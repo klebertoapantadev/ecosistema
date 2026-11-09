@@ -115,7 +115,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   {
     clave: "horarios_atencion_agenda",
     nombre: "Horarios de Atención (Telemático y Presencial)",
-    detalle: "Configura horarios por defecto para consultas telemáticas y presenciales, especialidad por defecto de ARIA y agendamiento sin abogado disponible",
+    detalle: "Configura horarios por defecto para consultas telemáticas y presenciales, especialidad por defecto de Tranqi y agendamiento sin abogado disponible",
     ruta: "/panel/agendamiento?widget=horarios_atencion_agenda",
     categoria: "Agendamiento & Operación",
     minNivel: 30,
@@ -144,7 +144,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "tokens_mcp",
-    nombre: "Tokens de Integración MCP (ARIA / Agentes IA)",
+    nombre: "Tokens de Integración MCP (Tranqi / Agentes IA)",
     detalle: "Gestión y emisión de API Keys Bearer para integrar herramientas MCP y agentes externos al catálogo",
     ruta: "/panel/configuracion?widget=tokens_mcp",
     categoria: "Seguridad & Integraciones",
@@ -225,7 +225,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   {
     clave: "compliance_score_legal",
     nombre: "Compliance & Score Legal Empresarial",
-    detalle: "Matriz de obligaciones normativas (SRI, IESS, LUAE, SuperCías), lectura inteligente ARIA y Health Score",
+    detalle: "Matriz de obligaciones normativas (SRI, IESS, LUAE, SuperCías), lectura inteligente Tranqi y Health Score",
     ruta: "/panel/administrar?widget=compliance_score_legal",
     categoria: "Comercio & B2B",
     minNivel: 30,
@@ -275,7 +275,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   {
     clave: "disponibilidad_abogados",
     nombre: "Disponibilidad de Abogados & Turnos",
-    detalle: "Gestión de horas y cupos. Postulación preliminar por abogados y aprobación por operadores con sincronización ARIA",
+    detalle: "Gestión de horas y cupos. Postulación preliminar por abogados y aprobación por operadores con sincronización Tranqi",
     ruta: "/panel/agendamiento?widget=disponibilidad_abogados",
     categoria: "Agendamiento & Operación",
     minNivel: 30,
@@ -325,7 +325,7 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   {
     clave: "crm_clientes",
     nombre: "CRM Jurídico y Recepción de Clientes",
-    detalle: "Administración 360° de clientes, personas naturales/jurídicas, validación ARIA y Conflict Check",
+    detalle: "Administración 360° de clientes, personas naturales/jurídicas, validación Tranqi y Conflict Check",
     ruta: "/panel/clientes",
     categoria: "Operación Legal",
     minNivel: 50,

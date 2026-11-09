@@ -293,7 +293,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
         const manualesConservados = metadatosDinamicos.filter(m => !clavesSugeridas.has(m.clave.toLowerCase()));
         setMetadatosDinamicos([...listaSugerida, ...manualesConservados]);
 
-        const resumenFinal = a.resumenOcr || `Aria analizó el documento exitosamente.${a.requiereCaducidad && a.fechaCaducidad ? ` Fecha de vencimiento detectada: ${a.fechaCaducidad}.` : " No requiere control de caducidad."} Metadatos dinámicos cargados.`;
+        const resumenFinal = a.resumenOcr || `Tranqi analizó el documento exitosamente.${a.requiereCaducidad && a.fechaCaducidad ? ` Fecha de vencimiento detectada: ${a.fechaCaducidad}.` : " No requiere control de caducidad."} Metadatos dinámicos cargados.`;
         setResumenAria(resumenFinal);
         mostrarToast("Análisis completado. Metadatos dinámicos cargados.", "exito");
       } else if (json.motivo) {
@@ -413,7 +413,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
     }
 
     if (analizandoConAria) {
-      mostrarToast("Espera a que ARIA termine de leer el documento", "error");
+      mostrarToast("Espera a que Tranqi termine de leer el documento", "error");
       return;
     }
 
@@ -497,7 +497,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
         numeroDocumento: numDocFinal || null,
         metadatosDinamicos: metadatosLimpios,
         metadatosOcr: {
-          analizado_por: "Aria IA / Multimodal",
+          analizado_por: "Tranqi IA / Multimodal",
           total_archivos: archivosSeleccionados.length,
           resumen: resumenAria || null,
           lugar_nacimiento: lugarNacFinal || null,
@@ -1236,7 +1236,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                       }}
                     >
                       <Sparkles size={13} className={analizandoConAria ? "anim-girar" : ""} />
-                      {analizandoConAria ? "Aria Analizando..." : "Re-analizar con Aria (IA)"}
+                      {analizandoConAria ? "Tranqi Analizando..." : "Re-analizar con Tranqi (IA)"}
                     </button>
                   </div>
 
@@ -1327,7 +1327,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                       {/* Título y Pasos de análisis */}
                       <div style={{ flex: 1 }}>
                         <h3 style={{ margin: "0 0 10px 0", fontSize: "0.95rem", fontWeight: 800, color: "#5000BA" }}>
-                          ARIA está leyendo tu documento
+                          Tranqi está leyendo tu documento
                         </h3>
 
                         <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "6px" }}>
@@ -1462,7 +1462,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                 >
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px", flexWrap: "wrap", gap: "6px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, color: "#5000BA", fontSize: "0.86rem" }}>
-                      <Sparkles size={16} /> Datos Clave Detectados por Aria (IA)
+                      <Sparkles size={16} /> Datos Clave Detectados por Tranqi (IA)
                     </div>
                     {analisisDetectado.requiereCaducidad ? (
                       <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#DC2626", background: "#FEF2F2", border: "1px solid #FCA5A5", padding: "2px 8px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "4px" }}>
@@ -1508,11 +1508,11 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
               {resumenAria && !analisisDetectado && !analizandoConAria && (
                 <div role="status" style={{ background: "#F8FAFC", border: "1.5px solid #CBD5E1", padding: "12px 16px", borderRadius: "12px", marginBottom: "14px", fontSize: "0.82rem", color: "#334155" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, color: "#1E293B", marginBottom: "4px" }}>
-                    <AlertTriangle size={16} color="#64748B" /> ARIA no pudo completar los campos
+                    <AlertTriangle size={16} color="#64748B" /> Tranqi no pudo completar los campos
                   </div>
                   <div>{resumenAria}</div>
                   <div style={{ marginTop: "4px", color: "#64748B" }}>
-                    Complétalos a mano o pulsa «Re-analizar con Aria (IA)».
+                    Complétalos a mano o pulsa «Re-analizar con Tranqi (IA)».
                   </div>
                 </div>
               )}
@@ -1534,7 +1534,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                         setErroresCampos(prev => ({ ...prev, titulo: undefined }));
                       }
                     }}
-                    placeholder={analizandoConAria ? "ARIA está completando este campo…" : "Ej. Cédula de Identidad y Votación"}
+                    placeholder={analizandoConAria ? "Tranqi está completando este campo…" : "Ej. Cédula de Identidad y Votación"}
                     style={{
                       width: "100%",
                       padding: "8px 12px",
@@ -1830,7 +1830,7 @@ export function WidgetBilleteraDocumentos({ negocio = "TRANQ", onCerrar }: Props
                   {analizandoConAria ? (
                     <>
                       <Sparkles size={16} className="anim-girar" />
-                      <span>Espera: ARIA está leyendo el documento…</span>
+                      <span>Espera: Tranqi está leyendo el documento…</span>
                     </>
                   ) : guardandoDoc ? (
                     "Resguardando..."

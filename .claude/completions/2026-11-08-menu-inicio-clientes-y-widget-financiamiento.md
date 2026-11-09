@@ -14,3 +14,12 @@
 3. **Pre-configuración en 10 Puntos (`widget-registration-enforcer`)**:
    - Registrado y pre-asignado en migración SQL (`supabase/migrations/20261108000003_widget_financiamiento_proximamente.sql`), `MATRIZ_FUNCIONAL_ROLES`, `AdministracionPerfilesWidget.tsx`, `ConsolaSuperAdminModular.tsx`, `PanelDinamicoModular.tsx`, `ModalEditarWidget.tsx`, `SeccionFavoritosInicio.tsx` y `BuscadorModulosGlobal.tsx`.
 
+4. **Restauración de Sección `Herramientas` y Sanitización del Perfil `CLIENTE`**:
+   - Habilitada la opción **Herramientas** (`/panel/herramientas`) en `NavegacionSidebar.tsx` para el rol `CLIENTE` (detectando también `?modo=cliente` en URL y cookie `tranqi_modo_rol`).
+   - Sanitizado el perfil `CLIENTE` en `MATRIZ_FUNCIONAL_ROLES`, `AdministracionPerfilesWidget.tsx` y `packages/gestion-usuarios/src/acciones.ts` para retirar `panel_clientes`, `panel_empresas` y `solicitud_socio`.
+
+5. **Historial de Pagos del Cliente y Descarga de Factura Electrónica (`RIDE`)**:
+   - Añadida sección **"Mis pagos y facturas"** en el inicio del cliente (`/panel`) y acceso directo en `Herramientas` (`/panel/herramientas?widget=historial_pagos`) y `Mi cuenta` (`/panel/cuenta?widget=historial_pagos`).
+   - Añadido botón directo **`Descargar Factura`** e impresión PDF limpia en `WidgetFacturacionElectronica.tsx`, ocultando controles de operador en vista de cliente y sincronizando pagos de citas agendadas (`trq_cita`).
+
+

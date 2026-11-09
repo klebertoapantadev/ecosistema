@@ -17,7 +17,7 @@ import { obtenerMiPerfilAbogadoCompletoAction } from "../../modulos/socios/accio
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import { ConsolaSuperAdminModular } from "./ConsolaSuperAdminModular";
 import { TarjetaEstadoSolicitudHome } from "./TarjetaEstadoSolicitudHome";
-import { SeccionCoberturaCliente, obtenerCoberturaUsuarioAction, TarjetaBeneficiosCorporativosCliente } from "@eco/comercio";
+import { SeccionCoberturaCliente, obtenerCoberturaUsuarioAction, TarjetaBeneficiosCorporativosCliente, obtenerHistorialTransaccionesAction } from "@eco/comercio";
 import { MenuCuenta } from "./MenuCuenta";
 import { obtenerResumenInicioCliente, type DocumentoBilletera } from "../../modulos/inicio-cliente/consultas";
 import { CifraQueCuenta } from "../../modulos/inicio-cliente/componentes/CifraQueCuenta";
@@ -32,12 +32,12 @@ const NEGOCIO = "tranqi";
 
 const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
   { icono: ShoppingBag, nombre: "Catálogo & Servicios", detalle: "Honorarios y planes legales", href: "/panel/catalogo-productos" },
-  { icono: Receipt, nombre: "Facturación & Pagos", detalle: "Comprobantes SRI e historial", href: "/panel/herramientas?widget=facturacion_electronica" },
-  { icono: Bell, nombre: "Avisos & Alertas", detalle: "Novedades y alertas legales", href: "/panel/clientes?widget=muro_informativo_comunidad" },
+  { icono: Receipt, nombre: "Mis Pagos & Facturas", detalle: "Historial y descarga de factura SRI", href: "/panel/herramientas?widget=historial_pagos" },
+  { icono: Bell, nombre: "Avisos & Alertas", detalle: "Novedades y alertas legales", href: "/panel/herramientas?widget=muro_informativo_comunidad" },
   { icono: Folder, nombre: "Billetera digital", detalle: "Documentos con OCR y TTL", href: "/panel/billetera-documentos" },
   { icono: FileCheck, nombre: "Firmar un documento", detalle: "Con tu certificado digital", href: "/panel/firma-documentos" },
   { icono: Calendar, nombre: "Agendar cita", detalle: "Presencial o por video", href: "/panel/agendar" },
-  { icono: Coins, nombre: "Financiamiento", detalle: "Cuotas para tu caso", href: "/panel/clientes?widget=financiamiento" },
+  { icono: Coins, nombre: "Financiamiento", detalle: "Cuotas para tu caso", href: "/panel/herramientas?widget=financiamiento" },
 ];
 
 const ACCESOS_ABOGADO: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
@@ -57,7 +57,7 @@ const WIDGETS_OPERADOR: { clave: string; icono: LucideIcon; nombre: string; deta
   { clave: "crm_clientes", icono: Users, nombre: "CRM Jurídico & Clientes", detalle: "Directorio 360°, KPIs y alta asistida", ruta: "/panel/clientes" },
   { clave: "disponibilidad_abogados", icono: Scale, nombre: "Disponibilidad de Abogados", detalle: "Aprobación de horas y turnos", ruta: "/panel/agendamiento?widget=disponibilidad_abogados" },
   { clave: "gestion_convenios_corporativos", icono: Building2, nombre: "Convenios Corporativos & B2B", detalle: "Alianzas y beneficios empresariales", ruta: "/panel/administrar?widget=gestion_convenios_corporativos" },
-  { clave: "compliance_score_legal", icono: ShieldCheck, nombre: "Compliance & Score Legal", detalle: "Matriz regulatoria y vigencias ARIA", ruta: "/panel/administrar?widget=compliance_score_legal" },
+  { clave: "compliance_score_legal", icono: ShieldCheck, nombre: "Compliance & Score Legal", detalle: "Matriz regulatoria y vigencias Tranqi", ruta: "/panel/administrar?widget=compliance_score_legal" },
   { clave: "legal_hr_laboral", icono: Briefcase, nombre: "Legal HR & Finiquitos", detalle: "Contratos de trabajo y actas SUT", ruta: "/panel/administrar?widget=legal_hr_laboral" },
   { clave: "socios", icono: UserCheck, nombre: "Aprobación de socios", detalle: "Cédula, título y matrícula", ruta: "/panel/socios" },
   { clave: "solicitud_socio", icono: Briefcase, nombre: "Solicitudes de socios", detalle: "Postulaciones en revisión", ruta: "/panel/administrar?widget=solicitud_socio" },
@@ -274,10 +274,12 @@ function vigenciaDocumento(d: DocumentoBilletera): { detalle: string; pildora: {
 }
 
 async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | null; nombre: string; usuarioId: string | null }) {
-  const [resumen, cobertura] = await Promise.all([
+  const [resumen, cobertura, pagosCliente] = await Promise.all([
     usuarioId ? obtenerResumenInicioCliente(usuarioId) : null,
-    obtenerCoberturaUsuarioAction("tranqi").catch(() => null)
+    obtenerCoberturaUsuarioAction("tranqi").catch(() => null),
+    obtenerHistorialTransaccionesAction("tranqi", { soloClienteActual: true, modoVista: "cliente" }).catch(() => [])
   ]);
+  const pagosRecientes = (pagosCliente ?? []).slice(0, 3);
   const tienePlanActivo = Boolean(cobertura?.tienePlanActivo && !cobertura?.suscripcionId?.startsWith("sub-demo"));
   const tramites = resumen?.tramitesAbiertos ?? null;
   const consultas = resumen?.consultasResueltas ?? null;
@@ -438,6 +440,67 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
               )}
             </section>
           )}
+
+          {/* SECCIÓN DE HISTORIAL DE PAGOS Y DESCARGA DE FACTURA DEL CLIENTE */}
+          <section className="tarjeta-seccion tarjeta-billetera" aria-labelledby="t-pagos-cliente">
+            <header>
+              <h2 id="t-pagos-cliente">Mis pagos y facturas</h2>
+              <Link href="/panel/herramientas?widget=historial_pagos" className="enlace-accion">
+                {pagosCliente.length > 0 ? `Ver todos (${pagosCliente.length})` : "Abrir historial"}
+              </Link>
+            </header>
+            {pagosRecientes.length === 0 ? (
+              <div style={{ padding: "10px 0 4px", fontSize: "0.84rem", color: "#64748B" }}>
+                <p style={{ margin: "0 0 10px" }}>
+                  Consulta tus pagos realizados y descarga tus facturas electrónicas SRI.
+                </p>
+                <Link href="/panel/herramientas?widget=historial_pagos" className="btn btn-neutro btn-pequeno">
+                  <Receipt size={15} aria-hidden="true" />
+                  Ver mis pagos
+                </Link>
+              </div>
+            ) : (
+              <>
+                <ul className="documentos-inicio">
+                  {pagosRecientes.map((p) => {
+                    const fechaStr = new Date(p.pag_confirmado_en || p.pag_creado_en).toLocaleDateString("es-EC", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric"
+                    });
+                    return (
+                      <li key={p.pag_id}>
+                        <span className="documento-icono" aria-hidden="true">
+                          <Receipt size={16} />
+                        </span>
+                        <span className="documento-texto">
+                          <b>{p.rubro_facturado || "Servicio legal"}</b>
+                          <small>
+                            {fechaStr} · ${Number(p.pag_monto_total || 0).toFixed(2)} USD
+                            {p.numero_comprobante ? ` · Factura ${p.numero_comprobante}` : ""}
+                          </small>
+                        </span>
+                        <Link
+                          href="/panel/herramientas?widget=historial_pagos"
+                          className="estado-pill es-ok"
+                          title="Ver y descargar factura electrónica"
+                          style={{ textDecoration: "none" }}
+                        >
+                          Factura PDF
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <div className="documentos-pie">
+                  <Link href="/panel/herramientas?widget=historial_pagos" className="btn btn-neutro btn-pequeno">
+                    <Receipt size={15} aria-hidden="true" />
+                    Descargar facturas
+                  </Link>
+                </div>
+              </>
+            )}
+          </section>
 
           {billetera && (
             <section className="tarjeta-seccion tarjeta-billetera" aria-labelledby="t-billetera">

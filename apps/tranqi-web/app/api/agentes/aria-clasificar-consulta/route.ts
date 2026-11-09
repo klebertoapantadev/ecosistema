@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     const mensajes = Array.isArray(body.mensajes) ? body.mensajes : [];
     if (mensajes.length === 0) {
       return NextResponse.json(
-        { ok: false, error: "Describe brevemente tu problema para que ARIA pueda ayudarte." },
+        { ok: false, error: "Describe brevemente tu problema para que Tranqi pueda ayudarte." },
         { status: 400 },
       );
     }
@@ -48,7 +48,7 @@ export async function POST(req: Request) {
     return NextResponse.json(
       {
         ok: false,
-        error: err instanceof Error ? err.message : "Error al clasificar la consulta con ARIA",
+        error: err instanceof Error ? err.message : "Error al clasificar la consulta con Tranqi",
       },
       { status: 500 },
     );

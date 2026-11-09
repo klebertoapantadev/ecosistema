@@ -332,7 +332,7 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
                   <span>3. Recursos Digitales y Muestras Reales</span>
                 </div>
                 <p style={{ margin: "0 0 8px", fontSize: "0.84rem" }}>
-                  Para maximizar la tasa de conversión en la vitrina y en los chats de ARIA:
+                  Para maximizar la tasa de conversión en la vitrina y en los chats de Tranqi:
                 </p>
                 <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem", color: "#1E3A8A" }}>
                   <li><strong>URL Imagen / Portada:</strong> Fotografía vertical nítida con buena iluminación (formato 4:5 o 1:1).</li>

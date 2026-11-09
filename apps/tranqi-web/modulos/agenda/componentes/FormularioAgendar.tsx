@@ -315,7 +315,7 @@ export default function FormularioAgendar({
     const motivoEfectivo =
       motivo.trim().length >= 4
         ? motivo.trim()
-        : relatoUsuario.trim().slice(0, 500) || "Consulta jurídica clasificada por ARIA";
+        : relatoUsuario.trim().slice(0, 500) || "Consulta jurídica clasificada por Tranqi";
 
     iniciarEnvio(async () => {
       const r = await reservarCitaAction({
@@ -555,7 +555,7 @@ export default function FormularioAgendar({
                 marginBottom: "10px",
               }}
             >
-              <Sparkles size={14} /> Asistente Legal ARIA
+              <Sparkles size={14} /> Asistente Legal Tranqi
             </span>
             <h1 style={{ fontSize: "1.45rem", fontWeight: 800, color: "#111827", margin: "0 0 6px", letterSpacing: "-0.02em" }}>
               ¿Qué necesitas resolver hoy?
@@ -656,14 +656,14 @@ export default function FormularioAgendar({
                 ) : (
                   <>
                     <Sparkles size={16} />
-                    {triaje ? "Actualizar análisis" : "Consultar con ARIA"}
+                    {triaje ? "Actualizar análisis" : "Consultar con Tranqi"}
                   </>
                 )}
               </button>
             </div>
           </div>
 
-          {/* Respuesta de ARIA con la especialidad del especialista y botón de continuar */}
+          {/* Respuesta de Tranqi con la especialidad del especialista y botón de continuar */}
           {triaje && materia && (
             <div
               ref={respuestaRef}
@@ -695,7 +695,7 @@ export default function FormularioAgendar({
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.04em", color: "#5000BA", marginBottom: "4px" }}>
-                    Recomendación de ARIA
+                    Recomendación de Tranqi
                   </div>
                   <p style={{ fontSize: "0.94rem", color: "#1F2937", margin: "0 0 12px", lineHeight: 1.55 }}>
                     {triaje.respuesta_aria}

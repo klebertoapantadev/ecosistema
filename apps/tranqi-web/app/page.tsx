@@ -615,7 +615,7 @@ export default function TranqiLanding() {
             </a>
           </div>
         </div>
-        <div className="pie">© tranqi® 2026 · Todos los derechos reservados · Demo impulsada por ARIA</div>
+        <div className="pie">© tranqi® 2026 · Todos los derechos reservados · Impulsado por Tranqi IA</div>
       </section>
 
       {/* ═══════════ BUDDIE ═══════════ */}

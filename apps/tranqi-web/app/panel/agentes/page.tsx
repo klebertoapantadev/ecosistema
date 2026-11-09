@@ -128,7 +128,7 @@ export default async function PaginaAgentes() {
 function Aviso({ motivo }: { motivo: string }) {
   return (
     <p className="agentes-aviso" role="status">
-      No se pudo consultar ARIA: {motivo}
+      No se pudo consultar Tranqi: {motivo}
     </p>
   );
 }

@@ -283,7 +283,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
   {
     clave: "compliance_score_legal",
     nombre: "Compliance & Score Legal Empresarial",
-    detalle: "Matriz de obligaciones normativas, monitoreo continuo de caducidades con ARIA y Legal Health Score",
+    detalle: "Matriz de obligaciones normativas, monitoreo continuo de caducidades con Tranqi y Legal Health Score",
     ruta: "/panel/administrar?widget=compliance_score_legal",
     icono: ShieldCheck,
     iconoKey: "ShieldCheck",
@@ -315,7 +315,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
   {
     clave: "horarios_atencion_agenda",
     nombre: "Horarios de Atención (Telemático y Presencial)",
-    detalle: "Configuración de horarios por defecto para consultas telemáticas y presenciales, especialidad por defecto para ARIA y agendamiento sin abogado disponible",
+    detalle: "Configuración de horarios por defecto para consultas telemáticas y presenciales, especialidad por defecto para Tranqi y agendamiento sin abogado disponible",
     ruta: "/panel/agendamiento?widget=horarios_atencion_agenda",
     icono: ShieldCheck,
     iconoKey: "ShieldCheck",
@@ -379,7 +379,7 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
   {
     clave: "disponibilidad_abogados",
     nombre: "Disponibilidad de Abogados & Turnos",
-    detalle: "Gestión de horas y cupos. Postulación preliminar de abogados y aprobación operativa con sincronización ARIA",
+    detalle: "Gestión de horas y cupos. Postulación preliminar de abogados y aprobación operativa con sincronización Tranqi",
     ruta: "/panel/agendamiento?widget=disponibilidad_abogados",
     icono: Scale,
     iconoKey: "Scale",

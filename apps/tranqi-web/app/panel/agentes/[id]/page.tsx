@@ -27,7 +27,7 @@ export default async function PaginaAgente({ params }: { params: Promise<{ id: s
       <>
         <h1>Agente</h1>
         <p className="agentes-aviso" role="status">
-          No se pudo consultar ARIA: {agente.motivo}
+          No se pudo consultar Tranqi: {agente.motivo}
         </p>
       </>
     );

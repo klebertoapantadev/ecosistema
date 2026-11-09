@@ -123,7 +123,7 @@ export function SeccionCoberturaCliente({
               Activa tu Plan de Amparo & Cobertura Legal
             </h2>
             <p style={{ margin: 0, fontSize: "0.9rem", color: "#94A3B8", maxWidth: "560px", lineHeight: 1.5 }}>
-              Obtén citas telemáticas ilimitadas, dictámenes de contratos en 24h, consultas ARIA IA y hasta 35% de descuento en notarías y juicios para ti y tu familia.
+              Obtén citas telemáticas ilimitadas, dictámenes de contratos en 24h, consultas Tranqi IA y hasta 35% de descuento en notarías y juicios para ti y tu familia.
             </p>
           </div>
 
@@ -488,7 +488,7 @@ export function SeccionCoberturaCliente({
                       textDecoration: "none",
                     }}
                   >
-                    Abrir Chat con ARIA <Sparkles size={14} />
+                    Abrir Chat con Tranqi <Sparkles size={14} />
                   </Link>
                 )}
 

@@ -409,7 +409,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       analizado: true,
-      agente: "Aria (IA)",
+      agente: "Tranqi (IA)",
       analisis: {
         tituloSugerido: analisisAria.titular ? `${queEs} — ${analisisAria.titular}` : (archivo.nombre?.replace(/\.[^/.]+$/, "") || queEs),
         categoriaSugerida: cat,
@@ -440,7 +440,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     ok: true,
     analizado: true,
-    agente: "Aria Motor Local",
+    agente: "Tranqi Motor Local",
     analisis: analisisHeuristico
   });
 }

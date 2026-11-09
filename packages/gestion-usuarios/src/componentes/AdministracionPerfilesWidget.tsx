@@ -272,13 +272,13 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nombre: "Cliente (Jerarquía Base)",
     nivel: 1,
     ambito: "Empresa",
-    descripcion: "Perfil base de usuario. Acceso a paneles de Inicio, Agendamiento, Mi Cuenta, Herramientas y Preferencias de Notificaciones.",
-    panelesAsignados: ["panel_inicio", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
+    descripcion: "Perfil base de usuario. Acceso a paneles de Inicio, Agendamiento, Herramientas, Mi Cuenta y Preferencias de Notificaciones.",
+    panelesAsignados: ["panel_inicio", "panel_agendamiento", "panel_herramientas", "panel_cuenta", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_agendamiento: ["agendar_cita", "mis_citas"],
+      panel_herramientas: ["historial_pagos", "facturacion_electronica", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "financiamiento"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["facturacion_electronica", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "financiamiento"],
       panel_configuracion: ["notificaciones"]
     },
     activo: true
@@ -1559,7 +1559,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             if (p.clave?.toUpperCase() === "OPERADOR" && widgetsMerged["panel_usuarios"]) {
               widgetsMerged["panel_usuarios"] = widgetsMerged["panel_usuarios"].filter((w: string) => w !== "crm_clientes");
             }
-            if (p.clave?.toUpperCase() === "ABOGADO") {
+            if (p.clave?.toUpperCase() === "ABOGADO" || p.clave?.toUpperCase() === "CLIENTE") {
               return {
                 ...p,
                 panelesAsignados: [...base.panelesAsignados],

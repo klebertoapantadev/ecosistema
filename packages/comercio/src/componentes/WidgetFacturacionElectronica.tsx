@@ -12,6 +12,7 @@ import {
   FileText,
   PlusCircle,
   Printer,
+  Download,
   X,
   Building2,
   UserCheck,
@@ -79,27 +80,48 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
   const [referenciaPago, setReferenciaPago] = useState("");
   const [observacionesPago, setObservacionesPago] = useState("");
 
-  useEffect(() => {
+  const resolverModoVista = (): string => {
+    if (modoVistaForzado !== "auto") return modoVistaForzado;
     if (typeof window !== "undefined") {
-      const guardado = window.localStorage.getItem("tranqi_rol_vista_activa");
-      if (guardado) setRolVistaActiva(guardado.toLowerCase());
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const modoUrl = params.get("modo");
+        if (modoUrl && modoUrl.trim()) return modoUrl.trim().toLowerCase();
+        const cookieStr = document.cookie || "";
+        const matchModo = cookieStr.match(/tranqi_modo_rol=([^;]+)/);
+        if (matchModo && matchModo[1]) return decodeURIComponent(matchModo[1]).trim().toLowerCase();
+        const matchFav = cookieStr.match(/tranqi_rol_favorito=([^;]+)/);
+        if (matchFav && matchFav[1]) return decodeURIComponent(matchFav[1]).trim().toLowerCase();
+        const guardado = window.localStorage.getItem("tranqi_rol_vista_activa");
+        if (guardado) return guardado.toLowerCase();
+      } catch {
+        // Ignorar errores de acceso a cookies/storage
+      }
     }
-  }, []);
+    return "auto";
+  };
+
+  useEffect(() => {
+    setRolVistaActiva(resolverModoVista());
+  }, [modoVistaForzado]);
+
+  const esVistaCliente = rolVistaActiva === "cliente" || modoVistaForzado === "cliente";
 
   const cargarDatos = async () => {
     setCargando(true);
     try {
-      const vista =
-        modoVistaForzado !== "auto"
-          ? modoVistaForzado
-          : typeof window !== "undefined"
-            ? window.localStorage.getItem("tranqi_rol_vista_activa") || "auto"
-            : "auto";
+      const vista = resolverModoVista();
+      setRolVistaActiva(vista);
 
       const [hist, prods, clis] = await Promise.all([
-        obtenerHistorialTransaccionesAction(negocio, { modoVista: vista }),
+        obtenerHistorialTransaccionesAction(negocio, {
+          modoVista: vista,
+          soloClienteActual: vista === "cliente",
+        }),
         obtenerCatalogoProductosAction(negocio).catch(() => []),
-        obtenerClientesParaFacturacionAction(negocio).catch(() => []),
+        vista === "cliente"
+          ? Promise.resolve([] as ClienteDirectorioFacturacion[])
+          : obtenerClientesParaFacturacionAction(negocio).catch(() => []),
       ]);
 
       setTransacciones(hist);
@@ -458,6 +480,179 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
     }
   };
 
+  const construirHtmlFacturaRide = (t: TransaccionPagoCRM): string => {
+    const montoTotal = Number(t.pag_monto_total || 0);
+    const subtotal =
+      Number(t.factura_electronica?.subtotal) ||
+      Number(t.pag_monto_con_iva || 0) + Number(t.pag_monto_sin_iva || 0) ||
+      Math.round((montoTotal / 1.15) * 100) / 100;
+    const iva =
+      Number(t.factura_electronica?.iva) ||
+      Number(t.pag_monto_iva || 0) ||
+      Math.round((montoTotal - subtotal) * 100) / 100;
+    const razonEmisor =
+      negocio === "fastfix"
+        ? "FASTFIX HOME SERVICIOS S.A.S."
+        : negocio === "tinkay"
+          ? "TINKAY FLORISTERIA S.A.S."
+          : negocio === "margaritas"
+            ? "MARGARITAS FLORISTERIA S.A.S."
+            : "TRANQI LEGAL S.A.S.";
+    const numComp = t.numero_comprobante || "001-001-000000101";
+    const claveSri = t.clave_acceso_sri || "0911202601179001691900110010010000001011234567819";
+    const fechaEmision =
+      t.fecha_emision_factura ||
+      new Date(t.pag_confirmado_en || t.pag_creado_en).toLocaleDateString("es-EC");
+    const compradorNombre =
+      t.factura_electronica?.comprador?.razon_social ||
+      t.cliente_nombre ||
+      t.pag_titular_email ||
+      "CONSUMIDOR FINAL";
+    const compradorId =
+      t.factura_electronica?.comprador?.identificacion ||
+      t.pag_titular_identificacion ||
+      "9999999999999";
+    const compradorCorreo =
+      t.factura_electronica?.comprador?.correo || t.pag_titular_email || "";
+    const compradorDir =
+      t.factura_electronica?.comprador?.direccion || "Quito - Ecuador";
+    const rubro = t.rubro_facturado || "Servicio Legal Facturado";
+    const infoMedio = formatearEtiquetaMedio(t);
+
+    return `<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Factura Electrónica ${numComp} - ${razonEmisor}</title>
+  <style>
+    @page { size: A4; margin: 14mm; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; color: #0F172A; margin: 0; padding: 24px; background: #FFFFFF; }
+    .contenedor { max-width: 760px; margin: 0 auto; border: 1px solid #CBD5E1; border-radius: 14px; padding: 24px; }
+    .cabecera { display: flex; justify-content: space-between; gap: 16px; border-bottom: 2px solid #0F172A; padding-bottom: 16px; margin-bottom: 16px; }
+    .caja { border: 1px solid #CBD5E1; border-radius: 10px; padding: 14px; flex: 1; }
+    .caja-sri { background: #EEF2FF; border-color: #C7D2FE; }
+    h1 { font-size: 18px; margin: 0 0 6px; color: #0F172A; }
+    h2 { font-size: 15px; margin: 0 0 6px; color: #3730A3; }
+    .meta { font-size: 12px; color: #334155; line-height: 1.5; }
+    .clave { font-family: monospace; font-size: 11px; background: #FFFFFF; border: 1px solid #C7D2FE; padding: 6px; border-radius: 6px; word-break: break-all; margin-top: 4px; }
+    .comprador { border: 1px solid #CBD5E1; border-radius: 10px; padding: 14px; margin-bottom: 16px; background: #F8FAFC; font-size: 12px; line-height: 1.6; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 16px; font-size: 12px; }
+    th { background: #0F172A; color: #FFFFFF; text-align: left; padding: 10px; }
+    td { padding: 10px; border-bottom: 1px solid #E2E8F0; }
+    .totales { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+    .totales-tabla { width: 280px; border: 1px solid #CBD5E1; border-radius: 10px; overflow: hidden; }
+    .fila-total { display: flex; justify-content: space-between; padding: 8px 12px; font-size: 12px; border-bottom: 1px solid #E2E8F0; }
+    .fila-total.final { background: #0F172A; color: #FFFFFF; font-weight: 800; font-size: 14px; border-bottom: none; }
+    .acciones-no-print { text-align: right; margin-bottom: 14px; }
+    .btn-print { background: #4F46E5; color: #FFFFFF; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 13px; }
+    @media print { .acciones-no-print { display: none !important; } body { padding: 0; } }
+  </style>
+</head>
+<body>
+  <div class="acciones-no-print">
+    <button class="btn-print" onclick="window.print()">Imprimir / Guardar como PDF</button>
+  </div>
+  <div class="contenedor">
+    <div class="cabecera">
+      <div class="caja">
+        <h1>${razonEmisor}</h1>
+        <div class="meta">
+          <div><strong>RUC:</strong> 1790016919001</div>
+          <div><strong>Dirección Matriz:</strong> Av. República del Salvador y Moscú, Quito - Ecuador</div>
+          <div><strong>Obligado a llevar Contabilidad:</strong> SÍ</div>
+        </div>
+      </div>
+      <div class="caja caja-sri">
+        <h2>FACTURA ELECTRÓNICA N° ${numComp}</h2>
+        <div class="meta">
+          <div><strong>Estado SRI:</strong> ${t.estado_factura || "AUTORIZADO"}</div>
+          <div><strong>Fecha de Emisión:</strong> ${fechaEmision}</div>
+          <div><strong>Ambiente:</strong> ${t.factura_electronica?.ambiente === 2 ? "PRODUCCIÓN" : "CERTIFICADO SRI"}</div>
+          <div><strong>Clave de Acceso (49 dígitos):</strong></div>
+          <div class="clave">${claveSri}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="comprador">
+      <div><strong>Razón Social / Nombres y Apellidos:</strong> ${compradorNombre}</div>
+      <div><strong>Identificación (RUC / Cédula):</strong> ${compradorId} &nbsp;|&nbsp; <strong>Correo:</strong> ${compradorCorreo}</div>
+      <div><strong>Dirección:</strong> ${compradorDir} &nbsp;|&nbsp; <strong>Referencia Transacción:</strong> ${t.pag_identificador_cliente}</div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Cant.</th>
+          <th>Descripción del Rubro Facturado</th>
+          <th style="text-align:right">P. Unitario</th>
+          <th style="text-align:right">Total sin Imp.</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-family:monospace">SERV-001</td>
+          <td>1.00</td>
+          <td><strong>${rubro}</strong></td>
+          <td style="text-align:right">$${subtotal.toFixed(2)}</td>
+          <td style="text-align:right"><strong>$${subtotal.toFixed(2)}</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="totales">
+      <div class="caja" style="max-width:360px">
+        <div class="meta">
+          <div><strong>Forma de Pago SRI:</strong> ${infoMedio.esAutomatica ? "20 - Tarjeta de Crédito / Débito" : "20 - Otros con utilización del sistema financiero"}</div>
+          <div><strong>Medio Registrado:</strong> ${infoMedio.titulo} (${infoMedio.subtitulo})</div>
+          ${t.pag_autorizacion_codigo ? `<div><strong>Código de Autorización:</strong> ${t.pag_autorizacion_codigo}</div>` : ""}
+        </div>
+      </div>
+      <div class="totales-tabla">
+        <div class="fila-total"><span>Subtotal 15%:</span><strong>$${subtotal.toFixed(2)}</strong></div>
+        <div class="fila-total"><span>Subtotal 0%:</span><strong>$0.00</strong></div>
+        <div class="fila-total"><span>IVA 15%:</span><strong>$${iva.toFixed(2)}</strong></div>
+        <div class="fila-total final"><span>VALOR TOTAL PAGADO:</span><span>$${montoTotal.toFixed(2)} USD</span></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>`;
+  };
+
+  const descargarFacturaRide = (t: TransaccionPagoCRM) => {
+    if (typeof window === "undefined") return;
+    const html = construirHtmlFacturaRide(t);
+    const numLimpio = (t.numero_comprobante || t.pag_identificador_cliente || "comprobante").replace(/[^a-zA-Z0-9_-]/g, "_");
+    const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Factura_Electronica_${numLimpio}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+  };
+
+  const imprimirFacturaRide = (t: TransaccionPagoCRM) => {
+    if (typeof window === "undefined") return;
+    const html = construirHtmlFacturaRide(t);
+    const win = window.open("", "_blank", "width=860,height=780");
+    if (win) {
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => {
+        win.focus();
+        win.print();
+      }, 250);
+    } else {
+      descargarFacturaRide(t);
+    }
+  };
+
   return (
     <div style={{ padding: "8px 0" }}>
       {/* Cabecera Principal */}
@@ -487,7 +682,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               }}
             >
               <Receipt size={13} />
-              FACTURACIÓN ELECTRÓNICA SRI & LIQUIDACIÓN
+              {esVistaCliente ? "MIS PAGOS & COMPROBANTES SRI" : "FACTURACIÓN ELECTRÓNICA SRI & LIQUIDACIÓN"}
             </span>
             <span
               style={{
@@ -503,45 +698,51 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               }}
             >
               <Sparkles size={12} />
-              Emisión Automática con Tarjeta Activa
+              {esVistaCliente ? "Facturas Autorizadas Descargables" : "Emisión Automática con Tarjeta Activa"}
             </span>
           </div>
           <h1 style={{ margin: 0, fontSize: "1.45rem", fontWeight: 800, color: "#0F172A" }}>
-            Facturación, Comprobantes Electrónicos e Historial de Pagos
+            {esVistaCliente
+              ? "Mis Pagos Realizados & Facturas Electrónicas"
+              : "Facturación, Comprobantes Electrónicos e Historial de Pagos"}
           </h1>
           <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#64748B" }}>
-            Control de valores generados y valores pagados, detalle del rubro facturado y emisión automática o manual de facturas electrónicas.
+            {esVistaCliente
+              ? "Consulta el historial de tus pagos realizados, el detalle del servicio facturado y descarga tu factura electrónica SRI."
+              : "Control de valores generados y valores pagados, detalle del rubro facturado y emisión automática o manual de facturas electrónicas."}
           </p>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-          <button
-            type="button"
-            onClick={() => {
-              setErrorPagoManual(null);
-              setModalPagoManualAbierto(true);
-            }}
-            className="btn-responsive-accion"
-            title="Registrar pago manual (transferencia, efectivo, Deuna) y emitir factura electrónica"
-            aria-label="Registrar pago manual y emitir factura electrónica"
-            style={{
-              background: "linear-gradient(135deg, #4F46E5 0%, #3730A3 100%)",
-              color: "#FFFFFF",
-              border: "none",
-              padding: "9px 16px",
-              borderRadius: "10px",
-              fontSize: "0.84rem",
-              fontWeight: 700,
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "7px",
-              boxShadow: "0 4px 12px rgba(79, 70, 229, 0.25)",
-            }}
-          >
-            <PlusCircle size={16} />
-            <span className="btn-texto-responsive">Registrar Pago</span>
-          </button>
+          {!esVistaCliente && (
+            <button
+              type="button"
+              onClick={() => {
+                setErrorPagoManual(null);
+                setModalPagoManualAbierto(true);
+              }}
+              className="btn-responsive-accion"
+              title="Registrar pago manual (transferencia, efectivo, Deuna) y emitir factura electrónica"
+              aria-label="Registrar pago manual y emitir factura electrónica"
+              style={{
+                background: "linear-gradient(135deg, #4F46E5 0%, #3730A3 100%)",
+                color: "#FFFFFF",
+                border: "none",
+                padding: "9px 16px",
+                borderRadius: "10px",
+                fontSize: "0.84rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "7px",
+                boxShadow: "0 4px 12px rgba(79, 70, 229, 0.25)",
+              }}
+            >
+              <PlusCircle size={16} />
+              <span className="btn-texto-responsive">Registrar Pago</span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -888,31 +1089,35 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               No se encontraron comprobantes ni pagos con este filtro
             </h3>
             <p style={{ margin: "0 0 16px", fontSize: "0.85rem", color: "#64748B" }}>
-              Las facturas electrónicas se emiten automáticamente al pagar con tarjeta o al registrar un pago manual.
+              {esVistaCliente
+                ? "Aquí aparecerán tus pagos realizados y tus facturas electrónicas listas para descargar."
+                : "Las facturas electrónicas se emiten automáticamente al pagar con tarjeta o al registrar un pago manual."}
             </p>
-            <button
-              type="button"
-              onClick={() => setModalPagoManualAbierto(true)}
-              className="btn-responsive-accion"
-              title="Registrar un pago manual y emitir su factura electrónica"
-              aria-label="Registrar un pago manual y emitir su factura electrónica"
-              style={{
-                background: "#4F46E5",
-                color: "#FFFFFF",
-                border: "none",
-                padding: "9px 16px",
-                borderRadius: "10px",
-                fontSize: "0.84rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-              }}
-            >
-              <PlusCircle size={15} />
-              <span className="btn-texto-responsive">Registrar Pago</span>
-            </button>
+            {!esVistaCliente && (
+              <button
+                type="button"
+                onClick={() => setModalPagoManualAbierto(true)}
+                className="btn-responsive-accion"
+                title="Registrar un pago manual y emitir su factura electrónica"
+                aria-label="Registrar un pago manual y emitir su factura electrónica"
+                style={{
+                  background: "#4F46E5",
+                  color: "#FFFFFF",
+                  border: "none",
+                  padding: "9px 16px",
+                  borderRadius: "10px",
+                  fontSize: "0.84rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <PlusCircle size={15} />
+                <span className="btn-texto-responsive">Registrar Pago</span>
+              </button>
+            )}
           </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
@@ -1052,29 +1257,54 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                       {/* Columna 9: Acciones */}
                       <td style={{ padding: "13px 14px", textAlign: "right", whiteSpace: "nowrap" }}>
                         {t.numero_comprobante ? (
-                          <button
-                            type="button"
-                            onClick={() => setTransaccionSeleccionada(t)}
-                            className="btn-responsive-accion"
-                            title="Ver e imprimir Factura Electrónica RIDE"
-                            aria-label="Ver Factura Electrónica"
-                            style={{
-                              background: "#EEF2FF",
-                              color: "#4338CA",
-                              border: "1px solid #C7D2FE",
-                              padding: "6px 11px",
-                              borderRadius: "8px",
-                              fontSize: "0.76rem",
-                              fontWeight: 700,
-                              cursor: "pointer",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "5px",
-                            }}
-                          >
-                            <FileText size={14} />
-                            <span className="btn-texto-responsive">Ver Factura</span>
-                          </button>
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                            <button
+                              type="button"
+                              onClick={() => descargarFacturaRide(t)}
+                              className="btn-responsive-accion"
+                              title="Descargar Factura Electrónica RIDE"
+                              aria-label="Descargar Factura Electrónica"
+                              style={{
+                                background: "#059669",
+                                color: "#FFFFFF",
+                                border: "none",
+                                padding: "6px 11px",
+                                borderRadius: "8px",
+                                fontSize: "0.76rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "5px",
+                              }}
+                            >
+                              <Download size={14} />
+                              <span className="btn-texto-responsive">Descargar Factura</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setTransaccionSeleccionada(t)}
+                              className="btn-responsive-accion"
+                              title="Ver Factura Electrónica RIDE"
+                              aria-label="Ver Factura Electrónica"
+                              style={{
+                                background: "#EEF2FF",
+                                color: "#4338CA",
+                                border: "1px solid #C7D2FE",
+                                padding: "6px 11px",
+                                borderRadius: "8px",
+                                fontSize: "0.76rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "5px",
+                              }}
+                            >
+                              <FileText size={14} />
+                              <span className="btn-texto-responsive">Ver Factura</span>
+                            </button>
+                          </div>
                         ) : t.pag_estado === "APROBADO" ? (
                           <button
                             type="button"
@@ -1733,7 +1963,30 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <button
                   type="button"
-                  onClick={() => typeof window !== "undefined" && window.print()}
+                  onClick={() => descargarFacturaRide(transaccionSeleccionada)}
+                  className="btn-responsive-accion"
+                  title="Descargar archivo de esta Factura Electrónica"
+                  aria-label="Descargar Factura"
+                  style={{
+                    background: "#059669",
+                    color: "#FFFFFF",
+                    border: "none",
+                    padding: "7px 12px",
+                    borderRadius: "8px",
+                    fontSize: "0.78rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                  }}
+                >
+                  <Download size={14} />
+                  <span className="btn-texto-responsive">Descargar Factura</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => imprimirFacturaRide(transaccionSeleccionada)}
                   className="btn-responsive-accion"
                   title="Imprimir o guardar en PDF esta Factura Electrónica"
                   aria-label="Imprimir RIDE"

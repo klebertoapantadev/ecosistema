@@ -180,7 +180,7 @@ async function atender(req: NextRequest) {
     // usuario: lo primero se arregla preguntando por partes, lo segundo no.
     if ((e as Error).name === "TimeoutError") {
       return NextResponse.json(
-        { error: "ARIA no respondio a tiempo", codigo: "aria_tiempo", conversacion_id: conversacionId },
+        { error: "Tranqi no respondio a tiempo", codigo: "aria_tiempo", conversacion_id: conversacionId },
         { status: 504 },
       );
     }

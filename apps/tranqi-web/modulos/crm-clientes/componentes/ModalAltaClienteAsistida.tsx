@@ -50,7 +50,7 @@ function IndicadorOrigenCampo({ esAria, esModificado }: { esAria?: boolean; esMo
   if (esAria && !esModificado) {
     return (
       <span
-        title="Dato extraído y mapeado automáticamente por ARIA OCR"
+        title="Dato extraído y mapeado automáticamente por Tranqi OCR"
         style={{
           background: "#ECFDF5",
           color: "#047857",
@@ -64,7 +64,7 @@ function IndicadorOrigenCampo({ esAria, esModificado }: { esAria?: boolean; esMo
           gap: "3px"
         }}
       >
-        <Sparkles size={10} /> Leído por ARIA
+        <Sparkles size={10} /> Leído por Tranqi
       </span>
     );
   }
@@ -375,7 +375,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
           : Object.keys(nuevosCamposAria).length;
         const total = res.logExtraccion?.length || numMapeados;
 
-        setBadgeAriaId(`✨ ARIA OCR: ${total} datos identificados (${numMapeados} mapeados al formulario · ${res.confianza}% confianza)`);
+        setBadgeAriaId(`✨ Tranqi OCR: ${total} datos identificados (${numMapeados} mapeados al formulario · ${res.confianza}% confianza)`);
         setMostrarLogDetallado(true);
       } else {
         setErrorValidacion(res.mensaje || "No se pudo extraer la identificación.");
@@ -425,7 +425,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
         }
 
         setCamposAria((prev) => ({ ...prev, ...nuevosCamposAria }));
-        setBadgeAriaRepCedula(`✨ Cédula del Representante Legal verificada por ARIA (${repNomCompleto || res.identificacion})`);
+        setBadgeAriaRepCedula(`✨ Cédula del Representante Legal verificada por Tranqi (${repNomCompleto || res.identificacion})`);
         setMostrarLogDetallado(true);
       } else {
         setErrorValidacion(res.mensaje || "No se pudo extraer la cédula del representante.");
@@ -486,7 +486,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
 
         setNombramientoValidadoAria(true);
         setCamposAria((prev) => ({ ...prev, ...nuevosCamposAria }));
-        setBadgeAriaNom(`✨ Nombramiento Mercantil Vigente certificado por ARIA (Vence: ${res.fechaVencimientoCalculada || "2 años"})`);
+        setBadgeAriaNom(`✨ Nombramiento Mercantil Vigente certificado por Tranqi (Vence: ${res.fechaVencimientoCalculada || "2 años"})`);
         setMostrarLogDetallado(true);
       }
     };
@@ -578,7 +578,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
         return;
       }
       if (!archivoCedulaNatural && !omitirValidacionAlgoritmo && !clienteAEditar) {
-        setErrorValidacion("⚠️ La Cédula de Identidad es obligatoria para Persona Natural. Sube el documento para que ARIA lo analice y archive en la Billetera Digital (o activa la casilla 'Omitir validación por excepción').");
+        setErrorValidacion("⚠️ La Cédula de Identidad es obligatoria para Persona Natural. Sube el documento para que Tranqi lo analice y archive en la Billetera Digital (o activa la casilla 'Omitir validación por excepción').");
         return;
       }
     }
@@ -957,7 +957,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                       </span>
                     </div>
                     <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#475569" }}>
-                      📄 {archivoCedulaNatural.nombre} ({(archivoCedulaNatural.tamano / 1024).toFixed(1)} KB) · Extraído y certificado por ARIA
+                      📄 {archivoCedulaNatural.nombre} ({(archivoCedulaNatural.tamano / 1024).toFixed(1)} KB) · Extraído y certificado por Tranqi
                     </p>
                   </div>
                 </div>
@@ -1034,7 +1034,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                       </span>
                     </div>
                     <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#64748B" }}>
-                      Sube la cédula en PDF o imagen: ARIA autocompletará el formulario y la archivará en la Billetera Digital del cliente.
+                      Sube la cédula en PDF o imagen: Tranqi autocompletará el formulario y la archivará en la Billetera Digital del cliente.
                     </p>
                   </div>
                 </div>
@@ -1055,7 +1055,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                   }}
                 >
                   <Upload size={14} />
-                  {procesandoAriaId ? "Analizando con ARIA..." : "Cargar Cédula de Identidad"}
+                  {procesandoAriaId ? "Analizando con Tranqi..." : "Cargar Cédula de Identidad"}
                   <input
                     type="file"
                     accept="image/*,application/pdf"

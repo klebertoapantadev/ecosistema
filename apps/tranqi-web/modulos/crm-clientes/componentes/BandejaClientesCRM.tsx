@@ -287,7 +287,7 @@ export function BandejaClientesCRM({ negocio = "TRANQ", tipoPersoneriaPorDefecto
             CRM Jurídico y Recepción de Clientes
           </h1>
           <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#64748B" }}>
-            Administración 360° de personas naturales y jurídicas, validación ARIA y verificación de conflicto de intereses
+            Administración 360° de personas naturales y jurídicas, validación Tranqi y verificación de conflicto de intereses
           </p>
         </div>
 

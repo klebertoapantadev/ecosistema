@@ -266,7 +266,7 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
   },
   agentes_ia: {
     titulo: "Agentes de IA",
-    subtitulo: "Configuración de los asistentes Aria de tranqi: prompts, modelo y herramientas",
+    subtitulo: "Configuración de los asistentes Tranqi: prompts, modelo y herramientas",
     icono: Bot,
     colorIcono: "#5000BA",
     categoria: "Configuración"
@@ -371,7 +371,7 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
   },
   compliance_score_legal: {
     titulo: "Compliance & Score Legal Empresarial",
-    subtitulo: "Matriz de obligaciones normativas, monitoreo continuo de caducidades con ARIA y cálculo del Legal Health Score",
+    subtitulo: "Matriz de obligaciones normativas, monitoreo continuo de caducidades con Tranqi y cálculo del Legal Health Score",
     icono: ShieldCheck,
     colorIcono: "#05876E",
     categoria: "Comercio & B2B"
@@ -483,7 +483,7 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
   },
   horarios_atencion_agenda: {
     titulo: "Horarios de Atención (Telemático y Presencial)",
-    subtitulo: "Configura los horarios por defecto de consultas telemáticas y presenciales, y la especialidad por defecto para ARIA",
+    subtitulo: "Configura los horarios por defecto de consultas telemáticas y presenciales, y la especialidad por defecto para Tranqi",
     icono: Calendar,
     colorIcono: "#5000BA",
     categoria: "Agenda"
@@ -801,7 +801,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
         if (rolActivo === "OPERADOR" && (panelIdBuscado === "panel_usuarios" || slugNormalizado === "usuarios")) {
           listW = listW.filter(w => w !== "crm_clientes");
         }
-        if (rolActivo === "ABOGADO") {
+        if (rolActivo === "ABOGADO" || rolActivo === "CLIENTE") {
           listW = wCanonicos;
         }
 

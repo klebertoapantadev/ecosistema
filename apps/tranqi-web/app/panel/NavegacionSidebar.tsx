@@ -88,8 +88,28 @@ const PANELES_BASE_DEFAULT: PanelDefNav[] = [
   { id: "panel_seguridad", nombre: "Seguridad", ruta: "/panel/seguridad", icono: "Shield" },
 ];
 
+function resolverRolEfectivoSidebar(modoActivo: ModoRol): string {
+  if (typeof window !== "undefined") {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const modoUrl = params.get("modo");
+      if (modoUrl && modoUrl.trim()) {
+        return modoUrl.trim().toUpperCase();
+      }
+      const cookieStr = document.cookie || "";
+      const matchModo = cookieStr.match(/tranqi_modo_rol=([^;]+)/);
+      if (matchModo && matchModo[1]) {
+        return decodeURIComponent(matchModo[1]).trim().toUpperCase();
+      }
+    } catch {
+      // Fallback al prop modoActivo
+    }
+  }
+  return (modoActivo || "CLIENTE").toUpperCase();
+}
+
 function obtenerPanelesInicialesPorRol(modoActivo: ModoRol): PanelDefNav[] {
-  const rolKey = (modoActivo || "CLIENTE").toUpperCase();
+  const rolKey = resolverRolEfectivoSidebar(modoActivo);
 
   if (rolKey === "SUPERADMIN") {
     return PANELES_BASE_DEFAULT.filter(p => p.id === "panel_inicio" || p.id === "panel_cuenta");
@@ -121,12 +141,13 @@ export function NavegacionSidebar({
   modoActivo: ModoRol;
   negocio?: string;
 }) {
+  const ruta = usePathname();
   const [panelesVisibles, setPanelesVisibles] = useState<PanelDefNav[]>(() => obtenerPanelesInicialesPorRol(modoActivo));
 
   useEffect(() => {
     async function actualizarNavegacion() {
       try {
-        const rolKey = (modoActivo || "CLIENTE").toUpperCase();
+        const rolKey = resolverRolEfectivoSidebar(modoActivo);
 
         // REGLA SUPERADMIN: Mostrar únicamente Inicio y Mi Cuenta en el sidebar (todos los widgets se muestran en el menú Inicio /panel)
         if (rolKey === "SUPERADMIN") {
@@ -222,9 +243,8 @@ export function NavegacionSidebar({
       window.removeEventListener("storage", actualizarNavegacion);
       window.removeEventListener("tranqi_perfiles_updated", actualizarNavegacion);
     };
-  }, [modoActivo, negocio]);
+  }, [modoActivo, negocio, ruta]);
 
-  const ruta = usePathname();
   const { plegado } = useRail();
   const contenedor = useRef<HTMLDivElement>(null);
   const indicador = useRef<HTMLSpanElement>(null);

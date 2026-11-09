@@ -510,7 +510,7 @@ export function ConfiguracionHorariosAtencionWidget({
         return;
       }
       setMensajeOk(
-        "Disponibilidad guardada: horarios por defecto (telemático y oficina), fechas exactas y cupo máximo por hora sincronizados con la Agenda y ARIA.",
+        "Disponibilidad guardada: horarios por defecto (telemático y oficina), fechas exactas y cupo máximo por hora sincronizados con la Agenda y Tranqi.",
       );
     });
   }
@@ -596,7 +596,7 @@ export function ConfiguracionHorariosAtencionWidget({
                 }}
               >
                 <Sparkles size={12} />
-                Disponibilidad de Abogados & Motor de Agendamiento ARIA
+                Disponibilidad de Abogados & Motor de Agendamiento Tranqi
               </span>
             </div>
             <h2
@@ -919,7 +919,7 @@ export function ConfiguracionHorariosAtencionWidget({
               <label htmlFor="select-materia-defecto" style={labelBaseStyle}>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
                   <Sparkles size={14} color="#5000BA" />
-                  Especialidad por defecto (ARIA)
+                  Especialidad por defecto (Tranqi)
                 </span>
               </label>
               <select

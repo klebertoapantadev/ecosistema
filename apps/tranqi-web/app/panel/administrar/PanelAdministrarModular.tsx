@@ -63,7 +63,7 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
   {
     id: "compliance_score_legal",
     titulo: "Compliance & Score Legal Empresarial",
-    subtitulo: "Matriz de obligaciones normativas, monitoreo de caducidades con ARIA y cálculo del Legal Health Score",
+    subtitulo: "Matriz de obligaciones normativas, monitoreo de caducidades con Tranqi y cálculo del Legal Health Score",
     ruta: "/panel/administrar?widget=compliance_score_legal",
     icono: ShieldCheck,
     colorIcono: "#05876E",

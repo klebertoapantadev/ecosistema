@@ -269,11 +269,11 @@ export async function clasificarProblemaLegalConAria(
     .map((m) => {
       const esUsuario = m.autor === "usuario" || m.rol === "user";
       const txt = m.texto ?? m.contenido ?? "";
-      return `${esUsuario ? "Cliente" : "ARIA"}: ${txt}`;
+      return `${esUsuario ? "Cliente" : "Tranqi"}: ${txt}`;
     })
     .join("\n");
 
-  const promptClasificacion = `Eres ARIA, la asistente de orientación e ingreso legal de Tranqi en Ecuador.
+  const promptClasificacion = `Eres Tranqi, el asistente de orientación e ingreso legal de Tranqi en Ecuador.
 El cliente no conoce términos jurídicos y está explicando su problema para agendar una consulta con un abogado.
 
 Catálogo oficial de especialidades legales disponibles en Tranqi:

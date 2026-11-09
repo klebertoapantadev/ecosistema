@@ -727,10 +727,10 @@ export async function analizarIdentificacionConAria(
       logExtraccion,
       metadatosAdicionales,
       confianza: Math.min(confianza, 99),
-      mensaje: `Documento procesado con éxito por ARIA. ${logExtraccion.length} datos identificados (${logExtraccion.filter(l => l.estado === "mapeado_formulario").length} mapeados a pantalla).`,
+      mensaje: `Documento procesado con éxito por Tranqi. ${logExtraccion.length} datos identificados (${logExtraccion.filter(l => l.estado === "mapeado_formulario").length} mapeados a pantalla).`,
     };
   } catch (error: any) {
-    return { ok: false, confianza: 0, mensaje: error?.message || "Error al procesar documento con ARIA." };
+    return { ok: false, confianza: 0, mensaje: error?.message || "Error al procesar documento con Tranqi." };
   }
 }
 
@@ -838,7 +838,7 @@ export async function analizarNombramientoConAria(
       notaria: "Notaría Trigésima del Cantón Quito",
       logExtraccion,
       confianza: 98,
-      mensaje: `Nombramiento mercantil certificado por ARIA. ${logExtraccion.length} datos extraídos (${logExtraccion.filter(l => l.estado === "mapeado_formulario").length} mapeados a pantalla).`,
+      mensaje: `Nombramiento mercantil certificado por Tranqi. ${logExtraccion.length} datos extraídos (${logExtraccion.filter(l => l.estado === "mapeado_formulario").length} mapeados a pantalla).`,
     };
   } catch (error: any) {
     return { ok: false, confianza: 0, mensaje: error?.message || "Error al procesar el nombramiento." };

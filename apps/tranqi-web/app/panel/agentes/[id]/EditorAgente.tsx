@@ -34,7 +34,7 @@ export function EditorAgente({ agente, servidoresMcp, mcpEnganchados }: Props) {
     });
     if (!respuesta.ok) {
       const datos = await respuesta.json().catch(() => null);
-      throw new Error(datos?.error ?? datos?.detail ?? `ARIA respondió ${respuesta.status}`);
+      throw new Error(datos?.error ?? datos?.detail ?? `Tranqi respondió ${respuesta.status}`);
     }
     return respuesta.status === 204 ? null : respuesta.json();
   }

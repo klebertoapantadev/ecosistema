@@ -51,7 +51,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   compliance_score_legal: {
     id: "compliance_score_legal",
     titulo: "Compliance & Score Legal",
-    subtitulo: "Matriz de obligaciones normativas, monitoreo con ARIA y Legal Health Score",
+    subtitulo: "Matriz de obligaciones normativas, monitoreo con Tranqi y Legal Health Score",
     icono: ShieldCheck,
     href: "/panel/administrar?widget=compliance_score_legal",
     origen: "Administrar"
@@ -67,7 +67,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   disponibilidad_abogados: {
     id: "disponibilidad_abogados",
     titulo: "Disponibilidad de Abogados & Turnos",
-    subtitulo: "Control de horas disponibles por especialista. Postulación preliminar y aprobación con sincronización ARIA",
+    subtitulo: "Control de horas disponibles por especialista. Postulación preliminar y aprobación con sincronización Tranqi",
     icono: Scale,
     href: "/panel/agendamiento?widget=disponibilidad_abogados",
     origen: "Administrar"
@@ -91,7 +91,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   horarios_atencion_agenda: {
     id: "horarios_atencion_agenda",
     titulo: "Horarios de Atención (Telemático y Presencial)",
-    subtitulo: "Configura horarios por defecto para consultas telemáticas y presenciales y la especialidad por defecto de ARIA",
+    subtitulo: "Configura horarios por defecto para consultas telemáticas y presenciales y la especialidad por defecto de Tranqi",
     icono: Scale,
     href: "/panel/agendamiento?widget=horarios_atencion_agenda",
     origen: "Administrar"

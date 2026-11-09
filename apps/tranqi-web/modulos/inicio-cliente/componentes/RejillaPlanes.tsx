@@ -97,7 +97,7 @@ function textoDerecho(d: any): string | null {
     case "PODER_NOTARIAL":
       return n === null ? "Poderes notariales sin límite" : `${n} ${n === 1 ? "poder notarial" : "poderes notariales"}${per}`;
     case "CONSULTA_ARIA_IA":
-      return "ARIA, tu asistente legal 24/7";
+      return "Tranqi, tu asistente legal 24/7";
     case "DESCUENTO_NOTARIAL":
       return d?.porcentaje ? `${d.porcentaje} % menos en trámites notariales` : d?.nombre || null;
     default:

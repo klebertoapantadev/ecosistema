@@ -105,7 +105,7 @@ export function TableroDisponibilidadOperativa({
     try {
       const res = await actualizarDisponibilidadOperativaAction(negocio, items);
       if (res.ok) {
-        setMensajeExito("¡Disponibilidad sincronizada con la Web y con ARIA!");
+        setMensajeExito("¡Disponibilidad sincronizada con la Web y con Tranqi!");
         setTimeout(() => setMensajeExito(null), 4000);
       } else {
         setError(res.error || "No se pudo guardar la disponibilidad");
@@ -205,7 +205,7 @@ export function TableroDisponibilidadOperativa({
                 }}
               >
                 <Bot size={12} />
-                ARIA MCP Activo
+                Tranqi MCP Activo
               </span>
             </div>
             <p

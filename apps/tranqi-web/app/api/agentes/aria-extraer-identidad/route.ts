@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
         .createSignedUrl(rutaTemp, VIGENCIA_URL_SEGUNDOS);
 
       if (errorFirma || !firmada?.signedUrl) {
-        return NextResponse.json({ ok: false, error: "No se pudo generar el enlace de análisis para ARIA." }, { status: 500 });
+        return NextResponse.json({ ok: false, error: "No se pudo generar el enlace de análisis para Tranqi." }, { status: 500 });
       }
 
       urlFirmada = firmada.signedUrl;
@@ -150,7 +150,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : "Error durante la extracción de datos con ARIA";
+    const msg = err instanceof Error ? err.message : "Error durante la extracción de datos con Tranqi";
     console.error("Error en /api/agentes/aria-extraer-identidad:", err);
     return NextResponse.json({ ok: false, error: msg }, { status: 500 });
   }
