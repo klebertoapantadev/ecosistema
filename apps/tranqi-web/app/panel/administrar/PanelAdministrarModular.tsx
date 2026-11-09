@@ -608,8 +608,11 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
         const idsCanonicos: string[] = matrizRol?.widgetsPorPanel?.["panel_administrar"] ? [...matrizRol.widgetsPorPanel["panel_administrar"]] : [];
         let idsAsignados: string[] = [...idsCanonicos];
 
-        // 1. Consultar servidor BDD PostgreSQL (comun_seguridad.seg_perfil / seg_rol_widget)
+        // 1. Consultar servidor BDD PostgreSQL (comun_configuracion.cfg_negocio / comun_seguridad.seg_perfil)
         const resBdd = await obtenerConfiguracionNavegacionRolAction(rolEncontrado, (negocio || "TRANQ").toUpperCase());
+        const bddConfigurado = Boolean(resBdd.ok && resBdd.data?.configuradoExplicitamente);
+        const tsBdd = resBdd.ok && resBdd.data?.actualizadoEn ? Date.parse(resBdd.data.actualizadoEn) || 0 : 0;
+
         if (resBdd.ok && resBdd.data && resBdd.data.widgetsPorPanel) {
           const wBdd = resBdd.data.widgetsPorPanel["panel_administrar"] ?? resBdd.data.widgetsPorPanel["administrar"];
           if (Array.isArray(wBdd)) {
@@ -617,7 +620,7 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
           }
         }
 
-        // 2. Complementar con personalizaciones en localStorage si existen
+        // 2. Complementar con personalizaciones en localStorage únicamente si son más recientes que la BDD
         const savedPerfiles =
           localStorage.getItem(`tranqi_perfiles_${negocio}`) ||
           localStorage.getItem(`tranqi_perfiles_${(negocio || "").toUpperCase()}`) ||
@@ -635,7 +638,9 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === "OPERADOR");
               }
-              if (perfilObj && perfilObj.widgetsAsignadosPorPanel) {
+              const tsLocal = perfilObj?.actualizadoEn ? Date.parse(perfilObj.actualizadoEn) || 0 : 0;
+              const usarLocal = tsLocal > 0 && (!bddConfigurado || tsLocal > tsBdd);
+              if (usarLocal && perfilObj && perfilObj.widgetsAsignadosPorPanel) {
                 const wLocal = perfilObj.widgetsAsignadosPorPanel["panel_administrar"] ?? perfilObj.widgetsAsignadosPorPanel["administrar"];
                 if (Array.isArray(wLocal)) {
                   const retirados = new Set<string>(

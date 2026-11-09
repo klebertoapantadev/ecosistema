@@ -236,8 +236,11 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
           idsAsignados = ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "historial_accesos", "mfa_seguridad", "baja_cuenta"];
         }
 
-        // 2. Consultar BDD PostgreSQL (comun_seguridad.seg_rol_widget / seg_perfil)
+        // 2. Consultar BDD PostgreSQL (comun_configuracion.cfg_negocio / comun_seguridad.seg_perfil)
         const resBdd = await obtenerConfiguracionNavegacionRolAction(rolActivo, "TRANQ");
+        const bddConfigurado = Boolean(resBdd.ok && resBdd.data?.configuradoExplicitamente);
+        const tsBdd = resBdd.ok && resBdd.data?.actualizadoEn ? Date.parse(resBdd.data.actualizadoEn) || 0 : 0;
+
         if (resBdd.ok && resBdd.data && resBdd.data.widgetsPorPanel) {
           const wBdd = resBdd.data.widgetsPorPanel["panel_cuenta"] ?? resBdd.data.widgetsPorPanel["cuenta"];
           if (Array.isArray(wBdd)) {
@@ -245,7 +248,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
           }
         }
 
-        // 3. Complementar con personalizaciones locales si existen
+        // 3. Complementar con personalizaciones locales únicamente si son más recientes que la BDD
         const savedPerfiles = localStorage.getItem("tranqi_perfiles_TRANQ") || localStorage.getItem("tranqi_perfiles_tranqi");
         if (savedPerfiles) {
           const perfiles = JSON.parse(savedPerfiles);
@@ -256,7 +259,9 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === "OPERADOR");
             }
-            if (perfilObj && perfilObj.widgetsAsignadosPorPanel) {
+            const tsLocal = perfilObj?.actualizadoEn ? Date.parse(perfilObj.actualizadoEn) || 0 : 0;
+            const usarLocal = tsLocal > 0 && (!bddConfigurado || tsLocal > tsBdd);
+            if (usarLocal && perfilObj && perfilObj.widgetsAsignadosPorPanel) {
               const wLocal = perfilObj.widgetsAsignadosPorPanel["panel_cuenta"] ?? perfilObj.widgetsAsignadosPorPanel["cuenta"];
               if (Array.isArray(wLocal)) {
                 const retirados = new Set<string>(
