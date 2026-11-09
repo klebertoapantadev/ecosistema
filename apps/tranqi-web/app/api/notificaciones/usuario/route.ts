@@ -40,6 +40,10 @@ interface PropuestaCambioRolPersistida {
   abogadoId?: string | null;
   especialidadesNombres?: string[];
   provinciasNombres?: string[];
+  eliminada?: boolean;
+  eliminadaEn?: string | null;
+  pospuestaHasta?: string | null;
+  pospuestaHoras?: number | null;
 }
 
 interface NotificacionBandejaPersistida {
@@ -170,7 +174,10 @@ export async function GET() {
           for (const prop of propuestasRol) {
             if (!prop || !prop.id) continue;
             const notifEnBandeja = bandejaPersistida.find((b) => b.not_id === prop.id);
-            if (notifEnBandeja?.not_eliminada) continue;
+            const esEliminadaProp = Boolean(prop.eliminada || notifEnBandeja?.not_eliminada);
+            const eliminadaEnProp = prop.eliminadaEn || notifEnBandeja?.not_eliminada_en || null;
+            const pospuestaHastaProp = prop.pospuestaHasta || notifEnBandeja?.not_pospuesta_hasta || null;
+            const pospuestaHorasProp = prop.pospuestaHoras || notifEnBandeja?.not_pospuesta_horas || null;
 
             const fechaFormateada = new Date(prop.solicitadoEn || Date.now()).toLocaleString("es-EC", {
               dateStyle: "short",
@@ -224,14 +231,14 @@ export async function GET() {
               not_url_accion: "/panel",
               not_leido_en:
                 prop.estado === "pendiente_aceptacion"
-                  ? null
+                  ? notifEnBandeja?.not_leido_en || null
                   : prop.respondidoEn || notifEnBandeja?.not_leido_en || new Date().toISOString(),
               not_creado_en: prop.solicitadoEn || new Date().toISOString(),
               not_canal: "PUSH",
-              not_pospuesta_hasta: notifEnBandeja?.not_pospuesta_hasta || null,
-              not_pospuesta_horas: notifEnBandeja?.not_pospuesta_horas || null,
-              not_eliminada: Boolean(notifEnBandeja?.not_eliminada),
-              not_eliminada_en: notifEnBandeja?.not_eliminada_en || null,
+              not_pospuesta_hasta: pospuestaHastaProp,
+              not_pospuesta_horas: pospuestaHorasProp,
+              not_eliminada: esEliminadaProp,
+              not_eliminada_en: eliminadaEnProp,
               es_propuesta_rol: true,
               rol_propuesto: prop.rolClave,
               rol_nombre: prop.rolNombre || prop.rolClave,
@@ -500,7 +507,12 @@ export async function GET() {
                 const idNotAbg = `cita-asignada-abg-${c.cit_id}`;
                 const yaTiene =
                   registrosClavesVistas.has(idNotAbg) ||
-                  notificaciones.some(n => n.not_id === idNotAbg || n.not_id.startsWith(`asig-abg-${c.cit_id.slice(0, 8)}`));
+                  notificaciones.some(
+                    n =>
+                      n.not_id === idNotAbg ||
+                      n.not_id.startsWith(`asig-abg-${c.cit_id.slice(0, 8)}`) ||
+                      n.not_id.startsWith(`nueva-cita-${c.cit_id.slice(0, 8)}`)
+                  );
                 if (yaTiene) continue;
 
                 const inicioDate = new Date(c.cit_inicio_en);
@@ -611,6 +623,7 @@ export async function POST(request: Request) {
     if (accion === "eliminar_todas") {
       limpiarCampanasServidor();
       const ahora = new Date().toISOString();
+      const itemsEnviados: Array<Partial<NotificacionBandejaPersistida>> = Array.isArray(body.items) ? body.items : [];
       try {
         const { data: uRow } = await (client as any)
           .schema("comun_seguridad")
@@ -620,21 +633,52 @@ export async function POST(request: Request) {
           .maybeSingle();
         const det = (uRow?.usu_detalle_usuario || {}) as Record<string, any>;
         const bandeja: NotificacionBandejaPersistida[] = Array.isArray(det.notificaciones_bandeja)
-          ? det.notificaciones_bandeja
+          ? [...det.notificaciones_bandeja]
           : [];
+        const propuestas: PropuestaCambioRolPersistida[] = Array.isArray(det.propuestas_cambio_rol)
+          ? [...det.propuestas_cambio_rol]
+          : [];
+
+        const propuestasMarcadas = propuestas.map((p) => ({
+          ...p,
+          eliminada: true,
+          eliminadaEn: p.eliminadaEn || ahora,
+        }));
+
+        const idsEnBandeja = new Set(bandeja.map((b) => b?.not_id).filter(Boolean));
         const bandejaMarcada = bandeja.map((b) => ({
           ...b,
           not_eliminada: true,
-          not_eliminada_en: ahora,
+          not_eliminada_en: b.not_eliminada_en || ahora,
           not_leido_en: b.not_leido_en || ahora,
         }));
+
+        for (const it of itemsEnviados) {
+          if (!it?.not_id || idsEnBandeja.has(it.not_id)) continue;
+          idsEnBandeja.add(it.not_id);
+          bandejaMarcada.unshift({
+            not_id: it.not_id,
+            not_titulo: it.not_titulo || "Notificación de Sistema",
+            not_contenido_html: it.not_contenido_html || "<p>Notificación</p>",
+            not_url_accion: it.not_url_accion || "/panel",
+            not_creado_en: it.not_creado_en || ahora,
+            not_canal: it.not_canal || "IN_APP",
+            not_leido_en: it.not_leido_en || ahora,
+            not_eliminada: true,
+            not_eliminada_en: ahora,
+            not_pospuesta_hasta: it.not_pospuesta_hasta || null,
+            not_pospuesta_horas: it.not_pospuesta_horas || null,
+          });
+        }
+
         await (client as any)
           .schema("comun_seguridad")
           .from("seg_usuario")
           .update({
             usu_detalle_usuario: {
               ...det,
-              notificaciones_bandeja: bandejaMarcada,
+              notificaciones_bandeja: bandejaMarcada.slice(0, 100),
+              propuestas_cambio_rol: propuestasMarcadas,
             },
             usu_actualizado_en: ahora,
           })
@@ -874,10 +918,23 @@ export async function POST(request: Request) {
             detalle: `El usuario rechazó la asignación del rol ${prop.rolNombre || rolRechazadoUpper}.`,
           });
           det.historial_cambios_rol = histRechazo.slice(0, 60);
+        } else if (accion === "eliminar") {
+          prop.eliminada = true;
+          prop.eliminadaEn = ahora;
+          propuestas[idxProp] = prop;
+        } else if (accion === "restaurar") {
+          prop.eliminada = false;
+          prop.eliminadaEn = null;
+          propuestas[idxProp] = prop;
+        } else if (accion === "posponer") {
+          const horasNum = Number(horas) || 3;
+          prop.pospuestaHasta = new Date(Date.now() + horasNum * 3600 * 1000).toISOString();
+          prop.pospuestaHoras = horasNum;
+          propuestas[idxProp] = prop;
         }
       }
 
-      // Actualizar estado de la notificación en bandeja
+      // Actualizar estado de la notificación en bandeja (o insertarla si era sintética / propuesta)
       const idxBandeja = bandeja.findIndex((b) => b && b.not_id === not_id);
       if (idxBandeja >= 0) {
         const item = { ...bandeja[idxBandeja]! };
@@ -898,6 +955,26 @@ export async function POST(request: Request) {
           item.not_pospuesta_horas = horasNum;
         }
         bandeja[idxBandeja] = item;
+      } else {
+        const horasNum = Number(horas) || 3;
+        const nuevoItem: NotificacionBandejaPersistida = {
+          not_id,
+          not_titulo: titulo || "Notificación de Sistema",
+          not_contenido_html: contenido_html || "<p>Notificación</p>",
+          not_url_accion: url_accion || "/panel",
+          not_creado_en: body.creado_en || ahora,
+          not_canal: "IN_APP",
+          not_leido_en:
+            accion === "aceptar" || accion === "aceptar_rol" || accion === "rechazar_rol" || accion === "eliminar"
+              ? ahora
+              : null,
+          not_eliminada: accion === "eliminar",
+          not_eliminada_en: accion === "eliminar" ? ahora : null,
+          not_pospuesta_hasta:
+            accion === "posponer" ? new Date(Date.now() + horasNum * 3600 * 1000).toISOString() : null,
+          not_pospuesta_horas: accion === "posponer" ? horasNum : null,
+        };
+        bandeja.unshift(nuevoItem);
       }
 
       await (client as any)
@@ -907,7 +984,7 @@ export async function POST(request: Request) {
           usu_detalle_usuario: {
             ...det,
             ...(fichaAbogado ? { ficha_abogado: fichaAbogado } : {}),
-            notificaciones_bandeja: bandeja,
+            notificaciones_bandeja: bandeja.slice(0, 100),
             propuestas_cambio_rol: propuestas,
           },
           usu_actualizado_en: ahora,

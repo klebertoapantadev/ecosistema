@@ -195,11 +195,16 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
     {
       id: "titulo",
       encabezado: "Asunto / Título",
-      valor: (item) => item.not_titulo,
+      valor: (item) => `${item.not_id} ${item.not_titulo}`,
       render: (item) => (
-        <strong style={{ display: "block", color: "#1e293b", maxWidth: "240px" }}>
-          {item.not_titulo}
-        </strong>
+        <div style={{ maxWidth: "240px" }}>
+          <strong style={{ display: "block", color: "#1e293b" }}>
+            {item.not_titulo}
+          </strong>
+          <span style={{ fontSize: "0.66rem", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", color: "#64748b" }}>
+            ID: {item.not_id}
+          </span>
+        </div>
       )
     },
     {
@@ -631,7 +636,10 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
               {/* Título & Contenido */}
               <div style={{ marginBottom: "14px" }}>
                 <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 800, textTransform: "uppercase" }}>Título / Asunto</span>
-                <h4 style={{ margin: "4px 0 8px 0", color: "#0f172a", fontSize: "1rem" }}>{notifSeleccionada.not_titulo}</h4>
+                <h4 style={{ margin: "4px 0 4px 0", color: "#0f172a", fontSize: "1rem" }}>{notifSeleccionada.not_titulo}</h4>
+                <div style={{ fontSize: "0.72rem", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", color: "#64748b", marginBottom: "8px" }}>
+                  ID de Notificación: {notifSeleccionada.not_id}
+                </div>
 
                 <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 800, textTransform: "uppercase" }}>Cuerpo HTML Despachado</span>
                 <div

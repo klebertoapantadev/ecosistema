@@ -16,6 +16,15 @@ export function CampanaNotificaciones({ negocio }: Props) {
   const [abierto, setAbierto] = useState(false);
   const [filtro, setFiltro] = useState<"todas" | "no_leidas" | "eliminadas">("todas");
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
+  const [idCopiado, setIdCopiado] = useState<string | null>(null);
+  const overridesLocalRef = React.useRef<Record<string, { expiraEn: number; parche: Partial<NotificacionItem> }>>({});
+
+  const registrarOverride = (notId: string, parche: Partial<NotificacionItem>) => {
+    overridesLocalRef.current[notId] = {
+      expiraEn: Date.now() + 20000,
+      parche: { ...(overridesLocalRef.current[notId]?.parche || {}), ...parche },
+    };
+  };
 
   // Cargar notificaciones in-app reales desde el servidor y consultar periódicamente
   const cargarNotificaciones = () => {
@@ -23,7 +32,15 @@ export function CampanaNotificaciones({ negocio }: Props) {
       .then(res => res.json())
       .then(data => {
         if (data.success && Array.isArray(data.notificaciones)) {
-          setNotificaciones(data.notificaciones);
+          const ahoraMs = Date.now();
+          const listaConOverrides = (data.notificaciones as NotificacionItem[]).map(n => {
+            const ov = overridesLocalRef.current[n.not_id];
+            if (ov && ov.expiraEn > ahoraMs) {
+              return { ...n, ...ov.parche };
+            }
+            return n;
+          });
+          setNotificaciones(listaConOverrides);
         }
       })
       .catch(() => {});
@@ -57,7 +74,8 @@ export function CampanaNotificaciones({ negocio }: Props) {
           horas,
           titulo: item.not_titulo,
           contenido_html: item.not_contenido_html,
-          url_accion: item.not_url_accion
+          url_accion: item.not_url_accion,
+          creado_en: item.not_creado_en,
         })
       });
     } catch {
@@ -67,6 +85,7 @@ export function CampanaNotificaciones({ negocio }: Props) {
 
   const marcarComoLeida = (item: NotificacionItem) => {
     const ahoraIso = new Date().toISOString();
+    registrarOverride(item.not_id, { not_leido_en: ahoraIso });
     setNotificaciones(prev =>
       prev.map(n => (n.not_id === item.not_id ? { ...n, not_leido_en: ahoraIso } : n))
     );
@@ -75,18 +94,20 @@ export function CampanaNotificaciones({ negocio }: Props) {
 
   const marcarTodasComoLeidas = () => {
     const ahoraIso = new Date().toISOString();
-    setNotificaciones(prev =>
-      prev.map(n => ({ ...n, not_leido_en: n.not_leido_en || ahoraIso }))
-    );
     notificaciones.forEach(n => {
       if (!n.not_leido_en && !n.not_eliminada) {
+        registrarOverride(n.not_id, { not_leido_en: ahoraIso });
         enviarAccion(n, "aceptar");
       }
     });
+    setNotificaciones(prev =>
+      prev.map(n => ({ ...n, not_leido_en: n.not_leido_en || ahoraIso }))
+    );
   };
 
   const posponerItem = (item: NotificacionItem, horas: number) => {
     const hastaIso = new Date(Date.now() + horas * 3600 * 1000).toISOString();
+    registrarOverride(item.not_id, { not_pospuesta_hasta: hastaIso, not_pospuesta_horas: horas });
     setNotificaciones(prev =>
       prev.map(n => (n.not_id === item.not_id ? { ...n, not_pospuesta_hasta: hastaIso, not_pospuesta_horas: horas } : n))
     );
@@ -95,6 +116,11 @@ export function CampanaNotificaciones({ negocio }: Props) {
 
   const eliminarItem = (item: NotificacionItem) => {
     const ahoraIso = new Date().toISOString();
+    registrarOverride(item.not_id, {
+      not_eliminada: true,
+      not_eliminada_en: ahoraIso,
+      not_leido_en: item.not_leido_en || ahoraIso,
+    });
     setNotificaciones(prev =>
       prev.map(n => (n.not_id === item.not_id ? { ...n, not_eliminada: true, not_eliminada_en: ahoraIso, not_leido_en: n.not_leido_en || ahoraIso } : n))
     );
@@ -102,6 +128,7 @@ export function CampanaNotificaciones({ negocio }: Props) {
   };
 
   const restaurarItem = (item: NotificacionItem) => {
+    registrarOverride(item.not_id, { not_eliminada: false, not_eliminada_en: null });
     setNotificaciones(prev =>
       prev.map(n => (n.not_id === item.not_id ? { ...n, not_eliminada: false, not_eliminada_en: null } : n))
     );
@@ -109,14 +136,40 @@ export function CampanaNotificaciones({ negocio }: Props) {
   };
 
   const eliminarTodas = async () => {
-    setNotificaciones([]);
+    const ahoraIso = new Date().toISOString();
+    const copiaActual = [...notificaciones];
+    copiaActual.forEach(n => {
+      registrarOverride(n.not_id, {
+        not_eliminada: true,
+        not_eliminada_en: n.not_eliminada_en || ahoraIso,
+        not_leido_en: n.not_leido_en || ahoraIso,
+      });
+    });
+    setNotificaciones(prev =>
+      prev.map(n => ({
+        ...n,
+        not_eliminada: true,
+        not_eliminada_en: n.not_eliminada_en || ahoraIso,
+        not_leido_en: n.not_leido_en || ahoraIso,
+      }))
+    );
     try {
       await fetch("/api/notificaciones/usuario", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accion: "eliminar_todas" })
+        body: JSON.stringify({ accion: "eliminar_todas", items: copiaActual })
       });
     } catch {}
+  };
+
+  const copiarIdNotificacion = (id: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(id).catch(() => {});
+    }
+    setIdCopiado(id);
+    setTimeout(() => {
+      setIdCopiado(prev => (prev === id ? null : prev));
+    }, 2000);
   };
 
   const listaFiltrada = notificaciones.filter(n => {
@@ -378,13 +431,41 @@ export function CampanaNotificaciones({ negocio }: Props) {
                       transition: "background 0.2s"
                     }}
                   >
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px", marginBottom: "4px" }}>
                       <span style={{ fontWeight: 700, fontSize: "0.85rem", color: n.not_eliminada ? "#fca5a5" : n.not_leido_en ? "#c9d1d9" : "#58a6ff" }}>
                         {n.not_titulo}
                       </span>
-                      <span style={{ fontSize: "0.72rem", color: "#8b949e" }}>
+                      <span style={{ fontSize: "0.72rem", color: "#8b949e", whiteSpace: "nowrap" }}>
                         {new Date(n.not_creado_en).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                       </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        onClick={() => copiarIdNotificacion(n.not_id)}
+                        title="Clic para copiar el ID único de esta notificación"
+                        style={{
+                          background: "#0d1117",
+                          border: "1px solid #30363d",
+                          borderRadius: "4px",
+                          padding: "1px 6px",
+                          fontSize: "0.66rem",
+                          fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+                          color: idCopiado === n.not_id ? "#3fb950" : "#8b949e",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px"
+                        }}
+                      >
+                        <span>ID: {n.not_id}</span>
+                        <span style={{ fontWeight: 700 }}>{idCopiado === n.not_id ? "✓ Copiado" : "📋"}</span>
+                      </button>
+                      {n.not_eliminada && (
+                        <span style={{ fontSize: "0.66rem", color: "#fca5a5", fontWeight: 700 }}>
+                          • Estado: Eliminada
+                        </span>
+                      )}
                     </div>
                     <div
                       style={{ fontSize: "0.8rem", color: "#8b949e", lineHeight: 1.4 }}

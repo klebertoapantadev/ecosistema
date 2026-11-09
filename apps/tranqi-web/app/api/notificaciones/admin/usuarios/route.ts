@@ -56,12 +56,12 @@ export async function GET(request: Request) {
     const client: any = crearClienteAdmin() || await crearClienteServidor();
 
     // 1. Obtener catálogo completo de usuarios para correlacionar nombres y correos
-    let usuarios: Array<{ usu_id: string; usu_nombres?: string | null; usu_apellidos?: string | null; usu_correo: string; usu_superadmin_plataforma?: boolean }> = [];
+    let usuarios: Array<{ usu_id: string; usu_nombres?: string | null; usu_apellidos?: string | null; usu_correo: string; usu_superadmin_plataforma?: boolean; usu_detalle_usuario?: Record<string, any> | null }> = [];
     try {
       const { data: dbUsers } = await client
         .schema("comun_seguridad")
         .from("seg_usuario")
-        .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_superadmin_plataforma");
+        .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_superadmin_plataforma, usu_detalle_usuario");
       if (Array.isArray(dbUsers)) {
         usuarios = dbUsers;
       }
@@ -91,6 +91,80 @@ export async function GET(request: Request) {
 
     const lista: NotificacionUsuarioAdminItem[] = [];
     const idsVistos = new Set<string>();
+
+    // 1.5 Extraer bandeja persistida y propuestas de cambio de rol desde comun_seguridad.seg_usuario.usu_detalle_usuario
+    for (const u of usuarios) {
+      if (filtroUsuarioId && u.usu_id !== filtroUsuarioId) continue;
+      const uInfo = mapaUsuarios.get(u.usu_id) || { id: u.usu_id, nombre: u.usu_correo, correo: u.usu_correo };
+      const det = (u.usu_detalle_usuario || {}) as Record<string, any>;
+      const bandeja: any[] = Array.isArray(det.notificaciones_bandeja) ? det.notificaciones_bandeja : [];
+      const propuestas: any[] = Array.isArray(det.propuestas_cambio_rol) ? det.propuestas_cambio_rol : [];
+
+      for (const prop of propuestas) {
+        if (!prop?.id || idsVistos.has(`${u.usu_id}:${prop.id}`)) continue;
+        idsVistos.add(`${u.usu_id}:${prop.id}`);
+        idsVistos.add(prop.id);
+        const notifEnBandeja = bandeja.find((b) => b?.not_id === prop.id);
+        const esEliminadaProp = Boolean(prop.eliminada || notifEnBandeja?.not_eliminada);
+        const eliminadaEnProp = prop.eliminadaEn || notifEnBandeja?.not_eliminada_en || null;
+        lista.push({
+          not_id: prop.id,
+          usuario_id: u.usu_id,
+          usuario_nombre: uInfo.nombre,
+          usuario_correo: uInfo.correo,
+          emisor_id: prop.solicitadoPorId || null,
+          emisor_nombre: prop.solicitadoPorNombre || "Operador Tranqi",
+          emisor_correo: prop.solicitadoPorCorreo || "admin@tranqi24.com",
+          emisor_tipo: "ADMINISTRADOR",
+          not_negocio: prop.negocio || filtroNegocio,
+          not_canal: "PUSH",
+          not_titulo:
+            prop.estado === "aceptado"
+              ? `✅ Nuevo Rol Activado: ${prop.rolNombre || prop.rolClave}`
+              : prop.estado === "rechazado"
+              ? `❌ Asignación de Rol Rechazada: ${prop.rolNombre || prop.rolClave}`
+              : `🛡️ Confirmación de Nuevo Rol: ${prop.rolNombre || prop.rolClave}`,
+          not_contenido_html: `<p>Propuesta de rol <strong>${prop.rolNombre || prop.rolClave}</strong> (${prop.estado}).</p>`,
+          not_url_accion: "/panel",
+          not_leido_en:
+            prop.estado === "pendiente_aceptacion"
+              ? notifEnBandeja?.not_leido_en || null
+              : prop.respondidoEn || notifEnBandeja?.not_leido_en || prop.solicitadoEn,
+          not_pospuesta_hasta: prop.pospuestaHasta || notifEnBandeja?.not_pospuesta_hasta || null,
+          not_pospuesta_horas: prop.pospuestaHoras || notifEnBandeja?.not_pospuesta_horas || null,
+          not_eliminada: esEliminadaProp,
+          not_eliminada_en: eliminadaEnProp,
+          not_creado_en: prop.solicitadoEn || new Date().toISOString(),
+        });
+      }
+
+      for (const b of bandeja) {
+        if (!b?.not_id || idsVistos.has(`${u.usu_id}:${b.not_id}`) || idsVistos.has(b.not_id)) continue;
+        idsVistos.add(`${u.usu_id}:${b.not_id}`);
+        idsVistos.add(b.not_id);
+        lista.push({
+          not_id: b.not_id,
+          usuario_id: u.usu_id,
+          usuario_nombre: uInfo.nombre,
+          usuario_correo: uInfo.correo,
+          emisor_id: null,
+          emisor_nombre: "Sistema " + filtroNegocio,
+          emisor_correo: "sistema@tranqi24.com",
+          emisor_tipo: "SISTEMA",
+          not_negocio: filtroNegocio,
+          not_canal: b.not_canal || "IN_APP",
+          not_titulo: b.not_titulo || "Notificación",
+          not_contenido_html: b.not_contenido_html || "",
+          not_url_accion: b.not_url_accion || "/panel",
+          not_leido_en: b.not_leido_en || null,
+          not_pospuesta_hasta: b.not_pospuesta_hasta || null,
+          not_pospuesta_horas: b.not_pospuesta_horas || null,
+          not_eliminada: Boolean(b.not_eliminada),
+          not_eliminada_en: b.not_eliminada_en || null,
+          not_creado_en: b.not_creado_en || new Date().toISOString(),
+        });
+      }
+    }
 
     // 2. Intentar RPC comun_seguridad.seg_fn_monitoreo_notificaciones (esquema expuesto a PostgREST)
     try {

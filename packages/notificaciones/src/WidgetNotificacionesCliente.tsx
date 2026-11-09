@@ -94,7 +94,8 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
           horas,
           titulo: item.not_titulo,
           contenido_html: item.not_contenido_html,
-          url_accion: item.not_url_accion
+          url_accion: item.not_url_accion,
+          creado_en: item.not_creado_en
         })
       });
       const data = await res.json();
@@ -237,13 +238,23 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
   };
 
   const eliminarTodasLasNotificaciones = async () => {
-    setNotificaciones([]);
+    const ahoraIso = new Date().toISOString();
+    const copiaActual = [...notificaciones];
+    const idsTodos = copiaActual.map(n => n.not_id);
+    const nextEliminadas = new Set([...Array.from(eliminadasLocal), ...idsTodos]);
+    setEliminadasLocal(nextEliminadas);
+    setNotificaciones(prev =>
+      prev.map(n => ({
+        ...n,
+        not_eliminada: true,
+        not_eliminada_en: n.not_eliminada_en || ahoraIso,
+        not_leido_en: n.not_leido_en || ahoraIso
+      }))
+    );
     setAlertaPushToast(null);
     if (typeof window !== "undefined") {
       try {
-        localStorage.setItem(STORAGE_KEY_LEIDAS, "[]");
-        localStorage.setItem(STORAGE_KEY_ELIMINADAS, "[]");
-        localStorage.setItem(STORAGE_KEY_POSPUESTAS, "{}");
+        localStorage.setItem(STORAGE_KEY_ELIMINADAS, JSON.stringify(Array.from(nextEliminadas)));
         sessionStorage.setItem("tranqi_toasts_cerrados", "[]");
       } catch {}
     }
@@ -251,7 +262,7 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
       await fetch("/api/notificaciones/usuario", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accion: "eliminar_todas" })
+        body: JSON.stringify({ accion: "eliminar_todas", items: copiaActual })
       });
     } catch {}
   };
@@ -369,8 +380,11 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                 </span>
                 <span style={{ fontSize: "0.7rem", color: "#94a3b8" }}>Ahora</span>
               </div>
-              <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "#ffffff", marginBottom: "6px" }}>
+              <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "#ffffff", marginBottom: "4px" }}>
                 {alertaPushToast.not_titulo}
+              </div>
+              <div style={{ fontSize: "0.68rem", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", color: "#94a3b8", marginBottom: "6px" }}>
+                ID: {alertaPushToast.not_id}
               </div>
               <div
                 style={{ fontSize: "0.84rem", color: "#cbd5e1", lineHeight: 1.5 }}
@@ -638,6 +652,9 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                       {new Date(item.not_creado_en).toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit", timeZone: "America/Guayaquil" })}
                     </time>
                   </div>
+                  <div style={{ fontSize: "0.68rem", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", color: "#64748b", marginBottom: "4px" }}>
+                    ID: {item.not_id}
+                  </div>
                   <div
                     className="notif-cuerpo"
                     dangerouslySetInnerHTML={{ __html: item.not_contenido_html }}
@@ -765,6 +782,9 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                       {new Date(item.not_creado_en).toLocaleDateString("es-EC", { day: "2-digit", month: "2-digit" })}
                     </time>
                   </div>
+                  <div style={{ fontSize: "0.68rem", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", color: "#64748b", marginBottom: "4px" }}>
+                    ID: {item.not_id}
+                  </div>
                   <div
                     className="notif-cuerpo"
                     dangerouslySetInnerHTML={{ __html: item.not_contenido_html }}
@@ -807,6 +827,9 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                           ? new Date(item.not_eliminada_en).toLocaleDateString("es-EC", { day: "2-digit", month: "2-digit" })
                           : "—"}
                       </time>
+                    </div>
+                    <div style={{ fontSize: "0.68rem", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", color: "#64748b", marginBottom: "4px" }}>
+                      ID: {item.not_id}
                     </div>
                     <div
                       className="notif-cuerpo"
