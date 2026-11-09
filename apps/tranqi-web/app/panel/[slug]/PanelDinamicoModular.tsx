@@ -1020,6 +1020,17 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
   };
 
   const widgetActivoDef = widgetActivo ? INVENTARIO_GLOBAL_WIDGETS[widgetActivo] : null;
+  const esPanelRestringidoParaCliente =
+    (rolInicial || "CLIENTE").toUpperCase() === "CLIENTE" &&
+    (slug === "clientes" || slug === "empresas");
+
+  const handleCerrarWidget = () => {
+    if (esPanelRestringidoParaCliente && typeof window !== "undefined") {
+      window.location.href = "/panel";
+      return;
+    }
+    cerrar();
+  };
 
   if (widgetActivo) {
     return (
@@ -1027,7 +1038,10 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
         <section className="tarjeta-seccion" style={{ background: "#ffffff", borderRadius: "16px", overflow: "hidden", width: "100%", border: "1px solid #E4E4E4" }}>
           <header style={{ padding: "16px 20px", background: "#F7F6FA", borderBottom: "1px solid #E4E4E4", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-              <BotonVolverWidget onClick={cerrar} destino={panelInfo.nombre || "el panel"} />
+              <BotonVolverWidget
+                onClick={handleCerrarWidget}
+                destino={esPanelRestringidoParaCliente ? "Inicio" : (panelInfo.nombre || "el panel")}
+              />
               <div>
                 <h2 style={{ fontSize: "1.1rem", fontWeight: 800, margin: 0, color: "#111" }}>
                   {widgetActivoDef?.titulo || widgetActivo.toUpperCase()}

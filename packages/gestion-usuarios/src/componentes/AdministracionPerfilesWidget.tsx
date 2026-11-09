@@ -272,15 +272,13 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nombre: "Cliente (Jerarquía Base)",
     nivel: 1,
     ambito: "Empresa",
-    descripcion: "Perfil base de usuario. Acceso a paneles de Inicio, Clientes, Empresas, Mi Cuenta, Herramientas, Agendamiento y Preferencias de Notificaciones.",
-    panelesAsignados: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
+    descripcion: "Perfil base de usuario. Acceso a paneles de Inicio, Agendamiento, Mi Cuenta, Herramientas y Preferencias de Notificaciones.",
+    panelesAsignados: ["panel_inicio", "panel_agendamiento", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf", "financiamiento"],
-      panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "billetera_documentos", "firma_documentos_pdf"],
       panel_agendamiento: ["agendar_cita", "mis_citas"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
-      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos"],
+      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "financiamiento"],
       panel_configuracion: ["notificaciones"]
     },
     activo: true

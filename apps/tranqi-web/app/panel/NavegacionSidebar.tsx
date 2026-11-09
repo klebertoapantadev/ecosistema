@@ -101,7 +101,7 @@ function obtenerPanelesInicialesPorRol(modoActivo: ModoRol): PanelDefNav[] {
 
   if (rolKey === "CLIENTE") {
     return PANELES_BASE_DEFAULT.filter(
-      p => p.id === "panel_inicio" || p.id === "panel_clientes" || p.id === "panel_agendamiento" || p.id === "panel_cuenta"
+      p => p.id === "panel_inicio" || p.id === "panel_agendamiento" || p.id === "panel_cuenta"
     );
   }
 
@@ -135,10 +135,10 @@ export function NavegacionSidebar({
           return;
         }
 
-        // REGLA CLIENTE: Menú estrictamente acotado a la experiencia del cliente final
+        // REGLA CLIENTE: Menú estrictamente acotado a la experiencia del cliente final (sin panel Clientes administrativo)
         if (rolKey === "CLIENTE") {
           const panelesCliente = PANELES_BASE_DEFAULT.filter(
-            (p) => p.id === "panel_inicio" || p.id === "panel_clientes" || p.id === "panel_agendamiento" || p.id === "panel_cuenta"
+            (p) => p.id === "panel_inicio" || p.id === "panel_agendamiento" || p.id === "panel_cuenta"
           );
           setPanelesVisibles(panelesCliente);
           return;

@@ -295,3 +295,4 @@ export function WidgetProximamente({
     </div>
   );
 }
+
