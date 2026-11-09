@@ -866,10 +866,10 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
   },
   {
     clave: "asignaciones_agenda",
-    nombre: "Asignaciones y Contingencia (Agenda)",
-    descripcion: "Citas que se quedaron sin abogado porque el asignado canceló. La cita del afiliado sigue viva y hay que reasignarla antes de la hora.",
+    nombre: "Agenda, Citas Abogados",
+    descripcion: "Calendario de citas confirmadas (telemáticas vs presenciales), asignación de abogados e historial.",
     categoria: "Agenda",
-    ruta: "/panel/agenda/asignaciones",
+    ruta: "/panel/agendamiento?widget=asignaciones_agenda",
     rutaFisica: "/agenda/componentes/MesaAsignaciones.tsx",
     panelId: "panel_agendamiento",
     activo: true,

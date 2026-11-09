@@ -1,6 +1,5 @@
 import {
-  listarAbogadosAsignables,
-  listarCitasEnContingencia,
+  listarCitasCalendarioOperador,
   listarMateriasAgendables,
   obtenerConfiguracionAgendaNegocio,
 } from "../../../../modulos/agenda/consultas";
@@ -10,38 +9,32 @@ import { ConfiguracionHorariosAtencionWidget } from "../../../../modulos/agenda/
 export const dynamic = "force-dynamic";
 
 export default async function PaginaAsignaciones() {
-  const [citas, abogados, configAgenda, materias] = await Promise.all([
-    listarCitasEnContingencia(),
-    listarAbogadosAsignables(),
+  const [datosCalendario, configAgenda, materias] = await Promise.all([
+    listarCitasCalendarioOperador(),
     obtenerConfiguracionAgendaNegocio(),
     listarMateriasAgendables(),
   ]);
 
   return (
-    <div className="space-y-8">
+    <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
       <div>
-        <h1>Asignaciones y Horarios de Atención</h1>
+        <h1>Agenda, Citas Abogados</h1>
         <p>
-          Configura los horarios de atención por defecto para consultas telemáticas y presenciales,
-          y asigna abogado a las citas reservadas que están pendientes de profesional.
+          Calendario de citas confirmadas (telemáticas vs presenciales), identificación de citas con
+          y sin abogado asignado, notificación automática y log de asignaciones.
         </p>
       </div>
+
+      <MesaAsignaciones
+        citas={datosCalendario.citas}
+        abogados={datosCalendario.abogados}
+        historialGlobal={datosCalendario.historialGlobal}
+      />
 
       <ConfiguracionHorariosAtencionWidget
         configInicial={configAgenda}
         materiasIniciales={materias}
       />
-
-      <section className="space-y-3">
-        <h2 className="text-lg font-bold text-slate-900">
-          Citas agendadas pendientes de asignación de abogado ({citas.length})
-        </h2>
-        <p className="text-sm text-slate-600">
-          Citas confirmadas en los horarios de atención del negocio que aún no tienen un abogado
-          asignado o cuyo abogado requiere reemplazo.
-        </p>
-        <MesaAsignaciones citas={citas} abogados={abogados} />
-      </section>
     </div>
   );
 }

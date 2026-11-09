@@ -64,9 +64,9 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
   },
   {
     clave: "asignaciones_agenda",
-    nombre: "Asignaciones y Contingencia",
-    detalle: "Citas que se quedaron sin abogado porque el asignado canceló",
-    ruta: "/panel/agenda/asignaciones",
+    nombre: "Agenda, Citas Abogados",
+    detalle: "Calendario de citas confirmadas (telemáticas vs presenciales), asignación de abogados e historial",
+    ruta: "/panel/agendamiento?widget=asignaciones_agenda",
     categoria: "Agenda",
     minNivel: 30,
     icono: Shuffle,

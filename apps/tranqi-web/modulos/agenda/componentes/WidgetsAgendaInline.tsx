@@ -10,7 +10,12 @@ import {
   obtenerDatosAgendarCitaWidgetAction,
   obtenerMisCitasWidgetAction,
 } from "../acciones";
-import type { CitaResumen, ServicioAgendable } from "../consultas";
+import type {
+  CitaCalendarioOperador,
+  CitaResumen,
+  RegistroHistorialAsignacion,
+  ServicioAgendable,
+} from "../consultas";
 import type { DatosConfigNegocioAgenda } from "../esquema";
 import FormularioAgendar from "./FormularioAgendar";
 import ListaCitasCliente from "./ListaCitasCliente";
@@ -345,8 +350,9 @@ export function WidgetCitasProgramadasAbogadoInline({
 export function WidgetAsignacionesAgendaInline() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [citas, setCitas] = useState<CitaResumen[]>([]);
+  const [citas, setCitas] = useState<CitaCalendarioOperador[]>([]);
   const [abogados, setAbogados] = useState<Array<{ abg_id: string; nombre: string }>>([]);
+  const [historialGlobal, setHistorialGlobal] = useState<RegistroHistorialAsignacion[]>([]);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -359,8 +365,9 @@ export function WidgetAsignacionesAgendaInline() {
       }
       setCitas(res.data.citas);
       setAbogados(res.data.abogados);
+      setHistorialGlobal(res.data.historialGlobal ?? []);
     } catch {
-      setError("No se pudieron cargar las citas pendientes de asignación.");
+      setError("No se pudieron cargar las citas y el calendario de abogados.");
     } finally {
       setCargando(false);
     }
@@ -384,7 +391,9 @@ export function WidgetAsignacionesAgendaInline() {
         }}
       >
         <Loader2 size={28} color="#0284C7" style={{ animation: "spin 1s linear infinite" }} />
-        <span style={{ fontSize: "0.9rem", fontWeight: 700 }}>Cargando mesa de asignaciones…</span>
+        <span style={{ fontSize: "0.9rem", fontWeight: 700 }}>
+          Cargando calendario y citas de abogados…
+        </span>
       </div>
     );
   }
@@ -407,5 +416,12 @@ export function WidgetAsignacionesAgendaInline() {
     );
   }
 
-  return <MesaAsignaciones citas={citas} abogados={abogados} alActualizar={cargar} />;
+  return (
+    <MesaAsignaciones
+      citas={citas}
+      abogados={abogados}
+      historialGlobal={historialGlobal}
+      alActualizar={cargar}
+    />
+  );
 }

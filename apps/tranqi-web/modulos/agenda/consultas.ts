@@ -1,4 +1,4 @@
-import { crearClienteServidor } from "@eco/supabase/servidor";
+import { crearClienteAdmin, crearClienteServidor } from "@eco/supabase/servidor";
 import { aMinutos, deMinutos, trocearFranja } from "@eco/agenda";
 import type {
   DatosConfigNegocioAgenda,
@@ -22,8 +22,85 @@ export interface HuecoDisponible {
   disponibles: number;
 }
 
+export interface EventoLogCita {
+  id: string;
+  fecha: string;
+  tipo:
+    | "ASIGNACION"
+    | "REASIGNACION"
+    | "ACEPTACION"
+    | "RECHAZO"
+    | "REAGENDAMIENTO"
+    | "GESTION_REUNION"
+    | "VINCULACION_CASO";
+  autor_nombre: string;
+  autor_rol: "OPERADOR" | "ABOGADO" | "CLIENTE" | "SISTEMA";
+  resumen: string;
+  mensaje?: string | null;
+}
+
+export interface SiguientePasoCita {
+  id: string;
+  descripcion: string;
+  responsable_nombre: string;
+  responsable_rol: "ABOGADO" | "CLIENTE" | "OPERADOR";
+  fecha_compromiso?: string | null;
+  completado: boolean;
+}
+
+export interface DocumentoAdjuntoCita {
+  id: string;
+  nombre: string;
+  tipo: "cedula" | "contrato" | "minuta" | "notificacion" | "prueba" | "escrito" | "otro";
+  url_o_referencia?: string | null;
+  notas?: string | null;
+  subido_por_nombre?: string;
+  fecha?: string;
+}
+
+export interface EventoLineaTiempoCaso {
+  id: string;
+  fecha: string;
+  tipo: "MENSAJE" | "GESTION" | "DOCUMENTO" | "CONSULTA" | "HITO";
+  titulo: string;
+  detalle?: string | null;
+  responsable_nombre: string;
+  responsable_rol: "ABOGADO" | "CLIENTE" | "OPERADOR";
+  cita_id?: string | null;
+}
+
+export interface CasoExpedienteResumen {
+  cas_id: string;
+  cas_cliente_id: string;
+  cas_abogado_id: string | null;
+  cas_materia_id: string | null;
+  cas_titulo: string;
+  cas_descripcion: string | null;
+  cas_estado: string;
+  cas_prioridad: string;
+  cas_numero_proceso: string | null;
+  cas_abierto_en: string;
+  total_consultas: number;
+  total_documentos: number;
+  documentos: DocumentoAdjuntoCita[];
+  linea_tiempo: EventoLineaTiempoCaso[];
+}
+
+export interface GestionReunionCita {
+  cita_id: string;
+  estado_aceptacion_abogado: "pendiente" | "aceptada" | "rechazada";
+  motivo_aceptacion_abogado: string | null;
+  notas_reunion: string | null;
+  siguientes_pasos: SiguientePasoCita[];
+  documentos_adjuntos: DocumentoAdjuntoCita[];
+  eventos_log: EventoLogCita[];
+  actualizado_en: string | null;
+}
+
 export interface CitaResumen {
   cit_id: string;
+  cit_caso_id?: string | null;
+  cit_cliente_id?: string;
   cit_inicio_en: string;
   cit_fin_en: string | null;
   cit_modalidad: string;
@@ -35,7 +112,51 @@ export interface CitaResumen {
   cit_asignacion: string;
   cit_abogado_id: string | null;
   cit_materia_id?: string | null;
+  cit_notas?: string | null;
   cit_detalle_cita?: Record<string, unknown> | null;
+  cliente_nombre?: string;
+  cliente_correo?: string | null;
+  abogado_nombre?: string | null;
+  abogado_correo?: string | null;
+  materia_nombre?: string | null;
+  gestion_reunion?: GestionReunionCita;
+  caso_vinculado?: CasoExpedienteResumen | null;
+  casos_cliente?: CasoExpedienteResumen[];
+}
+
+export interface RegistroHistorialAsignacion {
+  id: string;
+  cita_id: string;
+  fecha_asignacion: string;
+  cita_inicio_en: string;
+  cita_modalidad: "virtual" | "presencial";
+  materia_nombre: string | null;
+  cliente_id: string;
+  cliente_nombre: string;
+  cliente_correo: string | null;
+  abogado_anterior_id: string | null;
+  abogado_anterior_nombre: string | null;
+  abogado_nuevo_id: string;
+  abogado_nuevo_nombre: string;
+  abogado_nuevo_correo: string | null;
+  operador_id: string | null;
+  operador_nombre: string;
+  operador_correo: string | null;
+  motivo: string | null;
+  notificado_cliente: boolean;
+  notificado_abogado: boolean;
+}
+
+export interface CitaCalendarioOperador extends CitaResumen {
+  cit_cliente_id: string;
+  cliente_nombre: string;
+  cliente_correo: string | null;
+  abogado_usuario_id: string | null;
+  abogado_nombre: string | null;
+  abogado_correo: string | null;
+  materia_nombre: string | null;
+  tiene_abogado: boolean;
+  historial_asignaciones: RegistroHistorialAsignacion[];
 }
 
 export interface ServicioAgendable {
@@ -523,39 +644,280 @@ export async function obtenerCobertura() {
   }>;
 }
 
+async function enriquecerCitasConExpedienteYLog(filasRaw: Array<Record<string, unknown>>): Promise<CitaResumen[]> {
+  if (!filasRaw || filasRaw.length === 0) return [];
+  const supabase = await crearClienteServidor();
+  const db = crearClienteAdmin() ?? supabase;
+
+  const clienteIds = Array.from(
+    new Set(filasRaw.map((c) => String(c.cit_cliente_id ?? "")).filter(Boolean)),
+  );
+
+  const [abogadosRes, materiasRes, cfgRes, casosRes] = await Promise.all([
+    db.schema("tranqui_legal").from("trq_abogado").select("abg_id, abg_usuario_id"),
+    db.schema("tranqui_legal").from("trq_materia").select("mat_id, mat_nombre"),
+    db
+      .schema("comun_configuracion")
+      .from("cfg_negocio")
+      .select("cfg_detalle_configuracion")
+      .eq("cfg_negocio", NEGOCIO)
+      .maybeSingle(),
+    clienteIds.length > 0
+      ? db
+          .schema("tranqui_legal")
+          .from("trq_caso_judicial")
+          .select(
+            "cas_id, cas_cliente_id, cas_abogado_id, cas_materia_id, cas_titulo, cas_descripcion, cas_estado, cas_prioridad, cas_numero_proceso, cas_detalle_caso, cas_abierto_en",
+          )
+          .in("cas_cliente_id", clienteIds)
+          .is("cas_eliminado_en", null)
+          .order("cas_abierto_en", { ascending: false })
+      : Promise.resolve({ data: [] }),
+  ]);
+
+  const mapaAbgUsu = new Map<string, string>();
+  for (const a of (abogadosRes.data ?? []) as Array<{ abg_id: string; abg_usuario_id: string }>) {
+    mapaAbgUsu.set(a.abg_id, a.abg_usuario_id);
+  }
+
+  const idsUsuarios = Array.from(
+    new Set([
+      ...clienteIds,
+      ...Array.from(mapaAbgUsu.values()).filter(Boolean),
+    ]),
+  );
+
+  const mapaUsuarios = new Map<string, { nombre: string; correo: string | null }>();
+  if (idsUsuarios.length > 0) {
+    const { data: usuRows } = await db
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_id, usu_nombres, usu_apellidos, usu_correo")
+      .in("usu_id", idsUsuarios);
+    for (const u of (usuRows ?? []) as Array<{
+      usu_id: string;
+      usu_nombres?: string | null;
+      usu_apellidos?: string | null;
+      usu_correo?: string | null;
+    }>) {
+      mapaUsuarios.set(u.usu_id, {
+        nombre:
+          [u.usu_nombres, u.usu_apellidos].filter(Boolean).join(" ").trim() ||
+          u.usu_correo ||
+          "Usuario",
+        correo: u.usu_correo ?? null,
+      });
+    }
+  }
+
+  const mapaMaterias = new Map<string, string>();
+  for (const m of (materiasRes.data ?? []) as Array<{ mat_id: string; mat_nombre: string }>) {
+    mapaMaterias.set(m.mat_id, m.mat_nombre);
+  }
+
+  const detCfg = (cfgRes.data?.cfg_detalle_configuracion ?? {}) as Record<string, unknown>;
+  const gestionesMap = ((detCfg.gestiones_citas ?? {}) as Record<string, GestionReunionCita>) || {};
+  const historialGlobal = Array.isArray(detCfg.historial_asignaciones_citas)
+    ? (detCfg.historial_asignaciones_citas as RegistroHistorialAsignacion[])
+    : [];
+
+  // Contar cuántas citas están vinculadas a cada caso
+  const conteoCitasPorCaso = new Map<string, number>();
+  for (const c of filasRaw) {
+    const casoId = c.cit_caso_id ? String(c.cit_caso_id) : null;
+    if (casoId) {
+      conteoCitasPorCaso.set(casoId, (conteoCitasPorCaso.get(casoId) ?? 0) + 1);
+    }
+  }
+
+  const casosPorCliente = new Map<string, CasoExpedienteResumen[]>();
+  const mapaCasos = new Map<string, CasoExpedienteResumen>();
+  for (const cas of (casosRes.data ?? []) as Array<Record<string, unknown>>) {
+    const casId = String(cas.cas_id);
+    const cliId = String(cas.cas_cliente_id);
+    const detCaso = (cas.cas_detalle_caso ?? {}) as Record<string, unknown>;
+    const docs = Array.isArray(detCaso.documentos)
+      ? (detCaso.documentos as DocumentoAdjuntoCita[])
+      : [];
+    const timeline = Array.isArray(detCaso.linea_tiempo)
+      ? (detCaso.linea_tiempo as EventoLineaTiempoCaso[])
+      : [];
+    const resumenCaso: CasoExpedienteResumen = {
+      cas_id: casId,
+      cas_cliente_id: cliId,
+      cas_abogado_id: cas.cas_abogado_id ? String(cas.cas_abogado_id) : null,
+      cas_materia_id: cas.cas_materia_id ? String(cas.cas_materia_id) : null,
+      cas_titulo: String(cas.cas_titulo ?? "Expediente legal"),
+      cas_descripcion: cas.cas_descripcion ? String(cas.cas_descripcion) : null,
+      cas_estado: String(cas.cas_estado ?? "en_curso"),
+      cas_prioridad: String(cas.cas_prioridad ?? "normal"),
+      cas_numero_proceso: cas.cas_numero_proceso ? String(cas.cas_numero_proceso) : null,
+      cas_abierto_en: String(cas.cas_abierto_en ?? new Date().toISOString()),
+      total_consultas: conteoCitasPorCaso.get(casId) ?? 1,
+      total_documentos: docs.length,
+      documentos: docs,
+      linea_tiempo: timeline,
+    };
+    mapaCasos.set(casId, resumenCaso);
+    const lista = casosPorCliente.get(cliId) ?? [];
+    lista.push(resumenCaso);
+    casosPorCliente.set(cliId, lista);
+  }
+
+  return filasRaw.map((c) => {
+    const citaId = String(c.cit_id);
+    const cliId = String(c.cit_cliente_id ?? "");
+    const abgId = c.cit_abogado_id ? String(c.cit_abogado_id) : null;
+    const matId = c.cit_materia_id ? String(c.cit_materia_id) : null;
+    const casoId = c.cit_caso_id ? String(c.cit_caso_id) : null;
+    const asignacion = String(c.cit_asignacion ?? "turno");
+    const tieneAbogado = Boolean(abgId && asignacion !== "contingencia");
+    const abgUsuId = abgId ? (mapaAbgUsu.get(abgId) ?? null) : null;
+    const cliInfo = cliId ? mapaUsuarios.get(cliId) : null;
+    const abgInfo = abgUsuId ? mapaUsuarios.get(abgUsuId) : null;
+
+    const gestionGuardada = gestionesMap[citaId];
+    const logsAsignacionCita: EventoLogCita[] = historialGlobal
+      .filter((h) => h.cita_id === citaId)
+      .map((h) => ({
+        id: `asig-${h.id}`,
+        fecha: h.fecha_asignacion,
+        tipo: h.abogado_anterior_id ? "REASIGNACION" : "ASIGNACION",
+        autor_nombre: h.operador_nombre,
+        autor_rol: "OPERADOR",
+        resumen: `Asignado a Dr(a). ${h.abogado_nuevo_nombre}`,
+        mensaje: h.motivo,
+      }));
+
+    const eventosExistentes = Array.isArray(gestionGuardada?.eventos_log)
+      ? gestionGuardada.eventos_log
+      : [];
+    const idsExistentes = new Set(eventosExistentes.map((e) => e.id));
+
+    const eventoReservaInicial: EventoLogCita = {
+      id: `res-ini-${citaId}`,
+      fecha: String(c.cit_creado_en ?? c.cit_inicio_en),
+      tipo: "GESTION_REUNION",
+      autor_nombre: cliInfo?.nombre ?? "Cliente",
+      autor_rol: "CLIENTE",
+      resumen: `Solicitud y agendamiento de consulta (${String(c.cit_modalidad ?? "virtual") === "presencial" ? "Presencial en Oficina" : "Videollamada"})`,
+      mensaje: c.cit_motivo ? String(c.cit_motivo) : null,
+    };
+
+    const baseLogs = [
+      ...eventosExistentes,
+      ...logsAsignacionCita.filter((l) => !idsExistentes.has(l.id)),
+    ];
+    if (!baseLogs.some((e) => e.id === eventoReservaInicial.id)) {
+      baseLogs.push(eventoReservaInicial);
+    }
+
+    const eventosUnificados = baseLogs.sort(
+      (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime(),
+    );
+
+    const gestionCompleta: GestionReunionCita = {
+      cita_id: citaId,
+      estado_aceptacion_abogado:
+        gestionGuardada?.estado_aceptacion_abogado ??
+        (String(c.cit_estado) === "confirmada" && tieneAbogado ? "pendiente" : "pendiente"),
+      motivo_aceptacion_abogado: gestionGuardada?.motivo_aceptacion_abogado ?? null,
+      notas_reunion: gestionGuardada?.notas_reunion ?? (c.cit_notas ? String(c.cit_notas) : null),
+      siguientes_pasos: Array.isArray(gestionGuardada?.siguientes_pasos)
+        ? gestionGuardada.siguientes_pasos
+        : [],
+      documentos_adjuntos: Array.isArray(gestionGuardada?.documentos_adjuntos)
+        ? gestionGuardada.documentos_adjuntos
+        : [],
+      eventos_log: eventosUnificados,
+      actualizado_en: gestionGuardada?.actualizado_en ?? null,
+    };
+
+    return {
+      cit_id: citaId,
+      cit_caso_id: casoId,
+      cit_cliente_id: cliId || undefined,
+      cit_inicio_en: String(c.cit_inicio_en),
+      cit_fin_en: c.cit_fin_en ? String(c.cit_fin_en) : null,
+      cit_modalidad: String(c.cit_modalidad ?? "virtual"),
+      cit_estado: String(c.cit_estado ?? "confirmada"),
+      cit_motivo: c.cit_motivo ? String(c.cit_motivo) : null,
+      cit_enlace: c.cit_enlace ? String(c.cit_enlace) : null,
+      cit_lugar: c.cit_lugar ? String(c.cit_lugar) : null,
+      cit_cobertura: String(c.cit_cobertura ?? "pagada"),
+      cit_asignacion: asignacion,
+      cit_abogado_id: abgId,
+      cit_materia_id: matId,
+      cit_notas: c.cit_notas ? String(c.cit_notas) : null,
+      cliente_nombre: cliInfo?.nombre ?? "Cliente",
+      cliente_correo: cliInfo?.correo ?? null,
+      abogado_nombre: tieneAbogado ? (abgInfo?.nombre ?? "Abogado asignado") : null,
+      abogado_correo: tieneAbogado ? (abgInfo?.correo ?? null) : null,
+      materia_nombre: matId ? (mapaMaterias.get(matId) ?? "General") : "General",
+      gestion_reunion: gestionCompleta,
+      caso_vinculado: casoId ? (mapaCasos.get(casoId) ?? null) : null,
+      casos_cliente: cliId ? (casosPorCliente.get(cliId) ?? []) : [],
+    };
+  });
+}
+
 export async function listarCitasDelCliente(soloFuturas = false): Promise<CitaResumen[]> {
   const supabase = await crearClienteServidor();
-  let consulta = supabase.schema("tranqui_legal")
+  const { data: authData } = await supabase.auth.getUser();
+  const usuarioId = authData.user?.id;
+  if (!usuarioId) return [];
+
+  const db = crearClienteAdmin() ?? supabase;
+  let consulta = db
+    .schema("tranqui_legal")
     .from("trq_cita")
     .select(
-      "cit_id, cit_inicio_en, cit_fin_en, cit_modalidad, cit_estado, cit_motivo, cit_enlace, cit_lugar, cit_cobertura, cit_asignacion, cit_abogado_id",
+      "cit_id, cit_caso_id, cit_cliente_id, cit_inicio_en, cit_fin_en, cit_modalidad, cit_estado, cit_motivo, cit_enlace, cit_lugar, cit_cobertura, cit_asignacion, cit_abogado_id, cit_notas",
     )
+    .eq("cit_cliente_id", usuarioId)
     .is("cit_eliminado_en", null)
     .order("cit_inicio_en", { ascending: false })
     .limit(50);
   if (soloFuturas) consulta = consulta.gte("cit_inicio_en", new Date().toISOString());
   const { data } = await consulta;
-  return (data ?? []) as CitaResumen[];
+  return enriquecerCitasConExpedienteYLog((data ?? []) as unknown as Array<Record<string, unknown>>);
 }
 
 /**
- * Agenda del abogado en sesión. RLS ya la acota a lo suyo: aquí no se filtra
- * por abogado, porque hacerlo a mano invitaría a olvidarlo en la siguiente
- * consulta y a creer que el filtro de la aplicación es la protección.
+ * Agenda del abogado en sesión con detalle de cliente, log de asignación,
+ * gestión de la reunión y expediente/casos del cliente.
  */
 export async function listarAgendaDelAbogado(desde: Date, hasta: Date): Promise<CitaResumen[]> {
   const supabase = await crearClienteServidor();
-  const { data } = await supabase.schema("tranqui_legal")
+  const { data: authData } = await supabase.auth.getUser();
+  const usuarioId = authData.user?.id;
+  if (!usuarioId) return [];
+
+  const db = crearClienteAdmin() ?? supabase;
+  const { data: abgRow } = await db
+    .schema("tranqui_legal")
+    .from("trq_abogado")
+    .select("abg_id")
+    .eq("abg_usuario_id", usuarioId)
+    .maybeSingle();
+
+  if (!abgRow?.abg_id) return [];
+
+  const { data } = await db
+    .schema("tranqui_legal")
     .from("trq_cita")
     .select(
-      "cit_id, cit_inicio_en, cit_fin_en, cit_modalidad, cit_estado, cit_motivo, cit_enlace, cit_lugar, cit_cobertura, cit_asignacion, cit_abogado_id",
+      "cit_id, cit_caso_id, cit_cliente_id, cit_inicio_en, cit_fin_en, cit_modalidad, cit_estado, cit_motivo, cit_enlace, cit_lugar, cit_cobertura, cit_asignacion, cit_abogado_id, cit_notas, cit_creado_en",
     )
+    .eq("cit_abogado_id", abgRow.abg_id)
+    .neq("cit_asignacion", "contingencia")
     .is("cit_eliminado_en", null)
     .gte("cit_inicio_en", desde.toISOString())
     .lt("cit_inicio_en", hasta.toISOString())
     .neq("cit_estado", "cancelada")
-    .order("cit_inicio_en");
-  return (data ?? []) as CitaResumen[];
+    .order("cit_inicio_en", { ascending: true });
+
+  return enriquecerCitasConExpedienteYLog((data ?? []) as unknown as Array<Record<string, unknown>>);
 }
 
 /** Configuración de agenda del profesional en sesión, o null si no la ha creado. */
@@ -684,17 +1046,18 @@ export async function listarCitasEnContingencia(): Promise<CitaResumen[]> {
  */
 export async function listarAbogadosAsignables() {
   const supabase = await crearClienteServidor();
-  const { data: abogados } = await supabase
+  const db = crearClienteAdmin() ?? supabase;
+  const { data: abogados } = await db
     .schema("tranqui_legal")
     .from("trq_abogado")
     .select("abg_id, abg_usuario_id")
     .eq("abg_estado", "verificado");
   if (!abogados || abogados.length === 0) return [];
 
-  const { data: usuarios } = await supabase
+  const { data: usuarios } = await db
     .schema("comun_seguridad")
     .from("seg_usuario")
-    .select("usu_id, usu_nombres, usu_apellidos")
+    .select("usu_id, usu_nombres, usu_apellidos, usu_correo")
     .in(
       "usu_id",
       abogados.map((a) => a.abg_usuario_id),
@@ -705,7 +1068,84 @@ export async function listarAbogadosAsignables() {
     const u = porId.get(a.abg_usuario_id);
     return {
       abg_id: a.abg_id,
-      nombre: [u?.usu_nombres, u?.usu_apellidos].filter(Boolean).join(" ") || "Abogado sin nombre",
+      usuario_id: a.abg_usuario_id,
+      nombre: [u?.usu_nombres, u?.usu_apellidos].filter(Boolean).join(" ") || u?.usu_correo || "Abogado sin nombre",
+      correo: u?.usu_correo ?? null,
     };
   });
+}
+
+export async function listarCitasCalendarioOperador(): Promise<{
+  citas: CitaCalendarioOperador[];
+  abogados: Array<{ abg_id: string; usuario_id: string; nombre: string; correo: string | null }>;
+  historialGlobal: RegistroHistorialAsignacion[];
+}> {
+  const supabase = await crearClienteServidor();
+  const db = crearClienteAdmin() ?? supabase;
+
+  const desdeReciente = new Date(Date.now() - 45 * 24 * 3600 * 1000).toISOString();
+
+  const [citasRes, abogadosLista, todosAbogadosRes, cfgRes] = await Promise.all([
+    db
+      .schema("tranqui_legal")
+      .from("trq_cita")
+      .select(
+        "cit_id, cit_caso_id, cit_cliente_id, cit_abogado_id, cit_inicio_en, cit_fin_en, cit_modalidad, cit_estado, cit_motivo, cit_enlace, cit_lugar, cit_cobertura, cit_asignacion, cit_notas",
+      )
+      .is("cit_eliminado_en", null)
+      .neq("cit_estado", "cancelada")
+      .gte("cit_inicio_en", desdeReciente)
+      .order("cit_inicio_en", { ascending: true }),
+    listarAbogadosAsignables(),
+    db.schema("tranqui_legal").from("trq_abogado").select("abg_id, abg_usuario_id"),
+    db
+      .schema("comun_configuracion")
+      .from("cfg_negocio")
+      .select("cfg_detalle_configuracion")
+      .eq("cfg_negocio", NEGOCIO)
+      .maybeSingle(),
+  ]);
+
+  const mapaAbgIdAUsuId = new Map<string, string>();
+  for (const a of (todosAbogadosRes.data ?? []) as Array<{ abg_id: string; abg_usuario_id: string }>) {
+    mapaAbgIdAUsuId.set(a.abg_id, a.abg_usuario_id);
+  }
+
+  const detCfg = (cfgRes.data?.cfg_detalle_configuracion ?? {}) as Record<string, unknown>;
+  const historialGlobalRaw = Array.isArray(detCfg.historial_asignaciones_citas)
+    ? (detCfg.historial_asignaciones_citas as RegistroHistorialAsignacion[])
+    : [];
+
+  const historialGlobal = [...historialGlobalRaw].sort(
+    (a, b) => new Date(b.fecha_asignacion).getTime() - new Date(a.fecha_asignacion).getTime(),
+  );
+
+  const citasBase = await enriquecerCitasConExpedienteYLog(
+    (citasRes.data ?? []) as unknown as Array<Record<string, unknown>>,
+  );
+
+  const citasEnriquecidas: CitaCalendarioOperador[] = citasBase.map((c) => {
+    const abgUsuId = c.cit_abogado_id ? (mapaAbgIdAUsuId.get(c.cit_abogado_id) ?? null) : null;
+    const tieneAbogado = Boolean(c.cit_abogado_id && c.cit_asignacion !== "contingencia");
+    const historialCita = historialGlobal.filter((h) => h.cita_id === c.cit_id);
+
+    return {
+      ...c,
+      cit_cliente_id: c.cit_cliente_id ?? "",
+      cliente_nombre: c.cliente_nombre ?? "Cliente",
+      cliente_correo: c.cliente_correo ?? null,
+      abogado_usuario_id: abgUsuId,
+      abogado_nombre: tieneAbogado ? (c.abogado_nombre ?? "Abogado asignado") : null,
+      abogado_correo: tieneAbogado ? (c.abogado_correo ?? null) : null,
+      materia_nombre: c.materia_nombre ?? null,
+      tiene_abogado: tieneAbogado,
+      historial_asignaciones: historialCita,
+    };
+  });
+
+  return {
+    citas: citasEnriquecidas,
+    abogados: abogadosLista,
+    historialGlobal,
+  };
 }

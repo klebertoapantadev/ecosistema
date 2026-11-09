@@ -207,8 +207,8 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
   },
   {
     id: "asignaciones_agenda",
-    titulo: "Asignaciones y Contingencia (Agenda)",
-    subtitulo: "Mesa de control de asignaciones operativas y reasignación de citas",
+    titulo: "Agenda, Citas Abogados",
+    subtitulo: "Calendario de citas confirmadas (telemáticas vs presenciales), asignación de abogados e historial",
     ruta: "/panel/administrar?widget=asignaciones_agenda",
     icono: Calendar,
     colorIcono: "#0284C7",

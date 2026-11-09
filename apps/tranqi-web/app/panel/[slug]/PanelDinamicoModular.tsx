@@ -495,8 +495,8 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     categoria: "Agenda"
   },
   asignaciones_agenda: {
-    titulo: "Asignaciones y Contingencia (Agenda)",
-    subtitulo: "Mesa de control de asignaciones operativas y reasignación de citas",
+    titulo: "Agenda, Citas Abogados",
+    subtitulo: "Calendario de citas confirmadas (telemáticas vs presenciales), asignación de abogados e historial",
     icono: LayoutGrid,
     colorIcono: "#0284C7",
     categoria: "Agenda"

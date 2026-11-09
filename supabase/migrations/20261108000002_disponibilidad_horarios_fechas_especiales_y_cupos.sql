@@ -1,4 +1,4 @@
--- ==============================================================================
+/*  */-- ==============================================================================
 -- Migración: 20261108000002_disponibilidad_horarios_fechas_especiales_y_cupos.sql
 -- Descripción:
 --   1. Incorpora en comun_agenda.age_config_negocio:

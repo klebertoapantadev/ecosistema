@@ -150,9 +150,27 @@ export function obtenerCustomizacionWidget(
     custom = customMap[id];
   }
 
+  const tituloResuelto = custom?.titulo?.trim() ? custom.titulo : tituloPorDefecto;
+  const subtituloResuelto = custom?.subtitulo?.trim() ? custom.subtitulo : subtituloPorDefecto;
+
+  if (
+    id === "asignaciones_agenda" &&
+    (tituloResuelto.includes("Asignaciones y Contingencia") ||
+      tituloResuelto === "Asignaciones y Contingencia (Agenda)")
+  ) {
+    return {
+      titulo: "Agenda, Citas Abogados",
+      subtitulo:
+        "Calendario de citas confirmadas (telemáticas vs presenciales), asignación de abogados e historial",
+      iconoKey: custom?.iconoKey || iconoPorDefectoKey,
+      requiereMfa: Boolean(custom?.requiereMfa),
+      tiempoMfaMinutos: custom?.tiempoMfaMinutos ?? 15,
+    };
+  }
+
   return {
-    titulo: custom?.titulo?.trim() ? custom.titulo : tituloPorDefecto,
-    subtitulo: custom?.subtitulo?.trim() ? custom.subtitulo : subtituloPorDefecto,
+    titulo: tituloResuelto,
+    subtitulo: subtituloResuelto,
     iconoKey: custom?.iconoKey || iconoPorDefectoKey,
     requiereMfa: Boolean(custom?.requiereMfa),
     tiempoMfaMinutos: custom?.tiempoMfaMinutos ?? 15,

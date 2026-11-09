@@ -329,6 +329,225 @@ export async function GET() {
           }
         }
 
+        // Alertas operativas automáticas para Operadores / Administradores:
+        // 1) El día de la cita si no tiene agendado un abogado
+        // 2) Nuevas consultas jurídicas confirmadas pendientes de abogado
+        if (_esAutorizado) {
+          try {
+            const ahoraMs = Date.now();
+            const hoyEcuStr = new Date(ahoraMs - 5 * 3600 * 1000).toISOString().slice(0, 10);
+            const desdeHoyIso = new Date(ahoraMs - 12 * 3600 * 1000).toISOString();
+            const hastaProximosIso = new Date(ahoraMs + 14 * 24 * 3600 * 1000).toISOString();
+
+            const { data: citasOperador } = await client
+              .schema("tranqui_legal")
+              .from("trq_cita")
+              .select("cit_id, cit_cliente_id, cit_abogado_id, cit_inicio_en, cit_modalidad, cit_estado, cit_motivo, cit_asignacion, cit_creado_en")
+              .is("cit_eliminado_en", null)
+              .neq("cit_estado", "cancelada")
+              .gte("cit_inicio_en", desdeHoyIso)
+              .lte("cit_inicio_en", hastaProximosIso)
+              .order("cit_inicio_en", { ascending: true });
+
+            if (Array.isArray(citasOperador) && citasOperador.length > 0) {
+              const cliIds = Array.from(new Set(citasOperador.map((c: any) => c.cit_cliente_id).filter(Boolean)));
+              const { data: cliRows } = cliIds.length > 0
+                ? await client
+                    .schema("comun_seguridad")
+                    .from("seg_usuario")
+                    .select("usu_id, usu_nombres, usu_apellidos, usu_correo")
+                    .in("usu_id", cliIds)
+                : { data: [] };
+
+              const mapaCli = new Map<string, string>();
+              for (const u of (cliRows || []) as Array<{ usu_id: string; usu_nombres?: string; usu_apellidos?: string; usu_correo?: string }>) {
+                mapaCli.set(
+                  u.usu_id,
+                  [u.usu_nombres, u.usu_apellidos].filter(Boolean).join(" ").trim() || u.usu_correo || "Cliente"
+                );
+              }
+
+              for (const c of citasOperador as Array<any>) {
+                const sinAbogado = !c.cit_abogado_id || c.cit_asignacion === "contingencia";
+                if (!sinAbogado) continue;
+
+                const inicioDate = new Date(c.cit_inicio_en);
+                const fechaCitaEcu = new Date(inicioDate.getTime() - 5 * 3600 * 1000).toISOString().slice(0, 10);
+                const esHoy = fechaCitaEcu === hoyEcuStr;
+                const horaEcu = inicioDate.toLocaleTimeString("es-EC", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  timeZone: "America/Guayaquil",
+                });
+                const fechaLargaEcu = inicioDate.toLocaleDateString("es-EC", {
+                  weekday: "short",
+                  day: "numeric",
+                  month: "short",
+                  timeZone: "America/Guayaquil",
+                });
+                const modTxt = c.cit_modalidad === "presencial" ? "Presencial en Oficina" : "Telemática (Videollamada)";
+                const cliNombre = mapaCli.get(c.cit_cliente_id) || "Cliente";
+
+                if (esHoy) {
+                  const idAlertaHoy = `alerta-dia-sin-abg-${c.cit_id}-${hoyEcuStr}`;
+                  if (!registrosClavesVistas.has(idAlertaHoy) && !notificaciones.some(n => n.not_id === idAlertaHoy)) {
+                    registrosClavesVistas.add(idAlertaHoy);
+                    notificaciones.unshift({
+                      not_id: idAlertaHoy,
+                      not_titulo: `🚨 URGENTE HOY (${horaEcu}): Cita sin abogado asignado`,
+                      not_contenido_html: `
+                        <div>
+                          <p style="margin:0 0 6px 0;color:#991B1B;font-weight:700;">
+                            La consulta programada para HOY aún no tiene un abogado asignado.
+                          </p>
+                          <div style="font-size:0.8rem;background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:8px 10px;margin:6px 0;">
+                            <strong>👤 Cliente:</strong> ${cliNombre}<br/>
+                            <strong>⏰ Hora de hoy:</strong> ${horaEcu}<br/>
+                            <strong>📍 Modalidad:</strong> ${modTxt}<br/>
+                            ${c.cit_motivo ? `<strong>📝 Motivo:</strong> ${c.cit_motivo}` : ""}
+                          </div>
+                          <a href="/panel/agendamiento?widget=asignaciones_agenda" style="color:#5000BA;font-weight:800;text-decoration:underline;font-size:0.8rem;">
+                            Asignar abogado ahora →
+                          </a>
+                        </div>
+                      `,
+                      not_url_accion: "/panel/agendamiento?widget=asignaciones_agenda",
+                      not_leido_en: null,
+                      not_creado_en: new Date().toISOString(),
+                      not_canal: "PUSH",
+                      not_eliminada: false,
+                    });
+                  }
+                } else {
+                  const idNuevaSinAbg = `cita-pend-abg-${c.cit_id}`;
+                  if (!registrosClavesVistas.has(idNuevaSinAbg) && !notificaciones.some(n => n.not_id === idNuevaSinAbg)) {
+                    registrosClavesVistas.add(idNuevaSinAbg);
+                    notificaciones.unshift({
+                      not_id: idNuevaSinAbg,
+                      not_titulo: `📅 Consulta confirmada pendiente de abogado (${fechaLargaEcu} · ${horaEcu})`,
+                      not_contenido_html: `
+                        <div>
+                          <p style="margin:0 0 6px 0;">
+                            Nueva consulta jurídica confirmada que requiere asignación de abogado.
+                          </p>
+                          <div style="font-size:0.8rem;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:8px 10px;margin:6px 0;">
+                            <strong>👤 Cliente:</strong> ${cliNombre}<br/>
+                            <strong>📅 Fecha y hora:</strong> ${fechaLargaEcu} · ${horaEcu}<br/>
+                            <strong>📍 Modalidad:</strong> ${modTxt}<br/>
+                            ${c.cit_motivo ? `<strong>📝 Motivo:</strong> ${c.cit_motivo}` : ""}
+                          </div>
+                          <a href="/panel/agendamiento?widget=asignaciones_agenda" style="color:#5000BA;font-weight:800;text-decoration:underline;font-size:0.8rem;">
+                            Abrir Agenda, Citas Abogados →
+                          </a>
+                        </div>
+                      `,
+                      not_url_accion: "/panel/agendamiento?widget=asignaciones_agenda",
+                      not_leido_en: null,
+                      not_creado_en: c.cit_creado_en || new Date().toISOString(),
+                      not_canal: "IN_APP",
+                      not_eliminada: false,
+                    });
+                  }
+                }
+              }
+            }
+          } catch (errOpAlert) {
+            console.warn("Aviso al evaluar alertas de citas para operador:", errOpAlert);
+          }
+        }
+
+        // Alertas automáticas para el Socio Abogado cuando tiene citas asignadas en su agenda
+        try {
+          const { data: abgRow } = await client
+            .schema("tranqui_legal")
+            .from("trq_abogado")
+            .select("abg_id")
+            .eq("abg_usuario_id", perfil.usu_id)
+            .maybeSingle();
+
+          if (abgRow?.abg_id) {
+            const desdeHoyIso = new Date(Date.now() - 4 * 3600 * 1000).toISOString();
+            const { data: misCitasAbg } = await client
+              .schema("tranqui_legal")
+              .from("trq_cita")
+              .select("cit_id, cit_cliente_id, cit_inicio_en, cit_modalidad, cit_estado, cit_motivo, cit_actualizado_en, cit_creado_en")
+              .eq("cit_abogado_id", abgRow.abg_id)
+              .is("cit_eliminado_en", null)
+              .neq("cit_estado", "cancelada")
+              .gte("cit_inicio_en", desdeHoyIso)
+              .order("cit_inicio_en", { ascending: true })
+              .limit(15);
+
+            if (Array.isArray(misCitasAbg) && misCitasAbg.length > 0) {
+              const cliIds = Array.from(new Set(misCitasAbg.map((c: any) => c.cit_cliente_id).filter(Boolean)));
+              const { data: cliRows } = cliIds.length > 0
+                ? await client
+                    .schema("comun_seguridad")
+                    .from("seg_usuario")
+                    .select("usu_id, usu_nombres, usu_apellidos, usu_correo")
+                    .in("usu_id", cliIds)
+                : { data: [] };
+
+              const mapaCli = new Map<string, string>();
+              for (const u of (cliRows || []) as Array<{ usu_id: string; usu_nombres?: string; usu_apellidos?: string; usu_correo?: string }>) {
+                mapaCli.set(
+                  u.usu_id,
+                  [u.usu_nombres, u.usu_apellidos].filter(Boolean).join(" ").trim() || u.usu_correo || "Cliente"
+                );
+              }
+
+              for (const c of misCitasAbg as Array<any>) {
+                const idNotAbg = `cita-asignada-abg-${c.cit_id}`;
+                const yaTiene =
+                  registrosClavesVistas.has(idNotAbg) ||
+                  notificaciones.some(n => n.not_id === idNotAbg || n.not_id.startsWith(`asig-abg-${c.cit_id.slice(0, 8)}`));
+                if (yaTiene) continue;
+
+                const inicioDate = new Date(c.cit_inicio_en);
+                const fechaHoraEcu = inicioDate.toLocaleString("es-EC", {
+                  weekday: "short",
+                  day: "numeric",
+                  month: "short",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  timeZone: "America/Guayaquil",
+                });
+                const modTxt = c.cit_modalidad === "presencial" ? "Presencial en Oficina" : "Telemática (Videollamada)";
+                const cliNombre = mapaCli.get(c.cit_cliente_id) || "Cliente";
+
+                registrosClavesVistas.add(idNotAbg);
+                notificaciones.unshift({
+                  not_id: idNotAbg,
+                  not_titulo: `📅 Cita jurídica asignada (${fechaHoraEcu}) — ${cliNombre}`,
+                  not_contenido_html: `
+                    <div>
+                      <p style="margin:0 0 6px 0;">
+                        Tienes una consulta jurídica asignada en tu agenda profesional.
+                      </p>
+                      <div style="font-size:0.8rem;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:8px 10px;margin:6px 0;">
+                        <strong>👤 Cliente:</strong> ${cliNombre}<br/>
+                        <strong>📅 Fecha y hora:</strong> ${fechaHoraEcu}<br/>
+                        <strong>📍 Modalidad:</strong> ${modTxt}<br/>
+                        ${c.cit_motivo ? `<strong>📝 Motivo:</strong> ${c.cit_motivo}` : ""}
+                      </div>
+                      <a href="/panel/agendamiento?widget=citas_programadas" style="color:#05876E;font-weight:800;text-decoration:underline;font-size:0.8rem;">
+                        Confirmar / Gestionar Cita →
+                      </a>
+                    </div>
+                  `,
+                  not_url_accion: "/panel/agendamiento?widget=citas_programadas",
+                  not_leido_en: null,
+                  not_creado_en: c.cit_actualizado_en || c.cit_creado_en || new Date().toISOString(),
+                  not_canal: "PUSH",
+                  not_eliminada: false,
+                });
+              }
+            }
+          }
+        } catch (errAbgAlert) {
+          console.warn("Aviso al evaluar alertas de citas para abogado:", errAbgAlert);
+        }
+
 
       } catch (errApi) {
         console.error("Error al consultar notificaciones en API:", errApi);

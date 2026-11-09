@@ -67,10 +67,63 @@ export default function ListaCitasCliente({
                 <span className="pildora-estado">{ETIQUETA_ESTADO_CITA[c.cit_estado] ?? c.cit_estado}</span>
               </div>
               <p className="agenda-cita-meta">
-                {c.cit_modalidad === "virtual" ? "Videollamada" : "Presencial"} ·{" "}
+                {c.cit_modalidad === "virtual" ? "🎥 Videollamada" : "🏢 Presencial"} ·{" "}
                 {ETIQUETA_COBERTURA[c.cit_cobertura] ?? c.cit_cobertura}
+                {c.materia_nombre ? ` · ⚖️ ${c.materia_nombre}` : ""}
               </p>
+              {c.abogado_nombre && (
+                <p
+                  style={{
+                    margin: "4px 0 6px 0",
+                    fontSize: "0.84rem",
+                    fontWeight: 700,
+                    color: "#059669",
+                  }}
+                >
+                  👨‍⚖️ Abogado asignado: Dr(a). {c.abogado_nombre}
+                </p>
+              )}
               {c.cit_motivo && <p className="agenda-cita-motivo">{c.cit_motivo}</p>}
+              {c.caso_vinculado && (
+                <div
+                  style={{
+                    margin: "6px 0",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    background: "#F5F3FF",
+                    border: "1px solid #DDD6FE",
+                    fontSize: "0.8rem",
+                    color: "#4C1D95",
+                  }}
+                >
+                  <strong>📁 Expediente / Caso vinculado:</strong> {c.caso_vinculado.cas_titulo} (
+                  {c.caso_vinculado.cas_estado.replace("_", " ")})
+                </div>
+              )}
+              {c.gestion_reunion?.siguientes_pasos &&
+                c.gestion_reunion.siguientes_pasos.length > 0 && (
+                  <div
+                    style={{
+                      margin: "6px 0",
+                      padding: "8px 12px",
+                      borderRadius: "8px",
+                      background: "#F8FAFC",
+                      border: "1px solid #E2E8F0",
+                      fontSize: "0.8rem",
+                    }}
+                  >
+                    <strong style={{ display: "block", marginBottom: "4px", color: "#0F172A" }}>
+                      📌 Siguientes pasos acordados en tu consulta:
+                    </strong>
+                    <ul style={{ margin: 0, paddingLeft: "18px", color: "#334155" }}>
+                      {c.gestion_reunion.siguientes_pasos.map((p) => (
+                        <li key={p.id}>
+                          {p.descripcion} — <em>Responsable: {p.responsable_nombre} ({p.responsable_rol})</em>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
               {c.cit_modalidad === "virtual" && c.cit_estado === "confirmada" && (
                 abierta && c.cit_enlace ? (

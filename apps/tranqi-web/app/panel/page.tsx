@@ -14,6 +14,8 @@ import { BuscadorModulosGlobal } from "./BuscadorModulosGlobal";
 import { WidgetNotificacionesCliente } from "@eco/notificaciones";
 import { obtenerSolicitudPropia } from "../../modulos/socios/consultas";
 import { obtenerMiPerfilAbogadoCompletoAction } from "../../modulos/socios/acciones-red-profesional";
+import { listarAgendaDelAbogado } from "../../modulos/agenda/consultas";
+import BandejaCitasAbogado from "../../modulos/agenda/componentes/BandejaCitasAbogado";
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import { ConsolaSuperAdminModular } from "./ConsolaSuperAdminModular";
 import { TarjetaEstadoSolicitudHome } from "./TarjetaEstadoSolicitudHome";
@@ -50,6 +52,7 @@ const ACCESOS_ABOGADO: { icono: LucideIcon; nombre: string; detalle: string; hre
 ];
 
 const WIDGETS_OPERADOR: { clave: string; icono: LucideIcon; nombre: string; detalle: string; ruta: string }[] = [
+  { clave: "asignaciones_agenda", icono: Calendar, nombre: "Agenda, Citas Abogados", detalle: "Calendario de citas confirmadas, asignación e historial", ruta: "/panel/agendamiento?widget=asignaciones_agenda" },
   { clave: "historial_pagos", icono: CreditCard, nombre: "Historial de Pagos", detalle: "Valores generados, pagados y comprobantes SRI", ruta: "/panel/administrar?widget=historial_pagos" },
   { clave: "gestion_red_abogados", icono: UserCheck, nombre: "Red Profesional & Abogados", detalle: "Alta manual, especialidades y horarios", ruta: "/panel/red-profesional?widget=gestion_red_abogados" },
   { clave: "gestion_informativos", icono: Bell, nombre: "Gestión de Informativos", detalle: "Alertas, noticias y beneficios", ruta: "/panel/administrar?widget=gestion_informativos" },
@@ -547,7 +550,14 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
 
 /* ──────────────── 2. PANEL MODO SOCIO ABOGADO ──────────────── */
 async function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
-  const resPerfil = await obtenerMiPerfilAbogadoCompletoAction();
+  const ahora = new Date();
+  const desdeAgenda = new Date(ahora.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const hastaAgenda = new Date(ahora.getTime() + 45 * 24 * 60 * 60 * 1000);
+
+  const [resPerfil, citasAbogado] = await Promise.all([
+    obtenerMiPerfilAbogadoCompletoAction(),
+    listarAgendaDelAbogado(desdeAgenda, hastaAgenda).catch(() => []),
+  ]);
   const miFicha = resPerfil.ok ? resPerfil.data.abogado : null;
   const materiasTexto =
     miFicha && miFicha.materias.length > 0
@@ -606,6 +616,26 @@ async function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
             </div>
           </section>
 
+          {/* 1.5) DETALLE DE MI AGENDA HOY / SEMANA / MES + CONFIRMACIÓN Y EXPEDIENTE */}
+          <section className="tarjeta-seccion" aria-labelledby="t-agenda-abogado-home">
+            <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
+              <div>
+                <h2 id="t-agenda-abogado-home" style={{ margin: 0 }}>
+                  Mi Agenda de Consultas: Hoy / Semana / Mes
+                </h2>
+                <span style={{ fontSize: "0.82rem", color: "#64748B" }}>
+                  Confirma o rechaza asignaciones, registra notas de reunión, documentos y vincula consultas al expediente del cliente.
+                </span>
+              </div>
+              <Link href="/panel/agendamiento?widget=citas_programadas" className="enlace-accion">
+                Abrir vista completa →
+              </Link>
+            </header>
+            <div style={{ marginTop: "12px" }}>
+              <BandejaCitasAbogado citas={citasAbogado} rangoInicial="semana" />
+            </div>
+          </section>
+
           {/* 2) ACCESS GRID (Favoritos primero + Accesos predeterminados) */}
           <div className="accesos-cliente">
             <TarjetasFavoritasGrid />
@@ -625,14 +655,6 @@ async function PanelAbogado({ nombreCompleto }: { nombreCompleto: string }) {
               )
             )}
           </div>
-
-          <section className="tarjeta-seccion" aria-labelledby="t-causas">
-            <header><h2 id="t-causas">Causas & Juicios Asignados</h2></header>
-            <div className="vacio-seccion">
-              <b>Sin audiencias pendientes para hoy</b>
-              <span>Las notificaciones de providencias se enviarán en tiempo real a tu WhatsApp.</span>
-            </div>
-          </section>
         </div>
 
         <aside className="columna-cliente">

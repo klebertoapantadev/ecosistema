@@ -69,9 +69,61 @@ export const esquemaConfigNegocioAgenda = z.object({
 
 export const esquemaDecisionCita = z.object({
   cita_id: z.string().uuid(),
-  decision: z.enum(["confirmar", "reagendar", "cancelar", "marcar_realizada", "marcar_no_asistio"]),
+  decision: z.enum([
+    "confirmar",
+    "aceptar_asignacion",
+    "rechazar_asignacion",
+    "reagendar",
+    "cancelar",
+    "marcar_realizada",
+    "marcar_no_asistio",
+  ]),
   nuevo_inicio: z.string().datetime({ offset: true }).nullish(),
   motivo: z.string().trim().max(500).nullish(),
+});
+
+export const esquemaSiguientePasoCita = z.object({
+  id: z.string().min(1),
+  descripcion: z.string().trim().min(2).max(400),
+  responsable_nombre: z.string().trim().min(1).max(150),
+  responsable_rol: z.enum(["ABOGADO", "CLIENTE", "OPERADOR"]).default("ABOGADO"),
+  fecha_compromiso: z.string().nullish(),
+  completado: z.boolean().default(false),
+});
+
+export const esquemaDocumentoAdjuntoCita = z.object({
+  id: z.string().min(1),
+  nombre: z.string().trim().min(1).max(240),
+  tipo: z
+    .enum(["cedula", "contrato", "minuta", "notificacion", "prueba", "escrito", "otro"])
+    .default("otro"),
+  url_o_referencia: z.string().trim().max(1000).nullish(),
+  notas: z.string().trim().max(400).nullish(),
+  subido_por_nombre: z.string().trim().max(150).optional(),
+  fecha: z.string().optional(),
+});
+
+export const esquemaGestionReunionCita = z.object({
+  cita_id: z.string().uuid(),
+  notas_reunion: z.string().trim().max(4000).nullish(),
+  siguientes_pasos: z.array(esquemaSiguientePasoCita).default([]),
+  documentos_adjuntos: z.array(esquemaDocumentoAdjuntoCita).default([]),
+  marcar_realizada: z.boolean().optional(),
+  accion_caso: z.enum(["ninguna", "vincular_existente", "crear_nuevo"]).default("ninguna"),
+  caso_id_existente: z.string().uuid().nullish(),
+  nuevo_caso_titulo: z.string().trim().max(240).nullish(),
+  nuevo_caso_descripcion: z.string().trim().max(2000).nullish(),
+  nuevo_caso_prioridad: z.enum(["normal", "alta", "urgente"]).default("normal"),
+  nuevo_caso_numero_proceso: z.string().trim().max(120).nullish(),
+  nuevo_evento_timeline: z
+    .object({
+      tipo: z.enum(["MENSAJE", "GESTION", "DOCUMENTO", "HITO"]),
+      titulo: z.string().trim().min(2).max(240),
+      detalle: z.string().trim().max(2000).nullish(),
+      responsable_nombre: z.string().trim().max(150).nullish(),
+      responsable_rol: z.enum(["ABOGADO", "CLIENTE", "OPERADOR"]).default("ABOGADO"),
+    })
+    .nullish(),
 });
 
 export const esquemaReasignacion = z.object({
