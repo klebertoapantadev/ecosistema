@@ -71,6 +71,16 @@ export interface ProvinciaItem {
   cat_region?: string;
 }
 
+export interface FechaEspecialAbogado {
+  fecha: string;
+  nombre: string;
+  cerrado_total: boolean;
+  habilitar_virtual: boolean;
+  franjas_virtual: Array<{ hora_inicio: string; hora_fin: string }>;
+  habilitar_presencial: boolean;
+  franjas_presencial: Array<{ hora_inicio: string; hora_fin: string }>;
+}
+
 export interface ConfiguracionAgendaAbogado {
   zona_horaria: string;
   duracion_cita_min: number;
@@ -80,6 +90,7 @@ export interface ConfiguracionAgendaAbogado {
   modalidades: ("virtual" | "presencial")[];
   acepta_turno: boolean;
   direccion: string | null;
+  fechas_especiales?: FechaEspecialAbogado[];
 }
 
 export interface HistorialCambioRolItem {
@@ -148,11 +159,17 @@ const AGENDA_POR_DEFECTO: ConfiguracionAgendaAbogado = {
 };
 
 const FRANJAS_POR_DEFECTO: Franja[] = [
-  { dia_semana: 1, hora_inicio: "09:00", hora_fin: "17:00", modalidad: "ambas" },
-  { dia_semana: 2, hora_inicio: "09:00", hora_fin: "17:00", modalidad: "ambas" },
-  { dia_semana: 3, hora_inicio: "09:00", hora_fin: "17:00", modalidad: "ambas" },
-  { dia_semana: 4, hora_inicio: "09:00", hora_fin: "17:00", modalidad: "ambas" },
-  { dia_semana: 5, hora_inicio: "09:00", hora_fin: "17:00", modalidad: "ambas" },
+  { dia_semana: 1, hora_inicio: "08:00", hora_fin: "19:00", modalidad: "virtual" },
+  { dia_semana: 2, hora_inicio: "08:00", hora_fin: "19:00", modalidad: "virtual" },
+  { dia_semana: 3, hora_inicio: "08:00", hora_fin: "19:00", modalidad: "virtual" },
+  { dia_semana: 4, hora_inicio: "08:00", hora_fin: "19:00", modalidad: "virtual" },
+  { dia_semana: 5, hora_inicio: "08:00", hora_fin: "19:00", modalidad: "virtual" },
+  { dia_semana: 6, hora_inicio: "09:00", hora_fin: "14:00", modalidad: "virtual" },
+  { dia_semana: 1, hora_inicio: "09:00", hora_fin: "17:30", modalidad: "presencial" },
+  { dia_semana: 2, hora_inicio: "09:00", hora_fin: "17:30", modalidad: "presencial" },
+  { dia_semana: 3, hora_inicio: "09:00", hora_fin: "17:30", modalidad: "presencial" },
+  { dia_semana: 4, hora_inicio: "09:00", hora_fin: "17:30", modalidad: "presencial" },
+  { dia_semana: 5, hora_inicio: "09:00", hora_fin: "17:30", modalidad: "presencial" },
 ];
 
 async function verificarEsOperadorOAdmin(): Promise<boolean> {
@@ -1048,7 +1065,10 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
               ? prof.agp_modalidades
               : ["virtual", "presencial"]) as ("virtual" | "presencial")[],
             acepta_turno: Boolean(prof.agp_acepta_turno ?? true),
-            direccion: prof.agp_direccion ?? null,
+            direccion: prof.agp_direccion ?? configFicha?.direccion ?? null,
+            fechas_especiales: Array.isArray(configFicha?.fechas_especiales)
+              ? configFicha.fechas_especiales
+              : [],
           }
         : configFicha
         ? {
@@ -1233,6 +1253,7 @@ async function guardarDisponibilidadAgendaInterna(
       modalidades: modalidadesLimpias as ("virtual" | "presencial")[],
       acepta_turno: Boolean(config.acepta_turno ?? true),
       direccion: config.direccion || null,
+      fechas_especiales: Array.isArray(config.fechas_especiales) ? config.fechas_especiales : [],
     };
 
     // 1. Guardar respaldo en seg_usuario.usu_detalle_usuario.ficha_abogado para resiliencia total

@@ -88,13 +88,48 @@ const CONFIG_AGENDA_BASE: ConfiguracionAgendaAbogado = {
   direccion: "Quito — Atención Presencial y Teleconsulta",
 };
 
-const FRANJAS_BASE: Franja[] = [
-  { dia_semana: 1, hora_inicio: "09:00", hora_fin: "17:00", modalidad: "ambas" },
-  { dia_semana: 2, hora_inicio: "09:00", hora_fin: "17:00", modalidad: "ambas" },
-  { dia_semana: 3, hora_inicio: "09:00", hora_fin: "17:00", modalidad: "ambas" },
-  { dia_semana: 4, hora_inicio: "09:00", hora_fin: "17:00", modalidad: "ambas" },
-  { dia_semana: 5, hora_inicio: "09:00", hora_fin: "17:00", modalidad: "ambas" },
+const FRANJAS_VIRTUAL_DEFECTO: Franja[] = [
+  { dia_semana: 1, hora_inicio: "08:00", hora_fin: "19:00", modalidad: "virtual" },
+  { dia_semana: 2, hora_inicio: "08:00", hora_fin: "19:00", modalidad: "virtual" },
+  { dia_semana: 3, hora_inicio: "08:00", hora_fin: "19:00", modalidad: "virtual" },
+  { dia_semana: 4, hora_inicio: "08:00", hora_fin: "19:00", modalidad: "virtual" },
+  { dia_semana: 5, hora_inicio: "08:00", hora_fin: "19:00", modalidad: "virtual" },
+  { dia_semana: 6, hora_inicio: "09:00", hora_fin: "14:00", modalidad: "virtual" },
 ];
+
+const FRANJAS_PRESENCIAL_DEFECTO: Franja[] = [
+  { dia_semana: 1, hora_inicio: "09:00", hora_fin: "17:30", modalidad: "presencial" },
+  { dia_semana: 2, hora_inicio: "09:00", hora_fin: "17:30", modalidad: "presencial" },
+  { dia_semana: 3, hora_inicio: "09:00", hora_fin: "17:30", modalidad: "presencial" },
+  { dia_semana: 4, hora_inicio: "09:00", hora_fin: "17:30", modalidad: "presencial" },
+  { dia_semana: 5, hora_inicio: "09:00", hora_fin: "17:30", modalidad: "presencial" },
+];
+
+const FRANJAS_BASE: Franja[] = [...FRANJAS_VIRTUAL_DEFECTO, ...FRANJAS_PRESENCIAL_DEFECTO];
+
+const DIAS_SEMANA_ORDENADOS: Array<{ dia: number; nombre: string }> = [
+  { dia: 1, nombre: "Lunes" },
+  { dia: 2, nombre: "Martes" },
+  { dia: 3, nombre: "Miércoles" },
+  { dia: 4, nombre: "Jueves" },
+  { dia: 5, nombre: "Viernes" },
+  { dia: 6, nombre: "Sábado" },
+  { dia: 0, nombre: "Domingo" },
+];
+
+function normalizarFranjasSeparadas(franjas: Franja[]): Franja[] {
+  if (!Array.isArray(franjas) || franjas.length === 0) return FRANJAS_BASE;
+  const resultado: Franja[] = [];
+  for (const f of franjas) {
+    if (f.modalidad === "ambas") {
+      resultado.push({ ...f, modalidad: "virtual" });
+      resultado.push({ ...f, modalidad: "presencial" });
+    } else {
+      resultado.push(f);
+    }
+  }
+  return resultado;
+}
 
 export function GestionRedProfesionalWidget() {
   const [abogados, setAbogados] = useState<AbogadoRedItem[]>([]);
@@ -496,7 +531,7 @@ export function GestionRedProfesionalWidget() {
   const abrirModalDisponibilidad = (abg: AbogadoRedItem) => {
     setAbogadoAgendaModal(abg);
     setConfigAgenda(abg.configuracionAgenda || CONFIG_AGENDA_BASE);
-    setFranjasAgenda(abg.franjas.length > 0 ? abg.franjas : FRANJAS_BASE);
+    setFranjasAgenda(normalizarFranjasSeparadas(abg.franjas));
     setMensaje(null);
   };
 
@@ -1897,7 +1932,7 @@ export function GestionRedProfesionalWidget() {
               background: "#ffffff",
               borderRadius: "18px",
               width: "100%",
-              maxWidth: "760px",
+              maxWidth: "940px",
               maxHeight: "90vh",
               overflowY: "auto",
               boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
@@ -1907,10 +1942,10 @@ export function GestionRedProfesionalWidget() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
               <div>
                 <h3 style={{ margin: 0, fontSize: "1.12rem", fontWeight: 900, color: "#111827" }}>
-                  Disponibilidad de Citas — {abogadoAgendaModal.nombreCompleto}
+                  Disponibilidad de Citas — {abogadoAgendaModal.nombreCompleto} ({huecosCalculadosModal} citas/semana)
                 </h3>
                 <p style={{ margin: "3px 0 0 0", fontSize: "0.8rem", color: "#6B7280" }}>
-                  Configura modalidades (Presencial y Teleconsulta), duración y franjas horarias semanales.
+                  1. Horario Laborable Normal (Consultas Telemáticas y Consultas en Oficina) y parámetros de cita.
                 </p>
               </div>
               <button
@@ -1922,86 +1957,375 @@ export function GestionRedProfesionalWidget() {
               </button>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              {/* Modalidades Habilitadas */}
-              <div style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px" }}>
-                <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#111827", display: "block", marginBottom: "8px" }}>
-                  Modalidades de Atención Habilitadas
-                </span>
-                <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                  <label
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      padding: "8px 14px",
-                      borderRadius: "10px",
-                      border: configAgenda.modalidades.includes("virtual") ? "2px solid #0284C7" : "1px solid #D1D5DB",
-                      background: configAgenda.modalidades.includes("virtual") ? "#F0F9FF" : "#ffffff",
-                      fontWeight: 700,
-                      fontSize: "0.82rem",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={configAgenda.modalidades.includes("virtual")}
-                      onChange={(e) => {
-                        const nuevas = e.target.checked
-                          ? Array.from(new Set([...configAgenda.modalidades, "virtual" as const]))
-                          : configAgenda.modalidades.filter((m) => m !== "virtual");
-                        setConfigAgenda({ ...configAgenda, modalidades: nuevas });
-                      }}
-                    />
-                    <Video size={16} color="#0284C7" />
-                    Teleconsulta (Videollamada)
-                  </label>
+            <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+              {/* 1. HORARIO LABORABLE NORMAL: 2 COLUMNAS (TELEMÁTICAS + OFICINA) */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                  gap: "16px",
+                }}
+              >
+                {/* COLUMNA 1: HORARIO NORMAL CONSULTAS TELEMÁTICAS */}
+                <section
+                  style={{
+                    borderRadius: "16px",
+                    border: "1px solid #DDD6FE",
+                    background: "#FAF8FF",
+                    padding: "16px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
+                  }}
+                >
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <div
+                        style={{
+                          width: "34px",
+                          height: "34px",
+                          borderRadius: "10px",
+                          background: "#5000BA",
+                          color: "#FFFFFF",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Video size={17} />
+                      </div>
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: "0.88rem", fontWeight: 800, color: "#0F172A" }}>
+                          Horario Normal — Consultas Telemáticas
+                        </h4>
+                        <p style={{ margin: "2px 0 0", fontSize: "0.72rem", color: "#64748B" }}>
+                          Videollamada (Por defecto Lun–Vie 08:00 a 19:00, Sáb 09:00 a 14:00)
+                        </p>
+                      </div>
+                    </div>
 
-                  <label
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      padding: "8px 14px",
-                      borderRadius: "10px",
-                      border: configAgenda.modalidades.includes("presencial") ? "2px solid #05876E" : "1px solid #D1D5DB",
-                      background: configAgenda.modalidades.includes("presencial") ? "#ECFDF5" : "#ffffff",
-                      fontWeight: 700,
-                      fontSize: "0.82rem",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={configAgenda.modalidades.includes("presencial")}
-                      onChange={(e) => {
-                        const nuevas = e.target.checked
-                          ? Array.from(new Set([...configAgenda.modalidades, "presencial" as const]))
-                          : configAgenda.modalidades.filter((m) => m !== "presencial");
-                        setConfigAgenda({ ...configAgenda, modalidades: nuevas });
-                      }}
-                    />
-                    <Building2 size={16} color="#05876E" />
-                    Atención Presencial (Consultorio / Despacho)
-                  </label>
-                </div>
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFranjasAgenda((prev) => [
+                            ...prev.filter((f) => f.modalidad === "presencial"),
+                            ...FRANJAS_VIRTUAL_DEFECTO,
+                          ])
+                        }
+                        style={{
+                          borderRadius: "8px",
+                          border: "1px solid #CBD5E1",
+                          background: "#FFFFFF",
+                          padding: "5px 9px",
+                          fontSize: "0.73rem",
+                          fontWeight: 700,
+                          color: "#334155",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Por Defecto
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFranjasAgenda((prev) => [
+                            ...prev,
+                            { dia_semana: 1, hora_inicio: "08:00", hora_fin: "19:00", modalidad: "virtual" },
+                          ])
+                        }
+                        style={{
+                          borderRadius: "8px",
+                          border: "none",
+                          background: "#5000BA",
+                          padding: "5px 10px",
+                          fontSize: "0.73rem",
+                          fontWeight: 700,
+                          color: "#FFFFFF",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        <Plus size={13} /> Añadir Día
+                      </button>
+                    </div>
+                  </div>
 
-                {configAgenda.modalidades.includes("presencial") && (
-                  <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.8rem", fontWeight: 700, marginTop: "12px" }}>
-                    Dirección del Consultorio / Despacho Presencial
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {franjasAgenda
+                      .map((f, idx) => ({ f, idx }))
+                      .filter(({ f }) => f.modalidad !== "presencial")
+                      .map(({ f, idx }) => (
+                        <div
+                          key={`virt-mod-${idx}`}
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: "8px",
+                            borderRadius: "10px",
+                            border: "1px solid #E2E8F0",
+                            background: "#FFFFFF",
+                            padding: "7px 10px",
+                          }}
+                        >
+                          <select
+                            value={f.dia_semana}
+                            onChange={(e) =>
+                              setFranjasAgenda((arr) =>
+                                arr.map((item, i) =>
+                                  i === idx ? { ...item, dia_semana: Number(e.target.value) } : item
+                                )
+                              )
+                            }
+                            style={{ padding: "6px 8px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.8rem", fontWeight: 600 }}
+                          >
+                            {DIAS_SEMANA_ORDENADOS.map((d) => (
+                              <option key={d.dia} value={d.dia}>{d.nombre}</option>
+                            ))}
+                          </select>
+
+                          <div style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "0.78rem" }}>
+                            <Clock size={13} color="#5000BA" />
+                            <input
+                              type="time"
+                              value={f.hora_inicio.slice(0, 5)}
+                              onChange={(e) =>
+                                setFranjasAgenda((arr) =>
+                                  arr.map((item, i) =>
+                                    i === idx ? { ...item, hora_inicio: e.target.value } : item
+                                  )
+                                )
+                              }
+                              style={{ padding: "5px 7px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.8rem", fontWeight: 600 }}
+                            />
+                            <span>a</span>
+                            <input
+                              type="time"
+                              value={f.hora_fin.slice(0, 5)}
+                              onChange={(e) =>
+                                setFranjasAgenda((arr) =>
+                                  arr.map((item, i) =>
+                                    i === idx ? { ...item, hora_fin: e.target.value } : item
+                                  )
+                                )
+                              }
+                              style={{ padding: "5px 7px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.8rem", fontWeight: 600 }}
+                            />
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => setFranjasAgenda((arr) => arr.filter((_, i) => i !== idx))}
+                            title="Quitar día telemático"
+                            style={{
+                              background: "#FFF1F2",
+                              color: "#E11D48",
+                              border: "1px solid #FEE2E2",
+                              borderRadius: "8px",
+                              padding: "6px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                </section>
+
+                {/* COLUMNA 2: HORARIO NORMAL CONSULTAS EN OFICINA */}
+                <section
+                  style={{
+                    borderRadius: "16px",
+                    border: "1px solid #CBD5E1",
+                    background: "#F8FAFC",
+                    padding: "16px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
+                  }}
+                >
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "8px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                      <div
+                        style={{
+                          width: "34px",
+                          height: "34px",
+                          borderRadius: "10px",
+                          background: "#0F172A",
+                          color: "#FFFFFF",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Building2 size={17} />
+                      </div>
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: "0.88rem", fontWeight: 800, color: "#0F172A" }}>
+                          Horario Normal — Consultas en Oficina
+                        </h4>
+                        <p style={{ margin: "2px 0 0", fontSize: "0.72rem", color: "#64748B" }}>
+                          Atención presencial en despacho (Por defecto Lun–Vie 09:00 a 17:30)
+                        </p>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFranjasAgenda((prev) => [
+                            ...prev.filter((f) => f.modalidad !== "presencial"),
+                            ...FRANJAS_PRESENCIAL_DEFECTO,
+                          ])
+                        }
+                        style={{
+                          borderRadius: "8px",
+                          border: "1px solid #CBD5E1",
+                          background: "#FFFFFF",
+                          padding: "5px 9px",
+                          fontSize: "0.73rem",
+                          fontWeight: 700,
+                          color: "#334155",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Por Defecto
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setFranjasAgenda((prev) => [
+                            ...prev,
+                            { dia_semana: 1, hora_inicio: "09:00", hora_fin: "17:30", modalidad: "presencial" },
+                          ])
+                        }
+                        style={{
+                          borderRadius: "8px",
+                          border: "none",
+                          background: "#0F172A",
+                          padding: "5px 10px",
+                          fontSize: "0.73rem",
+                          fontWeight: 700,
+                          color: "#FFFFFF",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        <Plus size={13} /> Añadir Día
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {franjasAgenda
+                      .map((f, idx) => ({ f, idx }))
+                      .filter(({ f }) => f.modalidad === "presencial")
+                      .map(({ f, idx }) => (
+                        <div
+                          key={`pres-mod-${idx}`}
+                          style={{
+                            display: "flex",
+                            flexWrap: "wrap",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: "8px",
+                            borderRadius: "10px",
+                            border: "1px solid #E2E8F0",
+                            background: "#FFFFFF",
+                            padding: "7px 10px",
+                          }}
+                        >
+                          <select
+                            value={f.dia_semana}
+                            onChange={(e) =>
+                              setFranjasAgenda((arr) =>
+                                arr.map((item, i) =>
+                                  i === idx ? { ...item, dia_semana: Number(e.target.value) } : item
+                                )
+                              )
+                            }
+                            style={{ padding: "6px 8px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.8rem", fontWeight: 600 }}
+                          >
+                            {DIAS_SEMANA_ORDENADOS.map((d) => (
+                              <option key={d.dia} value={d.dia}>{d.nombre}</option>
+                            ))}
+                          </select>
+
+                          <div style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "0.78rem" }}>
+                            <Clock size={13} color="#0F172A" />
+                            <input
+                              type="time"
+                              value={f.hora_inicio.slice(0, 5)}
+                              onChange={(e) =>
+                                setFranjasAgenda((arr) =>
+                                  arr.map((item, i) =>
+                                    i === idx ? { ...item, hora_inicio: e.target.value } : item
+                                  )
+                                )
+                              }
+                              style={{ padding: "5px 7px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.8rem", fontWeight: 600 }}
+                            />
+                            <span>a</span>
+                            <input
+                              type="time"
+                              value={f.hora_fin.slice(0, 5)}
+                              onChange={(e) =>
+                                setFranjasAgenda((arr) =>
+                                  arr.map((item, i) =>
+                                    i === idx ? { ...item, hora_fin: e.target.value } : item
+                                  )
+                                )
+                              }
+                              style={{ padding: "5px 7px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.8rem", fontWeight: 600 }}
+                            />
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => setFranjasAgenda((arr) => arr.filter((_, i) => i !== idx))}
+                            title="Quitar día presencial"
+                            style={{
+                              background: "#FFF1F2",
+                              color: "#E11D48",
+                              border: "1px solid #FEE2E2",
+                              borderRadius: "8px",
+                              padding: "6px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+
+                  <div style={{ paddingTop: "4px" }}>
+                    <label style={{ display: "block", fontSize: "0.74rem", fontWeight: 700, color: "#475569", marginBottom: "5px" }}>
+                      Dirección de la Oficina para Consultas Presenciales
+                    </label>
                     <input
                       type="text"
                       value={configAgenda.direccion ?? ""}
                       onChange={(e) => setConfigAgenda({ ...configAgenda, direccion: e.target.value })}
-                      placeholder="Ej. Av. República del Salvador y Naciones Unidas, Edif. Citiplaza, Of. 402"
-                      style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                      placeholder="Ej. Despacho Central Tranqi · Quito, Ecuador"
+                      style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", fontWeight: 600 }}
                     />
-                  </label>
-                )}
+                  </div>
+                </section>
               </div>
 
               {/* Parámetros de cita */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "12px", padding: "12px" }}>
                 <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.78rem", fontWeight: 700 }}>
                   Duración Cita
                   <select
@@ -2042,152 +2366,6 @@ export function GestionRedProfesionalWidget() {
                 </label>
               </div>
 
-              {/* Franjas Horarias */}
-              <div style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
-                  <span style={{ fontSize: "0.84rem", fontWeight: 800, color: "#111827", display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                    <Clock size={15} color="#5000BA" />
-                    Franjas Horarias Semanales ({huecosCalculadosModal} citas/semana)
-                  </span>
-                  <div style={{ display: "flex", gap: "6px" }}>
-                    <button
-                      type="button"
-                      onClick={() => setFranjasAgenda(FRANJAS_BASE)}
-                      style={{
-                        background: "#EEF2FF",
-                        color: "#4338CA",
-                        border: "1px solid #C7D2FE",
-                        borderRadius: "6px",
-                        padding: "4px 8px",
-                        fontSize: "0.73rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Lun–Vie 09:00–17:00
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setFranjasAgenda((prev) => [
-                          ...prev,
-                          { dia_semana: 1, hora_inicio: "09:00", hora_fin: "13:00", modalidad: "ambas" },
-                        ])
-                      }
-                      style={{
-                        background: "#05876E",
-                        color: "#ffffff",
-                        border: "none",
-                        borderRadius: "6px",
-                        padding: "4px 9px",
-                        fontSize: "0.73rem",
-                        fontWeight: 800,
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
-                      }}
-                    >
-                      <Plus size={12} /> Añadir Franja
-                    </button>
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  {franjasAgenda.map((f, idx) => (
-                    <div
-                      key={idx}
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "1.2fr 1fr 1fr 1.3fr auto",
-                        gap: "8px",
-                        alignItems: "center",
-                        background: "#ffffff",
-                        padding: "8px 10px",
-                        borderRadius: "8px",
-                        border: "1px solid #E5E7EB",
-                      }}
-                    >
-                      <select
-                        value={f.dia_semana}
-                        onChange={(e) =>
-                          setFranjasAgenda((arr) =>
-                            arr.map((item, i) =>
-                              i === idx ? { ...item, dia_semana: Number(e.target.value) } : item
-                            )
-                          )
-                        }
-                        style={{ padding: "6px", borderRadius: "6px", border: "1px solid #D1D5DB", fontSize: "0.8rem" }}
-                      >
-                        {DIAS_SEMANA.map((d: string, n: number) => (
-                          <option key={n} value={n}>{d}</option>
-                        ))}
-                      </select>
-
-                      <input
-                        type="time"
-                        value={f.hora_inicio.slice(0, 5)}
-                        onChange={(e) =>
-                          setFranjasAgenda((arr) =>
-                            arr.map((item, i) =>
-                              i === idx ? { ...item, hora_inicio: e.target.value } : item
-                            )
-                          )
-                        }
-                        style={{ padding: "6px", borderRadius: "6px", border: "1px solid #D1D5DB", fontSize: "0.8rem" }}
-                      />
-
-                      <input
-                        type="time"
-                        value={f.hora_fin.slice(0, 5)}
-                        onChange={(e) =>
-                          setFranjasAgenda((arr) =>
-                            arr.map((item, i) =>
-                              i === idx ? { ...item, hora_fin: e.target.value } : item
-                            )
-                          )
-                        }
-                        style={{ padding: "6px", borderRadius: "6px", border: "1px solid #D1D5DB", fontSize: "0.8rem" }}
-                      />
-
-                      <select
-                        value={f.modalidad}
-                        onChange={(e) =>
-                          setFranjasAgenda((arr) =>
-                            arr.map((item, i) =>
-                              i === idx
-                                ? { ...item, modalidad: e.target.value as Franja["modalidad"] }
-                                : item
-                            )
-                          )
-                        }
-                        style={{ padding: "6px", borderRadius: "6px", border: "1px solid #D1D5DB", fontSize: "0.8rem" }}
-                      >
-                        <option value="ambas">Presencial y Teleconsulta</option>
-                        <option value="virtual">Solo Teleconsulta</option>
-                        <option value="presencial">Solo Presencial</option>
-                      </select>
-
-                      <button
-                        type="button"
-                        onClick={() => setFranjasAgenda((arr) => arr.filter((_, i) => i !== idx))}
-                        title="Quitar franja"
-                        style={{
-                          background: "#FEF2F2",
-                          color: "#DC2626",
-                          border: "none",
-                          borderRadius: "6px",
-                          padding: "6px",
-                          cursor: "pointer",
-                        }}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
                 <button
                   type="button"
@@ -2211,13 +2389,13 @@ export function GestionRedProfesionalWidget() {
                     padding: "9px 18px",
                     borderRadius: "10px",
                     border: "none",
-                    background: "#05876E",
+                    background: "#5000BA",
                     color: "#ffffff",
                     fontWeight: 800,
                     cursor: "pointer",
                   }}
                 >
-                  {guardandoAgenda ? "Guardando..." : "Guardar Disponibilidad"}
+                  {guardandoAgenda ? "Guardando..." : "Guardar Horarios"}
                 </button>
               </div>
             </div>
