@@ -182,7 +182,7 @@ export function ComplianceScoreEmpresarial({ negocio = "tranqi", convenioId: pro
             fecha_lectura: new Date().toISOString(),
             archivo_analizado: "documento_oficial_firmado.pdf",
           },
-          cei_observaciones: "Validado automáticamente por ARIA: Documento oficial vigente sin tachaduras.",
+          cei_observaciones: "Validado automáticamente por Tranqi: Documento oficial vigente sin tachaduras.",
         });
       }
       setAnalizandoAria(false);
@@ -208,7 +208,7 @@ export function ComplianceScoreEmpresarial({ negocio = "tranqi", convenioId: pro
             </h2>
           </div>
           <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-            Matriz de obligaciones normativas, fechas de caducidad y auditoría continua con ARIA.
+            Matriz de obligaciones normativas, fechas de caducidad y auditoría continua con Tranqi.
           </p>
         </div>
 
@@ -592,7 +592,7 @@ export function ComplianceScoreEmpresarial({ negocio = "tranqi", convenioId: pro
                   <Sparkles className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                   <div>
                     <div className="font-bold text-indigo-950 dark:text-indigo-200">
-                      Lectura Automatizada con ARIA
+                      Lectura Automatizada con Tranqi
                     </div>
                     <div className="text-[11px] text-indigo-700 dark:text-indigo-300">
                       OCR inteligente para extraer vigencia y validar autenticidad.
@@ -611,7 +611,7 @@ export function ComplianceScoreEmpresarial({ negocio = "tranqi", convenioId: pro
                       <span>Analizando...</span>
                     </>
                   ) : (
-                    <span>Auditar con ARIA</span>
+                    <span>Auditar con Tranqi</span>
                   )}
                 </button>
               </div>

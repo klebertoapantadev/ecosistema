@@ -684,7 +684,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
     pro_negocio: "tranqi",
     pro_nombre: "Planes de Cobertura & Amparo Jurídico",
     pro_slug: "plan-proteccion",
-    pro_descripcion: "Suscripción legal continua con bolsa mensual de citas telemáticas, revisión de contratos y asistencia ARIA IA 24/7.",
+    pro_descripcion: "Suscripción legal continua con bolsa mensual de citas telemáticas, revisión de contratos y asistencia Tranqi IA 24/7.",
     pro_tipo: "SUSCRIPCION",
     pro_destacado: true,
     pro_categoria_principal_id: "cat-trq-planes",
@@ -706,7 +706,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
       beneficios: [
         "Bolsa mensual de citas telemáticas con abogados especialistas",
         "Revisiones y dictámenes express de contratos con semáforo de riesgos",
-        "Consultas ilimitadas 24/7 con asistente ARIA IA Legal",
+        "Consultas ilimitadas 24/7 con asistente Tranqi IA Legal",
         "Hasta 35% de descuento en trámites notariales y litigios",
         "Cobertura para titulares y núcleo familiar registrado",
       ],
@@ -724,7 +724,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
         var_id: "var-trq-plan-sos",
         var_producto_id: "prod-trq-plan-proteccion",
         var_sku: "TRQ-PLAN-SOS",
-        var_nombre: "Plan Cobertura SOS Individual (1 Cita/mes + ARIA 24/7)",
+        var_nombre: "Plan Cobertura SOS Individual (1 Cita/mes + Tranqi 24/7)",
         var_precio: 16.52,
         var_precio_comparacion: 22.0,
         var_codigo_impuesto_sri: "IVA_15",
@@ -740,7 +740,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
           derechos: [
             { concepto: "CONSULTA_TELEMATICA", nombre: "Citas Telemáticas", incluidos: 1 },
             { concepto: "REVISION_CONTRATO", nombre: "Revisión de Contrato Semestral", incluidos: 1 },
-            { concepto: "CONSULTA_ARIA_IA", nombre: "Consultas Ilimitadas ARIA 24/7", incluidos: null },
+            { concepto: "CONSULTA_ARIA_IA", nombre: "Consultas Ilimitadas Tranqi 24/7", incluidos: null },
             { concepto: "BOTON_SOS", nombre: "Asistencia SOS Flagrancia & Tránsito", incluidos: null },
           ],
         },
@@ -751,7 +751,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
         var_id: "var-trq-plan-amparo-fam",
         var_producto_id: "prod-trq-plan-proteccion",
         var_sku: "TRQ-PLAN-AMPARO-FAM",
-        var_nombre: "Plan Amparo Familiar (4 Citas + 2 Contratos + ARIA 24/7)",
+        var_nombre: "Plan Amparo Familiar (4 Citas + 2 Contratos + Tranqi 24/7)",
         var_precio: 30.0,
         var_precio_comparacion: 45.0,
         var_codigo_impuesto_sri: "IVA_15",
@@ -767,7 +767,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
           derechos: [
             { concepto: "CONSULTA_TELEMATICA", nombre: "Citas Telemáticas Especializadas", incluidos: 4 },
             { concepto: "REVISION_CONTRATO", nombre: "Revisiones y Dictámenes de Contratos", incluidos: 2 },
-            { concepto: "CONSULTA_ARIA_IA", nombre: "Consultas Ilimitadas ARIA 24/7", incluidos: null },
+            { concepto: "CONSULTA_ARIA_IA", nombre: "Consultas Ilimitadas Tranqi 24/7", incluidos: null },
             { concepto: "DESCUENTO_NOTARIAL", nombre: "35% Descuento en Trámites Notariales", incluidos: null, porcentaje: 35 },
           ],
         },
@@ -794,7 +794,7 @@ const PRODUCTOS_SEMILLA_TRANQI: ProductoCatalogo[] = [
           derechos: [
             { concepto: "CONSULTA_TELEMATICA", nombre: "Citas Telemáticas Anuales", incluidos: 48 },
             { concepto: "REVISION_CONTRATO", nombre: "Revisiones de Contratos Anuales", incluidos: 24 },
-            { concepto: "CONSULTA_ARIA_IA", nombre: "Consultas Ilimitadas ARIA 24/7", incluidos: null },
+            { concepto: "CONSULTA_ARIA_IA", nombre: "Consultas Ilimitadas Tranqi 24/7", incluidos: null },
             { concepto: "DESCUENTO_NOTARIAL", nombre: "40% Descuento Notarial & Litigios", incluidos: null, porcentaje: 40 },
           ],
         },
@@ -7112,7 +7112,7 @@ export async function activarSuscripcionTrasPagoAction(datos: {
   const derechosDef = varDetalle.derechos || [
     { concepto: "CONSULTA_TELEMATICA", nombre: "Citas Telemáticas Especializadas", incluidos: 4 },
     { concepto: "REVISION_CONTRATO", nombre: "Revisiones y Dictámenes de Contratos", incluidos: 2 },
-    { concepto: "CONSULTA_ARIA_IA", nombre: "Consultas Ilimitadas Asistente ARIA IA 24/7", incluidos: null },
+    { concepto: "CONSULTA_ARIA_IA", nombre: "Consultas Ilimitadas Asistente Tranqi IA 24/7", incluidos: null },
     { concepto: "DESCUENTO_NOTARIAL", nombre: "Descuento en Trámites Notariales", incluidos: null, porcentaje: 35 },
   ];
 

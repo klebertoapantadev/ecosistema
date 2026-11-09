@@ -524,7 +524,7 @@ export function SeccionCoberturaCliente({
                       textDecoration: "none",
                     }}
                   >
-                    Abrir Chat con ARIA <Sparkles size={14} />
+                    Abrir Chat con Tranqi <Sparkles size={14} />
                   </Link>
                 )}
 
@@ -592,7 +592,7 @@ export function SeccionCoberturaCliente({
               derechos: [
                 { concepto: "CONSULTA_TELEMATICA", nombre: "Citas Telemáticas Especializadas", incluidos: 4 },
                 { concepto: "REVISION_CONTRATO", nombre: "Revisiones y Dictámenes de Contratos", incluidos: 2 },
-                { concepto: "CONSULTA_ARIA_IA", nombre: "Consultas Ilimitadas Asistente ARIA IA 24/7", incluidos: null },
+                { concepto: "CONSULTA_ARIA_IA", nombre: "Consultas Ilimitadas Asistente Tranqi IA 24/7", incluidos: null },
                 { concepto: "DESCUENTO_NOTARIAL", nombre: "Descuento en Trámites Notariales", incluidos: null, porcentaje: 35 },
               ],
             },

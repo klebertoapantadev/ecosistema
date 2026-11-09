@@ -155,7 +155,7 @@ export function TableroDisponibilidadOperativa({
     try {
       const res = await actualizarDisponibilidadOperativaAction(negocio, items);
       if (res.ok) {
-        setMensajeExito("¡Disponibilidad sincronizada con la Web, agenda y ARIA MCP!");
+        setMensajeExito("¡Disponibilidad sincronizada con la Web, agenda y Tranqi MCP!");
         setTimeout(() => setMensajeExito(null), 4000);
       } else {
         setError(res.error || "No se pudo guardar la disponibilidad");
@@ -202,7 +202,7 @@ export function TableroDisponibilidadOperativa({
       const res = await aprobarPropuestaDisponibilidadAction(negocio, itemId, horas);
       if (res.ok && res.items) {
         setItems(res.items);
-        setMensajeExito("✅ Propuesta de horas aprobada y activada en el catálogo y ARIA.");
+        setMensajeExito("✅ Propuesta de horas aprobada y activada en el catálogo y Tranqi.");
         setTimeout(() => setMensajeExito(null), 4000);
       } else {
         setError(res.error || "Error al aprobar la propuesta.");
@@ -376,7 +376,7 @@ export function TableroDisponibilidadOperativa({
                 }}
               >
                 <Bot size={12} />
-                ARIA MCP Sincronizado
+                Tranqi MCP Sincronizado
               </span>
             </div>
             <p
@@ -387,7 +387,7 @@ export function TableroDisponibilidadOperativa({
               }}
             >
               {esLegal
-                ? "Gestión de turnos y cupos de atención profesional. Los abogados proponen horas preliminares y el operador aprueba para activar en Web y ARIA."
+                ? "Gestión de turnos y cupos de atención profesional. Los abogados proponen horas preliminares y el operador aprueba para activar en Web y Tranqi."
                 : esFloristeria
                 ? "Actualiza en segundos los bonches (25 tallos) y colores de rosas disponibles para la web y el bot de WhatsApp."
                 : "Control de cuadrillas técnicas disponibles para emergencias (45-60 min) y visitas programadas."}

@@ -1535,7 +1535,7 @@ export function ModalCrearProducto({
               </span>
             </div>
             <p style={{ fontSize: "0.73rem", color: "#64748B", margin: "0 0 10px 0", lineHeight: 1.4 }}>
-              Marca los escenarios donde los agentes de IA (como ARIA) deben recomendar este ítem:
+              Marca los escenarios donde los agentes de IA (como Tranqi) deben recomendar este ítem:
             </p>
 
             {/* Feedback tras eliminar uso */}

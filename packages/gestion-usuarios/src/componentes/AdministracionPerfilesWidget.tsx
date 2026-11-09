@@ -636,8 +636,8 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
   },
   {
     clave: "agentes_ia",
-    nombre: "Agentes de Inteligencia Artificial (Aria)",
-    descripcion: "Configuración y gobernanza de asistentes Aria: prompts, modelo y herramientas conectadas.",
+    nombre: "Agentes de Inteligencia Artificial (Tranqi)",
+    descripcion: "Configuración y gobernanza de asistentes Tranqi: prompts, modelo y herramientas conectadas.",
     categoria: "Configuración",
     ruta: "/panel/agentes",
     rutaFisica: "/agentes/page.tsx",
@@ -857,7 +857,7 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
   {
     clave: "horarios_atencion_agenda",
     nombre: "Horarios de Atención (Telemático y Presencial)",
-    descripcion: "Configuración de horarios por defecto para consultas telemáticas y presenciales, especialidad por defecto para ARIA y agendamiento sin abogado disponible.",
+    descripcion: "Configuración de horarios por defecto para consultas telemáticas y presenciales, especialidad por defecto para Tranqi y agendamiento sin abogado disponible.",
     categoria: "Agenda",
     ruta: "/panel/agendamiento?widget=horarios_atencion_agenda",
     rutaFisica: "/agenda/componentes/ConfiguracionHorariosAtencionWidget.tsx",
@@ -952,10 +952,10 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
             <Scale size={18} /> Disponibilidad de Abogados & Turnos
           </div>
           <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
-            Gestión de turnos y cupos. Postulación preliminar por abogados y aprobación por operadores con sincronización ARIA.
+            Gestión de turnos y cupos. Postulación preliminar por abogados y aprobación por operadores con sincronización Tranqi.
           </p>
           <div style={{ padding: "12px", background: "#F5F3FF", borderRadius: "8px", border: "1px dashed #DDD6FE", textAlign: "center", fontSize: "0.82rem", color: "#5B21B6", fontWeight: 700 }}>
-            Postulación Preliminar · Aprobación Operador · Sincronización ARIA MCP
+            Postulación Preliminar · Aprobación Operador · Sincronización Tranqi MCP
           </div>
         </div>
       );
@@ -1069,13 +1069,13 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
       return (
         <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid var(--violeta, #5000BA)", boxShadow: "0 4px 12px rgba(80,0,186,0.08)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "var(--violeta, #5000BA)", marginBottom: "10px" }}>
-            <Sparkles size={18} /> Agentes de Inteligencia Artificial (Aria)
+            <Sparkles size={18} /> Agentes de Inteligencia Artificial (Tranqi)
           </div>
           <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
-            Gestión de prompts maestros, temperatura, herramientas conectadas y memoria contextual de Aria para {negocio.toUpperCase()}.
+            Gestión de prompts maestros, temperatura, herramientas conectadas y memoria contextual de Tranqi para {negocio.toUpperCase()}.
           </p>
           <div style={{ padding: "12px", background: "#F5F3FF", borderRadius: "8px", border: "1px dashed #DDD6FE", textAlign: "center", fontSize: "0.82rem", color: "#4C1D95", fontWeight: 700 }}>
-            Aria Buddie · Integración WhatsApp YCloud · Memoria Conversacional
+            Agente Tranqi · Integración WhatsApp YCloud · Memoria Conversacional
           </div>
         </div>
       );
@@ -1251,10 +1251,10 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
             <Sliders size={18} /> Horarios de Atención (Telemático y Presencial)
           </div>
           <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
-            Configuración de franjas por defecto para consultas telemáticas y presenciales, especialidad por defecto para ARIA y agendamiento sin abogado disponible.
+            Configuración de franjas por defecto para consultas telemáticas y presenciales, especialidad por defecto para Tranqi y agendamiento sin abogado disponible.
           </p>
           <div style={{ padding: "12px", background: "#F5F3FF", borderRadius: "8px", border: "1px dashed #DDD6FE", textAlign: "center", fontSize: "0.82rem", color: "#5B21B6", fontWeight: 700 }}>
-            Horario Telemático · Horario Presencial · Especialidad por Defecto ARIA
+            Horario Telemático · Horario Presencial · Especialidad por Defecto Tranqi
           </div>
         </div>
       );

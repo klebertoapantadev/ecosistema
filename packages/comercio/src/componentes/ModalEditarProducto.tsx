@@ -3184,7 +3184,7 @@ export function ModalEditarProducto({
                   </span>
                 </div>
                 <p style={{ fontSize: "0.73rem", color: "#64748B", margin: "0 0 10px 0", lineHeight: 1.4 }}>
-                  Marca los escenarios donde los agentes de IA (como ARIA) y los filtros deben recomendar este ítem. Los productos sin un uso específico (ej. <em>Condolencias</em>) serán excluidos automáticamente de esas consultas.
+                  Marca los escenarios donde los agentes de IA (como Tranqi) y los filtros deben recomendar este ítem. Los productos sin un uso específico (ej. <em>Condolencias</em>) serán excluidos automáticamente de esas consultas.
                 </p>
 
                 {/* Mensaje de feedback tras eliminar uso */}
@@ -4825,7 +4825,7 @@ export function ModalEditarProducto({
                     ) : (
                       <div>
                         <p style={{ fontSize: "0.7rem", color: "#64748B", margin: "0 0 8px 0" }}>
-                          Configura para qué ocasiones la IA (ARIA) y los filtros recomendarán específicamente este tamaño:
+                          Configura para qué ocasiones la IA (Tranqi) y los filtros recomendarán específicamente este tamaño:
                         </p>
 
                         {/* Grid Unificado de Usos para la Variante (Presets + Personalizados) */}

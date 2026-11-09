@@ -2782,7 +2782,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
       <div style={{ marginTop: "16px", marginBottom: "18px" }}>
         <CampoSubidaArchivo
           etiqueta="Carnet Profesional / Matrícula Oficial (Único Requisito Obligatorio) • [Repositorio: Acreditación]"
-          subtitulo="Sube una fotografía clara o tómala con tu cámara. ARIA leerá automáticamente tu matrícula profesional, cédula y nombres. Este es el ÚNICO requisito obligatorio para afiliarte a la red."
+          subtitulo="Sube una fotografía clara o tómala con tu cámara. Tranqi leerá automáticamente tu matrícula profesional, cédula y nombres. Este es el ÚNICO requisito obligatorio para afiliarte a la red."
           aceptar="image/jpeg,image/png,image/webp"
           multiple={false}
           archivos={carnetArchivos}
@@ -2796,7 +2796,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         {analizandoCarnetAria && (
           <div style={{ padding: "12px 16px", background: "rgba(80, 0, 186, 0.06)", border: "1.5px dashed #5000BA", borderRadius: "10px", marginTop: "10px", display: "flex", alignItems: "center", gap: "10px", fontSize: "0.84rem", color: "#5000BA", fontWeight: 700 }}>
             <Sparkles size={18} color="#5000BA" />
-            <span>✨ ARIA está procesando y leyendo tu Carnet Profesional para autocompletar tus datos oficiales...</span>
+            <span>✨ Tranqi está procesando y leyendo tu Carnet Profesional para autocompletar tus datos oficiales...</span>
           </div>
         )}
 
@@ -2804,7 +2804,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         {dictamenAriaCarnet && (
           <div style={{ padding: "14px 18px", background: "rgba(5, 135, 110, 0.05)", border: "1.5px solid #05876E", borderRadius: "12px", marginTop: "10px", fontSize: "0.84rem", color: "#065F46" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, color: "#05876E", marginBottom: "8px" }}>
-              <CheckCircle2 size={18} /> Datos Extraídos por ARIA desde tu Carnet Profesional
+              <CheckCircle2 size={18} /> Datos Extraídos por Tranqi desde tu Carnet Profesional
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "8px" }}>
               <div><strong>Titular Oficial:</strong> {dictamenAriaCarnet.titular || `${nombres} ${apellidos}`}</div>
@@ -2983,7 +2983,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
       {/* Identidad Oficial: Nombres Completos, Cédula y Matrícula */}
       <div style={{ background: "rgba(80, 0, 186, 0.03)", border: "1px solid rgba(80, 0, 186, 0.15)", borderRadius: "14px", padding: "18px", marginBottom: "20px" }}>
         <span style={{ fontSize: "0.88rem", fontWeight: 800, color: "#5000BA", display: "flex", alignItems: "center", gap: "6px", marginBottom: "12px" }}>
-          <ShieldCheck size={16} /> Identidad Oficial del Titular (Extraída por ARIA desde tu Carnet)
+          <ShieldCheck size={16} /> Identidad Oficial del Titular (Extraída por Tranqi desde tu Carnet)
         </span>
 
         <div className="fila-dos-columnas">

@@ -2924,7 +2924,7 @@ export async function enviarInvitacionesRegistroAbogadosAction(entrada: {
             <ul style="margin: 0; padding-left: 18px; font-size: 13.5px; color: #4B5563; line-height: 1.6;">
               <li>Agenda inteligente de citas presenciales y teleconsulta en tus horarios disponibles.</li>
               <li>Asignación de consultas y patrocinio según tus especialidades legales y provincias de cobertura.</li>
-              <li>Herramientas digitales de firma electrónica PAdES (.p12), billetera documental y asistencia IA con ARIA.</li>
+              <li>Herramientas digitales de firma electrónica PAdES (.p12), billetera documental y asistencia IA con Tranqi.</li>
             </ul>
           </div>
           <div style="text-align: center; margin: 28px 0;">

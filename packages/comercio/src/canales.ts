@@ -33,7 +33,7 @@ export const CANALES_CATALOGO_OFICIALES: InfoCanalVisibilidad[] = [
   },
   {
     clave: "CHATBOT_WEB",
-    nombre: "Chatbot Web (ARIA)",
+    nombre: "Chatbot Web (Tranqi)",
     descripcion: "Asistente conversacional en portal web",
     icono: "Bot",
     color: "#059669",
@@ -48,7 +48,7 @@ export const CANALES_CATALOGO_OFICIALES: InfoCanalVisibilidad[] = [
   {
     clave: "CHATBOT_WHATSAPP",
     nombre: "Chatbot WhatsApp",
-    descripcion: "Agente ARIA por WhatsApp (YCloud / n8n)",
+    descripcion: "Agente Tranqi por WhatsApp (YCloud / n8n)",
     icono: "MessageCircle",
     color: "#16A34A",
   },
