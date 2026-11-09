@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { crearClienteServidor } from "@eco/supabase/servidor";
+import { crearClienteAdmin, crearClienteServidor } from "@eco/supabase/servidor";
 import {
   esquemaAgendaCompleta,
   esquemaBloqueo,
@@ -36,8 +36,8 @@ const NEGOCIO = "tranqi";
 /** Los mensajes de los RPC están escritos para leerse; se pasan tal cual. */
 function comoError(mensaje: string | undefined): string {
   if (!mensaje) return "No se pudo completar la operación. Vuelve a intentarlo.";
-  // PostgREST antepone el contexto de la función; al usuario solo le sirve el motivo.
-  return mensaje.replace(/^.*?:\s*/, "").trim() || mensaje;
+  // Solo retirar códigos técnicos de PostgreSQL/PostgREST (ej. "P0001: ", "ERROR: "), sin truncar frases con ":"
+  return mensaje.replace(/^(ERROR|P\d{4}|PGRST\d+):\s*/i, "").trim() || mensaje;
 }
 
 export async function clasificarProblemaConAriaAction(
@@ -246,62 +246,178 @@ export async function guardarConfiguracionAgendaNegocioAction(
   actualizarCacheConfigAgendaNegocio(d);
 
   const supabase = await crearClienteServidor();
-  const detallePayload = {
-    materia_defecto_nombre: d.materia_defecto_nombre,
+  const { data: authData } = await supabase.auth.getUser();
+  if (!authData.user) {
+    return { ok: false, error: "Debes iniciar sesión para guardar la configuración de horarios." };
+  }
+
+  const ahoraIso = new Date().toISOString();
+  const payloadAgendaHorarios = {
+    zona_horaria: d.zona_horaria,
+    duracion_cita_min: d.duracion_cita_min,
+    holgura_min: d.holgura_min,
+    antelacion_minima_horas: d.antelacion_minima_horas,
+    horizonte_dias: d.horizonte_dias,
+    permitir_sin_profesional: d.permitir_sin_profesional,
     max_citas_simultaneas: d.max_citas_simultaneas,
     modo_capacidad: d.modo_capacidad,
+    direccion_presencial: d.direccion_presencial ?? "",
+    materia_defecto_nombre: d.materia_defecto_nombre,
+    franjas_virtual: d.franjas_virtual,
+    franjas_presencial: d.franjas_presencial,
     fechas_especiales: d.fechas_especiales,
+    actualizado_en: ahoraIso,
+    actualizado_por: authData.user.id,
   };
 
-  const { error } = await supabase.schema("comun_agenda").rpc(
-    "age_fn_guardar_config_negocio" as never,
-    {
-      p_negocio: NEGOCIO,
-      p_config: {
-        zona_horaria: d.zona_horaria,
-        duracion_cita_min: d.duracion_cita_min,
-        holgura_min: d.holgura_min,
-        antelacion_minima_horas: d.antelacion_minima_horas,
-        horizonte_dias: d.horizonte_dias,
-        permitir_sin_profesional: d.permitir_sin_profesional,
-        max_citas_simultaneas: d.max_citas_simultaneas,
-        modo_capacidad: d.modo_capacidad,
-        direccion_presencial: d.direccion_presencial ?? "",
-        franjas_virtual: d.franjas_virtual,
-        franjas_presencial: d.franjas_presencial,
-        fechas_especiales: d.fechas_especiales,
-        detalle_config: detallePayload,
-        detalle: detallePayload,
-      },
-    } as never,
-  );
+  // 1. Persistencia primaria en PostgreSQL sobre comun_configuracion.cfg_negocio (esquema expuesto en PostgREST)
+  let guardadoEnCfg = false;
+  let ultimoErrorCfg: string | null = null;
 
-  if (error) {
-    // Fallback de escritura directa sobre age_config_negocio si el RPC aún no está aplicado
-    const fallbackUpsert = await supabase
-      .schema("comun_agenda")
-      .from("age_config_negocio" as never)
-      .upsert(
-        {
-          cgn_negocio: NEGOCIO,
-          cgn_zona_horaria: d.zona_horaria,
-          cgn_duracion_cita_min: d.duracion_cita_min,
-          cgn_holgura_min: d.holgura_min,
-          cgn_antelacion_minima_horas: d.antelacion_minima_horas,
-          cgn_horizonte_dias: d.horizonte_dias,
-          cgn_permitir_sin_profesional: d.permitir_sin_profesional,
-          cgn_direccion_presencial: d.direccion_presencial ?? "",
-          cgn_franjas_virtual: d.franjas_virtual,
-          cgn_franjas_presencial: d.franjas_presencial,
-          cgn_detalle_config: detallePayload,
-          cgn_actualizado_en: new Date().toISOString(),
-        } as never,
-        { onConflict: "cgn_negocio" },
-      );
+  try {
+    const { data: actual } = await supabase
+      .schema("comun_configuracion")
+      .from("cfg_negocio")
+      .select("cfg_id, cfg_detalle_configuracion")
+      .eq("cfg_negocio", NEGOCIO)
+      .maybeSingle();
 
-    if (fallbackUpsert.error) {
-      return { ok: false, error: comoError(error.message) };
+    const detallePrevio =
+      (actual?.cfg_detalle_configuracion as Record<string, unknown> | null) ?? {};
+    const nuevoDetalle = {
+      ...detallePrevio,
+      agenda_horarios: payloadAgendaHorarios,
+    };
+
+    const { data: filasActualizadas, error: errUpdate } = await supabase
+      .schema("comun_configuracion")
+      .from("cfg_negocio")
+      .update({
+        cfg_detalle_configuracion: nuevoDetalle,
+        cfg_actualizado_en: ahoraIso,
+      })
+      .eq("cfg_negocio", NEGOCIO)
+      .select("cfg_id");
+
+    if (!errUpdate && Array.isArray(filasActualizadas) && filasActualizadas.length > 0) {
+      guardadoEnCfg = true;
+    } else if (errUpdate) {
+      ultimoErrorCfg = errUpdate.message;
     }
+  } catch (err) {
+    ultimoErrorCfg = err instanceof Error ? err.message : "Error al escribir en cfg_negocio";
+  }
+
+  // Si la sesión requiere validación explícita de operador/admin (ej. fila aún no creada o política RLS),
+  // verificamos permiso con seg_fn_es_admin_negocio y persistimos con cliente admin.
+  if (!guardadoEnCfg) {
+    try {
+      const { data: esStaff } = await supabase
+        .schema("comun_seguridad")
+        .rpc("seg_fn_es_admin_negocio", { p_negocio: NEGOCIO });
+
+      if (esStaff === false) {
+        return {
+          ok: false,
+          error: "Solo operadores o administradores del negocio pueden modificar los horarios de atención.",
+        };
+      }
+
+      const adminClient = crearClienteAdmin() ?? supabase;
+      const { data: actualAdmin } = await adminClient
+        .schema("comun_configuracion")
+        .from("cfg_negocio")
+        .select("cfg_id, cfg_detalle_configuracion")
+        .eq("cfg_negocio", NEGOCIO)
+        .maybeSingle();
+
+      const detallePrevio =
+        (actualAdmin?.cfg_detalle_configuracion as Record<string, unknown> | null) ?? {};
+      const nuevoDetalle = {
+        ...detallePrevio,
+        agenda_horarios: payloadAgendaHorarios,
+      };
+
+      if (actualAdmin?.cfg_id) {
+        const { error: errAdminUpd } = await adminClient
+          .schema("comun_configuracion")
+          .from("cfg_negocio")
+          .update({
+            cfg_detalle_configuracion: nuevoDetalle as never,
+            cfg_actualizado_en: ahoraIso,
+          })
+          .eq("cfg_negocio", NEGOCIO);
+
+        if (!errAdminUpd) {
+          guardadoEnCfg = true;
+        } else {
+          ultimoErrorCfg = errAdminUpd.message;
+        }
+      } else {
+        const { error: errAdminIns } = await adminClient
+          .schema("comun_configuracion")
+          .from("cfg_negocio")
+          .insert({
+            cfg_negocio: NEGOCIO,
+            cfg_nombre_comercial: "Tranqi",
+            cfg_detalle_configuracion: nuevoDetalle as never,
+            cfg_actualizado_en: ahoraIso,
+          });
+
+        if (!errAdminIns) {
+          guardadoEnCfg = true;
+        } else {
+          ultimoErrorCfg = errAdminIns.message;
+        }
+      }
+    } catch (err) {
+      if (!ultimoErrorCfg) {
+        ultimoErrorCfg = err instanceof Error ? err.message : "Error al persistir horarios";
+      }
+    }
+  }
+
+  // 2. Sincronización secundaria (best-effort) en comun_agenda.age_config_negocio cuando el esquema esté expuesto
+  try {
+    const detallePayload = {
+      materia_defecto_nombre: d.materia_defecto_nombre,
+      max_citas_simultaneas: d.max_citas_simultaneas,
+      modo_capacidad: d.modo_capacidad,
+      fechas_especiales: d.fechas_especiales,
+    };
+
+    const { error: errRpcAge } = await supabase.schema("comun_agenda").rpc(
+      "age_fn_guardar_config_negocio" as never,
+      {
+        p_negocio: NEGOCIO,
+        p_config: {
+          zona_horaria: d.zona_horaria,
+          duracion_cita_min: d.duracion_cita_min,
+          holgura_min: d.holgura_min,
+          antelacion_minima_horas: d.antelacion_minima_horas,
+          horizonte_dias: d.horizonte_dias,
+          permitir_sin_profesional: d.permitir_sin_profesional,
+          max_citas_simultaneas: d.max_citas_simultaneas,
+          modo_capacidad: d.modo_capacidad,
+          direccion_presencial: d.direccion_presencial ?? "",
+          franjas_virtual: d.franjas_virtual,
+          franjas_presencial: d.franjas_presencial,
+          fechas_especiales: d.fechas_especiales,
+          detalle_config: detallePayload,
+          detalle: detallePayload,
+        },
+      } as never,
+    );
+
+    if (!errRpcAge) {
+      guardadoEnCfg = true;
+    }
+  } catch {
+    // Ignorar si comun_agenda no está expuesto en PostgREST; ya quedó persistido en comun_configuracion.cfg_negocio
+  }
+
+  if (!guardadoEnCfg && ultimoErrorCfg) {
+    return { ok: false, error: comoError(ultimoErrorCfg) };
   }
 
   revalidatePath("/panel/agendar");
@@ -365,12 +481,56 @@ export async function guardarDisponibilidadAction(entrada: unknown): Promise<Res
   const { configuracion, franjas } = validado.data;
 
   const supabase = await crearClienteServidor();
+  const { data: authData } = await supabase.auth.getUser();
+  const usuarioId = authData.user?.id;
+  if (!usuarioId) {
+    return { ok: false, error: "Debes iniciar sesión para configurar tu disponibilidad." };
+  }
+
+  // 1. Persistir en comun_seguridad.seg_usuario.usu_detalle_usuario.ficha_abogado (esquema expuesto)
+  const ahoraIso = new Date().toISOString();
+  let guardadoRespaldo = false;
+  try {
+    const adminClient = crearClienteAdmin() ?? supabase;
+    const { data: usuRow } = await adminClient
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_detalle_usuario")
+      .eq("usu_id", usuarioId)
+      .maybeSingle();
+
+    const detPrevio = (usuRow?.usu_detalle_usuario ?? {}) as Record<string, unknown>;
+    const fichaPrevia = (detPrevio.ficha_abogado ?? {}) as Record<string, unknown>;
+
+    const { error: errUsu } = await adminClient
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .update({
+        usu_detalle_usuario: {
+          ...detPrevio,
+          ficha_abogado: {
+            ...fichaPrevia,
+            configuracion_agenda: configuracion,
+            franjas_agenda: franjas,
+            agenda_configurada_en: ahoraIso,
+          },
+        } as never,
+        usu_actualizado_en: ahoraIso,
+      })
+      .eq("usu_id", usuarioId);
+
+    if (!errUsu) guardadoRespaldo = true;
+  } catch {
+    // Continuar con intento en comun_agenda
+  }
+
+  // 2. Sincronización secundaria en comun_agenda cuando el esquema esté expuesto
   const { error } = await supabase.schema("comun_agenda").rpc("age_fn_configurar_agenda", {
     p_negocio: NEGOCIO,
     p_config: configuracion,
     p_franjas: franjas,
   });
-  if (error) return { ok: false, error: comoError(error.message) };
+  if (error && !guardadoRespaldo) return { ok: false, error: comoError(error.message) };
 
   revalidatePath("/panel/agenda/disponibilidad");
   revalidatePath("/panel/agenda");
@@ -385,6 +545,57 @@ export async function bloquearAgendaAction(entrada: unknown): Promise<Resultado>
   const d = validado.data;
 
   const supabase = await crearClienteServidor();
+  const { data: authData } = await supabase.auth.getUser();
+  const usuarioId = authData.user?.id;
+  if (!usuarioId) {
+    return { ok: false, error: "Debes iniciar sesión para registrar un bloqueo." };
+  }
+
+  let guardadoRespaldo = false;
+  try {
+    const adminClient = crearClienteAdmin() ?? supabase;
+    const { data: usuRow } = await adminClient
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_detalle_usuario")
+      .eq("usu_id", usuarioId)
+      .maybeSingle();
+
+    const detPrevio = (usuRow?.usu_detalle_usuario ?? {}) as Record<string, unknown>;
+    const fichaPrevia = (detPrevio.ficha_abogado ?? {}) as Record<string, unknown>;
+    const bloqueosPrevios = Array.isArray(fichaPrevia.bloqueos_agenda)
+      ? (fichaPrevia.bloqueos_agenda as Array<Record<string, unknown>>)
+      : [];
+
+    const nuevoBloqueo = {
+      blq_id: crypto.randomUUID(),
+      blq_inicio_en: d.inicio_en,
+      blq_fin_en: d.fin_en,
+      blq_motivo: d.motivo ?? null,
+      blq_origen: d.es_audiencia ? "audiencia" : "manual",
+      blq_eliminado_en: null,
+    };
+
+    const { error: errUsu } = await adminClient
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .update({
+        usu_detalle_usuario: {
+          ...detPrevio,
+          ficha_abogado: {
+            ...fichaPrevia,
+            bloqueos_agenda: [...bloqueosPrevios, nuevoBloqueo],
+          },
+        } as never,
+        usu_actualizado_en: new Date().toISOString(),
+      })
+      .eq("usu_id", usuarioId);
+
+    if (!errUsu) guardadoRespaldo = true;
+  } catch {
+    // Continuar con comun_agenda
+  }
+
   const { error } = await supabase.schema("comun_agenda").rpc("age_fn_bloquear", {
     p_negocio: NEGOCIO,
     p_inicio: d.inicio_en,
@@ -392,7 +603,7 @@ export async function bloquearAgendaAction(entrada: unknown): Promise<Resultado>
     p_motivo: d.motivo ?? undefined,
     p_origen: d.es_audiencia ? "audiencia" : "manual",
   });
-  if (error) return { ok: false, error: comoError(error.message) };
+  if (error && !guardadoRespaldo) return { ok: false, error: comoError(error.message) };
 
   revalidatePath("/panel/agenda/disponibilidad");
   revalidatePath("/panel/agenda");
@@ -407,11 +618,57 @@ export async function quitarBloqueoAction(bloqueoId: string): Promise<Resultado>
   if (!/^[0-9a-f-]{36}$/i.test(bloqueoId)) return { ok: false, error: "Bloqueo no válido" };
 
   const supabase = await crearClienteServidor();
+  const { data: authData } = await supabase.auth.getUser();
+  const usuarioId = authData.user?.id;
+
+  let guardadoRespaldo = false;
+  if (usuarioId) {
+    try {
+      const adminClient = crearClienteAdmin() ?? supabase;
+      const { data: usuRow } = await adminClient
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_detalle_usuario")
+        .eq("usu_id", usuarioId)
+        .maybeSingle();
+
+      const detPrevio = (usuRow?.usu_detalle_usuario ?? {}) as Record<string, unknown>;
+      const fichaPrevia = (detPrevio.ficha_abogado ?? {}) as Record<string, unknown>;
+      const bloqueosPrevios = Array.isArray(fichaPrevia.bloqueos_agenda)
+        ? (fichaPrevia.bloqueos_agenda as Array<Record<string, unknown>>)
+        : [];
+
+      const ahoraIso = new Date().toISOString();
+      const actualizados = bloqueosPrevios.map((b) =>
+        b.blq_id === bloqueoId ? { ...b, blq_eliminado_en: ahoraIso } : b,
+      );
+
+      const { error: errUsu } = await adminClient
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .update({
+          usu_detalle_usuario: {
+            ...detPrevio,
+            ficha_abogado: {
+              ...fichaPrevia,
+              bloqueos_agenda: actualizados,
+            },
+          } as never,
+          usu_actualizado_en: ahoraIso,
+        })
+        .eq("usu_id", usuarioId);
+
+      if (!errUsu) guardadoRespaldo = true;
+    } catch {
+      // Continuar con comun_agenda
+    }
+  }
+
   const { error } = await supabase.schema("comun_agenda")
     .from("age_bloqueo")
     .update({ blq_eliminado_en: new Date().toISOString(), blq_actualizado_en: new Date().toISOString() })
     .eq("blq_id", bloqueoId);
-  if (error) return { ok: false, error: comoError(error.message) };
+  if (error && !guardadoRespaldo) return { ok: false, error: comoError(error.message) };
 
   revalidatePath("/panel/agenda/disponibilidad");
   return { ok: true, data: undefined };

@@ -102,9 +102,110 @@ export function actualizarCacheConfigAgendaNegocio(nueva: DatosConfigNegocioAgen
   cacheConfigNegocioMemoria = nueva;
 }
 
+function normalizarConfiguracionAgendaDesdeObjeto(
+  origen: Record<string, unknown>,
+  detalleExtra?: Record<string, unknown>,
+): DatosConfigNegocioAgenda {
+  const det = { ...(detalleExtra ?? {}), ...origen };
+
+  const franjasVirtualRaw = det.franjas_virtual ?? det.cgn_franjas_virtual;
+  const franjasVirtual =
+    Array.isArray(franjasVirtualRaw) && franjasVirtualRaw.length > 0
+      ? (franjasVirtualRaw as FranjaHorarioNegocio[])
+      : FRANJAS_VIRTUAL_DEFECTO;
+
+  const franjasPresencialRaw = det.franjas_presencial ?? det.cgn_franjas_presencial;
+  const franjasPresencial =
+    Array.isArray(franjasPresencialRaw) && franjasPresencialRaw.length > 0
+      ? (franjasPresencialRaw as FranjaHorarioNegocio[])
+      : FRANJAS_PRESENCIAL_DEFECTO;
+
+  const fechasEspecialesRaw = det.fechas_especiales ?? det.cgn_fechas_especiales;
+  const fechasEspeciales: FechaEspecialAgenda[] = Array.isArray(fechasEspecialesRaw)
+    ? (fechasEspecialesRaw as FechaEspecialAgenda[])
+    : FECHAS_ESPECIALES_DEFECTO;
+
+  const maxCitasRaw =
+    typeof det.max_citas_simultaneas === "number"
+      ? det.max_citas_simultaneas
+      : typeof det.cgn_max_citas_simultaneas === "number"
+        ? det.cgn_max_citas_simultaneas
+        : 1;
+
+  const modoRaw = det.modo_capacidad;
+  const modoCapacidad =
+    modoRaw === "hibrido_abogados" || modoRaw === "solo_abogados" || modoRaw === "fijo_negocio"
+      ? modoRaw
+      : "fijo_negocio";
+
+  const zonaHoraria =
+    typeof det.zona_horaria === "string" && det.zona_horaria.trim()
+      ? det.zona_horaria.trim()
+      : typeof det.cgn_zona_horaria === "string" && det.cgn_zona_horaria.trim()
+        ? det.cgn_zona_horaria.trim()
+        : "America/Guayaquil";
+
+  const direccionPresencial =
+    typeof det.direccion_presencial === "string"
+      ? det.direccion_presencial
+      : typeof det.cgn_direccion_presencial === "string"
+        ? det.cgn_direccion_presencial
+        : CONFIG_AGENDA_NEGOCIO_DEFECTO.direccion_presencial;
+
+  const materiaDefecto =
+    typeof det.materia_defecto_nombre === "string" && det.materia_defecto_nombre.trim()
+      ? det.materia_defecto_nombre.trim()
+      : "Civil";
+
+  return {
+    zona_horaria: zonaHoraria,
+    duracion_cita_min: Number(det.duracion_cita_min ?? det.cgn_duracion_cita_min ?? 45),
+    holgura_min: Number(det.holgura_min ?? det.cgn_holgura_min ?? 15),
+    antelacion_minima_horas: Number(
+      det.antelacion_minima_horas ?? det.cgn_antelacion_minima_horas ?? 2,
+    ),
+    horizonte_dias: Number(det.horizonte_dias ?? det.cgn_horizonte_dias ?? 45),
+    permitir_sin_profesional: Boolean(
+      det.permitir_sin_profesional ?? det.cgn_permitir_sin_profesional ?? true,
+    ),
+    max_citas_simultaneas: Math.max(1, Math.min(50, Number(maxCitasRaw) || 1)),
+    modo_capacidad: modoCapacidad,
+    direccion_presencial: direccionPresencial,
+    materia_defecto_nombre: materiaDefecto,
+    franjas_virtual: franjasVirtual,
+    franjas_presencial: franjasPresencial,
+    fechas_especiales: fechasEspeciales,
+  };
+}
+
 export async function obtenerConfiguracionAgendaNegocio(): Promise<DatosConfigNegocioAgenda> {
   try {
     const supabase = await crearClienteServidor();
+
+    // 1. Fuente principal en PostgreSQL expuesto por PostgREST: comun_configuracion.cfg_negocio
+    const { data: cfgRow, error: cfgErr } = await supabase
+      .schema("comun_configuracion")
+      .from("cfg_negocio")
+      .select("cfg_detalle_configuracion")
+      .eq("cfg_negocio", NEGOCIO)
+      .maybeSingle();
+
+    if (!cfgErr && cfgRow?.cfg_detalle_configuracion) {
+      const detalleCfg = cfgRow.cfg_detalle_configuracion as Record<string, unknown>;
+      if (
+        detalleCfg.agenda_horarios &&
+        typeof detalleCfg.agenda_horarios === "object" &&
+        !Array.isArray(detalleCfg.agenda_horarios)
+      ) {
+        const configFinal = normalizarConfiguracionAgendaDesdeObjeto(
+          detalleCfg.agenda_horarios as Record<string, unknown>,
+        );
+        cacheConfigNegocioMemoria = configFinal;
+        return configFinal;
+      }
+    }
+
+    // 2. Respaldo secundario en comun_agenda.age_config_negocio (cuando el esquema está expuesto)
     const { data: rawData, error } = await supabase
       .schema("comun_agenda")
       .from("age_config_negocio" as never)
@@ -119,58 +220,7 @@ export async function obtenerConfiguracionAgendaNegocio(): Promise<DatosConfigNe
     }
 
     const detalle = (data.cgn_detalle_config ?? {}) as Record<string, unknown>;
-    const franjasVirtual =
-      Array.isArray(data.cgn_franjas_virtual) && data.cgn_franjas_virtual.length > 0
-        ? (data.cgn_franjas_virtual as FranjaHorarioNegocio[])
-        : FRANJAS_VIRTUAL_DEFECTO;
-    const franjasPresencial =
-      Array.isArray(data.cgn_franjas_presencial) && data.cgn_franjas_presencial.length > 0
-        ? (data.cgn_franjas_presencial as FranjaHorarioNegocio[])
-        : FRANJAS_PRESENCIAL_DEFECTO;
-
-    const rawFechasCol = data.cgn_fechas_especiales;
-    const rawFechasDet = detalle.fechas_especiales;
-    const fechasEspeciales: FechaEspecialAgenda[] = Array.isArray(rawFechasCol)
-      ? (rawFechasCol as FechaEspecialAgenda[])
-      : Array.isArray(rawFechasDet)
-        ? (rawFechasDet as FechaEspecialAgenda[])
-        : FECHAS_ESPECIALES_DEFECTO;
-
-    const maxCitasRaw =
-      typeof data.cgn_max_citas_simultaneas === "number"
-        ? data.cgn_max_citas_simultaneas
-        : typeof detalle.max_citas_simultaneas === "number"
-          ? detalle.max_citas_simultaneas
-          : 1;
-
-    const modoCapacidadRaw =
-      detalle.modo_capacidad === "hibrido_abogados" ||
-      detalle.modo_capacidad === "solo_abogados" ||
-      detalle.modo_capacidad === "fijo_negocio"
-        ? detalle.modo_capacidad
-        : "fijo_negocio";
-
-    const configFinal: DatosConfigNegocioAgenda = {
-      zona_horaria: typeof data.cgn_zona_horaria === "string" ? data.cgn_zona_horaria : "America/Guayaquil",
-      duracion_cita_min: Number(data.cgn_duracion_cita_min ?? 45),
-      holgura_min: Number(data.cgn_holgura_min ?? 15),
-      antelacion_minima_horas: Number(data.cgn_antelacion_minima_horas ?? 2),
-      horizonte_dias: Number(data.cgn_horizonte_dias ?? 45),
-      permitir_sin_profesional: Boolean(data.cgn_permitir_sin_profesional ?? true),
-      max_citas_simultaneas: Math.max(1, Math.min(50, Number(maxCitasRaw) || 1)),
-      modo_capacidad: modoCapacidadRaw,
-      direccion_presencial:
-        typeof data.cgn_direccion_presencial === "string"
-          ? data.cgn_direccion_presencial
-          : CONFIG_AGENDA_NEGOCIO_DEFECTO.direccion_presencial,
-      materia_defecto_nombre:
-        typeof detalle.materia_defecto_nombre === "string" && detalle.materia_defecto_nombre.trim()
-          ? detalle.materia_defecto_nombre.trim()
-          : "Civil",
-      franjas_virtual: franjasVirtual,
-      franjas_presencial: franjasPresencial,
-      fechas_especiales: fechasEspeciales,
-    };
+    const configFinal = normalizarConfiguracionAgendaDesdeObjeto(data, detalle);
 
     cacheConfigNegocioMemoria = configFinal;
     return configFinal;
@@ -511,31 +561,97 @@ export async function listarAgendaDelAbogado(desde: Date, hasta: Date): Promise<
 /** Configuración de agenda del profesional en sesión, o null si no la ha creado. */
 export async function obtenerMiAgenda() {
   const supabase = await crearClienteServidor();
-  const { data: prof } = await supabase.schema("comun_agenda")
+  const { data: prof, error: errProf } = await supabase.schema("comun_agenda")
     .from("age_profesional")
     .select("*")
     .eq("agp_negocio", NEGOCIO)
     .is("agp_eliminado_en", null)
     .maybeSingle();
-  if (!prof) return null;
 
-  const { data: franjas } = await supabase.schema("comun_agenda")
-    .from("age_franja")
-    .select("fra_id, fra_dia_semana, fra_hora_inicio, fra_hora_fin, fra_modalidad")
-    .eq("fra_profesional_id", prof.agp_id)
-    .is("fra_eliminado_en", null)
-    .order("fra_dia_semana")
-    .order("fra_hora_inicio");
+  if (!errProf && prof) {
+    const { data: franjas } = await supabase.schema("comun_agenda")
+      .from("age_franja")
+      .select("fra_id, fra_dia_semana, fra_hora_inicio, fra_hora_fin, fra_modalidad")
+      .eq("fra_profesional_id", prof.agp_id)
+      .is("fra_eliminado_en", null)
+      .order("fra_dia_semana")
+      .order("fra_hora_inicio");
 
-  const { data: bloqueos } = await supabase.schema("comun_agenda")
-    .from("age_bloqueo")
-    .select("blq_id, blq_inicio_en, blq_fin_en, blq_motivo, blq_origen")
-    .eq("blq_profesional_id", prof.agp_id)
-    .is("blq_eliminado_en", null)
-    .gte("blq_fin_en", new Date().toISOString())
-    .order("blq_inicio_en");
+    const { data: bloqueos } = await supabase.schema("comun_agenda")
+      .from("age_bloqueo")
+      .select("blq_id, blq_inicio_en, blq_fin_en, blq_motivo, blq_origen")
+      .eq("blq_profesional_id", prof.agp_id)
+      .is("blq_eliminado_en", null)
+      .gte("blq_fin_en", new Date().toISOString())
+      .order("blq_inicio_en");
 
-  return { profesional: prof, franjas: franjas ?? [], bloqueos: bloqueos ?? [] };
+    return { profesional: prof, franjas: franjas ?? [], bloqueos: bloqueos ?? [] };
+  }
+
+  // Respaldo en comun_seguridad.seg_usuario.usu_detalle_usuario.ficha_abogado
+  const { data: authData } = await supabase.auth.getUser();
+  const usuarioId = authData.user?.id;
+  if (!usuarioId) return null;
+
+  const { data: usuRow } = await supabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .select("usu_id, usu_detalle_usuario")
+    .eq("usu_id", usuarioId)
+    .maybeSingle();
+
+  const det = (usuRow?.usu_detalle_usuario ?? {}) as Record<string, unknown>;
+  const ficha = (det.ficha_abogado ?? {}) as Record<string, unknown>;
+  const cfg = (ficha.configuracion_agenda ?? null) as Record<string, unknown> | null;
+  if (!cfg) return null;
+
+  const franjasFicha = Array.isArray(ficha.franjas_agenda)
+    ? (ficha.franjas_agenda as Array<Record<string, unknown>>).map((f, idx) => ({
+        fra_id: String(f.fra_id ?? `fra-${idx}`),
+        fra_dia_semana: Number(f.dia_semana ?? f.fra_dia_semana ?? 1),
+        fra_hora_inicio: String(f.hora_inicio ?? f.fra_hora_inicio ?? "09:00"),
+        fra_hora_fin: String(f.hora_fin ?? f.fra_hora_fin ?? "18:00"),
+        fra_modalidad: String(f.modalidad ?? f.fra_modalidad ?? "ambas"),
+      }))
+    : [];
+
+  const bloqueosFicha = Array.isArray(ficha.bloqueos_agenda)
+    ? (ficha.bloqueos_agenda as Array<Record<string, unknown>>)
+        .filter((b) => !b.blq_eliminado_en)
+        .map((b, idx) => ({
+          blq_id: String(b.blq_id ?? `blq-${idx}`),
+          blq_inicio_en: String(b.blq_inicio_en ?? ""),
+          blq_fin_en: String(b.blq_fin_en ?? ""),
+          blq_motivo: b.blq_motivo ? String(b.blq_motivo) : null,
+          blq_origen: String(b.blq_origen ?? "manual"),
+        }))
+    : [];
+
+  return {
+    profesional: {
+      agp_id: usuarioId,
+      agp_usuario_id: usuarioId,
+      agp_negocio: NEGOCIO,
+      agp_zona_horaria: String(cfg.zona_horaria ?? "America/Guayaquil"),
+      agp_duracion_cita_min: Number(cfg.duracion_cita_min ?? 45),
+      agp_holgura_min: Number(cfg.holgura_min ?? 15),
+      agp_antelacion_minima_horas: Number(cfg.antelacion_minima_horas ?? 12),
+      agp_horizonte_dias: Number(cfg.horizonte_dias ?? 60),
+      agp_modalidades: Array.isArray(cfg.modalidades)
+        ? (cfg.modalidades as string[])
+        : ["virtual", "presencial"],
+      agp_acepta_turno: Boolean(cfg.acepta_turno ?? true),
+      agp_direccion: cfg.direccion ? String(cfg.direccion) : null,
+      agp_configurada_en: String(ficha.agenda_configurada_en ?? new Date().toISOString()),
+      agp_ultimo_turno_en: null,
+      agp_google_calendar_id: null,
+      agp_creado_en: new Date().toISOString(),
+      agp_actualizado_en: new Date().toISOString(),
+      agp_eliminado_en: null,
+    },
+    franjas: franjasFicha,
+    bloqueos: bloqueosFicha,
+  };
 }
 
 /**
