@@ -23,7 +23,13 @@ export function WidgetAgendarCitaInline() {
   const [datos, setDatos] = useState<{
     materias: Array<{ mat_id: string; mat_nombre: string }>;
     servicios: ServicioAgendable[];
-    cobertura: Array<{ suscripcion_id: string; concepto: string; incluidos: number | null; restantes: number | null }>;
+    cobertura: Array<{
+      suscripcion_id: string;
+      plan_nombre: string;
+      concepto: string;
+      incluidos: number | null;
+      restantes: number | null;
+    }>;
     configAgenda: DatosConfigNegocioAgenda;
   } | null>(null);
 
