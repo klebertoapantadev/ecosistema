@@ -115,6 +115,8 @@ const MAPA_RUTAS_FISICAS_WIDGETS: Record<string, string> = {
   "tokens-mcp": "packages/configuracion-negocio/src/componentes/GestionTokensMcpWidget.tsx",
   "mcp_tokens": "packages/configuracion-negocio/src/componentes/GestionTokensMcpWidget.tsx",
   "mcp-tokens": "packages/configuracion-negocio/src/componentes/GestionTokensMcpWidget.tsx",
+  "financiamiento": "apps/tranqi-web/app/panel/WidgetProximamente.tsx",
+  "proximamente": "apps/tranqi-web/app/panel/WidgetProximamente.tsx",
 };
 
 export function ModalEditarWidget({

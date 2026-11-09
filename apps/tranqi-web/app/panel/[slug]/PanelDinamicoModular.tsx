@@ -6,9 +6,10 @@ import {
   LayoutGrid, Wrench, Shield, Users, Bell, UserCog, ClipboardList, FileText,
   Settings, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, Calendar, type LucideIcon,
   Bot, ShoppingBag, CreditCard, Receipt, Share2, CheckCircle2, Sparkles, Building2, Scale, Gift,
-  ShieldCheck, Briefcase, Pencil
+  ShieldCheck, Briefcase, Pencil, Coins
 } from "lucide-react";
 import { ModalEditarWidget } from "../ModalEditarWidget";
+import { WidgetProximamente } from "../WidgetProximamente";
 import { useWidgetEnUrl } from "../useWidgetEnUrl";
 import { BotonVolverWidget } from "../BotonVolverWidget";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
@@ -562,6 +563,13 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     icono: Shield,
     colorIcono: "#5000BA",
     categoria: "Gobernanza"
+  },
+  financiamiento: {
+    titulo: "Financiamiento & Cuotas para tu Caso",
+    subtitulo: "Planes de pago en cuotas flexibles y financiamiento legal (Próximamente disponible)",
+    icono: Coins,
+    colorIcono: "#5000BA",
+    categoria: "Comercio Personas"
   }
 };
 
@@ -994,16 +1002,19 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
         return <ConfiguracionContratoAbogadoWidget />;
       case "auditoria":
         return <VisorAuditoriaWidget negocio={negocio} />;
+      case "financiamiento":
+      case "proximamente":
+        return <WidgetProximamente moduloClave={wClave} />;
       default:
         return (
-          <div style={{ padding: "30px", background: "#ffffff", borderRadius: "12px", border: "1px solid #E4E4E4" }}>
-            <h4 style={{ fontSize: "1rem", fontWeight: 800, color: "var(--violeta, #5000BA)", marginBottom: "8px" }}>
-              Módulo Operativo: {wClave.toUpperCase()}
-            </h4>
-            <p style={{ fontSize: "0.85rem", color: "#666" }}>
-              Módulo dinámico activo y vinculado a este panel.
-            </p>
-          </div>
+          <WidgetProximamente
+            moduloClave={wClave}
+            titulo={INVENTARIO_GLOBAL_WIDGETS[wClave]?.titulo || `Módulo: ${wClave.toUpperCase()}`}
+            subtitulo={
+              INVENTARIO_GLOBAL_WIDGETS[wClave]?.subtitulo ||
+              "Estamos trabajando en ello. Próximamente estará disponible esta funcionalidad en tu panel."
+            }
+          />
         );
     }
   };

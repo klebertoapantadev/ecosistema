@@ -280,6 +280,14 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     icono: Users,
     href: "/panel/clientes",
     origen: "Configurar"
+  },
+  financiamiento: {
+    id: "financiamiento",
+    titulo: "Financiamiento & Cuotas",
+    subtitulo: "Cuotas para tu caso legal (Próximamente disponible)",
+    icono: CreditCard,
+    href: "/panel/clientes?widget=financiamiento",
+    origen: "Herramientas"
   }
 };
 

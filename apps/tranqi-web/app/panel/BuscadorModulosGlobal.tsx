@@ -431,6 +431,16 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     minNivel: 80,
     icono: BarChart2,
     colorIcono: "#2563EB"
+  },
+  {
+    clave: "financiamiento",
+    nombre: "Financiamiento & Cuotas para tu Caso",
+    detalle: "Planes de pago en cuotas para tu caso legal (Próximamente disponible)",
+    ruta: "/panel/clientes?widget=financiamiento",
+    categoria: "Comercio & Clientes",
+    minNivel: 1,
+    icono: CreditCard,
+    colorIcono: "#5000BA"
   }
 ];
 

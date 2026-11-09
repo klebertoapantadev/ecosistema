@@ -678,6 +678,22 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     perfilesAsignados: ["CLIENTE", "ABOGADO", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
     estadoDuplicidad: "CANONICO",
   },
+  {
+    clave: "financiamiento",
+    nombre: "Financiamiento & Cuotas para tu Caso",
+    detalle: "Widget informativo de planes de financiamiento y cuotas para casos legales (Próximamente disponible)",
+    ruta: "/panel/clientes?widget=financiamiento",
+    icono: CreditCard,
+    iconoKey: "CreditCard",
+    color: "var(--violeta, #5000BA)",
+    rutaFisica: "apps/tranqi-web/app/panel/WidgetProximamente.tsx",
+    paquete: "apps/tranqi-web",
+    panelDestino: "Clientes (/panel/clientes)",
+    categoria: "Comercio & Clientes",
+    perfilesAsignados: ["CLIENTE", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+    fechaRegistro: "2026-11-08",
+  },
 ];
 
 export function ConsolaSuperAdminModular() {
