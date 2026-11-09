@@ -72,6 +72,7 @@ export const esquemaDecisionCita = z.object({
   decision: z.enum([
     "confirmar",
     "aceptar_asignacion",
+    "cancelar_aceptacion",
     "rechazar_asignacion",
     "reagendar",
     "cancelar",

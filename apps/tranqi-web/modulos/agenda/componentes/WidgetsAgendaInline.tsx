@@ -121,8 +121,8 @@ export function WidgetMisCitasInline({ onIrAAgendar }: { onIrAAgendar?: () => vo
     Array<{ suscripcion_id: string; concepto: string; incluidos: number | null; restantes: number | null }>
   >([]);
 
-  const cargarMisCitas = useCallback(async () => {
-    setCargando(true);
+  const cargarMisCitas = useCallback(async (silencioso = false) => {
+    if (!silencioso) setCargando(true);
     setError(null);
     try {
       const res = await obtenerMisCitasWidgetAction();
@@ -135,12 +135,12 @@ export function WidgetMisCitasInline({ onIrAAgendar }: { onIrAAgendar?: () => vo
     } catch {
       setError("No se pudieron cargar tus citas programadas.");
     } finally {
-      setCargando(false);
+      if (!silencioso) setCargando(false);
     }
   }, []);
 
   useEffect(() => {
-    void cargarMisCitas();
+    void cargarMisCitas(false);
   }, [cargarMisCitas]);
 
   if (cargando) {
@@ -196,7 +196,7 @@ export function WidgetMisCitasInline({ onIrAAgendar }: { onIrAAgendar?: () => vo
         </section>
       )}
 
-      <ListaCitasCliente citas={citas} alActualizar={cargarMisCitas} />
+      <ListaCitasCliente citas={citas} alActualizar={() => cargarMisCitas(true)} />
 
       <div style={{ display: "flex", justifyContent: "flex-start", paddingTop: "6px" }}>
         {onIrAAgendar ? (
@@ -243,8 +243,8 @@ export function WidgetCitasProgramadasAbogadoInline({
   const [citas, setCitas] = useState<CitaResumen[]>([]);
   const [sinConfigurar, setSinConfigurar] = useState(false);
 
-  const cargar = useCallback(async () => {
-    setCargando(true);
+  const cargar = useCallback(async (silencioso = false) => {
+    if (!silencioso) setCargando(true);
     setError(null);
     try {
       const res = await obtenerAgendaAbogadoWidgetAction();
@@ -257,12 +257,12 @@ export function WidgetCitasProgramadasAbogadoInline({
     } catch {
       setError("No se pudo cargar tu agenda de citas.");
     } finally {
-      setCargando(false);
+      if (!silencioso) setCargando(false);
     }
   }, []);
 
   useEffect(() => {
-    void cargar();
+    void cargar(false);
   }, [cargar]);
 
   if (cargando) {
@@ -330,7 +330,7 @@ export function WidgetCitasProgramadasAbogadoInline({
         </p>
       )}
 
-      <BandejaCitasAbogado citas={citas} alActualizar={cargar} />
+      <BandejaCitasAbogado citas={citas} alActualizar={() => cargar(true)} />
 
       <div style={{ display: "flex", justifyContent: "flex-start", paddingTop: "6px" }}>
         {onIrADisponibilidad ? (

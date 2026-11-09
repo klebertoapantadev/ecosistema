@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useTransition } from "react";
+import React, { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { salaAbierta } from "@eco/agenda";
 import {
@@ -13,6 +13,7 @@ import {
   FolderOpen,
   History,
   Plus,
+  RotateCcw,
   Save,
   Trash2,
   Upload,
@@ -80,7 +81,15 @@ export default function BandejaCitasAbogado({
   const [citaGestionAbierta, setCitaGestionAbierta] = useState<string | null>(null);
   const [citaLogAbierta, setCitaLogAbierta] = useState<string | null>(null);
   const [mensajesAsignacion, setMensajesAsignacion] = useState<Record<string, string>>({});
+  const [citasLocal, setCitasLocal] = useState<CitaResumen[]>(citas);
+  const [accionEnCurso, setAccionEnCurso] = useState<{ citaId: string; decision: string } | null>(
+    null,
+  );
   const [enviando, iniciarEnvio] = useTransition();
+
+  useEffect(() => {
+    setCitasLocal(citas);
+  }, [citas]);
 
   const hoyClave = useMemo(() => claveDiaEcuador(new Date().toISOString()), []);
 
@@ -90,17 +99,17 @@ export default function BandejaCitasAbogado({
     const finSemanaMs = ahoraMs + 7 * 24 * 3600 * 1000;
     const finMesMs = ahoraMs + 31 * 24 * 3600 * 1000;
 
-    const hoy = citas.filter((c) => claveDiaEcuador(c.cit_inicio_en) === hoyClave);
-    const semana = citas.filter((c) => {
+    const hoy = citasLocal.filter((c) => claveDiaEcuador(c.cit_inicio_en) === hoyClave);
+    const semana = citasLocal.filter((c) => {
       const t = new Date(c.cit_inicio_en).getTime();
       return t >= inicioHoyMs && t <= finSemanaMs;
     });
-    const mes = citas.filter((c) => {
+    const mes = citasLocal.filter((c) => {
       const t = new Date(c.cit_inicio_en).getTime();
       return t >= inicioHoyMs && t <= finMesMs;
     });
-    return { hoy, semana, mes, todas: citas };
-  }, [citas, hoyClave]);
+    return { hoy, semana, mes, todas: citasLocal };
+  }, [citasLocal, hoyClave]);
 
   const citasVisibles = useMemo(() => {
     if (rango === "hoy") return resumenRangos.hoy;
@@ -112,27 +121,98 @@ export default function BandejaCitasAbogado({
   function decidir(citaId: string, decision: string, nuevoInicio?: string, motivo?: string) {
     setError(null);
     setExito(null);
+    setAccionEnCurso({ citaId, decision });
     iniciarEnvio(async () => {
-      const r = await decidirCitaAction({
-        cita_id: citaId,
-        decision,
-        nuevo_inicio: nuevoInicio ?? null,
-        motivo: motivo ?? null,
-      });
-      if (!r.ok) {
-        setError(r.error);
-        return;
+      try {
+        const r = await decidirCitaAction({
+          cita_id: citaId,
+          decision,
+          nuevo_inicio: nuevoInicio ?? null,
+          motivo: motivo ?? null,
+        });
+        if (!r.ok) {
+          setError(r.error);
+          return;
+        }
+        setReagendando(null);
+        // Actualización optimista inmediata en la tarjeta para evitar espera visual
+        setCitasLocal((prev) =>
+          prev.map((item) => {
+            if (item.cit_id !== citaId) return item;
+            const gestionPrevia = item.gestion_reunion ?? {
+              cita_id: item.cit_id,
+              estado_aceptacion_abogado: "pendiente" as const,
+              motivo_aceptacion_abogado: null,
+              notas_reunion: null,
+              siguientes_pasos: [],
+              documentos_adjuntos: [],
+              eventos_log: [],
+              actualizado_en: null,
+            };
+            if (decision === "aceptar_asignacion" || decision === "confirmar") {
+              return {
+                ...item,
+                cit_estado: "confirmada",
+                cit_asignacion: "operador",
+                gestion_reunion: {
+                  ...gestionPrevia,
+                  estado_aceptacion_abogado: "aceptada",
+                  motivo_aceptacion_abogado: motivo?.trim() || null,
+                },
+              };
+            }
+            if (decision === "cancelar_aceptacion") {
+              return {
+                ...item,
+                cit_estado: "confirmada",
+                cit_asignacion: "operador",
+                gestion_reunion: {
+                  ...gestionPrevia,
+                  estado_aceptacion_abogado: "pendiente",
+                  motivo_aceptacion_abogado: motivo?.trim() || null,
+                },
+              };
+            }
+            if (decision === "rechazar_asignacion") {
+              return {
+                ...item,
+                cit_asignacion: "contingencia",
+                gestion_reunion: {
+                  ...gestionPrevia,
+                  estado_aceptacion_abogado: "rechazada",
+                  motivo_aceptacion_abogado:
+                    motivo?.trim() || "El abogado solicitó reasignación de horario",
+                },
+              };
+            }
+            if (decision === "marcar_realizada") {
+              return {
+                ...item,
+                cit_estado: "realizada",
+              };
+            }
+            return item;
+          }),
+        );
+
+        if (decision === "aceptar_asignacion" || decision === "confirmar") {
+          setExito("✅ Has confirmado la asignación de la cita. Se notificó al cliente y a operaciones.");
+        } else if (decision === "cancelar_aceptacion") {
+          setExito("↩️ Has cancelado tu confirmación. La cita vuelve a estar pendiente de tu confirmación.");
+        } else if (decision === "rechazar_asignacion") {
+          setExito(
+            "⚠️ Solicitaste reasignación al operador. La cita permanece visible aquí y puedes retomarla si tu horario se libera.",
+          );
+        } else if (decision === "marcar_realizada") {
+          setExito("✅ Ejecución de la cita confirmada exitosamente.");
+        } else {
+          setExito("✅ Estado de la cita actualizado.");
+        }
+        alActualizar?.();
+        router.refresh();
+      } finally {
+        setAccionEnCurso(null);
       }
-      setReagendando(null);
-      if (decision === "aceptar_asignacion" || decision === "confirmar") {
-        setExito("✅ Has confirmado la asignación de la cita. Se notificó al cliente y a operaciones.");
-      } else if (decision === "rechazar_asignacion") {
-        setExito("⚠️ Has rechazado la asignación. Operaciones ha sido notificada para asignar otro abogado.");
-      } else {
-        setExito("✅ Estado de la cita actualizado.");
-      }
-      alActualizar?.();
-      router.refresh();
     });
   }
 
@@ -384,12 +464,16 @@ export default function BandejaCitasAbogado({
                             ? "#DCFCE7"
                             : estadoAceptacion === "aceptada"
                             ? "#DCFCE7"
+                            : estadoAceptacion === "rechazada"
+                            ? "#FEE2E2"
                             : "#FEF3C7",
                         color:
                           c.cit_estado === "realizada"
                             ? "#166534"
                             : estadoAceptacion === "aceptada"
                             ? "#166534"
+                            : estadoAceptacion === "rechazada"
+                            ? "#991B1B"
                             : "#92400E",
                       }}
                     >
@@ -397,6 +481,8 @@ export default function BandejaCitasAbogado({
                         ? "✅ Consulta Realizada"
                         : estadoAceptacion === "aceptada"
                         ? "✅ Asignación Confirmada"
+                        : estadoAceptacion === "rechazada"
+                        ? "⚠️ Reasignación Solicitada"
                         : "⏳ Pendiente tu Confirmación"}
                     </span>
                     {c.caso_vinculado && (
@@ -446,15 +532,24 @@ export default function BandejaCitasAbogado({
                   </div>
                 )}
 
-                {/* Bloque de Confirmar / Rechazar Asignación con mensaje opcional */}
+                {/* Bloque de Confirmar / Cancelar Aceptación / Rechazar Asignación con mensaje opcional */}
                 {!pasada && c.cit_estado !== "realizada" && (
                   <div
                     style={{
                       padding: "12px",
                       borderRadius: "10px",
-                      background: estadoAceptacion === "aceptada" ? "#F8FAFC" : "#FFFBEB",
+                      background:
+                        estadoAceptacion === "aceptada"
+                          ? "#F8FAFC"
+                          : estadoAceptacion === "rechazada"
+                          ? "#FEF2F2"
+                          : "#FFFBEB",
                       border: `1px solid ${
-                        estadoAceptacion === "aceptada" ? "#E2E8F0" : "#FDE68A"
+                        estadoAceptacion === "aceptada"
+                          ? "#E2E8F0"
+                          : estadoAceptacion === "rechazada"
+                          ? "#FECACA"
+                          : "#FDE68A"
                       }`,
                       display: "flex",
                       flexDirection: "column",
@@ -472,8 +567,14 @@ export default function BandejaCitasAbogado({
                     >
                       <strong style={{ fontSize: "0.8rem", color: "#0F172A" }}>
                         {estadoAceptacion === "aceptada"
-                          ? "✅ Ya confirmaste esta asignación (puedes enviar una nota o rechazar si surgió un imprevisto)"
-                          : "📩 Confirmar o rechazar esta asignación en tu agenda"}
+                          ? "✅ Ya confirmaste esta cita. Puedes cancelar la aceptación (volver a pendiente) o pedir reasignación si surgió un imprevisto:"
+                          : estadoAceptacion === "rechazada"
+                          ? `⚠️ Solicitaste reasignación al operador${
+                              c.gestion_reunion?.motivo_aceptacion_abogado
+                                ? ` ("${c.gestion_reunion.motivo_aceptacion_abogado}")`
+                                : ""
+                            }. Si ya puedes atenderla, puedes retomarla y confirmarla:`
+                          : "📩 Confirma esta cita en tu agenda o solicita reasignación al operador:"}
                       </strong>
                     </div>
 
@@ -513,6 +614,12 @@ export default function BandejaCitasAbogado({
                               decidir(c.cit_id, "aceptar_asignacion", undefined, msgActual)
                             }
                             disabled={enviando}
+                            title={
+                              estadoAceptacion === "rechazada"
+                                ? "Retomar y confirmar la asignación de esta cita"
+                                : "Confirmar la asignación de esta cita"
+                            }
+                            aria-label="Confirmar asignación"
                             style={{
                               display: "inline-flex",
                               alignItems: "center",
@@ -524,48 +631,96 @@ export default function BandejaCitasAbogado({
                               color: "#FFFFFF",
                               fontWeight: 800,
                               fontSize: "0.8rem",
-                              cursor: "pointer",
+                              cursor: enviando ? "wait" : "pointer",
+                              opacity: enviando ? 0.75 : 1,
                             }}
                           >
                             <CheckCircle2 size={14} />
-                            Confirmar asignación
+                            {accionEnCurso?.citaId === c.cit_id &&
+                            accionEnCurso?.decision === "aceptar_asignacion"
+                              ? "Confirmando…"
+                              : estadoAceptacion === "rechazada"
+                              ? "Retomar y Confirmar"
+                              : "Confirmar Cita"}
+                          </button>
+                        )}
+
+                        {estadoAceptacion === "aceptada" && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              decidir(c.cit_id, "cancelar_aceptacion", undefined, msgActual)
+                            }
+                            disabled={enviando}
+                            title="Cancelar la confirmación para que la cita vuelva a estado pendiente sin desasignarla"
+                            aria-label="Cancelar aceptación"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              padding: "8px 12px",
+                              borderRadius: "8px",
+                              border: "1px solid #F59E0B",
+                              background: "#FFFBEB",
+                              color: "#92400E",
+                              fontWeight: 800,
+                              fontSize: "0.78rem",
+                              cursor: enviando ? "wait" : "pointer",
+                              opacity: enviando ? 0.75 : 1,
+                            }}
+                          >
+                            <RotateCcw size={14} />
+                            {accionEnCurso?.citaId === c.cit_id &&
+                            accionEnCurso?.decision === "cancelar_aceptacion"
+                              ? "Cancelando…"
+                              : "Cancelar Aceptación"}
+                          </button>
+                        )}
+
+                        {estadoAceptacion !== "rechazada" && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              decidir(
+                                c.cit_id,
+                                "rechazar_asignacion",
+                                undefined,
+                                msgActual || "El abogado requiere reasignación de horario",
+                              )
+                            }
+                            disabled={enviando}
+                            title="Notificar a operaciones que no puedes asistir para que reasignen a otro abogado"
+                            aria-label="Pedir reasignación"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              padding: "8px 12px",
+                              borderRadius: "8px",
+                              border: "1px solid #FCA5A5",
+                              background: "#FEF2F2",
+                              color: "#991B1B",
+                              fontWeight: 700,
+                              fontSize: "0.78rem",
+                              cursor: enviando ? "wait" : "pointer",
+                              opacity: enviando ? 0.75 : 1,
+                            }}
+                          >
+                            <XCircle size={14} />
+                            {accionEnCurso?.citaId === c.cit_id &&
+                            accionEnCurso?.decision === "rechazar_asignacion"
+                              ? "Procesando…"
+                              : "Pedir Reasignación"}
                           </button>
                         )}
 
                         <button
                           type="button"
                           onClick={() =>
-                            decidir(
-                              c.cit_id,
-                              "rechazar_asignacion",
-                              undefined,
-                              msgActual || "El abogado requiere reasignación de horario",
-                            )
-                          }
-                          disabled={enviando}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "5px",
-                            padding: "8px 12px",
-                            borderRadius: "8px",
-                            border: "1px solid #FCA5A5",
-                            background: "#FEF2F2",
-                            color: "#991B1B",
-                            fontWeight: 700,
-                            fontSize: "0.78rem",
-                            cursor: "pointer",
-                          }}
-                        >
-                          <XCircle size={14} />
-                          Rechazar asignación
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() =>
                             setReagendando(reagendando === c.cit_id ? null : c.cit_id)
                           }
+                          title="Proponer nueva fecha y hora para la consulta"
+                          aria-label="Reagendar cita"
                           style={{
                             padding: "8px 12px",
                             borderRadius: "8px",
@@ -660,10 +815,14 @@ export default function BandejaCitasAbogado({
                         color: "#065F46",
                         fontWeight: 800,
                         fontSize: "0.78rem",
-                        cursor: "pointer",
+                        cursor: enviando ? "wait" : "pointer",
+                        opacity: enviando ? 0.75 : 1,
                       }}
                     >
-                      ✓ Confirmar Ejecución
+                      {accionEnCurso?.citaId === c.cit_id &&
+                      accionEnCurso?.decision === "marcar_realizada"
+                        ? "Confirmando…"
+                        : "✓ Confirmar Ejecución"}
                     </button>
                   )}
                 </div>

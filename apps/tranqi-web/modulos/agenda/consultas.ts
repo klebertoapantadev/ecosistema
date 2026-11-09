@@ -904,21 +904,61 @@ export async function listarAgendaDelAbogado(desde: Date, hasta: Date): Promise<
 
   if (!abgRow?.abg_id) return [];
 
+  const abgId = String(abgRow.abg_id);
+
+  // Identificar citas que el operador asignó a este abogado en historial_asignaciones_citas
+  // (incluso si el abogado solicitó reasignación / contingencia y cit_abogado_id quedó temporalmente en null)
+  const citasAsignadasAlAbogadoEnHistorial = new Set<string>();
+  try {
+    const { data: cfg } = await db
+      .schema("comun_configuracion")
+      .from("cfg_negocio")
+      .select("cfg_detalle_configuracion")
+      .eq("cfg_negocio", NEGOCIO)
+      .maybeSingle();
+    const detalle = ((cfg?.cfg_detalle_configuracion ?? {}) as Record<string, unknown>) || {};
+    const historial = Array.isArray(detalle.historial_asignaciones_citas)
+      ? (detalle.historial_asignaciones_citas as Array<Record<string, unknown>>)
+      : [];
+    // El historial se inserta con el más reciente primero; tomamos el último estado de asignación por cita_id
+    const ultimoAbogadoPorCita = new Map<string, string>();
+    for (const h of historial) {
+      const cId = typeof h.cita_id === "string" ? h.cita_id : "";
+      const abgNuevo = typeof h.abogado_nuevo_id === "string" ? h.abogado_nuevo_id : "";
+      if (cId && !ultimoAbogadoPorCita.has(cId)) {
+        ultimoAbogadoPorCita.set(cId, abgNuevo);
+      }
+    }
+    for (const [cId, ultAbg] of ultimoAbogadoPorCita.entries()) {
+      if (ultAbg === abgId) {
+        citasAsignadasAlAbogadoEnHistorial.add(cId);
+      }
+    }
+  } catch {
+    // Continuar con cit_abogado_id directo
+  }
+
   const { data } = await db
     .schema("tranqui_legal")
     .from("trq_cita")
     .select(
       "cit_id, cit_caso_id, cit_cliente_id, cit_inicio_en, cit_fin_en, cit_modalidad, cit_estado, cit_motivo, cit_enlace, cit_lugar, cit_cobertura, cit_asignacion, cit_abogado_id, cit_notas, cit_creado_en",
     )
-    .eq("cit_abogado_id", abgRow.abg_id)
-    .neq("cit_asignacion", "contingencia")
     .is("cit_eliminado_en", null)
     .gte("cit_inicio_en", desde.toISOString())
     .lt("cit_inicio_en", hasta.toISOString())
     .neq("cit_estado", "cancelada")
     .order("cit_inicio_en", { ascending: true });
 
-  return enriquecerCitasConExpedienteYLog((data ?? []) as unknown as Array<Record<string, unknown>>);
+  const filasDelAbogado = ((data ?? []) as unknown as Array<Record<string, unknown>>).filter((r) => {
+    const cId = String(r.cit_id ?? "");
+    const cAbg = r.cit_abogado_id ? String(r.cit_abogado_id) : null;
+    if (cAbg === abgId) return true;
+    if (cAbg === null && citasAsignadasAlAbogadoEnHistorial.has(cId)) return true;
+    return false;
+  });
+
+  return enriquecerCitasConExpedienteYLog(filasDelAbogado);
 }
 
 /** Configuración de agenda del profesional en sesión, o null si no la ha creado. */

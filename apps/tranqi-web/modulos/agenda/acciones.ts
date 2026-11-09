@@ -123,17 +123,19 @@ async function despacharNotificacionAgendaUsuarios(params: {
           .eq("usu_id", usuId);
 
         if (uRow?.usu_correo) {
-          try {
-            const { enviarCorreo } = await import("@eco/notificaciones/enviar-correo");
-            await enviarCorreo({
-              negocio: NEGOCIO,
-              para: uRow.usu_correo,
-              asunto: params.titulo,
-              html: params.contenidoHtml,
+          const correoDest = uRow.usu_correo;
+          void import("@eco/notificaciones/enviar-correo")
+            .then(({ enviarCorreo }) =>
+              enviarCorreo({
+                negocio: NEGOCIO,
+                para: correoDest,
+                asunto: params.titulo,
+                html: params.contenidoHtml,
+              }),
+            )
+            .catch(() => {
+              // Best-effort email sin bloquear la respuesta de la acción
             });
-          } catch {
-            // Best-effort email
-          }
         }
       } catch {
         // Continuar con el siguiente destinatario
@@ -758,15 +760,40 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
 
   const ahoraIso = new Date().toISOString();
 
+  // Resolver abg_id del abogado en sesión para restaurar cit_abogado_id si la cita estaba en contingencia previa
+  let abgActorId: string | null = null;
+  if (actorId) {
+    const { data: abgRow } = await db
+      .schema("tranqui_legal")
+      .from("trq_abogado")
+      .select("abg_id")
+      .eq("abg_usuario_id", actorId)
+      .maybeSingle();
+    if (abgRow?.abg_id) {
+      abgActorId = String(abgRow.abg_id);
+    }
+  }
+
   // Caso 1: Abogado acepta/confirma la asignación
   if (d.decision === "aceptar_asignacion" || d.decision === "confirmar") {
+    const cambiosConfirmar: {
+      cit_estado: string;
+      cit_asignacion: string;
+      cit_actualizado_en: string;
+      cit_abogado_id?: string | null;
+    } = {
+      cit_estado: "confirmada",
+      cit_asignacion: "operador",
+      cit_actualizado_en: ahoraIso,
+    };
+    if (!citaActual?.cit_abogado_id && abgActorId) {
+      cambiosConfirmar.cit_abogado_id = abgActorId;
+    }
+
     const { error: errUpd } = await db
       .schema("tranqui_legal")
       .from("trq_cita")
-      .update({
-        cit_estado: "confirmada",
-        cit_actualizado_en: ahoraIso,
-      })
+      .update(cambiosConfirmar)
       .eq("cit_id", d.cita_id);
 
     if (errUpd) return { ok: false, error: comoError(errUpd.message) };
@@ -817,13 +844,58 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
     return { ok: true, data: { resultado: "confirmada" } };
   }
 
-  // Caso 2: Abogado rechaza la asignación -> pasa a contingencia para reasignación sin cancelar al cliente
+  // Caso 1.B: Abogado cancela su confirmación previa (vuelve a estado pendiente sin quitar la asignación)
+  if (d.decision === "cancelar_aceptacion") {
+    const cambiosCancelarAceptacion: {
+      cit_estado: string;
+      cit_asignacion: string;
+      cit_actualizado_en: string;
+      cit_abogado_id?: string | null;
+    } = {
+      cit_estado: "confirmada",
+      cit_asignacion: "operador",
+      cit_actualizado_en: ahoraIso,
+    };
+    if (!citaActual?.cit_abogado_id && abgActorId) {
+      cambiosCancelarAceptacion.cit_abogado_id = abgActorId;
+    }
+
+    const { error: errUpd } = await db
+      .schema("tranqui_legal")
+      .from("trq_cita")
+      .update(cambiosCancelarAceptacion)
+      .eq("cit_id", d.cita_id);
+
+    if (errUpd) return { ok: false, error: comoError(errUpd.message) };
+
+    await registrarEventoYEstadoGestionCita(db, d.cita_id, {
+      estado_aceptacion_abogado: "pendiente",
+      motivo_aceptacion_abogado: d.motivo?.trim() || null,
+      evento: {
+        id: crypto.randomUUID(),
+        fecha: ahoraIso,
+        tipo: "GESTION_REUNION",
+        autor_nombre: autorNombre,
+        autor_rol: "ABOGADO",
+        resumen: `Dr(a). ${autorNombre} canceló la confirmación de la cita (vuelve a estado pendiente de confirmación)`,
+        mensaje: d.motivo?.trim() || null,
+      },
+    });
+
+    revalidatePath("/panel/agenda");
+    revalidatePath("/panel/agendamiento");
+    revalidatePath("/panel/mis-citas");
+    revalidatePath("/panel/agenda/asignaciones");
+    return { ok: true, data: { resultado: "pendiente_confirmacion" } };
+  }
+
+  // Caso 2: Abogado solicita reasignación / rechaza la asignación -> pasa a contingencia para el operador pero conserva vínculo visible en bandeja del abogado hasta ser reasignada
   if (d.decision === "rechazar_asignacion") {
     const { error: errUpd } = await db
       .schema("tranqui_legal")
       .from("trq_cita")
       .update({
-        cit_abogado_id: null,
+        cit_abogado_id: citaActual?.cit_abogado_id ?? abgActorId ?? null,
         cit_asignacion: "contingencia",
         cit_estado: "confirmada",
         cit_actualizado_en: ahoraIso,
@@ -841,7 +913,7 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
         tipo: "RECHAZO",
         autor_nombre: autorNombre,
         autor_rol: "ABOGADO",
-        resumen: `Dr(a). ${autorNombre} rechazó la asignación (requiere reasignación)`,
+        resumen: `Dr(a). ${autorNombre} solicitó reasignación de la cita`,
         mensaje: d.motivo?.trim() || null,
       },
     });
@@ -853,7 +925,7 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
         await despacharNotificacionAgendaUsuarios({
           usuarioIds: operadoresIds,
           notIdPrefijo: `rech-abg-op-${d.cita_id.slice(0, 8)}-${Date.now().toString().slice(-4)}`,
-          titulo: `⚠️ Asignación rechazada por Dr(a). ${autorNombre} — Reasignar abogado`,
+          titulo: `⚠️ Reasignación solicitada por Dr(a). ${autorNombre} — Reasignar abogado`,
           contenidoHtml: `<div><p style="margin:0 0 6px 0;">Dr(a). <strong>${autorNombre}</strong> no podrá atender la consulta del <strong>${fechaTxt}</strong>.</p>${d.motivo ? `<p style="margin:0 0 6px 0;font-size:0.82rem;"><strong>Motivo:</strong> ${d.motivo}</p>` : ""}<p style="margin:0;font-size:0.8rem;"><a href="/panel/agendamiento?widget=asignaciones_agenda" style="color:#5000BA;font-weight:800;text-decoration:underline;">Asignar otro abogado en Agenda, Citas Abogados →</a></p></div>`,
           urlAccion: "/panel/agendamiento?widget=asignaciones_agenda",
           canal: "PUSH",
