@@ -156,24 +156,6 @@ export function NavegacionSidebar({
           return;
         }
 
-        // REGLA CLIENTE: Menú acotado a la experiencia del cliente final (Inicio, Agendamiento, Herramientas y Mi cuenta)
-        if (rolKey === "CLIENTE") {
-          const panelesCliente = PANELES_BASE_DEFAULT.filter(
-            (p) => p.id === "panel_inicio" || p.id === "panel_agendamiento" || p.id === "panel_herramientas" || p.id === "panel_cuenta"
-          );
-          setPanelesVisibles(panelesCliente);
-          return;
-        }
-
-        // REGLA ABOGADO: Menú acotado al espacio profesional del socio abogado
-        if (rolKey === "ABOGADO") {
-          const panelesAbogado = PANELES_BASE_DEFAULT.filter(
-            (p) => p.id === "panel_inicio" || p.id === "panel_agendamiento" || p.id === "panel_herramientas" || p.id === "panel_cuenta"
-          );
-          setPanelesVisibles(panelesAbogado);
-          return;
-        }
-
         const savedPaneles = localStorage.getItem(`tranqi_paneles_sidebar_${negocio}`) || localStorage.getItem("tranqi_paneles_sidebar_TRANQ");
         let listaPaneles: PanelDefNav[] = PANELES_BASE_DEFAULT;
         if (savedPaneles) {
@@ -185,12 +167,12 @@ export function NavegacionSidebar({
           }
         }
 
-        // Consultar servidor (PostgreSQL comun_seguridad.seg_rol_widget)
+        // Consultar servidor (PostgreSQL comun_seguridad.seg_rol_widget / seg_perfil)
         const resBdd = await obtenerConfiguracionNavegacionRolAction(modoActivo, negocio.toUpperCase());
 
         // Base canónica desde MATRIZ_FUNCIONAL_ROLES
         const matrizRol = MATRIZ_FUNCIONAL_ROLES[rolKey] || MATRIZ_FUNCIONAL_ROLES["CLIENTE"] || { widgetsPorPanel: {} };
-        let widgetsPorPanel: Record<string, string[]> = {};
+        const widgetsPorPanel: Record<string, string[]> = {};
         for (const [pId, wList] of Object.entries(matrizRol.widgetsPorPanel || {})) {
           widgetsPorPanel[pId] = Array.isArray(wList) ? [...wList] : [];
         }
@@ -198,22 +180,34 @@ export function NavegacionSidebar({
         if (resBdd.ok && resBdd.data && resBdd.data.widgetsPorPanel) {
           for (const [pId, wList] of Object.entries(resBdd.data.widgetsPorPanel)) {
             if (Array.isArray(wList)) {
-              widgetsPorPanel[pId] = Array.from(new Set([...(widgetsPorPanel[pId] || []), ...wList]));
+              widgetsPorPanel[pId] = [...wList];
             }
           }
         }
 
-        // Complementar con personalizaciones en localStorage si existen (fusionando con la base canónica)
-        const savedPerfiles = localStorage.getItem(`tranqi_perfiles_${negocio}`) || localStorage.getItem("tranqi_perfiles_TRANQ");
+        // Complementar con personalizaciones en localStorage si existen (respetando eliminaciones)
+        const savedPerfiles =
+          localStorage.getItem(`tranqi_perfiles_${negocio}`) ||
+          localStorage.getItem(`tranqi_perfiles_${(negocio || "").toUpperCase()}`) ||
+          localStorage.getItem(`tranqi_perfiles_${(negocio || "").toLowerCase()}`) ||
+          localStorage.getItem("tranqi_perfiles_TRANQ") ||
+          localStorage.getItem("tranqi_perfiles_tranqi");
+        let panelesAsignadosExplicitos: string[] | null = null;
         if (savedPerfiles) {
           const perfiles = JSON.parse(savedPerfiles);
           if (Array.isArray(perfiles)) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === rolKey);
-            if (perfilObj && perfilObj.widgetsAsignadosPorPanel) {
-              for (const [pId, wList] of Object.entries(perfilObj.widgetsAsignadosPorPanel)) {
-                if (Array.isArray(wList)) {
-                  widgetsPorPanel[pId] = Array.from(new Set([...(widgetsPorPanel[pId] || []), ...(wList as string[])]));
+            if (perfilObj) {
+              if (Array.isArray(perfilObj.panelesAsignados)) {
+                panelesAsignadosExplicitos = perfilObj.panelesAsignados;
+              }
+              if (perfilObj.widgetsAsignadosPorPanel) {
+                for (const [pId, wList] of Object.entries(perfilObj.widgetsAsignadosPorPanel)) {
+                  if (Array.isArray(wList)) {
+                    const retirados = new Set<string>(perfilObj.widgetsRetiradosPorPanel?.[pId] || []);
+                    widgetsPorPanel[pId] = (wList as string[]).filter(w => !retirados.has(w));
+                  }
                 }
               }
             }
@@ -224,6 +218,9 @@ export function NavegacionSidebar({
         const filtrados = listaPaneles.filter((p) => {
           const esNucleo = p.id === "panel_inicio" || p.id === "panel_cuenta";
           if (esNucleo) return true;
+          if (panelesAsignadosExplicitos && !panelesAsignadosExplicitos.includes(p.id)) {
+            return false;
+          }
 
           const widgetsDelPanel = widgetsPorPanel[p.id] || [];
           return widgetsDelPanel.length > 0;

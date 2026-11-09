@@ -6,7 +6,8 @@ export {
   eliminarUsuarioSuperAdminAction,
   resetearSistemaSuperAdminAction,
   guardarConfiguracionPanelesPerfilAction,
-  obtenerConfiguracionNavegacionRolAction
+  obtenerConfiguracionNavegacionRolAction,
+  obtenerConfiguracionTodosPerfilesAction
 } from "./acciones";
 export { FilaUsuario } from "./componentes/FilaUsuario";
 export { AdministracionPerfilesWidget } from "./componentes/AdministracionPerfilesWidget";

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   ShieldCheck, Users,
   CheckCircle2, ChevronDown, ChevronUp, Search, Sliders,
@@ -10,7 +10,14 @@ import {
   Activity, Globe, Lock, KeyRound, CheckSquare, Terminal, Zap, Pencil, LogOut, LogIn,
   Forward, Inbox, FileText, Download, Printer, Share2, RotateCcw, Loader2, Scale, type LucideIcon
 } from "lucide-react";
-import { guardarPerfil, guardarWidget, guardarAsignacionWidget, guardarConfiguracionPanelesPerfilAction, obtenerDatosGestionUsuariosAction } from "../acciones";
+import {
+  guardarPerfil,
+  guardarWidget,
+  guardarAsignacionWidget,
+  guardarConfiguracionPanelesPerfilAction,
+  obtenerConfiguracionTodosPerfilesAction,
+  obtenerDatosGestionUsuariosAction
+} from "../acciones";
 import { MATRIZ_FUNCIONAL_ROLES } from "../matriz-roles";
 import type { UsuarioConMembresia } from "../consultas";
 
@@ -127,7 +134,9 @@ export interface PerfilDef {
   descripcion: string;
   panelesAsignados: string[];
   widgetsAsignadosPorPanel: Record<string, string[]>;
+  widgetsRetiradosPorPanel?: Record<string, string[]>;
   titulosWidgetsPorPanel?: Record<string, string>;
+  actualizadoEn?: string;
   activo: boolean;
   esSuperAdmin?: boolean;
 }
@@ -1439,6 +1448,35 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
     document.body.removeChild(link);
   };
 
+  // CLAVES LOCALSTORAGE PERSISTENCIA POR NEGOCIO
+  const KEY_PANELES = `tranqi_paneles_sidebar_${negocio}`;
+  const KEY_PERFILES = `tranqi_perfiles_${negocio}`;
+  const KEY_INVENTARIO = `tranqi_inventario_widgets_${negocio}`;
+  const KEY_TITULOS_WIDGETS = `ecosistema_titulos_widgets_paneles_${negocio}`;
+  const hidratadoRef = useRef<boolean>(false);
+
+  const obtenerClavesLocalStoragePerfiles = () => {
+    const nLower = (negocio || "tranqi").toLowerCase().trim();
+    const nUpper = (negocio || "TRANQ").toUpperCase().trim();
+    const base = [KEY_PERFILES, `tranqi_perfiles_${nLower}`, `tranqi_perfiles_${nUpper}`];
+    if (nLower.startsWith("tranq")) {
+      base.push("tranqi_perfiles_tranqi", "tranqi_perfiles_TRANQ", "tranqi_perfiles_tranq");
+    }
+    return Array.from(new Set(base));
+  };
+
+  const persistirPerfilesEnLocalStorage = (listaPerfiles: PerfilDef[]) => {
+    if (typeof window === "undefined") return;
+    const serializado = JSON.stringify(listaPerfiles);
+    for (const k of obtenerClavesLocalStoragePerfiles()) {
+      try {
+        localStorage.setItem(k, serializado);
+      } catch {
+        // Ignorar errores de cuota
+      }
+    }
+  };
+
   // FUNCIÓN PARA FORZAR SINCRONIZACIÓN INMEDIATA DEL CATÁLOGO MAESTRO (WIDGETS, PANELES Y PERFILES)
   const sincronizarCatalogoMaestro = () => {
     try {
@@ -1457,11 +1495,19 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       const perfilesActualizados = perfiles.map(p => {
         const base = PERFILES_INICIALES.find(b => b.clave === p.clave);
         if (!base) return p;
-        const panelesMerged = Array.from(new Set([...(p.panelesAsignados || []), ...base.panelesAsignados]));
+        const panelesMerged = Array.isArray(p.panelesAsignados) && p.panelesAsignados.length > 0
+          ? p.panelesAsignados
+          : [...base.panelesAsignados];
+        const retiradosPorPanel = p.widgetsRetiradosPorPanel || {};
         const widgetsMerged: Record<string, string[]> = { ...(p.widgetsAsignadosPorPanel || {}) };
         Object.entries(base.widgetsAsignadosPorPanel || {}).forEach(([panelKey, listBase]) => {
-          const currentList = widgetsMerged[panelKey] || [];
-          widgetsMerged[panelKey] = Array.from(new Set([...currentList, ...listBase]));
+          const retiradosSet = new Set(retiradosPorPanel[panelKey] || []);
+          const currentList = widgetsMerged[panelKey];
+          if (currentList === undefined) {
+            widgetsMerged[panelKey] = listBase.filter(w => !retiradosSet.has(w));
+          } else {
+            widgetsMerged[panelKey] = currentList.filter(w => !retiradosSet.has(w));
+          }
         });
         return {
           ...p,
@@ -1470,7 +1516,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
         };
       });
       setPerfiles(perfilesActualizados);
-      localStorage.setItem(`tranqi_perfiles_${negocio}`, JSON.stringify(perfilesActualizados));
+      persistirPerfilesEnLocalStorage(perfilesActualizados);
 
       const idsPaneles = new Set(panelesSidebar.map(p => p.id));
       const faltantesPaneles = PANELES_SIDEBAR_INICIALES.filter(p => !idsPaneles.has(p.id));
@@ -1488,12 +1534,6 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
     }
   };
 
-  // CLAVES LOCALSTORAGE PERSISTENCIA POR NEGOCIO
-  const KEY_PANELES = `tranqi_paneles_sidebar_${negocio}`;
-  const KEY_PERFILES = `tranqi_perfiles_${negocio}`;
-  const KEY_INVENTARIO = `tranqi_inventario_widgets_${negocio}`;
-  const KEY_TITULOS_WIDGETS = `ecosistema_titulos_widgets_paneles_${negocio}`;
-
   // Gestión de Títulos Personalizados por Panel Individual
   const [titulosPersonalizados, setTitulosPersonalizados] = useState<Record<string, string>>({});
   const [widgetEditarNombre, setWidgetEditarNombre] = useState<{
@@ -1505,10 +1545,62 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
   const [inputNuevoNombre, setInputNuevoNombre] = useState<string>("");
   const [guardandoNombreWidget, setGuardandoNombreWidget] = useState<boolean>(false);
 
-  // Cargar estado persistido al cargar el componente
+  // Cargar estado persistido al cargar el componente (LocalStorage + Sincronización con PostgreSQL seg_perfil)
   useEffect(() => {
+    let cancelado = false;
+
+    const normalizarPerfilesCargados = (parsed: any[]): PerfilDef[] => {
+      return parsed.map((p: any) => {
+        const base = PERFILES_INICIALES.find(b => b.clave === p.clave);
+        if (!base) return p;
+
+        // Respetar los paneles asignados configurados por el usuario; solo usar base si nunca se definieron
+        const panelesMerged = Array.isArray(p.panelesAsignados)
+          ? Array.from(new Set(p.panelesAsignados.map(String)))
+          : [...base.panelesAsignados];
+
+        const retiradosPorPanel: Record<string, string[]> = { ...(p.widgetsRetiradosPorPanel || {}) };
+        const widgetsMerged: Record<string, string[]> = { ...(p.widgetsAsignadosPorPanel || {}) };
+
+        Object.entries(base.widgetsAsignadosPorPanel || {}).forEach(([panelKey, listBase]) => {
+          if (widgetsMerged[panelKey] === undefined) {
+            // Solo asignar por defecto si el panel nunca fue configurado
+            widgetsMerged[panelKey] = [...listBase];
+          }
+        });
+
+        Object.entries(widgetsMerged).forEach(([panelKey, currentList]) => {
+          if (Array.isArray(currentList)) {
+            const retiradosSet = new Set<string>(
+              Array.isArray(retiradosPorPanel[panelKey]) ? retiradosPorPanel[panelKey].map(String) : []
+            );
+            widgetsMerged[panelKey] = Array.from(
+              new Set(
+                currentList
+                  .map((w: string) => (w === "facturacion_electronica" ? "historial_pagos" : w))
+                  .filter((w: string) => !retiradosSet.has(w) && !(w === "historial_pagos" && retiradosSet.has("facturacion_electronica")))
+              )
+            );
+          }
+        });
+
+        // Sanitización estricta: asegurar que crm_clientes no esté en panel_usuarios para OPERADOR
+        if (p.clave?.toUpperCase() === "OPERADOR" && widgetsMerged["panel_usuarios"]) {
+          widgetsMerged["panel_usuarios"] = widgetsMerged["panel_usuarios"].filter((w: string) => w !== "crm_clientes");
+        }
+
+        return {
+          ...base,
+          ...p,
+          panelesAsignados: panelesMerged,
+          widgetsAsignadosPorPanel: widgetsMerged,
+          widgetsRetiradosPorPanel: retiradosPorPanel
+        };
+      });
+    };
+
     try {
-      const savedPaneles = localStorage.getItem(KEY_PANELES);
+      const savedPaneles = localStorage.getItem(KEY_PANELES) || localStorage.getItem("tranqi_paneles_sidebar_TRANQ") || localStorage.getItem("tranqi_paneles_sidebar_tranqi");
       if (savedPaneles) {
         const parsed = JSON.parse(savedPaneles);
         if (Array.isArray(parsed) && parsed.length > 0) {
@@ -1527,68 +1619,45 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
         }
       }
 
-      const savedPerfiles = localStorage.getItem(KEY_PERFILES);
-      if (savedPerfiles) {
-        const parsed = JSON.parse(savedPerfiles);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Asegurar que perfiles base mantengan nuevos paneles sin re-inyectar widgets retirados
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const combinados = parsed.map((p: any) => {
-            const base = PERFILES_INICIALES.find(b => b.clave === p.clave);
-            if (!base) return p;
-            const panelesMerged = Array.from(new Set([...(p.panelesAsignados || []), ...base.panelesAsignados]));
-            const widgetsMerged: Record<string, string[]> = { ...(p.widgetsAsignadosPorPanel || {}) };
-            Object.entries(base.widgetsAsignadosPorPanel || {}).forEach(([panelKey, listBase]) => {
-              if (widgetsMerged[panelKey] === undefined) {
-                // Solo asignar por defecto si el panel nunca fue configurado
-                widgetsMerged[panelKey] = [...listBase];
-              }
-            });
+      // Buscar la copia más reciente entre todas las claves posibles de localStorage para este negocio
+      let mejorListaLocal: PerfilDef[] | null = null;
+      let mejorTimestampLocal = 0;
 
-            Object.entries(widgetsMerged).forEach(([panelKey, currentList]) => {
-              if (Array.isArray(currentList)) {
-                widgetsMerged[panelKey] = Array.from(
-                  new Set(currentList.map((w: string) => (w === "facturacion_electronica" ? "historial_pagos" : w)))
-                );
-              }
-            });
-
-            // Sanitización estricta: asegurar que crm_clientes no esté en panel_usuarios para OPERADOR
-            if (p.clave?.toUpperCase() === "OPERADOR" && widgetsMerged["panel_usuarios"]) {
-              widgetsMerged["panel_usuarios"] = widgetsMerged["panel_usuarios"].filter((w: string) => w !== "crm_clientes");
+      for (const k of obtenerClavesLocalStoragePerfiles()) {
+        const raw = localStorage.getItem(k);
+        if (!raw) continue;
+        try {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            const maxTs = parsed.reduce((acc: number, item: any) => {
+              const t = item?.actualizadoEn ? Date.parse(item.actualizadoEn) : 0;
+              return Number.isFinite(t) && t > acc ? t : acc;
+            }, 0);
+            if (!mejorListaLocal || maxTs > mejorTimestampLocal) {
+              mejorListaLocal = normalizarPerfilesCargados(parsed);
+              mejorTimestampLocal = maxTs;
             }
-            if (p.clave?.toUpperCase() === "ABOGADO" || p.clave?.toUpperCase() === "CLIENTE") {
-              return {
-                ...p,
-                panelesAsignados: [...base.panelesAsignados],
-                widgetsAsignadosPorPanel: { ...base.widgetsAsignadosPorPanel }
-              };
-            }
-
-            return {
-              ...p,
-              panelesAsignados: panelesMerged,
-              widgetsAsignadosPorPanel: widgetsMerged
-            };
-          });
-          setPerfiles(combinados);
+          }
+        } catch {
+          // Ignorar JSON corrupto
         }
+      }
+
+      if (mejorListaLocal) {
+        setPerfiles(mejorListaLocal);
+        persistirPerfilesEnLocalStorage(mejorListaLocal);
       }
 
       const savedInventario = localStorage.getItem(KEY_INVENTARIO);
       if (savedInventario) {
         const parsed = JSON.parse(savedInventario);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Fusionar con WIDGETS_INVENTARIO_INICIALES para no perder nuevos widgets y actualizar los campos creados/rutas
           const clavesExistentes = new Set(parsed.map((w: any) => w.clave));
           const nuevosWidgets = WIDGETS_INVENTARIO_INICIALES.filter(w => !clavesExistentes.has(w.clave));
-          
-          // Asegurarse de actualizar propiedades de fecha de creación y ruta de los ya cargados si cambian en código
           const actualizados = parsed.map((w: any) => {
             const original = WIDGETS_INVENTARIO_INICIALES.find(o => o.clave === w.clave);
             return original ? { ...w, creadoEn: original.creadoEn, rutaFisica: original.rutaFisica } : w;
           });
-          
           setInventarioWidgets([...actualizados, ...nuevosWidgets]);
         }
       }
@@ -1621,7 +1690,102 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       }
     } catch (err) {
       console.warn("Error cargando configuración persistida:", err);
+    } finally {
+      hidratadoRef.current = true;
     }
+
+    // Sincronizar con PostgreSQL (comun_seguridad.seg_perfil) para asegurar consistencia multi-dispositivo y tras recargas
+    obtenerConfiguracionTodosPerfilesAction(negocio)
+      .then((resBdd) => {
+        if (cancelado || !resBdd.ok || !resBdd.data) return;
+        const mapaBdd = resBdd.data;
+        if (Object.keys(mapaBdd).length === 0) return;
+
+        setPerfiles((prevPerfiles) => {
+          let huboCambiosDesdeBdd = false;
+          const fusionados = prevPerfiles.map((p) => {
+            const bdd = mapaBdd[p.clave.toUpperCase()];
+            if (!bdd || !bdd.configuradoExplicitamente) {
+              // Si en localStorage ya fue personalizado pero en BDD aún no figura, empujar a BDD en segundo plano
+              if (p.actualizadoEn) {
+                guardarConfiguracionPanelesPerfilAction(
+                  p.clave,
+                  negocio,
+                  p.panelesAsignados,
+                  p.widgetsAsignadosPorPanel,
+                  p.titulosWidgetsPorPanel,
+                  p.widgetsRetiradosPorPanel
+                ).catch(() => {});
+              }
+              return p;
+            }
+
+            const tsLocal = p.actualizadoEn ? Date.parse(p.actualizadoEn) : 0;
+            const tsBdd = bdd.actualizadoEn ? Date.parse(bdd.actualizadoEn) : 0;
+
+            // Si la copia local tiene una edición más reciente que la BDD, preservar la copia local y sincronizar BDD
+            if (tsLocal > 0 && tsLocal > tsBdd) {
+              guardarConfiguracionPanelesPerfilAction(
+                p.clave,
+                negocio,
+                p.panelesAsignados,
+                p.widgetsAsignadosPorPanel,
+                p.titulosWidgetsPorPanel,
+                p.widgetsRetiradosPorPanel
+              ).catch(() => {});
+              return p;
+            }
+
+            // Aplicar la configuración persistida en BDD (respetando los widgets retirados)
+            const retiradosCombinados: Record<string, string[]> = {
+              ...(p.widgetsRetiradosPorPanel || {}),
+              ...(bdd.widgetsRetiradosPorPanel || {})
+            };
+
+            const widgetsFuente = bdd.widgetsAsignadosPorPanel || p.widgetsAsignadosPorPanel;
+            const widgetsLimpios: Record<string, string[]> = {};
+            for (const [panelKey, wList] of Object.entries(widgetsFuente)) {
+              if (Array.isArray(wList)) {
+                const retSet = new Set<string>(
+                  Array.isArray(retiradosCombinados[panelKey]) ? retiradosCombinados[panelKey].map(String) : []
+                );
+                widgetsLimpios[panelKey] = Array.from(
+                  new Set(
+                    wList
+                      .map((w: string) => (w === "facturacion_electronica" ? "historial_pagos" : w))
+                      .filter((w: string) => !retSet.has(w) && !(w === "historial_pagos" && retSet.has("facturacion_electronica")))
+                  )
+                );
+              }
+            }
+
+            const panelesNuevos = Array.isArray(bdd.panelesAsignados) && bdd.panelesAsignados.length > 0
+              ? bdd.panelesAsignados
+              : p.panelesAsignados;
+
+            huboCambiosDesdeBdd = true;
+            return {
+              ...p,
+              panelesAsignados: panelesNuevos,
+              widgetsAsignadosPorPanel: widgetsLimpios,
+              widgetsRetiradosPorPanel: retiradosCombinados,
+              actualizadoEn: bdd.actualizadoEn || p.actualizadoEn
+            };
+          });
+
+          if (huboCambiosDesdeBdd) {
+            persistirPerfilesEnLocalStorage(fusionados);
+          }
+          return huboCambiosDesdeBdd ? fusionados : prevPerfiles;
+        });
+      })
+      .catch((err) => {
+        console.warn("Aviso sincronizando perfiles desde BDD:", err);
+      });
+
+    return () => {
+      cancelado = true;
+    };
   }, [negocio, KEY_PANELES, KEY_PERFILES, KEY_INVENTARIO, KEY_TITULOS_WIDGETS]);
 
   // Suscribirse a cambios en vivo de títulos de widgets
@@ -1660,27 +1824,30 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
     };
   }, [KEY_TITULOS_WIDGETS]);
 
-  // Guardar dinámicamente ante cualquier cambio de estado
+  // Guardar dinámicamente ante cualquier cambio de estado (solo tras hidratar para evitar sobrescribir con valores por defecto)
   useEffect(() => {
+    if (!hidratadoRef.current) return;
     try {
       localStorage.setItem(KEY_PANELES, JSON.stringify(panelesSidebar));
     } catch (e) {}
-  }, [panelesSidebar, negocio]);
+  }, [panelesSidebar, negocio, KEY_PANELES]);
 
   useEffect(() => {
+    if (!hidratadoRef.current) return;
     try {
-      localStorage.setItem(KEY_PERFILES, JSON.stringify(perfiles));
+      persistirPerfilesEnLocalStorage(perfiles);
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("storage"));
       }
     } catch (e) {}
-  }, [perfiles, negocio]);
+  }, [perfiles, negocio, KEY_PERFILES]);
 
   useEffect(() => {
+    if (!hidratadoRef.current) return;
     try {
       localStorage.setItem(KEY_INVENTARIO, JSON.stringify(inventarioWidgets));
     } catch (e) {}
-  }, [inventarioWidgets, negocio]);
+  }, [inventarioWidgets, negocio, KEY_INVENTARIO]);
 
   // Helper para obtener el nombre visible de un widget en un panel específico
   const obtenerNombreVisualWidget = (panelId: string, widgetClave: string, nombrePorDefecto: string) => {
@@ -1952,11 +2119,23 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
     nuevosPerfiles: PerfilDef[],
     perfilClave: string,
     mapaActualizado: Record<string, string[]>,
-    panelesActualizados?: string[]
+    panelesActualizados?: string[],
+    retiradosActualizados?: Record<string, string[]>
   ) => {
-    setPerfiles(nuevosPerfiles);
+    const ahoraIso = new Date().toISOString();
+    const perfilesConFecha = nuevosPerfiles.map(p =>
+      p.clave === perfilClave
+        ? {
+            ...p,
+            actualizadoEn: ahoraIso,
+            ...(retiradosActualizados !== undefined ? { widgetsRetiradosPorPanel: retiradosActualizados } : {})
+          }
+        : p
+    );
+
+    setPerfiles(perfilesConFecha);
     try {
-      localStorage.setItem(KEY_PERFILES, JSON.stringify(nuevosPerfiles));
+      persistirPerfilesEnLocalStorage(perfilesConFecha);
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("storage"));
         window.dispatchEvent(new CustomEvent("tranqi_perfiles_updated"));
@@ -1965,9 +2144,17 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       console.error("Error guardando perfiles en localStorage:", e);
     }
 
-    const perfilObj = nuevosPerfiles.find(p => p.clave === perfilClave);
+    const perfilObj = perfilesConFecha.find(p => p.clave === perfilClave);
     const paneles = panelesActualizados || perfilObj?.panelesAsignados || [];
-    guardarConfiguracionPanelesPerfilAction(perfilClave, negocio, paneles, mapaActualizado, titulosPersonalizados).catch(err => {
+    const retirados = retiradosActualizados !== undefined ? retiradosActualizados : perfilObj?.widgetsRetiradosPorPanel;
+    guardarConfiguracionPanelesPerfilAction(
+      perfilClave,
+      negocio,
+      paneles,
+      mapaActualizado,
+      titulosPersonalizados,
+      retirados
+    ).catch(err => {
       console.error("Error persistiendo configuración en seg_perfil:", err);
     });
   };
@@ -2003,7 +2190,13 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
     };
 
     const nuevosPerfiles = perfiles.map(p => p.clave === perfilClave ? { ...p, widgetsAsignadosPorPanel: mapaActualizado } : p);
-    sincronizarConfiguracionPerfil(nuevosPerfiles, perfilClave, mapaActualizado, perfil.panelesAsignados);
+    sincronizarConfiguracionPerfil(
+      nuevosPerfiles,
+      perfilClave,
+      mapaActualizado,
+      perfil.panelesAsignados,
+      perfil.widgetsRetiradosPorPanel
+    );
   };
 
   // Ejecutar Transferencia (Mover o Duplicar entre Paneles)
@@ -2018,10 +2211,13 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
     const origenList = Array.from(new Set(perfil.widgetsAsignadosPorPanel[panelOrigenId] || []));
     const destinoList = Array.from(new Set(perfil.widgetsAsignadosPorPanel[panelDestinoId] || []));
+    const retiradosActuales: Record<string, string[]> = { ...(perfil.widgetsRetiradosPorPanel || {}) };
 
     let nuevoOrigenList = origenList;
     if (accionTransferir === "mover") {
       nuevoOrigenList = origenList.filter(w => w !== widget.clave);
+      const prevRetOrigen = retiradosActuales[panelOrigenId] || [];
+      retiradosActuales[panelOrigenId] = Array.from(new Set([...prevRetOrigen, widget.clave]));
       await guardarAsignacionWidget(perfilClave, widget.clave, negocio, false, panelOrigenId);
     }
 
@@ -2030,6 +2226,9 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       nuevoDestinoList = [...destinoList, widget.clave];
       await guardarAsignacionWidget(perfilClave, widget.clave, negocio, true, panelDestinoId);
     }
+    if (Array.isArray(retiradosActuales[panelDestinoId])) {
+      retiradosActuales[panelDestinoId] = retiradosActuales[panelDestinoId].filter(w => w !== widget.clave);
+    }
 
     const mapaActualizado = {
       ...perfil.widgetsAsignadosPorPanel,
@@ -2037,8 +2236,18 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       [panelDestinoId]: nuevoDestinoList,
     };
 
-    const nuevosPerfiles = perfiles.map(p => p.clave === perfilClave ? { ...p, widgetsAsignadosPorPanel: mapaActualizado } : p);
-    sincronizarConfiguracionPerfil(nuevosPerfiles, perfilClave, mapaActualizado, perfil.panelesAsignados);
+    const nuevosPerfiles = perfiles.map(p =>
+      p.clave === perfilClave
+        ? { ...p, widgetsAsignadosPorPanel: mapaActualizado, widgetsRetiradosPorPanel: retiradosActuales }
+        : p
+    );
+    sincronizarConfiguracionPerfil(
+      nuevosPerfiles,
+      perfilClave,
+      mapaActualizado,
+      perfil.panelesAsignados,
+      retiradosActuales
+    );
 
     const nombreOrigen = panelesSidebar.find(p => p.id === panelOrigenId)?.nombre || panelOrigenId;
     const nombreDestino = panelesSidebar.find(p => p.id === panelDestinoId)?.nombre || panelDestinoId;
@@ -2231,7 +2440,14 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       ? perfil.panelesAsignados.filter(id => id !== panelId)
       : [...perfil.panelesAsignados, panelId];
 
-    setPerfiles(perfiles.map(p => p.clave === perfilClave ? { ...p, panelesAsignados: nuevosPaneles } : p));
+    const nuevosPerfiles = perfiles.map(p => p.clave === perfilClave ? { ...p, panelesAsignados: nuevosPaneles } : p);
+    sincronizarConfiguracionPerfil(
+      nuevosPerfiles,
+      perfilClave,
+      perfil.widgetsAsignadosPorPanel,
+      nuevosPaneles,
+      perfil.widgetsRetiradosPorPanel
+    );
     setMensajeExito(`Panel '${panelId}' ${asignado ? "retirado de" : "asignado a"} la navegación del perfil '${perfilClave}'.`);
     setTimeout(() => setMensajeExito(null), 3000);
   };
@@ -2253,8 +2469,25 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       ? perfil.panelesAsignados
       : [...perfil.panelesAsignados, panelId];
 
-    const nuevosPerfiles = perfiles.map(p => p.clave === perfilClave ? { ...p, panelesAsignados: panelesActualizados, widgetsAsignadosPorPanel: mapaActualizado } : p);
-    sincronizarConfiguracionPerfil(nuevosPerfiles, perfilClave, mapaActualizado, panelesActualizados);
+    // Al agregar un widget explícitamente, retirarlo de la lista de excluidos de ese panel
+    const retiradosActuales: Record<string, string[]> = { ...(perfil.widgetsRetiradosPorPanel || {}) };
+    if (Array.isArray(retiradosActuales[panelId])) {
+      retiradosActuales[panelId] = retiradosActuales[panelId].filter(
+        w => w !== widgetClave && !(widgetClave === "historial_pagos" && w === "facturacion_electronica")
+      );
+    }
+
+    const nuevosPerfiles = perfiles.map(p =>
+      p.clave === perfilClave
+        ? {
+            ...p,
+            panelesAsignados: panelesActualizados,
+            widgetsAsignadosPorPanel: mapaActualizado,
+            widgetsRetiradosPorPanel: retiradosActuales
+          }
+        : p
+    );
+    sincronizarConfiguracionPerfil(nuevosPerfiles, perfilClave, mapaActualizado, panelesActualizados, retiradosActuales);
 
     await guardarAsignacionWidget(perfilClave, widgetClave, negocio, true, panelId);
 
@@ -2299,12 +2532,13 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
           ? {
               ...p,
               panelesAsignados: [...matriz.paneles],
-              widgetsAsignadosPorPanel: { ...matriz.widgetsPorPanel }
+              widgetsAsignadosPorPanel: { ...matriz.widgetsPorPanel },
+              widgetsRetiradosPorPanel: {}
             }
           : p
       );
 
-      sincronizarConfiguracionPerfil(nuevosPerfiles, perfilClave, matriz.widgetsPorPanel, matriz.paneles);
+      sincronizarConfiguracionPerfil(nuevosPerfiles, perfilClave, matriz.widgetsPorPanel, matriz.paneles, {});
 
       const nombrePerfil = perfilActual.nombre;
       setMensajeExito(`⚡ Perfil '${nombrePerfil}' restaurado a su configuración funcional óptima según rol.`);
@@ -2392,12 +2626,13 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
           ? {
               ...p,
               panelesAsignados: Array.from(panelesNuevos),
-              widgetsAsignadosPorPanel: mapaActualizado
+              widgetsAsignadosPorPanel: mapaActualizado,
+              widgetsRetiradosPorPanel: {}
             }
           : p
       );
 
-      sincronizarConfiguracionPerfil(nuevosPerfiles, perfilClave, mapaActualizado, Array.from(panelesNuevos));
+      sincronizarConfiguracionPerfil(nuevosPerfiles, perfilClave, mapaActualizado, Array.from(panelesNuevos), {});
 
       if (countAsignados > 0) {
         setMensajeExito(`⚡ Se auto-asignaron ${countAsignados} widgets autorizados para '${perfil.nombre}'.`);
@@ -2418,13 +2653,16 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
     setIsAsignando(true);
     try {
       let totalAsignados = 0;
+      const ahoraIso = new Date().toISOString();
       const perfilesActualizados = perfiles.map(p => {
         const matriz = MATRIZ_FUNCIONAL_ROLES[p.clave];
         if (!matriz) return p;
         return {
           ...p,
           panelesAsignados: [...matriz.paneles],
-          widgetsAsignadosPorPanel: { ...matriz.widgetsPorPanel }
+          widgetsAsignadosPorPanel: { ...matriz.widgetsPorPanel },
+          widgetsRetiradosPorPanel: {},
+          actualizadoEn: ahoraIso
         };
       });
 
@@ -2436,11 +2674,11 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             totalAsignados++;
           }
         }
-        guardarConfiguracionPanelesPerfilAction(rolClave, negocio, matriz.paneles, matriz.widgetsPorPanel).catch(console.error);
+        guardarConfiguracionPanelesPerfilAction(rolClave, negocio, matriz.paneles, matriz.widgetsPorPanel, undefined, {}).catch(console.error);
       }
 
       setPerfiles(perfilesActualizados);
-      localStorage.setItem(`tranqi_perfiles_${negocio}`, JSON.stringify(perfilesActualizados));
+      persistirPerfilesEnLocalStorage(perfilesActualizados);
       if (typeof window !== "undefined") {
         window.dispatchEvent(new Event("storage"));
         window.dispatchEvent(new CustomEvent("tranqi_perfiles_updated"));
@@ -2461,14 +2699,27 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
     if (!perfil) return;
 
     const asignadosPanel = perfil.widgetsAsignadosPorPanel[panelId] || [];
-    const nuevosAsignados = asignadosPanel.filter(w => w !== widgetClave);
+    const nuevosAsignados = asignadosPanel.filter(
+      w => w !== widgetClave && !(widgetClave === "historial_pagos" && w === "facturacion_electronica")
+    );
     const mapaActualizado = {
       ...perfil.widgetsAsignadosPorPanel,
       [panelId]: nuevosAsignados
     };
 
-    const nuevosPerfiles = perfiles.map(p => p.clave === perfilClave ? { ...p, widgetsAsignadosPorPanel: mapaActualizado } : p);
-    sincronizarConfiguracionPerfil(nuevosPerfiles, perfilClave, mapaActualizado, perfil.panelesAsignados);
+    const retiradosActuales: Record<string, string[]> = { ...(perfil.widgetsRetiradosPorPanel || {}) };
+    const listaRetPanel = retiradosActuales[panelId] || [];
+    const clavesARetirar = widgetClave === "historial_pagos" || widgetClave === "facturacion_electronica"
+      ? ["historial_pagos", "facturacion_electronica"]
+      : [widgetClave];
+    retiradosActuales[panelId] = Array.from(new Set([...listaRetPanel, ...clavesARetirar]));
+
+    const nuevosPerfiles = perfiles.map(p =>
+      p.clave === perfilClave
+        ? { ...p, widgetsAsignadosPorPanel: mapaActualizado, widgetsRetiradosPorPanel: retiradosActuales }
+        : p
+    );
+    sincronizarConfiguracionPerfil(nuevosPerfiles, perfilClave, mapaActualizado, perfil.panelesAsignados, retiradosActuales);
 
     await guardarAsignacionWidget(perfilClave, widgetClave, negocio, false, panelId);
 

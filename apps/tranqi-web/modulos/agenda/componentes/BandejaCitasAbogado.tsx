@@ -16,7 +16,13 @@ const FORMATO = new Intl.DateTimeFormat("es-EC", {
   timeZone: "America/Guayaquil",
 });
 
-export default function BandejaCitasAbogado({ citas }: { citas: CitaResumen[] }) {
+export default function BandejaCitasAbogado({
+  citas,
+  alActualizar,
+}: {
+  citas: CitaResumen[];
+  alActualizar?: () => void;
+}) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [reagendando, setReagendando] = useState<string | null>(null);
@@ -36,6 +42,7 @@ export default function BandejaCitasAbogado({ citas }: { citas: CitaResumen[] })
         return;
       }
       setReagendando(null);
+      alActualizar?.();
       router.refresh();
     });
   }

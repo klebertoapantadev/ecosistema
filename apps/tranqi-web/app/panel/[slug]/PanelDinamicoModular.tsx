@@ -46,6 +46,12 @@ import { ConfiguracionContratoAbogadoWidget } from "@/modulos/socios/componentes
 import { GestionRedProfesionalWidget } from "@/modulos/socios/componentes/GestionRedProfesionalWidget";
 import { MiPerfilRedAbogadoWidget } from "@/modulos/socios/componentes/MiPerfilRedAbogadoWidget";
 import { ConfiguracionHorariosAtencionWidget } from "@/modulos/agenda/componentes/ConfiguracionHorariosAtencionWidget";
+import {
+  WidgetAgendarCitaInline,
+  WidgetAsignacionesAgendaInline,
+  WidgetCitasProgramadasAbogadoInline,
+  WidgetMisCitasInline,
+} from "@/modulos/agenda/componentes/WidgetsAgendaInline";
 import { obtenerConfiguracionNavegacionRolAction } from "@eco/gestion-usuarios/acciones";
 import { MATRIZ_FUNCIONAL_ROLES } from "@eco/gestion-usuarios/matriz-roles";
 
@@ -776,11 +782,16 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
                   perfilObj.widgetsAsignadosPorPanel[`panel_${slug}`] ??
                   perfilObj.widgetsAsignadosPorPanel[`panel_${slugNormalizado}`];
                 if (Array.isArray(wLocal)) {
-                  // Si es OPERADOR y el panel es panel_usuarios, asegurar que crm_clientes quede excluido
+                  const retiradosLocal = new Set<string>(
+                    perfilObj.widgetsRetiradosPorPanel?.[panelIdBuscado] ||
+                    perfilObj.widgetsRetiradosPorPanel?.[slug] ||
+                    perfilObj.widgetsRetiradosPorPanel?.[slugNormalizado] ||
+                    []
+                  );
                   const wFiltrado = (rolActivo === "OPERADOR" && (panelIdBuscado === "panel_usuarios" || slugNormalizado === "usuarios"))
                     ? wLocal.filter((w: string) => w !== "crm_clientes")
                     : wLocal;
-                  listW = wFiltrado;
+                  listW = wFiltrado.filter((w: string) => !retiradosLocal.has(w));
                   configuracionEncontrada = true;
                 }
               }
@@ -790,21 +801,15 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
           }
         }
 
-        // 3. Garantizar siempre los widgets canónicos de MATRIZ_FUNCIONAL_ROLES (Regla 15 de AGENTS.md)
-        // para que cachés antiguas en localStorage o snapshots previos en BDD no oculten módulos nuevos
+        // 3. Si no existe configuración explícita en BDD ni en localStorage, usar los widgets canónicos de MATRIZ_FUNCIONAL_ROLES
         const wCanonicos = obtenerWidgetsInicialesDinamicos(panelIdBuscado, slug, rolActivo);
         if (!configuracionEncontrada) {
           listW = wCanonicos;
-        } else {
-          listW = Array.from(new Set([...wCanonicos, ...listW]));
         }
 
         // Sanitización universal: Si el perfil es OPERADOR y el panel es usuarios, jamás mostrar crm_clientes
         if (rolActivo === "OPERADOR" && (panelIdBuscado === "panel_usuarios" || slugNormalizado === "usuarios")) {
           listW = listW.filter(w => w !== "crm_clientes");
-        }
-        if (rolActivo === "ABOGADO" || rolActivo === "CLIENTE") {
-          listW = wCanonicos;
         }
 
         // Unificar facturacion_electronica dentro de historial_pagos sin duplicados
@@ -830,30 +835,11 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
   const renderWidgetComponente = (wClave: string) => {
     switch (wClave) {
       case "agendar_cita":
-        return (
-          <EnlacePantalla
-            texto="Agendar una consulta"
-            descripcion="Elige la materia y la hora; te asignamos al abogado de turno especializado en ella."
-            ruta="/panel/agendar"
-          />
-        );
+        return <WidgetAgendarCitaInline />;
       case "mis_citas":
-        return (
-          <EnlacePantalla
-            texto="Ver mis citas"
-            descripcion="Tus próximas consultas, el enlace de la videollamada y la opción de cancelar."
-            ruta="/panel/mis-citas"
-          />
-        );
+        return <WidgetMisCitasInline onIrAAgendar={() => abrir("agendar_cita")} />;
       case "citas_programadas":
-        return (
-          <EnlacePantalla
-            texto="Abrir mi agenda"
-            descripcion="Las citas que te han asignado, para confirmarlas, moverlas o cerrarlas."
-            ruta="/panel/agenda"
-            color="#05876E"
-          />
-        );
+        return <WidgetCitasProgramadasAbogadoInline onIrADisponibilidad={() => abrir("disponibilidad")} />;
       case "disponibilidad":
         return <MiPerfilRedAbogadoWidget tabInicial="disponibilidad" />;
       case "mi_perfil_abogado":
@@ -865,14 +851,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       case "registro_abogados":
         return <GestionRedProfesionalWidget />;
       case "asignaciones_agenda":
-        return (
-          <EnlacePantalla
-            texto="Abrir la mesa de asignaciones"
-            descripcion="Citas que se quedaron sin abogado porque el asignado canceló. Hay que reasignarlas antes de la hora."
-            ruta="/panel/agenda/asignaciones"
-            color="#FE5800"
-          />
-        );
+        return <WidgetAsignacionesAgendaInline />;
       case "vitrina_comercial_personas":
       case "vitrina_personas":
       case "oferta_personas":

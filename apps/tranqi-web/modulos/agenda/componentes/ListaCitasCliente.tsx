@@ -18,7 +18,13 @@ const FORMATO = new Intl.DateTimeFormat("es-EC", {
 
 const HORAS_SIN_PENALIZACION = 24;
 
-export default function ListaCitasCliente({ citas }: { citas: CitaResumen[] }) {
+export default function ListaCitasCliente({
+  citas,
+  alActualizar,
+}: {
+  citas: CitaResumen[];
+  alActualizar?: () => void;
+}) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [cancelando, setCancelando] = useState<string | null>(null);
@@ -33,6 +39,7 @@ export default function ListaCitasCliente({ citas }: { citas: CitaResumen[] }) {
         return;
       }
       setCancelando(null);
+      alActualizar?.();
       router.refresh();
     });
   }

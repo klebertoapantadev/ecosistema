@@ -30,9 +30,11 @@ interface AbogadoOpcion {
 export default function MesaAsignaciones({
   citas,
   abogados,
+  alActualizar,
 }: {
   citas: CitaResumen[];
   abogados: AbogadoOpcion[];
+  alActualizar?: () => void;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -53,6 +55,7 @@ export default function MesaAsignaciones({
         setError(r.error);
         return;
       }
+      alActualizar?.();
       router.refresh();
     });
   }

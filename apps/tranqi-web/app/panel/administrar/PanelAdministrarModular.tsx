@@ -11,6 +11,7 @@ import { VisorAuditoriaWidget } from "../auditoria/VisorAuditoriaWidget";
 import { ConfiguracionContratoAbogadoWidget } from "../../../modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
 import { GestionRedProfesionalWidget } from "../../../modulos/socios/componentes/GestionRedProfesionalWidget";
 import { ConfiguracionHorariosAtencionWidget } from "../../../modulos/agenda/componentes/ConfiguracionHorariosAtencionWidget";
+import { WidgetAsignacionesAgendaInline } from "../../../modulos/agenda/componentes/WidgetsAgendaInline";
 import { BandejaClientesCRM } from "../../../modulos/crm-clientes/componentes/BandejaClientesCRM";
 import { HistorialTransaccionesPago, WidgetFacturacionElectronica, GestionConveniosCorporativos, ConsolaGestionInformativosWidget, ComplianceScoreEmpresarial, LegalHRLaboral } from "@eco/comercio";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
@@ -611,8 +612,8 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
         const resBdd = await obtenerConfiguracionNavegacionRolAction(rolEncontrado, (negocio || "TRANQ").toUpperCase());
         if (resBdd.ok && resBdd.data && resBdd.data.widgetsPorPanel) {
           const wBdd = resBdd.data.widgetsPorPanel["panel_administrar"] ?? resBdd.data.widgetsPorPanel["administrar"];
-          if (Array.isArray(wBdd) && wBdd.length > 0) {
-            idsAsignados = Array.from(new Set([...idsCanonicos, ...wBdd]));
+          if (Array.isArray(wBdd)) {
+            idsAsignados = [...wBdd];
           }
         }
 
@@ -636,11 +637,13 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
               }
               if (perfilObj && perfilObj.widgetsAsignadosPorPanel) {
                 const wLocal = perfilObj.widgetsAsignadosPorPanel["panel_administrar"] ?? perfilObj.widgetsAsignadosPorPanel["administrar"];
-                if (Array.isArray(wLocal) && wLocal.length > 0) {
-                  const tieneBase = wLocal.includes("gestion_informativos") || wLocal.includes("disponibilidad_abogados");
-                  if (rolEncontrado !== "OPERADOR" || tieneBase) {
-                    idsAsignados = Array.from(new Set([...idsCanonicos, ...wLocal]));
-                  }
+                if (Array.isArray(wLocal)) {
+                  const retirados = new Set<string>(
+                    perfilObj.widgetsRetiradosPorPanel?.["panel_administrar"] ||
+                    perfilObj.widgetsRetiradosPorPanel?.["administrar"] ||
+                    []
+                  );
+                  idsAsignados = wLocal.filter((w: string) => !retirados.has(w));
                 }
               }
             }
@@ -916,15 +919,8 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
 
             {/* 9. ASIGNACIONES Y CONTINGENCIA (AGENDA) */}
             {widgetActivo === "asignaciones_agenda" && (
-              <div style={{ padding: "24px", textAlign: "center", background: "#F8FAFC", borderRadius: "12px", border: "1px solid #E2E8F0" }}>
-                <Calendar style={{ width: 42, height: 42, color: "#0284C7", margin: "0 auto 12px", display: "block" }} />
-                <h3 style={{ fontSize: "1.1rem", fontWeight: 700, margin: "0 0 8px 0" }}>Mesa de Asignaciones y Contingencia</h3>
-                <p style={{ margin: "0 0 20px 0", color: "#64748B", fontSize: "0.88rem", maxWidth: "520px", marginInline: "auto" }}>
-                  Gestiona la distribución de casos, reasignaciones operativas y contingencias de la agenda profesional.
-                </p>
-                <Link href="/panel/agenda/asignaciones" className="btn btn-primario" style={{ textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "8px", background: "#0284C7", color: "#fff", padding: "10px 18px", borderRadius: "10px", fontWeight: 700, fontSize: "0.85rem" }}>
-                  <Calendar size={16} /> Abrir Mesa de Asignaciones
-                </Link>
+              <div style={{ width: "100%" }}>
+                <WidgetAsignacionesAgendaInline />
               </div>
             )}
           </div>

@@ -36,14 +36,14 @@ const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string; hre
   { icono: Bell, nombre: "Avisos & Alertas", detalle: "Novedades y alertas legales", href: "/panel/herramientas?widget=muro_informativo_comunidad" },
   { icono: Folder, nombre: "Billetera digital", detalle: "Documentos con OCR y TTL", href: "/panel/billetera-documentos" },
   { icono: FileCheck, nombre: "Firmar un documento", detalle: "Con tu certificado digital", href: "/panel/firma-documentos" },
-  { icono: Calendar, nombre: "Agendar cita", detalle: "Presencial o por video", href: "/panel/agendar" },
+  { icono: Calendar, nombre: "Agendar cita", detalle: "Presencial o por video", href: "/panel/agendamiento?widget=agendar_cita" },
   { icono: Coins, nombre: "Financiamiento", detalle: "Cuotas para tu caso", href: "/panel/herramientas?widget=financiamiento" },
 ];
 
 const ACCESOS_ABOGADO: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
   { icono: Scale, nombre: "Mis Especialidades y Cobertura", detalle: "Materias y provincias activas", href: "/panel/agendamiento?widget=mi_perfil_abogado" },
   { icono: Calendar, nombre: "Disponibilidad de Citas", detalle: "Horarios presencial y teleconsulta", href: "/panel/agendamiento?widget=disponibilidad" },
-  { icono: Briefcase, nombre: "Citas Programadas", detalle: "Confirmar y atender consultas", href: "/panel/agenda" },
+  { icono: Briefcase, nombre: "Citas Programadas", detalle: "Confirmar y atender consultas", href: "/panel/agendamiento?widget=citas_programadas" },
   { icono: Award, nombre: "Paquete de Beneficios", detalle: "Convenios y capacitaciones", href: "/panel/agendamiento?widget=paquete_beneficios_abogados" },
   { icono: Folder, nombre: "Billetera digital", detalle: "Documentos y expedientes", href: "/panel/billetera-documentos" },
   { icono: FileCheck, nombre: "Firmar un documento", detalle: "Con tu certificado digital", href: "/panel/firma-documentos" },
@@ -300,7 +300,7 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
           <h1>{saludo ?? `Hola de nuevo, ${nombre}`}. Estás <i>tranqi</i>.</h1>
           <p className="inicio-cliente-sub">{subtitulo}</p>
         </div>
-        <Link href="/panel/agendar" className="btn btn-primario btn-agendar">
+        <Link href="/panel/agendamiento?widget=agendar_cita" className="btn btn-primario btn-agendar">
           <Calendar size={16} aria-hidden="true" />
           Agendar cita
         </Link>
@@ -352,7 +352,7 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
                   </span>
                 </Link>
               )}
-              <Link href={cita ? "/panel/mis-citas" : "/panel/agendar"} className="cifra-tarjeta">
+              <Link href={cita ? "/panel/agendamiento?widget=mis_citas" : "/panel/agendamiento?widget=agendar_cita"} className="cifra-tarjeta">
                 <span className="cifra-cabecera"><span className="cifra-icono"><Calendar size={15} aria-hidden="true" /></span>Próxima cita</span>
                 {cita ? (
                   <b className="cifra-valor es-fecha">{FECHA_CORTA.format(new Date(cita.inicio))}<small>{HORA.format(new Date(cita.inicio))}</small></b>
@@ -373,7 +373,7 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
                 <span className="vacio-caso-icono" aria-hidden="true"><Briefcase size={24} strokeWidth={1.6} /></span>
                 <h2 id="t-vacio-caso">Aún no tienes casos abiertos</h2>
                 <p>Agenda una cita y te asignamos al abogado que más sabe de tu tema.</p>
-                <Link href="/panel/agendar" className="btn btn-primario">Agendar cita</Link>
+                <Link href="/panel/agendamiento?widget=agendar_cita" className="btn btn-primario">Agendar cita</Link>
               </div>
             </section>
           )}
@@ -417,7 +417,7 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
             <section className="tarjeta-seccion tarjeta-cita" aria-labelledby="t-cita">
               <header>
                 <h2 id="t-cita">Próxima cita</h2>
-                <Link href="/panel/mis-citas" className="enlace-accion">Ver agenda</Link>
+                <Link href="/panel/agendamiento?widget=mis_citas" className="enlace-accion">Ver agenda</Link>
               </header>
               <div className="cita-cuerpo">
                 <span className="cita-fecha" aria-hidden="true">

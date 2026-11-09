@@ -236,12 +236,12 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
           idsAsignados = ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "historial_accesos", "mfa_seguridad", "baja_cuenta"];
         }
 
-        // 2. Consultar BDD PostgreSQL (comun_seguridad.seg_rol_widget)
+        // 2. Consultar BDD PostgreSQL (comun_seguridad.seg_rol_widget / seg_perfil)
         const resBdd = await obtenerConfiguracionNavegacionRolAction(rolActivo, "TRANQ");
         if (resBdd.ok && resBdd.data && resBdd.data.widgetsPorPanel) {
-          const wBdd = resBdd.data.widgetsPorPanel["panel_cuenta"] || resBdd.data.widgetsPorPanel["cuenta"] || [];
-          if (wBdd.length > 0) {
-            idsAsignados = Array.from(new Set([...idsAsignados, ...wBdd]));
+          const wBdd = resBdd.data.widgetsPorPanel["panel_cuenta"] ?? resBdd.data.widgetsPorPanel["cuenta"];
+          if (Array.isArray(wBdd)) {
+            idsAsignados = [...wBdd];
           }
         }
 
@@ -257,9 +257,14 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
               perfilObj = perfiles.find((p: any) => p.clave?.toUpperCase() === "OPERADOR");
             }
             if (perfilObj && perfilObj.widgetsAsignadosPorPanel) {
-              const wLocal = perfilObj.widgetsAsignadosPorPanel["panel_cuenta"] || perfilObj.widgetsAsignadosPorPanel["cuenta"] || [];
-              if (wLocal.length > 0) {
-                idsAsignados = Array.from(new Set([...idsAsignados, ...wLocal]));
+              const wLocal = perfilObj.widgetsAsignadosPorPanel["panel_cuenta"] ?? perfilObj.widgetsAsignadosPorPanel["cuenta"];
+              if (Array.isArray(wLocal)) {
+                const retirados = new Set<string>(
+                  perfilObj.widgetsRetiradosPorPanel?.["panel_cuenta"] ||
+                  perfilObj.widgetsRetiradosPorPanel?.["cuenta"] ||
+                  []
+                );
+                idsAsignados = wLocal.filter((w: string) => !retirados.has(w));
               }
             }
           }

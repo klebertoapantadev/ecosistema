@@ -343,7 +343,7 @@ export default function FormularioAgendar({
 
       setCitaConfirmadaId(r.data.citaId);
       setTimeout(() => {
-        router.push("/panel/mis-citas");
+        router.push("/panel/agendamiento?widget=mis_citas");
       }, 1500);
     });
   }

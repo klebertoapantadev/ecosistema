@@ -17,8 +17,16 @@ import {
 } from "./clasificador-aria";
 import {
   actualizarCacheConfigAgendaNegocio,
+  listarAbogadosAsignables,
+  listarAgendaDelAbogado,
+  listarCitasDelCliente,
+  listarCitasEnContingencia,
   listarMateriasAgendables,
+  listarServiciosAgendables,
+  obtenerCobertura,
   obtenerConfiguracionAgendaNegocio,
+  obtenerHuecosDeMateria,
+  obtenerMiAgenda,
 } from "./consultas";
 
 // Mutaciones del módulo. Devuelven `{ ok }` y nunca lanzan hacia el componente
@@ -672,4 +680,95 @@ export async function quitarBloqueoAction(bloqueoId: string): Promise<Resultado>
 
   revalidatePath("/panel/agenda/disponibilidad");
   return { ok: true, data: undefined };
+}
+
+export async function obtenerDatosAgendarCitaWidgetAction() {
+  try {
+    const [materias, servicios, cobertura, configAgenda] = await Promise.all([
+      listarMateriasAgendables(),
+      listarServiciosAgendables(),
+      obtenerCobertura(),
+      obtenerConfiguracionAgendaNegocio(),
+    ]);
+    return {
+      ok: true as const,
+      data: { materias, servicios, cobertura, configAgenda },
+    };
+  } catch (err) {
+    return {
+      ok: false as const,
+      error: err instanceof Error ? err.message : "No se pudieron cargar los datos de agendamiento.",
+    };
+  }
+}
+
+export async function buscarHuecosMateriaAction(
+  materiaId: string,
+  varianteId: string | null,
+  modalidad: string,
+) {
+  const configAgenda = await obtenerConfiguracionAgendaNegocio();
+  const desde = new Date();
+  const horizonteDias = configAgenda.horizonte_dias || 21;
+  const hasta = new Date(desde.getTime() + horizonteDias * 24 * 60 * 60 * 1000);
+  return obtenerHuecosDeMateria(materiaId, desde, hasta, varianteId, modalidad);
+}
+
+export async function obtenerMisCitasWidgetAction() {
+  try {
+    const [citas, cobertura] = await Promise.all([
+      listarCitasDelCliente(),
+      obtenerCobertura(),
+    ]);
+    return {
+      ok: true as const,
+      data: { citas, cobertura },
+    };
+  } catch (err) {
+    return {
+      ok: false as const,
+      error: err instanceof Error ? err.message : "No se pudieron cargar tus citas.",
+    };
+  }
+}
+
+export async function obtenerAgendaAbogadoWidgetAction() {
+  try {
+    const ahora = new Date();
+    const finSemana = new Date(ahora.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const [citas, agenda] = await Promise.all([
+      listarAgendaDelAbogado(ahora, finSemana),
+      obtenerMiAgenda(),
+    ]);
+    return {
+      ok: true as const,
+      data: {
+        citas,
+        sinConfigurar: !agenda || !agenda.profesional.agp_configurada_en,
+      },
+    };
+  } catch (err) {
+    return {
+      ok: false as const,
+      error: err instanceof Error ? err.message : "No se pudo cargar tu agenda.",
+    };
+  }
+}
+
+export async function obtenerAsignacionesWidgetAction() {
+  try {
+    const [citas, abogados] = await Promise.all([
+      listarCitasEnContingencia(),
+      listarAbogadosAsignables(),
+    ]);
+    return {
+      ok: true as const,
+      data: { citas, abogados },
+    };
+  } catch (err) {
+    return {
+      ok: false as const,
+      error: err instanceof Error ? err.message : "No se pudieron cargar las asignaciones.",
+    };
+  }
 }

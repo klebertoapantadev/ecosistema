@@ -621,6 +621,15 @@ export async function guardarWidget(input: GuardarWidgetInput): Promise<Resultad
   return { ok: true, data: undefined };
 }
 
+function obtenerClavesNegocioCompatibles(negocio: string): string[] {
+  const nLower = (negocio || "tranqi").toLowerCase().trim();
+  const nUpper = (negocio || "TRANQ").toUpperCase().trim();
+  if (nLower.startsWith("tranq")) {
+    return Array.from(new Set([nLower, nUpper, "tranqi", "tranq", "TRANQ", "TRANQI"]));
+  }
+  return Array.from(new Set([nLower, nUpper]));
+}
+
 export async function guardarAsignacionWidget(
   perfilClave: string,
   widgetClave: string,
@@ -629,49 +638,73 @@ export async function guardarAsignacionWidget(
   panelId?: string
 ): Promise<Resultado> {
   const supabase = await crearClienteServidor();
-  const negocioNorm = (negocio || "tranqi").toLowerCase().trim();
+  const adminSupabase = (crearClienteAdmin() || supabase) as any;
+  const negocioNorm = (negocio || "tranqi").toLowerCase().trim().startsWith("tranq")
+    ? "tranqi"
+    : (negocio || "tranqi").toLowerCase().trim();
 
   // Resolver el UUID del widget si se pasó la clave textual
   let widgetUuid = widgetClave;
   const esUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(widgetClave);
   if (!esUuid) {
-    const { data: wRow } = await supabase
+    const { data: wRow } = await adminSupabase
       .schema("comun_seguridad")
       .from("seg_widget")
       .select("wdg_id")
       .eq("wdg_clave", widgetClave.toLowerCase().trim())
-      .eq("wdg_negocio", negocioNorm)
+      .in("wdg_negocio", obtenerClavesNegocioCompatibles(negocio))
+      .limit(1)
       .maybeSingle();
 
     if (wRow?.wdg_id) {
       widgetUuid = wRow.wdg_id;
+    } else {
+      // Si el widget aún no existe en seg_widget, el estado por panel ya queda persistido en seg_perfil.per_detalle_perfil
+      revalidatePath("/panel/configuracion");
+      revalidatePath("/panel/administrar");
+      revalidatePath("/panel");
+      return { ok: true, data: undefined };
     }
   }
 
-  if (asignar) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const payload: any = {
-      rlw_rol: perfilClave.toUpperCase().trim(),
-      rlw_widget_id: widgetUuid,
-      rlw_negocio: negocioNorm,
-      rlw_visible: true
-    };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const payload: any = {
+    rlw_rol: perfilClave.toUpperCase().trim(),
+    rlw_widget_id: widgetUuid,
+    rlw_negocio: negocioNorm,
+    rlw_visible: Boolean(asignar),
+    ...(panelId ? { rlw_panel_id: panelId } : {})
+  };
 
-    const { error } = await supabase
+  if (asignar) {
+    const { error } = await adminSupabase
       .schema("comun_seguridad")
       .from("seg_rol_widget")
-      .upsert(payload, { onConflict: "rlw_negocio, rlw_rol, rlw_widget_id" });
+      .upsert(
+        {
+          rlw_rol: payload.rlw_rol,
+          rlw_widget_id: payload.rlw_widget_id,
+          rlw_negocio: payload.rlw_negocio,
+          rlw_visible: true
+        },
+        { onConflict: "rlw_negocio, rlw_rol, rlw_widget_id" }
+      );
 
     if (error) return { ok: false, error: error.message };
   } else {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await supabase
+    // Marcar rlw_visible = false o actualizar para que no se pierda el rastro de desasignación
+    const { error } = await adminSupabase
       .schema("comun_seguridad")
       .from("seg_rol_widget")
-      .delete()
-      .eq("rlw_rol", perfilClave.toUpperCase().trim())
-      .eq("rlw_widget_id", widgetUuid)
-      .eq("rlw_negocio", negocioNorm);
+      .upsert(
+        {
+          rlw_rol: payload.rlw_rol,
+          rlw_widget_id: payload.rlw_widget_id,
+          rlw_negocio: payload.rlw_negocio,
+          rlw_visible: false
+        },
+        { onConflict: "rlw_negocio, rlw_rol, rlw_widget_id" }
+      );
 
     if (error) return { ok: false, error: error.message };
   }
@@ -687,13 +720,15 @@ export async function guardarConfiguracionPanelesPerfilAction(
   negocio: string,
   panelesAsignados: string[],
   widgetsAsignadosPorPanel: Record<string, string[]>,
-  titulosWidgetsPorPanel?: Record<string, string>
+  titulosWidgetsPorPanel?: Record<string, string>,
+  widgetsRetiradosPorPanel?: Record<string, string[]>
 ): Promise<Resultado> {
   try {
     const supabase = await crearClienteServidor();
     const adminSupabase = crearClienteAdmin() || supabase;
     const perfilClaveUpper = (perfilClave || "").toUpperCase().trim();
-    const negocioNorm = (negocio || "tranqi").toLowerCase().trim();
+    const clavesNegocio = obtenerClavesNegocioCompatibles(negocio);
+    const negocioNorm = clavesNegocio[0] || "tranqi";
 
     if (!perfilClaveUpper) return { ok: false, error: "Clave de perfil no válida" };
 
@@ -706,8 +741,11 @@ export async function guardarConfiguracionPanelesPerfilAction(
       .maybeSingle();
 
     const detalleActual = (perfilRow?.per_detalle_perfil as Record<string, any>) || {};
-    const negociosMap = detalleActual.negocios || {};
-    const negocioConfigActual = negociosMap[negocioNorm] || {};
+    const negociosMap = { ...(detalleActual.negocios || {}) };
+    const negocioConfigActual =
+      negociosMap[negocioNorm] ||
+      clavesNegocio.map(k => negociosMap[k]).find(Boolean) ||
+      {};
 
     const titulosMerged = {
       ...(detalleActual.titulosWidgetsPorPanel || {}),
@@ -715,22 +753,48 @@ export async function guardarConfiguracionPanelesPerfilAction(
       ...(titulosWidgetsPorPanel || {})
     };
 
-    negociosMap[negocioNorm] = {
+    const retiradosMerged: Record<string, string[]> = {
+      ...(detalleActual.widgetsRetiradosPorPanel || {}),
+      ...(negocioConfigActual.widgetsRetiradosPorPanel || {}),
+      ...(widgetsRetiradosPorPanel || {})
+    };
+
+    // Si un widget está presente en widgetsAsignadosPorPanel[pId], asegurarse de que NO figure como retirado en ese mismo panel
+    for (const [pId, wActivos] of Object.entries(widgetsAsignadosPorPanel || {})) {
+      if (Array.isArray(wActivos) && Array.isArray(retiradosMerged[pId])) {
+        const setActivos = new Set(wActivos);
+        retiradosMerged[pId] = retiradosMerged[pId].filter(w => !setActivos.has(w));
+      }
+    }
+
+    const ahoraIso = new Date().toISOString();
+    const snapshotNegocio = {
       ...negocioConfigActual,
+      configuradoExplicitamente: true,
       panelesAsignados,
       widgetsAsignadosPorPanel,
+      widgetsPorPanel: widgetsAsignadosPorPanel,
+      widgetsRetiradosPorPanel: retiradosMerged,
       titulosWidgetsPorPanel: titulosMerged,
-      actualizadoEn: new Date().toISOString()
+      actualizadoEn: ahoraIso
     };
+
+    // Guardar en todas las variantes de clave del negocio ("tranqi", "tranq", "TRANQ", "TRANQI") para evitar desincronización
+    for (const k of clavesNegocio) {
+      negociosMap[k] = snapshotNegocio;
+    }
 
     const nuevoDetalle = {
       ...detalleActual,
+      configuradoExplicitamente: true,
       negocios: negociosMap,
       // Guardar también a nivel raíz para consistencia y fallback
       panelesAsignados,
       widgetsAsignadosPorPanel,
+      widgetsPorPanel: widgetsAsignadosPorPanel,
+      widgetsRetiradosPorPanel: retiradosMerged,
       titulosWidgetsPorPanel: titulosMerged,
-      actualizadoEn: new Date().toISOString()
+      actualizadoEn: ahoraIso
     };
 
     const { error: updErr } = await (adminSupabase
@@ -738,7 +802,7 @@ export async function guardarConfiguracionPanelesPerfilAction(
       .from("seg_perfil") as any)
       .update({
         per_detalle_perfil: nuevoDetalle,
-        per_actualizado_en: new Date().toISOString()
+        per_actualizado_en: ahoraIso
       })
       .eq("per_clave", perfilClaveUpper);
 
@@ -759,29 +823,106 @@ export async function guardarConfiguracionPanelesPerfilAction(
   }
 }
 
+export interface ConfiguracionPerfilPersistida {
+  clave: string;
+  configuradoExplicitamente: boolean;
+  panelesAsignados?: string[];
+  widgetsAsignadosPorPanel?: Record<string, string[]>;
+  widgetsRetiradosPorPanel?: Record<string, string[]>;
+  titulosWidgetsPorPanel?: Record<string, string>;
+  actualizadoEn?: string;
+}
+
+export async function obtenerConfiguracionTodosPerfilesAction(
+  negocio: string
+): Promise<Resultado<Record<string, ConfiguracionPerfilPersistida>>> {
+  try {
+    const supabase = await crearClienteServidor();
+    const adminSupabase = crearClienteAdmin() || supabase;
+    const clavesNegocio = obtenerClavesNegocioCompatibles(negocio);
+
+    const { data: filas, error } = await (adminSupabase
+      .schema("comun_seguridad")
+      .from("seg_perfil")
+      .select("per_clave, per_detalle_perfil") as any);
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+
+    const resultado: Record<string, ConfiguracionPerfilPersistida> = {};
+    for (const fila of (filas || []) as any[]) {
+      const clave = String(fila?.per_clave || "").toUpperCase().trim();
+      if (!clave) continue;
+      const detalle = (fila?.per_detalle_perfil || {}) as Record<string, any>;
+      const negocioCfg =
+        clavesNegocio.map(k => detalle.negocios?.[k]).find(Boolean) ||
+        null;
+
+      const widgetsMap =
+        negocioCfg?.widgetsAsignadosPorPanel ||
+        negocioCfg?.widgetsPorPanel ||
+        detalle.widgetsAsignadosPorPanel ||
+        detalle.widgetsPorPanel;
+
+      const panelesArr =
+        negocioCfg?.panelesAsignados ||
+        detalle.panelesAsignados;
+
+      const retiradosMap =
+        negocioCfg?.widgetsRetiradosPorPanel ||
+        detalle.widgetsRetiradosPorPanel;
+
+      const titulosMap =
+        negocioCfg?.titulosWidgetsPorPanel ||
+        detalle.titulosWidgetsPorPanel;
+
+      if (widgetsMap || panelesArr || retiradosMap) {
+        resultado[clave] = {
+          clave,
+          configuradoExplicitamente: Boolean(
+            negocioCfg?.configuradoExplicitamente ||
+            detalle.configuradoExplicitamente ||
+            widgetsMap
+          ),
+          panelesAsignados: Array.isArray(panelesArr) ? panelesArr.map(String) : undefined,
+          widgetsAsignadosPorPanel: widgetsMap && typeof widgetsMap === "object" ? widgetsMap : undefined,
+          widgetsRetiradosPorPanel: retiradosMap && typeof retiradosMap === "object" ? retiradosMap : undefined,
+          titulosWidgetsPorPanel: titulosMap && typeof titulosMap === "object" ? titulosMap : undefined,
+          actualizadoEn: negocioCfg?.actualizadoEn || detalle.actualizadoEn
+        };
+      }
+    }
+
+    return { ok: true, data: resultado };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || "Error consultando configuración de perfiles" };
+  }
+}
+
 export async function obtenerConfiguracionNavegacionRolAction(
   perfilClave: string,
   negocio: string
-): Promise<Resultado<{ widgetsPorPanel: Record<string, string[]>; panelesAsignados: string[]; titulosWidgetsPorPanel?: Record<string, string> }>> {
+): Promise<Resultado<{ widgetsPorPanel: Record<string, string[]>; panelesAsignados: string[]; widgetsRetiradosPorPanel?: Record<string, string[]>; titulosWidgetsPorPanel?: Record<string, string>; configuradoExplicitamente?: boolean }>> {
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
-  const negocioNorm = (negocio || "tranqi").toLowerCase().trim();
-  const negocioUpper = (negocio || "TRANQ").toUpperCase().trim();
-  const variantesNegocio = Array.from(new Set([negocioNorm, negocioUpper, "TRANQ", "tranqi"]));
+  const variantesNegocio = obtenerClavesNegocioCompatibles(negocio);
   const rolUpper = (perfilClave || "CLIENTE").toUpperCase().trim();
 
-  let widgetsPorPanel: Record<string, string[]> = {};
+  const widgetsPorPanel: Record<string, string[]> = {};
   let panelesAsignados: string[] = [];
+  let widgetsRetiradosPorPanel: Record<string, string[]> = {};
   let titulosWidgetsPorPanel: Record<string, string> = {};
+  let configuradoExplicitamente = false;
   const matrizRol = MATRIZ_FUNCIONAL_ROLES[rolUpper] || MATRIZ_FUNCIONAL_ROLES["CLIENTE"] || { paneles: [], widgetsPorPanel: {} };
 
-  // 1. Inicializar siempre desde MATRIZ_FUNCIONAL_ROLES (preconfiguración canónica obligatoria)
+  // 1. Inicializar valores base desde MATRIZ_FUNCIONAL_ROLES (solo para paneles que no hayan sido personalizados)
   for (const [panelId, widgets] of Object.entries(matrizRol.widgetsPorPanel)) {
     widgetsPorPanel[panelId] = [...widgets];
   }
   panelesAsignados = [...(matrizRol.paneles || ["panel_inicio", "panel_cuenta"])];
 
-  // 2. Fusionar con cualquier personalización adicional en seg_perfil.per_detalle_perfil sin perder widgets canónicos nuevos
+  // 2. Leer la configuración persistida en seg_perfil.per_detalle_perfil y RESPETAR las eliminaciones/personalizaciones
   try {
     const { data: perfilRow } = await (adminSupabase
       .schema("comun_seguridad")
@@ -792,39 +933,53 @@ export async function obtenerConfiguracionNavegacionRolAction(
 
     if (perfilRow?.per_detalle_perfil) {
       const detalle = perfilRow.per_detalle_perfil as Record<string, any>;
-      const negocioConfig = detalle.negocios?.[negocioNorm] || detalle.negocios?.[negocioUpper];
-      const bddWidgetsPorPanel = negocioConfig?.widgetsPorPanel || detalle.widgetsPorPanel;
-      const bddPaneles = negocioConfig?.panelesAsignados || detalle.panelesAsignados;
+      const negocioConfig =
+        variantesNegocio.map(k => detalle.negocios?.[k]).find(Boolean) ||
+        null;
+
+      const bddWidgetsPorPanel =
+        negocioConfig?.widgetsAsignadosPorPanel ||
+        negocioConfig?.widgetsPorPanel ||
+        detalle.widgetsAsignadosPorPanel ||
+        detalle.widgetsPorPanel;
+      const bddPaneles =
+        negocioConfig?.panelesAsignados ||
+        detalle.panelesAsignados;
+      const bddRetirados =
+        negocioConfig?.widgetsRetiradosPorPanel ||
+        detalle.widgetsRetiradosPorPanel ||
+        {};
+
+      widgetsRetiradosPorPanel = bddRetirados;
 
       if (bddWidgetsPorPanel && typeof bddWidgetsPorPanel === "object") {
+        configuradoExplicitamente = true;
         for (const [pId, wList] of Object.entries(bddWidgetsPorPanel)) {
           if (Array.isArray(wList)) {
-            if (rolUpper === "ABOGADO" && !["panel_inicio", "panel_agendamiento", "panel_herramientas", "panel_cuenta"].includes(pId)) {
-              continue;
-            }
-            if (rolUpper === "CLIENTE" && !["panel_inicio", "panel_agendamiento", "panel_herramientas", "panel_cuenta", "panel_configuracion"].includes(pId)) {
-              continue;
-            }
-            const canonicos = widgetsPorPanel[pId] || [];
+            const retiradosPanel = new Set<string>(Array.isArray(bddRetirados[pId]) ? bddRetirados[pId].map(String) : []);
             const normalizados = wList
               .map(String)
-              .map((w) => (w === "facturacion_electronica" ? "historial_pagos" : w));
-            const filtrados =
-              rolUpper === "ABOGADO" || rolUpper === "CLIENTE"
-                ? normalizados.filter((w) => !["disponibilidad_abogados", "asignaciones_agenda", "gestion_red_abogados", "crm_clientes", "agentes_ia", "socios", "solicitud_socio"].includes(w))
-                : normalizados;
-            widgetsPorPanel[pId] = Array.from(new Set([...canonicos, ...filtrados]));
+              .map((w) => (w === "facturacion_electronica" ? "historial_pagos" : w))
+              .filter((w) => !retiradosPanel.has(w) && !(w === "historial_pagos" && retiradosPanel.has("facturacion_electronica")));
+
+            // Respetar exactamente la lista guardada para este panel sin re-inyectar widgets canónicos eliminados
+            widgetsPorPanel[pId] = Array.from(new Set(normalizados));
           }
         }
       }
-      if (Array.isArray(bddPaneles)) {
-        const panelesFiltrados =
-          rolUpper === "ABOGADO"
-            ? bddPaneles.map(String).filter((p) => ["panel_inicio", "panel_agendamiento", "panel_herramientas", "panel_cuenta"].includes(p))
-            : rolUpper === "CLIENTE"
-              ? bddPaneles.map(String).filter((p) => ["panel_inicio", "panel_agendamiento", "panel_herramientas", "panel_cuenta", "panel_configuracion"].includes(p))
-              : bddPaneles.map(String);
-        panelesAsignados = Array.from(new Set([...panelesAsignados, ...panelesFiltrados]));
+
+      // Aplicar exclusión de widgetsRetiradosPorPanel sobre cualquier panel restante
+      for (const [pId, retList] of Object.entries(bddRetirados)) {
+        if (Array.isArray(retList) && retList.length > 0 && Array.isArray(widgetsPorPanel[pId])) {
+          const retSet = new Set(retList.map(String));
+          widgetsPorPanel[pId] = widgetsPorPanel[pId].filter(
+            (w) => !retSet.has(w) && !(w === "historial_pagos" && retSet.has("facturacion_electronica"))
+          );
+        }
+      }
+
+      if (Array.isArray(bddPaneles) && bddPaneles.length > 0) {
+        panelesAsignados = Array.from(new Set(bddPaneles.map(String)));
       }
       titulosWidgetsPorPanel = negocioConfig?.titulosWidgetsPorPanel || detalle.titulosWidgetsPorPanel || {};
     }
@@ -832,43 +987,14 @@ export async function obtenerConfiguracionNavegacionRolAction(
     console.error("Error leyendo per_detalle_perfil:", e);
   }
 
-  const panelesSet = new Set<string>(panelesAsignados);
-
-  // 3. Consultar en base de datos los permisos específicos de seg_rol_widget
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase
-    .schema("comun_seguridad")
-    .from("seg_rol_widget")
-    .select("rlw_widget_id, rlw_visible, seg_widget(wdg_clave, wdg_detalle_widget)") as any)
-    .eq("rlw_rol", rolUpper)
-    .in("rlw_negocio", variantesNegocio);
-
-  if (!error && data && Array.isArray(data) && data.length > 0) {
-    const widgetsDesactivados = new Set<string>();
-
-    for (const r of data as any[]) {
-      const widgetClave = r.seg_widget?.wdg_clave || r.rlw_widget_id;
-      if (widgetClave) {
-        if (r.rlw_visible === false) {
-          widgetsDesactivados.add(widgetClave);
-        }
-      }
-    }
-
-    // Filtrar widgets desactivados explícitamente en base de datos
-    if (widgetsDesactivados.size > 0) {
-      for (const panelId of Object.keys(widgetsPorPanel)) {
-        widgetsPorPanel[panelId] = (widgetsPorPanel[panelId] || []).filter((w) => !widgetsDesactivados.has(w));
-      }
-    }
-  }
-
   return {
     ok: true,
     data: {
       widgetsPorPanel,
-      panelesAsignados: Array.from(panelesSet),
-      titulosWidgetsPorPanel
+      panelesAsignados,
+      widgetsRetiradosPorPanel,
+      titulosWidgetsPorPanel,
+      configuradoExplicitamente
     }
   };
 }
