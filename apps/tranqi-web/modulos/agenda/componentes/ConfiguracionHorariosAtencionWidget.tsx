@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import React, { useEffect, useMemo, useState, useTransition } from "react";
 import {
   AlertCircle,
   Building2,
@@ -120,6 +120,25 @@ function normalizarConfiguracion(raw: Partial<DatosConfigNegocioAgenda>): DatosC
   };
 }
 
+const inputBaseStyle: React.CSSProperties = {
+  borderRadius: "10px",
+  border: "1px solid #CBD5E1",
+  background: "#FFFFFF",
+  padding: "8px 12px",
+  fontSize: "0.84rem",
+  fontWeight: 600,
+  color: "#0F172A",
+  outline: "none",
+};
+
+const labelBaseStyle: React.CSSProperties = {
+  display: "block",
+  fontSize: "0.75rem",
+  fontWeight: 700,
+  color: "#475569",
+  marginBottom: "6px",
+};
+
 export function ConfiguracionHorariosAtencionWidget({
   configInicial,
   materiasIniciales,
@@ -152,7 +171,6 @@ export function ConfiguracionHorariosAtencionWidget({
     if (configInicial) return;
     let cancelado = false;
 
-    // 1. Carga inmediata desde caché local (Resiliencia Híbrida)
     try {
       const cache = localStorage.getItem(CLAVE_CACHE_LOCAL);
       if (cache) {
@@ -174,7 +192,7 @@ export function ConfiguracionHorariosAtencionWidget({
           try {
             localStorage.setItem(CLAVE_CACHE_LOCAL, JSON.stringify(norm));
           } catch {
-            // ignorar almacenamiento lleno
+            // ignorar
           }
         }
       } finally {
@@ -187,8 +205,6 @@ export function ConfiguracionHorariosAtencionWidget({
       cancelado = true;
     };
   }, [configInicial]);
-
-  // ── Gestión de Horarios Semanales Normales (Por Defecto) ──
 
   function actualizarFranja(
     tipo: "virtual" | "presencial",
@@ -255,8 +271,6 @@ export function ConfiguracionHorariosAtencionWidget({
             .concat([{ dia_semana: 6, hora_inicio: "09:00", hora_fin: "13:00" }]);
     setConfig((prev) => ({ ...prev, franjas_presencial: nuevas }));
   }
-
-  // ── Gestión de Fechas Exactas con Horario Diferenciado ──
 
   function agregarOActualizarFechaEspecial(item: FechaEspecialAgenda) {
     setMensajeOk(null);
@@ -416,8 +430,6 @@ export function ConfiguracionHorariosAtencionWidget({
     }));
   }
 
-  // ── Simulador en vivo para comprobar el horario efectivo de cualquier fecha ──
-
   const simulacionDia = useMemo(() => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaSimulacion)) {
       return null;
@@ -505,29 +517,104 @@ export function ConfiguracionHorariosAtencionWidget({
 
   if (cargando) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 flex items-center gap-3 text-sm text-slate-600">
-        <Loader2 className="h-5 w-5 animate-spin text-violet-600" />
-        Cargando configuración de disponibilidad y horarios de atención…
+      <div
+        style={{
+          borderRadius: "16px",
+          border: "1px solid #E2E8F0",
+          background: "#FFFFFF",
+          padding: "24px",
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          fontSize: "0.9rem",
+          color: "#475569",
+        }}
+      >
+        <Loader2 size={20} color="#5000BA" />
+        <span>Cargando configuración de disponibilidad y horarios de atención…</span>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 rounded-3xl border border-slate-200 bg-white p-5 sm:p-6 shadow-xs">
-      {/* 1. ENCABEZADO Y ACCIÓN DE GUARDADO */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-violet-50 border border-violet-200 px-3 py-0.5 text-xs font-bold text-violet-700">
-            <CalendarClock className="h-3.5 w-3.5" />
-            Disponibilidad de Abogados & Motor de Agendamiento ARIA
+    <div
+      style={{
+        background: "#FFFFFF",
+        borderRadius: "20px",
+        border: "1px solid #E2E8F0",
+        padding: "24px",
+        boxShadow: "0 4px 16px -4px rgba(15, 23, 42, 0.05)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "24px",
+        width: "100%",
+      }}
+    >
+      {/* 1. ENCABEZADO Y BOTÓN DE GUARDADO */}
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: "16px",
+          paddingBottom: "18px",
+          borderBottom: "1px solid #F1F5F9",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "14px", maxWidth: "740px" }}>
+          <div
+            style={{
+              width: "46px",
+              height: "46px",
+              borderRadius: "12px",
+              background: "#F5F3FF",
+              color: "#5000BA",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+              border: "1px solid #DDD6FE",
+            }}
+          >
+            <CalendarClock size={24} />
           </div>
-          <h2 className="text-lg sm:text-xl font-bold text-slate-900">
-            Horarios de Atención (Telemático y Oficina), Fechas Especiales y Cupo por Hora
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-600">
-            Configura el horario laborable normal por defecto, excepciones por fechas exactas (ej.
-            Navidad) y el número máximo de citas permitidas en la misma fecha y hora.
-          </p>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap", marginBottom: "4px" }}>
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  background: "#F5F3FF",
+                  border: "1px solid #DDD6FE",
+                  color: "#5000BA",
+                  padding: "3px 10px",
+                  borderRadius: "999px",
+                  fontSize: "0.72rem",
+                  fontWeight: 800,
+                }}
+              >
+                <Sparkles size={12} />
+                Disponibilidad de Abogados & Motor de Agendamiento ARIA
+              </span>
+            </div>
+            <h2
+              style={{
+                margin: "0 0 4px 0",
+                fontSize: "1.25rem",
+                fontWeight: 800,
+                color: "#0F172A",
+                letterSpacing: "-0.01em",
+              }}
+            >
+              Horarios de Atención (Telemático y Oficina), Fechas Especiales y Cupo por Hora
+            </h2>
+            <p style={{ margin: 0, fontSize: "0.85rem", color: "#64748B", lineHeight: 1.45 }}>
+              Configura el horario laborable normal por defecto, excepciones por fechas exactas (ej.
+              Navidad) y el número máximo de citas permitidas en la misma fecha y hora.
+            </p>
+          </div>
         </div>
 
         <button
@@ -536,49 +623,135 @@ export function ConfiguracionHorariosAtencionWidget({
           disabled={guardando}
           title="Guardar configuración de disponibilidad y horarios"
           aria-label="Guardar configuración de disponibilidad y horarios"
-          className="btn btn-primario btn-responsive-accion inline-flex items-center justify-center gap-2 self-start sm:self-auto px-4 py-2.5 rounded-xl font-semibold"
+          className="btn-responsive-accion"
+          style={{
+            background: "var(--violeta, #5000BA)",
+            color: "#FFFFFF",
+            border: "none",
+            borderRadius: "12px",
+            padding: "10px 18px",
+            fontSize: "0.86rem",
+            fontWeight: 700,
+            cursor: guardando ? "wait" : "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            boxShadow: "0 4px 12px rgba(80, 0, 186, 0.22)",
+            opacity: guardando ? 0.75 : 1,
+          }}
         >
-          {guardando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          {guardando ? <Loader2 size={16} /> : <Save size={16} />}
           <span className="btn-texto-responsive">
             {guardando ? "Guardando…" : "Guardar Horarios"}
           </span>
         </button>
       </div>
 
+      {/* ALERTAS DE ÉXITO O ERROR */}
       {mensajeOk && (
-        <div className="flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900">
-          <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            borderRadius: "12px",
+            border: "1px solid #86EFAC",
+            background: "#F0FDF4",
+            padding: "12px 16px",
+            fontSize: "0.86rem",
+            fontWeight: 600,
+            color: "#166534",
+          }}
+        >
+          <CheckCircle2 size={18} color="#16A34A" />
           <span>{mensajeOk}</span>
         </div>
       )}
 
       {error && (
-        <div className="flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-800">
-          <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" />
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+            borderRadius: "12px",
+            border: "1px solid #FCA5A5",
+            background: "#FEF2F2",
+            padding: "12px 16px",
+            fontSize: "0.86rem",
+            fontWeight: 600,
+            color: "#991B1B",
+          }}
+        >
+          <AlertCircle size={18} color="#DC2626" />
           <span>{error}</span>
         </div>
       )}
 
       {/* 2. PARÁMETRO DE CUPO MÁXIMO POR FECHA/HORA Y ESTRATEGIA DE CAPACIDAD */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50/70 via-white to-slate-50 p-4 sm:p-5">
-        {/* Cupo máximo de citas en la misma fecha/hora */}
-        <div className="lg:col-span-5 flex flex-col justify-between rounded-xl border border-violet-200 bg-white p-4 shadow-2xs">
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+          gap: "16px",
+          background: "linear-gradient(135deg, #F5F3FF 0%, #F8FAFC 100%)",
+          border: "1.5px solid #DDD6FE",
+          borderRadius: "16px",
+          padding: "18px",
+        }}
+      >
+        {/* Tarjeta Izquierda: Máximo de citas en la misma fecha y hora */}
+        <div
+          style={{
+            background: "#FFFFFF",
+            borderRadius: "14px",
+            border: "1px solid #E9D5FF",
+            padding: "16px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            gap: "14px",
+            boxShadow: "0 2px 6px rgba(80, 0, 186, 0.04)",
+          }}
+        >
           <div>
-            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-violet-700">
-              <Users className="h-4 w-4" />
-              Control de Concurrencia por Turno
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                fontSize: "0.72rem",
+                fontWeight: 800,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                color: "#5000BA",
+                marginBottom: "4px",
+              }}
+            >
+              <Users size={15} />
+              <span>Control de Concurrencia por Turno</span>
             </div>
-            <h3 className="mt-1 text-sm sm:text-base font-bold text-slate-900">
+            <h3 style={{ margin: "0 0 6px 0", fontSize: "1rem", fontWeight: 800, color: "#0F172A" }}>
               Máximo de citas en la misma fecha y hora
             </h3>
-            <p className="mt-1 text-xs text-slate-600">
+            <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748B", lineHeight: 1.45 }}>
               Por defecto <strong>1 sola cita</strong> por bloque horario. Cuando se reserva ese
-              cupo, la hora queda ocupada automáticamente para otros clientes.
+              cupo, la fecha/hora se bloquea automáticamente para otros clientes.
             </p>
           </div>
 
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
-            <div className="flex items-center gap-2">
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "12px",
+              paddingTop: "12px",
+              borderTop: "1px solid #F1F5F9",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <button
                 type="button"
                 onClick={() =>
@@ -589,9 +762,20 @@ export function ConfiguracionHorariosAtencionWidget({
                 }
                 title="Reducir cupo máximo por hora"
                 aria-label="Reducir cupo máximo por hora"
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                style={{
+                  width: "34px",
+                  height: "34px",
+                  borderRadius: "10px",
+                  border: "1px solid #CBD5E1",
+                  background: "#F8FAFC",
+                  color: "#334155",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                }}
               >
-                <Minus className="h-4 w-4" />
+                <Minus size={15} />
               </button>
 
               <input
@@ -606,7 +790,17 @@ export function ConfiguracionHorariosAtencionWidget({
                     max_citas_simultaneas: Math.max(1, Math.min(50, Number(e.target.value) || 1)),
                   }))
                 }
-                className="w-16 rounded-xl border border-violet-300 bg-violet-50/50 px-2 py-1.5 text-center text-base font-extrabold text-violet-950"
+                style={{
+                  width: "64px",
+                  height: "34px",
+                  borderRadius: "10px",
+                  border: "1.5px solid #5000BA",
+                  background: "#F5F3FF",
+                  textAlign: "center",
+                  fontSize: "1rem",
+                  fontWeight: 800,
+                  color: "#3B0087",
+                }}
               />
 
               <button
@@ -619,47 +813,82 @@ export function ConfiguracionHorariosAtencionWidget({
                 }
                 title="Aumentar cupo máximo por hora"
                 aria-label="Aumentar cupo máximo por hora"
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                style={{
+                  width: "34px",
+                  height: "34px",
+                  borderRadius: "10px",
+                  border: "1px solid #CBD5E1",
+                  background: "#F8FAFC",
+                  color: "#334155",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                }}
               >
-                <Plus className="h-4 w-4" />
+                <Plus size={15} />
               </button>
 
-              <span className="text-xs font-bold text-slate-700">
+              <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#475569" }}>
                 {config.max_citas_simultaneas === 1
                   ? "cita por hora (Por defecto)"
                   : "citas simultáneas"}
               </span>
             </div>
 
-            <div className="flex items-center gap-1">
-              {[1, 2, 3].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setConfig((prev) => ({ ...prev, max_citas_simultaneas: n }))}
-                  className={`rounded-lg px-2.5 py-1 text-xs font-bold transition ${
-                    config.max_citas_simultaneas === n
-                      ? "bg-violet-600 text-white"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  {n} {n === 1 ? "cita" : "citas"}
-                </button>
-              ))}
+            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              {[1, 2, 3].map((n) => {
+                const activo = config.max_citas_simultaneas === n;
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => setConfig((prev) => ({ ...prev, max_citas_simultaneas: n }))}
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: "8px",
+                      border: activo ? "1px solid #5000BA" : "1px solid #CBD5E1",
+                      background: activo ? "#5000BA" : "#F8FAFC",
+                      color: activo ? "#FFFFFF" : "#475569",
+                      fontSize: "0.74rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {n} {n === 1 ? "cita" : "citas"}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        {/* Estrategia de Capacidad y Especialidad por Defecto de ARIA */}
-        <div className="lg:col-span-7 flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-2xs space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {/* Tarjeta Derecha: Modo de Disponibilidad Operativa y Especialidad ARIA */}
+        <div
+          style={{
+            background: "#FFFFFF",
+            borderRadius: "14px",
+            border: "1px solid #E2E8F0",
+            padding: "16px",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            gap: "12px",
+          }}
+        >
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: "12px",
+            }}
+          >
             <div>
-              <label
-                htmlFor="select-modo-capacidad"
-                className="flex items-center gap-1.5 text-xs font-bold text-slate-700 mb-1"
-              >
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-                Modo de Disponibilidad Operativa
+              <label htmlFor="select-modo-capacidad" style={labelBaseStyle}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                  <ShieldCheck size={14} color="#05876E" />
+                  Modo de Disponibilidad Operativa
+                </span>
               </label>
               <select
                 id="select-modo-capacidad"
@@ -672,7 +901,7 @@ export function ConfiguracionHorariosAtencionWidget({
                     permitir_sin_profesional: val !== "solo_abogados",
                   }));
                 }}
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs sm:text-sm font-semibold text-slate-900"
+                style={{ ...inputBaseStyle, width: "100%", background: "#F8FAFC" }}
               >
                 <option value="fijo_negocio">
                   1. Horario Base Tranqi (Cupo fijo por hora, sin requerir horario de socios)
@@ -687,12 +916,11 @@ export function ConfiguracionHorariosAtencionWidget({
             </div>
 
             <div>
-              <label
-                htmlFor="select-materia-defecto"
-                className="flex items-center gap-1.5 text-xs font-bold text-slate-700 mb-1"
-              >
-                <Sparkles className="h-3.5 w-3.5 text-violet-600" />
-                Especialidad por defecto (ARIA)
+              <label htmlFor="select-materia-defecto" style={labelBaseStyle}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+                  <Sparkles size={14} color="#5000BA" />
+                  Especialidad por defecto (ARIA)
+                </span>
               </label>
               <select
                 id="select-materia-defecto"
@@ -700,7 +928,7 @@ export function ConfiguracionHorariosAtencionWidget({
                 onChange={(e) =>
                   setConfig((prev) => ({ ...prev, materia_defecto_nombre: e.target.value }))
                 }
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs sm:text-sm font-semibold text-slate-900"
+                style={{ ...inputBaseStyle, width: "100%", background: "#F8FAFC" }}
               >
                 {materias.length > 0 ? (
                   materias.map((m) => (
@@ -721,7 +949,17 @@ export function ConfiguracionHorariosAtencionWidget({
             </div>
           </div>
 
-          <div className="rounded-xl bg-slate-50 border border-slate-200/80 px-3.5 py-2.5 text-xs text-slate-600 leading-relaxed">
+          <div
+            style={{
+              background: "#F8FAFC",
+              border: "1px solid #E2E8F0",
+              borderRadius: "10px",
+              padding: "10px 14px",
+              fontSize: "0.78rem",
+              color: "#475569",
+              lineHeight: 1.5,
+            }}
+          >
             {config.modo_capacidad === "fijo_negocio" && (
               <span>
                 <strong>Modo actual (Recomendado en etapa inicial):</strong> Los clientes agendan y
@@ -749,46 +987,93 @@ export function ConfiguracionHorariosAtencionWidget({
       </div>
 
       {/* 3. HORARIO LABORABLE NORMAL (POR DEFECTO — EDITABLE): TELEMÁTICO Y OFICINA */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-base font-bold text-slate-900">
-              1. Horario Laborable Normal (Por Defecto — Editable)
-            </h3>
-            <p className="text-xs text-slate-500">
-              Se aplica todos los días del año salvo en las fechas exactas que tengan un horario
-              diferenciado configurado más abajo.
-            </p>
-          </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+        <div>
+          <h3 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
+            1. Horario Laborable Normal (Por Defecto — Editable)
+          </h3>
+          <p style={{ margin: 0, fontSize: "0.82rem", color: "#64748B" }}>
+            Se aplica todos los días del año salvo en las fechas exactas que tengan un horario
+            diferenciado configurado en la sección 2.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+            gap: "18px",
+          }}
+        >
           {/* COLUMNA 1: HORARIO NORMAL CONSULTAS TELEMÁTICAS */}
-          <section className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-600 text-white">
-                  <Video className="h-4 w-4" />
+          <section
+            style={{
+              borderRadius: "16px",
+              border: "1px solid #DDD6FE",
+              background: "#FAF8FF",
+              padding: "18px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "14px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "10px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "10px",
+                    background: "#5000BA",
+                    color: "#FFFFFF",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Video size={18} />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900">
+                  <h4 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 800, color: "#0F172A" }}>
                     Horario Normal — Consultas Telemáticas
                   </h4>
-                  <p className="text-xs text-slate-500">
+                  <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#64748B" }}>
                     Videollamada (Por defecto Lun–Vie 08:00 a 19:00, Sáb 09:00 a 14:00)
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5">
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <button
                   type="button"
                   onClick={() => aplicarPresetTelematico("estandar")}
                   title="Restaurar horario telemático estándar Lun-Sáb"
                   aria-label="Restaurar horario telemático estándar Lun-Sáb"
-                  className="btn-responsive-accion inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                  className="btn-responsive-accion"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    borderRadius: "8px",
+                    border: "1px solid #CBD5E1",
+                    background: "#FFFFFF",
+                    padding: "6px 10px",
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    color: "#334155",
+                    cursor: "pointer",
+                  }}
                 >
-                  <RotateCcw className="h-3.5 w-3.5" />
+                  <RotateCcw size={13} />
                   <span className="btn-texto-responsive">Por Defecto</span>
                 </button>
                 <button
@@ -796,19 +1081,42 @@ export function ConfiguracionHorariosAtencionWidget({
                   onClick={() => agregarFranja("virtual")}
                   title="Añadir franja telemática"
                   aria-label="Añadir franja telemática"
-                  className="btn-responsive-accion inline-flex items-center gap-1 rounded-lg bg-violet-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-violet-700"
+                  className="btn-responsive-accion"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    borderRadius: "8px",
+                    border: "none",
+                    background: "#5000BA",
+                    padding: "6px 12px",
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    color: "#FFFFFF",
+                    cursor: "pointer",
+                  }}
                 >
-                  <Plus className="h-3.5 w-3.5" />
+                  <Plus size={14} />
                   <span className="btn-texto-responsive">Añadir Día</span>
                 </button>
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {config.franjas_virtual.map((f, idx) => (
                 <div
                   key={`virt-${idx}`}
-                  className="flex flex-wrap sm:flex-nowrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-2.5"
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "8px",
+                    borderRadius: "12px",
+                    border: "1px solid #E2E8F0",
+                    background: "#FFFFFF",
+                    padding: "8px 12px",
+                  }}
                 >
                   <select
                     aria-label="Día de la semana telemático"
@@ -816,7 +1124,13 @@ export function ConfiguracionHorariosAtencionWidget({
                     onChange={(e) =>
                       actualizarFranja("virtual", idx, { dia_semana: Number(e.target.value) })
                     }
-                    className="flex-1 min-w-[120px] rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-800"
+                    style={{
+                      ...inputBaseStyle,
+                      flex: "1 1 120px",
+                      minWidth: "120px",
+                      background: "#F8FAFC",
+                      padding: "6px 10px",
+                    }}
                   >
                     {DIAS_SEMANA_NEGOCIO.map((d) => (
                       <option key={d.dia} value={d.dia}>
@@ -825,8 +1139,8 @@ export function ConfiguracionHorariosAtencionWidget({
                     ))}
                   </select>
 
-                  <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                    <Clock className="h-3.5 w-3.5 text-slate-400" />
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", color: "#475569" }}>
+                    <Clock size={14} color="#5000BA" />
                     <input
                       type="time"
                       aria-label="Hora inicio telemático"
@@ -834,9 +1148,9 @@ export function ConfiguracionHorariosAtencionWidget({
                       onChange={(e) =>
                         actualizarFranja("virtual", idx, { hora_inicio: e.target.value })
                       }
-                      className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-900"
+                      style={{ ...inputBaseStyle, padding: "5px 8px" }}
                     />
-                    <span>a</span>
+                    <span style={{ fontWeight: 600 }}>a</span>
                     <input
                       type="time"
                       aria-label="Hora fin telemático"
@@ -844,7 +1158,7 @@ export function ConfiguracionHorariosAtencionWidget({
                       onChange={(e) =>
                         actualizarFranja("virtual", idx, { hora_fin: e.target.value })
                       }
-                      className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-900"
+                      style={{ ...inputBaseStyle, padding: "5px 8px" }}
                     />
                   </div>
 
@@ -854,9 +1168,21 @@ export function ConfiguracionHorariosAtencionWidget({
                     disabled={config.franjas_virtual.length <= 1}
                     title="Eliminar franja telemática"
                     aria-label="Eliminar franja telemática"
-                    className="ml-auto rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-30"
+                    style={{
+                      border: "1px solid #FEE2E2",
+                      background: "#FFF1F2",
+                      color: "#E11D48",
+                      borderRadius: "8px",
+                      width: "32px",
+                      height: "32px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: config.franjas_virtual.length <= 1 ? "not-allowed" : "pointer",
+                      opacity: config.franjas_virtual.length <= 1 ? 0.35 : 1,
+                    }}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 size={15} />
                   </button>
                 </div>
               ))}
@@ -864,31 +1190,74 @@ export function ConfiguracionHorariosAtencionWidget({
           </section>
 
           {/* COLUMNA 2: HORARIO NORMAL CONSULTAS EN OFICINA (PRESENCIAL) */}
-          <section className="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 space-y-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800 text-white">
-                  <Building2 className="h-4 w-4" />
+          <section
+            style={{
+              borderRadius: "16px",
+              border: "1px solid #CBD5E1",
+              background: "#F8FAFC",
+              padding: "18px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "14px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "10px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <div
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "10px",
+                    background: "#0F172A",
+                    color: "#FFFFFF",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Building2 size={18} />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-slate-900">
+                  <h4 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 800, color: "#0F172A" }}>
                     Horario Normal — Consultas en Oficina
                   </h4>
-                  <p className="text-xs text-slate-500">
+                  <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#64748B" }}>
                     Atención presencial en despacho (Por defecto Lun–Vie 09:00 a 17:30)
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-1.5">
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <button
                   type="button"
                   onClick={() => aplicarPresetPresencial("oficina")}
                   title="Restaurar horario de oficina Lun-Vie"
                   aria-label="Restaurar horario de oficina Lun-Vie"
-                  className="btn-responsive-accion inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                  className="btn-responsive-accion"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    borderRadius: "8px",
+                    border: "1px solid #CBD5E1",
+                    background: "#FFFFFF",
+                    padding: "6px 10px",
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    color: "#334155",
+                    cursor: "pointer",
+                  }}
                 >
-                  <RotateCcw className="h-3.5 w-3.5" />
+                  <RotateCcw size={13} />
                   <span className="btn-texto-responsive">Por Defecto</span>
                 </button>
                 <button
@@ -896,19 +1265,42 @@ export function ConfiguracionHorariosAtencionWidget({
                   onClick={() => agregarFranja("presencial")}
                   title="Añadir franja de oficina"
                   aria-label="Añadir franja de oficina"
-                  className="btn-responsive-accion inline-flex items-center gap-1 rounded-lg bg-slate-800 px-2.5 py-1 text-xs font-semibold text-white hover:bg-slate-900"
+                  className="btn-responsive-accion"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    borderRadius: "8px",
+                    border: "none",
+                    background: "#0F172A",
+                    padding: "6px 12px",
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    color: "#FFFFFF",
+                    cursor: "pointer",
+                  }}
                 >
-                  <Plus className="h-3.5 w-3.5" />
+                  <Plus size={14} />
                   <span className="btn-texto-responsive">Añadir Día</span>
                 </button>
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {config.franjas_presencial.map((f, idx) => (
                 <div
                   key={`pres-${idx}`}
-                  className="flex flex-wrap sm:flex-nowrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-2.5"
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "8px",
+                    borderRadius: "12px",
+                    border: "1px solid #E2E8F0",
+                    background: "#FFFFFF",
+                    padding: "8px 12px",
+                  }}
                 >
                   <select
                     aria-label="Día de la semana oficina"
@@ -916,7 +1308,13 @@ export function ConfiguracionHorariosAtencionWidget({
                     onChange={(e) =>
                       actualizarFranja("presencial", idx, { dia_semana: Number(e.target.value) })
                     }
-                    className="flex-1 min-w-[120px] rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-800"
+                    style={{
+                      ...inputBaseStyle,
+                      flex: "1 1 120px",
+                      minWidth: "120px",
+                      background: "#F8FAFC",
+                      padding: "6px 10px",
+                    }}
                   >
                     {DIAS_SEMANA_NEGOCIO.map((d) => (
                       <option key={d.dia} value={d.dia}>
@@ -925,8 +1323,8 @@ export function ConfiguracionHorariosAtencionWidget({
                     ))}
                   </select>
 
-                  <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                    <Clock className="h-3.5 w-3.5 text-slate-400" />
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", color: "#475569" }}>
+                    <Clock size={14} color="#0F172A" />
                     <input
                       type="time"
                       aria-label="Hora inicio oficina"
@@ -934,9 +1332,9 @@ export function ConfiguracionHorariosAtencionWidget({
                       onChange={(e) =>
                         actualizarFranja("presencial", idx, { hora_inicio: e.target.value })
                       }
-                      className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-900"
+                      style={{ ...inputBaseStyle, padding: "5px 8px" }}
                     />
-                    <span>a</span>
+                    <span style={{ fontWeight: 600 }}>a</span>
                     <input
                       type="time"
                       aria-label="Hora fin oficina"
@@ -944,7 +1342,7 @@ export function ConfiguracionHorariosAtencionWidget({
                       onChange={(e) =>
                         actualizarFranja("presencial", idx, { hora_fin: e.target.value })
                       }
-                      className="rounded-lg border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-900"
+                      style={{ ...inputBaseStyle, padding: "5px 8px" }}
                     />
                   </div>
 
@@ -954,19 +1352,28 @@ export function ConfiguracionHorariosAtencionWidget({
                     disabled={config.franjas_presencial.length <= 1}
                     title="Eliminar franja de oficina"
                     aria-label="Eliminar franja de oficina"
-                    className="ml-auto rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-30"
+                    style={{
+                      border: "1px solid #FEE2E2",
+                      background: "#FFF1F2",
+                      color: "#E11D48",
+                      borderRadius: "8px",
+                      width: "32px",
+                      height: "32px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: config.franjas_presencial.length <= 1 ? "not-allowed" : "pointer",
+                      opacity: config.franjas_presencial.length <= 1 ? 0.35 : 1,
+                    }}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 size={15} />
                   </button>
                 </div>
               ))}
             </div>
 
-            <div className="pt-1">
-              <label
-                htmlFor="input-direccion-presencial"
-                className="block text-xs font-bold text-slate-700 mb-1"
-              >
+            <div style={{ paddingTop: "6px" }}>
+              <label htmlFor="input-direccion-presencial" style={labelBaseStyle}>
                 Dirección de la Oficina para Consultas Presenciales
               </label>
               <input
@@ -977,7 +1384,7 @@ export function ConfiguracionHorariosAtencionWidget({
                   setConfig((prev) => ({ ...prev, direccion_presencial: e.target.value }))
                 }
                 placeholder="Ej.: Av. República del Salvador y Moscú, Edificio Tranqi, Piso 5"
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs sm:text-sm text-slate-800"
+                style={{ ...inputBaseStyle, width: "100%" }}
               />
             </div>
           </section>
@@ -985,31 +1392,70 @@ export function ConfiguracionHorariosAtencionWidget({
       </div>
 
       {/* 4. HORARIOS DIFERENCIADOS POR FECHAS EXACTAS (EJ. NAVIDAD, FERIADOS) */}
-      <section className="rounded-2xl border border-amber-200 bg-amber-50/30 p-4 sm:p-5 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-amber-800">
-              <CalendarPlus className="h-4 w-4 text-amber-600" />
-              Excepciones al Horario por Defecto
+      <section
+        style={{
+          borderRadius: "16px",
+          border: "1.5px solid #FDE68A",
+          background: "#FFFBEB",
+          padding: "20px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "16px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            gap: "14px",
+          }}
+        >
+          <div style={{ maxWidth: "680px" }}>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                fontSize: "0.72rem",
+                fontWeight: 800,
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
+                color: "#B45309",
+                marginBottom: "4px",
+              }}
+            >
+              <CalendarPlus size={15} />
+              <span>Excepciones al Horario por Defecto</span>
             </div>
-            <h3 className="text-base font-bold text-slate-900 mt-0.5">
+            <h3 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
               2. Horarios Diferenciados por Fechas Exactas (Navidad, Feriados, Jornadas Especiales)
             </h3>
-            <p className="text-xs text-slate-600">
+            <p style={{ margin: 0, fontSize: "0.82rem", color: "#78350F", lineHeight: 1.45 }}>
               Si ingresas una fecha exacta aquí, su configuración reemplaza al horario normal en ese
-              día (por ejemplo: en Navidad <code>2026-12-25</code> habilitar solo teleconsultas de{" "}
-              <code>08:00</code> a <code>16:00</code> y cerrar oficina).
+              día (por ejemplo: en Navidad <strong>2026-12-25</strong> habilitar solo teleconsultas
+              de <strong>08:00 a 16:00</strong> y cerrar oficina).
             </p>
           </div>
 
           {/* Plantillas rápidas de 1 clic */}
-          <div className="flex flex-wrap items-center gap-1.5">
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px" }}>
             <button
               type="button"
               onClick={() => aplicarPlantillaFechaEspecial("navidad")}
               title="Configurar 25 de Diciembre: Solo Teleconsultas 08:00 a 16:00"
               aria-label="Configurar Navidad 25 de Diciembre"
-              className="rounded-lg border border-amber-300 bg-white px-2.5 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100 transition"
+              style={{
+                borderRadius: "10px",
+                border: "1px solid #F59E0B",
+                background: "#FFFFFF",
+                padding: "7px 12px",
+                fontSize: "0.76rem",
+                fontWeight: 700,
+                color: "#92400E",
+                cursor: "pointer",
+              }}
             >
               🎄 Navidad (25 Dic · Tele 08h–16h)
             </button>
@@ -1018,7 +1464,16 @@ export function ConfiguracionHorariosAtencionWidget({
               onClick={() => aplicarPlantillaFechaEspecial("nochebuena")}
               title="Configurar 24 de Diciembre: Solo Teleconsultas 08:00 a 14:00"
               aria-label="Configurar Nochebuena 24 de Diciembre"
-              className="rounded-lg border border-amber-300 bg-white px-2.5 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100 transition"
+              style={{
+                borderRadius: "10px",
+                border: "1px solid #F59E0B",
+                background: "#FFFFFF",
+                padding: "7px 12px",
+                fontSize: "0.76rem",
+                fontWeight: 700,
+                color: "#92400E",
+                cursor: "pointer",
+              }}
             >
               🎅 Nochebuena (24 Dic)
             </button>
@@ -1027,7 +1482,16 @@ export function ConfiguracionHorariosAtencionWidget({
               onClick={() => aplicarPlantillaFechaEspecial("fin_anio")}
               title="Configurar 31 de Diciembre: Solo Teleconsultas 08:00 a 14:00"
               aria-label="Configurar Fin de Año 31 de Diciembre"
-              className="rounded-lg border border-amber-300 bg-white px-2.5 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100 transition"
+              style={{
+                borderRadius: "10px",
+                border: "1px solid #F59E0B",
+                background: "#FFFFFF",
+                padding: "7px 12px",
+                fontSize: "0.76rem",
+                fontWeight: 700,
+                color: "#92400E",
+                cursor: "pointer",
+              }}
             >
               🎆 Fin de Año (31 Dic)
             </button>
@@ -1036,7 +1500,16 @@ export function ConfiguracionHorariosAtencionWidget({
               onClick={() => aplicarPlantillaFechaEspecial("anio_nuevo")}
               title="Configurar 1 de Enero como feriado cerrado"
               aria-label="Configurar Año Nuevo Cerrado"
-              className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition"
+              style={{
+                borderRadius: "10px",
+                border: "1px solid #CBD5E1",
+                background: "#FFFFFF",
+                padding: "7px 12px",
+                fontSize: "0.76rem",
+                fontWeight: 700,
+                color: "#334155",
+                cursor: "pointer",
+              }}
             >
               🛑 01 Ene (Cerrado)
             </button>
@@ -1044,161 +1517,244 @@ export function ConfiguracionHorariosAtencionWidget({
         </div>
 
         {/* Formulario para agregar nueva fecha exacta */}
-        <div className="rounded-2xl border border-amber-200/90 bg-white p-4 space-y-3 shadow-2xs">
-          <div className="text-xs font-bold text-slate-800">
+        <div
+          style={{
+            borderRadius: "14px",
+            border: "1px solid #FCD34D",
+            background: "#FFFFFF",
+            padding: "16px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px",
+          }}
+        >
+          <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#0F172A" }}>
             Agregar o actualizar horario diferenciado para una fecha exacta:
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
-            <div className="lg:col-span-2">
-              <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                Fecha Exacta
-              </label>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+              gap: "12px",
+              alignItems: "end",
+            }}
+          >
+            <div>
+              <label style={labelBaseStyle}>Fecha Exacta</label>
               <input
                 type="date"
                 aria-label="Fecha exacta especial"
                 value={nuevaFecha}
                 onChange={(e) => setNuevaFecha(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-900"
+                style={{ ...inputBaseStyle, width: "100%", background: "#F8FAFC" }}
               />
             </div>
 
-            <div className="lg:col-span-3">
-              <label className="block text-[11px] font-bold text-slate-600 mb-1">
-                Motivo / Etiqueta
-              </label>
+            <div>
+              <label style={labelBaseStyle}>Motivo / Etiqueta</label>
               <input
                 type="text"
                 aria-label="Motivo o etiqueta de la fecha especial"
                 value={nuevoNombreFecha}
                 onChange={(e) => setNuevoNombreFecha(e.target.value)}
                 placeholder="Ej. Navidad — Solo Teleconsultas"
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-2.5 py-1.5 text-xs font-semibold text-slate-900"
+                style={{ ...inputBaseStyle, width: "100%", background: "#F8FAFC" }}
               />
             </div>
 
-            <div className="lg:col-span-3">
-              <label className="flex items-center gap-1.5 text-[11px] font-bold text-violet-700 mb-1 cursor-pointer">
+            <div>
+              <label
+                style={{
+                  ...labelBaseStyle,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  color: "#5000BA",
+                  cursor: "pointer",
+                }}
+              >
                 <input
                   type="checkbox"
                   checked={!nuevoCerradoTotal && nuevoHabilitarVirtual}
                   disabled={nuevoCerradoTotal}
                   onChange={(e) => setNuevoHabilitarVirtual(e.target.checked)}
-                  className="rounded border-slate-300 text-violet-600"
                 />
-                Teleconsulta en esta fecha
+                <span>Teleconsulta en esta fecha</span>
               </label>
               {!nuevoCerradoTotal && nuevoHabilitarVirtual ? (
-                <div className="flex items-center gap-1 text-xs">
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                   <input
                     type="time"
                     aria-label="Hora inicio teleconsulta fecha especial"
                     value={nuevoVirtualInicio}
                     onChange={(e) => setNuevoVirtualInicio(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold"
+                    style={{ ...inputBaseStyle, width: "100%", padding: "6px 8px" }}
                   />
-                  <span>a</span>
+                  <span style={{ fontSize: "0.78rem", fontWeight: 600 }}>a</span>
                   <input
                     type="time"
                     aria-label="Hora fin teleconsulta fecha especial"
                     value={nuevoVirtualFin}
                     onChange={(e) => setNuevoVirtualFin(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-2 py-1 text-xs font-semibold"
+                    style={{ ...inputBaseStyle, width: "100%", padding: "6px 8px" }}
                   />
                 </div>
               ) : (
-                <div className="rounded-lg border border-slate-200 bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-500">
+                <div
+                  style={{
+                    borderRadius: "10px",
+                    border: "1px solid #E2E8F0",
+                    background: "#F1F5F9",
+                    padding: "8px 12px",
+                    fontSize: "0.78rem",
+                    fontWeight: 600,
+                    color: "#64748B",
+                  }}
+                >
                   Sin teleconsulta
                 </div>
               )}
             </div>
 
-            <div className="lg:col-span-2">
-              <label className="flex items-center gap-1.5 text-[11px] font-bold text-slate-700 mb-1 cursor-pointer">
+            <div>
+              <label
+                style={{
+                  ...labelBaseStyle,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  color: "#0F172A",
+                  cursor: "pointer",
+                }}
+              >
                 <input
                   type="checkbox"
                   checked={!nuevoCerradoTotal && nuevoHabilitarPresencial}
                   disabled={nuevoCerradoTotal}
                   onChange={(e) => setNuevoHabilitarPresencial(e.target.checked)}
-                  className="rounded border-slate-300 text-slate-800"
                 />
-                Oficina abierta
+                <span>Oficina abierta</span>
               </label>
               {!nuevoCerradoTotal && nuevoHabilitarPresencial ? (
-                <div className="flex items-center gap-1 text-xs">
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                   <input
                     type="time"
                     aria-label="Hora inicio oficina fecha especial"
                     value={nuevoPresencialInicio}
                     onChange={(e) => setNuevoPresencialInicio(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-1.5 py-1 text-xs font-semibold"
+                    style={{ ...inputBaseStyle, width: "100%", padding: "6px 8px" }}
                   />
-                  <span>a</span>
+                  <span style={{ fontSize: "0.78rem", fontWeight: 600 }}>a</span>
                   <input
                     type="time"
                     aria-label="Hora fin oficina fecha especial"
                     value={nuevoPresencialFin}
                     onChange={(e) => setNuevoPresencialFin(e.target.value)}
-                    className="w-full rounded-lg border border-slate-300 px-1.5 py-1 text-xs font-semibold"
+                    style={{ ...inputBaseStyle, width: "100%", padding: "6px 8px" }}
                   />
                 </div>
               ) : (
-                <div className="rounded-lg border border-slate-200 bg-slate-100 px-2.5 py-1.5 text-xs font-semibold text-slate-500">
+                <div
+                  style={{
+                    borderRadius: "10px",
+                    border: "1px solid #E2E8F0",
+                    background: "#F1F5F9",
+                    padding: "8px 12px",
+                    fontSize: "0.78rem",
+                    fontWeight: 600,
+                    color: "#64748B",
+                  }}
+                >
                   Oficina cerrada
                 </div>
               )}
             </div>
 
-            <div className="lg:col-span-1">
-              <label className="block text-[11px] font-bold text-slate-600 mb-1" title="Máximo de citas por hora en esta fecha">
-                Máx/Hora
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={50}
-                aria-label="Cupo máximo por hora en esta fecha especial"
-                value={nuevoMaxCitasFecha}
-                onChange={(e) => setNuevoMaxCitasFecha(Math.max(1, Number(e.target.value) || 1))}
-                className="w-full rounded-xl border border-slate-300 bg-slate-50 px-2 py-1.5 text-center text-xs font-bold text-slate-900"
-              />
-            </div>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: "8px" }}>
+              <div style={{ width: "90px" }}>
+                <label style={labelBaseStyle} title="Máximo de citas por hora en esta fecha">
+                  Máx/Hora
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  max={50}
+                  aria-label="Cupo máximo por hora en esta fecha especial"
+                  value={nuevoMaxCitasFecha}
+                  onChange={(e) => setNuevoMaxCitasFecha(Math.max(1, Number(e.target.value) || 1))}
+                  style={{ ...inputBaseStyle, width: "100%", textAlign: "center", background: "#F8FAFC" }}
+                />
+              </div>
 
-            <div className="lg:col-span-1">
               <button
                 type="button"
                 onClick={handleAgregarDesdeFormulario}
                 title="Agregar fecha especial a la lista"
                 aria-label="Agregar fecha especial"
-                className="btn-responsive-accion w-full inline-flex items-center justify-center gap-1 rounded-xl bg-amber-600 px-3 py-2 text-xs font-bold text-white hover:bg-amber-700"
+                className="btn-responsive-accion"
+                style={{
+                  flex: 1,
+                  height: "38px",
+                  borderRadius: "10px",
+                  border: "none",
+                  background: "#D97706",
+                  color: "#FFFFFF",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                }}
               >
-                <Plus className="h-4 w-4" />
+                <Plus size={15} />
                 <span className="btn-texto-responsive">Añadir</span>
               </button>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 pt-1">
-            <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+          <div>
+            <label
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                fontSize: "0.8rem",
+                fontWeight: 700,
+                color: "#475569",
+                cursor: "pointer",
+              }}
+            >
               <input
                 type="checkbox"
                 checked={nuevoCerradoTotal}
                 onChange={(e) => setNuevoCerradoTotal(e.target.checked)}
-                className="rounded border-slate-300 text-rose-600"
               />
-              Marcar esta fecha como Feriado Cerrado Total (sin teleconsulta ni oficina)
+              <span>Marcar esta fecha como Feriado Cerrado Total (sin teleconsulta ni oficina)</span>
             </label>
           </div>
         </div>
 
         {/* Lista de fechas exactas configuradas */}
         {(config.fechas_especiales ?? []).length === 0 ? (
-          <div className="rounded-xl border border-dashed border-amber-300 bg-white/70 p-4 text-center text-xs text-slate-500">
+          <div
+            style={{
+              borderRadius: "12px",
+              border: "1px dashed #F59E0B",
+              background: "#FFFFFF",
+              padding: "16px",
+              textAlign: "center",
+              fontSize: "0.82rem",
+              color: "#64748B",
+            }}
+          >
             No hay fechas exactas diferenciadas configuradas. Todos los días usan el horario
             laborable normal por defecto.
           </div>
         ) : (
-          <div className="space-y-2.5">
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
             {(config.fechas_especiales ?? []).map((fe) => {
               const rVirt = fe.franjas_virtual?.[0] ?? { hora_inicio: "08:00", hora_fin: "16:00" };
               const rPres = fe.franjas_presencial?.[0] ?? { hora_inicio: "09:00", hora_fin: "13:00" };
@@ -1206,11 +1762,35 @@ export function ConfiguracionHorariosAtencionWidget({
               return (
                 <div
                   key={fe.fecha}
-                  className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 rounded-2xl border border-amber-200 bg-white p-3.5 shadow-2xs"
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "12px",
+                    borderRadius: "14px",
+                    border: "1px solid #FDE68A",
+                    background: "#FFFFFF",
+                    padding: "12px 16px",
+                    boxShadow: "0 1px 4px rgba(0,0,0,0.03)",
+                  }}
                 >
-                  <div className="flex flex-wrap items-center gap-2.5">
-                    <span className="inline-flex items-center gap-1.5 rounded-xl bg-amber-100 px-3 py-1 text-xs font-extrabold text-amber-950">
-                      <Calendar className="h-3.5 w-3.5 text-amber-700" />
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px" }}>
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        borderRadius: "10px",
+                        background: "#FEF3C7",
+                        border: "1px solid #FCD34D",
+                        padding: "5px 10px",
+                        fontSize: "0.8rem",
+                        fontWeight: 800,
+                        color: "#92400E",
+                      }}
+                    >
+                      <Calendar size={14} color="#D97706" />
                       {fe.fecha}
                     </span>
                     <input
@@ -1220,13 +1800,28 @@ export function ConfiguracionHorariosAtencionWidget({
                       onChange={(e) =>
                         actualizarFechaEspecialEnLista(fe.fecha, { nombre: e.target.value })
                       }
-                      className="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold text-slate-900 min-w-[210px]"
+                      style={{
+                        ...inputBaseStyle,
+                        minWidth: "220px",
+                        background: "#F8FAFC",
+                        padding: "6px 10px",
+                      }}
                     />
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-3">
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px" }}>
                     {/* Cierre Total */}
-                    <label className="inline-flex items-center gap-1.5 text-xs font-semibold text-rose-700 cursor-pointer">
+                    <label
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        fontSize: "0.78rem",
+                        fontWeight: 700,
+                        color: "#BE123C",
+                        cursor: "pointer",
+                      }}
+                    >
                       <input
                         type="checkbox"
                         checked={fe.cerrado_total}
@@ -1235,16 +1830,35 @@ export function ConfiguracionHorariosAtencionWidget({
                             cerrado_total: e.target.checked,
                           })
                         }
-                        className="rounded border-slate-300 text-rose-600"
                       />
-                      Cerrado Total
+                      <span>Cerrado Total</span>
                     </label>
 
                     {!fe.cerrado_total && (
                       <>
                         {/* Teleconsulta */}
-                        <div className="flex items-center gap-1.5 rounded-xl border border-violet-200 bg-violet-50/50 px-2.5 py-1">
-                          <label className="inline-flex items-center gap-1 text-xs font-bold text-violet-900 cursor-pointer">
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            borderRadius: "10px",
+                            border: "1px solid #DDD6FE",
+                            background: "#F5F3FF",
+                            padding: "5px 10px",
+                          }}
+                        >
+                          <label
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              fontSize: "0.78rem",
+                              fontWeight: 800,
+                              color: "#4C1D95",
+                              cursor: "pointer",
+                            }}
+                          >
                             <input
                               type="checkbox"
                               checked={fe.habilitar_virtual}
@@ -1257,12 +1871,11 @@ export function ConfiguracionHorariosAtencionWidget({
                                       : fe.franjas_virtual,
                                 })
                               }
-                              className="rounded border-violet-300 text-violet-600"
                             />
-                            Teleconsulta:
+                            <span>Teleconsulta:</span>
                           </label>
                           {fe.habilitar_virtual ? (
-                            <div className="flex items-center gap-1 text-xs">
+                            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                               <input
                                 type="time"
                                 aria-label={`Hora inicio teleconsulta en ${fe.fecha}`}
@@ -1272,9 +1885,9 @@ export function ConfiguracionHorariosAtencionWidget({
                                     hora_inicio: e.target.value,
                                   })
                                 }
-                                className="rounded border border-violet-200 bg-white px-1.5 py-0.5 text-xs font-bold text-slate-900"
+                                style={{ ...inputBaseStyle, padding: "3px 6px", fontSize: "0.78rem" }}
                               />
-                              <span>a</span>
+                              <span style={{ fontSize: "0.75rem", fontWeight: 700 }}>a</span>
                               <input
                                 type="time"
                                 aria-label={`Hora fin teleconsulta en ${fe.fecha}`}
@@ -1284,17 +1897,39 @@ export function ConfiguracionHorariosAtencionWidget({
                                     hora_fin: e.target.value,
                                   })
                                 }
-                                className="rounded border border-violet-200 bg-white px-1.5 py-0.5 text-xs font-bold text-slate-900"
+                                style={{ ...inputBaseStyle, padding: "3px 6px", fontSize: "0.78rem" }}
                               />
                             </div>
                           ) : (
-                            <span className="text-xs font-semibold text-slate-400">No</span>
+                            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94A3B8" }}>
+                              No
+                            </span>
                           )}
                         </div>
 
                         {/* Oficina */}
-                        <div className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1">
-                          <label className="inline-flex items-center gap-1 text-xs font-bold text-slate-800 cursor-pointer">
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            borderRadius: "10px",
+                            border: "1px solid #E2E8F0",
+                            background: "#F8FAFC",
+                            padding: "5px 10px",
+                          }}
+                        >
+                          <label
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              fontSize: "0.78rem",
+                              fontWeight: 800,
+                              color: "#1E293B",
+                              cursor: "pointer",
+                            }}
+                          >
                             <input
                               type="checkbox"
                               checked={fe.habilitar_presencial}
@@ -1308,12 +1943,11 @@ export function ConfiguracionHorariosAtencionWidget({
                                       : fe.franjas_presencial,
                                 })
                               }
-                              className="rounded border-slate-300 text-slate-800"
                             />
-                            Oficina:
+                            <span>Oficina:</span>
                           </label>
                           {fe.habilitar_presencial ? (
-                            <div className="flex items-center gap-1 text-xs">
+                            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                               <input
                                 type="time"
                                 aria-label={`Hora inicio oficina en ${fe.fecha}`}
@@ -1323,9 +1957,9 @@ export function ConfiguracionHorariosAtencionWidget({
                                     hora_inicio: e.target.value,
                                   })
                                 }
-                                className="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-xs font-bold text-slate-900"
+                                style={{ ...inputBaseStyle, padding: "3px 6px", fontSize: "0.78rem" }}
                               />
-                              <span>a</span>
+                              <span style={{ fontSize: "0.75rem", fontWeight: 700 }}>a</span>
                               <input
                                 type="time"
                                 aria-label={`Hora fin oficina en ${fe.fecha}`}
@@ -1335,17 +1969,19 @@ export function ConfiguracionHorariosAtencionWidget({
                                     hora_fin: e.target.value,
                                   })
                                 }
-                                className="rounded border border-slate-200 bg-white px-1.5 py-0.5 text-xs font-bold text-slate-900"
+                                style={{ ...inputBaseStyle, padding: "3px 6px", fontSize: "0.78rem" }}
                               />
                             </div>
                           ) : (
-                            <span className="text-xs font-semibold text-rose-600">Cerrada</span>
+                            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#E11D48" }}>
+                              Cerrada
+                            </span>
                           )}
                         </div>
 
                         {/* Cupo máximo en esa fecha */}
-                        <div className="flex items-center gap-1 text-xs text-slate-700">
-                          <span className="font-semibold">Máx. citas/hora:</span>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.78rem", color: "#334155" }}>
+                          <span style={{ fontWeight: 700 }}>Máx/hora:</span>
                           <input
                             type="number"
                             min={1}
@@ -1357,7 +1993,12 @@ export function ConfiguracionHorariosAtencionWidget({
                                 max_citas_simultaneas: Math.max(1, Number(e.target.value) || 1),
                               })
                             }
-                            className="w-12 rounded-lg border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-center text-xs font-bold text-slate-900"
+                            style={{
+                              ...inputBaseStyle,
+                              width: "52px",
+                              padding: "4px 6px",
+                              textAlign: "center",
+                            }}
                           />
                         </div>
                       </>
@@ -1368,9 +2009,20 @@ export function ConfiguracionHorariosAtencionWidget({
                       onClick={() => setFechaSimulacion(fe.fecha)}
                       title="Ver vista previa de turnos en esta fecha"
                       aria-label="Ver vista previa de turnos en esta fecha"
-                      className="rounded-lg border border-slate-200 bg-slate-50 p-1.5 text-slate-600 hover:bg-violet-50 hover:text-violet-700"
+                      style={{
+                        borderRadius: "8px",
+                        border: "1px solid #CBD5E1",
+                        background: "#F8FAFC",
+                        width: "32px",
+                        height: "32px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#475569",
+                        cursor: "pointer",
+                      }}
                     >
-                      <Eye className="h-4 w-4" />
+                      <Eye size={15} />
                     </button>
 
                     <button
@@ -1378,9 +2030,20 @@ export function ConfiguracionHorariosAtencionWidget({
                       onClick={() => eliminarFechaEspecial(fe.fecha)}
                       title="Eliminar excepción de fecha"
                       aria-label="Eliminar excepción de fecha"
-                      className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+                      style={{
+                        borderRadius: "8px",
+                        border: "1px solid #FEE2E2",
+                        background: "#FFF1F2",
+                        width: "32px",
+                        height: "32px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "#E11D48",
+                        cursor: "pointer",
+                      }}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 size={15} />
                     </button>
                   </div>
                 </div>
@@ -1391,17 +2054,35 @@ export function ConfiguracionHorariosAtencionWidget({
       </section>
 
       {/* 5. SIMULADOR / VERIFICADOR DE TURNOS POR FECHA EXACTA */}
-      <section className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <Eye className="h-4 w-4 text-violet-600" />
-            <h3 className="text-sm font-bold text-slate-900">
+      <section
+        style={{
+          borderRadius: "16px",
+          border: "1px solid #E2E8F0",
+          background: "#F8FAFC",
+          padding: "18px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "14px",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "12px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Eye size={18} color="#5000BA" />
+            <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "#0F172A" }}>
               3. Simulador de Horarios por Fecha (Comprobación en Vivo)
             </h3>
           </div>
 
-          <div className="flex items-center gap-2">
-            <label htmlFor="sim-fecha" className="text-xs font-bold text-slate-600">
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <label htmlFor="sim-fecha" style={{ fontSize: "0.8rem", fontWeight: 700, color: "#475569" }}>
               Probar fecha:
             </label>
             <input
@@ -1409,47 +2090,90 @@ export function ConfiguracionHorariosAtencionWidget({
               type="date"
               value={fechaSimulacion}
               onChange={(e) => setFechaSimulacion(e.target.value)}
-              className="rounded-xl border border-slate-300 bg-white px-3 py-1 text-xs font-bold text-slate-900"
+              style={{ ...inputBaseStyle, padding: "6px 10px" }}
             />
           </div>
         </div>
 
         {simulacionDia && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-            <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-1">
-              <div className="font-bold text-slate-500 uppercase text-[11px]">
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+              gap: "12px",
+            }}
+          >
+            <div
+              style={{
+                borderRadius: "12px",
+                border: "1px solid #E2E8F0",
+                background: "#FFFFFF",
+                padding: "14px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "0.72rem",
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  color: "#64748B",
+                }}
+              >
                 Regla Aplicada ({simulacionDia.nombreDia} {fechaSimulacion})
               </div>
               {simulacionDia.reglaEspecial ? (
-                <div className="font-bold text-amber-800">
+                <div style={{ fontSize: "0.86rem", fontWeight: 800, color: "#B45309" }}>
                   ✨ Fecha Especial: {simulacionDia.reglaEspecial.nombre}
                 </div>
               ) : (
-                <div className="font-bold text-slate-800">
+                <div style={{ fontSize: "0.86rem", fontWeight: 800, color: "#0F172A" }}>
                   📅 Horario Laborable Normal (Por defecto)
                 </div>
               )}
-              <div className="text-slate-600">
+              <div style={{ fontSize: "0.8rem", color: "#475569" }}>
                 Cupo máximo por bloque:{" "}
-                <strong className="text-violet-700">
+                <strong style={{ color: "#5000BA" }}>
                   {simulacionDia.cupoEfectivo}{" "}
                   {simulacionDia.cupoEfectivo === 1 ? "cita" : "citas"}
                 </strong>
               </div>
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-1.5">
-              <div className="font-bold text-violet-700 flex items-center justify-between">
-                <span>Turnos Telemáticos ({simulacionDia.turnosVirtual.length})</span>
+            <div
+              style={{
+                borderRadius: "12px",
+                border: "1px solid #E2E8F0",
+                background: "#FFFFFF",
+                padding: "14px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "#5000BA" }}>
+                Turnos Telemáticos ({simulacionDia.turnosVirtual.length})
               </div>
               {simulacionDia.turnosVirtual.length === 0 ? (
-                <p className="text-slate-400 font-medium">Sin atención telemática en esta fecha</p>
+                <p style={{ margin: 0, fontSize: "0.78rem", color: "#94A3B8", fontWeight: 600 }}>
+                  Sin atención telemática en esta fecha
+                </p>
               ) : (
-                <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", maxHeight: "110px", overflowY: "auto" }}>
                   {simulacionDia.turnosVirtual.map((t) => (
                     <span
                       key={t}
-                      className="rounded-md bg-violet-50 border border-violet-200 px-2 py-0.5 text-[11px] font-semibold text-violet-900"
+                      style={{
+                        borderRadius: "6px",
+                        background: "#F5F3FF",
+                        border: "1px solid #DDD6FE",
+                        padding: "3px 8px",
+                        fontSize: "0.72rem",
+                        fontWeight: 700,
+                        color: "#4C1D95",
+                      }}
                     >
                       {t}
                     </span>
@@ -1458,20 +2182,38 @@ export function ConfiguracionHorariosAtencionWidget({
               )}
             </div>
 
-            <div className="rounded-xl border border-slate-200 bg-white p-3 space-y-1.5">
-              <div className="font-bold text-slate-800 flex items-center justify-between">
-                <span>Turnos en Oficina ({simulacionDia.turnosPresencial.length})</span>
+            <div
+              style={{
+                borderRadius: "12px",
+                border: "1px solid #E2E8F0",
+                background: "#FFFFFF",
+                padding: "14px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "#0F172A" }}>
+                Turnos en Oficina ({simulacionDia.turnosPresencial.length})
               </div>
               {simulacionDia.turnosPresencial.length === 0 ? (
-                <p className="text-rose-600 font-semibold">
+                <p style={{ margin: 0, fontSize: "0.78rem", color: "#E11D48", fontWeight: 700 }}>
                   Oficina cerrada (Solo teleconsulta o feriado)
                 </p>
               ) : (
-                <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", maxHeight: "110px", overflowY: "auto" }}>
                   {simulacionDia.turnosPresencial.map((t) => (
                     <span
                       key={t}
-                      className="rounded-md bg-slate-100 border border-slate-200 px-2 py-0.5 text-[11px] font-semibold text-slate-800"
+                      style={{
+                        borderRadius: "6px",
+                        background: "#F1F5F9",
+                        border: "1px solid #CBD5E1",
+                        padding: "3px 8px",
+                        fontSize: "0.72rem",
+                        fontWeight: 700,
+                        color: "#1E293B",
+                      }}
                     >
                       {t}
                     </span>
@@ -1484,9 +2226,17 @@ export function ConfiguracionHorariosAtencionWidget({
       </section>
 
       {/* 6. PARÁMETROS DE DURACIÓN, HOLGURA Y HORIZONTE */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-slate-100">
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+          gap: "12px",
+          paddingTop: "14px",
+          borderTop: "1px solid #F1F5F9",
+        }}
+      >
         <div>
-          <label htmlFor="cfg-duracion" className="block text-xs font-bold text-slate-600 mb-1">
+          <label htmlFor="cfg-duracion" style={labelBaseStyle}>
             Duración cita (min)
           </label>
           <input
@@ -1499,11 +2249,11 @@ export function ConfiguracionHorariosAtencionWidget({
             onChange={(e) =>
               setConfig((prev) => ({ ...prev, duracion_cita_min: Number(e.target.value) || 45 }))
             }
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900"
+            style={{ ...inputBaseStyle, width: "100%", background: "#F8FAFC" }}
           />
         </div>
         <div>
-          <label htmlFor="cfg-holgura" className="block text-xs font-bold text-slate-600 mb-1">
+          <label htmlFor="cfg-holgura" style={labelBaseStyle}>
             Descanso entre citas (min)
           </label>
           <input
@@ -1516,11 +2266,11 @@ export function ConfiguracionHorariosAtencionWidget({
             onChange={(e) =>
               setConfig((prev) => ({ ...prev, holgura_min: Number(e.target.value) || 0 }))
             }
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900"
+            style={{ ...inputBaseStyle, width: "100%", background: "#F8FAFC" }}
           />
         </div>
         <div>
-          <label htmlFor="cfg-antelacion" className="block text-xs font-bold text-slate-600 mb-1">
+          <label htmlFor="cfg-antelacion" style={labelBaseStyle}>
             Antelación mínima (horas)
           </label>
           <input
@@ -1535,11 +2285,11 @@ export function ConfiguracionHorariosAtencionWidget({
                 antelacion_minima_horas: Number(e.target.value) || 0,
               }))
             }
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900"
+            style={{ ...inputBaseStyle, width: "100%", background: "#F8FAFC" }}
           />
         </div>
         <div>
-          <label htmlFor="cfg-horizonte" className="block text-xs font-bold text-slate-600 mb-1">
+          <label htmlFor="cfg-horizonte" style={labelBaseStyle}>
             Horizonte abierto (días)
           </label>
           <input
@@ -1551,7 +2301,7 @@ export function ConfiguracionHorariosAtencionWidget({
             onChange={(e) =>
               setConfig((prev) => ({ ...prev, horizonte_dias: Number(e.target.value) || 45 }))
             }
-            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-900"
+            style={{ ...inputBaseStyle, width: "100%", background: "#F8FAFC" }}
           />
         </div>
       </div>
