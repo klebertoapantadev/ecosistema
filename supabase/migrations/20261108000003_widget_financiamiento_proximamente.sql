@@ -23,3 +23,4 @@ from comun_seguridad.seg_widget w
 cross join (values ('CLIENTE'), ('OPERADOR'), ('ADMINISTRADOR'), ('SUPERADMIN')) as r(rol)
 where w.wdg_clave = 'financiamiento'
 on conflict (rlw_negocio, rlw_rol, rlw_widget_id) do update set rlw_visible = true;
+

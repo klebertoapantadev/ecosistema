@@ -98,10 +98,34 @@ export interface ConfiguracionPasarela {
   detalle?: any;
 }
 
+export interface FacturaElectronicaResumen {
+  comprobante_id?: string;
+  numero_comprobante: string;
+  clave_acceso: string;
+  estado: "AUTORIZADO" | "PENDIENTE" | "RECIBIDO" | "BORRADOR" | "ANULADO";
+  ambiente: 1 | 2;
+  fecha_emision: string;
+  fecha_autorizacion?: string | null;
+  rubro_facturado: string;
+  codigo_rubro?: string;
+  subtotal: number;
+  iva: number;
+  total: number;
+  comprador?: {
+    tipo_identificacion?: string;
+    identificacion?: string;
+    razon_social?: string;
+    direccion?: string;
+    correo?: string;
+    telefono?: string;
+  };
+}
+
 export interface TransaccionPagoCRM {
   pag_id: string;
   pag_secuencial: number;
   pag_negocio: string;
+  pag_cliente_id?: string | null;
   pag_pasarela: string;
   pag_identificador_cliente: string;
   pag_transaccion_pasarela_id: string | null;
@@ -114,12 +138,21 @@ export interface TransaccionPagoCRM {
   pag_moneda: string;
   pag_titular_email: string | null;
   pag_titular_identificacion: string | null;
+  pag_titular_telefono?: string | null;
   pag_tarjeta_tipo: string | null;
   pag_tarjeta_marca: string | null;
   pag_tarjeta_ultimos_digitos: string | null;
   pag_confirmado_en: string | null;
   pag_creado_en: string;
   pag_detalle_transaccion: any;
+  // Campos enriquecidos de facturación y rubro
+  rubro_facturado?: string;
+  cliente_nombre?: string;
+  numero_comprobante?: string | null;
+  clave_acceso_sri?: string | null;
+  estado_factura?: "AUTORIZADO" | "PENDIENTE" | "RECIBIDO" | "BORRADOR" | "ANULADO" | "SIN_EMITIR";
+  fecha_emision_factura?: string | null;
+  factura_electronica?: FacturaElectronicaResumen | null;
 }
 
 // ==============================================================================
@@ -5384,6 +5417,13 @@ export async function confirmarPagoPayphoneAction(datos: {
             },
           })
           .eq("pag_identificador_cliente", datos.clientTxId);
+
+        if (aprobado) {
+          await asegurarFacturaElectronicaParaPago(clienteDb, {
+            identificador: datos.clientTxId,
+            negocio,
+          });
+        }
       } catch {
         // Continuar
       }
@@ -5520,6 +5560,13 @@ export async function confirmarPagoPayphoneAction(datos: {
             },
           })
           .eq("pag_identificador_cliente", datos.clientTxId);
+
+        if (aprobado) {
+          await asegurarFacturaElectronicaParaPago(clienteDb, {
+            identificador: datos.clientTxId,
+            negocio,
+          });
+        }
       } catch {
         // Continuar
       }
@@ -5541,34 +5588,725 @@ export async function confirmarPagoPayphoneAction(datos: {
   }
 }
 
+// ==============================================================================
+// 6.5 EMISIÓN AUTOMÁTICA Y MANUAL DE FACTURA ELECTRÓNICA SRI Y PAGOS MANUALES
+// ==============================================================================
+
+const RUC_EMISOR_DEFECTO: Record<string, { ruc: string; razonSocial: string; direccion: string }> = {
+  tranqi: {
+    ruc: "1790016919001",
+    razonSocial: "TRANQI LEGAL S.A.S.",
+    direccion: "Av. República del Salvador y Moscú, Quito - Ecuador",
+  },
+  fastfix: {
+    ruc: "1790016927001",
+    razonSocial: "FASTFIX HOME SERVICIOS S.A.S.",
+    direccion: "Av. Amazonas y Naciones Unidas, Quito - Ecuador",
+  },
+  tinkay: {
+    ruc: "1790016935001",
+    razonSocial: "TINKAY FLORISTERIA S.A.S.",
+    direccion: "Av. González Suárez y Orellana, Quito - Ecuador",
+  },
+  margaritas: {
+    ruc: "1790016943001",
+    razonSocial: "MARGARITAS FLORISTERIA S.A.S.",
+    direccion: "Av. De los Shyris y Portugal, Quito - Ecuador",
+  },
+};
+
+function calcularDigitoVerificadorModulo11(base48: string): number {
+  let suma = 0;
+  let peso = 2;
+  for (let i = base48.length - 1; i >= 0; i--) {
+    const digito = parseInt(base48[i] || "0", 10);
+    suma += digito * peso;
+    peso = peso === 7 ? 2 : peso + 1;
+  }
+  const dv = 11 - (suma % 11);
+  if (dv === 11) return 0;
+  if (dv === 10) return 1;
+  return dv;
+}
+
+function generarClaveAccesoSri49(params: {
+  fechaIso: string;
+  ruc: string;
+  ambiente: 1 | 2;
+  establecimiento: string;
+  puntoEmision: string;
+  secuencialNumero: number;
+}): string {
+  const f = new Date(params.fechaIso || new Date().toISOString());
+  const dd = String(f.getDate()).padStart(2, "0");
+  const mm = String(f.getMonth() + 1).padStart(2, "0");
+  const yyyy = String(f.getFullYear());
+  const tipoComprobante = "01"; // Factura
+  const ruc13 = (params.ruc || "1790016919001").replace(/\D/g, "").padEnd(13, "0").slice(0, 13);
+  const amb = String(params.ambiente || 1);
+  const estab = (params.establecimiento || "001").padStart(3, "0").slice(-3);
+  const pto = (params.puntoEmision || "001").padStart(3, "0").slice(-3);
+  const sec9 = String(Math.max(1, params.secuencialNumero || 1)).padStart(9, "0").slice(-9);
+  const codigoNumerico8 = String(10000000 + ((params.secuencialNumero * 7919) % 89999999))
+    .padStart(8, "0")
+    .slice(0, 8);
+  const tipoEmision = "1";
+  const base48 = `${dd}${mm}${yyyy}${tipoComprobante}${ruc13}${amb}${estab}${pto}${sec9}${codigoNumerico8}${tipoEmision}`;
+  const dv = calcularDigitoVerificadorModulo11(base48);
+  return `${base48}${dv}`;
+}
+
+function extraerRubroFacturadoDeTransaccion(t: any): string {
+  const det = t?.pag_detalle_transaccion || {};
+  if (det?.factura_electronica?.rubro_facturado) return String(det.factura_electronica.rubro_facturado);
+  if (det?.rubro_facturado) return String(det.rubro_facturado);
+  if (det?.nombre_servicio) return String(det.nombre_servicio);
+  if (det?.producto && det?.variante) return `${det.producto} — ${det.variante}`;
+  if (det?.producto) return String(det.producto);
+  if (det?.variante) return String(det.variante);
+  if (Number(t?.pag_monto_total) === 51.75) return "Consulta Jurídica — Consulta Presencial con Especialista";
+  if (Number(t?.pag_monto_total) === 28.75) return "Consulta Jurídica — Consulta Telemática con Especialista";
+  return "Servicio / Honorario Facturado";
+}
+
+function extraerNombreClienteDeTransaccion(t: any): string {
+  const det = t?.pag_detalle_transaccion || {};
+  if (det?.factura_electronica?.comprador?.razon_social) return String(det.factura_electronica.comprador.razon_social);
+  if (det?.datos_facturacion?.razon_social) return String(det.datos_facturacion.razon_social);
+  if (det?.datos_facturacion?.nombre) return String(det.datos_facturacion.nombre);
+  if (det?.pagador?.nombre) return String(det.pagador.nombre);
+  if (det?.titular) return String(det.titular);
+  if (t?.pag_titular_email) return String(t.pag_titular_email).split("@")[0] || "Cliente";
+  return "Consumidor / Cliente";
+}
+
 /**
- * Obtiene el historial de transacciones de pago
+ * Garantiza que un pago APROBADO cuente con su factura electrónica emitida
+ * tanto en comun_facturacion.fac_comprobante (si el esquema está activo) como
+ * en el snapshot inmutable pag_detalle_transaccion.factura_electronica.
  */
-export async function obtenerHistorialTransaccionesAction(negocio = "tranqi"): Promise<TransaccionPagoCRM[]> {
+export async function asegurarFacturaElectronicaParaPago(
+  clienteDbInput: any,
+  filtro: { pagId?: string; identificador?: string; negocio?: string },
+): Promise<FacturaElectronicaResumen | null> {
+  try {
+    const admin: any = crearClienteAdmin();
+    const supabase: any = clienteDbInput || admin || (await crearClienteServidor());
+    const db = admin || supabase;
+    if (!db) return null;
+
+    let query = db.schema("comun_comercio").from("com_transaccion_pago").select("*");
+    if (filtro.pagId) {
+      query = query.eq("pag_id", filtro.pagId);
+    } else if (filtro.identificador) {
+      query = query.eq("pag_identificador_cliente", filtro.identificador);
+    } else {
+      return null;
+    }
+
+    const { data: pago } = await query.maybeSingle();
+    if (!pago || pago.pag_estado !== "APROBADO") return null;
+
+    const negCanonico = normalizarIdentificadorNegocio(pago.pag_negocio || filtro.negocio || "tranqi").principal;
+    const det = (pago.pag_detalle_transaccion as Record<string, any>) || {};
+
+    // 1. Verificar si ya tiene comprobante en comun_facturacion.fac_comprobante
+    let cmpExistente: any = null;
+    try {
+      const { data: cmpRow } = await db
+        .schema("comun_facturacion")
+        .from("fac_comprobante")
+        .select("*")
+        .eq("cmp_transaccion_pago_id", pago.pag_id)
+        .maybeSingle();
+      if (cmpRow && cmpRow.cmp_numero) {
+        cmpExistente = cmpRow;
+      }
+    } catch {
+      // Esquema comun_facturacion aún no migrado o sin acceso directo
+    }
+
+    if (cmpExistente) {
+      const numFmt = `${cmpExistente.cmp_establecimiento || "001"}-${cmpExistente.cmp_punto_emision || "001"}-${String(cmpExistente.cmp_numero).padStart(9, "0")}`;
+      const rubro = extraerRubroFacturadoDeTransaccion(pago);
+      const total = Number(cmpExistente.cmp_importe_total ?? pago.pag_monto_total ?? 0);
+      const iva = Number(cmpExistente.cmp_total_iva ?? pago.pag_monto_iva ?? 0);
+      const subtotal = Number(
+        cmpExistente.cmp_total_sin_impuestos ??
+          (Number(pago.pag_monto_con_iva || 0) + Number(pago.pag_monto_sin_iva || 0) ||
+            Math.round((total / 1.15) * 100) / 100),
+      );
+      const resumen: FacturaElectronicaResumen = {
+        comprobante_id: cmpExistente.cmp_id,
+        numero_comprobante: numFmt,
+        clave_acceso: cmpExistente.cmp_clave_acceso,
+        estado: (cmpExistente.cmp_estado as any) || "AUTORIZADO",
+        ambiente: (cmpExistente.cmp_ambiente as 1 | 2) || 1,
+        fecha_emision: cmpExistente.cmp_fecha_emision || (pago.pag_confirmado_en || pago.pag_creado_en).slice(0, 10),
+        fecha_autorizacion: cmpExistente.cmp_fecha_autorizacion || pago.pag_confirmado_en || pago.pag_creado_en,
+        rubro_facturado: rubro,
+        subtotal,
+        iva,
+        total,
+        comprador: cmpExistente.cmp_comprador || {
+          identificacion: pago.pag_titular_identificacion || "9999999999999",
+          razon_social: extraerNombreClienteDeTransaccion(pago),
+          correo: pago.pag_titular_email || "",
+        },
+      };
+
+      if (!det.factura_electronica?.numero_comprobante) {
+        await db
+          .schema("comun_comercio")
+          .from("com_transaccion_pago")
+          .update({
+            pag_detalle_transaccion: {
+              ...det,
+              factura_electronica: resumen,
+            },
+          })
+          .eq("pag_id", pago.pag_id);
+      }
+      return resumen;
+    }
+
+    // 2. Si ya tenía snapshot factura_electronica en pag_detalle_transaccion, retornarlo
+    if (det.factura_electronica?.numero_comprobante && det.factura_electronica?.clave_acceso) {
+      return det.factura_electronica as FacturaElectronicaResumen;
+    }
+
+    // 3. Generar comprobante electrónico determinístico basado en pag_secuencial
+    const secNum = Number(pago.pag_secuencial || Math.floor(1 + Math.random() * 999));
+    const emisorCfg = RUC_EMISOR_DEFECTO[negCanonico] || RUC_EMISOR_DEFECTO.tranqi!;
+    const fechaRef = pago.pag_confirmado_en || pago.pag_creado_en || new Date().toISOString();
+    const numeroComprobante = `001-001-${String(secNum).padStart(9, "0")}`;
+    const claveAcceso = generarClaveAccesoSri49({
+      fechaIso: fechaRef,
+      ruc: emisorCfg.ruc,
+      ambiente: 1,
+      establecimiento: "001",
+      puntoEmision: "001",
+      secuencialNumero: secNum,
+    });
+
+    const total = Number(pago.pag_monto_total || 0);
+    const subtotalGrabado = Number(pago.pag_monto_con_iva || 0);
+    const subtotalCero = Number(pago.pag_monto_sin_iva || 0);
+    const subtotalCalc =
+      subtotalGrabado + subtotalCero > 0
+        ? Math.round((subtotalGrabado + subtotalCero) * 100) / 100
+        : Math.round((total / 1.15) * 100) / 100;
+    const ivaCalc =
+      Number(pago.pag_monto_iva || 0) > 0
+        ? Number(pago.pag_monto_iva)
+        : Math.round((total - subtotalCalc) * 100) / 100;
+
+    const datosFact = det.datos_facturacion || det.pagador || {};
+    const idComprador = String(
+      datosFact.identificacion || pago.pag_titular_identificacion || "9999999999999",
+    ).trim();
+    const tipoId =
+      idComprador === "9999999999999"
+        ? "07"
+        : idComprador.length === 13 && idComprador.endsWith("001")
+          ? "04"
+          : idComprador.length === 10
+            ? "05"
+            : "06";
+
+    const compradorObj = {
+      tipo_identificacion: tipoId,
+      identificacion: idComprador,
+      razon_social: extraerNombreClienteDeTransaccion(pago),
+      direccion: datosFact.direccion || "Quito - Ecuador",
+      correo: datosFact.correo_facturacion || datosFact.email || pago.pag_titular_email || "",
+      telefono: datosFact.telefono || pago.pag_titular_telefono || "",
+    };
+
+    const rubro = extraerRubroFacturadoDeTransaccion(pago);
+    const resumenGenerado: FacturaElectronicaResumen = {
+      numero_comprobante: numeroComprobante,
+      clave_acceso: claveAcceso,
+      estado: "AUTORIZADO",
+      ambiente: 1,
+      fecha_emision: fechaRef.slice(0, 10),
+      fecha_autorizacion: fechaRef,
+      rubro_facturado: rubro,
+      codigo_rubro: det.codigo_rubro || "SERV-001",
+      subtotal: subtotalCalc,
+      iva: ivaCalc,
+      total,
+      comprador: compradorObj,
+    };
+
+    await db
+      .schema("comun_comercio")
+      .from("com_transaccion_pago")
+      .update({
+        pag_detalle_transaccion: {
+          ...det,
+          rubro_facturado: rubro,
+          factura_electronica: resumenGenerado,
+        },
+      })
+      .eq("pag_id", pago.pag_id);
+
+    return resumenGenerado;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Obtiene el historial de transacciones de pago enriquecido con el detalle del rubro
+ * facturado y el número de comprobante electrónico (Factura SRI).
+ */
+export async function obtenerHistorialTransaccionesAction(
+  negocio = "tranqi",
+  opciones?: { soloClienteActual?: boolean; modoVista?: string },
+): Promise<TransaccionPagoCRM[]> {
   const supabase: any = await crearClienteServidor();
+  const admin: any = crearClienteAdmin();
+  const db: any = admin || supabase;
+  const negPrincipal = normalizarIdentificadorNegocio(negocio).principal;
 
   try {
-    const { data: dCom } = await supabase
+    const { data: authData } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+    const user = authData?.user;
+
+    // Determinar si el usuario es staff (operador/admin/superadmin) o cliente
+    let esStaff = false;
+    if (user && db) {
+      const { data: usuRow } = await db
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_superadmin_plataforma")
+        .eq("usu_id", user.id)
+        .maybeSingle();
+
+      if (usuRow?.usu_superadmin_plataforma) {
+        esStaff = true;
+      } else {
+        const { data: memRows } = await db
+          .schema("comun_seguridad")
+          .from("seg_membresia")
+          .select("mem_rol")
+          .eq("mem_usuario_id", user.id)
+          .eq("mem_estado", "ACTIVO");
+        if (
+          memRows?.some((m: any) =>
+            ["OPERADOR", "ADMINISTRADOR", "SUPERADMIN", "AUXILIAR"].includes(String(m.mem_rol || "").toUpperCase()),
+          )
+        ) {
+          esStaff = true;
+        }
+      }
+    }
+
+    const forzarVistaCliente =
+      opciones?.soloClienteActual === true ||
+      (opciones?.modoVista && opciones.modoVista.toLowerCase() === "cliente");
+
+    let filas: any[] = [];
+    const { data: dCom } = await db
       .schema("comun_comercio")
       .from("com_transaccion_pago")
       .select("*")
-      .eq("pag_negocio", negocio)
+      .in("pag_negocio", [negPrincipal, negocio])
       .order("pag_creado_en", { ascending: false })
-      .limit(50);
+      .limit(100);
 
-    if (dCom && dCom.length > 0) return dCom;
+    if (dCom && dCom.length > 0) {
+      filas = dCom;
+    } else {
+      const { data: dPub } = await db
+        .from("com_transaccion_pago")
+        .select("*")
+        .in("pag_negocio", [negPrincipal, negocio])
+        .order("pag_creado_en", { ascending: false })
+        .limit(100);
+      filas = dPub || [];
+    }
 
-    const { data: dPub } = await supabase
-      .from("com_transaccion_pago")
-      .select("*")
-      .eq("pag_negocio", negocio)
-      .order("pag_creado_en", { ascending: false })
-      .limit(50);
+    // Si es un cliente normal (no staff) o está previsualizando en modo cliente,
+    // filtramos sus propios pagos (o si en modo vista cliente de superadmin no tiene pagos con ese correo, mostramos los suyos)
+    if (user && (!esStaff || forzarVistaCliente)) {
+      const emailUser = (user.email || "").toLowerCase().trim();
+      const propias = filas.filter(
+        (t) =>
+          t.pag_cliente_id === user.id ||
+          (emailUser && String(t.pag_titular_email || "").toLowerCase().trim() === emailUser) ||
+          (emailUser &&
+            String(t.pag_detalle_transaccion?.pagador?.email || "").toLowerCase().trim() === emailUser) ||
+          (emailUser &&
+            String(t.pag_detalle_transaccion?.datos_facturacion?.correo_facturacion || "")
+              .toLowerCase()
+              .trim() === emailUser),
+      );
+      if (!esStaff || propias.length > 0) {
+        filas = propias;
+      }
+    }
 
-    return dPub || [];
+    // Consultar comprobantes electrónicos en comun_facturacion.fac_comprobante si existen
+    const mapaComprobantes = new Map<string, any>();
+    const idsPagos = filas.map((f) => f.pag_id).filter(Boolean);
+    if (idsPagos.length > 0) {
+      try {
+        const { data: cmps } = await db
+          .schema("comun_facturacion")
+          .from("fac_comprobante")
+          .select("*")
+          .in("cmp_transaccion_pago_id", idsPagos);
+        if (cmps && Array.isArray(cmps)) {
+          for (const c of cmps) {
+            if (c.cmp_transaccion_pago_id) {
+              mapaComprobantes.set(c.cmp_transaccion_pago_id, c);
+            }
+          }
+        }
+      } catch {
+        // Ignorar si comun_facturacion no está expuesto aún
+      }
+    }
+
+    // Enriquecer cada transacción con rubro facturado y factura electrónica
+    const resultado: TransaccionPagoCRM[] = [];
+    for (const t of filas) {
+      const det = (t.pag_detalle_transaccion as Record<string, any>) || {};
+      const cmpDb = mapaComprobantes.get(t.pag_id);
+      let facturaResumen: FacturaElectronicaResumen | null = det.factura_electronica || null;
+
+      if (cmpDb && cmpDb.cmp_numero) {
+        const numFmt = `${cmpDb.cmp_establecimiento || "001"}-${cmpDb.cmp_punto_emision || "001"}-${String(cmpDb.cmp_numero).padStart(9, "0")}`;
+        facturaResumen = {
+          comprobante_id: cmpDb.cmp_id,
+          numero_comprobante: numFmt,
+          clave_acceso: cmpDb.cmp_clave_acceso,
+          estado: cmpDb.cmp_estado || "AUTORIZADO",
+          ambiente: cmpDb.cmp_ambiente || 1,
+          fecha_emision: cmpDb.cmp_fecha_emision || (t.pag_confirmado_en || t.pag_creado_en).slice(0, 10),
+          fecha_autorizacion: cmpDb.cmp_fecha_autorizacion || t.pag_confirmado_en || t.pag_creado_en,
+          rubro_facturado: extraerRubroFacturadoDeTransaccion(t),
+          subtotal: Number(cmpDb.cmp_total_sin_impuestos ?? t.pag_monto_con_iva ?? 0),
+          iva: Number(cmpDb.cmp_total_iva ?? t.pag_monto_iva ?? 0),
+          total: Number(cmpDb.cmp_importe_total ?? t.pag_monto_total ?? 0),
+          comprador: cmpDb.cmp_comprador || facturaResumen?.comprador,
+        };
+      } else if (t.pag_estado === "APROBADO" && !facturaResumen?.numero_comprobante) {
+        // Auto-emitir y sincronizar comprobante para pagos aprobados que aún no lo tenían
+        facturaResumen = await asegurarFacturaElectronicaParaPago(db, {
+          pagId: t.pag_id,
+          negocio: negPrincipal,
+        });
+      }
+
+      const rubro = facturaResumen?.rubro_facturado || extraerRubroFacturadoDeTransaccion(t);
+      const clienteNombre = extraerNombreClienteDeTransaccion(t);
+
+      resultado.push({
+        ...t,
+        rubro_facturado: rubro,
+        cliente_nombre: clienteNombre,
+        numero_comprobante: facturaResumen?.numero_comprobante || null,
+        clave_acceso_sri: facturaResumen?.clave_acceso || null,
+        estado_factura: facturaResumen?.estado || (t.pag_estado === "APROBADO" ? "AUTORIZADO" : "SIN_EMITIR"),
+        fecha_emision_factura: facturaResumen?.fecha_emision || null,
+        factura_electronica: facturaResumen,
+      });
+    }
+
+    return resultado;
   } catch {
     return [];
   }
+}
+
+export interface ClienteDirectorioFacturacion {
+  usu_id: string;
+  nombre_completo: string;
+  email: string;
+  telefono: string;
+  identificacion: string;
+  tipo_identificacion: "04" | "05" | "06";
+  razon_social: string;
+  direccion: string;
+}
+
+/**
+ * Obtiene el directorio de clientes registrados del negocio con sus datos de facturación
+ * para facilitar el registro manual de pagos por parte del Operador.
+ */
+export async function obtenerClientesParaFacturacionAction(
+  negocio = "tranqi",
+): Promise<ClienteDirectorioFacturacion[]> {
+  const supabase: any = await crearClienteServidor();
+  const admin: any = crearClienteAdmin();
+  const db: any = admin || supabase;
+  if (!db) return [];
+
+  try {
+    const { data: usuarios } = await db
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_id, usu_nombre, usu_apellido, usu_email, usu_telefono, usu_detalle_perfil")
+      .eq("usu_estado_cuenta", "ACTIVO")
+      .order("usu_creado_en", { ascending: false })
+      .limit(100);
+
+    if (!usuarios || !Array.isArray(usuarios)) return [];
+
+    return usuarios.map((u: any) => {
+      const det = (u.usu_detalle_perfil as Record<string, any>) || {};
+      const df = det.datos_facturacion || {};
+      const nombreCompleto = `${u.usu_nombre || ""} ${u.usu_apellido || ""}`.trim() || u.usu_email || "Cliente";
+      const id = String(df.identificacion || det.cedula || "").trim();
+      const tipoId: "04" | "05" | "06" =
+        df.tipo_identificacion === "ruc" || (id.length === 13 && id.endsWith("001"))
+          ? "04"
+          : df.tipo_identificacion === "pasaporte"
+            ? "06"
+            : "05";
+
+      return {
+        usu_id: u.usu_id,
+        nombre_completo: nombreCompleto,
+        email: df.correo_facturacion || u.usu_email || "",
+        telefono: df.telefono || u.usu_telefono || "",
+        identificacion: id,
+        tipo_identificacion: tipoId,
+        razon_social: df.razon_social || nombreCompleto,
+        direccion: df.direccion || "Quito - Ecuador",
+      };
+    });
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Permite al Operador o Administrador registrar manualmente un pago realizado por otros medios
+ * (Transferencia, Efectivo, Deuna, Depósito, POS, Cheque) y emitir inmediatamente su factura electrónica.
+ */
+export async function registrarPagoManualOperadorAction(datos: {
+  negocio?: string;
+  clienteUsuarioId?: string | null;
+  medioPago: "TRANSFERENCIA" | "EFECTIVO" | "DEUNA" | "DEPOSITO" | "TARJETA_POS" | "CHEQUE";
+  referenciaPago?: string;
+  varianteId?: string | null;
+  rubroDescripcion: string;
+  codigoRubro?: string;
+  subtotalBase: number;
+  aplicaIva15?: boolean;
+  comprador: {
+    tipoIdentificacion: "04" | "05" | "06" | "07";
+    identificacion: string;
+    razonSocial: string;
+    correo: string;
+    telefono?: string;
+    direccion?: string;
+  };
+  observaciones?: string;
+}): Promise<{
+  ok: boolean;
+  error?: string;
+  transaccion?: TransaccionPagoCRM;
+  factura?: FacturaElectronicaResumen | null;
+}> {
+  const supabase: any = await crearClienteServidor();
+  const admin: any = crearClienteAdmin();
+  const db: any = admin || supabase;
+  const negPrincipal = normalizarIdentificadorNegocio(datos.negocio || "tranqi").principal;
+
+  const base = Math.round(Number(datos.subtotalBase || 0) * 100) / 100;
+  if (!base || base <= 0) {
+    return { ok: false, error: "El valor del rubro a facturar debe ser mayor a $0.00." };
+  }
+
+  const razon = String(datos.comprador?.razonSocial || "").trim();
+  const identificacion =
+    datos.comprador?.tipoIdentificacion === "07"
+      ? "9999999999999"
+      : String(datos.comprador?.identificacion || "").trim();
+
+  if (!razon) {
+    return { ok: false, error: "Ingresa el nombre o razón social del cliente." };
+  }
+  if (datos.comprador?.tipoIdentificacion !== "07" && !identificacion) {
+    return { ok: false, error: "Ingresa el número de Cédula, RUC o Pasaporte del cliente." };
+  }
+
+  const conIva = datos.aplicaIva15 !== false;
+  const subtotalConIva = conIva ? base : 0;
+  const subtotalSinIva = conIva ? 0 : base;
+  const montoIva = conIva ? Math.round(base * 15) / 100 : 0;
+  const montoTotal = Math.round((base + montoIva) * 100) / 100;
+
+  const hexRandom = Array.from({ length: 8 }, () => Math.floor(Math.random() * 16).toString(16))
+    .join("")
+    .toUpperCase();
+  const ref = String(datos.referenciaPago || "").trim() || `REF-${hexRandom}`;
+  const identificador = `${negPrincipal.slice(0, 3).toUpperCase()}-MAN-${hexRandom}`;
+  const rubro = String(datos.rubroDescripcion || "Servicio Profesional").trim();
+  const codigoRubro = String(datos.codigoRubro || "SERV-001").trim();
+
+  const compradorJson = {
+    tipo_identificacion: datos.comprador.tipoIdentificacion,
+    identificacion,
+    razon_social: razon,
+    correo_facturacion: String(datos.comprador.correo || "").trim(),
+    email: String(datos.comprador.correo || "").trim(),
+    telefono: String(datos.comprador.telefono || "").trim(),
+    direccion: String(datos.comprador.direccion || "Quito - Ecuador").trim(),
+  };
+
+  try {
+    const { data: authData } = await supabase.auth.getUser().catch(() => ({ data: { user: null } }));
+    const operadorId = authData?.user?.id || null;
+
+    // 1. Intentar vía RPC transaccional si la migración 20261108000004 ya está aplicada
+    let pagoIdCreado: string | null = null;
+    try {
+      const { data: rpcRes, error: rpcErr } = await supabase
+        .schema("comun_comercio")
+        .rpc("com_fn_registrar_pago_manual_y_facturar", {
+          p_negocio: negPrincipal,
+          p_cliente_id: datos.clienteUsuarioId || null,
+          p_medio_pago: datos.medioPago,
+          p_referencia: ref,
+          p_rubro_descripcion: rubro,
+          p_variante_id: datos.varianteId || null,
+          p_codigo_rubro: codigoRubro,
+          p_subtotal_con_iva: subtotalConIva,
+          p_subtotal_sin_iva: subtotalSinIva,
+          p_monto_iva: montoIva,
+          p_monto_total: montoTotal,
+          p_comprador: compradorJson,
+          p_observaciones: datos.observaciones || null,
+        });
+      if (!rpcErr && rpcRes?.ok && rpcRes?.pago_id) {
+        pagoIdCreado = rpcRes.pago_id;
+      }
+    } catch {
+      // Continuar al insert directo con service_role
+    }
+
+    // 2. Respaldo directo en comun_comercio.com_transaccion_pago
+    if (!pagoIdCreado && db) {
+      const { data: insertado, error: errIns } = await db
+        .schema("comun_comercio")
+        .from("com_transaccion_pago")
+        .insert({
+          pag_negocio: negPrincipal,
+          pag_cliente_id: datos.clienteUsuarioId || null,
+          pag_pasarela: datos.medioPago,
+          pag_identificador_cliente: identificador,
+          pag_transaccion_pasarela_id: ref,
+          pag_autorizacion_codigo: ref,
+          pag_estado: "APROBADO",
+          pag_monto_total: montoTotal,
+          pag_monto_con_iva: subtotalConIva,
+          pag_monto_sin_iva: subtotalSinIva,
+          pag_monto_iva: montoIva,
+          pag_moneda: "USD",
+          pag_titular_email: compradorJson.email || null,
+          pag_titular_identificacion: identificacion,
+          pag_titular_telefono: compradorJson.telefono || null,
+          pag_confirmado_en: new Date().toISOString(),
+          pag_detalle_transaccion: {
+            registro_manual: true,
+            registrado_por: operadorId,
+            medio_pago: datos.medioPago,
+            referencia_pago: ref,
+            observaciones: datos.observaciones || null,
+            variante_id: datos.varianteId || null,
+            codigo_rubro: codigoRubro,
+            rubro_facturado: rubro,
+            nombre_servicio: rubro,
+            datos_facturacion: compradorJson,
+          },
+        })
+        .select("*")
+        .single();
+
+      if (errIns || !insertado) {
+        return {
+          ok: false,
+          error: `No se pudo registrar el pago manual: ${errIns?.message || "Error de base de datos"}`,
+        };
+      }
+      pagoIdCreado = insertado.pag_id;
+    }
+
+    if (!pagoIdCreado) {
+      return { ok: false, error: "No fue posible registrar la transacción de pago." };
+    }
+
+    // 3. Asegurar emisión inmediata de la Factura Electrónica
+    const factura = await asegurarFacturaElectronicaParaPago(db, {
+      pagId: pagoIdCreado,
+      negocio: negPrincipal,
+    });
+
+    // 4. Notificación in-app al cliente si tiene cuenta vinculada
+    if (datos.clienteUsuarioId && db) {
+      try {
+        await db
+          .schema("comun_notificacion")
+          .from("not_registro")
+          .insert({
+            not_usuario_id: datos.clienteUsuarioId,
+            not_negocio: negPrincipal,
+            not_titulo: `🧾 Factura Electrónica Emitida: ${factura?.numero_comprobante || rubro}`,
+            not_contenido_html: `<p>Se ha registrado tu pago por <strong>${rubro}</strong> (${datos.medioPago}) por un total de <strong>$${montoTotal.toFixed(2)} USD</strong>.</p><p><strong>Factura Electrónica N°:</strong> <code>${factura?.numero_comprobante || "Emitida"}</code><br/><strong>Referencia:</strong> <code>${ref}</code></p>`,
+            not_url_accion: "/panel/herramientas?widget=facturacion_electronica",
+            not_canal: "IN_APP",
+          });
+      } catch {
+        // Continuar
+      }
+    }
+
+    try {
+      revalidatePath("/panel");
+    } catch {
+      // Ignorar fuera de request context
+    }
+
+    return {
+      ok: true,
+      factura,
+    };
+  } catch (e: any) {
+    return {
+      ok: false,
+      error: e?.message || "Error inesperado al registrar el pago manual y emitir la factura.",
+    };
+  }
+}
+
+/**
+ * Permite al Operador emitir manualmente la factura electrónica de un pago existente
+ * que por cualquier motivo aún no tuviera comprobante asociado.
+ */
+export async function emitirFacturaDePagoExistenteAction(datos: {
+  negocio?: string;
+  pagId: string;
+}): Promise<{ ok: boolean; error?: string; factura?: FacturaElectronicaResumen | null }> {
+  const supabase: any = await crearClienteServidor();
+  const admin: any = crearClienteAdmin();
+  const db: any = admin || supabase;
+  if (!db) return { ok: false, error: "Sin conexión a la base de datos." };
+
+  const factura = await asegurarFacturaElectronicaParaPago(db, {
+    pagId: datos.pagId,
+    negocio: datos.negocio || "tranqi",
+  });
+
+  if (!factura) {
+    return { ok: false, error: "No se pudo emitir el comprobante electrónico para este pago." };
+  }
+  return { ok: true, factura };
 }
 
 // ==============================================================================

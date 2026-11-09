@@ -12,7 +12,7 @@ import { ConfiguracionContratoAbogadoWidget } from "../../../modulos/socios/comp
 import { GestionRedProfesionalWidget } from "../../../modulos/socios/componentes/GestionRedProfesionalWidget";
 import { ConfiguracionHorariosAtencionWidget } from "../../../modulos/agenda/componentes/ConfiguracionHorariosAtencionWidget";
 import { BandejaClientesCRM } from "../../../modulos/crm-clientes/componentes/BandejaClientesCRM";
-import { HistorialTransaccionesPago, GestionConveniosCorporativos, ConsolaGestionInformativosWidget, ComplianceScoreEmpresarial, LegalHRLaboral } from "@eco/comercio";
+import { HistorialTransaccionesPago, WidgetFacturacionElectronica, GestionConveniosCorporativos, ConsolaGestionInformativosWidget, ComplianceScoreEmpresarial, LegalHRLaboral } from "@eco/comercio";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
@@ -88,9 +88,18 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     categoria: "Agendamiento & Operación"
   },
   {
+    id: "facturacion_electronica",
+    titulo: "Facturación Electrónica & Registrar Pagos",
+    subtitulo: "Valores generados, valores pagados, registro manual de pagos (transferencia, efectivo, Deuna) y emisión de factura electrónica SRI",
+    ruta: "/panel/administrar?widget=facturacion_electronica",
+    icono: Receipt,
+    colorIcono: "#5000BA",
+    categoria: "Comercio y Pagos"
+  },
+  {
     id: "historial_pagos",
     titulo: "Historial de Transacciones & Pagos",
-    subtitulo: "Auditoría contable y registro de pagos Payphone en vivo y simulados",
+    subtitulo: "Auditoría contable, detalle de rubro facturado, comprobantes SRI y registro de pagos",
     ruta: "/panel/administrar?widget=historial_pagos",
     icono: Receipt,
     colorIcono: "#05876E",
@@ -907,10 +916,10 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
               </div>
             )}
 
-            {/* 8. HISTORIAL DE TRANSACCIONES & PAGOS */}
-            {widgetActivo === "historial_pagos" && (
+            {/* 8. FACTURACIÓN ELECTRÓNICA E HISTORIAL DE TRANSACCIONES & PAGOS */}
+            {(widgetActivo === "historial_pagos" || widgetActivo === "facturacion_electronica") && (
               <div style={{ width: "100%" }}>
-                <HistorialTransaccionesPago />
+                <WidgetFacturacionElectronica negocio={negocio} />
               </div>
             )}
 

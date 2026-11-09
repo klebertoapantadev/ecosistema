@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, History, KeyRound, ShieldAlert, Star, CheckCircle2, ChevronRight, ShieldCheck, Briefcase, Pencil, Receipt, Lock, QrCode, type LucideIcon } from "lucide-react";
+import { User, History, KeyRound, ShieldAlert, Star, CheckCircle2, ChevronRight, ShieldCheck, Briefcase, Pencil, Receipt, Lock, QrCode, CreditCard, type LucideIcon } from "lucide-react";
 import { FormularioPerfil } from "@eco/identidad/componentes/FormularioPerfil";
 import { FormularioPerfilAbogado } from "@eco/identidad/componentes/FormularioPerfilAbogado";
 import { FormularioDatosFacturacion } from "@eco/identidad/componentes/FormularioDatosFacturacion";
 import { WidgetConfiguracionMfa } from "@eco/identidad/componentes/WidgetConfiguracionMfa";
 import { HistorialAccesos } from "@eco/identidad/componentes/HistorialAccesos";
 import { EliminarCuenta } from "@eco/identidad/componentes/EliminarCuenta";
+import { WidgetFacturacionElectronica } from "@eco/comercio";
 import { FormularioSolicitudSocio } from "../../../modulos/socios/componentes/FormularioSolicitudSocio";
 import { cerrarSesionYRedirigir } from "../acciones";
 import { SelectorRolActivo, type RolOpcionDef } from "../SelectorRolActivo";
@@ -78,6 +79,14 @@ const WIDGETS_BASE: WidgetDef[] = [
     categoria: "Facturación & Cobros"
   },
   {
+    id: "historial_pagos",
+    titulo: "Historial de Pagos & Facturas Electrónicas",
+    subtitulo: "Valores generados, valores pagados, detalle del rubro facturado y descarga de factura electrónica SRI",
+    icono: CreditCard,
+    colorIcono: "var(--violeta, #5000BA)",
+    categoria: "Facturación & Cobros"
+  },
+  {
     id: "perfil_abogado",
     titulo: "Perfil Profesional de Abogado (MFA)",
     subtitulo: "Visualiza y edita tus datos de registro, SENESCYT, matrícula del Foro y especialidades (Protegido por MFA)",
@@ -142,13 +151,13 @@ function obtenerWidgetsInicialesCuenta(tieneMultiplesRoles: boolean): WidgetDef[
   if (matchModo && matchModo[1]) rolActivo = matchModo[1].toUpperCase();
   else if (matchFav && matchFav[1]) rolActivo = matchFav[1].toUpperCase();
 
-  let ids: string[] = ["mi_cuenta", "datos_facturacion", "mfa_seguridad", "baja_cuenta"];
+  let ids: string[] = ["mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "baja_cuenta"];
   if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
-    ids = ["ver_como", "mi_cuenta", "datos_facturacion", "historial_accesos", "mfa_seguridad", "baja_cuenta"];
+    ids = ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "historial_accesos", "mfa_seguridad", "baja_cuenta"];
   } else if (rolActivo === "ABOGADO") {
-    ids = ["perfil_abogado", "mi_cuenta", "mfa_seguridad", "baja_cuenta"];
+    ids = ["perfil_abogado", "mi_cuenta", "historial_pagos", "mfa_seguridad", "baja_cuenta"];
   } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
-    ids = ["ver_como", "mi_cuenta", "datos_facturacion", "historial_accesos", "mfa_seguridad", "baja_cuenta"];
+    ids = ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "historial_accesos", "mfa_seguridad", "baja_cuenta"];
   }
 
   // REGLA: Si el usuario tiene más de 1 rol o es SuperAdmin, siempre asegurar "ver_como" en la portada
@@ -171,7 +180,10 @@ function obtenerWidgetsInicialesCuenta(tieneMultiplesRoles: boolean): WidgetDef[
 }
 
 const ALIAS_WIDGET: Record<string, string> = {
-  facturacion: "datos_facturacion",
+  datos_facturacion: "facturacion",
+  pagos: "historial_pagos",
+  facturacion_electronica: "historial_pagos",
+  comprobantes_electronicos: "historial_pagos",
   mfa: "mfa_seguridad",
   baja_cuenta: "peligro",
   eliminar_cuenta: "peligro",
@@ -215,13 +227,13 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
         // 1. Presets por defecto según rol para panel_cuenta
         let idsAsignados: string[] = [];
         if (rolActivo === "OPERADOR" || rolActivo === "AUXILIAR" || rolActivo === "TECNICO") {
-          idsAsignados = ["ver_como", "mi_cuenta", "datos_facturacion", "historial_accesos", "mfa_seguridad", "baja_cuenta"];
+          idsAsignados = ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "historial_accesos", "mfa_seguridad", "baja_cuenta"];
         } else if (rolActivo === "CLIENTE") {
-          idsAsignados = ["mi_cuenta", "datos_facturacion", "mfa_seguridad", "baja_cuenta"];
+          idsAsignados = ["mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "baja_cuenta"];
         } else if (rolActivo === "ABOGADO") {
-          idsAsignados = ["perfil_abogado", "mi_cuenta", "mfa_seguridad", "baja_cuenta"];
+          idsAsignados = ["perfil_abogado", "mi_cuenta", "historial_pagos", "mfa_seguridad", "baja_cuenta"];
         } else if (rolActivo === "ADMINISTRADOR" || rolActivo === "SUPERADMIN") {
-          idsAsignados = ["ver_como", "mi_cuenta", "datos_facturacion", "historial_accesos", "mfa_seguridad", "baja_cuenta"];
+          idsAsignados = ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "historial_accesos", "mfa_seguridad", "baja_cuenta"];
         }
 
         // 2. Consultar BDD PostgreSQL (comun_seguridad.seg_rol_widget)
@@ -268,6 +280,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
             (id === "mi_cuenta" && m.id === "perfil") ||
             (id === "ver_como" && m.id === "rol_activo") ||
             (id === "datos_facturacion" && m.id === "facturacion") ||
+            (id === "facturacion_electronica" && m.id === "historial_pagos") ||
             (id === "baja_cuenta" && m.id === "peligro") ||
             (id === "seguridad_mfa" && m.id === "mfa_seguridad") ||
             (id === "sesion_claves" && m.id === "sesion")
@@ -278,6 +291,11 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
             }
             filtrados.push(enInventario);
           }
+        }
+        // Asegurar siempre que 'historial_pagos' esté disponible en Mi cuenta
+        if (!filtrados.some(f => f.id === "historial_pagos")) {
+          const wPagos = WIDGETS_BASE.find(m => m.id === "historial_pagos");
+          if (wPagos) filtrados.splice(Math.min(2, filtrados.length), 0, wPagos);
         }
 
         // Asegurar que si tiene múltiples roles, 'rol_activo' esté en la lista
@@ -498,6 +516,10 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                   solicitudExistente={solicitudExistente}
                 />
               </FormularioPerfilAbogado>
+            )}
+
+            {widgetActivo === "historial_pagos" && (
+              <WidgetFacturacionElectronica negocio="tranqi" />
             )}
 
             {/* WIDGET 2: HISTORIAL DE ACCESOS */}

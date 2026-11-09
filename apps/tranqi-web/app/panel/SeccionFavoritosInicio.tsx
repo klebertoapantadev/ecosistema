@@ -112,6 +112,22 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     href: "/panel/cuenta?widget=mi_cuenta",
     origen: "Mi cuenta"
   },
+  facturacion_electronica: {
+    id: "facturacion_electronica",
+    titulo: "Facturación Electrónica & Comprobantes",
+    subtitulo: "Valores generados, valores pagados, detalle del rubro facturado y comprobantes electrónicos SRI",
+    icono: Receipt,
+    href: "/panel/herramientas?widget=facturacion_electronica",
+    origen: "Herramientas"
+  },
+  historial_pagos: {
+    id: "historial_pagos",
+    titulo: "Historial de Pagos & Facturas",
+    subtitulo: "Consulta de pagos realizados, detalle de rubro facturado y factura electrónica SRI",
+    icono: CreditCard,
+    href: "/panel/cuenta?widget=historial_pagos",
+    origen: "Mi cuenta"
+  },
   facturacion: {
     id: "facturacion",
     titulo: "Datos de Facturación & Comprobantes",

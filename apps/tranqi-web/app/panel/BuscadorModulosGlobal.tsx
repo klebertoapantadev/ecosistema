@@ -73,6 +73,26 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     colorIcono: "#FE5800"
   },
   {
+    clave: "facturacion_electronica",
+    nombre: "Facturación Electrónica & Comprobantes SRI",
+    detalle: "Valores generados, valores pagados, detalle del rubro facturado y emisión automática o manual de factura electrónica",
+    ruta: "/panel/herramientas?widget=facturacion_electronica",
+    categoria: "Comercio & Facturación",
+    minNivel: 1,
+    icono: FileText,
+    colorIcono: "#5000BA"
+  },
+  {
+    clave: "historial_pagos",
+    nombre: "Historial de Pagos & Facturas Electrónicas",
+    detalle: "Consulta de pagos realizados, rubro facturado y descarga de comprobante electrónico SRI",
+    ruta: "/panel/cuenta?widget=historial_pagos",
+    categoria: "Comercio & Facturación",
+    minNivel: 1,
+    icono: CreditCard,
+    colorIcono: "#05876E"
+  },
+  {
     clave: "vitrina_comercial_personas",
     nombre: "Oferta para Personas & Familias",
     detalle: "Trámites notariales, videoconsultas individuales, defensa legal y planes familiares",

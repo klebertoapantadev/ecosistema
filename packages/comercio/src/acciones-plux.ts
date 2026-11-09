@@ -3,7 +3,7 @@
 // Acciones del checkout con PLUX (TRQ-ADM-004).
 import { z } from "zod";
 import { crearClienteAdmin, crearClienteServidor } from "@eco/supabase/servidor";
-import { activarSuscripcionTrasPagoAction } from "./acciones";
+import { activarSuscripcionTrasPagoAction, asegurarFacturaElectronicaParaPago } from "./acciones";
 import { datosPaybox, respuestaExitosa, type PagoPluxPreparado } from "./plux";
 import { normalizarIdentificadorNegocio } from "./utils/negocio";
 
@@ -453,6 +453,17 @@ export async function confirmarPagoPluxAction(entrada: {
     }
   }
 
+  // 3.5. Emitir y sincronizar automáticamente la Factura Electrónica SRI para este pago con tarjeta
+  let facturaEmitida: any = null;
+  try {
+    facturaEmitida = await asegurarFacturaElectronicaParaPago(clienteDb, {
+      identificador,
+      negocio,
+    });
+  } catch {
+    // Continuar
+  }
+
   // 4. Sincronizar cobertura activa y notificación in-app. Solo una suscripción
   // activa cobertura; un trámite de pago único no (igual que en Payphone).
   if (varianteId && (await esVarianteSuscripcion(clienteDb || supabase, varianteId))) {
@@ -473,15 +484,18 @@ export async function confirmarPagoPluxAction(entrada: {
   if (clienteDb && pago?.pag_cliente_id) {
     try {
       const montoFmt = Number(pago.pag_monto_total || 0).toFixed(2);
+      const infoFactura = facturaEmitida?.numero_comprobante
+        ? `<br/><strong>Factura Electrónica N°:</strong> <code>${facturaEmitida.numero_comprobante}</code>`
+        : "";
       await clienteDb
         .schema("comun_notificacion")
         .from("not_registro")
         .insert({
           not_usuario_id: pago.pag_cliente_id,
           not_negocio: negocio,
-          not_titulo: `🧾 ¡Pago Confirmado! ${productoNombre}`,
-          not_contenido_html: `<p>Tu pago por <strong>${productoNombre}</strong> por <strong>$${montoFmt} USD</strong> fue procesado exitosamente con PLUX.</p><p><strong>Referencia / Autorización:</strong> <code>${autorizacion}</code><br/><strong>Tarjeta:</strong> ${marcaTarjeta} •••• ${ultimosDigitos}</p>`,
-          not_url_accion: "/panel",
+          not_titulo: `🧾 ¡Pago y Factura Confirmados! ${productoNombre}`,
+          not_contenido_html: `<p>Tu pago por <strong>${productoNombre}</strong> por <strong>$${montoFmt} USD</strong> fue procesado exitosamente con PLUX.</p><p><strong>Referencia / Autorización:</strong> <code>${autorizacion}</code><br/><strong>Tarjeta:</strong> ${marcaTarjeta} •••• ${ultimosDigitos}${infoFactura}</p>`,
+          not_url_accion: "/panel/herramientas?widget=facturacion_electronica",
           not_canal: "IN_APP",
         });
     } catch {

@@ -13,3 +13,4 @@
 
 3. **Pre-configuración en 10 Puntos (`widget-registration-enforcer`)**:
    - Registrado y pre-asignado en migración SQL (`supabase/migrations/20261108000003_widget_financiamiento_proximamente.sql`), `MATRIZ_FUNCIONAL_ROLES`, `AdministracionPerfilesWidget.tsx`, `ConsolaSuperAdminModular.tsx`, `PanelDinamicoModular.tsx`, `ModalEditarWidget.tsx`, `SeccionFavoritosInicio.tsx` y `BuscadorModulosGlobal.tsx`.
+

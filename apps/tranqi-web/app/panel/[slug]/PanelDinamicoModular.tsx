@@ -32,6 +32,7 @@ import {
   CatalogoProductosComercio,
   ConfiguracionPasarelaPayphone,
   HistorialTransaccionesPago,
+  WidgetFacturacionElectronica,
   GestionConveniosCorporativos,
   TableroDisponibilidadOperativa,
   TarjetaBeneficiosCorporativosCliente,
@@ -228,10 +229,24 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     colorIcono: "#D97706",
     categoria: "Comercio y Pagos"
   },
+  facturacion_electronica: {
+    titulo: "Facturación Electrónica & Comprobantes SRI",
+    subtitulo: "Valores generados, valores pagados, detalle del rubro facturado y emisión automática o manual de factura electrónica",
+    icono: Receipt,
+    colorIcono: "#5000BA",
+    categoria: "Comercio y Pagos"
+  },
+  comprobantes_electronicos: {
+    titulo: "Facturación Electrónica & Comprobantes SRI",
+    subtitulo: "Valores generados, valores pagados, detalle del rubro facturado y emisión automática o manual de factura electrónica",
+    icono: Receipt,
+    colorIcono: "#5000BA",
+    categoria: "Comercio y Pagos"
+  },
   historial_pagos: {
     titulo: "Historial de Transacciones & Pagos",
-    subtitulo: "Auditoría contable y registro de pagos Payphone en vivo y simulados",
-    icono: Receipt,
+    subtitulo: "Valores generados, valores pagados, detalle del rubro facturado y comprobantes electrónicos emitidos",
+    icono: CreditCard,
     colorIcono: "#05876E",
     categoria: "Comercio y Pagos"
   },
@@ -875,6 +890,10 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       case "payphone":
       case "pasarela":
         return <ConfiguracionPasarelaPayphone negocio={negocio} />;
+      case "facturacion_electronica":
+      case "comprobantes_electronicos":
+      case "facturacion_sri":
+        return <WidgetFacturacionElectronica negocio={negocio} />;
       case "historial_pagos":
       case "transacciones":
       case "pagos":

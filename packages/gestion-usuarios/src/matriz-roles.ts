@@ -8,32 +8,33 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
     widgetsPorPanel: {
       panel_inicio: ["favoritos"],
       panel_agendamiento: ["agendar_cita", "mis_citas"],
-      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos"],
-      panel_herramientas: ["catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "financiamiento"],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
+      panel_herramientas: ["facturacion_electronica", "catalogo_productos", "firma_documentos_pdf", "billetera_documentos", "financiamiento"],
       panel_configuracion: ["notificaciones"]
     }
   },
   ABOGADO: {
-    paneles: ["panel_inicio", "panel_agendamiento", "panel_cuenta"],
+    paneles: ["panel_inicio", "panel_agendamiento", "panel_herramientas", "panel_cuenta"],
     widgetsPorPanel: {
       panel_inicio: ["favoritos"],
       panel_agendamiento: ["mi_perfil_abogado", "disponibilidad", "citas_programadas", "paquete_beneficios_abogados", "billetera_documentos", "firma_documentos_pdf"],
-      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos", "historial_pagos", "notificaciones"]
+      panel_herramientas: ["facturacion_electronica", "firma_documentos_pdf", "billetera_documentos"],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos", "notificaciones"]
     }
   },
   OPERADOR: {
     paneles: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf", "financiamiento"],
-      panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
+      panel_clientes: ["facturacion_electronica", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf", "financiamiento"],
+      panel_empresas: ["facturacion_electronica", "vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["consulta_usuarios_perfiles", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["gestion_red_abogados", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
-      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
+      panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "facturacion_electronica", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
+      panel_herramientas: ["facturacion_electronica", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["notificaciones", "agentes_ia"]
     }
   },
@@ -41,15 +42,15 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
     paneles: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf", "financiamiento"],
-      panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
+      panel_clientes: ["facturacion_electronica", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf", "financiamiento"],
+      panel_empresas: ["facturacion_electronica", "vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["gestion_red_abogados", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
-      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
+      panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "facturacion_electronica", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
+      panel_herramientas: ["facturacion_electronica", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
     }
   },
@@ -57,15 +58,15 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
     paneles: ["panel_inicio", "panel_clientes", "panel_empresas", "panel_usuarios", "panel_red_profesional", "panel_terminos", "panel_agendamiento", "panel_administrar", "panel_cuenta", "panel_herramientas", "panel_configuracion"],
     widgetsPorPanel: {
       panel_inicio: ["favoritos"],
-      panel_clientes: ["vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf", "financiamiento"],
-      panel_empresas: ["vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
+      panel_clientes: ["facturacion_electronica", "vitrina_comercial_personas", "muro_informativo_comunidad", "crm_clientes", "agendar_cita", "mis_citas", "billetera_documentos", "firma_documentos_pdf", "financiamiento"],
+      panel_empresas: ["facturacion_electronica", "vitrina_comercial_empresas", "gestion_convenios_corporativos", "crm_clientes", "billetera_documentos", "firma_documentos_pdf"],
       panel_usuarios: ["gestion_usuarios", "consulta_usuarios_perfiles", "monitoreo_notificaciones_usuarios"],
       panel_red_profesional: ["gestion_red_abogados", "mi_perfil_abogado", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "mi_perfil_abogado", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
-      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
+      panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "facturacion_electronica", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
+      panel_herramientas: ["facturacion_electronica", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
     }
   }

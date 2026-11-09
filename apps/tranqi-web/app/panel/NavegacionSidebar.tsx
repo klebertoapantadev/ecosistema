@@ -101,13 +101,13 @@ function obtenerPanelesInicialesPorRol(modoActivo: ModoRol): PanelDefNav[] {
 
   if (rolKey === "CLIENTE") {
     return PANELES_BASE_DEFAULT.filter(
-      p => p.id === "panel_inicio" || p.id === "panel_agendamiento" || p.id === "panel_cuenta"
+      p => p.id === "panel_inicio" || p.id === "panel_agendamiento" || p.id === "panel_herramientas" || p.id === "panel_cuenta"
     );
   }
 
   if (rolKey === "ABOGADO") {
     return PANELES_BASE_DEFAULT.filter(
-      p => p.id === "panel_inicio" || p.id === "panel_agendamiento" || p.id === "panel_cuenta"
+      p => p.id === "panel_inicio" || p.id === "panel_agendamiento" || p.id === "panel_herramientas" || p.id === "panel_cuenta"
     );
   }
 
@@ -135,19 +135,19 @@ export function NavegacionSidebar({
           return;
         }
 
-        // REGLA CLIENTE: Menú estrictamente acotado a la experiencia del cliente final (sin panel Clientes administrativo)
+        // REGLA CLIENTE: Menú acotado a la experiencia del cliente final (Inicio, Agendamiento, Herramientas y Mi cuenta)
         if (rolKey === "CLIENTE") {
           const panelesCliente = PANELES_BASE_DEFAULT.filter(
-            (p) => p.id === "panel_inicio" || p.id === "panel_agendamiento" || p.id === "panel_cuenta"
+            (p) => p.id === "panel_inicio" || p.id === "panel_agendamiento" || p.id === "panel_herramientas" || p.id === "panel_cuenta"
           );
           setPanelesVisibles(panelesCliente);
           return;
         }
 
-        // REGLA ABOGADO: Menú estrictamente acotado al espacio profesional del socio abogado (sin consolas de Operador como Clientes, Empresas, Red profesional, Herramientas o Configurar)
+        // REGLA ABOGADO: Menú acotado al espacio profesional del socio abogado
         if (rolKey === "ABOGADO") {
           const panelesAbogado = PANELES_BASE_DEFAULT.filter(
-            (p) => p.id === "panel_inicio" || p.id === "panel_agendamiento" || p.id === "panel_cuenta"
+            (p) => p.id === "panel_inicio" || p.id === "panel_agendamiento" || p.id === "panel_herramientas" || p.id === "panel_cuenta"
           );
           setPanelesVisibles(panelesAbogado);
           return;
