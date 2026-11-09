@@ -134,6 +134,17 @@ export const esquemaReasignacion = z.object({
   motivo: z.string().trim().max(500).nullish(),
 });
 
+export const esquemaActualizarEnlaceCita = z.object({
+  cita_id: z.string().uuid("Cita inválida"),
+  enlace: z
+    .string()
+    .trim()
+    .min(6, "Ingresa el enlace de la videollamada (Google Meet, Zoom, Teams, etc.)")
+    .max(500, "El enlace es demasiado largo"),
+  nota: z.string().trim().max(300).nullish(),
+});
+
+
 export const esquemaBloqueo = z
   .object({
     inicio_en: z.string().datetime({ offset: true }),

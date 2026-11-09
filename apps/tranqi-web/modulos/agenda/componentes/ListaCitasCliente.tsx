@@ -132,7 +132,14 @@ export default function ListaCitasCliente({
         </div>
       )}
       <ul className="agenda-lista-citas">
-        {citas.map((c) => {
+        {[...citas]
+          .sort((a, b) => {
+            const aRealizada = a.cit_estado === "realizada" ? 1 : 0;
+            const bRealizada = b.cit_estado === "realizada" ? 1 : 0;
+            if (aRealizada !== bRealizada) return aRealizada - bRealizada;
+            return new Date(a.cit_inicio_en).getTime() - new Date(b.cit_inicio_en).getTime();
+          })
+          .map((c) => {
           const inicio = new Date(c.cit_inicio_en);
           const fin = c.cit_fin_en
             ? new Date(c.cit_fin_en)
@@ -149,6 +156,129 @@ export default function ListaCitasCliente({
             futura && c.cit_estado !== "cancelada" && c.cit_estado !== "realizada";
           const logEventos = c.gestion_reunion?.eventos_log ?? [];
           const verTracking = trackingAbierto === c.cit_id;
+          const esRealizada = c.cit_estado === "realizada";
+
+          // Vista compacta, opaca y de información básica para citas ya atendidas ("realizada")
+          if (esRealizada) {
+            return (
+              <li
+                key={c.cit_id}
+                className="agenda-cita"
+                style={{
+                  background: "#F1F5F9",
+                  border: "1px solid #CBD5E1",
+                  padding: "12px 16px",
+                  opacity: 0.78,
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                    gap: "10px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <strong style={{ textTransform: "capitalize", color: "#475569", fontSize: "0.92rem" }}>
+                      {FORMATO.format(inicio)}
+                    </strong>
+                    <span
+                      style={{
+                        padding: "2px 8px",
+                        borderRadius: "999px",
+                        fontSize: "0.72rem",
+                        fontWeight: 700,
+                        background: "#E2E8F0",
+                        color: "#475569",
+                      }}
+                    >
+                      {c.cit_modalidad === "virtual" ? "🎥 Videollamada" : "🏢 Presencial"}
+                    </span>
+                    {c.materia_nombre && (
+                      <span
+                        style={{
+                          padding: "2px 8px",
+                          borderRadius: "999px",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          background: "#E2E8F0",
+                          color: "#475569",
+                        }}
+                      >
+                        ⚖️ {c.materia_nombre}
+                      </span>
+                    )}
+                    {c.abogado_nombre && (
+                      <span style={{ fontSize: "0.8rem", color: "#475569" }}>
+                        · 👨‍⚖️ Dr(a). {c.abogado_nombre}
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                    <span
+                      style={{
+                        padding: "3px 10px",
+                        borderRadius: "999px",
+                        fontSize: "0.73rem",
+                        fontWeight: 800,
+                        background: "#E2E8F0",
+                        color: "#334155",
+                        border: "1px solid #CBD5E1",
+                      }}
+                    >
+                      ✅ Consulta Realizada
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => setTrackingAbierto(verTracking ? null : c.cit_id)}
+                      title="Visualizar bajo demanda el Tracking de tu consulta atendida"
+                      aria-label="Ver Tracking"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        padding: "5px 10px",
+                        borderRadius: "8px",
+                        border: "1px solid #94A3B8",
+                        background: verTracking ? "#334155" : "#FFFFFF",
+                        color: verTracking ? "#FFFFFF" : "#334155",
+                        fontSize: "0.75rem",
+                        fontWeight: 800,
+                        cursor: "pointer",
+                      }}
+                    >
+                      <GitCommit size={13} />
+                      {verTracking ? "Ocultar Tracking" : `Tracking (${logEventos.length})`}
+                    </button>
+                  </div>
+                </div>
+
+                {verTracking && (
+                  <div style={{ marginTop: "10px" }}>
+                    <LineaTiempoTrackingCita
+                      cita={c}
+                      rolVista="CLIENTE"
+                      alActualizar={() => {
+                        alActualizar?.();
+                        router.refresh();
+                      }}
+                    />
+                  </div>
+                )}
+              </li>
+            );
+          }
 
           const calLinks = construirEnlacesCalendarioCita({
             citaId: c.cit_id,
@@ -238,20 +368,60 @@ export default function ListaCitasCliente({
                 )}
 
               {c.cit_modalidad === "virtual" &&
-                c.cit_estado === "confirmada" &&
-                (abierta && c.cit_enlace ? (
-                  <a
-                    className="btn btn-primario"
-                    href={c.cit_enlace}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                c.cit_estado !== "cancelada" &&
+                (c.cit_enlace ? (
+                  <div
+                    style={{
+                      margin: "8px 0",
+                      padding: "10px 12px",
+                      borderRadius: "10px",
+                      background: "#F5F3FF",
+                      border: "1px solid #DDD6FE",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: "10px",
+                    }}
                   >
-                    <Video size={15} />
-                    Entrar a la videollamada
-                  </a>
+                    <div style={{ fontSize: "0.82rem", color: "#1E293B" }}>
+                      <strong>📹 Enlace para tu consulta telemática:</strong>{" "}
+                      <a
+                        href={c.cit_enlace}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          color: "#5000BA",
+                          fontWeight: 800,
+                          textDecoration: "underline",
+                          wordBreak: "break-all",
+                        }}
+                      >
+                        {c.cit_enlace}
+                      </a>
+                    </div>
+                    <a
+                      className="btn btn-primario"
+                      href={c.cit_enlace}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        padding: "7px 14px",
+                        fontSize: "0.78rem",
+                      }}
+                    >
+                      <Video size={14} />
+                      {abierta ? "Entrar a videollamada" : "Abrir link"}
+                    </a>
+                  </div>
                 ) : futura ? (
-                  <p className="agenda-nota">El enlace se activa 10 minutos antes de la cita.</p>
+                  <p className="agenda-nota">
+                    Tu abogado asignado compartirá aquí el link de la videollamada y te llegará una
+                    notificación.
+                  </p>
                 ) : null)}
 
               {/* Botonera de Acciones del Cliente: Tracking, Cambiar Hora, Agendar en Calendario y Cancelar */}

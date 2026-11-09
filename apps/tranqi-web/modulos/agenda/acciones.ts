@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { crearClienteAdmin, crearClienteServidor } from "@eco/supabase/servidor";
 import {
+  esquemaActualizarEnlaceCita,
   esquemaAgendaCompleta,
   esquemaBloqueo,
   esquemaConfigNegocioAgenda,
@@ -2746,3 +2747,253 @@ export async function actualizarContactoClienteCitaAction(entrada: {
     };
   }
 }
+
+export async function actualizarEnlaceCitaTelematicaAction(
+  entrada: unknown,
+): Promise<Resultado<{ enlace: string; esModificacion: boolean }>> {
+  const validado = esquemaActualizarEnlaceCita.safeParse(entrada);
+  if (!validado.success) {
+    return {
+      ok: false,
+      error: validado.error.issues[0]?.message ?? "Ingresa un enlace de videollamada válido.",
+    };
+  }
+
+  let enlaceNormalizado = validado.data.enlace.trim();
+  if (!/^https?:\/\//i.test(enlaceNormalizado)) {
+    enlaceNormalizado = `https://${enlaceNormalizado}`;
+  }
+  try {
+    const parsedUrl = new URL(enlaceNormalizado);
+    if (!parsedUrl.hostname.includes(".")) {
+      return {
+        ok: false,
+        error: "Ingresa un enlace válido de videollamada (ej. https://meet.google.com/...).",
+      };
+    }
+  } catch {
+    return {
+      ok: false,
+      error: "Ingresa un enlace válido de videollamada (ej. https://meet.google.com/...).",
+    };
+  }
+
+  try {
+    const supabase = await crearClienteServidor();
+    const db = crearClienteAdmin() ?? supabase;
+    const { data: authData } = await supabase.auth.getUser();
+    const actorId = authData.user?.id ?? null;
+    if (!actorId) {
+      return { ok: false, error: "Debes iniciar sesión para actualizar el enlace de la cita." };
+    }
+
+    const { data: citaActual, error: errCita } = await db
+      .schema("tranqui_legal")
+      .from("trq_cita")
+      .select(
+        "cit_id, cit_cliente_id, cit_abogado_id, cit_inicio_en, cit_fin_en, cit_modalidad, cit_estado, cit_motivo, cit_enlace, cit_lugar",
+      )
+      .eq("cit_id", validado.data.cita_id)
+      .maybeSingle();
+
+    if (errCita || !citaActual) {
+      return { ok: false, error: "No se encontró la cita seleccionada." };
+    }
+
+    if (citaActual.cit_estado === "realizada" || citaActual.cit_estado === "cancelada") {
+      return {
+        ok: false,
+        error: "No se puede modificar el enlace de una consulta ya realizada o cancelada.",
+      };
+    }
+
+    const enlacePrevio = (citaActual.cit_enlace ?? "").trim();
+    const esModificacion = Boolean(enlacePrevio);
+
+    // Regla de negocio: el enlace se puede modificar hasta 1 hora antes de la hora agendada
+    const inicioMs = new Date(citaActual.cit_inicio_en).getTime();
+    const faltaMs = inicioMs - Date.now();
+    if (esModificacion && faltaMs < 60 * 60 * 1000) {
+      return {
+        ok: false,
+        error:
+          "El enlace de la videollamada solo puede modificarse hasta 1 hora antes de la hora agendada.",
+      };
+    }
+
+    // Obtener datos de actor, cliente y abogado
+    let abgUsuIdActual: string | null = null;
+    if (citaActual.cit_abogado_id) {
+      const { data: abgRow } = await db
+        .schema("tranqui_legal")
+        .from("trq_abogado")
+        .select("abg_usuario_id")
+        .eq("abg_id", citaActual.cit_abogado_id)
+        .maybeSingle();
+      abgUsuIdActual = abgRow?.abg_usuario_id ?? null;
+    }
+
+    const idsUsuarios = Array.from(
+      new Set([actorId, citaActual.cit_cliente_id, abgUsuIdActual].filter(Boolean) as string[]),
+    );
+    const { data: usuariosRows } = await db
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_detalle_usuario")
+      .in("usu_id", idsUsuarios);
+
+    const mapaUsu = new Map<
+      string,
+      { nombre: string; correo: string | null; whatsapp: string | null }
+    >();
+    for (const u of (usuariosRows ?? []) as Array<{
+      usu_id: string;
+      usu_nombres?: string | null;
+      usu_apellidos?: string | null;
+      usu_correo?: string | null;
+      usu_whatsapp?: string | null;
+      usu_detalle_usuario?: Record<string, unknown> | null;
+    }>) {
+      const det = (u.usu_detalle_usuario ?? {}) as Record<string, unknown>;
+      const wsp =
+        u.usu_whatsapp ||
+        (typeof det.whatsapp === "string" ? det.whatsapp : null) ||
+        (typeof det.celular === "string" ? det.celular : null) ||
+        null;
+      mapaUsu.set(u.usu_id, {
+        nombre:
+          [u.usu_nombres, u.usu_apellidos].filter(Boolean).join(" ").trim() ||
+          u.usu_correo ||
+          "Usuario",
+        correo: u.usu_correo ?? null,
+        whatsapp: wsp,
+      });
+    }
+
+    const autorInfo = mapaUsu.get(actorId) ?? {
+      nombre: "Abogado",
+      correo: authData.user?.email ?? null,
+      whatsapp: null,
+    };
+    const clienteInfo = mapaUsu.get(citaActual.cit_cliente_id) ?? {
+      nombre: "Cliente",
+      correo: null,
+      whatsapp: null,
+    };
+    const abgInfo = (abgUsuIdActual ? mapaUsu.get(abgUsuIdActual) : null) ?? autorInfo;
+
+    const ahoraIso = new Date().toISOString();
+
+    const { error: errUpd } = await db
+      .schema("tranqui_legal")
+      .from("trq_cita")
+      .update({
+        cit_enlace: enlaceNormalizado,
+        cit_actualizado_en: ahoraIso,
+      })
+      .eq("cit_id", validado.data.cita_id);
+
+    if (errUpd) {
+      return { ok: false, error: comoError(errUpd.message) };
+    }
+
+    const notaOpcional = validado.data.nota?.trim() || null;
+
+    // Actualizar Tracking de la cita e incrementar secuencia de calendario (.ics)
+    const seqPosterior = await registrarEventoYEstadoGestionCita(db, validado.data.cita_id, {
+      incrementar_sequence_calendario: true,
+      evento: {
+        id: crypto.randomUUID(),
+        fecha: ahoraIso,
+        tipo: "GESTION_REUNION",
+        autor_nombre: autorInfo.nombre,
+        autor_rol: "ABOGADO",
+        resumen: esModificacion
+          ? `Enlace de consulta telemática actualizado por Dr(a). ${autorInfo.nombre}`
+          : `Enlace de consulta telemática registrado por Dr(a). ${autorInfo.nombre}`,
+        mensaje: notaOpcional
+          ? `${enlaceNormalizado} — ${notaOpcional}`
+          : `Link de videollamada: ${enlaceNormalizado}`,
+      },
+    });
+
+    // Notificar al cliente (In-App + Push + Correo con .ics actualizado)
+    const fechaCitaTxt = FORMATO_FECHA_CITA_EC.format(new Date(citaActual.cit_inicio_en));
+    const datosIcsLink: DatosEventoCalendarioCita = {
+      citaId: validado.data.cita_id,
+      inicioIso: String(citaActual.cit_inicio_en),
+      finIso: citaActual.cit_fin_en ? String(citaActual.cit_fin_en) : null,
+      modalidad: String(citaActual.cit_modalidad ?? "virtual"),
+      motivo: citaActual.cit_motivo ? String(citaActual.cit_motivo) : null,
+      clienteNombre: clienteInfo.nombre,
+      clienteCorreo: clienteInfo.correo,
+      clienteWhatsapp: clienteInfo.whatsapp,
+      abogadoNombre: abgInfo.nombre,
+      abogadoCorreo: abgInfo.correo,
+      enlaceVideollamada: enlaceNormalizado,
+      lugarPresencial: citaActual.cit_lugar ? String(citaActual.cit_lugar) : null,
+      sequence: seqPosterior,
+      metodo: "REQUEST",
+      comentarioCambio: esModificacion
+        ? `Enlace de videollamada actualizado: ${enlaceNormalizado}`
+        : `Enlace de videollamada listo para tu consulta: ${enlaceNormalizado}`,
+    };
+
+    if (citaActual.cit_cliente_id) {
+      await despacharNotificacionAgendaUsuarios({
+        usuarioIds: [citaActual.cit_cliente_id],
+        notIdPrefijo: `link-cita-${validado.data.cita_id.slice(0, 8)}-${Date.now().toString().slice(-4)}`,
+        titulo: esModificacion
+          ? `📹 Link de videollamada actualizado (${fechaCitaTxt})`
+          : `📹 Link listo para tu consulta telemática (${fechaCitaTxt})`,
+        contenidoHtml: `
+          <div>
+            <p style="margin:0 0 8px 0;">
+              Tu abogado asignado <strong>Dr(a). ${abgInfo.nombre}</strong> ha ${
+                esModificacion ? "actualizado" : "compartido"
+              } el enlace para tu consulta telemática en <strong>Tranqi</strong>.
+            </p>
+            <div style="font-size:0.84rem;background:#F5F3FF;border:1px solid #C4B5FD;border-radius:8px;padding:10px 12px;margin:8px 0;">
+              <strong>📅 Fecha y hora:</strong> ${fechaCitaTxt}<br/>
+              <strong>👨‍⚖️ Abogado:</strong> Dr(a). ${abgInfo.nombre}<br/>
+              <strong>🔗 Enlace de conexión:</strong>
+              <a href="${enlaceNormalizado}" target="_blank" rel="noreferrer" style="color:#5000BA;font-weight:800;word-break:break-all;">
+                ${enlaceNormalizado}
+              </a>
+              ${notaOpcional ? `<br/><strong>💬 Nota:</strong> ${notaOpcional}` : ""}
+            </div>
+            <p style="margin:8px 0 0 0;font-size:0.8rem;">
+              <a href="${enlaceNormalizado}" target="_blank" rel="noreferrer" style="display:inline-block;padding:8px 14px;background:#5000BA;color:#FFFFFF;border-radius:8px;font-weight:800;text-decoration:none;margin-right:8px;">
+                🎥 Unirse a la videollamada
+              </a>
+              <a href="/panel/agendamiento?widget=mis_citas" style="color:#5000BA;font-weight:800;text-decoration:underline;">
+                Ver en Mis Citas →
+              </a>
+            </p>
+          </div>
+        `,
+        urlAccion: "/panel/agendamiento?widget=mis_citas",
+        canal: "PUSH",
+        calendarioIcs: datosIcsLink,
+        copiarAgendaInstitucional: true,
+      });
+    }
+
+    revalidatePath("/panel");
+    revalidatePath("/panel/agendamiento");
+    revalidatePath("/panel/agenda");
+    revalidatePath("/panel/mis-citas");
+    revalidatePath("/panel/agenda/asignaciones");
+
+    return { ok: true, data: { enlace: enlaceNormalizado, esModificacion } };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error
+          ? err.message
+          : "No se pudo actualizar el enlace de la consulta telemática.",
+    };
+  }
+}
+

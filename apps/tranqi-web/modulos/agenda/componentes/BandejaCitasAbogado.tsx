@@ -22,11 +22,14 @@ import {
   Trash2,
   Upload,
   ExternalLink,
+  Link2,
+  Lock,
   Video,
   XCircle,
 } from "lucide-react";
 import {
   actualizarContactoClienteCitaAction,
+  actualizarEnlaceCitaTelematicaAction,
   decidirCitaAction,
   guardarGestionReunionYCitaAction,
   subirArchivoRespaldoCitaAction,
@@ -95,6 +98,9 @@ export default function BandejaCitasAbogado({
   const [motivosReagendar, setMotivosReagendar] = useState<Record<string, string>>({});
   const [editandoWhatsappCita, setEditandoWhatsappCita] = useState<string | null>(null);
   const [nuevoWhatsappCliente, setNuevoWhatsappCliente] = useState<string>("");
+  const [enlacesTelematicos, setEnlacesTelematicos] = useState<Record<string, string>>({});
+  const [notasEnlaceTelematico, setNotasEnlaceTelematico] = useState<Record<string, string>>({});
+  const [editandoEnlaceCita, setEditandoEnlaceCita] = useState<string | null>(null);
   const [citasLocal, setCitasLocal] = useState<CitaResumen[]>(citas);
   const [accionEnCurso, setAccionEnCurso] = useState<{ citaId: string; decision: string } | null>(
     null,
@@ -126,11 +132,95 @@ export default function BandejaCitasAbogado({
   }, [citasLocal, hoyClave]);
 
   const citasVisibles = useMemo(() => {
-    if (rango === "hoy") return resumenRangos.hoy;
-    if (rango === "semana") return resumenRangos.semana;
-    if (rango === "mes") return resumenRangos.mes;
-    return resumenRangos.todas;
+    const base =
+      rango === "hoy"
+        ? resumenRangos.hoy
+        : rango === "semana"
+        ? resumenRangos.semana
+        : rango === "mes"
+        ? resumenRangos.mes
+        : resumenRangos.todas;
+
+    // Mostrar las citas activas primero y las ya atendidas ("realizada") al final para diferenciarlas fácilmente
+    return [...base].sort((a, b) => {
+      const aRealizada = a.cit_estado === "realizada" ? 1 : 0;
+      const bRealizada = b.cit_estado === "realizada" ? 1 : 0;
+      if (aRealizada !== bRealizada) return aRealizada - bRealizada;
+      return new Date(a.cit_inicio_en).getTime() - new Date(b.cit_inicio_en).getTime();
+    });
   }, [rango, resumenRangos]);
+
+  function guardarEnlaceTelematico(citaId: string) {
+    const enlaceInput = (enlacesTelematicos[citaId] ?? "").trim();
+    const notaInput = (notasEnlaceTelematico[citaId] ?? "").trim();
+    if (!enlaceInput) {
+      setError("Ingresa el link para la consulta telemática (ej. Google Meet, Zoom o Teams).");
+      return;
+    }
+    setError(null);
+    setExito(null);
+    setAccionEnCurso({ citaId, decision: "actualizar_enlace" });
+    iniciarEnvio(async () => {
+      try {
+        const r = await actualizarEnlaceCitaTelematicaAction({
+          cita_id: citaId,
+          enlace: enlaceInput,
+          nota: notaInput || null,
+        });
+        if (!r.ok) {
+          setError(r.error);
+          return;
+        }
+        const ahoraIso = new Date().toISOString();
+        setCitasLocal((prev) =>
+          prev.map((item) => {
+            if (item.cit_id !== citaId) return item;
+            const gestionPrevia = item.gestion_reunion ?? {
+              cita_id: item.cit_id,
+              estado_aceptacion_abogado: "pendiente" as const,
+              motivo_aceptacion_abogado: null,
+              notas_reunion: null,
+              siguientes_pasos: [],
+              documentos_adjuntos: [],
+              eventos_log: [],
+              actualizado_en: ahoraIso,
+            };
+            const nuevoEv = {
+              id: `link-${Date.now()}`,
+              fecha: ahoraIso,
+              tipo: "GESTION_REUNION" as const,
+              autor_nombre: item.abogado_nombre ?? "Abogado",
+              autor_rol: "ABOGADO" as const,
+              resumen: r.data.esModificacion
+                ? "Enlace de consulta telemática actualizado"
+                : "Enlace de consulta telemática registrado",
+              mensaje: `Link de videollamada: ${r.data.enlace}`,
+            };
+            return {
+              ...item,
+              cit_enlace: r.data.enlace,
+              gestion_reunion: {
+                ...gestionPrevia,
+                eventos_log: [nuevoEv, ...(gestionPrevia.eventos_log ?? [])],
+                sequence_calendario: (gestionPrevia.sequence_calendario ?? 0) + 1,
+                actualizado_en: ahoraIso,
+              },
+            };
+          }),
+        );
+        setEditandoEnlaceCita(null);
+        setExito(
+          r.data.esModificacion
+            ? "✅ Link de la consulta telemática modificado. Se actualizó el Tracking y se notificó el nuevo link al cliente."
+            : "✅ Link de la consulta telemática registrado. Se actualizó el Tracking y se notificó el link al cliente.",
+        );
+        alActualizar?.();
+        router.refresh();
+      } finally {
+        setAccionEnCurso(null);
+      }
+    });
+  }
 
   function decidir(citaId: string, decision: string, nuevoInicio?: string, motivo?: string) {
     setError(null);
@@ -407,6 +497,201 @@ export default function BandejaCitasAbogado({
             const gestionAbierta = citaGestionAbierta === c.cit_id;
             const logAbierto = citaLogAbierta === c.cit_id;
             const msgActual = mensajesAsignacion[c.cit_id] ?? "";
+            const esRealizada = c.cit_estado === "realizada";
+            const faltaParaCitaMs = inicio.getTime() - Date.now();
+            const puedeModificarLink = !c.cit_enlace || faltaParaCitaMs >= 60 * 60 * 1000;
+            const mostrarEditorLink =
+              !esPresencial &&
+              !esRealizada &&
+              (editandoEnlaceCita === c.cit_id || !c.cit_enlace);
+
+            // Vista compacta, opaca y de información básica para citas ya atendidas ("realizada")
+            if (esRealizada) {
+              return (
+                <div
+                  key={c.cit_id}
+                  style={{
+                    background: "#F1F5F9",
+                    borderRadius: "12px",
+                    border: "1px solid #CBD5E1",
+                    padding: "12px 16px",
+                    opacity: 0.78,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "10px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: "10px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <strong
+                        style={{
+                          fontSize: "0.92rem",
+                          color: "#475569",
+                          textTransform: "capitalize",
+                        }}
+                      >
+                        {FORMATO_CITA.format(inicio)}
+                      </strong>
+                      <span
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          padding: "2px 8px",
+                          borderRadius: "999px",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          background: "#E2E8F0",
+                          color: "#475569",
+                        }}
+                      >
+                        {esPresencial ? <Building2 size={12} /> : <Video size={12} />}
+                        {esPresencial ? "Presencial" : "Telemática"}
+                      </span>
+                      <span
+                        style={{
+                          padding: "2px 8px",
+                          borderRadius: "999px",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          background: "#E2E8F0",
+                          color: "#475569",
+                        }}
+                      >
+                        ⚖️ {c.materia_nombre ?? "General"}
+                      </span>
+                      <span style={{ fontSize: "0.82rem", color: "#475569" }}>
+                        · <strong>👤 Cliente:</strong> {c.cliente_nombre ?? "Afiliado"}
+                      </span>
+                      {c.caso_vinculado && (
+                        <span
+                          style={{
+                            fontSize: "0.72rem",
+                            fontWeight: 700,
+                            color: "#475569",
+                            background: "#E2E8F0",
+                            padding: "2px 8px",
+                            borderRadius: "6px",
+                          }}
+                        >
+                          📁 {c.caso_vinculado.cas_titulo}
+                        </span>
+                      )}
+                    </div>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <span
+                        style={{
+                          padding: "3px 10px",
+                          borderRadius: "999px",
+                          fontSize: "0.73rem",
+                          fontWeight: 800,
+                          background: "#E2E8F0",
+                          color: "#334155",
+                          border: "1px solid #CBD5E1",
+                        }}
+                      >
+                        ✅ Consulta Realizada
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={() => setCitaLogAbierta(logAbierto ? null : c.cit_id)}
+                        title="Visualizar bajo demanda el Tracking de esta consulta atendida"
+                        aria-label="Ver Tracking"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          padding: "5px 10px",
+                          borderRadius: "8px",
+                          border: "1px solid #94A3B8",
+                          background: logAbierto ? "#334155" : "#FFFFFF",
+                          color: logAbierto ? "#FFFFFF" : "#334155",
+                          fontWeight: 800,
+                          fontSize: "0.75rem",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <GitCommit size={13} />
+                        {logAbierto ? "Ocultar Tracking" : `Tracking (${logEventos.length})`}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCitaGestionAbierta(gestionAbierta ? null : c.cit_id)
+                        }
+                        title="Consultar acta o expediente registrado en esta cita"
+                        aria-label="Ver acta"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          padding: "5px 9px",
+                          borderRadius: "8px",
+                          border: "1px solid #CBD5E1",
+                          background: gestionAbierta ? "#475569" : "transparent",
+                          color: gestionAbierta ? "#FFFFFF" : "#475569",
+                          fontWeight: 700,
+                          fontSize: "0.73rem",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <FolderOpen size={12} />
+                        {gestionAbierta ? "Ocultar Acta" : "Ver Acta"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {gestionAbierta && (
+                    <PanelGestionReunionYExpediente
+                      cita={c}
+                      alGuardar={() => {
+                        setExito(
+                          "✅ Gestión de la reunión, documentos y expediente del cliente actualizados.",
+                        );
+                        alActualizar?.();
+                        router.refresh();
+                      }}
+                    />
+                  )}
+
+                  {logAbierto && (
+                    <LineaTiempoTrackingCita
+                      cita={c}
+                      rolVista="ABOGADO"
+                      alActualizar={() => {
+                        alActualizar?.();
+                        router.refresh();
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            }
 
             return (
               <div
@@ -766,18 +1051,229 @@ export default function BandejaCitasAbogado({
                   </div>
                 )}
 
-                {c.cit_modalidad === "virtual" && abierta && c.cit_enlace && (
-                  <div>
-                    <a
-                      className="btn btn-primario"
-                      href={c.cit_enlace}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                {/* Gestión del Link para Consultas Telemáticas (Videollamada) */}
+                {!esPresencial && (
+                  <div
+                    style={{
+                      padding: "10px 12px",
+                      borderRadius: "10px",
+                      background: c.cit_enlace ? "#F5F3FF" : "#FFFBEB",
+                      border: `1px solid ${c.cit_enlace ? "#DDD6FE" : "#FDE68A"}`,
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        flexWrap: "wrap",
+                        gap: "8px",
+                      }}
                     >
-                      <Video size={15} />
-                      Entrar a videollamada
-                    </a>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          flexWrap: "wrap",
+                          fontSize: "0.82rem",
+                        }}
+                      >
+                        <Video
+                          size={15}
+                          color={c.cit_enlace ? "#5000BA" : "#B45309"}
+                        />
+                        <strong style={{ color: "#0F172A" }}>
+                          Link de Consulta Telemática:
+                        </strong>
+                        {c.cit_enlace ? (
+                          <a
+                            href={c.cit_enlace}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{
+                              color: "#5000BA",
+                              fontWeight: 800,
+                              textDecoration: "underline",
+                              wordBreak: "break-all",
+                            }}
+                          >
+                            {c.cit_enlace}
+                          </a>
+                        ) : (
+                          <span style={{ color: "#B45309", fontWeight: 700 }}>
+                            ⚠️ Pendiente registrar link de videollamada (Meet / Zoom / Teams)
+                          </span>
+                        )}
+                      </div>
+
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                        {c.cit_enlace && (
+                          <a
+                            href={c.cit_enlace}
+                            target="_blank"
+                            rel="noreferrer"
+                            title="Abrir sala de videollamada"
+                            aria-label="Abrir videollamada"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              padding: "6px 12px",
+                              borderRadius: "8px",
+                              background: abierta ? "#05876E" : "#5000BA",
+                              color: "#FFFFFF",
+                              fontSize: "0.76rem",
+                              fontWeight: 800,
+                              textDecoration: "none",
+                            }}
+                          >
+                            <ExternalLink size={13} />
+                            {abierta ? "Entrar a Sala" : "Abrir Link"}
+                          </a>
+                        )}
+
+                        {c.cit_enlace && puedeModificarLink && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (editandoEnlaceCita === c.cit_id) {
+                                setEditandoEnlaceCita(null);
+                              } else {
+                                setEnlacesTelematicos((prev) => ({
+                                  ...prev,
+                                  [c.cit_id]: prev[c.cit_id] ?? c.cit_enlace ?? "",
+                                }));
+                                setEditandoEnlaceCita(c.cit_id);
+                              }
+                            }}
+                            title="Modificar el link de la consulta telemática (permitido hasta 1 hora antes de la cita)"
+                            aria-label="Modificar link"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #C4B5FD",
+                              background: "#FFFFFF",
+                              color: "#5000BA",
+                              fontSize: "0.75rem",
+                              fontWeight: 800,
+                              cursor: "pointer",
+                            }}
+                          >
+                            <Link2 size={13} />
+                            {editandoEnlaceCita === c.cit_id ? "Cancelar" : "Modificar Link"}
+                          </button>
+                        )}
+
+                        {c.cit_enlace && !puedeModificarLink && (
+                          <span
+                            title="El enlace solo puede modificarse hasta 1 hora antes de la hora agendada"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              padding: "4px 8px",
+                              borderRadius: "999px",
+                              background: "#F1F5F9",
+                              border: "1px solid #CBD5E1",
+                              color: "#64748B",
+                              fontSize: "0.72rem",
+                              fontWeight: 700,
+                            }}
+                          >
+                            <Lock size={12} />
+                            Modificación cerrada (&lt;1h para la cita)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {mostrarEditorLink && puedeModificarLink && (
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "2fr 1.2fr auto",
+                          gap: "8px",
+                          alignItems: "center",
+                          paddingTop: "2px",
+                        }}
+                      >
+                        <input
+                          type="url"
+                          value={enlacesTelematicos[c.cit_id] ?? c.cit_enlace ?? ""}
+                          onChange={(e) =>
+                            setEnlacesTelematicos((prev) => ({
+                              ...prev,
+                              [c.cit_id]: e.target.value,
+                            }))
+                          }
+                          placeholder="https://meet.google.com/... o enlace de Zoom / Teams"
+                          style={{
+                            padding: "7px 10px",
+                            borderRadius: "8px",
+                            border: "1px solid #CBD5E1",
+                            fontSize: "0.82rem",
+                            background: "#FFFFFF",
+                            width: "100%",
+                          }}
+                        />
+                        <input
+                          type="text"
+                          value={notasEnlaceTelematico[c.cit_id] ?? ""}
+                          onChange={(e) =>
+                            setNotasEnlaceTelematico((prev) => ({
+                              ...prev,
+                              [c.cit_id]: e.target.value,
+                            }))
+                          }
+                          placeholder="Nota opcional para el cliente"
+                          maxLength={200}
+                          style={{
+                            padding: "7px 10px",
+                            borderRadius: "8px",
+                            border: "1px solid #CBD5E1",
+                            fontSize: "0.8rem",
+                            background: "#FFFFFF",
+                            width: "100%",
+                          }}
+                        />
+                        <button
+                          type="button"
+                          disabled={enviando}
+                          onClick={() => guardarEnlaceTelematico(c.cit_id)}
+                          title="Guardar link, actualizar Tracking y notificar al cliente (modificable hasta 1h antes)"
+                          aria-label="Notificar link"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            padding: "8px 12px",
+                            borderRadius: "8px",
+                            border: "none",
+                            background: "#5000BA",
+                            color: "#FFFFFF",
+                            fontSize: "0.78rem",
+                            fontWeight: 800,
+                            cursor: enviando ? "wait" : "pointer",
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          <Link2 size={14} />
+                          {accionEnCurso?.citaId === c.cit_id &&
+                          accionEnCurso?.decision === "actualizar_enlace"
+                            ? "Notificando…"
+                            : c.cit_enlace
+                            ? "Actualizar Link"
+                            : "Notificar Link"}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 
