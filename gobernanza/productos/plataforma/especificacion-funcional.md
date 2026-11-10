@@ -857,9 +857,11 @@ Motor unificado de comunicación multicanal y alertas en tiempo real para todos 
 1. **Componente In-App de Notificaciones (Receptor):**
    - Barra superior de todas las aplicaciones con icono de campana e indicador numérico interactivo de notificaciones no leídas.
    - Drawer táctil / modal adaptativo con historial cronológico, filtro por leídas/no leídas y enlaces de acción directa (*deep linking*) hacia la sección del evento.
-2. **Infraestructura Multicanal Integrada:**
+2. **Infraestructura Multicanal Integrada & Soporte PWA (Instalación, Modo Offline y Web Push en Segundo Plano):**
    - **In-App:** Notificación persistida en base de datos (`comun_notificacion.not_registro`).
-   - **Web & Mobile Push:** Alertas push inmediatas enviadas a navegadores (Web Push API - VAPID) y aplicaciones nativas móviles (Capacitor / FCM).
+   - **PWA Instalable (`app/manifest.ts` + `GestorPwaCliente.tsx`):** Manifiesto Web App con modo `display: "standalone"`, íconos `192x192` y `512x512` (`any` y `maskable`), captura de `beforeinstallprompt` en Android/Escritorio y guía asistida de 1 paso para Safari en iOS (`Agregar a pantalla de inicio`).
+   - **Modo Offline con Service Worker (`public/sw.js` + `public/offline.html`):** Estrategia *Stale-While-Revalidate* para activos estáticos y *Network-First* con respaldo en caché local para rutas del panel (`/panel`), endpoints de lectura y pantalla dedicada de modo sin conexión.
+   - **Web & Mobile Push con Navegador Cerrado (RFC 8291 `aes128gcm` + RFC 8292 VAPID `ES256`):** Alertas push inmediatas enviadas a navegadores y PWAs instaladas mediante cifrado nativo ECDH P-256 (`lib/web-push-vapid.ts` y `/api/pwa/suscripcion`), almacenando las suscripciones por dispositivo en `comun_seguridad.seg_usuario.usu_detalle_usuario.push_subscriptions` y despertando al Service Worker (`push` + `notificationclick`) incluso cuando el navegador o la aplicación están cerrados.
    - **Correo Transaccional (Email):** Envíos por correo electrónico estructurado (HTML responsive / Markdown) para notificaciones formales y comunicados corporativos.
    - **Propuesta / Idea Futura (WhatsApp Business API):** Mensajes operativos de alto valor (estado de entregas, asignación de técnicos/abogados). Se mantiene documentado exclusivamente como propuesta/idea futura; de momento no se realizará ninguna integración operativa con WhatsApp API.
 3. **Widget Administrativo de Emisión de Notificaciones (`emision_notificaciones`):**

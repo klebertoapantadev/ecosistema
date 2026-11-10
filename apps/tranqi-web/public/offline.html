@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#5000BA" />
+  <title>tranqi — Modo sin conexión</title>
+  <style>
+    :root {
+      --violeta: #5000BA;
+      --amarillo: #FAEB2C;
+      --menta: #D8FFB3;
+      --negro: #141019;
+      --blanco: #FFFFFF;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(145deg, #5000BA 0%, #2D006B 100%);
+      color: var(--blanco);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 24px;
+      padding: 32px 24px;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(216, 255, 179, 0.18);
+      color: var(--menta);
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 18px;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--amarillo);
+    }
+    h1 {
+      font-size: 1.65rem;
+      font-weight: 900;
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+    p {
+      font-size: 0.95rem;
+      line-height: 1.55;
+      color: rgba(255, 255, 255, 0.88);
+      margin-bottom: 22px;
+    }
+    .cache-box {
+      text-align: left;
+      background: rgba(20, 16, 25, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 16px;
+      padding: 14px 16px;
+      margin-bottom: 22px;
+      font-size: 0.84rem;
+    }
+    .cache-box h3 {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--amarillo);
+      margin-bottom: 8px;
+    }
+    .cache-item {
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.9);
+    }
+    .cache-item:last-child { border-bottom: none; }
+    .actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      appearance: none;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 22px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 0.15s ease;
+    }
+    .btn-primary {
+      background: var(--amarillo);
+      color: var(--negro);
+    }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.16);
+      color: var(--blanco);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="badge"><span class="dot"></span> Modo Offline Activo</div>
+    <h1>Estás sin conexión a internet</h1>
+    <p>
+      Tu aplicación <strong>tranqi</strong> sigue disponible. En cuanto recuperes señal, sincronizaremos automáticamente tu sesión.
+    </p>
+    <div class="cache-box" id="datosLocales" style="display: none;">
+      <h3>Datos guardados en este dispositivo</h3>
+      <div id="listaLocal"></div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" onclick="window.location.reload()">Reintentar ahora</button>
+      <a class="btn btn-secondary" href="/panel">Ir al Panel en Caché</a>
+    </div>
+  </div>
+  <script>
+    window.addEventListener("online", function () {
+      window.location.reload();
+    });
+    try {
+      var items = [];
+      var modo = document.cookie.match(/tranqi_modo_rol=([^;]+)/);
+      if (modo && modo[1]) {
+        items.push("Perfil activo: <strong>" + decodeURIComponent(modo[1]).toUpperCase() + "</strong>");
+      }
+      var campanas = localStorage.getItem("eco_campanas_informativas_tranqi");
+      if (campanas) {
+        var parsed = JSON.parse(campanas);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          items.push("Avisos legales en caché: <strong>" + parsed.length + " disponibles</strong>");
+        }
+      }
+      if (items.length > 0) {
+        var box = document.getElementById("datosLocales");
+        var list = document.getElementById("listaLocal");
+        box.style.display = "block";
+        list.innerHTML = items.map(function (t) { return '<div class="cache-item">' + t + "</div>"; }).join("");
+      }
+    } catch (e) {}
+  </script>
+</body>
+</html>

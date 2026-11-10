@@ -3,6 +3,7 @@ import nodemailer from "nodemailer";
 import { obtenerPerfilActual, obtenerPerfiles } from "@eco/identidad";
 import { crearClienteServidor } from "@eco/supabase/servidor";
 import { agregarCampanaServidor, obtenerCampanasServidor, CampanaBitacora } from "./almacen";
+import { enviarWebPushAUsuarios } from "../../../lib/web-push-vapid";
 
 interface UsuarioDBRow {
   usu_id: string;
@@ -171,6 +172,37 @@ export async function POST(req: Request) {
       /* Ignorar */
     }
 
+    // 2.5. Despacho Web Push (VAPID / Service Worker en segundo plano) si el canal PUSH o IN_APP está activo
+    let detalleEnvioPush = "";
+    if ((canales?.push || canales?.inApp) && usuariosTarget.length > 0) {
+      try {
+        const mapaPorId = new Map(usuariosTarget.map((u) => [u.id, u]));
+        const textoPlanoBase = (contenidoHTML || asunto)
+          .replace(/<[^>]+>/g, " ")
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 180);
+
+        const resPush = await enviarWebPushAUsuarios(
+          usuariosTarget.map((u) => u.id),
+          (uid) => {
+            const usr = mapaPorId.get(uid) || { correo: "usuario@tranqi24.com" };
+            return {
+              title: interpolarVariables(asunto.trim(), usr, negocio),
+              body: interpolarVariables(textoPlanoBase || asunto.trim(), usr, negocio),
+              url: "/panel",
+              tag: `tranqi-cmp-${Date.now()}`,
+            };
+          }
+        );
+        if (resPush.totalEnviados > 0) {
+          detalleEnvioPush = ` (Push entregado a ${resPush.totalEnviados} dispositivo(s))`;
+        }
+      } catch {
+        /* Continuar con los demás canales */
+      }
+    }
+
     // 3. Despacho real de correos vía SMTP y Edge Function con variables interpoladas por usuario
     let correoDespachadoConExito = false;
     let detalleEnvioEmail = "";
@@ -265,7 +297,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      mensaje: `Notificación multicanal emitida (${listaCorreos.length} destinatarios).${detalleEnvioEmail}`,
+      mensaje: `Notificación multicanal emitida (${listaCorreos.length} destinatarios).${detalleEnvioEmail}${detalleEnvioPush}`,
       campana: nuevaCampana,
       totalHistorico: obtenerCampanasServidor().length
     });

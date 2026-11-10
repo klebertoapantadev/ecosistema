@@ -298,6 +298,93 @@ export function CampanaNotificaciones({ negocio }: Props) {
               </button>
             </div>
 
+              {/* Barra PWA: Instalar App y Notificaciones Push en segundo plano */}
+              <div
+                style={{
+                  padding: "8px 14px",
+                  background: "#11161f",
+                  borderBottom: "1px solid #30363d",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "6px",
+                  flexWrap: "wrap",
+                  fontSize: "0.74rem",
+                }}
+              >
+                <span style={{ color: "#8b949e", fontWeight: 600 }}>App & Alertas Push:</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        window.dispatchEvent(new CustomEvent("tranqi:instalar-pwa"));
+                      }
+                    }}
+                    title="Instalar aplicación en el dispositivo"
+                    aria-label="Instalar aplicación"
+                    style={{
+                      background: "#21262d",
+                      color: "#c9d1d9",
+                      border: "1px solid #30363d",
+                      borderRadius: "8px",
+                      padding: "4px 9px",
+                      cursor: "pointer",
+                      fontWeight: 700,
+                      fontSize: "0.72rem",
+                    }}
+                  >
+                    📲 Instalar App
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        window.dispatchEvent(new CustomEvent("tranqi:activar-push"));
+                      }
+                    }}
+                    title="Activar notificaciones Push incluso con el navegador cerrado"
+                    aria-label="Activar notificaciones Push"
+                    style={{
+                      background: "#1f6feb",
+                      color: "#ffffff",
+                      border: "none",
+                      borderRadius: "8px",
+                      padding: "4px 9px",
+                      cursor: "pointer",
+                      fontWeight: 700,
+                      fontSize: "0.72rem",
+                    }}
+                  >
+                    🔔 Activar Push
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      fetch("/api/pwa/suscripcion", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ accion: "probar" }),
+                      }).catch(() => {});
+                    }}
+                    title="Enviar una notificación Push de prueba a este dispositivo"
+                    aria-label="Probar notificación Push"
+                    style={{
+                      background: "rgba(56, 139, 253, 0.15)",
+                      color: "#58a6ff",
+                      border: "1px solid rgba(56, 139, 253, 0.4)",
+                      borderRadius: "8px",
+                      padding: "4px 9px",
+                      cursor: "pointer",
+                      fontWeight: 700,
+                      fontSize: "0.72rem",
+                    }}
+                  >
+                    ⚡ Probar Push
+                  </button>
+                </div>
+              </div>
+
             {/* Filtros y acciones rápidas */}
             <div
               style={{
