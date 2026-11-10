@@ -1138,17 +1138,15 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                 </div>
               </div>
 
-              {/* Ubicaciones de Despliegue */}
+              {/* Ubicaciones de Despliegue (Exclusivo para Usuarios Registrados en el Panel) */}
               <div>
                 <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
-                  Ubicación de Despliegue
+                  Ubicación de Despliegue (Usuarios Registrados)
                 </label>
                 <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                   {[
                     { id: "PANEL_INICIO" as UbicacionInformativo, label: "Tablero Inicio (Panel)" },
-                    { id: "PANEL_BENEFICIOS" as UbicacionInformativo, label: "Muro de Beneficios" },
-                    { id: "LANDING_BANNER" as UbicacionInformativo, label: "Cintillo Superior Landing" },
-                    { id: "LANDING_GRID" as UbicacionInformativo, label: "Sección Avisos Landing" },
+                    { id: "PANEL_BENEFICIOS" as UbicacionInformativo, label: "Muro de Beneficios (Panel)" },
                   ].map((u) => {
                     const sel = ubicaciones.includes(u.id);
                     return (

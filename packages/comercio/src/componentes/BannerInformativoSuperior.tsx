@@ -29,27 +29,7 @@ export function BannerInformativoSuperior({
   ubicacion = "PANEL_INICIO",
   audiencia = "TODOS",
 }: Props) {
-  const [campanas, setCampanas] = useState<CampanaInformativa[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const raw = localStorage.getItem(`eco_campanas_informativas_${negocio}`);
-      const rawDel = localStorage.getItem(`eco_campanas_eliminadas_${negocio}`);
-      const eliminados = rawDel ? new Set(JSON.parse(rawDel)) : new Set();
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          return parsed.filter(
-            (c: any) =>
-              c.inf_activo !== false &&
-              !eliminados.has(c.inf_id) &&
-              !eliminados.has(c.inf_slug) &&
-              (!c.inf_titulo || !eliminados.has(c.inf_titulo))
-          );
-        }
-      }
-    } catch {}
-    return [];
-  });
+  const [campanas, setCampanas] = useState<CampanaInformativa[]>([]);
   const [indiceActivo, setIndiceActivo] = useState(0);
   const [cerrado, setCerrado] = useState(false);
   const [modalDetalle, setModalDetalle] = useState<CampanaInformativa | null>(null);
@@ -83,22 +63,24 @@ export function BannerInformativoSuperior({
           incluirInactivos: false,
         });
 
-        if (!cancelado && Array.isArray(data) && data.length > 0) {
-          const limpios = data.filter(
-            (c) =>
-              !eliminados.has(c.inf_id) &&
-              !eliminados.has(c.inf_slug) &&
-              (!c.inf_titulo || !eliminados.has(c.inf_titulo))
-          );
-          if (limpios.length > 0) {
+        if (!cancelado) {
+          if (Array.isArray(data) && data.length > 0) {
+            const limpios = data.filter(
+              (c) =>
+                !eliminados.has(c.inf_id) &&
+                !eliminados.has(c.inf_slug) &&
+                (!c.inf_titulo || !eliminados.has(c.inf_titulo))
+            );
             setCampanas(limpios);
-            if (typeof window !== "undefined") {
+            if (typeof window !== "undefined" && limpios.length > 0) {
               localStorage.setItem(`eco_campanas_informativas_${negocio}`, JSON.stringify(limpios));
             }
+          } else {
+            setCampanas([]);
           }
         }
       } catch (err) {
-        // Silencioso para no romper landing o panel
+        if (!cancelado) setCampanas([]);
       }
     };
     cargar();

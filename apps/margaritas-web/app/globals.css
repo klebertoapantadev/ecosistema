@@ -51,9 +51,12 @@ body {
 
 /* Sello de versión en el pie del rail: fecha de compilación y commit.
    Deliberadamente discreto — es una herramienta de diagnóstico, no
-   información para el usuario final. */
+   información para el usuario final. Oculto en versión móvil. */
 .sello-compilacion {
   display: block; margin-top: 8px; font-size: 0.66rem; letter-spacing: 0.02em;
   opacity: 0.45; font-variant-numeric: tabular-nums; cursor: default;
 }
 .sello-compilacion:hover { opacity: 0.75; }
+@media (max-width: 860px) {
+  .sello-compilacion { display: none !important; }
+}

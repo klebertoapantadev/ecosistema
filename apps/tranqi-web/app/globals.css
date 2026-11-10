@@ -1121,6 +1121,7 @@ p { line-height: 1.55; }
   .rail-plegado .separador-nav,
   .rail-plegado .chip-pronto-nav { opacity: 0; }
   .rail-plegado .panel-usuario { opacity: 0; visibility: hidden; height: 0; min-height: 0; margin: 0; padding: 0; overflow: hidden; border: none; }
+  .rail-plegado .panel-sello-compilacion { display: none; }
 }
 
 /* ══════════ Inicio del cliente v2 (TRQ-013) ══════════════════════════
@@ -2735,6 +2736,7 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
      solo mostraba nombre/correo/SuperAdmin, que aca ya estaban ocultos, asi
      que la version movil no tiene nada que enseñar. */
   .panel-usuario { display: none; }
+  .panel-sello-compilacion, .sello-compilacion { display: none !important; }
   .panel-contenido { padding: 20px clamp(16px, 5vw, 28px) 40px; }
   .fila-dos-columnas { grid-template-columns: 1fr; }
   .tarjeta-proteccion-fila { flex-wrap: wrap; }
@@ -2920,7 +2922,11 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 
 /* Sello de versión en el pie del rail: fecha de compilación y commit.
    Deliberadamente discreto — es una herramienta de diagnóstico, no
-   información para el usuario final. */
+   información para el usuario final. Oculto en versión móvil. */
+.panel-sello-compilacion {
+  padding: 0 20px 8px 20px;
+  margin-top: -6px;
+}
 .sello-compilacion {
   display: block; margin-top: 8px; font-size: 0.66rem; letter-spacing: 0.02em;
   opacity: 0.45; font-variant-numeric: tabular-nums; cursor: default;

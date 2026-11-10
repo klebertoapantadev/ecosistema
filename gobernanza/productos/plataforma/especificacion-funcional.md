@@ -1584,23 +1584,24 @@ CREATE TRIGGER trg_aud_com_beneficio_consumo AFTER INSERT OR UPDATE OR DELETE ON
 Módulo unificado y transversal para la gestión, publicación y visualización omnicanal de **campañas informativas, alertas de instituciones públicas (ANT, SRI, Municipios), novedades tributarias y paquetes de beneficios/convenios de capacitación** orientados a las distintas audiencias del ecosistema (`TODOS`, `CLIENTES`, `EMPRESAS`, `ABOGADOS` / `PROFESIONALES`).
 
 ### 2. Reglas de Negocio
-1. **Segmentación de Audiencia:**
-   - `TODOS`: Comunicados globales y alertas de impacto general (ej. cortes programados, feriados nacionales).
-   - `CLIENTES`: Alertas para personas naturales (ej. "ANT suspende matriculación vehicular del 10 al 15 de Octubre").
+1. **Exclusividad para Usuarios Registrados (Sesión Autenticada):**
+   - Los anuncios, campañas informativas, alertas y convenios son **exclusivos para usuarios registrados** con sesión activa dentro del panel de la aplicación (`/panel`).
+   - Nunca se muestran anuncios ni cintillos en páginas públicas sin iniciar sesión (`/`). La Server Action `obtenerCampanasInformativasAction` verifica obligatoriamente la sesión autenticada antes de devolver cualquier campaña.
+2. **Segmentación de Audiencia:**
+   - `TODOS`: Comunicados globales y alertas de impacto general para usuarios registrados (ej. cortes programados, feriados nacionales).
+   - `CLIENTES`: Alertas para personas naturales registradas (ej. "ANT suspende matriculación vehicular del 10 al 15 de Octubre").
    - `EMPRESAS`: Novedades tributarias y beneficios corporativos (ej. "Descuento del 10% en Patente Municipal de Quito durante Noviembre").
    - `ABOGADOS` / `PROFESIONALES`: Paquete exclusivo de convenios de formación, maestrías, becas universitarias, herramientas de software y firma electrónica.
-2. **Ubicaciones de Despliegue (*Placement*):**
-   - `LANDING_BANNER`: Cintillo o ticker rotativo en el encabezado superior de la landing page.
-   - `LANDING_GRID`: Rejilla de avisos destacados en la landing de la aplicación.
-   - `PANEL_INICIO`: Tarjeta o banner destacado en el tablero de inicio (`/panel`).
+3. **Ubicaciones de Despliegue (*Placement* en Panel Autenticado):**
+   - `PANEL_INICIO`: Aviso discreto o tarjeta destacada en el tablero de inicio (`/panel`).
    - `PANEL_BENEFICIOS`: Cartelera o muro exclusivo de beneficios y alertas (`/panel/red-profesional`, `/panel/clientes`).
-3. **Vigencia Temporal & Control de Publicación:**
+4. **Vigencia Temporal & Control de Publicación:**
    - Cada campaña define `cmp_fecha_inicio` y `cmp_fecha_fin` (o permanente si `cmp_fecha_fin` es nulo).
    - Solo se despliegan aquellas con `cmp_activo = true` y cuya fecha actual esté comprendida dentro del intervalo de vigencia.
-4. **Recursos Multimedia & Call-to-Action (CTA):**
+5. **Recursos Multimedia & Call-to-Action (CTA):**
    - Soporte para portada de imagen (URL directa o selector de galería), video explicativo (YouTube o MP4) y botón de acción directa (texto del CTA + URL externa o interna).
-5. **Persistencia & Gobernanza de Base de Datos:**
-   - Tabla `comun_comercio.com_campana_informativa` con RLS habilitado (lectura pública para campañas activas, escritura restringida a Operadores y Administradores de la empresa).
+6. **Persistencia & Gobernanza de Base de Datos:**
+   - Tabla `comun_comercio.com_campana_informativa` con RLS habilitado (escritura restringida a Operadores y Administradores de la empresa).
    - Trigger de auditoría `comun_auditoria.aud_fn_auditar_tabla()` en cada inserción, edición o borrado.
 
 ---

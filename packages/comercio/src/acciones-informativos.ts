@@ -331,7 +331,8 @@ function esUuidValido(v?: string | null): boolean {
 }
 
 /**
- * Obtiene las campañas informativas activas y vigentes
+ * Obtiene las campañas informativas activas y vigentes.
+ * Exclusivo para usuarios registrados con sesión autenticada activa.
  */
 export async function obtenerCampanasInformativasAction(params: {
   negocio?: string;
@@ -343,14 +344,24 @@ export async function obtenerCampanasInformativasAction(params: {
   const negocio = (params.negocio || "tranqi").toLowerCase().trim();
   const { audiencia, ubicacion, tipo, incluirInactivos = false } = params;
 
+  // Verificar que el solicitante sea un usuario registrado (sesión autenticada)
+  let clienteSesion: any = null;
+  try {
+    clienteSesion = await crearClienteServidor();
+    const { data: authData } = await clienteSesion.auth.getUser();
+    if (!authData?.user) {
+      return [];
+    }
+  } catch {
+    return [];
+  }
+
   let cliente: any = null;
   try {
     cliente = crearClienteAdmin();
   } catch {}
   if (!cliente) {
-    try {
-      cliente = await crearClienteServidor();
-    } catch {}
+    cliente = clienteSesion;
   }
 
   if (cliente) {

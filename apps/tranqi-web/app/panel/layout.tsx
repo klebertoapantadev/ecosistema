@@ -147,7 +147,7 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
             <BotonPlegarRail />
           </div>
 
-          <div style={{ padding: "0 20px 8px 20px", marginTop: "-6px" }}>
+          <div className="panel-sello-compilacion">
             <SelloCompilacion className="sello-compilacion" />
           </div>
 
