@@ -82,7 +82,9 @@ export default function ListaCitasCliente({
       }
       setReagendando(null);
       setExito(
-        "✅ Fecha y hora actualizadas. Se registró en el Tracking y enviamos el agendamiento actualizado a tu correo.",
+        `✅ Fecha y hora actualizadas.${
+          r.data.enlace ? ` Nuevo link de videollamada Daily.co: ${r.data.enlace}.` : ""
+        } Se registró en el Tracking y enviamos el agendamiento actualizado a tu correo.`,
       );
       alActualizar?.();
       router.refresh();

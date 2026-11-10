@@ -225,6 +225,73 @@ export default function BandejaCitasAbogado({
     });
   }
 
+  function generarSalaDailyAutomatica(citaId: string, forzarNuevo = false) {
+    setError(null);
+    setExito(null);
+    setAccionEnCurso({ citaId, decision: "generar_daily" });
+    iniciarEnvio(async () => {
+      try {
+        const notaInput = (notasEnlaceTelematico[citaId] ?? "").trim();
+        const r = await generarSalaDailyCitaAction({
+          cita_id: citaId,
+          forzar_nuevo: forzarNuevo,
+          nota: notaInput || null,
+        });
+        if (!r.ok) {
+          setError(r.error);
+          return;
+        }
+        const ahoraIso = new Date().toISOString();
+        setEnlacesTelematicos((prev) => ({
+          ...prev,
+          [citaId]: r.data.enlace,
+        }));
+        setCitasLocal((prev) =>
+          prev.map((item) => {
+            if (item.cit_id !== citaId) return item;
+            const gestionPrevia = item.gestion_reunion ?? {
+              cita_id: item.cit_id,
+              estado_aceptacion_abogado: "pendiente" as const,
+              motivo_aceptacion_abogado: null,
+              notas_reunion: null,
+              siguientes_pasos: [],
+              documentos_adjuntos: [],
+              eventos_log: [],
+              actualizado_en: ahoraIso,
+            };
+            const nuevoEv = {
+              id: `daily-${Date.now()}`,
+              fecha: ahoraIso,
+              tipo: "GESTION_REUNION" as const,
+              autor_nombre: item.abogado_nombre ?? "Abogado",
+              autor_rol: "ABOGADO" as const,
+              resumen: "Sala de videollamada generada en Daily.co",
+              mensaje: `Link de videollamada: ${r.data.enlace}`,
+            };
+            return {
+              ...item,
+              cit_enlace: r.data.enlace,
+              gestion_reunion: {
+                ...gestionPrevia,
+                eventos_log: [nuevoEv, ...(gestionPrevia.eventos_log ?? [])],
+                sequence_calendario: (gestionPrevia.sequence_calendario ?? 0) + 1,
+                actualizado_en: ahoraIso,
+              },
+            };
+          }),
+        );
+        setEditandoEnlaceCita(null);
+        setExito(
+          `✅ Sala de videollamada generada automáticamente (${r.data.enlace}). Se actualizó el Tracking y se notificó al cliente.`,
+        );
+        alActualizar?.();
+        router.refresh();
+      } finally {
+        setAccionEnCurso(null);
+      }
+    });
+  }
+
   function decidir(citaId: string, decision: string, nuevoInicio?: string, motivo?: string) {
     setError(null);
     setExito(null);
@@ -261,6 +328,7 @@ export default function BandejaCitasAbogado({
                 ...item,
                 cit_estado: "confirmada",
                 cit_asignacion: "operador",
+                cit_enlace: r.data.enlace ?? item.cit_enlace,
                 gestion_reunion: {
                   ...gestionPrevia,
                   estado_aceptacion_abogado: "aceptada",
@@ -297,6 +365,7 @@ export default function BandejaCitasAbogado({
                 ...item,
                 cit_inicio_en: nuevoInicio ?? item.cit_inicio_en,
                 cit_estado: decision === "reagendar_y_aceptar" ? "confirmada" : "reagendada",
+                cit_enlace: r.data.enlace ?? item.cit_enlace,
                 cit_asignacion:
                   decision === "reagendar_y_aceptar" ? "operador" : item.cit_asignacion,
                 gestion_reunion: {
@@ -329,11 +398,15 @@ export default function BandejaCitasAbogado({
           );
         } else if (decision === "reagendar_y_aceptar") {
           setExito(
-            "✅ Fecha/hora actualizada y cita confirmada. Se registró en el Tracking y se envió actualización de calendario (.ics) al cliente, a tu correo y a la agenda institucional.",
+            `✅ Fecha/hora actualizada y cita confirmada.${
+              r.data.enlace ? ` Se generó el nuevo link de sala Daily.co (${r.data.enlace}).` : ""
+            } Se registró en el Tracking y se envió actualización de calendario (.ics).`,
           );
         } else if (decision === "reagendar") {
           setExito(
-            "✅ Fecha/hora de la cita actualizada. Se registró en el Tracking y se envió actualización de calendario (.ics) al cliente, a tu correo y a la agenda institucional.",
+            `✅ Fecha/hora de la cita actualizada.${
+              r.data.enlace ? ` Se generó el nuevo link de sala Daily.co (${r.data.enlace}).` : ""
+            } Se registró en el Tracking y se envió actualización de calendario (.ics).`,
           );
         } else if (decision === "cancelar_aceptacion") {
           setExito("↩️ Has cancelado tu confirmación. La cita vuelve a estar pendiente de tu confirmación.");
@@ -1093,22 +1166,43 @@ export default function BandejaCitasAbogado({
                           Link de Consulta Telemática:
                         </strong>
                         {c.cit_enlace ? (
-                          <a
-                            href={c.cit_enlace}
-                            target="_blank"
-                            rel="noreferrer"
-                            style={{
-                              color: "#5000BA",
-                              fontWeight: 800,
-                              textDecoration: "underline",
-                              wordBreak: "break-all",
-                            }}
-                          >
-                            {c.cit_enlace}
-                          </a>
+                          <>
+                            <a
+                              href={c.cit_enlace}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{
+                                color: "#5000BA",
+                                fontWeight: 800,
+                                textDecoration: "underline",
+                                wordBreak: "break-all",
+                              }}
+                            >
+                              {c.cit_enlace}
+                            </a>
+                            {c.cit_enlace.includes(".daily.co") && (
+                              <span
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "3px",
+                                  padding: "2px 7px",
+                                  borderRadius: "999px",
+                                  background: "#ECFDF5",
+                                  border: "1px solid #A7F3D0",
+                                  color: "#065F46",
+                                  fontSize: "0.68rem",
+                                  fontWeight: 800,
+                                }}
+                              >
+                                <Sparkles size={11} />
+                                Daily.co Automático
+                              </span>
+                            )}
+                          </>
                         ) : (
                           <span style={{ color: "#B45309", fontWeight: 700 }}>
-                            ⚠️ Pendiente registrar link de videollamada (Meet / Zoom / Teams)
+                            ⚠️ Pendiente registrar link de videollamada (Daily.co / Meet / Zoom)
                           </span>
                         )}
                       </div>
@@ -1121,6 +1215,7 @@ export default function BandejaCitasAbogado({
                             rel="noreferrer"
                             title="Abrir sala de videollamada"
                             aria-label="Abrir videollamada"
+                            className="btn-responsive-accion"
                             style={{
                               display: "inline-flex",
                               alignItems: "center",
@@ -1135,8 +1230,53 @@ export default function BandejaCitasAbogado({
                             }}
                           >
                             <ExternalLink size={13} />
-                            {abierta ? "Entrar a Sala" : "Abrir Link"}
+                            <span className="btn-texto-responsive">
+                              {abierta ? "Entrar a Sala" : "Abrir Link"}
+                            </span>
                           </a>
+                        )}
+
+                        {puedeModificarLink && (
+                          <button
+                            type="button"
+                            disabled={enviando}
+                            onClick={() =>
+                              generarSalaDailyAutomatica(
+                                c.cit_id,
+                                Boolean(c.cit_enlace?.includes(".daily.co")),
+                              )
+                            }
+                            title={
+                              c.cit_enlace?.includes(".daily.co")
+                                ? "Generar un nuevo enlace en Daily.co e invalidar el anterior"
+                                : "Generar sala oficial de videollamada automáticamente en Daily.co"
+                            }
+                            aria-label="Generar sala automática en Daily.co"
+                            className="btn-responsive-accion"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #A7F3D0",
+                              background: "#ECFDF5",
+                              color: "#065F46",
+                              fontSize: "0.75rem",
+                              fontWeight: 800,
+                              cursor: enviando ? "wait" : "pointer",
+                            }}
+                          >
+                            <RefreshCw size={13} />
+                            <span className="btn-texto-responsive">
+                              {accionEnCurso?.citaId === c.cit_id &&
+                              accionEnCurso?.decision === "generar_daily"
+                                ? "Generando…"
+                                : c.cit_enlace?.includes(".daily.co")
+                                ? "Nuevo Daily.co"
+                                : "Sala Daily.co"}
+                            </span>
+                          </button>
                         )}
 
                         {c.cit_enlace && puedeModificarLink && (
@@ -1155,6 +1295,7 @@ export default function BandejaCitasAbogado({
                             }}
                             title="Modificar el link de la consulta telemática (permitido hasta 1 hora antes de la cita)"
                             aria-label="Modificar link"
+                            className="btn-responsive-accion"
                             style={{
                               display: "inline-flex",
                               alignItems: "center",
@@ -1170,7 +1311,9 @@ export default function BandejaCitasAbogado({
                             }}
                           >
                             <Link2 size={13} />
-                            {editandoEnlaceCita === c.cit_id ? "Cancelar" : "Modificar Link"}
+                            <span className="btn-texto-responsive">
+                              {editandoEnlaceCita === c.cit_id ? "Cancelar" : "Modificar Link"}
+                            </span>
                           </button>
                         )}
 
