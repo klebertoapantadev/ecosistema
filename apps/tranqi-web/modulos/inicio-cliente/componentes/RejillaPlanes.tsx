@@ -440,30 +440,70 @@ function Destacados({
   );
 }
 
-// ── Rejilla de trámites y servicios ──────────────────────────────────────
-function Catalogo({ productos, alContratar }: { productos: ProductoCatalogo[]; alContratar: (p: ProductoCatalogo) => void }) {
+// ── Catálogo de Productos y Servicios Individuales ───────────────────────
+interface ItemProductoIndividual {
+  idUnico: string;
+  producto: ProductoCatalogo;
+  variante: VarianteCatalogo;
+  totalVariantesProducto: number;
+  categoriaSlug: string;
+  categoriaNombre: string;
+}
+
+function Catalogo({
+  productos,
+  alContratarDirecto,
+}: {
+  productos: ProductoCatalogo[];
+  alContratarDirecto: (p: ProductoCatalogo, v: VarianteCatalogo) => void;
+}) {
+  const itemsIndividuales = useMemo<ItemProductoIndividual[]>(() => {
+    const lista: ItemProductoIndividual[] = [];
+    for (const p of productos) {
+      const vars = variantesActivas(p);
+      const catSlug = esPlan(p) ? "planes" : p.categoria?.ctg_slug || "servicios";
+      const catNombre = esPlan(p) ? "Planes" : p.categoria?.ctg_nombre || "Servicios";
+      for (const v of vars) {
+        lista.push({
+          idUnico: `${p.pro_id}__${v.var_id}`,
+          producto: p,
+          variante: v,
+          totalVariantesProducto: vars.length,
+          categoriaSlug: catSlug,
+          categoriaNombre: catNombre,
+        });
+      }
+    }
+    return lista;
+  }, [productos]);
+
   const categorias = useMemo(() => {
     const vistas = new Map<string, string>();
-    for (const p of productos) {
-      const id = p.categoria?.ctg_slug;
-      if (id && p.categoria?.ctg_nombre && !vistas.has(id)) vistas.set(id, p.categoria.ctg_nombre);
+    for (const item of itemsIndividuales) {
+      if (item.categoriaSlug && item.categoriaNombre && !vistas.has(item.categoriaSlug)) {
+        vistas.set(item.categoriaSlug, item.categoriaNombre);
+      }
     }
-    return Array.from(vistas, ([id, nombre]) => ({ id, nombre })).slice(0, 5);
-  }, [productos]);
+    return Array.from(vistas, ([id, nombre]) => ({ id, nombre })).slice(0, 6);
+  }, [itemsIndividuales]);
+
   const [filtro, setFiltro] = useState("todos");
   const opciones = [{ id: "todos", nombre: "Todos" }, ...categorias];
   const { grupo, pulgar } = usePulgar(
     Math.max(0, opciones.findIndex((o) => o.id === filtro)),
     [categorias.length],
   );
-  const visibles = filtro === "todos" ? productos : productos.filter((p) => p.categoria?.ctg_slug === filtro);
+  const visibles =
+    filtro === "todos"
+      ? itemsIndividuales
+      : itemsIndividuales.filter((item) => item.categoriaSlug === filtro);
 
   return (
     <section className="ini-catalogo" aria-labelledby="t-catalogo">
       <header>
         <div>
-          <h2 id="t-catalogo">Trámites y servicios</h2>
-          <p>Pago único. Un abogado lo lleva de principio a fin.</p>
+          <h2 id="t-catalogo">Productos y Servicios</h2>
+          <p>Todos nuestros planes, consultas jurídicas y trámites legales presentados de forma individual.</p>
         </div>
         {categorias.length > 1 && (
           <div className="ini-filtros" ref={grupo} role="group" aria-label="Filtrar por categoría">
@@ -477,15 +517,29 @@ function Catalogo({ productos, alContratar }: { productos: ProductoCatalogo[]; a
         )}
       </header>
       <div className="ini-tarjetas">
-        {visibles.map((p, k) => {
-          const variantes = variantesActivas(p);
-          const desde = variantes[0];
-          if (!desde) return null;
-          const foto = obtenerFoto(p, desde);
+        {visibles.map((item, k) => {
+          const { producto: p, variante: v, totalVariantesProducto } = item;
+          const foto = obtenerFoto(p, v);
           const Icono = iconoDe(p);
           const plazo = plazoDe(p);
+          const duracionMin = v.var_detalle_variante?.duracion_min;
+          const frecuencia = frecuenciaDe(v);
+          const sufijoFreq = esPlan(p) ? SUFIJO_FRECUENCIA[frecuencia] || "/mes" : "";
+          const tituloIndividual =
+            totalVariantesProducto > 1 ? v.var_nombre : p.pro_nombre;
+          const descripcionIndividual =
+            v.var_detalle_variante?.descripcion_corta || p.pro_descripcion;
+          const metaTexto = [
+            duracionMin ? `${duracionMin} min` : plazo,
+            esPlan(p)
+              ? NOTA_FRECUENCIA[frecuencia] || "suscripción"
+              : "IVA incluido · pago único",
+          ]
+            .filter(Boolean)
+            .join(" · ");
+
           return (
-            <article key={`${filtro}-${p.pro_id}`} className="ini-producto" style={{ "--n": k } as React.CSSProperties}>
+            <article key={`${filtro}-${item.idUnico}`} className="ini-producto" style={{ "--n": k } as React.CSSProperties}>
               <div className="ini-imagen">
                 {foto ? (
                   <img src={foto} alt="" loading="lazy" />
@@ -496,22 +550,39 @@ function Catalogo({ productos, alContratar }: { productos: ProductoCatalogo[]; a
                 )}
                 <span className="ini-tipo">{tipoDe(p)}</span>
                 <span className="ini-precio-foto">
-                  {variantes.length > 1 && <small>desde</small>}
-                  {USD.format(desde.precio_total)}
+                  {USD.format(v.precio_total)}
+                  {sufijoFreq && <small>{sufijoFreq}</small>}
                 </span>
               </div>
               <div className="ini-cuerpo">
-                <h3>{p.pro_nombre}</h3>
-                {p.pro_descripcion && <p>{p.pro_descripcion}</p>}
-                {(plazo || variantes.length > 1) && (
+                {totalVariantesProducto > 1 && (
+                  <span
+                    style={{
+                      fontSize: "0.7rem",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.04em",
+                      color: "#6D28D9",
+                    }}
+                  >
+                    {p.pro_nombre}
+                  </span>
+                )}
+                <h3>{tituloIndividual}</h3>
+                {descripcionIndividual && <p>{descripcionIndividual}</p>}
+                {metaTexto && (
                   <span className="ini-meta">
                     <Clock size={13} />
-                    {[plazo, variantes.length > 1 ? `${variantes.length} opciones` : null].filter(Boolean).join(" · ")}
+                    {metaTexto}
                   </span>
                 )}
                 <div className="ini-pie">
-                  <button type="button" className="ini-btn-linea" onClick={() => alContratar(p)}>
-                    {variantes.length > 1 ? "Ver opciones" : "Contratar"}
+                  <button
+                    type="button"
+                    className="ini-btn-linea"
+                    onClick={() => alContratarDirecto(p, v)}
+                  >
+                    Contratar
                   </button>
                 </div>
               </div>
@@ -528,9 +599,11 @@ interface RejillaPlanesProps {
   negocio?: string;
   /** Se conserva por compatibilidad con panel/page.tsx; el diseño ya no filtra. */
   filtroInicial?: "todos" | "planes" | "servicios";
+  /** Define si se muestra únicamente el carrusel (Inicio) o el catálogo individual (Productos Servicios). */
+  modoVista?: "solo-carrusel" | "solo-catalogo" | "completo";
 }
 
-export function RejillaPlanes({ negocio = "tranqi" }: RejillaPlanesProps) {
+export function RejillaPlanes({ negocio = "tranqi", modoVista = "solo-carrusel" }: RejillaPlanesProps) {
   const router = useRouter();
   const { avisar } = useAvisos();
   const [productos, setProductos] = useState<ProductoCatalogo[] | null>(null);
@@ -553,7 +626,7 @@ export function RejillaPlanes({ negocio = "tranqi" }: RejillaPlanesProps) {
     };
   }, [negocio]);
 
-  const { planes, servicios, diapos } = useMemo(() => {
+  const { planes, servicios, paraPersonas, diapos } = useMemo(() => {
     const paraPersonas = (productos || []).filter((p) => !esCorporativo(p) && variantesActivas(p).length > 0);
     const planes = paraPersonas.filter(esPlan).sort((a, b) => Number(b.pro_destacado) - Number(a.pro_destacado));
     const servicios = paraPersonas.filter((p) => !esPlan(p));
@@ -562,7 +635,7 @@ export function RejillaPlanes({ negocio = "tranqi" }: RejillaPlanesProps) {
     const conFoto = servicios.filter((p) => obtenerFoto(p, variantesActivas(p)[0]));
     const destacados = conFoto.filter((p) => p.pro_destacado);
     const diapos = [...planes.slice(0, 1), ...(destacados.length > 0 ? destacados : conFoto)].slice(0, MAX_DIAPOS);
-    return { planes, servicios, diapos };
+    return { planes, servicios, paraPersonas, diapos };
   }, [productos]);
 
   // Sin productos no hay sección.
@@ -582,13 +655,21 @@ export function RejillaPlanes({ negocio = "tranqi" }: RejillaPlanesProps) {
     dialogo.current?.showModal();
   }
 
+  const mostrarCarrusel = modoVista === "solo-carrusel" || modoVista === "completo";
+  const mostrarCatalogoIndividual = modoVista === "solo-catalogo" || modoVista === "completo";
+
   return (
     <div className="ini-planes">
-      {diapos.length > 0 && (
+      {mostrarCarrusel && diapos.length > 0 && (
         <Destacados diapos={diapos} alContratarPlan={abrirPago} alContratarServicio={contratarServicio} />
       )}
 
-      {servicios.length > 0 && <Catalogo productos={servicios} alContratar={contratarServicio} />}
+      {mostrarCatalogoIndividual && paraPersonas.length > 0 && (
+        <Catalogo
+          productos={paraPersonas}
+          alContratarDirecto={(p, v) => abrirPago(p, v)}
+        />
+      )}
 
       <dialog
         ref={dialogo}

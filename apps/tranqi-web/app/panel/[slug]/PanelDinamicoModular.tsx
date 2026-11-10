@@ -27,6 +27,7 @@ import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { WidgetFirmaDocumentosPdf } from "@/modulos/firma-documentos/componentes/WidgetFirmaDocumentosPdf";
 import { WidgetBilleteraDocumentos } from "@/modulos/billetera-documentos";
 import { BandejaClientesCRM } from "@/modulos/crm-clientes/componentes/BandejaClientesCRM";
+import { RejillaPlanes } from "@/modulos/inicio-cliente/componentes/RejillaPlanes";
 import {
   VitrinaComercialVisual,
   CatalogoProductosComercio,
@@ -107,6 +108,11 @@ function EnlaceConsolaAgentes() {
 }
 
 const METADATOS_PANELES_BASE: Record<string, { nombre: string; descripcion: string; icono?: string }> = {
+  panel_productos_servicios: {
+    nombre: "Productos Servicios",
+    descripcion: "Catálogo completo de planes de protección, consultas jurídicas y trámites legales presentados de forma individual.",
+    icono: "ShoppingBag"
+  },
   panel_usuarios: {
     nombre: "Usuarios",
     descripcion: "Directorio de usuarios, CRM Jurídico & Gestión de Clientes y Monitoreo de Notificaciones por Usuario.",
@@ -165,6 +171,13 @@ const METADATOS_PANELES_BASE: Record<string, { nombre: string; descripcion: stri
 };
 
 const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: string; icono: LucideIcon; colorIcono: string; categoria: string }> = {
+  productos_servicios: {
+    titulo: "Productos y Servicios",
+    subtitulo: "Todos los planes, consultas legales y trámites puntuales presentados de forma individual",
+    icono: ShoppingBag,
+    colorIcono: "#5000BA",
+    categoria: "Comercio Personas"
+  },
   agendar_cita: {
     titulo: "Agendar Consulta o Trámite",
     subtitulo: "Elige materia legal, fecha y modalidad presencial o videollamada",
@@ -840,6 +853,13 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
 
   const renderWidgetComponente = (wClave: string) => {
     switch (wClave) {
+      case "productos_servicios":
+        return (
+          <RejillaPlanes
+            negocio={negocio.toLowerCase().startsWith("tranq") ? "tranqi" : negocio}
+            modoVista="solo-catalogo"
+          />
+        );
       case "agendar_cita":
         return <WidgetAgendarCitaInline />;
       case "mis_citas":
@@ -1042,6 +1062,17 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
     }
     cerrar();
   };
+
+  if (slug === "productos-servicios" || panelIdBuscado === "panel_productos_servicios") {
+    return (
+      <div style={{ width: "100%", animation: "fadeIn 0.15s ease" }}>
+        <RejillaPlanes
+          negocio={negocio.toLowerCase().startsWith("tranq") ? "tranqi" : negocio}
+          modoVista="solo-catalogo"
+        />
+      </div>
+    );
+  }
 
   if (widgetActivo) {
     return (

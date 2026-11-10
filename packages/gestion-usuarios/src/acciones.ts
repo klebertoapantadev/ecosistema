@@ -1149,6 +1149,18 @@ export async function obtenerConfiguracionNavegacionRolAction(
     if (Array.isArray(bddPaneles) && bddPaneles.length > 0) {
       panelesAsignados = Array.from(new Set(bddPaneles.map(String)));
     }
+    if (rolUpper === "CLIENTE") {
+      if (!panelesAsignados.includes("panel_productos_servicios")) {
+        panelesAsignados = [
+          "panel_inicio",
+          "panel_productos_servicios",
+          ...panelesAsignados.filter((id) => id !== "panel_inicio"),
+        ];
+      }
+      if (!widgetsPorPanel["panel_productos_servicios"] || widgetsPorPanel["panel_productos_servicios"].length === 0) {
+        widgetsPorPanel["panel_productos_servicios"] = ["productos_servicios"];
+      }
+    }
     titulosWidgetsPorPanel = bddTitulos;
   } catch (e) {
     console.error("Error leyendo configuración de perfil:", e);

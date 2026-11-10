@@ -1,5 +1,6 @@
 import { crearClienteAdmin, crearClienteServidor } from "@eco/supabase/servidor";
 import { aMinutos, deMinutos, trocearFranja } from "@eco/agenda";
+import { crearOActualizarSalaDailyCita, esEnlaceVideollamadaReal } from "./daily-video";
 import type {
   DatosConfigNegocioAgenda,
   FechaEspecialAgenda,
@@ -788,6 +789,39 @@ async function enriquecerCitasConExpedienteYLog(filasRaw: Array<Record<string, u
     lista.push(resumenCaso);
     casosPorCliente.set(cliId, lista);
   }
+
+  // Autoprovisionar sala de videollamada en Daily.co para citas telemáticas activas que aún no tengan enlace válido
+  await Promise.all(
+    filasRaw.map(async (c) => {
+      const modalidad = String(c.cit_modalidad ?? "virtual");
+      const estado = String(c.cit_estado ?? "confirmada");
+      const enlaceActual = c.cit_enlace ? String(c.cit_enlace) : null;
+      if (
+        modalidad !== "presencial" &&
+        estado !== "realizada" &&
+        estado !== "cancelada" &&
+        !esEnlaceVideollamadaReal(enlaceActual)
+      ) {
+        const resDaily = await crearOActualizarSalaDailyCita({
+          citaId: String(c.cit_id),
+          inicioIso: String(c.cit_inicio_en),
+          finIso: c.cit_fin_en ? String(c.cit_fin_en) : null,
+          enlaceAnterior: enlaceActual,
+        });
+        if (resDaily.ok) {
+          c.cit_enlace = resDaily.url;
+          await db
+            .schema("tranqui_legal")
+            .from("trq_cita")
+            .update({
+              cit_enlace: resDaily.url,
+              cit_actualizado_en: new Date().toISOString(),
+            })
+            .eq("cit_id", String(c.cit_id));
+        }
+      }
+    }),
+  );
 
   return filasRaw.map((c) => {
     const citaId = String(c.cit_id);

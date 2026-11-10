@@ -59,6 +59,7 @@ const MAPA_ICONOS_NAV: Record<string, LucideIcon> = {
   LogIn,
   PanelLeft,
   panel_inicio: Home,
+  panel_productos_servicios: ShoppingBag,
   panel_clientes: CircleUser,
   panel_empresas: Building2,
   panel_usuarios: Users,
@@ -75,6 +76,7 @@ const MAPA_ICONOS_NAV: Record<string, LucideIcon> = {
 // Configuración inicial de paneles base del ecosistema
 const PANELES_BASE_DEFAULT: PanelDefNav[] = [
   { id: "panel_inicio", nombre: "Inicio", ruta: "/panel", icono: "Home" },
+  { id: "panel_productos_servicios", nombre: "Productos Servicios", ruta: "/panel/productos-servicios", icono: "ShoppingBag" },
   { id: "panel_clientes", nombre: "Clientes", ruta: "/panel/clientes", icono: "CircleUser" },
   { id: "panel_empresas", nombre: "Empresas", ruta: "/panel/empresas", icono: "Building2" },
   { id: "panel_usuarios", nombre: "Usuarios", ruta: "/panel/usuarios", icono: "Users" },
@@ -121,7 +123,12 @@ function obtenerPanelesInicialesPorRol(modoActivo: ModoRol): PanelDefNav[] {
 
   if (rolKey === "CLIENTE") {
     return PANELES_BASE_DEFAULT.filter(
-      p => p.id === "panel_inicio" || p.id === "panel_agendamiento" || p.id === "panel_herramientas" || p.id === "panel_cuenta"
+      p =>
+        p.id === "panel_inicio" ||
+        p.id === "panel_productos_servicios" ||
+        p.id === "panel_agendamiento" ||
+        p.id === "panel_herramientas" ||
+        p.id === "panel_cuenta"
     );
   }
 
@@ -220,6 +227,16 @@ export function NavegacionSidebar({
                 }
               }
             }
+          }
+        }
+
+        // Garantizar que para el rol CLIENTE la sección Productos Servicios esté siempre habilitada en el menú
+        if (rolKey === "CLIENTE") {
+          if (panelesAsignadosExplicitos && !panelesAsignadosExplicitos.includes("panel_productos_servicios")) {
+            panelesAsignadosExplicitos = ["panel_inicio", "panel_productos_servicios", ...panelesAsignadosExplicitos.filter(id => id !== "panel_inicio")];
+          }
+          if (!widgetsPorPanel["panel_productos_servicios"] || widgetsPorPanel["panel_productos_servicios"].length === 0) {
+            widgetsPorPanel["panel_productos_servicios"] = ["productos_servicios"];
           }
         }
 

@@ -33,7 +33,7 @@ export const metadata: Metadata = { title: "Panel — tranqi" };
 const NEGOCIO = "tranqi";
 
 const ACCESOS_CLIENTE: { icono: LucideIcon; nombre: string; detalle: string; href?: string }[] = [
-  { icono: ShoppingBag, nombre: "Catálogo & Servicios", detalle: "Honorarios y planes legales", href: "/panel/catalogo-productos" },
+  { icono: ShoppingBag, nombre: "Productos Servicios", detalle: "Planes, consultas y trámites individuales", href: "/panel/productos-servicios" },
   { icono: Receipt, nombre: "Historial de Pagos", detalle: "Pagos realizados y descarga de factura SRI", href: "/panel/herramientas?widget=historial_pagos" },
   { icono: Bell, nombre: "Avisos & Alertas", detalle: "Novedades y alertas legales", href: "/panel/herramientas?widget=muro_informativo_comunidad" },
   { icono: Folder, nombre: "Billetera digital", detalle: "Documentos con OCR y TTL", href: "/panel/billetera-documentos" },
@@ -314,9 +314,9 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
           {/* Si el usuario pertenece a una empresa aliada con convenio B2B (SATCOM, etc.), muestra sus beneficios corporativos */}
           <TarjetaBeneficiosCorporativosCliente negocio="tranqi" ocultarSiNoTiene={true} variante="completa" />
 
-          {/* Si NO tiene plan activo, presenta PRIMERO el panel de planes y servicios (por defecto en Planes) */}
+          {/* Si NO tiene plan activo, presenta PRIMERO el carrusel de destacados (sin listado de productos debajo) */}
           {!tienePlanActivo && (
-            <RejillaPlanes negocio="tranqi" filtroInicial="planes" />
+            <RejillaPlanes negocio="tranqi" filtroInicial="planes" modoVista="solo-carrusel" />
           )}
 
           {/* Si TIENE plan activo, presenta primero su estado de cobertura activa */}
@@ -404,11 +404,6 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
               )
             ))}
           </div>
-
-          {/* Si ya TIENE plan activo, el catálogo de planes y servicios se ubica abajo */}
-          {tienePlanActivo && (
-            <RejillaPlanes negocio="tranqi" filtroInicial="todos" />
-          )}
 
         </div>
 

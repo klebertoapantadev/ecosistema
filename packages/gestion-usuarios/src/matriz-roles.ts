@@ -4,9 +4,10 @@
  */
 export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgetsPorPanel: Record<string, string[]> }> = {
   CLIENTE: {
-    paneles: ["panel_inicio", "panel_agendamiento", "panel_herramientas", "panel_cuenta", "panel_configuracion"],
+    paneles: ["panel_inicio", "panel_productos_servicios", "panel_agendamiento", "panel_herramientas", "panel_cuenta", "panel_configuracion"],
     widgetsPorPanel: {
       panel_inicio: ["favoritos"],
+      panel_productos_servicios: ["productos_servicios"],
       panel_agendamiento: ["agendar_cita", "mis_citas"],
       panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "financiamiento"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],

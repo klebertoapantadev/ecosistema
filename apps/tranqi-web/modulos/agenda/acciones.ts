@@ -41,6 +41,12 @@ import {
   generarContenidoIcsCita,
   type DatosEventoCalendarioCita,
 } from "./calendario-ics";
+import {
+  crearOActualizarSalaDailyCita,
+  eliminarSalaDailyCita,
+  esEnlaceDaily,
+  esEnlaceVideollamadaReal,
+} from "./daily-video";
 
 // Mutaciones del módulo. Devuelven `{ ok }` y nunca lanzan hacia el componente
 // (01-convenciones §6).
@@ -381,6 +387,27 @@ async function notificarOperadoresNuevaCitaConfirmada(citaId: string) {
     const etiquetaModalidad = esPresencial ? "Presencial en Oficina" : "Telemática (Videollamada)";
     const fechaTxt = FORMATO_FECHA_CITA_EC.format(new Date(cita.cit_inicio_en));
 
+    let enlaceVideollamadaFinal = cita.cit_enlace ? String(cita.cit_enlace) : null;
+    if (!esPresencial && !esEnlaceVideollamadaReal(enlaceVideollamadaFinal)) {
+      const resDaily = await crearOActualizarSalaDailyCita({
+        citaId: String(cita.cit_id),
+        inicioIso: String(cita.cit_inicio_en),
+        finIso: cita.cit_fin_en ? String(cita.cit_fin_en) : null,
+        enlaceAnterior: enlaceVideollamadaFinal,
+      });
+      if (resDaily.ok) {
+        enlaceVideollamadaFinal = resDaily.url;
+        await db
+          .schema("tranqui_legal")
+          .from("trq_cita")
+          .update({
+            cit_enlace: resDaily.url,
+            cit_actualizado_en: new Date().toISOString(),
+          })
+          .eq("cit_id", cita.cit_id);
+      }
+    }
+
     const datosIcs: DatosEventoCalendarioCita = {
       citaId: String(cita.cit_id),
       inicioIso: String(cita.cit_inicio_en),
@@ -393,7 +420,7 @@ async function notificarOperadoresNuevaCitaConfirmada(citaId: string) {
       clienteWhatsapp,
       abogadoNombre,
       abogadoCorreo,
-      enlaceVideollamada: cita.cit_enlace ? String(cita.cit_enlace) : null,
+      enlaceVideollamada: enlaceVideollamadaFinal,
       lugarPresencial: cita.cit_lugar ? String(cita.cit_lugar) : null,
       sequence: 0,
       metodo: "REQUEST",
@@ -414,6 +441,11 @@ async function notificarOperadoresNuevaCitaConfirmada(citaId: string) {
           }<br/>
           <strong>📅 Fecha y hora:</strong> ${fechaTxt}<br/>
           <strong>📍 Modalidad:</strong> ${etiquetaModalidad}<br/>
+          ${
+            !esPresencial && enlaceVideollamadaFinal
+              ? `<strong>🎥 Sala Daily.co:</strong> <a href="${enlaceVideollamadaFinal}" target="_blank" rel="noreferrer" style="color:#5000BA;font-weight:800;">${enlaceVideollamadaFinal}</a><br/>`
+              : ""
+          }
           <strong>⚖️ Especialidad:</strong> ${materiaNombre}<br/>
           <strong>👨‍⚖️ Abogado:</strong> ${estadoAbgHtml}<br/>
           ${cita.cit_motivo ? `<strong>📝 Motivo:</strong> ${cita.cit_motivo}` : ""}
@@ -434,11 +466,21 @@ async function notificarOperadoresNuevaCitaConfirmada(citaId: string) {
         <div style="font-size:0.82rem;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px 12px;margin:6px 0;">
           <strong>📅 Fecha y hora:</strong> ${fechaTxt}<br/>
           <strong>📍 Modalidad:</strong> ${etiquetaModalidad}<br/>
+          ${
+            !esPresencial && enlaceVideollamadaFinal
+              ? `<strong>🎥 Enlace de videollamada:</strong> <a href="${enlaceVideollamadaFinal}" target="_blank" rel="noreferrer" style="color:#5000BA;font-weight:800;">${enlaceVideollamadaFinal}</a><br/>`
+              : ""
+          }
           <strong>⚖️ Especialidad:</strong> ${materiaNombre}<br/>
           <strong>👨‍⚖️ Abogado:</strong> ${abogadoNombre ? `Dr(a). ${abogadoNombre}` : "En asignación por operaciones"}<br/>
           ${cita.cit_motivo ? `<strong>📝 Motivo:</strong> ${cita.cit_motivo}` : ""}
         </div>
         <p style="margin:8px 0 0 0;font-size:0.8rem;">
+          ${
+            !esPresencial && enlaceVideollamadaFinal
+              ? `<a href="${enlaceVideollamadaFinal}" target="_blank" rel="noreferrer" style="display:inline-block;padding:8px 14px;background:#5000BA;color:#FFFFFF;border-radius:8px;font-weight:800;text-decoration:none;margin-right:8px;">🎥 Sala de videollamada</a>`
+              : ""
+          }
           <a href="/panel/agendamiento?widget=mis_citas" style="color:#5000BA;font-weight:800;text-decoration:underline;">
             Ver Mis Citas Programadas →
           </a>
@@ -869,7 +911,9 @@ export async function guardarConfiguracionAgendaNegocioAction(
   return { ok: true, data: undefined };
 }
 
-export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ resultado: string }>> {
+export async function decidirCitaAction(
+  entrada: unknown,
+): Promise<Resultado<{ resultado: string; enlace?: string | null }>> {
   const validado = esquemaDecisionCita.safeParse(entrada);
   if (!validado.success) {
     return { ok: false, error: validado.error.issues[0]?.message ?? "Datos incompletos" };
@@ -995,11 +1039,32 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
 
   // Caso 1: Abogado acepta/confirma la asignación
   if (d.decision === "aceptar_asignacion" || d.decision === "confirmar") {
+    let enlaceConfirmado: string | null = citaActual?.cit_enlace
+      ? String(citaActual.cit_enlace)
+      : null;
+
+    if (
+      citaActual &&
+      citaActual.cit_modalidad !== "presencial" &&
+      !esEnlaceVideollamadaReal(enlaceConfirmado)
+    ) {
+      const resDaily = await crearOActualizarSalaDailyCita({
+        citaId: d.cita_id,
+        inicioIso: String(citaActual.cit_inicio_en),
+        finIso: citaActual.cit_fin_en ? String(citaActual.cit_fin_en) : null,
+        enlaceAnterior: enlaceConfirmado,
+      });
+      if (resDaily.ok) {
+        enlaceConfirmado = resDaily.url;
+      }
+    }
+
     const cambiosConfirmar: {
       cit_estado: string;
       cit_asignacion: string;
       cit_actualizado_en: string;
       cit_abogado_id?: string | null;
+      cit_enlace?: string | null;
     } = {
       cit_estado: "confirmada",
       cit_asignacion: "operador",
@@ -1007,6 +1072,9 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
     };
     if (!citaActual?.cit_abogado_id && abgActorId) {
       cambiosConfirmar.cit_abogado_id = abgActorId;
+    }
+    if (enlaceConfirmado && enlaceConfirmado !== citaActual?.cit_enlace) {
+      cambiosConfirmar.cit_enlace = enlaceConfirmado;
     }
 
     const { error: errUpd } = await db
@@ -1027,7 +1095,7 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
         autor_nombre: autorNombre,
         autor_rol: "ABOGADO",
         resumen: `Dr(a). ${autorNombre} confirmó la asignación de la cita`,
-        mensaje: d.motivo?.trim() || null,
+        mensaje: d.motivo?.trim() || (enlaceConfirmado ? `Sala activa: ${enlaceConfirmado}` : null),
       },
     });
 
@@ -1045,7 +1113,7 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
         clienteWhatsapp,
         abogadoNombre: abgNombreActual || autorNombre,
         abogadoCorreo: abgCorreoActual || autorCorreo,
-        enlaceVideollamada: citaActual.cit_enlace ? String(citaActual.cit_enlace) : null,
+        enlaceVideollamada: enlaceConfirmado,
         lugarPresencial: citaActual.cit_lugar ? String(citaActual.cit_lugar) : null,
         sequence: seqActual,
         metodo: "REQUEST",
@@ -1064,6 +1132,10 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
           contenidoHtml: `<div><p style="margin:0 0 6px 0;">Dr(a). <strong>${autorNombre}</strong> ha confirmado la consulta jurídica del <strong>${fechaTxt}</strong>.</p><p style="margin:0 0 6px 0;font-size:0.82rem;color:#334155;">👤 Cliente: <strong>${clienteNombre}</strong>${
             clienteWhatsapp ? ` · 📱 Cel/WhatsApp: <strong>${clienteWhatsapp}</strong>` : ""
           }</p>${
+            enlaceConfirmado && citaActual.cit_modalidad !== "presencial"
+              ? `<p style="margin:0 0 6px 0;font-size:0.82rem;color:#334155;">🎥 Enlace de videollamada: <a href="${enlaceConfirmado}" target="_blank" rel="noreferrer" style="color:#5000BA;font-weight:800;">${enlaceConfirmado}</a></p>`
+              : ""
+          }${
             d.motivo
               ? `<p style="margin:0;font-size:0.82rem;color:#334155;">💬 Comentario en Tracking: "${d.motivo}"</p>`
               : ""
@@ -1090,7 +1162,7 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
     revalidatePath("/panel/agendamiento");
     revalidatePath("/panel/mis-citas");
     revalidatePath("/panel/agenda/asignaciones");
-    return { ok: true, data: { resultado: "confirmada" } };
+    return { ok: true, data: { resultado: "confirmada", enlace: enlaceConfirmado } };
   }
 
   // Caso 1.B: Abogado cancela su confirmación previa (vuelve a estado pendiente sin quitar la asignación)
@@ -1237,6 +1309,30 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
         ? "ABOGADO"
         : "OPERADOR";
 
+    const esPresencial = citaActual.cit_modalidad === "presencial";
+    const etiquetaModalidad = esPresencial ? "Presencial en Oficina" : "Telemática (Videollamada)";
+
+    // Si es consulta telemática, actualizar o crear automáticamente el nuevo enlace en Daily.co para el nuevo horario
+    let enlaceReagendado: string | null = citaActual.cit_enlace
+      ? String(citaActual.cit_enlace)
+      : null;
+    let seActualizoSalaDaily = false;
+    if (
+      !esPresencial &&
+      (!esEnlaceVideollamadaReal(enlaceReagendado) || esEnlaceDaily(enlaceReagendado))
+    ) {
+      const resDaily = await crearOActualizarSalaDailyCita({
+        citaId: d.cita_id,
+        inicioIso: nuevoInicioIso,
+        finIso: nuevoFinIso,
+        enlaceAnterior: enlaceReagendado,
+      });
+      if (resDaily.ok) {
+        enlaceReagendado = resDaily.url;
+        seActualizoSalaDaily = true;
+      }
+    }
+
     const cambiosCitaReagendar: {
       cit_inicio_en: string;
       cit_fin_en: string;
@@ -1245,6 +1341,7 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
       cit_asignacion?: string;
       cit_abogado_id?: string | null;
       cit_notas?: string;
+      cit_enlace?: string | null;
     } = {
       cit_inicio_en: nuevoInicioIso,
       cit_fin_en: nuevoFinIso,
@@ -1257,6 +1354,10 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
         .filter(Boolean)
         .join("\n"),
     };
+
+    if (enlaceReagendado && enlaceReagendado !== citaActual.cit_enlace) {
+      cambiosCitaReagendar.cit_enlace = enlaceReagendado;
+    }
 
     if (confirmarTambien) {
       cambiosCitaReagendar.cit_asignacion = "operador";
@@ -1275,6 +1376,11 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
       return { ok: false, error: comoError(errUpdHorario.message) };
     }
 
+    const mensajeTrackingReagendar =
+      seActualizoSalaDaily && enlaceReagendado
+        ? `${comentarioLimpio} · 🎥 Nuevo link Daily.co: ${enlaceReagendado}`
+        : comentarioLimpio;
+
     const nuevaSecuencia = await registrarEventoYEstadoGestionCita(db, d.cita_id, {
       ...(confirmarTambien
         ? {
@@ -1292,7 +1398,7 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
         resumen: confirmarTambien
           ? `Dr(a). ${autorNombre} cambió la fecha/hora a ${nuevaFechaTxt} y confirmó la cita (antes: ${fechaAnteriorTxt})`
           : `${autorNombre} (${rolAutor}) reprogramó la fecha/hora para ${nuevaFechaTxt} (antes: ${fechaAnteriorTxt})`,
-        mensaje: comentarioLimpio,
+        mensaje: mensajeTrackingReagendar,
       },
     });
 
@@ -1302,9 +1408,6 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
         [citaActual.cit_cliente_id, abgUsuIdActual, actorId].filter(Boolean) as string[],
       ),
     );
-
-    const esPresencial = citaActual.cit_modalidad === "presencial";
-    const etiquetaModalidad = esPresencial ? "Presencial en Oficina" : "Telemática (Videollamada)";
 
     const datosIcsReagendada: DatosEventoCalendarioCita = {
       citaId: d.cita_id,
@@ -1317,7 +1420,7 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
       clienteWhatsapp,
       abogadoNombre: abgNombreActual || (rolAutor === "ABOGADO" ? autorNombre : null),
       abogadoCorreo: abgCorreoActual || (rolAutor === "ABOGADO" ? autorCorreo : null),
-      enlaceVideollamada: citaActual.cit_enlace ? String(citaActual.cit_enlace) : null,
+      enlaceVideollamada: enlaceReagendado,
       lugarPresencial: citaActual.cit_lugar ? String(citaActual.cit_lugar) : null,
       sequence: nuevaSecuencia,
       metodo: "REQUEST",
@@ -1335,6 +1438,11 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
           <strong>📅 Nueva fecha y hora:</strong> <span style="color:#05876E;font-weight:800;">${nuevaFechaTxt}</span><br/>
           <strong>🕒 Horario anterior:</strong> <span style="text-decoration:line-through;color:#64748B;">${fechaAnteriorTxt}</span><br/>
           <strong>📍 Modalidad:</strong> ${etiquetaModalidad}<br/>
+          ${
+            !esPresencial && enlaceReagendado
+              ? `<strong>🎥 Link de videollamada actualizado:</strong> <a href="${enlaceReagendado}" target="_blank" rel="noreferrer" style="color:#5000BA;font-weight:800;word-break:break-all;">${enlaceReagendado}</a><br/>`
+              : ""
+          }
           <strong>👤 Cliente:</strong> ${clienteNombre}${
             clienteWhatsapp ? ` (📱 ${clienteWhatsapp})` : ""
           }<br/>
@@ -1344,6 +1452,11 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
           <strong>💬 Comentario (${autorNombre} - ${rolAutor}):</strong> "${comentarioLimpio}"
         </div>
         <p style="margin:8px 0 0 0;font-size:0.8rem;">
+          ${
+            !esPresencial && enlaceReagendado
+              ? `<a href="${enlaceReagendado}" target="_blank" rel="noreferrer" style="display:inline-block;padding:8px 14px;background:#5000BA;color:#FFFFFF;border-radius:8px;font-weight:800;text-decoration:none;margin-right:8px;">🎥 Unirse a la videollamada</a>`
+              : ""
+          }
           <a href="/panel/agendamiento" style="color:#5000BA;font-weight:800;text-decoration:underline;">
             Ver Tracking y Detalle en Tranqi →
           </a>
@@ -1379,7 +1492,18 @@ export async function decidirCitaAction(entrada: unknown): Promise<Resultado<{ r
     revalidatePath("/panel/agendamiento");
     revalidatePath("/panel/mis-citas");
     revalidatePath("/panel/agenda/asignaciones");
-    return { ok: true, data: { resultado: confirmarTambien ? "confirmada" : "reagendada" } };
+    return {
+      ok: true,
+      data: {
+        resultado: confirmarTambien ? "confirmada" : "reagendada",
+        enlace: enlaceReagendado,
+      },
+    };
+  }
+
+  // Si la decisión es cancelar y la cita tenía una sala activa en Daily.co, eliminarla inmediatamente
+  if (d.decision === "cancelar" && citaActual?.cit_enlace && esEnlaceDaily(citaActual.cit_enlace)) {
+    await eliminarSalaDailyCita(citaActual.cit_enlace);
   }
 
   // Caso 3: Otras decisiones (cancelar por cliente/abogado, marcar_realizada, marcar_no_asistio)
@@ -1805,6 +1929,27 @@ export async function reasignarCitaAction(
   const esPresencial = citaActual.cit_modalidad === "presencial";
   const etiquetaModalidad = esPresencial ? "Presencial en Oficina" : "Telemática (Videollamada)";
 
+  let enlaceAsignacionFinal = citaActual.cit_enlace ? String(citaActual.cit_enlace) : null;
+  if (!esPresencial && !esEnlaceVideollamadaReal(enlaceAsignacionFinal)) {
+    const resDaily = await crearOActualizarSalaDailyCita({
+      citaId: d.cita_id,
+      inicioIso: String(citaActual.cit_inicio_en),
+      finIso: citaActual.cit_fin_en ? String(citaActual.cit_fin_en) : null,
+      enlaceAnterior: enlaceAsignacionFinal,
+    });
+    if (resDaily.ok) {
+      enlaceAsignacionFinal = resDaily.url;
+      await db
+        .schema("tranqui_legal")
+        .from("trq_cita")
+        .update({
+          cit_enlace: resDaily.url,
+          cit_actualizado_en: ahoraIso,
+        })
+        .eq("cit_id", d.cita_id);
+    }
+  }
+
   const datosIcsAsignacion: DatosEventoCalendarioCita = {
     citaId: d.cita_id,
     inicioIso: String(citaActual.cit_inicio_en),
@@ -1817,7 +1962,7 @@ export async function reasignarCitaAction(
     clienteWhatsapp: clienteInfo.whatsapp,
     abogadoNombre: abgNuevoInfo.nombre,
     abogadoCorreo: abgNuevoInfo.correo,
-    enlaceVideollamada: citaActual.cit_enlace ? String(citaActual.cit_enlace) : null,
+    enlaceVideollamada: enlaceAsignacionFinal,
     lugarPresencial: citaActual.cit_lugar ? String(citaActual.cit_lugar) : null,
     sequence: secuenciaAsignacion,
     metodo: "REQUEST",
@@ -2808,17 +2953,21 @@ export async function actualizarEnlaceCitaTelematicaAction(
     }
 
     const enlacePrevio = (citaActual.cit_enlace ?? "").trim();
-    const esModificacion = Boolean(enlacePrevio);
+    const esModificacion = esEnlaceVideollamadaReal(enlacePrevio);
 
     // Regla de negocio: el enlace se puede modificar hasta 1 hora antes de la hora agendada
     const inicioMs = new Date(citaActual.cit_inicio_en).getTime();
     const faltaMs = inicioMs - Date.now();
-    if (esModificacion && faltaMs < 60 * 60 * 1000) {
+    if (esModificacion && faltaMs > 0 && faltaMs < 60 * 60 * 1000) {
       return {
         ok: false,
         error:
           "El enlace de la videollamada solo puede modificarse hasta 1 hora antes de la hora agendada.",
       };
+    }
+
+    if (enlacePrevio && enlacePrevio !== enlaceNormalizado && esEnlaceDaily(enlacePrevio)) {
+      await eliminarSalaDailyCita(enlacePrevio);
     }
 
     // Obtener datos de actor, cliente y abogado
@@ -2996,4 +3145,59 @@ export async function actualizarEnlaceCitaTelematicaAction(
     };
   }
 }
+
+export async function generarSalaDailyCitaAction(entrada: {
+  cita_id: string;
+  forzar_nuevo?: boolean;
+  nota?: string | null;
+}): Promise<Resultado<{ enlace: string; esModificacion: boolean }>> {
+  const citaId = (entrada?.cita_id ?? "").trim();
+  if (!citaId) {
+    return { ok: false, error: "Identificador de cita no válido." };
+  }
+
+  try {
+    const supabase = await crearClienteServidor();
+    const db = crearClienteAdmin() ?? supabase;
+    const { data: citaActual, error: errCita } = await db
+      .schema("tranqui_legal")
+      .from("trq_cita")
+      .select("cit_id, cit_inicio_en, cit_fin_en, cit_modalidad, cit_estado, cit_enlace")
+      .eq("cit_id", citaId)
+      .maybeSingle();
+
+    if (errCita || !citaActual) {
+      return { ok: false, error: "No se encontró la cita seleccionada." };
+    }
+
+    const resDaily = await crearOActualizarSalaDailyCita({
+      citaId: String(citaActual.cit_id),
+      inicioIso: String(citaActual.cit_inicio_en),
+      finIso: citaActual.cit_fin_en ? String(citaActual.cit_fin_en) : null,
+      enlaceAnterior: citaActual.cit_enlace ? String(citaActual.cit_enlace) : null,
+      forzarNuevo: Boolean(entrada.forzar_nuevo),
+    });
+
+    if (!resDaily.ok) {
+      return { ok: false, error: resDaily.error };
+    }
+
+    return actualizarEnlaceCitaTelematicaAction({
+      cita_id: citaId,
+      enlace: resDaily.url,
+      nota:
+        entrada.nota?.trim() ||
+        "Sala de videollamada generada automáticamente en Tranqi (Daily.co)",
+    });
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error
+          ? err.message
+          : "No se pudo generar la sala automática en Daily.co.",
+    };
+  }
+}
+
 

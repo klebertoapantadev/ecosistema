@@ -111,3 +111,4 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "No se pudo generar el archivo de calendario" }, { status: 500 });
   }
 }
+

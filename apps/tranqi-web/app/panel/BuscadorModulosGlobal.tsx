@@ -23,6 +23,16 @@ export interface ModuloInfoDef {
 
 const CATALOGO_MODULOS: ModuloInfoDef[] = [
   {
+    clave: "productos_servicios",
+    nombre: "Productos Servicios",
+    detalle: "Todos nuestros planes de protección, consultas jurídicas y trámites legales presentados de forma individual",
+    ruta: "/panel/productos-servicios",
+    categoria: "Comercio & Clientes",
+    minNivel: 1,
+    icono: ShoppingBag,
+    colorIcono: "#5000BA"
+  },
+  {
     clave: "agendar_cita",
     nombre: "Agendar una Consulta",
     detalle: "Elegir materia, servicio y hora libre; el abogado se asigna por turno rotativo",

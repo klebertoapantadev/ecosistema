@@ -175,6 +175,15 @@ const PANELES_SIDEBAR_INICIALES: PanelSidebarDef[] = [
     mostrarSinWidgets: true
   },
   {
+    id: "panel_productos_servicios",
+    nombre: "Productos Servicios",
+    ruta: "/panel/productos-servicios",
+    descripcion: "Catálogo completo de planes de protección, consultas jurídicas y trámites legales presentados de forma individual.",
+    icono: "Layers",
+    requiereMfa: false,
+    mostrarSinWidgets: true
+  },
+  {
     id: "panel_clientes",
     nombre: "Clientes",
     ruta: "/panel/clientes",
@@ -281,10 +290,11 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nombre: "Cliente (Jerarquía Base)",
     nivel: 1,
     ambito: "Empresa",
-    descripcion: "Perfil base de usuario. Acceso a paneles de Inicio, Agendamiento, Herramientas, Mi Cuenta y Preferencias de Notificaciones.",
-    panelesAsignados: ["panel_inicio", "panel_agendamiento", "panel_herramientas", "panel_cuenta", "panel_configuracion"],
+    descripcion: "Perfil base de usuario. Acceso a paneles de Inicio, Productos Servicios, Agendamiento, Herramientas, Mi Cuenta y Preferencias de Notificaciones.",
+    panelesAsignados: ["panel_inicio", "panel_productos_servicios", "panel_agendamiento", "panel_herramientas", "panel_cuenta", "panel_configuracion"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
+      panel_productos_servicios: ["productos_servicios"],
       panel_agendamiento: ["agendar_cita", "mis_citas"],
       panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "financiamiento"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
@@ -380,6 +390,17 @@ const PERFILES_INICIALES: PerfilDef[] = [
 export { MATRIZ_FUNCIONAL_ROLES };
 
 const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
+  {
+    clave: "productos_servicios",
+    nombre: "Productos y Servicios",
+    descripcion: "Presentación individual de todos los planes de protección, consultas jurídicas y trámites legales.",
+    categoria: "Comercio",
+    ruta: "/panel/productos-servicios",
+    rutaFisica: "/modulos/inicio-cliente/componentes/RejillaPlanes.tsx",
+    panelId: "panel_productos_servicios",
+    activo: true,
+    creadoEn: "2026-11-10"
+  },
   {
     clave: "mis_beneficios_corporativos",
     nombre: "Mis Beneficios Corporativos & Convenio",
