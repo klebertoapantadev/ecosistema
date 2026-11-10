@@ -41,6 +41,7 @@ import {
   obtenerClientesParaFacturacionAction,
   obtenerExpedienteCliente360Action,
   registrarPagoManualOperadorAction,
+  liquidarValorPendienteOperadorAction,
   emitirFacturaDePagoExistenteAction,
 } from "../acciones";
 
@@ -62,12 +63,22 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
   // Modal de visualización de Factura Electrónica (RIDE)
   const [transaccionSeleccionada, setTransaccionSeleccionada] = useState<TransaccionPagoCRM | null>(null);
 
-  // Modal de Registro Manual de Pago + Emisión de Factura (Operador)
+  // Modal de Registro Manual de Pago / Orden de Cobro Pendiente (Operador)
   const [modalPagoManualAbierto, setModalPagoManualAbierto] = useState(false);
+  const [modoOperacionModal, setModoOperacionModal] = useState<"APROBADO" | "PENDIENTE">("APROBADO");
   const [guardandoPagoManual, setGuardandoPagoManual] = useState(false);
   const [errorPagoManual, setErrorPagoManual] = useState<string | null>(null);
-  const [exitoFacturaReciente, setExitoFacturaReciente] = useState< string | null>(null);
+  const [exitoFacturaReciente, setExitoFacturaReciente] = useState<string | null>(null);
   const [emitiendoId, setEmitiendoId] = useState<string | null>(null);
+
+  // Modal para Liquidar un Valor Pendiente existente (PENDIENTE -> APROBADO + Factura SRI)
+  const [transaccionPendienteLiquidar, setTransaccionPendienteLiquidar] = useState<TransaccionPagoCRM | null>(null);
+  const [medioLiquidacion, setMedioLiquidacion] = useState<
+    "TRANSFERENCIA" | "EFECTIVO" | "DEUNA" | "DEPOSITO" | "TARJETA_POS" | "CHEQUE" | "PLUX"
+  >("TRANSFERENCIA");
+  const [referenciaLiquidacion, setReferenciaLiquidacion] = useState("");
+  const [observacionesLiquidacion, setObservacionesLiquidacion] = useState("");
+  const [guardandoLiquidacion, setGuardandoLiquidacion] = useState(false);
 
   // Campos del formulario de Pago Manual
   const [clienteSeleccionadoId, setClienteSeleccionadoId] = useState<string>("");
@@ -119,8 +130,12 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
     }
   };
 
-  const abrirPagoManualParaCliente360 = (exp: ExpedienteCliente360) => {
+  const abrirPagoManualParaCliente360 = (
+    exp: ExpedienteCliente360,
+    modo: "APROBADO" | "PENDIENTE" = "APROBADO",
+  ) => {
     setModal360Abierto(false);
+    setModoOperacionModal(modo);
     setClienteSeleccionadoId(exp.cliente.usu_id || "");
     const idLimpia = exp.cliente.identificacion || "";
     setTipoIdentificacion(idLimpia.length === 13 ? "04" : idLimpia.length === 10 ? "05" : "05");
@@ -355,7 +370,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
       const res = await registrarPagoManualOperadorAction({
         negocio,
         clienteUsuarioId: clienteSeleccionadoId || null,
-        medioPago: medioPagoManual,
+        estadoInicial: modoOperacionModal,
+        medioPago: modoOperacionModal === "PENDIENTE" ? "POR_DEFINIR" : medioPagoManual,
         referenciaPago,
         varianteId: modoRubro === "catalogo" ? varianteSeleccionadaId || null : null,
         rubroDescripcion: rubroDescripcion || "Servicio Legal Facturado",
@@ -374,14 +390,20 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
       });
 
       if (!res.ok) {
-        setErrorPagoManual(res.error || "No se pudo registrar el pago manual.");
+        setErrorPagoManual(res.error || "No se pudo procesar la operación.");
         return;
       }
 
       setModalPagoManualAbierto(false);
-      setExitoFacturaReciente(
-        `Pago manual registrado y Factura Electrónica ${res.factura?.numero_comprobante || ""} emitida exitosamente.`,
-      );
+      if (modoOperacionModal === "PENDIENTE") {
+        setExitoFacturaReciente(
+          `Valor pendiente de pago por $${totalNum.toFixed(2)} USD generado exitosamente para ${razonSocial || "el cliente"}.`,
+        );
+      } else {
+        setExitoFacturaReciente(
+          `Pago manual registrado y Factura Electrónica ${res.factura?.numero_comprobante || ""} emitida exitosamente.`,
+        );
+      }
       setReferenciaPago("");
       setObservacionesPago("");
       await cargarDatos();
@@ -389,6 +411,32 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
       setErrorPagoManual(err?.message || "Error inesperado al procesar el registro.");
     } finally {
       setGuardandoPagoManual(false);
+    }
+  };
+
+  const manejarLiquidarPendiente = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!transaccionPendienteLiquidar) return;
+    setGuardandoLiquidacion(true);
+    try {
+      const res = await liquidarValorPendienteOperadorAction({
+        negocio,
+        pagId: transaccionPendienteLiquidar.pag_id,
+        medioPago: medioLiquidacion,
+        referenciaPago: referenciaLiquidacion,
+        observaciones: observacionesLiquidacion,
+      });
+      if (res.ok) {
+        setTransaccionPendienteLiquidar(null);
+        setReferenciaLiquidacion("");
+        setObservacionesLiquidacion("");
+        setExitoFacturaReciente(
+          `Valor pendiente liquidado (${medioLiquidacion}) y Factura Electrónica ${res.factura?.numero_comprobante || ""} emitida exitosamente.`,
+        );
+        await cargarDatos();
+      }
+    } finally {
+      setGuardandoLiquidacion(false);
     }
   };
 
@@ -799,33 +847,64 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
 
         <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
           {!esVistaCliente && (
-            <button
-              type="button"
-              onClick={() => {
-                setErrorPagoManual(null);
-                setModalPagoManualAbierto(true);
-              }}
-              className="btn-responsive-accion"
-              title="Registrar pago manual (transferencia, efectivo, Deuna) y emitir factura electrónica"
-              aria-label="Registrar pago manual y emitir factura electrónica"
-              style={{
-                background: "linear-gradient(135deg, #4F46E5 0%, #3730A3 100%)",
-                color: "#FFFFFF",
-                border: "none",
-                padding: "9px 16px",
-                borderRadius: "10px",
-                fontSize: "0.84rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "7px",
-                boxShadow: "0 4px 12px rgba(79, 70, 229, 0.25)",
-              }}
-            >
-              <PlusCircle size={16} />
-              <span className="btn-texto-responsive">Registrar Pago</span>
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setErrorPagoManual(null);
+                  setModoOperacionModal("PENDIENTE");
+                  setModalPagoManualAbierto(true);
+                }}
+                className="btn-responsive-accion"
+                title="Generar un valor pendiente de pago (Cuenta por Cobrar) a un cliente"
+                aria-label="Generar Cobro"
+                style={{
+                  background: "#FEF3C7",
+                  color: "#92400E",
+                  border: "1px solid #FCD34D",
+                  padding: "9px 15px",
+                  borderRadius: "10px",
+                  fontSize: "0.84rem",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "7px",
+                }}
+              >
+                <Clock size={16} />
+                <span className="btn-texto-responsive">Generar Cobro</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setErrorPagoManual(null);
+                  setModoOperacionModal("APROBADO");
+                  setModalPagoManualAbierto(true);
+                }}
+                className="btn-responsive-accion"
+                title="Registrar pago manual (transferencia, efectivo, Deuna) y emitir factura electrónica"
+                aria-label="Registrar pago manual y emitir factura electrónica"
+                style={{
+                  background: "linear-gradient(135deg, #4F46E5 0%, #3730A3 100%)",
+                  color: "#FFFFFF",
+                  border: "none",
+                  padding: "9px 16px",
+                  borderRadius: "10px",
+                  fontSize: "0.84rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "7px",
+                  boxShadow: "0 4px 12px rgba(79, 70, 229, 0.25)",
+                }}
+              >
+                <PlusCircle size={16} />
+                <span className="btn-texto-responsive">Registrar Pago</span>
+              </button>
+            </>
           )}
 
           <button
@@ -1500,6 +1579,48 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                               {emitiendoId === t.pag_id ? "Emitiendo..." : "Emitir Factura"}
                             </span>
                           </button>
+                        ) : t.pag_estado === "PENDIENTE" && !esVistaCliente ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMedioLiquidacion("TRANSFERENCIA");
+                              setReferenciaLiquidacion("");
+                              setObservacionesLiquidacion("");
+                              setTransaccionPendienteLiquidar(t);
+                            }}
+                            className="btn-responsive-accion"
+                            title="Registrar el cobro recibido de este valor pendiente y emitir su factura electrónica"
+                            aria-label="Registrar Cobro"
+                            style={{
+                              background: "#4F46E5",
+                              color: "#FFFFFF",
+                              border: "none",
+                              padding: "6px 11px",
+                              borderRadius: "8px",
+                              fontSize: "0.76rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                            }}
+                          >
+                            <CheckCircle2 size={14} />
+                            <span className="btn-texto-responsive">Registrar Cobro</span>
+                          </button>
+                        ) : t.pag_estado === "PENDIENTE" ? (
+                          <span
+                            style={{
+                              fontSize: "0.74rem",
+                              fontWeight: 700,
+                              color: "#B45309",
+                              background: "#FEF3C7",
+                              padding: "4px 9px",
+                              borderRadius: "6px",
+                            }}
+                          >
+                            Por Pagar
+                          </span>
                         ) : (
                           <span style={{ fontSize: "0.74rem", color: "#94A3B8" }}>—</span>
                         )}
@@ -1514,7 +1635,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
       </div>
 
       {/* ===========================================================================
-          MODAL 1: REGISTRAR PAGO MANUAL (OPERADOR) Y EMITIR FACTURA ELECTRÓNICA
+          MODAL 1: GENERAR VALOR PENDIENTE O REGISTRAR PAGO MANUAL Y FACTURAR
          =========================================================================== */}
       {modalPagoManualAbierto && (
         <div
@@ -1557,7 +1678,9 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   Operación de Caja & Facturación SRI
                 </div>
                 <h2 style={{ margin: "2px 0 0", fontSize: "1.15rem", fontWeight: 800, color: "#0F172A" }}>
-                  Registrar Pago Manual y Emitir Factura Electrónica
+                  {modoOperacionModal === "PENDIENTE"
+                    ? "Generar Valor Pendiente de Pago al Cliente"
+                    : "Registrar Pago Manual y Emitir Factura Electrónica"}
                 </h2>
               </div>
               <button
@@ -1579,6 +1702,61 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
             </div>
 
             <form onSubmit={manejarRegistrarPagoManual} style={{ padding: "20px 22px" }}>
+              {/* Selector de Tipo de Operación: Valor Pendiente vs Pago Recibido */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "8px",
+                  marginBottom: "16px",
+                  background: "#F1F5F9",
+                  padding: "5px",
+                  borderRadius: "12px",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setModoOperacionModal("PENDIENTE")}
+                  style={{
+                    padding: "9px 12px",
+                    borderRadius: "9px",
+                    border: modoOperacionModal === "PENDIENTE" ? "1px solid #F59E0B" : "none",
+                    background: modoOperacionModal === "PENDIENTE" ? "#FFFBEB" : "transparent",
+                    color: modoOperacionModal === "PENDIENTE" ? "#92400E" : "#475569",
+                    fontSize: "0.8rem",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <Clock size={15} />
+                  <span>Generar Valor Pendiente (Por Cobrar)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModoOperacionModal("APROBADO")}
+                  style={{
+                    padding: "9px 12px",
+                    borderRadius: "9px",
+                    border: modoOperacionModal === "APROBADO" ? "1px solid #10B981" : "none",
+                    background: modoOperacionModal === "APROBADO" ? "#ECFDF5" : "transparent",
+                    color: modoOperacionModal === "APROBADO" ? "#065F46" : "#475569",
+                    fontSize: "0.8rem",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <CheckCircle2 size={15} />
+                  <span>Registrar Pago Recibido y Facturar</span>
+                </button>
+              </div>
               {errorPagoManual && (
                 <div
                   style={{
@@ -1949,88 +2127,108 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 </div>
               </div>
 
-              {/* Sección 3: Medio de Pago Recibido */}
-              <div
-                style={{
-                  background: "#F8FAFC",
-                  border: "1px solid #E2E8F0",
-                  borderRadius: "12px",
-                  padding: "14px",
-                  marginBottom: "18px",
-                }}
-              >
+              {/* Sección 3: Medio de Pago Recibido o Nota de Orden de Cobro */}
+              {modoOperacionModal === "APROBADO" ? (
                 <div
                   style={{
+                    background: "#F8FAFC",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: "12px",
+                    padding: "14px",
+                    marginBottom: "18px",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "0.8rem",
+                      fontWeight: 800,
+                      color: "#1E293B",
+                      marginBottom: "10px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <Wallet size={15} color="#4F46E5" />
+                    3. Medio de Pago y Referencia de Recaudación
+                  </div>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+                      gap: "10px",
+                    }}
+                  >
+                    <div>
+                      <label
+                        style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}
+                      >
+                        Medio de Pago *
+                      </label>
+                      <select
+                        value={medioPagoManual}
+                        onChange={(e) => setMedioPagoManual(e.target.value as any)}
+                        style={{
+                          width: "100%",
+                          padding: "8px 10px",
+                          borderRadius: "8px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.83rem",
+                          background: "#FFFFFF",
+                        }}
+                      >
+                        <option value="TRANSFERENCIA">Transferencia Bancaria</option>
+                        <option value="EFECTIVO">Efectivo en Oficina</option>
+                        <option value="DEUNA">Deuna! / Pago QR</option>
+                        <option value="DEPOSITO">Depósito Bancario</option>
+                        <option value="TARJETA_POS">Datafast / POS Físico</option>
+                        <option value="CHEQUE">Cheque</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}
+                      >
+                        N° Comprobante / Referencia del Pago
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ej: N° transferencia o recibo"
+                        value={referenciaPago}
+                        onChange={(e) => setReferenciaPago(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "8px 10px",
+                          borderRadius: "8px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.83rem",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    background: "#FFFBEB",
+                    border: "1px solid #FDE68A",
+                    borderRadius: "12px",
+                    padding: "12px 14px",
+                    marginBottom: "18px",
                     fontSize: "0.8rem",
-                    fontWeight: 800,
-                    color: "#1E293B",
-                    marginBottom: "10px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
+                    color: "#92400E",
+                    lineHeight: 1.5,
                   }}
                 >
-                  <Wallet size={15} color="#4F46E5" />
-                  3. Medio de Pago y Referencia de Recaudación
+                  <strong>Orden de Cobro Pendiente:</strong> Este valor quedará registrado en estado{" "}
+                  <strong>PENDIENTE</strong> tanto en tu consola como en el{" "}
+                  <strong>Historial de Pagos del cliente</strong>. Cuando el cliente realice el pago, podrás hacer clic en{" "}
+                  <strong>Registrar Cobro</strong> para confirmar el medio de pago y emitir su Factura Electrónica SRI.
                 </div>
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
-                    gap: "10px",
-                  }}
-                >
-                  <div>
-                    <label
-                      style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}
-                    >
-                      Medio de Pago *
-                    </label>
-                    <select
-                      value={medioPagoManual}
-                      onChange={(e) => setMedioPagoManual(e.target.value as any)}
-                      style={{
-                        width: "100%",
-                        padding: "8px 10px",
-                        borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
-                        fontSize: "0.83rem",
-                        background: "#FFFFFF",
-                      }}
-                    >
-                      <option value="TRANSFERENCIA">Transferencia Bancaria</option>
-                      <option value="EFECTIVO">Efectivo en Oficina</option>
-                      <option value="DEUNA">Deuna! / Pago QR</option>
-                      <option value="DEPOSITO">Depósito Bancario</option>
-                      <option value="TARJETA_POS">Datafast / POS Físico</option>
-                      <option value="CHEQUE">Cheque</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label
-                      style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}
-                    >
-                      N° Comprobante / Referencia del Pago
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ej: N° transferencia o recibo"
-                      value={referenciaPago}
-                      onChange={(e) => setReferenciaPago(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "8px 10px",
-                        borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
-                        fontSize: "0.83rem",
-                        boxSizing: "border-box",
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
+              )}
 
               {/* Pie del Modal */}
               <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
@@ -2054,10 +2252,17 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   type="submit"
                   disabled={guardandoPagoManual}
                   className="btn-responsive-accion"
-                  title="Guardar pago manual y emitir automáticamente la factura electrónica"
-                  aria-label="Registrar y Facturar"
+                  title={
+                    modoOperacionModal === "PENDIENTE"
+                      ? "Generar valor pendiente de pago al cliente"
+                      : "Guardar pago manual y emitir automáticamente la factura electrónica"
+                  }
+                  aria-label={modoOperacionModal === "PENDIENTE" ? "Generar Cobro" : "Registrar y Facturar"}
                   style={{
-                    background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
+                    background:
+                      modoOperacionModal === "PENDIENTE"
+                        ? "linear-gradient(135deg, #D97706 0%, #B45309 100%)"
+                        : "linear-gradient(135deg, #059669 0%, #047857 100%)",
                     color: "#FFFFFF",
                     border: "none",
                     padding: "9px 18px",
@@ -2070,8 +2275,14 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                     gap: "7px",
                   }}
                 >
-                  <Receipt size={16} />
-                  <span>{guardandoPagoManual ? "Emitiendo Factura..." : "Registrar y Facturar"}</span>
+                  {modoOperacionModal === "PENDIENTE" ? <Clock size={16} /> : <Receipt size={16} />}
+                  <span>
+                    {guardandoPagoManual
+                      ? "Procesando..."
+                      : modoOperacionModal === "PENDIENTE"
+                        ? "Generar Cobro"
+                        : "Registrar y Facturar"}
+                  </span>
                 </button>
               </div>
             </form>
@@ -2565,7 +2776,31 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   <>
                     <button
                       type="button"
-                      onClick={() => abrirPagoManualParaCliente360(expediente360)}
+                      onClick={() => abrirPagoManualParaCliente360(expediente360, "PENDIENTE")}
+                      className="btn-responsive-accion"
+                      title="Generar un valor pendiente de pago (cuenta por cobrar) a este cliente"
+                      aria-label="Generar Cobro"
+                      style={{
+                        background: "#F59E0B",
+                        color: "#FFFFFF",
+                        border: "none",
+                        padding: "7px 13px",
+                        borderRadius: "9px",
+                        fontSize: "0.78rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                      }}
+                    >
+                      <Clock size={14} />
+                      <span className="btn-texto-responsive">Generar Cobro</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => abrirPagoManualParaCliente360(expediente360, "APROBADO")}
                       className="btn-responsive-accion"
                       title="Registrar pago manual y emitir factura electrónica a este cliente"
                       aria-label="Registrar Pago"
@@ -3200,56 +3435,91 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                               </div>
                             </div>
 
-                            <div style={{ display: "flex", gap: "6px" }}>
-                              <button
-                                type="button"
-                                onClick={() => descargarFacturaRide(p)}
-                                className="btn-responsive-accion"
-                                title="Descargar Factura Electrónica RIDE"
-                                aria-label="Descargar Factura"
-                                style={{
-                                  background: "#059669",
-                                  color: "#FFFFFF",
-                                  border: "none",
-                                  padding: "6px 11px",
-                                  borderRadius: "8px",
-                                  fontSize: "0.75rem",
-                                  fontWeight: 700,
-                                  cursor: "pointer",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "5px",
-                                }}
-                              >
-                                <Download size={13} />
-                                <span className="btn-texto-responsive">Descargar Factura</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setModal360Abierto(false);
-                                  setTransaccionSeleccionada(p);
-                                }}
-                                className="btn-responsive-accion"
-                                title="Ver Factura Electrónica RIDE"
-                                aria-label="Ver Factura"
-                                style={{
-                                  background: "#EEF2FF",
-                                  color: "#4338CA",
-                                  border: "1px solid #C7D2FE",
-                                  padding: "6px 11px",
-                                  borderRadius: "8px",
-                                  fontSize: "0.75rem",
-                                  fontWeight: 700,
-                                  cursor: "pointer",
-                                  display: "inline-flex",
-                                  alignItems: "center",
-                                  gap: "5px",
-                                }}
-                              >
-                                <FileText size={13} />
-                                <span className="btn-texto-responsive">Ver Factura</span>
-                              </button>
+                            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                              {!esVistaCliente && p.pag_estado === "PENDIENTE" && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setModal360Abierto(false);
+                                    setTransaccionPendienteLiquidar(p);
+                                    setMedioLiquidacion("TRANSFERENCIA");
+                                    setReferenciaLiquidacion("");
+                                    setObservacionesLiquidacion("");
+                                  }}
+                                  className="btn-responsive-accion"
+                                  title="Registrar el cobro de este valor pendiente y emitir Factura Electrónica SRI"
+                                  aria-label="Registrar Cobro"
+                                  style={{
+                                    background: "#D97706",
+                                    color: "#FFFFFF",
+                                    border: "none",
+                                    padding: "6px 11px",
+                                    borderRadius: "8px",
+                                    fontSize: "0.75rem",
+                                    fontWeight: 800,
+                                    cursor: "pointer",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "5px",
+                                  }}
+                                >
+                                  <CheckCircle2 size={13} />
+                                  <span className="btn-texto-responsive">Registrar Cobro</span>
+                                </button>
+                              )}
+                              {p.pag_estado === "APROBADO" && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => descargarFacturaRide(p)}
+                                    className="btn-responsive-accion"
+                                    title="Descargar Factura Electrónica RIDE"
+                                    aria-label="Descargar Factura"
+                                    style={{
+                                      background: "#059669",
+                                      color: "#FFFFFF",
+                                      border: "none",
+                                      padding: "6px 11px",
+                                      borderRadius: "8px",
+                                      fontSize: "0.75rem",
+                                      fontWeight: 700,
+                                      cursor: "pointer",
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "5px",
+                                    }}
+                                  >
+                                    <Download size={13} />
+                                    <span className="btn-texto-responsive">Descargar Factura</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setModal360Abierto(false);
+                                      setTransaccionSeleccionada(p);
+                                    }}
+                                    className="btn-responsive-accion"
+                                    title="Ver Factura Electrónica RIDE"
+                                    aria-label="Ver Factura"
+                                    style={{
+                                      background: "#EEF2FF",
+                                      color: "#4338CA",
+                                      border: "1px solid #C7D2FE",
+                                      padding: "6px 11px",
+                                      borderRadius: "8px",
+                                      fontSize: "0.75rem",
+                                      fontWeight: 700,
+                                      cursor: "pointer",
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "5px",
+                                    }}
+                                  >
+                                    <FileText size={13} />
+                                    <span className="btn-texto-responsive">Ver Factura</span>
+                                  </button>
+                                </>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -3298,6 +3568,257 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 )}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ===========================================================================
+          MODAL 4: LIQUIDAR VALOR PENDIENTE (REGISTRAR COBRO Y EMITIR FACTURA SRI)
+         =========================================================================== */}
+      {transaccionPendienteLiquidar && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.7)",
+            zIndex: 10020,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+        >
+          <div
+            style={{
+              background: "#FFFFFF",
+              borderRadius: "20px",
+              width: "100%",
+              maxWidth: "560px",
+              maxHeight: "92vh",
+              overflowY: "auto",
+              boxShadow: "0 24px 60px rgba(15, 23, 42, 0.35)",
+              border: "1px solid #E2E8F0",
+            }}
+          >
+            <div
+              style={{
+                padding: "18px 22px",
+                background: "linear-gradient(135deg, #065F46 0%, #059669 100%)",
+                color: "#FFFFFF",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                gap: "12px",
+              }}
+            >
+              <div>
+                <span
+                  style={{
+                    background: "rgba(255, 255, 255, 0.18)",
+                    color: "#D1FAE5",
+                    padding: "2px 9px",
+                    borderRadius: "999px",
+                    fontSize: "0.68rem",
+                    fontWeight: 800,
+                    letterSpacing: "0.03em",
+                  }}
+                >
+                  LIQUIDACIÓN DE VALOR PENDIENTE + FACTURA SRI
+                </span>
+                <h2 style={{ margin: "6px 0 0", fontSize: "1.15rem", fontWeight: 800, color: "#FFFFFF" }}>
+                  Registrar Cobro y Emitir Factura Electrónica
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTransaccionPendienteLiquidar(null)}
+                title="Cerrar ventana"
+                aria-label="Cerrar ventana"
+                style={{
+                  background: "rgba(255, 255, 255, 0.16)",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "6px",
+                  cursor: "pointer",
+                  color: "#FFFFFF",
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={manejarLiquidarPendiente} style={{ padding: "20px 22px", display: "grid", gap: "16px" }}>
+              {/* Resumen del cargo pendiente */}
+              <div
+                style={{
+                  background: "#FFFBEB",
+                  border: "1px solid #FDE68A",
+                  borderRadius: "12px",
+                  padding: "12px 14px",
+                  fontSize: "0.82rem",
+                  color: "#78350F",
+                  display: "grid",
+                  gap: "6px",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
+                  <strong>Cliente: {transaccionPendienteLiquidar.cliente_nombre || "Consumidor Final"}</strong>
+                  <span style={{ fontFamily: "monospace", fontWeight: 800, fontSize: "1rem", color: "#92400E" }}>
+                    ${Number(transaccionPendienteLiquidar.pag_monto_total).toFixed(2)} USD
+                  </span>
+                </div>
+                <div style={{ fontSize: "0.78rem", color: "#92400E" }}>
+                  <strong>Rubro:</strong> {transaccionPendienteLiquidar.rubro_facturado}
+                </div>
+                <div style={{ fontSize: "0.73rem", color: "#B45309", fontFamily: "monospace" }}>
+                  Orden: {transaccionPendienteLiquidar.pag_identificador_cliente} · C.I./RUC:{" "}
+                  {transaccionPendienteLiquidar.pag_titular_identificacion || "9999999999999"}
+                </div>
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.78rem",
+                    fontWeight: 700,
+                    color: "#334155",
+                    marginBottom: "6px",
+                  }}
+                >
+                  Medio de Pago Recibido *
+                </label>
+                <select
+                  value={medioLiquidacion}
+                  onChange={(e) => setMedioLiquidacion(e.target.value as any)}
+                  style={{
+                    width: "100%",
+                    padding: "9px 11px",
+                    borderRadius: "9px",
+                    border: "1px solid #CBD5E1",
+                    fontSize: "0.83rem",
+                    background: "#FFFFFF",
+                  }}
+                >
+                  <option value="TRANSFERENCIA">Transferencia Bancaria (SPI / Interbancaria)</option>
+                  <option value="EFECTIVO">Efectivo en Ventanilla / Caja</option>
+                  <option value="DEUNA">Deuna! / Pago QR Pichincha</option>
+                  <option value="DEPOSITO">Depósito Bancario</option>
+                  <option value="TARJETA_POS">Datafast / POS Físico (Tarjeta)</option>
+                  <option value="PLUX">PagoPlux (PLUX — Link / Pasarela)</option>
+                  <option value="CHEQUE">Cheque Certificado</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.78rem",
+                    fontWeight: 700,
+                    color: "#334155",
+                    marginBottom: "6px",
+                  }}
+                >
+                  N° de Comprobante / Referencia Bancaria *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={referenciaLiquidacion}
+                  onChange={(e) => setReferenciaLiquidacion(e.target.value)}
+                  placeholder="Ej: SPI-8493021, Comprobante Pichincha #49281, Recibo Caja #12"
+                  style={{
+                    width: "100%",
+                    padding: "9px 11px",
+                    borderRadius: "9px",
+                    border: "1px solid #CBD5E1",
+                    fontSize: "0.83rem",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.78rem",
+                    fontWeight: 700,
+                    color: "#334155",
+                    marginBottom: "6px",
+                  }}
+                >
+                  Observaciones de Liquidación (Opcional)
+                </label>
+                <input
+                  type="text"
+                  value={observacionesLiquidacion}
+                  onChange={(e) => setObservacionesLiquidacion(e.target.value)}
+                  placeholder="Ej: Pago verificado en estado de cuenta..."
+                  style={{
+                    width: "100%",
+                    padding: "9px 11px",
+                    borderRadius: "9px",
+                    border: "1px solid #CBD5E1",
+                    fontSize: "0.83rem",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: "10px",
+                  paddingTop: "8px",
+                  borderTop: "1px solid #E2E8F0",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setTransaccionPendienteLiquidar(null)}
+                  style={{
+                    background: "#F1F5F9",
+                    color: "#475569",
+                    border: "none",
+                    padding: "9px 16px",
+                    borderRadius: "10px",
+                    fontSize: "0.82rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={guardandoLiquidacion}
+                  className="btn-responsive-accion"
+                  title="Confirmar el cobro y emitir la Factura Electrónica SRI"
+                  aria-label="Confirmar y Facturar"
+                  style={{
+                    background: "#059669",
+                    color: "#FFFFFF",
+                    border: "none",
+                    padding: "9px 18px",
+                    borderRadius: "10px",
+                    fontSize: "0.82rem",
+                    fontWeight: 800,
+                    cursor: guardandoLiquidacion ? "wait" : "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <CheckCircle2 size={15} />
+                  <span className="btn-texto-responsive">
+                    {guardandoLiquidacion ? "Facturando..." : "Confirmar y Facturar"}
+                  </span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
