@@ -30,6 +30,30 @@ const SUGERENCIAS_RAPIDAS = [
   { id: 'economico', texto: '✨ Opciones de menos de $30' },
 ];
 
+function crearConversacionId(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
+  return `web-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function normalizar(texto: string): string {
+  return texto
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+// La burbuja muestra texto plano: se quita el markdown que el agente pueda
+// emitir para que no aparezcan asteriscos ni corchetes sueltos.
+function limpiarMarkdown(texto: string): string {
+  return texto
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 ($2)')
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/^#{1,6}\s+/gm, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 export function ChatAriaFlotante() {
   const {
     agregarItem,
@@ -48,6 +72,9 @@ export function ChatAriaFlotante() {
   const [itemRecienAgregado, setItemRecienAgregado] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Hilo de la conversación en ARIA: uno por visita, para que Mía recuerde lo
+  // que ya se habló en este chat.
+  const conversacionId = useRef<string>(crearConversacionId());
 
   useEffect(() => {
     if (abierto && scrollRef.current) {
@@ -222,14 +249,51 @@ export function ChatAriaFlotante() {
     };
   };
 
-  const handleEnviar = (textoOpcional?: string) => {
-    const texto = textoOpcional || inputTexto;
-    if (!texto.trim()) return;
+  // Mía responde desde ARIA (ruta /api/chat). Su prompt se edita en el panel
+  // de ARIA, no aquí. Las reglas de `procesarMensajeUsuario` quedan solo como
+  // respaldo para cuando ARIA no está disponible.
+  const consultarAria = async (texto: string): Promise<string | null> => {
+    try {
+      const r = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: texto, conversation_id: conversacionId.current }),
+      });
+      if (!r.ok) return null;
+      const data = (await r.json()) as { response?: string };
+      const respuesta = data.response?.trim();
+      return respuesta ? limpiarMarkdown(respuesta) : null;
+    } catch {
+      return null;
+    }
+  };
+
+  // ARIA devuelve solo texto: las tarjetas se arman con los productos del
+  // catálogo que la respuesta menciona por su nombre.
+  const productosMencionados = (texto: string): MensajeChat['productosSugeridos'] => {
+    const normalizado = normalizar(texto);
+    const vistos = new Set<string>();
+    const encontrados: NonNullable<MensajeChat['productosSugeridos']> = [];
+    for (const producto of catalogo) {
+      const nombre = normalizar(producto.nombreBase ?? producto.nombre);
+      if (nombre.length < 6 || vistos.has(nombre) || !normalizado.includes(nombre)) continue;
+      const variante = producto.variantes[0];
+      if (!variante) continue;
+      vistos.add(nombre);
+      encontrados.push({ producto, variantePorDefecto: variante });
+      if (encontrados.length === 2) break;
+    }
+    return encontrados.length > 0 ? encontrados : undefined;
+  };
+
+  const handleEnviar = async (textoOpcional?: string) => {
+    const texto = (textoOpcional || inputTexto).trim();
+    if (!texto || escribiendo) return;
 
     const nuevoMensajeUsuario: MensajeChat = {
       id: `usr-${Date.now()}`,
       remitente: 'usuario',
-      texto: texto.trim(),
+      texto,
       timestamp: 'Ahora',
     };
 
@@ -237,21 +301,23 @@ export function ChatAriaFlotante() {
     setInputTexto('');
     setEscribiendo(true);
 
-    // Simulación del tiempo de pensamiento botánico de ARIA
-    setTimeout(() => {
-      const respuesta = procesarMensajeUsuario(texto);
-      const nuevoMensajeAria: MensajeChat = {
-        id: `aria-${Date.now()}`,
-        remitente: 'aria',
-        texto: respuesta.texto,
-        timestamp: 'Ahora',
-        productosSugeridos: respuesta.productosSugeridos,
-        sugerenciaDedicatoria: respuesta.sugerenciaDedicatoria,
-      };
+    const respuestaAria = await consultarAria(texto);
+    const respuesta = respuestaAria
+      ? { texto: respuestaAria, productosSugeridos: productosMencionados(respuestaAria) }
+      : procesarMensajeUsuario(texto);
 
-      setMensajes((prev) => [...prev, nuevoMensajeAria]);
-      setEscribiendo(false);
-    }, 700);
+    const nuevoMensajeAria: MensajeChat = {
+      id: `aria-${Date.now()}`,
+      remitente: 'aria',
+      texto: respuesta.texto,
+      timestamp: 'Ahora',
+      productosSugeridos: respuesta.productosSugeridos,
+      sugerenciaDedicatoria:
+        'sugerenciaDedicatoria' in respuesta ? respuesta.sugerenciaDedicatoria : undefined,
+    };
+
+    setMensajes((prev) => [...prev, nuevoMensajeAria]);
+    setEscribiendo(false);
   };
 
   const handleAgregarDesdeChat = (
@@ -336,7 +402,7 @@ export function ChatAriaFlotante() {
                 )}
 
                 <div className="burbuja-mensaje">
-                  <p>{m.texto}</p>
+                  <p style={{ whiteSpace: 'pre-wrap' }}>{m.texto}</p>
 
                   {/* Tarjetas de Productos Sugeridos por ARIA */}
                   {m.productosSugeridos && m.productosSugeridos.length > 0 && (
