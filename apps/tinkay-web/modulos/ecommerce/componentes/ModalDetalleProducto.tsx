@@ -296,6 +296,14 @@ export function ModalDetalleProducto() {
     }
   };
 
+  const descripcionProducto = (producto.descripcionLarga || producto.descripcionCorta || '').trim();
+  const beneficiosMostrados =
+    varianteSeleccionada.beneficiosCustom && varianteSeleccionada.beneficiosCustom.length > 0
+      ? varianteSeleccionada.beneficiosCustom
+      : producto.beneficios && producto.beneficios.length > 0
+      ? producto.beneficios
+      : [];
+
   return (
     <div className="modal-backdrop-ecommerce" onClick={() => setProductoSeleccionadoModal(null)}>
       <div
@@ -404,17 +412,35 @@ export function ModalDetalleProducto() {
               </div>
             )}
 
-            {/* Garantías de Taller */}
-            <div className="garantias-taller-box">
-              <div className="garantia-item">
-                <Truck size={16} />
-                <span>Entrega cuidada en vehículo climatizado de taller</span>
+            {/* Descripción y Beneficios del Producto */}
+            {(descripcionProducto || beneficiosMostrados.length > 0) && (
+              <div className="caja-descripcion-beneficios-producto">
+                {descripcionProducto && (
+                  <div className="bloque-descripcion-producto">
+                    <span className="subtitulo-seccion-detalle">Descripción</span>
+                    <p className="texto-descripcion-producto">{descripcionProducto}</p>
+                  </div>
+                )}
+
+                {descripcionProducto && beneficiosMostrados.length > 0 && (
+                  <div className="separador-detalle-producto" />
+                )}
+
+                {beneficiosMostrados.length > 0 && (
+                  <div className="bloque-beneficios-producto">
+                    <span className="subtitulo-seccion-detalle">Beneficios / ¿Qué incluye?</span>
+                    <ul className="lista-beneficios-producto">
+                      {beneficiosMostrados.map((beneficio, idx) => (
+                        <li key={idx} className="item-beneficio-producto">
+                          <Check size={14} className="icono-check-beneficio" />
+                          <span>{beneficio}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
-              <div className="garantia-item">
-                <ShieldCheck size={16} />
-                <span>Rosas frescas cortadas menos de 24 horas antes</span>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Columna Derecha: Configuración, Variantes y Dedicatoria */}
@@ -514,8 +540,6 @@ export function ModalDetalleProducto() {
                 </div>
               </div>
             )}
-
-            <p className="descripcion-larga-modal">{producto.descripcionLarga}</p>
 
             {varianteSeleccionada.detalle &&
               !varianteSeleccionada.detalle.toLowerCase().includes('payphone') &&

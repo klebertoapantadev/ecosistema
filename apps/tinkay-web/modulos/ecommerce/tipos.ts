@@ -17,6 +17,7 @@ export interface VarianteEcommerce {
   baseImponible: number; // PVP / 1.15
   tarifaIva: number; // 15%
   detalle?: string;
+  beneficiosCustom?: string[];
   recetaBom?: string;
   unidadesFlores?: number;
   foto?: string;
@@ -31,6 +32,7 @@ export interface ProductoEcommerce {
   nombreBase?: string; // Nombre original del producto antes del desglose individual por variantes
   descripcionCorta: string;
   descripcionLarga: string;
+  beneficios?: string[];
   categoriaPrincipal: string;
   categoriaNombre?: string;
   categoriasSecundarias: string[];

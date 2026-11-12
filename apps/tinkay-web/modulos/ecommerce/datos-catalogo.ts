@@ -91,6 +91,11 @@ export const PRODUCTOS_TINKAY: ProductoEcommerce[] = [
     nombre: 'Bouquet Coreano',
     descripcionCorta: 'Composición floral de rosas ecuatorianas y flores silvestres de temporada. Incluye base y espuma floral, no requiere florero.',
     descripcionLarga: 'Composición floral armoniosa de rosas ecuatorianas y flores silvestres de temporada. No requieren florero, incluye base y espuma floral para un fácil cuidado de tus flores. Envoltura vanguardista estilo coreano en finos papeles plisados translúcidos, múltiples capas y cintas de seda satinada.',
+    beneficios: [
+      'Composición floral armoniosa de rosas ecuatorianas y flores silvestres de temporada.',
+      'No requiere florero: incluye base y espuma floral hidratada.',
+      'Envoltura de vanguardia estilo coreano en finos papeles plisados translúcidos y cintas de seda.',
+    ],
     categoriaPrincipal: 'cat-coreanos',
     categoriasSecundarias: ['cat-ocas-amor', 'cat-ocas-cumple', 'cat-ocas-aniv'],
     fotos: [
@@ -136,6 +141,11 @@ export const PRODUCTOS_TINKAY: ProductoEcommerce[] = [
     nombre: 'Box Florales',
     descripcionCorta: 'Elegante caja floral de lujo con rosas ecuatorianas seleccionadas y follaje fino en base hidratada.',
     descripcionLarga: 'Composiciones florales arquitectónicas montadas sobre cajas rígidas de alta gama. Cada rosa es hidratada individualmente en espuma floral de grado profesional OASIS para garantizar máxima duración sin necesidad de mantenimiento.',
+    beneficios: [
+      'Caja rígida de lujo con acabado premium y moño de seda satinada.',
+      'Rosas ecuatorianas seleccionadas hidratadas en espuma floral profesional OASIS.',
+      'Máxima frescura y duración sin necesidad de cambio de agua diario.',
+    ],
     categoriaPrincipal: 'box-florales',
     categoriasSecundarias: ['cat-ocas-cumple', 'cat-ocas-aniv', 'cat-ocas-amor'],
     fotos: [
@@ -226,6 +236,11 @@ export const PRODUCTOS_TINKAY: ProductoEcommerce[] = [
     nombre: 'Bouquet Clásico para Florero',
     descripcionCorta: 'Rosas de exportación de tallo largo de 70 cm con follaje de hidratación prolongada para lucir en agua.',
     descripcionLarga: 'Ramos de rosas seleccionadas de tallo largo, preparadas con follaje fino para lucir en florero. Incluye sobre de nutriente floral Chrysal para extender la frescura y vida de tus flores hasta por 12 a 15 días.',
+    beneficios: [
+      'Rosas de exportación seleccionadas de tallo largo (70 cm).',
+      'Papel coreano plisado y cintas de seda satinada con follaje fino.',
+      'Sobre de nutriente floral Chrysal incluido para extender la vida en florero.',
+    ],
     categoriaPrincipal: 'cat-floreros',
     categoriasSecundarias: ['cat-ocas-amor', 'cat-ocas-aniv'],
     fotos: [
@@ -283,6 +298,11 @@ export const PRODUCTOS_TINKAY: ProductoEcommerce[] = [
     nombre: 'Bouquets Especiales — Puro Amor',
     descripcionCorta: 'Corazón monumental de aprox. 180 rosas rojas o del color de tu preferencia.',
     descripcionLarga: 'Detalles especiales para demostrar el amor que quieres expresar. Composición artística extraordinaria en forma de corazón elaborada con aprox. 180 rosas rojas clasificadas de exportación.',
+    beneficios: [
+      'Composición artística monumental de impacto con aprox. 180 rosas rojas clasificadas.',
+      'Estructura de corazón reforzada y diseño arquitectónico floral de alta gama.',
+      'Tarjeta dedicatoria de lujo y presentación especial de taller.',
+    ],
     categoriaPrincipal: 'cat-ocas-amor',
     categoriasSecundarias: ['cat-coreanos', 'cat-ocas-aniv'],
     fotos: [
@@ -313,6 +333,11 @@ export const PRODUCTOS_TINKAY: ProductoEcommerce[] = [
     nombre: 'Abanico Floral',
     descripcionCorta: 'Diseño monumental en abanico sobre base de mimbre o atril. Ideal para velaciones y ceremonias religiosas.',
     descripcionLarga: 'Diseño monumental de gran altura dispuesto en abanico sobre una base de mimbre (o sin base). Ideal para ceremonias religiosas, velaciones, iglesias y homenajes solemnes. Confeccionado con flores frescas blancas de máxima apertura y durabilidad.',
+    beneficios: [
+      'Diseño monumental de gran altura dispuesto en abanico sobre atril resistente.',
+      'Flores frescas blancas de máxima apertura y durabilidad para homenajes solemnes.',
+      'Tarjeta dedicatoria impresa y opción de cinta fúnebre personalizada sin costo adicional.',
+    ],
     categoriaPrincipal: 'cat-abanicos',
     categoriasSecundarias: ['cat-ocas-condol', 'cat-eventos'],
     fotos: [
@@ -346,6 +371,11 @@ export const PRODUCTOS_TINKAY: ProductoEcommerce[] = [
     nombre: 'Pedestal Floral',
     descripcionCorta: 'Imponente arreglo floral de rosas y flores naturales sobre pedestal de gran altura para velaciones o eventos.',
     descripcionLarga: 'Imponente composición vertical de gran impacto visual confeccionada con rosas blancas y flores naturales en pedestal. Incluye tarjeta dedicatoria y cinta de condolencias opcional sin costo adicional.',
+    beneficios: [
+      'Imponente arreglo floral de rosas y flores naturales sobre pedestal de gran altura.',
+      'Estructura de pedestal / trípode de madera firme incluida para ceremonias solemnes.',
+      'Tarjeta "Nota de Pesar" personalizada y cinta de condolencias opcional sin costo.',
+    ],
     categoriaPrincipal: 'cat-abanicos',
     categoriasSecundarias: ['cat-ocas-condol', 'cat-eventos'],
     fotos: [

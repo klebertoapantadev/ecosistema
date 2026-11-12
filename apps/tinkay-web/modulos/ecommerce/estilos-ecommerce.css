@@ -1029,6 +1029,69 @@
   object-fit: cover;
 }
 
+.caja-descripcion-beneficios-producto {
+  background: #FAF8F5;
+  border: 1px solid #EAE6DF;
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bloque-descripcion-producto,
+.bloque-beneficios-producto {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.subtitulo-seccion-detalle {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #71717A;
+}
+
+.texto-descripcion-producto {
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: var(--tinta, #221D1A);
+  margin: 0;
+}
+
+.separador-detalle-producto {
+  height: 1px;
+  background: #EAE6DF;
+  margin: 2px 0;
+}
+
+.lista-beneficios-producto {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.item-beneficio-producto {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.81rem;
+  line-height: 1.45;
+  color: var(--tinta, #221D1A);
+  font-weight: 500;
+}
+
+.icono-check-beneficio {
+  color: #16A34A;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
 .garantias-taller-box {
   background: var(--crema);
   border-radius: 14px;

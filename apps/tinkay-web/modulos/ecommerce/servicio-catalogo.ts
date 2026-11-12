@@ -39,6 +39,7 @@ interface SupabaseProductoRaw {
     imagen_url?: string;
     galeria_urls?: string[];
     descripcion_corta?: string;
+    beneficios?: string[] | string;
     etiquetas?: string[];
     ocasion_recomendada?: string;
     usos?: string[];
@@ -117,6 +118,7 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
     const productos: ProductoEcommerce[] = prodsDb
       .filter((p) => p.pro_tipo !== 'SERVICIO' && p.pro_slug !== 'combo-aniversario-especial')
       .map((p) => {
+        const fallbackMatch = PRODUCTOS_TINKAY.find((orig) => orig.slug === p.pro_slug || orig.id === p.pro_slug);
         const detalle = p.pro_detalle_producto || {};
         const varsRaw: SupabaseVarianteRaw[] = Array.isArray(p.com_variante) ? p.com_variante : [];
         const varsActivas = varsRaw
@@ -185,6 +187,15 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
             });
           }
 
+          const beneficiosVarRaw = Array.isArray(v.var_detalle_variante?.beneficios_custom)
+            ? v.var_detalle_variante.beneficios_custom
+            : typeof v.var_detalle_variante?.beneficios_custom === 'string'
+            ? (v.var_detalle_variante.beneficios_custom as string).split('\n')
+            : [];
+          const beneficiosVar = beneficiosVarRaw
+            .map((b: any) => String(b).trim())
+            .filter((b: string) => b.length > 0);
+
           return {
             sku: v.var_sku || `VAR-${v.var_id.slice(0, 6)}`,
             nombre: v.var_nombre,
@@ -198,6 +209,7 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
               v.var_detalle_variante?.beneficios_custom?.[0] ||
               v.var_detalle_variante?.detalle ||
               undefined,
+            beneficiosCustom: beneficiosVar.length > 0 ? beneficiosVar : undefined,
             recetaBom: v.var_detalle_variante?.receta_bom || undefined,
             unidadesFlores: v.var_detalle_variante?.tallos || undefined,
           };
@@ -218,11 +230,8 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
         });
 
         // Fallback fotográfico de seguridad
-        if (fotos.length === 0) {
-          const fallbackMatch = PRODUCTOS_TINKAY.find((orig) => orig.slug === p.pro_slug || orig.id === p.pro_slug);
-          if (fallbackMatch && fallbackMatch.fotos.length > 0) {
-            fotos.push(...fallbackMatch.fotos);
-          }
+        if (fotos.length === 0 && fallbackMatch && fallbackMatch.fotos.length > 0) {
+          fotos.push(...fallbackMatch.fotos);
         }
 
         // Buscar categoría en catsDb por UUID o slug
@@ -284,12 +293,36 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
           catsSecundarias.push('cat-ocas-cumple');
         }
 
+        const beneficiosDbRaw = Array.isArray(detalle.beneficios)
+          ? detalle.beneficios
+          : typeof detalle.beneficios === 'string'
+          ? (detalle.beneficios as string).split('\n')
+          : [];
+        const beneficiosDb = beneficiosDbRaw
+          .map((b: any) => String(b).trim())
+          .filter((b: string) => b.length > 0);
+
+        const beneficiosFinal =
+          beneficiosDb.length > 0
+            ? beneficiosDb
+            : fallbackMatch?.beneficios && fallbackMatch.beneficios.length > 0
+            ? fallbackMatch.beneficios
+            : [];
+
+        const descripcionFinal =
+          p.pro_descripcion && p.pro_descripcion.trim().length > 0
+            ? p.pro_descripcion.trim()
+            : detalle.descripcion_corta && detalle.descripcion_corta.trim().length > 0
+            ? detalle.descripcion_corta.trim()
+            : fallbackMatch?.descripcionLarga || fallbackMatch?.descripcionCorta || '';
+
         return {
           id: p.pro_slug || p.pro_id,
           slug: p.pro_slug || p.pro_id,
           nombre: p.pro_nombre,
-          descripcionCorta: detalle.descripcion_corta || p.pro_descripcion || 'Arreglo floral exclusivo de exportación.',
-          descripcionLarga: p.pro_descripcion || detalle.descripcion_corta || '',
+          descripcionCorta: detalle.descripcion_corta || p.pro_descripcion || fallbackMatch?.descripcionCorta || 'Arreglo floral exclusivo de exportación.',
+          descripcionLarga: descripcionFinal,
+          beneficios: beneficiosFinal,
           categoriaPrincipal: catSlug || catEncontrada?.ctg_id || (p.pro_slug?.includes('coreano')
             ? 'cat-coreanos'
             : p.pro_slug?.includes('florero')
