@@ -119,68 +119,103 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
       .map((p) => {
         const detalle = p.pro_detalle_producto || {};
         const varsRaw: SupabaseVarianteRaw[] = Array.isArray(p.com_variante) ? p.com_variante : [];
-
-        const variantes: VarianteEcommerce[] = varsRaw
+        const varsActivas = varsRaw
           .filter((v) => v.var_activo !== false)
           .sort((a, b) => {
             const ordA = a.var_detalle_variante?.orden ?? 99;
             const ordB = b.var_detalle_variante?.orden ?? 99;
             return ordA - ordB;
-          })
-          .map((v) => {
-            const tarifaIva = Number(v.var_tarifa_iva_porcentaje ?? 0);
-            const base = Number(v.var_precio ?? 0);
-            // El PVP es la base más el IVA correspondiente
-            const pvp = tarifaIva > 0 ? Number((base * (1 + tarifaIva / 100)).toFixed(2)) : base;
-            const compRaw = v.var_precio_comparacion
-              ? Number(v.var_precio_comparacion)
-              : v.var_detalle_variante?.pvp_nominal
-              ? Number(v.var_detalle_variante.pvp_nominal)
-              : undefined;
-            const precioComparacion = compRaw && compRaw > pvp ? compRaw : undefined;
-
-            return {
-              sku: v.var_sku || `VAR-${v.var_id.slice(0, 6)}`,
-              nombre: v.var_nombre,
-              pvp,
-              baseImponible: base,
-              tarifaIva,
-              precioComparacion,
-              foto:
-                v.var_detalle_variante?.portada_url ||
-                (Array.isArray(v.var_detalle_variante?.galeria_urls)
-                  ? v.var_detalle_variante.galeria_urls[0]
-                  : undefined),
-              detalle:
-                v.var_detalle_variante?.beneficios_custom?.[0] ||
-                v.var_detalle_variante?.detalle ||
-                undefined,
-              recetaBom: v.var_detalle_variante?.receta_bom || undefined,
-              unidadesFlores: v.var_detalle_variante?.tallos || undefined,
-            };
           });
 
-        // Recolección y desduplicación de fotografías
-        // Primero aseguramos que cada variante aporte su fotografía en el orden exacto de las variantes
+        // Fotografías globales configuradas en la ficha maestra del producto
+        const fotosMaster: string[] = [];
+        const galeriaMasterExplicita: string[] = [];
+        if (typeof detalle.imagen_url === 'string' && detalle.imagen_url.trim()) {
+          fotosMaster.push(detalle.imagen_url.trim());
+        }
+        if (Array.isArray(detalle.galeria_urls)) {
+          detalle.galeria_urls.forEach((f) => {
+            if (typeof f === 'string' && f.trim()) {
+              const limpia = f.trim();
+              if (!fotosMaster.includes(limpia)) fotosMaster.push(limpia);
+              if (!galeriaMasterExplicita.includes(limpia)) galeriaMasterExplicita.push(limpia);
+            }
+          });
+        }
+
+        const variantes: VarianteEcommerce[] = varsActivas.map((v) => {
+          const tarifaIva = Number(v.var_tarifa_iva_porcentaje ?? 0);
+          const base = Number(v.var_precio ?? 0);
+          // El PVP es la base más el IVA correspondiente
+          const pvp = tarifaIva > 0 ? Number((base * (1 + tarifaIva / 100)).toFixed(2)) : base;
+          const compRaw = v.var_precio_comparacion
+            ? Number(v.var_precio_comparacion)
+            : v.var_detalle_variante?.pvp_nominal
+            ? Number(v.var_detalle_variante.pvp_nominal)
+            : undefined;
+          const precioComparacion = compRaw && compRaw > pvp ? compRaw : undefined;
+
+          // Construir la galería completa de esta variante igual que en ModalEditarProducto
+          const fotosPropias: string[] = [];
+          const portadaVar =
+            typeof v.var_detalle_variante?.portada_url === 'string'
+              ? v.var_detalle_variante.portada_url.trim()
+              : '';
+          if (portadaVar) {
+            fotosPropias.push(portadaVar);
+          }
+          if (Array.isArray(v.var_detalle_variante?.galeria_urls)) {
+            v.var_detalle_variante.galeria_urls.forEach((u) => {
+              if (typeof u === 'string' && u.trim() && !fotosPropias.includes(u.trim())) {
+                fotosPropias.push(u.trim());
+              }
+            });
+          }
+
+          // Si el producto tiene una sola variante o la galería maestra tiene fotos adicionales, sumarlas sin duplicar
+          const fotosVarianteFinal =
+            fotosPropias.length > 0 ? [...fotosPropias] : [...fotosMaster];
+          if (varsActivas.length === 1) {
+            fotosMaster.forEach((fm) => {
+              if (!fotosVarianteFinal.includes(fm)) fotosVarianteFinal.push(fm);
+            });
+          } else if (galeriaMasterExplicita.length > 0) {
+            galeriaMasterExplicita.forEach((gm) => {
+              if (!fotosVarianteFinal.includes(gm)) fotosVarianteFinal.push(gm);
+            });
+          }
+
+          return {
+            sku: v.var_sku || `VAR-${v.var_id.slice(0, 6)}`,
+            nombre: v.var_nombre,
+            pvp,
+            baseImponible: base,
+            tarifaIva,
+            precioComparacion,
+            foto: fotosVarianteFinal[0],
+            fotos: fotosVarianteFinal,
+            detalle:
+              v.var_detalle_variante?.beneficios_custom?.[0] ||
+              v.var_detalle_variante?.detalle ||
+              undefined,
+            recetaBom: v.var_detalle_variante?.receta_bom || undefined,
+            unidadesFlores: v.var_detalle_variante?.tallos || undefined,
+          };
+        });
+
+        // Recolección y desduplicación de todas las fotografías del producto y sus variantes
         const fotos: string[] = [];
         variantes.forEach((v) => {
           if (v.foto && !fotos.includes(v.foto)) fotos.push(v.foto);
         });
-        (p.com_variante || []).forEach((v) => {
-          if (Array.isArray(v.var_detalle_variante?.galeria_urls)) {
-            v.var_detalle_variante.galeria_urls.forEach((f: string) => {
-              if (f && typeof f === 'string' && !fotos.includes(f)) fotos.push(f);
-            });
-          }
-        });
-        if (detalle.imagen_url && typeof detalle.imagen_url === 'string' && !fotos.includes(detalle.imagen_url)) {
-          fotos.push(detalle.imagen_url);
-        }
-        if (Array.isArray(detalle.galeria_urls)) {
-          detalle.galeria_urls.forEach((f: string) => {
-            if (f && typeof f === 'string' && !fotos.includes(f)) fotos.push(f);
+        variantes.forEach((v) => {
+          (v.fotos || []).forEach((f) => {
+            if (f && !fotos.includes(f)) fotos.push(f);
           });
-        }
+        });
+        fotosMaster.forEach((f) => {
+          if (f && !fotos.includes(f)) fotos.push(f);
+        });
 
         // Fallback fotográfico de seguridad
         if (fotos.length === 0) {
@@ -269,6 +304,7 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
           categoriaNombre: catNombre || undefined,
           categoriasSecundarias: catsSecundarias,
           fotos,
+          fotosMaster,
           variantes: variantes.length > 0 ? variantes : [
             {
               sku: 'DEF-1',

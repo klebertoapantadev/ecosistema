@@ -20,6 +20,7 @@ export interface VarianteEcommerce {
   recetaBom?: string;
   unidadesFlores?: number;
   foto?: string;
+  fotos?: string[]; // Galería completa configurada para esta variante (portada + galeria_urls)
   precioComparacion?: number;
 }
 
@@ -34,6 +35,7 @@ export interface ProductoEcommerce {
   categoriaNombre?: string;
   categoriasSecundarias: string[];
   fotos: string[]; // Carrusel de fotos reales en alta definición
+  fotosMaster?: string[]; // Fotos globales configuradas en la ficha maestra del producto
   fotosModal?: string[]; // Galería completa para el modal de detalle
   varianteInicialSku?: string; // Variante preseleccionada en caso de desglose individual
   variantes: VarianteEcommerce[];

@@ -46,15 +46,19 @@ export function ModalDetalleProducto() {
         producto.variantes[0]!;
       setVarianteSeleccionada(varInicial);
 
-      const fotosDisponibles =
-        producto.fotosModal && producto.fotosModal.length > 0
-          ? producto.fotosModal
-          : producto.fotos && producto.fotos.length > 0
-          ? producto.fotos
-          : ['/img/slide4_flores_amor.jpg'];
+      if (varInicial.fotos && varInicial.fotos.length > 1) {
+        setFotoActivaIndex(0);
+      } else {
+        const fotosDisponibles =
+          producto.fotosModal && producto.fotosModal.length > 0
+            ? producto.fotosModal
+            : producto.fotos && producto.fotos.length > 0
+            ? producto.fotos
+            : ['/img/slide4_flores_amor.jpg'];
 
-      const fotoIdx = varInicial.foto ? fotosDisponibles.indexOf(varInicial.foto) : 0;
-      setFotoActivaIndex(fotoIdx >= 0 ? fotoIdx : 0);
+        const fotoIdx = varInicial.foto ? fotosDisponibles.indexOf(varInicial.foto) : 0;
+        setFotoActivaIndex(fotoIdx >= 0 ? fotoIdx : 0);
+      }
       setComplementosSeleccionados([]);
       setIncluirDedicatoria(false);
       setDedicatoria({ para: '', de: '', mensaje: '' });
@@ -250,20 +254,45 @@ export function ModalDetalleProducto() {
 
   if (!producto) return null;
 
-  const fotos =
+  const todasLasFotosProducto =
     producto.fotosModal && producto.fotosModal.length > 0
       ? producto.fotosModal
       : producto.fotos && producto.fotos.length > 0
       ? producto.fotos
       : ['/img/slide4_flores_amor.jpg'];
 
+  const fotosVarianteActual =
+    varianteSeleccionada.fotos && varianteSeleccionada.fotos.length > 0
+      ? varianteSeleccionada.fotos
+      : varianteSeleccionada.foto
+      ? [varianteSeleccionada.foto]
+      : [];
+
+  const mostrandoGaleriaPropia = fotosVarianteActual.length > 1;
+  const fotos = mostrandoGaleriaPropia ? fotosVarianteActual : todasLasFotosProducto;
+  const indiceFotoSeguro = fotoActivaIndex < fotos.length ? fotoActivaIndex : 0;
+
+  const seleccionarVarianteModal = (v: VarianteEcommerce) => {
+    setVarianteSeleccionada(v);
+    if (v.fotos && v.fotos.length > 1) {
+      setFotoActivaIndex(0);
+    } else if (v.foto) {
+      const idx = todasLasFotosProducto.indexOf(v.foto);
+      setFotoActivaIndex(idx >= 0 ? idx : 0);
+    } else {
+      setFotoActivaIndex(0);
+    }
+  };
+
   const cambiarFotoActiva = (nuevoIdx: number) => {
     setFotoActivaIndex(nuevoIdx);
-    const url = fotos[nuevoIdx];
-    const varDirecta =
-      producto.variantes.find((v) => v.foto === url) || producto.variantes[nuevoIdx];
-    if (varDirecta) {
-      setVarianteSeleccionada(varDirecta);
+    if (!mostrandoGaleriaPropia && producto.variantes.length > 1) {
+      const url = fotos[nuevoIdx];
+      if (!url) return;
+      const varDirecta = producto.variantes.find((v) => v.foto === url);
+      if (varDirecta) {
+        setVarianteSeleccionada(varDirecta);
+      }
     }
   };
 
@@ -289,8 +318,8 @@ export function ModalDetalleProducto() {
           <div className="columna-galeria-modal">
             <div className="visor-foto-principal">
               <img
-                src={fotos[fotoActivaIndex] ?? fotos[0] ?? '/img/slide4_flores_amor.jpg'}
-                alt={`${producto.nombre} - Foto ${fotoActivaIndex + 1}`}
+                src={fotos[indiceFotoSeguro] ?? fotos[0] ?? '/img/slide4_flores_amor.jpg'}
+                alt={`${producto.nombre} - Foto ${indiceFotoSeguro + 1}`}
                 className="imagen-modal-principal"
               />
 
@@ -301,9 +330,10 @@ export function ModalDetalleProducto() {
                     className="flecha-galeria flecha-izq"
                     onClick={() =>
                       cambiarFotoActiva(
-                        fotoActivaIndex === 0 ? fotos.length - 1 : fotoActivaIndex - 1
+                        indiceFotoSeguro === 0 ? fotos.length - 1 : indiceFotoSeguro - 1
                       )
                     }
+                    title="Foto anterior"
                     aria-label="Foto anterior"
                   >
                     <ChevronLeft size={20} />
@@ -313,41 +343,59 @@ export function ModalDetalleProducto() {
                     className="flecha-galeria flecha-der"
                     onClick={() =>
                       cambiarFotoActiva(
-                        fotoActivaIndex === fotos.length - 1 ? 0 : fotoActivaIndex + 1
+                        indiceFotoSeguro === fotos.length - 1 ? 0 : indiceFotoSeguro + 1
                       )
                     }
+                    title="Siguiente foto"
                     aria-label="Siguiente foto"
                   >
                     <ChevronRight size={20} />
                   </button>
+                  <span
+                    style={{
+                      position: 'absolute',
+                      bottom: '12px',
+                      right: '12px',
+                      background: 'rgba(24, 24, 27, 0.68)',
+                      color: '#FFFFFF',
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      padding: '4px 10px',
+                      borderRadius: '999px',
+                      pointerEvents: 'none',
+                    }}
+                  >
+                    Foto {indiceFotoSeguro + 1} de {fotos.length}
+                  </span>
                 </>
               )}
             </div>
 
-            {/* Miniaturas con Badge de Precio */}
+            {/* Miniaturas de la Galería */}
             {fotos.length > 1 && (
               <div className="tira-miniaturas">
                 {fotos.map((f, i) => {
-                  const varAsoc =
-                    producto.variantes.find((v) => v.foto === f) || producto.variantes[i];
-                  const estaActiva =
-                    i === fotoActivaIndex || (varAsoc && varAsoc.sku === varianteSeleccionada.sku);
+                  const varPorPortada = !mostrandoGaleriaPropia
+                    ? producto.variantes.find((v) => v.foto === f)
+                    : undefined;
+                  const estaActiva = i === indiceFotoSeguro;
                   return (
                     <button
-                      key={i}
+                      key={`${f}-${i}`}
                       type="button"
                       className={`miniatura-item ${estaActiva ? 'miniatura-activa' : ''}`}
                       onClick={() => cambiarFotoActiva(i)}
+                      aria-label={`Ver fotografía ${i + 1}`}
                       title={
-                        varAsoc
-                          ? `${varAsoc.nombre} — $${varAsoc.pvp.toFixed(2)}`
-                          : `Foto ${i + 1}`
+                        varPorPortada
+                          ? `${varPorPortada.nombre} — $${varPorPortada.pvp.toFixed(2)}`
+                          : `Fotografía ${i + 1} de ${fotos.length}`
                       }
                     >
                       <img src={f} alt={`Miniatura ${i + 1}`} />
-                      {varAsoc && (
+                      {varPorPortada && (
                         <span className="miniatura-badge-precio">
-                          ${varAsoc.pvp.toFixed(0)}
+                          ${varPorPortada.pvp.toFixed(0)}
                         </span>
                       )}
                     </button>
@@ -402,6 +450,70 @@ export function ModalDetalleProducto() {
                 </span>
               </div>
             </div>
+
+            {producto.variantes.length > 1 && (
+              <div
+                style={{
+                  marginBottom: '16px',
+                  padding: '12px 14px',
+                  background: '#FAF8F5',
+                  border: '1px solid #EAE6DF',
+                  borderRadius: '14px',
+                }}
+              >
+                <span
+                  style={{
+                    display: 'block',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    color: '#52525B',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                    marginBottom: '8px',
+                  }}
+                >
+                  Presentación / Tamaño
+                </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {producto.variantes.map((v) => {
+                    const activa = v.sku === varianteSeleccionada.sku;
+                    return (
+                      <button
+                        key={v.sku}
+                        type="button"
+                        onClick={() => seleccionarVarianteModal(v)}
+                        title={`Seleccionar ${v.nombre} ($${v.pvp.toFixed(2)})`}
+                        aria-label={`Seleccionar ${v.nombre}`}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '7px 12px',
+                          borderRadius: '999px',
+                          border: activa ? '1.5px solid #27272A' : '1px solid #E4E4E7',
+                          background: activa ? '#27272A' : '#FFFFFF',
+                          color: activa ? '#FFFFFF' : '#27272A',
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        <span>{v.nombre.trim()}</span>
+                        <span
+                          style={{
+                            fontWeight: 700,
+                            opacity: activa ? 0.9 : 0.72,
+                          }}
+                        >
+                          ${v.pvp.toFixed(2)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             <p className="descripcion-larga-modal">{producto.descripcionLarga}</p>
 

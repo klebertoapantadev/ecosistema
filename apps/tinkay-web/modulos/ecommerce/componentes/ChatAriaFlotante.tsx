@@ -554,7 +554,12 @@ export function ChatAriaFlotante() {
                               <button
                                 type="button"
                                 className="btn-chat-ver"
-                                onClick={() => setProductoSeleccionadoModal(producto)}
+                                onClick={() =>
+                                  setProductoSeleccionadoModal({
+                                    ...producto,
+                                    varianteInicialSku: variantePorDefecto.sku,
+                                  })
+                                }
                               >
                                 Ver fotos
                               </button>

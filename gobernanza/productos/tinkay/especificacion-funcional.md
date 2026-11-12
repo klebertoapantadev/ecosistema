@@ -55,6 +55,7 @@ Tinkay se apoya plenamente en la arquitectura de Plataforma común:
 ### TNK-002 — E-Commerce Web, Carrito y Pasarela Payphone
 - **Vitrina Web:** `apps/tinkay-web` con diseño editorial botánico según [`sistema-visual.md`](sistema-visual.md).
 - **Catálogo Real & Variantes:** Visualización de productos reales (Bouquet Coreano, Box Florales con Box M a $40 como principal, Bouquets para Florero, Especiales Puro Amor, Abanicos y Pedestales). Exclusión estricta de productos de prueba o combos inexistentes.
+- **Carrusel Fotográfico Multigaleria por Producto y Variante:** Tanto las tarjetas de vitrina (`TarjetaProductoConCarrusel`) como el modal de detalle (`ModalDetalleProducto`) leen íntegramente las galerías configuradas en `comun_comercio` (`pro_detalle_producto.galeria_urls` y `var_detalle_variante.galeria_urls`), permitiendo recorrer todas las fotografías de cada presentación y alternar entre variantes.
 - **Cajita de Pagos Payphone:** Configuración de pasarela registrada en `comun_comercio.com_pasarela_configuracion` (modo pruebas / simulado habilitado).
 - **Parámetros de Entrega:** Selección de dedicatoria impresa individual o unificada, fecha y franja horaria (gratuita mañana/tarde o recargo de hora exacta / madrugador).
 

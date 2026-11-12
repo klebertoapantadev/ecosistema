@@ -501,22 +501,24 @@
   top: 50%;
   transform: translateY(-50%);
   z-index: 6;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border-radius: 999px;
-  border: none;
-  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(34, 29, 26, 0.12);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
   backdrop-filter: blur(4px);
   color: var(--tinta);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s ease, transform 0.15s ease;
+  opacity: 0.88;
+  transition: opacity 0.2s ease, transform 0.15s ease, background 0.15s ease;
 }
 .tarjeta-producto-ecommerce:hover .flecha-carrusel {
   opacity: 1;
+  background: #FFFFFF;
 }
 .flecha-izq { left: 8px; }
 .flecha-der { right: 8px; }
@@ -524,19 +526,24 @@
 .dots-carrusel {
   position: absolute;
   bottom: 10px;
-  left: 0;
-  right: 0;
-  display: flex;
+  left: 50%;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
   gap: 5px;
-  z-index: 5;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: rgba(24, 24, 27, 0.42);
+  backdrop-filter: blur(3px);
+  z-index: 6;
 }
 .dot {
   width: 6px;
   height: 6px;
   border-radius: 999px;
   border: none;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.78);
   cursor: pointer;
   transition: all 0.15s ease;
 }

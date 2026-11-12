@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ProductoEcommerce, VarianteEcommerce } from '../tipos';
 import { useCarrito } from '../contexto-carrito';
 import { ChevronLeft, ChevronRight, Eye, ShoppingBag, Heart } from 'lucide-react';
@@ -13,7 +13,7 @@ interface Props {
 export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
   const { agregarItem, setProductoSeleccionadoModal } = useCarrito();
   const [fotoActualIndex, setFotoActualIndex] = useState(0);
-  const varianteInicial =
+  const obtenerVarianteBase = () =>
     (producto.varianteInicialSku
       ? producto.variantes.find((v) => v.sku === producto.varianteInicialSku)
       : null) ??
@@ -24,30 +24,57 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
       baseImponible: 21.74,
       tarifaIva: 15,
     };
-  const [varianteSeleccionada, setVarianteSeleccionada] = useState<VarianteEcommerce>(varianteInicial);
+  const [varianteSeleccionada, setVarianteSeleccionada] = useState<VarianteEcommerce>(obtenerVarianteBase);
   const [favorito, setFavorito] = useState(false);
 
-  const fotos = producto.fotos.length > 0 ? producto.fotos : ['/img/slide4_flores_amor.jpg'];
-  const fotoActual = fotos[fotoActualIndex] ?? fotos[0] ?? '/img/slide4_flores_amor.jpg';
+  // En tarjetas agrupadas (sin varianteInicialSku), si la variante elegida tiene su propia galería (>1 foto),
+  // mostrar su galería o el carrusel general del producto.
+  const fotosBase =
+    !producto.varianteInicialSku &&
+    varianteSeleccionada.fotos &&
+    varianteSeleccionada.fotos.length > 1 &&
+    producto.variantes.length === 1
+      ? varianteSeleccionada.fotos
+      : producto.fotos;
+
+  const fotos = fotosBase.length > 0 ? fotosBase : ['/img/slide4_flores_amor.jpg'];
+  const indiceSeguro = fotoActualIndex < fotos.length ? fotoActualIndex : 0;
+  const fotoActual = fotos[indiceSeguro] ?? fotos[0] ?? '/img/slide4_flores_amor.jpg';
+
+  useEffect(() => {
+    const nuevaVar =
+      (producto.varianteInicialSku
+        ? producto.variantes.find((v) => v.sku === producto.varianteInicialSku)
+        : null) ?? producto.variantes[0];
+    if (nuevaVar) {
+      setVarianteSeleccionada(nuevaVar);
+    }
+    setFotoActualIndex((prev) => (prev < producto.fotos.length ? prev : 0));
+  }, [producto]);
 
   const cambiarFotoCard = (nuevoIdx: number) => {
     setFotoActualIndex(nuevoIdx);
-    const url = fotos[nuevoIdx];
-    const varDirecta =
-      producto.variantes.find((v) => v.foto === url) || producto.variantes[nuevoIdx];
-    if (varDirecta) {
-      setVarianteSeleccionada(varDirecta);
+    // Solo sincronizar variante cuando la tarjeta agrupa múltiples variantes (no desglosada individualmente)
+    if (!producto.varianteInicialSku && producto.variantes.length > 1) {
+      const url = fotos[nuevoIdx];
+      if (!url) return;
+      const varDirecta =
+        producto.variantes.find((v) => v.foto === url) ||
+        producto.variantes.find((v) => Array.isArray(v.fotos) && v.fotos.includes(url));
+      if (varDirecta) {
+        setVarianteSeleccionada(varDirecta);
+      }
     }
   };
 
   const anteriorFoto = (e: React.MouseEvent) => {
     e.stopPropagation();
-    cambiarFotoCard(fotoActualIndex === 0 ? fotos.length - 1 : fotoActualIndex - 1);
+    cambiarFotoCard(indiceSeguro === 0 ? fotos.length - 1 : indiceSeguro - 1);
   };
 
   const siguienteFoto = (e: React.MouseEvent) => {
     e.stopPropagation();
-    cambiarFotoCard(fotoActualIndex === fotos.length - 1 ? 0 : fotoActualIndex + 1);
+    cambiarFotoCard(indiceSeguro === fotos.length - 1 ? 0 : indiceSeguro + 1);
   };
 
   const irAFoto = (e: React.MouseEvent, index: number) => {
@@ -77,7 +104,7 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
       <div className="contenedor-foto-carrusel">
         <img
           src={fotoActual}
-          alt={`${producto.nombre} - Foto ${fotoActualIndex + 1}`}
+          alt={`${producto.nombre} - Foto ${indiceSeguro + 1}`}
           className="imagen-carrusel"
           loading="lazy"
         />
@@ -128,13 +155,31 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
               <ChevronRight size={18} />
             </button>
 
-            {/* Indicador de dots */}
+            {/* Contador discreto + Indicador de dots */}
+            <span
+              style={{
+                position: 'absolute',
+                bottom: '10px',
+                right: '10px',
+                zIndex: 6,
+                background: 'rgba(24, 24, 27, 0.62)',
+                color: '#FFFFFF',
+                fontSize: '0.68rem',
+                fontWeight: 700,
+                padding: '2px 7px',
+                borderRadius: '999px',
+                pointerEvents: 'none',
+              }}
+            >
+              {indiceSeguro + 1}/{fotos.length}
+            </span>
+
             <div className="dots-carrusel">
               {fotos.map((_, idx) => (
                 <button
                   key={idx}
                   type="button"
-                  className={`dot ${idx === fotoActualIndex ? 'dot-activo' : ''}`}
+                  className={`dot ${idx === indiceSeguro ? 'dot-activo' : ''}`}
                   onClick={(e) => irAFoto(e, idx)}
                   aria-label={`Ver foto ${idx + 1}`}
                 />

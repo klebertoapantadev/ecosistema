@@ -84,14 +84,32 @@ export function VitrinaCatalogoTinkay() {
 
       // Si el producto tiene múltiples variaciones, se despliega cada una como un producto individual
       if (p.variantes && p.variantes.length > 1) {
-        // Galería completa de todas las variaciones para las miniaturas del modal
-        const todasLasFotosModal = p.variantes
-          .map((v) => v.foto)
-          .filter((f): f is string => Boolean(f));
+        // Galería completa desduplicada de todas las variaciones y fotos del producto
+        const todasLasFotosModal: string[] = [];
+        p.variantes.forEach((varItem) => {
+          if (varItem.foto && !todasLasFotosModal.includes(varItem.foto)) {
+            todasLasFotosModal.push(varItem.foto);
+          }
+          (varItem.fotos || []).forEach((f) => {
+            if (f && !todasLasFotosModal.includes(f)) {
+              todasLasFotosModal.push(f);
+            }
+          });
+        });
+        p.fotos.forEach((f) => {
+          if (f && !todasLasFotosModal.includes(f)) {
+            todasLasFotosModal.push(f);
+          }
+        });
 
         return p.variantes.map((v) => {
-          // Para la tarjeta individual de la vitrina: ÚNICAMENTE la foto de esta variación
-          const fotosTarjetaIndividual = v.foto ? [v.foto] : p.fotos.slice(0, 1);
+          // Para la tarjeta individual: mostrar TODAS las fotografías configuradas en esta variación
+          const fotosTarjetaIndividual =
+            v.fotos && v.fotos.length > 0
+              ? v.fotos
+              : v.foto
+              ? [v.foto]
+              : p.fotos;
           const nombreIndividual = obtenerNombreProductoIndividual(p.nombre, v.nombre);
 
           const productoIndividual: ProductoEcommerce = {
@@ -101,10 +119,10 @@ export function VitrinaCatalogoTinkay() {
             nombre: nombreIndividual,
             nombreBase: p.nombre,
             descripcionCorta: v.detalle || p.descripcionCorta,
-            fotos: fotosTarjetaIndividual, // En la vitrina: SOLO muestra la imagen de esta variación individual
-            fotosModal: todasLasFotosModal.length > 0 ? todasLasFotosModal : p.fotos, // En el modal: galería de todas las variaciones
-            variantes: p.variantes, // En el modal: lista completa de variantes para alternar
-            varianteInicialSku: v.sku, // Marca cuál variante abrió el usuario
+            fotos: fotosTarjetaIndividual,
+            fotosModal: todasLasFotosModal.length > 0 ? todasLasFotosModal : p.fotos,
+            variantes: p.variantes,
+            varianteInicialSku: v.sku,
             destacado: p.destacado,
           };
           return productoIndividual;
