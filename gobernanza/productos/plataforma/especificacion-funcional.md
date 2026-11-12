@@ -22,7 +22,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-001`** | Identidad Única, Registro Cero Fricción y Auth | ✅ Implementado | **85%** | Kleber Toapanta |
 | **`PLT-002`** | Autenticación Multifactor (MFA TOTP) & Expiración por Inactividad | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-003`** | Membresías, Jerarquía & Active Role Switcher | ✅ Implementado | **100%** | Kleber Toapanta / Jesus Navarrete |
-| **`PLT-004`** | **Buddie Conversacional (Chat IA ARIA & OCR Multimodal)** | 🟡 En Desarrollo | **60%** | **Jesus Navarrete** |
+| **`PLT-004`** | **Buddie Conversacional (Chat IA ARIA & OCR Multimodal)** | 🟡 En Desarrollo | **75%** | **Kleber Toapanta / Jesus Navarrete** |
 | **`PLT-005`** | Auditoría por Triggers y Widget Común | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-006`** | Datos de Facturación SRI, Emisión Automática con Tarjeta, Pagos Manuales y Widget de Comprobantes | ✅ Implementado | **100%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-007`** | Catálogo Geográfico (Ecuador 24 Provincias) | ✅ Implementado | **100%** | Kleber Toapanta |
@@ -412,6 +412,10 @@ Proporciona una consola de configuración para que el Administrador de cada nego
    - **La contraseña se guarda cifrada en Supabase Vault y no vuelve a mostrarse a nadie**, ni siquiera al Administrador que la escribió. La pantalla solo indica si existe; dejar el campo vacío conserva la guardada, y hay una acción explícita y separada para eliminarla. Ver [`ADR-0005`](../../arquitectura/adr/0005-smtp-por-negocio.md).
    - **Interruptor de activación independiente de la configuración:** los datos pueden quedar cargados sin que el negocio empiece a enviar. Solo se puede activar si host, usuario y contraseña están completos.
    - Mientras un negocio no tenga SMTP activo **no envía correo**: no existe un remitente compartido por defecto que enmascare una configuración faltante. Afecta al código de verificación de registro (`PLT-001`) y al enlace de recuperación de contraseña.
+7. **Agente Conversacional ARIA propio del negocio** — widget común `configuracion_aria` (`/panel/aria`), accesible para `ADMINISTRADOR` del negocio y `SUPERADMIN`:
+   - Cada aplicación del ecosistema (`tranqi-web`, `fastfix-web`, `tinkay-web`, `margaritas-web`) expone la misma pantalla compartida (`FormularioAria` en `@eco/configuracion-negocio`), guardando los parámetros propios e independientes de su negocio en `comun_configuracion.cfg_aria` (`ari_base_url` / `ARIA_BASE`, `ari_agente_id` / `ARIA_AGENT_ID`, `ari_nombre_agente` y `ari_activo`).
+   - **Las credenciales secretas (`ARIA_AGENT_KEY`, y opcionalmente `ARIA_TENANT_KEY` / `ARIA_GATE_KEY`) se cifran exclusivamente en Supabase Vault** vía `cfg_fn_guardar_aria` y jamás vuelven a mostrarse en pantalla. El descifrado (`cfg_fn_obtener_aria_credenciales`) solo puede ejecutarlo `service_role` desde la Edge Function `invocar-aria`.
+   - Incluye botón **Probar Agente** para validar la conexión en vivo desde la consola administrativa, y respaldo automático a las variables de entorno `ARIA_BASE` / `ARIA_AGENT_ID` / `ARIA_AGENT_KEY` cuando el negocio aún no activó su registro en Vault (`invocarAgentePorNegocio` en `@eco/agentes-ia`).
 
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Configuración del servidor SMTP del negocio

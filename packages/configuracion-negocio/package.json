@@ -10,6 +10,7 @@
     "./consultas": "./src/consultas.ts",
     "./acciones": "./src/acciones.ts",
     "./acciones-smtp": "./src/acciones-smtp.ts",
+    "./acciones-aria": "./src/acciones-aria.ts",
     "./acciones-tokens-mcp": "./src/acciones-tokens-mcp.ts"
   },
   "scripts": {

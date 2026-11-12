@@ -78,3 +78,23 @@ pasar por el prompt (`tool_context` en `InvokeRequest`, plantillas `{{clave}}` e
 http-tools y MCP). El cambio es retrocompatible. El razonamiento completo, y por qué la alternativa
 de pasar el identificador como argumento de herramienta se descartó, están en
 [ADR-0005](0005-frontera-de-identidad-en-herramientas-de-ia.md).
+
+## Nota de seguimiento (2026-11-11, PLT-008 / PLT-004 / TNK-004)
+
+Para que el `ADMINISTRADOR` de cada negocio (`tinkay`, `tranqi`, `fastfix`, `margaritas`) o el
+`SUPERADMIN` pueda configurar y rotar las credenciales de su propio agente conversacional desde el
+panel administrativo (`/panel/aria`, widget común `configuracion_aria` en `@eco/configuracion-negocio`)
+sin depender de variables de despliegue manuales en Vercel ni romper la política de secretos:
+
+1. **Metadatos no sensibles en `comun_configuracion.cfg_aria`** (prefijo `ari_`, RLS + auditoría):
+   almacena por negocio `ari_base_url` (`ARIA_BASE`), `ari_agente_id` (`ARIA_AGENT_ID`),
+   `ari_nombre_agente` y `ari_activo`, más las referencias UUID a Vault (`ari_secreto_id`,
+   `ari_tenant_secreto_id`, `ari_gate_secreto_id`).
+2. **Secretos exclusivamente en Supabase Vault (`vault.secrets`)**: `ARIA_AGENT_KEY` (y opcionalmente
+   `ARIA_TENANT_KEY` / `ARIA_GATE_KEY`) se guardan mediante el RPC `cfg_fn_guardar_aria` siguiendo el
+   mismo modelo que SMTP en [ADR-0005](0005-smtp-por-negocio.md). Ninguna columna guarda la clave en
+   texto plano y la pantalla jamás puede leerla de vuelta.
+3. **Descifrado aislado en Edge Function (`supabase/functions/invocar-aria`)**: `cfg_fn_obtener_aria_credenciales`
+   otorga `EXECUTE` únicamente a `service_role`. `invocarAgentePorNegocio()` en `packages/agentes-ia`
+   consulta primero `invocar-aria` y mantiene respaldo automático a `resolverAgenteDesdeEntorno("ARIA")`
+   (`ARIA_BASE`, `ARIA_AGENT_ID`, `ARIA_AGENT_KEY`) para no interrumpir despliegues existentes.

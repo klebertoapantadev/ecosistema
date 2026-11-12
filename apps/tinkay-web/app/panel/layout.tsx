@@ -33,6 +33,12 @@ const MODULOS_NAV_TINKAY: ItemNavegacionTinkay[] = [
     soloAdmin: true,
   },
   {
+    clave: "configuracion_aria",
+    nombre: "Agente Conversacional ARIA",
+    ruta: "/panel/aria",
+    soloAdmin: true,
+  },
+  {
     clave: "tokens_mcp",
     nombre: "Tokens & Servidor MCP",
     ruta: "/panel/tokens-mcp",

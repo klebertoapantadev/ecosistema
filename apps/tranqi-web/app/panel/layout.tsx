@@ -105,7 +105,10 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   }
 
   const correo = perfil.usu_correo?.toLowerCase().trim() || "";
-  const esSuperAdminEmail = correo === "familiammtg@gmail.com" || correo === "jesus251296@gmail.com";
+  const esSuperAdminEmail =
+    correo === "kleber.toapanta.ch@gmail.com" ||
+    correo === "familiammtg@gmail.com" ||
+    correo === "jesus251296@gmail.com";
   const esSuperAdminPlataforma = Boolean(perfil.usu_superadmin_plataforma);
   const esSuperAdmin = esSuperAdminEmail || esSuperAdminPlataforma || perfiles.includes("SUPERADMIN");
 

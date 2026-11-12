@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Search, X, UserCog, UserCheck, Settings, Mail, Bell, Shield, ShieldCheck,
   CircleUser, ChevronRight, Sliders, Briefcase, FileText, BarChart2, FileCheck, Folder,
-  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard, Building2, Scale, KeyRound, Sparkles
+  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard, Building2, Scale, KeyRound, Sparkles, Bot
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
@@ -141,6 +141,16 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     minNivel: 50,
     icono: CreditCard,
     colorIcono: "#D97706"
+  },
+  {
+    clave: "configuracion_aria",
+    nombre: "Agente Conversacional ARIA",
+    detalle: "Parámetros ARIA_BASE, ARIA_AGENT_ID y claves en Supabase Vault propios de este negocio",
+    ruta: "/panel/aria",
+    categoria: "Seguridad & Integraciones",
+    minNivel: 80,
+    icono: Bot,
+    colorIcono: "#059669"
   },
   {
     clave: "tokens_mcp",

@@ -6,7 +6,7 @@ import {
   Home, CircleUser, Settings, ShieldCheck, ClipboardList, Wrench, CreditCard,
   PanelLeft, Sliders, Folder, Activity, FileText, UserCog, Briefcase, Calendar, Users,
   CheckSquare, Globe, Building2, Sparkles, Phone, Lock, KeyRound, Terminal, Zap,
-  Eye, Search, Pencil, LogOut, LogIn, ShoppingBag, type LucideIcon
+  Eye, Search, Pencil, LogOut, LogIn, ShoppingBag, Bot, type LucideIcon
 } from "lucide-react";
 import { EnlacePanel } from "./EnlacePanel";
 import { BotonCerrarSesion } from "./BotonCerrarSesion";
@@ -58,6 +58,7 @@ const MAPA_ICONOS_NAV: Record<string, LucideIcon> = {
   LogOut,
   LogIn,
   PanelLeft,
+  Bot,
   panel_inicio: Home,
   panel_productos_servicios: ShoppingBag,
   panel_clientes: CircleUser,

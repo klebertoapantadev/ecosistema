@@ -151,7 +151,12 @@ export async function buscarUsuarios(
     }
 
     const correoLower = (u.usu_correo || "").toLowerCase().trim();
-    if (u.usu_superadmin_plataforma || correoLower === "familiammtg@gmail.com" || correoLower === "jesus251296@gmail.com") {
+    if (
+      u.usu_superadmin_plataforma ||
+      correoLower === "kleber.toapanta.ch@gmail.com" ||
+      correoLower === "familiammtg@gmail.com" ||
+      correoLower === "jesus251296@gmail.com"
+    ) {
       listaClaves = Array.from(new Set(["SUPERADMIN", ...listaClaves]));
       nMax = 100;
     }

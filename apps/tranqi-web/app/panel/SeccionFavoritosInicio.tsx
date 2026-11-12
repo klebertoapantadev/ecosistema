@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, Users, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, ShoppingBag, CreditCard, CalendarPlus, CalendarCheck, CalendarClock, Shuffle, Building2, Scale, Briefcase, type LucideIcon } from "lucide-react";
+import { User, Users, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, ShoppingBag, CreditCard, CalendarPlus, CalendarCheck, CalendarClock, Shuffle, Building2, Scale, Briefcase, Bot, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
 
@@ -215,6 +215,14 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     subtitulo: "Configuración de cláusulas LOPDP, notificaciones, WhatsApp y protección de datos",
     icono: FileText,
     href: "/panel/administrar?widget=gestion_terminos_consentimientos",
+    origen: "Configurar"
+  },
+  configuracion_aria: {
+    id: "configuracion_aria",
+    titulo: "Agente Conversacional ARIA",
+    subtitulo: "Parámetros ARIA_BASE, ARIA_AGENT_ID y claves en Vault aislados por negocio",
+    icono: Bot,
+    href: "/panel/aria",
     origen: "Configurar"
   },
   tokens_mcp: {

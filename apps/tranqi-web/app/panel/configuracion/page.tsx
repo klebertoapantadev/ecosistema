@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { obtenerPerfilActual, obtenerPerfiles } from "@eco/identidad";
-import { obtenerConfiguracionNegocio, obtenerSmtpNegocio } from "@eco/configuracion-negocio/consultas";
+import {
+  obtenerConfiguracionNegocio,
+  obtenerSmtpNegocio,
+  obtenerAriaNegocio,
+} from "@eco/configuracion-negocio/consultas";
 import { PanelConfiguracionModular } from "./PanelConfiguracionModular";
 
 export const metadata: Metadata = { title: "Configuración & Preferencias — tranqi" };
@@ -23,6 +27,7 @@ export default async function PaginaConfiguracion() {
 
   const configuracion = (esAdmin || esSuperadmin) ? await obtenerConfiguracionNegocio(NEGOCIO) : null;
   const smtp = (esAdmin || esSuperadmin) ? await obtenerSmtpNegocio(NEGOCIO) : null;
+  const aria = (esAdmin || esSuperadmin) ? await obtenerAriaNegocio(NEGOCIO) : null;
 
   return (
     <div style={{ width: "100%" }}>
@@ -31,6 +36,7 @@ export default async function PaginaConfiguracion() {
         esSuperadmin={esSuperadmin}
         configuracion={configuracion}
         smtp={smtp}
+        aria={aria}
         negocio={NEGOCIO}
       />
     </div>

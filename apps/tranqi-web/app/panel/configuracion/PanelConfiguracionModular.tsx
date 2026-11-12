@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Pencil, Lock, CreditCard, ShoppingBag, KeyRound, type LucideIcon } from "lucide-react";
+import { Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Pencil, Lock, CreditCard, ShoppingBag, KeyRound, Bot, type LucideIcon } from "lucide-react";
 import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
 import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
+import { FormularioAria } from "@eco/configuracion-negocio/componentes/FormularioAria";
+import type { ConfiguracionAriaVista } from "@eco/configuracion-negocio";
 import { GestionTokensMcpWidget } from "@eco/configuracion-negocio/componentes/GestionTokensMcpWidget";
 import { PreferenciasNotificacionWidget } from "@eco/notificaciones";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
@@ -22,6 +24,7 @@ interface Props {
   configuracion: any | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   smtp: any | null;
+  aria?: ConfiguracionAriaVista | null;
   negocio: string;
 }
 
@@ -99,6 +102,15 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     soloAdmin: true
   },
   {
+    id: "configuracion_aria",
+    titulo: "Agente Conversacional ARIA",
+    subtitulo: "Parámetros ARIA_BASE, ARIA_AGENT_ID y claves en Supabase Vault propios del negocio",
+    icono: Bot,
+    colorIcono: "#059669",
+    categoria: "Servicios de Despacho",
+    soloAdmin: true
+  },
+  {
     id: "tokens_mcp",
     titulo: "Tokens & APIs MCP",
     subtitulo: "Gestión y emisión de tokens de acceso para conectar herramientas MCP con bots y agentes externos",
@@ -112,6 +124,9 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
 const ALIAS_WIDGET: Record<string, string> = {
   configuracion_negocio: "negocio",
   configuracion_correo: "correo",
+  configuracion_aria: "configuracion_aria",
+  "configuracion-aria": "configuracion_aria",
+  aria: "configuracion_aria",
   preferencias_notificacion: "notificaciones",
   terminos: "gestion_terminos_consentimientos",
   mcp_tokens: "tokens_mcp",
@@ -128,7 +143,7 @@ const ALIAS_WIDGET: Record<string, string> = {
   mi_perfil_abogado: "notificaciones",
 };
 
-export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, configuracion, smtp, negocio }: Props) {
+export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, configuracion, smtp, aria = null, negocio }: Props) {
   const [favoritos, setFavoritos] = useState<string[]>([]);
   const { widgetActivo, abrir, cerrar } = useWidgetEnUrl(ALIAS_WIDGET);
   const [widgetEditar, setWidgetEditar] = useState<{
@@ -339,6 +354,13 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
             {(widgetActivo === "tokens_mcp" || widgetActivo === "mcp_tokens") && (
               <div style={{ width: "100%" }}>
                 <GestionTokensMcpWidget negocio={negocio} />
+              </div>
+            )}
+
+            {/* 9. AGENTE CONVERSACIONAL ARIA (VAULT POR NEGOCIO) */}
+            {widgetActivo === "configuracion_aria" && (
+              <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+                <FormularioAria inicial={aria} negocio={negocio} />
               </div>
             )}
           </div>

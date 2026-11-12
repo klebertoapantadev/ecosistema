@@ -22,7 +22,7 @@ responsable: Kleber Toapanta
 | **`TNK-001`** | **Catálogo y Portafolio Multidimensional de Arreglos** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TNK-002`** | **E-Commerce Web, Carrito y Pasarela Payphone** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TNK-003`** | **Vendedoras, Enlaces Ref y Comisiones Netas** | 🟡 En Desarrollo | **60%** | Kleber Toapanta |
-| **`TNK-004`** | **Agente ARIA WhatsApp (YCloud), Web Chat y Consola (HITL)** | 🟡 En Desarrollo | **85%** | Kleber Toapanta |
+| **`TNK-004`** | **Agente ARIA WhatsApp (YCloud), Web Chat y Consola (HITL)** | 🟡 En Desarrollo | **90%** | Kleber Toapanta |
 | **`TNK-005`** | **Taller de Armado Floral, Inventario de Bonches y Despacho Delivery** | 🟡 En Desarrollo | **75%** | Kleber Toapanta |
 
 ---
@@ -37,6 +37,7 @@ Tinkay se apoya plenamente en la arquitectura de Plataforma común:
 - **`PLT-011` (Widgets Administrativos y Panel Modular):** Catálogo de herramientas y módulos propio de la floristería:
   - `catalogo_productos` / `vitrina_comercial` (`/panel/catalogo-productos`): Catálogo multidimensional de arreglos florales, bouquets, stock de bonches y precios SRI con IVA 15%.
   - `gestion_usuarios` (`/panel/usuarios`): Asignación de membresías y roles de taller y asesoras.
+  - `configuracion_aria` (`/panel/aria`): Parámetros `ARIA_BASE`, `ARIA_AGENT_ID` y clave `ARIA_AGENT_KEY` en Supabase Vault para el chat Mía de Tinkay (`@eco/configuracion-negocio`).
   - `tokens_mcp` (`/panel/tokens-mcp`): Credenciales de catálogo para bots de WhatsApp y automatizaciones.
   - `configuracion_negocio` (`/panel/configuracion`): Políticas de entrega, dedicatorias y redes oficiales.
   - `configuracion_correo` (`/panel/correo`): Servidor SMTP para confirmaciones de despacho.

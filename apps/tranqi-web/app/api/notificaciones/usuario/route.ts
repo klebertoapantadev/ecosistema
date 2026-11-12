@@ -104,7 +104,10 @@ export async function GET() {
         const perfilesTRANQ = await obtenerPerfiles("TRANQ");
         const perfiles = Array.from(new Set([...perfilesTranqi, ...perfilesTRANQ]));
         const correo = (perfil.usu_correo || "").toLowerCase().trim();
-        const esSuperAdminEmail = correo === "familiammtg@gmail.com" || correo === "jesus251296@gmail.com";
+        const esSuperAdminEmail =
+          correo === "kleber.toapanta.ch@gmail.com" ||
+          correo === "familiammtg@gmail.com" ||
+          correo === "jesus251296@gmail.com";
 
         let client = null;
         try {

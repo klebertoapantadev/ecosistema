@@ -8,7 +8,7 @@ import {
   Palette, UserCheck, X, Sparkles, Trash2, Star, Move, Copy, Package, GripVertical,
   Home, User, Settings, Shield, Folder, Wrench, Building, Briefcase, Bell, Database,
   Activity, Globe, Lock, KeyRound, CheckSquare, Terminal, Zap, Pencil, LogOut, LogIn,
-  Forward, Inbox, FileText, Download, Printer, Share2, RotateCcw, Loader2, Scale, type LucideIcon
+  Forward, Inbox, FileText, Download, Printer, Share2, RotateCcw, Loader2, Scale, Bot, type LucideIcon
 } from "lucide-react";
 import {
   guardarPerfil,
@@ -51,6 +51,7 @@ export const CATALOGO_ICONOS_PANEL: Record<string, LucideIcon> = {
   Layers,
   LayoutGrid,
   PanelLeft,
+  Bot,
 };
 
 export function IconoPanelDinamico({ nombreIcono, color, size = 18 }: { nombreIcono?: string; color?: string; size?: number }) {
@@ -357,7 +358,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
-      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
+      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "configuracion_aria", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
     },
     activo: true
   },
@@ -379,7 +380,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
-      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
+      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "configuracion_aria", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
     },
     activo: true,
     esSuperAdmin: true
@@ -565,6 +566,17 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     panelId: "panel_configuracion",
     activo: true,
     creadoEn: "2026-08-20"
+  },
+  {
+    clave: "configuracion_aria",
+    nombre: "Agente Conversacional ARIA",
+    descripcion: "Parámetros de conexión ARIA (ARIA_BASE, ARIA_AGENT_ID y claves en Vault) propios de este negocio.",
+    categoria: "Seguridad & Integraciones",
+    ruta: "/panel/aria",
+    rutaFisica: "/configuracion-negocio/componentes/FormularioAria.tsx",
+    panelId: "panel_configuracion",
+    activo: true,
+    creadoEn: "2026-11-11"
   },
   {
     clave: "tokens_mcp",
@@ -1006,6 +1018,21 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
           </p>
           <div style={{ padding: "12px", background: "#ECFDF5", borderRadius: "8px", border: "1px dashed #A7F3D0", textAlign: "center", fontSize: "0.82rem", color: "#047857", fontWeight: 700 }}>
             Especialidades Legales · Provincias de Cobertura · Citas Presenciales / Teleconsulta
+          </div>
+        </div>
+      );
+
+    case "configuracion_aria":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #059669", boxShadow: "0 4px 12px rgba(5,150,105,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#059669", marginBottom: "10px" }}>
+            <Bot size={18} /> Agente Conversacional ARIA
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Parámetros de conexión ARIA (ARIA_BASE, ARIA_AGENT_ID y API Key cifrada en Supabase Vault) aislados por negocio.
+          </p>
+          <div style={{ padding: "12px", background: "#ECFDF5", borderRadius: "8px", border: "1px dashed #A7F3D0", textAlign: "center", fontSize: "0.82rem", color: "#065F46", fontWeight: 700 }}>
+            ARIA_BASE · ARIA_AGENT_ID · Vault (ARIA_AGENT_KEY) · Prueba en Vivo
           </div>
         </div>
       );

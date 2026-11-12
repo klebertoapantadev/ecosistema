@@ -69,6 +69,7 @@ async function obtenerDestinatariosStaffTranqi(
         const correo = (u.usu_correo || "").toLowerCase().trim();
         const esSuperAdmin = Boolean(
           u.usu_superadmin_plataforma ||
+          correo === "kleber.toapanta.ch@gmail.com" ||
           correo === "familiammtg@gmail.com" ||
           correo === "jesus251296@gmail.com"
         );

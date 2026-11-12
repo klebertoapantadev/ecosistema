@@ -33,7 +33,7 @@ Si más adelante se requiere un inventario propio, se limita estrictamente a:
 - `service_role` de Supabase: solo en variables de entorno de Edge Functions y de GitHub Actions con scope restringido. Nunca en `NEXT_PUBLIC_*`, nunca en el bundle de una app nativa.
 - Rotación obligatoria ante salida de cualquier persona con acceso, y calendarizada al menos cada 6 meses para credenciales de pasarela de pago y SRI.
 - Credenciales de ambiente de desarrollo y de producción son distintas siempre; nunca se reutiliza una clave de producción en local.
-- **Credenciales que escribe el cliente desde la consola, no el equipo técnico** —hoy la contraseña SMTP de cada negocio (`PLT-008`)— van a Supabase Vault, nunca a una columna de tabla ni a una variable de entorno. La regla práctica: si la pantalla que la guarda pudiera volver a mostrarla, está mal guardada. Ver [`ADR-0005`](../arquitectura/adr/0005-smtp-por-negocio.md).
+- **Credenciales que escribe el cliente desde la consola, no el equipo técnico** —la contraseña SMTP de cada negocio (`PLT-008`, `cfg_smtp`) y la API Key del agente conversacional ARIA de cada negocio (`PLT-008`, `cfg_aria`)— van a Supabase Vault, nunca a una columna de tabla ni a una variable de entorno ni a `localStorage`. La regla práctica: si la pantalla que la guarda pudiera volver a mostrarla, está mal guardada. Ver [`ADR-0005`](../arquitectura/adr/0005-smtp-por-negocio.md) y [`ADR-0002`](../arquitectura/adr/0002-aria-como-estandar-de-agentes-conversacionales.md).
 
 ## 4. Si en el futuro se decide construir un repositorio propio
 

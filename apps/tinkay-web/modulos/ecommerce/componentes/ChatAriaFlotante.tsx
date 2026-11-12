@@ -234,8 +234,8 @@ export function ChatAriaFlotante() {
       };
     }
 
-    // 6. Caso General / Consulta de entrega o compra
-    const prodDestacado = catalogo[0]!;
+    // 6. Caso General / Consulta de entrega o compra (evitando sugerir condolencias por defecto)
+    const prodDestacado = catalogo.find((p) => !p.esCondolencias) ?? catalogo[0]!;
     return {
       texto:
         'Con gusto te asesoro. En Tinkay entregamos flores frescas en Quito y Valles (Cumbayá, Tumbaco, Los Chillos) con opción de franja horaria gratuita, entrega a hora exacta o retiro gratis en nuestra tienda física (https://maps.app.goo.gl/D56gQohzuwha4sLf8). Aquí tienes nuestro arreglo más solicitado del día:',

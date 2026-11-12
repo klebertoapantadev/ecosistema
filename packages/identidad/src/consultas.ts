@@ -49,8 +49,9 @@ export async function obtenerPerfiles(negocio: string): Promise<string[]> {
   const negocioNorm = (negocio || "TRANQ").toUpperCase();
   const { data } = await supabase.schema("comun_seguridad").rpc("seg_fn_perfiles", { p_negocio: negocioNorm });
   let perfiles = (data as string[] | null) ?? [];
-  if (perfiles.length === 0 && negocioNorm === "TRANQ") {
-    const { data: dataLower } = await supabase.schema("comun_seguridad").rpc("seg_fn_perfiles", { p_negocio: "tranqi" });
+  if (perfiles.length === 0) {
+    const negocioLower = negocioNorm === "TRANQ" ? "tranqi" : negocio.trim().toLowerCase();
+    const { data: dataLower } = await supabase.schema("comun_seguridad").rpc("seg_fn_perfiles", { p_negocio: negocioLower });
     if (dataLower && dataLower.length > 0) perfiles = dataLower;
   }
   return perfiles;
@@ -61,8 +62,9 @@ export async function obtenerNivelMaximo(negocio: string): Promise<number> {
   const negocioNorm = (negocio || "TRANQ").toUpperCase();
   const { data } = await supabase.schema("comun_seguridad").rpc("seg_fn_nivel_maximo", { p_negocio: negocioNorm });
   let nivel = (data as number | null) ?? 0;
-  if (nivel === 0 && negocioNorm === "TRANQ") {
-    const { data: dataLower } = await supabase.schema("comun_seguridad").rpc("seg_fn_nivel_maximo", { p_negocio: "tranqi" });
+  if (nivel === 0) {
+    const negocioLower = negocioNorm === "TRANQ" ? "tranqi" : negocio.trim().toLowerCase();
+    const { data: dataLower } = await supabase.schema("comun_seguridad").rpc("seg_fn_nivel_maximo", { p_negocio: negocioLower });
     if (dataLower && dataLower > 0) nivel = dataLower;
   }
   return nivel;

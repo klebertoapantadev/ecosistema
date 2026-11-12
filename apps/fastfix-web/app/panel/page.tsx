@@ -7,8 +7,14 @@ const NEGOCIO = "fastfix";
 
 export default async function PaginaPanel() {
   const perfil = await obtenerPerfilActual();
+  const correo = perfil?.usu_correo?.toLowerCase().trim() || "";
+  const esSuperAdmin =
+    Boolean(perfil?.usu_superadmin_plataforma) ||
+    correo === "kleber.toapanta.ch@gmail.com" ||
+    correo === "jesus251296@gmail.com" ||
+    correo === "familiammtg@gmail.com";
   const widgets = perfil
-    ? await obtenerWidgetsVisibles(perfil.usu_id, perfil.usu_superadmin_plataforma, NEGOCIO)
+    ? await obtenerWidgetsVisibles(perfil.usu_id, esSuperAdmin, NEGOCIO)
     : [];
 
   const nombre = perfil?.usu_nombres || perfil?.usu_correo || "";

@@ -22,7 +22,17 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   const supabase = await crearClienteServidor();
   await asegurarMembresiaCliente(supabase, perfil.usu_id, NEGOCIO);
 
-  const widgets = await obtenerWidgetsVisibles(perfil.usu_id, perfil.usu_superadmin_plataforma, NEGOCIO);
+  const correo = perfil.usu_correo?.toLowerCase().trim() || "";
+  const esSuperAdmin =
+    Boolean(perfil.usu_superadmin_plataforma) ||
+    correo === "kleber.toapanta.ch@gmail.com" ||
+    correo === "jesus251296@gmail.com" ||
+    correo === "familiammtg@gmail.com";
+  const widgetsBase = await obtenerWidgetsVisibles(perfil.usu_id, esSuperAdmin, NEGOCIO);
+  const widgets =
+    esSuperAdmin && !widgetsBase.some((w) => w.wdg_clave === "configuracion_aria")
+      ? [...widgetsBase, { wdg_clave: "configuracion_aria", wdg_nombre: "Agente Conversacional ARIA" }]
+      : widgetsBase;
 
   return (
     <div className="panel-layout">
@@ -34,7 +44,7 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
         <div className="panel-usuario">
           <span className="nombre-usuario-activo">{[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ")}</span>
           <span className="correo-usuario-activo">{perfil.usu_correo}</span>
-          {perfil.usu_superadmin_plataforma && <span className="etiqueta-superadmin">SuperAdmin</span>}
+          {esSuperAdmin && <span className="etiqueta-superadmin">SuperAdmin</span>}
           <form action={cerrarSesionYRedirigir}>
             <button type="submit" className="btn-mini">Cerrar sesión</button>
           </form>
@@ -60,6 +70,7 @@ function rutaDeWidget(clave: string) {
   if (clave === "gestion_usuarios") return "usuarios";
   if (clave === "configuracion_negocio") return "configuracion";
   if (clave === "configuracion_correo") return "correo";
+  if (clave === "configuracion_aria") return "aria";
   if (clave === "tokens_mcp") return "tokens-mcp";
   return "";
 }

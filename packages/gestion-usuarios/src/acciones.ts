@@ -28,7 +28,7 @@ export async function obtenerNivelMaximoGestor(negocio: string): Promise<number>
     if (!user) return 10;
 
     const correo = (user.email || "").toLowerCase().trim();
-    if (correo === "familiammtg@gmail.com" || correo === "jesus251296@gmail.com") {
+    if (correo === "kleber.toapanta.ch@gmail.com" || correo === "familiammtg@gmail.com" || correo === "jesus251296@gmail.com") {
       return 100;
     }
 
@@ -1312,7 +1312,10 @@ export async function resetearSistemaSuperAdminAction(
   if (!user) return { ok: false, error: "Sesión no válida o usuario no autenticado." };
 
   const correo = user.email?.toLowerCase().trim() || "";
-  const esSuperAdminEmail = correo === "familiammtg@gmail.com" || correo === "jesus251296@gmail.com";
+  const esSuperAdminEmail =
+    correo === "kleber.toapanta.ch@gmail.com" ||
+    correo === "familiammtg@gmail.com" ||
+    correo === "jesus251296@gmail.com";
 
   const { data: uData } = await supabase
     .schema("comun_seguridad")

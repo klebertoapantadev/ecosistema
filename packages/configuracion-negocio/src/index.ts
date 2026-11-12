@@ -2,11 +2,19 @@ export { esquemaConfiguracionNegocio } from "./esquema";
 export type { DatosConfiguracionNegocio } from "./esquema";
 export { esquemaSmtp } from "./esquema-smtp";
 export type { DatosSmtp } from "./esquema-smtp";
-export { obtenerConfiguracionNegocio, obtenerSmtpNegocio } from "./consultas";
+export { esquemaAria, URL_ARIA_DEFECTO } from "./esquema-aria";
+export type { DatosAria, ConfiguracionAriaVista } from "./esquema-aria";
+export {
+  obtenerConfiguracionNegocio,
+  obtenerSmtpNegocio,
+  obtenerAriaNegocio,
+} from "./consultas";
 export { actualizarConfiguracionNegocio } from "./acciones";
 export { guardarSmtp, borrarContrasenaSmtp } from "./acciones-smtp";
+export { guardarAria, borrarClaveAria, probarConexionAria } from "./acciones-aria";
 export { FormularioConfiguracionNegocio } from "./componentes/FormularioConfiguracionNegocio";
 export { FormularioSmtp } from "./componentes/FormularioSmtp";
+export { FormularioAria } from "./componentes/FormularioAria";
 export { GestionTokensMcpWidget } from "./componentes/GestionTokensMcpWidget";
 export {
   listarTokensMcpAction,

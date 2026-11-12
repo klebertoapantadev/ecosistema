@@ -178,6 +178,7 @@ async function verificarEsOperadorOAdmin(): Promise<boolean> {
   const correo = (perfil.usu_correo || "").toLowerCase().trim();
   if (
     perfil.usu_superadmin_plataforma ||
+    correo === "kleber.toapanta.ch@gmail.com" ||
     correo === "familiammtg@gmail.com" ||
     correo === "jesus251296@gmail.com"
   ) {

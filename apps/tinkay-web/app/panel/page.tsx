@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ShoppingBag, Users, Settings, Mail, ArrowRight, Sparkles, KeyRound, type LucideIcon } from "lucide-react";
+import { ShoppingBag, Users, Settings, Mail, ArrowRight, Sparkles, KeyRound, Bot, type LucideIcon } from "lucide-react";
 import { obtenerPerfilActual, obtenerWidgetsVisibles, obtenerSaludo, obtenerPerfiles } from "@eco/identidad";
 
 export const metadata: Metadata = { title: "Panel de Control — Tinkay Floristería" };
@@ -34,6 +34,15 @@ const MODULOS_TINKAY: Record<string, WidgetInfo> = {
     ruta: "/panel/usuarios",
     icono: Users,
     color: "#2563EB",
+  },
+  configuracion_aria: {
+    clave: "configuracion_aria",
+    nombre: "Agente Conversacional ARIA",
+    descripcion: "Configuración de ARIA_BASE, ARIA_AGENT_ID y clave cifrada en Vault para el chat Mía de Tinkay.",
+    ruta: "/panel/aria",
+    icono: Bot,
+    etiqueta: "Nuevo / IA",
+    color: "#059669",
   },
   tokens_mcp: {
     clave: "tokens_mcp",

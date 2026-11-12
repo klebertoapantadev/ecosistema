@@ -6,7 +6,7 @@ import {
   Sparkles, Shield, LayoutGrid, Pencil, Users, UserCheck, Eye,
   Settings, Mail, ShieldCheck, Bell, CircleUser, KeyRound, Sliders, Briefcase,
   Receipt, History, RotateCcw, FileCheck, Folder, ShoppingBag, CreditCard,
-  CalendarClock, CalendarPlus, CalendarCheck, Building2, Scale, Award, BellRing, type LucideIcon
+  CalendarClock, CalendarPlus, CalendarCheck, Building2, Scale, Award, BellRing, Bot, type LucideIcon
 } from "lucide-react";
 import { resetearSistemaSuperAdminAction } from "@eco/gestion-usuarios/acciones";
 import { ModalNotificacionPush } from "@eco/notificaciones";
@@ -112,6 +112,22 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     categoria: "Comercio & Catálogo",
     perfilesAsignados: ["CLIENTE", "SUPERADMIN"],
     estadoDuplicidad: "CANONICO",
+  },
+  {
+    clave: "configuracion_aria",
+    nombre: "Agente Conversacional ARIA",
+    detalle: "Parámetros de conexión ARIA (ARIA_BASE, ARIA_AGENT_ID y clave en Vault) aislados por negocio",
+    ruta: "/panel/aria",
+    icono: Bot,
+    iconoKey: "Bot",
+    color: "#059669",
+    rutaFisica: "packages/configuracion-negocio/src/componentes/FormularioAria.tsx",
+    paquete: "@eco/configuracion-negocio",
+    panelDestino: "Configuración (/panel/aria)",
+    categoria: "Integraciones & IA",
+    perfilesAsignados: ["ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "COMPARTIDO",
+    fechaRegistro: "2026-11-11",
   },
   {
     clave: "gestion_catalogo",

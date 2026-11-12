@@ -18,6 +18,7 @@ import { EmisionNotificacionesWidget, PreferenciasNotificacionWidget, BitacoraNo
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
 import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
 import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
+import { FormularioAria } from "@eco/configuracion-negocio/componentes/FormularioAria";
 import { GestionTokensMcpWidget } from "@eco/configuracion-negocio/componentes/GestionTokensMcpWidget";
 import { FormularioPerfil } from "@eco/identidad/componentes/FormularioPerfil";
 import { WidgetConfiguracionMfa } from "@eco/identidad/componentes/WidgetConfiguracionMfa";
@@ -345,6 +346,13 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     icono: KeyRound,
     colorIcono: "#D97706",
     categoria: "Seguridad"
+  },
+  configuracion_aria: {
+    titulo: "Agente Conversacional ARIA",
+    subtitulo: "Parámetros de conexión ARIA (ARIA_BASE, ARIA_AGENT_ID y claves en Vault) propios del negocio",
+    icono: Bot,
+    colorIcono: "#059669",
+    categoria: "Seguridad & Integraciones"
   },
   tokens_mcp: {
     titulo: "Tokens & APIs MCP",
@@ -931,6 +939,9 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       case "mfa":
       case "seguridad_mfa":
         return <WidgetConfiguracionMfa negocio={negocio} />;
+      case "configuracion_aria":
+      case "aria":
+        return <FormularioAria inicial={null} negocio={negocio} />;
       case "tokens_mcp":
       case "tokens":
       case "mcp_tokens":

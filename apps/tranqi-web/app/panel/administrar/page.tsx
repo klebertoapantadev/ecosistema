@@ -16,7 +16,10 @@ export default async function PaginaPanelAdministrar() {
   const perfiles = await obtenerPerfiles(NEGOCIO);
   const perfilesUpper = perfiles.map((p) => p.toUpperCase().trim());
   const correo = perfil.usu_correo?.toLowerCase().trim() || "";
-  const esSuperAdminEmail = correo === "familiammtg@gmail.com" || correo === "jesus251296@gmail.com";
+  const esSuperAdminEmail =
+    correo === "kleber.toapanta.ch@gmail.com" ||
+    correo === "familiammtg@gmail.com" ||
+    correo === "jesus251296@gmail.com";
   const esSuperAdminPlataforma = Boolean(perfil.usu_superadmin_plataforma);
   const esSuperAdmin = esSuperAdminEmail || esSuperAdminPlataforma || perfilesUpper.includes("SUPERADMIN");
 

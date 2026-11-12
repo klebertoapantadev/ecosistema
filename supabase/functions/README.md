@@ -9,6 +9,7 @@ Edge Functions. Única ubicación permitida para usar la `service_role` key. Ver
 | `plux-webhook` | Confirma los pagos con PLUX y activa la suscripción (`TRQ-ADM-004`) | `false` | Basic con las credenciales de API de PLUX guardadas en `psc_credenciales_privadas`, comparado en tiempo constante |
 | `facturacion-sri` | Worker de facturación electrónica (`PLT-006`): firma XAdES-BES, envío al SRI, autorización, XML y RIDE a Storage, correo | `false` | La cabecera `x-facturacion-clave`, comparada en tiempo constante contra el secreto `FACTURACION_FUNCION_CLAVE` |
 | `facturacion-certificado` | Valida y guarda en Vault el `.p12` de firma de un negocio (`PLT-006`) | `true` | El JWT del usuario: perfil ADMINISTRADOR del negocio y MFA (`aal2`) |
+| `invocar-aria` | Invoca el agente ARIA activo del negocio descifrando `ARIA_AGENT_KEY` desde Vault (`PLT-008` / `ADR-0002`) | `false` | Cabecera `x-aria-clave` en tiempo constante para llamadas privilegiadas o cuando `ARIA_FUNCION_CLAVE` está definida; acotación estricta (`prompt <= 1000` sin herramientas privadas) para el chat público de vitrina |
 
 Ambas llevan `verify_jwt=false` por el mismo motivo: sirven flujos donde el usuario **no tiene sesión** (llegó por un enlace de correo, o todavía se está registrando). Que no haya JWT no significa que no haya autenticación — la columna de la derecha es lo que la sustituye en cada caso.
 
@@ -88,3 +89,17 @@ SRI_PRUEBAS=1 deno test --allow-read --allow-env --allow-net=celcer.sri.gob.ec f
 ```
 
 La validación contra los XSD oficiales usa `python` con `lxml` (`_compartido/sri/pruebas/validar_xsd.py`). Las políticas RLS y las RPC se prueban con `supabase test db` (`supabase/tests/comun_facturacion.sql`).
+
+## Agente conversacional ARIA por negocio (`invocar-aria`)
+
+Desplegar tras aplicar la migración `20261111000002_cfg_aria_por_negocio_y_widget.sql`:
+
+```bash
+npx supabase functions deploy invocar-aria --no-verify-jwt --project-ref oaybbpdxhlxjbpwnoymy
+```
+
+`comun_configuracion` debe estar expuesto en PostgREST (ya lo está para `enviar-correo`). Opcionalmente, para exigir secreto compartido en todas las llamadas desde Route Handlers de Next.js:
+
+```bash
+npx supabase secrets set ARIA_FUNCION_CLAVE=<valor> --project-ref oaybbpdxhlxjbpwnoymy
+```

@@ -96,6 +96,131 @@ export async function invocarAgente(
   };
 }
 
+export interface OpcionesInvocarPorNegocio {
+  conversationId?: string;
+  toolContext?: Record<string, string>;
+  imageUrls?: string[];
+  documentUrls?: string[];
+  tiempoMaximoMs?: number;
+  /** Prefijo de variables de entorno de respaldo cuando Vault no está activo (por defecto "ARIA"). */
+  prefijoEntornoRespaldo?: string;
+}
+
+export class ErrorSinConfiguracionAria extends Error {
+  readonly codigo = "SIN_CONFIGURACION_ARIA";
+  constructor(negocio: string) {
+    super(
+      `Sin credenciales activas de ARIA para "${negocio}" en /panel/aria ni variables de entorno (ARIA_BASE, ARIA_AGENT_ID, ARIA_AGENT_KEY)`,
+    );
+    this.name = "ErrorSinConfiguracionAria";
+  }
+}
+
+/**
+ * Invoca el agente conversacional del negocio usando primero la configuración
+ * administrada por negocio en `comun_configuracion.cfg_aria` + Supabase Vault
+ * (Edge Function `invocar-aria`), con respaldo automático a variables de entorno
+ * (`ARIA_BASE`, `ARIA_AGENT_ID`, `ARIA_AGENT_KEY`) si el negocio aún no activó
+ * su configuración en `/panel/aria` o la función aún no está desplegada.
+ */
+export async function invocarAgentePorNegocio(
+  negocio: string,
+  prompt: string,
+  opciones?: OpcionesInvocarPorNegocio,
+): Promise<RespuestaAgente> {
+  const tiempoMaximoMs = opciones?.tiempoMaximoMs ?? 120000;
+  const prefijoRespaldo = opciones?.prefijoEntornoRespaldo ?? "ARIA";
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
+  const supabaseKey =
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
+    process.env.SUPABASE_ANON_KEY;
+  const claveFuncion = process.env.ARIA_FUNCION_CLAVE ?? process.env.CORREO_FUNCION_CLAVE;
+
+  let errorVaultNoConfigurado = false;
+  let errorInfraestructuraVault: string | null = null;
+  let errorAguasArribaAria: Error | null = null;
+
+  if (supabaseUrl && supabaseKey) {
+    try {
+      const urlFuncion = `${supabaseUrl.replace(/\/+$/, "")}/functions/v1/invocar-aria`;
+      const cabeceras: Record<string, string> = {
+        "Content-Type": "application/json",
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
+      };
+      if (claveFuncion) {
+        cabeceras["x-aria-clave"] = claveFuncion;
+      }
+
+      const r = await fetch(urlFuncion, {
+        method: "POST",
+        headers: cabeceras,
+        body: JSON.stringify({
+          negocio: negocio.trim().toLowerCase(),
+          prompt,
+          conversation_id: opciones?.conversationId,
+          tool_context: opciones?.toolContext,
+          image_urls: opciones?.imageUrls,
+          document_urls: opciones?.documentUrls,
+          tiempo_maximo_ms: Math.min(tiempoMaximoMs, 110000),
+        }),
+        signal: AbortSignal.timeout(tiempoMaximoMs),
+      });
+
+      const data = await r.json().catch(() => null);
+
+      if (r.ok && data) {
+        return {
+          response: data.response ?? data.detail ?? "…",
+          usage: data.usage,
+          runId: data.runId ?? data.run_id,
+        };
+      }
+
+      if (r.status === 404 || r.status === 409) {
+        // 404 = función invocar-aria aún no desplegada; 409 = negocio sin agente activo en Vault
+        errorVaultNoConfigurado = true;
+      } else if (r.status === 502) {
+        // El agente estaba activo en Vault pero ARIA respondió error aguas arriba: no reintentar
+        errorAguasArribaAria = new Error(data?.error ?? data?.detail ?? "ARIA respondió con error (502)");
+      } else {
+        // 401 o 500 (ej. migración pendiente): permitir respaldo por entorno si existe
+        errorInfraestructuraVault = data?.error ?? `invocar-aria respondió ${r.status}`;
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === "TimeoutError") {
+        throw err;
+      }
+      errorInfraestructuraVault = err instanceof Error ? err.message : String(err);
+    }
+  }
+
+  if (errorAguasArribaAria) {
+    throw errorAguasArribaAria;
+  }
+
+  const configEntorno = resolverAgenteDesdeEntorno(prefijoRespaldo);
+  if (configEntorno) {
+    return invocarAgente(
+      configEntorno,
+      prompt,
+      opciones?.conversationId,
+      opciones?.toolContext,
+      opciones?.imageUrls,
+      opciones?.documentUrls,
+      tiempoMaximoMs,
+    );
+  }
+
+  if (errorInfraestructuraVault && !errorVaultNoConfigurado) {
+    throw new Error(errorInfraestructuraVault);
+  }
+
+  throw new ErrorSinConfiguracionAria(negocio);
+}
+
 export { firmarJwtHs256, verificarJwtHs256 } from "./jwt";
 export {
   firmarCapsula,
