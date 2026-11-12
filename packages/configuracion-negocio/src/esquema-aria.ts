@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const URL_ARIA_DEFECTO = "https://logs-testing.mysatcomla.com/agentes";
+export const URL_ARIA_DEFECTO = "https://aria.midomo.site";
 
 /**
  * Vista segura (sin secretos) de la fila `comun_configuracion.cfg_aria`.
@@ -24,7 +24,7 @@ export const esquemaAria = z.object({
   baseUrl: z
     .string()
     .trim()
-    .url("Indica una URL válida para ARIA_BASE (ej. https://logs-testing.mysatcomla.com/agentes)")
+    .url("Indica una URL válida para ARIA_BASE (ej. https://aria.midomo.site)")
     .optional()
     .or(z.literal("")),
   agenteId: z.string().trim().max(120, "ID demasiado largo").optional().or(z.literal("")),

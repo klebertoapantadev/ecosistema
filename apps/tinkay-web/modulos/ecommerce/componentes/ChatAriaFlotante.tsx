@@ -46,6 +46,7 @@ function normalizar(texto: string): string {
 // emitir para que no aparezcan asteriscos ni corchetes sueltos.
 function limpiarMarkdown(texto: string): string {
   return texto
+    .replace(/!\[[^\]]*\]\(https?:\/\/[^\s)]+(?:\([^\s)]*\)[^\s)]*)*\)/g, '')
     .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 ($2)')
     .replace(/\*\*([^*]+)\*\*/g, '$1')

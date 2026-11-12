@@ -19,6 +19,10 @@ const SUGERENCIA_AGENTE_POR_NEGOCIO: Record<string, string> = {
   margaritas: "Asesora Floral Margaritas",
 };
 
+const AGENTE_ID_DEFECTO_POR_NEGOCIO: Record<string, string> = {
+  tinkay: "c717f44a-028e-4e9c-a190-4eb0b774c588",
+};
+
 function claveLocalBorrador(negocio: string): string {
   return `eco_cfg_aria_meta_v1_${negocio.trim().toLowerCase()}`;
 }
@@ -38,9 +42,13 @@ export function FormularioAria({
   const sugerenciaNombre =
     SUGERENCIA_AGENTE_POR_NEGOCIO[codigoNegocio] ?? `Agente ARIA (${codigoNegocio})`;
 
-  const [nombreAgente, setNombreAgente] = useState(inicial?.nombreAgente ?? "");
+  const [nombreAgente, setNombreAgente] = useState(
+    inicial?.nombreAgente || SUGERENCIA_AGENTE_POR_NEGOCIO[codigoNegocio] || "",
+  );
   const [baseUrl, setBaseUrl] = useState(inicial?.baseUrl ?? URL_ARIA_DEFECTO);
-  const [agenteId, setAgenteId] = useState(inicial?.agenteId ?? "");
+  const [agenteId, setAgenteId] = useState(
+    inicial?.agenteId || AGENTE_ID_DEFECTO_POR_NEGOCIO[codigoNegocio] || "",
+  );
   const [apiKey, setApiKey] = useState("");
   const [tenantKey, setTenantKey] = useState("");
   const [gateKey, setGateKey] = useState("");

@@ -22,7 +22,7 @@ create table if not exists comun_configuracion.cfg_aria (
   ari_id uuid primary key default gen_random_uuid(),
   ari_secuencial bigint generated always as identity,
   ari_negocio text not null unique references comun_configuracion.cfg_negocio(cfg_negocio) on delete cascade,
-  ari_base_url text not null default 'https://logs-testing.mysatcomla.com/agentes',
+  ari_base_url text not null default 'https://aria.midomo.site',
   ari_agente_id text,
   ari_nombre_agente text,
   ari_secreto_id uuid,
@@ -189,7 +189,7 @@ begin
   )
   values (
     v_negocio,
-    coalesce(nullif(v_base_url, ''), 'https://logs-testing.mysatcomla.com/agentes'),
+    coalesce(nullif(v_base_url, ''), 'https://aria.midomo.site'),
     v_agente_id,
     v_nombre,
     v_secreto_id,
@@ -361,5 +361,29 @@ begin
       and w.wdg_clave = 'configuracion_aria'
     on conflict (rlw_negocio, rlw_rol, rlw_widget_id) do update set rlw_visible = true;
   end loop;
+
+  -- Semilla no sensible del agente Mía de Tinkay (la API Key se carga en Vault desde /panel/aria)
+  insert into comun_configuracion.cfg_negocio (cfg_negocio, cfg_nombre_comercial)
+  values ('tinkay', 'Tinkay Floristería')
+  on conflict (cfg_negocio) do nothing;
+
+  insert into comun_configuracion.cfg_aria (
+    ari_negocio,
+    ari_base_url,
+    ari_agente_id,
+    ari_nombre_agente,
+    ari_activo
+  )
+  values (
+    'tinkay',
+    'https://aria.midomo.site',
+    'c717f44a-028e-4e9c-a190-4eb0b774c588',
+    'Mía — Asesora Floral',
+    false
+  )
+  on conflict (ari_negocio) do update set
+    ari_base_url = coalesce(nullif(comun_configuracion.cfg_aria.ari_base_url, ''), excluded.ari_base_url),
+    ari_agente_id = coalesce(comun_configuracion.cfg_aria.ari_agente_id, excluded.ari_agente_id),
+    ari_nombre_agente = coalesce(comun_configuracion.cfg_aria.ari_nombre_agente, excluded.ari_nombre_agente);
 end $$;
 
