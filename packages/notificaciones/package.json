@@ -17,7 +17,7 @@
   "dependencies": {
     "@eco/datagrid": "workspace:*",
     "@eco/supabase": "workspace:*",
-    "lucide-react": "1.27.0"
+    "lucide-react": "1.68.0"
   },
   "devDependencies": {
     "@eco/config": "workspace:*",
