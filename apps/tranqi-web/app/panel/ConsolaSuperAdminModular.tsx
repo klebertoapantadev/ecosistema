@@ -6,7 +6,7 @@ import {
   Sparkles, Shield, LayoutGrid, Pencil, Users, UserCheck, Eye,
   Settings, Mail, ShieldCheck, Bell, CircleUser, KeyRound, Sliders, Briefcase,
   Receipt, History, RotateCcw, FileCheck, Folder, ShoppingBag, CreditCard,
-  CalendarClock, CalendarPlus, CalendarCheck, Building2, Scale, Award, BellRing, Bot, type LucideIcon
+  CalendarClock, CalendarPlus, CalendarCheck, Building2, Scale, Award, BellRing, Bot, MapPin, type LucideIcon
 } from "lucide-react";
 import { resetearSistemaSuperAdminAction } from "@eco/gestion-usuarios/acciones";
 import { ModalNotificacionPush } from "@eco/notificaciones";
@@ -128,6 +128,22 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     perfilesAsignados: ["ADMINISTRADOR", "SUPERADMIN"],
     estadoDuplicidad: "COMPARTIDO",
     fechaRegistro: "2026-11-11",
+  },
+  {
+    clave: "configuracion_logistica",
+    nombre: "Envíos, Zonas y Cobertura GPS",
+    detalle: "Polígonos de cobertura en Pichincha, sector de envío gratis por defecto, tarifa por km vial y simulador GPS",
+    ruta: "/panel/logistica",
+    icono: MapPin,
+    iconoKey: "MapPin",
+    color: "#16A34A",
+    rutaFisica: "packages/comercio/src/componentes/FormularioLogisticaCobertura.tsx",
+    paquete: "@eco/comercio",
+    panelDestino: "Configuración (/panel/logistica)",
+    categoria: "Comercio & Catálogo",
+    perfilesAsignados: ["ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "COMPARTIDO",
+    fechaRegistro: "2026-11-12",
   },
   {
     clave: "gestion_catalogo",

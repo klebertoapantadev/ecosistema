@@ -50,6 +50,11 @@ export interface ProductoEcommerce {
   usos?: string[]; // Usos recomendados (ej. 'condolencias', 'cumpleanos')
   ocasionRecomendada?: string;
   etiquetas: string[];
+  deliveryIncluido?: boolean;
+  modalidadTransporte?: string;
+  etiquetaTransporte?: string;
+  coberturaTexto?: string;
+  recargoLogisticoUsd?: number;
 }
 
 export interface DedicatoriaArreglo {
@@ -70,6 +75,15 @@ export interface DatosEntrega {
   fechaEntrega: string;
   franjaHoraria: FranjaHoraria;
   horaExacta?: string;
+  enlaceMapa?: string;
+  lat?: number;
+  lng?: number;
+  retiroEnLocal?: boolean;
+  zonaDetectadaNombre?: string;
+  distanciaVialKm?: number;
+  costoEnvioCalculado?: number;
+  dentroCobertura?: boolean;
+  etiquetaCotizacion?: string;
 }
 
 export interface ItemCarrito {
@@ -96,6 +110,17 @@ export interface MensajeChat {
   sugerenciaDedicatoria?: {
     para: string;
     mensaje: string;
+  };
+  cotizacionEnvio?: {
+    etiquetaResumen: string;
+    formulaDetalle: string;
+    costoTotalEnvio: number;
+    dentroCobertura: boolean;
+    zonaDetectadaNombre?: string;
+    distanciaVialKm: number;
+    enlaceMapa: string;
+    lat: number;
+    lng: number;
   };
   reintentarTexto?: string;
 }

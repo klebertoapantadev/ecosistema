@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { obtenerConfiguracionLogisticaAction } from "@eco/comercio";
 import {
   ConsolaConfiguracionUnificada,
   obtenerAriaNegocio,
@@ -12,10 +13,11 @@ export const dynamic = "force-dynamic";
 const NEGOCIO = "tinkay";
 
 export default async function PaginaConfiguracionNegocio() {
-  const [configuracion, smtp, aria] = await Promise.all([
+  const [configuracion, smtp, aria, logistica] = await Promise.all([
     obtenerConfiguracionNegocio(NEGOCIO),
     obtenerSmtpNegocio(NEGOCIO),
     obtenerAriaNegocio(NEGOCIO),
+    obtenerConfiguracionLogisticaAction(NEGOCIO),
   ]);
 
   return (
@@ -26,6 +28,7 @@ export default async function PaginaConfiguracionNegocio() {
       configuracion={configuracion}
       smtp={smtp}
       aria={aria}
+      logistica={logistica}
     />
   );
 }

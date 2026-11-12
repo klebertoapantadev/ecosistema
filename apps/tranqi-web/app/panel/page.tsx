@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import {
   Calendar, Upload, Coins, MessageCircle, FileText,
   Briefcase, UserCheck, Users, Settings, ShieldCheck, Bell, FileCheck,
-  ShoppingBag, CreditCard, Folder, Receipt, Building2, Scale, Award, Bot,
+  ShoppingBag, CreditCard, Folder, Receipt, Building2, Scale, Award, Bot, MapPin,
   type LucideIcon
 } from "lucide-react";
 import { obtenerPerfilActual, obtenerSaludo, obtenerPerfiles, obtenerNivelMaximo } from "@eco/identidad";
@@ -84,6 +84,7 @@ const WIDGETS_ADMIN: { clave: string; icono: LucideIcon; nombre: string; detalle
   { clave: "gestion_usuarios", icono: Users, nombre: "Gestión de usuarios", detalle: "Membresías y perfiles", ruta: "/panel/usuarios", estado: "registrado" },
   { clave: "socios", icono: UserCheck, nombre: "Aprobación de socios", detalle: "Cédula, título y matrícula", ruta: "/panel/socios", estado: "registrado" },
   { clave: "configuracion_aria", icono: Bot, nombre: "Agente ARIA", detalle: "Parámetros ARIA y Vault del negocio", ruta: "/panel/aria", estado: "registrado" },
+  { clave: "configuracion_logistica", icono: MapPin, nombre: "Envíos y Cobertura", detalle: "Zonas Pichincha, envío gratis y km vial", ruta: "/panel/logistica", estado: "registrado" },
   { clave: "configuracion_negocio", icono: Settings, nombre: "Configuración del negocio", detalle: "Términos, locales y canales", ruta: "/panel/configuracion", estado: "registrado" },
   { clave: "auditoria", icono: ShieldCheck, nombre: "Auditoría de cambios", detalle: "Registro inalterable", ruta: "/panel/auditoria", estado: "registrado" },
   { clave: "emision_notificaciones", icono: Bell, nombre: "Emisión de notificaciones", detalle: "Despacho masivo", ruta: "/panel/emision-notificaciones", estado: "registrado" },

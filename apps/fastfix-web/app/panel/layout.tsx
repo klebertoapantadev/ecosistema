@@ -38,6 +38,13 @@ const CATALOGO_NAV_FASTFIX: ItemNavegacionPanel[] = [
     grupo: "configuracion",
   },
   {
+    clave: "configuracion_logistica",
+    nombre: "Zonas y Cobertura",
+    ruta: "/panel/logistica",
+    icono: "logistica",
+    grupo: "configuracion",
+  },
+  {
     clave: "configuracion_aria",
     nombre: "Agente ARIA",
     ruta: "/panel/aria",

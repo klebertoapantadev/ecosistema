@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Search, X, UserCog, UserCheck, Settings, Mail, Bell, Shield, ShieldCheck,
   CircleUser, ChevronRight, Sliders, Briefcase, FileText, BarChart2, FileCheck, Folder,
-  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard, Building2, Scale, KeyRound, Sparkles, Bot
+  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard, Building2, Scale, KeyRound, Sparkles, Bot, MapPin
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
@@ -151,6 +151,16 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     minNivel: 80,
     icono: Bot,
     colorIcono: "#059669"
+  },
+  {
+    clave: "configuracion_logistica",
+    nombre: "Envíos, Zonas y Cobertura GPS",
+    detalle: "Configuración de sector con Envío Gratis, polígonos de cobertura en Pichincha y cálculo por km vial",
+    ruta: "/panel/logistica",
+    categoria: "Comercio & Pagos",
+    minNivel: 80,
+    icono: MapPin,
+    colorIcono: "#16A34A"
   },
   {
     clave: "tokens_mcp",

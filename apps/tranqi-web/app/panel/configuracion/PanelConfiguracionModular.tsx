@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Pencil, Lock, CreditCard, ShoppingBag, KeyRound, Bot, type LucideIcon } from "lucide-react";
+import { Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Pencil, Lock, CreditCard, ShoppingBag, KeyRound, Bot, MapPin, type LucideIcon } from "lucide-react";
 import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
 import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
 import { FormularioAria } from "@eco/configuracion-negocio/componentes/FormularioAria";
@@ -10,7 +10,7 @@ import { GestionTokensMcpWidget } from "@eco/configuracion-negocio/componentes/G
 import { PreferenciasNotificacionWidget } from "@eco/notificaciones";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
-import { ConfiguracionPasarelaPayphone, CatalogoProductosComercio } from "@eco/comercio";
+import { ConfiguracionPasarelaPayphone, CatalogoProductosComercio, FormularioLogisticaCobertura } from "@eco/comercio";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
 import { ModalVerificarMFAWidget } from "../ModalVerificarMFAWidget";
@@ -111,6 +111,15 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     soloAdmin: true
   },
   {
+    id: "configuracion_logistica",
+    titulo: "Envíos, Zonas y Cobertura GPS",
+    subtitulo: "Polígonos en Pichincha, zona de envío gratis por defecto, recargo por km vial y simulador GPS",
+    icono: MapPin,
+    colorIcono: "#16A34A",
+    categoria: "Parámetros del Negocio",
+    soloAdmin: true
+  },
+  {
     id: "tokens_mcp",
     titulo: "Tokens & APIs MCP",
     subtitulo: "Gestión y emisión de tokens de acceso para conectar herramientas MCP con bots y agentes externos",
@@ -127,6 +136,9 @@ const ALIAS_WIDGET: Record<string, string> = {
   configuracion_aria: "configuracion_aria",
   "configuracion-aria": "configuracion_aria",
   aria: "configuracion_aria",
+  configuracion_logistica: "configuracion_logistica",
+  "configuracion-logistica": "configuracion_logistica",
+  logistica: "configuracion_logistica",
   preferencias_notificacion: "notificaciones",
   terminos: "gestion_terminos_consentimientos",
   mcp_tokens: "tokens_mcp",
@@ -361,6 +373,13 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
             {widgetActivo === "configuracion_aria" && (
               <div style={{ maxWidth: "800px", margin: "0 auto" }}>
                 <FormularioAria inicial={aria} negocio={negocio} />
+              </div>
+            )}
+
+            {/* 10. LOGÍSTICA, ZONAS DE COBERTURA Y ENVÍO POR KM */}
+            {widgetActivo === "configuracion_logistica" && (
+              <div style={{ width: "100%" }}>
+                <FormularioLogisticaCobertura negocio={negocio} />
               </div>
             )}
           </div>

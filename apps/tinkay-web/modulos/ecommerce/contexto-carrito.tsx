@@ -12,6 +12,11 @@ import {
 } from './tipos';
 import { PRODUCTOS_TINKAY, CATEGORIAS_TINKAY } from './datos-catalogo';
 import { cargarCatalogoDinamicoTinkay } from './servicio-catalogo';
+import {
+  crearConfiguracionLogisticaPorDefecto,
+  obtenerConfiguracionLogisticaAction,
+  type ConfiguracionLogisticaNegocio,
+} from '@eco/comercio';
 
 interface ContextoCarritoValor {
   items: ItemCarrito[];
@@ -24,6 +29,7 @@ interface ContextoCarritoValor {
   ordenConfirmadaId: string | null;
   productos: ProductoEcommerce[];
   categorias: CategoriaEcommerce[];
+  configLogistica: ConfiguracionLogisticaNegocio;
 
   // Acciones
   setDrawerAbierto: (abierto: boolean) => void;
@@ -64,10 +70,12 @@ const ENTREGA_INICIAL: DatosEntrega = {
   destinatarioTelefono: '',
   direccion: '',
   referencia: '',
-  ciudad: 'Quito Urbano / Cumbayá',
+  ciudad: 'Centro-Norte de Quito',
   fechaEntrega: FECHA_POR_DEFECTO(),
   franjaHoraria: 'manana',
   horaExacta: '08:30',
+  retiroEnLocal: false,
+  dentroCobertura: true,
 };
 
 const ContextoCarrito = createContext<ContextoCarritoValor | undefined>(undefined);
@@ -87,6 +95,9 @@ export function ProveedorCarrito({ children }: { children: React.ReactNode }) {
   // Catálogo dinámico sincronizado con Supabase en tiempo real
   const [productos, setProductos] = useState<ProductoEcommerce[]>(PRODUCTOS_TINKAY);
   const [categorias, setCategorias] = useState<CategoriaEcommerce[]>(CATEGORIAS_TINKAY);
+  const [configLogistica, setConfigLogistica] = useState<ConfiguracionLogisticaNegocio>(() =>
+    crearConfiguracionLogisticaPorDefecto('tinkay')
+  );
 
   useEffect(() => {
     cargarCatalogoDinamicoTinkay().then(({ productos: prodsLive, categorias: catsLive }) => {
@@ -97,6 +108,12 @@ export function ProveedorCarrito({ children }: { children: React.ReactNode }) {
         setCategorias(catsLive);
       }
     });
+
+    obtenerConfiguracionLogisticaAction('tinkay')
+      .then((cfg) => {
+        if (cfg) setConfigLogistica(cfg);
+      })
+      .catch(() => {});
   }, []);
 
   // Cargar estado inicial desde LocalStorage para resiliencia
@@ -229,24 +246,50 @@ export function ProveedorCarrito({ children }: { children: React.ReactNode }) {
       iva += ivaItem;
     });
 
-    // Flete y logística:
-    // Tarifa base de delivery en Quito/Cumbayá: $3.00
-    // Recargo horario exacto / madrugador: $10.00
+    // Flete y logística dinámica según zona / distancia vial / retiro en tienda
     let flete = 0;
     let recargoHora = 0;
+    const tarifaHoraExacta = configLogistica.recargoHoraExacta ?? 10;
 
     if (items.length > 0) {
+      const itemsPrincipales = items.filter((it) => !it.producto.esComplemento && !it.producto.esExtra);
+      const listaBase = itemsPrincipales.length > 0 ? itemsPrincipales : items;
+      const algunoNoIncluye = listaBase.some(
+        (it) => it.producto.deliveryIncluido === false && it.producto.modalidadTransporte !== 'SOLO_RETIRO'
+      );
+      const recargoEspecialTotal = listaBase.reduce(
+        (acc, it) => acc + (it.producto.recargoLogisticoUsd || 0) * it.cantidad,
+        0
+      );
+
       if (modalidadEntrega === 'unificada') {
-        flete = 3.00;
-        if (entregaUnificada.franjaHoraria === 'hora_exacta') {
-          recargoHora = 10.00;
+        if (entregaUnificada.retiroEnLocal) {
+          flete = 0;
+        } else if (typeof entregaUnificada.costoEnvioCalculado === 'number') {
+          flete = entregaUnificada.costoEnvioCalculado;
+        } else {
+          flete =
+            (algunoNoIncluye ? configLogistica.tarifaBaseNoIncluido : 0) + recargoEspecialTotal;
+        }
+
+        if (!entregaUnificada.retiroEnLocal && entregaUnificada.franjaHoraria === 'hora_exacta') {
+          recargoHora = tarifaHoraExacta;
         }
       } else {
-        // Individual: $3.00 por cada arreglo que vaya a un destino
-        flete = items.length * 3.00;
-        items.forEach((it) => {
-          if (it.entregaIndividual?.franjaHoraria === 'hora_exacta') {
-            recargoHora += 10.00;
+        listaBase.forEach((it) => {
+          const ent = it.entregaIndividual;
+          if (ent?.retiroEnLocal) {
+            flete += 0;
+          } else if (typeof ent?.costoEnvioCalculado === 'number') {
+            flete += ent.costoEnvioCalculado;
+          } else {
+            flete +=
+              (it.producto.deliveryIncluido === false ? configLogistica.tarifaBaseNoIncluido : 0) +
+              (it.producto.recargoLogisticoUsd || 0) * it.cantidad;
+          }
+
+          if (!ent?.retiroEnLocal && ent?.franjaHoraria === 'hora_exacta') {
+            recargoHora += tarifaHoraExacta;
           }
         });
       }
@@ -261,7 +304,7 @@ export function ProveedorCarrito({ children }: { children: React.ReactNode }) {
       totalRecargoHorarioExacto: Math.round(recargoHora * 100) / 100,
       totalPagar: Math.round(total * 100) / 100,
     };
-  }, [items, modalidadEntrega, entregaUnificada]);
+  }, [items, modalidadEntrega, entregaUnificada, configLogistica]);
 
   return (
     <ContextoCarrito.Provider
@@ -276,6 +319,7 @@ export function ProveedorCarrito({ children }: { children: React.ReactNode }) {
         ordenConfirmadaId,
         productos,
         categorias,
+        configLogistica,
         setDrawerAbierto,
         setProductoSeleccionadoModal,
         setCheckoutAbierto,

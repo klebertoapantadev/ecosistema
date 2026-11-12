@@ -3768,6 +3768,7 @@ export async function editarProductoAction(datos: {
     modalidad_transporte: string;
     etiqueta_transporte: string;
     cobertura_texto: string;
+    recargo_transporte_usd?: number;
   };
   usos?: string[];
   etiquetas?: string[];

@@ -9,6 +9,7 @@ import {
   Settings,
   ShoppingBag,
   Sparkles,
+  Truck,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -58,6 +59,15 @@ const MODULOS_TINKAY: Record<string, WidgetInfo> = {
     ruta: "/panel/configuracion",
     icono: Building2,
     grupo: "configuracion",
+  },
+  configuracion_logistica: {
+    clave: "configuracion_logistica",
+    nombre: "Envíos, Zonas y Cobertura",
+    descripcion: "Polígono de Envío Gratis (Centro-Norte), zonas de Pichincha y tarifa por km adicional.",
+    ruta: "/panel/logistica",
+    icono: Truck,
+    grupo: "configuracion",
+    etiqueta: "Pichincha / GPS",
   },
   configuracion_aria: {
     clave: "configuracion_aria",

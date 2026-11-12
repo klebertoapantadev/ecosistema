@@ -11,11 +11,21 @@ export interface ContextoMcpCatalogo {
   token: string;
 }
 
+export interface ParametrosCotizarEnvioMcp {
+  enlace_o_direccion?: string;
+  lat?: number;
+  lng?: number;
+  retiro_en_local?: boolean;
+  delivery_incluido_producto?: boolean;
+  recargo_logistico_producto_usd?: number;
+}
+
 export interface OpcionesServidorMcpCatalogo {
   negocioPorDefecto: string;
   supabaseUrl?: string;
   supabaseAnonKey?: string;
   consultarProductos?: (negocioId: string) => Promise<any[]>;
+  cotizarEnvio?: (negocioId: string, params: ParametrosCotizarEnvioMcp) => Promise<unknown>;
   herramientasAdicionales?: Record<
     string,
     Herramienta<ContextoMcpCatalogo> & { alcanceRequerido?: string }
@@ -394,6 +404,64 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
   const herramientasFinales: Record<string, Herramienta<ContextoMcpCatalogo>> = {
     ...herramientas,
   };
+
+  if (typeof opciones.cotizarEnvio === "function") {
+    const cotizarFn = opciones.cotizarEnvio;
+    herramientasFinales.cotizar_envio_domicilio = {
+      descripcion:
+        "Calcula el costo exacto de envío a domicilio o retiro gratis en tienda según un enlace GPS (Google Maps, Apple Maps, Waze), " +
+        "coordenadas de ubicación de WhatsApp (lat, lng) o dirección/sector en Pichincha, Ecuador. " +
+        "Retorna la zona detectada (ej. Centro-Norte de Quito con Envío Gratis, Cumbayá, Tumbaco, Valle de los Chillos), " +
+        "la distancia vial en kilómetros desde el taller, el costo exacto del delivery y la fórmula aplicada.",
+      esquema: {
+        type: "object",
+        properties: {
+          enlace_o_direccion: {
+            type: "string",
+            description:
+              "URL de Google Maps (incluye links cortos maps.app.goo.gl), Apple Maps, Waze, coordenadas 'lat,lng' o sector/dirección en Pichincha (ej. 'Parque La Carolina', 'Scala Shopping Cumbayá').",
+          },
+          lat: {
+            type: "number",
+            description: "Latitud GPS opcional cuando el cliente envía pin nativo de ubicación (ej. desde WhatsApp).",
+          },
+          lng: {
+            type: "number",
+            description: "Longitud GPS opcional cuando el cliente envía pin nativo de ubicación (ej. desde WhatsApp).",
+          },
+          retiro_en_local: {
+            type: "boolean",
+            description: "true si el cliente indica que retirará el pedido directamente en la tienda física (costo $0.00).",
+          },
+          delivery_incluido_producto: {
+            type: "boolean",
+            description: "Por defecto true. Enviar false únicamente si el producto consultado no incluye subsidio base de envío.",
+          },
+          recargo_logistico_producto_usd: {
+            type: "number",
+            description: "Recargo logístico adicional de un arreglo monumental específico en USD (opcional, por defecto 0).",
+          },
+        },
+      },
+      async ejecutar(args, ctx) {
+        return await cotizarFn(ctx.negocioId, {
+          enlace_o_direccion:
+            typeof args.enlace_o_direccion === "string" ? args.enlace_o_direccion : undefined,
+          lat: typeof args.lat === "number" ? args.lat : undefined,
+          lng: typeof args.lng === "number" ? args.lng : undefined,
+          retiro_en_local: typeof args.retiro_en_local === "boolean" ? args.retiro_en_local : false,
+          delivery_incluido_producto:
+            typeof args.delivery_incluido_producto === "boolean"
+              ? args.delivery_incluido_producto
+              : true,
+          recargo_logistico_producto_usd:
+            typeof args.recargo_logistico_producto_usd === "number"
+              ? args.recargo_logistico_producto_usd
+              : 0,
+        });
+      },
+    };
+  }
 
   if (opciones.herramientasAdicionales) {
     for (const [clave, h] of Object.entries(opciones.herramientasAdicionales)) {

@@ -22,8 +22,8 @@ responsable: Kleber Toapanta
 | **`TNK-001`** | **Catálogo y Portafolio Multidimensional de Arreglos** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TNK-002`** | **E-Commerce Web, Carrito y Pasarela Payphone** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TNK-003`** | **Vendedoras, Enlaces Ref y Comisiones Netas** | 🟡 En Desarrollo | **60%** | Kleber Toapanta |
-| **`TNK-004`** | **Agente ARIA WhatsApp (YCloud), Web Chat y Consola (HITL)** | 🟡 En Desarrollo | **95%** | Kleber Toapanta |
-| **`TNK-005`** | **Taller de Armado Floral, Inventario de Bonches y Despacho Delivery** | 🟡 En Desarrollo | **75%** | Kleber Toapanta |
+| **`TNK-004`** | **Agente ARIA WhatsApp (YCloud), Web Chat y Consola (HITL)** | 🟡 En Desarrollo | **96%** | Kleber Toapanta |
+| **`TNK-005`** | **Taller de Armado Floral, Inventario de Bonches y Despacho Delivery** | 🟡 En Desarrollo | **82%** | Kleber Toapanta |
 
 ---
 
@@ -37,7 +37,7 @@ Tinkay se apoya plenamente en la arquitectura de Plataforma común:
 - **`PLT-011` (Widgets Administrativos y Panel Modular):** Catálogo de herramientas y módulos propio de la floristería:
   - `catalogo_productos` / `vitrina_comercial` (`/panel/catalogo-productos`): Catálogo multidimensional de arreglos florales, bouquets, stock de bonches y precios SRI con IVA 15%.
   - `gestion_usuarios` (`/panel/usuarios`): Asignación de membresías y roles de taller y asesoras.
-  - `configuracion_aria` (`/panel/aria`), `tokens_mcp` (`/panel/tokens-mcp`), `configuracion_negocio` (`/panel/configuracion`) y `configuracion_correo` (`/panel/correo`): agrupados visualmente bajo la sección lateral **Configuración** (`NavegacionPanelLateral`) y la consola unificada `ConsolaConfiguracionUnificada` (`@eco/configuracion-negocio`), con prueba en vivo del agente ARIA (`cfg_fn_invocar_aria`).
+  - `configuracion_logistica` (`/panel/logistica`), `configuracion_aria` (`/panel/aria`), `tokens_mcp` (`/panel/tokens-mcp`), `configuracion_negocio` (`/panel/configuracion`) y `configuracion_correo` (`/panel/correo`): agrupados visualmente bajo la sección lateral **Configuración** (`NavegacionPanelLateral`) y la consola unificada `ConsolaConfiguracionUnificada` (`@eco/configuracion-negocio`), incluyendo configuración de zonas de cobertura en Pichincha, sector de envío gratis por defecto (`Centro-Norte de Quito`), tarifa por km vial y prueba en vivo del agente ARIA (`cfg_fn_invocar_aria`).
   - Aislamiento estricto: quedan excluidos los módulos jurídicos y de contratación de otros negocios (Tranqi).
   - Migración de saneamiento: [`20261016000001_corregir_widgets_tinkay_y_catalogo_comercial.sql`](file:///c:/IA/Ecosistema/supabase/migrations/20261016000001_corregir_widgets_tinkay_y_catalogo_comercial.sql).
 
@@ -57,7 +57,7 @@ Tinkay se apoya plenamente en la arquitectura de Plataforma común:
 - **Catálogo Real & Variantes:** Visualización de productos reales (Bouquet Coreano, Box Florales con Box M a $40 como principal, Bouquets para Florero, Especiales Puro Amor, Abanicos y Pedestales). Exclusión estricta de productos de prueba o combos inexistentes.
 - **Carrusel Fotográfico Multigaleria por Producto y Variante:** Tanto las tarjetas de vitrina (`TarjetaProductoConCarrusel`) como el modal de detalle (`ModalDetalleProducto`) leen íntegramente las galerías configuradas en `comun_comercio` (`pro_detalle_producto.galeria_urls` y `var_detalle_variante.galeria_urls`), permitiendo recorrer todas las fotografías de cada presentación y alternar entre variantes.
 - **Cajita de Pagos Payphone:** Configuración de pasarela registrada en `comun_comercio.com_pasarela_configuracion` (modo pruebas / simulado habilitado).
-- **Parámetros de Entrega:** Selección de dedicatoria impresa individual o unificada, fecha y franja horaria (gratuita mañana/tarde o recargo de hora exacta / madrugador).
+- **Parámetros de Entrega y Cotización Geoespacial (`SelectorUbicacionEntrega`):** Selección de dedicatoria impresa individual o unificada, retiro gratis en tienda física o entrega a domicilio verificada mediante enlace de **Google Maps / Apple Maps / Waze** o buscador interactivo en mapa de Pichincha (OpenStreetMap + Leaflet + OSRM). Calcula automáticamente **Envío Gratis ($0.00)** dentro del polígono `Centro-Norte de Quito`, tarifas fijas zonales configurables en valles (Cumbayá, Tumbaco, Los Chillos) o cálculo vial por km fuera de zona (`$0.50/km` descontando `-$3.00` de subsidio base absorbido, mínimo `$1.00 USD` extra), más fecha y franja horaria.
 
 ### TNK-003 — Gestión de Vendedoras y Liquidación Automatizada de Comisiones
 - **Enlaces con Atribución:** Cada asesora cuenta con enlaces y QR únicos (`tinkay.com/chat?asesora=paola`) para atribución de la conversación y venta.
@@ -67,7 +67,7 @@ Tinkay se apoya plenamente en la arquitectura de Plataforma común:
 ### TNK-004 — Agente ARIA WhatsApp (YCloud) y Consola de Supervisión Humana (*Human-in-the-Loop*)
 - **Definición completa:** [`agente-aria-whatsapp-ycloud.md`](agente-aria-whatsapp-ycloud.md).
 - **Sustitución de ManyChat:** Transición integral hacia **YCloud** (WhatsApp Cloud API) orquestado por el agente conversacional **ARIA** (`packages/agentes-ia`).
-- **Agente "Mía":** Asesora floral botánica con prompt especializado, tono refinado, manejo solemne de condolencias, consulta de catálogo vía MCP tool `consultar_catalogo_tinkay` y consulta de existencias en vivo de rosas y papel decorativo.
+- **Agente "Mía":** Asesora floral botánica con prompt especializado, tono refinado, manejo solemne de condolencias, consulta de catálogo vía MCP tool `consultar_catalogo`, cotización exacta de transporte a domicilio vía MCP tool `cotizar_envio_domicilio` (`/api/mcp/catalogo` reutilizable tanto en Web Chat como en WhatsApp YCloud con links de Google/Apple/Waze o pines GPS) y consulta de existencias en vivo de rosas y papel decorativo.
 - **Suministro de Catálogo Conversacional (RPC):** Implementada la función `tinkay_floristeria.tnk_fn_buscar_catalogo_conversacional()` con filtrado multidimensional por ocasión, formato, presupuesto en USD y términos de búsqueda, retornando variantes con PVP y links de Google Photos.
 - **Almacenamiento de Chats:** Persistencia en `comun_agentes.agc_conversacion` y `comun_agentes.agc_mensaje` con Supabase Realtime para la consola de monitoreo.
 - **Consola de Supervisión Humana (HITL):** Widget donde las vendedoras monitorean los chats en vivo, conmutan a modo manual con el botón **[ Tomar Control ]** (silenciando a ARIA) y pueden **[ Reactivar Bot ]** tras resolver la consulta puntual.

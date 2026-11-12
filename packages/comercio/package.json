@@ -9,6 +9,8 @@
     "./componentes/*": "./src/componentes/*.tsx",
     "./acciones": "./src/acciones.ts",
     "./acciones-informativos": "./src/acciones-informativos.ts",
+    "./acciones-logistica": "./src/acciones-logistica.ts",
+    "./logistica": "./src/logistica.ts",
     "./plux": "./src/plux.ts"
   },
   "scripts": {

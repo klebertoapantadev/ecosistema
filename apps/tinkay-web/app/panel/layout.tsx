@@ -49,6 +49,14 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel & { soloAdmin?: boolean }> 
     soloAdmin: true,
   },
   {
+    clave: "configuracion_logistica",
+    nombre: "Envíos y Cobertura",
+    ruta: "/panel/logistica",
+    icono: "logistica",
+    grupo: "configuracion",
+    soloAdmin: true,
+  },
+  {
     clave: "configuracion_aria",
     nombre: "Agente ARIA (Mía)",
     ruta: "/panel/aria",

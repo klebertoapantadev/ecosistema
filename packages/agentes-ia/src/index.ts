@@ -323,6 +323,7 @@ export {
   crearServidorMcpCatalogo,
   type ContextoMcpCatalogo,
   type OpcionesServidorMcpCatalogo,
+  type ParametrosCotizarEnvioMcp,
 } from "./mcp-catalogo";
 
 

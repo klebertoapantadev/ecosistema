@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { SelectorUbicacionEntrega } from '@eco/comercio';
 import { useCarrito } from '../contexto-carrito';
 import { FRASES_DEDICATORIAS, PRODUCTOS_TINKAY } from '../datos-catalogo';
 import { DatosEntrega, FranjaHoraria } from '../tipos';
@@ -19,6 +20,7 @@ import {
   CreditCard,
   Gift,
   ArrowRight,
+  AlertTriangle,
 } from 'lucide-react';
 
 export function DrawerCarritoFloristeria() {
@@ -35,6 +37,7 @@ export function DrawerCarritoFloristeria() {
     modalidadEntrega,
     setModalidadEntrega,
     entregaUnificada,
+    configLogistica,
     subtotalBaseImponible,
     totalIva,
     totalFlete,
@@ -47,12 +50,63 @@ export function DrawerCarritoFloristeria() {
   // Estados locales para edición de dedicatoria por ítem
   const [itemEditandoDedicatoria, setItemEditandoDedicatoria] = useState<string | null>(null);
   const [itemEditandoEntrega, setItemEditandoEntrega] = useState<string | null>(null);
+  const [avisoValidacionEntrega, setAvisoValidacionEntrega] = useState<string | null>(null);
 
   if (!drawerAbierto) return null;
 
   const productosComplementos = PRODUCTOS_TINKAY.filter((p) => p.esComplemento);
+  const itemsPrincipales = items.filter((it) => !it.producto.esComplemento && !it.producto.esExtra);
+  const listaBase = itemsPrincipales.length > 0 ? itemsPrincipales : items;
+  const algunoNoIncluye = listaBase.some(
+    (it) => it.producto.deliveryIncluido === false && it.producto.modalidadTransporte !== 'SOLO_RETIRO'
+  );
+  const algunoSoloRetiro = listaBase.some((it) => it.producto.modalidadTransporte === 'SOLO_RETIRO');
+  const recargoEspecialTotal = listaBase.reduce(
+    (acc, it) => acc + (it.producto.recargoLogisticoUsd || 0) * it.cantidad,
+    0
+  );
+  const tarifaHoraExacta = configLogistica.recargoHoraExacta ?? 10;
 
   const handleIrAlPago = () => {
+    setAvisoValidacionEntrega(null);
+
+    if (modalidadEntrega === 'unificada') {
+      if (!entregaUnificada.retiroEnLocal) {
+        if (entregaUnificada.dentroCobertura === false) {
+          setAvisoValidacionEntrega(
+            `El punto seleccionado supera el radio automático de ${configLogistica.radioMaximoKm} km. Elige «Retiro gratis» o escríbenos en el chat para coordinar envío especial.`
+          );
+          return;
+        }
+        if (typeof entregaUnificada.costoEnvioCalculado !== 'number') {
+          setAvisoValidacionEntrega(
+            'Verifica la ubicación de entrega pegando un link de Google Maps / Apple / Waze o usando «Buscar en Mapa» (o selecciona «Retiro gratis»).'
+          );
+          return;
+        }
+      }
+    } else {
+      for (const it of listaBase) {
+        const ent = it.entregaIndividual;
+        if (!ent?.retiroEnLocal) {
+          if (ent?.dentroCobertura === false) {
+            setItemEditandoEntrega(it.id);
+            setAvisoValidacionEntrega(
+              `El destino de «${it.producto.nombre}» está fuera de la cobertura automática. Ajusta su ubicación o elige retiro en tienda.`
+            );
+            return;
+          }
+          if (typeof ent?.costoEnvioCalculado !== 'number') {
+            setItemEditandoEntrega(it.id);
+            setAvisoValidacionEntrega(
+              `Confirma en el mapa o con enlace GPS el destino individual de «${it.producto.nombre}» para calcular su envío.`
+            );
+            return;
+          }
+        }
+      }
+    }
+
     setDrawerAbierto(false);
     setCheckoutAbierto(true);
   };
@@ -287,9 +341,17 @@ export function DrawerCarritoFloristeria() {
                           <div className="texto-toggle-icono">
                             <MapPin size={15} />
                             <span>
-                              {item.entregaIndividual?.direccion
+                              {item.entregaIndividual?.retiroEnLocal
+                                ? `Retiro en tienda (${item.entregaIndividual.fechaEntrega || ''})`
+                                : typeof item.entregaIndividual?.costoEnvioCalculado === 'number'
+                                ? `Destino: ${item.entregaIndividual.zonaDetectadaNombre || 'Ubicación verificada'} — ${
+                                    item.entregaIndividual.costoEnvioCalculado === 0
+                                      ? 'Envío Gratis'
+                                      : `+$${item.entregaIndividual.costoEnvioCalculado.toFixed(2)}`
+                                  }`
+                                : item.entregaIndividual?.direccion
                                 ? `Destino: ${item.entregaIndividual.destinatarioNombre || 'Sin nombre'} (${item.entregaIndividual.fechaEntrega})`
-                                : 'Coordinar Destino Individual de este Arreglo'}
+                                : 'Coordinar Destino y Mapa de este Arreglo'}
                             </span>
                           </div>
                           {expandidoEntrega ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -297,9 +359,60 @@ export function DrawerCarritoFloristeria() {
 
                         {expandidoEntrega && (
                           <div className="formulario-entrega-individual-caja">
+                            <div style={{ marginBottom: '10px' }}>
+                              <SelectorUbicacionEntrega
+                                negocio="tinkay"
+                                configuracionInicial={configLogistica}
+                                deliveryIncluidoProducto={item.producto.deliveryIncluido !== false}
+                                recargoLogisticoProducto={
+                                  (item.producto.recargoLogisticoUsd || 0) * item.cantidad
+                                }
+                                permitirModoRetiro={configLogistica.permitirRetiroLocal}
+                                retiroEnLocal={Boolean(item.entregaIndividual?.retiroEnLocal)}
+                                enlaceMapaInicial={item.entregaIndividual?.enlaceMapa || ''}
+                                coordenadasIniciales={
+                                  typeof item.entregaIndividual?.lat === 'number' &&
+                                  typeof item.entregaIndividual?.lng === 'number'
+                                    ? {
+                                        lat: item.entregaIndividual.lat,
+                                        lng: item.entregaIndividual.lng,
+                                      }
+                                    : null
+                                }
+                                onCambioCotizacion={(ev) => {
+                                  setAvisoValidacionEntrega(null);
+                                  const actual = item.entregaIndividual || ({} as DatosEntrega);
+                                  actualizarEntregaIndividual(item.id, {
+                                    ...actual,
+                                    retiroEnLocal: ev.retiroEnLocal,
+                                    enlaceMapa: ev.enlaceMapa,
+                                    lat: ev.cotizacion.destino.lat,
+                                    lng: ev.cotizacion.destino.lng,
+                                    zonaDetectadaNombre: ev.cotizacion.zonaDetectada?.nombre,
+                                    distanciaVialKm: ev.cotizacion.distanciaVialKm,
+                                    costoEnvioCalculado: ev.cotizacion.costoTotalEnvio,
+                                    dentroCobertura: ev.cotizacion.dentroCobertura,
+                                    etiquetaCotizacion: ev.cotizacion.etiquetaResumen,
+                                    ciudad:
+                                      ev.cotizacion.zonaDetectada?.nombre ||
+                                      actual.ciudad ||
+                                      configLogistica.zonaGratisNombre,
+                                    direccion:
+                                      ev.retiroEnLocal
+                                        ? `Retiro en ${configLogistica.origenNombre}`
+                                        : actual.direccion || ev.direccionSugerida || '',
+                                  });
+                                }}
+                              />
+                            </div>
+
                             <input
                               type="text"
-                              placeholder="Nombre de quien recibe este arreglo"
+                              placeholder={
+                                item.entregaIndividual?.retiroEnLocal
+                                  ? 'Nombre de quien retira en tienda'
+                                  : 'Nombre de quien recibe este arreglo'
+                              }
                               value={item.entregaIndividual?.destinatarioNombre || ''}
                               onChange={(e) =>
                                 actualizarEntregaIndividual(item.id, {
@@ -312,7 +425,7 @@ export function DrawerCarritoFloristeria() {
 
                             <input
                               type="tel"
-                              placeholder="Teléfono móvil de quien recibe"
+                              placeholder="Teléfono móvil de contacto"
                               value={item.entregaIndividual?.destinatarioTelefono || ''}
                               onChange={(e) =>
                                 actualizarEntregaIndividual(item.id, {
@@ -323,18 +436,20 @@ export function DrawerCarritoFloristeria() {
                               className="input-mini"
                             />
 
-                            <input
-                              type="text"
-                              placeholder="Dirección exacta de entrega (Calle principal, número, intersección)"
-                              value={item.entregaIndividual?.direccion || ''}
-                              onChange={(e) =>
-                                actualizarEntregaIndividual(item.id, {
-                                  ...(item.entregaIndividual || ({} as DatosEntrega)),
-                                  direccion: e.target.value,
-                                })
-                              }
-                              className="input-mini"
-                            />
+                            {!item.entregaIndividual?.retiroEnLocal && (
+                              <input
+                                type="text"
+                                placeholder="Detalle de dirección / edificio / departamento"
+                                value={item.entregaIndividual?.direccion || ''}
+                                onChange={(e) =>
+                                  actualizarEntregaIndividual(item.id, {
+                                    ...(item.entregaIndividual || ({} as DatosEntrega)),
+                                    direccion: e.target.value,
+                                  })
+                                }
+                                className="input-mini"
+                              />
+                            )}
 
                             <div className="fila-fecha-franja-mini">
                               <label className="label-campo-mini">
@@ -366,7 +481,11 @@ export function DrawerCarritoFloristeria() {
                                 >
                                   <option value="manana">Mañana (09:00 - 13:00)</option>
                                   <option value="tarde">Tarde (14:00 - 18:00)</option>
-                                  <option value="hora_exacta">Hora Exacta (+ $10.00)</option>
+                                  {!item.entregaIndividual?.retiroEnLocal && (
+                                    <option value="hora_exacta">
+                                      Hora Exacta (+ ${tarifaHoraExacta.toFixed(2)})
+                                    </option>
+                                  )}
                                 </select>
                               </label>
                             </div>
@@ -394,7 +513,13 @@ export function DrawerCarritoFloristeria() {
                     onClick={() => setModalidadEntrega('unificada')}
                   >
                     <span>Todos a la misma dirección</span>
-                    <small>1 solo flete ($3.00)</small>
+                    <small>
+                      {entregaUnificada.retiroEnLocal
+                        ? 'Retiro gratis en taller'
+                        : totalFlete === 0
+                        ? `Gratis en ${configLogistica.zonaGratisNombre}`
+                        : `1 solo envío ($${totalFlete.toFixed(2)})`}
+                    </small>
                   </button>
                   <button
                     type="button"
@@ -413,24 +538,63 @@ export function DrawerCarritoFloristeria() {
               <div className="caja-formulario-entrega-unificada">
                 <div className="cabecera-caja-entrega">
                   <Calendar size={16} />
-                  <strong>Coordinación de Entrega en Quito / Valles</strong>
+                  <strong>Ubicación y Coordinación de Entrega (Pichincha)</strong>
                 </div>
-                <div style={{ padding: '0 14px 10px', fontSize: '0.8rem', color: 'var(--verde)' }}>
-                  <span>📍 ¿Prefieres retirar en persona? Visítanos en nuestra tienda física: </span>
-                  <a
-                    href="https://maps.app.goo.gl/D56gQohzuwha4sLf8"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ textDecoration: 'underline', fontWeight: 600, color: 'var(--verde)' }}
-                  >
-                    Ver en Maps
-                  </a>
+
+                <div style={{ padding: '0 14px 12px' }}>
+                  <SelectorUbicacionEntrega
+                    negocio="tinkay"
+                    configuracionInicial={configLogistica}
+                    deliveryIncluidoProducto={!algunoNoIncluye}
+                    recargoLogisticoProducto={recargoEspecialTotal}
+                    permitirModoRetiro={configLogistica.permitirRetiroLocal}
+                    retiroEnLocal={Boolean(entregaUnificada.retiroEnLocal || algunoSoloRetiro)}
+                    enlaceMapaInicial={entregaUnificada.enlaceMapa || ''}
+                    coordenadasIniciales={
+                      typeof entregaUnificada.lat === 'number' &&
+                      typeof entregaUnificada.lng === 'number'
+                        ? { lat: entregaUnificada.lat, lng: entregaUnificada.lng }
+                        : null
+                    }
+                    onCambioCotizacion={(ev) => {
+                      setAvisoValidacionEntrega(null);
+                      actualizarEntregaUnificada({
+                        retiroEnLocal: ev.retiroEnLocal,
+                        enlaceMapa: ev.enlaceMapa,
+                        lat: ev.cotizacion.destino.lat,
+                        lng: ev.cotizacion.destino.lng,
+                        zonaDetectadaNombre: ev.cotizacion.zonaDetectada?.nombre,
+                        distanciaVialKm: ev.cotizacion.distanciaVialKm,
+                        costoEnvioCalculado: ev.cotizacion.costoTotalEnvio,
+                        dentroCobertura: ev.cotizacion.dentroCobertura,
+                        etiquetaCotizacion: ev.cotizacion.etiquetaResumen,
+                        ciudad:
+                          ev.cotizacion.zonaDetectada?.nombre ||
+                          configLogistica.zonaGratisNombre,
+                        ...(ev.retiroEnLocal
+                          ? {
+                              direccion: `Retiro en ${configLogistica.origenNombre}`,
+                              franjaHoraria:
+                                entregaUnificada.franjaHoraria === 'hora_exacta'
+                                  ? 'manana'
+                                  : entregaUnificada.franjaHoraria,
+                            }
+                          : !entregaUnificada.direccion && ev.direccionSugerida
+                          ? { direccion: ev.direccionSugerida }
+                          : {}),
+                      });
+                    }}
+                  />
                 </div>
 
                 <div className="grid-campos-entrega-unificada">
                   <input
                     type="text"
-                    placeholder="Nombre completo de quien recibe"
+                    placeholder={
+                      entregaUnificada.retiroEnLocal
+                        ? 'Nombre completo de quien retira en tienda'
+                        : 'Nombre completo de quien recibe'
+                    }
                     value={entregaUnificada.destinatarioNombre}
                     onChange={(e) =>
                       actualizarEntregaUnificada({ destinatarioNombre: e.target.value })
@@ -446,27 +610,34 @@ export function DrawerCarritoFloristeria() {
                     }
                     className="input-entrega"
                   />
-                  <input
-                    type="text"
-                    placeholder="Dirección exacta de entrega (ej. Av. González Suárez y Coruña, Edif. Ámbar dpto 4B)"
-                    value={entregaUnificada.direccion}
-                    onChange={(e) =>
-                      actualizarEntregaUnificada({ direccion: e.target.value })
-                    }
-                    className="input-entrega input-col-2"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Referencia de llegada (ej. Frente a la farmacia, dejar en conserjería)"
-                    value={entregaUnificada.referencia}
-                    onChange={(e) =>
-                      actualizarEntregaUnificada({ referencia: e.target.value })
-                    }
-                    className="input-entrega input-col-2"
-                  />
+
+                  {!entregaUnificada.retiroEnLocal && (
+                    <>
+                      <input
+                        type="text"
+                        placeholder="Complemento de dirección (ej. Edif. Ámbar dpto 4B, número de casa)"
+                        value={entregaUnificada.direccion}
+                        onChange={(e) =>
+                          actualizarEntregaUnificada({ direccion: e.target.value })
+                        }
+                        className="input-entrega input-col-2"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Referencia de llegada (ej. Frente a la farmacia, dejar en conserjería)"
+                        value={entregaUnificada.referencia}
+                        onChange={(e) =>
+                          actualizarEntregaUnificada({ referencia: e.target.value })
+                        }
+                        className="input-entrega input-col-2"
+                      />
+                    </>
+                  )}
 
                   <div className="campo-fecha-entrega">
-                    <label>Fecha de Entrega:</label>
+                    <label>
+                      {entregaUnificada.retiroEnLocal ? 'Fecha de Retiro:' : 'Fecha de Entrega:'}
+                    </label>
                     <input
                       type="date"
                       value={entregaUnificada.fechaEntrega}
@@ -490,25 +661,30 @@ export function DrawerCarritoFloristeria() {
                     >
                       <option value="manana">Mañana (09:00 - 13:00) — Sin costo</option>
                       <option value="tarde">Tarde (14:00 - 18:00) — Sin costo</option>
-                      <option value="hora_exacta">Hora Exacta / Madrugador (+ $10.00)</option>
+                      {!entregaUnificada.retiroEnLocal && (
+                        <option value="hora_exacta">
+                          Hora Exacta / Madrugador (+ ${tarifaHoraExacta.toFixed(2)})
+                        </option>
+                      )}
                     </select>
                   </div>
 
-                  {entregaUnificada.franjaHoraria === 'hora_exacta' && (
-                    <div className="campo-hora-exacta-aviso input-col-2">
-                      <Clock size={16} />
-                      <label>Hora exacta requerida:</label>
-                      <input
-                        type="time"
-                        value={entregaUnificada.horaExacta || '07:30'}
-                        onChange={(e) =>
-                          actualizarEntregaUnificada({ horaExacta: e.target.value })
-                        }
-                        className="input-entrega input-hora"
-                      />
-                      <small>🚨 Asignaremos ruta exclusiva y prioridad en taller.</small>
-                    </div>
-                  )}
+                  {!entregaUnificada.retiroEnLocal &&
+                    entregaUnificada.franjaHoraria === 'hora_exacta' && (
+                      <div className="campo-hora-exacta-aviso input-col-2">
+                        <Clock size={16} />
+                        <label>Hora exacta requerida:</label>
+                        <input
+                          type="time"
+                          value={entregaUnificada.horaExacta || '07:30'}
+                          onChange={(e) =>
+                            actualizarEntregaUnificada({ horaExacta: e.target.value })
+                          }
+                          className="input-entrega input-hora"
+                        />
+                        <small>🚨 Asignaremos ruta exclusiva y prioridad en taller.</small>
+                      </div>
+                    )}
                 </div>
               </div>
             )}
@@ -550,8 +726,29 @@ export function DrawerCarritoFloristeria() {
                 <span>${totalIva.toFixed(2)}</span>
               </div>
               <div className="fila-desglose">
-                <span>Flete Delivery {modalidadEntrega === 'individual' ? `(${items.length} destinos)` : 'Quito/Cumbayá'}</span>
-                <span>${totalFlete.toFixed(2)}</span>
+                <span>
+                  {modalidadEntrega === 'individual'
+                    ? `Envío Multidestino (${listaBase.length} destinos)`
+                    : entregaUnificada.retiroEnLocal
+                    ? `Retiro en ${configLogistica.origenNombre}`
+                    : entregaUnificada.zonaDetectadaNombre
+                    ? `Envío (${entregaUnificada.zonaDetectadaNombre})`
+                    : typeof entregaUnificada.distanciaVialKm === 'number'
+                    ? `Envío a domicilio (${entregaUnificada.distanciaVialKm.toFixed(1)} km)`
+                    : `Envío (${configLogistica.zonaGratisNombre})`}
+                </span>
+                <span
+                  style={{
+                    fontWeight: totalFlete === 0 ? 700 : 500,
+                    color: totalFlete === 0 ? 'var(--verde)' : 'inherit',
+                  }}
+                >
+                  {modalidadEntrega === 'unificada' && entregaUnificada.retiroEnLocal
+                    ? 'GRATIS ($0.00)'
+                    : typeof entregaUnificada.costoEnvioCalculado === 'number' && totalFlete === 0
+                    ? 'GRATIS ($0.00)'
+                    : `$${totalFlete.toFixed(2)}`}
+                </span>
               </div>
               {totalRecargoHorarioExacto > 0 && (
                 <div className="fila-desglose recargo-fila">
@@ -565,13 +762,37 @@ export function DrawerCarritoFloristeria() {
               </div>
             </div>
 
+            {avisoValidacionEntrega && (
+              <div
+                role="alert"
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '8px',
+                  padding: '10px 12px',
+                  marginBottom: '10px',
+                  borderRadius: '10px',
+                  background: '#FEF3C7',
+                  border: '1px solid #F59E0B',
+                  color: '#92400E',
+                  fontSize: '0.78rem',
+                  lineHeight: 1.4,
+                }}
+              >
+                <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: '1px' }} />
+                <span>{avisoValidacionEntrega}</span>
+              </div>
+            )}
+
             <button
               type="button"
               className="btn btn-primario btn-proceder-pago"
               onClick={handleIrAlPago}
+              title="Proceder al pago seguro en línea"
+              aria-label="Proceder al pago seguro en línea"
             >
               <CreditCard size={18} />
-              <span>Proceder al Pago en Línea</span>
+              <span>Ir a Pagar</span>
               <ArrowRight size={18} />
             </button>
           </div>

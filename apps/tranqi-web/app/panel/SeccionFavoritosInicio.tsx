@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, Users, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, ShoppingBag, CreditCard, CalendarPlus, CalendarCheck, CalendarClock, Shuffle, Building2, Scale, Briefcase, Bot, type LucideIcon } from "lucide-react";
+import { User, Users, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, ShoppingBag, CreditCard, CalendarPlus, CalendarCheck, CalendarClock, Shuffle, Building2, Scale, Briefcase, Bot, MapPin, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
 
@@ -223,6 +223,14 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     subtitulo: "Parámetros ARIA_BASE, ARIA_AGENT_ID y claves en Vault aislados por negocio",
     icono: Bot,
     href: "/panel/aria",
+    origen: "Configurar"
+  },
+  configuracion_logistica: {
+    id: "configuracion_logistica",
+    titulo: "Envíos, Zonas y Cobertura GPS",
+    subtitulo: "Polígonos de cobertura en Pichincha, envío gratis por sector y tarifa por km vial",
+    icono: MapPin,
+    href: "/panel/logistica",
     origen: "Configurar"
   },
   tokens_mcp: {

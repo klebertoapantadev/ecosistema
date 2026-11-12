@@ -62,6 +62,11 @@ import { TipoVigenciaTemporal, evaluarVigenciaProducto } from "../utils/vigencia
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
 import { ModalGaleriaMedios } from "./ModalGaleriaMedios";
 import { detectarTipoNegocio, obtenerImagenFallbackNegocio } from "../utils/negocio";
+import { obtenerConfiguracionLogisticaAction } from "../acciones-logistica";
+import {
+  crearConfiguracionLogisticaPorDefecto,
+  type ConfiguracionLogisticaNegocio,
+} from "../logistica";
 import {
   obtenerPresetsPorNegocio,
   obtenerUsosEliminadosStorage,
@@ -483,11 +488,31 @@ export function ModalEditarProducto({
   const [tarifaIvaMaster, setTarifaIvaMaster] = useState<number>(15);
   const [autoAplicarIvaVariantes, setAutoAplicarIvaVariantes] = useState<boolean>(true);
   const [mensajeFeedbackIva, setMensajeFeedbackIva] = useState<string | null>(null);
+  const [configLogisticaNegocio, setConfigLogisticaNegocio] =
+    useState<ConfiguracionLogisticaNegocio>(() => crearConfiguracionLogisticaPorDefecto(negocio));
   const [deliveryIncluido, setDeliveryIncluido] = useState<boolean>(true);
   const [modalidadTransporte, setModalidadTransporte] = useState<string>("INCLUIDO_GRATIS");
-  const [etiquetaTransporte, setEtiquetaTransporte] = useState<string>("🚚 Envío a Domicilio Incluido");
-  const [coberturaTransporte, setCoberturaTransporte] = useState<string>("Quito Urbano y Valles");
+  const [etiquetaTransporte, setEtiquetaTransporte] = useState<string>("🌸 Envío Gratis en Centro-Norte de Quito");
+  const [coberturaTransporte, setCoberturaTransporte] = useState<string>("Centro-Norte de Quito");
+  const [recargoTransporteUsd, setRecargoTransporteUsd] = useState<number>(0);
   const [canalesSeleccionados, setCanalesSeleccionados] = useState<CanalVisibilidad[]>([...CANALES_POR_DEFECTO]);
+
+  useEffect(() => {
+    if (!abierto) return;
+    let vivo = true;
+    obtenerConfiguracionLogisticaAction(negocio)
+      .then((cfg) => {
+        if (!vivo || !cfg) return;
+        setConfigLogisticaNegocio(cfg);
+        setCoberturaTransporte((actual) =>
+          !actual || actual === "Quito Urbano y Valles" ? cfg.zonaGratisNombre : actual
+        );
+      })
+      .catch(() => {});
+    return () => {
+      vivo = false;
+    };
+  }, [abierto, negocio]);
 
   // Editor Multivariante (Tamaños / Modalidades)
   const [modoEdicion, setModoEdicion] = useState<"master" | "variante">("master");
@@ -843,6 +868,11 @@ export function ModalEditarProducto({
       
       const rawEtiqueta = det.logistica?.etiqueta_transporte;
       const rawCobertura = det.logistica?.cobertura_texto;
+      setRecargoTransporteUsd(
+        Number.isFinite(Number(det.logistica?.recargo_transporte_usd))
+          ? Math.max(0, Number(det.logistica.recargo_transporte_usd))
+          : 0
+      );
       if (esLegal) {
         setEtiquetaTransporte(
           rawEtiqueta && !rawEtiqueta.includes("Envío a Domicilio") && !rawEtiqueta.includes("Visita Técnica")
@@ -855,8 +885,18 @@ export function ModalEditarProducto({
             : "Nacional (Ecuador)"
         );
       } else {
-        setEtiquetaTransporte(rawEtiqueta || (esFloristeria ? "🌸 Envío a Domicilio Incluido" : "🔧 Visita Técnica Incluida"));
-        setCoberturaTransporte(rawCobertura || "Quito Urbano y Valles");
+        setEtiquetaTransporte(
+          rawEtiqueta && rawEtiqueta !== "🌸 Envío a Domicilio Incluido"
+            ? rawEtiqueta
+            : esFloristeria
+            ? configLogisticaNegocio.etiquetaEnvioGratis || "🌸 Envío Gratis en Centro-Norte de Quito"
+            : "🔧 Visita Técnica Incluida"
+        );
+        setCoberturaTransporte(
+          rawCobertura && rawCobertura !== "Quito Urbano y Valles"
+            ? rawCobertura
+            : configLogisticaNegocio.zonaGratisNombre || "Centro-Norte de Quito"
+        );
       }
 
       // Clonar y ordenar variantes por orden ascendente y precio
@@ -1513,6 +1553,7 @@ export function ModalEditarProducto({
           modalidad_transporte: modalidadTransporte,
           etiqueta_transporte: etiquetaTransporte,
           cobertura_texto: coberturaTransporte,
+          recargo_transporte_usd: recargoTransporteUsd > 0 ? recargoTransporteUsd : 0,
         },
         usos: usosSeleccionados,
         etiquetas: etiquetasSeleccionadas,
@@ -2851,21 +2892,47 @@ export function ModalEditarProducto({
                   transition: "all 0.2s ease",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
-                  {esLegal ? (
-                    <Scale size={16} color={deliveryIncluido ? "#16A34A" : "#0284C7"} />
-                  ) : esFloristeria ? (
-                    <Flower2 size={16} color={deliveryIncluido ? "#16A34A" : "#E11D48"} />
-                  ) : (
-                    <Truck size={16} color={deliveryIncluido ? "#16A34A" : "#64748B"} />
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "6px", marginBottom: "8px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    {esLegal ? (
+                      <Scale size={16} color={deliveryIncluido ? "#16A34A" : "#0284C7"} />
+                    ) : esFloristeria ? (
+                      <Flower2 size={16} color={deliveryIncluido ? "#16A34A" : "#E11D48"} />
+                    ) : (
+                      <Truck size={16} color={deliveryIncluido ? "#16A34A" : "#64748B"} />
+                    )}
+                    <label style={{ fontSize: "0.8rem", fontWeight: 800, color: deliveryIncluido ? "#166534" : "#1E293B" }}>
+                      {esLegal
+                        ? "Modalidad de Atención Legal & Entrega de Dictamen"
+                        : esFloristeria
+                        ? "Logística, Envíos & Entrega Floral"
+                        : "Logística & Turnos de Cuadrilla Técnica"}
+                    </label>
+                  </div>
+
+                  {!esLegal && (
+                    <a
+                      href="/panel/logistica"
+                      title="Abrir configuración de zonas de cobertura en Pichincha y tarifas por km"
+                      aria-label="Configurar zonas y tarifas"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        fontSize: "0.71rem",
+                        fontWeight: 700,
+                        color: "#166534",
+                        background: "#FFFFFF",
+                        border: "1px solid #BBF7D0",
+                        padding: "3px 8px",
+                        borderRadius: "999px",
+                        textDecoration: "none",
+                      }}
+                    >
+                      <Settings2 size={12} />
+                      <span>Zonas y Km</span>
+                    </a>
                   )}
-                  <label style={{ fontSize: "0.8rem", fontWeight: 800, color: deliveryIncluido ? "#166534" : "#1E293B" }}>
-                    {esLegal
-                      ? "Modalidad de Atención Legal & Entrega de Dictamen"
-                      : esFloristeria
-                      ? "Logística, Envíos & Entrega Floral"
-                      : "Logística & Turnos de Cuadrilla Técnica"}
-                  </label>
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px", marginBottom: "10px" }}>
@@ -2947,7 +3014,14 @@ export function ModalEditarProducto({
                         onClick={() => {
                           setDeliveryIncluido(true);
                           setModalidadTransporte("INCLUIDO_GRATIS");
-                          setEtiquetaTransporte(esFloristeria ? "🌸 Envío Floral Incluido" : "🚚 Visita Técnica Incluida");
+                          setEtiquetaTransporte(
+                            esFloristeria
+                              ? configLogisticaNegocio.etiquetaEnvioGratis || "🌸 Envío Gratis en Centro-Norte de Quito"
+                              : "🚚 Visita Técnica Incluida"
+                          );
+                          setCoberturaTransporte(
+                            configLogisticaNegocio.zonaGratisNombre || "Centro-Norte de Quito"
+                          );
                         }}
                         style={{
                           padding: "8px 10px",
@@ -2969,7 +3043,7 @@ export function ModalEditarProducto({
                         onClick={() => {
                           setDeliveryIncluido(false);
                           setModalidadTransporte("COSTO_ADICIONAL");
-                          setEtiquetaTransporte(esFloristeria ? "📦 Delivery con Costo Adicional" : "📦 Traslado con Costo");
+                          setEtiquetaTransporte(esFloristeria ? "📦 Delivery Calculado por Ubicación" : "📦 Traslado con Costo");
                         }}
                         style={{
                           padding: "8px 10px",
@@ -3011,7 +3085,13 @@ export function ModalEditarProducto({
                   )}
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: esLegal ? "1fr 1fr" : "1.2fr 1.2fr 0.9fr",
+                    gap: "10px",
+                  }}
+                >
                   <div>
                     <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
                       {esLegal ? "Etiqueta Visible de Modalidad" : "Etiqueta Visible de Transporte"}
@@ -3020,7 +3100,7 @@ export function ModalEditarProducto({
                       type="text"
                       value={etiquetaTransporte}
                       onChange={(e) => setEtiquetaTransporte(e.target.value)}
-                      placeholder={esLegal ? "Ej. 🌐 Modalidad 100% Telemática" : "Ej. 🚚 Envío a Domicilio Incluido"}
+                      placeholder={esLegal ? "Ej. 🌐 Modalidad 100% Telemática" : "Ej. 🌸 Envío Gratis en Centro-Norte de Quito"}
                       style={{
                         width: "100%",
                         padding: "6px 10px",
@@ -3041,7 +3121,7 @@ export function ModalEditarProducto({
                       type="text"
                       value={coberturaTransporte}
                       onChange={(e) => setCoberturaTransporte(e.target.value)}
-                      placeholder={esLegal ? "Ej. Cobertura Nacional (Ecuador)" : "Ej. Quito Urbano y Valles"}
+                      placeholder={esLegal ? "Ej. Cobertura Nacional (Ecuador)" : "Ej. Centro-Norte de Quito"}
                       style={{
                         width: "100%",
                         padding: "6px 10px",
@@ -3053,7 +3133,62 @@ export function ModalEditarProducto({
                       }}
                     />
                   </div>
+
+                  {!esLegal && (
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        Recargo Especial (+USD)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.50"
+                        min="0"
+                        value={recargoTransporteUsd}
+                        onChange={(e) => setRecargoTransporteUsd(Math.max(0, Number(e.target.value) || 0))}
+                        placeholder="0.00"
+                        title="Opcional: recargo adicional por furgoneta o volumen monumental de este arreglo"
+                        style={{
+                          width: "100%",
+                          padding: "6px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.78rem",
+                          boxSizing: "border-box",
+                          background: "#FFFFFF",
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
+
+                {!esLegal && modalidadTransporte !== "SOLO_RETIRO" && (
+                  <div
+                    style={{
+                      marginTop: "8px",
+                      fontSize: "0.71rem",
+                      color: "#334155",
+                      background: "rgba(255,255,255,0.75)",
+                      border: "1px dashed #CBD5E1",
+                      borderRadius: "6px",
+                      padding: "6px 9px",
+                    }}
+                  >
+                    {deliveryIncluido ? (
+                      <>
+                        ✅ <strong>Gratis ($0.00)</strong> dentro de <strong>{configLogisticaNegocio.zonaGratisNombre}</strong>. Fuera de esta zona se calcula por enlace de Maps/Waze o mapa: tarifa de zona o{" "}
+                        <strong>
+                          (${configLogisticaNegocio.tarifaPorKm.toFixed(2)}/km − ${configLogisticaNegocio.subsidioBaseUsd.toFixed(2)}, mín. ${configLogisticaNegocio.recargoMinimoExtra.toFixed(2)})
+                        </strong>
+                        {recargoTransporteUsd > 0 ? ` + $${recargoTransporteUsd.toFixed(2)} transporte especial.` : "."}
+                      </>
+                    ) : (
+                      <>
+                        📦 Cobra tarifa base de <strong>${configLogisticaNegocio.tarifaBaseNoIncluido.toFixed(2)}</strong> en {configLogisticaNegocio.zonaGratisNombre} y cálculo completo por zona/km fuera de cobertura base
+                        {recargoTransporteUsd > 0 ? ` + $${recargoTransporteUsd.toFixed(2)} transporte especial.` : "."}
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
 
 

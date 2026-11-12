@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { SelectorUbicacionEntrega } from '@eco/comercio';
 import { useCarrito } from '../contexto-carrito';
 import { PRODUCTOS_TINKAY, FRASES_DEDICATORIAS } from '../datos-catalogo';
 import { ProductoEcommerce, VarianteEcommerce, MensajeChat } from '../tipos';
@@ -12,6 +13,7 @@ import {
   ArrowRight,
   Check,
   RefreshCw,
+  MapPin,
 } from 'lucide-react';
 
 const MENSAJES_INICIALES: MensajeChat[] = [
@@ -19,7 +21,7 @@ const MENSAJES_INICIALES: MensajeChat[] = [
     id: 'msg-init-1',
     remitente: 'aria',
     texto:
-      '¡Hola! Soy Mía 🌿, sommelier floral de Tinkay. ¿Para qué ocasión o persona especial estamos buscando el arreglo hoy? Con gusto te sugiero la mejor opción de nuestro taller y te ayudo a coordinar la entrega.',
+      '¡Hola! Soy Mía 🌿, sommelier floral de Tinkay. ¿Para qué ocasión o persona especial estamos buscando el arreglo hoy? También puedes pegarme tu link de Google Maps / Waze o usar el pin 📍 para cotizar el envío exacto.',
     timestamp: 'Ahora',
   },
 ];
@@ -28,13 +30,15 @@ const SUGERENCIAS_RAPIDAS = [
   { id: 'amor', texto: '🌹 Sorpresa de Amor / Aniversario' },
   { id: 'cumple', texto: '🎂 Cumpleaños Alegre' },
   { id: 'condolencias', texto: '🕊️ Condolencias y Respeto' },
-  { id: 'economico', texto: '✨ Opciones de menos de $30' },
+  { id: 'envio', texto: '📍 Cotizar envío a mi ubicación' },
 ];
 
+type CotizacionChat = NonNullable<MensajeChat['cotizacionEnvio']>;
+
 type ResultadoConsultaAria =
-  | { estado: 'ok'; texto: string }
-  | { estado: 'sin_configurar' }
-  | { estado: 'error_temporal' };
+  | { estado: 'ok'; texto: string; cotizacionEnvio?: CotizacionChat }
+  | { estado: 'sin_configurar'; cotizacionEnvio?: CotizacionChat }
+  | { estado: 'error_temporal'; cotizacionEnvio?: CotizacionChat };
 
 function crearConversacionId(): string {
   if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
@@ -101,6 +105,9 @@ export function ChatAriaFlotante() {
     setDrawerAbierto,
     cantidadTotal,
     productos,
+    configLogistica,
+    entregaUnificada,
+    actualizarEntregaUnificada,
   } = useCarrito();
 
   const catalogo = productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY;
@@ -110,6 +117,8 @@ export function ChatAriaFlotante() {
   const [inputTexto, setInputTexto] = useState('');
   const [escribiendo, setEscribiendo] = useState(false);
   const [itemRecienAgregado, setItemRecienAgregado] = useState<string | null>(null);
+  const [selectorMapaAbierto, setSelectorMapaAbierto] = useState(false);
+  const [ubicacionAplicadaId, setUbicacionAplicadaId] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const conversacionId = useRef<string>(crearConversacionId());
@@ -118,17 +127,55 @@ export function ChatAriaFlotante() {
     if (abierto && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [mensajes, abierto, escribiendo]);
+  }, [mensajes, abierto, escribiendo, selectorMapaAbierto]);
 
   // Respaldo estático usado ÚNICAMENTE cuando el negocio aún no tiene ningún
   // agente ARIA configurado (HTTP 503). Nunca sustituye silenciosamente a ARIA
   // en errores de timeout para no contradecir el hilo conversacional.
-  const procesarRespaldoSinAgente = (texto: string) => {
+  const procesarRespaldoSinAgente = (texto: string, cotizacionEnvio?: CotizacionChat) => {
+    if (cotizacionEnvio) {
+      return {
+        texto: cotizacionEnvio.dentroCobertura
+          ? `¡Ubicación verificada! ${cotizacionEnvio.etiquetaResumen} (${cotizacionEnvio.distanciaVialKm.toFixed(
+              1
+            )} km desde nuestro taller). Puedes pulsar «Usar ubicación» para aplicarla directo a tu carrito.`
+          : `Revisé tu ubicación (${cotizacionEnvio.distanciaVialKm.toFixed(
+              1
+            )} km desde nuestro taller) y supera el radio automático de cobertura (${
+              configLogistica.radioMaximoKm
+            } km). Podemos coordinar retiro sin costo en nuestra tienda física (${
+              configLogistica.origenMapaUrl
+            }).`,
+      };
+    }
+
     const query = normalizar(texto);
     const soloArreglosPrincipales = catalogo.filter(
       (p) => !p.esComplemento && !p.esExtra && p.categoriaPrincipal !== 'cat-detalles'
     );
     const baseFloral = soloArreglosPrincipales.length > 0 ? soloArreglosPrincipales : catalogo;
+
+    if (
+      query.includes('domicilio') ||
+      query.includes('envio') ||
+      query.includes('delivery') ||
+      query.includes('transporte') ||
+      query.includes('cobertura') ||
+      query.includes('flete')
+    ) {
+      return {
+        texto:
+          `¡Sí! Entregamos a domicilio en Quito y Pichincha:\n` +
+          `• Envío GRATIS en ${configLogistica.zonaGratisNombre}.\n` +
+          `• Fuera de esa zona calculamos según tu ubicación GPS ($${configLogistica.tarifaPorKm.toFixed(
+            2
+          )}/km vial descontando $${configLogistica.subsidioBaseUsd.toFixed(
+            2
+          )} de base absorbida, mínimo $${configLogistica.recargoMinimoExtra.toFixed(2)} USD extra) o tarifa zonal en valles.\n` +
+          `• También tienes retiro gratis en tienda: ${configLogistica.origenMapaUrl}\n\n` +
+          `Pégame tu link de Google Maps / Apple Maps / Waze o toca el botón 📍 de abajo para darte el valor exacto.`,
+      };
+    }
 
     if (
       query.includes('tienda') ||
@@ -141,8 +188,7 @@ export function ChatAriaFlotante() {
       query.includes('retiro')
     ) {
       return {
-        texto:
-          '¡Con mucho gusto! Nuestra tienda física y taller floral principal está ubicada en Quito. Puedes visitarnos directamente o retirar tus pedidos sin costo de envío aquí: https://maps.app.goo.gl/D56gQohzuwha4sLf8. ¿Te gustaría coordinar un pedido hoy?',
+        texto: `¡Con mucho gusto! Nuestra tienda física y taller floral principal (${configLogistica.origenNombre}) está en Quito. Puedes visitarnos o retirar tus pedidos gratis aquí: ${configLogistica.origenMapaUrl}. ¿Te ayudo a cotizar envío a domicilio con el pin 📍?`,
       };
     }
 
@@ -269,6 +315,8 @@ export function ChatAriaFlotante() {
 
   // Consulta a ARIA con 1 reintento automático ante micro-cortes o timeouts transitorios (502/504).
   const consultarAria = async (texto: string): Promise<ResultadoConsultaAria> => {
+    let ultimaCotizacion: CotizacionChat | undefined;
+
     for (let intento = 0; intento < 2; intento++) {
       try {
         const r = await fetch('/api/chat', {
@@ -277,15 +325,26 @@ export function ChatAriaFlotante() {
           body: JSON.stringify({ prompt: texto, conversation_id: conversacionId.current }),
         });
 
+        const data = (await r.json().catch(() => ({}))) as {
+          response?: string;
+          cotizacionEnvio?: CotizacionChat;
+        };
+        if (data.cotizacionEnvio) {
+          ultimaCotizacion = data.cotizacionEnvio;
+        }
+
         if (r.status === 503) {
-          return { estado: 'sin_configurar' };
+          return { estado: 'sin_configurar', cotizacionEnvio: ultimaCotizacion };
         }
 
         if (r.ok) {
-          const data = (await r.json()) as { response?: string };
           const respuesta = data.response?.trim();
           if (respuesta) {
-            return { estado: 'ok', texto: limpiarMarkdown(respuesta) };
+            return {
+              estado: 'ok',
+              texto: limpiarMarkdown(respuesta),
+              cotizacionEnvio: ultimaCotizacion,
+            };
           }
         }
       } catch {
@@ -297,7 +356,7 @@ export function ChatAriaFlotante() {
       }
     }
 
-    return { estado: 'error_temporal' };
+    return { estado: 'error_temporal', cotizacionEnvio: ultimaCotizacion };
   };
 
   // Empareja las tarjetas interactivas del catálogo con los arreglos que Mía
@@ -393,17 +452,19 @@ export function ChatAriaFlotante() {
         texto: resultado.texto,
         timestamp: 'Ahora',
         productosSugeridos: productosMencionados(resultado.texto),
+        cotizacionEnvio: resultado.cotizacionEnvio,
       };
     } else if (resultado.estado === 'sin_configurar') {
-      const respaldo = procesarRespaldoSinAgente(texto);
+      const respaldo = procesarRespaldoSinAgente(texto, resultado.cotizacionEnvio);
       nuevoMensajeAria = {
         id: `aria-${Date.now()}`,
         remitente: 'aria',
         texto: respaldo.texto,
         timestamp: 'Ahora',
-        productosSugeridos: respaldo.productosSugeridos,
+        productosSugeridos: 'productosSugeridos' in respaldo ? respaldo.productosSugeridos : undefined,
         sugerenciaDedicatoria:
           'sugerenciaDedicatoria' in respaldo ? respaldo.sugerenciaDedicatoria : undefined,
+        cotizacionEnvio: resultado.cotizacionEnvio,
       };
     } else {
       nuevoMensajeAria = {
@@ -413,11 +474,29 @@ export function ChatAriaFlotante() {
           'Disculpa, nuestro catálogo en vivo tardó unos segundos más de lo habitual en responder. Pulsa «Reintentar» para retomar exactamente tu consulta.',
         timestamp: 'Ahora',
         reintentarTexto: texto,
+        cotizacionEnvio: resultado.cotizacionEnvio,
       };
     }
 
     setMensajes((prev) => [...prev, nuevoMensajeAria]);
     setEscribiendo(false);
+  };
+
+  const aplicarCotizacionAlCarrito = (mensajeId: string, cot: CotizacionChat) => {
+    actualizarEntregaUnificada({
+      retiroEnLocal: false,
+      enlaceMapa: cot.enlaceMapa,
+      lat: cot.lat,
+      lng: cot.lng,
+      zonaDetectadaNombre: cot.zonaDetectadaNombre,
+      distanciaVialKm: cot.distanciaVialKm,
+      costoEnvioCalculado: cot.costoTotalEnvio,
+      dentroCobertura: cot.dentroCobertura,
+      etiquetaCotizacion: cot.etiquetaResumen,
+      ciudad: cot.zonaDetectadaNombre || configLogistica.zonaGratisNombre,
+    });
+    setUbicacionAplicadaId(mensajeId);
+    setTimeout(() => setUbicacionAplicadaId(null), 2500);
   };
 
   const handleAgregarDesdeChat = (
@@ -503,6 +582,81 @@ export function ChatAriaFlotante() {
 
                 <div className="burbuja-mensaje">
                   <p style={{ whiteSpace: 'pre-wrap' }}>{m.texto}</p>
+
+                  {m.cotizacionEnvio && (
+                    <div
+                      style={{
+                        marginTop: '10px',
+                        padding: '10px 12px',
+                        borderRadius: '10px',
+                        background: m.cotizacionEnvio.dentroCobertura ? '#F0FDF4' : '#FEF2F2',
+                        border: `1px solid ${
+                          m.cotizacionEnvio.dentroCobertura ? '#86EFAC' : '#FECACA'
+                        }`,
+                        fontSize: '0.78rem',
+                        color: '#1E293B',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '6px',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          gap: '8px',
+                        }}
+                      >
+                        <strong style={{ color: '#14532D' }}>
+                          📍 {m.cotizacionEnvio.etiquetaResumen}
+                        </strong>
+                        <span style={{ fontWeight: 700, color: '#15803D' }}>
+                          {m.cotizacionEnvio.costoTotalEnvio === 0
+                            ? 'GRATIS'
+                            : `$${m.cotizacionEnvio.costoTotalEnvio.toFixed(2)}`}
+                        </span>
+                      </div>
+                      <small style={{ color: '#475569', lineHeight: 1.35 }}>
+                        {m.cotizacionEnvio.formulaDetalle}
+                      </small>
+                      {m.cotizacionEnvio.dentroCobertura && (
+                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                          <button
+                            type="button"
+                            onClick={() => aplicarCotizacionAlCarrito(m.id, m.cotizacionEnvio!)}
+                            title="Aplicar esta ubicación verificada al carrito"
+                            aria-label="Aplicar esta ubicación verificada al carrito"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              padding: '5px 11px',
+                              borderRadius: '999px',
+                              border: 'none',
+                              background: '#3D5A45',
+                              color: '#FFFFFF',
+                              fontSize: '0.74rem',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            {ubicacionAplicadaId === m.id ? (
+                              <>
+                                <Check size={12} />
+                                <span>Aplicada</span>
+                              </>
+                            ) : (
+                              <>
+                                <MapPin size={12} />
+                                <span>Usar ubicación</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {m.reintentarTexto && (
                     <div style={{ marginTop: '10px' }}>
@@ -625,24 +779,156 @@ export function ChatAriaFlotante() {
                 key={sug.id}
                 type="button"
                 className="chip-pregunta-rapida"
-                onClick={() => handleEnviar(sug.texto)}
+                onClick={() => {
+                  if (sug.id === 'envio') {
+                    setSelectorMapaAbierto((prev) => !prev);
+                  } else {
+                    void handleEnviar(sug.texto);
+                  }
+                }}
               >
                 {sug.texto}
               </button>
             ))}
           </div>
 
+          {/* Panel compacto de Mapa / Enlace GPS integrado en el Chat */}
+          {selectorMapaAbierto && (
+            <div
+              style={{
+                padding: '10px 12px',
+                borderTop: '1px solid rgba(61, 90, 69, 0.16)',
+                background: '#FAF8F5',
+                maxHeight: '310px',
+                overflowY: 'auto',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '6px',
+                }}
+              >
+                <strong style={{ fontSize: '0.78rem', color: '#2F4837' }}>
+                  📍 Cotizar entrega (Link GPS o Mapa Pichincha)
+                </strong>
+                <button
+                  type="button"
+                  onClick={() => setSelectorMapaAbierto(false)}
+                  title="Cerrar selector de mapa"
+                  aria-label="Cerrar selector de mapa"
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    color: '#64748B',
+                    padding: '2px',
+                  }}
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              <SelectorUbicacionEntrega
+                negocio="tinkay"
+                configuracionInicial={configLogistica}
+                permitirModoRetiro={configLogistica.permitirRetiroLocal}
+                retiroEnLocal={Boolean(entregaUnificada.retiroEnLocal)}
+                enlaceMapaInicial={entregaUnificada.enlaceMapa || ''}
+                coordenadasIniciales={
+                  typeof entregaUnificada.lat === 'number' &&
+                  typeof entregaUnificada.lng === 'number'
+                    ? { lat: entregaUnificada.lat, lng: entregaUnificada.lng }
+                    : null
+                }
+                mostrarMapaPorDefecto={true}
+                onCambioCotizacion={(ev) => {
+                  actualizarEntregaUnificada({
+                    retiroEnLocal: ev.retiroEnLocal,
+                    enlaceMapa: ev.enlaceMapa,
+                    lat: ev.cotizacion.destino.lat,
+                    lng: ev.cotizacion.destino.lng,
+                    zonaDetectadaNombre: ev.cotizacion.zonaDetectada?.nombre,
+                    distanciaVialKm: ev.cotizacion.distanciaVialKm,
+                    costoEnvioCalculado: ev.cotizacion.costoTotalEnvio,
+                    dentroCobertura: ev.cotizacion.dentroCobertura,
+                    etiquetaCotizacion: ev.cotizacion.etiquetaResumen,
+                    ciudad:
+                      ev.cotizacion.zonaDetectada?.nombre || configLogistica.zonaGratisNombre,
+                    ...(ev.direccionSugerida && !entregaUnificada.direccion
+                      ? { direccion: ev.direccionSugerida }
+                      : {}),
+                  });
+
+                  const resumenMsg: MensajeChat = {
+                    id: `aria-loc-${Date.now()}`,
+                    remitente: 'aria',
+                    texto: ev.retiroEnLocal
+                      ? `Perfecto 🌿, dejé configurado el retiro sin costo en ${configLogistica.origenNombre} en tu carrito.`
+                      : ev.cotizacion.dentroCobertura
+                      ? `¡Listo! Guardé tu ubicación de entrega en el carrito: ${ev.cotizacion.etiquetaResumen}.`
+                      : `El punto elegido (${ev.cotizacion.distanciaVialKm.toFixed(
+                          1
+                        )} km) supera nuestra cobertura automática (${
+                          configLogistica.radioMaximoKm
+                        } km). Escríbeme aquí para ayudarte con una coordinación especial o retiro en tienda.`,
+                    timestamp: 'Ahora',
+                    cotizacionEnvio: ev.retiroEnLocal
+                      ? undefined
+                      : {
+                          etiquetaResumen: ev.cotizacion.etiquetaResumen,
+                          formulaDetalle: ev.cotizacion.formulaDetalle,
+                          costoTotalEnvio: ev.cotizacion.costoTotalEnvio,
+                          dentroCobertura: ev.cotizacion.dentroCobertura,
+                          zonaDetectadaNombre: ev.cotizacion.zonaDetectada?.nombre,
+                          distanciaVialKm: ev.cotizacion.distanciaVialKm,
+                          enlaceMapa: ev.enlaceMapa,
+                          lat: ev.cotizacion.destino.lat,
+                          lng: ev.cotizacion.destino.lng,
+                        },
+                  };
+                  setMensajes((prev) => [...prev, resumenMsg]);
+                }}
+              />
+            </div>
+          )}
+
           {/* Barra de Input */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              handleEnviar();
+              void handleEnviar();
             }}
             className="barra-input-chat"
           >
+            <button
+              type="button"
+              onClick={() => setSelectorMapaAbierto((prev) => !prev)}
+              title="Cotizar envío con enlace o mapa"
+              aria-label="Cotizar envío con enlace o mapa"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '34px',
+                height: '34px',
+                borderRadius: '50%',
+                border: selectorMapaAbierto
+                  ? '1px solid #3D5A45'
+                  : '1px solid rgba(61, 90, 69, 0.25)',
+                background: selectorMapaAbierto ? '#3D5A45' : '#FFFFFF',
+                color: selectorMapaAbierto ? '#FFFFFF' : '#3D5A45',
+                cursor: 'pointer',
+                flexShrink: 0,
+              }}
+            >
+              <MapPin size={16} />
+            </button>
             <input
               type="text"
-              placeholder="Pregúntale a Mía sobre arreglos, entregas o dedicatorias..."
+              placeholder="Pregúntale a Mía o pega tu link de Maps / Waze..."
               value={inputTexto}
               onChange={(e) => setInputTexto(e.target.value)}
               className="input-texto-chat"
@@ -652,6 +938,7 @@ export function ChatAriaFlotante() {
               className="btn-enviar-mensaje-chat"
               disabled={!inputTexto.trim()}
               aria-label="Enviar mensaje"
+              title="Enviar mensaje"
             >
               <Send size={16} />
             </button>

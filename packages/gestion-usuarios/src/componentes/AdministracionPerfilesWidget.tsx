@@ -8,7 +8,7 @@ import {
   Palette, UserCheck, X, Sparkles, Trash2, Star, Move, Copy, Package, GripVertical,
   Home, User, Settings, Shield, Folder, Wrench, Building, Briefcase, Bell, Database,
   Activity, Globe, Lock, KeyRound, CheckSquare, Terminal, Zap, Pencil, LogOut, LogIn,
-  Forward, Inbox, FileText, Download, Printer, Share2, RotateCcw, Loader2, Scale, Bot, type LucideIcon
+  Forward, Inbox, FileText, Download, Printer, Share2, RotateCcw, Loader2, Scale, Bot, MapPin, type LucideIcon
 } from "lucide-react";
 import {
   guardarPerfil,
@@ -358,7 +358,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
-      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "configuracion_aria", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
+      panel_configuracion: ["configuracion_negocio", "configuracion_logistica", "configuracion_correo", "configuracion_aria", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
     },
     activo: true
   },
@@ -380,7 +380,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
-      panel_configuracion: ["configuracion_negocio", "configuracion_correo", "configuracion_aria", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
+      panel_configuracion: ["configuracion_negocio", "configuracion_logistica", "configuracion_correo", "configuracion_aria", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
     },
     activo: true,
     esSuperAdmin: true
@@ -577,6 +577,17 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     panelId: "panel_configuracion",
     activo: true,
     creadoEn: "2026-11-11"
+  },
+  {
+    clave: "configuracion_logistica",
+    nombre: "Envíos, Zonas y Cobertura GPS",
+    descripcion: "Polígonos de cobertura en Pichincha, sector de envío gratis por defecto, tarifa por kilómetro vial y simulador GPS.",
+    categoria: "Comercio y Pagos",
+    ruta: "/panel/logistica",
+    rutaFisica: "/comercio/componentes/FormularioLogisticaCobertura.tsx",
+    panelId: "panel_configuracion",
+    activo: true,
+    creadoEn: "2026-11-12"
   },
   {
     clave: "tokens_mcp",
@@ -1033,6 +1044,21 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
           </p>
           <div style={{ padding: "12px", background: "#ECFDF5", borderRadius: "8px", border: "1px dashed #A7F3D0", textAlign: "center", fontSize: "0.82rem", color: "#065F46", fontWeight: 700 }}>
             ARIA_BASE · ARIA_AGENT_ID · Vault (ARIA_AGENT_KEY) · Prueba en Vivo
+          </div>
+        </div>
+      );
+
+    case "configuracion_logistica":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #16A34A", boxShadow: "0 4px 12px rgba(22,163,74,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#15803D", marginBottom: "10px" }}>
+            <MapPin size={18} /> Envíos, Zonas y Cobertura GPS
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Configuración de polígonos de cobertura en Pichincha, zona de envío gratis por defecto, recargo por km vial y simulador de mapas.
+          </p>
+          <div style={{ padding: "12px", background: "#F0FDF4", borderRadius: "8px", border: "1px dashed #86EFAC", textAlign: "center", fontSize: "0.82rem", color: "#166534", fontWeight: 700 }}>
+            Zona Gratis · Polígonos Pichincha · Cálculo por Km OSRM · MCP WhatsApp
           </div>
         </div>
       );

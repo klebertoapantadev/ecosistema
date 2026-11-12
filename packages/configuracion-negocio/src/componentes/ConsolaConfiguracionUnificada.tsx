@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bot, Building2, CheckCircle2, CircleDashed, KeyRound, Mail, SlidersHorizontal, type LucideIcon } from "lucide-react";
+import { Bot, Building2, CheckCircle2, CircleDashed, KeyRound, Mail, SlidersHorizontal, Truck, type LucideIcon } from "lucide-react";
+import {
+  FormularioLogisticaCobertura,
+  type ConfiguracionLogisticaNegocio,
+} from "@eco/comercio";
 import type { Tables } from "@eco/db";
 import type { ConfiguracionAriaVista } from "../esquema-aria";
 import { FormularioConfiguracionNegocio } from "./FormularioConfiguracionNegocio";
@@ -13,7 +17,7 @@ import { estiloTarjetaConfig } from "./estilos-configuracion";
 type CfgNegocio = Tables<{ schema: "comun_configuracion" }, "cfg_negocio">;
 type CfgSmtp = Tables<{ schema: "comun_configuracion" }, "cfg_smtp">;
 
-export type SeccionConfiguracion = "negocio" | "aria" | "correo" | "tokens";
+export type SeccionConfiguracion = "negocio" | "logistica" | "aria" | "correo" | "tokens";
 
 export interface PropsConsolaConfiguracionUnificada {
   negocio: string;
@@ -22,6 +26,8 @@ export interface PropsConsolaConfiguracionUnificada {
   configuracion: CfgNegocio | null;
   smtp: CfgSmtp | null;
   aria: ConfiguracionAriaVista | null;
+  logistica?: ConfiguracionLogisticaNegocio | null;
+  mostrarLogistica?: boolean;
   mostrarCorreo?: boolean;
   mostrarAria?: boolean;
   mostrarTokens?: boolean;
@@ -40,6 +46,12 @@ const TABS_CONFIGURACION: DefinicionTab[] = [
     etiqueta: "Datos del Negocio",
     ruta: "/panel/configuracion",
     icono: Building2,
+  },
+  {
+    id: "logistica",
+    etiqueta: "Envíos y Cobertura",
+    ruta: "/panel/logistica",
+    icono: Truck,
   },
   {
     id: "aria",
@@ -68,6 +80,8 @@ export function ConsolaConfiguracionUnificada({
   configuracion,
   smtp,
   aria,
+  logistica = null,
+  mostrarLogistica = true,
   mostrarCorreo = true,
   mostrarAria = true,
   mostrarTokens = true,
@@ -79,6 +93,7 @@ export function ConsolaConfiguracionUnificada({
   }, [seccionInicial]);
 
   const tabsVisibles = TABS_CONFIGURACION.filter((tab) => {
+    if (tab.id === "logistica" && !mostrarLogistica) return false;
     if (tab.id === "correo" && !mostrarCorreo) return false;
     if (tab.id === "aria" && !mostrarAria) return false;
     if (tab.id === "tokens" && !mostrarTokens) return false;
@@ -208,6 +223,14 @@ export function ConsolaConfiguracionUnificada({
             activo={negocioListo}
             onClick={() => cambiarSeccionPorId("negocio")}
           />
+          {mostrarLogistica && (
+            <IndicadorResumen
+              etiqueta="Envío Gratis"
+              valor={logistica?.zonaGratisNombre ?? "Centro-Norte de Quito"}
+              activo={true}
+              onClick={() => cambiarSeccionPorId("logistica")}
+            />
+          )}
           {mostrarAria && (
             <IndicadorResumen
               etiqueta="Agente ARIA"
@@ -281,6 +304,12 @@ export function ConsolaConfiguracionUnificada({
       <div>
         {seccionActiva === "negocio" && (
           <FormularioConfiguracionNegocio inicial={configuracion} negocio={negocio} />
+        )}
+
+        {seccionActiva === "logistica" && mostrarLogistica && (
+          <div style={{ ...estiloTarjetaConfig, padding: "24px" }}>
+            <FormularioLogisticaCobertura negocio={negocio} configuracionInicial={logistica} />
+          </div>
         )}
 
         {seccionActiva === "aria" && mostrarAria && (

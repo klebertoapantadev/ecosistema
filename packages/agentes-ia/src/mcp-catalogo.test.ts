@@ -331,4 +331,43 @@ describe("crearServidorMcpCatalogo con herramientas adicionales", () => {
     const contenido = JSON.parse(datos.result.content[0].text);
     expect(contenido.tokenUsado).toBe(tokenPrueba);
   });
+
+  it("(e) registra y ejecuta cotizar_envio_domicilio cuando se provee cotizarEnvio", async () => {
+    configurarMockRpc(["catalogo:leer"]);
+    const manejar = crearServidorMcpCatalogo({
+      negocioPorDefecto: "tinkay",
+      supabaseUrl: "https://oaybbpdxhlxjbpwnoymy.supabase.co",
+      supabaseAnonKey: "anon-key-test",
+      consultarProductos: async () => [],
+      cotizarEnvio: async (negocioId, params) => ({
+        ok: true,
+        negocio: negocioId,
+        enlace_recibido: params.enlace_o_direccion,
+        zona_detectada: "Centro-Norte de Quito",
+        costo_envio_usd: 0,
+      }),
+    });
+
+    const listaRes = await manejar(peticion({ jsonrpc: "2.0", id: 10, method: "tools/list" }));
+    const listaJson = await listaRes.json();
+    const nombres = listaJson.result.tools.map((t: { name: string }) => t.name);
+    expect(nombres).toContain("cotizar_envio_domicilio");
+
+    const callRes = await manejar(
+      peticion({
+        jsonrpc: "2.0",
+        id: 11,
+        method: "tools/call",
+        params: {
+          name: "cotizar_envio_domicilio",
+          arguments: { enlace_o_direccion: "https://maps.google.com/?q=-0.18065,-78.46783" },
+        },
+      })
+    );
+    const callJson = await callRes.json();
+    const payload = JSON.parse(callJson.result.content[0].text);
+    expect(payload.ok).toBe(true);
+    expect(payload.costo_envio_usd).toBe(0);
+    expect(payload.zona_detectada).toBe("Centro-Norte de Quito");
+  });
 });

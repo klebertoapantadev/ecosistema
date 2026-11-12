@@ -6,7 +6,7 @@ import {
   LayoutGrid, Wrench, Shield, Users, Bell, UserCog, ClipboardList, FileText,
   Settings, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, Calendar, type LucideIcon,
   Bot, ShoppingBag, CreditCard, Receipt, Share2, CheckCircle2, Sparkles, Building2, Scale, Gift,
-  ShieldCheck, Briefcase, Pencil, Coins
+  ShieldCheck, Briefcase, Pencil, Coins, MapPin
 } from "lucide-react";
 import { ModalEditarWidget } from "../ModalEditarWidget";
 import { WidgetProximamente } from "../WidgetProximamente";
@@ -42,6 +42,7 @@ import {
   TableroBeneficiosAvisosWidget,
   ComplianceScoreEmpresarial,
   LegalHRLaboral,
+  FormularioLogisticaCobertura,
 } from "@eco/comercio";
 import { SociosWidget } from "../administrar/PanelAdministrarModular";
 import { ConfiguracionContratoAbogadoWidget } from "@/modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
@@ -353,6 +354,13 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     icono: Bot,
     colorIcono: "#059669",
     categoria: "Seguridad & Integraciones"
+  },
+  configuracion_logistica: {
+    titulo: "Envíos, Zonas y Cobertura GPS",
+    subtitulo: "Polígonos de cobertura en Pichincha, sector de envío gratis por defecto y recargo por km vial",
+    icono: MapPin,
+    colorIcono: "#16A34A",
+    categoria: "Comercio & Pagos"
   },
   tokens_mcp: {
     titulo: "Tokens & APIs MCP",
@@ -942,6 +950,9 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       case "configuracion_aria":
       case "aria":
         return <FormularioAria inicial={null} negocio={negocio} />;
+      case "configuracion_logistica":
+      case "logistica":
+        return <FormularioLogisticaCobertura negocio={negocio} />;
       case "tokens_mcp":
       case "tokens":
       case "mcp_tokens":

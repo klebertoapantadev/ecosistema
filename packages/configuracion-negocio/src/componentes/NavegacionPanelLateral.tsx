@@ -13,6 +13,7 @@ import {
   Mail,
   Settings,
   ShoppingBag,
+  Truck,
   UserCircle,
   Users,
   type LucideIcon,
@@ -23,6 +24,7 @@ export type IconoNavegacionPanel =
   | "catalogo"
   | "usuarios"
   | "negocio"
+  | "logistica"
   | "aria"
   | "correo"
   | "tokens"
@@ -41,6 +43,7 @@ const MAPA_ICONOS: Record<IconoNavegacionPanel, LucideIcon> = {
   catalogo: ShoppingBag,
   usuarios: Users,
   negocio: Building2,
+  logistica: Truck,
   aria: Bot,
   correo: Mail,
   tokens: KeyRound,
@@ -51,6 +54,7 @@ export function NavegacionPanelLateral({ items }: { items: ItemNavegacionPanel[]
   const pathname = usePathname() || "/panel";
   const enRutaConfiguracion =
     pathname.startsWith("/panel/configuracion") ||
+    pathname.startsWith("/panel/logistica") ||
     pathname.startsWith("/panel/aria") ||
     pathname.startsWith("/panel/correo") ||
     pathname.startsWith("/panel/tokens-mcp");

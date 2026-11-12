@@ -15,9 +15,14 @@ export function ModalCheckoutTinkay() {
     checkoutAbierto,
     setCheckoutAbierto,
     items,
+    subtotalBaseImponible,
+    totalIva,
+    totalFlete,
+    totalRecargoHorarioExacto,
     totalPagar,
     modalidadEntrega,
     entregaUnificada,
+    configLogistica,
     vaciarCarrito,
   } = useCarrito();
 
@@ -112,7 +117,9 @@ export function ModalCheckoutTinkay() {
                 <span>Entrega:</span>
                 <span>
                   {modalidadEntrega === 'unificada'
-                    ? `${entregaUnificada.fechaEntrega} (${entregaUnificada.franjaHoraria})`
+                    ? entregaUnificada.retiroEnLocal
+                      ? `Retiro en ${configLogistica.origenNombre} (${entregaUnificada.fechaEntrega})`
+                      : `${entregaUnificada.zonaDetectadaNombre || entregaUnificada.ciudad || 'Domicilio'} — ${entregaUnificada.fechaEntrega} (${entregaUnificada.franjaHoraria})`
                     : 'Multidestino individual'}
                 </span>
               </div>
@@ -345,6 +352,58 @@ export function ModalCheckoutTinkay() {
                     </span>
                   </div>
                 ))}
+              </div>
+
+              <div
+                style={{
+                  marginTop: '12px',
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  background: 'rgba(61, 90, 69, 0.06)',
+                  border: '1px solid rgba(61, 90, 69, 0.16)',
+                  fontSize: '0.78rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px',
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span>Subtotal + IVA:</span>
+                  <span>${(subtotalBaseImponible + totalIva).toFixed(2)}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
+                  <span>
+                    {modalidadEntrega === 'unificada' && entregaUnificada.retiroEnLocal
+                      ? 'Retiro en tienda:'
+                      : modalidadEntrega === 'unificada' && entregaUnificada.zonaDetectadaNombre
+                      ? `Envío (${entregaUnificada.zonaDetectadaNombre}):`
+                      : 'Envío a domicilio:'}
+                  </span>
+                  <span style={{ color: totalFlete === 0 ? 'var(--verde)' : 'inherit' }}>
+                    {totalFlete === 0 ? 'GRATIS ($0.00)' : `$${totalFlete.toFixed(2)}`}
+                  </span>
+                </div>
+                {totalRecargoHorarioExacto > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Horario exacto:</span>
+                    <span>+${totalRecargoHorarioExacto.toFixed(2)}</span>
+                  </div>
+                )}
+                {modalidadEntrega === 'unificada' && entregaUnificada.enlaceMapa && (
+                  <a
+                    href={entregaUnificada.enlaceMapa}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      marginTop: '2px',
+                      color: 'var(--verde)',
+                      textDecoration: 'underline',
+                      fontWeight: 600,
+                    }}
+                  >
+                    📍 Ver ubicación GPS confirmada
+                  </a>
+                )}
               </div>
 
               <div className="total-destacado-caja">

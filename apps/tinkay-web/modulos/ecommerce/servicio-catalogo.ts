@@ -43,6 +43,13 @@ interface SupabaseProductoRaw {
     etiquetas?: string[];
     ocasion_recomendada?: string;
     usos?: string[];
+    logistica?: {
+      delivery_incluido?: boolean;
+      modalidad_transporte?: string;
+      etiqueta_transporte?: string;
+      cobertura_texto?: string;
+      recargo_transporte_usd?: number;
+    };
   };
   com_variante?: SupabaseVarianteRaw[];
 }
@@ -356,6 +363,16 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
           usos,
           ocasionRecomendada: esCondol ? 'Condolencias y Homenajes Solemnes' : 'Amor, Cumpleaños o Aniversario',
           etiquetas: Array.isArray(detalle.etiquetas) ? detalle.etiquetas : ['Flores de Exportación', 'Quito'],
+          deliveryIncluido:
+            typeof detalle.logistica?.delivery_incluido === 'boolean'
+              ? detalle.logistica.delivery_incluido
+              : true,
+          modalidadTransporte: detalle.logistica?.modalidad_transporte || 'INCLUIDO_GRATIS',
+          etiquetaTransporte: detalle.logistica?.etiqueta_transporte || undefined,
+          coberturaTexto: detalle.logistica?.cobertura_texto || 'Centro-Norte de Quito',
+          recargoLogisticoUsd: Number.isFinite(Number(detalle.logistica?.recargo_transporte_usd))
+            ? Math.max(0, Number(detalle.logistica?.recargo_transporte_usd))
+            : 0,
         };
       });
 
