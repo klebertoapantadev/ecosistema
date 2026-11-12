@@ -93,4 +93,5 @@ export interface MensajeChat {
     para: string;
     mensaje: string;
   };
+  reintentarTexto?: string;
 }
