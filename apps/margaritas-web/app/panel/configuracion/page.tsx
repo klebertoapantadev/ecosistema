@@ -1,17 +1,31 @@
 import type { Metadata } from "next";
-import { obtenerConfiguracionNegocio, FormularioConfiguracionNegocio } from "@eco/configuracion-negocio";
+import {
+  ConsolaConfiguracionUnificada,
+  obtenerAriaNegocio,
+  obtenerConfiguracionNegocio,
+  obtenerSmtpNegocio,
+} from "@eco/configuracion-negocio";
 
-export const metadata: Metadata = { title: "Configuración del negocio — Margaritas Floristería" };
+export const metadata: Metadata = { title: "Configuración — Margaritas Floristería" };
+export const dynamic = "force-dynamic";
 
 const NEGOCIO = "margaritas";
 
 export default async function PaginaConfiguracionNegocio() {
-  const configuracion = await obtenerConfiguracionNegocio(NEGOCIO);
+  const [configuracion, smtp, aria] = await Promise.all([
+    obtenerConfiguracionNegocio(NEGOCIO),
+    obtenerSmtpNegocio(NEGOCIO),
+    obtenerAriaNegocio(NEGOCIO),
+  ]);
 
   return (
-    <div>
-      <h1>Configuración del negocio</h1>
-      <FormularioConfiguracionNegocio inicial={configuracion} negocio={NEGOCIO} />
-    </div>
+    <ConsolaConfiguracionUnificada
+      negocio={NEGOCIO}
+      nombreNegocioVisible="Margaritas Floristería"
+      seccionInicial="negocio"
+      configuracion={configuracion}
+      smtp={smtp}
+      aria={aria}
+    />
   );
 }

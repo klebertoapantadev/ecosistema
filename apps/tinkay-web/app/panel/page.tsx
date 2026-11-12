@@ -1,7 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ShoppingBag, Users, Settings, Mail, ArrowRight, Sparkles, KeyRound, Bot, type LucideIcon } from "lucide-react";
-import { obtenerPerfilActual, obtenerWidgetsVisibles, obtenerSaludo, obtenerPerfiles } from "@eco/identidad";
+import {
+  ArrowRight,
+  Bot,
+  Building2,
+  KeyRound,
+  Mail,
+  Settings,
+  ShoppingBag,
+  Sparkles,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
+import {
+  obtenerPerfilActual,
+  obtenerWidgetsVisibles,
+  obtenerSaludo,
+  obtenerPerfiles,
+} from "@eco/identidad";
 
 export const metadata: Metadata = { title: "Panel de Control — Tinkay Floristería" };
 
@@ -13,19 +29,19 @@ interface WidgetInfo {
   descripcion: string;
   ruta: string;
   icono: LucideIcon;
+  grupo: "operacion" | "configuracion";
   etiqueta?: string;
-  color: string;
 }
 
 const MODULOS_TINKAY: Record<string, WidgetInfo> = {
   catalogo_productos: {
     clave: "catalogo_productos",
     nombre: "Catálogo Comercial & Portafolio",
-    descripcion: "Arreglos florales, bouquets coreanos, mix de temporada, complementos y precios SRI (IVA 15%).",
+    descripcion: "Arreglos florales, bouquets coreanos, mix de temporada, complementos y precios.",
     ruta: "/panel/catalogo-productos",
     icono: ShoppingBag,
-    etiqueta: "Nuevo / Activo",
-    color: "#3D5A45",
+    grupo: "operacion",
+    etiqueta: "Principal",
   },
   gestion_usuarios: {
     clave: "gestion_usuarios",
@@ -33,41 +49,40 @@ const MODULOS_TINKAY: Record<string, WidgetInfo> = {
     descripcion: "Asignación de membresías, roles de asesoras de ventas y permisos del taller floral.",
     ruta: "/panel/usuarios",
     icono: Users,
-    color: "#2563EB",
-  },
-  configuracion_aria: {
-    clave: "configuracion_aria",
-    nombre: "Agente Conversacional ARIA",
-    descripcion: "Configuración de ARIA_BASE, ARIA_AGENT_ID y clave cifrada en Vault para el chat Mía de Tinkay.",
-    ruta: "/panel/aria",
-    icono: Bot,
-    etiqueta: "Nuevo / IA",
-    color: "#059669",
-  },
-  tokens_mcp: {
-    clave: "tokens_mcp",
-    nombre: "Tokens & Servidor MCP",
-    descripcion: "Emisión de credenciales API y tokens para conectar el catálogo con bots de WhatsApp y n8n.",
-    ruta: "/panel/tokens-mcp",
-    icono: KeyRound,
-    etiqueta: "Nuevo / IA",
-    color: "#5000BA",
+    grupo: "operacion",
   },
   configuracion_negocio: {
     clave: "configuracion_negocio",
-    nombre: "Configuración de la Floristería",
-    descripcion: "Políticas de entrega, franjas horarias, teléfonos de contacto y redes oficiales.",
+    nombre: "Datos de la Floristería",
+    descripcion: "Identificación fiscal (RUC), nombre comercial, razón social y correo operativo.",
     ruta: "/panel/configuracion",
-    icono: Settings,
-    color: "#475569",
+    icono: Building2,
+    grupo: "configuracion",
+  },
+  configuracion_aria: {
+    clave: "configuracion_aria",
+    nombre: "Agente Conversacional ARIA (Mía)",
+    descripcion: "URL base, ID del agente y API Key cifrada en Supabase Vault para el chat en vivo.",
+    ruta: "/panel/aria",
+    icono: Bot,
+    grupo: "configuracion",
+    etiqueta: "Vault / IA",
   },
   configuracion_correo: {
     clave: "configuracion_correo",
     nombre: "Servidor de Correo (SMTP)",
-    descripcion: "Credenciales de envío para confirmaciones de compra y alertas de despacho.",
+    descripcion: "Credenciales de despacho para códigos de seguridad, alertas y confirmaciones.",
     ruta: "/panel/correo",
     icono: Mail,
-    color: "#D97706",
+    grupo: "configuracion",
+  },
+  tokens_mcp: {
+    clave: "tokens_mcp",
+    nombre: "Tokens & Servidor MCP",
+    descripcion: "Credenciales API para integrar el catálogo floral con WhatsApp, n8n y agentes externos.",
+    ruta: "/panel/tokens-mcp",
+    icono: KeyRound,
+    grupo: "configuracion",
   },
 };
 
@@ -97,14 +112,11 @@ export default async function PaginaPanel() {
       ["gestion_usuarios", "catalogo_productos", "configuracion_negocio"].includes(w.wdg_clave)
     );
 
-  // En Tinkay, el Catálogo Comercial está siempre visible para cualquier usuario autenticado
   const clavesVisibles = new Set<string>(["catalogo_productos"]);
 
   if (esAdmin) {
-    // Si es administrador o staff, todos los módulos de gestión de Tinkay quedan disponibles
     Object.keys(MODULOS_TINKAY).forEach((k) => clavesVisibles.add(k));
   } else {
-    // Para roles operativos, añadir solo los widgets legítimos asignados a Tinkay
     widgets.forEach((w) => {
       if (w.wdg_clave === "vitrina_comercial" || w.wdg_clave === "gestion_catalogo") {
         clavesVisibles.add("catalogo_productos");
@@ -114,132 +126,200 @@ export default async function PaginaPanel() {
     });
   }
 
-  const modulosDisponibles = Object.values(MODULOS_TINKAY).filter(
-    (m) => clavesVisibles.has(m.clave)
+  const modulosDisponibles = Object.values(MODULOS_TINKAY).filter((m) =>
+    clavesVisibles.has(m.clave)
   );
+  const modulosOperacion = modulosDisponibles.filter((m) => m.grupo === "operacion");
+  const modulosConfiguracion = modulosDisponibles.filter((m) => m.grupo === "configuracion");
 
   return (
-    <div style={{ maxWidth: "1180px", margin: "0 auto", padding: "8px 0" }}>
-      {/* Cabecera del Panel */}
+    <div style={{ maxWidth: "1120px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "28px" }}>
+      {/* Cabecera Sobria del Panel */}
       <div
         style={{
-          background: "linear-gradient(135deg, #3D5A45 0%, #2A3F30 100%)",
+          background: "linear-gradient(135deg, #2D4334 0%, #1F2E24 100%)",
           borderRadius: "16px",
-          padding: "32px",
+          padding: "28px 32px",
           color: "#FFFFFF",
-          marginBottom: "32px",
-          boxShadow: "0 10px 25px -5px rgba(61, 90, 69, 0.25)",
+          boxShadow: "0 8px 20px -6px rgba(31, 46, 36, 0.25)",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            flexWrap: "wrap",
+            gap: "16px",
+          }}
+        >
           <div>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(255,255,255,0.15)", padding: "4px 12px", borderRadius: "999px", fontSize: "12px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: "12px" }}>
-              <Sparkles size={14} />
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                background: "rgba(255,255,255,0.12)",
+                padding: "4px 11px",
+                borderRadius: "999px",
+                fontSize: "11px",
+                fontWeight: 600,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                marginBottom: "10px",
+              }}
+            >
+              <Sparkles size={13} />
               Administración Tinkay
             </div>
-            <h1 style={{ fontSize: "28px", fontWeight: 700, margin: "0 0 8px 0", color: "#FFFFFF" }}>
+            <h1 style={{ fontSize: "24px", fontWeight: 700, margin: "0 0 6px 0", color: "#FFFFFF" }}>
               {saludo ?? `Hola, ${nombre}`}
             </h1>
-            <p style={{ margin: 0, fontSize: "15px", color: "rgba(255,255,255,0.85)", maxWidth: "600px" }}>
-              Bienvenido al centro de administración y operaciones de Tinkay Floristería. Desde aquí puedes gestionar el portafolio comercial, variantes, precios y personal.
+            <p style={{ margin: 0, fontSize: "14px", color: "rgba(255,255,255,0.82)", maxWidth: "600px", lineHeight: 1.5 }}>
+              Centro de operaciones y configuración de Tinkay Floristería. Administra el catálogo floral,
+              el equipo de ventas y las integraciones de atención automatizada.
             </p>
           </div>
-          <div style={{ background: "rgba(255,255,255,0.1)", backdropFilter: "blur(8px)", padding: "12px 20px", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.15)", textAlign: "right" }}>
-            <span style={{ display: "block", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.05em", color: "rgba(255,255,255,0.7)" }}>Módulos activos</span>
-            <strong style={{ fontSize: "24px", fontWeight: 800 }}>{modulosDisponibles.length}</strong>
+          {modulosConfiguracion.length > 0 && (
+            <Link
+              href="/panel/configuracion"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "10px 16px",
+                borderRadius: "10px",
+                background: "rgba(255, 255, 255, 0.12)",
+                border: "1px solid rgba(255, 255, 255, 0.22)",
+                color: "#FFFFFF",
+                textDecoration: "none",
+                fontSize: "13px",
+                fontWeight: 600,
+              }}
+            >
+              <Settings size={15} />
+              Centro de Configuración
+            </Link>
+          )}
+        </div>
+      </div>
+
+      {/* Grupo 1: Operación Comercial */}
+      {modulosOperacion.length > 0 && (
+        <section style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "8px" }}>
+            <h2 style={{ fontSize: "15px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", margin: 0, color: "#374151" }}>
+              Operación Comercial y Equipo
+            </h2>
+            <span style={{ fontSize: "12.5px", color: "#6B7280" }}>Gestión diaria de la floristería</span>
           </div>
-        </div>
-      </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "16px" }}>
+            {modulosOperacion.map((mod) => (
+              <TarjetaModuloPanel key={mod.clave} mod={mod} />
+            ))}
+          </div>
+        </section>
+      )}
 
-      {/* Rejilla de Módulos */}
-      <div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-          <h2 style={{ fontSize: "18px", fontWeight: 700, margin: 0, color: "#1F2421" }}>
-            Módulos y Herramientas del Sistema
-          </h2>
-          <span style={{ fontSize: "13px", color: "#64748B" }}>Acceso configurado según tu rol</span>
-        </div>
-
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "20px" }}>
-          {modulosDisponibles.map((mod) => {
-            const Icono = mod.icono;
-            return (
-              <Link
-                key={mod.clave}
-                href={mod.ruta}
-                style={{
-                  textDecoration: "none",
-                  background: "#FFFFFF",
-                  borderRadius: "14px",
-                  padding: "24px",
-                  border: "1.5px solid #E2E8F0",
-                  transition: "all 0.2s ease-in-out",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "space-between",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
-                  cursor: "pointer",
-                }}
-              >
-                <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                    <div
-                      style={{
-                        width: "44px",
-                        height: "44px",
-                        borderRadius: "10px",
-                        background: `${mod.color}15`,
-                        color: mod.color,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Icono size={22} />
-                    </div>
-                    {mod.etiqueta && (
-                      <span
-                        style={{
-                          fontSize: "11px",
-                          fontWeight: 700,
-                          padding: "3px 8px",
-                          borderRadius: "6px",
-                          background: "#EC7FA71A",
-                          color: "#D6336C",
-                          border: "1px solid #EC7FA740",
-                        }}
-                      >
-                        {mod.etiqueta}
-                      </span>
-                    )}
-                  </div>
-                  <h3 style={{ fontSize: "16px", fontWeight: 700, color: "#0F172A", margin: "0 0 6px 0" }}>
-                    {mod.nombre}
-                  </h3>
-                  <p style={{ fontSize: "13px", color: "#64748B", margin: 0, lineHeight: 1.5 }}>
-                    {mod.descripcion}
-                  </p>
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    marginTop: "20px",
-                    fontSize: "13px",
-                    fontWeight: 600,
-                    color: mod.color,
-                  }}
-                >
-                  Abrir módulo
-                  <ArrowRight size={14} />
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </div>
+      {/* Grupo 2: Configuración e Integraciones */}
+      {modulosConfiguracion.length > 0 && (
+        <section style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "8px" }}>
+            <h2 style={{ fontSize: "15px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", margin: 0, color: "#374151" }}>
+              Configuración e Integraciones
+            </h2>
+            <span style={{ fontSize: "12.5px", color: "#6B7280" }}>Parámetros exclusivos de Tinkay en Vault</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "16px" }}>
+            {modulosConfiguracion.map((mod) => (
+              <TarjetaModuloPanel key={mod.clave} mod={mod} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
+  );
+}
+
+function TarjetaModuloPanel({ mod }: { mod: WidgetInfo }) {
+  const Icono = mod.icono;
+  return (
+    <Link
+      href={mod.ruta}
+      style={{
+        textDecoration: "none",
+        background: "#FFFFFF",
+        borderRadius: "13px",
+        padding: "20px 22px",
+        border: "1px solid #E5E7EB",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)",
+      }}
+    >
+      <div>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "14px",
+          }}
+        >
+          <div
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "10px",
+              background: "#F4F4F5",
+              border: "1px solid #E4E4E7",
+              color: "#18181B",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Icono size={19} />
+          </div>
+          {mod.etiqueta && (
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: 600,
+                padding: "3px 9px",
+                borderRadius: "999px",
+                background: "#F3F4F6",
+                color: "#374151",
+                border: "1px solid #E5E7EB",
+              }}
+            >
+              {mod.etiqueta}
+            </span>
+          )}
+        </div>
+        <h3 style={{ fontSize: "15.5px", fontWeight: 700, color: "#111827", margin: "0 0 6px 0" }}>
+          {mod.nombre}
+        </h3>
+        <p style={{ fontSize: "13px", color: "#6B7280", margin: 0, lineHeight: 1.5 }}>
+          {mod.descripcion}
+        </p>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          marginTop: "18px",
+          fontSize: "12.5px",
+          fontWeight: 600,
+          color: "#18181B",
+        }}
+      >
+        Configurar
+        <ArrowRight size={14} />
+      </div>
+    </Link>
   );
 }

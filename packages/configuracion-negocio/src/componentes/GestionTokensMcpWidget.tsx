@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useTransition } from "react";
-import { KeyRound, Plus, Copy, Check, AlertTriangle, ShieldCheck, Trash2, RefreshCw, Lock, Terminal } from "lucide-react";
+import { KeyRound, Plus, Copy, Check, AlertTriangle, ShieldCheck, Trash2, RefreshCw, Terminal } from "lucide-react";
 import type { TokenMcpItem, RespuestaGenerarTokenMcp } from "@eco/agentes-ia";
 import {
   listarTokensMcpAction,
@@ -118,7 +118,7 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
       >
         <div>
           <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "#111827", display: "flex", alignItems: "center", gap: "8px" }}>
-            <KeyRound size={20} color="var(--violeta, #5000BA)" />
+            <KeyRound size={20} color="var(--violeta, #18181B)" />
             Tokens de Integración & Servidor MCP
           </h3>
           <p style={{ margin: "4px 0 0 0", fontSize: "0.85rem", color: "#6B7280" }}>
@@ -164,7 +164,7 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
               padding: "8px 14px",
               borderRadius: "8px",
               border: "none",
-              background: "var(--violeta, #5000BA)",
+              background: "var(--violeta, #18181B)",
               color: "#FFFFFF",
               fontSize: "0.85rem",
               fontWeight: 700,
@@ -455,7 +455,7 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
                     padding: "10px 18px",
                     borderRadius: "8px",
                     border: "none",
-                    background: "var(--violeta, #5000BA)",
+                    background: "var(--violeta, #18181B)",
                     color: "#FFFFFF",
                     fontWeight: 700,
                     fontSize: "0.85rem",
@@ -555,7 +555,7 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
                     padding: "10px 16px",
                     borderRadius: "8px",
                     border: "none",
-                    background: copiado ? "#059669" : "var(--violeta, #5000BA)",
+                    background: copiado ? "#059669" : "var(--violeta, #18181B)",
                     color: "#FFFFFF",
                     fontWeight: 700,
                     fontSize: "0.85rem",

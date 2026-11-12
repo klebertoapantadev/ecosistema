@@ -108,9 +108,10 @@ export interface OpcionesInvocarPorNegocio {
 
 export class ErrorSinConfiguracionAria extends Error {
   readonly codigo = "SIN_CONFIGURACION_ARIA";
-  constructor(negocio: string) {
+  constructor(negocio: string, detallePersonalizado?: string) {
     super(
-      `Sin credenciales activas de ARIA para "${negocio}" en /panel/aria ni variables de entorno (ARIA_BASE, ARIA_AGENT_ID, ARIA_AGENT_KEY)`,
+      detallePersonalizado ??
+        `Sin credenciales activas de ARIA para "${negocio}" en /panel/aria ni variables de entorno (ARIA_BASE, ARIA_AGENT_ID, ARIA_AGENT_KEY)`,
     );
     this.name = "ErrorSinConfiguracionAria";
   }
@@ -139,12 +140,17 @@ export async function invocarAgentePorNegocio(
   const claveFuncion = process.env.ARIA_FUNCION_CLAVE ?? process.env.CORREO_FUNCION_CLAVE;
 
   let errorVaultNoConfigurado = false;
+  let faltaPuenteSupabase = false;
   let errorInfraestructuraVault: string | null = null;
   let errorAguasArribaAria: Error | null = null;
 
   if (supabaseUrl && supabaseKey) {
+    const baseSupabase = supabaseUrl.replace(/\/+$/, "");
+    let funcionNoDesplegada = false;
+
+    // 1. Intentar primero vía Edge Function invocar-aria (soporta adjuntos y tool_context)
     try {
-      const urlFuncion = `${supabaseUrl.replace(/\/+$/, "")}/functions/v1/invocar-aria`;
+      const urlFuncion = `${baseSupabase}/functions/v1/invocar-aria`;
       const cabeceras: Record<string, string> = {
         "Content-Type": "application/json",
         apikey: supabaseKey,
@@ -179,21 +185,77 @@ export async function invocarAgentePorNegocio(
         };
       }
 
-      if (r.status === 404 || r.status === 409) {
-        // 404 = función invocar-aria aún no desplegada; 409 = negocio sin agente activo en Vault
+      if (r.status === 404) {
+        funcionNoDesplegada = true;
+      } else if (r.status === 409) {
         errorVaultNoConfigurado = true;
       } else if (r.status === 502) {
-        // El agente estaba activo en Vault pero ARIA respondió error aguas arriba: no reintentar
         errorAguasArribaAria = new Error(data?.error ?? data?.detail ?? "ARIA respondió con error (502)");
       } else {
-        // 401 o 500 (ej. migración pendiente): permitir respaldo por entorno si existe
         errorInfraestructuraVault = data?.error ?? `invocar-aria respondió ${r.status}`;
       }
     } catch (err) {
       if (err instanceof Error && err.name === "TimeoutError") {
         throw err;
       }
-      errorInfraestructuraVault = err instanceof Error ? err.message : String(err);
+      funcionNoDesplegada = true;
+    }
+
+    // 2. Si la Edge Function aún no está desplegada (404), usar el puente RPC
+    //    directo en PostgreSQL (comun_configuracion.cfg_fn_invocar_aria con Vault + pgsql-http)
+    const tieneAdjuntosComplejos =
+      Boolean(opciones?.toolContext) ||
+      Boolean(opciones?.imageUrls?.length) ||
+      Boolean(opciones?.documentUrls?.length);
+
+    if (funcionNoDesplegada && !tieneAdjuntosComplejos && !errorAguasArribaAria) {
+      try {
+        const rRpc = await fetch(`${baseSupabase}/rest/v1/rpc/cfg_fn_invocar_aria`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Content-Profile": "comun_configuracion",
+            apikey: supabaseKey,
+            Authorization: `Bearer ${supabaseKey}`,
+          },
+          body: JSON.stringify({
+            p_negocio: negocio.trim().toLowerCase(),
+            p_prompt: prompt,
+            p_conversation_id: opciones?.conversationId ?? null,
+          }),
+          signal: AbortSignal.timeout(tiempoMaximoMs),
+        });
+
+        const dataRpc = await rRpc.json().catch(() => null);
+
+        if (rRpc.ok && dataRpc) {
+          if (dataRpc.ok === true) {
+            return {
+              response: dataRpc.response ?? "…",
+              usage: dataRpc.usage,
+              runId: dataRpc.runId ?? dataRpc.run_id,
+            };
+          }
+          if (dataRpc.codigo === "SIN_CONFIGURACION_VAULT") {
+            errorVaultNoConfigurado = true;
+          } else {
+            errorAguasArribaAria = new Error(
+              dataRpc.error ?? "ARIA devolvió un error al procesar la consulta",
+            );
+          }
+        } else if (rRpc.status === 404) {
+          // Ni la Edge Function invocar-aria ni el RPC cfg_fn_invocar_aria están creados aún
+          faltaPuenteSupabase = true;
+        } else {
+          errorInfraestructuraVault =
+            dataRpc?.message ?? dataRpc?.error ?? `cfg_fn_invocar_aria respondió ${rRpc.status}`;
+        }
+      } catch (err) {
+        if (err instanceof Error && err.name === "TimeoutError") {
+          throw err;
+        }
+        errorInfraestructuraVault = err instanceof Error ? err.message : String(err);
+      }
     }
   }
 
@@ -216,6 +278,13 @@ export async function invocarAgentePorNegocio(
 
   if (errorInfraestructuraVault && !errorVaultNoConfigurado) {
     throw new Error(errorInfraestructuraVault);
+  }
+
+  if (faltaPuenteSupabase) {
+    throw new ErrorSinConfiguracionAria(
+      negocio,
+      `La clave puede estar guardada en Vault, pero falta aplicar en Supabase SQL Editor la función comun_configuracion.cfg_fn_invocar_aria (migración 20261112000001_cfg_fn_invocar_aria_rpc.sql) o desplegar la Edge Function invocar-aria.`,
+    );
   }
 
   throw new ErrorSinConfiguracionAria(negocio);

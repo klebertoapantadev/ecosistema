@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { SelloCompilacion } from "@eco/primitivas";
 import Link from "next/link";
+import { SelloCompilacion } from "@eco/primitivas";
 import {
   obtenerPerfilActual,
   obtenerWidgetsVisibles,
@@ -8,53 +8,76 @@ import {
   asegurarMembresiaCliente,
   obtenerPerfiles,
 } from "@eco/identidad";
+import {
+  NavegacionPanelLateral,
+  type ItemNavegacionPanel,
+} from "@eco/configuracion-negocio";
 import { crearClienteServidor } from "@eco/supabase/servidor";
 
 const NEGOCIO = "tinkay";
 
-interface ItemNavegacionTinkay {
-  clave: string;
-  nombre: string;
-  ruta: string;
-  soloAdmin?: boolean;
-}
-
-const MODULOS_NAV_TINKAY: ItemNavegacionTinkay[] = [
+const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel & { soloAdmin?: boolean }> = [
+  {
+    clave: "resumen",
+    nombre: "Resumen del Panel",
+    ruta: "/panel",
+    icono: "resumen",
+    grupo: "operacion",
+  },
   {
     clave: "catalogo_productos",
-    nombre: "Catálogo Comercial & Portafolio",
+    nombre: "Catálogo Comercial",
     ruta: "/panel/catalogo-productos",
+    icono: "catalogo",
+    grupo: "operacion",
     soloAdmin: false,
   },
   {
     clave: "gestion_usuarios",
-    nombre: "Gestión de Usuarios & Roles",
+    nombre: "Usuarios y Roles",
     ruta: "/panel/usuarios",
-    soloAdmin: true,
-  },
-  {
-    clave: "configuracion_aria",
-    nombre: "Agente Conversacional ARIA",
-    ruta: "/panel/aria",
-    soloAdmin: true,
-  },
-  {
-    clave: "tokens_mcp",
-    nombre: "Tokens & Servidor MCP",
-    ruta: "/panel/tokens-mcp",
+    icono: "usuarios",
+    grupo: "operacion",
     soloAdmin: true,
   },
   {
     clave: "configuracion_negocio",
-    nombre: "Configuración de la Floristería",
+    nombre: "Datos de la Floristería",
     ruta: "/panel/configuracion",
+    icono: "negocio",
+    grupo: "configuracion",
+    soloAdmin: true,
+  },
+  {
+    clave: "configuracion_aria",
+    nombre: "Agente ARIA (Mía)",
+    ruta: "/panel/aria",
+    icono: "aria",
+    grupo: "configuracion",
     soloAdmin: true,
   },
   {
     clave: "configuracion_correo",
-    nombre: "Servidor de Correo (SMTP)",
+    nombre: "Servidor de Correo",
     ruta: "/panel/correo",
+    icono: "correo",
+    grupo: "configuracion",
     soloAdmin: true,
+  },
+  {
+    clave: "tokens_mcp",
+    nombre: "Tokens & MCP",
+    ruta: "/panel/tokens-mcp",
+    icono: "tokens",
+    grupo: "configuracion",
+    soloAdmin: true,
+  },
+  {
+    clave: "cuenta",
+    nombre: "Mi Cuenta",
+    ruta: "/panel/cuenta",
+    icono: "cuenta",
+    grupo: "cuenta",
   },
 ];
 
@@ -91,62 +114,133 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
       ["gestion_usuarios", "catalogo_productos", "configuracion_negocio"].includes(w.wdg_clave)
     );
 
-  // Determinar enlaces visibles exclusivos de Tinkay (excluyendo cualquier widget de otros negocios)
-  const clavesAutorizadas = new Set<string>();
-
-  // El catálogo comercial es el núcleo de la floristería y siempre está disponible
-  clavesAutorizadas.add("catalogo_productos");
+  const clavesAutorizadas = new Set<string>(["resumen", "catalogo_productos", "cuenta"]);
 
   if (esAdmin) {
-    MODULOS_NAV_TINKAY.forEach((m) => clavesAutorizadas.add(m.clave));
+    CATALOGO_NAV_TINKAY.forEach((m) => clavesAutorizadas.add(m.clave));
   } else {
     for (const w of widgets) {
       if (w.wdg_clave === "vitrina_comercial" || w.wdg_clave === "gestion_catalogo") {
         clavesAutorizadas.add("catalogo_productos");
-      } else if (MODULOS_NAV_TINKAY.some((m) => m.clave === w.wdg_clave)) {
+      } else if (CATALOGO_NAV_TINKAY.some((m) => m.clave === w.wdg_clave)) {
         clavesAutorizadas.add(w.wdg_clave);
       }
     }
   }
 
-  const navLinksVisibles = MODULOS_NAV_TINKAY.filter((m) => clavesAutorizadas.has(m.clave));
+  const navItemsVisibles: ItemNavegacionPanel[] = CATALOGO_NAV_TINKAY.filter((m) =>
+    clavesAutorizadas.has(m.clave)
+  ).map(({ clave, nombre, ruta, icono, grupo }) => ({
+    clave,
+    nombre,
+    ruta,
+    icono,
+    grupo,
+  }));
 
   return (
     <div className="panel-layout">
-      <aside className="panel-nav">
-        <div className="panel-marca">
-          tinkay
+      <aside
+        className="panel-nav"
+        style={{
+          width: "260px",
+          padding: "22px 16px",
+          gap: "20px",
+          borderRight: "1px solid rgba(255, 255, 255, 0.08)",
+        }}
+      >
+        <div
+          className="panel-marca"
+          style={{
+            padding: "0 8px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "2px",
+          }}
+        >
+          <Link
+            href="/panel"
+            style={{
+              color: "#FFFFFF",
+              textDecoration: "none",
+              fontSize: "1.35rem",
+              fontWeight: 600,
+              letterSpacing: "-0.01em",
+            }}
+          >
+            tinkay
+          </Link>
           <SelloCompilacion className="sello-compilacion" />
         </div>
-        <div className="panel-usuario">
-          <span className="nombre-usuario-activo">
-            {[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ")}
+
+        <div
+          className="panel-usuario"
+          style={{
+            padding: "12px",
+            borderRadius: "10px",
+            background: "rgba(255, 255, 255, 0.04)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            gap: "6px",
+            opacity: 1,
+          }}
+        >
+          <span className="nombre-usuario-activo" style={{ fontSize: "0.86rem", color: "#FFFFFF" }}>
+            {[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ") || "Administrador"}
           </span>
-          <span className="correo-usuario-activo">{perfil.usu_correo}</span>
-          {esSuperAdmin ? (
-            <span className="etiqueta-superadmin">SuperAdmin</span>
-          ) : esAdmin ? (
-            <span
-              className="etiqueta-superadmin"
-              style={{ background: "#3D5A45", color: "#FFFFFF" }}
-            >
-              Administrador
-            </span>
-          ) : null}
-          <form action={cerrarSesionYRedirigir}>
-            <button type="submit" className="btn-mini">
-              Cerrar sesión
-            </button>
-          </form>
+          <span
+            className="correo-usuario-activo"
+            style={{
+              fontSize: "0.74rem",
+              color: "rgba(255, 255, 255, 0.65)",
+              wordBreak: "break-all",
+            }}
+          >
+            {perfil.usu_correo}
+          </span>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "8px",
+              marginTop: "6px",
+              flexWrap: "wrap",
+            }}
+          >
+            {esSuperAdmin ? (
+              <span className="etiqueta-superadmin">SuperAdmin</span>
+            ) : esAdmin ? (
+              <span
+                className="etiqueta-superadmin"
+                style={{ background: "#3D5A45", color: "#FFFFFF" }}
+              >
+                Administrador
+              </span>
+            ) : null}
+            <form action={cerrarSesionYRedirigir}>
+              <button
+                type="submit"
+                title="Cerrar sesión activa"
+                aria-label="Cerrar sesión activa"
+                style={{
+                  padding: "5px 11px",
+                  borderRadius: "7px",
+                  border: "1px solid rgba(255, 255, 255, 0.18)",
+                  background: "rgba(255, 255, 255, 0.06)",
+                  color: "#FFFFFF",
+                  fontFamily: "inherit",
+                  fontSize: "0.74rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Salir
+              </button>
+            </form>
+          </div>
         </div>
-        <div className="panel-nav-links">
-          {navLinksVisibles.map((item) => (
-            <Link key={item.clave} href={item.ruta}>
-              {item.nombre}
-            </Link>
-          ))}
-          <Link href="/panel/cuenta">Mi cuenta</Link>
-        </div>
+
+        <NavegacionPanelLateral items={navItemsVisibles} />
       </aside>
       <main className="panel-contenido">{children}</main>
     </div>

@@ -1,15 +1,32 @@
 "use client";
 
 import { useState } from "react";
+import { KeyRound, Mail, Save, Trash2 } from "lucide-react";
 import { guardarSmtp, borrarContrasenaSmtp } from "../acciones-smtp";
 import type { Tables } from "@eco/db";
+import {
+  estiloAlertaMensaje,
+  estiloBotonPeligroSuave,
+  estiloBotonPrimario,
+  estiloCabeceraTarjeta,
+  estiloCajaIconoCabecera,
+  estiloCajaToggle,
+  estiloCuerpoTarjeta,
+  estiloEtiquetaCampo,
+  estiloGrillaDosColumnas,
+  estiloGrupoCampo,
+  estiloInputCampo,
+  estiloPastillaEstado,
+  estiloPieTarjeta,
+  estiloSubtituloBloque,
+  estiloTarjetaConfig,
+  estiloTextoAyuda,
+} from "./estilos-configuracion";
 
 type CfgSmtp = Tables<{ schema: "comun_configuracion" }, "cfg_smtp">;
 
 // PLT-008: servidor SMTP del negocio. La contrasena nunca se precarga en el
-// campo -- no se puede, porque el servidor tampoco la puede leer: vive en
-// Supabase Vault y solo la descifra la Edge Function enviar-correo. Lo que se
-// muestra es si existe o no, y el campo vacio significa "no la cambies".
+// campo -- vive en Supabase Vault y solo la descifra la Edge Function enviar-correo.
 export function FormularioSmtp({ inicial, negocio }: { inicial: CfgSmtp | null; negocio: string }) {
   const [host, setHost] = useState(inicial?.smt_host ?? "");
   const [puerto, setPuerto] = useState(String(inicial?.smt_puerto ?? 465));
@@ -38,7 +55,7 @@ export function FormularioSmtp({ inicial, negocio }: { inicial: CfgSmtp | null; 
     }
     if (contrasena) setTieneContrasena(true);
     setContrasena("");
-    setMensaje({ tipo: "ok", texto: "Configuración guardada." });
+    setMensaje({ tipo: "ok", texto: "Configuración del servidor de correo guardada." });
   }
 
   async function alBorrarContrasena() {
@@ -52,86 +69,204 @@ export function FormularioSmtp({ inicial, negocio }: { inicial: CfgSmtp | null; 
     }
     setTieneContrasena(false);
     setActivo(false);
-    setMensaje({ tipo: "ok", texto: "Contraseña eliminada. El envío quedó desactivado." });
+    setMensaje({ tipo: "ok", texto: "Contraseña eliminada de Vault. El envío quedó desactivado." });
   }
 
+  const tonoEstado = tieneContrasena && activo ? "activo" : tieneContrasena ? "guardado" : "pendiente";
+
   return (
-    <form onSubmit={alEnviar} className="form-panel">
-      <label>
-        Servidor (host)
-        <input value={host} onChange={(e) => setHost(e.target.value)} placeholder="smtp.tudominio.com" />
-      </label>
+    <form onSubmit={alEnviar} style={estiloTarjetaConfig}>
+      <div style={estiloCabeceraTarjeta}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={estiloCajaIconoCabecera}>
+            <Mail size={19} />
+          </div>
+          <div>
+            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "#111827" }}>
+              Servidor de Correo Transaccional (SMTP)
+            </div>
+            <div style={{ fontSize: "0.82rem", color: "#6B7280", marginTop: "2px" }}>
+              Despacho de códigos de verificación, recuperación de clave y notificaciones de{" "}
+              <strong>{negocio}</strong>.
+            </div>
+          </div>
+        </div>
 
-      <label>
-        Puerto
-        <input
-          value={puerto}
-          onChange={(e) => setPuerto(e.target.value)}
-          type="number"
-          min={1}
-          max={65535}
-          inputMode="numeric"
-        />
-      </label>
+        <span style={estiloPastillaEstado(tonoEstado)}>
+          <KeyRound size={13} />
+          {tieneContrasena && activo
+            ? "Activo en Vault"
+            : tieneContrasena
+              ? "Clave en Vault (Inactivo)"
+              : "Sin configurar"}
+        </span>
+      </div>
 
-      <label className="campo-casilla">
-        <input type="checkbox" checked={seguro} onChange={(e) => setSeguro(e.target.checked)} />
-        Conexión cifrada desde el inicio (TLS implícito, normalmente puerto 465). Desmárcalo si tu proveedor usa
-        STARTTLS, normalmente puerto 587.
-      </label>
+      <div style={estiloCuerpoTarjeta}>
+        <div style={estiloSubtituloBloque}>Conexión del servidor</div>
 
-      <label>
-        Usuario
-        <input
-          value={usuario}
-          onChange={(e) => setUsuario(e.target.value)}
-          type="email"
-          placeholder="notificaciones@tudominio.com"
-        />
-      </label>
+        <div style={estiloGrillaDosColumnas}>
+          <div style={estiloGrupoCampo}>
+            <label htmlFor={`smtp-host-${negocio}`} style={estiloEtiquetaCampo}>
+              Servidor saliente (Host)
+            </label>
+            <input
+              id={`smtp-host-${negocio}`}
+              style={estiloInputCampo}
+              value={host}
+              onChange={(e) => setHost(e.target.value)}
+              placeholder="smtp.tudominio.com"
+            />
+          </div>
 
-      <label>
-        Nombre del remitente
-        <input
-          value={remitenteNombre}
-          onChange={(e) => setRemitenteNombre(e.target.value)}
-          placeholder="Soporte"
-        />
-        <small>Es el nombre que verá quien reciba el correo, junto a la dirección del usuario.</small>
-      </label>
+          <div style={estiloGrupoCampo}>
+            <label htmlFor={`smtp-puerto-${negocio}`} style={estiloEtiquetaCampo}>
+              Puerto TCP
+            </label>
+            <input
+              id={`smtp-puerto-${negocio}`}
+              style={estiloInputCampo}
+              value={puerto}
+              onChange={(e) => setPuerto(e.target.value)}
+              type="number"
+              min={1}
+              max={65535}
+              inputMode="numeric"
+            />
+          </div>
+        </div>
 
-      <label>
-        Contraseña
-        <input
-          value={contrasena}
-          onChange={(e) => setContrasena(e.target.value)}
-          type="password"
-          autoComplete="new-password"
-          placeholder={tieneContrasena ? "Guardada — escribe solo si quieres cambiarla" : "Escribe la contraseña"}
-        />
-        <small>
-          {tieneContrasena
-            ? "Hay una contraseña guardada y cifrada. Ni siquiera esta pantalla puede volver a mostrarla; déjalo en blanco para conservarla."
-            : "Se guarda cifrada. No vuelve a mostrarse después de guardar."}
-        </small>
-      </label>
+        <label style={estiloCajaToggle}>
+          <input
+            type="checkbox"
+            checked={seguro}
+            onChange={(e) => setSeguro(e.target.checked)}
+            style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
+          />
+          <div>
+            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#1F2937" }}>
+              Conexión cifrada TLS implícita (puerto 465)
+            </div>
+            <div style={{ fontSize: "0.78rem", color: "#6B7280", marginTop: "2px", lineHeight: 1.45 }}>
+              Desmárcalo únicamente si tu proveedor de correo utiliza STARTTLS sobre el puerto 587.
+            </div>
+          </div>
+        </label>
 
-      <label className="campo-casilla">
-        <input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} />
-        Enviar los correos de este negocio por este servidor
-      </label>
+        <div style={estiloSubtituloBloque}>Autenticación y remitente</div>
 
-      {mensaje && <p className={mensaje.tipo === "error" ? "error-auth" : "mensaje-ok"}>{mensaje.texto}</p>}
+        <div style={estiloGrillaDosColumnas}>
+          <div style={estiloGrupoCampo}>
+            <label htmlFor={`smtp-usuario-${negocio}`} style={estiloEtiquetaCampo}>
+              Usuario / Buzón SMTP
+            </label>
+            <input
+              id={`smtp-usuario-${negocio}`}
+              style={estiloInputCampo}
+              value={usuario}
+              onChange={(e) => setUsuario(e.target.value)}
+              type="email"
+              placeholder="notificaciones@tudominio.com"
+            />
+          </div>
 
-      <div className="fila-botones">
-        <button type="submit" className="btn btn-negro" disabled={guardando || borrando}>
-          {guardando ? "Guardando…" : "Guardar configuración"}
+          <div style={estiloGrupoCampo}>
+            <label htmlFor={`smtp-remitente-${negocio}`} style={estiloEtiquetaCampo}>
+              Nombre visible del remitente
+            </label>
+            <input
+              id={`smtp-remitente-${negocio}`}
+              style={estiloInputCampo}
+              value={remitenteNombre}
+              onChange={(e) => setRemitenteNombre(e.target.value)}
+              placeholder="Ej. Tinkay Floristería"
+            />
+          </div>
+        </div>
+
+        <div style={estiloGrupoCampo}>
+          <label htmlFor={`smtp-clave-${negocio}`} style={estiloEtiquetaCampo}>
+            Contraseña del buzón (Supabase Vault)
+          </label>
+          <input
+            id={`smtp-clave-${negocio}`}
+            style={estiloInputCampo}
+            value={contrasena}
+            onChange={(e) => setContrasena(e.target.value)}
+            type="password"
+            autoComplete="new-password"
+            placeholder={
+              tieneContrasena
+                ? "Guardada en Vault — escribe solo si deseas reemplazarla"
+                : "Escribe la contraseña o clave de aplicación SMTP"
+            }
+          />
+          <span style={estiloTextoAyuda}>
+            {tieneContrasena
+              ? "La contraseña está cifrada en Supabase Vault y nunca vuelve a mostrarse; déjala en blanco para conservarla."
+              : "Se cifra automáticamente en Supabase Vault al guardar."}
+          </span>
+        </div>
+
+        <label
+          style={{
+            ...estiloCajaToggle,
+            background: activo ? "#F0FDF4" : "#F9FAFB",
+            borderColor: activo ? "#BBF7D0" : "#E5E7EB",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={activo}
+            onChange={(e) => setActivo(e.target.checked)}
+            style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
+          />
+          <div>
+            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#111827" }}>
+              Habilitar envío de correos transaccionales por este servidor
+            </div>
+            <div style={{ fontSize: "0.78rem", color: "#6B7280", marginTop: "2px" }}>
+              Mientras esté desmarcado, los correos salientes de este negocio permanecerán pausados.
+            </div>
+          </div>
+        </label>
+
+        {mensaje && <div style={estiloAlertaMensaje(mensaje.tipo)}>{mensaje.texto}</div>}
+      </div>
+
+      <div style={estiloPieTarjeta}>
+        <div>
+          {tieneContrasena && (
+            <button
+              type="button"
+              className="btn-responsive-accion"
+              onClick={alBorrarContrasena}
+              disabled={guardando || borrando}
+              title="Eliminar contraseña SMTP de Supabase Vault"
+              aria-label="Eliminar contraseña SMTP de Supabase Vault"
+              style={estiloBotonPeligroSuave}
+            >
+              <Trash2 size={14} />
+              <span className="btn-texto-responsive">
+                {borrando ? "Eliminando…" : "Eliminar Clave"}
+              </span>
+            </button>
+          )}
+        </div>
+
+        <button
+          type="submit"
+          className="btn-responsive-accion"
+          disabled={guardando || borrando}
+          title="Guardar configuración del servidor SMTP"
+          aria-label="Guardar configuración del servidor SMTP"
+          style={{ ...estiloBotonPrimario, opacity: guardando || borrando ? 0.65 : 1 }}
+        >
+          <Save size={15} />
+          <span className="btn-texto-responsive">
+            {guardando ? "Guardando…" : "Guardar Servidor"}
+          </span>
         </button>
-        {tieneContrasena && (
-          <button type="button" className="btn-mini" onClick={alBorrarContrasena} disabled={guardando || borrando}>
-            {borrando ? "Eliminando…" : "Eliminar contraseña"}
-          </button>
-        )}
       </div>
     </form>
   );

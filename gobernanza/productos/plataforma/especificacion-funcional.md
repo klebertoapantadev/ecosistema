@@ -22,7 +22,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-001`** | Identidad Única, Registro Cero Fricción y Auth | ✅ Implementado | **85%** | Kleber Toapanta |
 | **`PLT-002`** | Autenticación Multifactor (MFA TOTP) & Expiración por Inactividad | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-003`** | Membresías, Jerarquía & Active Role Switcher | ✅ Implementado | **100%** | Kleber Toapanta / Jesus Navarrete |
-| **`PLT-004`** | **Buddie Conversacional (Chat IA ARIA & OCR Multimodal)** | 🟡 En Desarrollo | **75%** | **Kleber Toapanta / Jesus Navarrete** |
+| **`PLT-004`** | **Buddie Conversacional (Chat IA ARIA & OCR Multimodal)** | 🟡 En Desarrollo | **85%** | **Kleber Toapanta / Jesus Navarrete** |
 | **`PLT-005`** | Auditoría por Triggers y Widget Común | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-006`** | Datos de Facturación SRI, Emisión Automática con Tarjeta, Pagos Manuales y Widget de Comprobantes | ✅ Implementado | **100%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-007`** | Catálogo Geográfico (Ecuador 24 Provincias) | ✅ Implementado | **100%** | Kleber Toapanta |

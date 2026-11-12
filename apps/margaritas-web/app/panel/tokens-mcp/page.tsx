@@ -1,14 +1,31 @@
 import type { Metadata } from "next";
-import { GestionTokensMcpWidget } from "@eco/configuracion-negocio";
+import {
+  ConsolaConfiguracionUnificada,
+  obtenerAriaNegocio,
+  obtenerConfiguracionNegocio,
+  obtenerSmtpNegocio,
+} from "@eco/configuracion-negocio";
 
-export const metadata: Metadata = { title: "Tokens & Servidor MCP — Margaritas" };
+export const metadata: Metadata = { title: "Tokens & Servidor MCP — Margaritas Floristería" };
+export const dynamic = "force-dynamic";
 
 const NEGOCIO = "margaritas";
 
-export default function PaginaTokensMcp() {
+export default async function PaginaTokensMcp() {
+  const [configuracion, smtp, aria] = await Promise.all([
+    obtenerConfiguracionNegocio(NEGOCIO),
+    obtenerSmtpNegocio(NEGOCIO),
+    obtenerAriaNegocio(NEGOCIO),
+  ]);
+
   return (
-    <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "16px 0" }}>
-      <GestionTokensMcpWidget negocio={NEGOCIO} />
-    </div>
+    <ConsolaConfiguracionUnificada
+      negocio={NEGOCIO}
+      nombreNegocioVisible="Margaritas Floristería"
+      seccionInicial="tokens"
+      configuracion={configuracion}
+      smtp={smtp}
+      aria={aria}
+    />
   );
 }

@@ -16,7 +16,7 @@ interface EsquemaRpcCfgAria {
     select(columnas: string): {
       eq(columna: string, valor: string): {
         maybeSingle(): Promise<{
-          data: { ari_secreto_id: string | null } | null;
+          data: { ari_secreto_id: string | null; ari_activo?: boolean } | null;
           error: { message: string } | null;
         }>;
       };
@@ -119,7 +119,7 @@ export async function borrarClaveAria(
 }
 
 export async function probarConexionAria(
-  datos: { baseUrl?: string; agenteId?: string; apiKey?: string },
+  datos: { baseUrl?: string; agenteId?: string; apiKey?: string; mensajePrueba?: string },
   negocio: string,
 ): Promise<Resultado<{ respuesta: string }>> {
   try {
@@ -133,6 +133,7 @@ export async function probarConexionAria(
       return { ok: false, error: "Debes iniciar sesión como administrador para probar el agente." };
     }
 
+    const codigoNegocio = negocio.trim().toLowerCase();
     const correo = (user.email ?? "").trim().toLowerCase();
     let autorizado = CORREOS_SUPERADMIN_RESPALDO.has(correo);
 
@@ -140,7 +141,7 @@ export async function probarConexionAria(
       const seg = supabase.schema("comun_seguridad") as unknown as EsquemaSeguridadRpc;
       const [{ data: esSuper }, { data: esAdmin }] = await Promise.all([
         seg.rpc("seg_fn_es_superadmin"),
-        seg.rpc("seg_fn_es_admin_negocio", { p_negocio: negocio.trim().toLowerCase() }),
+        seg.rpc("seg_fn_es_admin_negocio", { p_negocio: codigoNegocio }),
       ]);
       autorizado = Boolean(esSuper) || Boolean(esAdmin);
     }
@@ -149,7 +150,9 @@ export async function probarConexionAria(
       return { ok: false, error: "No tienes permisos de administrador en este negocio." };
     }
 
-    const promptPrueba = "Hola, confirma brevemente en una oración quién eres y que estás en línea.";
+    const promptPrueba =
+      datos.mensajePrueba?.trim() ||
+      "Hola, confirma brevemente en una oración quién eres y que estás en línea.";
 
     // Si el administrador escribió una clave nueva en pantalla, probamos esa conexión directamente
     if (datos.apiKey?.trim() && datos.baseUrl?.trim() && datos.agenteId?.trim()) {
@@ -164,13 +167,31 @@ export async function probarConexionAria(
         undefined,
         undefined,
         undefined,
-        25000,
+        45000,
       );
       return { ok: true, data: { respuesta: res.response } };
     }
 
-    // De lo contrario, probamos la configuración ya almacenada en Vault (o entorno de respaldo)
-    const res = await invocarAgentePorNegocio(negocio, promptPrueba, { tiempoMaximoMs: 25000 });
+    // Verificar si la fila en Vault existe pero está desactivada para dar un aviso claro
+    const esquemaCfg = supabase.schema("comun_configuracion") as unknown as EsquemaRpcCfgAria;
+    const { data: filaAria } = await esquemaCfg
+      .from("cfg_aria")
+      .select("ari_secreto_id, ari_activo")
+      .eq("ari_negocio", codigoNegocio)
+      .maybeSingle();
+
+    if (filaAria?.ari_secreto_id && filaAria.ari_activo === false) {
+      return {
+        ok: false,
+        error:
+          "La clave ya está guardada en Vault, pero el agente está desactivado. Marca la casilla de activación y pulsa «Guardar Configuración».",
+      };
+    }
+
+    // Probamos la configuración activa almacenada en Vault (o entorno de respaldo)
+    const res = await invocarAgentePorNegocio(codigoNegocio, promptPrueba, {
+      tiempoMaximoMs: 45000,
+    });
     return { ok: true, data: { respuesta: res.response } };
   } catch (err) {
     return {

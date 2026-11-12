@@ -135,6 +135,31 @@ describe("invocarAgentePorNegocio", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it("usa el puente RPC cfg_fn_invocar_aria cuando la Edge Function invocar-aria devuelve 404", async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://proyecto.supabase.co";
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "sb_pub_123";
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: "Function not found" }), { status: 404 }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ ok: true, response: "Hola desde Mía (RPC Vault)", runId: "run-rpc-1" }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const res = await invocarAgentePorNegocio("tinkay", "Hola Mía");
+    expect(res).toEqual({ response: "Hola desde Mía (RPC Vault)", usage: undefined, runId: "run-rpc-1" });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      "https://proyecto.supabase.co/rest/v1/rpc/cfg_fn_invocar_aria",
+    );
+  });
+
   it("lanza ErrorSinConfiguracionAria cuando no hay ni Vault ni variables de entorno", async () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://proyecto.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "sb_pub_123";
@@ -143,6 +168,9 @@ describe("invocarAgentePorNegocio", () => {
       .fn()
       .mockResolvedValueOnce(
         new Response(JSON.stringify({ error: "No encontrado" }), { status: 404 }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: "RPC no encontrado" }), { status: 404 }),
       ) as unknown as typeof fetch;
 
     await expect(invocarAgentePorNegocio("tinkay", "Hola")).rejects.toBeInstanceOf(

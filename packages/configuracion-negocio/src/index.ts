@@ -16,6 +16,16 @@ export { FormularioConfiguracionNegocio } from "./componentes/FormularioConfigur
 export { FormularioSmtp } from "./componentes/FormularioSmtp";
 export { FormularioAria } from "./componentes/FormularioAria";
 export { GestionTokensMcpWidget } from "./componentes/GestionTokensMcpWidget";
+export { ConsolaConfiguracionUnificada } from "./componentes/ConsolaConfiguracionUnificada";
+export type {
+  SeccionConfiguracion,
+  PropsConsolaConfiguracionUnificada,
+} from "./componentes/ConsolaConfiguracionUnificada";
+export { NavegacionPanelLateral } from "./componentes/NavegacionPanelLateral";
+export type {
+  ItemNavegacionPanel,
+  IconoNavegacionPanel,
+} from "./componentes/NavegacionPanelLateral";
 export {
   listarTokensMcpAction,
   generarTokenMcpAction,

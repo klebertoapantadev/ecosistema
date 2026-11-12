@@ -1,9 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bot, CheckCircle2, KeyRound, Save, Sparkles, Trash2 } from "lucide-react";
+import { Bot, CheckCircle2, ChevronDown, ChevronUp, KeyRound, Save, Sparkles, Trash2 } from "lucide-react";
 import { borrarClaveAria, guardarAria, probarConexionAria } from "../acciones-aria";
 import { URL_ARIA_DEFECTO, type ConfiguracionAriaVista } from "../esquema-aria";
+import {
+  estiloAlertaMensaje,
+  estiloBotonPeligroSuave,
+  estiloBotonPrimario,
+  estiloBotonSecundario,
+  estiloCabeceraTarjeta,
+  estiloCajaIconoCabecera,
+  estiloCajaToggle,
+  estiloCodigoBadge,
+  estiloCuerpoTarjeta,
+  estiloEtiquetaCampo,
+  estiloGrillaDosColumnas,
+  estiloGrupoCampo,
+  estiloInputCampo,
+  estiloInputMonoespaciado,
+  estiloPastillaEstado,
+  estiloPieTarjeta,
+  estiloSubtituloBloque,
+  estiloTarjetaConfig,
+  estiloTextoAyuda,
+} from "./estilos-configuracion";
 
 interface BorradorNoSecretoAria {
   baseUrl: string;
@@ -27,10 +48,8 @@ function claveLocalBorrador(negocio: string): string {
   return `eco_cfg_aria_meta_v1_${negocio.trim().toLowerCase()}`;
 }
 
-// PLT-008 / PLT-010 (ADR-0002): parámetros de conexión a ARIA por negocio.
-// Las claves secretas (ARIA_AGENT_KEY, ARIA_TENANT_KEY, ARIA_GATE_KEY) viven en
-// Supabase Vault y nunca se precargan ni se guardan en localStorage: solo se
-// informa si ya existe una clave cifrada y dejar el campo en blanco la conserva.
+// PLT-008 / PLT-004 (ADR-0002): parámetros de conexión a ARIA por negocio.
+// Las claves secretas viven en Supabase Vault y nunca se precargan ni se guardan en localStorage.
 export function FormularioAria({
   inicial,
   negocio,
@@ -53,6 +72,8 @@ export function FormularioAria({
   const [tenantKey, setTenantKey] = useState("");
   const [gateKey, setGateKey] = useState("");
   const [activo, setActivo] = useState(inicial?.activo ?? true);
+  const [mostrarAvanzadas, setMostrarAvanzadas] = useState(false);
+  const [mensajePrueba, setMensajePrueba] = useState("");
 
   const [tieneApiKey, setTieneApiKey] = useState(inicial?.tieneApiKey ?? false);
   const [tieneTenantKey, setTieneTenantKey] = useState(inicial?.tieneTenantKey ?? false);
@@ -64,7 +85,6 @@ export function FormularioAria({
   const [mensaje, setMensaje] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
   const [respuestaPrueba, setRespuestaPrueba] = useState<string | null>(null);
 
-  // Hidratación híbrida (solo metadatos no sensibles si la BDD aún no tiene fila)
   useEffect(() => {
     if (inicial) return;
     try {
@@ -72,8 +92,10 @@ export function FormularioAria({
       if (!crudo) return;
       const borrador = JSON.parse(crudo) as Partial<BorradorNoSecretoAria>;
       if (typeof borrador.baseUrl === "string" && borrador.baseUrl) setBaseUrl(borrador.baseUrl);
-      if (typeof borrador.agenteId === "string") setAgenteId(borrador.agenteId);
-      if (typeof borrador.nombreAgente === "string") setNombreAgente(borrador.nombreAgente);
+      if (typeof borrador.agenteId === "string" && borrador.agenteId) setAgenteId(borrador.agenteId);
+      if (typeof borrador.nombreAgente === "string" && borrador.nombreAgente) {
+        setNombreAgente(borrador.nombreAgente);
+      }
       if (typeof borrador.activo === "boolean") setActivo(borrador.activo);
     } catch {
       // Ignorar errores de parseo de localStorage
@@ -93,7 +115,6 @@ export function FormularioAria({
     setMensaje(null);
     setRespuestaPrueba(null);
 
-    // Resiliencia: respaldar metadatos públicos antes del guardado remoto (jamás las claves)
     persistirMetadatosNoSensibles({ baseUrl, agenteId, nombreAgente, activo });
 
     setGuardando(true);
@@ -125,7 +146,7 @@ export function FormularioAria({
     setMensaje({
       tipo: "ok",
       texto: activo
-        ? "Configuración ARIA guardada y activa para este negocio."
+        ? "Configuración ARIA guardada y activa en Supabase Vault."
         : "Configuración ARIA guardada (agente desactivado).",
     });
   }
@@ -139,6 +160,7 @@ export function FormularioAria({
         baseUrl,
         agenteId,
         apiKey: apiKey.trim() || undefined,
+        mensajePrueba: mensajePrueba.trim() || undefined,
       },
       codigoNegocio,
     );
@@ -150,7 +172,7 @@ export function FormularioAria({
     }
 
     setRespuestaPrueba(resultado.data.respuesta);
-    setMensaje({ tipo: "ok", texto: "Conexión verificada correctamente con ARIA." });
+    setMensaje({ tipo: "ok", texto: "Conexión verificada en vivo con el agente ARIA." });
   }
 
   async function alEliminarClave() {
@@ -174,256 +196,341 @@ export function FormularioAria({
   }
 
   const ocupado = guardando || probando || borrando;
+  const tonoEstado = tieneApiKey && activo ? "activo" : tieneApiKey ? "guardado" : "pendiente";
 
   return (
-    <form onSubmit={alEnviar} className="form-panel">
-      {/* Cinta de estado por negocio */}
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "0.75rem",
-          padding: "0.85rem 1rem",
-          borderRadius: "10px",
-          border: "1px solid var(--borde, #e2e8f0)",
-          background: "var(--superficie-suave, #f8fafc)",
-          marginBottom: "0.5rem",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-          <Bot size={20} style={{ flexShrink: 0 }} />
+    <form onSubmit={alEnviar} style={estiloTarjetaConfig}>
+      {/* Cabecera sobria con estado de Vault */}
+      <div style={estiloCabeceraTarjeta}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={estiloCajaIconoCabecera}>
+            <Bot size={19} />
+          </div>
           <div>
-            <strong style={{ display: "block", fontSize: "0.92rem" }}>
-              Parámetros aislados del negocio: <code>{codigoNegocio}</code>
-            </strong>
-            <small style={{ color: "var(--texto-suave, #64748b)", fontSize: "0.8rem" }}>
-              Cada aplicación gestiona aquí su propio agente sin compartir claves con los demás negocios.
-            </small>
+            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "#111827" }}>
+              Agente Conversacional ARIA
+            </div>
+            <div style={{ fontSize: "0.82rem", color: "#6B7280", marginTop: "2px" }}>
+              Credenciales aisladas para el chat de <strong>{codigoNegocio}</strong> (cifradas en Supabase Vault).
+            </div>
           </div>
         </div>
 
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "0.35rem",
-            padding: "0.28rem 0.65rem",
-            borderRadius: "999px",
-            fontSize: "0.78rem",
-            fontWeight: 600,
-            background: tieneApiKey && activo ? "#dcfce7" : tieneApiKey ? "#fef9c3" : "#f1f5f9",
-            color: tieneApiKey && activo ? "#166534" : tieneApiKey ? "#854d0e" : "#475569",
-          }}
-        >
+        <span style={estiloPastillaEstado(tonoEstado)}>
           <KeyRound size={13} />
           {tieneApiKey && activo
             ? "Activo en Vault"
             : tieneApiKey
-              ? "Clave guardada (Inactivo)"
+              ? "Clave en Vault (Inactivo)"
               : "Sin clave en Vault"}
         </span>
       </div>
 
-      <label>
-        Nombre descriptivo del agente
-        <input
-          value={nombreAgente}
-          onChange={(e) => setNombreAgente(e.target.value)}
-          placeholder={sugerenciaNombre}
-        />
-        <small>Identificador interno para reconocer qué agente atiende en este negocio.</small>
-      </label>
+      {/* Cuerpo del formulario */}
+      <div style={estiloCuerpoTarjeta}>
+        <div style={estiloSubtituloBloque}>Identificación y endpoint del agente</div>
 
-      <label>
-        URL Base del Servidor ARIA (<code>ARIA_BASE</code>)
-        <input
-          value={baseUrl}
-          onChange={(e) => setBaseUrl(e.target.value)}
-          type="url"
-          placeholder={URL_ARIA_DEFECTO}
-        />
-        <small>
-          Dirección raíz del motor de agentes (sin barra final), por defecto{" "}
-          <code>{URL_ARIA_DEFECTO}</code>.
-        </small>
-      </label>
-
-      <label>
-        ID del Agente (<code>ARIA_AGENT_ID</code>)
-        <input
-          value={agenteId}
-          onChange={(e) => setAgenteId(e.target.value)}
-          placeholder="ej. 7f8c3b20-1234-4abc-9def-0123456789ab"
-          spellCheck={false}
-        />
-        <small>
-          Identificador único del agente en el panel de ARIA (donde se edita su prompt e instrucciones).
-        </small>
-      </label>
-
-      <label>
-        API Key del Agente (<code>ARIA_AGENT_KEY</code>)
-        <input
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          type="password"
-          autoComplete="new-password"
-          placeholder={
-            tieneApiKey
-              ? "Guardada en Vault — escribe solo si deseas reemplazarla"
-              : "Pega aquí la clave secreta del agente (ARIA_AGENT_KEY)"
-          }
-        />
-        <small>
-          {tieneApiKey
-            ? "Existe una clave cifrada en Supabase Vault. Nunca puede leerse de vuelta desde el navegador; déjala vacía para mantener la actual."
-            : "Se almacena cifrada en Supabase Vault y solo la Edge Function del servidor puede usarla."}
-        </small>
-      </label>
-
-      <details
-        style={{
-          border: "1px solid var(--borde, #e2e8f0)",
-          borderRadius: "8px",
-          padding: "0.75rem 0.9rem",
-        }}
-      >
-        <summary
-          style={{
-            cursor: "pointer",
-            fontWeight: 600,
-            fontSize: "0.88rem",
-            userSelect: "none",
-          }}
-        >
-          Claves avanzadas de consola ARIA (opcionales)
-        </summary>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.9rem",
-            marginTop: "0.85rem",
-          }}
-        >
-          <label>
-            Tenant Key (<code>ARIA_TENANT_KEY</code>)
+        <div style={estiloGrillaDosColumnas}>
+          <div style={estiloGrupoCampo}>
+            <label htmlFor={`aria-nombre-${codigoNegocio}`} style={estiloEtiquetaCampo}>
+              <span>Nombre descriptivo del agente</span>
+            </label>
             <input
-              value={tenantKey}
-              onChange={(e) => setTenantKey(e.target.value)}
-              type="password"
-              autoComplete="new-password"
-              placeholder={
-                tieneTenantKey
-                  ? "Guardada en Vault — escribe solo para reemplazarla"
-                  : "Opcional: solo si la app sincroniza herramientas de consola"
-              }
+              id={`aria-nombre-${codigoNegocio}`}
+              style={estiloInputCampo}
+              value={nombreAgente}
+              onChange={(e) => setNombreAgente(e.target.value)}
+              placeholder={sugerenciaNombre}
             />
-          </label>
+            <span style={estiloTextoAyuda}>
+              Etiqueta interna para identificar qué agente atiende en este negocio.
+            </span>
+          </div>
 
-          <label>
-            Gate Key (<code>ARIA_GATE_KEY</code>)
+          <div style={estiloGrupoCampo}>
+            <label htmlFor={`aria-base-${codigoNegocio}`} style={estiloEtiquetaCampo}>
+              <span>URL Base del Servidor</span>
+              <span style={estiloCodigoBadge}>ARIA_BASE</span>
+            </label>
             <input
-              value={gateKey}
-              onChange={(e) => setGateKey(e.target.value)}
-              type="password"
-              autoComplete="new-password"
-              placeholder={
-                tieneGateKey
-                  ? "Guardada en Vault — escribe solo para reemplazarla"
-                  : "Opcional: llave de compuerta de administración ARIA"
-              }
+              id={`aria-base-${codigoNegocio}`}
+              style={estiloInputMonoespaciado}
+              value={baseUrl}
+              onChange={(e) => setBaseUrl(e.target.value)}
+              type="url"
+              placeholder={URL_ARIA_DEFECTO}
             />
-          </label>
+            <span style={estiloTextoAyuda}>
+              Raíz del motor de agentes (sin barra final), por defecto {URL_ARIA_DEFECTO}.
+            </span>
+          </div>
         </div>
-      </details>
 
-      <label className="campo-casilla">
-        <input type="checkbox" checked={activo} onChange={(e) => setActivo(e.target.checked)} />
-        Activar este agente conversacional ARIA para atender el chat de este negocio
-      </label>
+        <div style={estiloGrupoCampo}>
+          <label htmlFor={`aria-id-${codigoNegocio}`} style={estiloEtiquetaCampo}>
+            <span>ID del Agente</span>
+            <span style={estiloCodigoBadge}>ARIA_AGENT_ID</span>
+          </label>
+          <input
+            id={`aria-id-${codigoNegocio}`}
+            style={estiloInputMonoespaciado}
+            value={agenteId}
+            onChange={(e) => setAgenteId(e.target.value)}
+            placeholder="c717f44a-028e-4e9c-a190-4eb0b774c588"
+            spellCheck={false}
+          />
+          <span style={estiloTextoAyuda}>
+            UUID del agente dentro de la consola de ARIA donde administras su identidad y herramientas.
+          </span>
+        </div>
 
-      {mensaje && (
-        <p className={mensaje.tipo === "error" ? "error-auth" : "mensaje-ok"}>{mensaje.texto}</p>
-      )}
+        <div style={estiloSubtituloBloque}>Seguridad y Vault</div>
 
-      {respuestaPrueba && (
+        <div style={estiloGrupoCampo}>
+          <label htmlFor={`aria-key-${codigoNegocio}`} style={estiloEtiquetaCampo}>
+            <span>Token / API Key del Agente</span>
+            <span style={estiloCodigoBadge}>ARIA_AGENT_KEY</span>
+          </label>
+          <input
+            id={`aria-key-${codigoNegocio}`}
+            style={estiloInputCampo}
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            type="password"
+            autoComplete="new-password"
+            placeholder={
+              tieneApiKey
+                ? "Guardada en Vault — escribe solo si deseas reemplazarla"
+                : "Pega aquí el token Bearer del agente"
+            }
+          />
+          <span style={estiloTextoAyuda}>
+            {tieneApiKey
+              ? "Existe una clave cifrada en Supabase Vault. Por seguridad jamás se devuelve al navegador; déjala en blanco para conservarla."
+              : "Se guarda cifrada en Supabase Vault y solo se descifra en el servidor al invocar el agente."}
+          </span>
+        </div>
+
+        {/* Acordeón discreto para claves avanzadas opcionales */}
         <div
           style={{
-            padding: "0.85rem 1rem",
-            borderRadius: "8px",
-            border: "1px solid #bbf7d0",
-            background: "#f0fdf4",
-            color: "#14532d",
-            fontSize: "0.88rem",
+            border: "1px solid #E5E7EB",
+            borderRadius: "10px",
+            background: "#FFFFFF",
+            overflow: "hidden",
           }}
         >
-          <div
+          <button
+            type="button"
+            onClick={() => setMostrarAvanzadas((v) => !v)}
             style={{
+              width: "100%",
+              padding: "12px 16px",
+              background: "#FAFAFA",
+              border: "none",
               display: "flex",
               alignItems: "center",
-              gap: "0.4rem",
-              fontWeight: 700,
-              marginBottom: "0.3rem",
+              justifyContent: "space-between",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              fontSize: "0.84rem",
+              fontWeight: 600,
+              color: "#374151",
             }}
           >
-            <CheckCircle2 size={16} />
-            <span>Respuesta en vivo del agente ARIA:</span>
-          </div>
-          <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{respuestaPrueba}</p>
-        </div>
-      )}
+            <span>Claves avanzadas de consola ARIA (opcionales)</span>
+            {mostrarAvanzadas ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
 
-      <div className="fila-botones" style={{ flexWrap: "wrap", gap: "0.6rem" }}>
+          {mostrarAvanzadas && (
+            <div
+              style={{
+                padding: "16px",
+                borderTop: "1px solid #E5E7EB",
+                ...estiloGrillaDosColumnas,
+              }}
+            >
+              <div style={estiloGrupoCampo}>
+                <label htmlFor={`aria-tenant-${codigoNegocio}`} style={estiloEtiquetaCampo}>
+                  <span>Tenant Key</span>
+                  <span style={estiloCodigoBadge}>ARIA_TENANT_KEY</span>
+                </label>
+                <input
+                  id={`aria-tenant-${codigoNegocio}`}
+                  style={estiloInputCampo}
+                  value={tenantKey}
+                  onChange={(e) => setTenantKey(e.target.value)}
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder={
+                    tieneTenantKey
+                      ? "Guardada en Vault — escribe para reemplazar"
+                      : "Opcional (sincronización de consola)"
+                  }
+                />
+              </div>
+
+              <div style={estiloGrupoCampo}>
+                <label htmlFor={`aria-gate-${codigoNegocio}`} style={estiloEtiquetaCampo}>
+                  <span>Gate Key</span>
+                  <span style={estiloCodigoBadge}>ARIA_GATE_KEY</span>
+                </label>
+                <input
+                  id={`aria-gate-${codigoNegocio}`}
+                  style={estiloInputCampo}
+                  value={gateKey}
+                  onChange={(e) => setGateKey(e.target.value)}
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder={
+                    tieneGateKey
+                      ? "Guardada en Vault — escribe para reemplazar"
+                      : "Opcional (compuerta administrativa)"
+                  }
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Interruptor de activación */}
+        <label
+          style={{
+            ...estiloCajaToggle,
+            background: activo ? "#F0FDF4" : "#F9FAFB",
+            borderColor: activo ? "#BBF7D0" : "#E5E7EB",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={activo}
+            onChange={(e) => setActivo(e.target.checked)}
+            style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
+          />
+          <div>
+            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#111827" }}>
+              Activar agente conversacional ARIA en este negocio
+            </div>
+            <div style={{ fontSize: "0.78rem", color: "#6B7280", marginTop: "2px" }}>
+              Cuando está activo, el chat público de la tienda consulta en tiempo real a este agente.
+            </div>
+          </div>
+        </label>
+
+        {/* Caja de verificación rápida en vivo */}
+        <div
+          style={{
+            padding: "16px",
+            borderRadius: "10px",
+            border: "1px solid #E5E7EB",
+            background: "#F9FAFB",
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+            <span style={{ fontSize: "0.83rem", fontWeight: 600, color: "#1F2937" }}>
+              Verificación de respuesta en vivo
+            </span>
+            <span style={{ fontSize: "0.75rem", color: "#6B7280" }}>
+              Envía un mensaje corto para comprobar latencia y credenciales
+            </span>
+          </div>
+
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            <input
+              style={{ ...estiloInputCampo, flex: "1 1 240px" }}
+              value={mensajePrueba}
+              onChange={(e) => setMensajePrueba(e.target.value)}
+              placeholder="Ej. Hola, ¿qué arreglo me recomiendas para aniversario?"
+            />
+            <button
+              type="button"
+              className="btn-responsive-accion"
+              onClick={alProbarAgente}
+              disabled={ocupado}
+              title="Enviar mensaje de prueba al agente ARIA"
+              aria-label="Enviar mensaje de prueba al agente ARIA"
+              style={{ ...estiloBotonSecundario, opacity: ocupado ? 0.65 : 1 }}
+            >
+              <Sparkles size={15} />
+              <span className="btn-texto-responsive">
+                {probando ? "Consultando…" : "Probar Agente"}
+              </span>
+            </button>
+          </div>
+
+          {respuestaPrueba && (
+            <div
+              style={{
+                marginTop: "4px",
+                padding: "12px 14px",
+                borderRadius: "9px",
+                border: "1px solid #BBF7D0",
+                background: "#FFFFFF",
+                color: "#14532D",
+                fontSize: "0.86rem",
+                lineHeight: 1.5,
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontWeight: 700,
+                  fontSize: "0.8rem",
+                  marginBottom: "4px",
+                  color: "#15803D",
+                }}
+              >
+                <CheckCircle2 size={15} />
+                <span>Respuesta recibida desde ARIA:</span>
+              </div>
+              <p style={{ margin: 0, whiteSpace: "pre-wrap", color: "#1F2937" }}>{respuestaPrueba}</p>
+            </div>
+          )}
+        </div>
+
+        {mensaje && <div style={estiloAlertaMensaje(mensaje.tipo)}>{mensaje.texto}</div>}
+      </div>
+
+      {/* Pie de acciones */}
+      <div style={estiloPieTarjeta}>
+        <div>
+          {tieneApiKey && (
+            <button
+              type="button"
+              className="btn-responsive-accion"
+              onClick={alEliminarClave}
+              disabled={ocupado}
+              title="Eliminar clave secreta de ARIA en Vault"
+              aria-label="Eliminar clave secreta de ARIA en Vault"
+              style={{ ...estiloBotonPeligroSuave, opacity: ocupado ? 0.65 : 1 }}
+            >
+              <Trash2 size={14} />
+              <span className="btn-texto-responsive">
+                {borrando ? "Eliminando…" : "Eliminar Clave"}
+              </span>
+            </button>
+          )}
+        </div>
+
         <button
           type="submit"
-          className="btn btn-negro btn-responsive-accion"
+          className="btn-responsive-accion"
           disabled={ocupado}
           title="Guardar parámetros de ARIA en este negocio"
           aria-label="Guardar parámetros de ARIA en este negocio"
-          style={{ display: "inline-flex", alignItems: "center", gap: "0.45rem" }}
+          style={{ ...estiloBotonPrimario, opacity: ocupado ? 0.65 : 1 }}
         >
-          <Save size={16} />
+          <Save size={15} />
           <span className="btn-texto-responsive">
             {guardando ? "Guardando…" : "Guardar Configuración"}
           </span>
         </button>
-
-        <button
-          type="button"
-          className="btn-mini btn-responsive-accion"
-          onClick={alProbarAgente}
-          disabled={ocupado}
-          title="Enviar mensaje de prueba al agente ARIA"
-          aria-label="Enviar mensaje de prueba al agente ARIA"
-          style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
-        >
-          <Sparkles size={15} />
-          <span className="btn-texto-responsive">
-            {probando ? "Probando…" : "Probar Agente"}
-          </span>
-        </button>
-
-        {tieneApiKey && (
-          <button
-            type="button"
-            className="btn-mini btn-responsive-accion"
-            onClick={alEliminarClave}
-            disabled={ocupado}
-            title="Eliminar clave secreta de ARIA en Vault"
-            aria-label="Eliminar clave secreta de ARIA en Vault"
-            style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem" }}
-          >
-            <Trash2 size={15} />
-            <span className="btn-texto-responsive">
-              {borrando ? "Eliminando…" : "Eliminar Clave"}
-            </span>
-          </button>
-        )}
       </div>
     </form>
   );
 }
-
