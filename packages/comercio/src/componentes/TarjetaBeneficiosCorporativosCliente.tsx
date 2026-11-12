@@ -43,8 +43,43 @@ export function TarjetaBeneficiosCorporativosCliente({
   if (cargando) {
     return (
       <div style={{ padding: "16px", borderRadius: "14px", background: "#F8FAFC", border: "1px dashed #CBD5E1", display: "flex", alignItems: "center", gap: "10px", color: "#64748B", fontSize: "0.85rem" }}>
-        <RefreshCw size={16} className="animate-spin" />
+        <RefreshCw size={16} />
         <span>Verificando membresía corporativa y beneficios B2B...</span>
+      </div>
+    );
+  }
+
+  if (beneficios && (beneficios.cupoAgotado || beneficios.cupoSuspendido)) {
+    return (
+      <div
+        style={{
+          background: "#FFFBEB",
+          borderRadius: "14px",
+          border: "1.5px solid #FDE68A",
+          padding: "16px 20px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "12px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#FEF3C7", display: "flex", alignItems: "center", justifyContent: "center", color: "#D97706" }}>
+            <Building2 size={20} />
+          </div>
+          <div>
+            <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "#92400E" }}>
+              {beneficios.cupoAgotado
+                ? `Cupo de Colaboradores Completo · ${beneficios.empresaNombre || "Empresa"}`
+                : `Membresía Corporativa Pausada · ${beneficios.empresaNombre || "Empresa"}`}
+            </h4>
+            <p style={{ margin: "2px 0 0", fontSize: "0.8rem", color: "#B45309" }}>
+              {beneficios.mensajeEstado ||
+                `El convenio corporativo ha alcanzado el límite de ${beneficios.cupoColaboradores || 50} colaboradores habilitados. Solicita a Talento Humano (RRHH) ampliar el cupo.`}
+            </p>
+          </div>
+        </div>
       </div>
     );
   }

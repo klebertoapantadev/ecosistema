@@ -59,8 +59,8 @@ Tranqi adopta las mejores prácticas y estándares internacionales de **Law Prac
 | **`TRQ-ADM-002`** | **Operador/Admin** | **Asignación Inteligente de Casos (IA), Liquidación de Honorarios y Comisiones** | ⏳ Pendiente | **0%** | **Jesus Navarrete (IA)** / Kleber Toapanta |
 | **`TRQ-ADM-003`** | **Operador/Admin** | **Auditoría Transversal BDD, Telemetría API y Bitácora de Campañas** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-ADM-004`** | **Operador/Admin** | **Catálogo Comercial, Tarifario de Honorarios, Pasarela Pagoplux (Pagos y Facturación Electrónica SRI) e Historial** | 🟡 En Desarrollo | **50%** | Kleber Toapanta |
-| **`TRQ-B2B-001`** | **B2B / Empresas** | **Convenios Corporativos: Consultas Jurídicas Gratuitas, Descuento en Servicios y Billetera Legal** | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`TRQ-B2B-002`** | **B2B / Empresas** | **Widget de Nómina Corporativa, Carga Masiva, Invitaciones por Correo y Link con Empresa Padre** | 🟡 Especificado | **30%** | Kleber Toapanta |
+| **`TRQ-B2B-001`** | **B2B / Empresas** | **Convenios Corporativos: Cupo de Colaboradores Habilitados, Consultas Jurídicas Gratuitas, Descuento en Servicios y Correo de Bienvenida con Beneficios** | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`TRQ-B2B-002`** | **B2B / Empresas** | **Widget de Nómina Corporativa, Control de Colaboradores Registrados por Convenio, Cupos y Bienvenida por Correo** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TRQ-B2B-003`** | **B2B / Empresas** | **Portal Empresa: Administradores Corporativos, Roles RBAC, Secreto Profesional y Expedientes** | 🟡 Especificado | **30%** | Kleber Toapanta |
 | **`TRQ-B2B-004`** | **B2B / Empresas** | **Tranqi Legal HR: Onboarding/Offboarding Laboral, Firma Contratos .p12 y Finiquitos SUT/MDT** | 🟡 Especificado | **25%** | Kleber Toapanta |
 | **`TRQ-B2B-005`** | **B2B / Empresas** | **Corporate Compliance & Legal Health Score: Matriz Regulatoria, Vencimientos y Auditoría con ARIA** | 🟡 Especificado | **25%** | Kleber Toapanta |
@@ -881,13 +881,13 @@ Tranqi habilita un canal comercial corporativo B2B2C donde empresas (personas ju
 
 ---
 
-### TRQ-B2B-002 — Widget de Nómina Corporativa, Carga Masiva, Invitaciones por Correo y Link con Empresa Padre
-**Responsable:** Kleber Toapanta | **Estado:** 🟡 Especificado (30%)  
+### TRQ-B2B-002 — Widget de Nómina Corporativa, Control de Colaboradores por Convenio y Bienvenida por Correo
+**Responsable:** Kleber Toapanta | **Estado:** ✅ Implementado (100%)  
 **Identificador de Widget en BDD:** `gestion_convenios_corporativos`  
 **Ubicación en UI:** `panel_administracion` / `panel_operador` / Consola de Empresa Cliente
 
 #### 1. Descripción
-Widget modular administrativo desarrollado bajo la arquitectura del ecosistema (`packages/gestion-usuarios` / `@eco/gestion-convenios`) que permite registrar empresas cliente, configurar sus paquetes de beneficios, cargar masivamente la nómina de colaboradores, disparar invitaciones oficiales por correo electrónico mediante Magic Links corporativos y auditar el estado de vinculación y uso.
+Widget modular administrativo desarrollado bajo la arquitectura del ecosistema (`packages/comercio/src/componentes/GestionConveniosCorporativos.tsx`) que permite registrar empresas cliente, especificar el **número de colaboradores habilitado para cada convenio (`cve_cupo_colaboradores`)**, configurar sus paquetes de beneficios, **controlar las personas que se registran bajo ese convenio** (`com_beneficiario_empresa`) y **enviar automáticamente un correo de bienvenida indicando todos los beneficios que tiene con el convenio** cuando alguien se registra o es habilitado.
 
 #### 2. Experiencia de Usuario y Componentes del Widget
 ```

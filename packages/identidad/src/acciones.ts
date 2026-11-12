@@ -17,7 +17,10 @@ import {
 } from "./esquema";
 import { registrarAcceso } from "./acceso";
 import { obtenerPerfiles } from "./consultas";
-import { notificarNuevoUsuarioRegistrado } from "@eco/notificaciones/notificar-usuario";
+import {
+  notificarNuevoUsuarioRegistrado,
+  procesarAutoafiliacionYBienvenidaConvenio,
+} from "@eco/notificaciones/notificar-usuario";
 
 type Resultado<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 
@@ -290,6 +293,16 @@ export async function actualizarPerfilUsuario(datos: {
 
   if (error) return { ok: false, error: error.message };
 
+  if (user.email) {
+    await procesarAutoafiliacionYBienvenidaConvenio({
+      usuarioId: user.id,
+      nombres: datos.nombres.trim(),
+      apellidos: datos.apellidos.trim(),
+      correo: user.email,
+      negocio: "tranqi",
+    });
+  }
+
   return { ok: true, data: undefined };
 }
 
@@ -435,6 +448,16 @@ export async function completarBienvenida(datos: DatosBienvenida): Promise<Resul
     .eq("usu_id", user.id);
 
   if (error) return { ok: false, error: error.message };
+
+  if (user.email) {
+    await procesarAutoafiliacionYBienvenidaConvenio({
+      usuarioId: user.id,
+      nombres: parseo.data.nombres,
+      apellidos: parseo.data.apellidos,
+      correo: user.email,
+      negocio: "tranqi",
+    });
+  }
 
   return { ok: true, data: undefined };
 }

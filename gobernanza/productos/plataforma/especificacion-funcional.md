@@ -1489,13 +1489,13 @@ El sistema implementa una resolución de herencia de beneficios en 3 niveles de 
 * **Cuando** el Administrador cambia su estado a `INACTIVO` en el widget de nómina.
 * **Entonces** el sistema inhabilita inmediatamente el consumo de nuevas consultas gratuitas corporativas y el descuento preferencial; el saldo de bono no consumido regresa a la bolsa del convenio o caduca según las cláusulas del contrato, y el usuario conserva su cuenta personal como cliente individual sin pérdida de datos.
 
-#### Escenario 5: Auto-Afiliación Directa por Dominio Corporativo Verificado (Zero Friction)
-* **Dado** que la empresa cliente tiene configurados sus dominios autorizados en `cve_dominios_autorizados` (ej. `['pichincha.com', 'dinersclub.com.ec']`) y `cve_auto_afiliacion_por_dominio = true`.
-* **Cuando** un colaborador no fue cargado previamente en el archivo de nómina de RRHH, pero se registra con su correo corporativo (o desde su perfil personal pulsa *"Reclamar beneficios de mi empresa"* e introduce `usuario@pichincha.com`).
-* **Entonces** el sistema detecta que el dominio pertenece al convenio de Banco Pichincha, envía un OTP de 6 dígitos a su bandeja corporativa, y al ingresarlo con éxito:
-  1. Crea automáticamente el registro en `com_beneficiario_empresa` en estado `VINCULADO`.
-  2. Le asigna el paquete de beneficios correspondiente.
-  3. Muestra el distintivo co-brandeado con el **Logo oficial** de la empresa en su panel.
+#### Escenario 5: Auto-Afiliación Directa por Dominio Corporativo Verificado con Control de Cupo y Correo de Bienvenida (Zero Friction)
+* **Dado** que la empresa cliente tiene configurados sus dominios autorizados en `cve_dominios_autorizados` (ej. `['@satcom.com.ec', '@pichincha.com']`), `cve_auto_afiliacion_por_dominio = true` y un **cupo máximo de colaboradores habilitados** en `cve_cupo_colaboradores` (ej. `50` colaboradores).
+* **Cuando** un colaborador se registra con su correo corporativo (vía formulario de registro, Google OAuth o alta en el convenio) y el número de colaboradores activos registrados en `com_beneficiario_empresa` es menor a `cve_cupo_colaboradores`.
+* **Entonces** el sistema:
+  1. Verifica que exista cupo disponible (`registrados_activos < cve_cupo_colaboradores`); si el cupo está lleno, bloquea nuevas afiliaciones automáticas e informa al usuario y a Operaciones.
+  2. Crea o vincula automáticamente el registro en `com_beneficiario_empresa` en estado `VINCULADO` para controlar a la persona registrada bajo el convenio.
+  3. **Envía automáticamente un Correo de Bienvenida al Convenio Corporativo** detallando todos los beneficios activos de su convenio (consultas telemáticas gratuitas a $0.00 y frecuencia, porcentaje de descuento general en servicios legales, descuentos específicos por trámite/producto, bono de billetera y vigencia) además de una notificación In-App.
 
 ### 4. Modelo de Datos Técnico (`comun_comercio`)
 
