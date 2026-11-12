@@ -170,6 +170,7 @@ begin
     log_radio_maximo_km,
     log_factor_vial_respaldo,
     log_permitir_retiro_local,
+    log_detalle_logistica,
     log_actualizado_en
   )
   values (
@@ -190,6 +191,10 @@ begin
     greatest(1, coalesce((p_payload->>'radioMaximoKm')::numeric(12,2), 45.00)),
     greatest(1, coalesce((p_payload->>'factorVialRespaldo')::numeric(6,2), 1.32)),
     coalesce((p_payload->>'permitirRetiroLocal')::boolean, true),
+    jsonb_build_object(
+      'mostrarKilometrosCliente',
+      coalesce((p_payload->>'mostrarKilometrosCliente')::boolean, true)
+    ),
     now()
   )
   on conflict (log_negocio) do update set
@@ -209,6 +214,7 @@ begin
     log_radio_maximo_km = excluded.log_radio_maximo_km,
     log_factor_vial_respaldo = excluded.log_factor_vial_respaldo,
     log_permitir_retiro_local = excluded.log_permitir_retiro_local,
+    log_detalle_logistica = coalesce(l.log_detalle_logistica, '{}'::jsonb) || excluded.log_detalle_logistica,
     log_actualizado_en = now();
 
   if jsonb_typeof(p_payload->'zonas') = 'array' then
@@ -457,6 +463,181 @@ begin
     where w.wdg_negocio = v_negocio
       and w.wdg_clave = 'configuracion_logistica'
     on conflict (rlw_negocio, rlw_rol, rlw_widget_id) do update set rlw_visible = true;
+
+    insert into comun_seguridad.seg_widget (
+      wdg_negocio,
+      wdg_clave,
+      wdg_nombre,
+      wdg_activo,
+      wdg_detalle_widget,
+      wdg_creado_en
+    )
+    values (
+      v_negocio,
+      'pedidos_tienda',
+      'Pedidos de Tienda y Despachos',
+      true,
+      jsonb_build_object(
+        'descripcion', 'Bandeja operativa de pedidos e-commerce con trazabilidad GPS, dedicatorias y desglose interno de logística.',
+        'categoria', 'Operación',
+        'ruta', '/panel/pedidos',
+        'panel_defecto', 'panel_administrar',
+        'icono', 'ClipboardList'
+      ),
+      now()
+    )
+    on conflict (wdg_negocio, wdg_clave) do update set
+      wdg_nombre = excluded.wdg_nombre,
+      wdg_activo = true,
+      wdg_detalle_widget = excluded.wdg_detalle_widget,
+      wdg_actualizado_en = now();
+
+    insert into comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_id, rlw_visible)
+    select v_negocio, r.rol, w.wdg_id, true
+    from comun_seguridad.seg_widget w
+    cross join (values ('OPERADOR'), ('ADMINISTRADOR'), ('SUPERADMIN')) as r(rol)
+    where w.wdg_negocio = v_negocio
+      and w.wdg_clave = 'pedidos_tienda'
+    on conflict (rlw_negocio, rlw_rol, rlw_widget_id) do update set rlw_visible = true;
   end loop;
 end $$;
+
+-- 5. RPC transaccional de registro de pedido de tienda con desglose logístico interno
+create or replace function comun_comercio.com_fn_registrar_pedido_tienda(
+  p_negocio text,
+  p_payload jsonb
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_negocio text := lower(trim(coalesce(p_negocio, '')));
+  v_cliente_id uuid := auth.uid();
+  v_prf_id uuid;
+  v_prf_sec bigint;
+  v_codigo_orden text;
+  v_prefijo text;
+  v_item jsonb;
+  v_logistica jsonb := coalesce(p_payload->'logistica_entrega', '{}'::jsonb);
+  v_comprador jsonb := coalesce(p_payload->'comprador', '{}'::jsonb);
+  v_costo_envio numeric(12,4) := greatest(0, coalesce((p_payload->>'total_flete')::numeric(12,4), 0));
+  v_estado_inicial text := coalesce(nullif(trim(p_payload->>'estado'), ''), 'APROBADA');
+begin
+  if v_negocio = '' then
+    raise exception 'Identificador de negocio inválido';
+  end if;
+
+  if coalesce(trim(v_comprador->>'nombreCompleto'), '') = '' then
+    raise exception 'El nombre del comprador es obligatorio';
+  end if;
+
+  v_prefijo := case v_negocio
+    when 'tinkay' then 'TNK'
+    when 'margaritas' then 'MRG'
+    when 'fastfix' then 'FFH'
+    else 'TRQ'
+  end;
+
+  insert into comun_comercio.com_proforma (
+    prf_negocio,
+    prf_cliente_id,
+    prf_cliente_nombre,
+    prf_cliente_contacto,
+    prf_estado,
+    prf_subtotal,
+    prf_descuento,
+    prf_iva,
+    prf_total,
+    prf_observaciones,
+    prf_detalle_proforma
+  )
+  values (
+    v_negocio,
+    v_cliente_id,
+    trim(v_comprador->>'nombreCompleto'),
+    v_comprador,
+    v_estado_inicial,
+    greatest(0, coalesce((p_payload->>'subtotal_base_imponible')::numeric(12,4), 0)),
+    0,
+    greatest(0, coalesce((p_payload->>'total_iva')::numeric(12,4), 0)),
+    greatest(0, coalesce((p_payload->>'total_pagar')::numeric(12,4), 0)),
+    nullif(trim(p_payload->>'observaciones'), ''),
+    p_payload
+  )
+  returning prf_id, prf_secuencial into v_prf_id, v_prf_sec;
+
+  v_codigo_orden := coalesce(
+    nullif(trim(p_payload->>'codigo_orden'), ''),
+    v_prefijo || '-ORD-' || lpad(v_prf_sec::text, 4, '0')
+  );
+
+  update comun_comercio.com_proforma
+  set prf_detalle_proforma = coalesce(prf_detalle_proforma, '{}'::jsonb)
+    || jsonb_build_object('codigo_orden', v_codigo_orden, 'tipo_origen', 'PEDIDO_TIENDA')
+  where prf_id = v_prf_id;
+
+  if jsonb_typeof(p_payload->'items') = 'array' then
+    for v_item in select * from jsonb_array_elements(p_payload->'items') loop
+      insert into comun_comercio.com_proforma_item (
+        pfi_negocio,
+        pfi_proforma_id,
+        pfi_variante_id,
+        pfi_es_item_libre,
+        pfi_descripcion,
+        pfi_cantidad,
+        pfi_precio_unitario,
+        pfi_descuento,
+        pfi_impuesto,
+        pfi_total_linea,
+        pfi_detalle_item
+      )
+      values (
+        v_negocio,
+        v_prf_id,
+        null,
+        true,
+        coalesce(nullif(trim(v_item->>'descripcion'), ''), 'Arreglo Floral'),
+        greatest(1, coalesce((v_item->>'cantidad')::numeric(12,2), 1)),
+        greatest(0, coalesce((v_item->>'precio_unitario')::numeric(12,4), 0)),
+        0,
+        coalesce(nullif(trim(v_item->>'impuesto'), ''), 'IVA_0'),
+        greatest(0, coalesce((v_item->>'total_linea')::numeric(12,4), 0)),
+        v_item
+      );
+    end loop;
+  end if;
+
+  insert into comun_comercio.com_despacho_asignacion (
+    dsp_negocio,
+    dsp_orden_id,
+    dsp_modalidad,
+    dsp_tracking_url,
+    dsp_costo_envio,
+    dsp_estado,
+    dsp_observaciones_coordinacion,
+    dsp_detalle_despacho
+  )
+  values (
+    v_negocio,
+    v_prf_id,
+    case when coalesce((v_logistica->>'retiro_en_local')::boolean, false) then 'RETIRO_LOCAL' else 'PROPIO' end,
+    nullif(trim(v_logistica->>'enlace_mapa'), ''),
+    v_costo_envio,
+    'ASIGNADO',
+    nullif(trim(v_logistica->>'formula_calculo_interno'), ''),
+    v_logistica
+  );
+
+  return jsonb_build_object(
+    'ok', true,
+    'id', v_prf_id,
+    'codigo_orden', v_codigo_orden
+  );
+end;
+$$;
+
+grant execute on function comun_comercio.com_fn_registrar_pedido_tienda(text, jsonb) to anon, authenticated, service_role;
+
 

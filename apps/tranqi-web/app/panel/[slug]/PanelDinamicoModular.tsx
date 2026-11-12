@@ -43,6 +43,7 @@ import {
   ComplianceScoreEmpresarial,
   LegalHRLaboral,
   FormularioLogisticaCobertura,
+  BandejaPedidosTienda,
 } from "@eco/comercio";
 import { SociosWidget } from "../administrar/PanelAdministrarModular";
 import { ConfiguracionContratoAbogadoWidget } from "@/modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
@@ -360,6 +361,13 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     subtitulo: "Polígonos de cobertura en Pichincha, sector de envío gratis por defecto y recargo por km vial",
     icono: MapPin,
     colorIcono: "#16A34A",
+    categoria: "Comercio & Pagos"
+  },
+  pedidos_tienda: {
+    titulo: "Pedidos de Tienda y Despachos",
+    subtitulo: "Órdenes registradas con ubicación GPS, dedicatorias y desglose logístico interno",
+    icono: ClipboardList,
+    colorIcono: "#0284C7",
     categoria: "Comercio & Pagos"
   },
   tokens_mcp: {
@@ -953,6 +961,9 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       case "configuracion_logistica":
       case "logistica":
         return <FormularioLogisticaCobertura negocio={negocio} />;
+      case "pedidos_tienda":
+      case "pedidos":
+        return <BandejaPedidosTienda negocio={negocio} />;
       case "tokens_mcp":
       case "tokens":
       case "mcp_tokens":

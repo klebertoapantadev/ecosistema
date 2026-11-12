@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { registrarPedidoTiendaAction } from '@eco/comercio';
 import { useCarrito } from '../contexto-carrito';
 import {
   X,
@@ -29,6 +30,11 @@ export function ModalCheckoutTinkay() {
   const [metodoPago, setMetodoPago] = useState<'payphone' | 'transferencia'>('payphone');
   const [paso, setPaso] = useState<'formulario' | 'procesando' | 'exito'>('formulario');
   const [codigoOrdenGenerado, setCodigoOrdenGenerado] = useState<string>('');
+  const [errorPago, setErrorPago] = useState<string | null>(null);
+  const [resumenExito, setResumenExito] = useState<{
+    totalPagado: number;
+    entregaTexto: string;
+  } | null>(null);
 
   // Datos de Facturación SRI
   const [datosFactura, setDatosFactura] = useState({
@@ -49,22 +55,122 @@ export function ModalCheckoutTinkay() {
 
   if (!checkoutAbierto) return null;
 
-  const handlePagar = (e: React.FormEvent) => {
+  const handlePagar = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorPago(null);
     setPaso('procesando');
 
-    setTimeout(() => {
-      const numSecuencial = Math.floor(1000 + Math.random() * 9000);
-      const codigo = `TNK-ORD-${numSecuencial}`;
-      setCodigoOrdenGenerado(codigo);
-      setPaso('exito');
-      vaciarCarrito();
-    }, 1800);
+    const entregaTextoConfirmado =
+      modalidadEntrega === 'unificada'
+        ? entregaUnificada.retiroEnLocal
+          ? `Retiro en ${configLogistica.origenNombre} (${entregaUnificada.fechaEntrega})`
+          : `${entregaUnificada.zonaDetectadaNombre || entregaUnificada.ciudad || 'Domicilio'}${
+              configLogistica.mostrarKilometrosCliente !== false &&
+              typeof entregaUnificada.distanciaVialKm === 'number'
+                ? ` (${entregaUnificada.distanciaVialKm.toFixed(1)} km)`
+                : ''
+            } — ${entregaUnificada.fechaEntrega} (${entregaUnificada.franjaHoraria})`
+        : 'Multidestino individual';
+
+    const resultado = await registrarPedidoTiendaAction({
+      negocio: 'tinkay',
+      metodoPago,
+      comprador: {
+        nombreCompleto: datosFactura.nombreCompleto,
+        identificacion: datosFactura.identificacion,
+        correo: datosFactura.correo,
+        telefono: datosFactura.telefono,
+      },
+      modalidadEntrega,
+      entregaUnificada:
+        modalidadEntrega === 'unificada'
+          ? {
+              retiroEnLocal: entregaUnificada.retiroEnLocal,
+              destinatarioNombre: entregaUnificada.destinatarioNombre || datosFactura.nombreCompleto,
+              destinatarioTelefono: entregaUnificada.destinatarioTelefono || datosFactura.telefono,
+              direccion: entregaUnificada.direccion,
+              referencia: entregaUnificada.referencia,
+              ciudad: entregaUnificada.ciudad,
+              fechaEntrega: entregaUnificada.fechaEntrega,
+              franjaHoraria: entregaUnificada.franjaHoraria,
+              horaExacta: entregaUnificada.horaExacta,
+              enlaceMapa: entregaUnificada.enlaceMapa,
+              lat: entregaUnificada.lat,
+              lng: entregaUnificada.lng,
+              zonaDetectadaNombre: entregaUnificada.zonaDetectadaNombre,
+              reglaLogisticaAplicada: entregaUnificada.reglaLogisticaAplicada,
+              distanciaVialKm: entregaUnificada.distanciaVialKm,
+              costoEnvioCalculado: totalFlete,
+              etiquetaCotizacion: entregaUnificada.etiquetaCotizacion,
+              formulaCalculoInterno: entregaUnificada.formulaCalculoInterno,
+            }
+          : undefined,
+      items: items.map((it) => ({
+        productoId: it.producto.id,
+        productoNombre: it.producto.nombre,
+        varianteSku: it.variante.sku,
+        varianteNombre: it.variante.nombre,
+        cantidad: it.cantidad,
+        pvpUnitario: it.variante.pvp,
+        tarifaIva: it.variante.tarifaIva,
+        deliveryIncluidoProducto: it.producto.deliveryIncluido !== false,
+        recargoLogisticoUsd: it.producto.recargoLogisticoUsd || 0,
+        dedicatoria: it.dedicatoria
+          ? {
+              para: it.dedicatoria.para,
+              de: it.dedicatoria.de,
+              mensaje: it.dedicatoria.mensaje,
+            }
+          : undefined,
+        entregaIndividual: it.entregaIndividual
+          ? {
+              retiroEnLocal: it.entregaIndividual.retiroEnLocal,
+              destinatarioNombre: it.entregaIndividual.destinatarioNombre,
+              destinatarioTelefono: it.entregaIndividual.destinatarioTelefono,
+              direccion: it.entregaIndividual.direccion,
+              referencia: it.entregaIndividual.referencia,
+              ciudad: it.entregaIndividual.ciudad,
+              fechaEntrega: it.entregaIndividual.fechaEntrega,
+              franjaHoraria: it.entregaIndividual.franjaHoraria,
+              horaExacta: it.entregaIndividual.horaExacta,
+              enlaceMapa: it.entregaIndividual.enlaceMapa,
+              lat: it.entregaIndividual.lat,
+              lng: it.entregaIndividual.lng,
+              zonaDetectadaNombre: it.entregaIndividual.zonaDetectadaNombre,
+              reglaLogisticaAplicada: it.entregaIndividual.reglaLogisticaAplicada,
+              distanciaVialKm: it.entregaIndividual.distanciaVialKm,
+              costoEnvioCalculado: it.entregaIndividual.costoEnvioCalculado,
+              etiquetaCotizacion: it.entregaIndividual.etiquetaCotizacion,
+              formulaCalculoInterno: it.entregaIndividual.formulaCalculoInterno,
+            }
+          : undefined,
+      })),
+      subtotalBaseImponible,
+      totalIva,
+      totalFlete,
+      totalRecargoHorarioExacto,
+      totalPagar,
+    });
+
+    if (!resultado.ok) {
+      setErrorPago(resultado.error);
+      setPaso('formulario');
+      return;
+    }
+
+    setResumenExito({
+      totalPagado: totalPagar,
+      entregaTexto: entregaTextoConfirmado,
+    });
+    setCodigoOrdenGenerado(resultado.codigoOrden);
+    setPaso('exito');
+    vaciarCarrito();
   };
 
   const handleCerrar = () => {
     setCheckoutAbierto(false);
     setPaso('formulario');
+    setErrorPago(null);
   };
 
   return (
@@ -111,17 +217,11 @@ export function ModalCheckoutTinkay() {
             <div className="tarjeta-resumen-confirmacion">
               <div className="fila-resumen-c">
                 <span>Total pagado:</span>
-                <strong>${totalPagar.toFixed(2)} USD</strong>
+                <strong>${(resumenExito?.totalPagado ?? totalPagar).toFixed(2)} USD</strong>
               </div>
               <div className="fila-resumen-c">
                 <span>Entrega:</span>
-                <span>
-                  {modalidadEntrega === 'unificada'
-                    ? entregaUnificada.retiroEnLocal
-                      ? `Retiro en ${configLogistica.origenNombre} (${entregaUnificada.fechaEntrega})`
-                      : `${entregaUnificada.zonaDetectadaNombre || entregaUnificada.ciudad || 'Domicilio'} — ${entregaUnificada.fechaEntrega} (${entregaUnificada.franjaHoraria})`
-                    : 'Multidestino individual'}
-                </span>
+                <span>{resumenExito?.entregaTexto || 'Registrada'}</span>
               </div>
             </div>
 
@@ -319,8 +419,24 @@ export function ModalCheckoutTinkay() {
                   </div>
                 )}
 
+                {errorPago && (
+                  <div
+                    style={{
+                      background: '#FEF2F2',
+                      border: '1px solid #FECACA',
+                      color: '#B91C1C',
+                      borderRadius: '10px',
+                      padding: '10px 12px',
+                      fontSize: '0.82rem',
+                      marginBottom: '10px',
+                    }}
+                  >
+                    {errorPago}
+                  </div>
+                )}
+
                 <button type="submit" className="btn btn-primario btn-confirmar-pago-grande">
-                  <span>Pagar ${totalPagar.toFixed(2)} USD Ahora</span>
+                  <span>Confirmar Pedido (${totalPagar.toFixed(2)})</span>
                 </button>
               </form>
             </div>
@@ -376,7 +492,16 @@ export function ModalCheckoutTinkay() {
                     {modalidadEntrega === 'unificada' && entregaUnificada.retiroEnLocal
                       ? 'Retiro en tienda:'
                       : modalidadEntrega === 'unificada' && entregaUnificada.zonaDetectadaNombre
-                      ? `Envío (${entregaUnificada.zonaDetectadaNombre}):`
+                      ? `Envío (${entregaUnificada.zonaDetectadaNombre}${
+                          configLogistica.mostrarKilometrosCliente !== false &&
+                          typeof entregaUnificada.distanciaVialKm === 'number'
+                            ? ` · ${entregaUnificada.distanciaVialKm.toFixed(1)} km`
+                            : ''
+                        }):`
+                      : modalidadEntrega === 'unificada' &&
+                        configLogistica.mostrarKilometrosCliente !== false &&
+                        typeof entregaUnificada.distanciaVialKm === 'number'
+                      ? `Envío a domicilio (${entregaUnificada.distanciaVialKm.toFixed(1)} km):`
                       : 'Envío a domicilio:'}
                   </span>
                   <span style={{ color: totalFlete === 0 ? 'var(--verde)' : 'inherit' }}>

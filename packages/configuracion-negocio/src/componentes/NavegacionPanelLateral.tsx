@@ -8,6 +8,7 @@ import {
   Building2,
   ChevronDown,
   ChevronRight,
+  ClipboardList,
   KeyRound,
   LayoutDashboard,
   Mail,
@@ -21,6 +22,7 @@ import {
 
 export type IconoNavegacionPanel =
   | "resumen"
+  | "pedidos"
   | "catalogo"
   | "usuarios"
   | "negocio"
@@ -40,6 +42,7 @@ export interface ItemNavegacionPanel {
 
 const MAPA_ICONOS: Record<IconoNavegacionPanel, LucideIcon> = {
   resumen: LayoutDashboard,
+  pedidos: ClipboardList,
   catalogo: ShoppingBag,
   usuarios: Users,
   negocio: Building2,

@@ -24,6 +24,13 @@ const CATALOGO_NAV_FASTFIX: ItemNavegacionPanel[] = [
     grupo: "operacion",
   },
   {
+    clave: "pedidos_tienda",
+    nombre: "Órdenes y Despachos",
+    ruta: "/panel/pedidos",
+    icono: "pedidos",
+    grupo: "operacion",
+  },
+  {
     clave: "gestion_usuarios",
     nombre: "Usuarios y Roles",
     ruta: "/panel/usuarios",

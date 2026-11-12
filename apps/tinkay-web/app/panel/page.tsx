@@ -4,6 +4,7 @@ import {
   ArrowRight,
   Bot,
   Building2,
+  ClipboardList,
   KeyRound,
   Mail,
   Settings,
@@ -35,6 +36,15 @@ interface WidgetInfo {
 }
 
 const MODULOS_TINKAY: Record<string, WidgetInfo> = {
+  pedidos_tienda: {
+    clave: "pedidos_tienda",
+    nombre: "Pedidos de Tienda y Despachos",
+    descripcion: "Órdenes registradas, dedicatorias, enlace GPS directo y desglose interno de logística.",
+    ruta: "/panel/pedidos",
+    icono: ClipboardList,
+    grupo: "operacion",
+    etiqueta: "Taller / Envíos",
+  },
   catalogo_productos: {
     clave: "catalogo_productos",
     nombre: "Catálogo Comercial & Portafolio",

@@ -4,6 +4,7 @@ import {
   cotizarEnvioDesdeEntradaAction,
   extraerCoordenadasDeTextoOUrl,
   extraerPrimeraUrlDeTexto,
+  obtenerConfiguracionLogisticaAction,
 } from "@eco/comercio";
 
 // Chat publico de la tienda (Mía). Pasa por packages/agentes-ia como exige el
@@ -57,11 +58,10 @@ export async function POST(req: NextRequest) {
   let cotizacionEnvio:
     | {
         etiquetaResumen: string;
-        formulaDetalle: string;
         costoTotalEnvio: number;
         dentroCobertura: boolean;
         zonaDetectadaNombre?: string;
-        distanciaVialKm: number;
+        distanciaVialKm?: number;
         enlaceMapa: string;
         lat: number;
         lng: number;
@@ -72,23 +72,26 @@ export async function POST(req: NextRequest) {
 
   if (tieneUbicacionMapa) {
     try {
-      const resCot = await cotizarEnvioDesdeEntradaAction({
-        negocio: NEGOCIO,
-        enlaceOTexto: urlEnMensaje ?? textoLimpio,
-      });
+      const [cfg, resCot] = await Promise.all([
+        obtenerConfiguracionLogisticaAction(NEGOCIO),
+        cotizarEnvioDesdeEntradaAction({
+          negocio: NEGOCIO,
+          enlaceOTexto: urlEnMensaje ?? textoLimpio,
+        }),
+      ]);
       if (resCot.ok) {
         const c = resCot.cotizacion;
+        const mostrarKm = cfg.mostrarKilometrosCliente !== false;
         const enlaceFinal =
           urlEnMensaje && /^https?:\/\//i.test(urlEnMensaje)
             ? urlEnMensaje
             : c.urlGoogleMapsDestino;
         cotizacionEnvio = {
           etiquetaResumen: c.etiquetaResumen,
-          formulaDetalle: c.formulaDetalle,
           costoTotalEnvio: c.costoTotalEnvio,
           dentroCobertura: c.dentroCobertura,
           zonaDetectadaNombre: c.zonaDetectada?.nombre,
-          distanciaVialKm: c.distanciaVialKm,
+          ...(mostrarKm ? { distanciaVialKm: c.distanciaVialKm } : {}),
           enlaceMapa: enlaceFinal,
           lat: c.destino.lat,
           lng: c.destino.lng,
@@ -96,12 +99,18 @@ export async function POST(req: NextRequest) {
 
         promptParaAria =
           `${textoLimpio}\n\n` +
-          `[DATOS OFICIALES VERIFICADOS DE LOGÍSTICA TINKAY PARA ESTA UBICACIÓN GPS: ` +
+          `[DATOS OFICIALES DE ENVÍO TINKAY PARA ESTA UBICACIÓN GPS: ` +
           `Dentro de cobertura=${c.dentroCobertura ? "SÍ" : "NO"}; ` +
-          `Zona=${c.zonaDetectada?.nombre ?? "Fuera de zonas fijas (cálculo por km)"}; ` +
-          `Distancia vial desde taller=${c.distanciaVialKm.toFixed(2)} km; ` +
-          `Costo exacto de envío=$${c.costoTotalEnvio.toFixed(2)} USD; ` +
-          `Detalle=${c.formulaDetalle}. Usa exactamente este valor al responder al cliente.]`;
+          `Zona=${c.zonaDetectada?.nombre ?? "Domicilio"}; ` +
+          (mostrarKm ? `Distancia=${c.distanciaVialKm.toFixed(1)} km; ` : "") +
+          `Costo final de envío=$${c.costoTotalEnvio.toFixed(2)} USD. ` +
+          `Usa exactamente este costo final al responder al cliente. ` +
+          `${
+            mostrarKm
+              ? "Puedes indicar la distancia en km."
+              : "NO menciones distancia en kilómetros."
+          } ` +
+          `NUNCA menciones fórmulas internas, tarifas por km ni descuentos absorbidos.]`;
       }
     } catch {
       // Si falla la resolución externa de mapas no bloqueamos la conversación con ARIA

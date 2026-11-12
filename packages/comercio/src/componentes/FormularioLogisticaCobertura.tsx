@@ -14,6 +14,7 @@ import {
   Truck,
 } from "lucide-react";
 import {
+  cotizarEnvioDomicilio,
   crearConfiguracionLogisticaPorDefecto,
   ZONAS_PICHINCHA_POR_DEFECTO,
   type ConfiguracionLogisticaNegocio,
@@ -477,6 +478,49 @@ export function FormularioLogisticaCobertura({
           </div>
         </div>
 
+        <label
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "10px",
+            background: "#F8FAFC",
+            border: "1px solid #E2E8F0",
+            borderRadius: "9px",
+            padding: "10px 12px",
+            cursor: "pointer",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={form.mostrarKilometrosCliente !== false}
+            onChange={(e) => {
+              const nuevoValor = e.target.checked;
+              const actualizado = { ...form, mostrarKilometrosCliente: nuevoValor };
+              setForm(actualizado);
+              if (puntoSimulador && resultadoSimulador) {
+                setResultadoSimulador(
+                  cotizarEnvioDomicilio({
+                    config: actualizado,
+                    destino: puntoSimulador,
+                    distanciaVialKm: resultadoSimulador.distanciaVialKm,
+                    fuenteDistancia: resultadoSimulador.fuenteDistancia,
+                    rutaGeometria: resultadoSimulador.rutaGeometria,
+                  })
+                );
+              }
+            }}
+            style={{ marginTop: "3px", width: "16px", height: "16px", accentColor: "#16A34A" }}
+          />
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#0F172A" }}>
+              Mostrar número de kilómetros (km) al cliente en cotizaciones y chat
+            </span>
+            <span style={{ fontSize: "0.74rem", color: "#64748B", lineHeight: 1.4 }}>
+              La fórmula interna (costo por km y descuento absorbido) nunca es visible para el cliente y se guarda únicamente en el pedido de la tienda.
+            </span>
+          </div>
+        </label>
+
         <div
           style={{
             background: "#F0FDF4",
@@ -488,7 +532,7 @@ export function FormularioLogisticaCobertura({
             lineHeight: 1.45,
           }}
         >
-          <strong>Fórmula activa fuera de «{form.zonaGratisNombre}»:</strong>{" "}
+          <strong>Fórmula interna fuera de «{form.zonaGratisNombre}» (solo visible en pedido de tienda):</strong>{" "}
           <code>
             Máx(${form.recargoMinimoExtra.toFixed(2)}, (Distancia vial desde taller × $
             {form.tarifaPorKm.toFixed(2)}/km) − ${form.subsidioBaseUsd.toFixed(2)})
@@ -700,8 +744,9 @@ export function FormularioLogisticaCobertura({
             }}
           >
             <div>
-              <strong>Resultado Simulación:</strong> {resultadoSimulador.etiquetaResumen}
-              <div style={{ fontSize: "0.73rem", color: "#475569" }}>
+              <strong>Vista Cliente:</strong> {resultadoSimulador.etiquetaResumen}
+              <div style={{ fontSize: "0.73rem", color: "#475569", marginTop: "2px" }}>
+                <strong>Auditoría en Pedido de Tienda (oculto al cliente):</strong>{" "}
                 {resultadoSimulador.formulaDetalle}
               </div>
             </div>

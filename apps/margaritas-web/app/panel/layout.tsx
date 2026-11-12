@@ -24,6 +24,13 @@ const CATALOGO_NAV_MARGARITAS: ItemNavegacionPanel[] = [
     grupo: "operacion",
   },
   {
+    clave: "pedidos_tienda",
+    nombre: "Pedidos de Tienda",
+    ruta: "/panel/pedidos",
+    icono: "pedidos",
+    grupo: "operacion",
+  },
+  {
     clave: "gestion_usuarios",
     nombre: "Usuarios y Roles",
     ruta: "/panel/usuarios",

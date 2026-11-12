@@ -375,6 +375,9 @@ importers:
 
   packages/comercio:
     dependencies:
+      '@eco/datagrid':
+        specifier: workspace:*
+        version: link:../datagrid
       '@eco/db':
         specifier: workspace:*
         version: link:../db

@@ -6,7 +6,7 @@ import {
   Sparkles, Shield, LayoutGrid, Pencil, Users, UserCheck, Eye,
   Settings, Mail, ShieldCheck, Bell, CircleUser, KeyRound, Sliders, Briefcase,
   Receipt, History, RotateCcw, FileCheck, Folder, ShoppingBag, CreditCard,
-  CalendarClock, CalendarPlus, CalendarCheck, Building2, Scale, Award, BellRing, Bot, MapPin, type LucideIcon
+  CalendarClock, CalendarPlus, CalendarCheck, Building2, Scale, Award, BellRing, Bot, MapPin, ClipboardList, type LucideIcon
 } from "lucide-react";
 import { resetearSistemaSuperAdminAction } from "@eco/gestion-usuarios/acciones";
 import { ModalNotificacionPush } from "@eco/notificaciones";
@@ -142,6 +142,22 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     panelDestino: "Configuración (/panel/logistica)",
     categoria: "Comercio & Catálogo",
     perfilesAsignados: ["ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "COMPARTIDO",
+    fechaRegistro: "2026-11-12",
+  },
+  {
+    clave: "pedidos_tienda",
+    nombre: "Pedidos de Tienda y Despachos",
+    detalle: "Bandeja de órdenes e-commerce con ruta GPS, dedicatorias y desglose interno de logística",
+    ruta: "/panel/pedidos",
+    icono: ClipboardList,
+    iconoKey: "ClipboardList",
+    color: "#0284C7",
+    rutaFisica: "packages/comercio/src/componentes/BandejaPedidosTienda.tsx",
+    paquete: "@eco/comercio",
+    panelDestino: "Administrar (/panel/pedidos)",
+    categoria: "Comercio & Catálogo",
+    perfilesAsignados: ["OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
     estadoDuplicidad: "COMPARTIDO",
     fechaRegistro: "2026-11-12",
   },

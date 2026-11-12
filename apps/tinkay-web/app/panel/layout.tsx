@@ -25,6 +25,14 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel & { soloAdmin?: boolean }> 
     grupo: "operacion",
   },
   {
+    clave: "pedidos_tienda",
+    nombre: "Pedidos de Tienda",
+    ruta: "/panel/pedidos",
+    icono: "pedidos",
+    grupo: "operacion",
+    soloAdmin: true,
+  },
+  {
     clave: "catalogo_productos",
     nombre: "Catálogo Comercial",
     ruta: "/panel/catalogo-productos",

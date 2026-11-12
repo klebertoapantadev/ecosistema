@@ -43,6 +43,8 @@ export interface ConfiguracionLogisticaNegocio {
   radioMaximoKm: number;
   factorVialRespaldo: number;
   permitirRetiroLocal: boolean;
+  /** Si es true, la etiqueta visible al cliente incluye la distancia vial en km (nunca la fórmula interna) */
+  mostrarKilometrosCliente: boolean;
   zonas: ZonaCoberturaLogistica[];
   actualizadoEn?: string | null;
 }
@@ -281,6 +283,7 @@ export function crearConfiguracionLogisticaPorDefecto(
     radioMaximoKm: 45.0,
     factorVialRespaldo: 1.32,
     permitirRetiroLocal: true,
+    mostrarKilometrosCliente: true,
     zonas: ZONAS_PICHINCHA_POR_DEFECTO.map((z) => ({
       ...z,
       sectoresReferencia: [...z.sectoresReferencia],
@@ -708,6 +711,9 @@ export function cotizarEnvioDomicilio(
       ? redondearKm(vialInyectada)
       : redondearKm(linealKm * (config.factorVialRespaldo > 1 ? config.factorVialRespaldo : 1.32));
 
+  const mostrarKm = config.mostrarKilometrosCliente !== false;
+  const sufijoKm = mostrarKm ? ` (${vialKm.toFixed(1)} km)` : "";
+
   if (linealKm > config.radioMaximoKm) {
     return {
       ok: false,
@@ -722,7 +728,9 @@ export function cotizarEnvioDomicilio(
       costoBaseEnvio: 0,
       recargoProducto: recargoProd,
       costoTotalEnvio: 0,
-      etiquetaResumen: `Fuera del radio automático (${linealKm.toFixed(1)} km)`,
+      etiquetaResumen: mostrarKm
+        ? `Fuera de cobertura (${linealKm.toFixed(1)} km)`
+        : "Fuera de cobertura automática",
       formulaDetalle: `La ubicación está a ${linealKm.toFixed(1)} km del taller (máximo automático ${config.radioMaximoKm} km en Pichincha). Coordina entrega especial con nuestra asesora o elige retiro en tienda.`,
       rutaGeometria,
       urlGoogleMapsDestino,
@@ -760,8 +768,8 @@ export function cotizarEnvioDomicilio(
         costoTotalEnvio: total,
         etiquetaResumen:
           total === 0
-            ? `${zonaMatch.nombre} — Envío Gratis ($0.00)`
-            : `${zonaMatch.nombre} — Transporte especial +$${total.toFixed(2)}`,
+            ? `${zonaMatch.nombre}${sufijoKm} — Envío Gratis`
+            : `${zonaMatch.nombre}${sufijoKm}`,
         formulaDetalle:
           recargoProd > 0
             ? `Dentro de ${zonaMatch.nombre} ($0.00 base) + $${recargoProd.toFixed(2)} por transporte especial del arreglo.`
@@ -791,7 +799,7 @@ export function cotizarEnvioDomicilio(
       costoBaseEnvio: baseNoInc,
       recargoProducto: recargoProd,
       costoTotalEnvio: total,
-      etiquetaResumen: `${zonaMatch.nombre} — Envío +$${total.toFixed(2)}`,
+      etiquetaResumen: `${zonaMatch.nombre}${sufijoKm}`,
       formulaDetalle: `Tarifa base en ${zonaMatch.nombre}: $${baseNoInc.toFixed(2)}${
         recargoProd > 0 ? ` + $${recargoProd.toFixed(2)} transporte especial` : ""
       }.`,
@@ -824,7 +832,7 @@ export function cotizarEnvioDomicilio(
       costoBaseEnvio: baseZona,
       recargoProducto: recargoProd,
       costoTotalEnvio: total,
-      etiquetaResumen: `${zonaMatch.nombre} — Adicional +$${total.toFixed(2)}`,
+      etiquetaResumen: `${zonaMatch.nombre}${sufijoKm}`,
       formulaDetalle: `Tarifa zonificada para ${zonaMatch.nombre}: $${baseZona.toFixed(2)} (${vialKm.toFixed(1)} km viales desde taller)${
         recargoProd > 0 ? ` + $${recargoProd.toFixed(2)} transporte especial` : ""
       }.`,
@@ -843,7 +851,7 @@ export function cotizarEnvioDomicilio(
   const costoBaseKm = redondearMoneda(Math.max(minimoExtra, netoPorKm));
   const totalKm = redondearMoneda(costoBaseKm + recargoProd);
 
-  const etiquetaSector = zonaMatch ? zonaMatch.nombre : `Pichincha (${vialKm.toFixed(1)} km)`;
+  const etiquetaSector = zonaMatch ? zonaMatch.nombre : "Envío a domicilio";
 
   return {
     ok: true,
@@ -865,7 +873,7 @@ export function cotizarEnvioDomicilio(
     costoBaseEnvio: costoBaseKm,
     recargoProducto: recargoProd,
     costoTotalEnvio: totalKm,
-    etiquetaResumen: `${etiquetaSector} — Adicional +$${totalKm.toFixed(2)}`,
+    etiquetaResumen: `${etiquetaSector}${sufijoKm}`,
     formulaDetalle:
       subsidioAplicado > 0
         ? `${vialKm.toFixed(1)} km × $${config.tarifaPorKm.toFixed(2)}/km ($${brutoPorKm.toFixed(2)}) − $${subsidioAplicado.toFixed(2)} incluido = $${costoBaseKm.toFixed(2)} (mín. $${minimoExtra.toFixed(2)})${

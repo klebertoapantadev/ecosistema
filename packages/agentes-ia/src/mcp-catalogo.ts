@@ -412,7 +412,8 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
         "Calcula el costo exacto de envío a domicilio o retiro gratis en tienda según un enlace GPS (Google Maps, Apple Maps, Waze), " +
         "coordenadas de ubicación de WhatsApp (lat, lng) o dirección/sector en Pichincha, Ecuador. " +
         "Retorna la zona detectada (ej. Centro-Norte de Quito con Envío Gratis, Cumbayá, Tumbaco, Valle de los Chillos), " +
-        "la distancia vial en kilómetros desde el taller, el costo exacto del delivery y la fórmula aplicada.",
+        "el costo final de delivery para el cliente y, cuando el negocio lo habilita, la distancia en kilómetros. " +
+        "Nunca expongas fórmulas internas al cliente; informa únicamente el costo final y lo permitido por mostrar_kilometros_cliente.",
       esquema: {
         type: "object",
         properties: {

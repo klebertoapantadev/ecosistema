@@ -725,9 +725,11 @@ export function SelectorUbicacionEntrega({
                 </strong>
               </div>
 
-              <span style={{ fontSize: "0.72rem", color: "#52525B", lineHeight: 1.35 }}>
-                {cotizacion.formulaDetalle}
-              </span>
+              {!cotizacion.dentroCobertura && (
+                <span style={{ fontSize: "0.72rem", color: "#92400E", lineHeight: 1.35 }}>
+                  Ubicación fuera de nuestra cobertura automática. Coordina entrega especial por chat o elige retiro en tienda.
+                </span>
+              )}
             </div>
           )}
         </>

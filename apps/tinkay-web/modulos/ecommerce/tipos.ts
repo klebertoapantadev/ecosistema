@@ -80,10 +80,12 @@ export interface DatosEntrega {
   lng?: number;
   retiroEnLocal?: boolean;
   zonaDetectadaNombre?: string;
+  reglaLogisticaAplicada?: string;
   distanciaVialKm?: number;
   costoEnvioCalculado?: number;
   dentroCobertura?: boolean;
   etiquetaCotizacion?: string;
+  formulaCalculoInterno?: string;
 }
 
 export interface ItemCarrito {
@@ -113,11 +115,10 @@ export interface MensajeChat {
   };
   cotizacionEnvio?: {
     etiquetaResumen: string;
-    formulaDetalle: string;
     costoTotalEnvio: number;
     dentroCobertura: boolean;
     zonaDetectadaNombre?: string;
-    distanciaVialKm: number;
+    distanciaVialKm?: number;
     enlaceMapa: string;
     lat: number;
     lng: number;

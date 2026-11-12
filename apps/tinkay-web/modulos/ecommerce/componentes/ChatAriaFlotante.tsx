@@ -133,17 +133,20 @@ export function ChatAriaFlotante() {
   // agente ARIA configurado (HTTP 503). Nunca sustituye silenciosamente a ARIA
   // en errores de timeout para no contradecir el hilo conversacional.
   const procesarRespaldoSinAgente = (texto: string, cotizacionEnvio?: CotizacionChat) => {
+    const mostrarKm = configLogistica.mostrarKilometrosCliente !== false;
     if (cotizacionEnvio) {
       return {
         texto: cotizacionEnvio.dentroCobertura
-          ? `¡Ubicación verificada! ${cotizacionEnvio.etiquetaResumen} (${cotizacionEnvio.distanciaVialKm.toFixed(
-              1
-            )} km desde nuestro taller). Puedes pulsar «Usar ubicación» para aplicarla directo a tu carrito.`
-          : `Revisé tu ubicación (${cotizacionEnvio.distanciaVialKm.toFixed(
-              1
-            )} km desde nuestro taller) y supera el radio automático de cobertura (${
-              configLogistica.radioMaximoKm
-            } km). Podemos coordinar retiro sin costo en nuestra tienda física (${
+          ? `¡Ubicación verificada! El costo de envío es ${
+              cotizacionEnvio.costoTotalEnvio === 0
+                ? 'GRATIS'
+                : `$${cotizacionEnvio.costoTotalEnvio.toFixed(2)} USD`
+            }. Puedes pulsar «Usar ubicación» para aplicarla directo a tu carrito.`
+          : `Revisé tu ubicación${
+              mostrarKm && typeof cotizacionEnvio.distanciaVialKm === 'number'
+                ? ` (${cotizacionEnvio.distanciaVialKm.toFixed(1)} km)`
+                : ''
+            } y supera nuestra cobertura automática. Podemos coordinar entrega especial o retiro sin costo en nuestra tienda física (${
               configLogistica.origenMapaUrl
             }).`,
       };
@@ -167,11 +170,7 @@ export function ChatAriaFlotante() {
         texto:
           `¡Sí! Entregamos a domicilio en Quito y Pichincha:\n` +
           `• Envío GRATIS en ${configLogistica.zonaGratisNombre}.\n` +
-          `• Fuera de esa zona calculamos según tu ubicación GPS ($${configLogistica.tarifaPorKm.toFixed(
-            2
-          )}/km vial descontando $${configLogistica.subsidioBaseUsd.toFixed(
-            2
-          )} de base absorbida, mínimo $${configLogistica.recargoMinimoExtra.toFixed(2)} USD extra) o tarifa zonal en valles.\n` +
+          `• Para valles y otros sectores de Pichincha cotizamos el valor exacto según tu ubicación en el mapa.\n` +
           `• También tienes retiro gratis en tienda: ${configLogistica.origenMapaUrl}\n\n` +
           `Pégame tu link de Google Maps / Apple Maps / Waze o toca el botón 📍 de abajo para darte el valor exacto.`,
       };
@@ -617,9 +616,6 @@ export function ChatAriaFlotante() {
                             : `$${m.cotizacionEnvio.costoTotalEnvio.toFixed(2)}`}
                         </span>
                       </div>
-                      <small style={{ color: '#475569', lineHeight: 1.35 }}>
-                        {m.cotizacionEnvio.formulaDetalle}
-                      </small>
                       {m.cotizacionEnvio.dentroCobertura && (
                         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                           <button
@@ -845,16 +841,19 @@ export function ChatAriaFlotante() {
                 }
                 mostrarMapaPorDefecto={true}
                 onCambioCotizacion={(ev) => {
+                  const mostrarKm = configLogistica.mostrarKilometrosCliente !== false;
                   actualizarEntregaUnificada({
                     retiroEnLocal: ev.retiroEnLocal,
                     enlaceMapa: ev.enlaceMapa,
                     lat: ev.cotizacion.destino.lat,
                     lng: ev.cotizacion.destino.lng,
                     zonaDetectadaNombre: ev.cotizacion.zonaDetectada?.nombre,
+                    reglaLogisticaAplicada: ev.cotizacion.reglaAplicada,
                     distanciaVialKm: ev.cotizacion.distanciaVialKm,
                     costoEnvioCalculado: ev.cotizacion.costoTotalEnvio,
                     dentroCobertura: ev.cotizacion.dentroCobertura,
                     etiquetaCotizacion: ev.cotizacion.etiquetaResumen,
+                    formulaCalculoInterno: ev.cotizacion.formulaDetalle,
                     ciudad:
                       ev.cotizacion.zonaDetectada?.nombre || configLogistica.zonaGratisNombre,
                     ...(ev.direccionSugerida && !entregaUnificada.direccion
@@ -869,21 +868,18 @@ export function ChatAriaFlotante() {
                       ? `Perfecto 🌿, dejé configurado el retiro sin costo en ${configLogistica.origenNombre} en tu carrito.`
                       : ev.cotizacion.dentroCobertura
                       ? `¡Listo! Guardé tu ubicación de entrega en el carrito: ${ev.cotizacion.etiquetaResumen}.`
-                      : `El punto elegido (${ev.cotizacion.distanciaVialKm.toFixed(
-                          1
-                        )} km) supera nuestra cobertura automática (${
-                          configLogistica.radioMaximoKm
-                        } km). Escríbeme aquí para ayudarte con una coordinación especial o retiro en tienda.`,
+                      : `El punto elegido${
+                          mostrarKm ? ` (${ev.cotizacion.distanciaVialKm.toFixed(1)} km)` : ''
+                        } supera nuestra cobertura automática. Escríbeme aquí para ayudarte con una coordinación especial o retiro en tienda.`,
                     timestamp: 'Ahora',
                     cotizacionEnvio: ev.retiroEnLocal
                       ? undefined
                       : {
                           etiquetaResumen: ev.cotizacion.etiquetaResumen,
-                          formulaDetalle: ev.cotizacion.formulaDetalle,
                           costoTotalEnvio: ev.cotizacion.costoTotalEnvio,
                           dentroCobertura: ev.cotizacion.dentroCobertura,
                           zonaDetectadaNombre: ev.cotizacion.zonaDetectada?.nombre,
-                          distanciaVialKm: ev.cotizacion.distanciaVialKm,
+                          ...(mostrarKm ? { distanciaVialKm: ev.cotizacion.distanciaVialKm } : {}),
                           enlaceMapa: ev.enlaceMapa,
                           lat: ev.cotizacion.destino.lat,
                           lng: ev.cotizacion.destino.lng,

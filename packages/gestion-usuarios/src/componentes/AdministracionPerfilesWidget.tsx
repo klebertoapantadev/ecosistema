@@ -8,7 +8,7 @@ import {
   Palette, UserCheck, X, Sparkles, Trash2, Star, Move, Copy, Package, GripVertical,
   Home, User, Settings, Shield, Folder, Wrench, Building, Briefcase, Bell, Database,
   Activity, Globe, Lock, KeyRound, CheckSquare, Terminal, Zap, Pencil, LogOut, LogIn,
-  Forward, Inbox, FileText, Download, Printer, Share2, RotateCcw, Loader2, Scale, Bot, MapPin, type LucideIcon
+  Forward, Inbox, FileText, Download, Printer, Share2, RotateCcw, Loader2, Scale, Bot, MapPin, ClipboardList, type LucideIcon
 } from "lucide-react";
 import {
   guardarPerfil,
@@ -318,7 +318,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_red_profesional: ["gestion_red_abogados", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
+      panel_administrar: ["pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["notificaciones", "agentes_ia"]
@@ -355,7 +355,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_red_profesional: ["gestion_red_abogados", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
+      panel_administrar: ["pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_logistica", "configuracion_correo", "configuracion_aria", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
@@ -377,7 +377,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_red_profesional: ["gestion_red_abogados", "mi_perfil_abogado", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "mi_perfil_abogado", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
+      panel_administrar: ["pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_logistica", "configuracion_correo", "configuracion_aria", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
@@ -586,6 +586,17 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     ruta: "/panel/logistica",
     rutaFisica: "/comercio/componentes/FormularioLogisticaCobertura.tsx",
     panelId: "panel_configuracion",
+    activo: true,
+    creadoEn: "2026-11-12"
+  },
+  {
+    clave: "pedidos_tienda",
+    nombre: "Pedidos de Tienda y Despachos",
+    descripcion: "Bandeja operativa de pedidos e-commerce con ubicación GPS, dedicatorias y desglose interno de logística.",
+    categoria: "Comercio y Pagos",
+    ruta: "/panel/pedidos",
+    rutaFisica: "/comercio/componentes/BandejaPedidosTienda.tsx",
+    panelId: "panel_administrar",
     activo: true,
     creadoEn: "2026-11-12"
   },
@@ -1059,6 +1070,21 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
           </p>
           <div style={{ padding: "12px", background: "#F0FDF4", borderRadius: "8px", border: "1px dashed #86EFAC", textAlign: "center", fontSize: "0.82rem", color: "#166534", fontWeight: 700 }}>
             Zona Gratis · Polígonos Pichincha · Cálculo por Km OSRM · MCP WhatsApp
+          </div>
+        </div>
+      );
+
+    case "pedidos_tienda":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #0284C7", boxShadow: "0 4px 12px rgba(2,132,199,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#0369A1", marginBottom: "10px" }}>
+            <ClipboardList size={18} /> Pedidos de Tienda y Despachos
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Bandeja de órdenes e-commerce con enlace GPS directo, dedicatorias y desglose interno de cálculo logístico.
+          </p>
+          <div style={{ padding: "12px", background: "#F0F9FF", borderRadius: "8px", border: "1px dashed #7DD3FC", textAlign: "center", fontSize: "0.82rem", color: "#0369A1", fontWeight: 700 }}>
+            Órdenes · Ruta GPS · Fórmula Logística Interna · Estados de Despacho
           </div>
         </div>
       );

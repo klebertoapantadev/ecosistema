@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Search, X, UserCog, UserCheck, Settings, Mail, Bell, Shield, ShieldCheck,
   CircleUser, ChevronRight, Sliders, Briefcase, FileText, BarChart2, FileCheck, Folder,
-  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard, Building2, Scale, KeyRound, Sparkles, Bot, MapPin
+  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard, Building2, Scale, KeyRound, Sparkles, Bot, MapPin, ClipboardList
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
@@ -161,6 +161,16 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     minNivel: 80,
     icono: MapPin,
     colorIcono: "#16A34A"
+  },
+  {
+    clave: "pedidos_tienda",
+    nombre: "Pedidos de Tienda y Despachos",
+    detalle: "Órdenes e-commerce con ubicación GPS, dedicatorias y fórmula logística interna",
+    ruta: "/panel/pedidos",
+    categoria: "Comercio & Pagos",
+    minNivel: 40,
+    icono: ClipboardList,
+    colorIcono: "#0284C7"
   },
   {
     clave: "tokens_mcp",

@@ -33,28 +33,27 @@ const manejarMcp = crearServidorMcpCatalogo({
         error: resultado.error,
         politica_general: {
           zona_envio_gratis: cfg.zonaGratisNombre,
-          tarifa_por_km_fuera_zona_usd: cfg.tarifaPorKm,
-          subsidio_base_absorbido_usd: cfg.subsidioBaseUsd,
-          recargo_minimo_fuera_zona_usd: cfg.recargoMinimoExtra,
           tienda_fisica_maps: cfg.origenMapaUrl,
         },
       };
     }
 
     const c = resultado.cotizacion;
+    const mostrarKm = cfg.mostrarKilometrosCliente !== false;
     return {
       ok: true,
       dentro_cobertura: c.dentroCobertura,
-      regla_aplicada: c.reglaAplicada,
       zona_detectada: c.zonaDetectada?.nombre ?? null,
-      distancia_vial_km: c.distanciaVialKm,
-      fuente_distancia: c.fuenteDistancia,
+      ...(mostrarKm ? { distancia_vial_km: c.distanciaVialKm } : {}),
+      mostrar_kilometros_cliente: mostrarKm,
       costo_envio_usd: c.costoTotalEnvio,
       etiqueta_resumen: c.etiquetaResumen,
-      formula_detalle: c.formulaDetalle,
       direccion_detectada: resultado.direccionDetectada ?? null,
       url_google_maps_destino: c.urlGoogleMapsDestino,
       tienda_fisica_maps: cfg.origenMapaUrl,
+      instruccion_presentacion_cliente: mostrarKm
+        ? "Informa únicamente el costo final de envío (puedes indicar los kilómetros). Nunca menciones tarifas por km ni descuentos internos."
+        : "Informa únicamente el costo final de envío SIN mencionar kilómetros ni fórmulas internas.",
     };
   },
 });

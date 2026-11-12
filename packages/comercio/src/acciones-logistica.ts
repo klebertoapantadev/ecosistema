@@ -48,6 +48,7 @@ const esquemaConfigLogistica = z.object({
   radioMaximoKm: z.number().min(1).max(300),
   factorVialRespaldo: z.number().min(1).max(3),
   permitirRetiroLocal: z.boolean(),
+  mostrarKilometrosCliente: z.boolean().default(true),
   zonas: z.array(esquemaZona).min(1, "Debe existir al menos una zona de cobertura"),
 });
 
@@ -149,6 +150,7 @@ function normalizarConfiguracionDesdeJson(
       ? Number(raw.factorVialRespaldo)
       : base.factorVialRespaldo,
     permitirRetiroLocal: raw.permitirRetiroLocal !== false,
+    mostrarKilometrosCliente: raw.mostrarKilometrosCliente !== false,
     zonas: zonasNormalizadas.length > 0 ? zonasNormalizadas : base.zonas,
     actualizadoEn: typeof raw.actualizadoEn === "string" ? raw.actualizadoEn : null,
   };
@@ -252,6 +254,12 @@ export async function obtenerConfiguracionLogisticaAction(
           radioMaximoKm: Number(fila.log_radio_maximo_km ?? base.radioMaximoKm),
           factorVialRespaldo: Number(fila.log_factor_vial_respaldo ?? base.factorVialRespaldo),
           permitirRetiroLocal: fila.log_permitir_retiro_local !== false,
+          mostrarKilometrosCliente:
+            fila.log_detalle_logistica &&
+            typeof fila.log_detalle_logistica === "object" &&
+            typeof fila.log_detalle_logistica.mostrarKilometrosCliente === "boolean"
+              ? fila.log_detalle_logistica.mostrarKilometrosCliente
+              : true,
           zonas: zonasMapeadas.length > 0 ? zonasMapeadas : base.zonas,
           actualizadoEn: fila.log_actualizado_en ?? null,
         };
@@ -513,5 +521,636 @@ export async function cotizarEnvioDesdeEntradaAction(
     cotizacion,
     direccionDetectada,
   };
+}
+
+// ============================================================================
+// PERSISTENCIA Y GESTIÓN DE PEDIDOS DE TIENDA CON AUDITORÍA LOGÍSTICA INTERNA
+// ============================================================================
+
+export interface DestinoEntregaPedidoInput {
+  retiroEnLocal?: boolean;
+  destinatarioNombre: string;
+  destinatarioTelefono: string;
+  direccion: string;
+  referencia?: string;
+  ciudad?: string;
+  fechaEntrega: string;
+  franjaHoraria: string;
+  horaExacta?: string;
+  enlaceMapa?: string;
+  lat?: number;
+  lng?: number;
+  zonaDetectadaNombre?: string;
+  reglaLogisticaAplicada?: string;
+  distanciaVialKm?: number;
+  costoEnvioCalculado?: number;
+  etiquetaCotizacion?: string;
+  formulaCalculoInterno?: string;
+}
+
+export interface ItemPedidoTiendaInput {
+  productoId: string;
+  productoNombre: string;
+  varianteSku: string;
+  varianteNombre: string;
+  cantidad: number;
+  pvpUnitario: number;
+  tarifaIva: number;
+  deliveryIncluidoProducto?: boolean;
+  recargoLogisticoUsd?: number;
+  dedicatoria?: {
+    para: string;
+    de: string;
+    mensaje: string;
+  };
+  entregaIndividual?: DestinoEntregaPedidoInput;
+}
+
+export interface EntradaPedidoTienda {
+  negocio: string;
+  metodoPago: "payphone" | "transferencia" | string;
+  comprador: {
+    nombreCompleto: string;
+    identificacion: string;
+    correo: string;
+    telefono: string;
+  };
+  modalidadEntrega: "unificada" | "individual";
+  entregaUnificada?: DestinoEntregaPedidoInput;
+  items: ItemPedidoTiendaInput[];
+  subtotalBaseImponible: number;
+  totalIva: number;
+  totalFlete: number;
+  totalRecargoHorarioExacto: number;
+  totalPagar: number;
+}
+
+export interface PedidoTiendaRegistrado {
+  id: string;
+  secuencial: number;
+  codigoOrden: string;
+  negocio: string;
+  estado: string;
+  metodoPago: string;
+  compradorNombre: string;
+  compradorIdentificacion: string;
+  compradorCorreo: string;
+  compradorTelefono: string;
+  subtotal: number;
+  iva: number;
+  costoEnvio: number;
+  recargoHorarioExacto: number;
+  total: number;
+  creadoEn: string;
+  logistica: {
+    modalidadEntrega: string;
+    retiroEnLocal: boolean;
+    destinatarioNombre: string;
+    destinatarioTelefono: string;
+    direccion: string;
+    referencia: string;
+    fechaEntrega: string;
+    franjaHoraria: string;
+    horaExacta?: string;
+    enlaceMapa?: string;
+    lat?: number;
+    lng?: number;
+    zonaDetectada?: string;
+    reglaAplicada?: string;
+    distanciaVialKm?: number;
+    formulaCalculoInterno: string;
+    parametrosTarifarios?: {
+      tarifaPorKm: number;
+      subsidioBaseUsd: number;
+      recargoMinimoExtra: number;
+      zonaGratisNombre: string;
+    };
+  };
+  items: Array<{
+    descripcion: string;
+    varianteNombre: string;
+    cantidad: number;
+    precioUnitario: number;
+    totalLinea: number;
+    dedicatoria?: { para: string; de: string; mensaje: string };
+    entregaIndividual?: Record<string, unknown>;
+  }>;
+}
+
+const esquemaPedidoTienda = z.object({
+  negocio: z.string().min(1),
+  metodoPago: z.string().min(2),
+  comprador: z.object({
+    nombreCompleto: z.string().trim().min(2, "Indica el nombre o razón social del comprador"),
+    identificacion: z.string().trim().min(4, "Indica la cédula, RUC o pasaporte"),
+    correo: z.string().trim().email("Correo electrónico inválido"),
+    telefono: z.string().trim().min(6, "Indica un teléfono de contacto válido"),
+  }),
+  modalidadEntrega: z.enum(["unificada", "individual"]),
+  subtotalBaseImponible: z.number().min(0),
+  totalIva: z.number().min(0),
+  totalFlete: z.number().min(0),
+  totalRecargoHorarioExacto: z.number().min(0),
+  totalPagar: z.number().min(0),
+  items: z.array(z.any()).min(1, "El pedido debe incluir al menos un producto"),
+});
+
+function enriquecerDestinoConAuditoriaInterna(
+  destino: DestinoEntregaPedidoInput | undefined,
+  config: ConfiguracionLogisticaNegocio,
+  deliveryIncluidoProducto: boolean,
+  recargoLogisticoProducto: number
+) {
+  if (!destino) {
+    return {
+      retiro_en_local: false,
+      destinatario_nombre: "",
+      destinatario_telefono: "",
+      direccion: "",
+      referencia: "",
+      fecha_entrega: "",
+      franja_horaria: "manana",
+      formula_calculo_interno: "Sin datos de entrega especificados.",
+    };
+  }
+
+  let formulaInterna = (destino.formulaCalculoInterno || "").trim();
+  let reglaAplicada = destino.reglaLogisticaAplicada || "";
+  let zonaDetectada = destino.zonaDetectadaNombre || "";
+  let distanciaKm = destino.distanciaVialKm;
+  let enlaceMapa = destino.enlaceMapa || "";
+
+  if (destino.retiroEnLocal) {
+    const cot = cotizarEnvioDomicilio({
+      config,
+      destino: { lat: config.origenLat, lng: config.origenLng },
+      retiroEnLocal: true,
+    });
+    formulaInterna = cot.formulaDetalle;
+    reglaAplicada = cot.reglaAplicada;
+    enlaceMapa = enlaceMapa || config.origenMapaUrl;
+    distanciaKm = 0;
+  } else if (esCoordenadaValida(Number(destino.lat), Number(destino.lng))) {
+    const cot = cotizarEnvioDomicilio({
+      config,
+      destino: { lat: Number(destino.lat), lng: Number(destino.lng) },
+      distanciaVialKm: destino.distanciaVialKm,
+      deliveryIncluidoProducto,
+      recargoLogisticoProducto,
+      retiroEnLocal: false,
+    });
+    formulaInterna = cot.formulaDetalle;
+    reglaAplicada = cot.reglaAplicada;
+    zonaDetectada = zonaDetectada || cot.zonaDetectada?.nombre || "";
+    distanciaKm = cot.distanciaVialKm;
+    enlaceMapa = enlaceMapa || cot.urlGoogleMapsDestino;
+  } else if (!formulaInterna) {
+    formulaInterna = `Dirección manual (${destino.ciudad || config.zonaGratisNombre}) · Envío aplicado: $${Number(
+      destino.costoEnvioCalculado ?? 0
+    ).toFixed(2)}.`;
+  }
+
+  return {
+    retiro_en_local: Boolean(destino.retiroEnLocal),
+    destinatario_nombre: destino.destinatarioNombre,
+    destinatario_telefono: destino.destinatarioTelefono,
+    direccion: destino.direccion,
+    referencia: destino.referencia || "",
+    ciudad: destino.ciudad || "",
+    fecha_entrega: destino.fechaEntrega,
+    franja_horaria: destino.franjaHoraria,
+    hora_exacta: destino.horaExacta || null,
+    enlace_mapa: enlaceMapa || null,
+    lat: typeof destino.lat === "number" ? destino.lat : null,
+    lng: typeof destino.lng === "number" ? destino.lng : null,
+    zona_detectada: zonaDetectada || null,
+    regla_aplicada: reglaAplicada || null,
+    distancia_vial_km: typeof distanciaKm === "number" ? distanciaKm : null,
+    costo_envio_usd: Number(destino.costoEnvioCalculado ?? 0),
+    formula_calculo_interno: formulaInterna,
+  };
+}
+
+/**
+ * Registra de forma persistente el pedido de la tienda en `comun_comercio`
+ * incluyendo el desglose interno completo de logística (kilómetros, fórmula aplicada,
+ * tarifa $/km, subsidio base absorbido y enlace GPS) exclusivo para el taller/tienda.
+ */
+export async function registrarPedidoTiendaAction(
+  entrada: EntradaPedidoTienda
+): Promise<
+  | { ok: true; id: string; codigoOrden: string }
+  | { ok: false; error: string }
+> {
+  const validacion = esquemaPedidoTienda.safeParse(entrada);
+  if (!validacion.success) {
+    return {
+      ok: false,
+      error: validacion.error.issues[0]?.message ?? "Datos del pedido incompletos",
+    };
+  }
+
+  const negNorm = entrada.negocio.trim().toLowerCase();
+  const config = await obtenerConfiguracionLogisticaAction(negNorm);
+
+  const algunConDeliveryIncluido = entrada.items.some(
+    (it) => it.deliveryIncluidoProducto !== false
+  );
+  const recargoProductosTotal = entrada.items.reduce(
+    (acc, it) => acc + (Number(it.recargoLogisticoUsd) || 0) * (Number(it.cantidad) || 1),
+    0
+  );
+
+  const itemsEnriquecidos = entrada.items.map((it) => {
+    const totalLinea = Math.round(it.pvpUnitario * it.cantidad * 100) / 100;
+    const entregaInd =
+      entrada.modalidadEntrega === "individual" && it.entregaIndividual
+        ? enriquecerDestinoConAuditoriaInterna(
+            it.entregaIndividual,
+            config,
+            it.deliveryIncluidoProducto !== false,
+            (it.recargoLogisticoUsd || 0) * it.cantidad
+          )
+        : null;
+
+    return {
+      producto_id: it.productoId,
+      descripcion:
+        it.varianteNombre && it.varianteNombre.trim() !== it.productoNombre.trim()
+          ? `${it.productoNombre} (${it.varianteNombre})`
+          : it.productoNombre,
+      producto_nombre: it.productoNombre,
+      variante_sku: it.varianteSku,
+      variante_nombre: it.varianteNombre,
+      cantidad: it.cantidad,
+      precio_unitario: it.pvpUnitario,
+      impuesto: it.tarifaIva > 0 ? `IVA_${it.tarifaIva}` : "IVA_0",
+      total_linea: totalLinea,
+      dedicatoria: it.dedicatoria ?? null,
+      entrega_individual: entregaInd,
+    };
+  });
+
+  const logisticaPrincipal =
+    entrada.modalidadEntrega === "unificada"
+      ? enriquecerDestinoConAuditoriaInterna(
+          entrada.entregaUnificada,
+          config,
+          algunConDeliveryIncluido,
+          recargoProductosTotal
+        )
+      : {
+          retiro_en_local: false,
+          destinatario_nombre: "Multidestino (ver detalle por arreglo)",
+          destinatario_telefono: entrada.comprador.telefono,
+          direccion: `${itemsEnriquecidos.filter((i) => i.entrega_individual).length} destinos individuales`,
+          referencia: "",
+          fecha_entrega: itemsEnriquecidos[0]?.entrega_individual?.fecha_entrega || "",
+          franja_horaria: "multidestino",
+          enlace_mapa: itemsEnriquecidos[0]?.entrega_individual?.enlace_mapa || null,
+          lat: itemsEnriquecidos[0]?.entrega_individual?.lat ?? null,
+          lng: itemsEnriquecidos[0]?.entrega_individual?.lng ?? null,
+          zona_detectada: "Multidestino",
+          regla_aplicada: "MULTIDESTINO",
+          distancia_vial_km: itemsEnriquecidos.reduce(
+            (s, i) => s + (Number(i.entrega_individual?.distancia_vial_km) || 0),
+            0
+          ),
+          costo_envio_usd: entrada.totalFlete,
+          formula_calculo_interno: itemsEnriquecidos
+            .filter((i) => i.entrega_individual)
+            .map(
+              (i, idx) =>
+                `Destino #${idx + 1} (${i.descripcion}): ${
+                  i.entrega_individual?.formula_calculo_interno || ""
+                }`
+            )
+            .join(" | "),
+        };
+
+  const estadoInicial =
+    entrada.metodoPago === "transferencia" ? "PENDIENTE_PAGO" : "APROBADA";
+
+  const payloadCompleto = {
+    tipo_origen: "PEDIDO_TIENDA",
+    estado: estadoInicial,
+    metodo_pago: entrada.metodoPago,
+    comprador: entrada.comprador,
+    subtotal_base_imponible: entrada.subtotalBaseImponible,
+    total_iva: entrada.totalIva,
+    total_flete: entrada.totalFlete,
+    total_recargo_horario_exacto: entrada.totalRecargoHorarioExacto,
+    total_pagar: entrada.totalPagar,
+    observaciones: logisticaPrincipal.formula_calculo_interno,
+    logistica_entrega: {
+      modalidad_entrega: entrada.modalidadEntrega,
+      ...logisticaPrincipal,
+      recargo_horario_exacto_usd: entrada.totalRecargoHorarioExacto,
+      parametros_tarifarios_snapshot: {
+        tarifa_por_km: config.tarifaPorKm,
+        subsidio_base_usd: config.subsidioBaseUsd,
+        recargo_minimo_extra: config.recargoMinimoExtra,
+        zona_gratis_nombre: config.zonaGratisNombre,
+        mostrar_kilometros_cliente: config.mostrarKilometrosCliente,
+      },
+    },
+    items: itemsEnriquecidos,
+  };
+
+  const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+
+  // 1. Vía principal: RPC transaccional SECURITY DEFINER (funciona para compradores invitados y autenticados)
+  const esquemaComercio = supabase.schema("comun_comercio") as unknown as {
+    rpc(
+      fn: string,
+      args: Record<string, unknown>
+    ): Promise<{ data: any; error: { message: string } | null }>;
+  };
+
+  const { data: resRpc, error: errRpc } = await esquemaComercio.rpc(
+    "com_fn_registrar_pedido_tienda",
+    {
+      p_negocio: negNorm,
+      p_payload: payloadCompleto,
+    }
+  );
+
+  if (!errRpc && resRpc?.ok) {
+    revalidatePath("/panel/pedidos");
+    return {
+      ok: true,
+      id: String(resRpc.id),
+      codigoOrden: String(resRpc.codigo_orden),
+    };
+  }
+
+  // 2. Respaldo resiliente sobre tablas existentes en producción (`com_proforma`, `com_proforma_item`, `com_despacho_asignacion`)
+  const clienteEscritura: any = crearClienteAdmin() ?? supabase;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const prefijo =
+    negNorm === "tinkay"
+      ? "TNK"
+      : negNorm === "margaritas"
+      ? "MRG"
+      : negNorm === "fastfix"
+      ? "FFH"
+      : "TRQ";
+
+  const { data: proformaCreada, error: errPrf } = await clienteEscritura
+    .schema("comun_comercio")
+    .from("com_proforma")
+    .insert({
+      prf_negocio: negNorm,
+      prf_cliente_id: user?.id ?? null,
+      prf_cliente_nombre: entrada.comprador.nombreCompleto,
+      prf_cliente_contacto: entrada.comprador,
+      prf_estado: estadoInicial,
+      prf_subtotal: entrada.subtotalBaseImponible,
+      prf_descuento: 0,
+      prf_iva: entrada.totalIva,
+      prf_total: entrada.totalPagar,
+      prf_observaciones: logisticaPrincipal.formula_calculo_interno,
+      prf_detalle_proforma: payloadCompleto,
+    })
+    .select("prf_id, prf_secuencial")
+    .single();
+
+  if (errPrf || !proformaCreada) {
+    return {
+      ok: false,
+      error:
+        errPrf?.message ||
+        errRpc?.message ||
+        "No se pudo registrar el pedido en la base de datos.",
+    };
+  }
+
+  const codigoOrden = `${prefijo}-ORD-${String(proformaCreada.prf_secuencial ?? 1).padStart(
+    4,
+    "0"
+  )}`;
+
+  await clienteEscritura
+    .schema("comun_comercio")
+    .from("com_proforma")
+    .update({
+      prf_detalle_proforma: {
+        ...payloadCompleto,
+        codigo_orden: codigoOrden,
+      },
+    })
+    .eq("prf_id", proformaCreada.prf_id);
+
+  if (itemsEnriquecidos.length > 0) {
+    const filasItems = itemsEnriquecidos.map((it) => ({
+      pfi_negocio: negNorm,
+      pfi_proforma_id: proformaCreada.prf_id,
+      pfi_variante_id: null,
+      pfi_es_item_libre: true,
+      pfi_descripcion: it.descripcion,
+      pfi_cantidad: it.cantidad,
+      pfi_precio_unitario: it.precio_unitario,
+      pfi_descuento: 0,
+      pfi_impuesto: it.impuesto,
+      pfi_total_linea: it.total_linea,
+      pfi_detalle_item: it,
+    }));
+
+    const { error: errItems } = await clienteEscritura
+      .schema("comun_comercio")
+      .from("com_proforma_item")
+      .insert(filasItems);
+
+    if (errItems) {
+      return { ok: false, error: errItems.message };
+    }
+  }
+
+  await clienteEscritura
+    .schema("comun_comercio")
+    .from("com_despacho_asignacion")
+    .insert({
+      dsp_negocio: negNorm,
+      dsp_orden_id: proformaCreada.prf_id,
+      dsp_modalidad: logisticaPrincipal.retiro_en_local ? "RETIRO_LOCAL" : "PROPIO",
+      dsp_tracking_url: logisticaPrincipal.enlace_mapa,
+      dsp_costo_envio: entrada.totalFlete,
+      dsp_estado: "ASIGNADO",
+      dsp_observaciones_coordinacion: logisticaPrincipal.formula_calculo_interno,
+      dsp_detalle_despacho: payloadCompleto.logistica_entrega,
+    });
+
+  revalidatePath("/panel/pedidos");
+  return {
+    ok: true,
+    id: String(proformaCreada.prf_id),
+    codigoOrden,
+  };
+}
+
+/**
+ * Consulta los pedidos registrados en la tienda junto con su desglose logístico interno.
+ * Protegido para operadores, administradores y superadmins del negocio.
+ */
+export async function obtenerPedidosTiendaAction(
+  negocio: string
+): Promise<{ ok: true; pedidos: PedidoTiendaRegistrado[] } | { ok: false; error: string }> {
+  const negNorm = (negocio || "tinkay").trim().toLowerCase();
+  const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "Debes iniciar sesión para consultar los pedidos de la tienda." };
+  }
+
+  const admin = crearClienteAdmin();
+  const db: any = admin ?? supabase;
+
+  const { data: filas, error } = await db
+    .schema("comun_comercio")
+    .from("com_proforma")
+    .select("*")
+    .eq("prf_negocio", negNorm)
+    .is("prf_eliminado_en", null)
+    .order("prf_creado_en", { ascending: false })
+    .limit(250);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  const prefijo =
+    negNorm === "tinkay"
+      ? "TNK"
+      : negNorm === "margaritas"
+      ? "MRG"
+      : negNorm === "fastfix"
+      ? "FFH"
+      : "TRQ";
+
+  const pedidos: PedidoTiendaRegistrado[] = (filas ?? []).map((f: any) => {
+    const det = (f.prf_detalle_proforma ?? {}) as Record<string, any>;
+    const contacto = (f.prf_cliente_contacto ?? det.comprador ?? {}) as Record<string, any>;
+    const log = (det.logistica_entrega ?? {}) as Record<string, any>;
+    const paramsSnap = log.parametros_tarifarios_snapshot as Record<string, any> | undefined;
+    const itemsRaw = Array.isArray(det.items) ? det.items : [];
+    const sec = Number(f.prf_secuencial ?? 0);
+
+    return {
+      id: String(f.prf_id),
+      secuencial: sec,
+      codigoOrden: String(
+        det.codigo_orden || `${prefijo}-ORD-${String(sec || 1).padStart(4, "0")}`
+      ),
+      negocio: String(f.prf_negocio || negNorm),
+      estado: String(f.prf_estado || det.estado || "APROBADA"),
+      metodoPago: String(det.metodo_pago || "payphone"),
+      compradorNombre: String(f.prf_cliente_nombre || contacto.nombreCompleto || "Cliente"),
+      compradorIdentificacion: String(contacto.identificacion || ""),
+      compradorCorreo: String(contacto.correo || ""),
+      compradorTelefono: String(contacto.telefono || ""),
+      subtotal: Number(f.prf_subtotal ?? det.subtotal_base_imponible ?? 0),
+      iva: Number(f.prf_iva ?? det.total_iva ?? 0),
+      costoEnvio: Number(det.total_flete ?? log.costo_envio_usd ?? 0),
+      recargoHorarioExacto: Number(
+        det.total_recargo_horario_exacto ?? log.recargo_horario_exacto_usd ?? 0
+      ),
+      total: Number(f.prf_total ?? det.total_pagar ?? 0),
+      creadoEn: String(f.prf_creado_en),
+      logistica: {
+        modalidadEntrega: String(log.modalidad_entrega || "unificada"),
+        retiroEnLocal: Boolean(log.retiro_en_local),
+        destinatarioNombre: String(log.destinatario_nombre || f.prf_cliente_nombre || ""),
+        destinatarioTelefono: String(log.destinatario_telefono || contacto.telefono || ""),
+        direccion: String(log.direccion || ""),
+        referencia: String(log.referencia || ""),
+        fechaEntrega: String(log.fecha_entrega || ""),
+        franjaHoraria: String(log.franja_horaria || ""),
+        horaExacta: log.hora_exacta ? String(log.hora_exacta) : undefined,
+        enlaceMapa: log.enlace_mapa ? String(log.enlace_mapa) : undefined,
+        lat: typeof log.lat === "number" ? log.lat : undefined,
+        lng: typeof log.lng === "number" ? log.lng : undefined,
+        zonaDetectada: log.zona_detectada ? String(log.zona_detectada) : undefined,
+        reglaAplicada: log.regla_aplicada ? String(log.regla_aplicada) : undefined,
+        distanciaVialKm:
+          typeof log.distancia_vial_km === "number" ? log.distancia_vial_km : undefined,
+        formulaCalculoInterno: String(
+          log.formula_calculo_interno || f.prf_observaciones || "Sin detalle adicional"
+        ),
+        parametrosTarifarios: paramsSnap
+          ? {
+              tarifaPorKm: Number(paramsSnap.tarifa_por_km ?? 0),
+              subsidioBaseUsd: Number(paramsSnap.subsidio_base_usd ?? 0),
+              recargoMinimoExtra: Number(paramsSnap.recargo_minimo_extra ?? 0),
+              zonaGratisNombre: String(paramsSnap.zona_gratis_nombre ?? ""),
+            }
+          : undefined,
+      },
+      items: itemsRaw.map((it: any) => ({
+        descripcion: String(it.descripcion || it.producto_nombre || "Producto"),
+        varianteNombre: String(it.variante_nombre || ""),
+        cantidad: Number(it.cantidad ?? 1),
+        precioUnitario: Number(it.precio_unitario ?? 0),
+        totalLinea: Number(it.total_linea ?? 0),
+        dedicatoria: it.dedicatoria ?? undefined,
+        entregaIndividual: it.entrega_individual ?? undefined,
+      })),
+    };
+  });
+
+  return { ok: true, pedidos };
+}
+
+export async function actualizarEstadoPedidoTiendaAction(
+  negocio: string,
+  pedidoId: string,
+  nuevoEstado: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const negNorm = (negocio || "tinkay").trim().toLowerCase();
+  const estadosPermitidos = [
+    "PENDIENTE_PAGO",
+    "APROBADA",
+    "EN_PREPARACION",
+    "EN_RUTA",
+    "ENTREGADO",
+    "CANCELADO",
+  ];
+  if (!estadosPermitidos.includes(nuevoEstado)) {
+    return { ok: false, error: "Estado de pedido no válido" };
+  }
+
+  const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, error: "No autenticado" };
+  }
+
+  const db: any = crearClienteAdmin() ?? supabase;
+  const { error } = await db
+    .schema("comun_comercio")
+    .from("com_proforma")
+    .update({
+      prf_estado: nuevoEstado,
+      prf_actualizado_en: new Date().toISOString(),
+    })
+    .eq("prf_id", pedidoId)
+    .eq("prf_negocio", negNorm);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/panel/pedidos");
+  return { ok: true };
 }
 

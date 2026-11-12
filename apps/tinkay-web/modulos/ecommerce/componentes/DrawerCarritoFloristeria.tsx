@@ -389,10 +389,12 @@ export function DrawerCarritoFloristeria() {
                                     lat: ev.cotizacion.destino.lat,
                                     lng: ev.cotizacion.destino.lng,
                                     zonaDetectadaNombre: ev.cotizacion.zonaDetectada?.nombre,
+                                    reglaLogisticaAplicada: ev.cotizacion.reglaAplicada,
                                     distanciaVialKm: ev.cotizacion.distanciaVialKm,
                                     costoEnvioCalculado: ev.cotizacion.costoTotalEnvio,
                                     dentroCobertura: ev.cotizacion.dentroCobertura,
                                     etiquetaCotizacion: ev.cotizacion.etiquetaResumen,
+                                    formulaCalculoInterno: ev.cotizacion.formulaDetalle,
                                     ciudad:
                                       ev.cotizacion.zonaDetectada?.nombre ||
                                       actual.ciudad ||
@@ -564,10 +566,12 @@ export function DrawerCarritoFloristeria() {
                         lat: ev.cotizacion.destino.lat,
                         lng: ev.cotizacion.destino.lng,
                         zonaDetectadaNombre: ev.cotizacion.zonaDetectada?.nombre,
+                        reglaLogisticaAplicada: ev.cotizacion.reglaAplicada,
                         distanciaVialKm: ev.cotizacion.distanciaVialKm,
                         costoEnvioCalculado: ev.cotizacion.costoTotalEnvio,
                         dentroCobertura: ev.cotizacion.dentroCobertura,
                         etiquetaCotizacion: ev.cotizacion.etiquetaResumen,
+                        formulaCalculoInterno: ev.cotizacion.formulaDetalle,
                         ciudad:
                           ev.cotizacion.zonaDetectada?.nombre ||
                           configLogistica.zonaGratisNombre,
@@ -732,9 +736,16 @@ export function DrawerCarritoFloristeria() {
                     : entregaUnificada.retiroEnLocal
                     ? `Retiro en ${configLogistica.origenNombre}`
                     : entregaUnificada.zonaDetectadaNombre
-                    ? `Envío (${entregaUnificada.zonaDetectadaNombre})`
+                    ? `Envío (${entregaUnificada.zonaDetectadaNombre}${
+                        configLogistica.mostrarKilometrosCliente !== false &&
+                        typeof entregaUnificada.distanciaVialKm === 'number'
+                          ? ` · ${entregaUnificada.distanciaVialKm.toFixed(1)} km`
+                          : ''
+                      })`
                     : typeof entregaUnificada.distanciaVialKm === 'number'
-                    ? `Envío a domicilio (${entregaUnificada.distanciaVialKm.toFixed(1)} km)`
+                    ? configLogistica.mostrarKilometrosCliente !== false
+                      ? `Envío a domicilio (${entregaUnificada.distanciaVialKm.toFixed(1)} km)`
+                      : 'Envío a domicilio'
                     : `Envío (${configLogistica.zonaGratisNombre})`}
                 </span>
                 <span

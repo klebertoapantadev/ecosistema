@@ -85,6 +85,27 @@ describe("Motor de logística y cobertura Tinkay", () => {
     expect(res.dentroCobertura).toBe(false);
     expect(res.reglaAplicada).toBe("FUERA_DE_COBERTURA");
   });
+
+  it("respeta mostrarKilometrosCliente en etiquetaResumen sin exponer la fórmula en ella, conservando formulaDetalle para el pedido", () => {
+    const fueraDePoligonos = { lat: -0.02, lng: -78.38 }; // Pichincha fuera de polígonos fijos
+    const conKm = cotizarEnvioDomicilio({
+      config: { ...config, mostrarKilometrosCliente: true },
+      destino: fueraDePoligonos,
+      distanciaVialKm: 17.84,
+    });
+    expect(conKm.etiquetaResumen).toBe("Envío a domicilio (17.8 km)");
+    expect(conKm.etiquetaResumen).not.toContain("$0.50");
+    expect(conKm.formulaDetalle).toContain("17.8 km × $0.50/km");
+
+    const sinKm = cotizarEnvioDomicilio({
+      config: { ...config, mostrarKilometrosCliente: false },
+      destino: fueraDePoligonos,
+      distanciaVialKm: 17.84,
+    });
+    expect(sinKm.etiquetaResumen).toBe("Envío a domicilio");
+    expect(sinKm.etiquetaResumen).not.toContain("km");
+    expect(sinKm.formulaDetalle).toContain("17.8 km × $0.50/km");
+  });
 });
 
 function cotizarEnvicilioHelper(
