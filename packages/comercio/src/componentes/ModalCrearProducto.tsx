@@ -313,6 +313,23 @@ export function ModalCrearProducto({
     return false;
   }, [imagenUrl, galeriaTexto, albumFotosUrl]);
 
+  // Galería de fotos unificada al crear producto (Hook de nivel superior)
+  const fotosCrear = useMemo(() => {
+    const list: string[] = [];
+    if (imagenUrl && imagenUrl.trim()) {
+      list.push(imagenUrl.trim());
+    }
+    if (galeriaTexto && galeriaTexto.trim()) {
+      galeriaTexto.split("\n").forEach((u) => {
+        const trimmed = u.trim();
+        if (trimmed && !list.includes(trimmed)) {
+          list.push(trimmed);
+        }
+      });
+    }
+    return list;
+  }, [imagenUrl, galeriaTexto]);
+
   const toggleCanal = (clave: CanalVisibilidad) => {
     if (CANALES_REQUIEREN_IMAGEN.includes(clave) && !canalesSeleccionados.includes(clave) && !tieneAlMenosUnaImagen) {
       setError("Para activar la visibilidad en E-Commerce Web o App Clientes, es obligatorio configurar al menos una imagen de portada.");
@@ -467,22 +484,6 @@ export function ModalCrearProducto({
       e.target.value = "";
     }
   };
-
-  const fotosCrear = useMemo(() => {
-    const list: string[] = [];
-    if (imagenUrl && imagenUrl.trim()) {
-      list.push(imagenUrl.trim());
-    }
-    if (galeriaTexto && galeriaTexto.trim()) {
-      galeriaTexto.split("\n").forEach((u) => {
-        const trimmed = u.trim();
-        if (trimmed && !list.includes(trimmed)) {
-          list.push(trimmed);
-        }
-      });
-    }
-    return list;
-  }, [imagenUrl, galeriaTexto]);
 
   const handleEstablecerPortadaCrear = (url: string) => {
     if (!url || url === imagenUrl) return;

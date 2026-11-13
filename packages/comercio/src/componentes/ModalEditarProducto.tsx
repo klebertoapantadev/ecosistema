@@ -557,6 +557,23 @@ export function ModalEditarProducto({
     return false;
   }, [imagenUrl, albumFotosUrl, galeriaTexto, variantesLocales]);
 
+  // Galería de fotos unificada para la ficha master / producto simple (Hook de nivel superior)
+  const fotosMaster = useMemo(() => {
+    const list: string[] = [];
+    if (imagenUrl && imagenUrl.trim()) {
+      list.push(imagenUrl.trim());
+    }
+    if (galeriaTexto && galeriaTexto.trim()) {
+      galeriaTexto.split("\n").forEach((u) => {
+        const trimmed = u.trim();
+        if (trimmed && !list.includes(trimmed)) {
+          list.push(trimmed);
+        }
+      });
+    }
+    return list;
+  }, [imagenUrl, galeriaTexto]);
+
   const toggleCanal = (clave: CanalVisibilidad) => {
     if (CANALES_REQUIEREN_IMAGEN.includes(clave) && !canalesSeleccionados.includes(clave) && !tieneAlMenosUnaImagen) {
       setError("Para activar la visibilidad en E-Commerce Web o App Clientes, es obligatorio configurar al menos una imagen en la Portada, Galería o Variantes.");
@@ -1228,23 +1245,6 @@ export function ModalEditarProducto({
       e.target.value = "";
     }
   };
-
-  // Galería de fotos unificada para la ficha master / producto simple
-  const fotosMaster = useMemo(() => {
-    const list: string[] = [];
-    if (imagenUrl && imagenUrl.trim()) {
-      list.push(imagenUrl.trim());
-    }
-    if (galeriaTexto && galeriaTexto.trim()) {
-      galeriaTexto.split("\n").forEach((u) => {
-        const trimmed = u.trim();
-        if (trimmed && !list.includes(trimmed)) {
-          list.push(trimmed);
-        }
-      });
-    }
-    return list;
-  }, [imagenUrl, galeriaTexto]);
 
   const handleEstablecerPortadaMaster = (urlSeleccionada: string) => {
     if (!urlSeleccionada || urlSeleccionada === imagenUrl) return;
