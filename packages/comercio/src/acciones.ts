@@ -3474,10 +3474,12 @@ export async function crearProductoAction(datos: {
   tipo: "FISICO" | "SERVICIO" | "SUSCRIPCION" | "DIGITAL";
   destacado?: boolean;
   precioBase: number;
+  precioComparacion?: number | null;
   tarifaIva?: number; // 15 o 0
   sku?: string;
   icono?: "Scale" | "ShieldCheck" | "FileCheck" | "CreditCard" | string;
   imagenUrl?: string;
+  galeriaUrls?: string[];
   albumFotosUrl?: string;
   videoUrl?: string;
   beneficios?: string[];
@@ -3530,10 +3532,16 @@ export async function crearProductoAction(datos: {
       var_sku: sku,
       var_nombre: `${nombre} (Tarifa Estándar)`,
       var_precio: base,
-      var_precio_comparacion: null,
+      var_precio_comparacion:
+        typeof datos.precioComparacion === "number" && datos.precioComparacion > 0
+          ? Number(datos.precioComparacion.toFixed(2))
+          : null,
       var_codigo_impuesto_sri: tarifaIva > 0 ? "IVA_15" : "IVA_0",
       var_tarifa_iva_porcentaje: tarifaIva,
-      var_tipo_oferta: "REGULAR",
+      var_tipo_oferta:
+        typeof datos.precioComparacion === "number" && datos.precioComparacion > base
+          ? "OFERTA"
+          : "REGULAR",
       var_frecuencia_recurrencia: datos.tipo === "SUSCRIPCION" ? "MENSUAL" : null,
       var_activo: true,
       var_detalle_variante: {
@@ -3553,9 +3561,26 @@ export async function crearProductoAction(datos: {
       }
     }
 
+    let resolvedGaleria = Array.isArray(datos.galeriaUrls) ? datos.galeriaUrls : [];
+    if (resolvedGaleria.length > 0) {
+      resolvedGaleria = await Promise.all(
+        resolvedGaleria.map(async (u) => {
+          const resG = await resolverUrlImagenDirectaAction(u);
+          return resG.ok && resG.urlDirecta ? resG.urlDirecta : u;
+        })
+      );
+    }
+
+    nuevaVariante.var_detalle_variante = {
+      ...nuevaVariante.var_detalle_variante,
+      portada_url: resolvedImg,
+      galeria_urls: resolvedGaleria,
+    };
+
     // Control de Imagen Obligatoria para Web y App
     const tieneImg = Boolean(
       resolvedImg ||
+      resolvedGaleria.length > 0 ||
       datos.albumFotosUrl?.trim()
     );
 
@@ -3578,6 +3603,7 @@ export async function crearProductoAction(datos: {
       pro_detalle_producto: {
         icono: datos.icono || "Scale",
         imagen_url: resolvedImg,
+        galeria_urls: resolvedGaleria,
         album_fotos_url: datos.albumFotosUrl?.trim() || null,
         video_url: datos.videoUrl?.trim() || null,
         beneficios: datos.beneficios || [],

@@ -181,16 +181,19 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
             });
           }
 
-          // Si el producto tiene una sola variante o la galería maestra tiene fotos adicionales, sumarlas sin duplicar
-          const fotosVarianteFinal =
-            fotosPropias.length > 0 ? [...fotosPropias] : [...fotosMaster];
+          // Si la variante tiene sus propias fotos configuradas, usar estrictamente sus fotos propias.
+          // Solo si no tiene fotos propias, hereda la galería/portada de la ficha maestra como fallback.
+          let fotosVarianteFinal: string[] = [];
+          if (fotosPropias.length > 0) {
+            fotosVarianteFinal = [...fotosPropias];
+          } else if (fotosMaster.length > 0) {
+            fotosVarianteFinal = [...fotosMaster];
+          }
+
+          // Si el producto tiene una sola variante (producto simple), asegurar que incluya todas las fotos del producto
           if (varsActivas.length === 1) {
             fotosMaster.forEach((fm) => {
               if (!fotosVarianteFinal.includes(fm)) fotosVarianteFinal.push(fm);
-            });
-          } else if (galeriaMasterExplicita.length > 0) {
-            galeriaMasterExplicita.forEach((gm) => {
-              if (!fotosVarianteFinal.includes(gm)) fotosVarianteFinal.push(gm);
             });
           }
 

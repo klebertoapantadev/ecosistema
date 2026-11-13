@@ -96,6 +96,7 @@ export function ModalCrearProducto({
     esFloristeria ? "FISICO" : "SERVICIO"
   );
   const [precioBase, setPrecioBase] = useState<number | "">("");
+  const [precioComparacion, setPrecioComparacion] = useState<number | "">("");
   const [tarifaIva, setTarifaIva] = useState<number>(15);
   const [sku, setSku] = useState("");
   const [destacado, setDestacado] = useState(false);
@@ -104,8 +105,11 @@ export function ModalCrearProducto({
 
   // Recursos Digitales y Multimedia
   const [imagenUrl, setImagenUrl] = useState("");
+  const [galeriaTexto, setGaleriaTexto] = useState("");
   const [albumFotosUrl, setAlbumFotosUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
+  const [contextoMedios, setContextoMedios] = useState<"portada" | "galeria">("portada");
+  const [subiendoGaleria, setSubiendoGaleria] = useState(false);
   const [tiempoEntrega, setTiempoEntrega] = useState(
     esFloristeria ? "🌸 Pide hoy, recibe hoy (Mismo Día)" : "24 a 48 horas hábiles"
   );
@@ -304,9 +308,10 @@ export function ModalCrearProducto({
   // Verificación reactiva de al menos una imagen
   const tieneAlMenosUnaImagen = useMemo(() => {
     if (imagenUrl && imagenUrl.trim().length > 0) return true;
+    if (galeriaTexto && galeriaTexto.trim().length > 0) return true;
     if (albumFotosUrl && albumFotosUrl.trim().length > 0) return true;
     return false;
-  }, [imagenUrl, albumFotosUrl]);
+  }, [imagenUrl, galeriaTexto, albumFotosUrl]);
 
   const toggleCanal = (clave: CanalVisibilidad) => {
     if (CANALES_REQUIEREN_IMAGEN.includes(clave) && !canalesSeleccionados.includes(clave) && !tieneAlMenosUnaImagen) {
@@ -412,6 +417,34 @@ export function ModalCrearProducto({
     }
   };
 
+  const handleSubirArchivoGaleria = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError(null);
+
+    if (file.size > LIMITE_MAX_IMAGEN_BYTES) {
+      const tamanoMb = (file.size / (1024 * 1024)).toFixed(2);
+      setError(`⚠️ La imagen "${file.name}" supera el tamaño máximo permitido de 5 MB (${tamanoMb} MB).`);
+      e.target.value = "";
+      return;
+    }
+
+    setSubiendoGaleria(true);
+    try {
+      const res = await subirImagenClienteOAccion(file, negocio || "comun", "galeria");
+      if (res.ok && res.urlPublica) {
+        setGaleriaTexto((prev) => (prev ? `${prev}\n${res.urlPublica}` : (res.urlPublica || "")));
+      } else {
+        setError(res.error || "No se pudo subir la foto para la galería.");
+      }
+    } catch (err: any) {
+      setError(`Error al subir la imagen: ${err.message || err}`);
+    } finally {
+      setSubiendoGaleria(false);
+      e.target.value = "";
+    }
+  };
+
   const handleGuardar = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -456,6 +489,11 @@ export function ModalCrearProducto({
       .map((r) => r.trim())
       .filter((r) => r.length > 0);
 
+    const galeriaUrls = galeriaTexto
+      .split("\n")
+      .map((g) => g.trim())
+      .filter((g) => g.length > 0);
+
     try {
       const res = await crearProductoAction({
         nombre: nombre.trim(),
@@ -463,11 +501,13 @@ export function ModalCrearProducto({
         categoriaId: categoriaId || categorias[0]?.ctg_id,
         tipo,
         precioBase: Number(precioBase),
+        precioComparacion: typeof precioComparacion === "number" && precioComparacion > 0 ? precioComparacion : undefined,
         tarifaIva,
         sku: sku.trim() || undefined,
         destacado,
         icono: icono as any,
         imagenUrl: imagenUrlFinal || undefined,
+        galeriaUrls: galeriaUrls.length > 0 ? galeriaUrls : undefined,
         albumFotosUrl: albumFotosUrl.trim() || undefined,
         videoUrl: videoUrl.trim() || undefined,
         beneficios,
@@ -1040,7 +1080,7 @@ export function ModalCrearProducto({
               marginBottom: "14px",
             }}
           >
-            <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "12px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
               <div>
                 <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
                   Precio Base Imponible ($ USD) *
@@ -1077,6 +1117,45 @@ export function ModalCrearProducto({
                     fontWeight: 800,
                     boxSizing: "border-box",
                     color: "#0F172A",
+                  }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#D97706", marginBottom: "4px" }}>
+                  Precio Oferta / Comparación ($)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  placeholder="0.00 (Opcional tachado)"
+                  value={precioComparacion}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (val === "") {
+                      setPrecioComparacion("");
+                      return;
+                    }
+                    const num = parseFloat(val);
+                    if (!isNaN(num)) {
+                      setPrecioComparacion(Math.round(num * 100) / 100);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (typeof precioComparacion === "number" && !isNaN(precioComparacion)) {
+                      setPrecioComparacion(parseFloat(precioComparacion.toFixed(2)));
+                    }
+                  }}
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid #CBD5E1",
+                    fontSize: "0.95rem",
+                    fontWeight: 800,
+                    boxSizing: "border-box",
+                    color: "#D97706",
                   }}
                 />
               </div>
@@ -1233,7 +1312,10 @@ export function ModalCrearProducto({
 
                   <button
                     type="button"
-                    onClick={() => setModalGaleriaAbierto(true)}
+                    onClick={() => {
+                      setContextoMedios("portada");
+                      setModalGaleriaAbierto(true);
+                    }}
                     style={{
                       background: "#0284C7",
                       color: "#FFFFFF",
@@ -1344,24 +1426,94 @@ export function ModalCrearProducto({
               </div>
             </div>
 
-            <div>
-              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                URL Video / GIF Demostrativo (YouTube / MP4)
-              </label>
-              <input
-                type="url"
-                placeholder="https://www.youtube.com/watch?v=... o archivo .mp4 / .gif"
-                value={videoUrl}
-                onChange={(e) => setVideoUrl(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "7px 10px",
-                  borderRadius: "6px",
-                  border: "1px solid #CBD5E1",
-                  fontSize: "0.8rem",
-                  boxSizing: "border-box",
-                }}
-              />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "10px" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                  URL Video / GIF Demostrativo (YouTube / MP4)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://www.youtube.com/watch?v=... o archivo .mp4 / .gif"
+                  value={videoUrl}
+                  onChange={(e) => setVideoUrl(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "7px 10px",
+                    borderRadius: "6px",
+                    border: "1px solid #CBD5E1",
+                    fontSize: "0.8rem",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
+                  <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
+                    Galería Adicional (URLs por salto de línea)
+                  </label>
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <label
+                      style={{
+                        fontSize: "0.68rem",
+                        fontWeight: 700,
+                        color: "#15803D",
+                        cursor: subiendoGaleria ? "wait" : "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "3px",
+                      }}
+                    >
+                      {subiendoGaleria ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
+                      <span>+ Subir PC</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        disabled={subiendoGaleria}
+                        onChange={handleSubirArchivoGaleria}
+                        style={{ display: "none" }}
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setContextoMedios("galeria");
+                        setModalGaleriaAbierto(true);
+                      }}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        color: "#0284C7",
+                        fontSize: "0.68rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "3px",
+                        padding: 0,
+                      }}
+                    >
+                      <ImageIcon size={11} />
+                      <span>+ De Galería</span>
+                    </button>
+                  </div>
+                </div>
+                <textarea
+                  rows={2}
+                  placeholder="https://...foto1.jpg&#10;https://...foto2.jpg"
+                  value={galeriaTexto}
+                  onChange={(e) => setGaleriaTexto(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "6px 10px",
+                    borderRadius: "6px",
+                    border: "1px solid #CBD5E1",
+                    fontSize: "0.78rem",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
             </div>
           </div>
 
@@ -1890,8 +2042,12 @@ export function ModalCrearProducto({
         onCerrar={() => setModalGaleriaAbierto(false)}
         negocio={negocio}
         onSeleccionarImagen={(url) => {
-          setImagenUrl(url);
-          setExitoAutoConvertir("¡Imagen seleccionada desde la galería del negocio!");
+          if (contextoMedios === "galeria") {
+            setGaleriaTexto((prev) => (prev ? `${prev}\n${url}` : url));
+          } else {
+            setImagenUrl(url);
+            setExitoAutoConvertir("¡Imagen seleccionada desde la galería del negocio!");
+          }
         }}
         titulo={`Biblioteca de Medios (${negocio.toUpperCase()})`}
       />

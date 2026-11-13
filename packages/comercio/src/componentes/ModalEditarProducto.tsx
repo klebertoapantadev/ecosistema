@@ -955,10 +955,11 @@ export function ModalEditarProducto({
   const colVariante = PALETA_COLORES_VARIANTES[varianteActivaIndex % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
   const colActiva = esModoMaster ? COLOR_PRODUCTO_MASTER : colVariante;
 
-  const actualizarVarianteActual = (campo: keyof VarianteCatalogo, valor: any) => {
+  const actualizarVariantePorIndex = (index: number, campo: keyof VarianteCatalogo, valor: any) => {
     setVariantesLocales((prev) => {
       const nuevas = [...prev];
-      const target = { ...nuevas[varianteActivaIndex] } as any;
+      if (!nuevas[index]) return prev;
+      const target = { ...nuevas[index] } as any;
 
       if (campo === "var_precio") {
         const base = typeof valor === "number" ? valor : parseFloat(valor) || 0;
@@ -977,9 +978,13 @@ export function ModalEditarProducto({
         target[campo] = valor;
       }
 
-      nuevas[varianteActivaIndex] = target;
+      nuevas[index] = target;
       return nuevas;
     });
+  };
+
+  const actualizarVarianteActual = (campo: keyof VarianteCatalogo, valor: any) => {
+    actualizarVariantePorIndex(varianteActivaIndex, campo, valor);
   };
 
   const agregarNuevaVariante = () => {
@@ -1520,6 +1525,19 @@ export function ModalEditarProducto({
       .map((g) => g.trim())
       .filter((g) => g.length > 0);
 
+    // Si es un producto simple (1 sola variante), sincronizar fotos y atributos con la variante única
+    if (variantesParaGuardar.length === 1 && variantesParaGuardar[0]) {
+      const v0 = variantesParaGuardar[0];
+      const fotosMasterSimple = [imagenUrlFinal, ...galeriaUrls].filter((u): u is string => Boolean(u && u.trim()));
+      if (fotosMasterSimple.length > 0) {
+        v0.var_detalle_variante = {
+          ...(v0.var_detalle_variante || {}),
+          portada_url: imagenUrlFinal || fotosMasterSimple[0] || null,
+          galeria_urls: fotosMasterSimple,
+        };
+      }
+    }
+
     try {
       const res = await editarProductoAction({
         pro_id: producto.pro_id,
@@ -1848,7 +1866,7 @@ export function ModalEditarProducto({
               }}
             >
               <PackagePlus size={14} />
-              <span>🌐 1. Producto Master (Global)</span>
+              <span>{variantesLocales.length === 1 ? "📦 1. Datos y Precio (Producto Simple)" : "🌐 1. Producto Master (Global)"}</span>
             </button>
 
             <button
@@ -1876,7 +1894,13 @@ export function ModalEditarProducto({
               }}
             >
               <Layers size={14} />
-              <span>{esFloristeria ? `🌸 2. Tamaños (${variantesLocales.length})` : `🏷️ 2. Variantes y Planes (${variantesLocales.length})`}</span>
+              <span>
+                {variantesLocales.length === 1
+                  ? "➕ Gestionar Variantes / Tamaños"
+                  : esFloristeria
+                  ? `🌸 2. Tamaños (${variantesLocales.length})`
+                  : `🏷️ 2. Variantes y Planes (${variantesLocales.length})`}
+              </span>
             </button>
           </div>
 
@@ -3602,47 +3626,229 @@ export function ModalEditarProducto({
                 </div>
               </div>
 
-              {/* Banner resumen que invita a configurar tamaños */}
-              <div
-                style={{
-                  background: "#F0F9FF",
-                  border: "1.5px dashed #38BDF8",
-                  borderRadius: "10px",
-                  padding: "12px 16px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: "14px",
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#0369A1" }}>
-                    🏷️ Variantes / Tamaños configurados: {variantesLocales.length}
-                  </div>
-                  <div style={{ fontSize: "0.72rem", color: "#0284C7" }}>
-                    Puedes personalizar fotos individuales y precios para cada tamaño en la pestaña de variantes.
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setModoEdicion("variante");
-                    setVarianteActivaIndex(0);
-                  }}
+              {/* ================================================================= */}
+              {/* BLOQUE DE PRECIO Y FACTURACIÓN DIRECTA (PRODUCTO SIMPLE)        */}
+              {/* ================================================================= */}
+              {variantesLocales.length === 1 ? (
+                <div
                   style={{
-                    background: "#0284C7",
-                    color: "#FFFFFF",
-                    border: "none",
-                    padding: "6px 12px",
-                    borderRadius: "6px",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    cursor: "pointer",
+                    background: "#F8FAFC",
+                    border: "1.5px solid #0284C7",
+                    borderRadius: "12px",
+                    padding: "16px",
+                    marginBottom: "16px",
+                    boxShadow: "0 2px 8px rgba(2, 132, 199, 0.08)",
                   }}
                 >
-                  Configurar Tamaños ➔
-                </button>
-              </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ fontSize: "1.1rem" }}>📦</span>
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: "0.88rem", fontWeight: 800, color: "#0F172A" }}>
+                          Precio y Facturación (Producto Simple)
+                        </h4>
+                        <span style={{ fontSize: "0.72rem", color: "#64748B" }}>
+                          Este producto no tiene variaciones. Edita su precio, oferta y stock directamente aquí.
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        agregarNuevaVariante();
+                        setModoEdicion("variante");
+                      }}
+                      style={{
+                        background: "#0F172A",
+                        color: "#FFFFFF",
+                        border: "none",
+                        borderRadius: "8px",
+                        padding: "6px 12px",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+                      }}
+                    >
+                      <Plus size={13} />
+                      <span>➕ Convertir a Producto con Variantes / Tamaños</span>
+                    </button>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        Código SKU / Referencia *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={variantesLocales[0]?.var_sku || ""}
+                        onChange={(e) => actualizarVariantePorIndex(0, "var_sku", e.target.value)}
+                        placeholder="Ej. TNK-001"
+                        style={{
+                          width: "100%",
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.82rem",
+                          boxSizing: "border-box",
+                          fontWeight: 600,
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        Precio Base Imponible ($ USD) *
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        required
+                        value={variantesLocales[0]?.var_precio ?? ""}
+                        onChange={(e) => actualizarVariantePorIndex(0, "var_precio", Math.max(0, Number(e.target.value) || 0))}
+                        placeholder="0.00"
+                        style={{
+                          width: "100%",
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.85rem",
+                          boxSizing: "border-box",
+                          fontWeight: 700,
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#D97706", marginBottom: "2px" }}>
+                        Precio Oferta / Comparación ($ USD)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={variantesLocales[0]?.var_precio_comparacion ?? ""}
+                        onChange={(e) => actualizarVariantePorIndex(0, "var_precio_comparacion", e.target.value === "" ? null : Math.max(0, Number(e.target.value) || 0))}
+                        placeholder="0.00 (Opcional tachado)"
+                        style={{
+                          width: "100%",
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.85rem",
+                          boxSizing: "border-box",
+                          fontWeight: 700,
+                          color: "#D97706",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        Stock Disponible (Unidades)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={variantesLocales[0]?.var_detalle_variante?.stock ?? 999}
+                        onChange={(e) =>
+                          actualizarVariantePorIndex(0, "var_detalle_variante", {
+                            ...(variantesLocales[0]?.var_detalle_variante || {}),
+                            stock: Math.max(0, Number(e.target.value) || 0),
+                          })
+                        }
+                        style={{
+                          width: "100%",
+                          padding: "6px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.8rem",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                    </div>
+
+                    <div
+                      style={{
+                        background: "#FFFFFF",
+                        border: "1px solid #E2E8F0",
+                        borderRadius: "8px",
+                        padding: "8px 12px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div>
+                        <span style={{ fontSize: "0.72rem", color: "#64748B" }}>Tarifa IVA: </span>
+                        <strong style={{ fontSize: "0.8rem", color: "#0F172A" }}>
+                          {variantesLocales[0]?.var_tarifa_iva_porcentaje ?? tarifaIvaMaster}%
+                        </strong>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: "0.72rem", color: "#64748B" }}>PVP Final al Público: </span>
+                        <strong style={{ fontSize: "0.95rem", color: "#059669" }}>
+                          $
+                          {(
+                            (Number(variantesLocales[0]?.var_precio || 0)) *
+                            (1 + (variantesLocales[0]?.var_tarifa_iva_porcentaje ?? tarifaIvaMaster) / 100)
+                          ).toFixed(2)}
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Banner resumen que invita a configurar tamaños */
+                <div
+                  style={{
+                    background: "#F0F9FF",
+                    border: "1.5px dashed #38BDF8",
+                    borderRadius: "10px",
+                    padding: "12px 16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: "14px",
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#0369A1" }}>
+                      🏷️ Variantes / Tamaños configurados: {variantesLocales.length}
+                    </div>
+                    <div style={{ fontSize: "0.72rem", color: "#0284C7" }}>
+                      Puedes personalizar fotos individuales y precios para cada tamaño en la pestaña de variantes.
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModoEdicion("variante");
+                      setVarianteActivaIndex(0);
+                    }}
+                    style={{
+                      background: "#0284C7",
+                      color: "#FFFFFF",
+                      border: "none",
+                      padding: "6px 12px",
+                      borderRadius: "6px",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Configurar Tamaños ➔
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
