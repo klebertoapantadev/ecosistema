@@ -106,6 +106,80 @@ describe("Motor de logística y cobertura Tinkay", () => {
     expect(sinKm.etiquetaResumen).not.toContain("km");
     expect(sinKm.formulaDetalle).toContain("17.8 km × $0.50/km");
   });
+
+  it("permite áreas solapadas y aplica siempre la tarifa más baja sin importar el orden de prioridad", () => {
+    const puntoPuembo = { lat: -0.2, lng: -78.36 }; // Cae en Tumbaco/Puembo ($6.00, prioridad 3)
+    const configConSolapamiento = {
+      ...config,
+      zonas: [
+        ...config.zonas,
+        // Caso 1: área superpuesta más cara ($8.00) -> debe ganar la de $6.00
+        {
+          id: "zon-puembo-cara",
+          codigo: "puembo_cara",
+          nombre: "Puembo Extendido",
+          provincia: "Pichincha",
+          modoCobro: "TARIFA_FIJA" as const,
+          tarifaFija: 8.0,
+          prioridad: 1, // Incluso con prioridad 1, $6.00 es menor que $8.00
+          activo: true,
+          color: "#4F46E5",
+          sectoresReferencia: ["Puembo"],
+          poligono: [
+            [-0.25, -78.4],
+            [-0.25, -78.33],
+            [-0.16, -78.33],
+            [-0.16, -78.4],
+          ] as [number, number][],
+        },
+      ],
+    };
+
+    const resEntre6y8 = cotizarEnvioDomicilio({
+      config: configConSolapamiento,
+      destino: puntoPuembo,
+      distanciaVialKm: 24.5,
+    });
+    expect(resEntre6y8.costoTotalEnvio).toBe(6.0);
+    expect(resEntre6y8.zonaDetectada?.codigo).toBe("tumbaco_puembo");
+    expect(resEntre6y8.zonasCoincidentes?.length).toBe(2);
+    expect(resEntre6y8.formulaDetalle).toContain("Áreas solapadas");
+
+    // Caso 2: área promocional más económica ($4.00, prioridad 99) superpuesta sobre $6.00 y $8.00 -> gana $4.00
+    const configConSubzonaBarata = {
+      ...configConSolapamiento,
+      zonas: [
+        ...configConSolapamiento.zonas,
+        {
+          id: "zon-ruta-viva-promo",
+          codigo: "ruta_viva_promo",
+          nombre: "Ruta Viva Cercana",
+          provincia: "Pichincha",
+          modoCobro: "TARIFA_FIJA" as const,
+          tarifaFija: 4.0,
+          prioridad: 99,
+          activo: true,
+          color: "#10B981",
+          sectoresReferencia: ["Ruta Viva"],
+          poligono: [
+            [-0.22, -78.38],
+            [-0.22, -78.34],
+            [-0.18, -78.34],
+            [-0.18, -78.38],
+          ] as [number, number][],
+        },
+      ],
+    };
+
+    const resConPromo4 = cotizarEnvioDomicilio({
+      config: configConSubzonaBarata,
+      destino: puntoPuembo,
+      distanciaVialKm: 24.5,
+    });
+    expect(resConPromo4.costoTotalEnvio).toBe(4.0);
+    expect(resConPromo4.zonaDetectada?.codigo).toBe("ruta_viva_promo");
+    expect(resConPromo4.zonasCoincidentes?.length).toBe(3);
+  });
 });
 
 function cotizarEnvicilioHelper(

@@ -81,6 +81,14 @@ export interface ResultadoCotizacionEnvio {
     nombre: string;
     modoCobro: ModoCobroZona;
   } | null;
+  /** Cuando un punto cae en 2 o más polígonos activos solapados, lista todas las áreas evaluadas (gana la tarifa más baja) */
+  zonasCoincidentes?: Array<{
+    id: string;
+    codigo: string;
+    nombre: string;
+    modoCobro: ModoCobroZona;
+    costoTotalEnvio: number;
+  }>;
   distanciaLinealKm: number;
   distanciaVialKm: number;
   fuenteDistancia: "OSRM" | "ESTIMACION_VIAL";
@@ -737,111 +745,7 @@ export function cotizarEnvioDomicilio(
     };
   }
 
-  // Buscar primera zona activa que contenga el punto, ordenada por prioridad ascendente
-  const zonasOrdenadas = [...(config.zonas || [])]
-    .filter((z) => z.activo && Array.isArray(z.poligono) && z.poligono.length >= 3)
-    .sort((a, b) => a.prioridad - b.prioridad);
-
-  const zonaMatch = zonasOrdenadas.find((z) => puntoEnPoligono(destino, z.poligono)) || null;
-
-  // Caso A: Zona de Envío Gratis (ej. Centro-Norte de Quito)
-  if (zonaMatch && zonaMatch.modoCobro === "GRATIS") {
-    if (deliveryIncluidoProducto) {
-      const total = recargoProd;
-      return {
-        ok: true,
-        dentroCobertura: true,
-        reglaAplicada: "ZONA_GRATIS",
-        origen,
-        destino,
-        zonaDetectada: {
-          id: zonaMatch.id,
-          codigo: zonaMatch.codigo,
-          nombre: zonaMatch.nombre,
-          modoCobro: zonaMatch.modoCobro,
-        },
-        distanciaLinealKm: linealKm,
-        distanciaVialKm: vialKm,
-        fuenteDistancia,
-        costoBaseEnvio: 0,
-        recargoProducto: recargoProd,
-        costoTotalEnvio: total,
-        etiquetaResumen:
-          total === 0
-            ? `${zonaMatch.nombre}${sufijoKm} — Envío Gratis`
-            : `${zonaMatch.nombre}${sufijoKm}`,
-        formulaDetalle:
-          recargoProd > 0
-            ? `Dentro de ${zonaMatch.nombre} ($0.00 base) + $${recargoProd.toFixed(2)} por transporte especial del arreglo.`
-            : `Ubicación dentro de la zona de cobertura incluida (${zonaMatch.nombre} · ${vialKm.toFixed(1)} km desde taller).`,
-        rutaGeometria,
-        urlGoogleMapsDestino,
-      };
-    }
-
-    const baseNoInc = redondearMoneda(config.tarifaBaseNoIncluido);
-    const total = redondearMoneda(baseNoInc + recargoProd);
-    return {
-      ok: true,
-      dentroCobertura: true,
-      reglaAplicada: "TARIFA_BASE_PRODUCTO",
-      origen,
-      destino,
-      zonaDetectada: {
-        id: zonaMatch.id,
-        codigo: zonaMatch.codigo,
-        nombre: zonaMatch.nombre,
-        modoCobro: zonaMatch.modoCobro,
-      },
-      distanciaLinealKm: linealKm,
-      distanciaVialKm: vialKm,
-      fuenteDistancia,
-      costoBaseEnvio: baseNoInc,
-      recargoProducto: recargoProd,
-      costoTotalEnvio: total,
-      etiquetaResumen: `${zonaMatch.nombre}${sufijoKm}`,
-      formulaDetalle: `Tarifa base en ${zonaMatch.nombre}: $${baseNoInc.toFixed(2)}${
-        recargoProd > 0 ? ` + $${recargoProd.toFixed(2)} transporte especial` : ""
-      }.`,
-      rutaGeometria,
-      urlGoogleMapsDestino,
-    };
-  }
-
-  // Caso B: Zona con Tarifa Fija explícita (ej. Cumbayá, Tumbaco, Valle de los Chillos)
-  if (zonaMatch && zonaMatch.modoCobro === "TARIFA_FIJA") {
-    const compensacionNoIncluido = deliveryIncluidoProducto ? 0 : config.subsidioBaseUsd;
-    const baseZona = redondearMoneda(zonaMatch.tarifaFija + compensacionNoIncluido);
-    const total = redondearMoneda(baseZona + recargoProd);
-
-    return {
-      ok: true,
-      dentroCobertura: true,
-      reglaAplicada: "ZONA_TARIFA_FIJA",
-      origen,
-      destino,
-      zonaDetectada: {
-        id: zonaMatch.id,
-        codigo: zonaMatch.codigo,
-        nombre: zonaMatch.nombre,
-        modoCobro: zonaMatch.modoCobro,
-      },
-      distanciaLinealKm: linealKm,
-      distanciaVialKm: vialKm,
-      fuenteDistancia,
-      costoBaseEnvio: baseZona,
-      recargoProducto: recargoProd,
-      costoTotalEnvio: total,
-      etiquetaResumen: `${zonaMatch.nombre}${sufijoKm}`,
-      formulaDetalle: `Tarifa zonificada para ${zonaMatch.nombre}: $${baseZona.toFixed(2)} (${vialKm.toFixed(1)} km viales desde taller)${
-        recargoProd > 0 ? ` + $${recargoProd.toFixed(2)} transporte especial` : ""
-      }.`,
-      rutaGeometria,
-      urlGoogleMapsDestino,
-    };
-  }
-
-  // Caso C: Zona configurada POR_KM o cualquier sector en Pichincha fuera de polígonos fijos
+  // Cálculo por km base reutilizable tanto en zonas POR_KM como fuera de polígonos
   const subsidioAplicado = deliveryIncluidoProducto ? config.subsidioBaseUsd : 0;
   const brutoPorKm = vialKm * config.tarifaPorKm;
   const netoPorKm = brutoPorKm - subsidioAplicado;
@@ -851,37 +755,154 @@ export function cotizarEnvioDomicilio(
   const costoBaseKm = redondearMoneda(Math.max(minimoExtra, netoPorKm));
   const totalKm = redondearMoneda(costoBaseKm + recargoProd);
 
-  const etiquetaSector = zonaMatch ? zonaMatch.nombre : "Envío a domicilio";
+  const formulaKmBase =
+    subsidioAplicado > 0
+      ? `${vialKm.toFixed(1)} km × $${config.tarifaPorKm.toFixed(2)}/km ($${brutoPorKm.toFixed(2)}) − $${subsidioAplicado.toFixed(2)} incluido = $${costoBaseKm.toFixed(2)} (mín. $${minimoExtra.toFixed(2)})${
+          recargoProd > 0 ? ` + $${recargoProd.toFixed(2)} transporte especial` : ""
+        }.`
+      : `${vialKm.toFixed(1)} km × $${config.tarifaPorKm.toFixed(2)}/km = $${costoBaseKm.toFixed(2)}${
+          recargoProd > 0 ? ` + $${recargoProd.toFixed(2)} transporte especial` : ""
+        }.`;
 
+  // Evaluar TODAS las áreas activas cuyo polígono contenga el punto (soporta solapamiento de áreas:
+  // si 2 o más zonas se solapan en el destino, siempre se cobra la tarifa más baja).
+  const zonasEnPunto = [...(config.zonas || [])].filter(
+    (z) => z.activo && Array.isArray(z.poligono) && z.poligono.length >= 3 && puntoEnPoligono(destino, z.poligono)
+  );
+
+  if (zonasEnPunto.length > 0) {
+    const pesoModo: Record<ModoCobroZona, number> = {
+      GRATIS: 0,
+      TARIFA_FIJA: 1,
+      POR_KM: 2,
+    };
+
+    const evaluaciones = zonasEnPunto
+      .map((z) => {
+        if (z.modoCobro === "GRATIS") {
+          if (deliveryIncluidoProducto) {
+            const total = recargoProd;
+            return {
+              zona: z,
+              reglaAplicada: "ZONA_GRATIS" as const,
+              costoBaseEnvio: 0,
+              costoTotalEnvio: total,
+              etiquetaResumen:
+                total === 0
+                  ? `${z.nombre}${sufijoKm} — Envío Gratis`
+                  : `${z.nombre}${sufijoKm}`,
+              formulaDetalle:
+                recargoProd > 0
+                  ? `Dentro de ${z.nombre} ($0.00 base) + $${recargoProd.toFixed(2)} por transporte especial del arreglo.`
+                  : `Ubicación dentro de la zona de cobertura incluida (${z.nombre} · ${vialKm.toFixed(1)} km desde taller).`,
+            };
+          }
+
+          const baseNoInc = redondearMoneda(config.tarifaBaseNoIncluido);
+          const total = redondearMoneda(baseNoInc + recargoProd);
+          return {
+            zona: z,
+            reglaAplicada: "TARIFA_BASE_PRODUCTO" as const,
+            costoBaseEnvio: baseNoInc,
+            costoTotalEnvio: total,
+            etiquetaResumen: `${z.nombre}${sufijoKm}`,
+            formulaDetalle: `Tarifa base en ${z.nombre}: $${baseNoInc.toFixed(2)}${
+              recargoProd > 0 ? ` + $${recargoProd.toFixed(2)} transporte especial` : ""
+            }.`,
+          };
+        }
+
+        if (z.modoCobro === "TARIFA_FIJA") {
+          const compensacionNoIncluido = deliveryIncluidoProducto ? 0 : config.subsidioBaseUsd;
+          const baseZona = redondearMoneda(z.tarifaFija + compensacionNoIncluido);
+          const total = redondearMoneda(baseZona + recargoProd);
+          return {
+            zona: z,
+            reglaAplicada: "ZONA_TARIFA_FIJA" as const,
+            costoBaseEnvio: baseZona,
+            costoTotalEnvio: total,
+            etiquetaResumen: `${z.nombre}${sufijoKm}`,
+            formulaDetalle: `Tarifa zonificada para ${z.nombre}: $${baseZona.toFixed(2)} (${vialKm.toFixed(1)} km viales desde taller)${
+              recargoProd > 0 ? ` + $${recargoProd.toFixed(2)} transporte especial` : ""
+            }.`,
+          };
+        }
+
+        return {
+          zona: z,
+          reglaAplicada: "CALCULO_POR_KM" as const,
+          costoBaseEnvio: costoBaseKm,
+          costoTotalEnvio: totalKm,
+          etiquetaResumen: `${z.nombre}${sufijoKm}`,
+          formulaDetalle: formulaKmBase,
+        };
+      })
+      .sort((a, b) => {
+        if (a.costoTotalEnvio !== b.costoTotalEnvio) {
+          return a.costoTotalEnvio - b.costoTotalEnvio;
+        }
+        const diffModo = pesoModo[a.zona.modoCobro] - pesoModo[b.zona.modoCobro];
+        if (diffModo !== 0) return diffModo;
+        return a.zona.prioridad - b.zona.prioridad;
+      });
+
+    const ganadora = evaluaciones[0]!;
+    const notaSolapamiento =
+      evaluaciones.length > 1
+        ? ` [Áreas solapadas: ${evaluaciones
+            .map((ev) => `${ev.zona.nombre} ($${ev.costoTotalEnvio.toFixed(2)})`)
+            .join(" vs ")} → aplicada tarifa más baja]`
+        : "";
+
+    return {
+      ok: true,
+      dentroCobertura: true,
+      reglaAplicada: ganadora.reglaAplicada,
+      origen,
+      destino,
+      zonaDetectada: {
+        id: ganadora.zona.id,
+        codigo: ganadora.zona.codigo,
+        nombre: ganadora.zona.nombre,
+        modoCobro: ganadora.zona.modoCobro,
+      },
+      zonasCoincidentes: evaluaciones.map((ev) => ({
+        id: ev.zona.id,
+        codigo: ev.zona.codigo,
+        nombre: ev.zona.nombre,
+        modoCobro: ev.zona.modoCobro,
+        costoTotalEnvio: ev.costoTotalEnvio,
+      })),
+      distanciaLinealKm: linealKm,
+      distanciaVialKm: vialKm,
+      fuenteDistancia,
+      costoBaseEnvio: ganadora.costoBaseEnvio,
+      recargoProducto: recargoProd,
+      costoTotalEnvio: ganadora.costoTotalEnvio,
+      etiquetaResumen: ganadora.etiquetaResumen,
+      formulaDetalle: `${ganadora.formulaDetalle}${notaSolapamiento}`,
+      rutaGeometria,
+      urlGoogleMapsDestino,
+    };
+  }
+
+  // Fuera de polígonos zonificados (pero dentro del radio máximo en Pichincha): cálculo por km
   return {
     ok: true,
     dentroCobertura: true,
     reglaAplicada: "CALCULO_POR_KM",
     origen,
     destino,
-    zonaDetectada: zonaMatch
-      ? {
-          id: zonaMatch.id,
-          codigo: zonaMatch.codigo,
-          nombre: zonaMatch.nombre,
-          modoCobro: zonaMatch.modoCobro,
-        }
-      : null,
+    zonaDetectada: null,
+    zonasCoincidentes: [],
     distanciaLinealKm: linealKm,
     distanciaVialKm: vialKm,
     fuenteDistancia,
     costoBaseEnvio: costoBaseKm,
     recargoProducto: recargoProd,
     costoTotalEnvio: totalKm,
-    etiquetaResumen: `${etiquetaSector}${sufijoKm}`,
-    formulaDetalle:
-      subsidioAplicado > 0
-        ? `${vialKm.toFixed(1)} km × $${config.tarifaPorKm.toFixed(2)}/km ($${brutoPorKm.toFixed(2)}) − $${subsidioAplicado.toFixed(2)} incluido = $${costoBaseKm.toFixed(2)} (mín. $${minimoExtra.toFixed(2)})${
-            recargoProd > 0 ? ` + $${recargoProd.toFixed(2)} transporte especial` : ""
-          }.`
-        : `${vialKm.toFixed(1)} km × $${config.tarifaPorKm.toFixed(2)}/km = $${costoBaseKm.toFixed(2)}${
-            recargoProd > 0 ? ` + $${recargoProd.toFixed(2)} transporte especial` : ""
-          }.`,
+    etiquetaResumen: `Envío a domicilio${sufijoKm}`,
+    formulaDetalle: formulaKmBase,
     rutaGeometria,
     urlGoogleMapsDestino,
   };

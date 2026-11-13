@@ -65,8 +65,13 @@ export interface PropsMapaCoberturaPichincha {
   zonaResaltadaId?: string | null;
   rutaGeometria?: [number, number][];
   alturaPx?: number;
+  alturaCss?: string;
   modoDibujoPoligono?: boolean;
   verticesDibujo?: [number, number][];
+  /** Incrementar para encuadrar automáticamente el polígono de `zonaResaltadaId` */
+  secuenciaEnfoqueZona?: number;
+  /** Incrementar para encuadrar todas las zonas activas de Pichincha */
+  secuenciaVerTodo?: number;
   onSeleccionarPunto?: (punto: CoordenadaGeo) => void;
   onAgregarVerticePoligono?: (punto: CoordenadaGeo) => void;
 }
@@ -79,8 +84,11 @@ export function MapaCoberturaPichincha({
   zonaResaltadaId,
   rutaGeometria,
   alturaPx = 300,
+  alturaCss,
   modoDibujoPoligono = false,
   verticesDibujo = [],
+  secuenciaEnfoqueZona = 0,
+  secuenciaVerTodo = 0,
   onSeleccionarPunto,
   onAgregarVerticePoligono,
 }: PropsMapaCoberturaPichincha) {
@@ -102,9 +110,10 @@ export function MapaCoberturaPichincha({
 
   const [estadoCarga, setEstadoCarga] = useState<"cargando" | "listo" | "error">("cargando");
 
-  // Inicialización única del mapa Leaflet
+  // Inicialización única del mapa Leaflet + observador de cambio de dimensiones
   useEffect(() => {
     let cancelado = false;
+    let resizeObserver: ResizeObserver | null = null;
 
     cargarLeafletCliente()
       .then((L) => {
@@ -127,6 +136,7 @@ export function MapaCoberturaPichincha({
         capaRutaRef.current = L.layerGroup().addTo(map);
         capaDibujoRef.current = L.layerGroup().addTo(map);
 
+        // Un único listener en el mapa recibe tanto clics sobre calles libres como sobre 1 o varios polígonos solapados
         map.on("click", (ev: any) => {
           const lat = Number(ev?.latlng?.lat?.toFixed(6));
           const lng = Number(ev?.latlng?.lng?.toFixed(6));
@@ -142,6 +152,17 @@ export function MapaCoberturaPichincha({
         mapaRef.current = map;
         setEstadoCarga("listo");
 
+        if (typeof ResizeObserver !== "undefined" && contenedorRef.current) {
+          resizeObserver = new ResizeObserver(() => {
+            try {
+              map.invalidateSize();
+            } catch {
+              // Ignorar si está desmontándose
+            }
+          });
+          resizeObserver.observe(contenedorRef.current);
+        }
+
         setTimeout(() => {
           try {
             map.invalidateSize();
@@ -156,6 +177,9 @@ export function MapaCoberturaPichincha({
 
     return () => {
       cancelado = true;
+      if (resizeObserver) {
+        resizeObserver.disconnect();
+      }
       if (mapaRef.current) {
         try {
           mapaRef.current.remove();
@@ -167,49 +191,114 @@ export function MapaCoberturaPichincha({
     };
   }, []);
 
-  // Actualizar polígonos de zonas
+  // Revalidar tamaño al ampliar / reducir altura o abrir pantalla completa
+  useEffect(() => {
+    if (estadoCarga !== "listo" || !mapaRef.current) return;
+    const timer = setTimeout(() => {
+      try {
+        mapaRef.current?.invalidateSize();
+      } catch {
+        // Ignorar
+      }
+    }, 80);
+    return () => clearTimeout(timer);
+  }, [estadoCarga, alturaPx, alturaCss]);
+
+  // Encuadrar zona seleccionada cuando el usuario la elige en el dropdown o pulsa «Enfocar Área»
+  useEffect(() => {
+    if (estadoCarga !== "listo" || !mapaRef.current || !window.L || secuenciaEnfoqueZona <= 0) {
+      return;
+    }
+    const zona = zonas.find((z) => z.id === zonaResaltadaId || z.codigo === zonaResaltadaId);
+    if (!zona || !Array.isArray(zona.poligono) || zona.poligono.length < 3) return;
+    try {
+      const bounds = window.L.latLngBounds(zona.poligono);
+      mapaRef.current.invalidateSize();
+      mapaRef.current.fitBounds(bounds, { padding: [44, 44], maxZoom: 14 });
+    } catch {
+      // Ignorar coordenadas degeneradas
+    }
+  }, [estadoCarga, secuenciaEnfoqueZona, zonaResaltadaId, zonas]);
+
+  // Encuadrar todas las zonas activas de Pichincha al pulsar «Ver Todas»
+  useEffect(() => {
+    if (estadoCarga !== "listo" || !mapaRef.current || !window.L || secuenciaVerTodo <= 0) {
+      return;
+    }
+    const puntos: [number, number][] = [[origen.lat, origen.lng]];
+    zonas.forEach((z) => {
+      if (z.activo && Array.isArray(z.poligono)) {
+        z.poligono.forEach((pt) => {
+          if (Array.isArray(pt) && pt.length === 2) puntos.push(pt);
+        });
+      }
+    });
+    if (puntos.length < 2) return;
+    try {
+      const bounds = window.L.latLngBounds(puntos);
+      mapaRef.current.invalidateSize();
+      mapaRef.current.fitBounds(bounds, { padding: [36, 36], maxZoom: 13 });
+    } catch {
+      // Ignorar
+    }
+  }, [estadoCarga, secuenciaVerTodo, origen.lat, origen.lng, zonas]);
+
+  // Actualizar polígonos de zonas (la zona seleccionada se dibuja al final para quedar nítida arriba en solapamientos)
   useEffect(() => {
     if (estadoCarga !== "listo" || !mapaRef.current || !capaZonasRef.current || !window.L) return;
     const L = window.L;
     capaZonasRef.current.clearLayers();
 
-    zonas
-      .filter((z) => z.activo && Array.isArray(z.poligono) && z.poligono.length >= 3)
-      .forEach((zona) => {
-        const resaltada = zonaResaltadaId === zona.id || zonaResaltadaId === zona.codigo;
-        const etiquetaPrecio =
-          zona.modoCobro === "GRATIS"
-            ? "Envío Gratis ($0)"
-            : zona.modoCobro === "TARIFA_FIJA"
-            ? `Tarifa fija $${zona.tarifaFija.toFixed(2)}`
-            : "Cálculo por km";
+    const activas = zonas.filter((z) => z.activo && Array.isArray(z.poligono) && z.poligono.length >= 3);
+    const ordenadasParaDibujo = [...activas].sort((a, b) => {
+      const aSel = zonaResaltadaId === a.id || zonaResaltadaId === a.codigo ? 1 : 0;
+      const bSel = zonaResaltadaId === b.id || zonaResaltadaId === b.codigo ? 1 : 0;
+      return aSel - bSel;
+    });
 
-        const poly = L.polygon(zona.poligono, {
-          color: zona.color || "#0284C7",
-          weight: resaltada ? 2.8 : 1.5,
-          opacity: resaltada ? 0.95 : 0.7,
-          fillColor: zona.color || "#0284C7",
-          fillOpacity: resaltada ? 0.24 : zona.modoCobro === "GRATIS" ? 0.14 : 0.08,
-        });
+    ordenadasParaDibujo.forEach((zona) => {
+      const resaltada = zonaResaltadaId === zona.id || zonaResaltadaId === zona.codigo;
+      const etiquetaPrecio =
+        zona.modoCobro === "GRATIS"
+          ? "Envío Gratis ($0)"
+          : zona.modoCobro === "TARIFA_FIJA"
+          ? `Tarifa fija $${zona.tarifaFija.toFixed(2)}`
+          : "Cálculo por km";
 
+      const poly = L.polygon(zona.poligono, {
+        color: zona.color || "#0284C7",
+        weight: resaltada ? 3.2 : 1.6,
+        opacity: resaltada ? 1 : 0.72,
+        dashArray: resaltada ? undefined : "5, 4",
+        fillColor: zona.color || "#0284C7",
+        fillOpacity: resaltada ? 0.22 : zona.modoCobro === "GRATIS" ? 0.11 : 0.07,
+        bubblingMouseEvents: true,
+        interactive: !modoDibujoPoligono,
+      });
+
+      if (!modoDibujoPoligono) {
         poly.bindTooltip(`<strong>${zona.nombre}</strong><br/>${etiquetaPrecio}`, {
           sticky: true,
         });
+      }
 
-        poly.on("click", (ev: any) => {
-          const lat = Number(ev?.latlng?.lat?.toFixed(6));
-          const lng = Number(ev?.latlng?.lng?.toFixed(6));
-          if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
-          if (modoDibujoRef.current && callbackVerticeRef.current) {
-            callbackVerticeRef.current({ lat, lng });
-          } else if (callbackPuntoRef.current) {
-            callbackPuntoRef.current({ lat, lng });
-          }
+      poly.addTo(capaZonasRef.current);
+
+      // Mostrar vértices discretos del área actualmente seleccionada cuando no se está redibujando
+      if (resaltada && !modoDibujoPoligono) {
+        zona.poligono.forEach(([lat, lng]) => {
+          L.circleMarker([lat, lng], {
+            radius: 3.5,
+            color: zona.color || "#0284C7",
+            fillColor: "#FFFFFF",
+            fillOpacity: 1,
+            weight: 2,
+            interactive: false,
+          }).addTo(capaZonasRef.current);
         });
-
-        poly.addTo(capaZonasRef.current);
-      });
-  }, [estadoCarga, zonas, zonaResaltadaId]);
+      }
+    });
+  }, [estadoCarga, zonas, zonaResaltadaId, modoDibujoPoligono]);
 
   // Actualizar marcador de origen, destino y ruta OSRM
   useEffect(() => {
@@ -229,7 +318,7 @@ export function MapaCoberturaPichincha({
 
     marcadorOrigenRef.current = L.marker([origen.lat, origen.lng], {
       icon: iconoTaller,
-      interactive: true,
+      interactive: !modoDibujoPoligono,
     })
       .bindTooltip(`${origenNombre} (Punto de partida)`, { direction: "top" })
       .addTo(map);
@@ -253,6 +342,7 @@ export function MapaCoberturaPichincha({
       const marker = L.marker([destino.lat, destino.lng], {
         icon: iconoEntrega,
         draggable: Boolean(onSeleccionarPunto) && !modoDibujoPoligono,
+        interactive: !modoDibujoPoligono,
       }).addTo(map);
 
       marker.on("dragend", () => {
@@ -273,17 +363,20 @@ export function MapaCoberturaPichincha({
           weight: 3.5,
           opacity: 0.78,
           dashArray: "6, 6",
+          interactive: false,
         }).addTo(capaRutaRef.current);
       }
 
-      try {
-        const bounds = L.latLngBounds([
-          [origen.lat, origen.lng],
-          [destino.lat, destino.lng],
-        ]);
-        map.fitBounds(bounds, { padding: [36, 36], maxZoom: 15 });
-      } catch {
-        map.setView([destino.lat, destino.lng], 14);
+      if (!modoDibujoPoligono) {
+        try {
+          const bounds = L.latLngBounds([
+            [origen.lat, origen.lng],
+            [destino.lat, destino.lng],
+          ]);
+          map.fitBounds(bounds, { padding: [36, 36], maxZoom: 15 });
+        } catch {
+          map.setView([destino.lat, destino.lng], 14);
+        }
       }
     }
   }, [estadoCarga, origen.lat, origen.lng, origenNombre, destino, rutaGeometria, modoDibujoPoligono, onSeleccionarPunto]);
@@ -297,33 +390,44 @@ export function MapaCoberturaPichincha({
     if (verticesDibujo.length > 0) {
       verticesDibujo.forEach(([lat, lng], idx) => {
         L.circleMarker([lat, lng], {
-          radius: 5,
+          radius: idx === 0 ? 6 : 5,
           color: "#DC2626",
-          fillColor: "#FFFFFF",
+          fillColor: idx === 0 ? "#DC2626" : "#FFFFFF",
           fillOpacity: 1,
           weight: 2,
+          interactive: false,
         })
           .bindTooltip(`Vértice ${idx + 1}`)
           .addTo(capaDibujoRef.current);
       });
 
-      if (verticesDibujo.length >= 2) {
+      if (verticesDibujo.length === 2) {
+        L.polyline(verticesDibujo, {
+          color: "#DC2626",
+          weight: 2.2,
+          dashArray: "4, 4",
+          interactive: false,
+        }).addTo(capaDibujoRef.current);
+      } else if (verticesDibujo.length >= 3) {
         L.polygon(verticesDibujo, {
           color: "#DC2626",
-          weight: 2,
+          weight: 2.4,
           dashArray: "4, 4",
           fillColor: "#EF4444",
-          fillOpacity: 0.18,
+          fillOpacity: 0.2,
+          interactive: false,
         }).addTo(capaDibujoRef.current);
       }
     }
   }, [estadoCarga, verticesDibujo]);
 
+  const altoFinal = alturaCss ?? `${alturaPx}px`;
+
   if (estadoCarga === "error") {
     return (
       <div
         style={{
-          height: `${alturaPx}px`,
+          height: altoFinal,
           borderRadius: "10px",
           border: "1px solid #E4E4E7",
           background: "#FAFAFA",
@@ -347,11 +451,12 @@ export function MapaCoberturaPichincha({
         ref={contenedorRef}
         style={{
           width: "100%",
-          height: `${alturaPx}px`,
+          height: altoFinal,
           borderRadius: "10px",
-          border: "1px solid #E4E4E7",
+          border: modoDibujoPoligono ? "2px solid #DC2626" : "1px solid #E4E4E7",
           overflow: "hidden",
           background: "#F4F4F5",
+          cursor: modoDibujoPoligono ? "crosshair" : "grab",
           zIndex: 1,
         }}
       />
@@ -377,4 +482,3 @@ export function MapaCoberturaPichincha({
     </div>
   );
 }
-

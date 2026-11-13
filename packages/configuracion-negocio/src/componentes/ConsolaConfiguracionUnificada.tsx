@@ -121,11 +121,12 @@ export function ConsolaConfiguracionUnificada({
   return (
     <div
       style={{
-        maxWidth: "960px",
+        maxWidth: seccionActiva === "logistica" ? "1220px" : "960px",
         margin: "0 auto",
         display: "flex",
         flexDirection: "column",
         gap: "20px",
+        transition: "max-width 0.2s ease",
       }}
     >
       {/* Cabecera Ejecutiva Sobria */}
