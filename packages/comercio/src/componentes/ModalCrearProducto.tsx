@@ -388,26 +388,42 @@ export function ModalCrearProducto({
   const LIMITE_MAX_IMAGEN_BYTES = 5 * 1024 * 1024; // 5 MB
 
   const handleSubirArchivoLocal = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
     setError(null);
     setExitoAutoConvertir(null);
 
-    if (file.size > LIMITE_MAX_IMAGEN_BYTES) {
-      const tamanoMb = (file.size / (1024 * 1024)).toFixed(2);
-      setError(`⚠️ La imagen "${file.name}" supera el tamaño máximo permitido de 5 MB (tamaño detectado: ${tamanoMb} MB). Por favor selecciona una imagen menor a 5 MB.`);
-      e.target.value = "";
-      return;
+    const listaArchivos = Array.from(files);
+    for (const f of listaArchivos) {
+      if (f.size > LIMITE_MAX_IMAGEN_BYTES) {
+        const tamanoMb = (f.size / (1024 * 1024)).toFixed(2);
+        setError(`⚠️ La imagen "${f.name}" supera el tamaño máximo permitido de 5 MB (${tamanoMb} MB).`);
+        e.target.value = "";
+        return;
+      }
     }
 
     setSubiendoImagen(true);
     try {
-      const res = await subirImagenClienteOAccion(file, negocio || "comun", "portadas");
-      if (res.ok && res.urlPublica) {
-        setImagenUrl(res.urlPublica);
-        setExitoAutoConvertir(`¡Imagen "${res.nombreArchivo || file.name}" cargada con éxito desde tu equipo!`);
-      } else {
-        setError(res.error || "No se pudo cargar la imagen seleccionada.");
+      const nuevasUrls: string[] = [];
+      for (const file of listaArchivos) {
+        const res = await subirImagenClienteOAccion(file, negocio || "comun", "portadas");
+        if (res.ok && res.urlPublica) {
+          nuevasUrls.push(res.urlPublica);
+        }
+      }
+
+      if (nuevasUrls.length > 0) {
+        if (!imagenUrl.trim()) {
+          const [primera, ...resto] = nuevasUrls;
+          setImagenUrl(primera || "");
+          if (resto.length > 0) {
+            setGaleriaTexto((prev) => (prev ? `${prev}\n${resto.join("\n")}` : resto.join("\n")));
+          }
+        } else {
+          setGaleriaTexto((prev) => (prev ? `${prev}\n${nuevasUrls.join("\n")}` : nuevasUrls.join("\n")));
+        }
+        setExitoAutoConvertir(`¡${nuevasUrls.length} imagen(es) cargada(s) con éxito desde tu equipo!`);
       }
     } catch (err: any) {
       setError(`Error al cargar la imagen: ${err.message || err}`);
@@ -418,30 +434,72 @@ export function ModalCrearProducto({
   };
 
   const handleSubirArchivoGaleria = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
     setError(null);
 
-    if (file.size > LIMITE_MAX_IMAGEN_BYTES) {
-      const tamanoMb = (file.size / (1024 * 1024)).toFixed(2);
-      setError(`⚠️ La imagen "${file.name}" supera el tamaño máximo permitido de 5 MB (${tamanoMb} MB).`);
-      e.target.value = "";
-      return;
+    const listaArchivos = Array.from(files);
+    for (const f of listaArchivos) {
+      if (f.size > LIMITE_MAX_IMAGEN_BYTES) {
+        const tamanoMb = (f.size / (1024 * 1024)).toFixed(2);
+        setError(`⚠️ El archivo "${f.name}" supera el tamaño máximo permitido de 5 MB (${tamanoMb} MB).`);
+        e.target.value = "";
+        return;
+      }
     }
 
     setSubiendoGaleria(true);
     try {
-      const res = await subirImagenClienteOAccion(file, negocio || "comun", "galeria");
-      if (res.ok && res.urlPublica) {
-        setGaleriaTexto((prev) => (prev ? `${prev}\n${res.urlPublica}` : (res.urlPublica || "")));
-      } else {
-        setError(res.error || "No se pudo subir la foto para la galería.");
+      const nuevasUrls: string[] = [];
+      for (const file of listaArchivos) {
+        const res = await subirImagenClienteOAccion(file, negocio || "comun", "galeria");
+        if (res.ok && res.urlPublica) {
+          nuevasUrls.push(res.urlPublica);
+        }
+      }
+      if (nuevasUrls.length > 0) {
+        setGaleriaTexto((prev) => (prev ? `${prev}\n${nuevasUrls.join("\n")}` : nuevasUrls.join("\n")));
       }
     } catch (err: any) {
       setError(`Error al subir la imagen: ${err.message || err}`);
     } finally {
       setSubiendoGaleria(false);
       e.target.value = "";
+    }
+  };
+
+  const fotosCrear = useMemo(() => {
+    const list: string[] = [];
+    if (imagenUrl && imagenUrl.trim()) {
+      list.push(imagenUrl.trim());
+    }
+    if (galeriaTexto && galeriaTexto.trim()) {
+      galeriaTexto.split("\n").forEach((u) => {
+        const trimmed = u.trim();
+        if (trimmed && !list.includes(trimmed)) {
+          list.push(trimmed);
+        }
+      });
+    }
+    return list;
+  }, [imagenUrl, galeriaTexto]);
+
+  const handleEstablecerPortadaCrear = (url: string) => {
+    if (!url || url === imagenUrl) return;
+    const todas = [...fotosCrear];
+    const reordenadas = [url, ...todas.filter((u) => u !== url)];
+    setImagenUrl(reordenadas[0] || "");
+    setGaleriaTexto(reordenadas.slice(1).join("\n"));
+  };
+
+  const handleQuitarFotoCrear = (urlAQuitar: string) => {
+    const todas = fotosCrear.filter((u) => u !== urlAQuitar);
+    if (todas.length === 0) {
+      setImagenUrl("");
+      setGaleriaTexto("");
+    } else {
+      setImagenUrl(todas[0] || "");
+      setGaleriaTexto(todas.slice(1).join("\n"));
     }
   };
 
@@ -1304,6 +1362,7 @@ export function ModalCrearProducto({
                     <input
                       type="file"
                       accept="image/*"
+                      multiple
                       disabled={subiendoImagen}
                       onChange={handleSubirArchivoLocal}
                       style={{ display: "none" }}
@@ -1469,6 +1528,7 @@ export function ModalCrearProducto({
                       <input
                         type="file"
                         accept="image/*"
+                        multiple
                         disabled={subiendoGaleria}
                         onChange={handleSubirArchivoGaleria}
                         style={{ display: "none" }}
@@ -1515,6 +1575,67 @@ export function ModalCrearProducto({
                 />
               </div>
             </div>
+
+            {/* Grid Visual de Fotos Seleccionadas */}
+            {fotosCrear.length > 0 && (
+              <div style={{ marginTop: "12px", borderTop: "1px dashed #BBF7D0", paddingTop: "10px" }}>
+                <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#15803D", marginBottom: "6px" }}>
+                  📷 Vista Previa de Fotos del Producto ({fotosCrear.length}):
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(85px, 1fr))", gap: "8px" }}>
+                  {fotosCrear.map((url, idx) => {
+                    const esPortada = idx === 0 || url === imagenUrl;
+                    return (
+                      <div
+                        key={`${url}-${idx}`}
+                        style={{
+                          position: "relative",
+                          borderRadius: "6px",
+                          overflow: "hidden",
+                          border: esPortada ? "2px solid #10B981" : "1px solid #CBD5E1",
+                          aspectRatio: "1 / 1",
+                          background: "#0F172A",
+                          cursor: esPortada ? "default" : "pointer",
+                        }}
+                        onClick={() => {
+                          if (!esPortada) handleEstablecerPortadaCrear(url);
+                        }}
+                        title={esPortada ? "Foto de Portada (#1)" : "Clic para hacer Portada"}
+                      >
+                        <img src={url} alt={`Foto ${idx + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                        <div style={{ position: "absolute", top: 2, left: 2, right: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: "0.6rem", fontWeight: 800, background: esPortada ? "#10B981" : "rgba(0,0,0,0.6)", color: "#FFFFFF", padding: "1px 4px", borderRadius: "3px" }}>
+                            {esPortada ? "★ #1" : `#${idx + 1}`}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleQuitarFotoCrear(url);
+                            }}
+                            style={{
+                              background: "rgba(220, 38, 38, 0.9)",
+                              color: "#FFFFFF",
+                              border: "none",
+                              borderRadius: "50%",
+                              width: "16px",
+                              height: "16px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              cursor: "pointer",
+                              padding: 0,
+                            }}
+                          >
+                            <X size={10} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Tiempo de Entrega */}
@@ -2041,12 +2162,29 @@ export function ModalCrearProducto({
         abierto={modalGaleriaAbierto}
         onCerrar={() => setModalGaleriaAbierto(false)}
         negocio={negocio}
+        modoSeleccion="multiple"
         onSeleccionarImagen={(url) => {
           if (contextoMedios === "galeria") {
             setGaleriaTexto((prev) => (prev ? `${prev}\n${url}` : url));
           } else {
             setImagenUrl(url);
             setExitoAutoConvertir("¡Imagen seleccionada desde la galería del negocio!");
+          }
+        }}
+        onSeleccionarMultiples={(urls) => {
+          if (contextoMedios === "galeria") {
+            setGaleriaTexto((prev) => (prev ? `${prev}\n${urls.join("\n")}` : urls.join("\n")));
+          } else {
+            if (!imagenUrl.trim()) {
+              const [primera, ...resto] = urls;
+              if (primera) setImagenUrl(primera);
+              if (resto.length > 0) {
+                setGaleriaTexto((prev) => (prev ? `${prev}\n${resto.join("\n")}` : resto.join("\n")));
+              }
+            } else {
+              setGaleriaTexto((prev) => (prev ? `${prev}\n${urls.join("\n")}` : urls.join("\n")));
+            }
+            setExitoAutoConvertir(`¡${urls.length} imagen(es) seleccionada(s) desde la galería!`);
           }
         }}
         titulo={`Biblioteca de Medios (${negocio.toUpperCase()})`}

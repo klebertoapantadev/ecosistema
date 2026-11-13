@@ -469,18 +469,30 @@ export function ModalEditarProducto({
       };
       actualizarVarianteActual("var_detalle_variante", det);
     } else if (contextoGaleria === "master") {
-      const [primera, ...resto] = urls;
-      if (primera) setImagenUrl(primera);
-      if (resto.length > 0) {
+      if (!imagenUrl.trim()) {
+        const [primera, ...resto] = urls;
+        if (primera) setImagenUrl(primera);
+        if (resto.length > 0) {
+          setGaleriaTexto((prev) => {
+            const lineasExistentes = prev
+              .split("\n")
+              .map((l) => l.trim())
+              .filter((l) => l.length > 0);
+            const combinadas = Array.from(new Set([...lineasExistentes, ...resto]));
+            return combinadas.join("\n");
+          });
+        }
+      } else {
         setGaleriaTexto((prev) => {
           const lineasExistentes = prev
             .split("\n")
             .map((l) => l.trim())
             .filter((l) => l.length > 0);
-          const combinadas = Array.from(new Set([...lineasExistentes, ...resto]));
+          const combinadas = Array.from(new Set([...lineasExistentes, ...urls]));
           return combinadas.join("\n");
         });
       }
+      setExitoAutoConvertir(`¡${urls.length} imagen(es) seleccionada(s) desde la galería!`);
     }
   };
 
@@ -1160,32 +1172,97 @@ export function ModalEditarProducto({
   const LIMITE_MAX_IMAGEN_BYTES = 5 * 1024 * 1024; // 5 MB
 
   const handleSubirArchivoGlobal = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
     setError(null);
     setExitoAutoConvertir(null);
 
-    if (file.size > LIMITE_MAX_IMAGEN_BYTES) {
-      const tamanoMb = (file.size / (1024 * 1024)).toFixed(2);
-      setError(`⚠️ La imagen "${file.name}" supera el tamaño máximo permitido de 5 MB (tamaño detectado: ${tamanoMb} MB). Por favor selecciona una imagen menor a 5 MB.`);
-      e.target.value = "";
-      return;
+    const listaArchivos = Array.from(files);
+    for (const f of listaArchivos) {
+      if (f.size > LIMITE_MAX_IMAGEN_BYTES) {
+        const tamanoMb = (f.size / (1024 * 1024)).toFixed(2);
+        setError(`⚠️ La imagen "${f.name}" supera el tamaño máximo permitido de 5 MB (${tamanoMb} MB).`);
+        e.target.value = "";
+        return;
+      }
     }
 
     setSubiendoImagenGlobal(true);
     try {
-      const res = await subirImagenClienteOAccion(file, negocio || "comun", "portadas");
-      if (res.ok && res.urlPublica) {
-        setImagenUrl(res.urlPublica);
-        setExitoAutoConvertir(`¡Imagen "${res.nombreArchivo || file.name}" cargada con éxito desde tu equipo!`);
-      } else {
-        setError(res.error || "No se pudo cargar la imagen seleccionada.");
+      const nuevasUrls: string[] = [];
+      const errores: string[] = [];
+      for (const file of listaArchivos) {
+        const res = await subirImagenClienteOAccion(file, negocio || "comun", "portadas");
+        if (res.ok && res.urlPublica) {
+          nuevasUrls.push(res.urlPublica);
+        } else {
+          errores.push(`${file.name}: ${res.error || "error"}`);
+        }
+      }
+
+      if (nuevasUrls.length > 0) {
+        if (!imagenUrl.trim()) {
+          const [primera, ...resto] = nuevasUrls;
+          setImagenUrl(primera || "");
+          if (resto.length > 0) {
+            setGaleriaTexto((prev) => {
+              const actuales = prev.split("\n").map((l) => l.trim()).filter(Boolean);
+              return Array.from(new Set([...actuales, ...resto])).join("\n");
+            });
+          }
+        } else {
+          setGaleriaTexto((prev) => {
+            const actuales = prev.split("\n").map((l) => l.trim()).filter(Boolean);
+            return Array.from(new Set([...actuales, ...nuevasUrls])).join("\n");
+          });
+        }
+        setExitoAutoConvertir(`¡${nuevasUrls.length} imagen(es) cargada(s) con éxito desde tu equipo!`);
+      }
+      if (errores.length > 0) {
+        setError(`No se pudieron subir ${errores.length} imagen(es): ${errores.join(" · ")}`);
       }
     } catch (err: any) {
-      setError(`Error al cargar la imagen: ${err.message || err}`);
+      setError(`Error al cargar imágenes: ${err.message || err}`);
     } finally {
       setSubiendoImagenGlobal(false);
       e.target.value = "";
+    }
+  };
+
+  // Galería de fotos unificada para la ficha master / producto simple
+  const fotosMaster = useMemo(() => {
+    const list: string[] = [];
+    if (imagenUrl && imagenUrl.trim()) {
+      list.push(imagenUrl.trim());
+    }
+    if (galeriaTexto && galeriaTexto.trim()) {
+      galeriaTexto.split("\n").forEach((u) => {
+        const trimmed = u.trim();
+        if (trimmed && !list.includes(trimmed)) {
+          list.push(trimmed);
+        }
+      });
+    }
+    return list;
+  }, [imagenUrl, galeriaTexto]);
+
+  const handleEstablecerPortadaMaster = (urlSeleccionada: string) => {
+    if (!urlSeleccionada || urlSeleccionada === imagenUrl) return;
+    const todas = [...fotosMaster];
+    const reordenadas = [urlSeleccionada, ...todas.filter((u) => u !== urlSeleccionada)];
+    setImagenUrl(reordenadas[0] || "");
+    const resto = reordenadas.slice(1);
+    setGaleriaTexto(resto.join("\n"));
+  };
+
+  const handleQuitarFotoMaster = (urlAQuitar: string) => {
+    const todas = fotosMaster.filter((u) => u !== urlAQuitar);
+    if (todas.length === 0) {
+      setImagenUrl("");
+      setGaleriaTexto("");
+    } else {
+      setImagenUrl(todas[0] || "");
+      setGaleriaTexto(todas.slice(1).join("\n"));
     }
   };
 
@@ -2368,218 +2445,263 @@ export function ModalEditarProducto({
                 )}
               </div>
 
-              {/* 3. RECURSOS DIGITALES Y MULTIMEDIA GLOBALES (MASTER) */}
+              {/* 3. RECURSOS DIGITALES Y GALERÍA DE FOTOS (PRODUCTO / MASTER) */}
               <div
                 style={{
                   background: "#F8FAFC",
-                  border: "1px solid #E2E8F0",
-                  borderRadius: "10px",
-                  padding: "14px",
-                  marginBottom: "14px",
+                  border: "1.5px solid #CBD5E1",
+                  borderRadius: "12px",
+                  padding: "16px",
+                  marginBottom: "16px",
                 }}
               >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <ImageIcon size={16} color="#475569" />
-                    <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#334155", textTransform: "uppercase" }}>
-                      Recursos Digitales Globales (Foto Principal Master)
-                    </span>
+                {/* Cabecera de la Galería Unificada */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <ImageIcon size={18} color="#0284C7" />
+                    <div>
+                      <label style={{ fontSize: "0.85rem", fontWeight: 800, color: "#1E293B", textTransform: "uppercase" }}>
+                        Galería de Fotos del Producto
+                      </label>
+                      <div style={{ fontSize: "0.72rem", color: "#64748B" }}>
+                        {fotosMaster.length > 0
+                          ? `Total: ${fotosMaster.length} foto${fotosMaster.length === 1 ? "" : "s"}. La foto #1 es la Portada principal.`
+                          : "Agrega una o varias fotos para el producto o vitrina."}
+                      </div>
+                    </div>
                   </div>
-                  <span style={{ fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>
-                    Las variantes heredarán esta foto salvo que tengan una propia
-                  </span>
+
+                  {/* Acciones para Subir o Seleccionar Múltiples */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                    <label
+                      style={{
+                        background: subiendoImagenGlobal ? "#94A3B8" : "#0F172A",
+                        color: "#FFFFFF",
+                        padding: "6px 12px",
+                        borderRadius: "7px",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        cursor: subiendoImagenGlobal ? "wait" : "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                      }}
+                      title="Subir una o varias fotos desde tu PC simultáneamente"
+                    >
+                      {subiendoImagenGlobal ? (
+                        <>
+                          <Loader2 size={13} className="animate-spin" />
+                          <span>Subiendo fotos...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload size={13} />
+                          <span>📁 Subir Fotos PC</span>
+                        </>
+                      )}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        disabled={subiendoImagenGlobal}
+                        onChange={handleSubirArchivoGlobal}
+                        style={{ display: "none" }}
+                      />
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setContextoGaleria("master");
+                        setModalGaleriaAbierto(true);
+                      }}
+                      style={{
+                        background: "#0284C7",
+                        color: "#FFFFFF",
+                        border: "none",
+                        padding: "6px 14px",
+                        borderRadius: "7px",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        boxShadow: "0 1px 3px rgba(2, 132, 199, 0.25)",
+                      }}
+                      title="Seleccionar una o varias imágenes de la galería multimedia"
+                    >
+                      <ImageIcon size={13} />
+                      <span>+ Seleccionar de Galería</span>
+                    </button>
+                  </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
-                  <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
-                      <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
-                        URL Imagen de Portada Principal (Global) *
-                      </label>
-                      {(imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) && (
-                        <span style={{ fontSize: "0.68rem", color: "#D97706", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
-                          <AlertCircle size={12} /> Requiere Extracción
-                        </span>
-                      )}
-                      {imagenUrl.includes("lh3.googleusercontent.com") && (
-                        <span style={{ fontSize: "0.68rem", color: "#16A34A", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
-                          <CheckCircle2 size={12} /> Imagen Directa Lista
-                        </span>
-                      )}
-                    </div>
-                    <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                      <input
-                        type="url"
-                        placeholder="https://... o sube una imagen desde tu PC ➔"
-                        value={imagenUrl}
-                        onChange={(e) => {
-                          const raw = e.target.value;
-                          const driveMatch = raw.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) || raw.match(/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/);
-                          if (driveMatch && driveMatch[1]) {
-                            setImagenUrl(`https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1200`);
-                          } else {
-                            setImagenUrl(raw);
-                          }
-                          setExitoAutoConvertir(null);
-                        }}
-                        style={{
-                          flex: 1,
-                          padding: "7px 10px",
-                          borderRadius: "6px",
-                          border: (imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
-                          fontSize: "0.8rem",
-                          boxSizing: "border-box",
-                        }}
-                      />
-
-                      <label
-                        style={{
-                          background: subiendoImagenGlobal ? "#94A3B8" : "#0F172A",
-                          color: "#FFFFFF",
-                          padding: "7px 11px",
-                          borderRadius: "6px",
-                          fontSize: "0.74rem",
-                          fontWeight: 700,
-                          cursor: subiendoImagenGlobal ? "wait" : "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "5px",
-                          whiteSpace: "nowrap",
-                          flexShrink: 0,
-                          boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                        }}
-                        title="Seleccionar foto desde tu disco local o Google Drive en PC"
-                      >
-                        {subiendoImagenGlobal ? (
-                          <>
-                            <Loader2 size={13} className="animate-spin" />
-                            <span>Subiendo...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Upload size={13} />
-                            <span>📁 Subir PC</span>
-                          </>
-                        )}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          disabled={subiendoImagenGlobal}
-                          onChange={handleSubirArchivoGlobal}
-                          style={{ display: "none" }}
-                        />
-                      </label>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setContextoGaleria("master");
-                          setModalGaleriaAbierto(true);
-                        }}
-                        style={{
-                          background: "#0284C7",
-                          color: "#FFFFFF",
-                          border: "none",
-                          padding: "7px 11px",
-                          borderRadius: "6px",
-                          fontSize: "0.74rem",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px",
-                          whiteSpace: "nowrap",
-                          flexShrink: 0,
-                          boxShadow: "0 1px 2px rgba(2, 132, 199, 0.2)",
-                        }}
-                        title="Abrir galería de imágenes del negocio"
-                      >
-                        <ImageIcon size={13} />
-                        <span>🖼️ Galería</span>
-                      </button>
-                    </div>
-
-                    {exitoAutoConvertir && (
-                      <div style={{ marginTop: "4px", fontSize: "0.7rem", color: "#15803D", background: "#DCFCE7", padding: "4px 8px", borderRadius: "4px", border: "1px solid #BBF7D0", display: "flex", alignItems: "center", gap: "4px" }}>
-                        <CheckCircle2 size={13} /> {exitoAutoConvertir}
-                      </div>
-                    )}
-
-                    {(imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl") || imagenUrl.includes("drive.google.com/drive")) && (
-                      <div style={{ marginTop: "6px", fontSize: "0.7rem", color: "#92400E", background: "#FEF3C7", padding: "8px 10px", borderRadius: "6px", border: "1px solid #FDE68A", lineHeight: 1.4 }}>
-                        <div style={{ fontWeight: 800, marginBottom: "3px", display: "flex", alignItems: "center", gap: "4px" }}>
-                          <AlertCircle size={13} color="#D97706" /> Enlace de Álbum Web Detectado
-                        </div>
-                        <div>Este enlace abre el visor web de Google Fotos, no un archivo de imagen directo (.jpg).</div>
-                        <div style={{ marginTop: "6px", display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
-                          <button
-                            type="button"
-                            disabled={resolviendoImagen}
-                            onClick={() => handleConvertirImagenGlobal()}
-                            style={{
-                              background: "#0284C7",
-                              color: "#FFFFFF",
-                              border: "none",
-                              padding: "4px 9px",
-                              borderRadius: "4px",
-                              fontSize: "0.68rem",
-                              fontWeight: 700,
-                              cursor: resolviendoImagen ? "wait" : "pointer",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "4px",
-                            }}
-                          >
-                            {resolviendoImagen ? (
-                              <>
-                                <Loader2 size={12} className="animate-spin" /> Extrayendo Directa...
-                              </>
-                            ) : (
-                              <>
-                                <Wand2 size={12} /> 🪄 Auto-Convertir Foto
-                              </>
-                            )}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setAlbumFotosUrl(imagenUrl);
-                              setImagenUrl("");
-                            }}
-                            style={{
-                              background: "#B45309",
-                              color: "#FFFFFF",
-                              border: "none",
-                              padding: "4px 8px",
-                              borderRadius: "4px",
-                              fontSize: "0.68rem",
-                              fontWeight: 700,
-                              cursor: "pointer",
-                            }}
-                          >
-                            📁 Mover a "Álbum de Muestras"
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Selector de Encuadre & Posición en Carrusel Cuadrado para Master */}
-                    {imagenUrl && (
-                      <SelectorEncuadreFoto
-                        imagenUrl={imagenUrl}
-                        posicion={fotoPosicionMaster}
-                        ajuste={fotoAjusteMaster}
-                        zoom={fotoZoomMaster}
-                        onCambiarPosicion={(pos) => setFotoPosicionMaster(pos)}
-                        onCambiarAjuste={(aj) => setFotoAjusteMaster(aj)}
-                        onCambiarZoom={(zm) => setFotoZoomMaster(zm)}
-                        titulo="Encuadre & Posición en Carrusel Cuadrado (Portada Master)"
-                        colorTema="#0284C7"
-                      />
-                    )}
+                {exitoAutoConvertir && (
+                  <div style={{ marginBottom: "10px", fontSize: "0.72rem", color: "#15803D", background: "#DCFCE7", padding: "6px 10px", borderRadius: "6px", border: "1px solid #BBF7D0", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <CheckCircle2 size={14} /> {exitoAutoConvertir}
                   </div>
+                )}
 
+                {/* Grid Visual de Miniaturas de Fotos */}
+                {fotosMaster.length === 0 ? (
+                  <div
+                    style={{
+                      border: "2px dashed #CBD5E1",
+                      borderRadius: "10px",
+                      padding: "24px 16px",
+                      textAlign: "center",
+                      background: "#FFFFFF",
+                      color: "#64748B",
+                      marginBottom: "12px",
+                    }}
+                  >
+                    <ImageIcon size={32} color="#94A3B8" style={{ margin: "0 auto 8px auto", display: "block" }} />
+                    <p style={{ margin: "0 0 6px 0", fontSize: "0.82rem", fontWeight: 700, color: "#334155" }}>
+                      Este producto no tiene fotos configuradas
+                    </p>
+                    <p style={{ margin: 0, fontSize: "0.74rem" }}>
+                      Haz clic en <strong>📁 Subir Fotos PC</strong> para cargar varias imágenes a la vez, o en <strong>+ Seleccionar de Galería</strong>.
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{ marginBottom: "12px" }}>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(105px, 1fr))",
+                        gap: "10px",
+                      }}
+                    >
+                      {fotosMaster.map((gUrl: string, idx: number) => {
+                        const esPortada = idx === 0 || gUrl === imagenUrl;
+                        return (
+                          <div
+                            key={`${gUrl}-${idx}`}
+                            style={{
+                              position: "relative",
+                              borderRadius: "8px",
+                              overflow: "hidden",
+                              border: esPortada ? "2.5px solid #10B981" : "1px solid #CBD5E1",
+                              background: "#0F172A",
+                              aspectRatio: "1 / 1",
+                              display: "flex",
+                              flexDirection: "column",
+                              justifyContent: "space-between",
+                              boxShadow: esPortada ? "0 0 0 2px rgba(16, 185, 129, 0.25)" : "none",
+                              cursor: esPortada ? "default" : "pointer",
+                            }}
+                            onClick={() => {
+                              if (!esPortada) handleEstablecerPortadaMaster(gUrl);
+                            }}
+                            title={esPortada ? "Foto de Portada Principal" : "Haz clic para establecer esta foto como Portada"}
+                          >
+                            <img
+                              src={gUrl}
+                              alt={`Foto ${idx + 1}`}
+                              style={{
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                width: "100%",
+                                height: "100%",
+                                objectFit: "cover",
+                              }}
+                            />
+                            {/* Cabecera sobre la foto: Badge Portada / Número y botón eliminar */}
+                            <div
+                              style={{
+                                position: "relative",
+                                zIndex: 2,
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                padding: "4px",
+                                background: "linear-gradient(to bottom, rgba(0,0,0,0.7), transparent)",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: "0.65rem",
+                                  color: "#FFFFFF",
+                                  fontWeight: 800,
+                                  background: esPortada ? "#10B981" : "rgba(0,0,0,0.55)",
+                                  padding: "2px 5px",
+                                  borderRadius: "4px",
+                                }}
+                              >
+                                {esPortada ? "★ Portada" : `#${idx + 1}`}
+                              </span>
+
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleQuitarFotoMaster(gUrl);
+                                }}
+                                title="Eliminar foto del producto"
+                                style={{
+                                  background: "rgba(220, 38, 38, 0.9)",
+                                  color: "#FFFFFF",
+                                  border: "none",
+                                  borderRadius: "50%",
+                                  width: "18px",
+                                  height: "18px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  cursor: "pointer",
+                                  padding: 0,
+                                }}
+                              >
+                                <X size={11} />
+                              </button>
+                            </div>
+
+                            {/* Pie sobre la foto si no es portada */}
+                            {!esPortada && (
+                              <div
+                                style={{
+                                  position: "relative",
+                                  zIndex: 2,
+                                  textAlign: "center",
+                                  padding: "3px",
+                                  background: "linear-gradient(to top, rgba(0,0,0,0.75), transparent)",
+                                  color: "#FFFFFF",
+                                  fontSize: "0.62rem",
+                                  fontWeight: 700,
+                                }}
+                              >
+                                <span>Poner de Portada</span>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Encuadre & Posición en Carrusel Cuadrado para Portada Master */}
+                {imagenUrl && (
+                  <div style={{ marginTop: "10px", marginBottom: "14px" }}>
+                    <SelectorEncuadreFoto
+                      imagenUrl={imagenUrl}
+                      posicion={fotoPosicionMaster}
+                      ajuste={fotoAjusteMaster}
+                      zoom={fotoZoomMaster}
+                      onCambiarPosicion={(pos) => setFotoPosicionMaster(pos)}
+                      onCambiarAjuste={(aj) => setFotoAjusteMaster(aj)}
+                      onCambiarZoom={(zm) => setFotoZoomMaster(zm)}
+                      titulo="Encuadre & Posición en Carrusel Cuadrado (Foto Portada Principal)"
+                      colorTema="#0284C7"
+                    />
+                  </div>
+                )}
+
+                {/* Álbum y Video / GIF */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
                       URL Álbum de Muestras Reales (Google Photos / Instagram)
@@ -2596,12 +2718,11 @@ export function ModalEditarProducto({
                         border: "1px solid #CBD5E1",
                         fontSize: "0.8rem",
                         boxSizing: "border-box",
+                        background: "#FFFFFF",
                       }}
                     />
                   </div>
-                </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
                       URL Video / GIF Demostrativo (YouTube, MP4)
@@ -2613,83 +2734,65 @@ export function ModalEditarProducto({
                       onChange={(e) => setVideoUrl(e.target.value)}
                       style={{
                         width: "100%",
-                        padding: "6px 10px",
+                        padding: "7px 10px",
                         borderRadius: "6px",
                         border: "1px solid #CBD5E1",
-                        fontSize: "0.78rem",
+                        fontSize: "0.8rem",
                         boxSizing: "border-box",
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
-                      <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
-                        Galería Adicional (URLs por salto de línea)
-                      </label>
-                      <div style={{ display: "flex", gap: "6px" }}>
-                        <label
-                          style={{
-                            fontSize: "0.68rem",
-                            fontWeight: 700,
-                            color: "#0284C7",
-                            cursor: subiendoGaleria ? "wait" : "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "3px",
-                          }}
-                        >
-                          {subiendoGaleria ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
-                          <span>+ Subir PC</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            disabled={subiendoGaleria}
-                            onChange={handleSubirArchivoGaleria}
-                            style={{ display: "none" }}
-                          />
-                        </label>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setContextoGaleria("galeria");
-                            setModalGaleriaAbierto(true);
-                          }}
-                          style={{
-                            background: "none",
-                            border: "none",
-                            color: "#0284C7",
-                            fontSize: "0.68rem",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "3px",
-                            padding: 0,
-                          }}
-                        >
-                          <ImageIcon size={11} />
-                          <span>+ De Galería</span>
-                        </button>
-                      </div>
-                    </div>
-                    <textarea
-                      rows={2}
-                      placeholder="https://...foto1.jpg&#10;https://...foto2.jpg"
-                      value={galeriaTexto}
-                      onChange={(e) => setGaleriaTexto(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
-                        fontSize: "0.78rem",
-                        boxSizing: "border-box",
+                        background: "#FFFFFF",
                       }}
                     />
                   </div>
                 </div>
+
+                {/* Acordeón opcional para ver o editar URLs en texto directo */}
+                <details style={{ marginTop: "10px", background: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: "8px", padding: "8px 12px" }}>
+                  <summary style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B", cursor: "pointer" }}>
+                    ✏️ Modo Avanzado: Ver o editar URLs de fotos en texto directo
+                  </summary>
+                  <div style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        URL Foto de Portada Principal (#1)
+                      </label>
+                      <input
+                        type="url"
+                        value={imagenUrl}
+                        onChange={(e) => setImagenUrl(e.target.value)}
+                        placeholder="https://..."
+                        style={{
+                          width: "100%",
+                          padding: "6px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.75rem",
+                          boxSizing: "border-box",
+                          fontFamily: "monospace",
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        Fotos adicionales de la galería (URLs, una por línea)
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={galeriaTexto}
+                        onChange={(e) => setGaleriaTexto(e.target.value)}
+                        placeholder={"https://...foto2.jpg\nhttps://...foto3.jpg"}
+                        style={{
+                          width: "100%",
+                          padding: "6px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.75rem",
+                          boxSizing: "border-box",
+                          fontFamily: "monospace",
+                        }}
+                      />
+                    </div>
+                  </div>
+                </details>
               </div>
 
               {/* 3. TIEMPO DE ENTREGA GLOBAL & DESCRIPCIÓN BASE */}
@@ -5529,7 +5632,7 @@ export function ModalEditarProducto({
         negocio={negocio}
         onSeleccionarImagen={(url) => handleSeleccionarDesdeGaleria(url)}
         onSeleccionarMultiples={(urls) => handleSeleccionarMultiplesDesdeGaleria(urls)}
-        modoSeleccion={contextoGaleria === "galeria" || contextoGaleria === "variante_galeria" || contextoGaleria === "variante" ? "multiple" : "simple"}
+        modoSeleccion={contextoGaleria === "master" || contextoGaleria === "galeria" || contextoGaleria === "variante_galeria" || contextoGaleria === "variante" ? "multiple" : "simple"}
         titulo={`Biblioteca de Medios (${negocio.toUpperCase()})`}
       />
 
