@@ -27,7 +27,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-006`** | Datos de Facturación SRI, Emisión Automática con Tarjeta, Pagos Manuales y Widget de Comprobantes | ✅ Implementado | **100%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-007`** | Catálogo Geográfico (Ecuador 24 Provincias) | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-008`** | Configuración de Negocio & SMTP en Vault | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`PLT-009`** | Catálogo Comercial Unificado (Productos/Planes/Despachos y Pasarela Payphone) | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`PLT-009`** | Catálogo Comercial Unificado (Productos, Sets/Combos Configurables, Descuentos por Volumen, Despachos y Pasarela Payphone) | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-010`** | **Integración Omnicanal (WhatsApp YCloud, ARIA y Supervisión Humana HITL)** | 🟡 En Desarrollo | **45%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-011`** | Sistema de Widgets por Rol & DataGrids 2 Capas | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-012`** | **Baja de Cuenta y Derecho al Olvido** | ✅ Implementado | **100%** | Kleber Toapanta |
@@ -581,6 +581,16 @@ Motor centralizado de gestión de bienes, servicios, recetas (BOM), inventarios,
       - Si la categoría no está asignada como categoría principal a ningún producto activo (`conteo = 0`), el botón de eliminación se habilita en rojo (`Sin productos (Disponible para eliminar)`). Al confirmarse la baja, la RPC desvincula limpiamente cualquier etiqueta secundaria residual en `com_producto_categoria` y efectúa la baja segura de la categoría.
       - **Sincronización Total Consulta-Eliminación:** Tanto la consulta de categorías con uso (`com_fn_obtener_categorias_con_uso`) como la RPC de baja (`com_fn_eliminar_categoria_catalogo`) aplican idéntica regla de conteo e integridad, garantizando coherencia absoluta entre el estado visual del control y la ejecución transaccional.
     - **Actualización Reactiva de Selectores:** Al eliminar exitosamente una categoría, los componentes locales y de formulario purgan inmediatamente la opción sin requerir recargar la página; si el producto que se estaba creando o editando tenía seleccionada dicha categoría, el selector se conmuta automáticamente a la primera categoría disponible.
+27. **Sets / Combos Configurables y Escalas de Descuento por Cantidad / Volumen (`com_combo_componente`, `combosVolumen.ts`, `EditorComboYVolumen.tsx`):**
+    - **Escalas de Descuento por Volumen en Variantes (`var_detalle_variante.escalas_volumen`):**
+      - Toda variante (`com_variante`, tanto en producto simple como multivariante `S / M / L / XL`) admite tramos de descuento automático por cantidad (`min_cantidad >= 2`) bajo 3 modalidades: `PRECIO_FIJO` (ej. de `$70.00` baja a `$60.00 c/u` llevando `2+`), `PORCENTAJE` (ej. `-10% OFF`) o `MONTO_DESCUENTO` (ej. `-$10.00 c/u`).
+      - El motor financiero compartido (`calcularPrecioPorVolumen` en `@eco/comercio`) recalcula automáticamente la **base imponible unitaria sin IVA** para cuadrar al centavo con la facturación electrónica SRI (`PLT-006`).
+    - **Sets / Combos Compuestos de Productos Individuales (`comun_comercio.com_combo_componente` y `pro_detalle_producto.combo_componentes`):**
+      - Permite publicar un Set/Paquete completo con su propia fotografía escénica y PVP preferencial cerrado (ej. *Set de Bienvenida*: `1 × Aro Floral ($150)` + `2 × Cartel Bienvenida/Menú ($70 c/u = $140)` -> Suma individual `$290`, Precio Set Completo `$260`, mostrando insignia `🎁 SET -10% OFF`).
+      - Los productos que integran el Set permanecen publicados como productos individuales en el catálogo (incluyendo sus propias variaciones `S / M / L / XL` y escalas por volumen).
+      - **Doble Modo de Compra en E-Commerce (`Set Completo` vs `Personalizar`):**
+        1. **`Set Completo`:** Aplica el precio paquete cerrado configurado por el administrador (`$260.00`), exhibiendo el ahorro porcentual frente a la suma individual en vivo.
+        2. **`Personalizar`:** El cliente puede cambiar la presentación/tamaño (`S / M / L / XL`) y ajustar la cantidad (`0, 1, 2, 3...`) de cada elemento del Set. Al modificar cantidades o variantes, el total suma estrictamente los costos reales de los elementos seleccionados aplicando las escalas de descuento por volumen de cada pieza; si la selección coincide exactamente con la composición base del Set y el precio paquete es menor, el sistema protege automáticamente al comprador aplicando la tarifa preferencial del Set.
 
 **Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §7 (`comun_comercio`).
 

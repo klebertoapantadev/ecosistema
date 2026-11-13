@@ -1,6 +1,10 @@
 import { ProductoEcommerce, CategoriaEcommerce, VarianteEcommerce } from './tipos';
 import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from './datos-catalogo';
 import { normalizarTextoEcommerce } from './filtrado-catalogo';
+import {
+  normalizarComponentesCombo,
+  normalizarEscalasVolumen,
+} from '@eco/comercio';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://oaybbpdxhlxjbpwnoymy.supabase.co';
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_vC-t-FcOQ2Q5_XkTCcPKdQ_bveIh5YS';
@@ -27,6 +31,7 @@ interface SupabaseVarianteRaw {
     usos?: string[];
     ocasiones?: string[];
     usos_modo?: 'heredar' | 'personalizado';
+    escalas_volumen?: unknown;
   };
 }
 
@@ -51,6 +56,8 @@ interface SupabaseProductoRaw {
     usos?: string[] | string;
     ocasiones?: string[] | string;
     es_complemento?: boolean;
+    es_combo?: boolean;
+    combo_componentes?: unknown;
     canales_visibilidad?: string[];
     vigencia_tipo?: 'SIEMPRE' | 'RANGO_FECHAS' | 'ESTACIONAL_ANUAL';
     fecha_inicio?: string;
@@ -384,13 +391,20 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
             .map((u: unknown) => String(u).trim())
             .filter((u: string) => u.length > 0);
 
+          const escalasVolumen = normalizarEscalasVolumen(
+            v.var_detalle_variante?.escalas_volumen
+          );
+
           return {
+            varId: v.var_id,
             sku: v.var_sku || `VAR-${v.var_id.slice(0, 6)}`,
             nombre: v.var_nombre,
             pvp,
+            pvpNominalSinVolumen: pvp,
             baseImponible: base,
             tarifaIva,
             precioComparacion,
+            escalasVolumen: escalasVolumen.length > 0 ? escalasVolumen : undefined,
             foto: fotosVarianteFinal[0],
             fotos: fotosVarianteFinal,
             detalle:
@@ -531,8 +545,14 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
               .filter((e: string) => e.length > 0)
           : [];
 
+        const esCombo = Boolean(detalle.es_combo);
+        const comboComponentes = esCombo
+          ? normalizarComponentesCombo(detalle.combo_componentes)
+          : [];
+
         return {
           id: p.pro_slug || p.pro_id,
+          proIdUuid: p.pro_id,
           slug: p.pro_slug || p.pro_id,
           nombre: p.pro_nombre,
           descripcionCorta:
@@ -587,6 +607,8 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
           esCondolencias: esCondol,
           esComplemento: esExtra,
           esExtra,
+          esCombo: esCombo && comboComponentes.length > 0,
+          comboComponentes: esCombo && comboComponentes.length > 0 ? comboComponentes : undefined,
           usos,
           ocasionRecomendada: formatearOcasionRecomendada(
             detalle.ocasion_recomendada,
@@ -607,6 +629,35 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
             : 0,
         };
       });
+
+    // 3. Para productos tipo Set / Combo, sincronizar automáticamente el precio tachado con la suma real de sus componentes
+    productos.forEach((prodCombo) => {
+      if (!prodCombo.esCombo || !prodCombo.comboComponentes || prodCombo.comboComponentes.length === 0) {
+        return;
+      }
+      const sumaComponentes = prodCombo.comboComponentes.reduce((acc, comp) => {
+        const prodHijo = productos.find(
+          (item) =>
+            item.proIdUuid === comp.producto_id ||
+            item.id === comp.producto_id ||
+            (comp.producto_slug && item.slug === comp.producto_slug)
+        );
+        const varHija =
+          prodHijo?.variantes.find(
+            (v) =>
+              (comp.variante_id && v.varId === comp.variante_id) ||
+              (comp.variante_sku && v.sku === comp.variante_sku)
+          ) || prodHijo?.variantes[0];
+        const pvpUnit = varHija ? (varHija.pvpNominalSinVolumen ?? varHija.pvp) : 0;
+        return acc + pvpUnit * comp.cantidad_base;
+      }, 0);
+
+      const sumaRedondeada = Number(sumaComponentes.toFixed(2));
+      const varCombo = prodCombo.variantes[0];
+      if (varCombo && sumaRedondeada > varCombo.pvp) {
+        varCombo.precioComparacion = sumaRedondeada;
+      }
+    });
 
     return { productos, categorias };
   } catch (error) {

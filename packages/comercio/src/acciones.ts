@@ -9,6 +9,12 @@ import {
   productoTieneAlMenosUnaImagen,
 } from "./canales";
 import { normalizarIdentificadorNegocio } from "./utils/negocio";
+import {
+  normalizarComponentesCombo,
+  normalizarEscalasVolumen,
+  type ComponenteComboConfig,
+  type EscalaVolumenVariante,
+} from "./utils/combosVolumen";
 
 export interface CategoriaCatalogo {
   ctg_id: string;
@@ -3495,6 +3501,9 @@ export async function crearProductoAction(datos: {
   mensaje_fuera_temporada?: string;
   etiqueta_temporada?: string;
   pro_activo?: boolean;
+  esCombo?: boolean;
+  comboComponentes?: ComponenteComboConfig[];
+  escalasVolumen?: EscalaVolumenVariante[];
   negocio?: string;
 }): Promise<{ ok: boolean; producto?: ProductoCatalogo; error?: string }> {
   try {
@@ -3575,7 +3584,11 @@ export async function crearProductoAction(datos: {
       ...nuevaVariante.var_detalle_variante,
       portada_url: resolvedImg,
       galeria_urls: resolvedGaleria,
+      escalas_volumen: normalizarEscalasVolumen(datos.escalasVolumen),
     };
+
+    const esCombo = Boolean(datos.esCombo);
+    const comboComponentes = esCombo ? normalizarComponentesCombo(datos.comboComponentes) : [];
 
     // Control de Imagen Obligatoria para Web y App
     const tieneImg = Boolean(
@@ -3619,6 +3632,8 @@ export async function crearProductoAction(datos: {
         mensaje_fuera_temporada: datos.mensaje_fuera_temporada?.trim() || null,
         etiqueta_temporada: datos.etiqueta_temporada?.trim() || null,
         pro_activo: datos.pro_activo !== false,
+        es_combo: esCombo,
+        combo_componentes: comboComponentes,
         creado_desde_panel: true,
       },
       categoria: cat
@@ -3659,7 +3674,7 @@ export async function crearProductoAction(datos: {
               var_sku: sku,
               var_nombre: nuevaVariante.var_nombre,
               var_precio: base,
-              var_precio_comparacion: null,
+              var_precio_comparacion: nuevaVariante.var_precio_comparacion,
               var_codigo_impuesto_sri: nuevaVariante.var_codigo_impuesto_sri,
               var_tarifa_iva_porcentaje: tarifaIva,
               var_tipo_oferta: "REGULAR",
@@ -3805,6 +3820,8 @@ export async function editarProductoAction(datos: {
   mensaje_fuera_temporada?: string;
   etiqueta_temporada?: string;
   pro_activo?: boolean;
+  esCombo?: boolean;
+  comboComponentes?: ComponenteComboConfig[];
   varianteId?: string;
   variantes?: Array<{
     var_id?: string;
@@ -4046,6 +4063,14 @@ export async function editarProductoAction(datos: {
         mensaje_fuera_temporada: datos.mensaje_fuera_temporada !== undefined ? datos.mensaje_fuera_temporada?.trim() : (prodActual.pro_detalle_producto?.mensaje_fuera_temporada || null),
         etiqueta_temporada: datos.etiqueta_temporada !== undefined ? datos.etiqueta_temporada?.trim() : (prodActual.pro_detalle_producto?.etiqueta_temporada || null),
         pro_activo: proActivoFinal,
+        es_combo:
+          datos.esCombo !== undefined
+            ? Boolean(datos.esCombo)
+            : Boolean(prodActual.pro_detalle_producto?.es_combo),
+        combo_componentes:
+          datos.comboComponentes !== undefined
+            ? (datos.esCombo === false ? [] : normalizarComponentesCombo(datos.comboComponentes))
+            : normalizarComponentesCombo(prodActual.pro_detalle_producto?.combo_componentes),
         editado_en: new Date().toISOString(),
       },
 

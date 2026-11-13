@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { describirEscalaVolumen } from '@eco/comercio';
 import { ProductoEcommerce, VarianteEcommerce } from '../tipos';
 import { useCarrito } from '../contexto-carrito';
 import { ChevronLeft, ChevronRight, Eye, ShoppingBag, Heart } from 'lucide-react';
@@ -123,13 +124,29 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
 
         {/* Chips de Estado */}
         <div className="chips-contenedor">
-          {tieneOferta && porcentajeDescuento > 0 && (
+          {producto.esCombo ? (
             <span
               className="chip-etiqueta chip-oferta"
-              title={`¡Oferta Especial! Ahorras $${ahorroMonto.toFixed(2)}`}
+              title={
+                tieneOferta
+                  ? `Set Completo con ahorro de $${ahorroMonto.toFixed(2)}`
+                  : 'Set de eventos configurable'
+              }
             >
-              🔥 -{porcentajeDescuento}% OFF
+              {tieneOferta && porcentajeDescuento > 0
+                ? `🎁 SET -${porcentajeDescuento}% OFF`
+                : '🎁 SET EVENTO'}
             </span>
+          ) : (
+            tieneOferta &&
+            porcentajeDescuento > 0 && (
+              <span
+                className="chip-etiqueta chip-oferta"
+                title={`¡Oferta Especial! Ahorras $${ahorroMonto.toFixed(2)}`}
+              >
+                🔥 -{porcentajeDescuento}% OFF
+              </span>
+            )
           )}
           {producto.entregaHoy && (
             <span className="chip-etiqueta chip-entrega-hoy">⚡ Entrega Hoy</span>
@@ -279,6 +296,37 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
                 ? `PVP (Inc. IVA ${varianteSeleccionada.tarifaIva}%)`
                 : 'PVP (Tarifa IVA 0%)'}
             </span>
+            {producto.esCombo && producto.comboComponentes && producto.comboComponentes.length > 0 && (
+              <span
+                style={{
+                  display: 'inline-block',
+                  marginTop: '3px',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  color: '#BE185D',
+                }}
+              >
+                ✨ Incluye {producto.comboComponentes.reduce((a, c) => a + c.cantidad_base, 0)} piezas • Personalizable
+              </span>
+            )}
+            {!producto.esCombo &&
+              varianteSeleccionada.escalasVolumen &&
+              varianteSeleccionada.escalasVolumen[0] && (
+                <span
+                  style={{
+                    display: 'inline-block',
+                    marginTop: '3px',
+                    fontSize: '0.7rem',
+                    fontWeight: 700,
+                    color: '#B45309',
+                  }}
+                >
+                  🏷️ {describirEscalaVolumen(
+                    varianteSeleccionada.escalasVolumen[0],
+                    varianteSeleccionada.pvpNominalSinVolumen ?? varianteSeleccionada.pvp
+                  )}
+                </span>
+              )}
           </div>
 
           <div className="acciones-tarjeta">

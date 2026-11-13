@@ -200,8 +200,25 @@ export function DrawerCarritoFloristeria() {
                             </button>
                           </div>
 
-                          <div className="precio-linea-item">
-                            ${(item.variante.pvp * item.cantidad).toFixed(2)}
+                          <div className="precio-linea-item" style={{ textAlign: 'right' }}>
+                            <div>${(item.variante.pvp * item.cantidad).toFixed(2)}</div>
+                            {(item.variante.pvpNominalSinVolumen ?? item.variante.pvp) >
+                              item.variante.pvp && (
+                              <div style={{ fontSize: '0.7rem', lineHeight: 1.2 }}>
+                                <span
+                                  style={{
+                                    textDecoration: 'line-through',
+                                    color: '#94A3B8',
+                                    marginRight: '4px',
+                                  }}
+                                >
+                                  ${((item.variante.pvpNominalSinVolumen ?? item.variante.pvp) * item.cantidad).toFixed(2)}
+                                </span>
+                                <span style={{ color: '#059669', fontWeight: 700 }}>
+                                  (${item.variante.pvp.toFixed(2)} c/u)
+                                </span>
+                              </div>
+                            )}
                           </div>
 
                           <button

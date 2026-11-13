@@ -1,6 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
+import {
+  calcularPrecioPorVolumen,
+  describirEscalaVolumen,
+} from '@eco/comercio';
 import { useCarrito } from '../contexto-carrito';
 import { PRODUCTOS_TINKAY, FRASES_DEDICATORIAS } from '../datos-catalogo';
 import { ProductoEcommerce, VarianteEcommerce, DedicatoriaArreglo } from '../tipos';
@@ -14,6 +18,9 @@ import {
   Truck,
   ShieldCheck,
   Plus,
+  Minus,
+  Gift,
+  Sliders,
   Check,
   Eye,
 } from 'lucide-react';
@@ -29,6 +36,11 @@ export function ModalDetalleProducto() {
   const producto = productoSeleccionadoModal;
 
   const [fotoActivaIndex, setFotoActivaIndex] = useState(0);
+  const [cantidadModal, setCantidadModal] = useState<number>(1);
+  const [modoCompraCombo, setModoCompraCombo] = useState<'set_completo' | 'personalizado'>('set_completo');
+  const [seleccionCombo, setSeleccionCombo] = useState<
+    Record<number, { sku: string; cantidad: number }>
+  >({});
   const [varianteSeleccionada, setVarianteSeleccionada] = useState<VarianteEcommerce>(
     producto?.variantes[0] || {
       sku: '',
@@ -46,11 +58,40 @@ export function ModalDetalleProducto() {
         producto.variantes[0]!;
       setVarianteSeleccionada(varInicial);
       setFotoActivaIndex(0);
+      setCantidadModal(1);
+      setModoCompraCombo('set_completo');
+
+      if (producto.esCombo && Array.isArray(producto.comboComponentes)) {
+        const catalogoRef = productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY;
+        const inicial: Record<number, { sku: string; cantidad: number }> = {};
+        producto.comboComponentes.forEach((comp, idx) => {
+          const prodHijo = catalogoRef.find(
+            (item) =>
+              item.proIdUuid === comp.producto_id ||
+              item.id === comp.producto_id ||
+              (comp.producto_slug && item.slug === comp.producto_slug)
+          );
+          const varDef =
+            prodHijo?.variantes.find(
+              (v) =>
+                (comp.variante_id && v.varId === comp.variante_id) ||
+                (comp.variante_sku && v.sku === comp.variante_sku)
+            ) || prodHijo?.variantes[0];
+          inicial[idx] = {
+            sku: varDef?.sku || comp.variante_sku || '',
+            cantidad: Math.max(1, comp.cantidad_base || 1),
+          };
+        });
+        setSeleccionCombo(inicial);
+      } else {
+        setSeleccionCombo({});
+      }
+
       setComplementosSeleccionados([]);
       setIncluirDedicatoria(false);
       setDedicatoria({ para: '', de: '', mensaje: '' });
     }
-  }, [producto]);
+  }, [producto, productos]);
 
   // Estado para la tarjeta de dedicatoria
   const [incluirDedicatoria, setIncluirDedicatoria] = useState(false);
@@ -207,22 +248,212 @@ export function ModalDetalleProducto() {
       ? obtenerNombreProductoIndividual(nombreBaseProducto, varianteSeleccionada.nombre)
       : producto?.nombre || '';
 
+  // Resolver elementos del Set / Combo Configurable (Hook de nivel superior)
+  const componentesComboResueltos = React.useMemo(() => {
+    if (!producto?.esCombo || !Array.isArray(producto.comboComponentes) || producto.comboComponentes.length === 0) {
+      return [];
+    }
+    const catalogoRef = productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY;
+
+    return producto.comboComponentes
+      .map((comp, idx) => {
+        const prodHijo = catalogoRef.find(
+          (item) =>
+            item.proIdUuid === comp.producto_id ||
+            item.id === comp.producto_id ||
+            (comp.producto_slug && item.slug === comp.producto_slug)
+        );
+        if (!prodHijo || prodHijo.variantes.length === 0) return null;
+
+        const varBaseSet =
+          prodHijo.variantes.find(
+            (v) =>
+              (comp.variante_id && v.varId === comp.variante_id) ||
+              (comp.variante_sku && v.sku === comp.variante_sku)
+          ) || prodHijo.variantes[0]!;
+
+        const selUsuario = seleccionCombo[idx];
+        const varElegida =
+          modoCompraCombo === 'personalizado' && selUsuario?.sku
+            ? prodHijo.variantes.find((v) => v.sku === selUsuario.sku) || varBaseSet
+            : varBaseSet;
+
+        const cantidadElegida =
+          modoCompraCombo === 'personalizado' && selUsuario !== undefined
+            ? Math.max(0, selUsuario.cantidad)
+            : Math.max(1, comp.cantidad_base);
+
+        const pvpBaseSetUnit = varBaseSet.pvpNominalSinVolumen ?? varBaseSet.pvp;
+        const subtotalBaseNominal = Number((pvpBaseSetUnit * comp.cantidad_base).toFixed(2));
+
+        const calcPersonalizado = calcularPrecioPorVolumen({
+          pvpUnitarioNominal: varElegida.pvpNominalSinVolumen ?? varElegida.pvp,
+          tarifaIvaPorcentaje: varElegida.tarifaIva,
+          cantidad: cantidadElegida,
+          escalas: varElegida.escalasVolumen,
+        });
+
+        const miniatura =
+          varElegida.foto ||
+          varElegida.fotos?.[0] ||
+          prodHijo.fotos[0] ||
+          '/img/slide4_flores_amor.jpg';
+
+        return {
+          idx,
+          comp,
+          prodHijo,
+          varBaseSet,
+          varElegida,
+          cantidadElegida,
+          pvpBaseSetUnit,
+          subtotalBaseNominal,
+          calcPersonalizado,
+          miniatura,
+        };
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null);
+  }, [producto, productos, seleccionCombo, modoCompraCombo]);
+
+  const esComboActivo = Boolean(producto?.esCombo && componentesComboResueltos.length > 0);
+
+  const resumenFinancieroCombo = React.useMemo(() => {
+    const sumaSetNominal = Number(
+      componentesComboResueltos
+        .reduce((acc, item) => acc + item.subtotalBaseNominal, 0)
+        .toFixed(2)
+    );
+    const pvpSet = varianteSeleccionada.pvp;
+    const ahorroSet = Math.max(0, Number((sumaSetNominal - pvpSet).toFixed(2)));
+    const porcentajeDescuentoSet =
+      sumaSetNominal > 0 && ahorroSet > 0 ? Math.round((ahorroSet / sumaSetNominal) * 100) : 0;
+
+    const sumaPersonalizadaNominal = Number(
+      componentesComboResueltos
+        .reduce((acc, item) => acc + item.calcPersonalizado.subtotalLineaNominal, 0)
+        .toFixed(2)
+    );
+    const sumaPersonalizadaFinal = Number(
+      componentesComboResueltos
+        .reduce((acc, item) => acc + item.calcPersonalizado.subtotalLineaFinal, 0)
+        .toFixed(2)
+    );
+    const ahorroVolumenPersonalizado = Math.max(
+      0,
+      Number((sumaPersonalizadaNominal - sumaPersonalizadaFinal).toFixed(2))
+    );
+    const totalPiezasPersonalizadas = componentesComboResueltos.reduce(
+      (acc, item) => acc + item.cantidadElegida,
+      0
+    );
+
+    const coincideExactoConSetBase =
+      componentesComboResueltos.length > 0 &&
+      componentesComboResueltos.every(
+        (item) =>
+          item.varElegida.sku === item.varBaseSet.sku &&
+          item.cantidadElegida === item.comp.cantidad_base
+      );
+
+    return {
+      sumaSetNominal,
+      pvpSet,
+      ahorroSet,
+      porcentajeDescuentoSet,
+      sumaPersonalizadaNominal,
+      sumaPersonalizadaFinal,
+      ahorroVolumenPersonalizado,
+      totalPiezasPersonalizadas,
+      coincideExactoConSetBase,
+    };
+  }, [componentesComboResueltos, varianteSeleccionada.pvp]);
+
+  const calculoVolumenIndividual = React.useMemo(() => {
+    return calcularPrecioPorVolumen({
+      pvpUnitarioNominal: varianteSeleccionada.pvpNominalSinVolumen ?? varianteSeleccionada.pvp,
+      tarifaIvaPorcentaje: varianteSeleccionada.tarifaIva,
+      cantidad: cantidadModal,
+      escalas: varianteSeleccionada.escalasVolumen,
+    });
+  }, [varianteSeleccionada, cantidadModal]);
+
   const handleAgregarAlCarrito = () => {
     if (!producto) return;
 
-    const productoParaCarrito: ProductoEcommerce = {
-      ...producto,
-      id: `${producto.id}__${varianteSeleccionada.sku}`,
-      nombre: tituloModal,
-      fotos: varianteSeleccionada.foto ? [varianteSeleccionada.foto] : producto.fotos,
-    };
+    const dedicatoriaActiva =
+      incluirDedicatoria && dedicatoria.mensaje.trim() ? dedicatoria : undefined;
 
-    // 1. Agregar el arreglo principal con su variante y dedicatoria
-    agregarItem(
-      productoParaCarrito,
-      varianteSeleccionada,
-      incluirDedicatoria && dedicatoria.mensaje.trim() ? dedicatoria : undefined
-    );
+    if (esComboActivo) {
+      const usarSetCerrado =
+        modoCompraCombo === 'set_completo' ||
+        (resumenFinancieroCombo.coincideExactoConSetBase &&
+          resumenFinancieroCombo.pvpSet <= resumenFinancieroCombo.sumaPersonalizadaFinal);
+
+      if (usarSetCerrado) {
+        const resumenPiezas = componentesComboResueltos
+          .map((it) => {
+            const sufijoVar =
+              it.prodHijo.variantes.length > 1 ? ` (${it.varBaseSet.nombre})` : '';
+            return `${it.comp.cantidad_base}× ${it.prodHijo.nombre}${sufijoVar}`;
+          })
+          .join(' + ');
+
+        const productoSetCarrito: ProductoEcommerce = {
+          ...producto,
+          id: `${producto.id}__${varianteSeleccionada.sku}`,
+          nombre: producto.nombre,
+          fotos: varianteSeleccionada.foto ? [varianteSeleccionada.foto] : producto.fotos,
+        };
+
+        const varianteSetCarrito: VarianteEcommerce = {
+          ...varianteSeleccionada,
+          nombre: `Set Completo: ${resumenPiezas}`,
+        };
+
+        agregarItem(productoSetCarrito, varianteSetCarrito, dedicatoriaActiva, undefined, 1);
+      } else {
+        if (resumenFinancieroCombo.totalPiezasPersonalizadas <= 0) return;
+        let dedicatoriaAsignada = false;
+
+        componentesComboResueltos.forEach((fila) => {
+          if (fila.cantidadElegida <= 0) return;
+          const tituloItem = obtenerNombreProductoIndividual(
+            fila.prodHijo.nombreBase || fila.prodHijo.nombre,
+            fila.varElegida.nombre
+          );
+          const prodItemCarrito: ProductoEcommerce = {
+            ...fila.prodHijo,
+            id: `${fila.prodHijo.id}__${fila.varElegida.sku}`,
+            nombre: tituloItem,
+            fotos: fila.varElegida.foto ? [fila.varElegida.foto] : fila.prodHijo.fotos,
+          };
+          agregarItem(
+            prodItemCarrito,
+            fila.varElegida,
+            !dedicatoriaAsignada ? dedicatoriaActiva : undefined,
+            undefined,
+            fila.cantidadElegida
+          );
+          dedicatoriaAsignada = true;
+        });
+      }
+    } else {
+      const productoParaCarrito: ProductoEcommerce = {
+        ...producto,
+        id: `${producto.id}__${varianteSeleccionada.sku}`,
+        nombre: tituloModal,
+        fotos: varianteSeleccionada.foto ? [varianteSeleccionada.foto] : producto.fotos,
+      };
+
+      // 1. Agregar el arreglo principal con su variante, cantidad y dedicatoria
+      agregarItem(
+        productoParaCarrito,
+        varianteSeleccionada,
+        dedicatoriaActiva,
+        undefined,
+        cantidadModal
+      );
+    }
 
     // 2. Agregar los complementos marcados con su variante elegida
     complementosSeleccionados.forEach((compId) => {
@@ -442,57 +673,685 @@ export function ModalDetalleProducto() {
           <div className="columna-info-modal">
             <div className="cabecera-info-producto">
               <span className="categoria-pill-modal">
-                {producto.esCondolencias ? '🕊️ Condolencias Solemnes' : 'Colección Tinkay'}
+                {esComboActivo
+                  ? '🎁 Set / Combo para Eventos'
+                  : producto.esCondolencias
+                  ? '🕊️ Condolencias Solemnes'
+                  : 'Colección Tinkay'}
               </span>
               <h2 className="titulo-modal-producto">{tituloModal}</h2>
-              <div className="fila-precio-modal">
-                <span className="precio-pvp-destacado">
-                  ${varianteSeleccionada.pvp.toFixed(2)}
-                </span>
-                {varianteSeleccionada.precioComparacion &&
-                  varianteSeleccionada.precioComparacion > varianteSeleccionada.pvp && (
-                    <>
+              {(() => {
+                const usarPrecioSet =
+                  esComboActivo &&
+                  (modoCompraCombo === 'set_completo' ||
+                    (resumenFinancieroCombo.coincideExactoConSetBase &&
+                      resumenFinancieroCombo.pvpSet <= resumenFinancieroCombo.sumaPersonalizadaFinal));
+
+                const precioCabecera = esComboActivo
+                  ? usarPrecioSet
+                    ? resumenFinancieroCombo.pvpSet
+                    : resumenFinancieroCombo.sumaPersonalizadaFinal
+                  : calculoVolumenIndividual.pvpUnitarioFinal;
+
+                const precioTachadoCabecera = esComboActivo
+                  ? usarPrecioSet
+                    ? resumenFinancieroCombo.sumaSetNominal > resumenFinancieroCombo.pvpSet
+                      ? resumenFinancieroCombo.sumaSetNominal
+                      : varianteSeleccionada.precioComparacion
+                    : resumenFinancieroCombo.sumaPersonalizadaNominal >
+                      resumenFinancieroCombo.sumaPersonalizadaFinal
+                    ? resumenFinancieroCombo.sumaPersonalizadaNominal
+                    : undefined
+                  : calculoVolumenIndividual.tieneDescuentoVolumen
+                  ? calculoVolumenIndividual.pvpUnitarioNominal
+                  : varianteSeleccionada.precioComparacion;
+
+                const pctDescuentoCabecera =
+                  precioTachadoCabecera && precioTachadoCabecera > precioCabecera
+                    ? Math.round(
+                        ((precioTachadoCabecera - precioCabecera) / precioTachadoCabecera) * 100
+                      )
+                    : 0;
+
+                return (
+                  <div className="fila-precio-modal" style={{ flexWrap: 'wrap', rowGap: '6px' }}>
+                    <span className="precio-pvp-destacado">${precioCabecera.toFixed(2)}</span>
+                    {!esComboActivo && cantidadModal > 1 && (
                       <span
                         style={{
-                          textDecoration: 'line-through',
-                          opacity: 0.55,
-                          fontSize: '1.25rem',
-                          fontWeight: 500,
-                          marginLeft: '8px',
-                          color: 'var(--tinta-media)',
-                        }}
-                        title={`Precio anterior de referencia: $${varianteSeleccionada.precioComparacion.toFixed(2)}`}
-                      >
-                        ${varianteSeleccionada.precioComparacion.toFixed(2)}
-                      </span>
-                      <span
-                        style={{
-                          background: '#E11D48',
-                          color: '#FFFFFF',
-                          fontSize: '0.78rem',
+                          fontSize: '0.82rem',
                           fontWeight: 700,
-                          padding: '3px 10px',
+                          color: '#047857',
+                          background: '#ECFDF5',
+                          border: '1px solid #A7F3D0',
+                          padding: '2px 8px',
                           borderRadius: '999px',
-                          marginLeft: '8px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          boxShadow: '0 2px 6px rgba(225, 29, 72, 0.35)',
+                          marginLeft: '6px',
                         }}
                       >
-                        🔥 -{Math.round(((varianteSeleccionada.precioComparacion - varianteSeleccionada.pvp) / varianteSeleccionada.precioComparacion) * 100)}% OFF
+                        c/u × {cantidadModal} = ${calculoVolumenIndividual.subtotalLineaFinal.toFixed(2)}
                       </span>
-                    </>
-                  )}
-                <span className="iva-etiqueta-modal">
-                  {varianteSeleccionada.tarifaIva > 0
-                    ? `PVP (IVA ${varianteSeleccionada.tarifaIva}% incluido)`
-                    : 'PVP (Tarifa IVA 0% — Flores Frescas)'}
-                </span>
-              </div>
+                    )}
+                    {precioTachadoCabecera && precioTachadoCabecera > precioCabecera && (
+                      <>
+                        <span
+                          style={{
+                            textDecoration: 'line-through',
+                            opacity: 0.55,
+                            fontSize: '1.2rem',
+                            fontWeight: 500,
+                            marginLeft: '8px',
+                            color: 'var(--tinta-media)',
+                          }}
+                          title={`Suma / precio individual sin descuento: $${precioTachadoCabecera.toFixed(2)}`}
+                        >
+                          ${precioTachadoCabecera.toFixed(2)}
+                        </span>
+                        {pctDescuentoCabecera > 0 && (
+                          <span
+                            style={{
+                              background: esComboActivo ? '#7C3AED' : '#E11D48',
+                              color: '#FFFFFF',
+                              fontSize: '0.76rem',
+                              fontWeight: 700,
+                              padding: '3px 10px',
+                              borderRadius: '999px',
+                              marginLeft: '8px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              boxShadow: esComboActivo
+                                ? '0 2px 6px rgba(124, 58, 237, 0.3)'
+                                : '0 2px 6px rgba(225, 29, 72, 0.35)',
+                            }}
+                          >
+                            {esComboActivo
+                              ? usarPrecioSet
+                                ? `🎁 Set -${pctDescuentoCabecera}% OFF`
+                                : `🏷️ Volumen -${pctDescuentoCabecera}% OFF`
+                              : calculoVolumenIndividual.tieneDescuentoVolumen
+                              ? `🏷️ Volumen -${pctDescuentoCabecera}% OFF`
+                              : `🔥 -${pctDescuentoCabecera}% OFF`}
+                          </span>
+                        )}
+                      </>
+                    )}
+                    <span className="iva-etiqueta-modal">
+                      {varianteSeleccionada.tarifaIva > 0
+                        ? `PVP (IVA ${varianteSeleccionada.tarifaIva}% incluido)`
+                        : 'PVP (Tarifa IVA 0% — Flores Frescas)'}
+                    </span>
+                  </div>
+                );
+              })()}
             </div>
 
-            {producto.variantes.length > 1 && (
+            {/* Configurador Interactivo de Set / Combo para Eventos */}
+            {esComboActivo && (
+              <div
+                style={{
+                  marginBottom: '16px',
+                  padding: '14px',
+                  background: 'linear-gradient(180deg, #FDFCFE 0%, #FAF7FF 100%)',
+                  border: '1.5px solid #DDD6FE',
+                  borderRadius: '14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                }}
+              >
+                {/* Conmutador: Set Completo vs Personalizar */}
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '6px',
+                    background: '#EDE9FE',
+                    padding: '4px',
+                    borderRadius: '10px',
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setModoCompraCombo('set_completo')}
+                    title="Llevar el Set Completo con precio especial de paquete"
+                    aria-label="Seleccionar Set Completo"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: modoCompraCombo === 'set_completo' ? '#5B21B6' : 'transparent',
+                      color: modoCompraCombo === 'set_completo' ? '#FFFFFF' : '#4C1D95',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      boxShadow:
+                        modoCompraCombo === 'set_completo'
+                          ? '0 2px 6px rgba(91, 33, 182, 0.25)'
+                          : 'none',
+                    }}
+                  >
+                    <Gift size={15} />
+                    <span>Set Completo</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setModoCompraCombo('personalizado')}
+                    title="Personalizar tamaños y cantidades individuales del evento"
+                    aria-label="Personalizar elementos"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      padding: '8px 10px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: modoCompraCombo === 'personalizado' ? '#18181B' : 'transparent',
+                      color: modoCompraCombo === 'personalizado' ? '#FFFFFF' : '#3F3F46',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      boxShadow:
+                        modoCompraCombo === 'personalizado'
+                          ? '0 2px 6px rgba(24, 24, 27, 0.22)'
+                          : 'none',
+                    }}
+                  >
+                    <Sliders size={15} />
+                    <span>Personalizar</span>
+                  </button>
+                </div>
+
+                <div style={{ fontSize: '0.78rem', color: '#52525B', lineHeight: 1.4 }}>
+                  {modoCompraCombo === 'set_completo' ? (
+                    <span>
+                      Incluye todas las piezas mostradas con{' '}
+                      <strong style={{ color: '#5B21B6' }}>
+                        descuento especial de Set (${resumenFinancieroCombo.ahorroSet.toFixed(2)} de ahorro)
+                      </strong>
+                      . Haz clic en <strong>Personalizar</strong> si deseas elegir tamaños o cantidades a medida.
+                    </span>
+                  ) : (
+                    <span>
+                      Elige el <strong>tamaño</strong> y la <strong>cantidad</strong> de cada elemento (pon{' '}
+                      <code>0</code> si no requieres alguno). Se suman los costos reales aplicando descuentos por volumen automáticamente.
+                    </span>
+                  )}
+                </div>
+
+                {/* Lista de elementos individuales del Set */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {componentesComboResueltos.map((fila) => {
+                    const escalasVar = fila.varElegida.escalasVolumen ?? [];
+                    const excluido = modoCompraCombo === 'personalizado' && fila.cantidadElegida === 0;
+                    const pvpUnitSinDesc =
+                      modoCompraCombo === 'personalizado'
+                        ? fila.calcPersonalizado.pvpUnitarioNominal
+                        : fila.pvpBaseSetUnit;
+                    const pvpUnitConDesc =
+                      modoCompraCombo === 'personalizado'
+                        ? fila.calcPersonalizado.pvpUnitarioFinal
+                        : fila.pvpBaseSetUnit;
+                    const subtotalElemento =
+                      modoCompraCombo === 'personalizado'
+                        ? fila.calcPersonalizado.subtotalLineaFinal
+                        : fila.subtotalBaseNominal;
+
+                    return (
+                      <div
+                        key={`${fila.comp.producto_id}-${fila.idx}`}
+                        style={{
+                          background: excluido ? '#F4F4F5' : '#FFFFFF',
+                          border: excluido ? '1px dashed #D4D4D8' : '1px solid #E4E4E7',
+                          borderRadius: '12px',
+                          padding: '10px 12px',
+                          opacity: excluido ? 0.68 : 1,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '8px',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            justifyContent: 'space-between',
+                          }}
+                        >
+                          {/* Miniatura con vista ampliada */}
+                          <button
+                            type="button"
+                            onClick={() => abrirInspeccionExtra(fila.prodHijo)}
+                            title={`Ver foto ampliada de ${fila.prodHijo.nombre}`}
+                            aria-label={`Ver foto de ${fila.prodHijo.nombre}`}
+                            style={{
+                              position: 'relative',
+                              width: '54px',
+                              height: '54px',
+                              borderRadius: '10px',
+                              overflow: 'hidden',
+                              border: '1px solid #E4E4E7',
+                              padding: 0,
+                              background: '#F4F4F5',
+                              cursor: 'pointer',
+                              flexShrink: 0,
+                            }}
+                          >
+                            <img
+                              src={fila.miniatura}
+                              alt={fila.prodHijo.nombre}
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                            <span
+                              style={{
+                                position: 'absolute',
+                                bottom: '2px',
+                                right: '2px',
+                                background: 'rgba(24,24,27,0.72)',
+                                color: '#FFFFFF',
+                                borderRadius: '999px',
+                                padding: '2px 4px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                              }}
+                            >
+                              <Eye size={10} />
+                            </span>
+                          </button>
+
+                          {/* Nombre y precio individual */}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div
+                              style={{
+                                fontSize: '0.86rem',
+                                fontWeight: 700,
+                                color: '#18181B',
+                                lineHeight: 1.25,
+                              }}
+                            >
+                              {modoCompraCombo === 'set_completo' && (
+                                <span
+                                  style={{
+                                    display: 'inline-block',
+                                    background: '#EDE9FE',
+                                    color: '#5B21B6',
+                                    borderRadius: '6px',
+                                    padding: '1px 6px',
+                                    fontSize: '0.74rem',
+                                    fontWeight: 800,
+                                    marginRight: '6px',
+                                  }}
+                                >
+                                  {fila.comp.cantidad_base}×
+                                </span>
+                              )}
+                              {fila.prodHijo.nombreBase || fila.prodHijo.nombre}
+                            </div>
+
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                flexWrap: 'wrap',
+                                gap: '6px',
+                                marginTop: '3px',
+                                fontSize: '0.76rem',
+                                color: '#52525B',
+                              }}
+                            >
+                              {modoCompraCombo === 'set_completo' &&
+                                fila.prodHijo.variantes.length > 1 && (
+                                  <span
+                                    style={{
+                                      background: '#F4F4F5',
+                                      color: '#3F3F46',
+                                      padding: '1px 7px',
+                                      borderRadius: '999px',
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    {fila.varBaseSet.nombre}
+                                  </span>
+                                )}
+                              <span>
+                                Unitario:{' '}
+                                {modoCompraCombo === 'personalizado' &&
+                                fila.calcPersonalizado.tieneDescuentoVolumen ? (
+                                  <>
+                                    <span
+                                      style={{
+                                        textDecoration: 'line-through',
+                                        opacity: 0.6,
+                                        marginRight: '4px',
+                                      }}
+                                    >
+                                      ${pvpUnitSinDesc.toFixed(2)}
+                                    </span>
+                                    <strong style={{ color: '#047857' }}>
+                                      ${pvpUnitConDesc.toFixed(2)}
+                                    </strong>
+                                  </>
+                                ) : (
+                                  <strong>${pvpUnitSinDesc.toFixed(2)}</strong>
+                                )}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Subtotal o Controles de Cantidad */}
+                          {modoCompraCombo === 'set_completo' ? (
+                            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                              <div
+                                style={{
+                                  fontSize: '0.86rem',
+                                  fontWeight: 700,
+                                  color: '#27272A',
+                                }}
+                              >
+                                ${subtotalElemento.toFixed(2)}
+                              </div>
+                              {fila.comp.cantidad_base > 1 && (
+                                <div style={{ fontSize: '0.68rem', color: '#71717A' }}>
+                                  ({fila.comp.cantidad_base} × ${fila.pvpBaseSetUnit.toFixed(2)})
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div
+                              style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'flex-end',
+                                gap: '4px',
+                                flexShrink: 0,
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  border: '1px solid #D4D4D8',
+                                  borderRadius: '999px',
+                                  background: '#FFFFFF',
+                                  overflow: 'hidden',
+                                }}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setSeleccionCombo((prev) => ({
+                                      ...prev,
+                                      [fila.idx]: {
+                                        sku: fila.varElegida.sku,
+                                        cantidad: Math.max(0, fila.cantidadElegida - 1),
+                                      },
+                                    }))
+                                  }
+                                  title="Disminuir cantidad"
+                                  aria-label={`Disminuir cantidad de ${fila.prodHijo.nombre}`}
+                                  style={{
+                                    border: 'none',
+                                    background: 'transparent',
+                                    padding: '5px 8px',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    color: '#27272A',
+                                  }}
+                                >
+                                  <Minus size={13} />
+                                </button>
+                                <span
+                                  style={{
+                                    minWidth: '24px',
+                                    textAlign: 'center',
+                                    fontSize: '0.82rem',
+                                    fontWeight: 800,
+                                    color: '#18181B',
+                                  }}
+                                >
+                                  {fila.cantidadElegida}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setSeleccionCombo((prev) => ({
+                                      ...prev,
+                                      [fila.idx]: {
+                                        sku: fila.varElegida.sku,
+                                        cantidad: fila.cantidadElegida + 1,
+                                      },
+                                    }))
+                                  }
+                                  title="Aumentar cantidad"
+                                  aria-label={`Aumentar cantidad de ${fila.prodHijo.nombre}`}
+                                  style={{
+                                    border: 'none',
+                                    background: 'transparent',
+                                    padding: '5px 8px',
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    color: '#27272A',
+                                  }}
+                                >
+                                  <Plus size={13} />
+                                </button>
+                              </div>
+                              <span
+                                style={{
+                                  fontSize: '0.78rem',
+                                  fontWeight: 700,
+                                  color: excluido ? '#A1A1AA' : '#18181B',
+                                }}
+                              >
+                                {excluido ? 'No incluido' : `$${subtotalElemento.toFixed(2)}`}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Selector de Variación (S / M / L / XL) en modo Personalizar */}
+                        {modoCompraCombo === 'personalizado' &&
+                          fila.prodHijo.variantes.length > 1 && (
+                            <div
+                              style={{
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                gap: '6px',
+                                paddingTop: '6px',
+                                borderTop: '1px dashed #F4F4F5',
+                              }}
+                            >
+                              {fila.prodHijo.variantes.map((vHijo) => {
+                                const activaVar = vHijo.sku === fila.varElegida.sku;
+                                return (
+                                  <button
+                                    key={vHijo.sku}
+                                    type="button"
+                                    onClick={() =>
+                                      setSeleccionCombo((prev) => ({
+                                        ...prev,
+                                        [fila.idx]: {
+                                          sku: vHijo.sku,
+                                          cantidad:
+                                            fila.cantidadElegida > 0 ? fila.cantidadElegida : 1,
+                                        },
+                                      }))
+                                    }
+                                    title={`Elegir ${vHijo.nombre} ($${vHijo.pvp.toFixed(2)})`}
+                                    aria-label={`Elegir ${vHijo.nombre}`}
+                                    style={{
+                                      padding: '4px 9px',
+                                      borderRadius: '999px',
+                                      border: activaVar
+                                        ? '1.5px solid #18181B'
+                                        : '1px solid #E4E4E7',
+                                      background: activaVar ? '#18181B' : '#FAFAFA',
+                                      color: activaVar ? '#FFFFFF' : '#3F3F46',
+                                      fontSize: '0.73rem',
+                                      fontWeight: 600,
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    {vHijo.nombre} · ${vHijo.pvp.toFixed(2)}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+
+                        {/* Etiquetas de descuento por volumen del componente */}
+                        {escalasVar.length > 0 && (
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '6px',
+                              alignItems: 'center',
+                            }}
+                          >
+                            {escalasVar.map((esc, idxEsc) => {
+                              const activaEsc =
+                                modoCompraCombo === 'personalizado' &&
+                                fila.calcPersonalizado.escalaAplicada?.min_cantidad ===
+                                  esc.min_cantidad;
+                              return (
+                                <span
+                                  key={idxEsc}
+                                  style={{
+                                    fontSize: '0.7rem',
+                                    fontWeight: 700,
+                                    padding: '2px 8px',
+                                    borderRadius: '999px',
+                                    background: activaEsc ? '#DCFCE7' : '#F0FDF4',
+                                    color: '#047857',
+                                    border: activaEsc
+                                      ? '1px solid #34D399'
+                                      : '1px dashed #A7F3D0',
+                                  }}
+                                >
+                                  🏷️ {describirEscalaVolumen(esc, pvpUnitSinDesc)}{' '}
+                                  {activaEsc ? '✓ Aplicado' : ''}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Resumen Financiero del Set / Selección */}
+                <div
+                  style={{
+                    background: '#FFFFFF',
+                    border: '1px solid #DDD6FE',
+                    borderRadius: '10px',
+                    padding: '10px 12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                    fontSize: '0.8rem',
+                  }}
+                >
+                  {modoCompraCombo === 'set_completo' ? (
+                    <>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          color: '#71717A',
+                        }}
+                      >
+                        <span>Suma de elementos por separado:</span>
+                        <span style={{ textDecoration: 'line-through' }}>
+                          ${resumenFinancieroCombo.sumaSetNominal.toFixed(2)}
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          fontWeight: 800,
+                          color: '#5B21B6',
+                          fontSize: '0.9rem',
+                        }}
+                      >
+                        <span>
+                          Precio Set Completo (-{resumenFinancieroCombo.porcentajeDescuentoSet}%):
+                        </span>
+                        <span>${resumenFinancieroCombo.pvpSet.toFixed(2)}</span>
+                      </div>
+                    </>
+                  ) : resumenFinancieroCombo.coincideExactoConSetBase &&
+                    resumenFinancieroCombo.pvpSet <
+                      resumenFinancieroCombo.sumaPersonalizadaFinal ? (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        color: '#5B21B6',
+                        fontWeight: 700,
+                        fontSize: '0.78rem',
+                      }}
+                    >
+                      <ShieldCheck size={16} />
+                      <span>
+                        Tu selección coincide con el Set Completo: aplicamos automáticamente la tarifa preferencial de{' '}
+                        <strong>${resumenFinancieroCombo.pvpSet.toFixed(2)}</strong>.
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      {resumenFinancieroCombo.ahorroVolumenPersonalizado > 0 && (
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            color: '#047857',
+                            fontWeight: 600,
+                          }}
+                        >
+                          <span>Ahorro automático por cantidad:</span>
+                          <span>
+                            -${resumenFinancieroCombo.ahorroVolumenPersonalizado.toFixed(2)}
+                          </span>
+                        </div>
+                      )}
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          fontWeight: 800,
+                          color: '#18181B',
+                          fontSize: '0.9rem',
+                        }}
+                      >
+                        <span>
+                          Total selección ({resumenFinancieroCombo.totalPiezasPersonalizadas}{' '}
+                          {resumenFinancieroCombo.totalPiezasPersonalizadas === 1
+                            ? 'pieza'
+                            : 'piezas'}
+                          ):
+                        </span>
+                        <span>${resumenFinancieroCombo.sumaPersonalizadaFinal.toFixed(2)}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {!esComboActivo && producto.variantes.length > 1 && (
               <div
                 style={{
                   marginBottom: '16px',
@@ -553,6 +1412,165 @@ export function ModalDetalleProducto() {
                     );
                   })}
                 </div>
+              </div>
+            )}
+
+            {/* Cantidad y Escalas de Descuento por Volumen (Producto Individual) */}
+            {!esComboActivo && (
+              <div
+                style={{
+                  marginBottom: '14px',
+                  padding: '10px 14px',
+                  background:
+                    (varianteSeleccionada.escalasVolumen?.length ?? 0) > 0 ? '#F0FDF4' : '#FAF8F5',
+                  border:
+                    (varianteSeleccionada.escalasVolumen?.length ?? 0) > 0
+                      ? '1px solid #A7F3D0'
+                      : '1px solid #EAE6DF',
+                  borderRadius: '14px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '10px',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <div>
+                    <span
+                      style={{
+                        display: 'block',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        color: '#3F3F46',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                      }}
+                    >
+                      Cantidad
+                    </span>
+                    {calculoVolumenIndividual.tieneDescuentoVolumen && (
+                      <span
+                        style={{
+                          fontSize: '0.74rem',
+                          fontWeight: 700,
+                          color: '#047857',
+                        }}
+                      >
+                        ✓ Ahorras ${calculoVolumenIndividual.ahorroTotalLinea.toFixed(2)} por volumen
+                      </span>
+                    )}
+                  </div>
+
+                  <div
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      border: '1px solid #D4D4D8',
+                      borderRadius: '999px',
+                      background: '#FFFFFF',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setCantidadModal((prev) => Math.max(1, prev - 1))}
+                      title="Disminuir cantidad"
+                      aria-label="Disminuir cantidad"
+                      style={{
+                        border: 'none',
+                        background: 'transparent',
+                        padding: '6px 10px',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        color: '#27272A',
+                      }}
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span
+                      style={{
+                        minWidth: '28px',
+                        textAlign: 'center',
+                        fontSize: '0.88rem',
+                        fontWeight: 800,
+                        color: '#18181B',
+                      }}
+                    >
+                      {cantidadModal}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setCantidadModal((prev) => prev + 1)}
+                      title="Aumentar cantidad"
+                      aria-label="Aumentar cantidad"
+                      style={{
+                        border: 'none',
+                        background: 'transparent',
+                        padding: '6px 10px',
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        color: '#27272A',
+                      }}
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                {varianteSeleccionada.escalasVolumen &&
+                  varianteSeleccionada.escalasVolumen.length > 0 && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '6px',
+                        paddingTop: '6px',
+                        borderTop: '1px dashed #A7F3D0',
+                      }}
+                    >
+                      {varianteSeleccionada.escalasVolumen.map((esc, idxEsc) => {
+                        const activaEsc =
+                          calculoVolumenIndividual.escalaAplicada?.min_cantidad ===
+                          esc.min_cantidad;
+                        return (
+                          <button
+                            key={idxEsc}
+                            type="button"
+                            onClick={() => setCantidadModal(esc.min_cantidad)}
+                            title={`Seleccionar ${esc.min_cantidad} unidades para activar este descuento`}
+                            aria-label={`Aplicar descuento llevando ${esc.min_cantidad} unidades`}
+                            style={{
+                              padding: '4px 10px',
+                              borderRadius: '999px',
+                              border: activaEsc ? '1.5px solid #059669' : '1px solid #6EE7B7',
+                              background: activaEsc ? '#059669' : '#FFFFFF',
+                              color: activaEsc ? '#FFFFFF' : '#047857',
+                              fontSize: '0.73rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            🏷️{' '}
+                            {describirEscalaVolumen(
+                              esc,
+                              varianteSeleccionada.pvpNominalSinVolumen ??
+                                varianteSeleccionada.pvp
+                            )}{' '}
+                            {activaEsc ? '✓' : ''}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
               </div>
             )}
 
@@ -757,21 +1775,61 @@ export function ModalDetalleProducto() {
 
             {/* Botón Principal de Adición */}
             <div className="fila-botones-modal-accion">
-              <button
-                type="button"
-                className="btn btn-primario btn-agregar-modal-grande"
-                onClick={handleAgregarAlCarrito}
-              >
-                <ShoppingBag size={20} />
-                <span>Agregar al Carrito — ${(
-                  varianteSeleccionada.pvp +
-                  complementosSeleccionados.reduce((acc, cId) => {
-                    const c = productosComplementos.find((p) => p.id === cId);
-                    const varC = c ? (variantesExtrasElegidas[cId] || obtenerVarianteComplemento(c)) : null;
-                    return acc + (varC?.pvp ?? 0);
-                  }, 0)
-                ).toFixed(2)}</span>
-              </button>
+              {(() => {
+                const sumaExtras = complementosSeleccionados.reduce((acc, cId) => {
+                  const c = productosComplementos.find((p) => p.id === cId);
+                  const varC = c
+                    ? variantesExtrasElegidas[cId] || obtenerVarianteComplemento(c)
+                    : null;
+                  return acc + (varC?.pvp ?? 0);
+                }, 0);
+
+                const usarSetCerradoBtn =
+                  esComboActivo &&
+                  (modoCompraCombo === 'set_completo' ||
+                    (resumenFinancieroCombo.coincideExactoConSetBase &&
+                      resumenFinancieroCombo.pvpSet <=
+                        resumenFinancieroCombo.sumaPersonalizadaFinal));
+
+                const subtotalBaseBoton = esComboActivo
+                  ? usarSetCerradoBtn
+                    ? resumenFinancieroCombo.pvpSet
+                    : resumenFinancieroCombo.sumaPersonalizadaFinal
+                  : calculoVolumenIndividual.subtotalLineaFinal;
+
+                const totalBoton = Number((subtotalBaseBoton + sumaExtras).toFixed(2));
+                const sinPiezasCombo =
+                  esComboActivo &&
+                  modoCompraCombo === 'personalizado' &&
+                  resumenFinancieroCombo.totalPiezasPersonalizadas <= 0;
+
+                const etiquetaAccion = sinPiezasCombo
+                  ? 'Elige 1 pieza'
+                  : esComboActivo
+                  ? usarSetCerradoBtn
+                    ? `Agregar Set — $${totalBoton.toFixed(2)}`
+                    : `Agregar Selección — $${totalBoton.toFixed(2)}`
+                  : `Agregar al Carrito — $${totalBoton.toFixed(2)}`;
+
+                return (
+                  <button
+                    type="button"
+                    className="btn btn-primario btn-agregar-modal-grande"
+                    onClick={handleAgregarAlCarrito}
+                    disabled={sinPiezasCombo}
+                    title={etiquetaAccion}
+                    aria-label={etiquetaAccion}
+                    style={
+                      sinPiezasCombo
+                        ? { opacity: 0.55, cursor: 'not-allowed' }
+                        : undefined
+                    }
+                  >
+                    <ShoppingBag size={20} />
+                    <span>{etiquetaAccion}</span>
+                  </button>
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -921,34 +1979,64 @@ export function ModalDetalleProducto() {
 
               {/* Botones de Acción */}
               <div className="acciones-preview-extra">
-                {complementosSeleccionados.includes(extraParaInspeccionar.id) ? (
-                  <button
-                    type="button"
-                    className="btn btn-quitar-extra-preview"
-                    onClick={() => confirmarQuitarExtraDesdeInspeccion(extraParaInspeccionar)}
-                  >
-                    <Check size={16} />
-                    <span>✓ Extra Agregado — Quitar de mi Pedido</span>
-                  </button>
+                {esComboActivo &&
+                componentesComboResueltos.some((c) => c.prodHijo.id === extraParaInspeccionar.id) ? (
+                  <>
+                    <button
+                      type="button"
+                      className="btn btn-primario btn-agregar-extra-preview"
+                      onClick={() => {
+                        setModoCompraCombo('personalizado');
+                        cerrarInspeccionExtra();
+                      }}
+                      title="Personalizar cantidades o tamaños en el Set"
+                      aria-label="Personalizar en el Set"
+                    >
+                      <Sliders size={16} />
+                      <span>Personalizar en Set</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="btn-volver-arreglo"
+                      onClick={cerrarInspeccionExtra}
+                      title="Volver al Set"
+                      aria-label="Volver al Set"
+                    >
+                      Volver al Set
+                    </button>
+                  </>
                 ) : (
-                  <button
-                    type="button"
-                    className="btn btn-primario btn-agregar-extra-preview"
-                    onClick={() => confirmarAgregarExtraDesdeInspeccion(extraParaInspeccionar)}
-                  >
-                    <Plus size={16} />
-                    <span>
-                      Agregar este Detalle (+${(varianteExtraInspeccion?.pvp ?? obtenerVarianteComplemento(extraParaInspeccionar)?.pvp ?? 0).toFixed(2)})
-                    </span>
-                  </button>
+                  <>
+                    {complementosSeleccionados.includes(extraParaInspeccionar.id) ? (
+                      <button
+                        type="button"
+                        className="btn btn-quitar-extra-preview"
+                        onClick={() => confirmarQuitarExtraDesdeInspeccion(extraParaInspeccionar)}
+                      >
+                        <Check size={16} />
+                        <span>✓ Extra Agregado — Quitar de mi Pedido</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn btn-primario btn-agregar-extra-preview"
+                        onClick={() => confirmarAgregarExtraDesdeInspeccion(extraParaInspeccionar)}
+                      >
+                        <Plus size={16} />
+                        <span>
+                          Agregar este Detalle (+${(varianteExtraInspeccion?.pvp ?? obtenerVarianteComplemento(extraParaInspeccionar)?.pvp ?? 0).toFixed(2)})
+                        </span>
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="btn-volver-arreglo"
+                      onClick={cerrarInspeccionExtra}
+                    >
+                      Volver a la selección de flores
+                    </button>
+                  </>
                 )}
-                <button
-                  type="button"
-                  className="btn-volver-arreglo"
-                  onClick={cerrarInspeccionExtra}
-                >
-                  Volver a la selección de flores
-                </button>
               </div>
             </div>
           </div>

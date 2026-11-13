@@ -18,6 +18,7 @@ import {
   resolverCategoriaPorIdentificador,
 } from './filtrado-catalogo';
 import {
+  calcularPrecioPorVolumen,
   crearConfiguracionLogisticaPorDefecto,
   obtenerConfiguracionLogisticaAction,
   type ConfiguracionLogisticaNegocio,
@@ -52,7 +53,8 @@ interface ContextoCarritoValor {
     producto: ProductoEcommerce,
     variante: VarianteEcommerce,
     dedicatoria?: DedicatoriaArreglo,
-    entregaIndividual?: DatosEntrega
+    entregaIndividual?: DatosEntrega,
+    cantidadInicial?: number
   ) => void;
   eliminarItem: (itemId: string) => void;
   actualizarCantidad: (itemId: string, cantidad: number) => void;
@@ -199,25 +201,55 @@ export function ProveedorCarrito({ children }: { children: React.ReactNode }) {
     }
   }, [items, modalidadEntrega, entregaUnificada, cargado]);
 
+  const recalcularVarianteConVolumen = (
+    variante: VarianteEcommerce,
+    cantidad: number
+  ): VarianteEcommerce => {
+    const pvpNominal = variante.pvpNominalSinVolumen ?? variante.pvp;
+    if (!variante.escalasVolumen || variante.escalasVolumen.length === 0) {
+      return {
+        ...variante,
+        pvpNominalSinVolumen: pvpNominal,
+      };
+    }
+    const calc = calcularPrecioPorVolumen({
+      pvpUnitarioNominal: pvpNominal,
+      tarifaIvaPorcentaje: variante.tarifaIva,
+      cantidad,
+      escalas: variante.escalasVolumen,
+    });
+    return {
+      ...variante,
+      pvpNominalSinVolumen: pvpNominal,
+      pvp: calc.pvpUnitarioFinal,
+      baseImponible: calc.baseImponibleUnitariaFinal,
+    };
+  };
+
   const agregarItem = (
     producto: ProductoEcommerce,
     variante: VarianteEcommerce,
     dedicatoria?: DedicatoriaArreglo,
-    entregaIndividual?: DatosEntrega
+    entregaIndividual?: DatosEntrega,
+    cantidadInicial = 1
   ) => {
+    const cantAgregar = Math.max(1, Math.floor(cantidadInicial || 1));
+
     setItems((prev) => {
       // Si el producto no tiene dedicatoria específica y ya existe la misma variante, podemos sumar cantidad
       if (!dedicatoria && !entregaIndividual) {
         const indexExistente = prev.findIndex(
-          (i) => i.producto.id === producto.id && i.variante.sku === variante.sku && !i.dedicatoria
+          (i) => i.producto.id === producto.id && i.variante.sku === variante.sku && !i.dedicatoria?.mensaje
         );
         if (indexExistente >= 0) {
           const clon = [...prev];
           const actual = clon[indexExistente];
           if (actual) {
+            const nuevaCantidad = actual.cantidad + cantAgregar;
             clon[indexExistente] = {
               ...actual,
-              cantidad: actual.cantidad + 1,
+              cantidad: nuevaCantidad,
+              variante: recalcularVarianteConVolumen(actual.variante, nuevaCantidad),
             };
           }
           return clon;
@@ -229,8 +261,8 @@ export function ProveedorCarrito({ children }: { children: React.ReactNode }) {
       const nuevoItem: ItemCarrito = {
         id: nuevoId,
         producto,
-        variante,
-        cantidad: 1,
+        variante: recalcularVarianteConVolumen(variante, cantAgregar),
+        cantidad: cantAgregar,
         dedicatoria: dedicatoria || {
           para: '',
           de: '',
@@ -255,7 +287,15 @@ export function ProveedorCarrito({ children }: { children: React.ReactNode }) {
       return;
     }
     setItems((prev) =>
-      prev.map((i) => (i.id === itemId ? { ...i, cantidad } : i))
+      prev.map((i) =>
+        i.id === itemId
+          ? {
+              ...i,
+              cantidad,
+              variante: recalcularVarianteConVolumen(i.variante, cantidad),
+            }
+          : i
+      )
     );
   };
 

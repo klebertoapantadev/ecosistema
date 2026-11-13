@@ -1,6 +1,6 @@
 # ADR-0003: Catálogo Comercial Unificado, Recetas (BOM), Proformas (CPQ), Inventarios y Suscripciones
 
-**Fecha:** 2026-07-26 (Actualizado: 2026-09-05)  
+**Fecha:** 2026-07-26 (Actualizado: 2026-11-13)  
 **Estado:** aceptada (ampliada y blindada)  
 
 ## Contexto
@@ -130,6 +130,24 @@ create table comun_comercio.com_producto_relacionado (
   prl_orden int not null default 0,
   unique(prl_producto_origen_id, prl_producto_destino_id)
 );
+
+-- Composición de Sets / Combos Configurables (ej. Sets de Eventos / Bodas compuestos por productos individuales con variantes)
+create table comun_comercio.com_combo_componente (
+  cbc_id uuid primary key default gen_random_uuid(),
+  cbc_secuencial bigint generated always as identity,
+  cbc_negocio text not null,
+  cbc_combo_producto_id uuid not null references comun_comercio.com_producto(pro_id) on delete cascade,
+  cbc_item_producto_id uuid not null references comun_comercio.com_producto(pro_id) on delete cascade,
+  cbc_item_variante_id uuid references comun_comercio.com_variante(var_id) on delete set null,
+  cbc_cantidad_base int not null default 1 check (cbc_cantidad_base >= 1),
+  cbc_orden int not null default 1,
+  cbc_es_opcional boolean not null default true,
+  cbc_detalle_componente jsonb not null default '{}'::jsonb,
+  cbc_creado_en timestamptz not null default now(),
+  cbc_actualizado_en timestamptz not null default now(),
+  check (cbc_combo_producto_id <> cbc_item_producto_id)
+);
+-- Nota: Adicionalmente, cada variante (`com_variante.var_detalle_variante.escalas_volumen`) soporta escalas de descuento por cantidad (`PRECIO_FIJO` | `PORCENTAJE` | `MONTO_DESCUENTO`) recalculando la base imponible antes de IVA.
 ```
 
 ---

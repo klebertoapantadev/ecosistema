@@ -54,6 +54,16 @@ import {
   verificarUsoEnProductosLocales,
 } from "../utils/usosCatalogo";
 import { ModalBloqueoUso, ModalConfirmarEliminarUso } from "./ModalesValidacionUso";
+import {
+  EditorEscalasVolumenVariante,
+  EditorSetComboConfigurable,
+} from "./EditorComboYVolumen";
+import {
+  normalizarComponentesCombo,
+  normalizarEscalasVolumen,
+  type ComponenteComboConfig,
+  type EscalaVolumenVariante,
+} from "../utils/combosVolumen";
 
 
 interface Props {
@@ -99,6 +109,9 @@ export function ModalCrearProducto({
   const [precioComparacion, setPrecioComparacion] = useState<number | "">("");
   const [tarifaIva, setTarifaIva] = useState<number>(15);
   const [sku, setSku] = useState("");
+  const [esComboCrear, setEsComboCrear] = useState<boolean>(false);
+  const [comboComponentesCrear, setComboComponentesCrear] = useState<ComponenteComboConfig[]>([]);
+  const [escalasVolumenCrear, setEscalasVolumenCrear] = useState<EscalaVolumenVariante[]>([]);
   const [destacado, setDestacado] = useState(false);
   const [icono, setIcono] = useState<string>(esFloristeria ? "Sparkles" : "Scale");
   const [modalidadPago, setModalidadPago] = useState("Botón Payphone / Tarjeta / Saldo");
@@ -582,6 +595,9 @@ export function ModalCrearProducto({
         usos: usosSeleccionados,
         etiquetas: etiquetasSeleccionadas,
         canales_visibilidad: canalesSeleccionados,
+        esCombo: esComboCrear,
+        comboComponentes: esComboCrear ? normalizarComponentesCombo(comboComponentesCrear) : [],
+        escalasVolumen: normalizarEscalasVolumen(escalasVolumenCrear),
         negocio,
       });
 
@@ -1270,7 +1286,53 @@ export function ModalCrearProducto({
                 </strong>
               </div>
             </div>
+
+            {/* Escalas de descuento por cantidad / volumen */}
+            <EditorEscalasVolumenVariante
+              escalas={escalasVolumenCrear}
+              pvpUnitarioNominal={totalCalc}
+              onChange={setEscalasVolumenCrear}
+            />
           </div>
+
+          {/* Constructor de Set / Combo Compuesto */}
+          <EditorSetComboConfigurable
+            esCombo={esComboCrear}
+            onCambiarEsCombo={setEsComboCrear}
+            componentes={comboComponentesCrear}
+            onCambiarComponentes={(nuevos) => {
+              setComboComponentesCrear(nuevos);
+              const suma = nuevos.reduce((acc, comp) => {
+                const p = (productos || []).find(
+                  (item) =>
+                    item.pro_id === comp.producto_id ||
+                    (comp.producto_slug && item.pro_slug === comp.producto_slug)
+                );
+                const v =
+                  p?.variantes.find(
+                    (vi) =>
+                      (comp.variante_id && vi.var_id === comp.variante_id) ||
+                      (comp.variante_sku && vi.var_sku === comp.variante_sku)
+                  ) || p?.variantes[0];
+                const pvpV = v
+                  ? typeof v.precio_total === "number" && v.precio_total > 0
+                    ? v.precio_total
+                    : Number((Number(v.var_precio || 0) * (1 + Number(v.var_tarifa_iva_porcentaje || 0) / 100)).toFixed(2))
+                  : 0;
+                return acc + pvpV * comp.cantidad_base;
+              }, 0);
+              if (suma > totalCalc) {
+                setPrecioComparacion(Number(suma.toFixed(2)));
+              }
+            }}
+            catalogoProductos={productos}
+            pvpSetCompleto={totalCalc}
+            tarifaIvaSet={tarifaIva}
+            onCambiarPrecioSetBase={(nuevoBase) => setPrecioBase(nuevoBase)}
+            onSincronizarPrecioComparacion={(sumaNominal) =>
+              setPrecioComparacion(Number(sumaNominal.toFixed(2)))
+            }
+          />
 
           {/* Recursos Digitales */}
           <div

@@ -76,6 +76,15 @@ import {
   verificarUsoEnProductosLocales,
 } from "../utils/usosCatalogo";
 import { ModalBloqueoUso, ModalConfirmarEliminarUso } from "./ModalesValidacionUso";
+import {
+  EditorEscalasVolumenVariante,
+  EditorSetComboConfigurable,
+} from "./EditorComboYVolumen";
+import {
+  normalizarComponentesCombo,
+  normalizarEscalasVolumen,
+  type ComponenteComboConfig,
+} from "../utils/combosVolumen";
 
 
 export const COLOR_PRODUCTO_MASTER = {
@@ -526,10 +535,12 @@ export function ModalEditarProducto({
     };
   }, [abierto, negocio]);
 
-  // Editor Multivariante (Tamaños / Modalidades)
+  // Editor Multivariante (Tamaños / Modalidades) y Sets/Combos Configurables
   const [modoEdicion, setModoEdicion] = useState<"master" | "variante">("master");
   const [variantesLocales, setVariantesLocales] = useState<VarianteCatalogo[]>([]);
   const [varianteActivaIndex, setVarianteActivaIndex] = useState<number>(0);
+  const [esCombo, setEsCombo] = useState<boolean>(false);
+  const [comboComponentes, setComboComponentes] = useState<ComponenteComboConfig[]>([]);
 
   // Verificación reactiva de al menos una imagen (master, galería o variantes)
   const tieneAlMenosUnaImagen = useMemo(() => {
@@ -869,6 +880,8 @@ export function ModalEditarProducto({
 
       const etiquetasCargadas = Array.isArray(det.etiquetas) ? det.etiquetas : [];
       setEtiquetasSeleccionadas(etiquetasCargadas);
+      setEsCombo(Boolean(det.es_combo));
+      setComboComponentes(normalizarComponentesCombo(det.combo_componentes));
 
       // Canales de visibilidad
       if (producto.canales_visibilidad && Array.isArray(producto.canales_visibilidad)) {
@@ -1582,6 +1595,7 @@ export function ModalEditarProducto({
             galeria_urls: galeriaFinal,
             usos: usosFinal,
             usos_modo: v.var_detalle_variante?.usos_modo || "heredar",
+            escalas_volumen: normalizarEscalasVolumen(v.var_detalle_variante?.escalas_volumen),
           },
         };
       })
@@ -1653,6 +1667,8 @@ export function ModalEditarProducto({
         usos: usosSeleccionados,
         etiquetas: etiquetasSeleccionadas,
         canales_visibilidad: canalesSeleccionados,
+        esCombo,
+        comboComponentes: esCombo ? normalizarComponentesCombo(comboComponentes) : [],
         variantes: variantesParaGuardar,
         negocio,
       });
@@ -3908,6 +3924,21 @@ export function ModalEditarProducto({
                       </div>
                     </div>
                   </div>
+
+                  {/* Escalas de descuento por volumen para Producto Simple */}
+                  <EditorEscalasVolumenVariante
+                    escalas={normalizarEscalasVolumen(variantesLocales[0]?.var_detalle_variante?.escalas_volumen)}
+                    pvpUnitarioNominal={
+                      Number(variantesLocales[0]?.var_precio || 0) *
+                      (1 + (variantesLocales[0]?.var_tarifa_iva_porcentaje ?? tarifaIvaMaster) / 100)
+                    }
+                    onChange={(nuevasEscalas) =>
+                      actualizarVariantePorIndex(0, "var_detalle_variante", {
+                        ...(variantesLocales[0]?.var_detalle_variante || {}),
+                        escalas_volumen: nuevasEscalas,
+                      })
+                    }
+                  />
                 </div>
               ) : (
                 /* Banner resumen que invita a configurar tamaños */
@@ -3952,6 +3983,52 @@ export function ModalEditarProducto({
                   </button>
                 </div>
               )}
+
+              {/* CONSTRUCTOR DE SET / COMBO DE EVENTOS (COMPUESTO POR PRODUCTOS INDIVIDUALES) */}
+              <EditorSetComboConfigurable
+                esCombo={esCombo}
+                onCambiarEsCombo={setEsCombo}
+                componentes={comboComponentes}
+                onCambiarComponentes={(nuevos) => {
+                  setComboComponentes(nuevos);
+                  const suma = nuevos.reduce((acc, comp) => {
+                    const p = (productos || []).find(
+                      (item) =>
+                        item.pro_id === comp.producto_id ||
+                        (comp.producto_slug && item.pro_slug === comp.producto_slug)
+                    );
+                    const v =
+                      p?.variantes.find(
+                        (vi) =>
+                          (comp.variante_id && vi.var_id === comp.variante_id) ||
+                          (comp.variante_sku && vi.var_sku === comp.variante_sku)
+                      ) || p?.variantes[0];
+                    const pvpV = v
+                      ? typeof v.precio_total === "number" && v.precio_total > 0
+                        ? v.precio_total
+                        : Number((Number(v.var_precio || 0) * (1 + Number(v.var_tarifa_iva_porcentaje || 0) / 100)).toFixed(2))
+                      : 0;
+                    return acc + pvpV * comp.cantidad_base;
+                  }, 0);
+                  const pvpActualSet =
+                    Number(variantesLocales[0]?.var_precio || 0) *
+                    (1 + (variantesLocales[0]?.var_tarifa_iva_porcentaje ?? tarifaIvaMaster) / 100);
+                  if (suma > pvpActualSet) {
+                    actualizarVariantePorIndex(0, "var_precio_comparacion", Number(suma.toFixed(2)));
+                  }
+                }}
+                catalogoProductos={productos}
+                productoActualId={producto.pro_id}
+                pvpSetCompleto={
+                  Number(variantesLocales[0]?.var_precio || 0) *
+                  (1 + (variantesLocales[0]?.var_tarifa_iva_porcentaje ?? tarifaIvaMaster) / 100)
+                }
+                tarifaIvaSet={variantesLocales[0]?.var_tarifa_iva_porcentaje ?? tarifaIvaMaster}
+                onCambiarPrecioSetBase={(nuevoBase) => actualizarVariantePorIndex(0, "var_precio", nuevoBase)}
+                onSincronizarPrecioComparacion={(sumaNominal) =>
+                  actualizarVariantePorIndex(0, "var_precio_comparacion", Number(sumaNominal.toFixed(2)))
+                }
+              />
             </div>
           )}
 
@@ -4419,6 +4496,23 @@ export function ModalEditarProducto({
                         </button>
                       )}
                     </div>
+                  </div>
+
+                  {/* Escalas de descuento por cantidad / volumen para esta variante */}
+                  <div style={{ marginBottom: "12px" }}>
+                    <EditorEscalasVolumenVariante
+                      escalas={normalizarEscalasVolumen(varianteActual?.var_detalle_variante?.escalas_volumen)}
+                      pvpUnitarioNominal={
+                        Number(varianteActual.var_precio || 0) *
+                        (1 + (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100)
+                      }
+                      onChange={(nuevasEscalas) =>
+                        actualizarVarianteActual("var_detalle_variante", {
+                          ...(varianteActual?.var_detalle_variante || {}),
+                          escalas_volumen: nuevasEscalas,
+                        })
+                      }
+                    />
                   </div>
 
                   {/* 1. SECCIÓN UNIFICADA: GALERÍA DE FOTOS (1 A N) PARA ESTA VARIANTE */}

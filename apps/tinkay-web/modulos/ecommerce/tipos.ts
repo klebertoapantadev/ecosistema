@@ -1,3 +1,8 @@
+import type {
+  ComponenteComboConfig,
+  EscalaVolumenVariante,
+} from '@eco/comercio';
+
 export type TipoCategoria = 'FORMATO' | 'COLECCION' | 'OCASION' | 'COMPLEMENTO' | 'EVENTO';
 
 export interface CategoriaEcommerce {
@@ -13,11 +18,13 @@ export interface CategoriaEcommerce {
 }
 
 export interface VarianteEcommerce {
+  varId?: string;
   sku: string;
   nombre: string;
-  pvp: number; // Precio de Venta al Público con IVA 15% incluido
-  baseImponible: number; // PVP / 1.15
-  tarifaIva: number; // 15%
+  pvp: number; // Precio de Venta al Público con IVA incluido
+  pvpNominalSinVolumen?: number; // PVP unitario base antes de escalas por cantidad
+  baseImponible: number; // PVP / (1 + IVA)
+  tarifaIva: number;
   detalle?: string;
   beneficiosCustom?: string[];
   recetaBom?: string;
@@ -25,12 +32,14 @@ export interface VarianteEcommerce {
   foto?: string;
   fotos?: string[]; // Galería completa configurada para esta variante (portada + galeria_urls)
   precioComparacion?: number;
+  escalasVolumen?: EscalaVolumenVariante[];
   usos?: string[];
   usosModo?: 'heredar' | 'personalizado';
 }
 
 export interface ProductoEcommerce {
   id: string;
+  proIdUuid?: string;
   slug: string;
   nombre: string;
   nombreBase?: string; // Nombre original del producto antes del desglose individual por variantes
@@ -55,6 +64,8 @@ export interface ProductoEcommerce {
   esCondolencias?: boolean;
   esComplemento?: boolean;
   esExtra?: boolean; // Pertenece a categoría "Extras"
+  esCombo?: boolean; // Set / Combo compuesto por múltiples productos individuales
+  comboComponentes?: ComponenteComboConfig[];
   usos?: string[]; // Usos recomendados (ej. 'condolencias', 'cumpleanos')
   ocasionRecomendada?: string;
   etiquetas: string[];
