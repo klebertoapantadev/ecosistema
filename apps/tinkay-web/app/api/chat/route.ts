@@ -72,7 +72,20 @@ export async function POST(req: NextRequest) {
       }
     | undefined;
 
-  let promptParaAria = textoLimpio;
+  const origenTienda = (
+    req.nextUrl?.origin ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    "https://tinkay-web.vercel.app"
+  ).replace(/\/+$/, "");
+
+  const guiaEnlacesTienda =
+    `[ENLACES DIRECTOS E-COMMERCE TINKAY: ` +
+    `Para redirigir al cliente a una categoría usa ${origenTienda}/categoria/{slug} ` +
+    `(ej. Eventos: ${origenTienda}/categoria/eventos-y-ceremonias, Box Florales: ${origenTienda}/categoria/box-florales, Estilo Coreano: ${origenTienda}/categoria/cat-coreanos, Condolencias: ${origenTienda}/categoria/condolencias). ` +
+    `Para redirigir directamente a un producto usa el campo url_tienda_producto del catálogo (${origenTienda}/producto/{slug}). ` +
+    `Incluye el link directo cuando recomiendes una colección o arreglo específico.]`;
+
+  let promptParaAria = `${textoLimpio}\n\n${guiaEnlacesTienda}`;
 
   if (tieneUbicacionMapa) {
     try {
@@ -121,7 +134,8 @@ export async function POST(req: NextRequest) {
               ? "Puedes indicar la distancia en km."
               : "NO menciones distancia en kilómetros."
           } ` +
-          `NUNCA menciones fórmulas internas, tarifas por km ni descuentos absorbidos.]`;
+          `NUNCA menciones fórmulas internas, tarifas por km ni descuentos absorbidos.]\n` +
+          guiaEnlacesTienda;
       }
     } catch {
       // Si falla la resolución externa de mapas no bloqueamos la conversación con ARIA

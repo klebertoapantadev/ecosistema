@@ -16,10 +16,14 @@ import {
   expandirProductosVitrina,
   obtenerCategoriasVisibles,
   resolverCategoriaPorIdentificador,
+  resolverProductoPorIdentificador,
 } from './filtrado-catalogo';
 import {
   calcularPrecioPorVolumen,
+  construirEnlaceCategoriaTienda,
+  construirEnlaceProductoTienda,
   crearConfiguracionLogisticaPorDefecto,
+  interpretarEnlaceTienda,
   obtenerConfiguracionLogisticaAction,
   type ConfiguracionLogisticaNegocio,
 } from '@eco/comercio';
@@ -48,6 +52,9 @@ interface ContextoCarritoValor {
   setCategoriaActiva: (catId: string) => void;
   setTerminoBusqueda: (termino: string) => void;
   navegarACategoria: (identificador: string) => void;
+  abrirProductoPorIdentificador: (identificador: string, varianteSku?: string) => boolean;
+  obtenerEnlaceCategoriaActual: (catIdOpcional?: string) => string;
+  obtenerEnlaceProducto: (prod: ProductoEcommerce, skuVarianteOpcional?: string) => string;
 
   agregarItem: (
     producto: ProductoEcommerce,
@@ -94,12 +101,25 @@ const ContextoCarrito = createContext<ContextoCarritoValor | undefined>(undefine
 
 const CLAVE_LOCALSTORAGE = 'tinkay_carrito_v1';
 
-export function ProveedorCarrito({ children }: { children: React.ReactNode }) {
+export interface ProveedorCarritoProps {
+  children: React.ReactNode;
+  categoriaInicialUrl?: string;
+  productoInicialUrl?: string;
+  varianteInicialUrl?: string;
+}
+
+export function ProveedorCarrito({
+  children,
+  categoriaInicialUrl,
+  productoInicialUrl,
+  varianteInicialUrl,
+}: ProveedorCarritoProps) {
   const [items, setItems] = useState<ItemCarrito[]>([]);
   const [modalidadEntrega, setModalidadEntrega] = useState<ModalidadEntrega>('unificada');
   const [entregaUnificada, setEntregaUnificada] = useState<DatosEntrega>(ENTREGA_INICIAL);
   const [drawerAbierto, setDrawerAbierto] = useState(false);
-  const [productoSeleccionadoModal, setProductoSeleccionadoModal] = useState<ProductoEcommerce | null>(null);
+  const [productoSeleccionadoModal, setProductoSeleccionadoModalInterno] =
+    useState<ProductoEcommerce | null>(null);
   const [checkoutAbierto, setCheckoutAbierto] = useState(false);
   const [ordenConfirmadaId, setOrdenConfirmadaId] = useState<string | null>(null);
   const [cargado, setCargado] = useState(false);
@@ -107,10 +127,97 @@ export function ProveedorCarrito({ children }: { children: React.ReactNode }) {
   // Catálogo dinámico sincronizado con Supabase en tiempo real
   const [productos, setProductos] = useState<ProductoEcommerce[]>(PRODUCTOS_TINKAY);
   const [categorias, setCategorias] = useState<CategoriaEcommerce[]>(CATEGORIAS_TINKAY);
-  const [categoriaActiva, setCategoriaActiva] = useState<string>('cat-todos');
+  const [categoriaActiva, setCategoriaActivaInterna] = useState<string>('cat-todos');
   const [terminoBusqueda, setTerminoBusqueda] = useState<string>('');
   const [configLogistica, setConfigLogistica] = useState<ConfiguracionLogisticaNegocio>(() =>
     crearConfiguracionLogisticaPorDefecto('tinkay')
+  );
+
+  const sincronizarRutaNavegador = React.useCallback((rutaCompletaONuevaUrl: string) => {
+    if (typeof window === 'undefined') return;
+    try {
+      const parsed = new URL(rutaCompletaONuevaUrl, window.location.origin);
+      const nuevaRuta = `${parsed.pathname}${parsed.search}${parsed.hash}`;
+      const actualRuta = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      if (nuevaRuta !== actualRuta) {
+        window.history.replaceState(null, '', nuevaRuta);
+      }
+    } catch {
+      // Ignorar fallos de History API en entornos embebidos
+    }
+  }, []);
+
+  const obtenerEnlaceCategoriaActual = React.useCallback(
+    (catIdOpcional?: string) => {
+      const idRef = catIdOpcional ?? categoriaActiva;
+      const catObj = categorias.find((c) => c.id === idRef || c.slug === idRef);
+      const slugRef = catObj?.slug || idRef;
+      return construirEnlaceCategoriaTienda({
+        negocio: 'tinkay',
+        slugCategoria: slugRef,
+      });
+    },
+    [categoriaActiva, categorias]
+  );
+
+  const obtenerEnlaceProducto = React.useCallback(
+    (prod: ProductoEcommerce, skuVarianteOpcional?: string) => {
+      const idRaiz = prod.id.split('__')[0] || prod.id;
+      const prodMaster =
+        productos.find(
+          (item) =>
+            (prod.proIdUuid && item.proIdUuid === prod.proIdUuid) ||
+            item.id === idRaiz ||
+            item.slug === idRaiz
+        ) || prod;
+      const skuRef =
+        prodMaster.variantes.length > 1
+          ? skuVarianteOpcional || prod.varianteInicialSku || prodMaster.variantes[0]?.sku
+          : undefined;
+      return construirEnlaceProductoTienda({
+        negocio: 'tinkay',
+        slugProducto: prodMaster.slug || prodMaster.id,
+        skuVariante: skuRef,
+      });
+    },
+    [productos]
+  );
+
+  const setCategoriaActiva = React.useCallback(
+    (catId: string) => {
+      setCategoriaActivaInterna(catId);
+      if (typeof window !== 'undefined' && !productoSeleccionadoModal) {
+        if (!catId || catId === 'cat-todos' || catId === 'todos') {
+          sincronizarRutaNavegador('/');
+        } else {
+          const catObj = categorias.find((c) => c.id === catId || c.slug === catId);
+          sincronizarRutaNavegador(
+            construirEnlaceCategoriaTienda({
+              negocio: 'tinkay',
+              slugCategoria: catObj?.slug || catId,
+            })
+          );
+        }
+      }
+    },
+    [categorias, productoSeleccionadoModal, sincronizarRutaNavegador]
+  );
+
+  const setProductoSeleccionadoModal = React.useCallback(
+    (nuevoProd: ProductoEcommerce | null) => {
+      setProductoSeleccionadoModalInterno(nuevoProd);
+      if (typeof window === 'undefined') return;
+      if (nuevoProd) {
+        sincronizarRutaNavegador(obtenerEnlaceProducto(nuevoProd));
+      } else {
+        if (!categoriaActiva || categoriaActiva === 'cat-todos' || categoriaActiva === 'todos') {
+          sincronizarRutaNavegador('/');
+        } else {
+          sincronizarRutaNavegador(obtenerEnlaceCategoriaActual(categoriaActiva));
+        }
+      }
+    },
+    [categoriaActiva, obtenerEnlaceCategoriaActual, obtenerEnlaceProducto, sincronizarRutaNavegador]
   );
 
   const navegarACategoria = React.useCallback(
@@ -121,43 +228,115 @@ export function ProveedorCarrito({ children }: { children: React.ReactNode }) {
         identificador,
         visibles.length > 0 ? visibles : categorias
       );
-      setCategoriaActiva(destino);
+      setProductoSeleccionadoModalInterno(null);
+      setCategoriaActivaInterna(destino);
       setTerminoBusqueda('');
 
       if (typeof window !== 'undefined') {
+        if (!destino || destino === 'cat-todos' || destino === 'todos') {
+          sincronizarRutaNavegador('/#catalogo');
+        } else {
+          const catObj = categorias.find((c) => c.id === destino || c.slug === destino);
+          sincronizarRutaNavegador(
+            construirEnlaceCategoriaTienda({
+              negocio: 'tinkay',
+              slugCategoria: catObj?.slug || destino,
+            })
+          );
+        }
         const el = document.getElementById('catalogo');
         if (el) {
           el.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }
     },
-    [productos, categorias]
+    [productos, categorias, sincronizarRutaNavegador]
+  );
+
+  const abrirProductoPorIdentificador = React.useCallback(
+    (identificador: string, varianteSku?: string): boolean => {
+      const resuelto = resolverProductoPorIdentificador(identificador, productos, varianteSku);
+      if (!resuelto) return false;
+      if (resuelto.categoriaPrincipal && resuelto.categoriaPrincipal !== 'cat-detalles') {
+        const catRes = resolverCategoriaPorIdentificador(resuelto.categoriaPrincipal, categorias);
+        if (catRes && catRes !== 'cat-todos') {
+          setCategoriaActivaInterna(catRes);
+        }
+      }
+      setProductoSeleccionadoModalInterno(resuelto);
+      sincronizarRutaNavegador(obtenerEnlaceProducto(resuelto, resuelto.varianteInicialSku));
+      return true;
+    },
+    [productos, categorias, obtenerEnlaceProducto, sincronizarRutaNavegador]
   );
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const qInicial = params.get('q') || params.get('busqueda');
-      const catInicial = params.get('categoria');
-      if (qInicial) setTerminoBusqueda(qInicial);
-      if (catInicial) {
-        setCategoriaActiva(resolverCategoriaPorIdentificador(catInicial, CATEGORIAS_TINKAY));
+    const resolverDesdeUrlOProps = (
+      listaProds: ProductoEcommerce[],
+      listaCats: CategoriaEcommerce[],
+      hacerScrollCatalogo: boolean
+    ) => {
+      const destinoUrl =
+        typeof window !== 'undefined'
+          ? interpretarEnlaceTienda(window.location.href, window.location.origin)
+          : { tipo: 'externo' as const };
+
+      const prodObjetivo =
+        productoInicialUrl ||
+        (destinoUrl.tipo === 'producto' ? destinoUrl.producto : undefined);
+      const varObjetivo =
+        varianteInicialUrl ||
+        (destinoUrl.tipo === 'producto' ? destinoUrl.variante : undefined);
+      const catObjetivo =
+        categoriaInicialUrl ||
+        (destinoUrl.tipo === 'categoria' ? destinoUrl.categoria : undefined);
+      const busqObjetivo =
+        destinoUrl.tipo === 'busqueda' ? destinoUrl.busqueda : undefined;
+
+      if (busqObjetivo) {
+        setTerminoBusqueda(busqObjetivo);
       }
-    }
+
+      if (catObjetivo) {
+        const catId = resolverCategoriaPorIdentificador(catObjetivo, listaCats);
+        setCategoriaActivaInterna(catId);
+        if (hacerScrollCatalogo && typeof window !== 'undefined') {
+          setTimeout(() => {
+            const el = document.getElementById('catalogo');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 180);
+        }
+      }
+
+      if (prodObjetivo) {
+        const prodMatch = resolverProductoPorIdentificador(prodObjetivo, listaProds, varObjetivo);
+        if (prodMatch) {
+          if (prodMatch.categoriaPrincipal && prodMatch.categoriaPrincipal !== 'cat-detalles') {
+            const catDeProd = resolverCategoriaPorIdentificador(
+              prodMatch.categoriaPrincipal,
+              listaCats
+            );
+            if (catDeProd && catDeProd !== 'cat-todos') {
+              setCategoriaActivaInterna(catDeProd);
+            }
+          }
+          setProductoSeleccionadoModalInterno(prodMatch);
+        }
+      }
+    };
+
+    resolverDesdeUrlOProps(PRODUCTOS_TINKAY, CATEGORIAS_TINKAY, false);
 
     cargarCatalogoDinamicoTinkay().then(({ productos: prodsLive, categorias: catsLive }) => {
+      const prodsFinales = prodsLive && prodsLive.length > 0 ? prodsLive : PRODUCTOS_TINKAY;
+      const catsFinales = catsLive && catsLive.length > 0 ? catsLive : CATEGORIAS_TINKAY;
       if (prodsLive && prodsLive.length > 0) {
         setProductos(prodsLive);
       }
       if (catsLive && catsLive.length > 0) {
         setCategorias(catsLive);
-        if (typeof window !== 'undefined') {
-          const catParam = new URLSearchParams(window.location.search).get('categoria');
-          if (catParam) {
-            setCategoriaActiva(resolverCategoriaPorIdentificador(catParam, catsLive));
-          }
-        }
       }
+      resolverDesdeUrlOProps(prodsFinales, catsFinales, true);
     });
 
     obtenerConfiguracionLogisticaAction('tinkay')
@@ -165,7 +344,7 @@ export function ProveedorCarrito({ children }: { children: React.ReactNode }) {
         if (cfg) setConfigLogistica(cfg);
       })
       .catch(() => {});
-  }, []);
+  }, [categoriaInicialUrl, productoInicialUrl, varianteInicialUrl]);
 
   // Cargar estado inicial desde LocalStorage para resiliencia
   useEffect(() => {
@@ -419,6 +598,9 @@ export function ProveedorCarrito({ children }: { children: React.ReactNode }) {
         setCategoriaActiva,
         setTerminoBusqueda,
         navegarACategoria,
+        abrirProductoPorIdentificador,
+        obtenerEnlaceCategoriaActual,
+        obtenerEnlaceProducto,
         agregarItem,
         eliminarItem,
         actualizarCantidad,

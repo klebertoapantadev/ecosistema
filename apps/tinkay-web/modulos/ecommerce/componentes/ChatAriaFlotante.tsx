@@ -1,7 +1,11 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { SelectorUbicacionEntrega } from '@eco/comercio';
+import {
+  SelectorUbicacionEntrega,
+  construirEnlaceCategoriaTienda,
+  interpretarEnlaceTienda,
+} from '@eco/comercio';
 import { useCarrito } from '../contexto-carrito';
 import { PRODUCTOS_TINKAY, FRASES_DEDICATORIAS } from '../datos-catalogo';
 import { ProductoEcommerce, VarianteEcommerce, MensajeChat } from '../tipos';
@@ -14,6 +18,7 @@ import {
   Check,
   RefreshCw,
   MapPin,
+  Link2,
 } from 'lucide-react';
 
 const MENSAJES_INICIALES: MensajeChat[] = [
@@ -21,12 +26,13 @@ const MENSAJES_INICIALES: MensajeChat[] = [
     id: 'msg-init-1',
     remitente: 'aria',
     texto:
-      '¡Hola! Soy Mía 🌿, sommelier floral de Tinkay. ¿Para qué ocasión o persona especial estamos buscando el arreglo hoy? También puedes pegarme tu link de Google Maps / Waze o usar el pin 📍 para cotizar el envío exacto.',
+      '¡Hola! Soy Mía 🌿, sommelier floral de Tinkay. ¿Para qué ocasión o evento especial buscamos flores hoy? También puedes pegarme tu link de Google Maps / Waze o usar el pin 📍 para cotizar el envío exacto.',
     timestamp: 'Ahora',
   },
 ];
 
 const SUGERENCIAS_RAPIDAS = [
+  { id: 'eventos', texto: '🎉 Eventos y Bodas' },
   { id: 'amor', texto: '🌹 Sorpresa de Amor / Aniversario' },
   { id: 'cumple', texto: '🎂 Cumpleaños Alegre' },
   { id: 'condolencias', texto: '🕊️ Condolencias y Respeto' },
@@ -105,6 +111,10 @@ export function ChatAriaFlotante() {
     setDrawerAbierto,
     cantidadTotal,
     productos,
+    categorias,
+    navegarACategoria,
+    abrirProductoPorIdentificador,
+    obtenerEnlaceProducto,
     configLogistica,
     entregaUnificada,
     actualizarEntregaUnificada,
@@ -117,6 +127,7 @@ export function ChatAriaFlotante() {
   const [inputTexto, setInputTexto] = useState('');
   const [escribiendo, setEscribiendo] = useState(false);
   const [itemRecienAgregado, setItemRecienAgregado] = useState<string | null>(null);
+  const [linkChatCopiadoId, setLinkChatCopiadoId] = useState<string | null>(null);
   const [selectorMapaAbierto, setSelectorMapaAbierto] = useState(false);
   const [ubicacionAplicadaId, setUbicacionAplicadaId] = useState<string | null>(null);
 
@@ -192,6 +203,44 @@ export function ChatAriaFlotante() {
     }
 
     const niegaCondolencias = /\b(no|ya no|sin|nada de)\b[^.?!]{0,35}\b(condolenc|pesame|duelo|velaci)/.test(query);
+
+    if (
+      query.includes('evento') ||
+      query.includes('boda') ||
+      query.includes('ceremonia') ||
+      query.includes('arco') ||
+      query.includes('aro') ||
+      query.includes('backing') ||
+      query.includes('cartel')
+    ) {
+      const catEvento = categorias.find(
+        (c) => normalizar(c.nombre).includes('evento') || normalizar(c.slug).includes('evento')
+      );
+      const urlCatEventos = construirEnlaceCategoriaTienda({
+        negocio: 'tinkay',
+        slugCategoria: catEvento?.slug || 'eventos-y-ceremonias',
+      });
+      const prodsEventos = baseFloral.filter(
+        (p) =>
+          normalizar(p.categoriaNombre || '').includes('evento') ||
+          normalizar(p.categoriaPrincipal || '').includes('evento') ||
+          p.esCombo
+      );
+      return {
+        texto:
+          `¡Nos encanta acompañar tus eventos y ceremonias! Contamos con arcos florales, backings, carteles de bienvenida y sets configurables a medida.\n\n` +
+          `Puedes ver toda la colección de Eventos aquí: ${urlCatEventos}`,
+        ...(prodsEventos.length > 0
+          ? {
+              productosSugeridos: prodsEventos.slice(0, 2).map((pe) => ({
+                producto: pe,
+                variantePorDefecto: pe.variantes[0]!,
+                mensajeMotivo: pe.descripcionCorta,
+              })),
+            }
+          : {}),
+      };
+    }
 
     if (
       query.includes('cumple') ||
@@ -534,6 +583,116 @@ export function ChatAriaFlotante() {
     setTimeout(() => setItemRecienAgregado(null), 2500);
   };
 
+  const handleCopiarLinkDesdeChat = async (claveId: string, url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkChatCopiadoId(claveId);
+      setTimeout(() => setLinkChatCopiadoId(null), 2000);
+    } catch {
+      // Fallback silencioso
+    }
+  };
+
+  const detectarCategoriasMencionadas = (textoMensaje: string) => {
+    const normMsg = normalizar(textoMensaje);
+    return (categorias || [])
+      .filter((c) => c.id !== 'cat-todos' && c.slug !== 'todos' && !normalizar(c.nombre).includes('extra'))
+      .filter((c) => {
+        const nomCat = normalizar(c.nombre);
+        const slugCat = normalizar(c.slug).replace(/-/g, ' ');
+        return (
+          (nomCat.length >= 4 && normMsg.includes(nomCat)) ||
+          (slugCat.length >= 5 && normMsg.includes(slugCat)) ||
+          (nomCat.includes('evento') && /\b(eventos|ceremonias)\b/.test(normMsg))
+        );
+      })
+      .slice(0, 2);
+  };
+
+  const renderizarTextoConEnlaces = (texto: string) => {
+    const partes = texto.split(/(https?:\/\/[^\s)]+)/g);
+    return partes.map((parte, idx) => {
+      if (!/^https?:\/\//i.test(parte)) {
+        return <React.Fragment key={idx}>{parte}</React.Fragment>;
+      }
+      const matchFinal = parte.match(/[.,;!?]+$/);
+      const puntuacionFinal = matchFinal ? matchFinal[0] : '';
+      const urlLimpia = puntuacionFinal ? parte.slice(0, -puntuacionFinal.length) : parte;
+      const destino = interpretarEnlaceTienda(urlLimpia);
+
+      if (destino.tipo === 'categoria' && destino.categoria) {
+        return (
+          <React.Fragment key={idx}>
+            <a
+              href={urlLimpia}
+              onClick={(e) => {
+                e.preventDefault();
+                navegarACategoria(destino.categoria!);
+                if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                  setAbierto(false);
+                }
+              }}
+              style={{
+                color: '#15803D',
+                fontWeight: 700,
+                textDecoration: 'underline',
+                wordBreak: 'break-all',
+              }}
+            >
+              {urlLimpia}
+            </a>
+            {puntuacionFinal}
+          </React.Fragment>
+        );
+      }
+
+      if (destino.tipo === 'producto' && destino.producto) {
+        return (
+          <React.Fragment key={idx}>
+            <a
+              href={urlLimpia}
+              onClick={(e) => {
+                e.preventDefault();
+                const abrio = abrirProductoPorIdentificador(destino.producto!, destino.variante);
+                if (abrio && typeof window !== 'undefined' && window.innerWidth < 768) {
+                  setAbierto(false);
+                }
+              }}
+              style={{
+                color: '#BE185D',
+                fontWeight: 700,
+                textDecoration: 'underline',
+                wordBreak: 'break-all',
+              }}
+            >
+              {urlLimpia}
+            </a>
+            {puntuacionFinal}
+          </React.Fragment>
+        );
+      }
+
+      return (
+        <React.Fragment key={idx}>
+          <a
+            href={urlLimpia}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              color: '#0369A1',
+              fontWeight: 600,
+              textDecoration: 'underline',
+              wordBreak: 'break-all',
+            }}
+          >
+            {urlLimpia}
+          </a>
+          {puntuacionFinal}
+        </React.Fragment>
+      );
+    });
+  };
+
   return (
     <>
       {/* Botón Flotante para Abrir Chat */}
@@ -595,7 +754,94 @@ export function ChatAriaFlotante() {
                 )}
 
                 <div className="burbuja-mensaje">
-                  <p style={{ whiteSpace: 'pre-wrap' }}>{m.texto}</p>
+                  <p style={{ whiteSpace: 'pre-wrap' }}>
+                    {m.remitente === 'aria' ? renderizarTextoConEnlaces(m.texto) : m.texto}
+                  </p>
+
+                  {m.remitente === 'aria' && (() => {
+                    const catsDetectadas = detectarCategoriasMencionadas(m.texto);
+                    if (catsDetectadas.length === 0) return null;
+                    return (
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '6px',
+                          marginTop: '8px',
+                        }}
+                      >
+                        {catsDetectadas.map((cat) => {
+                          const urlCat = construirEnlaceCategoriaTienda({
+                            negocio: 'tinkay',
+                            slugCategoria: cat.slug || cat.id,
+                          });
+                          const keyCopy = `cat-${m.id}-${cat.id}`;
+                          return (
+                            <div
+                              key={cat.id}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                              }}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navegarACategoria(cat.id);
+                                  if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                                    setAbierto(false);
+                                  }
+                                }}
+                                title={`Abrir categoría ${cat.nombre} en la tienda`}
+                                aria-label={`Ver ${cat.nombre}`}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '5px',
+                                  padding: '5px 10px',
+                                  borderRadius: '999px',
+                                  border: '1px solid #86EFAC',
+                                  background: '#F0FDF4',
+                                  color: '#14532D',
+                                  fontSize: '0.73rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                <span>Ver {cat.nombre}</span>
+                                <ArrowRight size={12} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleCopiarLinkDesdeChat(keyCopy, urlCat)}
+                                title={`Copiar link de ${cat.nombre} para WhatsApp`}
+                                aria-label={`Copiar link de ${cat.nombre}`}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  width: '26px',
+                                  height: '26px',
+                                  borderRadius: '999px',
+                                  border: '1px solid #CBD5E1',
+                                  background: linkChatCopiadoId === keyCopy ? '#ECFDF5' : '#FFFFFF',
+                                  color: linkChatCopiadoId === keyCopy ? '#047857' : '#475569',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                {linkChatCopiadoId === keyCopy ? (
+                                  <Check size={12} />
+                                ) : (
+                                  <Link2 size={12} />
+                                )}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
 
                   {m.cotizacionEnvio && (
                     <div
@@ -732,6 +978,43 @@ export function ChatAriaFlotante() {
                                 }
                               >
                                 Ver fotos
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleCopiarLinkDesdeChat(
+                                    `prod-${m.id}-${producto.id}`,
+                                    obtenerEnlaceProducto(producto, variantePorDefecto.sku)
+                                  )
+                                }
+                                title="Copiar link directo de este producto"
+                                aria-label="Copiar link del producto"
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '5px 8px',
+                                  borderRadius: '8px',
+                                  border: '1px solid #E2E8F0',
+                                  background:
+                                    linkChatCopiadoId === `prod-${m.id}-${producto.id}`
+                                      ? '#ECFDF5'
+                                      : '#FFFFFF',
+                                  color:
+                                    linkChatCopiadoId === `prod-${m.id}-${producto.id}`
+                                      ? '#047857'
+                                      : '#475569',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                {linkChatCopiadoId === `prod-${m.id}-${producto.id}` ? (
+                                  <Check size={12} />
+                                ) : (
+                                  <Link2 size={12} />
+                                )}
+                                <span>Link</span>
                               </button>
                               <button
                                 type="button"

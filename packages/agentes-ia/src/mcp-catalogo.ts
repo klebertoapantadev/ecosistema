@@ -22,6 +22,7 @@ export interface ParametrosCotizarEnvioMcp {
 
 export interface OpcionesServidorMcpCatalogo {
   negocioPorDefecto: string;
+  urlBaseTienda?: string;
   supabaseUrl?: string;
   supabaseAnonKey?: string;
   consultarProductos?: (negocioId: string) => Promise<any[]>;
@@ -30,6 +31,50 @@ export interface OpcionesServidorMcpCatalogo {
     string,
     Herramienta<ContextoMcpCatalogo> & { alcanceRequerido?: string }
   >;
+}
+
+const URL_TIENDA_OFICIAL_POR_NEGOCIO: Record<string, string> = {
+  tinkay: "https://tinkay-web.vercel.app",
+  margaritas: "https://margaritas-web.vercel.app",
+  tranqi: "https://tranqi-web.vercel.app",
+  fastfix: "https://fastfix-web.vercel.app",
+};
+
+function normalizarSlugUrl(valor: unknown): string {
+  return String(valor ?? "")
+    .trim()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9-_]+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function obtenerUrlBaseTiendaMcp(negocioId: string, urlBaseExplicita?: string): string {
+  if (urlBaseExplicita && urlBaseExplicita.trim()) {
+    return urlBaseExplicita.trim().replace(/\/+$/, "");
+  }
+  const clave = String(negocioId || "tinkay").trim().toLowerCase();
+  return URL_TIENDA_OFICIAL_POR_NEGOCIO[clave] || URL_TIENDA_OFICIAL_POR_NEGOCIO.tinkay!;
+}
+
+function construirUrlCategoriaMcp(baseTienda: string, slugONombre: unknown): string | null {
+  const slug = normalizarSlugUrl(slugONombre);
+  if (!slug || slug === "todos" || slug === "cat-todos" || slug === "todas") return null;
+  return `${baseTienda}/categoria/${encodeURIComponent(slug)}`;
+}
+
+function construirUrlProductoMcp(
+  baseTienda: string,
+  slugOIdProducto: unknown,
+  skuVariante?: unknown
+): string | null {
+  const slug = normalizarSlugUrl(slugOIdProducto);
+  if (!slug) return null;
+  const baseProd = `${baseTienda}/producto/${encodeURIComponent(slug)}`;
+  const sku = String(skuVariante ?? "").trim();
+  return sku ? `${baseProd}?variante=${encodeURIComponent(sku)}` : baseProd;
 }
 
 // Palabras que no aportan a la búsqueda: "permiso de salida para mi hijo" busca "permiso salida hijo".
@@ -211,7 +256,8 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
   const herramientas: Record<string, Herramienta<ContextoMcpCatalogo>> = {
     consultar_catalogo: {
       descripcion:
-        "Busca productos, ramos, servicios y tarifas del catálogo oficial con precios, fotos y variantes. " +
+        "Busca productos, ramos, sets de eventos, servicios y tarifas del catálogo oficial con precios, fotos, variantes y enlaces directos al E-Commerce (`url_tienda_producto`, `url_tienda_categoria`, `url_tienda_variante`). " +
+        "Comparte siempre `url_tienda_producto` o `url_tienda_categoria` cuando el cliente quiera ver fotos en la tienda (por WhatsApp o Chat Web). " +
         "pvp_total_usd es el precio final con IVA; frecuencia indica si se cobra de forma recurrente (p. ej. MENSUAL) o es un pago único (null).",
       esquema: {
         type: "object",
@@ -219,12 +265,12 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
           termino: {
             type: "string",
             description:
-              "Texto de búsqueda: palabra clave o frase natural (ej. 'rosas rojas', 'coreano', 'divorcio', 'permiso de salida del país'). " +
+              "Texto de búsqueda: palabra clave o frase natural (ej. 'rosas rojas', 'coreano', 'eventos', 'cartel bienvenida', 'divorcio'). " +
               "Cada palabra se busca por separado, sin distinguir tildes; primero salen los productos que coinciden con más palabras.",
           },
           categoria: {
             type: "string",
-            description: "Slug o nombre de categoría (ej. 'condolencias', 'cumpleanos', 'corporativo')",
+            description: "Slug o nombre de categoría (ej. 'eventos', 'box-florales', 'condolencias', 'cumpleanos', 'corporativo')",
           },
           presupuesto_max_usd: {
             type: "number",
@@ -236,7 +282,7 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
           },
           ocasion: {
             type: "string",
-            description: "Alias de 'uso' para floristería (ej. 'aniversario', 'condolencias', 'grado', 'cumpleanos')",
+            description: "Alias de 'uso' para floristería (ej. 'aniversario', 'condolencias', 'grado', 'cumpleanos', 'eventos')",
           },
           canal: {
             type: "string",
@@ -245,6 +291,7 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
         },
       },
       async ejecutar(args, ctx) {
+        const baseTienda = obtenerUrlBaseTiendaMcp(ctx.negocioId, opciones.urlBaseTienda);
         const canalParam = typeof args.canal === "string" ? args.canal : undefined;
         const prods = await obtenerListaProductos(ctx.negocioId, canalParam);
         if (!prods || prods.length === 0) {
@@ -308,94 +355,150 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
           });
         }
 
+        const catFiltroUrl =
+          typeof args.categoria === "string" && args.categoria.trim()
+            ? construirUrlCategoriaMcp(
+                baseTienda,
+                filtrados[0]?.categoria?.ctg_slug ||
+                  filtrados[0]?.categoria?.slug ||
+                  filtrados[0]?.categoria?.ctg_nombre ||
+                  args.categoria
+              )
+            : null;
+
         return {
           total_encontrados: filtrados.length,
           negocio: ctx.negocioId,
-          productos: filtrados.map((p) => ({
-            id: p.pro_id || p.id || p.producto_id,
-            nombre: p.pro_nombre || p.nombre,
-            slug: p.pro_slug || p.slug,
-            descripcion: p.pro_descripcion || p.descripcion,
-            tipo: p.pro_tipo || p.tipo,
-            destacado: p.pro_destacado ?? false,
-            categoria: p.categoria?.ctg_nombre || p.categoria?.nombre || p.categoria_nombre || null,
-            album_fotos_url: p.pro_detalle_producto?.album_fotos_url || p.album_fotos_url || null,
-            portada_url: p.pro_detalle_producto?.imagen_url || p.portada_url || null,
-            delivery_incluido: p.pro_detalle_producto?.logistica?.delivery_incluido ?? p.delivery_incluido ?? false,
-            usos: p.pro_detalle_producto?.usos || p.pro_detalle_producto?.ocasiones || [],
-            etiquetas: p.pro_detalle_producto?.etiquetas || [],
-            canales_visibilidad:
-              p.canales_visibilidad ||
-              p.pro_detalle_producto?.canales_visibilidad || [
-                "ECOMMERCE_WEB",
-                "APP_CLIENTES",
-                "CHATBOT_WEB",
-                "CHATBOT_APP",
-                "CHATBOT_WHATSAPP",
-                "OTROS_API",
-              ],
-            variantes: (p.variantes || []).map((v: any) => {
-              const base = Number(v.var_precio ?? v.precio ?? v.precio_base_usd ?? 0);
-              const tarifaIva = Number(
-                v.var_tarifa_iva_porcentaje ??
-                v.tarifa_iva ??
-                p.pro_detalle_producto?.tarifa_iva_predeterminada ??
-                0
-              );
-              const montoIva = Number(v.monto_iva ?? v.monto_iva_usd ?? ((base * tarifaIva) / 100));
-              const pvpTotal = Number(v.precio_total ?? v.pvp_total_usd ?? (base + montoIva));
+          url_tienda_general: `${baseTienda}/#catalogo`,
+          ...(catFiltroUrl ? { url_tienda_categoria_consultada: catFiltroUrl } : {}),
+          productos: filtrados.map((p) => {
+            const prodSlug = p.pro_slug || p.slug || p.pro_id || p.id;
+            const catNombre =
+              p.categoria?.ctg_nombre || p.categoria?.nombre || p.categoria_nombre || null;
+            const catSlug = p.categoria?.ctg_slug || p.categoria?.slug || catNombre;
+            const listaVariantes = Array.isArray(p.variantes) ? p.variantes : [];
 
-              return {
-                id: v.var_id || v.id || v.variante_id,
-                sku: v.var_sku || v.sku,
-                nombre: v.var_nombre || v.nombre,
-                base_imponible_usd: base,
-                tarifa_iva: tarifaIva,
-                monto_iva_usd: Number(montoIva.toFixed(2)),
-                pvp_total_usd: Number(pvpTotal.toFixed(2)),
-                frecuencia: v.var_frecuencia_recurrencia ?? v.frecuencia ?? null,
-                foto_variante_url: v.var_detalle_variante?.portada_url || v.foto_variante_url || null,
-              };
-            }),
-          })),
+            return {
+              id: p.pro_id || p.id || p.producto_id,
+              nombre: p.pro_nombre || p.nombre,
+              slug: p.pro_slug || p.slug,
+              url_tienda_producto: construirUrlProductoMcp(baseTienda, prodSlug),
+              url_tienda_categoria: construirUrlCategoriaMcp(baseTienda, catSlug),
+              descripcion: p.pro_descripcion || p.descripcion,
+              tipo: p.pro_tipo || p.tipo,
+              destacado: p.pro_destacado ?? false,
+              es_combo: Boolean(p.pro_detalle_producto?.es_combo),
+              combo_componentes: Array.isArray(p.pro_detalle_producto?.combo_componentes)
+                ? p.pro_detalle_producto.combo_componentes
+                : undefined,
+              categoria: catNombre,
+              album_fotos_url: p.pro_detalle_producto?.album_fotos_url || p.album_fotos_url || null,
+              portada_url: p.pro_detalle_producto?.imagen_url || p.portada_url || null,
+              delivery_incluido: p.pro_detalle_producto?.logistica?.delivery_incluido ?? p.delivery_incluido ?? false,
+              usos: p.pro_detalle_producto?.usos || p.pro_detalle_producto?.ocasiones || [],
+              etiquetas: p.pro_detalle_producto?.etiquetas || [],
+              canales_visibilidad:
+                p.canales_visibilidad ||
+                p.pro_detalle_producto?.canales_visibilidad || [
+                  "ECOMMERCE_WEB",
+                  "APP_CLIENTES",
+                  "CHATBOT_WEB",
+                  "CHATBOT_APP",
+                  "CHATBOT_WHATSAPP",
+                  "OTROS_API",
+                ],
+              variantes: listaVariantes.map((v: any) => {
+                const base = Number(v.var_precio ?? v.precio ?? v.precio_base_usd ?? 0);
+                const tarifaIva = Number(
+                  v.var_tarifa_iva_porcentaje ??
+                  v.tarifa_iva ??
+                  p.pro_detalle_producto?.tarifa_iva_predeterminada ??
+                  0
+                );
+                const montoIva = Number(v.monto_iva ?? v.monto_iva_usd ?? ((base * tarifaIva) / 100));
+                const pvpTotal = Number(v.precio_total ?? v.pvp_total_usd ?? (base + montoIva));
+                const skuVar = v.var_sku || v.sku;
+
+                return {
+                  id: v.var_id || v.id || v.variante_id,
+                  sku: skuVar,
+                  nombre: v.var_nombre || v.nombre,
+                  url_tienda_variante: construirUrlProductoMcp(
+                    baseTienda,
+                    prodSlug,
+                    listaVariantes.length > 1 ? skuVar : undefined
+                  ),
+                  base_imponible_usd: base,
+                  tarifa_iva: tarifaIva,
+                  monto_iva_usd: Number(montoIva.toFixed(2)),
+                  pvp_total_usd: Number(pvpTotal.toFixed(2)),
+                  escalas_volumen: Array.isArray(v.var_detalle_variante?.escalas_volumen)
+                    ? v.var_detalle_variante.escalas_volumen
+                    : undefined,
+                  frecuencia: v.var_frecuencia_recurrencia ?? v.frecuencia ?? null,
+                  foto_variante_url: v.var_detalle_variante?.portada_url || v.foto_variante_url || null,
+                };
+              }),
+            };
+          }),
         };
       },
     },
 
     detalle_producto: {
-      descripcion: "Obtiene los detalles completos de un producto o servicio por su identificador o slug.",
+      descripcion:
+        "Obtiene los detalles completos y los enlaces directos a la tienda (`url_tienda_producto`, `url_tienda_variante`) de un producto o servicio por su identificador, slug o nombre.",
       esquema: {
         type: "object",
         properties: {
           slug_o_id: {
             type: "string",
-            description: "Slug o UUID del producto/servicio (ej. 'tinkay-bouq-coreano' o '3af6aff5-ddd0-4746-b282-c760e4b42214')",
+            description: "Slug, UUID o nombre del producto/servicio (ej. 'cartel-bienvenida', 'tinkay-bouq-coreano')",
           },
         },
         required: ["slug_o_id"],
       },
       async ejecutar(args, ctx) {
+        const baseTienda = obtenerUrlBaseTiendaMcp(ctx.negocioId, opciones.urlBaseTienda);
         const slugOId = String(args.slug_o_id ?? "").trim().toLowerCase();
         if (!slugOId) {
           return { error: "El parámetro slug_o_id es obligatorio." };
         }
 
         const prods = await obtenerListaProductos(ctx.negocioId);
-        const encontrado = prods.find((p) => {
-          const id = String(p.pro_id || p.id || p.producto_id || "").toLowerCase();
-          const slug = String(p.pro_slug || p.slug || "").toLowerCase();
-          return id === slugOId || slug === slugOId;
-        });
+        const normBuscado = normalizarTextoBusqueda(slugOId);
+        const encontrado =
+          prods.find((p) => {
+            const id = String(p.pro_id || p.id || p.producto_id || "").toLowerCase();
+            const slug = String(p.pro_slug || p.slug || "").toLowerCase();
+            return id === slugOId || slug === slugOId;
+          }) ||
+          prods.find((p) => {
+            const nom = normalizarTextoBusqueda(p.pro_nombre || p.nombre || "");
+            return Boolean(nom && normBuscado && (nom === normBuscado || nom.includes(normBuscado)));
+          });
 
         if (encontrado) {
+          const prodSlug = encontrado.pro_slug || encontrado.slug || encontrado.pro_id || encontrado.id;
+          const catNombre =
+            encontrado.categoria?.ctg_nombre ||
+            encontrado.categoria?.nombre ||
+            encontrado.categoria_nombre ||
+            null;
+          const catSlug =
+            encontrado.categoria?.ctg_slug || encontrado.categoria?.slug || catNombre;
+          const listaVariantes = Array.isArray(encontrado.variantes) ? encontrado.variantes : [];
+
           return {
             id: encontrado.pro_id || encontrado.id || encontrado.producto_id,
             nombre: encontrado.pro_nombre || encontrado.nombre,
             slug: encontrado.pro_slug || encontrado.slug,
+            url_tienda_producto: construirUrlProductoMcp(baseTienda, prodSlug),
+            url_tienda_categoria: construirUrlCategoriaMcp(baseTienda, catSlug),
             descripcion: encontrado.pro_descripcion || encontrado.descripcion,
             tipo: encontrado.pro_tipo || encontrado.tipo,
             destacado: encontrado.pro_destacado ?? false,
-            categoria: encontrado.categoria?.ctg_nombre || encontrado.categoria?.nombre || encontrado.categoria_nombre || null,
+            categoria: catNombre,
             canales_visibilidad:
               encontrado.canales_visibilidad ||
               encontrado.pro_detalle_producto?.canales_visibilidad || [
@@ -407,7 +510,7 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
                 "OTROS_API",
               ],
             detalle_producto: encontrado.pro_detalle_producto || {},
-            variantes: (encontrado.variantes || []).map((v: any) => {
+            variantes: listaVariantes.map((v: any) => {
               const base = Number(v.var_precio ?? v.precio ?? v.precio_base_usd ?? 0);
               const tarifaIva = Number(
                 v.var_tarifa_iva_porcentaje ??
@@ -417,11 +520,17 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
               );
               const montoIva = Number(v.monto_iva ?? v.monto_iva_usd ?? ((base * tarifaIva) / 100));
               const pvpTotal = Number(v.precio_total ?? v.pvp_total_usd ?? (base + montoIva));
+              const skuVar = v.var_sku || v.sku;
 
               return {
                 id: v.var_id || v.id || v.variante_id,
-                sku: v.var_sku || v.sku,
+                sku: skuVar,
                 nombre: v.var_nombre || v.nombre,
+                url_tienda_variante: construirUrlProductoMcp(
+                  baseTienda,
+                  prodSlug,
+                  listaVariantes.length > 1 ? skuVar : undefined
+                ),
                 base_imponible_usd: base,
                 tarifa_iva: tarifaIva,
                 monto_iva_usd: Number(montoIva.toFixed(2)),
@@ -434,6 +543,115 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
         }
 
         return { error: `Producto no encontrado para '${args.slug_o_id}'` };
+      },
+    },
+
+    obtener_enlaces_tienda: {
+      descripcion:
+        "Genera enlaces directos (Deep Links) al E-Commerce para redirigir al cliente por WhatsApp o Chat Web hacia una categoría específica (ej. 'eventos', 'box florales', 'condolencias') o directamente a la ventana de un producto específico.",
+      esquema: {
+        type: "object",
+        properties: {
+          categoria: {
+            type: "string",
+            description: "Opcional. Nombre o slug de la categoría cuyo link se desea obtener (ej. 'eventos', 'box florales', 'estilo coreano', 'condolencias'). Si se omite, lista todas las categorías activas con sus links.",
+          },
+          producto: {
+            type: "string",
+            description: "Opcional. Nombre, slug o SKU del producto cuyo link directo se desea obtener (ej. 'cartel bienvenida', 'backing media luna').",
+          },
+        },
+      },
+      async ejecutar(args, ctx) {
+        const baseTienda = obtenerUrlBaseTiendaMcp(ctx.negocioId, opciones.urlBaseTienda);
+        const prods = await obtenerListaProductos(ctx.negocioId, "ECOMMERCE_WEB");
+
+        const mapaCategorias = new Map<string, { nombre: string; slug: string; url: string; total_productos: number }>();
+        for (const p of prods) {
+          const catNom = String(p.categoria?.ctg_nombre || p.categoria?.nombre || p.categoria_nombre || "").trim();
+          const catSlugRaw = String(p.categoria?.ctg_slug || p.categoria?.slug || catNom).trim();
+          const slugNorm = normalizarSlugUrl(catSlugRaw);
+          if (!catNom || !slugNorm || slugNorm.includes("extra")) continue;
+          const urlCat = construirUrlCategoriaMcp(baseTienda, slugNorm);
+          if (!urlCat) continue;
+          const existente = mapaCategorias.get(slugNorm);
+          if (existente) {
+            existente.total_productos += 1;
+          } else {
+            mapaCategorias.set(slugNorm, {
+              nombre: catNom,
+              slug: slugNorm,
+              url: urlCat,
+              total_productos: 1,
+            });
+          }
+        }
+
+        let categoriasRes = Array.from(mapaCategorias.values());
+        if (typeof args.categoria === "string" && args.categoria.trim()) {
+          const busqCat = normalizarTextoBusqueda(args.categoria);
+          const filtradasCat = categoriasRes.filter((c) => {
+            const n = normalizarTextoBusqueda(`${c.nombre} ${c.slug}`);
+            return n.includes(busqCat) || busqCat.includes(normalizarTextoBusqueda(c.nombre));
+          });
+          if (filtradasCat.length > 0) {
+            categoriasRes = filtradasCat;
+          } else {
+            const urlDirecta = construirUrlCategoriaMcp(baseTienda, args.categoria);
+            if (urlDirecta) {
+              categoriasRes = [
+                {
+                  nombre: args.categoria.trim(),
+                  slug: normalizarSlugUrl(args.categoria),
+                  url: urlDirecta,
+                  total_productos: 0,
+                },
+              ];
+            }
+          }
+        }
+
+        let productosRes: Array<{
+          nombre: string;
+          slug: string;
+          url: string | null;
+          pvp_desde_usd: number;
+          variantes?: Array<{ nombre: string; sku: string; pvp_usd: number; url: string | null }>;
+        }> = [];
+
+        if (typeof args.producto === "string" && args.producto.trim()) {
+          const prodsCoincidentes = filtrarPorTermino(prods, args.producto).slice(0, 6);
+          productosRes = prodsCoincidentes.map((p) => {
+            const prodSlug = p.pro_slug || p.slug || p.pro_id || p.id;
+            const listaVars = Array.isArray(p.variantes) ? p.variantes : [];
+            const precios = listaVars.map((v: any) =>
+              Number(v.precio_total ?? v.pvp_total_usd ?? v.var_precio ?? 0)
+            );
+            return {
+              nombre: p.pro_nombre || p.nombre,
+              slug: prodSlug,
+              url: construirUrlProductoMcp(baseTienda, prodSlug),
+              pvp_desde_usd: precios.length > 0 ? Math.min(...precios) : 0,
+              ...(listaVars.length > 1
+                ? {
+                    variantes: listaVars.map((v: any) => ({
+                      nombre: v.var_nombre || v.nombre,
+                      sku: v.var_sku || v.sku,
+                      pvp_usd: Number(v.precio_total ?? v.pvp_total_usd ?? v.var_precio ?? 0),
+                      url: construirUrlProductoMcp(baseTienda, prodSlug, v.var_sku || v.sku),
+                    })),
+                  }
+                : {}),
+            };
+          });
+        }
+
+        return {
+          negocio: ctx.negocioId,
+          url_tienda_inicio: `${baseTienda}/#catalogo`,
+          categorias: categoriasRes,
+          ...(productosRes.length > 0 ? { productos: productosRes } : {}),
+        };
       },
     },
   };

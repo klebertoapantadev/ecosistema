@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { describirEscalaVolumen } from '@eco/comercio';
 import { ProductoEcommerce, VarianteEcommerce } from '../tipos';
 import { useCarrito } from '../contexto-carrito';
-import { ChevronLeft, ChevronRight, Eye, ShoppingBag, Heart } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, ShoppingBag, Heart, Link2, Check } from 'lucide-react';
 
 interface Props {
   producto: ProductoEcommerce;
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
-  const { agregarItem, setProductoSeleccionadoModal } = useCarrito();
+  const { agregarItem, setProductoSeleccionadoModal, obtenerEnlaceProducto } = useCarrito();
   const [fotoActualIndex, setFotoActualIndex] = useState(0);
   const obtenerVarianteBase = () =>
     (producto.varianteInicialSku
@@ -27,6 +27,19 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
     };
   const [varianteSeleccionada, setVarianteSeleccionada] = useState<VarianteEcommerce>(obtenerVarianteBase);
   const [favorito, setFavorito] = useState(false);
+  const [linkCopiado, setLinkCopiado] = useState(false);
+
+  const handleCopiarEnlaceProducto = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = obtenerEnlaceProducto(producto, varianteSeleccionada.sku);
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopiado(true);
+      setTimeout(() => setLinkCopiado(false), 2000);
+    } catch {
+      // Fallback silencioso
+    }
+  };
 
   // Cálculo dinámico de Oferta y % de Descuento
   const tieneOferta = Boolean(
@@ -164,12 +177,41 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
           type="button"
           className={`btn-favorito ${favorito ? 'activo' : ''}`}
           aria-label="Guardar en favoritos"
+          title="Guardar en favoritos"
           onClick={(e) => {
             e.stopPropagation();
             setFavorito(!favorito);
           }}
         >
           <Heart size={16} fill={favorito ? 'currentColor' : 'none'} />
+        </button>
+
+        {/* Botón Copiar Link Directo del Producto (WhatsApp / Chat) */}
+        <button
+          type="button"
+          onClick={handleCopiarEnlaceProducto}
+          title={linkCopiado ? '¡Link copiado!' : 'Copiar link directo del producto para WhatsApp'}
+          aria-label="Copiar link del producto"
+          style={{
+            position: 'absolute',
+            top: '54px',
+            right: '12px',
+            zIndex: 7,
+            width: '34px',
+            height: '34px',
+            borderRadius: '50%',
+            border: linkCopiado ? '1.5px solid #10B981' : '1px solid rgba(255,255,255,0.65)',
+            background: linkCopiado ? '#ECFDF5' : 'rgba(255, 255, 255, 0.92)',
+            color: linkCopiado ? '#047857' : '#27272A',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          {linkCopiado ? <Check size={15} /> : <Link2 size={15} />}
         </button>
 
         {/* Flechas de navegación en la foto */}
@@ -234,7 +276,10 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
       {/* Información del Producto */}
       <div className="info-producto-carrusel">
         <span className="categoria-rotulo">
-          {producto.esCondolencias
+          {modoSobrio ||
+          (producto.esCondolencias &&
+            (!producto.categoriaNombre ||
+              producto.categoriaNombre.toLowerCase().includes('condol')))
             ? '🕊️ Condolencias Solemnes'
             : (producto.categoriaNombre || producto.categoriaPrincipal.replace('cat-', '')).toUpperCase()}
         </span>

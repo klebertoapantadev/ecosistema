@@ -16,6 +16,7 @@ import {
   AlertTriangle,
   Info,
   Loader2,
+  Link2,
 } from "lucide-react";
 import {
   crearCategoriaAction,
@@ -24,6 +25,10 @@ import {
   CategoriaCatalogo,
 } from "../acciones";
 import { detectarTipoNegocio } from "../utils/negocio";
+import {
+  URL_TIENDA_POR_NEGOCIO,
+  construirEnlaceCategoriaTienda,
+} from "../utils/enlacesTienda";
 
 type CategoriaConUso = CategoriaCatalogo & {
   productos_conteo: number;
@@ -73,6 +78,24 @@ export function ModalCrearCategoria({
   const [errorEliminarModal, setErrorEliminarModal] = useState<string | null>(null);
   const [mensajeErrorGestion, setMensajeErrorGestion] = useState<string | null>(null);
   const [mensajeExitoGestion, setMensajeExitoGestion] = useState<string | null>(null);
+  const [catLinkCopiadoId, setCatLinkCopiadoId] = useState<string | null>(null);
+
+  const copiarLinkCategoria = async (cat: CategoriaConUso) => {
+    const url = construirEnlaceCategoriaTienda({
+      negocio,
+      slugCategoria: cat.ctg_slug || cat.ctg_nombre,
+      baseUrl: URL_TIENDA_POR_NEGOCIO[negocio],
+    });
+    try {
+      await navigator.clipboard.writeText(url);
+      setCatLinkCopiadoId(cat.ctg_id);
+      setTimeout(() => {
+        setCatLinkCopiadoId((prev) => (prev === cat.ctg_id ? null : prev));
+      }, 2200);
+    } catch {
+      // Fallback silencioso
+    }
+  };
 
   // Sincronizar tab inicial cuando se abre el modal
   useEffect(() => {
@@ -820,8 +843,41 @@ export function ModalCrearCategoria({
                           </div>
                         </div>
 
-                        {/* Botón de Acción Eliminar / Bloqueado */}
-                        <div>
+                        {/* Botones de Acción: Copiar Link Tienda + Eliminar / Bloqueado */}
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                          <button
+                            type="button"
+                            onClick={() => copiarLinkCategoria(cat)}
+                            className="btn-responsive-accion"
+                            title={`Copiar link directo a la categoría "${cat.ctg_nombre}" para compartir por WhatsApp o Chat`}
+                            aria-label={`Copiar link de ${cat.ctg_nombre}`}
+                            style={{
+                              background: catLinkCopiadoId === cat.ctg_id ? "#ECFDF5" : "#F0F9FF",
+                              border: catLinkCopiadoId === cat.ctg_id ? "1px solid #34D399" : "1px solid #BAE6FD",
+                              color: catLinkCopiadoId === cat.ctg_id ? "#047857" : "#0369A1",
+                              padding: "6px 10px",
+                              borderRadius: "8px",
+                              fontSize: "0.74rem",
+                              fontWeight: 700,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            {catLinkCopiadoId === cat.ctg_id ? (
+                              <>
+                                <CheckCircle2 size={12} color="#059669" />
+                                <span className="btn-texto-responsive">Copiado</span>
+                              </>
+                            ) : (
+                              <>
+                                <Link2 size={12} />
+                                <span className="btn-texto-responsive">Link Tienda</span>
+                              </>
+                            )}
+                          </button>
+
                           {enUso ? (
                             <button
                               type="button"

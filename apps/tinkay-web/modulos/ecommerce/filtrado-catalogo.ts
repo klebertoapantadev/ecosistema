@@ -373,11 +373,114 @@ export function resolverCategoriaPorIdentificador(
       (norm.includes('corean') && (slugNorm.includes('corean') || nomNorm.includes('corean'))) ||
       (norm.includes('florero') && (slugNorm.includes('florero') || nomNorm.includes('florero'))) ||
       (norm.includes('box') && (slugNorm.includes('box') || nomNorm.includes('box'))) ||
-      (norm.includes('evento') && (slugNorm.includes('evento') || nomNorm.includes('evento')))
+      ((norm.includes('evento') || norm.includes('ceremonia') || norm.includes('boda')) &&
+        (slugNorm.includes('evento') ||
+          nomNorm.includes('evento') ||
+          nomNorm.includes('ceremonia')))
     );
   });
 
   return porNorm ? porNorm.id : 'cat-todos';
+}
+
+/**
+ * Resuelve un producto del catálogo (y su variante seleccionada si aplica) a partir de
+ * un slug, UUID, nombre o SKU compartido por WhatsApp o Chat Web.
+ */
+export function resolverProductoPorIdentificador(
+  identificador: string,
+  productos: ProductoEcommerce[],
+  varianteSkuONombre?: string
+): ProductoEcommerce | null {
+  const idRaw = (identificador || '').trim();
+  if (!idRaw || !Array.isArray(productos) || productos.length === 0) return null;
+
+  const idLower = idRaw.toLowerCase();
+  const idNorm = normalizarTextoEcommerce(idRaw);
+
+  let varianteDetectada: VarianteEcommerce | undefined;
+
+  // 1. Coincidencia exacta por slug, id o UUID
+  let encontrado = productos.find(
+    (p) =>
+      p.slug.toLowerCase() === idLower ||
+      p.id.toLowerCase() === idLower ||
+      (p.proIdUuid && p.proIdUuid.toLowerCase() === idLower)
+  );
+
+  // 2. Coincidencia por SKU de variante o slug expandido `${slug}-${sku}`
+  if (!encontrado) {
+    for (const p of productos) {
+      const varPorSku = p.variantes.find(
+        (v) =>
+          v.sku.toLowerCase() === idLower ||
+          (v.varId && v.varId.toLowerCase() === idLower) ||
+          `${p.slug}-${v.sku}`.toLowerCase() === idLower ||
+          `${p.id}__${v.sku}`.toLowerCase() === idLower
+      );
+      if (varPorSku) {
+        encontrado = p;
+        varianteDetectada = varPorSku;
+        break;
+      }
+    }
+  }
+
+  // 3. Coincidencia normalizada por slug o nombre exacto
+  if (!encontrado && idNorm) {
+    encontrado = productos.find((p) => {
+      const slugN = normalizarTextoEcommerce(p.slug);
+      const nomN = normalizarTextoEcommerce(p.nombreBase || p.nombre);
+      return slugN === idNorm || nomN === idNorm;
+    });
+  }
+
+  // 4. Coincidencia parcial por nombre o slug (ej. "cartel-bienvenida" -> "Cartel Bienvenida")
+  if (!encontrado && idNorm && idNorm.length >= 3) {
+    encontrado = productos.find((p) => {
+      const slugN = normalizarTextoEcommerce(p.slug);
+      const nomN = normalizarTextoEcommerce(p.nombreBase || p.nombre);
+      return (
+        slugN.includes(idNorm) ||
+        nomN.includes(idNorm) ||
+        (slugN.length >= 4 && idNorm.includes(slugN)) ||
+        (nomN.length >= 4 && idNorm.includes(nomN))
+      );
+    });
+  }
+
+  if (!encontrado) return null;
+
+  // Resolver variante explícita si se envió `?variante=...` o `?sku=...`
+  if (varianteSkuONombre && varianteSkuONombre.trim()) {
+    const varRaw = varianteSkuONombre.trim();
+    const varLower = varRaw.toLowerCase();
+    const varNorm = normalizarTextoEcommerce(varRaw);
+    const varMatch =
+      encontrado.variantes.find(
+        (v) =>
+          v.sku.toLowerCase() === varLower ||
+          (v.varId && v.varId.toLowerCase() === varLower)
+      ) ||
+      encontrado.variantes.find(
+        (v) =>
+          normalizarTextoEcommerce(v.nombre) === varNorm ||
+          normalizarTextoEcommerce(v.sku) === varNorm ||
+          normalizarTextoEcommerce(v.nombre).includes(varNorm)
+      );
+    if (varMatch) {
+      varianteDetectada = varMatch;
+    }
+  }
+
+  if (varianteDetectada) {
+    return {
+      ...encontrado,
+      varianteInicialSku: varianteDetectada.sku,
+    };
+  }
+
+  return encontrado;
 }
 
 /**

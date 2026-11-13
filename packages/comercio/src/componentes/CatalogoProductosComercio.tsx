@@ -66,8 +66,13 @@ import { TableroDisponibilidadOperativa } from "./TableroDisponibilidadOperativa
 import { GestionConveniosCorporativos } from "./GestionConveniosCorporativos";
 import { VitrinaComercialVisual } from "./VitrinaComercialVisual";
 import { TarjetaBeneficiosCorporativosCliente } from "./TarjetaBeneficiosCorporativosCliente";
-import { BookOpen, Flower2, Wrench, Activity, LayoutGrid, Users, Calendar, Power } from "lucide-react";
+import { BookOpen, Flower2, Wrench, Activity, LayoutGrid, Users, Calendar, Power, Link2 } from "lucide-react";
 import { detectarTipoNegocio, obtenerImagenFallbackNegocio } from "../utils/negocio";
+import {
+  URL_TIENDA_POR_NEGOCIO,
+  construirEnlaceCategoriaTienda,
+  construirEnlaceProductoTienda,
+} from "../utils/enlacesTienda";
 
 interface Props {
   negocio?: string;
@@ -118,8 +123,22 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
 
   // Estado de feedback al copiar URL de consulta
   const [copiadoConsulta, setCopiadoConsulta] = useState(false);
+  // Estado de feedback al copiar link público de tienda (categoría o producto)
+  const [linkTiendaCopiadoKey, setLinkTiendaCopiadoKey] = useState<string | null>(null);
   // Estado para indicar si se está guardando el orden de variantes de un producto
   const [guardandoOrdenProdId, setGuardandoOrdenProdId] = useState<string | null>(null);
+
+  const copiarLinkPublicoTienda = async (key: string, url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkTiendaCopiadoKey(key);
+      setTimeout(() => {
+        setLinkTiendaCopiadoKey((prev) => (prev === key ? null : prev));
+      }, 2200);
+    } catch {
+      // Fallback silencioso si el navegador restringe portapapeles
+    }
+  };
 
   // Inicializar parámetros de consulta desde URL (Deep Linking & Compartir)
   useEffect(() => {
@@ -1195,6 +1214,52 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
 
             {/* Acciones de Recursos Digitales de la Categoría */}
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={() => {
+                  const urlCatPublica = construirEnlaceCategoriaTienda({
+                    negocio,
+                    slugCategoria: catActiva.ctg_slug || catActiva.ctg_nombre,
+                    baseUrl: URL_TIENDA_POR_NEGOCIO[negocio],
+                  });
+                  copiarLinkPublicoTienda(`cat_${catActiva.ctg_id}`, urlCatPublica);
+                }}
+                className="btn-responsive-accion"
+                title={`Copiar link directo de la categoría "${catActiva.ctg_nombre}" para compartir por WhatsApp o Chat`}
+                aria-label={`Copiar link directo de la categoría ${catActiva.ctg_nombre}`}
+                style={{
+                  background:
+                    linkTiendaCopiadoKey === `cat_${catActiva.ctg_id}`
+                      ? "rgba(5, 150, 105, 0.95)"
+                      : "rgba(255, 255, 255, 0.2)",
+                  backdropFilter: "blur(4px)",
+                  color: "#FFFFFF",
+                  border:
+                    linkTiendaCopiadoKey === `cat_${catActiva.ctg_id}`
+                      ? "1px solid #34D399"
+                      : "1px solid rgba(255, 255, 255, 0.38)",
+                  padding: "6px 12px",
+                  borderRadius: "8px",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                {linkTiendaCopiadoKey === `cat_${catActiva.ctg_id}` ? (
+                  <>
+                    <CheckCircle2 size={13} color="#FFFFFF" />
+                    <span className="btn-texto-responsive">Copiado</span>
+                  </>
+                ) : (
+                  <>
+                    <Link2 size={13} color="#38BDF8" />
+                    <span className="btn-texto-responsive">Link Tienda</span>
+                  </>
+                )}
+              </button>
               {videoCat && (
                 <button
                   type="button"
@@ -1976,6 +2041,57 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         DESTACADO
                       </div>
                     )
+                  )}
+
+                  {modoVista === "admin" && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const urlProdPublico = construirEnlaceProductoTienda({
+                          negocio,
+                          slugProducto: p.pro_slug || p.pro_id,
+                          skuVariante: variantesLista.length > 1 ? currentVar?.var_sku : undefined,
+                          baseUrl: URL_TIENDA_POR_NEGOCIO[negocio],
+                        });
+                        copiarLinkPublicoTienda(`prod_${p.pro_id}`, urlProdPublico);
+                      }}
+                      className="btn-responsive-accion"
+                      title={`Copiar link directo en tienda para compartir "${p.pro_nombre}" por WhatsApp o Chat`}
+                      aria-label={`Copiar link en tienda de ${p.pro_nombre}`}
+                      style={{
+                        background:
+                          linkTiendaCopiadoKey === `prod_${p.pro_id}`
+                            ? "rgba(5, 150, 105, 0.95)"
+                            : "rgba(15, 23, 42, 0.9)",
+                        border:
+                          linkTiendaCopiadoKey === `prod_${p.pro_id}`
+                            ? "1.5px solid #34D399"
+                            : "1.5px solid rgba(16, 185, 129, 0.45)",
+                        color: "#FFFFFF",
+                        padding: "5px 10px",
+                        borderRadius: "8px",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+                      }}
+                    >
+                      {linkTiendaCopiadoKey === `prod_${p.pro_id}` ? (
+                        <>
+                          <CheckCircle2 size={12} color="#FFFFFF" />
+                          <span className="btn-texto-responsive">Copiado</span>
+                        </>
+                      ) : (
+                        <>
+                          <Link2 size={12} color="#34D399" />
+                          <span className="btn-texto-responsive">Link Tienda</span>
+                        </>
+                      )}
+                    </button>
                   )}
 
                   {modoVista === "admin" && (

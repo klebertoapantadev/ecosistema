@@ -13,7 +13,7 @@ import {
   productoTieneOferta,
 } from '../filtrado-catalogo';
 import { TarjetaProductoConCarrusel } from './TarjetaProductoConCarrusel';
-import { Search, SlidersHorizontal, Feather, Sparkles, ArrowUpDown } from 'lucide-react';
+import { Search, SlidersHorizontal, Feather, Sparkles, ArrowUpDown, Link2, Check } from 'lucide-react';
 
 export { obtenerNombreProductoIndividual, obtenerPvpProducto, productoTieneOferta };
 
@@ -25,7 +25,21 @@ export function VitrinaCatalogoTinkay() {
     setCategoriaActiva,
     terminoBusqueda,
     setTerminoBusqueda,
+    obtenerEnlaceCategoriaActual,
   } = useCarrito();
+
+  const [linkCatCopiado, setLinkCatCopiado] = useState(false);
+
+  const handleCopiarEnlaceCategoria = async () => {
+    const url = obtenerEnlaceCategoriaActual(categoriaActiva);
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCatCopiado(true);
+      setTimeout(() => setLinkCatCopiado(false), 2200);
+    } catch {
+      // Fallback silencioso
+    }
+  };
 
   const catalogoProductos = productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY;
   const catalogoCategorias = categorias && categorias.length > 0 ? categorias : CATEGORIAS_TINKAY;
@@ -279,22 +293,65 @@ export function VitrinaCatalogoTinkay() {
           </div>
         </div>
 
-        {/* Pestañas de Categorías Multidimensionales */}
-        <div className="pills-categorias-scroll">
-          {categoriasVisibles.map((cat) => {
-            const estaActiva = cat.id === categoriaActiva;
-            return (
-              <button
-                key={cat.id}
-                type="button"
-                className={`pill-categoria ${estaActiva ? 'pill-activa' : ''} ${cat.modoVisualSobrio ? 'pill-condolencias' : ''}`}
-                onClick={() => handleSeleccionarCategoria(cat.id)}
-              >
-                {cat.modoVisualSobrio && <Feather size={14} className="icono-pill" />}
-                <span>{cat.nombre}</span>
-              </button>
-            );
-          })}
+        {/* Pestañas de Categorías Multidimensionales + Botón Copiar Link de Categoría */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '10px',
+            flexWrap: 'wrap',
+            marginBottom: '6px',
+          }}
+        >
+          <div className="pills-categorias-scroll" style={{ flex: 1, minWidth: 0 }}>
+            {categoriasVisibles.map((cat) => {
+              const estaActiva = cat.id === categoriaActiva;
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  className={`pill-categoria ${estaActiva ? 'pill-activa' : ''} ${cat.modoVisualSobrio ? 'pill-condolencias' : ''}`}
+                  onClick={() => handleSeleccionarCategoria(cat.id)}
+                >
+                  {cat.modoVisualSobrio && <Feather size={14} className="icono-pill" />}
+                  <span>{cat.nombre}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            type="button"
+            onClick={handleCopiarEnlaceCategoria}
+            className="btn-responsive-accion"
+            title={
+              categoriaActivaObj && categoriaActiva !== 'cat-todos'
+                ? `Copiar link directo de "${categoriaActivaObj.nombre}" para WhatsApp o Chat`
+                : 'Copiar link directo del catálogo para WhatsApp o Chat'
+            }
+            aria-label="Copiar link de categoría"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 13px',
+              borderRadius: '999px',
+              border: linkCatCopiado ? '1.5px solid #10B981' : '1px solid #E4E4E7',
+              background: linkCatCopiado ? '#ECFDF5' : '#FFFFFF',
+              color: linkCatCopiado ? '#047857' : '#27272A',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+              flexShrink: 0,
+            }}
+          >
+            {linkCatCopiado ? <Check size={14} /> : <Link2 size={14} />}
+            <span className="btn-texto-responsive">
+              {linkCatCopiado ? 'Link copiado' : 'Copiar link'}
+            </span>
+          </button>
         </div>
 
         {/* Grid de Productos con Carruseles Fotográficos */}
@@ -317,13 +374,20 @@ export function VitrinaCatalogoTinkay() {
           </div>
         ) : (
           <div className="grid-productos-vitrina">
-            {productosFinales.map((producto) => (
-              <TarjetaProductoConCarrusel
-                key={producto.id}
-                producto={producto}
-                modoSobrio={esModoCondolencias || Boolean(producto.esCondolencias)}
-              />
-            ))}
+            {productosFinales.map((producto) => {
+              const esPrimariaCondolencias = Boolean(
+                producto.esCondolencias &&
+                  (!producto.categoriaNombre ||
+                    producto.categoriaNombre.toLowerCase().includes('condol'))
+              );
+              return (
+                <TarjetaProductoConCarrusel
+                  key={producto.id}
+                  producto={producto}
+                  modoSobrio={esModoCondolencias || esPrimariaCondolencias}
+                />
+              );
+            })}
           </div>
         )}
       </div>

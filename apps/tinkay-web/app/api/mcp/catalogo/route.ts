@@ -7,6 +7,10 @@ import {
 
 const manejarMcp = crearServidorMcpCatalogo({
   negocioPorDefecto: "tinkay",
+  urlBaseTienda:
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "https://tinkay-web.vercel.app",
   supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
   supabaseAnonKey:
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||

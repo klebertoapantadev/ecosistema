@@ -23,6 +23,7 @@ import {
   Sliders,
   Check,
   Eye,
+  Link2,
 } from 'lucide-react';
 
 export function ModalDetalleProducto() {
@@ -31,11 +32,13 @@ export function ModalDetalleProducto() {
     setProductoSeleccionadoModal,
     agregarItem,
     productos,
+    obtenerEnlaceProducto,
   } = useCarrito();
 
   const producto = productoSeleccionadoModal;
 
   const [fotoActivaIndex, setFotoActivaIndex] = useState(0);
+  const [linkModalCopiado, setLinkModalCopiado] = useState(false);
   const [cantidadModal, setCantidadModal] = useState<number>(1);
   const [modoCompraCombo, setModoCompraCombo] = useState<'set_completo' | 'personalizado'>('set_completo');
   const [seleccionCombo, setSeleccionCombo] = useState<
@@ -508,6 +511,26 @@ export function ModalDetalleProducto() {
   const seleccionarVarianteModal = (v: VarianteEcommerce) => {
     setVarianteSeleccionada(v);
     setFotoActivaIndex(0);
+    if (typeof window !== 'undefined') {
+      try {
+        const urlVar = obtenerEnlaceProducto(producto, v.sku);
+        const parsed = new URL(urlVar, window.location.origin);
+        window.history.replaceState(null, '', `${parsed.pathname}${parsed.search}`);
+      } catch {
+        // Ignorar en entornos sin History API
+      }
+    }
+  };
+
+  const handleCopiarEnlaceModal = async () => {
+    const url = obtenerEnlaceProducto(producto, varianteSeleccionada.sku);
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkModalCopiado(true);
+      setTimeout(() => setLinkModalCopiado(false), 2200);
+    } catch {
+      // Fallback silencioso
+    }
   };
 
   const cambiarFotoActiva = (nuevoIdx: number) => {
@@ -672,13 +695,51 @@ export function ModalDetalleProducto() {
           {/* Columna Derecha: Configuración, Variantes y Dedicatoria */}
           <div className="columna-info-modal">
             <div className="cabecera-info-producto">
-              <span className="categoria-pill-modal">
-                {esComboActivo
-                  ? '🎁 Set / Combo para Eventos'
-                  : producto.esCondolencias
-                  ? '🕊️ Condolencias Solemnes'
-                  : 'Colección Tinkay'}
-              </span>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '8px',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <span className="categoria-pill-modal">
+                  {esComboActivo
+                    ? '🎁 Set / Combo para Eventos'
+                    : producto.esCondolencias &&
+                      (!producto.categoriaNombre ||
+                        producto.categoriaNombre.toLowerCase().includes('condol'))
+                    ? '🕊️ Condolencias Solemnes'
+                    : producto.categoriaNombre || 'Colección Tinkay'}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={handleCopiarEnlaceModal}
+                  className="btn-responsive-accion"
+                  title="Copiar enlace directo a este producto para compartir por WhatsApp"
+                  aria-label="Copiar enlace del producto"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '5px 11px',
+                    borderRadius: '999px',
+                    border: linkModalCopiado ? '1.5px solid #10B981' : '1px solid #E4E4E7',
+                    background: linkModalCopiado ? '#ECFDF5' : '#FFFFFF',
+                    color: linkModalCopiado ? '#047857' : '#3F3F46',
+                    fontSize: '0.75rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  {linkModalCopiado ? <Check size={13} /> : <Link2 size={13} />}
+                  <span className="btn-texto-responsive">
+                    {linkModalCopiado ? 'Link copiado' : 'Copiar link'}
+                  </span>
+                </button>
+              </div>
               <h2 className="titulo-modal-producto">{tituloModal}</h2>
               {(() => {
                 const usarPrecioSet =

@@ -27,8 +27,8 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-006`** | Datos de Facturación SRI, Emisión Automática con Tarjeta, Pagos Manuales y Widget de Comprobantes | ✅ Implementado | **100%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-007`** | Catálogo Geográfico (Ecuador 24 Provincias) | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-008`** | Configuración de Negocio & SMTP en Vault | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`PLT-009`** | Catálogo Comercial Unificado (Productos, Sets/Combos Configurables, Descuentos por Volumen, Despachos y Pasarela Payphone) | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`PLT-010`** | **Integración Omnicanal (WhatsApp YCloud, ARIA y Supervisión Humana HITL)** | 🟡 En Desarrollo | **45%** | Kleber Toapanta / Jesus Navarrete |
+| **`PLT-009`** | Catálogo Comercial Unificado (Productos, Sets/Combos Configurables, Descuentos por Volumen, Enlaces Directos Omnicanal, Despachos y Pasarela Payphone) | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`PLT-010`** | **Integración Omnicanal (WhatsApp YCloud, ARIA, Deep Links de Tienda y Supervisión Humana HITL)** | 🟡 En Desarrollo | **55%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-011`** | Sistema de Widgets por Rol & DataGrids 2 Capas | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-012`** | **Baja de Cuenta y Derecho al Olvido** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-013`** | Notificaciones Multicanal (Push/Email/In-App) | ✅ Implementado | **100%** | Kleber Toapanta |
@@ -591,6 +591,11 @@ Motor centralizado de gestión de bienes, servicios, recetas (BOM), inventarios,
       - **Doble Modo de Compra en E-Commerce (`Set Completo` vs `Personalizar`):**
         1. **`Set Completo`:** Aplica el precio paquete cerrado configurado por el administrador (`$260.00`), exhibiendo el ahorro porcentual frente a la suma individual en vivo.
         2. **`Personalizar`:** El cliente puede cambiar la presentación/tamaño (`S / M / L / XL`) y ajustar la cantidad (`0, 1, 2, 3...`) de cada elemento del Set. Al modificar cantidades o variantes, el total suma estrictamente los costos reales de los elementos seleccionados aplicando las escalas de descuento por volumen de cada pieza; si la selección coincide exactamente con la composición base del Set y el precio paquete es menor, el sistema protege automáticamente al comprador aplicando la tarifa preferencial del Set.
+28. **Enlaces Directos Omnicanal (Deep Links) a Categorías y Productos para WhatsApp y Chat Web (`enlacesTienda.ts`, `obtener_enlaces_tienda` en MCP):**
+    - **Rutas Limpias y Parámetros Compatibles:** Toda tienda e-commerce del ecosistema expone URLs canónicas dedicadas tanto por ruta limpia (`/categoria/{slug}` y `/producto/{slug}?variante={sku}`) como por parámetros de consulta (`/?categoria=...`, `/?producto=...`, `/?variante=...`). Las rutas limpias garantizan que WhatsApp, Instagram y Telegram generen tarjetas de vista previa OpenGraph independientes (`og:title`, `og:description`, `og:image` con la foto real y precio del producto o portada de la categoría) sin colapsar al caché de la página principal.
+    - **Generador y Analizador Compartido (`@eco/comercio` → `enlacesTienda.ts`):** Utilitario puro libre de `next/*` (`construirEnlaceCategoriaTienda`, `construirEnlaceProductoTienda`, `interpretarEnlaceTienda`) reutilizable en vitrinas públicas, backoffice administrativo y apps nativas.
+    - **Exposición Nativa en MCP para ARIA (`@eco/agentes-ia` → `mcp-catalogo.ts`):** Las herramientas `consultar_catalogo` y `detalle_producto` incluyen automáticamente `url_tienda_producto`, `url_tienda_categoria` y `url_tienda_variante`, además de la herramienta dedicada `obtener_enlaces_tienda` para resolver enlaces directos bajo demanda en WhatsApp (YCloud) y Chat Web.
+    - **Copiado en 1 Clic para Asesores Humanos:** Botones rápidos `Link Tienda` / `Copiar link` disponibles tanto en la vitrina pública (barra de categorías, tarjeta de producto y modal de detalle) como en la consola administrativa (`/panel/catalogo-productos` y gestor de categorías).
 
 **Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §7 (`comun_comercio`).
 
@@ -626,6 +631,10 @@ Ecosistema integral de atención conversacional y distribución comercial omnica
    - Cada negocio expone un feed estructurado (XML/JSON) que Meta consulta periódicamente para sincronizar el catálogo de productos con WhatsApp Business, Facebook e Instagram.
 6. **Botón "Comprar por WhatsApp":**
    - En las tiendas web del ecosistema, el botón genera un enlace profundo con texto estructurado (producto, SKU, PVP en dólares, extras y dirección), enrutándolo al agente ARIA o a la asesora con el tag correspondiente.
+7. **Redirección Inversa desde WhatsApp y Chat Web hacia Categorías y Productos en Tienda (*Storefront Deep Linking*):**
+   - Tanto el agente conversacional ARIA (vía herramientas MCP `consultar_catalogo`, `detalle_producto` y `obtener_enlaces_tienda`) como las asesoras humanas disponen de enlaces directos limpios hacia cualquier categoría (`/categoria/{slug}`) o producto/variante (`/producto/{slug}?variante={sku}`).
+   - En **WhatsApp**, cada enlace despliega previsualización rica OpenGraph con fotografía real y precio en USD, llevando al cliente directamente a la colección filtrada o abriendo automáticamente la ficha interactiva del producto listo para agregar al carrito.
+   - En **Chat Web**, los enlaces compartidos por el agente se interceptan en cliente para navegar instantáneamente a la categoría o abrir el modal del producto sin recargar la página.
 
 **Especificación específica de producto:** Ver [`agente-aria-whatsapp-ycloud.md`](../tinkay/agente-aria-whatsapp-ycloud.md) para el caso de Tinkay Floristería ("Mía").
 
