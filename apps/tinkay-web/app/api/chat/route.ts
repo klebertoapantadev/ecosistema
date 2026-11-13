@@ -62,6 +62,10 @@ export async function POST(req: NextRequest) {
         dentroCobertura: boolean;
         zonaDetectadaNombre?: string;
         distanciaVialKm?: number;
+        direccionReferencial?: string;
+        callePrincipal?: string;
+        sectorBarrio?: string;
+        parroquia?: string;
         enlaceMapa: string;
         lat: number;
         lng: number;
@@ -81,6 +85,8 @@ export async function POST(req: NextRequest) {
       ]);
       if (resCot.ok) {
         const c = resCot.cotizacion;
+        const detGeo = c.detalleDireccion;
+        const direccionRef = detGeo?.resumenDireccion || resCot.direccionDetectada;
         const mostrarKm = cfg.mostrarKilometrosCliente !== false;
         const enlaceFinal =
           urlEnMensaje && /^https?:\/\//i.test(urlEnMensaje)
@@ -92,6 +98,10 @@ export async function POST(req: NextRequest) {
           dentroCobertura: c.dentroCobertura,
           zonaDetectadaNombre: c.zonaDetectada?.nombre,
           ...(mostrarKm ? { distanciaVialKm: c.distanciaVialKm } : {}),
+          ...(direccionRef ? { direccionReferencial: direccionRef } : {}),
+          ...(detGeo?.callePrincipal ? { callePrincipal: detGeo.callePrincipal } : {}),
+          ...(detGeo?.sectorBarrio ? { sectorBarrio: detGeo.sectorBarrio } : {}),
+          ...(detGeo?.parroquia ? { parroquia: detGeo.parroquia } : {}),
           enlaceMapa: enlaceFinal,
           lat: c.destino.lat,
           lng: c.destino.lng,
@@ -102,9 +112,10 @@ export async function POST(req: NextRequest) {
           `[DATOS OFICIALES DE ENVÍO TINKAY PARA ESTA UBICACIÓN GPS: ` +
           `Dentro de cobertura=${c.dentroCobertura ? "SÍ" : "NO"}; ` +
           `Zona=${c.zonaDetectada?.nombre ?? "Domicilio"}; ` +
+          (direccionRef ? `Dirección referencial=${direccionRef}; ` : "") +
           (mostrarKm ? `Distancia=${c.distanciaVialKm.toFixed(1)} km; ` : "") +
           `Costo final de envío=$${c.costoTotalEnvio.toFixed(2)} USD. ` +
-          `Usa exactamente este costo final al responder al cliente. ` +
+          `Usa exactamente este costo final al responder al cliente y puedes confirmar amablemente el sector o calle detectada. ` +
           `${
             mostrarKm
               ? "Puedes indicar la distancia en km."

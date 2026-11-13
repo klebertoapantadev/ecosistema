@@ -86,6 +86,15 @@ export interface DatosEntrega {
   dentroCobertura?: boolean;
   etiquetaCotizacion?: string;
   formulaCalculoInterno?: string;
+  detalleDireccionGeo?: {
+    resumenDireccion: string;
+    callePrincipal?: string;
+    sectorBarrio?: string;
+    parroquia?: string;
+    ciudad?: string;
+    provincia?: string;
+    codigoPostal?: string;
+  } | null;
 }
 
 export interface ItemCarrito {
@@ -119,6 +128,10 @@ export interface MensajeChat {
     dentroCobertura: boolean;
     zonaDetectadaNombre?: string;
     distanciaVialKm?: number;
+    direccionReferencial?: string;
+    callePrincipal?: string;
+    sectorBarrio?: string;
+    parroquia?: string;
     enlaceMapa: string;
     lat: number;
     lng: number;

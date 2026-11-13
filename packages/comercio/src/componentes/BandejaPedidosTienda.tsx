@@ -383,6 +383,22 @@ export function BandejaPedidosTienda({
                     <strong>Dirección:</strong> {p.logistica.direccion || "—"}
                     {p.logistica.referencia ? ` · Ref: ${p.logistica.referencia}` : ""}
                   </div>
+                  {p.logistica.detalleDireccionGeo && (
+                    <div style={{ fontSize: "0.74rem", color: "#0F766E" }}>
+                      <strong>Mapa (Calle / Sector / Parroquia):</strong>{" "}
+                      {[
+                        p.logistica.detalleDireccionGeo.callePrincipal,
+                        p.logistica.detalleDireccionGeo.sectorBarrio
+                          ? `Sector ${p.logistica.detalleDireccionGeo.sectorBarrio}`
+                          : null,
+                        p.logistica.detalleDireccionGeo.parroquia
+                          ? `Parroquia ${p.logistica.detalleDireccionGeo.parroquia}`
+                          : null,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ") || p.logistica.detalleDireccionGeo.resumenDireccion}
+                    </div>
+                  )}
                   <div>
                     <strong>Fecha / Franja:</strong> {p.logistica.fechaEntrega} ·{" "}
                     {p.logistica.franjaHoraria}

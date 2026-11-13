@@ -49,12 +49,32 @@ export interface ConfiguracionLogisticaNegocio {
   actualizadoEn?: string | null;
 }
 
+export interface DetalleDireccionGeoespacial {
+  /** Resumen legible listo para autocompletar dirección de entrega (ej. "Av. Rodrigo de Chávez, Villaflora, Parroquia Chimbacalle, Quito") */
+  resumenDireccion: string;
+  /** Calle principal, intersección, numeración o edificio/lugar detectado */
+  callePrincipal?: string;
+  /** Barrio, sector, ciudadela o urbanización */
+  sectorBarrio?: string;
+  /** Parroquia urbana o rural (ej. Chimbacalle, Iñaquito, Cumbayá, Nayón, Tumbaco) */
+  parroquia?: string;
+  /** Cantón o ciudad (ej. Quito, Sangolquí) */
+  ciudad?: string;
+  /** Provincia (ej. Pichincha) */
+  provincia?: string;
+  /** Código postal referencial si existe (ej. 170111) */
+  codigoPostal?: string;
+  /** Cadena completa devuelta por el geocodificador */
+  direccionCompleta?: string;
+}
+
 export interface OpcionesCotizacionEnvio {
   config: ConfiguracionLogisticaNegocio;
   destino: CoordenadaGeo;
   distanciaVialKm?: number;
   fuenteDistancia?: "OSRM" | "ESTIMACION_VIAL";
   rutaGeometria?: [number, number][];
+  detalleDireccion?: DetalleDireccionGeoespacial | null;
   /** Si el producto incluye envío gratis dentro de la zona por defecto (default: true) */
   deliveryIncluidoProducto?: boolean;
   /** Recargo adicional específico del producto (ej. furgoneta para pedestal monumental) */
@@ -99,6 +119,8 @@ export interface ResultadoCotizacionEnvio {
   formulaDetalle: string;
   rutaGeometria?: [number, number][];
   urlGoogleMapsDestino: string;
+  /** Calles, sector/barrio y parroquia obtenidos por geocodificación inversa del pin o enlace */
+  detalleDireccion?: DetalleDireccionGeoespacial | null;
 }
 
 export interface SugerenciaDireccionMapa {
@@ -305,6 +327,27 @@ function redondearMoneda(valor: number): number {
   return Math.round(valor * 100) / 100;
 }
 
+/**
+ * Redondeo comercial de tarifas de envío en tramos de $0.50 USD:
+ *  - Menos de $0.25 (0 a 24 ctv)   -> aproxima hacia abajo al entero inferior ($X.00)
+ *  - De $0.25 a $0.50 (25 a 50 ctv) -> aproxima a $X.50
+ *  - Más de $0.50 (51 a 99 ctv)     -> aproxima al siguiente entero superior ($(X+1).00)
+ */
+export function redondearTarifaComercialEnvio(valor: number): number {
+  if (!Number.isFinite(valor) || valor <= 0) return 0;
+  const totalCentavos = Math.round(valor * 100);
+  const enteros = Math.floor(totalCentavos / 100);
+  const centavos = totalCentavos % 100;
+
+  if (centavos < 25) {
+    return enteros;
+  }
+  if (centavos <= 50) {
+    return enteros + 0.5;
+  }
+  return enteros + 1;
+}
+
 function redondearKm(valor: number): number {
   return Math.round(valor * 100) / 100;
 }
@@ -482,14 +525,38 @@ export function extraerCoordenadasDeTextoOUrl(entrada: string): CoordenadaGeo | 
 }
 
 /**
+ * Extrae el nombre legible de lugar o calle codificado dentro de una URL expandida de Google Maps (`/maps/place/...`).
+ */
+export function extraerNombreLugarDeUrlMapa(urlOTexto: string): string | undefined {
+  if (!urlOTexto || typeof urlOTexto !== "string") return undefined;
+  const match = urlOTexto.match(/\/maps\/place\/([^/?#]+)/i);
+  if (!match?.[1]) return undefined;
+  let decodificado = match[1].replace(/\+/g, " ");
+  try {
+    decodificado = decodeURIComponent(decodificado);
+  } catch {
+    // Conservar valor
+  }
+  const limpio = decodificado.trim();
+  if (!limpio || limpio.length < 3) return undefined;
+  // Descartar si son únicamente coordenadas DMS o decimales (ej. "-0.245,-78.518" o "0°14'42.0\"S")
+  if (/^[-+\d.,\s°'"NSEW]+$/i.test(limpio)) return undefined;
+  if (/^google\s*maps$/i.test(limpio)) return undefined;
+  return limpio;
+}
+
+/**
  * Resuelve en servidor enlaces acortados de Google Maps / Waze / Apple Maps siguiendo redirecciones HTTP.
  */
 export async function resolverEnlaceMapaACoordenadas(
   entrada: string
-): Promise<{ coordenadas: CoordenadaGeo | null; urlExpandida?: string }> {
+): Promise<{ coordenadas: CoordenadaGeo | null; urlExpandida?: string; nombreLugar?: string }> {
   const directo = extraerCoordenadasDeTextoOUrl(entrada);
   if (directo) {
-    return { coordenadas: directo };
+    return {
+      coordenadas: directo,
+      nombreLugar: extraerNombreLugarDeUrlMapa(entrada),
+    };
   }
 
   const urlDetectada = extraerPrimeraUrlDeTexto(entrada);
@@ -510,15 +577,36 @@ export async function resolverEnlaceMapaACoordenadas(
     });
 
     const urlFinal = respuesta.url || urlDetectada;
+    const pistaUrl = extraerNombreLugarDeUrlMapa(urlFinal);
     const desdeUrlFinal = extraerCoordenadasDeTextoOUrl(urlFinal);
     if (desdeUrlFinal) {
-      return { coordenadas: desdeUrlFinal, urlExpandida: urlFinal };
+      return {
+        coordenadas: desdeUrlFinal,
+        urlExpandida: urlFinal,
+        nombreLugar: pistaUrl,
+      };
     }
 
     const html = await respuesta.text();
+    const matchOgTitle = html.match(
+      /<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i
+    );
+    const tituloOg = matchOgTitle?.[1]?.trim();
+    const pistaLugar =
+      pistaUrl ||
+      (tituloOg &&
+      !/^google\s*maps$/i.test(tituloOg) &&
+      !/^[-+\d.,\s°'"NSEW]+$/i.test(tituloOg)
+        ? tituloOg.replace(/\s*[-·|]\s*Google Maps.*$/i, "").trim()
+        : undefined);
+
     const desdeHtml = extraerCoordenadasDeTextoOUrl(html.slice(0, 120000));
     if (desdeHtml) {
-      return { coordenadas: desdeHtml, urlExpandida: urlFinal };
+      return {
+        coordenadas: desdeHtml,
+        urlExpandida: urlFinal,
+        nombreLugar: pistaLugar,
+      };
     }
 
     // Buscar meta og:image de Google Maps estático (center=lat%2Clng)
@@ -527,11 +615,15 @@ export async function resolverEnlaceMapaACoordenadas(
       const lat = Number(matchCenter[1]);
       const lng = Number(matchCenter[2]);
       if (esCoordenadaValida(lat, lng)) {
-        return { coordenadas: { lat, lng }, urlExpandida: urlFinal };
+        return {
+          coordenadas: { lat, lng },
+          urlExpandida: urlFinal,
+          nombreLugar: pistaLugar,
+        };
       }
     }
 
-    return { coordenadas: null, urlExpandida: urlFinal };
+    return { coordenadas: null, urlExpandida: urlFinal, nombreLugar: pistaLugar };
   } catch {
     return { coordenadas: null };
   }
@@ -662,6 +754,215 @@ export async function buscarDireccionesPichincha(
 }
 
 /**
+ * Extrae calles, barrio/sector, parroquia y ciudad desde una respuesta de geocodificación inversa (Nominatim)
+ * combinada opcionalmente con el nombre de lugar del enlace de Google Maps.
+ */
+export function construirDetalleDireccionDesdeNominatim(
+  datos: {
+    name?: string;
+    display_name?: string;
+    address?: Record<string, string | undefined>;
+  } | null,
+  nombreLugarPista?: string
+): DetalleDireccionGeoespacial | null {
+  const addr = datos?.address ?? {};
+  const pista = (nombreLugarPista || "").trim();
+
+  const limpiarAdmin = (txt?: string) => {
+    const v = (txt || "").trim();
+    if (!v) return "";
+    if (/^administraci[oó]n\s+zonal/i.test(v)) return "";
+    if (/^distrito\s+metropolitano\s+de\s+quito$/i.test(v)) return "";
+    if (/^cant[oó]n\s+/i.test(v)) return v.replace(/^cant[oó]n\s+/i, "").trim();
+    return v;
+  };
+
+  const calleBase = (
+    addr.road ||
+    addr.pedestrian ||
+    addr.footway ||
+    addr.street ||
+    addr.path ||
+    ""
+  ).trim();
+  const numeroCasa = (addr.house_number || "").trim();
+  const viaConNumero =
+    calleBase && numeroCasa ? `${calleBase} ${numeroCasa}` : calleBase;
+
+  const poiONombre = (
+    pista ||
+    addr.building ||
+    addr.amenity ||
+    addr.shop ||
+    addr.office ||
+    addr.commercial ||
+    datos?.name ||
+    ""
+  ).trim();
+
+  let callePrincipal = viaConNumero;
+  if (
+    poiONombre &&
+    (!callePrincipal ||
+      !callePrincipal.toLowerCase().includes(poiONombre.toLowerCase())) &&
+    (!callePrincipal ||
+      !poiONombre.toLowerCase().includes(callePrincipal.toLowerCase()))
+  ) {
+    callePrincipal = callePrincipal
+      ? `${poiONombre} (${callePrincipal})`
+      : poiONombre;
+  } else if (!callePrincipal && poiONombre) {
+    callePrincipal = poiONombre;
+  }
+
+  // Sector / Barrio / Urbanización
+  const candidatosSector = [
+    addr.neighbourhood,
+    addr.quarter,
+    addr.residential,
+    addr.hamlet,
+    addr.allotments,
+  ]
+    .map(limpiarAdmin)
+    .filter(Boolean);
+
+  // Parroquia urbana o rural (ej. Chimbacalle, Iñaquito, Cumbayá, Tumbaco, Nayón, Conocoto, Calderón)
+  const candidatosParroquia = [
+    addr.suburb,
+    addr.town,
+    addr.village,
+    addr.municipality,
+    addr.city_district,
+  ]
+    .map(limpiarAdmin)
+    .filter(Boolean);
+
+  let sectorBarrio = candidatosSector[0] || "";
+  let parroquia =
+    candidatosParroquia.find(
+      (p) => p.toLowerCase() !== sectorBarrio.toLowerCase()
+    ) || "";
+
+  // Si Nominatim puso el barrio en `suburb` y la parroquia en `town`/`village`/`city_district`
+  if (!sectorBarrio && candidatosParroquia.length >= 2) {
+    sectorBarrio = candidatosParroquia[0]!;
+    parroquia =
+      candidatosParroquia.find(
+        (p) => p.toLowerCase() !== sectorBarrio.toLowerCase()
+      ) || "";
+  } else if (!sectorBarrio && candidatosParroquia.length === 1) {
+    // Cuando solo existe una entidad sub-municipal (ej. Cumbayá o Nayón), funciona como parroquia/sector
+    parroquia = candidatosParroquia[0]!;
+  }
+
+  const ciudadBruta =
+    limpiarAdmin(addr.city) ||
+    (addr.county && /rumi[ñn]ahui/i.test(addr.county)
+      ? "Sangolquí"
+      : addr.county && /quito/i.test(addr.county)
+      ? "Quito"
+      : limpiarAdmin(addr.county)) ||
+    "";
+
+  const ciudad =
+    ciudadBruta &&
+    ciudadBruta.toLowerCase() !== parroquia.toLowerCase() &&
+    ciudadBruta.toLowerCase() !== sectorBarrio.toLowerCase()
+      ? ciudadBruta
+      : ciudadBruta || (addr.state && /pichincha/i.test(addr.state) ? "Quito" : "");
+
+  const provincia = (addr.state || "").trim() || undefined;
+  const codigoPostal = (addr.postcode || "").trim() || undefined;
+
+  const vistos = new Set<string>();
+  const partesResumen: string[] = [];
+  const agregarUnico = (fragmento?: string, prefijo = "") => {
+    const limpio = (fragmento || "").trim();
+    if (!limpio) return;
+    const clave = limpio.toLowerCase();
+    if (vistos.has(clave)) return;
+    vistos.add(clave);
+    partesResumen.push(prefijo ? `${prefijo}${limpio}` : limpio);
+  };
+
+  agregarUnico(callePrincipal);
+  agregarUnico(sectorBarrio);
+  agregarUnico(parroquia, parroquia && sectorBarrio ? "Parroquia " : "");
+  agregarUnico(ciudad);
+
+  const direccionCompleta = (datos?.display_name || "").trim() || undefined;
+  const resumenDireccion =
+    partesResumen.join(", ") ||
+    (direccionCompleta
+      ? direccionCompleta
+          .split(",")
+          .map((s) => s.trim())
+          .slice(0, 4)
+          .join(", ")
+      : "");
+
+  if (!resumenDireccion) return null;
+
+  return {
+    resumenDireccion,
+    ...(callePrincipal ? { callePrincipal } : {}),
+    ...(sectorBarrio ? { sectorBarrio } : {}),
+    ...(parroquia ? { parroquia } : {}),
+    ...(ciudad ? { ciudad } : {}),
+    ...(provincia ? { provincia } : {}),
+    ...(codigoPostal ? { codigoPostal } : {}),
+    ...(direccionCompleta ? { direccionCompleta } : {}),
+  };
+}
+
+/**
+ * Obtiene calles, sector/barrio y parroquia a partir de coordenadas GPS mediante Nominatim (OpenStreetMap).
+ */
+export async function geocodificarInversoCoordenadas(
+  coordenadas: CoordenadaGeo,
+  nombreLugarPista?: string
+): Promise<DetalleDireccionGeoespacial | null> {
+  if (!esCoordenadaValida(coordenadas.lat, coordenadas.lng)) {
+    return null;
+  }
+
+  try {
+    const url =
+      `https://nominatim.openstreetmap.org/reverse?format=jsonv2` +
+      `&lat=${encodeURIComponent(String(coordenadas.lat))}` +
+      `&lon=${encodeURIComponent(String(coordenadas.lng))}` +
+      `&zoom=18&addressdetails=1`;
+
+    const res = await fetch(url, {
+      headers: {
+        Accept: "application/json",
+        "Accept-Language": "es",
+        "User-Agent": "EcosistemaTinkayLogistica/1.0 (https://tinkay-web.vercel.app)",
+      },
+      signal: AbortSignal.timeout(3800),
+    });
+
+    if (!res.ok) {
+      return nombreLugarPista
+        ? construirDetalleDireccionDesdeNominatim(null, nombreLugarPista)
+        : null;
+    }
+
+    const json = (await res.json()) as {
+      name?: string;
+      display_name?: string;
+      address?: Record<string, string | undefined>;
+    };
+
+    return construirDetalleDireccionDesdeNominatim(json, nombreLugarPista);
+  } catch {
+    return nombreLugarPista
+      ? construirDetalleDireccionDesdeNominatim(null, nombreLugarPista)
+      : null;
+  }
+}
+
+/**
  * Motor determinista de cotización de envío a domicilio.
  * Regla híbrida aprobada:
  *  1. Retiro en local -> $0.00.
@@ -669,7 +970,8 @@ export async function buscarDireccionesPichincha(
  *  3. Zona con modo GRATIS (ej. Centro-Norte de Quito) -> $0.00 si el producto incluye envío, o tarifaBaseNoIncluido si no lo incluye.
  *  4. Zona con modo TARIFA_FIJA (ej. Cumbayá, Tumbaco, Los Chillos) -> tarifaFija de la zona (+ subsidioBaseUsd si el producto no incluía envío base).
  *  5. Zona POR_KM o cualquier sector en Pichincha fuera de polígonos fijos ->
- *     Máx(recargoMinimoExtra, (distanciaVialKmDesdeTaller × tarifaPorKm) − subsidioBaseUsd).
+ *     Máx(recargoMinimoExtra, (distanciaVialKmDesdeTaller × tarifaPorKm) − subsidioBaseUsd),
+ *     aplicando redondeo comercial (<25 ctv baja a entero, 25..50 ctv aproxima a .50, >50 ctv sube al siguiente entero).
  */
 export function cotizarEnvioDomicilio(
   opciones: OpcionesCotizacionEnvio
@@ -680,6 +982,7 @@ export function cotizarEnvioDomicilio(
     distanciaVialKm: vialInyectada,
     fuenteDistancia = "ESTIMACION_VIAL",
     rutaGeometria,
+    detalleDireccion = null,
     deliveryIncluidoProducto = true,
     recargoLogisticoProducto = 0,
     retiroEnLocal = false,
@@ -710,6 +1013,12 @@ export function cotizarEnvioDomicilio(
       etiquetaResumen: `Retiro en ${config.origenNombre} ($0.00)`,
       formulaDetalle: "Retiro presencial en tienda física sin recargo de transporte.",
       urlGoogleMapsDestino: config.origenMapaUrl || urlGoogleMapsDestino,
+      detalleDireccion: {
+        resumenDireccion: config.origenDireccion
+          ? `${config.origenNombre} (${config.origenDireccion})`
+          : config.origenNombre,
+        callePrincipal: config.origenDireccion || config.origenNombre,
+      },
     };
   }
 
@@ -742,25 +1051,35 @@ export function cotizarEnvioDomicilio(
       formulaDetalle: `La ubicación está a ${linealKm.toFixed(1)} km del taller (máximo automático ${config.radioMaximoKm} km en Pichincha). Coordina entrega especial con nuestra asesora o elige retiro en tienda.`,
       rutaGeometria,
       urlGoogleMapsDestino,
+      detalleDireccion,
     };
   }
 
-  // Cálculo por km base reutilizable tanto en zonas POR_KM como fuera de polígonos
+  // Cálculo por km base con aproximación comercial (<25 ctv -> .00 | 25..50 ctv -> .50 | >50 ctv -> +1.00)
   const subsidioAplicado = deliveryIncluidoProducto ? config.subsidioBaseUsd : 0;
-  const brutoPorKm = vialKm * config.tarifaPorKm;
-  const netoPorKm = brutoPorKm - subsidioAplicado;
+  const brutoPorKm = redondearMoneda(vialKm * config.tarifaPorKm);
+  const netoPorKm = redondearMoneda(brutoPorKm - subsidioAplicado);
   const minimoExtra = deliveryIncluidoProducto
     ? config.recargoMinimoExtra
     : Math.max(config.tarifaBaseNoIncluido, config.recargoMinimoExtra);
-  const costoBaseKm = redondearMoneda(Math.max(minimoExtra, netoPorKm));
-  const totalKm = redondearMoneda(costoBaseKm + recargoProd);
+  const costoExactoSinRedondeo = redondearMoneda(Math.max(minimoExtra, netoPorKm));
+  const costoBaseKm = Math.max(
+    redondearTarifaComercialEnvio(minimoExtra),
+    redondearTarifaComercialEnvio(costoExactoSinRedondeo)
+  );
+  const totalKm = redondearTarifaComercialEnvio(costoBaseKm + recargoProd);
+
+  const sufijoAproximacion =
+    Math.abs(costoBaseKm - costoExactoSinRedondeo) >= 0.01
+      ? ` → aproximado $${costoBaseKm.toFixed(2)}`
+      : "";
 
   const formulaKmBase =
     subsidioAplicado > 0
-      ? `${vialKm.toFixed(1)} km × $${config.tarifaPorKm.toFixed(2)}/km ($${brutoPorKm.toFixed(2)}) − $${subsidioAplicado.toFixed(2)} incluido = $${costoBaseKm.toFixed(2)} (mín. $${minimoExtra.toFixed(2)})${
+      ? `${vialKm.toFixed(1)} km × $${config.tarifaPorKm.toFixed(2)}/km ($${brutoPorKm.toFixed(2)}) − $${subsidioAplicado.toFixed(2)} incluido = $${costoExactoSinRedondeo.toFixed(2)}${sufijoAproximacion} (mín. $${minimoExtra.toFixed(2)})${
           recargoProd > 0 ? ` + $${recargoProd.toFixed(2)} transporte especial` : ""
         }.`
-      : `${vialKm.toFixed(1)} km × $${config.tarifaPorKm.toFixed(2)}/km = $${costoBaseKm.toFixed(2)}${
+      : `${vialKm.toFixed(1)} km × $${config.tarifaPorKm.toFixed(2)}/km = $${costoExactoSinRedondeo.toFixed(2)}${sufijoAproximacion}${
           recargoProd > 0 ? ` + $${recargoProd.toFixed(2)} transporte especial` : ""
         }.`;
 
@@ -781,7 +1100,7 @@ export function cotizarEnvioDomicilio(
       .map((z) => {
         if (z.modoCobro === "GRATIS") {
           if (deliveryIncluidoProducto) {
-            const total = recargoProd;
+            const total = redondearTarifaComercialEnvio(recargoProd);
             return {
               zona: z,
               reglaAplicada: "ZONA_GRATIS" as const,
@@ -798,8 +1117,8 @@ export function cotizarEnvioDomicilio(
             };
           }
 
-          const baseNoInc = redondearMoneda(config.tarifaBaseNoIncluido);
-          const total = redondearMoneda(baseNoInc + recargoProd);
+          const baseNoInc = redondearTarifaComercialEnvio(config.tarifaBaseNoIncluido);
+          const total = redondearTarifaComercialEnvio(baseNoInc + recargoProd);
           return {
             zona: z,
             reglaAplicada: "TARIFA_BASE_PRODUCTO" as const,
@@ -814,8 +1133,9 @@ export function cotizarEnvioDomicilio(
 
         if (z.modoCobro === "TARIFA_FIJA") {
           const compensacionNoIncluido = deliveryIncluidoProducto ? 0 : config.subsidioBaseUsd;
-          const baseZona = redondearMoneda(z.tarifaFija + compensacionNoIncluido);
-          const total = redondearMoneda(baseZona + recargoProd);
+          const baseSinRedondeo = redondearMoneda(z.tarifaFija + compensacionNoIncluido);
+          const baseZona = redondearTarifaComercialEnvio(baseSinRedondeo);
+          const total = redondearTarifaComercialEnvio(baseZona + recargoProd);
           return {
             zona: z,
             reglaAplicada: "ZONA_TARIFA_FIJA" as const,
@@ -883,6 +1203,7 @@ export function cotizarEnvioDomicilio(
       formulaDetalle: `${ganadora.formulaDetalle}${notaSolapamiento}`,
       rutaGeometria,
       urlGoogleMapsDestino,
+      detalleDireccion,
     };
   }
 
@@ -905,6 +1226,7 @@ export function cotizarEnvioDomicilio(
     formulaDetalle: formulaKmBase,
     rutaGeometria,
     urlGoogleMapsDestino,
+    detalleDireccion,
   };
 }
 

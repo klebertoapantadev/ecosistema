@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  construirDetalleDireccionDesdeNominatim,
   cotizarEnvioDomicilio,
   crearConfiguracionLogisticaPorDefecto,
   extraerCoordenadasDeTextoOUrl,
   puntoEnPoligono,
+  redondearTarifaComercialEnvio,
 } from "./logistica";
 
 describe("Motor de logística y cobertura Tinkay", () => {
@@ -105,6 +107,76 @@ describe("Motor de logística y cobertura Tinkay", () => {
     expect(sinKm.etiquetaResumen).toBe("Envío a domicilio");
     expect(sinKm.etiquetaResumen).not.toContain("km");
     expect(sinKm.formulaDetalle).toContain("17.8 km × $0.50/km");
+    expect(sinKm.costoTotalEnvio).toBe(6.0);
+  });
+
+  it("aplica redondeo comercial en tramos (<25 ctv baja a .00, 25-50 ctv a .50, >50 ctv sube al entero)", () => {
+    expect(redondearTarifaComercialEnvio(0)).toBe(0);
+    expect(redondearTarifaComercialEnvio(5.03)).toBe(5.0);
+    expect(redondearTarifaComercialEnvio(5.24)).toBe(5.0);
+    expect(redondearTarifaComercialEnvio(5.25)).toBe(5.5);
+    expect(redondearTarifaComercialEnvio(5.38)).toBe(5.5);
+    expect(redondearTarifaComercialEnvio(5.5)).toBe(5.5);
+    expect(redondearTarifaComercialEnvio(5.51)).toBe(6.0);
+    expect(redondearTarifaComercialEnvio(5.92)).toBe(6.0);
+
+    const surQuito = { lat: -0.245, lng: -78.518 };
+
+    // 16.06 km * $0.50 - $3.00 = $5.03 -> menos de 25 ctv -> $5.00
+    const casoMenos25 = cotizarEnvioDomicilio({
+      config,
+      destino: surQuito,
+      distanciaVialKm: 16.06,
+    });
+    expect(casoMenos25.costoTotalEnvio).toBe(5.0);
+    expect(casoMenos25.formulaDetalle).toContain("= $5.03 → aproximado $5.00");
+
+    // 14.70 km * $0.50 - $3.00 = $4.35 -> entre 25 y 50 ctv -> $4.50
+    const casoEntre25y50 = cotizarEnvioDomicilio({
+      config,
+      destino: surQuito,
+      distanciaVialKm: 14.7,
+    });
+    expect(casoEntre25y50.costoTotalEnvio).toBe(4.5);
+    expect(casoEntre25y50.formulaDetalle).toContain("= $4.35 → aproximado $4.50");
+
+    // 17.84 km * $0.50 - $3.00 = $5.92 -> más de 50 ctv -> $6.00
+    const casoMas50 = cotizarEnvioDomicilio({
+      config,
+      destino: surQuito,
+      distanciaVialKm: 17.84,
+    });
+    expect(casoMas50.costoTotalEnvio).toBe(6.0);
+    expect(casoMas50.formulaDetalle).toContain("= $5.92 → aproximado $6.00");
+  });
+
+  it("construye detalle de dirección inversa con calles, sector y parroquia sin duplicados ni ruido administrativo", () => {
+    const detalleVillaflora = construirDetalleDireccionDesdeNominatim(
+      {
+        display_name:
+          "Av. Rodrigo de Chávez, Villaflora, Chimbacalle, Administración Zonal Eloy Alfaro, Quito, Pichincha, 170111, Ecuador",
+        address: {
+          road: "Av. Rodrigo de Chávez",
+          house_number: "OE2-44",
+          neighbourhood: "Villaflora",
+          suburb: "Chimbacalle",
+          city_district: "Administración Zonal Eloy Alfaro",
+          city: "Quito",
+          state: "Pichincha",
+          postcode: "170111",
+        },
+      },
+      "Edificio Mirador Sur"
+    );
+
+    expect(detalleVillaflora).not.toBeNull();
+    expect(detalleVillaflora?.callePrincipal).toBe("Edificio Mirador Sur (Av. Rodrigo de Chávez OE2-44)");
+    expect(detalleVillaflora?.sectorBarrio).toBe("Villaflora");
+    expect(detalleVillaflora?.parroquia).toBe("Chimbacalle");
+    expect(detalleVillaflora?.ciudad).toBe("Quito");
+    expect(detalleVillaflora?.resumenDireccion).toContain("Villaflora");
+    expect(detalleVillaflora?.resumenDireccion).toContain("Parroquia Chimbacalle");
+    expect(detalleVillaflora?.resumenDireccion).not.toContain("Administración Zonal");
   });
 
   it("permite áreas solapadas y aplica siempre la tarifa más baja sin importar el orden de prioridad", () => {

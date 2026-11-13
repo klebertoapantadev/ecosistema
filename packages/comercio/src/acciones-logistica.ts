@@ -8,8 +8,10 @@ import {
   cotizarEnvioDomicilio,
   crearConfiguracionLogisticaPorDefecto,
   esCoordenadaValida,
+  geocodificarInversoCoordenadas,
   resolverEnlaceMapaACoordenadas,
   type ConfiguracionLogisticaNegocio,
+  type DetalleDireccionGeoespacial,
   type ModoCobroZona,
   type ResultadoCotizacionEnvio,
   type SugerenciaDireccionMapa,
@@ -465,6 +467,7 @@ export async function cotizarEnvioDesdeEntradaAction(
   let lat = entrada.lat;
   let lng = entrada.lng;
   let direccionDetectada: string | undefined;
+  let nombreLugarPista: string | undefined;
 
   if (!esCoordenadaValida(Number(lat), Number(lng))) {
     const texto = (entrada.enlaceOTexto || "").trim();
@@ -479,6 +482,7 @@ export async function cotizarEnvioDesdeEntradaAction(
     if (resuelto.coordenadas) {
       lat = resuelto.coordenadas.lat;
       lng = resuelto.coordenadas.lng;
+      nombreLugarPista = resuelto.nombreLugar;
     } else {
       const sugerencias = await buscarDireccionesPichincha(texto);
       const primera = sugerencias[0];
@@ -486,6 +490,7 @@ export async function cotizarEnvioDesdeEntradaAction(
         lat = primera.lat;
         lng = primera.lng;
         direccionDetectada = primera.direccionCompleta;
+        nombreLugarPista = primera.nombreCorto;
       }
     }
   }
@@ -499,11 +504,16 @@ export async function cotizarEnvioDesdeEntradaAction(
   }
 
   const destino = { lat: Number(lat), lng: Number(lng) };
-  const ruta = await calcularRutaVialOsrm(
-    { lat: config.origenLat, lng: config.origenLng },
-    destino,
-    config.factorVialRespaldo
-  );
+  const [ruta, detalleGeo] = await Promise.all([
+    calcularRutaVialOsrm(
+      { lat: config.origenLat, lng: config.origenLng },
+      destino,
+      config.factorVialRespaldo
+    ),
+    geocodificarInversoCoordenadas(destino, nombreLugarPista),
+  ]);
+
+  const direccionFinal = detalleGeo?.resumenDireccion || direccionDetectada;
 
   const cotizacion = cotizarEnvioDomicilio({
     config,
@@ -511,6 +521,7 @@ export async function cotizarEnvioDesdeEntradaAction(
     distanciaVialKm: ruta.distanciaKm,
     fuenteDistancia: ruta.fuente,
     rutaGeometria: ruta.geometria,
+    detalleDireccion: detalleGeo,
     deliveryIncluidoProducto: entrada.deliveryIncluidoProducto ?? true,
     recargoLogisticoProducto: entrada.recargoLogisticoProducto ?? 0,
     retiroEnLocal: false,
@@ -519,7 +530,7 @@ export async function cotizarEnvioDesdeEntradaAction(
   return {
     ok: true,
     cotizacion,
-    direccionDetectada,
+    direccionDetectada: direccionFinal,
   };
 }
 
@@ -546,6 +557,7 @@ export interface DestinoEntregaPedidoInput {
   costoEnvioCalculado?: number;
   etiquetaCotizacion?: string;
   formulaCalculoInterno?: string;
+  detalleDireccionGeo?: DetalleDireccionGeoespacial | null;
 }
 
 export interface ItemPedidoTiendaInput {
@@ -619,6 +631,7 @@ export interface PedidoTiendaRegistrado {
     reglaAplicada?: string;
     distanciaVialKm?: number;
     formulaCalculoInterno: string;
+    detalleDireccionGeo?: DetalleDireccionGeoespacial | null;
     parametrosTarifarios?: {
       tarifaPorKm: number;
       subsidioBaseUsd: number;
@@ -728,6 +741,7 @@ function enriquecerDestinoConAuditoriaInterna(
     distancia_vial_km: typeof distanciaKm === "number" ? distanciaKm : null,
     costo_envio_usd: Number(destino.costoEnvioCalculado ?? 0),
     formula_calculo_interno: formulaInterna,
+    detalle_direccion_geo: destino.detalleDireccionGeo ?? null,
   };
 }
 
@@ -791,10 +805,31 @@ export async function registrarPedidoTiendaAction(
     };
   });
 
+  let entregaUnificadaConGeo = entrada.entregaUnificada;
+  if (
+    entrada.modalidadEntrega === "unificada" &&
+    entregaUnificadaConGeo &&
+    !entregaUnificadaConGeo.retiroEnLocal &&
+    !entregaUnificadaConGeo.detalleDireccionGeo &&
+    esCoordenadaValida(Number(entregaUnificadaConGeo.lat), Number(entregaUnificadaConGeo.lng))
+  ) {
+    const geoResuelta = await geocodificarInversoCoordenadas({
+      lat: Number(entregaUnificadaConGeo.lat),
+      lng: Number(entregaUnificadaConGeo.lng),
+    });
+    if (geoResuelta) {
+      entregaUnificadaConGeo = {
+        ...entregaUnificadaConGeo,
+        detalleDireccionGeo: geoResuelta,
+        direccion: entregaUnificadaConGeo.direccion || geoResuelta.resumenDireccion,
+      };
+    }
+  }
+
   const logisticaPrincipal =
     entrada.modalidadEntrega === "unificada"
       ? enriquecerDestinoConAuditoriaInterna(
-          entrada.entregaUnificada,
+          entregaUnificadaConGeo,
           config,
           algunConDeliveryIncluido,
           recargoProductosTotal
@@ -1084,6 +1119,10 @@ export async function obtenerPedidosTiendaAction(
         formulaCalculoInterno: String(
           log.formula_calculo_interno || f.prf_observaciones || "Sin detalle adicional"
         ),
+        detalleDireccionGeo:
+          log.detalle_direccion_geo && typeof log.detalle_direccion_geo === "object"
+            ? (log.detalle_direccion_geo as DetalleDireccionGeoespacial)
+            : null,
         parametrosTarifarios: paramsSnap
           ? {
               tarifaPorKm: Number(paramsSnap.tarifa_por_km ?? 0),

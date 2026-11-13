@@ -18,6 +18,7 @@ import {
   crearConfiguracionLogisticaPorDefecto,
   type ConfiguracionLogisticaNegocio,
   type CoordenadaGeo,
+  type DetalleDireccionGeoespacial,
   type ResultadoCotizacionEnvio,
   type SugerenciaDireccionMapa,
 } from "../logistica";
@@ -32,6 +33,7 @@ export interface EventoCotizacionUbicacion {
   cotizacion: ResultadoCotizacionEnvio;
   enlaceMapa: string;
   direccionSugerida?: string;
+  detalleDireccionGeo?: DetalleDireccionGeoespacial | null;
   retiroEnLocal: boolean;
 }
 
@@ -138,7 +140,11 @@ export function SelectorUbicacionEntrega({
       onCambioCotizacion({
         cotizacion: res.cotizacion,
         enlaceMapa: urlMaps,
-        direccionSugerida: direccionSugerida || res.direccionDetectada,
+        direccionSugerida:
+          direccionSugerida ||
+          res.direccionDetectada ||
+          res.cotizacion.detalleDireccion?.resumenDireccion,
+        detalleDireccionGeo: res.cotizacion.detalleDireccion ?? null,
         retiroEnLocal: false,
       });
     } catch {
@@ -182,7 +188,9 @@ export function SelectorUbicacionEntrega({
       onCambioCotizacion({
         cotizacion: res.cotizacion,
         enlaceMapa: urlFinal,
-        direccionSugerida: res.direccionDetectada,
+        direccionSugerida:
+          res.direccionDetectada || res.cotizacion.detalleDireccion?.resumenDireccion,
+        detalleDireccionGeo: res.cotizacion.detalleDireccion ?? null,
         retiroEnLocal: false,
       });
     } catch {
@@ -724,6 +732,19 @@ export function SelectorUbicacionEntrega({
                     : "Por coordinar"}
                 </strong>
               </div>
+
+              {cotizacion.detalleDireccion && (
+                <div
+                  style={{
+                    fontSize: "0.73rem",
+                    color: "#475569",
+                    lineHeight: 1.38,
+                    marginTop: "2px",
+                  }}
+                >
+                  📍 {cotizacion.detalleDireccion.resumenDireccion}
+                </div>
+              )}
 
               {!cotizacion.dentroCobertura && (
                 <span style={{ fontSize: "0.72rem", color: "#92400E", lineHeight: 1.35 }}>

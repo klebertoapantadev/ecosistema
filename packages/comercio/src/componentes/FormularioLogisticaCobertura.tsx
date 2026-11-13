@@ -25,6 +25,7 @@ import {
   ZONAS_PICHINCHA_POR_DEFECTO,
   type ConfiguracionLogisticaNegocio,
   type CoordenadaGeo,
+  type DetalleDireccionGeoespacial,
   type ModoCobroZona,
   type ResultadoCotizacionEnvio,
   type ZonaCoberturaLogistica,
@@ -119,6 +120,7 @@ export function FormularioLogisticaCobertura({
     distanciaVialKm?: number;
     fuenteDistancia: "OSRM" | "ESTIMACION_VIAL";
     rutaGeometria?: [number, number][];
+    detalleDireccion?: DetalleDireccionGeoespacial | null;
   }>({ fuenteDistancia: "ESTIMACION_VIAL" });
   const [resultadoSimulador, setResultadoSimulador] = useState<ResultadoCotizacionEnvio | null>(
     null
@@ -147,6 +149,7 @@ export function FormularioLogisticaCobertura({
         distanciaVialKm: datosRutaSimulada.distanciaVialKm,
         fuenteDistancia: datosRutaSimulada.fuenteDistancia,
         rutaGeometria: datosRutaSimulada.rutaGeometria,
+        detalleDireccion: datosRutaSimulada.detalleDireccion,
       })
     );
   }, [form, puntoSimulador, datosRutaSimulada]);
@@ -287,40 +290,40 @@ export function FormularioLogisticaCobertura({
     setSimulando(true);
     setMensajeError(null);
     try {
-      let destino = puntoDirecto ?? null;
-      if (!destino && enlaceSimulador.trim()) {
-        const res = await cotizarEnvioDesdeEntradaAction({
-          negocio,
-          enlaceOTexto: enlaceSimulador.trim(),
-        });
-        if (!res.ok) {
-          setMensajeError(res.error);
-          return;
-        }
-        destino = res.cotizacion.destino;
-      }
-
-      if (!destino) {
+      if (!puntoDirecto && !enlaceSimulador.trim()) {
         setMensajeError(
           "Haz clic en cualquier punto del mapa o pega un enlace de Google Maps / Waze."
         );
         return;
       }
 
-      const resVial = await cotizarEnvioDesdeEntradaAction({
-        negocio,
-        lat: destino.lat,
-        lng: destino.lng,
-      });
+      const resCot = puntoDirecto
+        ? await cotizarEnvioDesdeEntradaAction({
+            negocio,
+            lat: puntoDirecto.lat,
+            lng: puntoDirecto.lng,
+          })
+        : await cotizarEnvioDesdeEntradaAction({
+            negocio,
+            enlaceOTexto: enlaceSimulador.trim(),
+          });
 
-      const vialKm = resVial.ok ? resVial.cotizacion.distanciaVialKm : undefined;
-      const geom = resVial.ok ? resVial.cotizacion.rutaGeometria : undefined;
-      const fuente = resVial.ok ? resVial.cotizacion.fuenteDistancia : "ESTIMACION_VIAL";
+      if (!resCot.ok) {
+        setMensajeError(resCot.error);
+        return;
+      }
+
+      const destino = resCot.cotizacion.destino;
+      const vialKm = resCot.cotizacion.distanciaVialKm;
+      const geom = resCot.cotizacion.rutaGeometria;
+      const fuente = resCot.cotizacion.fuenteDistancia;
+      const detalleDir = resCot.cotizacion.detalleDireccion ?? null;
 
       setDatosRutaSimulada({
         distanciaVialKm: vialKm,
         fuenteDistancia: fuente,
         rutaGeometria: geom,
+        detalleDireccion: detalleDir,
       });
       setPuntoSimulador(destino);
 
@@ -330,6 +333,7 @@ export function FormularioLogisticaCobertura({
         distanciaVialKm: vialKm,
         fuenteDistancia: fuente,
         rutaGeometria: geom,
+        detalleDireccion: detalleDir,
       });
 
       setResultadoSimulador(cotLocal);
@@ -689,8 +693,9 @@ export function FormularioLogisticaCobertura({
             Máx(${form.recargoMinimoExtra.toFixed(2)}, (Distancia vial desde taller × $
             {form.tarifaPorKm.toFixed(2)}/km) − ${form.subsidioBaseUsd.toFixed(2)})
           </code>
-          . Si varias áreas se solapan en un punto, el motor aplica automáticamente la{" "}
-          <strong>tarifa más baja</strong> entre ellas.
+          . Redondeo comercial automático: menos de $0.25 baja al entero ($X.00), entre $0.25 y
+          $0.50 aproxima a $X.50, y más de $0.50 sube al entero superior. En áreas solapadas gana la{" "}
+          <strong>tarifa más baja</strong>.
         </div>
       </div>
 
@@ -1390,6 +1395,31 @@ export function FormularioLogisticaCobertura({
                 <strong>Auditoría en Pedido de Tienda (oculto al cliente):</strong>{" "}
                 {resultadoSimulador.formulaDetalle}
               </div>
+              {resultadoSimulador.detalleDireccion && (
+                <div
+                  style={{
+                    fontSize: "0.74rem",
+                    color: "#0F766E",
+                    marginTop: "2px",
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "6px",
+                  }}
+                >
+                  <strong>📍 Dirección detectada:</strong>
+                  <span>{resultadoSimulador.detalleDireccion.resumenDireccion}</span>
+                  {resultadoSimulador.detalleDireccion.sectorBarrio && (
+                    <span style={{ color: "#475569" }}>
+                      · <strong>Sector:</strong> {resultadoSimulador.detalleDireccion.sectorBarrio}
+                    </span>
+                  )}
+                  {resultadoSimulador.detalleDireccion.parroquia && (
+                    <span style={{ color: "#475569" }}>
+                      · <strong>Parroquia:</strong> {resultadoSimulador.detalleDireccion.parroquia}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
             <strong
               style={{

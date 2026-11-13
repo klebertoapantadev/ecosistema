@@ -103,6 +103,7 @@ export function ModalCheckoutTinkay() {
               costoEnvioCalculado: totalFlete,
               etiquetaCotizacion: entregaUnificada.etiquetaCotizacion,
               formulaCalculoInterno: entregaUnificada.formulaCalculoInterno,
+              detalleDireccionGeo: entregaUnificada.detalleDireccionGeo ?? null,
             }
           : undefined,
       items: items.map((it) => ({
@@ -142,6 +143,7 @@ export function ModalCheckoutTinkay() {
               costoEnvioCalculado: it.entregaIndividual.costoEnvioCalculado,
               etiquetaCotizacion: it.entregaIndividual.etiquetaCotizacion,
               formulaCalculoInterno: it.entregaIndividual.formulaCalculoInterno,
+              detalleDireccionGeo: it.entregaIndividual.detalleDireccionGeo ?? null,
             }
           : undefined,
       })),

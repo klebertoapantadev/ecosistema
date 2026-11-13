@@ -49,6 +49,7 @@ const manejarMcp = crearServidorMcpCatalogo({
       costo_envio_usd: c.costoTotalEnvio,
       etiqueta_resumen: c.etiquetaResumen,
       direccion_detectada: resultado.direccionDetectada ?? null,
+      detalle_direccion: c.detalleDireccion ?? null,
       url_google_maps_destino: c.urlGoogleMapsDestino,
       tienda_fisica_maps: cfg.origenMapaUrl,
       instruccion_presentacion_cliente: mostrarKm

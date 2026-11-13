@@ -382,6 +382,10 @@ export function DrawerCarritoFloristeria() {
                                 onCambioCotizacion={(ev) => {
                                   setAvisoValidacionEntrega(null);
                                   const actual = item.entregaIndividual || ({} as DatosEntrega);
+                                  const dirPreviaEraAuto =
+                                    !actual.direccion ||
+                                    actual.direccion === actual.detalleDireccionGeo?.resumenDireccion ||
+                                    actual.direccion.startsWith('Retiro en ');
                                   actualizarEntregaIndividual(item.id, {
                                     ...actual,
                                     retiroEnLocal: ev.retiroEnLocal,
@@ -395,13 +399,17 @@ export function DrawerCarritoFloristeria() {
                                     dentroCobertura: ev.cotizacion.dentroCobertura,
                                     etiquetaCotizacion: ev.cotizacion.etiquetaResumen,
                                     formulaCalculoInterno: ev.cotizacion.formulaDetalle,
+                                    detalleDireccionGeo: ev.detalleDireccionGeo ?? null,
                                     ciudad:
+                                      ev.detalleDireccionGeo?.parroquia ||
                                       ev.cotizacion.zonaDetectada?.nombre ||
                                       actual.ciudad ||
                                       configLogistica.zonaGratisNombre,
                                     direccion:
                                       ev.retiroEnLocal
                                         ? `Retiro en ${configLogistica.origenNombre}`
+                                        : dirPreviaEraAuto && ev.direccionSugerida
+                                        ? ev.direccionSugerida
                                         : actual.direccion || ev.direccionSugerida || '',
                                   });
                                 }}
@@ -560,6 +568,11 @@ export function DrawerCarritoFloristeria() {
                     }
                     onCambioCotizacion={(ev) => {
                       setAvisoValidacionEntrega(null);
+                      const dirPreviaEraAuto =
+                        !entregaUnificada.direccion ||
+                        entregaUnificada.direccion ===
+                          entregaUnificada.detalleDireccionGeo?.resumenDireccion ||
+                        entregaUnificada.direccion.startsWith('Retiro en ');
                       actualizarEntregaUnificada({
                         retiroEnLocal: ev.retiroEnLocal,
                         enlaceMapa: ev.enlaceMapa,
@@ -572,7 +585,9 @@ export function DrawerCarritoFloristeria() {
                         dentroCobertura: ev.cotizacion.dentroCobertura,
                         etiquetaCotizacion: ev.cotizacion.etiquetaResumen,
                         formulaCalculoInterno: ev.cotizacion.formulaDetalle,
+                        detalleDireccionGeo: ev.detalleDireccionGeo ?? null,
                         ciudad:
+                          ev.detalleDireccionGeo?.parroquia ||
                           ev.cotizacion.zonaDetectada?.nombre ||
                           configLogistica.zonaGratisNombre,
                         ...(ev.retiroEnLocal
@@ -583,7 +598,7 @@ export function DrawerCarritoFloristeria() {
                                   ? 'manana'
                                   : entregaUnificada.franjaHoraria,
                             }
-                          : !entregaUnificada.direccion && ev.direccionSugerida
+                          : dirPreviaEraAuto && ev.direccionSugerida
                           ? { direccion: ev.direccionSugerida }
                           : {}),
                       });

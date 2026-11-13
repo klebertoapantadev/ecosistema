@@ -482,6 +482,10 @@ export function ChatAriaFlotante() {
   };
 
   const aplicarCotizacionAlCarrito = (mensajeId: string, cot: CotizacionChat) => {
+    const dirPreviaEraAuto =
+      !entregaUnificada.direccion ||
+      entregaUnificada.direccion === entregaUnificada.detalleDireccionGeo?.resumenDireccion ||
+      entregaUnificada.direccion.startsWith('Retiro en ');
     actualizarEntregaUnificada({
       retiroEnLocal: false,
       enlaceMapa: cot.enlaceMapa,
@@ -492,7 +496,18 @@ export function ChatAriaFlotante() {
       costoEnvioCalculado: cot.costoTotalEnvio,
       dentroCobertura: cot.dentroCobertura,
       etiquetaCotizacion: cot.etiquetaResumen,
-      ciudad: cot.zonaDetectadaNombre || configLogistica.zonaGratisNombre,
+      ciudad: cot.parroquia || cot.zonaDetectadaNombre || configLogistica.zonaGratisNombre,
+      detalleDireccionGeo: cot.direccionReferencial
+        ? {
+            resumenDireccion: cot.direccionReferencial,
+            callePrincipal: cot.callePrincipal,
+            sectorBarrio: cot.sectorBarrio,
+            parroquia: cot.parroquia,
+          }
+        : null,
+      ...(dirPreviaEraAuto && cot.direccionReferencial
+        ? { direccion: cot.direccionReferencial }
+        : {}),
     });
     setUbicacionAplicadaId(mensajeId);
     setTimeout(() => setUbicacionAplicadaId(null), 2500);
@@ -616,6 +631,11 @@ export function ChatAriaFlotante() {
                             : `$${m.cotizacionEnvio.costoTotalEnvio.toFixed(2)}`}
                         </span>
                       </div>
+                      {m.cotizacionEnvio.direccionReferencial && (
+                        <div style={{ fontSize: '0.72rem', color: '#334155', lineHeight: 1.35 }}>
+                          {m.cotizacionEnvio.direccionReferencial}
+                        </div>
+                      )}
                       {m.cotizacionEnvio.dentroCobertura && (
                         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                           <button
@@ -854,9 +874,15 @@ export function ChatAriaFlotante() {
                     dentroCobertura: ev.cotizacion.dentroCobertura,
                     etiquetaCotizacion: ev.cotizacion.etiquetaResumen,
                     formulaCalculoInterno: ev.cotizacion.formulaDetalle,
+                    detalleDireccionGeo: ev.detalleDireccionGeo ?? null,
                     ciudad:
-                      ev.cotizacion.zonaDetectada?.nombre || configLogistica.zonaGratisNombre,
-                    ...(ev.direccionSugerida && !entregaUnificada.direccion
+                      ev.detalleDireccionGeo?.parroquia ||
+                      ev.cotizacion.zonaDetectada?.nombre ||
+                      configLogistica.zonaGratisNombre,
+                    ...(ev.direccionSugerida &&
+                    (!entregaUnificada.direccion ||
+                      entregaUnificada.direccion ===
+                        entregaUnificada.detalleDireccionGeo?.resumenDireccion)
                       ? { direccion: ev.direccionSugerida }
                       : {}),
                   });
@@ -867,7 +893,9 @@ export function ChatAriaFlotante() {
                     texto: ev.retiroEnLocal
                       ? `Perfecto 🌿, dejé configurado el retiro sin costo en ${configLogistica.origenNombre} en tu carrito.`
                       : ev.cotizacion.dentroCobertura
-                      ? `¡Listo! Guardé tu ubicación de entrega en el carrito: ${ev.cotizacion.etiquetaResumen}.`
+                      ? `¡Listo! Guardé tu ubicación de entrega en el carrito: ${ev.cotizacion.etiquetaResumen}${
+                          ev.direccionSugerida ? ` (${ev.direccionSugerida})` : ''
+                        }.`
                       : `El punto elegido${
                           mostrarKm ? ` (${ev.cotizacion.distanciaVialKm.toFixed(1)} km)` : ''
                         } supera nuestra cobertura automática. Escríbeme aquí para ayudarte con una coordinación especial o retiro en tienda.`,
@@ -880,6 +908,18 @@ export function ChatAriaFlotante() {
                           dentroCobertura: ev.cotizacion.dentroCobertura,
                           zonaDetectadaNombre: ev.cotizacion.zonaDetectada?.nombre,
                           ...(mostrarKm ? { distanciaVialKm: ev.cotizacion.distanciaVialKm } : {}),
+                          ...(ev.direccionSugerida
+                            ? { direccionReferencial: ev.direccionSugerida }
+                            : {}),
+                          ...(ev.detalleDireccionGeo?.callePrincipal
+                            ? { callePrincipal: ev.detalleDireccionGeo.callePrincipal }
+                            : {}),
+                          ...(ev.detalleDireccionGeo?.sectorBarrio
+                            ? { sectorBarrio: ev.detalleDireccionGeo.sectorBarrio }
+                            : {}),
+                          ...(ev.detalleDireccionGeo?.parroquia
+                            ? { parroquia: ev.detalleDireccionGeo.parroquia }
+                            : {}),
                           enlaceMapa: ev.enlaceMapa,
                           lat: ev.cotizacion.destino.lat,
                           lng: ev.cotizacion.destino.lng,

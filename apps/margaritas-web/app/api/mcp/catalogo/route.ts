@@ -39,6 +39,8 @@ const manejarMcp = crearServidorMcpCatalogo({
       mostrar_kilometros_cliente: mostrarKm,
       costo_envio_usd: c.costoTotalEnvio,
       etiqueta_resumen: c.etiquetaResumen,
+      direccion_detectada: resultado.direccionDetectada ?? null,
+      detalle_direccion: c.detalleDireccion ?? null,
       url_google_maps_destino: c.urlGoogleMapsDestino,
       instruccion_presentacion_cliente: mostrarKm
         ? "Informa únicamente el costo final de envío (puedes indicar los kilómetros). Nunca menciones tarifas por km ni descuentos internos."
