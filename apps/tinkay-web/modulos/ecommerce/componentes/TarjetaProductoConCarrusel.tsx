@@ -161,8 +161,25 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
               </span>
             )
           )}
-          {producto.entregaHoy && (
-            <span className="chip-etiqueta chip-entrega-hoy">⚡ Entrega Hoy</span>
+          {producto.esRenta ? (
+            <span
+              className="chip-etiqueta"
+              style={{
+                background: 'rgba(15, 23, 42, 0.88)',
+                color: '#FDE68A',
+                border: '1px solid rgba(251, 191, 36, 0.55)',
+              }}
+              title={
+                producto.rentaConfig?.nota_condiciones ||
+                'Mobiliario en calidad de renta para eventos'
+              }
+            >
+              🪑 EN RENTA
+            </span>
+          ) : (
+            producto.entregaHoy && (
+              <span className="chip-etiqueta chip-entrega-hoy">⚡ Entrega Hoy</span>
+            )
           )}
           {producto.destacado && (
             <span className="chip-etiqueta chip-destacado">★ Más Pedido</span>
@@ -337,7 +354,13 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
               )}
             </div>
             <span className="subtexto-iva">
-              {varianteSeleccionada.tarifaIva > 0
+              {producto.esRenta
+                ? `Renta (${producto.rentaConfig?.periodo || 'Por evento'}) • ${
+                    varianteSeleccionada.tarifaIva > 0
+                      ? `IVA ${varianteSeleccionada.tarifaIva}%`
+                      : 'IVA 0%'
+                  }`
+                : varianteSeleccionada.tarifaIva > 0
                 ? `PVP (Inc. IVA ${varianteSeleccionada.tarifaIva}%)`
                 : 'PVP (Tarifa IVA 0%)'}
             </span>

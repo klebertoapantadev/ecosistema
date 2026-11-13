@@ -73,6 +73,8 @@ import {
   construirEnlaceCategoriaTienda,
   construirEnlaceProductoTienda,
 } from "../utils/enlacesTienda";
+import { esCodigoOfertaRenta, normalizarConfiguracionRenta } from "../utils/tiposOferta";
+import { ModalGestionTiposOferta } from "./ModalGestionTiposOferta";
 
 interface Props {
   negocio?: string;
@@ -106,6 +108,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const [modalProdAbierto, setModalProdAbierto] = useState(false);
   const [modalCatAbierto, setModalCatAbierto] = useState(false);
   const [catModalTab, setCatModalTab] = useState<"crear" | "gestionar">("crear");
+  const [modalTiposOfertaAbierto, setModalTiposOfertaAbierto] = useState(false);
   const [productoAEditar, setProductoAEditar] = useState<ProductoCatalogo | null>(null);
   const [varianteAEditarId, setVarianteAEditarId] = useState<string | undefined>(undefined);
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
@@ -763,6 +766,29 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               >
                 <Settings2 size={15} />
                 <span className="btn-texto-responsive">Gestionar</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setModalTiposOfertaAbierto(true)}
+                className="btn-responsive-accion"
+                title="Administrar Tipos de Oferta Comercial (Venta, Decoración, Renta de Mobiliario, etc.)"
+                aria-label="Administrar Tipos de Oferta"
+                style={{
+                  background: "#FFFBEB",
+                  color: "#92400E",
+                  border: "1px solid #FDE68A",
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  fontSize: "0.85rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <Tag size={15} color="#D97706" />
+                <span className="btn-texto-responsive">Tipos Oferta</span>
               </button>
               <button
                 type="button"
@@ -2172,6 +2198,31 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     </div>
                   ) : null}
 
+                  {/* Badge Modalidad de Renta de Mobiliario */}
+                  {esCodigoOfertaRenta(p.pro_tipo, p.pro_detalle_producto) && (
+                    <div
+                      style={{
+                        background: "#FFFBEB",
+                        border: "1px solid #FCD34D",
+                        color: "#92400E",
+                        padding: "3px 9px",
+                        borderRadius: "6px",
+                        fontSize: "0.7rem",
+                        fontWeight: 800,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        marginBottom: "8px",
+                        alignSelf: "flex-start",
+                      }}
+                    >
+                      <span>
+                        🪑 EN RENTA •{" "}
+                        {normalizarConfiguracionRenta(p.pro_detalle_producto?.renta_config).periodo}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Icono y Categoría */}
                   <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "10px" }}>
                     {!fotoMostrar && (
@@ -2884,6 +2935,13 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           </div>
         </div>
       )}
+
+      <ModalGestionTiposOferta
+        abierto={modalTiposOfertaAbierto}
+        onCerrar={() => setModalTiposOfertaAbierto(false)}
+        negocio={negocio}
+        tabInicial="gestionar"
+      />
     </div>
   );
 }

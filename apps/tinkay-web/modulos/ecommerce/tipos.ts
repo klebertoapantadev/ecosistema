@@ -1,5 +1,6 @@
 import type {
   ComponenteComboConfig,
+  ConfiguracionRentaProducto,
   EscalaVolumenVariante,
 } from '@eco/comercio';
 
@@ -66,6 +67,10 @@ export interface ProductoEcommerce {
   esExtra?: boolean; // Pertenece a categoría "Extras"
   esCombo?: boolean; // Set / Combo compuesto por múltiples productos individuales
   comboComponentes?: ComponenteComboConfig[];
+  tipoOferta?: string; // 'FISICO' | 'SERVICIO' | 'RENTA' | 'SUSCRIPCION' | 'DIGITAL' | custom
+  esRenta?: boolean; // Modalidad de Renta de Mobiliario / Alquiler temporal
+  etiquetaTipoOferta?: string;
+  rentaConfig?: ConfiguracionRentaProducto;
   usos?: string[]; // Usos recomendados (ej. 'condolencias', 'cumpleanos')
   ocasionRecomendada?: string;
   etiquetas: string[];

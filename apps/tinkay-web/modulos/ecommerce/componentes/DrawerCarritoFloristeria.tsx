@@ -174,6 +174,24 @@ export function DrawerCarritoFloristeria() {
                       <div className="datos-principales-item">
                         <div className="titulos-item-carrito">
                           <strong>{item.producto.nombre}</strong>
+                          {item.producto.esRenta && (
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                                background: '#FFFBEB',
+                                color: '#92400E',
+                                border: '1px solid #FDE68A',
+                                padding: '1px 7px',
+                                borderRadius: '999px',
+                                marginTop: '2px',
+                                alignSelf: 'flex-start',
+                              }}
+                            >
+                              🪑 En renta ({item.producto.rentaConfig?.periodo || 'Por evento'})
+                            </span>
+                          )}
                           {item.variante.nombre && item.variante.nombre.trim() !== item.producto.nombre.trim() && (
                             <span className="variante-nombre-item">
                               {item.variante.nombre}

@@ -64,6 +64,22 @@ import {
   type ComponenteComboConfig,
   type EscalaVolumenVariante,
 } from "../utils/combosVolumen";
+import { obtenerTiposOfertaConUsoAction } from "../acciones-tipos-oferta";
+import {
+  esCodigoOfertaRenta,
+  guardarTiposOfertaCacheLocal,
+  leerTiposOfertaCacheLocal,
+  leerTiposOfertaEliminadosLocal,
+  normalizarConfiguracionRenta,
+  obtenerEtiquetaCortaTipoOferta,
+  obtenerTiposOfertaPorDefecto,
+  type ConfiguracionRentaProducto,
+  type TipoOfertaComercial,
+} from "../utils/tiposOferta";
+import {
+  ModalGestionTiposOferta,
+  PanelCondicionesRentaProducto,
+} from "./ModalGestionTiposOferta";
 
 
 interface Props {
@@ -102,8 +118,41 @@ export function ModalCrearProducto({
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [categoriaId, setCategoriaId] = useState(categorias[0]?.ctg_id || "");
-  const [tipo, setTipo] = useState<"SERVICIO" | "SUSCRIPCION" | "FISICO" | "DIGITAL">(
-    esFloristeria ? "FISICO" : "SERVICIO"
+  const [tipo, setTipo] = useState<string>(esFloristeria ? "FISICO" : "SERVICIO");
+  const [tiposOfertaLocales, setTiposOfertaLocales] = useState<TipoOfertaComercial[]>(() =>
+    obtenerTiposOfertaPorDefecto(negocio)
+  );
+  const [modalTiposOfertaAbierto, setModalTiposOfertaAbierto] = useState(false);
+  const [tiposOfertaTab, setTiposOfertaTab] = useState<"crear" | "gestionar">("crear");
+  const [rentaConfig, setRentaConfig] = useState<ConfiguracionRentaProducto>(() =>
+    normalizarConfiguracionRenta()
+  );
+
+  useEffect(() => {
+    if (!abierto) return;
+    let vivo = true;
+    const cache = leerTiposOfertaCacheLocal(negocio);
+    if (cache.length > 0) {
+      setTiposOfertaLocales(cache);
+    }
+    obtenerTiposOfertaConUsoAction(negocio)
+      .then((remotos) => {
+        if (!vivo || !Array.isArray(remotos) || remotos.length === 0) return;
+        const elim = new Set(leerTiposOfertaEliminadosLocal(negocio));
+        const filtrados = remotos.filter((t) => !elim.has(t.tof_codigo.toUpperCase()));
+        const finalLista = filtrados.length > 0 ? filtrados : remotos;
+        setTiposOfertaLocales(finalLista);
+        guardarTiposOfertaCacheLocal(negocio, finalLista);
+      })
+      .catch(() => {});
+    return () => {
+      vivo = false;
+    };
+  }, [abierto, negocio]);
+
+  const esOfertaRentaActiva = useMemo(
+    () => esCodigoOfertaRenta(tipo, undefined, tiposOfertaLocales),
+    [tipo, tiposOfertaLocales]
   );
   const [precioBase, setPrecioBase] = useState<number | "">("");
   const [precioComparacion, setPrecioComparacion] = useState<number | "">("");
@@ -572,6 +621,9 @@ export function ModalCrearProducto({
         descripcion: descripcion.trim(),
         categoriaId: categoriaId || categorias[0]?.ctg_id,
         tipo,
+        esRenta: esOfertaRentaActiva,
+        tipoOfertaEtiqueta: obtenerEtiquetaCortaTipoOferta(tipo, undefined, tiposOfertaLocales),
+        rentaConfig: esOfertaRentaActiva ? rentaConfig : undefined,
         precioBase: Number(precioBase),
         precioComparacion: typeof precioComparacion === "number" && precioComparacion > 0 ? precioComparacion : undefined,
         tarifaIva,
@@ -821,49 +873,108 @@ export function ModalCrearProducto({
             </div>
 
             <div>
-              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                Tipo de Oferta Comercial
-              </label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px", gap: "6px", flexWrap: "wrap" }}>
+                <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
+                  Tipo de Oferta Comercial
+                </label>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTiposOfertaTab("crear");
+                      setModalTiposOfertaAbierto(true);
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: esFloristeria ? "#E11D48" : "#0284C7",
+                      fontSize: "0.74rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      padding: "2px 6px",
+                      borderRadius: "4px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                    title="Crear nuevo tipo de oferta comercial (ej. Renta de Mobiliario)"
+                  >
+                    <span>+ Nueva</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTiposOfertaTab("gestionar");
+                      setModalTiposOfertaAbierto(true);
+                    }}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "#64748B",
+                      fontSize: "0.74rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      padding: "2px 6px",
+                      borderRadius: "4px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                    title="Administrar, editar y eliminar tipos de oferta comercial"
+                  >
+                    <Settings2 size={13} />
+                    <span>Gestionar</span>
+                  </button>
+                </div>
+              </div>
               <select
                 value={tipo}
-                onChange={(e) => setTipo(e.target.value as any)}
+                onChange={(e) => {
+                  const nextTipo = e.target.value;
+                  setTipo(nextTipo);
+                  const objOferta = tiposOfertaLocales.find(
+                    (o) => o.tof_codigo.toUpperCase() === nextTipo.toUpperCase()
+                  );
+                  const detOferta = objOferta?.tof_detalle_tipo_oferta;
+                  if (detOferta?.es_renta) {
+                    setRentaConfig((prev) => ({
+                      ...prev,
+                      periodo: detOferta.periodo_defecto || prev.periodo || "Por evento (24h)",
+                      incluye_retiro:
+                        detOferta.incluye_retiro_defecto !== undefined
+                          ? detOferta.incluye_retiro_defecto
+                          : prev.incluye_retiro,
+                      nota_condiciones:
+                        detOferta.nota_condiciones_defecto || prev.nota_condiciones,
+                    }));
+                  }
+                }}
                 style={{
                   width: "100%",
                   padding: "9px 12px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: esOfertaRentaActiva ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
                   fontSize: "0.85rem",
                   boxSizing: "border-box",
-                  background: "#FFFFFF",
+                  background: esOfertaRentaActiva ? "#FFFDF5" : "#FFFFFF",
+                  fontWeight: esOfertaRentaActiva ? 700 : 500,
                 }}
               >
-                <option value="FISICO">
-                  {esFloristeria
-                    ? "Producto Físico / Entrega Floral a Domicilio"
-                    : esMantenimiento
-                    ? "Producto Físico / Repuesto"
-                    : "Físico / Entrega Notarial"}
-                </option>
-                <option value="SERVICIO">
-                  {esFloristeria
-                    ? "Servicio de Decoración / Eventos"
-                    : esMantenimiento
-                    ? "Servicio Técnico / Reparación"
-                    : "Servicio / Trámite Puntual"}
-                </option>
-                <option value="SUSCRIPCION">
-                  {esFloristeria
-                    ? "Suscripción Floral (Semanal / Mensual)"
-                    : "Suscripción / Plan Periódico"}
-                </option>
-                <option value="DIGITAL">
-                  {esFloristeria
-                    ? "Tarjeta Dedicatoria Digital / Gift Card"
-                    : "Producto Digital / Formato"}
-                </option>
+                {tiposOfertaLocales.map((op) => (
+                  <option key={op.tof_codigo} value={op.tof_codigo}>
+                    {op.tof_nombre}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
+
+          {esOfertaRentaActiva && (
+            <PanelCondicionesRentaProducto
+              config={rentaConfig}
+              onChange={setRentaConfig}
+            />
+          )}
 
           {/* CONTROL DE ESTADO ACTIVO & TEMPORALIDAD ESTACIONAL */}
           <div
@@ -2272,6 +2383,24 @@ export function ModalCrearProducto({
               modalConfirmarEliminarUso.clave,
               modalConfirmarEliminarUso.label
             );
+          }
+        }}
+      />
+
+      <ModalGestionTiposOferta
+        abierto={modalTiposOfertaAbierto}
+        onCerrar={() => setModalTiposOfertaAbierto(false)}
+        negocio={negocio}
+        tabInicial={tiposOfertaTab}
+        onCambioCatalogo={(nuevaLista, nuevoCodigo) => {
+          setTiposOfertaLocales(nuevaLista);
+          if (nuevoCodigo) {
+            setTipo(nuevoCodigo);
+          } else if (
+            nuevaLista.length > 0 &&
+            !nuevaLista.some((t) => t.tof_codigo.toUpperCase() === tipo.toUpperCase())
+          ) {
+            setTipo(nuevaLista[0]!.tof_codigo);
           }
         }}
       />

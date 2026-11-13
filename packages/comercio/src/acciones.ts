@@ -15,6 +15,11 @@ import {
   type ComponenteComboConfig,
   type EscalaVolumenVariante,
 } from "./utils/combosVolumen";
+import {
+  esCodigoOfertaRenta,
+  normalizarConfiguracionRenta,
+  type ConfiguracionRentaProducto,
+} from "./utils/tiposOferta";
 
 export interface CategoriaCatalogo {
   ctg_id: string;
@@ -34,7 +39,7 @@ export interface ProductoCatalogo {
   pro_nombre: string;
   pro_slug: string;
   pro_descripcion: string | null;
-  pro_tipo: "FISICO" | "SERVICIO" | "SUSCRIPCION" | "DIGITAL";
+  pro_tipo: "FISICO" | "SERVICIO" | "RENTA" | "SUSCRIPCION" | "DIGITAL" | string;
   pro_destacado: boolean;
   pro_activo?: boolean;
   pro_categoria_principal_id: string | null;
@@ -3477,7 +3482,10 @@ export async function crearProductoAction(datos: {
   slug?: string;
   descripcion: string;
   categoriaId?: string;
-  tipo: "FISICO" | "SERVICIO" | "SUSCRIPCION" | "DIGITAL";
+  tipo: "FISICO" | "SERVICIO" | "RENTA" | "SUSCRIPCION" | "DIGITAL" | string;
+  esRenta?: boolean;
+  tipoOfertaEtiqueta?: string;
+  rentaConfig?: Partial<ConfiguracionRentaProducto>;
   destacado?: boolean;
   precioBase: number;
   precioComparacion?: number | null;
@@ -3634,6 +3642,15 @@ export async function crearProductoAction(datos: {
         pro_activo: datos.pro_activo !== false,
         es_combo: esCombo,
         combo_componentes: comboComponentes,
+        es_renta:
+          datos.esRenta !== undefined
+            ? Boolean(datos.esRenta)
+            : esCodigoOfertaRenta(datos.tipo),
+        tipo_oferta_etiqueta: datos.tipoOfertaEtiqueta?.trim() || null,
+        renta_config:
+          datos.esRenta || esCodigoOfertaRenta(datos.tipo)
+            ? normalizarConfiguracionRenta(datos.rentaConfig)
+            : null,
         creado_desde_panel: true,
       },
       categoria: cat
@@ -3785,7 +3802,10 @@ export async function editarProductoAction(datos: {
   nombre: string;
   descripcion: string;
   categoriaId?: string;
-  tipo: "FISICO" | "SERVICIO" | "SUSCRIPCION" | "DIGITAL";
+  tipo: "FISICO" | "SERVICIO" | "RENTA" | "SUSCRIPCION" | "DIGITAL" | string;
+  esRenta?: boolean;
+  tipoOfertaEtiqueta?: string;
+  rentaConfig?: Partial<ConfiguracionRentaProducto>;
   destacado?: boolean;
   precioBase?: number;
   tarifaIva?: number; // 15 o 0
@@ -4071,6 +4091,20 @@ export async function editarProductoAction(datos: {
           datos.comboComponentes !== undefined
             ? (datos.esCombo === false ? [] : normalizarComponentesCombo(datos.comboComponentes))
             : normalizarComponentesCombo(prodActual.pro_detalle_producto?.combo_componentes),
+        es_renta:
+          datos.esRenta !== undefined
+            ? Boolean(datos.esRenta)
+            : esCodigoOfertaRenta(datos.tipo, prodActual.pro_detalle_producto),
+        tipo_oferta_etiqueta:
+          datos.tipoOfertaEtiqueta !== undefined
+            ? datos.tipoOfertaEtiqueta.trim() || null
+            : prodActual.pro_detalle_producto?.tipo_oferta_etiqueta || null,
+        renta_config:
+          datos.esRenta || esCodigoOfertaRenta(datos.tipo)
+            ? normalizarConfiguracionRenta(
+                datos.rentaConfig || prodActual.pro_detalle_producto?.renta_config
+              )
+            : null,
         editado_en: new Date().toISOString(),
       },
 

@@ -2,8 +2,11 @@ import { ProductoEcommerce, CategoriaEcommerce, VarianteEcommerce } from './tipo
 import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from './datos-catalogo';
 import { normalizarTextoEcommerce } from './filtrado-catalogo';
 import {
+  esCodigoOfertaRenta,
   normalizarComponentesCombo,
+  normalizarConfiguracionRenta,
   normalizarEscalasVolumen,
+  obtenerEtiquetaCortaTipoOferta,
 } from '@eco/comercio';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://oaybbpdxhlxjbpwnoymy.supabase.co';
@@ -58,6 +61,9 @@ interface SupabaseProductoRaw {
     es_complemento?: boolean;
     es_combo?: boolean;
     combo_componentes?: unknown;
+    es_renta?: boolean;
+    tipo_oferta_etiqueta?: string;
+    renta_config?: unknown;
     canales_visibilidad?: string[];
     vigencia_tipo?: 'SIEMPRE' | 'RANGO_FECHAS' | 'ESTACIONAL_ANUAL';
     fecha_inicio?: string;
@@ -295,9 +301,9 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
         if (p.pro_slug === 'combo-aniversario-especial') return false;
         if (!productoEstaVigenteEnFecha(p.pro_detalle_producto, p.pro_activo)) return false;
 
-        // Permitir productos tipo SERVICIO únicamente si están publicados para E-Commerce Web o tienen fotos reales
-        // (ej. Backing Floral en Eventos y Ceremonias), excluyendo recargos internos sin imagen.
-        if (p.pro_tipo === 'SERVICIO') {
+        // Permitir productos tipo SERVICIO o RENTA únicamente si están publicados para E-Commerce Web o tienen fotos reales
+        // (ej. Backing Floral o Set Pedestales en Eventos y Ceremonias), excluyendo recargos internos sin imagen.
+        if (p.pro_tipo === 'SERVICIO' || p.pro_tipo === 'RENTA') {
           const canales = p.pro_detalle_producto?.canales_visibilidad || [];
           const visibleEnWeb = canales.includes('ECOMMERCE_WEB');
           return visibleEnWeb || productoTieneFotografiaConfigurada(p);
@@ -484,13 +490,19 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
           p.pro_slug?.includes('servicios-logisticos') ||
           p.pro_slug?.includes('cinta');
 
+        const esRentaProd = esCodigoOfertaRenta(p.pro_tipo, detalle);
+        const esCatEventos =
+          catNombre.toLowerCase().includes('evento') ||
+          catNombre.toLowerCase().includes('ceremonia') ||
+          catSlug.toLowerCase().includes('evento');
+
         const esCondol =
           catEncontrada?.ctg_detalle_categoria?.modo_visual_sobrio === true ||
           catNombre.toLowerCase().includes('condol') ||
           catSlug.toLowerCase().includes('condol') ||
-          p.pro_slug?.includes('abanico') ||
-          p.pro_slug?.includes('pedestal') ||
-          p.pro_slug?.includes('corona') ||
+          (!esRentaProd && !esCatEventos && p.pro_slug?.includes('abanico')) ||
+          (!esRentaProd && !esCatEventos && p.pro_slug?.includes('pedestal')) ||
+          (!esRentaProd && !esCatEventos && p.pro_slug?.includes('corona')) ||
           (detalle.ocasion_recomendada || '').toUpperCase().includes('CONDOL') ||
           usosNormTexto.includes('condol') ||
           usosNormTexto.includes('duelo') ||
@@ -609,6 +621,10 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
           esExtra,
           esCombo: esCombo && comboComponentes.length > 0,
           comboComponentes: esCombo && comboComponentes.length > 0 ? comboComponentes : undefined,
+          tipoOferta: p.pro_tipo || 'FISICO',
+          esRenta: esRentaProd,
+          etiquetaTipoOferta: obtenerEtiquetaCortaTipoOferta(p.pro_tipo, detalle),
+          rentaConfig: esRentaProd ? normalizarConfiguracionRenta(detalle.renta_config) : undefined,
           usos,
           ocasionRecomendada: formatearOcasionRecomendada(
             detalle.ocasion_recomendada,
@@ -616,7 +632,9 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
             usos,
             catNombre
           ),
-          etiquetas: etiquetasDb,
+          etiquetas: esRentaProd
+            ? Array.from(new Set([...etiquetasDb, 'En Renta', 'Alquiler Mobiliario']))
+            : etiquetasDb,
           deliveryIncluido:
             typeof detalle.logistica?.delivery_incluido === 'boolean'
               ? detalle.logistica.delivery_incluido

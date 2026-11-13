@@ -838,7 +838,11 @@ export function ModalDetalleProducto() {
                       </>
                     )}
                     <span className="iva-etiqueta-modal">
-                      {varianteSeleccionada.tarifaIva > 0
+                      {producto.esRenta
+                        ? varianteSeleccionada.tarifaIva > 0
+                          ? `Tarifa de Renta (IVA ${varianteSeleccionada.tarifaIva}% incluido)`
+                          : 'Tarifa de Renta (IVA 0%)'
+                        : varianteSeleccionada.tarifaIva > 0
                         ? `PVP (IVA ${varianteSeleccionada.tarifaIva}% incluido)`
                         : 'PVP (Tarifa IVA 0% — Flores Frescas)'}
                     </span>
@@ -846,6 +850,56 @@ export function ModalDetalleProducto() {
                 );
               })()}
             </div>
+
+            {/* Aviso Informativo de Modalidad de Renta de Mobiliario */}
+            {producto.esRenta && (
+              <div
+                style={{
+                  marginBottom: '14px',
+                  padding: '11px 14px',
+                  borderRadius: '12px',
+                  background: '#FFFBEB',
+                  border: '1.5px solid #FCD34D',
+                  color: '#78350F',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '8px',
+                    flexWrap: 'wrap',
+                    marginBottom: '4px',
+                  }}
+                >
+                  <strong style={{ fontSize: '0.82rem', color: '#92400E' }}>
+                    🪑 Modalidad: Renta de Mobiliario para Eventos
+                  </strong>
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 700,
+                      background: '#FFFFFF',
+                      border: '1px solid #FDE68A',
+                      color: '#B45309',
+                      padding: '2px 8px',
+                      borderRadius: '999px',
+                    }}
+                  >
+                    {producto.rentaConfig?.periodo || 'Por evento (24h)'}
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.78rem', lineHeight: 1.45, color: '#78350F' }}>
+                  {producto.rentaConfig?.nota_condiciones ||
+                    'Mobiliario entregado en calidad de alquiler para tu evento. Coordinamos la entrega y el retiro al finalizar.'}
+                  {producto.rentaConfig?.deposito_garantia_usd &&
+                  producto.rentaConfig.deposito_garantia_usd > 0
+                    ? ` (Garantía reembolsable: $${producto.rentaConfig.deposito_garantia_usd.toFixed(2)}).`
+                    : ''}
+                </p>
+              </div>
+            )}
 
             {/* Configurador Interactivo de Set / Combo para Eventos */}
             {esComboActivo && (

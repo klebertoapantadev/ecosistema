@@ -234,7 +234,7 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
     // 2. Consulta directa REST a com_producto
     try {
       const res = await fetch(
-        `${url}/rest/v1/com_producto?pro_negocio=eq.${negocioId}&pro_activo=eq.true&select=pro_id,pro_nombre,pro_slug,pro_descripcion,pro_detalle_producto,com_variante(*)&order=pro_destacado.desc`,
+        `${url}/rest/v1/com_producto?pro_negocio=eq.${negocioId}&pro_activo=eq.true&select=pro_id,pro_nombre,pro_slug,pro_tipo,pro_descripcion,pro_detalle_producto,com_variante(*)&order=pro_destacado.desc`,
         {
           headers: {
             apikey: key,
@@ -394,6 +394,13 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
               categoria: catNombre,
               album_fotos_url: p.pro_detalle_producto?.album_fotos_url || p.album_fotos_url || null,
               portada_url: p.pro_detalle_producto?.imagen_url || p.portada_url || null,
+              tipo_oferta: p.pro_tipo || p.tipo || "FISICO",
+              es_renta: Boolean(
+                p.pro_detalle_producto?.es_renta === true ||
+                  String(p.pro_tipo || "").toUpperCase().includes("RENTA") ||
+                  String(p.pro_tipo || "").toUpperCase().includes("ALQUILER")
+              ),
+              condiciones_renta: p.pro_detalle_producto?.renta_config || null,
               delivery_incluido: p.pro_detalle_producto?.logistica?.delivery_incluido ?? p.delivery_incluido ?? false,
               usos: p.pro_detalle_producto?.usos || p.pro_detalle_producto?.ocasiones || [],
               etiquetas: p.pro_detalle_producto?.etiquetas || [],
@@ -497,6 +504,12 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
             url_tienda_categoria: construirUrlCategoriaMcp(baseTienda, catSlug),
             descripcion: encontrado.pro_descripcion || encontrado.descripcion,
             tipo: encontrado.pro_tipo || encontrado.tipo,
+            es_renta: Boolean(
+              encontrado.pro_detalle_producto?.es_renta === true ||
+                String(encontrado.pro_tipo || "").toUpperCase().includes("RENTA") ||
+                String(encontrado.pro_tipo || "").toUpperCase().includes("ALQUILER")
+            ),
+            condiciones_renta: encontrado.pro_detalle_producto?.renta_config || null,
             destacado: encontrado.pro_destacado ?? false,
             categoria: catNombre,
             canales_visibilidad:
