@@ -27,6 +27,18 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
   const [varianteSeleccionada, setVarianteSeleccionada] = useState<VarianteEcommerce>(obtenerVarianteBase);
   const [favorito, setFavorito] = useState(false);
 
+  // Cálculo dinámico de Oferta y % de Descuento
+  const tieneOferta = Boolean(
+    varianteSeleccionada.precioComparacion &&
+    varianteSeleccionada.precioComparacion > varianteSeleccionada.pvp
+  );
+  const ahorroMonto = tieneOferta
+    ? Number((varianteSeleccionada.precioComparacion! - varianteSeleccionada.pvp).toFixed(2))
+    : 0;
+  const porcentajeDescuento = tieneOferta
+    ? Math.round((ahorroMonto / varianteSeleccionada.precioComparacion!) * 100)
+    : 0;
+
   // En tarjetas agrupadas (sin varianteInicialSku), si la variante elegida tiene su propia galería (>1 foto),
   // mostrar su galería o el carrusel general del producto.
   const fotosBase =
@@ -111,6 +123,14 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
 
         {/* Chips de Estado */}
         <div className="chips-contenedor">
+          {tieneOferta && porcentajeDescuento > 0 && (
+            <span
+              className="chip-etiqueta chip-oferta"
+              title={`¡Oferta Especial! Ahorras $${ahorroMonto.toFixed(2)}`}
+            >
+              🔥 -{porcentajeDescuento}% OFF
+            </span>
+          )}
           {producto.entregaHoy && (
             <span className="chip-etiqueta chip-entrega-hoy">⚡ Entrega Hoy</span>
           )}
@@ -243,12 +263,16 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
               <span className="precio-pvp-grande">
                 ${varianteSeleccionada.pvp.toFixed(2)}
               </span>
-              {varianteSeleccionada.precioComparacion &&
-                varianteSeleccionada.precioComparacion > varianteSeleccionada.pvp && (
-                  <span className="precio-tachado-nominal">
-                    ${varianteSeleccionada.precioComparacion.toFixed(2)}
-                  </span>
-                )}
+              {tieneOferta && (
+                <span className="precio-tachado-nominal" title={`Precio anterior: $${varianteSeleccionada.precioComparacion!.toFixed(2)}`}>
+                  ${varianteSeleccionada.precioComparacion!.toFixed(2)}
+                </span>
+              )}
+              {tieneOferta && porcentajeDescuento > 0 && (
+                <span className="badge-ahorro-descuento">
+                  -{porcentajeDescuento}%
+                </span>
+              )}
             </div>
             <span className="subtexto-iva">
               {varianteSeleccionada.tarifaIva > 0

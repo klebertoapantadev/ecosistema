@@ -470,6 +470,11 @@
   background: rgba(61, 90, 69, 0.92);
   color: var(--blanco);
 }
+.chip-oferta {
+  background: #E11D48 !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 2px 8px rgba(225, 29, 72, 0.45);
+}
 
 .btn-favorito {
   position: absolute;
@@ -819,6 +824,70 @@
   color: var(--tinta);
   cursor: pointer;
   outline: none;
+}
+
+.selector-orden-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--blanco);
+  border: 1.5px solid var(--linea);
+  border-radius: 999px;
+  padding: 4px 14px;
+  color: var(--gris);
+  transition: border-color 0.15s;
+}
+.selector-orden-wrapper:hover,
+.selector-presupuesto-wrapper:hover {
+  border-color: var(--rosa);
+}
+.select-criterio-orden {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--tinta);
+  cursor: pointer;
+  outline: none;
+}
+
+.btn-filtro-ofertas {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #FFF1F2;
+  border: 1.5px solid #FECDD3;
+  color: #BE123C;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.btn-filtro-ofertas:hover {
+  background: #FFE4E6;
+  border-color: #FDA4AF;
+}
+.btn-filtro-ofertas.activo {
+  background: #E11D48;
+  border-color: #BE123C;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(225, 29, 72, 0.35);
+}
+.badge-contador-ofertas {
+  background: rgba(190, 18, 60, 0.15);
+  color: #9F1239;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+.btn-filtro-ofertas.activo .badge-contador-ofertas {
+  background: rgba(255, 255, 255, 0.28);
+  color: #FFFFFF;
 }
 
 .pills-categorias-scroll {
@@ -3187,9 +3256,14 @@
   .campo-busqueda-icono {
     min-width: 100%;
   }
+  .selector-orden-wrapper,
   .selector-presupuesto-wrapper {
     width: 100%;
     justify-content: space-between;
+  }
+  .btn-filtro-ofertas {
+    width: 100%;
+    justify-content: center;
   }
 
   /* Modales estilo Bottom Sheet en móviles */
@@ -3347,6 +3421,19 @@
   font-size: 0.95rem;
   font-weight: 500;
   opacity: 0.65;
+}
+
+.badge-ahorro-descuento {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #BE123C;
+  background: #FFE4E6;
+  border: 1px solid #FECDD3;
+  border-radius: 999px;
+  padding: 1px 7px;
+  line-height: 1.2;
 }
 
 /* ==============================================================================

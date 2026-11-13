@@ -1856,10 +1856,10 @@ export function ModalEditarProducto({
                     </div>
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "10px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr 1.1fr", gap: "10px" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                        Precio Base Imponible ($ USD) *
+                        Precio Venta Sin IVA ($) *
                       </label>
                       <input
                         type="number"
@@ -1884,7 +1884,7 @@ export function ModalEditarProducto({
 
                     <div>
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                        Tarifa IVA SRI (Ecuador)
+                        Tarifa IVA SRI
                       </label>
                       <select
                         value={varianteActual.var_tarifa_iva_porcentaje ?? 15}
@@ -1899,9 +1899,40 @@ export function ModalEditarProducto({
                           background: "#FFFFFF",
                         }}
                       >
-                        <option value={15}>IVA 15% (Estándar)</option>
-                        <option value={0}>IVA 0% (Exento SRI)</option>
+                        <option value={15}>IVA 15%</option>
+                        <option value={0}>IVA 0%</option>
                       </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        PVP Anterior / Tachado ($)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.50"
+                        min="0"
+                        placeholder="Ej. 80.00 (Oferta)"
+                        value={varianteActual.var_precio_comparacion ?? ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "" || val === "0") {
+                            actualizarVarianteActual("var_precio_comparacion", null);
+                          } else {
+                            const num = parseFloat(val);
+                            actualizarVarianteActual("var_precio_comparacion", !isNaN(num) ? num : null);
+                          }
+                        }}
+                        style={{
+                          width: "100%",
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.85rem",
+                          boxSizing: "border-box",
+                          color: "#64748B",
+                        }}
+                      />
                     </div>
                   </div>
 
@@ -1928,11 +1959,37 @@ export function ModalEditarProducto({
                         ${(Number(varianteActual.var_precio || 0) * (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100).toFixed(2)}
                       </strong>
                     </div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                       <span style={{ color: "#64748B" }}>PVP Total:</span>
                       <strong style={{ color: "#059669", fontSize: "0.95rem", fontWeight: 800 }}>
                         ${(Number(varianteActual.var_precio || 0) * (1 + (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100)).toFixed(2)}
                       </strong>
+                      {varianteActual.var_precio_comparacion &&
+                        Number(varianteActual.var_precio_comparacion) >
+                          Number(varianteActual.var_precio || 0) * (1 + (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100) && (
+                          <>
+                            <span style={{ textDecoration: "line-through", color: "#94A3B8", fontSize: "0.85rem", fontWeight: 500 }} title="Precio regular tachado">
+                              ${Number(varianteActual.var_precio_comparacion).toFixed(2)}
+                            </span>
+                            <span
+                              style={{
+                                background: "#FEE2E2",
+                                color: "#DC2626",
+                                fontSize: "0.72rem",
+                                fontWeight: 800,
+                                padding: "2px 7px",
+                                borderRadius: "9999px",
+                              }}
+                            >
+                              🔥 -{Math.round(
+                                ((Number(varianteActual.var_precio_comparacion) -
+                                  Number(varianteActual.var_precio || 0) * (1 + (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100)) /
+                                  Number(varianteActual.var_precio_comparacion)) *
+                                  100
+                              )}% OFF
+                            </span>
+                          </>
+                        )}
                       {variantesLocales.length > 1 && (
                         <button
                           type="button"

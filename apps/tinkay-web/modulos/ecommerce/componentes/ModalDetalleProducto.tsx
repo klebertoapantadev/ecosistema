@@ -456,18 +456,38 @@ export function ModalDetalleProducto() {
                 </span>
                 {varianteSeleccionada.precioComparacion &&
                   varianteSeleccionada.precioComparacion > varianteSeleccionada.pvp && (
-                    <span
-                      style={{
-                        textDecoration: 'line-through',
-                        opacity: 0.55,
-                        fontSize: '1.25rem',
-                        fontWeight: 500,
-                        marginLeft: '8px',
-                        color: 'var(--tinta-media)',
-                      }}
-                    >
-                      ${varianteSeleccionada.precioComparacion.toFixed(2)}
-                    </span>
+                    <>
+                      <span
+                        style={{
+                          textDecoration: 'line-through',
+                          opacity: 0.55,
+                          fontSize: '1.25rem',
+                          fontWeight: 500,
+                          marginLeft: '8px',
+                          color: 'var(--tinta-media)',
+                        }}
+                        title={`Precio anterior de referencia: $${varianteSeleccionada.precioComparacion.toFixed(2)}`}
+                      >
+                        ${varianteSeleccionada.precioComparacion.toFixed(2)}
+                      </span>
+                      <span
+                        style={{
+                          background: '#E11D48',
+                          color: '#FFFFFF',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          padding: '3px 10px',
+                          borderRadius: '999px',
+                          marginLeft: '8px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          boxShadow: '0 2px 6px rgba(225, 29, 72, 0.35)',
+                        }}
+                      >
+                        🔥 -{Math.round(((varianteSeleccionada.precioComparacion - varianteSeleccionada.pvp) / varianteSeleccionada.precioComparacion) * 100)}% OFF
+                      </span>
+                    </>
                   )}
                 <span className="iva-etiqueta-modal">
                   {varianteSeleccionada.tarifaIva > 0

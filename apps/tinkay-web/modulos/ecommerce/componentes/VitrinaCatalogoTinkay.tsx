@@ -5,7 +5,27 @@ import { useCarrito } from '../contexto-carrito';
 import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from '../datos-catalogo';
 import { ProductoEcommerce } from '../tipos';
 import { TarjetaProductoConCarrusel } from './TarjetaProductoConCarrusel';
-import { Search, SlidersHorizontal, Feather, Sparkles } from 'lucide-react';
+import { Search, SlidersHorizontal, Feather, Sparkles, ArrowUpDown } from 'lucide-react';
+
+export const obtenerPvpProducto = (p: ProductoEcommerce): number => {
+  const varCorresp =
+    (p.varianteInicialSku
+      ? p.variantes.find((v) => v.sku === p.varianteInicialSku)
+      : null) ?? p.variantes[0];
+  return varCorresp?.pvp ?? 0;
+};
+
+export const productoTieneOferta = (p: ProductoEcommerce): boolean => {
+  const varCorresp =
+    (p.varianteInicialSku
+      ? p.variantes.find((v) => v.sku === p.varianteInicialSku)
+      : null) ?? p.variantes[0];
+  return Boolean(
+    varCorresp &&
+    varCorresp.precioComparacion &&
+    varCorresp.precioComparacion > varCorresp.pvp
+  );
+};
 
 function productoCoincideConCategoria(
   p: ProductoEcommerce,
@@ -71,6 +91,8 @@ export function VitrinaCatalogoTinkay() {
   const [categoriaActiva, setCategoriaActiva] = useState<string>('cat-todos');
   const [terminoBusqueda, setTerminoBusqueda] = useState<string>('');
   const [filtroPresupuesto, setFiltroPresupuesto] = useState<string>('todos');
+  const [criterioOrden, setCriterioOrden] = useState<'precio-desc' | 'precio-asc' | 'destacados' | 'nombre-asc'>('precio-desc');
+  const [soloOfertas, setSoloOfertas] = useState<boolean>(false);
 
   const esModoCondolencias = categoriaActiva === 'cat-ocas-condol';
 
@@ -163,9 +185,19 @@ export function VitrinaCatalogoTinkay() {
     }
   }, [categoriasVisibles, categoriaActiva]);
 
-  // 3. Filtrado reactivo de productos por categoría, búsqueda y presupuesto
+  // Conteo reactivo de cuántos productos tienen oferta activa
+  const totalOfertasDisponibles = useMemo(() => {
+    return productosBaseDesplegados.filter((p) => productoTieneOferta(p)).length;
+  }, [productosBaseDesplegados]);
+
+  // 3. Filtrado reactivo de productos por categoría, búsqueda, presupuesto y ofertas
   const productosFiltrados = useMemo(() => {
     return productosBaseDesplegados.filter((p) => {
+      // Filtro de solo ofertas
+      if (soloOfertas && !productoTieneOferta(p)) {
+        return false;
+      }
+
       // Filtro de categoría y ocasión
       if (categoriaActiva !== 'cat-todos') {
         if (!productoCoincideConCategoria(p, categoriaActiva)) return false;
@@ -182,19 +214,33 @@ export function VitrinaCatalogoTinkay() {
 
       // Filtro de presupuesto individual
       if (filtroPresupuesto !== 'todos') {
-        const varCorrespondiente =
-          (p.varianteInicialSku
-            ? p.variantes.find((v) => v.sku === p.varianteInicialSku)
-            : null) ?? p.variantes[0];
-        const pvp = varCorrespondiente?.pvp ?? 0;
+        const pvp = obtenerPvpProducto(p);
         if (filtroPresupuesto === 'menor-30' && pvp > 30) return false;
         if (filtroPresupuesto === '30-50' && (pvp < 30 || pvp > 50)) return false;
-        if (filtroPresupuesto === 'mayor-50' && pvp < 50) return false;
+        if (filtroPresupuesto === '50-80' && (pvp < 50 || pvp > 80)) return false;
+        if (filtroPresupuesto === 'mayor-80' && pvp < 80) return false;
       }
 
       return true;
     });
-  }, [categoriaActiva, terminoBusqueda, filtroPresupuesto, productosBaseDesplegados]);
+  }, [categoriaActiva, terminoBusqueda, filtroPresupuesto, soloOfertas, productosBaseDesplegados]);
+
+  // 4. Ordenamiento reactivo (por defecto de mayor a menor precio, más costoso primero)
+  const productosFinales = useMemo(() => {
+    const lista = [...productosFiltrados];
+    switch (criterioOrden) {
+      case 'precio-desc':
+        return lista.sort((a, b) => obtenerPvpProducto(b) - obtenerPvpProducto(a));
+      case 'precio-asc':
+        return lista.sort((a, b) => obtenerPvpProducto(a) - obtenerPvpProducto(b));
+      case 'destacados':
+        return lista.sort((a, b) => (b.destacado ? 1 : 0) - (a.destacado ? 1 : 0));
+      case 'nombre-asc':
+        return lista.sort((a, b) => a.nombre.localeCompare(b.nombre));
+      default:
+        return lista;
+    }
+  }, [productosFiltrados, criterioOrden]);
 
   return (
     <section className={`seccion-vitrina-catalogo ${esModoCondolencias ? 'vitrina-modo-condolencias' : ''}`} id="catalogo">
@@ -227,7 +273,7 @@ export function VitrinaCatalogoTinkay() {
             </p>
           </div>
 
-          {/* Barra de Búsqueda y Filtros Rápidos */}
+          {/* Barra de Búsqueda, Ordenamiento y Filtros Rápidos */}
           <div className="barra-busqueda-vitrina">
             <div className="campo-busqueda-icono">
               <Search size={18} className="icono-busqueda" />
@@ -249,8 +295,25 @@ export function VitrinaCatalogoTinkay() {
               )}
             </div>
 
-            <div className="selector-presupuesto-wrapper">
-              <SlidersHorizontal size={16} />
+            {/* Selector de Ordenamiento por Precio / Relevancia */}
+            <div className="selector-orden-wrapper" title="Ordenar catálogo">
+              <ArrowUpDown size={15} />
+              <select
+                value={criterioOrden}
+                onChange={(e) => setCriterioOrden(e.target.value as any)}
+                className="select-criterio-orden"
+                aria-label="Ordenar productos por precio o destacados"
+              >
+                <option value="precio-desc">Mayor a menor ($$$ → $)</option>
+                <option value="precio-asc">Menor a mayor ($ → $$$)</option>
+                <option value="destacados">Más Pedidos / Destacados</option>
+                <option value="nombre-asc">Nombre: A — Z</option>
+              </select>
+            </div>
+
+            {/* Selector de Rango de Presupuesto */}
+            <div className="selector-presupuesto-wrapper" title="Filtrar por presupuesto">
+              <SlidersHorizontal size={15} />
               <select
                 value={filtroPresupuesto}
                 onChange={(e) => setFiltroPresupuesto(e.target.value)}
@@ -260,9 +323,24 @@ export function VitrinaCatalogoTinkay() {
                 <option value="todos">Cualquier Presupuesto</option>
                 <option value="menor-30">Hasta $30.00</option>
                 <option value="30-50">$30.00 - $50.00</option>
-                <option value="mayor-50">Más de $50.00</option>
+                <option value="50-80">$50.00 - $80.00</option>
+                <option value="mayor-80">Más de $80.00</option>
               </select>
             </div>
+
+            {/* Botón Filtro Rápido de Ofertas con % de descuento */}
+            <button
+              type="button"
+              className={`btn-filtro-ofertas ${soloOfertas ? 'activo' : ''}`}
+              onClick={() => setSoloOfertas(!soloOfertas)}
+              title={soloOfertas ? 'Mostrar todo el catálogo' : 'Filtrar únicamente productos con oferta o descuento'}
+              aria-pressed={soloOfertas}
+            >
+              <span>🔥 Solo Ofertas</span>
+              {totalOfertasDisponibles > 0 && (
+                <span className="badge-contador-ofertas">{totalOfertasDisponibles}</span>
+              )}
+            </button>
           </div>
         </div>
 
@@ -285,7 +363,7 @@ export function VitrinaCatalogoTinkay() {
         </div>
 
         {/* Grid de Productos con Carruseles Fotográficos */}
-        {productosFiltrados.length === 0 ? (
+        {productosFinales.length === 0 ? (
           <div className="vacio-catalogo-alerta">
             <p>No encontramos arreglos con los filtros seleccionados.</p>
             <button
@@ -295,6 +373,8 @@ export function VitrinaCatalogoTinkay() {
                 setCategoriaActiva('cat-todos');
                 setTerminoBusqueda('');
                 setFiltroPresupuesto('todos');
+                setSoloOfertas(false);
+                setCriterioOrden('precio-desc');
               }}
             >
               Restablecer filtros
@@ -302,7 +382,7 @@ export function VitrinaCatalogoTinkay() {
           </div>
         ) : (
           <div className="grid-productos-vitrina">
-            {productosFiltrados.map((producto) => (
+            {productosFinales.map((producto) => (
               <TarjetaProductoConCarrusel
                 key={producto.id}
                 producto={producto}
