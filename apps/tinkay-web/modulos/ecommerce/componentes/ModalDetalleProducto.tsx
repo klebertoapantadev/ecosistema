@@ -45,20 +45,7 @@ export function ModalDetalleProducto() {
         producto.variantes.find((v) => v.sku === producto.varianteInicialSku) ||
         producto.variantes[0]!;
       setVarianteSeleccionada(varInicial);
-
-      if (varInicial.fotos && varInicial.fotos.length > 1) {
-        setFotoActivaIndex(0);
-      } else {
-        const fotosDisponibles =
-          producto.fotosModal && producto.fotosModal.length > 0
-            ? producto.fotosModal
-            : producto.fotos && producto.fotos.length > 0
-            ? producto.fotos
-            : ['/img/slide4_flores_amor.jpg'];
-
-        const fotoIdx = varInicial.foto ? fotosDisponibles.indexOf(varInicial.foto) : 0;
-        setFotoActivaIndex(fotoIdx >= 0 ? fotoIdx : 0);
-      }
+      setFotoActivaIndex(0);
       setComplementosSeleccionados([]);
       setIncluirDedicatoria(false);
       setDedicatoria({ para: '', de: '', mensaje: '' });
@@ -268,20 +255,28 @@ export function ModalDetalleProducto() {
       ? [varianteSeleccionada.foto]
       : [];
 
-  const mostrandoGaleriaPropia = fotosVarianteActual.length > 1;
-  const fotos = mostrandoGaleriaPropia ? fotosVarianteActual : todasLasFotosProducto;
+  const esProductoMultivariante = producto.variantes.length > 1;
+  const mostrandoGaleriaPropia = esProductoMultivariante
+    ? fotosVarianteActual.length > 0
+    : true;
+
+  const fotosProductoSimple = Array.from(
+    new Set([...fotosVarianteActual, ...todasLasFotosProducto])
+  );
+
+  const fotos = esProductoMultivariante
+    ? mostrandoGaleriaPropia
+      ? fotosVarianteActual
+      : todasLasFotosProducto
+    : fotosProductoSimple.length > 0
+    ? fotosProductoSimple
+    : ['/img/slide4_flores_amor.jpg'];
+
   const indiceFotoSeguro = fotoActivaIndex < fotos.length ? fotoActivaIndex : 0;
 
   const seleccionarVarianteModal = (v: VarianteEcommerce) => {
     setVarianteSeleccionada(v);
-    if (v.fotos && v.fotos.length > 1) {
-      setFotoActivaIndex(0);
-    } else if (v.foto) {
-      const idx = todasLasFotosProducto.indexOf(v.foto);
-      setFotoActivaIndex(idx >= 0 ? idx : 0);
-    } else {
-      setFotoActivaIndex(0);
-    }
+    setFotoActivaIndex(0);
   };
 
   const cambiarFotoActiva = (nuevoIdx: number) => {

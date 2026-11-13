@@ -106,26 +106,8 @@ export function VitrinaCatalogoTinkay() {
 
       // Si el producto tiene múltiples variaciones, se despliega cada una como un producto individual
       if (p.variantes && p.variantes.length > 1) {
-        // Galería completa desduplicada de todas las variaciones y fotos del producto
-        const todasLasFotosModal: string[] = [];
-        p.variantes.forEach((varItem) => {
-          if (varItem.foto && !todasLasFotosModal.includes(varItem.foto)) {
-            todasLasFotosModal.push(varItem.foto);
-          }
-          (varItem.fotos || []).forEach((f) => {
-            if (f && !todasLasFotosModal.includes(f)) {
-              todasLasFotosModal.push(f);
-            }
-          });
-        });
-        p.fotos.forEach((f) => {
-          if (f && !todasLasFotosModal.includes(f)) {
-            todasLasFotosModal.push(f);
-          }
-        });
-
         return p.variantes.map((v) => {
-          // Para la tarjeta individual: mostrar TODAS las fotografías configuradas en esta variación
+          // Para la tarjeta y modal individual: mostrar estrictamente las fotografías configuradas en esta variación
           const fotosTarjetaIndividual =
             v.fotos && v.fotos.length > 0
               ? v.fotos
@@ -142,7 +124,7 @@ export function VitrinaCatalogoTinkay() {
             nombreBase: p.nombre,
             descripcionCorta: v.detalle || p.descripcionCorta,
             fotos: fotosTarjetaIndividual,
-            fotosModal: todasLasFotosModal.length > 0 ? todasLasFotosModal : p.fotos,
+            fotosModal: fotosTarjetaIndividual,
             variantes: p.variantes,
             varianteInicialSku: v.sku,
             destacado: p.destacado,
