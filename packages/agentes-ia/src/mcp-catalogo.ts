@@ -55,16 +55,51 @@ export function palabrasSignificativas(termino: string): string[] {
   return [...new Set(palabras)];
 }
 
-// Texto normalizado donde se busca cada palabra: nombre, slug, descripción, etiquetas, usos y variantes.
+// Texto normalizado donde se busca cada palabra: nombre, slug, categoría, descripción, beneficios, etiquetas, usos y variantes.
 function textoBuscable(p: any): string {
   const detalle = p.pro_detalle_producto ?? {};
   const etiquetas = Array.isArray(detalle.etiquetas) ? detalle.etiquetas : [];
-  const usos = Array.isArray(detalle.usos) ? detalle.usos : Array.isArray(detalle.ocasiones) ? detalle.ocasiones : [];
+  const beneficios = Array.isArray(detalle.beneficios)
+    ? detalle.beneficios
+    : typeof detalle.beneficios === "string"
+    ? [detalle.beneficios]
+    : [];
+  const usos = Array.isArray(detalle.usos)
+    ? detalle.usos
+    : Array.isArray(detalle.ocasiones)
+    ? detalle.ocasiones
+    : [];
+  const catNombre = p.categoria?.ctg_nombre || p.categoria?.nombre || p.categoria_nombre;
+  const catSlug = p.categoria?.ctg_slug || p.categoria?.slug;
   const variantes = Array.isArray(p.variantes)
-    ? p.variantes.flatMap((v: any) => [v.var_nombre || v.nombre, v.var_detalle_variante?.descripcion_corta])
+    ? p.variantes.flatMap((v: any) => [
+        v.var_nombre || v.nombre,
+        v.var_sku || v.sku,
+        v.var_detalle_variante?.descripcion_corta,
+        v.var_detalle_variante?.detalle,
+        v.var_detalle_variante?.receta_bom,
+        ...(Array.isArray(v.var_detalle_variante?.beneficios_custom)
+          ? v.var_detalle_variante.beneficios_custom
+          : []),
+        ...(Array.isArray(v.var_detalle_variante?.usos)
+          ? v.var_detalle_variante.usos
+          : []),
+      ])
     : [];
   return normalizarTextoBusqueda(
-    [p.pro_nombre || p.nombre, p.pro_slug || p.slug, p.pro_descripcion || p.descripcion, ...etiquetas, ...usos, ...variantes]
+    [
+      p.pro_nombre || p.nombre,
+      p.pro_slug || p.slug,
+      catNombre,
+      catSlug,
+      p.pro_descripcion || p.descripcion,
+      detalle.descripcion_corta,
+      detalle.ocasion_recomendada,
+      ...beneficios,
+      ...etiquetas,
+      ...usos,
+      ...variantes,
+    ]
       .filter(Boolean)
       .join(" "),
   );
@@ -239,23 +274,25 @@ export function crearServidorMcpCatalogo(opciones: OpcionesServidorMcpCatalogo) 
           filtrados = filtrarPorTermino(filtrados, args.termino);
         }
 
-        const criterioUso = String(args.uso || args.ocasion || args.categoria || "").toLowerCase().trim();
+        const criterioUso = normalizarTextoBusqueda(
+          args.uso || args.ocasion || args.categoria || ""
+        ).trim();
         if (criterioUso) {
           filtrados = filtrados.filter((p) => {
-            const slugCat = String(p.categoria?.ctg_slug || p.categoria?.slug || "").toLowerCase();
-            const nomCat = String(p.categoria?.ctg_nombre || p.categoria?.nombre || "").toLowerCase();
+            const slugCat = normalizarTextoBusqueda(p.categoria?.ctg_slug || p.categoria?.slug || "");
+            const nomCat = normalizarTextoBusqueda(p.categoria?.ctg_nombre || p.categoria?.nombre || "");
             const tags = Array.isArray(p.pro_detalle_producto?.etiquetas)
-              ? p.pro_detalle_producto.etiquetas.map((t: string) => String(t).toLowerCase())
+              ? p.pro_detalle_producto.etiquetas.map((t: string) => normalizarTextoBusqueda(t))
               : [];
             const usos = Array.isArray(p.pro_detalle_producto?.usos)
-              ? p.pro_detalle_producto.usos.map((u: string) => String(u).toLowerCase())
+              ? p.pro_detalle_producto.usos.map((u: string) => normalizarTextoBusqueda(u))
               : Array.isArray(p.pro_detalle_producto?.ocasiones)
-              ? p.pro_detalle_producto.ocasiones.map((u: string) => String(u).toLowerCase())
+              ? p.pro_detalle_producto.ocasiones.map((u: string) => normalizarTextoBusqueda(u))
               : [];
-            const desc = String(p.pro_descripcion || "").toLowerCase();
+            const desc = normalizarTextoBusqueda(p.pro_descripcion || "");
 
-            const matchUso = usos.some((u: string) => u.includes(criterioUso) || criterioUso.includes(u));
-            const matchTag = tags.some((t: string) => t.includes(criterioUso) || criterioUso.includes(t));
+            const matchUso = usos.some((u: string) => Boolean(u) && (u.includes(criterioUso) || criterioUso.includes(u)));
+            const matchTag = tags.some((t: string) => Boolean(t) && (t.includes(criterioUso) || criterioUso.includes(t)));
 
             return matchUso || matchTag || slugCat.includes(criterioUso) || nomCat.includes(criterioUso) || desc.includes(criterioUso);
           });

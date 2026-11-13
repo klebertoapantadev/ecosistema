@@ -33,6 +33,7 @@ import { ModalCrearProducto } from "./ModalCrearProducto";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
 import { ModalEditarProducto } from "./ModalEditarProducto";
 import { ModalGaleriaMedios } from "./ModalGaleriaMedios";
+import { productoCatalogoCoincideBusqueda } from "../utils/usosCatalogo";
 
 interface Props {
   negocio?: string;
@@ -146,14 +147,18 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
   };
 
   const productosFiltrados = productos.filter((p) => {
-    const cumpleBusqueda =
-      busqueda.trim() === "" ||
-      p.pro_nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      (p.pro_descripcion && p.pro_descripcion.toLowerCase().includes(busqueda.toLowerCase()));
+    const cumpleBusqueda = productoCatalogoCoincideBusqueda(
+      p,
+      busqueda,
+      categoriasLista
+    );
 
+    const catSlug = p.categoria?.ctg_slug || "";
+    const catId = p.categoria?.ctg_id || p.pro_categoria_principal_id || "";
     const cumpleCategoria =
       categoriaSeleccionada === "todas" ||
-      (p.categoria && p.categoria.ctg_slug === categoriaSeleccionada);
+      catSlug === categoriaSeleccionada ||
+      catId === categoriaSeleccionada;
 
     return cumpleBusqueda && cumpleCategoria;
   });

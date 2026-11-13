@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ProveedorCarrito } from '../modulos/ecommerce/contexto-carrito';
+import { ProveedorCarrito, useCarrito } from '../modulos/ecommerce/contexto-carrito';
 import { EncabezadoEcommerce } from '../modulos/ecommerce/componentes/EncabezadoEcommerce';
 import { CarruselHeroDestacados } from '../modulos/ecommerce/componentes/CarruselHeroDestacados';
 import { CarruselProductosDestacados } from '../modulos/ecommerce/componentes/CarruselProductosDestacados';
@@ -13,9 +13,15 @@ import { ModalCheckoutTinkay } from '../modulos/ecommerce/componentes/ModalCheck
 import { ChatAriaFlotante } from '../modulos/ecommerce/componentes/ChatAriaFlotante';
 import { Sparkles, ShieldCheck, Heart, Truck, Phone, MapPin } from 'lucide-react';
 
-export default function PaginaEcommerceTinkay() {
+function ContenidoPaginaEcommerceTinkay() {
+  const { navegarACategoria } = useCarrito();
+
+  const irAColeccion = (e: React.MouseEvent<HTMLAnchorElement>, catId: string) => {
+    e.preventDefault();
+    navegarACategoria(catId);
+  };
+
   return (
-    <ProveedorCarrito>
       <div className="pagina-ecommerce-tinkay-layout">
         {/* Encabezado Superior con Carrito */}
         <EncabezadoEcommerce />
@@ -137,6 +143,7 @@ export default function PaginaEcommerceTinkay() {
                   <a
                     href="#catalogo"
                     className="btn-ver-catalogo-tienda"
+                    onClick={(e) => irAColeccion(e, 'cat-todos')}
                   >
                     <span>Ver Productos para Retiro</span>
                   </a>
@@ -182,10 +189,26 @@ export default function PaginaEcommerceTinkay() {
               <div className="columna-pie-links">
                 <h4>Colecciones</h4>
                 <ul>
-                  <li><a href="#catalogo">Box Florales de Lujo</a></li>
-                  <li><a href="#catalogo">Bouquets Estilo Coreano</a></li>
-                  <li><a href="#catalogo">Ramos Clásicos para Florero</a></li>
-                  <li><a href="#catalogo">Condolencias &amp; Funerarios</a></li>
+                  <li>
+                    <a href="#catalogo" onClick={(e) => irAColeccion(e, 'box-florales')}>
+                      Box Florales de Lujo
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#catalogo" onClick={(e) => irAColeccion(e, 'cat-coreanos')}>
+                      Bouquets Estilo Coreano
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#catalogo" onClick={(e) => irAColeccion(e, 'cat-floreros')}>
+                      Ramos Clásicos para Florero
+                    </a>
+                  </li>
+                  <li>
+                    <a href="#catalogo" onClick={(e) => irAColeccion(e, 'cat-ocas-condol')}>
+                      Condolencias &amp; Funerarios
+                    </a>
+                  </li>
                 </ul>
               </div>
 
@@ -228,6 +251,13 @@ export default function PaginaEcommerceTinkay() {
         {/* Agente de Chat ARIA ("Mía") */}
         <ChatAriaFlotante />
       </div>
+  );
+}
+
+export default function PaginaEcommerceTinkay() {
+  return (
+    <ProveedorCarrito>
+      <ContenidoPaginaEcommerceTinkay />
     </ProveedorCarrito>
   );
 }

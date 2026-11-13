@@ -1,4 +1,4 @@
-import { ProductoCatalogo } from "../acciones";
+import { CategoriaCatalogo, ProductoCatalogo } from "../acciones";
 import { detectarTipoNegocio } from "./negocio";
 
 export interface ItemUsoCatalogo {
@@ -148,4 +148,148 @@ export function verificarUsoEnProductosLocales(
   }
 
   return Array.from(nombresSet);
+}
+
+const CONECTORES_BUSQUEDA_COMERCIO = new Set([
+  "de",
+  "del",
+  "la",
+  "las",
+  "el",
+  "los",
+  "un",
+  "una",
+  "y",
+  "o",
+  "a",
+  "en",
+  "con",
+  "por",
+  "para",
+]);
+
+function normalizarBusquedaComercio(valor: unknown): string {
+  return String(valor ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[_/\\|•·—–-]+/g, " ")
+    .replace(/[^a-z0-9$]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const TODOS_PRESETS_USOS = [
+  ...PRESETS_USOS_FLORISTERIA,
+  ...PRESETS_USOS_LEGAL,
+  ...PRESETS_USOS_MANTENIMIENTO,
+];
+
+function expandirEtiquetaUso(claveUso: string): string {
+  const norm = normalizarBusquedaComercio(claveUso);
+  const preset = TODOS_PRESETS_USOS.find(
+    (p) => normalizarBusquedaComercio(p.clave) === norm || norm.includes(normalizarBusquedaComercio(p.clave))
+  );
+  return preset ? `${norm} ${normalizarBusquedaComercio(preset.label)}` : norm;
+}
+
+/**
+ * Búsqueda multidimensional de productos del catálogo comercial unificado:
+ * busca en nombre, slug, categoría, palabras clave de categoría, usos/ocasiones,
+ * etiquetas, descripciones, beneficios, requisitos y todas sus variantes/SKUs.
+ */
+export function productoCatalogoCoincideBusqueda(
+  p: ProductoCatalogo,
+  busqueda: string,
+  categoriasLista: CategoriaCatalogo[] = []
+): boolean {
+  const queryNorm = normalizarBusquedaComercio(busqueda);
+  if (!queryNorm) return true;
+
+  const det = p.pro_detalle_producto || {};
+  const catResuelta =
+    p.categoria ||
+    categoriasLista.find(
+      (c) =>
+        c.ctg_id === p.pro_categoria_principal_id ||
+        c.ctg_slug === p.pro_categoria_principal_id
+    );
+
+  const usosRaw: string[] = [
+    ...(Array.isArray(det.usos) ? det.usos : []),
+    ...(Array.isArray(det.ocasiones) ? det.ocasiones : []),
+  ].map((u) => expandirEtiquetaUso(String(u)));
+
+  const beneficiosProd = Array.isArray(det.beneficios)
+    ? det.beneficios
+    : typeof det.beneficios === "string"
+    ? [det.beneficios]
+    : [];
+
+  const requisitosProd = Array.isArray(det.requisitos)
+    ? det.requisitos
+    : typeof det.requisitos === "string"
+    ? [det.requisitos]
+    : [];
+
+  const etiquetasProd = Array.isArray(det.etiquetas) ? det.etiquetas : [];
+  const palabrasClaveCat = Array.isArray(
+    (catResuelta as any)?.ctg_detalle_categoria?.palabras_clave
+  )
+    ? (catResuelta as any).ctg_detalle_categoria.palabras_clave
+    : [];
+
+  const textosVariantes = (p.variantes || []).flatMap((v) => {
+    const detV = v.var_detalle_variante || {};
+    const usosV = [
+      ...(Array.isArray(detV.usos) ? detV.usos : []),
+      ...(Array.isArray(detV.ocasiones) ? detV.ocasiones : []),
+    ].map((u) => expandirEtiquetaUso(String(u)));
+    const benV = Array.isArray(detV.beneficios_custom)
+      ? detV.beneficios_custom
+      : typeof detV.beneficios_custom === "string"
+      ? [detV.beneficios_custom]
+      : [];
+    return [
+      v.var_nombre,
+      v.var_sku,
+      detV.detalle,
+      detV.descripcion_corta,
+      detV.receta_bom,
+      ...benV,
+      ...usosV,
+    ];
+  });
+
+  const corpus = normalizarBusquedaComercio(
+    [
+      p.pro_nombre,
+      p.pro_slug,
+      p.pro_descripcion,
+      det.descripcion_corta,
+      det.ocasion_recomendada,
+      det.etiqueta_temporada,
+      catResuelta?.ctg_nombre,
+      catResuelta?.ctg_slug,
+      (catResuelta as any)?.ctg_descripcion,
+      ...palabrasClaveCat,
+      ...usosRaw,
+      ...etiquetasProd,
+      ...beneficiosProd,
+      ...requisitosProd,
+      ...textosVariantes,
+    ]
+      .filter(Boolean)
+      .join(" ")
+  );
+
+  if (corpus.includes(queryNorm)) return true;
+
+  const palabrasRaw = queryNorm.split(" ").filter(Boolean);
+  const palabrasSig = palabrasRaw.filter(
+    (w) => w.length > 1 && !CONECTORES_BUSQUEDA_COMERCIO.has(w)
+  );
+  const tokens = palabrasSig.length > 0 ? palabrasSig : palabrasRaw;
+
+  return tokens.every((t) => corpus.includes(t));
 }

@@ -1,12 +1,34 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { useCarrito } from '../contexto-carrito';
+import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from '../datos-catalogo';
+import { expandirProductosVitrina, obtenerCategoriasVisibles } from '../filtrado-catalogo';
 import { ShoppingBag, Feather } from 'lucide-react';
 
 export function EncabezadoEcommerce() {
-  const { cantidadTotal, setDrawerAbierto } = useCarrito();
+  const {
+    cantidadTotal,
+    setDrawerAbierto,
+    productos,
+    categorias,
+    categoriaActiva,
+    navegarACategoria,
+  } = useCarrito();
+
+  const categoriasMenu = useMemo(() => {
+    const prodsBase = expandirProductosVitrina(
+      productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY
+    );
+    const catsBase = categorias && categorias.length > 0 ? categorias : CATEGORIAS_TINKAY;
+    return obtenerCategoriasVisibles(catsBase, prodsBase);
+  }, [productos, categorias]);
+
+  const handleSeleccionMenu = (e: React.MouseEvent<HTMLAnchorElement>, catId: string) => {
+    e.preventDefault();
+    navegarACategoria(catId);
+  };
 
   return (
     <header className="cabecera-ecommerce-tinkay">
@@ -35,15 +57,34 @@ export function EncabezadoEcommerce() {
           <span className="sr-only">Tinkay Flores y Eventos</span>
         </Link>
 
-        <nav className="nav-enlaces-floristeria">
-          <a href="#catalogo">Catálogo</a>
-          <a href="#catalogo">Box Florales</a>
-          <a href="#catalogo">Estilo Coreano</a>
-          <a href="#catalogo">Para Florero</a>
-          <a href="#catalogo" className="enlace-condolencias">
-            <Feather size={14} />
-            <span>Condolencias</span>
-          </a>
+        <nav className="nav-enlaces-floristeria" aria-label="Categorías principales">
+          {categoriasMenu.map((cat) => {
+            const esTodos = cat.id === 'cat-todos';
+            const estaActiva = categoriaActiva === cat.id;
+            const etiquetaMenu = esTodos
+              ? 'Catálogo'
+              : cat.modoVisualSobrio
+              ? 'Condolencias'
+              : cat.nombre;
+
+            return (
+              <a
+                key={cat.id}
+                href="#catalogo"
+                onClick={(e) => handleSeleccionMenu(e, cat.id)}
+                aria-current={estaActiva ? 'true' : undefined}
+                className={[
+                  cat.modoVisualSobrio ? 'enlace-condolencias' : '',
+                  estaActiva ? 'enlace-categoria-activo' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
+                {cat.modoVisualSobrio && <Feather size={14} />}
+                <span>{etiquetaMenu}</span>
+              </a>
+            );
+          })}
         </nav>
 
         <div className="acciones-usuario-cabecera">

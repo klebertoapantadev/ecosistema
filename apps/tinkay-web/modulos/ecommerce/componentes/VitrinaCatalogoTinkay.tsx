@@ -3,158 +3,50 @@
 import React, { useState, useMemo } from 'react';
 import { useCarrito } from '../contexto-carrito';
 import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from '../datos-catalogo';
-import { ProductoEcommerce } from '../tipos';
+import {
+  expandirProductosVitrina,
+  obtenerCategoriasVisibles,
+  obtenerNombreProductoIndividual,
+  obtenerPvpProducto,
+  productoCoincideConBusqueda,
+  productoCoincideConCategoria,
+  productoTieneOferta,
+} from '../filtrado-catalogo';
 import { TarjetaProductoConCarrusel } from './TarjetaProductoConCarrusel';
 import { Search, SlidersHorizontal, Feather, Sparkles, ArrowUpDown } from 'lucide-react';
 
-export const obtenerPvpProducto = (p: ProductoEcommerce): number => {
-  const varCorresp =
-    (p.varianteInicialSku
-      ? p.variantes.find((v) => v.sku === p.varianteInicialSku)
-      : null) ?? p.variantes[0];
-  return varCorresp?.pvp ?? 0;
-};
-
-export const productoTieneOferta = (p: ProductoEcommerce): boolean => {
-  const varCorresp =
-    (p.varianteInicialSku
-      ? p.variantes.find((v) => v.sku === p.varianteInicialSku)
-      : null) ?? p.variantes[0];
-  return Boolean(
-    varCorresp &&
-    varCorresp.precioComparacion &&
-    varCorresp.precioComparacion > varCorresp.pvp
-  );
-};
-
-function productoCoincideConCategoria(
-  p: ProductoEcommerce,
-  catId: string
-): boolean {
-  if (p.esExtra || p.esComplemento) return false;
-  if (p.categoriaPrincipal?.toLowerCase().includes('extra')) return false;
-  if (p.categoriaNombre?.toLowerCase().includes('extra')) return false;
-
-  if (catId === 'cat-todos') return true;
-
-  const coincidePrincipal = p.categoriaPrincipal === catId;
-  const coincideSecundaria = p.categoriasSecundarias?.includes(catId);
-
-  const catLower = catId.toLowerCase();
-  let coincideUso = false;
-  if (catLower.includes('aniv')) {
-    coincideUso = (p.usos || []).some((u) => u.includes('aniv')) || Boolean(p.categoriasSecundarias?.includes('cat-ocas-aniv'));
-  } else if (catLower.includes('amor')) {
-    coincideUso = (p.usos || []).some((u) => u.includes('amor') || u.includes('romance') || u.includes('pedida')) || Boolean(p.categoriasSecundarias?.includes('cat-ocas-amor'));
-  } else if (catLower.includes('cumple')) {
-    coincideUso = (p.usos || []).some((u) => u.includes('cumple') || u.includes('festejo')) || Boolean(p.categoriasSecundarias?.includes('cat-ocas-cumple'));
-  } else if (catLower.includes('condol')) {
-    coincideUso = Boolean(p.esCondolencias) || (p.usos || []).some((u) => u.includes('condol') || u.includes('duelo')) || Boolean(p.categoriasSecundarias?.includes('cat-ocas-condol'));
-  } else {
-    coincideUso = (p.usos || []).some((u) => u === catLower || u.includes(catLower));
-  }
-
-  return coincidePrincipal || Boolean(coincideSecundaria) || coincideUso;
-}
-
-export function obtenerNombreProductoIndividual(
-  nombreProducto: string,
-  nombreVariante: string
-): string {
-  const vNorm = (nombreVariante || '').trim();
-  const pNorm = (nombreProducto || '').trim();
-  const vLower = vNorm.toLowerCase();
-  const pLower = pNorm.toLowerCase();
-
-  if (!vNorm) return pNorm;
-  if (!pNorm) return vNorm;
-
-  // Si la variante ya incluye el nombre del producto o términos representativos completos
-  if (
-    vLower.includes(pLower) ||
-    vLower.startsWith('box') ||
-    vLower.startsWith('mix floral') ||
-    vLower.startsWith('pedestal') ||
-    vLower.startsWith('abanico')
-  ) {
-    return vNorm;
-  }
-
-  return `${pNorm} — ${vNorm}`;
-}
+export { obtenerNombreProductoIndividual, obtenerPvpProducto, productoTieneOferta };
 
 export function VitrinaCatalogoTinkay() {
-  const { productos, categorias } = useCarrito();
+  const {
+    productos,
+    categorias,
+    categoriaActiva,
+    setCategoriaActiva,
+    terminoBusqueda,
+    setTerminoBusqueda,
+  } = useCarrito();
+
   const catalogoProductos = productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY;
   const catalogoCategorias = categorias && categorias.length > 0 ? categorias : CATEGORIAS_TINKAY;
 
-  const [categoriaActiva, setCategoriaActiva] = useState<string>('cat-todos');
-  const [terminoBusqueda, setTerminoBusqueda] = useState<string>('');
   const [filtroPresupuesto, setFiltroPresupuesto] = useState<string>('todos');
-  const [criterioOrden, setCriterioOrden] = useState<'precio-desc' | 'precio-asc' | 'destacados' | 'nombre-asc'>('precio-desc');
+  const [criterioOrden, setCriterioOrden] = useState<
+    'precio-desc' | 'precio-asc' | 'destacados' | 'nombre-asc'
+  >('precio-desc');
   const [soloOfertas, setSoloOfertas] = useState<boolean>(false);
 
-  const esModoCondolencias = categoriaActiva === 'cat-ocas-condol';
-
   // 1. Expandir todas las variaciones como productos individuales (excepto categoría Extras)
-  const productosBaseDesplegados = useMemo(() => {
-    return catalogoProductos.flatMap((p) => {
-      // Ocultar estrictamente productos de la categoría "Extras" del catálogo principal
-      if (p.esExtra || p.esComplemento) return [];
-      if (p.categoriaPrincipal?.toLowerCase().includes('extra')) return [];
-      if (p.categoriaNombre?.toLowerCase().includes('extra')) return [];
-
-      // Si el producto tiene múltiples variaciones, se despliega cada una como un producto individual
-      if (p.variantes && p.variantes.length > 1) {
-        return p.variantes.map((v) => {
-          // Para la tarjeta y modal individual: mostrar estrictamente las fotografías configuradas en esta variación
-          const fotosTarjetaIndividual =
-            v.fotos && v.fotos.length > 0
-              ? v.fotos
-              : v.foto
-              ? [v.foto]
-              : p.fotos;
-          const nombreIndividual = obtenerNombreProductoIndividual(p.nombre, v.nombre);
-
-          const productoIndividual: ProductoEcommerce = {
-            ...p,
-            id: `${p.id}__${v.sku}`,
-            slug: `${p.slug}-${v.sku.toLowerCase()}`,
-            nombre: nombreIndividual,
-            nombreBase: p.nombre,
-            descripcionCorta: v.detalle || p.descripcionCorta,
-            fotos: fotosTarjetaIndividual,
-            fotosModal: fotosTarjetaIndividual,
-            variantes: p.variantes,
-            varianteInicialSku: v.sku,
-            destacado: p.destacado,
-          };
-          return productoIndividual;
-        });
-      }
-
-      return [p];
-    });
-  }, [catalogoProductos]);
+  const productosBaseDesplegados = useMemo(
+    () => expandirProductosVitrina(catalogoProductos),
+    [catalogoProductos]
+  );
 
   // 2. Categorías visibles: ocultar extras Y ocultar estrictamente grupos/categorías sin productos
-  const categoriasVisibles = useMemo(() => {
-    const candidatas = catalogoCategorias.filter((cat) => {
-      const nombreLower = (cat.nombre || '').toLowerCase();
-      const slugLower = (cat.slug || '').toLowerCase();
-      return (
-        !nombreLower.includes('extra') &&
-        !slugLower.includes('extra') &&
-        cat.tipo !== 'COMPLEMENTO'
-      );
-    });
-
-    // Descartar grupos o categorías sin productos activos disponibles
-    return candidatas.filter((cat) => {
-      if (cat.id === 'cat-todos') return true;
-      return productosBaseDesplegados.some((p) => productoCoincideConCategoria(p, cat.id));
-    });
-  }, [catalogoCategorias, productosBaseDesplegados]);
+  const categoriasVisibles = useMemo(
+    () => obtenerCategoriasVisibles(catalogoCategorias, productosBaseDesplegados),
+    [catalogoCategorias, productosBaseDesplegados]
+  );
 
   // Si la categoría activa quedó sin productos o se ocultó, regresar a 'cat-todos'
   React.useEffect(() => {
@@ -165,36 +57,66 @@ export function VitrinaCatalogoTinkay() {
     ) {
       setCategoriaActiva('cat-todos');
     }
-  }, [categoriasVisibles, categoriaActiva]);
+  }, [categoriasVisibles, categoriaActiva, setCategoriaActiva]);
 
   // Conteo reactivo de cuántos productos tienen oferta activa
   const totalOfertasDisponibles = useMemo(() => {
     return productosBaseDesplegados.filter((p) => productoTieneOferta(p)).length;
   }, [productosBaseDesplegados]);
 
-  // 3. Filtrado reactivo de productos por categoría, búsqueda, presupuesto y ofertas
+  const handleCambioBusqueda = (nuevoValor: string) => {
+    setTerminoBusqueda(nuevoValor);
+    const limpio = nuevoValor.trim();
+    if (limpio && categoriaActiva !== 'cat-todos') {
+      const hayEnCategoriaActual = productosBaseDesplegados.some(
+        (p) =>
+          productoCoincideConCategoria(p, categoriaActiva, catalogoCategorias) &&
+          productoCoincideConBusqueda(p, limpio, catalogoCategorias)
+      );
+      if (!hayEnCategoriaActual) {
+        const hayEnTodoCatalogo = productosBaseDesplegados.some((p) =>
+          productoCoincideConBusqueda(p, limpio, catalogoCategorias)
+        );
+        if (hayEnTodoCatalogo) {
+          setCategoriaActiva('cat-todos');
+        }
+      }
+    }
+  };
+
+  const handleSeleccionarCategoria = (catId: string) => {
+    setCategoriaActiva(catId);
+    if (catId !== 'cat-todos' && terminoBusqueda.trim()) {
+      const hayConBusqueda = productosBaseDesplegados.some(
+        (p) =>
+          productoCoincideConCategoria(p, catId, catalogoCategorias) &&
+          productoCoincideConBusqueda(p, terminoBusqueda, catalogoCategorias)
+      );
+      if (!hayConBusqueda) {
+        setTerminoBusqueda('');
+      }
+    }
+  };
+
+  // 3. Filtrado reactivo por categoría, búsqueda multidimensional (usos, nombres, categorías, detalles), presupuesto y ofertas
   const productosFiltrados = useMemo(() => {
     return productosBaseDesplegados.filter((p) => {
-      // Filtro de solo ofertas
       if (soloOfertas && !productoTieneOferta(p)) {
         return false;
       }
 
-      // Filtro de categoría y ocasión
       if (categoriaActiva !== 'cat-todos') {
-        if (!productoCoincideConCategoria(p, categoriaActiva)) return false;
+        if (!productoCoincideConCategoria(p, categoriaActiva, catalogoCategorias)) {
+          return false;
+        }
       }
 
-      // Filtro de búsqueda por texto
       if (terminoBusqueda.trim()) {
-        const query = terminoBusqueda.toLowerCase().trim();
-        const coincideNombre = p.nombre.toLowerCase().includes(query);
-        const coincideDesc = p.descripcionCorta.toLowerCase().includes(query);
-        const coincideEtiqueta = p.etiquetas.some((e) => e.toLowerCase().includes(query));
-        if (!coincideNombre && !coincideDesc && !coincideEtiqueta) return false;
+        if (!productoCoincideConBusqueda(p, terminoBusqueda, catalogoCategorias)) {
+          return false;
+        }
       }
 
-      // Filtro de presupuesto individual
       if (filtroPresupuesto !== 'todos') {
         const pvp = obtenerPvpProducto(p);
         if (filtroPresupuesto === 'menor-30' && pvp > 30) return false;
@@ -205,9 +127,16 @@ export function VitrinaCatalogoTinkay() {
 
       return true;
     });
-  }, [categoriaActiva, terminoBusqueda, filtroPresupuesto, soloOfertas, productosBaseDesplegados]);
+  }, [
+    categoriaActiva,
+    terminoBusqueda,
+    filtroPresupuesto,
+    soloOfertas,
+    productosBaseDesplegados,
+    catalogoCategorias,
+  ]);
 
-  // 4. Ordenamiento reactivo (por defecto de mayor a menor precio, más costoso primero)
+  // 4. Ordenamiento reactivo (por defecto de mayor a menor precio)
   const productosFinales = useMemo(() => {
     const lista = [...productosFiltrados];
     switch (criterioOrden) {
@@ -224,8 +153,19 @@ export function VitrinaCatalogoTinkay() {
     }
   }, [productosFiltrados, criterioOrden]);
 
+  const categoriaActivaObj = categoriasVisibles.find((c) => c.id === categoriaActiva);
+  const esModoCondolencias =
+    Boolean(categoriaActivaObj?.modoVisualSobrio) ||
+    categoriaActiva === 'cat-ocas-condol' ||
+    (Boolean(terminoBusqueda.trim()) &&
+      productosFinales.length > 0 &&
+      productosFinales.every((p) => p.esCondolencias));
+
   return (
-    <section className={`seccion-vitrina-catalogo ${esModoCondolencias ? 'vitrina-modo-condolencias' : ''}`} id="catalogo">
+    <section
+      className={`seccion-vitrina-catalogo ${esModoCondolencias ? 'vitrina-modo-condolencias' : ''}`}
+      id="catalogo"
+    >
       <div className="contenedor-maximo">
         {/* Cabecera de la vitrina */}
         <div className="cabecera-vitrina">
@@ -246,12 +186,18 @@ export function VitrinaCatalogoTinkay() {
             <h2 className="titulo-seccion-vitrina">
               {esModoCondolencias
                 ? 'Arreglos de Condolencias & Respeto'
+                : categoriaActivaObj && categoriaActiva !== 'cat-todos'
+                ? categoriaActivaObj.nombre
                 : 'Flores con Historia, Para Cada Momento'}
             </h2>
             <p className="subtitulo-seccion-vitrina">
               {esModoCondolencias
                 ? 'Composiciones solemnes en blanco y follajes andinos para acompañar en los momentos más difíciles con entrega puntual en velaciones e iglesias.'
-                : 'Explora nuestros bouquets coreanos, ramos para florero y complementos gourmet preparados con rosas frescas de exportación.'}
+                : categoriaActivaObj &&
+                  categoriaActiva !== 'cat-todos' &&
+                  categoriaActivaObj.descripcion
+                ? categoriaActivaObj.descripcion
+                : 'Explora nuestros bouquets coreanos, box florales, ramos para florero y arreglos de eventos preparados con rosas frescas de exportación.'}
             </p>
           </div>
 
@@ -261,16 +207,19 @@ export function VitrinaCatalogoTinkay() {
               <Search size={18} className="icono-busqueda" />
               <input
                 type="text"
-                placeholder="Buscar por flores, estilo, ocasión (ej. rosas rojas, coreano)..."
+                placeholder="Buscar por nombre, uso, categoría, flores u ocasión (ej. condolencias, cumpleaños, orquídea)..."
                 value={terminoBusqueda}
-                onChange={(e) => setTerminoBusqueda(e.target.value)}
+                onChange={(e) => handleCambioBusqueda(e.target.value)}
                 className="input-busqueda-catalogo"
+                aria-label="Buscar productos por nombre, categoría, uso o características"
               />
               {terminoBusqueda && (
                 <button
                   type="button"
                   onClick={() => setTerminoBusqueda('')}
                   className="btn-limpiar-busqueda"
+                  title="Limpiar búsqueda"
+                  aria-label="Limpiar búsqueda"
                 >
                   ×
                 </button>
@@ -315,7 +264,11 @@ export function VitrinaCatalogoTinkay() {
               type="button"
               className={`btn-filtro-ofertas ${soloOfertas ? 'activo' : ''}`}
               onClick={() => setSoloOfertas(!soloOfertas)}
-              title={soloOfertas ? 'Mostrar todo el catálogo' : 'Filtrar únicamente productos con oferta o descuento'}
+              title={
+                soloOfertas
+                  ? 'Mostrar todo el catálogo'
+                  : 'Filtrar únicamente productos con oferta o descuento'
+              }
               aria-pressed={soloOfertas}
             >
               <span>🔥 Solo Ofertas</span>
@@ -335,7 +288,7 @@ export function VitrinaCatalogoTinkay() {
                 key={cat.id}
                 type="button"
                 className={`pill-categoria ${estaActiva ? 'pill-activa' : ''} ${cat.modoVisualSobrio ? 'pill-condolencias' : ''}`}
-                onClick={() => setCategoriaActiva(cat.id)}
+                onClick={() => handleSeleccionarCategoria(cat.id)}
               >
                 {cat.modoVisualSobrio && <Feather size={14} className="icono-pill" />}
                 <span>{cat.nombre}</span>
@@ -368,7 +321,7 @@ export function VitrinaCatalogoTinkay() {
               <TarjetaProductoConCarrusel
                 key={producto.id}
                 producto={producto}
-                modoSobrio={esModoCondolencias}
+                modoSobrio={esModoCondolencias || Boolean(producto.esCondolencias)}
               />
             ))}
           </div>

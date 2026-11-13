@@ -1,5 +1,6 @@
 import { ProductoEcommerce, CategoriaEcommerce, VarianteEcommerce } from './tipos';
 import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from './datos-catalogo';
+import { normalizarTextoEcommerce } from './filtrado-catalogo';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://oaybbpdxhlxjbpwnoymy.supabase.co';
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_vC-t-FcOQ2Q5_XkTCcPKdQ_bveIh5YS';
@@ -18,11 +19,14 @@ interface SupabaseVarianteRaw {
     portada_url?: string;
     album_url?: string;
     galeria_urls?: string[];
-    beneficios_custom?: string[];
+    beneficios_custom?: string[] | string;
     detalle?: string;
     modalidad_pago?: string;
     receta_bom?: string;
     tallos?: number;
+    usos?: string[];
+    ocasiones?: string[];
+    usos_modo?: 'heredar' | 'personalizado';
   };
 }
 
@@ -40,9 +44,18 @@ interface SupabaseProductoRaw {
     galeria_urls?: string[];
     descripcion_corta?: string;
     beneficios?: string[] | string;
+    requisitos?: string[] | string;
     etiquetas?: string[];
+    etiqueta_temporada?: string;
     ocasion_recomendada?: string;
-    usos?: string[];
+    usos?: string[] | string;
+    ocasiones?: string[] | string;
+    es_complemento?: boolean;
+    canales_visibilidad?: string[];
+    vigencia_tipo?: 'SIEMPRE' | 'RANGO_FECHAS' | 'ESTACIONAL_ANUAL';
+    fecha_inicio?: string;
+    fecha_fin?: string;
+    tarifa_iva_predeterminada?: number;
     logistica?: {
       delivery_incluido?: boolean;
       modalidad_transporte?: string;
@@ -59,16 +72,125 @@ interface SupabaseCategoriaRaw {
   ctg_slug?: string;
   ctg_nombre: string;
   ctg_descripcion?: string;
+  ctg_orden?: number;
+  ctg_activo?: boolean;
+  ctg_eliminado_en?: string | null;
   ctg_tipo?: 'FORMATO' | 'COLECCION' | 'OCASION' | 'COMPLEMENTO' | 'EVENTO';
   ctg_detalle_categoria?: {
     icono?: string;
     modo_visual_sobrio?: boolean;
+    palabras_clave?: string[];
   };
 }
 
+function productoEstaVigenteEnFecha(
+  detalle?: SupabaseProductoRaw['pro_detalle_producto'],
+  proActivo = true,
+  fechaRef = new Date()
+): boolean {
+  if (proActivo === false) return false;
+  const tipo = detalle?.vigencia_tipo || 'SIEMPRE';
+  if (tipo === 'SIEMPRE') return true;
+
+  const inicio = detalle?.fecha_inicio?.trim();
+  const fin = detalle?.fecha_fin?.trim();
+  if (!inicio || !fin) return true;
+
+  if (tipo === 'RANGO_FECHAS') {
+    const hoyYMD = fechaRef.toISOString().split('T')[0] ?? '';
+    return Boolean(hoyYMD && hoyYMD >= inicio && hoyYMD <= fin);
+  }
+
+  if (tipo === 'ESTACIONAL_ANUAL') {
+    const aMD = (val: string) => {
+      const partes = val.split('-');
+      return partes.length === 3 ? `${partes[1]}-${partes[2]}` : val;
+    };
+    const inicioMD = aMD(inicio);
+    const finMD = aMD(fin);
+    const mes = String(fechaRef.getMonth() + 1).padStart(2, '0');
+    const dia = String(fechaRef.getDate()).padStart(2, '0');
+    const hoyMD = `${mes}-${dia}`;
+    return inicioMD <= finMD
+      ? hoyMD >= inicioMD && hoyMD <= finMD
+      : hoyMD >= inicioMD || hoyMD <= finMD;
+  }
+
+  return true;
+}
+
+function productoTieneFotografiaConfigurada(p: SupabaseProductoRaw): boolean {
+  const det = p.pro_detalle_producto || {};
+  if (typeof det.imagen_url === 'string' && det.imagen_url.trim().length > 0) return true;
+  if (
+    Array.isArray(det.galeria_urls) &&
+    det.galeria_urls.some((u) => typeof u === 'string' && u.trim().length > 0)
+  ) {
+    return true;
+  }
+  const vars = Array.isArray(p.com_variante) ? p.com_variante : [];
+  return vars.some((v) => {
+    if (v.var_activo === false) return false;
+    const vdet = v.var_detalle_variante || {};
+    if (typeof vdet.portada_url === 'string' && vdet.portada_url.trim().length > 0) return true;
+    return (
+      Array.isArray(vdet.galeria_urls) &&
+      vdet.galeria_urls.some((u) => typeof u === 'string' && u.trim().length > 0)
+    );
+  });
+}
+
+function formatearOcasionRecomendada(
+  ocasionRaw: string | undefined,
+  esCondol: boolean,
+  usos: string[],
+  catNombre: string
+): string | undefined {
+  if (esCondol) return 'Condolencias y Homenajes Solemnes';
+
+  if (typeof ocasionRaw === 'string' && ocasionRaw.trim()) {
+    const limpia = ocasionRaw.trim();
+    const upper = limpia.toUpperCase();
+    if (upper === 'CAT_OCAS_CONDOL') return 'Condolencias y Homenajes Solemnes';
+    if (upper === 'CAT_OCAS_AMOR') return 'Amor, Romance y Pedida de Mano';
+    if (upper === 'CAT_OCAS_ANIV') return 'Aniversario y Fechas Especiales';
+    if (upper === 'CAT_OCAS_CUMPLE') return 'Cumpleaños y Celebraciones';
+    if (!upper.startsWith('CAT_')) return limpia;
+  }
+
+  if (usos.length > 0) {
+    const etiquetasLegibles: string[] = [];
+    const usosNorm = usos.map((u) => normalizarTextoEcommerce(u)).join(' ');
+    if (usosNorm.includes('amor') || usosNorm.includes('romance')) etiquetasLegibles.push('Amor y Romance');
+    if (usosNorm.includes('pedida')) etiquetasLegibles.push('Pedida de Mano');
+    if (usosNorm.includes('aniversario')) etiquetasLegibles.push('Aniversario');
+    if (usosNorm.includes('cumple')) etiquetasLegibles.push('Cumpleaños');
+    if (usosNorm.includes('agradecimiento')) etiquetasLegibles.push('Agradecimiento');
+    if (usosNorm.includes('graduacion')) etiquetasLegibles.push('Graduación');
+    if (usosNorm.includes('corporativo')) etiquetasLegibles.push('Corporativo y Eventos');
+    if (usosNorm.includes('nacimiento')) etiquetasLegibles.push('Nacimiento');
+    if (usosNorm.includes('madre') || usosNorm.includes('mujer')) etiquetasLegibles.push('Día de la Madre y Mujer');
+    if (usosNorm.includes('recuperate')) etiquetasLegibles.push('Recupérate Pronto');
+    if (usosNorm.includes('sorpresa')) etiquetasLegibles.push('Sorpresa y Detalle');
+    if (etiquetasLegibles.length > 0) return etiquetasLegibles.join(', ');
+  }
+
+  return catNombre || undefined;
+}
+
+function prioridadVisualCategoria(c: SupabaseCategoriaRaw): number {
+  const slug = (c.ctg_slug || '').toLowerCase();
+  if (slug === 'box-florales') return 1;
+  if (slug === 'cat-coreanos') return 2;
+  if (slug === 'cat-floreros') return 3;
+  if (slug.includes('evento')) return 4;
+  if (c.ctg_detalle_categoria?.modo_visual_sobrio || slug.includes('condol')) return 90;
+  return 50;
+}
+
 /**
- * Carga en tiempo real los productos y variantes configurados en Supabase (public.com_producto y public.com_variante)
- * para el negocio 'tinkay', reflejando de inmediato cualquier cambio de precio, foto o variante realizado en el panel.
+ * Carga en tiempo real los productos, categorías y variantes configurados en Supabase
+ * (`com_producto`, `com_variante`, `com_categoria`) para el negocio `tinkay`.
  */
 export async function cargarCatalogoDinamicoTinkay(): Promise<{
   productos: ProductoEcommerce[];
@@ -97,35 +219,89 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
     }
 
     const prodsDb: SupabaseProductoRaw[] = await resProds.json();
-    const catsDb: SupabaseCategoriaRaw[] = resCats.ok ? await resCats.json() : [];
+    const catsDbRaw: SupabaseCategoriaRaw[] = resCats.ok ? await resCats.json() : [];
+    const catsDb = Array.isArray(catsDbRaw)
+      ? catsDbRaw.filter((c) => c.ctg_activo !== false && !c.ctg_eliminado_en)
+      : [];
 
     if (!Array.isArray(prodsDb) || prodsDb.length === 0) {
       return { productos: PRODUCTOS_TINKAY, categorias: CATEGORIAS_TINKAY };
     }
 
-    // Mapeo de Categorías
-    const categorias: CategoriaEcommerce[] = [...CATEGORIAS_TINKAY];
-    if (Array.isArray(catsDb) && catsDb.length > 0) {
-      catsDb.forEach((c) => {
-        if (!categorias.some((cat) => cat.id === c.ctg_slug || cat.id === c.ctg_id)) {
+    // 1. Mapeo de Categorías fiel a Supabase (com_categoria)
+    const categoriaTodos: CategoriaEcommerce = CATEGORIAS_TINKAY[0] ?? {
+      id: 'cat-todos',
+      slug: 'todos',
+      nombre: 'Todo el Catálogo',
+      descripcion: 'Colección floral completa de exportación y detalles para regalar.',
+      tipo: 'COLECCION',
+      icono: 'Sparkles',
+      orden: 0,
+    };
+
+    let categorias: CategoriaEcommerce[];
+    if (catsDb.length > 0) {
+      const ordenadas = [...catsDb].sort((a, b) => {
+        const prioSobrioA = a.ctg_detalle_categoria?.modo_visual_sobrio ? 1 : 0;
+        const prioSobrioB = b.ctg_detalle_categoria?.modo_visual_sobrio ? 1 : 0;
+        if (prioSobrioA !== prioSobrioB) return prioSobrioA - prioSobrioB;
+
+        const ordA = a.ctg_orden ?? 99;
+        const ordB = b.ctg_orden ?? 99;
+        if (ordA !== ordB) return ordA - ordB;
+
+        return prioridadVisualCategoria(a) - prioridadVisualCategoria(b);
+      });
+
+      categorias = [categoriaTodos];
+      ordenadas.forEach((c) => {
+        const slugCat = c.ctg_slug || c.ctg_id;
+        if (!categorias.some((cat) => cat.id === slugCat || cat.slug === slugCat)) {
+          const esSobrio =
+            c.ctg_detalle_categoria?.modo_visual_sobrio === true ||
+            normalizarTextoEcommerce(c.ctg_nombre).includes('condol') ||
+            normalizarTextoEcommerce(slugCat).includes('condol');
+
           categorias.push({
-            id: c.ctg_slug || c.ctg_id,
-            slug: c.ctg_slug || c.ctg_id,
+            id: slugCat,
+            slug: slugCat,
             nombre: c.ctg_nombre,
             descripcion: c.ctg_descripcion || '',
             tipo: c.ctg_tipo || 'COLECCION',
             icono: c.ctg_detalle_categoria?.icono || undefined,
-            modoVisualSobrio: c.ctg_detalle_categoria?.modo_visual_sobrio === true,
+            modoVisualSobrio: esSobrio,
+            orden: c.ctg_orden ?? 99,
+            palabrasClave: Array.isArray(c.ctg_detalle_categoria?.palabras_clave)
+              ? c.ctg_detalle_categoria.palabras_clave
+              : undefined,
           });
         }
       });
+    } else {
+      categorias = [...CATEGORIAS_TINKAY];
     }
 
-    // Mapeo de Productos
+    // 2. Mapeo de Productos activos y vigentes
     const productos: ProductoEcommerce[] = prodsDb
-      .filter((p) => p.pro_tipo !== 'SERVICIO' && p.pro_slug !== 'combo-aniversario-especial')
+      .filter((p) => {
+        if (p.pro_activo === false) return false;
+        if (p.pro_slug === 'combo-aniversario-especial') return false;
+        if (!productoEstaVigenteEnFecha(p.pro_detalle_producto, p.pro_activo)) return false;
+
+        // Permitir productos tipo SERVICIO únicamente si están publicados para E-Commerce Web o tienen fotos reales
+        // (ej. Backing Floral en Eventos y Ceremonias), excluyendo recargos internos sin imagen.
+        if (p.pro_tipo === 'SERVICIO') {
+          const canales = p.pro_detalle_producto?.canales_visibilidad || [];
+          const visibleEnWeb = canales.includes('ECOMMERCE_WEB');
+          return visibleEnWeb || productoTieneFotografiaConfigurada(p);
+        }
+
+        return true;
+      })
       .map((p) => {
-        const fallbackMatch = PRODUCTOS_TINKAY.find((orig) => orig.slug === p.pro_slug || orig.id === p.pro_slug);
+        const fallbackMatch = PRODUCTOS_TINKAY.find(
+          (orig) => orig.slug === p.pro_slug || orig.id === p.pro_slug
+        );
         const detalle = p.pro_detalle_producto || {};
         const varsRaw: SupabaseVarianteRaw[] = Array.isArray(p.com_variante) ? p.com_variante : [];
         const varsActivas = varsRaw
@@ -138,7 +314,6 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
 
         // Fotografías globales configuradas en la ficha maestra del producto
         const fotosMaster: string[] = [];
-        const galeriaMasterExplicita: string[] = [];
         if (typeof detalle.imagen_url === 'string' && detalle.imagen_url.trim()) {
           fotosMaster.push(detalle.imagen_url.trim());
         }
@@ -147,15 +322,15 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
             if (typeof f === 'string' && f.trim()) {
               const limpia = f.trim();
               if (!fotosMaster.includes(limpia)) fotosMaster.push(limpia);
-              if (!galeriaMasterExplicita.includes(limpia)) galeriaMasterExplicita.push(limpia);
             }
           });
         }
 
+        const tarifaPredeterminada = Number(detalle.tarifa_iva_predeterminada ?? 0);
+
         const variantes: VarianteEcommerce[] = varsActivas.map((v) => {
-          const tarifaIva = Number(v.var_tarifa_iva_porcentaje ?? 0);
+          const tarifaIva = Number(v.var_tarifa_iva_porcentaje ?? tarifaPredeterminada ?? 0);
           const base = Number(v.var_precio ?? 0);
-          // El PVP es la base más el IVA correspondiente
           const pvp = tarifaIva > 0 ? Number((base * (1 + tarifaIva / 100)).toFixed(2)) : base;
           const compRaw = v.var_precio_comparacion
             ? Number(v.var_precio_comparacion)
@@ -164,7 +339,6 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
             : undefined;
           const precioComparacion = compRaw && compRaw > pvp ? compRaw : undefined;
 
-          // Construir la galería completa de esta variante igual que en ModalEditarProducto
           const fotosPropias: string[] = [];
           const portadaVar =
             typeof v.var_detalle_variante?.portada_url === 'string'
@@ -181,8 +355,6 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
             });
           }
 
-          // Si la variante tiene sus propias fotos configuradas, usar estrictamente sus fotos propias.
-          // Solo si no tiene fotos propias, hereda la galería/portada de la ficha maestra como fallback.
           let fotosVarianteFinal: string[] = [];
           if (fotosPropias.length > 0) {
             fotosVarianteFinal = [...fotosPropias];
@@ -190,7 +362,6 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
             fotosVarianteFinal = [...fotosMaster];
           }
 
-          // Si el producto tiene una sola variante (producto simple), asegurar que incluya todas las fotos del producto
           if (varsActivas.length === 1) {
             fotosMaster.forEach((fm) => {
               if (!fotosVarianteFinal.includes(fm)) fotosVarianteFinal.push(fm);
@@ -200,11 +371,18 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
           const beneficiosVarRaw = Array.isArray(v.var_detalle_variante?.beneficios_custom)
             ? v.var_detalle_variante.beneficios_custom
             : typeof v.var_detalle_variante?.beneficios_custom === 'string'
-            ? (v.var_detalle_variante.beneficios_custom as string).split('\n')
+            ? v.var_detalle_variante.beneficios_custom.split('\n')
             : [];
           const beneficiosVar = beneficiosVarRaw
-            .map((b: any) => String(b).trim())
+            .map((b: unknown) => String(b).trim())
             .filter((b: string) => b.length > 0);
+
+          const usosVarRaw = [
+            ...(Array.isArray(v.var_detalle_variante?.usos) ? v.var_detalle_variante.usos : []),
+            ...(Array.isArray(v.var_detalle_variante?.ocasiones) ? v.var_detalle_variante.ocasiones : []),
+          ]
+            .map((u: unknown) => String(u).trim())
+            .filter((u: string) => u.length > 0);
 
           return {
             sku: v.var_sku || `VAR-${v.var_id.slice(0, 6)}`,
@@ -216,12 +394,14 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
             foto: fotosVarianteFinal[0],
             fotos: fotosVarianteFinal,
             detalle:
-              v.var_detalle_variante?.beneficios_custom?.[0] ||
+              beneficiosVar[0] ||
               v.var_detalle_variante?.detalle ||
               undefined,
             beneficiosCustom: beneficiosVar.length > 0 ? beneficiosVar : undefined,
             recetaBom: v.var_detalle_variante?.receta_bom || undefined,
             unidadesFlores: v.var_detalle_variante?.tallos || undefined,
+            usos: usosVarRaw.length > 0 ? usosVarRaw : undefined,
+            usosModo: v.var_detalle_variante?.usos_modo || 'heredar',
           };
         });
 
@@ -239,27 +419,46 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
           if (f && !fotos.includes(f)) fotos.push(f);
         });
 
-        // Fallback fotográfico de seguridad
         if (fotos.length === 0 && fallbackMatch && fallbackMatch.fotos.length > 0) {
           fotos.push(...fallbackMatch.fotos);
         }
 
         // Buscar categoría en catsDb por UUID o slug
         const catEncontrada = catsDb.find(
-          (c) => c.ctg_id === p.pro_categoria_principal_id || c.ctg_slug === p.pro_categoria_principal_id
+          (c) =>
+            c.ctg_id === p.pro_categoria_principal_id ||
+            c.ctg_slug === p.pro_categoria_principal_id
         );
         const catNombre = catEncontrada?.ctg_nombre || '';
         const catSlug = catEncontrada?.ctg_slug || '';
         const catTipo = catEncontrada?.ctg_tipo;
+        const palabrasClaveCat = Array.isArray(catEncontrada?.ctg_detalle_categoria?.palabras_clave)
+          ? catEncontrada.ctg_detalle_categoria.palabras_clave
+          : undefined;
 
-        const usosRaw = Array.isArray(detalle.usos)
-          ? detalle.usos
-          : typeof detalle.usos === 'string'
-          ? [detalle.usos]
-          : [];
-        let usos: string[] = usosRaw.map((u: any) => String(u).trim().toLowerCase());
+        const usosRaw = [
+          ...(Array.isArray(detalle.usos)
+            ? detalle.usos
+            : typeof detalle.usos === 'string'
+            ? [detalle.usos]
+            : []),
+          ...(Array.isArray(detalle.ocasiones)
+            ? detalle.ocasiones
+            : typeof detalle.ocasiones === 'string'
+            ? [detalle.ocasiones]
+            : []),
+        ];
+        const usos: string[] = Array.from(
+          new Set(
+            usosRaw
+              .map((u: unknown) => String(u).trim())
+              .filter((u: string) => u.length > 0)
+          )
+        );
+        const usosNormTexto = usos.map((u) => normalizarTextoEcommerce(u)).join(' ');
 
         const esExtra =
+          detalle.es_complemento === true ||
           catNombre.toLowerCase().includes('extra') ||
           catSlug.toLowerCase().includes('extra') ||
           catTipo === 'COMPLEMENTO' ||
@@ -272,44 +471,29 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
           p.pro_slug?.includes('cinta');
 
         const esCondol =
+          catEncontrada?.ctg_detalle_categoria?.modo_visual_sobrio === true ||
           catNombre.toLowerCase().includes('condol') ||
           catSlug.toLowerCase().includes('condol') ||
           p.pro_slug?.includes('abanico') ||
           p.pro_slug?.includes('pedestal') ||
-          detalle.ocasion_recomendada?.toUpperCase().includes('CONDOL') ||
-          usos.some((u: string) => u.includes('condol') || u.includes('duelo') || u.includes('pesame'));
-
-        // Si no es extra ni condolencias y no tiene usos explícitos, asignar usos florales versátiles por defecto
-        if (usos.length === 0 && !esExtra && !esCondol) {
-          usos = ['amor_romance', 'aniversario', 'cumpleanos'];
-        }
-
-        const tieneUso = (palabra: string) =>
-          usos.some((u: string) => u.includes(palabra)) ||
-          (typeof detalle.ocasion_recomendada === 'string' && detalle.ocasion_recomendada.toLowerCase().includes(palabra)) ||
-          (Array.isArray(detalle.etiquetas) && detalle.etiquetas.some((e: any) => String(e).toLowerCase().includes(palabra)));
+          p.pro_slug?.includes('corona') ||
+          (detalle.ocasion_recomendada || '').toUpperCase().includes('CONDOL') ||
+          usosNormTexto.includes('condol') ||
+          usosNormTexto.includes('duelo') ||
+          usosNormTexto.includes('pesame');
 
         const catsSecundarias: string[] = [];
-        if (esCondol || tieneUso('condol') || tieneUso('duelo') || tieneUso('pesame')) {
+        if (esCondol && catSlug !== 'cat-ocas-condol') {
           catsSecundarias.push('cat-ocas-condol');
-        }
-        if (tieneUso('amor') || tieneUso('romance') || tieneUso('pedida') || p.pro_slug?.includes('san-valentin') || p.pro_slug?.includes('amor')) {
-          catsSecundarias.push('cat-ocas-amor');
-        }
-        if (tieneUso('aniv') || p.pro_slug?.includes('aniversario')) {
-          catsSecundarias.push('cat-ocas-aniv');
-        }
-        if (tieneUso('cumple') || tieneUso('festejo') || tieneUso('sorpresa') || tieneUso('celebracion')) {
-          catsSecundarias.push('cat-ocas-cumple');
         }
 
         const beneficiosDbRaw = Array.isArray(detalle.beneficios)
           ? detalle.beneficios
           : typeof detalle.beneficios === 'string'
-          ? (detalle.beneficios as string).split('\n')
+          ? detalle.beneficios.split('\n')
           : [];
         const beneficiosDb = beneficiosDbRaw
-          .map((b: any) => String(b).trim())
+          .map((b: unknown) => String(b).trim())
           .filter((b: string) => b.length > 0);
 
         const beneficiosFinal =
@@ -319,53 +503,98 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
             ? fallbackMatch.beneficios
             : [];
 
+        const requisitosDbRaw = Array.isArray(detalle.requisitos)
+          ? detalle.requisitos
+          : typeof detalle.requisitos === 'string'
+          ? detalle.requisitos.split('\n')
+          : [];
+        const requisitosFinal = requisitosDbRaw
+          .map((r: unknown) => String(r).trim())
+          .filter((r: string) => r.length > 0);
+
+        const descripcionMasterCorta =
+          detalle.descripcion_corta && detalle.descripcion_corta.trim().length > 0
+            ? detalle.descripcion_corta.trim()
+            : '';
+
         const descripcionFinal =
           p.pro_descripcion && p.pro_descripcion.trim().length > 0
             ? p.pro_descripcion.trim()
-            : detalle.descripcion_corta && detalle.descripcion_corta.trim().length > 0
-            ? detalle.descripcion_corta.trim()
-            : fallbackMatch?.descripcionLarga || fallbackMatch?.descripcionCorta || '';
+            : descripcionMasterCorta ||
+              fallbackMatch?.descripcionLarga ||
+              fallbackMatch?.descripcionCorta ||
+              '';
+
+        const etiquetasDb = Array.isArray(detalle.etiquetas)
+          ? detalle.etiquetas
+              .map((e: unknown) => String(e).trim())
+              .filter((e: string) => e.length > 0)
+          : [];
 
         return {
           id: p.pro_slug || p.pro_id,
           slug: p.pro_slug || p.pro_id,
           nombre: p.pro_nombre,
-          descripcionCorta: detalle.descripcion_corta || p.pro_descripcion || fallbackMatch?.descripcionCorta || 'Arreglo floral exclusivo de exportación.',
+          descripcionCorta:
+            descripcionMasterCorta ||
+            p.pro_descripcion ||
+            fallbackMatch?.descripcionCorta ||
+            'Arreglo floral exclusivo de exportación.',
+          descripcionMasterCorta: descripcionMasterCorta || undefined,
           descripcionLarga: descripcionFinal,
           beneficios: beneficiosFinal,
-          categoriaPrincipal: catSlug || catEncontrada?.ctg_id || (p.pro_slug?.includes('coreano')
-            ? 'cat-coreanos'
-            : p.pro_slug?.includes('florero')
-            ? 'cat-floreros'
-            : p.pro_slug?.includes('box')
-            ? 'box-florales'
-            : esCondol
-            ? 'cat-ocas-condol'
-            : esExtra
-            ? 'extras-condolencias'
-            : 'cat-coreanos'),
+          requisitos: requisitosFinal.length > 0 ? requisitosFinal : undefined,
+          etiquetaTemporada: detalle.etiqueta_temporada || undefined,
+          palabrasClaveCategoria: palabrasClaveCat,
+          categoriaPrincipal:
+            catSlug ||
+            catEncontrada?.ctg_id ||
+            (p.pro_slug?.includes('coreano')
+              ? 'cat-coreanos'
+              : p.pro_slug?.includes('florero')
+              ? 'cat-floreros'
+              : p.pro_slug?.includes('box')
+              ? 'box-florales'
+              : esCondol
+              ? 'cat-ocas-condol'
+              : esExtra
+              ? 'extras-condolencias'
+              : 'cat-coreanos'),
           categoriaNombre: catNombre || undefined,
           categoriasSecundarias: catsSecundarias,
           fotos,
           fotosMaster,
-          variantes: variantes.length > 0 ? variantes : [
-            {
-              sku: 'DEF-1',
-              nombre: 'Presentación Única',
-              pvp: 40,
-              baseImponible: 34.78,
-              tarifaIva: 15,
-            }
-          ],
-          destacado: p.pro_slug === 'box-florales' ? true : esCondol || esExtra ? false : p.pro_destacado === true,
+          variantes:
+            variantes.length > 0
+              ? variantes
+              : [
+                  {
+                    sku: 'DEF-1',
+                    nombre: 'Presentación Única',
+                    pvp: 40,
+                    baseImponible: 34.78,
+                    tarifaIva: 15,
+                  },
+                ],
+          destacado:
+            p.pro_slug === 'box-florales'
+              ? true
+              : esCondol || esExtra
+              ? false
+              : p.pro_destacado === true,
           nuevo: false,
           entregaHoy: true,
           esCondolencias: esCondol,
           esComplemento: esExtra,
-          esExtra: esExtra,
+          esExtra,
           usos,
-          ocasionRecomendada: esCondol ? 'Condolencias y Homenajes Solemnes' : 'Amor, Cumpleaños o Aniversario',
-          etiquetas: Array.isArray(detalle.etiquetas) ? detalle.etiquetas : ['Flores de Exportación', 'Quito'],
+          ocasionRecomendada: formatearOcasionRecomendada(
+            detalle.ocasion_recomendada,
+            esCondol,
+            usos,
+            catNombre
+          ),
+          etiquetas: etiquetasDb,
           deliveryIncluido:
             typeof detalle.logistica?.delivery_incluido === 'boolean'
               ? detalle.logistica.delivery_incluido

@@ -13,6 +13,11 @@ import {
 import { PRODUCTOS_TINKAY, CATEGORIAS_TINKAY } from './datos-catalogo';
 import { cargarCatalogoDinamicoTinkay } from './servicio-catalogo';
 import {
+  expandirProductosVitrina,
+  obtenerCategoriasVisibles,
+  resolverCategoriaPorIdentificador,
+} from './filtrado-catalogo';
+import {
   crearConfiguracionLogisticaPorDefecto,
   obtenerConfiguracionLogisticaAction,
   type ConfiguracionLogisticaNegocio,
@@ -29,6 +34,8 @@ interface ContextoCarritoValor {
   ordenConfirmadaId: string | null;
   productos: ProductoEcommerce[];
   categorias: CategoriaEcommerce[];
+  categoriaActiva: string;
+  terminoBusqueda: string;
   configLogistica: ConfiguracionLogisticaNegocio;
 
   // Acciones
@@ -37,6 +44,9 @@ interface ContextoCarritoValor {
   setCheckoutAbierto: (abierto: boolean) => void;
   setModalidadEntrega: (modalidad: ModalidadEntrega) => void;
   setOrdenConfirmadaId: (id: string | null) => void;
+  setCategoriaActiva: (catId: string) => void;
+  setTerminoBusqueda: (termino: string) => void;
+  navegarACategoria: (identificador: string) => void;
 
   agregarItem: (
     producto: ProductoEcommerce,
@@ -95,17 +105,56 @@ export function ProveedorCarrito({ children }: { children: React.ReactNode }) {
   // Catálogo dinámico sincronizado con Supabase en tiempo real
   const [productos, setProductos] = useState<ProductoEcommerce[]>(PRODUCTOS_TINKAY);
   const [categorias, setCategorias] = useState<CategoriaEcommerce[]>(CATEGORIAS_TINKAY);
+  const [categoriaActiva, setCategoriaActiva] = useState<string>('cat-todos');
+  const [terminoBusqueda, setTerminoBusqueda] = useState<string>('');
   const [configLogistica, setConfigLogistica] = useState<ConfiguracionLogisticaNegocio>(() =>
     crearConfiguracionLogisticaPorDefecto('tinkay')
   );
 
+  const navegarACategoria = React.useCallback(
+    (identificador: string) => {
+      const desplegados = expandirProductosVitrina(productos);
+      const visibles = obtenerCategoriasVisibles(categorias, desplegados);
+      const destino = resolverCategoriaPorIdentificador(
+        identificador,
+        visibles.length > 0 ? visibles : categorias
+      );
+      setCategoriaActiva(destino);
+      setTerminoBusqueda('');
+
+      if (typeof window !== 'undefined') {
+        const el = document.getElementById('catalogo');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    },
+    [productos, categorias]
+  );
+
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const qInicial = params.get('q') || params.get('busqueda');
+      const catInicial = params.get('categoria');
+      if (qInicial) setTerminoBusqueda(qInicial);
+      if (catInicial) {
+        setCategoriaActiva(resolverCategoriaPorIdentificador(catInicial, CATEGORIAS_TINKAY));
+      }
+    }
+
     cargarCatalogoDinamicoTinkay().then(({ productos: prodsLive, categorias: catsLive }) => {
       if (prodsLive && prodsLive.length > 0) {
         setProductos(prodsLive);
       }
       if (catsLive && catsLive.length > 0) {
         setCategorias(catsLive);
+        if (typeof window !== 'undefined') {
+          const catParam = new URLSearchParams(window.location.search).get('categoria');
+          if (catParam) {
+            setCategoriaActiva(resolverCategoriaPorIdentificador(catParam, catsLive));
+          }
+        }
       }
     });
 
@@ -319,12 +368,17 @@ export function ProveedorCarrito({ children }: { children: React.ReactNode }) {
         ordenConfirmadaId,
         productos,
         categorias,
+        categoriaActiva,
+        terminoBusqueda,
         configLogistica,
         setDrawerAbierto,
         setProductoSeleccionadoModal,
         setCheckoutAbierto,
         setModalidadEntrega,
         setOrdenConfirmadaId,
+        setCategoriaActiva,
+        setTerminoBusqueda,
+        navegarACategoria,
         agregarItem,
         eliminarItem,
         actualizarCantidad,

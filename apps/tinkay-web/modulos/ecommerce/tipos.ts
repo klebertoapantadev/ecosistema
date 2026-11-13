@@ -8,6 +8,8 @@ export interface CategoriaEcommerce {
   tipo: TipoCategoria;
   icono?: string;
   modoVisualSobrio?: boolean;
+  orden?: number;
+  palabrasClave?: string[];
 }
 
 export interface VarianteEcommerce {
@@ -23,6 +25,8 @@ export interface VarianteEcommerce {
   foto?: string;
   fotos?: string[]; // Galería completa configurada para esta variante (portada + galeria_urls)
   precioComparacion?: number;
+  usos?: string[];
+  usosModo?: 'heredar' | 'personalizado';
 }
 
 export interface ProductoEcommerce {
@@ -31,8 +35,12 @@ export interface ProductoEcommerce {
   nombre: string;
   nombreBase?: string; // Nombre original del producto antes del desglose individual por variantes
   descripcionCorta: string;
+  descripcionMasterCorta?: string; // Descripción corta original de la ficha maestra
   descripcionLarga: string;
   beneficios?: string[];
+  requisitos?: string[];
+  etiquetaTemporada?: string;
+  palabrasClaveCategoria?: string[];
   categoriaPrincipal: string;
   categoriaNombre?: string;
   categoriasSecundarias: string[];

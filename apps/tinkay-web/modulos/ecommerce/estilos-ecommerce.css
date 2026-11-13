@@ -64,6 +64,12 @@
   color: var(--rosa-oscuro);
 }
 
+.nav-enlaces-floristeria a.enlace-categoria-activo {
+  color: var(--rosa-oscuro);
+  border-bottom: 2px solid var(--rosa);
+  padding-bottom: 3px;
+}
+
 .nav-enlaces-floristeria .enlace-condolencias {
   display: flex;
   align-items: center;
@@ -73,6 +79,12 @@
 }
 .nav-enlaces-floristeria .enlace-condolencias:hover {
   color: #1F3626;
+  opacity: 1;
+}
+
+.nav-enlaces-floristeria .enlace-condolencias.enlace-categoria-activo {
+  color: #1F3626;
+  border-bottom: 2px solid var(--verde);
   opacity: 1;
 }
 

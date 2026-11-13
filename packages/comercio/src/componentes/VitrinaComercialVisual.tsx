@@ -32,6 +32,7 @@ import { ModalCheckoutPayphone } from "./ModalCheckoutPayphone";
 import { ModalDetalleServicioVisual } from "./ModalDetalleServicioVisual";
 import { obtenerImagenFallbackNegocio } from "../utils/negocio";
 import { evaluarVigenciaProducto } from "../utils/vigencia";
+import { productoCatalogoCoincideBusqueda } from "../utils/usosCatalogo";
 
 export interface VitrinaComercialVisualProps {
   negocio?: string;
@@ -233,10 +234,11 @@ export function VitrinaComercialVisual({
       catSlug === categoriaSeleccionada ||
       catId === categoriaSeleccionada;
 
-    const cumpleBusqueda =
-      busqueda.trim() === "" ||
-      p.pro_nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-      (p.pro_descripcion && p.pro_descripcion.toLowerCase().includes(busqueda.toLowerCase()));
+    const cumpleBusqueda = productoCatalogoCoincideBusqueda(
+      p,
+      busqueda,
+      categoriasLista
+    );
 
     return cumpleCategoria && cumpleBusqueda;
   });

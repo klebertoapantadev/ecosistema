@@ -9,6 +9,7 @@ const SLIDES_HERO = [
   {
     id: 'slide-coreano',
     productoId: 'tinkay-bouq-mix',
+    categoriaId: 'cat-coreanos',
     etiqueta: 'TENDENCIA COREANA 2026',
     titulo: 'Bouquets Estilo Coreano',
     subtitulo: 'Plisados vaporosos, capas translúcidas y rosas de exportación con base hidratada.',
@@ -19,6 +20,7 @@ const SLIDES_HERO = [
   {
     id: 'slide-box',
     productoId: 'box-florales',
+    categoriaId: 'box-florales',
     etiqueta: 'COLECCIÓN EXCLUSIVA',
     titulo: 'Box Florales de Lujo',
     subtitulo: 'Cajas rígidas de alta costura con rosas frescas seleccionadas y orquídeas en base hidratada OASIS.',
@@ -29,6 +31,7 @@ const SLIDES_HERO = [
   {
     id: 'slide-100rosas',
     productoId: 'tinkay-bouq-florero',
+    categoriaId: 'cat-floreros',
     etiqueta: 'ROSAS DE EXPORTACIÓN',
     titulo: 'Ramos Clásicos para Florero',
     subtitulo: 'Tallos largos de 70 cm en espiral (25, 50 y 100 rosas) con sobre de nutriente Chrysal incluido.',
@@ -39,6 +42,7 @@ const SLIDES_HERO = [
   {
     id: 'slide-tienda',
     productoId: '',
+    categoriaId: '',
     etiqueta: 'TIENDA FÍSICA EN QUITO',
     titulo: 'Visita Nuestro Taller Floral',
     subtitulo: 'Conoce nuestras instalaciones en Quito, retira tus pedidos o recibe asesoría personalizada.',
@@ -50,7 +54,7 @@ const SLIDES_HERO = [
 ];
 
 export function CarruselHeroDestacados() {
-  const { setProductoSeleccionadoModal, productos } = useCarrito();
+  const { setProductoSeleccionadoModal, navegarACategoria, productos } = useCarrito();
   const catalogo = productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY;
   const [slideActivo, setSlideActivo] = useState(0);
 
@@ -66,6 +70,10 @@ export function CarruselHeroDestacados() {
   const handleVerProducto = () => {
     if (slide.enlaceExterno) {
       window.open(slide.enlaceExterno, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    if (slide.categoriaId) {
+      navegarACategoria(slide.categoriaId);
       return;
     }
     const prod = catalogo.find((p) => p.id === slide.productoId || p.slug === slide.productoId);
