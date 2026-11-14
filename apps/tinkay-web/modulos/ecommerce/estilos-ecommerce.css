@@ -3037,6 +3037,512 @@
 }
 
 /* ==============================================================================
+   Sección de Testimonios y Capturas de Clientes (Social Proof)
+   ============================================================================== */
+.seccion-testimonios-tinkay {
+  background: var(--crema-fondo, #faf8f5);
+  border-top: 1px solid var(--linea);
+  padding: 64px clamp(16px, 4vw, 32px);
+}
+
+.cabecera-seccion-testimonios {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  gap: 20px;
+}
+
+.titulos-testimonios .badge-social-proof {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--dorado);
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+
+.titulos-testimonios h2 {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: clamp(1.6rem, 3vw, 2.2rem);
+  font-weight: 600;
+  color: var(--tinta);
+  letter-spacing: -0.01em;
+}
+
+.titulos-testimonios p {
+  color: var(--gris);
+  font-size: 0.95rem;
+  margin-top: 6px;
+  max-width: 680px;
+}
+
+.acciones-cabecera-testimonios {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.riel-testimonios-tinkay {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding-bottom: 16px;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+
+.riel-testimonios-tinkay::-webkit-scrollbar {
+  height: 6px;
+}
+
+.riel-testimonios-tinkay::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 999px;
+}
+
+.riel-testimonios-tinkay::-webkit-scrollbar-thumb {
+  background: var(--dorado);
+  border-radius: 999px;
+}
+
+.tarjeta-testimonio-card {
+  flex: 0 0 320px;
+  max-width: 320px;
+  scroll-snap-align: start;
+  background: var(--blanco);
+  border-radius: 18px;
+  border: 1px solid var(--linea);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tarjeta-testimonio-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.marco-foto-testimonio {
+  position: relative;
+  width: 100%;
+  height: 250px;
+  overflow: hidden;
+  background: #f1ede7;
+  cursor: pointer;
+}
+
+.foto-testimonio-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.marco-foto-testimonio:hover .foto-testimonio-img {
+  transform: scale(1.04);
+}
+
+.pildora-ocasion-testimonio {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(4px);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--tinta);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  z-index: 2;
+}
+
+.overlay-lupa-testimonio {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(3px);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  opacity: 0.9;
+  transition: opacity 0.2s ease, background 0.2s ease;
+  z-index: 2;
+}
+
+.marco-foto-testimonio:hover .overlay-lupa-testimonio {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.85);
+}
+
+.cuerpo-testimonio {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 12px;
+}
+
+.fila-estrellas-verificado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.estrellas-calificacion {
+  display: flex;
+  gap: 2px;
+  color: #d97706;
+}
+
+.badge-cliente-verificado {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #059669;
+  background: #ecfdf5;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.comentario-cita-testimonio {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: #374151;
+  font-style: italic;
+  margin: 0;
+  flex: 1;
+}
+
+.autor-testimonio {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-top: 1px solid var(--linea);
+  padding-top: 10px;
+  margin-top: auto;
+}
+
+.datos-autor-linea {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+}
+
+.nombre-cliente {
+  font-weight: 700;
+  color: var(--tinta);
+}
+
+.separador-punto {
+  color: var(--gris);
+  font-size: 0.75rem;
+}
+
+.ciudad-cliente {
+  color: var(--gris);
+  font-size: 0.8rem;
+}
+
+.fecha-testimonio {
+  font-size: 0.72rem;
+  color: #9ca3af;
+}
+
+.tarjeta-cta-album-google {
+  flex: 0 0 280px;
+  max-width: 280px;
+  scroll-snap-align: start;
+  background: linear-gradient(145deg, #182d4b 0%, #0d1b2e 100%);
+  color: #fff;
+  border-radius: 18px;
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  box-shadow: 0 8px 24px rgba(24, 45, 75, 0.18);
+}
+
+.icono-album-circulo {
+  width: 58px;
+  height: 58px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fbbf24;
+}
+
+.tarjeta-cta-album-google h3 {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+}
+
+.tarjeta-cta-album-google p {
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #cbd5e1;
+  margin: 0;
+}
+
+.btn-ver-album-google {
+  background: var(--dorado, #c5a059);
+  color: #fff;
+  text-decoration: none;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.2s ease, background 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-ver-album-google:hover {
+  background: var(--dorado-hover, #b08d4b);
+  transform: translateY(-2px);
+}
+
+/* Banner de Métricas / Social Proof Inferior */
+.banner-social-proof-inferior {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 36px;
+  padding: 18px 24px;
+  background: var(--blanco);
+  border-radius: 16px;
+  border: 1px solid var(--linea);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.item-metrica-social {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 3px;
+}
+
+.numero-metrica {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--dorado);
+}
+
+.etiqueta-metrica {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--gris);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.separador-barra-social {
+  width: 1px;
+  height: 34px;
+  background: var(--linea);
+}
+
+.cta-enlace-album-inline .enlace-discreto-album {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--dorado);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.cta-enlace-album-inline .enlace-discreto-album:hover {
+  color: var(--tinta);
+  text-decoration: underline;
+}
+
+/* Modal Lightbox Testimonio */
+.modal-lightbox-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeInModal 0.2s ease-out;
+}
+
+.modal-lightbox-contenido {
+  background: var(--blanco);
+  border-radius: 20px;
+  max-width: 860px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  animation: scaleInModal 0.2s ease-out;
+}
+
+.btn-cerrar-lightbox {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 10;
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.btn-cerrar-lightbox:hover {
+  background: rgba(0, 0, 0, 0.9);
+  transform: scale(1.06);
+}
+
+.lightbox-grid-layout {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  max-height: 85vh;
+}
+
+.lightbox-lado-imagen {
+  background: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  min-height: 360px;
+}
+
+.lightbox-imagen-grande {
+  max-height: 80vh;
+  width: 100%;
+  object-fit: contain;
+}
+
+.lightbox-lado-info {
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.lightbox-comentario-texto {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #1f2937;
+  font-style: italic;
+  margin: 0;
+  border-left: 3px solid var(--dorado);
+  padding-left: 14px;
+}
+
+.lightbox-datos-autor {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 12px;
+  border-top: 1px solid var(--linea);
+}
+
+.lightbox-datos-autor strong {
+  font-size: 1.05rem;
+  color: var(--tinta);
+}
+
+.lightbox-datos-autor span {
+  font-size: 0.86rem;
+  color: var(--gris);
+}
+
+.lightbox-acciones-footer {
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+@media (max-width: 768px) {
+  .cabecera-seccion-testimonios {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .acciones-cabecera-testimonios {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .tarjeta-testimonio-card {
+    flex: 0 0 280px;
+    max-width: 280px;
+  }
+
+  .marco-foto-testimonio {
+    height: 220px;
+  }
+
+  .banner-social-proof-inferior {
+    flex-direction: column;
+    gap: 14px;
+    text-align: center;
+  }
+
+  .separador-barra-social {
+    display: none;
+  }
+
+  .lightbox-grid-layout {
+    grid-template-columns: 1fr;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+
+  .lightbox-lado-imagen {
+    min-height: 240px;
+    max-height: 300px;
+  }
+}
+
+/* ==============================================================================
    Sección de Compromiso & Garantías
    ============================================================================== */
 .seccion-compromiso-tinkay {

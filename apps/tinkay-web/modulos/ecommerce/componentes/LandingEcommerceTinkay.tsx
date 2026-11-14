@@ -7,6 +7,7 @@ import { EncabezadoEcommerce } from './EncabezadoEcommerce';
 import { CarruselHeroDestacados } from './CarruselHeroDestacados';
 import { CarruselProductosDestacados } from './CarruselProductosDestacados';
 import { VitrinaCatalogoTinkay } from './VitrinaCatalogoTinkay';
+import { CarruselTestimoniosClientes } from './CarruselTestimoniosClientes';
 import { ModalDetalleProducto } from './ModalDetalleProducto';
 import { DrawerCarritoFloristeria } from './DrawerCarritoFloristeria';
 import { ModalCheckoutTinkay } from './ModalCheckoutTinkay';
@@ -34,6 +35,9 @@ function ContenidoPaginaEcommerceTinkay() {
 
       {/* Vitrina Completa con Filtros Multidimensionales y Búsqueda */}
       <VitrinaCatalogoTinkay />
+
+      {/* Carrusel de Testimonios y Entregas Reales (Social Proof) */}
+      <CarruselTestimoniosClientes />
 
       {/* Sección de Experiencia y Compromiso Botánico */}
       <section className="seccion-compromiso-tinkay">
