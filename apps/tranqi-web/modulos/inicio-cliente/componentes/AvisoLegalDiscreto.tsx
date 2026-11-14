@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronRight, X } from "lucide-react";
+import { X } from "lucide-react";
 import { obtenerCampanasInformativasAction, type CampanaInformativa } from "@eco/comercio/acciones-informativos";
 
 /** Aviso legal discreto del inicio del panel (TRQ-CLI-001).
@@ -10,12 +10,14 @@ import { obtenerCampanasInformativasAction, type CampanaInformativa } from "@eco
  *  datos (las campañas informativas que se publican desde administración),
  *  apariencia de tranqi. Maqueta aprobada el 7-nov-2026 (TRANQUI/demo/
  *  planes.html, opción «Aviso discreto»). Cada aviso se puede ocultar y no
- *  vuelve a salir en este navegador. */
+ *  vuelve a salir en este navegador.
+ *
+ *  Sin carrusel (corrección del cliente, 14-nov-2026): se muestra un solo
+ *  aviso, el de más prioridad; al ocultarlo aparece el siguiente. */
 
 type Audiencia = "TODOS" | "ABOGADOS" | "CLIENTES" | "EMPRESAS";
 
 const CLAVE_OCULTOS = "tranqi_avisos_ocultos";
-const ROTACION_MS = 9000;
 
 const ETIQUETA_TIPO: Record<string, string> = {
   ALERTA_REGULATORIA: "Novedad legal",
@@ -36,8 +38,6 @@ function leerOcultos(): string[] {
 
 export function AvisoLegalDiscreto({ negocio = "tranqi", audiencia = "TODOS" }: { negocio?: string; audiencia?: Audiencia }) {
   const [avisos, setAvisos] = useState<CampanaInformativa[]>([]);
-  const [indice, setIndice] = useState(0);
-  const [pausado, setPausado] = useState(false);
 
   // Se lee en un efecto y no al renderizar: localStorage no existe en el
   // servidor y leerlo antes desajusta la hidratación.
@@ -67,13 +67,7 @@ export function AvisoLegalDiscreto({ negocio = "tranqi", audiencia = "TODOS" }: 
     };
   }, [negocio, audiencia]);
 
-  useEffect(() => {
-    if (avisos.length < 2 || pausado) return;
-    const t = window.setInterval(() => setIndice((i) => (i + 1) % avisos.length), ROTACION_MS);
-    return () => window.clearInterval(t);
-  }, [avisos.length, pausado]);
-
-  const aviso = avisos[indice % Math.max(avisos.length, 1)];
+  const aviso = avisos[0];
   if (!aviso) return null;
 
   const detalle = (aviso.inf_detalle || {}) as Record<string, any>;
@@ -88,16 +82,10 @@ export function AvisoLegalDiscreto({ negocio = "tranqi", audiencia = "TODOS" }: 
       /* sin almacenamiento: se oculta solo en esta visita */
     }
     setAvisos((lista) => lista.filter((c) => c.inf_id !== aviso!.inf_id));
-    setIndice(0);
   }
 
   return (
-    <div
-      className="aviso-legal"
-      role="status"
-      onMouseEnter={() => setPausado(true)}
-      onMouseLeave={() => setPausado(false)}
-    >
+    <div className="aviso-legal" role="status">
       <span className="aviso-legal-etiqueta">{etiqueta}</span>
       <p key={aviso.inf_id} className="aviso-legal-texto">
         <b>{aviso.inf_titulo}.</b> {aviso.inf_subtitulo}
@@ -110,17 +98,6 @@ export function AvisoLegalDiscreto({ negocio = "tranqi", audiencia = "TODOS" }: 
         >
           {detalle.cta_texto || "Ver más"} →
         </a>
-      )}
-      {avisos.length > 1 && (
-        <button
-          type="button"
-          className="aviso-legal-boton"
-          onClick={() => setIndice((i) => (i + 1) % avisos.length)}
-          aria-label="Siguiente aviso"
-          title="Siguiente aviso"
-        >
-          <ChevronRight size={16} strokeWidth={2.4} />
-        </button>
       )}
       <button type="button" className="aviso-legal-boton" onClick={ocultar} aria-label="Ocultar aviso" title="Ocultar aviso">
         <X size={16} strokeWidth={2.2} />

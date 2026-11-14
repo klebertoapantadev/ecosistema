@@ -14,9 +14,11 @@ import { useAvisos } from "../../../app/panel/AvisosPanel";
 /** Planes y servicios del inicio del cliente (TRQ-CLI-001).
  *
  *  Maqueta aprobada el 7-nov-2026: TRANQUI/demo/planes.html.
- *  - Arriba, un carrusel de destacados con la foto del catálogo de fondo y
- *    degradado violeta lateral: primero el plan (modalidades, beneficios y
- *    precio), después los servicios destacados.
+ *  - Arriba, un carrusel con la foto del catálogo de fondo y degradado
+ *    lateral: una diapositiva por modalidad del plan, cada una con su tono
+ *    (correcciones del cliente, 14-nov-2026: «los planes son 3, que pase más
+ *    despacio, un tono por plan»). Los servicios ya no entran al carrusel; si
+ *    no hay plan, se muestran los servicios destacados.
  *  - Debajo, los trámites y servicios en tarjetas con foto y filtro por
  *    categoría.
  *  El plan corporativo (B2B) no se ofrece a personas. Los DATOS y el PAGO
@@ -24,7 +26,11 @@ import { useAvisos } from "../../../app/panel/AvisosPanel";
  *  globals.css (clases `ini-`). */
 
 const USD = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-const DURACION_DIAPO_MS = 7000;
+const DURACION_DIAPO_MS = 12000;
+
+// Tono del degradado de cada modalidad (canales RGB, ver `--tono` en
+// globals.css): violeta, esmeralda y azul de la paleta de marca, en tinta.
+const TONOS_PLAN = ["30, 0, 70", "5, 42, 35", "10, 32, 92"];
 const MAX_DIAPOS = 5;
 
 function esPlan(p: ProductoCatalogo) {
@@ -71,6 +77,14 @@ function tipoDe(p: ProductoCatalogo): string {
 const SUFIJO_FRECUENCIA: Record<string, string> = { MENSUAL: "/mes", ANUAL: "/año", QUINCENAL: "/quincena", SEMANAL: "/semana" };
 const TEXTO_FRECUENCIA: Record<string, string> = { MENSUAL: "al mes", ANUAL: "al año", QUINCENAL: "a la quincena", SEMANAL: "a la semana" };
 const NOTA_FRECUENCIA: Record<string, string> = { MENSUAL: "cobro mensual", ANUAL: "cobro anual", QUINCENAL: "cobro quincenal", SEMANAL: "cobro semanal" };
+
+/** Diapositiva del carrusel: una modalidad de un plan, o un servicio. */
+interface Diapo {
+  clave: string;
+  producto: ProductoCatalogo;
+  variante?: VarianteCatalogo;
+  tono?: string;
+}
 
 function frecuenciaDe(v: VarianteCatalogo): string {
   return (v.var_frecuencia_recurrencia || "").toUpperCase();
@@ -180,35 +194,53 @@ const IconoCheck = () => (
 // ── Diapositiva del plan ─────────────────────────────────────────────────
 function DiapoPlan({
   producto,
+  variante,
   activa,
+  recomendado,
+  alElegir,
   alContratar,
 }: {
   producto: ProductoCatalogo;
+  variante: VarianteCatalogo;
   activa: boolean;
+  recomendado: boolean;
+  /** Las modalidades son diapositivas: elegir una lleva a la suya. */
+  alElegir: (v: VarianteCatalogo) => void;
   alContratar: (v: VarianteCatalogo) => void;
 }) {
-  const variantes = variantesActivas(producto);
-  const [elegida, setElegida] = useState(0);
-  const variante = variantes[Math.min(elegida, variantes.length - 1)];
+  // Las mismas modalidades que tienen diapositiva (ver `diapos`).
+  const variantes = variantesActivas(producto).slice(0, MAX_DIAPOS);
+  const elegida = Math.max(0, variantes.findIndex((v) => v.var_id === variante.var_id));
   const { grupo, pulgar } = usePulgar(elegida, [activa, variantes.length]);
-  const precio = useCifra(variante?.precio_total ?? 0);
-  if (!variante) return null;
+  const frecuencia = frecuenciaDe(variante);
+  // Un plan anual se anuncia por su precio al año («al año» resaltado) y abajo
+  // se muestra lo que equivale al mes; el cobro sigue siendo uno al año.
+  const anual = frecuencia === "ANUAL";
+  const precio = useCifra(anual ? Math.round((variante.precio_total / 12) * 100) / 100 : variante.precio_total);
 
   const familiar = /famil/i.test(variante.var_nombre);
-  const frecuencia = frecuenciaDe(variante);
   const beneficios = beneficiosDe(producto, variante);
   const miembros = miembrosDe(producto, variante);
 
   return (
     <>
-      <span className="ini-chip-rec">Recomendado</span>
+      {recomendado && <span className="ini-chip-rec">Recomendado</span>}
       <div className="ini-contenido">
         <p className="ini-eyebrow" style={{ "--n": 0 } as React.CSSProperties}>
           {producto.pro_nombre}
         </p>
         <h2 style={{ "--n": 1 } as React.CSSProperties}>
           {familiar ? "Protege a tu familia" : "Protégete"} por <em>{USD.format(variante.precio_total)}</em>
-          {TEXTO_FRECUENCIA[frecuencia] ? ` ${TEXTO_FRECUENCIA[frecuencia]}` : ""}
+          {anual ? (
+            <>
+              {" "}
+              <span className="ini-periodo">al año</span>
+            </>
+          ) : TEXTO_FRECUENCIA[frecuencia] ? (
+            ` ${TEXTO_FRECUENCIA[frecuencia]}`
+          ) : (
+            ""
+          )}
         </h2>
         {producto.pro_descripcion && (
           <p className="ini-bajada" style={{ "--n": 2 } as React.CSSProperties}>
@@ -225,7 +257,7 @@ function DiapoPlan({
           >
             <span className="ini-pulgar" ref={pulgar} aria-hidden="true" />
             {variantes.map((v, k) => (
-              <button key={v.var_id} type="button" aria-pressed={k === elegida} onClick={() => setElegida(k)}>
+              <button key={v.var_id} type="button" aria-pressed={k === elegida} onClick={() => alElegir(v)}>
                 {nombreCorto(v)}
               </button>
             ))}
@@ -246,10 +278,12 @@ function DiapoPlan({
             <div className="ini-precio">
               <small>$</small>
               <strong>{precio}</strong>
-              {SUFIJO_FRECUENCIA[frecuencia] && <span>{SUFIJO_FRECUENCIA[frecuencia]}</span>}
+              {anual ? <span>/mes</span> : SUFIJO_FRECUENCIA[frecuencia] && <span>{SUFIJO_FRECUENCIA[frecuencia]}</span>}
             </div>
             <p className="ini-precio-nota">
-              IVA incluido{NOTA_FRECUENCIA[frecuencia] ? ` · ${NOTA_FRECUENCIA[frecuencia]}` : ""}
+              {anual
+                ? `IVA incluido · un pago de ${USD.format(variante.precio_total)} al año`
+                : `IVA incluido${NOTA_FRECUENCIA[frecuencia] ? ` · ${NOTA_FRECUENCIA[frecuencia]}` : ""}`}
             </p>
           </div>
           <button type="button" className="ini-btn-contratar" onClick={() => alContratar(variante)}>
@@ -333,7 +367,7 @@ function Destacados({
   alContratarPlan,
   alContratarServicio,
 }: {
-  diapos: ProductoCatalogo[];
+  diapos: Diapo[];
   alContratarPlan: (p: ProductoCatalogo, v: VarianteCatalogo) => void;
   alContratarServicio: (p: ProductoCatalogo) => void;
 }) {
@@ -377,13 +411,15 @@ function Destacados({
         if (Math.abs(dx) > 50) irA(indice + (dx < 0 ? 1 : -1));
       }}
     >
-      {diapos.map((p, k) => {
+      {diapos.map((d, k) => {
+        const p = d.producto;
         const activa = k === indice;
-        const foto = obtenerFoto(p, variantesActivas(p)[0]);
+        const foto = obtenerFoto(p, d.variante ?? variantesActivas(p)[0]);
         return (
           <article
-            key={p.pro_id}
+            key={d.clave}
             className={`ini-diapo${activa ? " es-activa" : ""}${foto ? "" : " sin-foto"}`}
+            style={d.tono ? ({ "--tono": d.tono } as React.CSSProperties) : undefined}
             role="group"
             aria-roledescription="diapositiva"
             aria-label={`${k + 1} de ${total}`}
@@ -391,8 +427,18 @@ function Destacados({
             inert={!activa}
           >
             {foto && <img className="ini-fondo" src={foto} alt="" loading={k === 0 ? "eager" : "lazy"} />}
-            {esPlan(p) ? (
-              <DiapoPlan producto={p} activa={activa} alContratar={(v) => alContratarPlan(p, v)} />
+            {esPlan(p) && d.variante ? (
+              <DiapoPlan
+                producto={p}
+                variante={d.variante}
+                activa={activa}
+                recomendado={k === 0}
+                alElegir={(v) => {
+                  const destino = diapos.findIndex((x) => x.variante?.var_id === v.var_id);
+                  if (destino >= 0) irA(destino);
+                }}
+                alContratar={(v) => alContratarPlan(p, v)}
+              />
             ) : (
               <DiapoServicio producto={p} alContratar={() => alContratarServicio(p)} />
             )}
@@ -403,12 +449,12 @@ function Destacados({
       {total > 1 && (
         <div className="ini-controles">
           <div className="ini-indicadores" role="tablist" aria-label="Elegir destacado">
-            {diapos.map((p, k) => (
+            {diapos.map((d, k) => (
               <button
-                key={p.pro_id}
+                key={d.clave}
                 type="button"
                 role="tab"
-                aria-label={`Destacado ${k + 1}: ${p.pro_nombre}`}
+                aria-label={`Destacado ${k + 1}: ${d.variante && esPlan(d.producto) ? nombreCorto(d.variante) : d.producto.pro_nombre}`}
                 aria-selected={k === indice}
                 className={k < indice ? "es-visto" : ""}
                 onClick={() => irA(k)}
@@ -630,11 +676,19 @@ export function RejillaPlanes({ negocio = "tranqi", modoVista = "solo-carrusel" 
     const paraPersonas = (productos || []).filter((p) => !esCorporativo(p) && variantesActivas(p).length > 0);
     const planes = paraPersonas.filter(esPlan).sort((a, b) => Number(b.pro_destacado) - Number(a.pro_destacado));
     const servicios = paraPersonas.filter((p) => !esPlan(p));
-    // Destacados: el plan primero y luego los servicios destacados con foto
-    // (si no hay destacados, los primeros con foto).
-    const conFoto = servicios.filter((p) => obtenerFoto(p, variantesActivas(p)[0]));
-    const destacados = conFoto.filter((p) => p.pro_destacado);
-    const diapos = [...planes.slice(0, 1), ...(destacados.length > 0 ? destacados : conFoto)].slice(0, MAX_DIAPOS);
+    // Carrusel: una diapositiva por modalidad del plan principal, cada una con
+    // su tono. Solo si no hay plan entran los servicios destacados con foto.
+    const plan = planes[0];
+    let diapos: Diapo[];
+    if (plan) {
+      diapos = variantesActivas(plan)
+        .slice(0, MAX_DIAPOS)
+        .map((v, k) => ({ clave: v.var_id, producto: plan, variante: v, tono: TONOS_PLAN[k % TONOS_PLAN.length] }));
+    } else {
+      const conFoto = servicios.filter((p) => obtenerFoto(p, variantesActivas(p)[0]));
+      const destacados = conFoto.filter((p) => p.pro_destacado);
+      diapos = (destacados.length > 0 ? destacados : conFoto).slice(0, MAX_DIAPOS).map((p) => ({ clave: p.pro_id, producto: p }));
+    }
     return { planes, servicios, paraPersonas, diapos };
   }, [productos]);
 

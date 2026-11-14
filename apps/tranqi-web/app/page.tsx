@@ -21,7 +21,7 @@ const FALLBACK: Record<string, string> = {
   problema: "Fuerte, ¿no? Hoy la justicia es cara y reactiva. Eso es justo lo que venimos a cambiar.",
   manifiesto: "Eso somos: tu respaldo legal de confianza, que te orienta sin enredos y no te deja solo.",
   app: "Toda tu vida legal en una app: actualmente estamos en construcción (próximamente en tiendas de apps).",
-  planes: "USD 20 al año. Menos de 6 centavos al día por vivir tranqi.",
+  planes: "Desde $23 al año con IVA incluido: unos 6 centavos al día por vivir tranqi.",
   statement: "Así de simple: lo legal, para todos.",
   red: "Si eres abogado, la red te da clientes, ingresos y capacitación constante.",
   contacto: "Este es el momento de dar el paso. Pregúntame cómo unirte.",

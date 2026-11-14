@@ -11,7 +11,8 @@
     "./acciones-informativos": "./src/acciones-informativos.ts",
     "./acciones-logistica": "./src/acciones-logistica.ts",
     "./logistica": "./src/logistica.ts",
-    "./plux": "./src/plux.ts"
+    "./plux": "./src/plux.ts",
+    "./periodo-derecho": "./src/utils/periodoDerecho.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

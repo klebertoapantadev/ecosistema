@@ -1261,13 +1261,16 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 @keyframes ini-subir { from { opacity: 0; transform: translateY(18px); } }
 .ini-diapo { grid-area: 1 / 1; position: relative; display: flex; flex-direction: column; min-width: 0; opacity: 0; visibility: hidden; transition: opacity 0.9s ease, visibility 0.9s; }
 .ini-diapo.es-activa { opacity: 1; visibility: visible; z-index: 1; }
-.ini-diapo.sin-foto { background: radial-gradient(circle at 85% 20%, rgba(120, 102, 255, 0.55), transparent 55%), var(--violeta-tinta); }
+.ini-diapo.sin-foto { background: radial-gradient(circle at 85% 20%, rgba(120, 102, 255, 0.55), transparent 55%), rgb(var(--tono)); }
 .ini-fondo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.12); }
-.ini-diapo.es-activa .ini-fondo { animation: ini-acercar 9s ease-out forwards; }
+.ini-diapo.es-activa .ini-fondo { animation: ini-acercar var(--dur, 12s) ease-out forwards; }
 @keyframes ini-acercar { from { transform: scale(1.14) translateX(2%); } to { transform: scale(1.02); } }
+/* `--tono`: canales RGB del degradado; cada modalidad del plan trae el suyo
+   desde RejillaPlanes (TONOS_PLAN). Sin él, violeta tinta. */
+.ini-diapo { --tono: 30, 0, 70; }
 .ini-diapo::before {
   content: ""; position: absolute; inset: 0; z-index: 1;
-  background: linear-gradient(90deg, var(--violeta-tinta) 0%, rgba(30, 0, 70, 0.95) 30%, rgba(30, 0, 70, 0.62) 56%, rgba(30, 0, 70, 0.12) 100%);
+  background: linear-gradient(90deg, rgb(var(--tono)) 0%, rgba(var(--tono), 0.95) 30%, rgba(var(--tono), 0.62) 56%, rgba(var(--tono), 0.12) 100%);
 }
 .ini-contenido { position: relative; z-index: 2; flex: 1; max-width: 580px; padding: 30px 34px 76px; display: flex; flex-direction: column; }
 /* Nada se encoge: si el texto es largo, crece la diapositiva. */
@@ -1277,6 +1280,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 .ini-eyebrow { margin: 0; font-size: 0.688rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--menta); }
 .ini-carrusel h2 { margin: 8px 0; font-size: 1.875rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; color: var(--blanco); }
 .ini-carrusel h2 em { font-style: normal; color: var(--menta); }
+.ini-periodo { color: var(--amarillo); white-space: nowrap; }
 .ini-bajada { margin: 0; max-width: 470px; color: rgba(255, 255, 255, 0.78); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .ini-plazo { display: inline-flex; gap: 7px; align-items: center; margin-top: 14px; font-size: 0.813rem; color: rgba(255, 255, 255, 0.75); }
 .ini-plazo svg { color: var(--menta); }
@@ -1293,7 +1297,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
   position: relative; z-index: 1; border: 0; background: none; padding: 9px 16px; border-radius: 10px; cursor: pointer;
   font: inherit; font-size: 0.875rem; font-weight: 700; color: rgba(255, 255, 255, 0.8); white-space: nowrap; transition: color 0.25s;
 }
-.ini-modalidades button[aria-pressed="true"] { color: var(--violeta); }
+.ini-modalidades button[aria-pressed="true"] { color: rgb(var(--tono)); }
 .ini-beneficios { list-style: none; margin: 16px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 9px 20px; }
 .ini-beneficios li { display: flex; gap: 10px; align-items: flex-start; font-size: 0.875rem; color: rgba(255, 255, 255, 0.92); animation: ini-entrar 0.45s var(--curva-entrada) both; animation-delay: calc(var(--k, 0) * 70ms); }
 .ini-ok { flex: none; width: 20px; height: 20px; margin-top: 1px; border-radius: 50%; background: var(--menta); color: var(--menta-honda); display: grid; place-items: center; }
@@ -1426,7 +1430,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 @container ini (max-width: 760px) { .ini-beneficios { grid-template-columns: 1fr; } }
 @container ini (max-width: 640px) {
   .ini-carrusel { min-height: 660px; border-radius: 20px; }
-  .ini-diapo::before { background: linear-gradient(0deg, var(--violeta-tinta) 0%, rgba(30, 0, 70, 0.94) 48%, rgba(30, 0, 70, 0.45) 72%, rgba(30, 0, 70, 0.1) 100%); }
+  .ini-diapo::before { background: linear-gradient(0deg, rgb(var(--tono)) 0%, rgba(var(--tono), 0.94) 48%, rgba(var(--tono), 0.45) 72%, rgba(var(--tono), 0.1) 100%); }
   .ini-fondo { height: 58%; min-height: 300px; object-position: center top; }
   .ini-contenido { justify-content: flex-end; padding: 20px 18px 70px; }
   .ini-contenido .ini-cierre { margin-top: 0; }
