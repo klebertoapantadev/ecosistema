@@ -527,6 +527,12 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
             ? beneficiosDb
             : fallbackMatch?.beneficios && fallbackMatch.beneficios.length > 0
             ? fallbackMatch.beneficios
+            : esRentaProd
+            ? [
+                'Mobiliario exclusivo y elegante con entrega y retiro coordinado para tu evento.',
+                'Estructura firme de alta calidad, desinfectada y lista para lucir en tu recepción.',
+                'Tarifa de renta por evento (24h) con garantía de puntualidad.',
+              ]
             : [];
 
         const requisitosDbRaw = Array.isArray(detalle.requisitos)
@@ -549,7 +555,9 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
             : descripcionMasterCorta ||
               fallbackMatch?.descripcionLarga ||
               fallbackMatch?.descripcionCorta ||
-              '';
+              (esRentaProd
+                ? 'Mobiliario y ambientación en calidad de renta temporal para eventos sociales y corporativos.'
+                : '');
 
         const etiquetasDb = Array.isArray(detalle.etiquetas)
           ? detalle.etiquetas
@@ -571,7 +579,9 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
             descripcionMasterCorta ||
             p.pro_descripcion ||
             fallbackMatch?.descripcionCorta ||
-            'Arreglo floral exclusivo de exportación.',
+            (esRentaProd
+              ? 'Mobiliario exclusivo en calidad de renta temporal para eventos.'
+              : 'Arreglo floral exclusivo de exportación.'),
           descripcionMasterCorta: descripcionMasterCorta || undefined,
           descripcionLarga: descripcionFinal,
           beneficios: beneficiosFinal,

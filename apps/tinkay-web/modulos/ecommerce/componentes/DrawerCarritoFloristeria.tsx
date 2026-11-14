@@ -45,6 +45,7 @@ export function DrawerCarritoFloristeria() {
     totalPagar,
     setCheckoutAbierto,
     agregarItem,
+    productos,
   } = useCarrito();
 
   // Estados locales para edición de dedicatoria por ítem
@@ -54,9 +55,53 @@ export function DrawerCarritoFloristeria() {
 
   if (!drawerAbierto) return null;
 
-  const productosComplementos = PRODUCTOS_TINKAY.filter((p) => p.esComplemento);
   const itemsPrincipales = items.filter((it) => !it.producto.esComplemento && !it.producto.esExtra);
   const listaBase = itemsPrincipales.length > 0 ? itemsPrincipales : items;
+
+  const todosSonRenta =
+    listaBase.length > 0 &&
+    listaBase.every(
+      (it) =>
+        it.producto.esRenta === true ||
+        it.producto.tipoOferta?.toUpperCase().includes('RENTA') ||
+        it.producto.tipoOferta?.toUpperCase().includes('ALQUILER') ||
+        (it.producto.etiquetas || []).some(
+          (e: string) => e.toLowerCase().includes('renta') || e.toLowerCase().includes('alquiler')
+        )
+    );
+
+  const catalogoProds = productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY;
+
+  const productosComplementos = todosSonRenta
+    ? catalogoProds.filter((p) => {
+        if (p.esExtra || p.esComplemento) return false;
+        const catPrincipal = (p.categoriaPrincipal || '').toLowerCase();
+        const catNombre = (p.categoriaNombre || '').toLowerCase();
+        if (catPrincipal.includes('extra') || catNombre.includes('extra')) return false;
+
+        const esRentaItem = Boolean(
+          p.esRenta === true ||
+          p.tipoOferta?.toUpperCase().includes('RENTA') ||
+          p.tipoOferta?.toUpperCase().includes('ALQUILER') ||
+          (p.etiquetas || []).some(
+            (e: string) => e.toLowerCase().includes('renta') || e.toLowerCase().includes('alquiler')
+          )
+        );
+        if (!esRentaItem) return false;
+
+        return !items.some(
+          (it) => it.producto.id === p.id || (p.proIdUuid && it.producto.proIdUuid === p.proIdUuid)
+        );
+      })
+    : catalogoProds.filter((p) => {
+        const esRentaItem = Boolean(
+          p.esRenta === true ||
+          p.tipoOferta?.toUpperCase().includes('RENTA') ||
+          p.tipoOferta?.toUpperCase().includes('ALQUILER')
+        );
+        if (esRentaItem) return false;
+        return p.esComplemento;
+      });
   const algunoNoIncluye = listaBase.some(
     (it) => it.producto.deliveryIncluido === false && it.producto.modalidadTransporte !== 'SOLO_RETIRO'
   );
@@ -744,26 +789,35 @@ export function DrawerCarritoFloristeria() {
             )}
 
             {/* Sugerencias de Cross-Selling Rápido en Carrito */}
-            <div className="cross-sell-carrusel-carrito">
-              <span className="etiqueta-cross-sell">¿Te gustaría añadir un toque extra?</span>
-              <div className="fila-cross-sell-chips">
-                {productosComplementos.map((comp) => {
-                  const varComp = comp.variantes[0];
-                  if (!varComp) return null;
-                  return (
-                    <button
-                      key={comp.id}
-                      type="button"
-                      className="btn-chip-cross-sell"
-                      onClick={() => agregarItem(comp, varComp)}
-                    >
-                      <Plus size={13} />
-                      <span>{comp.nombre.replace('Caja de Chocolates ', '')} (+${varComp.pvp.toFixed(2)})</span>
-                    </button>
-                  );
-                })}
+            {productosComplementos.length > 0 && (
+              <div className="cross-sell-carrusel-carrito">
+                <span className="etiqueta-cross-sell">
+                  {todosSonRenta
+                    ? '¿Deseas agregar más mobiliario o artículos en renta?'
+                    : '¿Te gustaría añadir un toque extra?'}
+                </span>
+                <div className="fila-cross-sell-chips">
+                  {productosComplementos.map((comp) => {
+                    const varComp = comp.variantes[0];
+                    if (!varComp) return null;
+                    return (
+                      <button
+                        key={comp.id}
+                        type="button"
+                        className="btn-chip-cross-sell"
+                        onClick={() => agregarItem(comp, varComp)}
+                        title={todosSonRenta ? `Agregar en renta: ${comp.nombre}` : `Añadir: ${comp.nombre}`}
+                      >
+                        <Plus size={13} />
+                        <span>
+                          {comp.nombre.replace('Caja de Chocolates ', '')} (+${varComp.pvp.toFixed(2)})
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 

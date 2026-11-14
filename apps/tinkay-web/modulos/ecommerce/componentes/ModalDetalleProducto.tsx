@@ -113,9 +113,19 @@ export function ModalDetalleProducto() {
   const [varianteExtraInspeccion, setVarianteExtraInspeccion] = useState<VarianteEcommerce | null>(null);
   const [fotoExtraActivaIdx, setFotoExtraActivaIdx] = useState(0);
 
+  // Detectar si el producto actual es de Renta de Mobiliario / Alquiler para Eventos
+  const esProductoRenta = Boolean(
+    producto?.esRenta ||
+    producto?.tipoOferta?.toUpperCase().includes('RENTA') ||
+    producto?.tipoOferta?.toUpperCase().includes('ALQUILER') ||
+    (producto?.etiquetas || []).some(
+      (e: string) => e.toLowerCase().includes('renta') || e.toLowerCase().includes('alquiler')
+    )
+  );
+
   // Detectar si el producto actual es de Condolencias & Funerarios
   const esProductoCondolencias = React.useMemo(() => {
-    if (!producto) return false;
+    if (!producto || esProductoRenta) return false;
     const catPrincipal = (producto.categoriaPrincipal || '').toLowerCase();
     const catNombre = (producto.categoriaNombre || '').toLowerCase();
     const secundarias = (producto.categoriasSecundarias || []).map((s: string) => s.toLowerCase());
@@ -128,14 +138,13 @@ export function ModalDetalleProducto() {
       catPrincipal.includes('condol') ||
       catNombre.includes('condol') ||
       secundarias.some((s: string) => s.includes('condol')) ||
-      nombre.includes('pedestal') ||
       nombre.includes('abanico') ||
       nombre.includes('condolencia') ||
       nombre.includes('pésame') ||
       usos.some((u: string) => u.includes('condol') || u.includes('duelo') || u.includes('pesame')) ||
       etiquetas.some((e: string) => e.includes('condol') || e.includes('duelo') || e.includes('fúnebre') || e.includes('funebre'))
     );
-  }, [producto]);
+  }, [producto, esProductoRenta]);
 
   // Helper para verificar si un producto Extra tiene uso "Condolencias"
   const tieneUsoCondolencias = (extra: ProductoEcommerce) => {
@@ -159,12 +168,54 @@ export function ModalDetalleProducto() {
     );
   };
 
-  // Filtrar productos de categorías Extras según la regla de venta cruzada
+  // Filtrar productos de sugerencias/complementos según la modalidad (Renta vs Venta floral estándar)
   const productosComplementos = React.useMemo(() => {
     if (!producto || producto.esComplemento || producto.esExtra) return [];
 
     const catalogo = productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY;
+
+    // REGLA ESTRICTA: Para la modalidad de renta, ÚNICAMENTE sugerir otros artículos de renta, NADA de extras.
+    if (esProductoRenta) {
+      return catalogo.filter((p) => {
+        // Excluir el mismo producto que se está visualizando
+        if (
+          p.id === producto.id ||
+          (producto.proIdUuid && p.proIdUuid === producto.proIdUuid) ||
+          (producto.slug && p.slug === producto.slug)
+        ) {
+          return false;
+        }
+
+        // Cero extras ni complementos florales (sin cintas, chocolates, peluches, etc.)
+        if (p.esExtra || p.esComplemento) return false;
+        const catPrincipal = (p.categoriaPrincipal || '').toLowerCase();
+        const catNombre = (p.categoriaNombre || '').toLowerCase();
+        if (catPrincipal.includes('extra') || catNombre.includes('extra')) return false;
+
+        // Únicamente productos en modalidad Renta
+        const esRentaItem = Boolean(
+          p.esRenta === true ||
+          p.tipoOferta?.toUpperCase().includes('RENTA') ||
+          p.tipoOferta?.toUpperCase().includes('ALQUILER') ||
+          (p.etiquetas || []).some(
+            (e: string) => e.toLowerCase().includes('renta') || e.toLowerCase().includes('alquiler')
+          )
+        );
+
+        return esRentaItem;
+      });
+    }
+
+    // Modalidad venta floral estándar:
     const extras = catalogo.filter((p) => {
+      // Excluir artículos de renta del listado de extras florales
+      const esRentaItem = Boolean(
+        p.esRenta === true ||
+        p.tipoOferta?.toUpperCase().includes('RENTA') ||
+        p.tipoOferta?.toUpperCase().includes('ALQUILER')
+      );
+      if (esRentaItem) return false;
+
       const catPrincipal = (p.categoriaPrincipal || '').toLowerCase();
       const catNombre = (p.categoriaNombre || '').toLowerCase();
       return (
@@ -182,7 +233,7 @@ export function ModalDetalleProducto() {
       // Resto de productos: presenta Extras con uso DIFERENTE de "Condolencias"
       return extras.filter((extra) => !tieneUsoCondolencias(extra));
     }
-  }, [producto, esProductoCondolencias, productos]);
+  }, [producto, esProductoRenta, esProductoCondolencias, productos]);
 
   const toggleComplemento = (id: string) => {
     setComplementosSeleccionados((prev) =>
@@ -1720,101 +1771,107 @@ export function ModalDetalleProducto() {
               </div>
             )}
 
-            {/* Tarjeta de Dedicatoria Personalizada Opcional */}
-            <div className="bloque-dedicatoria-modal">
-              <div className="encabezado-dedicatoria-toggle">
-                <label className="etiqueta-check-dedicatoria">
-                  <input
-                    type="checkbox"
-                    checked={incluirDedicatoria}
-                    onChange={(e) => setIncluirDedicatoria(e.target.checked)}
-                  />
-                  <span>1. Agregar Tarjeta de Dedicatoria Impresa (Gratis)</span>
-                </label>
-              </div>
-
-              {incluirDedicatoria && (
-                <div className="formulario-dedicatoria-campos">
-                  <div className="fila-de-para">
+            {/* Tarjeta de Dedicatoria Personalizada Opcional (solo para productos físicos / florales, nunca en renta de mobiliario) */}
+            {!esProductoRenta && (
+              <div className="bloque-dedicatoria-modal">
+                <div className="encabezado-dedicatoria-toggle">
+                  <label className="etiqueta-check-dedicatoria">
                     <input
-                      type="text"
-                      placeholder="Para: (ej. Mi amor, Mamá, Dra. Sofia)"
-                      value={dedicatoria.para}
-                      onChange={(e) => setDedicatoria({ ...dedicatoria, para: e.target.value })}
-                      className="input-dedicatoria"
+                      type="checkbox"
+                      checked={incluirDedicatoria}
+                      onChange={(e) => setIncluirDedicatoria(e.target.checked)}
                     />
-                    <input
-                      type="text"
-                      placeholder="De: (ej. Carlos, Tu admirador)"
-                      value={dedicatoria.de}
-                      onChange={(e) => setDedicatoria({ ...dedicatoria, de: e.target.value })}
-                      className="input-dedicatoria"
+                    <span>1. Agregar Tarjeta de Dedicatoria Impresa (Gratis)</span>
+                  </label>
+                </div>
+
+                {incluirDedicatoria && (
+                  <div className="formulario-dedicatoria-campos">
+                    <div className="fila-de-para">
+                      <input
+                        type="text"
+                        placeholder="Para: (ej. Mi amor, Mamá, Dra. Sofia)"
+                        value={dedicatoria.para}
+                        onChange={(e) => setDedicatoria({ ...dedicatoria, para: e.target.value })}
+                        className="input-dedicatoria"
+                      />
+                      <input
+                        type="text"
+                        placeholder="De: (ej. Carlos, Tu admirador)"
+                        value={dedicatoria.de}
+                        onChange={(e) => setDedicatoria({ ...dedicatoria, de: e.target.value })}
+                        className="input-dedicatoria"
+                      />
+                    </div>
+
+                    <textarea
+                      rows={3}
+                      placeholder="Escribe el mensaje emotivo que irá impreso en papel verjurado fino..."
+                      value={dedicatoria.mensaje}
+                      onChange={(e) => setDedicatoria({ ...dedicatoria, mensaje: e.target.value })}
+                      className="textarea-dedicatoria"
                     />
-                  </div>
 
-                  <textarea
-                    rows={3}
-                    placeholder="Escribe el mensaje emotivo que irá impreso en papel verjurado fino..."
-                    value={dedicatoria.mensaje}
-                    onChange={(e) => setDedicatoria({ ...dedicatoria, mensaje: e.target.value })}
-                    className="textarea-dedicatoria"
-                  />
-
-                  {/* Sugerencias Rápidas de Frases */}
-                  <div className="asistente-frases-rapidas">
-                    <span className="etiqueta-frases">Inspiración rápida:</span>
-                    <div className="chips-frases">
-                      {FRASES_DEDICATORIAS.amor?.[0] && (
-                        <button
-                          type="button"
-                          onClick={() => aplicarFrase(FRASES_DEDICATORIAS.amor![0]!)}
-                          className="chip-frase"
-                        >
-                          ❤️ Amor
-                        </button>
-                      )}
-                      {FRASES_DEDICATORIAS.cumpleanos?.[0] && (
-                        <button
-                          type="button"
-                          onClick={() => aplicarFrase(FRASES_DEDICATORIAS.cumpleanos![0]!)}
-                          className="chip-frase"
-                        >
-                          🎂 Cumpleaños
-                        </button>
-                      )}
-                      {FRASES_DEDICATORIAS.aniversario?.[0] && (
-                        <button
-                          type="button"
-                          onClick={() => aplicarFrase(FRASES_DEDICATORIAS.aniversario![0]!)}
-                          className="chip-frase"
-                        >
-                          💍 Aniversario
-                        </button>
-                      )}
-                      {FRASES_DEDICATORIAS.condolencias?.[0] && (
-                        <button
-                          type="button"
-                          onClick={() => aplicarFrase(FRASES_DEDICATORIAS.condolencias![0]!)}
-                          className="chip-frase"
-                        >
-                          🕊️ Pésame
-                        </button>
-                      )}
+                    {/* Sugerencias Rápidas de Frases */}
+                    <div className="asistente-frases-rapidas">
+                      <span className="etiqueta-frases">Inspiración rápida:</span>
+                      <div className="chips-frases">
+                        {FRASES_DEDICATORIAS.amor?.[0] && (
+                          <button
+                            type="button"
+                            onClick={() => aplicarFrase(FRASES_DEDICATORIAS.amor![0]!)}
+                            className="chip-frase"
+                          >
+                            ❤️ Amor
+                          </button>
+                        )}
+                        {FRASES_DEDICATORIAS.cumpleanos?.[0] && (
+                          <button
+                            type="button"
+                            onClick={() => aplicarFrase(FRASES_DEDICATORIAS.cumpleanos![0]!)}
+                            className="chip-frase"
+                          >
+                            🎂 Cumpleaños
+                          </button>
+                        )}
+                        {FRASES_DEDICATORIAS.aniversario?.[0] && (
+                          <button
+                            type="button"
+                            onClick={() => aplicarFrase(FRASES_DEDICATORIAS.aniversario![0]!)}
+                            className="chip-frase"
+                          >
+                            💍 Aniversario
+                          </button>
+                        )}
+                        {FRASES_DEDICATORIAS.condolencias?.[0] && (
+                          <button
+                            type="button"
+                            onClick={() => aplicarFrase(FRASES_DEDICATORIAS.condolencias![0]!)}
+                            className="chip-frase"
+                          >
+                            🕊️ Pésame
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
-            {/* Complementos de Cross-Selling */}
+            {/* Complementos / Artículos Sugeridos de Cross-Selling */}
             {!producto.esComplemento && !producto.esExtra && productosComplementos.length > 0 && (
               <div className="bloque-complementos-modal">
                 <div className="encabezado-seccion-complementos">
                   <label className="etiqueta-bloque">
-                    2. ¿Deseas acompañar tu arreglo con algún detalle?
+                    {esProductoRenta
+                      ? '¿Deseas agregar otro mobiliario o artículo en renta para tu evento?'
+                      : '2. ¿Deseas acompañar tu arreglo con algún detalle?'}
                   </label>
                   <span className="subtitulo-seccion-complementos">
-                    Haz clic en cualquier producto para ver su fotografía ampliada y detalles completos antes de agregarlo.
+                    {esProductoRenta
+                      ? 'Complementa tu ambientación con otros elementos disponibles en modalidad de renta temporal (24h). Haz clic para ver fotos y detalles.'
+                      : 'Haz clic en cualquier producto para ver su fotografía ampliada y detalles completos antes de agregarlo.'}
                   </span>
                 </div>
 
@@ -1823,6 +1880,11 @@ export function ModalDetalleProducto() {
                     const seleccionado = complementosSeleccionados.includes(comp.id);
                     const varComp = variantesExtrasElegidas[comp.id] || obtenerVarianteComplemento(comp);
                     if (!varComp) return null;
+                    const esCompRenta = Boolean(
+                      comp.esRenta ||
+                      comp.tipoOferta?.toUpperCase().includes('RENTA') ||
+                      comp.tipoOferta?.toUpperCase().includes('ALQUILER')
+                    );
                     return (
                       <div
                         key={comp.id}
@@ -1851,7 +1913,14 @@ export function ModalDetalleProducto() {
 
                         <div className="info-comp">
                           <strong>{comp.nombre}</strong>
-                          <span className="precio-comp">+${varComp.pvp.toFixed(2)}</span>
+                          <span className="precio-comp">
+                            +${varComp.pvp.toFixed(2)}
+                            {esCompRenta && (
+                              <small style={{ fontSize: '0.72rem', color: '#64748b', display: 'block', fontWeight: 500 }}>
+                                Tarifa evento (24h)
+                              </small>
+                            )}
+                          </span>
                           {varComp.nombre && varComp.nombre !== comp.nombre && (
                             <small className="variante-elegida-tag" title={varComp.nombre}>
                               {varComp.nombre.replace(/Cinta condolencias personalizada/gi, '').trim() || varComp.nombre}
@@ -1876,8 +1945,20 @@ export function ModalDetalleProducto() {
                             e.stopPropagation();
                             toggleComplemento(comp.id);
                           }}
-                          title={seleccionado ? 'Quitar este detalle' : 'Agregar este detalle'}
-                          aria-label={seleccionado ? 'Quitar este detalle' : 'Agregar este detalle'}
+                          title={
+                            seleccionado
+                              ? 'Quitar de la selección'
+                              : esCompRenta
+                              ? 'Agregar este artículo en renta'
+                              : 'Agregar este detalle'
+                          }
+                          aria-label={
+                            seleccionado
+                              ? 'Quitar de la selección'
+                              : esCompRenta
+                              ? 'Agregar este artículo en renta'
+                              : 'Agregar este detalle'
+                          }
                         >
                           {seleccionado ? <Check size={16} /> : <Plus size={16} />}
                         </button>
@@ -2036,14 +2117,19 @@ export function ModalDetalleProducto() {
             <div className="cuerpo-detalle-extra">
               <div className="encabezado-detalle-extra">
                 <span className="categoria-extra-badge">
-                  {extraParaInspeccionar.categoriaNombre || 'Complemento Especial'}
+                  {extraParaInspeccionar.categoriaNombre ||
+                    (extraParaInspeccionar.esRenta ? 'Mobiliario en Renta' : 'Complemento Especial')}
                 </span>
                 <h3 className="titulo-extra-preview">{extraParaInspeccionar.nombre}</h3>
                 <div className="precio-extra-preview">
                   <span>
                     +${(varianteExtraInspeccion?.pvp ?? obtenerVarianteComplemento(extraParaInspeccionar)?.pvp ?? 0).toFixed(2)}
                   </span>
-                  <small>Precio adicional al arreglo principal</small>
+                  <small>
+                    {extraParaInspeccionar.esRenta
+                      ? 'Tarifa de renta por evento (24h)'
+                      : 'Precio adicional al arreglo principal'}
+                  </small>
                 </div>
               </div>
 
@@ -2053,14 +2139,18 @@ export function ModalDetalleProducto() {
                   {extraParaInspeccionar.descripcionLarga ||
                     extraParaInspeccionar.descripcionCorta ||
                     varianteExtraInspeccion?.detalle ||
-                    'Complemento botánico exclusivo para enriquecer la presentación y significado de tu arreglo.'}
+                    (extraParaInspeccionar.esRenta
+                      ? 'Mobiliario y ambientación en calidad de renta temporal para eventos sociales y corporativos.'
+                      : 'Complemento botánico exclusivo para enriquecer la presentación y significado de tu arreglo.')}
                 </p>
               </div>
 
-              {/* Variantes / Opciones si tiene más de 1 (ej. Colores de Cinta) */}
+              {/* Variantes / Opciones si tiene más de 1 (ej. Colores de Cinta o Medidas) */}
               {extraParaInspeccionar.variantes.length > 1 && (
                 <div className="seccion-variantes-extra">
-                  <span className="etiqueta-variantes-extra">Selecciona el modelo / presentación:</span>
+                  <span className="etiqueta-variantes-extra">
+                    {extraParaInspeccionar.esRenta ? 'Selecciona la dimensión / modelo:' : 'Selecciona el modelo / presentación:'}
+                  </span>
                   <div className="grid-opciones-variantes-extra">
                     {extraParaInspeccionar.variantes.map((v) => {
                       const seleccionada = varianteExtraInspeccion?.sku === v.sku;
@@ -2080,15 +2170,23 @@ export function ModalDetalleProducto() {
                 </div>
               )}
 
-              {/* Beneficios / Garantías del Extra */}
+              {/* Beneficios / Garantías del Extra o Renta */}
               <div className="badges-beneficios-extra">
                 <div className="beneficio-extra-item">
                   <Sparkles size={14} />
-                  <span>Elaborado y colocado cuidadosamente en taller por floristas</span>
+                  <span>
+                    {extraParaInspeccionar.esRenta
+                      ? 'Mobiliario de alta resistencia y acabado estético premium para eventos'
+                      : 'Elaborado y colocado cuidadosamente en taller por floristas'}
+                  </span>
                 </div>
                 <div className="beneficio-extra-item">
                   <Truck size={14} />
-                  <span>Se despacha e integra directamente en el viaje de tu arreglo</span>
+                  <span>
+                    {extraParaInspeccionar.esRenta
+                      ? 'Coordinamos entrega oportuna y retiro al finalizar la celebración (24h)'
+                      : 'Se despacha e integra directamente en el viaje de tu arreglo'}
+                  </span>
                 </div>
               </div>
 
@@ -2129,7 +2227,11 @@ export function ModalDetalleProducto() {
                         onClick={() => confirmarQuitarExtraDesdeInspeccion(extraParaInspeccionar)}
                       >
                         <Check size={16} />
-                        <span>✓ Extra Agregado — Quitar de mi Pedido</span>
+                        <span>
+                          {extraParaInspeccionar.esRenta
+                            ? '✓ En Renta Agregado — Quitar de la orden'
+                            : '✓ Extra Agregado — Quitar de mi Pedido'}
+                        </span>
                       </button>
                     ) : (
                       <button
@@ -2139,7 +2241,9 @@ export function ModalDetalleProducto() {
                       >
                         <Plus size={16} />
                         <span>
-                          Agregar este Detalle (+${(varianteExtraInspeccion?.pvp ?? obtenerVarianteComplemento(extraParaInspeccionar)?.pvp ?? 0).toFixed(2)})
+                          {extraParaInspeccionar.esRenta
+                            ? `Agregar en Renta (+${(varianteExtraInspeccion?.pvp ?? obtenerVarianteComplemento(extraParaInspeccionar)?.pvp ?? 0).toFixed(2)})`
+                            : `Agregar este Detalle (+${(varianteExtraInspeccion?.pvp ?? obtenerVarianteComplemento(extraParaInspeccionar)?.pvp ?? 0).toFixed(2)})`}
                         </span>
                       </button>
                     )}
@@ -2148,7 +2252,7 @@ export function ModalDetalleProducto() {
                       className="btn-volver-arreglo"
                       onClick={cerrarInspeccionExtra}
                     >
-                      Volver a la selección de flores
+                      {extraParaInspeccionar.esRenta ? 'Volver al producto' : 'Volver a la selección de flores'}
                     </button>
                   </>
                 )}
