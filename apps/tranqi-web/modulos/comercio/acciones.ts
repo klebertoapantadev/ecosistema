@@ -2,6 +2,7 @@
 
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import { revalidatePath } from "next/cache";
+import { fechaRenovacionSuscripcion, periodoDerecho } from "@eco/comercio/periodo-derecho";
 
 export interface CategoriaCatalogo {
   ctg_id: string;
@@ -3543,21 +3544,22 @@ export async function obtenerCoberturaUsuarioAction(
           const varDetalle = sub.com_variante?.var_detalle_variante || {};
           const derechosDef: any[] = varDetalle.derechos || [];
 
-          const primerDiaMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
+          // Cada derecho se mide en su periodo: el año desde la compra si es
+          // ANUAL, el mes calendario si no (TRQ-022, igual que la base).
           const { data: consumos } = await clienteActivo
             .schema("comun_comercio")
             .from("com_derecho_consumo")
-            .select("*")
+            .select("der_concepto, der_periodo, der_consumidos")
             .eq("der_suscripcion_id", sub.sub_id)
-            .eq("der_periodo", primerDiaMes);
+            .is("der_eliminado_en", null);
 
           const mapaConsumos = new Map<string, number>();
           consumos?.forEach((c: any) => {
-            mapaConsumos.set(c.der_concepto, c.der_consumidos || 0);
+            mapaConsumos.set(`${c.der_concepto}|${c.der_periodo}`, c.der_consumidos || 0);
           });
 
           const derechos: DerechoCobertura[] = derechosDef.map((d: any) => {
-            const consumidos = mapaConsumos.get(d.concepto) || 0;
+            const consumidos = mapaConsumos.get(`${d.concepto}|${periodoDerecho(sub, d)}`) || 0;
             const restantes = d.incluidos !== null && d.incluidos !== undefined
               ? Math.max(0, d.incluidos - consumidos)
               : null;
@@ -3571,8 +3573,7 @@ export async function obtenerCoberturaUsuarioAction(
             };
           });
 
-          const fechaRenovacion = new Date();
-          fechaRenovacion.setMonth(fechaRenovacion.getMonth() + 1);
+          const fechaRenovacion = fechaRenovacionSuscripcion(sub);
 
           return {
             tienePlanActivo: true,
@@ -3581,7 +3582,7 @@ export async function obtenerCoberturaUsuarioAction(
             planSku: sub.com_variante?.var_sku || "TRQ-PLAN",
             frecuencia: sub.sub_frecuencia || "MENSUAL",
             estado: sub.sub_estado,
-            fechaRenovacion: fechaRenovacion.toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric" }),
+            fechaRenovacion: fechaRenovacion.toLocaleDateString("es-EC", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Guayaquil" }),
             miembrosCubiertos: varDetalle.miembros_cubiertos || 4,
             derechos,
           };
@@ -3729,8 +3730,10 @@ export async function activarSuscripcionTrasPagoAction(datos: {
     porcentaje: d.porcentaje,
   }));
 
-  const fechaRenovacion = new Date();
-  fechaRenovacion.setDate(fechaRenovacion.getDate() + 30);
+  const fechaRenovacion = fechaRenovacionSuscripcion({
+    sub_creado_en: new Date().toISOString(),
+    sub_frecuencia: varianteEncontrada?.var_frecuencia_recurrencia || "MENSUAL",
+  });
 
   const nuevaCobertura: EstadoCoberturaCliente = {
     tienePlanActivo: true,

@@ -19,8 +19,8 @@ Pantalla de inicio del cliente en el panel web (`/panel`, función `PanelCliente
 | `vigencia.ts` | Cálculo puro de vigencia de un documento; probado en `vigencia.test.ts` |
 | `componentes/CifraQueCuenta.tsx` | Cifra que sube desde cero al entrar en pantalla (variante 10A) |
 | `componentes/TarjetaCaso.tsx` | Etapas del caso (6B) y detalle en pestañas deslizantes (4A) |
-| `componentes/RejillaPlanes.tsx` | Planes y servicios: carrusel de destacados (foto de fondo, degradado lateral, modalidades del plan) y rejilla de trámites con foto y filtro. El resumen con IVA lo muestra el checkout |
-| `componentes/AvisoLegalDiscreto.tsx` | Aviso discreto de las campañas informativas en el inicio del panel; sustituye a la banda de `BannerInformativoSuperior` |
+| `componentes/RejillaPlanes.tsx` | Planes y servicios: carrusel con una diapositiva y un tono por modalidad del plan (foto de fondo, degradado lateral) y rejilla de trámites con foto y filtro. El resumen con IVA lo muestra el checkout |
+| `componentes/AvisoLegalDiscreto.tsx` | Aviso discreto de las campañas informativas en el inicio del panel; sustituye a la banda de `BannerInformativoSuperior`. Sin rotación: un aviso a la vez |
 | `componentes/BilleteraVacia.tsx` | Estado vacío de la billetera con la carpeta animada (10E) |
 
 No hay `acciones.ts`: el módulo solo lee. El pago lo hace `ModalCheckoutPayphone` de

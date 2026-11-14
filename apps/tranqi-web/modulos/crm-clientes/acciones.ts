@@ -2,6 +2,7 @@
 
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import { revalidatePath } from "next/cache";
+import { periodoDerecho } from "@eco/comercio/periodo-derecho";
 
 // ==============================================================================
 // 1. VALIDADORES ALGORÍTMICOS ECUATORIANOS
@@ -977,7 +978,7 @@ export async function verificarDuplicado(
       const { data: subs } = await supabase
         .schema("comun_comercio")
         .from("com_suscripcion")
-        .select("sub_id, sub_estado, sub_frecuencia, sub_monto_periodo, sub_proximo_cobro_en, com_variante(var_nombre, var_sku, var_detalle_variante)")
+        .select("sub_id, sub_estado, sub_frecuencia, sub_monto_periodo, sub_proximo_cobro_en, sub_creado_en, com_variante(var_nombre, var_sku, var_detalle_variante)")
         .eq("sub_cliente_id", userIdParaPlan)
         .eq("sub_negocio", negocio)
         .eq("sub_estado", "ACTIVA")
@@ -995,18 +996,27 @@ export async function verificarDuplicado(
         // Obtener saldo de derechos de consumo disponibles
         let consultasDisponibles: number | null = null;
         try {
-          const primerDiaMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
+          // Periodo del cupo: anual desde la compra o mes calendario (TRQ-022).
+          const derechoConsulta = (variante.var_detalle_variante?.derechos || []).find(
+            (d: { concepto?: string; incluidos?: number | null }) => d?.concepto === "CONSULTA_TELEMATICA",
+          );
+          const periodo = periodoDerecho(sub, derechoConsulta);
           const { data: der } = await supabase
             .schema("comun_comercio")
             .from("com_derecho_consumo")
             .select("der_incluidos, der_consumidos")
             .eq("der_suscripcion_id", sub.sub_id)
             .eq("der_concepto", "CONSULTA_TELEMATICA")
-            .eq("der_periodo", primerDiaMes)
+            .eq("der_periodo", periodo)
+            .is("der_eliminado_en", null)
             .maybeSingle();
 
           if (der) {
             consultasDisponibles = der.der_incluidos !== null ? Math.max(0, der.der_incluidos - der.der_consumidos) : null;
+          } else if (derechoConsulta) {
+            // La fila de consumo nace con la primera consulta del periodo:
+            // sin fila, el cupo está entero.
+            consultasDisponibles = derechoConsulta.incluidos ?? null;
           }
         } catch {
           // Ignorar fallback
