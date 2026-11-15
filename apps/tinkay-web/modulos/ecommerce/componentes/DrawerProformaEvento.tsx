@@ -12,6 +12,10 @@ import {
   PAISES_TELEFONO,
   PAIS_TELEFONO_DEFECTO,
 } from '@eco/identidad/paises';
+import {
+  codigosNegocio,
+  proyectarPerfilPorNegocio,
+} from '@eco/identidad/negocio';
 import { crearClienteNavegador } from '@eco/supabase/cliente';
 import { useCarrito } from '../contexto-carrito';
 import { PRODUCTOS_TINKAY } from '../datos-catalogo';
@@ -94,14 +98,30 @@ export function DrawerProformaEvento() {
         setCorreo(data.user.email);
       }
 
-      const { data: perfil } = await supabase
-        .schema('comun_seguridad')
-        .from('seg_usuario')
-        .select('usu_nombres, usu_apellidos, usu_cedula, usu_whatsapp, usu_autorizacion_whatsapp')
-        .eq('usu_id', data.user.id)
-        .maybeSingle();
+      const [{ data: perfilRaw }, { data: memTinkay }] = await Promise.all([
+        supabase
+          .schema('comun_seguridad')
+          .from('seg_usuario')
+          .select(
+            'usu_nombres, usu_apellidos, usu_cedula, usu_whatsapp, usu_autorizacion_whatsapp, usu_superadmin_plataforma, usu_detalle_usuario'
+          )
+          .eq('usu_id', data.user.id)
+          .maybeSingle(),
+        supabase
+          .schema('comun_seguridad')
+          .from('seg_membresia')
+          .select('mem_id')
+          .eq('mem_usuario_id', data.user.id)
+          .in('mem_negocio', codigosNegocio('tinkay'))
+          .eq('mem_estado', 'ACTIVO')
+          .limit(1)
+          .maybeSingle(),
+      ]);
 
-      if (cancelado || !perfil) return;
+      if (cancelado || !perfilRaw || !memTinkay) return;
+      const perfil = proyectarPerfilPorNegocio(perfilRaw, 'tinkay', Boolean(memTinkay));
+      if (!perfil) return;
+
       const nom = [perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(' ').trim();
       if (nom) setNombreCompleto((prev) => prev || nom);
       if (perfil.usu_cedula) setIdentificacion((prev) => prev || String(perfil.usu_cedula));

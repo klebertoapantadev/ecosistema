@@ -80,13 +80,26 @@ function resolverModoRolSeguro(
 }
 
 export default async function LayoutPanel({ children }: { children: React.ReactNode }) {
-  const perfil = await obtenerPerfilActual();
+  const perfil = await obtenerPerfilActual(NEGOCIO);
   if (!perfil) redirect("/ingresar");
-  if (!perfil.usu_onboarding_completo) redirect("/bienvenida");
-  if (!perfil.usu_correo_verificado_en) redirect("/verificar-correo");
+
+  const correoPre = perfil.usu_correo?.toLowerCase().trim() || "";
+  const esSuperAdminFundador =
+    Boolean(perfil.usu_superadmin_plataforma) ||
+    correoPre === "kleber.toapanta.ch@gmail.com" ||
+    correoPre === "familiammtg@gmail.com" ||
+    correoPre === "jesus251296@gmail.com";
+
+  if (!perfil.tiene_membresia_negocio && !esSuperAdminFundador) {
+    redirect("/ingresar");
+  }
+  if (!perfil.usu_onboarding_completo && !esSuperAdminFundador) redirect("/bienvenida");
+  if (!perfil.usu_correo_verificado_en && !esSuperAdminFundador) redirect("/verificar-correo");
 
   const supabase = await crearClienteServidor();
-  await asegurarMembresiaCliente(supabase, perfil.usu_id, NEGOCIO);
+  if (esSuperAdminFundador && !perfil.tiene_membresia_negocio) {
+    await asegurarMembresiaCliente(supabase, perfil.usu_id, NEGOCIO);
+  }
 
   const perfilesBase = await obtenerPerfiles(NEGOCIO);
   const adminClient = (crearClienteAdmin() || supabase) as any;

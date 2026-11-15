@@ -10,11 +10,18 @@ import { ModalTerminosWhatsapp } from "./ModalTerminosWhatsapp";
 interface Props {
   nombresIniciales: string;
   apellidosIniciales: string;
+  negocio?: string;
   intencion?: string;
   destinoFinal?: string;
 }
 
-export function FormularioBienvenida({ nombresIniciales, apellidosIniciales, intencion = "", destinoFinal = "" }: Props) {
+export function FormularioBienvenida({
+  nombresIniciales,
+  apellidosIniciales,
+  negocio = "tranqi",
+  intencion = "",
+  destinoFinal = "",
+}: Props) {
   const router = useRouter();
   const [nombres, setNombres] = useState(nombresIniciales);
   const [apellidos, setApellidos] = useState(apellidosIniciales);
@@ -65,7 +72,7 @@ export function FormularioBienvenida({ nombresIniciales, apellidosIniciales, int
     }
 
     setCargando(true);
-    const resultado = await completarBienvenida({ nombres, apellidos, autorizaWhatsapp, whatsapp });
+    const resultado = await completarBienvenida({ nombres, apellidos, autorizaWhatsapp, whatsapp }, negocio);
     setCargando(false);
     if (!resultado.ok) {
       setError(resultado.error);

@@ -71,3 +71,14 @@ export type { VariableDinamicaDef } from "./componentes/BarraVariablesDinamicas"
 export { ModalTerminosWhatsapp } from "./componentes/ModalTerminosWhatsapp";
 export { PAISES_TELEFONO, PAIS_TELEFONO_DEFECTO } from "./paises";
 export type { PaisTelefono } from "./paises";
+export {
+  claveNegocioCanonica,
+  codigosNegocio,
+  perteneceAlNegocio,
+  nombreVisibleNegocio,
+  codigoNotificacionNegocio,
+  obtenerRegistroNegocioDetalle,
+  resolverOnboardingNegocio,
+  proyectarPerfilPorNegocio,
+} from "./negocio";
+export type { NegocioCanonico, RegistroPerfilNegocio } from "./negocio";

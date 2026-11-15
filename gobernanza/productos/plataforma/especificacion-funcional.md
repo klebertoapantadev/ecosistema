@@ -19,7 +19,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 
 | Código | Funcionalidad / Requerimiento | Estado | Avance (%) | Responsable Asignado |
 | :--- | :--- | :---: | :---: | :--- |
-| **`PLT-001`** | Identidad Única, Registro con WhatsApp + Consentimiento LOPDP y Auth | ✅ Implementado | **90%** | Kleber Toapanta |
+| **`PLT-001`** | Identidad Base con Registro, Login, Consentimiento y Perfil 100% Aislados por Negocio | ✅ Implementado | **94%** | Kleber Toapanta |
 | **`PLT-002`** | Autenticación Multifactor (MFA TOTP) & Expiración por Inactividad | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-003`** | Membresías, Jerarquía & Active Role Switcher | ✅ Implementado | **100%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-004`** | **Buddie Conversacional (Chat IA ARIA & OCR Multimodal)** | 🟡 En Desarrollo | **85%** | **Kleber Toapanta / Jesus Navarrete** |
@@ -65,11 +65,12 @@ Un usuario posee una **única identidad base** en todo el ecosistema (`comun_seg
    - Se preserva el parámetro `destino` a lo largo de `/registro`, `/verificar-correo`, callback OAuth y `/bienvenida` (ej. `/?proforma=abierta`), retornando al comprador exactamente al punto comercial donde inició su flujo.
    - Sobre `comun_seguridad.seg_usuario` rige `REVOKE UPDATE` de tabla completa y `GRANT UPDATE` exclusivo por columnas no privilegiadas (`usu_nombres`, `usu_apellidos`, `usu_telefono_codigo_pais`, `usu_telefono_numero`, `usu_autoriza_whatsapp`, `usu_consentimiento_whatsapp_en`, `usu_avatar_url`, `usu_terminos_version`, `usu_terminos_aceptados_en`).
 4. **Información Transparente de Ubicación y Alcance Local:** En la pantalla de registro u onboarding de cada producto se expone de forma clara la información de presencia local en Ecuador y el alcance de atención (gestionados a través de `PLT-008`).
-5. **Registro e Identidad Independiente por Negocio (`comun_seguridad.seg_membresia`):**
-   - Aunque la cuenta base exista en el ecosistema, la suscripción a cada negocio crea un registro de membresía **100% independiente** que contiene:
-     - `mem_fecha_registro`: Fecha y hora exacta de incorporación a dicho negocio.
-     - `mem_estado`: Estado operativo de la membresía en ese producto (`ACTIVO`, `PENDIENTE`, `SUSPENDIDO`, `INACTIVO`).
-     - Credencial / PIN específico si la aplicación lo requiere.
+5. **Registro, Login, Perfil y Consentimientos 100% Aislados por Negocio (`comun_seguridad.seg_membresia` + `registros_negocio`):**
+   - Cada negocio del ecosistema opera comercial y visualmente como una empresa **100% independiente** frente al cliente final y a sus administradores locales:
+     - **Gating estricto de inicio de sesión (`/ingresar` y `/panel`):** Un usuario registrado únicamente en un negocio (ej. `tranqi`) **no puede iniciar sesión ni ingresar al panel** de otro negocio (ej. `tinkay`) donde no tenga `seg_membresia` activa (`ACTIVO`). El sistema rechaza el ingreso e invita a registrarse en dicho negocio (única excepción: fundadores globales con `usu_superadmin_plataforma = true`). Queda prohibido el auto-enrolamiento silencioso al visitar `/panel`.
+     - **Re-registro independiente con el mismo correo:** Si una persona ya tiene credencial en `auth.users` por otro negocio y completa `/registro` o Google OAuth en un nuevo negocio, el sistema valida su credencial (o enlaza OAuth) y crea su registro independiente en `seg_membresia` + `seg_usuario.usu_detalle_usuario.registros_negocio[negocio]` (con nombres, apellidos, WhatsApp, `autorizacion_whatsapp`, `onboarding_completo` y `seg_usuario_consentimiento` propios de ese negocio, sin sobrescribir los datos de otros negocios ni fallar con *"User already registered"*).
+     - **Onboarding OAuth por negocio (`/bienvenida`):** Todo ingreso vía Google OAuth a un negocio donde `registros_negocio[negocio].onboarding_completo` no esté completado redirige a `/bienvenida` para confirmar nombres, WhatsApp y consentimiento LOPDP específico de ese negocio.
+     - **Aislamiento de notificaciones, convenios y directorio de usuarios:** Las alertas de nuevo usuario (`notificarNuevoUsuarioRegistrado`) y la auto-afiliación por dominio corporativo (`procesarAutoafiliacionYBienvenidaConvenio`) consultan y notifican **exclusivamente** al staff activo (`OPERADOR`, `ADMINISTRADOR`, `SUPERADMIN`) y convenios del negocio donde ocurrió el registro. El widget `/panel/usuarios` lista únicamente cuentas con `seg_membresia` en ese negocio.
 6. **Autenticación Biométrica y PIN Móvil (Apps Nativas Capacitor):**
    - En las aplicaciones nativas para smartphones (iOS/Android), se habilita el acceso rápido mediante **Biometría (Face ID / Touch ID / Huella Dactilar)** o mediante la **Clave / Patrón de desbloqueo del dispositivo móvil**, permitiendo re-ingresar al negocio sin solicitar la contraseña de Supabase en cada apertura.
 7. **Aceptación de Términos y Widget de Gestión de Consentimientos (`gestion_terminos_consentimientos`):**
@@ -89,7 +90,7 @@ Actualizado en cada PR que toque este requerimiento. `Parcial` significa que exi
 | 1 · Registro Fluido (Google OAuth + Correo) | ✅ Implementado | `packages/identidad` (`FormularioRegistro.tsx`, `FormularioBienvenida.tsx`, preservación de `destino`) |
 | 2 · WhatsApp + Consentimiento LOPDP en Registro y Onboarding | ✅ Implementado | `usu_telefono_codigo_pais`, `usu_telefono_numero`, `usu_autoriza_whatsapp` y `ModalTerminosWhatsapp.tsx` |
 | 3 · Ubicación y Alcance Local | ✅ Implementado | Expuesto en onboarding y footer según catálogo `PLT-008` |
-| 4 · Identidad Base y Membresías Independientes | ✅ Implementado | `comun_seguridad.seg_usuario` y `comun_seguridad.seg_membresia` |
+| 4 · Aislamiento Estricto de Registro, Login, Perfil y Notificaciones por Negocio | ✅ Implementado | `packages/identidad/src/negocio.ts`, `seg_membresia`, `registros_negocio[negocio]`, `seg_usuario_consentimiento` y gating en `iniciarSesion` / `LayoutPanel` |
 | 5 · Biometría (Face ID / Touch ID) y PIN Móvil | ⏳ Pendiente | Plugin `@capacitor-community/biometrics` en apps nativas Capacitor |
 | 6.a · Términos Globales del Ecosistema | ✅ Implementado | Checkbox obligatorio en correo, auto-registro en Google OAuth (`usu_terminos_version`) |
 | 6.b · Términos Específicos del Negocio en Markdown | 🟡 Parcial | El texto en `/terminos` es estático; falta renderizarlo dinámicamente desde Markdown (`PLT-008`) |
@@ -407,7 +408,7 @@ Proporciona una consola de configuración para que el Administrador de cada nego
    - **Ubicación en Google Maps:** Coordenadas GPS (latitud, longitud) y/o URL embebida de Google Maps para navegación.
    - **Fotografía del Local (Opcional):** Imagen representativa de la fachada u oficina para brindar confianza visual al cliente.
    - **Indicador de Sede Principal:** Un local debe marcarse como Matriz/Sede Principal.
-6. **Servidor de Correo Saliente (SMTP) propio del negocio** — widget `configuracion_correo`, **exclusivo del `SUPERADMIN` de plataforma**:
+6. **Servidor de Correo Saliente (SMTP) propio del negocio** — widget `configuracion_correo`, **exclusivo del `SUPERADMIN` de plataforma o `SUPERADMIN` del propio negocio (`seg_fn_es_superadmin_negocio`)**:
    - **Por qué no lo gestiona el `ADMINISTRADOR` del negocio:** quien controla el SMTP puede enviar correo *en nombre* del negocio —códigos de verificación, enlaces de restablecimiento— a cualquier dirección. Es una capacidad de suplantación, no un ajuste de ficha, y por eso no se equipara al resto de `PLT-008`. El widget se registra sin asignaciones en `seg_rol_widget`, lo que por construcción lo reserva a superadmin, y el estrechamiento se aplica además en la política RLS y en los RPC — ocultar el widget por sí solo no cerraría la puerta.
    - Se configura desde la consola el servidor por el que sale el correo transaccional del negocio: **servidor (host), puerto, tipo de cifrado (TLS implícito o STARTTLS), usuario, contraseña y nombre del remitente**. No son variables de despliegue: cambiar de buzón no debe requerir intervención técnica ni un nuevo despliegue.
    - **La contraseña se guarda cifrada en Supabase Vault y no vuelve a mostrarse a nadie**, ni siquiera al Administrador que la escribió. La pantalla solo indica si existe; dejar el campo vacío conserva la guardada, y hay una acción explícita y separada para eliminarla. Ver [`ADR-0005`](../../arquitectura/adr/0005-smtp-por-negocio.md).
@@ -871,9 +872,10 @@ Todo usuario registrado puede solicitar, por auto-servicio y sin intervención d
 
 ### Reglas de Negocio
 1. **Auto-servicio, sin ticket de soporte:** la opción "Eliminar mi cuenta" vive en el panel del usuario (`/panel/cuenta`), accesible en cualquier momento, con un paso de confirmación explícito (no un solo clic) por ser una acción irreversible.
-2. **Decisión según historial transaccional (regla central):**
-   - **Sin compras ni transacciones registradas:** la cuenta y todos sus datos personales se eliminan de forma **permanente e inmediata** (hard delete) — incluye `auth.users`, `seg_usuario` y `seg_membresia` en cascada.
-   - **Con compras o transacciones registradas:** el hard delete **no procede**. El sistema debe **anonimizar** los datos personales identificables (nombre, correo, WhatsApp) y conservar únicamente lo exigido por la normativa contable/tributaria del SRI, desvinculado de la identidad real del usuario.
+2. **Aislamiento por Negocio y Decisión según Historial Transaccional (`seg_fn_eliminar_cuenta_negocio`):**
+   - **Baja aislada por negocio cuando existen otros negocios activos:** si el usuario posee membresías activas en otros negocios del ecosistema, solicitar la baja en el negocio actual elimina únicamente su membresía (`seg_membresia`), su perfil local (`registros_negocio[negocio]`), sus consentimientos e historial de accesos de ese negocio, preservando intactas sus cuentas independientes en los demás negocios.
+   - **Sin compras ni transacciones registradas (único negocio):** cuando no conserva membresías en ningún otro negocio ni historial transaccional, la cuenta y todos sus datos personales se eliminan de forma **permanente e inmediata** (hard delete) — incluye `auth.users`, `seg_usuario` y `seg_membresia` en cascada.
+   - **Con compras o transacciones registradas (único negocio):** el hard delete **no procede**. El sistema debe **anonimizar** los datos personales identificables (nombre, correo, WhatsApp) y conservar únicamente lo exigido por la normativa contable/tributaria del SRI, desvinculado de la identidad real del usuario.
 3. **Fallar cerrado, no silenciosamente mal:** el sistema consulta el historial transaccional real del usuario en `comun_comercio` (`com_transaccion_pago` aprobada o `com_suscripcion` activa) y, si existe, **anonimiza en vez de borrar**, conservando el vínculo contable exigido por el SRI. Nunca ejecuta un hard delete "optimista" que asuma que no hay historial, ni deja que el borrado se lleve por delante la billetera del usuario. Ver nota de diseño en la implementación técnica.
 4. **Sin retención oculta más allá de lo legal:** ninguna otra tabla o proceso puede quedarse con datos personales identificables de un usuario dado de baja fuera de lo que esta regla permite conservar.
 
@@ -1116,7 +1118,7 @@ Todo usuario registrado puede ver sus últimos accesos (dispositivo/navegador ap
 1. **Registro automático en cada inicio de sesión:** cualquier login exitoso (correo/contraseña, confirmación de registro con sesión inmediata, o Google OAuth) e **intentos fallidos de autenticación** (contraseña errónea, OTP vencido o cuenta bloqueada) registran automáticamente una fila con fecha/hora, IP, User-Agent, dispositivo y el estado/motivo del intento.
 2. **Visibilidad y Controles del Administrador:** un usuario regular (`CLIENTE`) únicamente puede ver su propio historial de accesos. El `ADMINISTRADOR` de negocio posee una vista consolidada en la consola administrativa para supervisar el historial de **intentos fallidos, logins exitosos, sesiones activas y dispositivos vinculados** de los miembros del negocio para auditoría de seguridad.
 3. **Saludo por antigüedad del acceso anterior:** el panel saluda distinto según el tiempo transcurrido desde el penúltimo acceso (mismo día, última semana, último mes, más de un mes) — el primer acceso de una cuenta nueva no dispara un saludo especial (lo cubre la pantalla de bienvenida, `PLT-001` regla 2).
-4. **Común a los 4 negocios:** al ser parte de la identidad única del ecosistema, el historial es uno solo por usuario, no uno por negocio en el que tenga membresía.
+4. **Aislado por negocio:** cada inicio de sesión registra el código canónico del negocio en `acc_detalle_acceso.negocio`, y tanto `/panel/cuenta` como el saludo personalizado consultan exclusivamente los accesos de ese negocio para no exponer actividad de otras empresas del ecosistema.
 
 ### Criterios de Aceptación (Gherkin)
 * **Escenario:** Saludo distinto en un reingreso el mismo día

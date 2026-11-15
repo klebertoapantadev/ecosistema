@@ -10,7 +10,7 @@ interface PageProps {
 }
 
 export default async function PaginaBienvenida({ searchParams }: PageProps) {
-  const perfil = await obtenerPerfilActual();
+  const perfil = await obtenerPerfilActual("tranqi");
   if (!perfil) redirect("/ingresar");
 
   const resolvedParams = await searchParams;
@@ -55,6 +55,7 @@ export default async function PaginaBienvenida({ searchParams }: PageProps) {
         <FormularioBienvenida
           nombresIniciales={perfil.usu_nombres ?? ""}
           apellidosIniciales={perfil.usu_apellidos ?? ""}
+          negocio="tranqi"
           intencion={intencion}
           destinoFinal={destinoFinal}
         />

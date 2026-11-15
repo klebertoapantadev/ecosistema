@@ -5,7 +5,7 @@ import { obtenerPerfilActual, VerificacionCorreo } from "@eco/identidad";
 export const metadata: Metadata = { title: "Verificar correo — tinkay" };
 
 export default async function PaginaVerificarCorreo() {
-  const perfil = await obtenerPerfilActual();
+  const perfil = await obtenerPerfilActual("tinkay");
   if (!perfil) redirect("/ingresar");
   if (perfil.usu_correo_verificado_en) redirect("/panel");
 

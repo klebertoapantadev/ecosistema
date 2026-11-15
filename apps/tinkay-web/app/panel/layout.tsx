@@ -106,17 +106,8 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel & { soloAdmin?: boolean }> 
 ];
 
 export default async function LayoutPanel({ children }: { children: React.ReactNode }) {
-  const perfil = await obtenerPerfilActual();
+  const perfil = await obtenerPerfilActual(NEGOCIO);
   if (!perfil) redirect("/ingresar");
-  // PLT-001 regla 2: confirmar identidad + WhatsApp antes de usar el panel.
-  if (!perfil.usu_onboarding_completo) redirect("/bienvenida");
-  // Registro por correo/contraseña exige verificar el OTP enviado -- Google
-  // OAuth ya llega verificado (ver seg_fn_provisionar_usuario()).
-  if (!perfil.usu_correo_verificado_en) redirect("/verificar-correo");
-
-  // Auto-reparación de membresía si fue interrumpida
-  const supabase = await crearClienteServidor();
-  await asegurarMembresiaCliente(supabase, perfil.usu_id, NEGOCIO);
 
   const correo = perfil.usu_correo?.toLowerCase().trim() || "";
   const esSuperAdminEmail =
@@ -125,6 +116,21 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
     correo === "jesus251296@gmail.com" ||
     correo === "tinkay.uio@gmail.com";
   const esSuperAdmin = esSuperAdminEmail || Boolean(perfil.usu_superadmin_plataforma);
+
+  // Aislamiento estricto: si la sesión viene de otro negocio sin membresía en Tinkay, exigir ingreso/registro propio
+  if (!perfil.tiene_membresia_negocio && !esSuperAdmin) {
+    redirect("/ingresar");
+  }
+
+  // PLT-001 regla 2: confirmar identidad + WhatsApp en Tinkay antes de usar el panel.
+  if (!perfil.usu_onboarding_completo && !esSuperAdmin) redirect("/bienvenida");
+  // Registro por correo/contraseña exige verificar el OTP enviado
+  if (!perfil.usu_correo_verificado_en && !esSuperAdmin) redirect("/verificar-correo");
+
+  if (esSuperAdmin && !perfil.tiene_membresia_negocio) {
+    const supabase = await crearClienteServidor();
+    await asegurarMembresiaCliente(supabase, perfil.usu_id, NEGOCIO);
+  }
 
   const perfiles = await obtenerPerfiles(NEGOCIO);
   const widgets = await obtenerWidgetsVisibles(perfil.usu_id, esSuperAdmin, NEGOCIO);

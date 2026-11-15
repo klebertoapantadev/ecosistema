@@ -1767,13 +1767,46 @@ export async function generarProformaEventoAction(
 
   if (user?.id) {
     try {
+      const { data: usrActual } = await clienteEscritura
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_whatsapp, usu_detalle_usuario")
+        .eq("usu_id", user.id)
+        .maybeSingle();
+
+      const detallePrev =
+        usrActual?.usu_detalle_usuario && typeof usrActual.usu_detalle_usuario === "object"
+          ? (usrActual.usu_detalle_usuario as Record<string, any>)
+          : {};
+      const mapaReg =
+        detallePrev.registros_negocio && typeof detallePrev.registros_negocio === "object"
+          ? { ...detallePrev.registros_negocio }
+          : {};
+      const ahoraIso = new Date().toISOString();
+
+      mapaReg[negNorm] = {
+        ...(mapaReg[negNorm] || {}),
+        whatsapp: compradorPayload.whatsapp,
+        autoriza_whatsapp: true,
+        actualizado_en: ahoraIso,
+        consentimiento_whatsapp_info: {
+          autorizado: true,
+          finalidad: "CONTACTO_COMERCIAL_PROFORMAS_E_INFORMACION",
+          aceptado_en: ahoraIso,
+          negocio: negNorm,
+        },
+      };
+
       await clienteEscritura
         .schema("comun_seguridad")
         .from("seg_usuario")
         .update({
-          usu_whatsapp: compradorPayload.whatsapp,
-          usu_autorizacion_whatsapp: true,
-          usu_actualizado_en: new Date().toISOString(),
+          ...(usrActual?.usu_whatsapp ? {} : { usu_whatsapp: compradorPayload.whatsapp, usu_autorizacion_whatsapp: true }),
+          usu_detalle_usuario: {
+            ...detallePrev,
+            registros_negocio: mapaReg,
+          },
+          usu_actualizado_en: ahoraIso,
         })
         .eq("usu_id", user.id);
     } catch {

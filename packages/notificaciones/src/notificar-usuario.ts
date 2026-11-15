@@ -1,6 +1,64 @@
 import { crearClienteAdmin, crearClienteServidor } from "@eco/supabase/servidor";
 import { enviarCorreo } from "./enviar-correo";
 
+function resolverMetaNegocioNotif(negocioRaw?: string | null): {
+  canon: string;
+  notifCode: string;
+  nombreVisible: string;
+  codigos: string[];
+  codigosUpper: Set<string>;
+} {
+  const limpio = (negocioRaw || "tranqi").trim().toLowerCase();
+  if (limpio === "tinkay" || limpio === "tnk") {
+    const codigos = ["tinkay", "TINKAY", "tnk", "TNK"];
+    return {
+      canon: "tinkay",
+      notifCode: "TINKAY",
+      nombreVisible: "Tinkay",
+      codigos,
+      codigosUpper: new Set(codigos.map((c) => c.toUpperCase())),
+    };
+  }
+  if (limpio === "fastfix" || limpio === "ffh") {
+    const codigos = ["fastfix", "FASTFIX", "ffh", "FFH"];
+    return {
+      canon: "fastfix",
+      notifCode: "FASTFIX",
+      nombreVisible: "FastFix Home",
+      codigos,
+      codigosUpper: new Set(codigos.map((c) => c.toUpperCase())),
+    };
+  }
+  if (limpio === "margaritas" || limpio === "mrg") {
+    const codigos = ["margaritas", "MARGARITAS", "mrg", "MRG"];
+    return {
+      canon: "margaritas",
+      notifCode: "MARGARITAS",
+      nombreVisible: "Margaritas Floristería",
+      codigos,
+      codigosUpper: new Set(codigos.map((c) => c.toUpperCase())),
+    };
+  }
+  if (limpio === "tranqi" || limpio === "tranq" || limpio === "legal") {
+    const codigos = ["tranqi", "TRANQI", "tranq", "TRANQ", "legal", "LEGAL"];
+    return {
+      canon: "tranqi",
+      notifCode: "TRANQ",
+      nombreVisible: "Tranqi",
+      codigos,
+      codigosUpper: new Set(codigos.map((c) => c.toUpperCase())),
+    };
+  }
+  const codigos = Array.from(new Set([limpio, limpio.toUpperCase()]));
+  return {
+    canon: limpio,
+    notifCode: limpio.toUpperCase(),
+    nombreVisible: negocioRaw?.trim() || "Plataforma",
+    codigos,
+    codigosUpper: new Set(codigos.map((c) => c.toUpperCase())),
+  };
+}
+
 export interface ParametrosNuevoUsuarioNotif {
   usuarioId: string;
   nombres?: string | null;
@@ -46,7 +104,10 @@ export function construirHtmlBienvenidaConvenio(params: {
     excepciones,
     bonoBilletera = 0,
     validoHasta,
+    negocio,
   } = params;
+  const metaNeg = resolverMetaNegocioNotif(negocio);
+  const esTranqi = metaNeg.canon === "tranqi";
 
   const textoFrecuencia =
     frecuenciaConsultas === "MENSUAL"
@@ -99,7 +160,7 @@ export function construirHtmlBienvenidaConvenio(params: {
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>Bienvenido a tu Convenio Corporativo ${empresaNombre} — Tranqi</title>
+  <title>Bienvenido a tu Convenio Corporativo ${empresaNombre} — ${metaNeg.nombreVisible}</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0F172A;">
   <div style="max-width: 600px; margin: 28px auto; background-color: #FFFFFF; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(15, 23, 42, 0.08); border: 1px solid #E2E8F0;">
@@ -110,7 +171,7 @@ export function construirHtmlBienvenidaConvenio(params: {
         Convenio Corporativo Activo · ${empresaNombre}
       </span>
       <h1 style="color: #FFFFFF; margin: 12px 0 4px 0; font-size: 24px; font-weight: 800;">
-        ¡Bienvenido/a a Tranqi, ${nombreColaborador}!
+        ¡Bienvenido/a a ${metaNeg.nombreVisible}, ${nombreColaborador}!
       </h1>
       <p style="color: #E0E7FF; margin: 0; font-size: 14px;">
         Tu cuenta corporativa (<strong>${correoColaborador}</strong>) ha sido vinculada exitosamente.
@@ -120,7 +181,7 @@ export function construirHtmlBienvenidaConvenio(params: {
     <!-- Cuerpo y Resumen de Beneficios -->
     <div style="padding: 28px;">
       <p style="font-size: 15px; line-height: 1.6; color: #334155; margin-top: 0;">
-        Como colaborador habilitado bajo el convenio empresarial de <strong>${empresaNombre}</strong>${empresaRuc ? ` (RUC: ${empresaRuc})` : ""}, cuentas con cobertura jurídica preferencial y beneficios exclusivos activados de forma inmediata:
+        Como colaborador habilitado bajo el convenio empresarial de <strong>${empresaNombre}</strong>${empresaRuc ? ` (RUC: ${empresaRuc})` : ""}, cuentas con beneficios preferenciales exclusivos activados de forma inmediata en <strong>${metaNeg.nombreVisible}</strong>:
       </p>
 
       <div style="background-color: #F8FAFC; border: 1.5px solid #A7F3D0; border-radius: 14px; padding: 20px; margin: 22px 0;">
@@ -128,6 +189,7 @@ export function construirHtmlBienvenidaConvenio(params: {
           🎁 Tus Beneficios con el Convenio ${empresaNombre}
         </h3>
 
+        ${esTranqi ? `
         <!-- Beneficio 1: Consultas Telemáticas -->
         <div style="background: #FFFFFF; border: 1px solid #D1FAE5; border-radius: 10px; padding: 12px 16px; margin-bottom: 10px;">
           <div style="font-size: 15px; font-weight: 800; color: #0F172A;">
@@ -136,15 +198,15 @@ export function construirHtmlBienvenidaConvenio(params: {
           <div style="font-size: 13px; color: #475569; margin-top: 3px;">
             Tienes <strong>${consultasGratis} citas telemáticas ${textoFrecuencia} sin costo</strong> (100% subsidiadas por tu convenio) con abogados especialistas verificados.
           </div>
-        </div>
+        </div>` : ""}
 
         <!-- Beneficio 2: Descuento General -->
         <div style="background: #FFFFFF; border: 1px solid #E0E7FF; border-radius: 10px; padding: 12px 16px; margin-bottom: 10px;">
           <div style="font-size: 15px; font-weight: 800; color: #4F46E5;">
-            🏷️ ${descuentoGeneralPct}% de Descuento General en Servicios Legales
+            🏷️ ${descuentoGeneralPct}% de Descuento Corporativo Preferencial
           </div>
           <div style="font-size: 13px; color: #475569; margin-top: 3px;">
-            Descuento automático aplicado sobre el tarifario oficial de trámites, contratos y patrocinio jurídico.
+            Descuento automático aplicado sobre tus compras y servicios en ${metaNeg.nombreVisible}.
           </div>
         </div>
 
@@ -159,17 +221,18 @@ export function construirHtmlBienvenidaConvenio(params: {
         <div><strong>Vigencia del Convenio:</strong> ${vigenciaTexto}</div>
       </div>
 
+      ${esTranqi ? `
       <!-- CTA -->
       <div style="text-align: center; margin: 26px 0 10px;">
         <a href="https://www.tranqi24.com/panel/clientes?widget=mis_beneficios_corporativos" style="display: inline-block; background: linear-gradient(135deg, #05876E 0%, #047857 100%); color: #FFFFFF; text-decoration: none; font-size: 14px; font-weight: 800; padding: 13px 28px; border-radius: 10px;">
           Ver Mis Beneficios y Agendar Consulta ($0.00)
         </a>
-      </div>
+      </div>` : ""}
     </div>
 
     <!-- Pie -->
     <div style="background-color: #0F172A; padding: 18px 28px; text-align: center; color: #94A3B8; font-size: 12px;">
-      <p style="margin: 0;">© ${new Date().getFullYear()} tranqi® · Protección y Bienestar Legal Corporativo.</p>
+      <p style="margin: 0;">© ${new Date().getFullYear()} ${metaNeg.nombreVisible} · Beneficios Corporativos.</p>
     </div>
   </div>
 </body>
@@ -194,7 +257,8 @@ export async function procesarAutoafiliacionYBienvenidaConvenio(
     const adminSupabase = crearClienteAdmin() || (await crearClienteServidor());
     if (!adminSupabase) return { tieneConvenio: false };
 
-    const negocioSlug = (params.negocio || "tranqi").toLowerCase().trim();
+    const metaNeg = resolverMetaNegocioNotif(params.negocio);
+    const negocioSlug = metaNeg.canon;
     const dominio = correoLimpio.substring(correoLimpio.indexOf("@"));
     const nombreCompleto =
       [params.nombres, params.apellidos].filter(Boolean).join(" ").trim() ||
@@ -204,7 +268,7 @@ export async function procesarAutoafiliacionYBienvenidaConvenio(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const db = adminSupabase as any;
 
-    // 1. Buscar convenio activo en comun_comercio.com_convenio_empresa
+    // 1. Buscar convenio activo en comun_comercio.com_convenio_empresa (estrictamente del negocio actual)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let convenioEncontrado: any = null;
     try {
@@ -212,7 +276,7 @@ export async function procesarAutoafiliacionYBienvenidaConvenio(
         .schema("comun_comercio")
         .from("com_convenio_empresa")
         .select("*")
-        .in("cve_negocio", [negocioSlug, negocioSlug.toUpperCase(), "tranqi", "TRANQ", "TRANQI"])
+        .in("cve_negocio", metaNeg.codigos)
         .eq("cve_activo", true);
 
       if (Array.isArray(listaConvenios)) {
@@ -230,14 +294,14 @@ export async function procesarAutoafiliacionYBienvenidaConvenio(
       }
     } catch {}
 
-    // 2. Fallback: revisar convenios guardados en comun_configuracion.cfg_negocio si no se halló en tabla
+    // 2. Fallback: revisar convenios guardados en comun_configuracion.cfg_negocio (estrictamente del negocio actual)
     if (!convenioEncontrado) {
       try {
         const { data: cfg } = await db
           .schema("comun_configuracion")
           .from("cfg_negocio")
           .select("cfg_detalle_configuracion")
-          .in("cfg_negocio", [negocioSlug, "tranqi", "TRANQ"])
+          .in("cfg_negocio", metaNeg.codigos)
           .limit(1)
           .maybeSingle();
 
@@ -398,7 +462,7 @@ export async function procesarAutoafiliacionYBienvenidaConvenio(
       const resCorreo = await enviarCorreo({
         negocio: negocioSlug,
         para: correoLimpio,
-        asunto: `🎁 ¡Bienvenido/a al Convenio ${empresaNombre}! Conoce tus beneficios en Tranqi`,
+        asunto: `🎁 ¡Bienvenido/a al Convenio ${empresaNombre}! Conoce tus beneficios en ${metaNeg.nombreVisible}`,
         html: htmlBienvenida,
       });
 
@@ -407,7 +471,7 @@ export async function procesarAutoafiliacionYBienvenidaConvenio(
       // Registrar también notificación In-App de bienvenida al convenio para el colaborador
       if (params.usuarioId) {
         try {
-          const negocioUpper = negocioSlug === "tranqi" ? "TRANQ" : negocioSlug.toUpperCase();
+          const negocioUpper = metaNeg.notifCode;
           await db
             .schema("comun_notificacion")
             .from("not_registro")
@@ -415,18 +479,18 @@ export async function procesarAutoafiliacionYBienvenidaConvenio(
               not_usuario_id: params.usuarioId,
               not_negocio: negocioUpper,
               not_canal: "IN_APP",
-              not_titulo: `🎁 Convenio ${empresaNombre} Activo: ${consultasGratis} Consultas $0.00 + ${descuentoGeneralPct}% Desc.`,
+              not_titulo: `🎁 Convenio ${empresaNombre} Activo: ${descuentoGeneralPct}% Desc.`,
               not_contenido_html: `
                 <div style="font-family: sans-serif; color: #0F172A;">
-                  <p>¡Bienvenido/a <strong>${nombreCompleto}</strong>! Tu cuenta ha sido registrada bajo el convenio corporativo de <strong>${empresaNombre}</strong>.</p>
+                  <p>¡Bienvenido/a <strong>${nombreCompleto}</strong>! Tu cuenta ha sido registrada bajo el convenio corporativo de <strong>${empresaNombre}</strong> en <strong>${metaNeg.nombreVisible}</strong>.</p>
                   <ul>
-                    <li><strong>${consultasGratis} Consultas Telemáticas ($0.00)</strong> al 100% de subsidio (${frecuenciaConsultas}).</li>
-                    <li><strong>${descuentoGeneralPct}% de descuento general</strong> en servicios legales.</li>
+                    ${metaNeg.canon === "tranqi" ? `<li><strong>${consultasGratis} Consultas Telemáticas ($0.00)</strong> al 100% de subsidio (${frecuenciaConsultas}).</li>` : ""}
+                    <li><strong>${descuentoGeneralPct}% de descuento general</strong> corporativo.</li>
                     ${excepciones.map((e: any) => `<li><strong>${e.producto_nombre}:</strong> ${e.descuento_pct}% de descuento.</li>`).join("")}
                   </ul>
                 </div>
               `,
-              not_url_accion: "/panel/clientes?widget=mis_beneficios_corporativos",
+              not_url_accion: metaNeg.canon === "tranqi" ? "/panel/clientes?widget=mis_beneficios_corporativos" : "/panel",
               not_creado_en: new Date().toISOString(),
             });
         } catch {}
@@ -472,11 +536,11 @@ export async function notificarNuevoUsuarioRegistrado(params: ParametrosNuevoUsu
 
     const adminSupabase = crearClienteAdmin() || await crearClienteServidor();
     const nombreCompleto = [params.nombres, params.apellidos].filter(Boolean).join(" ") || params.correo;
-    const negocioSlug = params.negocio || "tranqi";
-    const negocioUpper = (negocioSlug === "tranqi" || negocioSlug === "TRANQI") ? "TRANQ" : negocioSlug.toUpperCase();
+    const metaNeg = resolverMetaNegocioNotif(params.negocio);
+    const negocioUpper = metaNeg.notifCode;
     const titulo = infoConvenio.tieneConvenio
       ? `Nuevo Colaborador Convenio ${infoConvenio.empresaNombre}: ${nombreCompleto}`
-      : `Nuevo Usuario Registrado: ${nombreCompleto}`;
+      : `Nuevo Usuario Registrado (${metaNeg.nombreVisible}): ${nombreCompleto}`;
     const urlAccion = `/panel/usuarios?buscar=${encodeURIComponent(params.correo)}`;
 
     const bloqueConvenioStaff = infoConvenio.tieneConvenio
@@ -492,60 +556,68 @@ export async function notificarNuevoUsuarioRegistrado(params: ParametrosNuevoUsu
     const contenidoHTML = `
       <div style="font-family: sans-serif; padding: 16px; color: #111;">
         <h3 style="color: #5000BA; margin-top: 0;">${titulo}</h3>
-        <p>El usuario <strong>${nombreCompleto}</strong> (<code>${params.correo}</code>) se ha registrado exitosamente en la plataforma <strong>${negocioUpper}</strong>.</p>
+        <p>El usuario <strong>${nombreCompleto}</strong> (<code>${params.correo}</code>) se ha registrado exitosamente en <strong>${metaNeg.nombreVisible}</strong>.</p>
         ${bloqueConvenioStaff}
         <p><a href="${urlAccion}" style="display: inline-block; padding: 10px 18px; background: #5000BA; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 700;">Ver Datos del Usuario</a></p>
       </div>
     `;
 
-    // 1. Obtener usuarios con perfil Operador, Administrador o SuperAdmin en el negocio
+    // 1. Obtener usuarios con perfil Operador, Administrador o SuperAdmin ESTRICTAMENTE en este negocio
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: todosUsuarios } = await (adminSupabase as any)
+    const { data: membresiasStaff } = await (adminSupabase as any)
       .schema("comun_seguridad")
-      .from("seg_usuario")
+      .from("seg_membresia")
       .select(`
-        usu_id,
-        usu_correo,
-        usu_superadmin_plataforma,
-        seg_membresia (
-          mem_id,
-          mem_negocio,
-          seg_membresia_perfil (
-            mpe_perfil_clave
+        mem_id,
+        mem_usuario_id,
+        mem_negocio,
+        mem_rol,
+        mem_estado,
+        seg_usuario (
+          usu_id,
+          usu_correo
+        ),
+        seg_membresia_perfil (
+          seg_perfil (
+            per_clave
           )
         )
-      `);
+      `)
+      .in("mem_negocio", metaNeg.codigos)
+      .eq("mem_estado", "ACTIVO");
 
     const destinatarios: { id: string; correo: string }[] = [];
     const correosVistos = new Set<string>();
 
-    if (Array.isArray(todosUsuarios)) {
-      for (const u of todosUsuarios) {
-        if (u.usu_id === params.usuarioId) continue;
-        const esSuper = Boolean(u.usu_superadmin_plataforma);
-        let esStaff = esSuper;
+    if (Array.isArray(membresiasStaff)) {
+      for (const m of membresiasStaff) {
+        const usu = Array.isArray(m.seg_usuario) ? m.seg_usuario[0] : m.seg_usuario;
+        const usuId = usu?.usu_id || m.mem_usuario_id;
+        const usuCorreo = (usu?.usu_correo || "").trim();
+        if (!usuId || usuId === params.usuarioId || !usuCorreo) continue;
 
-        if (!esStaff && Array.isArray(u.seg_membresia)) {
-          for (const m of u.seg_membresia) {
-            const mNeg = (m.mem_negocio || "").toUpperCase();
-            if (mNeg === negocioUpper || mNeg === "TRANQ" || mNeg === "TRANQI") {
-              if (Array.isArray(m.seg_membresia_perfil)) {
-                for (const mp of m.seg_membresia_perfil) {
-                  const clave = (mp.mpe_perfil_clave || "").toUpperCase();
-                  if (clave === "OPERADOR" || clave === "ADMINISTRADOR" || clave === "SUPERADMIN") {
-                    esStaff = true;
-                    break;
-                  }
-                }
-              }
+        const mNeg = (m.mem_negocio || "").toUpperCase();
+        if (!metaNeg.codigosUpper.has(mNeg)) continue;
+
+        const rolMem = (m.mem_rol || "").toUpperCase();
+        let esStaff =
+          rolMem === "OPERADOR" || rolMem === "ADMINISTRADOR" || rolMem === "SUPERADMIN";
+
+        if (!esStaff && Array.isArray(m.seg_membresia_perfil)) {
+          for (const mp of m.seg_membresia_perfil) {
+            const perObj = Array.isArray(mp.seg_perfil) ? mp.seg_perfil[0] : mp.seg_perfil;
+            const clave = (perObj?.per_clave || "").toUpperCase();
+            if (clave === "OPERADOR" || clave === "ADMINISTRADOR" || clave === "SUPERADMIN") {
+              esStaff = true;
+              break;
             }
-            if (esStaff) break;
           }
         }
 
-        if (esStaff && u.usu_correo && !correosVistos.has(u.usu_correo)) {
-          correosVistos.add(u.usu_correo);
-          destinatarios.push({ id: u.usu_id, correo: u.usu_correo });
+        const correoLower = usuCorreo.toLowerCase();
+        if (esStaff && !correosVistos.has(correoLower)) {
+          correosVistos.add(correoLower);
+          destinatarios.push({ id: usuId, correo: usuCorreo });
         }
       }
     }
@@ -582,11 +654,11 @@ export async function notificarNuevoUsuarioRegistrado(params: ParametrosNuevoUsu
       .from("not_registro")
       .insert(notifs);
 
-    // 3. Enviar correo SMTP a cada operador/admin
+    // 3. Enviar correo SMTP a cada operador/admin usando el SMTP propio del negocio
     for (const d of destinatarios) {
       try {
         await enviarCorreo({
-          negocio: params.negocio,
+          negocio: metaNeg.canon,
           para: d.correo,
           asunto: titulo,
           html: contenidoHTML,

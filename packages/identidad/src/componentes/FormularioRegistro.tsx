@@ -94,7 +94,11 @@ export function FormularioRegistro({ negocio, intencion = "", destino = "" }: Fo
       document.cookie = `tranqi_rol_favorito=abogado; path=/; max-age=86400`;
     }
 
-    router.push("/verificar-correo");
+    if (resultado.data?.requiereVerificacionCorreo === false) {
+      router.push(destinoTarget);
+    } else {
+      router.push("/verificar-correo");
+    }
     router.refresh();
   }
 

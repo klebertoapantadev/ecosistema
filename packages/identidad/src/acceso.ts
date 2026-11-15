@@ -1,17 +1,11 @@
 import type { crearClienteServidor } from "@eco/supabase/servidor";
+import { claveNegocioCanonica, codigosNegocio } from "./negocio";
 
 type ClienteServidor = Awaited<ReturnType<typeof crearClienteServidor>>;
 
-// Historial de accesos por usuario/dispositivo, comun a los 4 negocios (vive
-// en comun_seguridad.seg_acceso -- ver migracion 20260727000011). Alimenta
-// la lista de "dispositivos recientes" en Mi cuenta y el saludo
-// personalizado, calculado a partir de la fila anterior a la mas reciente.
-//
-// PLT-018 regla 4: el historial es UNO SOLO por usuario, no uno por
-// negocio -- si el mismo usuario entra a Tranqi y despues a Margaritas,
-// ve ambos accesos en cualquiera de las dos apps. acc_negocio (20260727000012)
-// no cambia eso; solo etiqueta cada fila con la app de origen para que la
-// lista no parezca "duplicar" accesos de otra app sin explicacion.
+// Historial de accesos por usuario/dispositivo en comun_seguridad.seg_acceso.
+// Cuando se provee `negocio`, aísla tanto el cálculo del último acceso como la
+// lista mostrada en Mi Cuenta para que cada negocio opere de forma 100% independiente.
 export async function registrarAcceso(
   supabase: ClienteServidor,
   usuarioId: string,
@@ -19,11 +13,18 @@ export async function registrarAcceso(
   userAgent: string | null,
   negocio: string | null = null,
 ) {
-  const { data: anterior } = await supabase
+  const negocioCanon = negocio ? claveNegocioCanonica(negocio) : null;
+  let queryAnterior = supabase
     .schema("comun_seguridad")
     .from("seg_acceso")
     .select("acc_creado_en")
-    .eq("acc_usuario_id", usuarioId)
+    .eq("acc_usuario_id", usuarioId);
+
+  if (negocioCanon) {
+    queryAnterior = queryAnterior.in("acc_negocio", codigosNegocio(negocioCanon));
+  }
+
+  const { data: anterior } = await queryAnterior
     .order("acc_creado_en", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -32,18 +33,29 @@ export async function registrarAcceso(
     acc_usuario_id: usuarioId,
     acc_ip: ip,
     acc_user_agent: userAgent,
-    acc_negocio: negocio,
+    acc_negocio: negocioCanon,
   });
 
   return anterior?.acc_creado_en ?? null;
 }
 
-export async function obtenerHistorialAccesos(supabase: ClienteServidor, usuarioId: string, limite = 10) {
-  const { data } = await supabase
+export async function obtenerHistorialAccesos(
+  supabase: ClienteServidor,
+  usuarioId: string,
+  limite = 10,
+  negocio?: string,
+) {
+  let query = supabase
     .schema("comun_seguridad")
     .from("seg_acceso")
     .select("acc_id, acc_ip, acc_user_agent, acc_creado_en, acc_negocio")
-    .eq("acc_usuario_id", usuarioId)
+    .eq("acc_usuario_id", usuarioId);
+
+  if (negocio) {
+    query = query.in("acc_negocio", codigosNegocio(negocio));
+  }
+
+  const { data } = await query
     .order("acc_creado_en", { ascending: false })
     .limit(limite);
 
@@ -100,10 +112,14 @@ export function calcularSaludo(nombre: string, fechaAccesoAnterior: string | nul
 // Helper autocontenido para usar directo desde una pagina (crea su propio
 // cliente, igual que el resto de consultas.ts): la fila mas reciente es la
 // del login que acaba de ocurrir, la segunda es el "acceso anterior" real.
-export async function obtenerSaludo(usuarioId: string, nombre: string): Promise<string | null> {
+export async function obtenerSaludo(
+  usuarioId: string,
+  nombre: string,
+  negocio?: string,
+): Promise<string | null> {
   const { crearClienteServidor } = await import("@eco/supabase/servidor");
   const supabase = await crearClienteServidor();
-  const historial = await obtenerHistorialAccesos(supabase, usuarioId, 2);
+  const historial = await obtenerHistorialAccesos(supabase, usuarioId, 2, negocio);
   const anterior = historial[1]?.acc_creado_en ?? null;
   return calcularSaludo(nombre, anterior);
 }

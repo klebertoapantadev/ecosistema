@@ -478,6 +478,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
           <div style={{ padding: "20px 16px", width: "100%" }}>
             {widgetActivo === "perfil" && (
               <FormularioPerfil
+                negocio="tranqi"
                 inicial={{
                   nombres: perfil?.usu_nombres || "",
                   apellidos: perfil?.usu_apellidos || perfil?.apellidos || "",
@@ -586,7 +587,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
             {/* WIDGET 4: ZONA DE PELIGRO - BAJA DE CUENTA */}
             {widgetActivo === "peligro" && (
               <div style={{ width: "100%", maxWidth: "640px" }}>
-                <EliminarCuenta />
+                <EliminarCuenta negocio="tranqi" />
               </div>
             )}
           </div>

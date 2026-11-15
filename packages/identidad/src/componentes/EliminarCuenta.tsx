@@ -10,7 +10,7 @@ const PALABRA_CONFIRMACION = "ELIMINAR";
 // confirmacion antes de habilitar el boton -- es una accion irreversible,
 // no basta un solo click. La decision real (borrar vs. rechazar por
 // historial transaccional) la toma seg_fn_eliminar_cuenta() en el servidor.
-export function EliminarCuenta() {
+export function EliminarCuenta({ negocio }: { negocio?: string } = {}) {
   const router = useRouter();
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
   const [textoConfirmacion, setTextoConfirmacion] = useState("");
@@ -20,7 +20,7 @@ export function EliminarCuenta() {
   async function confirmar() {
     setError(null);
     setCargando(true);
-    const resultado = await eliminarCuenta();
+    const resultado = await eliminarCuenta(negocio);
     setCargando(false);
     if (!resultado.ok) {
       setError(resultado.error);

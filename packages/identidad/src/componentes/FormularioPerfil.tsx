@@ -24,6 +24,7 @@ export const PAISES_WHATSAPP: PaisWhatsappDef[] = [
 ];
 
 interface Props {
+  negocio?: string;
   inicial: {
     nombres: string;
     apellidos: string;
@@ -36,7 +37,7 @@ interface Props {
   };
 }
 
-export function FormularioPerfil({ inicial }: Props) {
+export function FormularioPerfil({ inicial, negocio }: Props) {
   const [nombres, setNombres] = useState(inicial.nombres || "");
   const [apellidos, setApellidos] = useState(inicial.apellidos || "");
   const [whatsapp, setWhatsapp] = useState(inicial.whatsapp || "");
@@ -130,15 +131,18 @@ export function FormularioPerfil({ inicial }: Props) {
     setGuardando(true);
     setMensaje(null);
 
-    const res = await actualizarPerfilUsuario({
-      nombres,
-      apellidos,
-      whatsapp,
-      autorizaWhatsapp,
-      fotoUrl,
-      codigoPaisWhatsapp,
-      correosAdicionales,
-    });
+    const res = await actualizarPerfilUsuario(
+      {
+        nombres,
+        apellidos,
+        whatsapp,
+        autorizaWhatsapp,
+        fotoUrl,
+        codigoPaisWhatsapp,
+        correosAdicionales,
+      },
+      negocio,
+    );
 
     setGuardando(false);
     if (res.ok) {

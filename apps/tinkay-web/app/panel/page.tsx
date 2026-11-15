@@ -119,7 +119,7 @@ const MODULOS_TINKAY: Record<string, WidgetInfo> = {
 };
 
 export default async function PaginaPanel() {
-  const perfil = await obtenerPerfilActual();
+  const perfil = await obtenerPerfilActual(NEGOCIO);
   const correo = perfil?.usu_correo?.toLowerCase().trim() || "";
   const esSuperAdminEmail =
     correo === "kleber.toapanta.ch@gmail.com" ||
@@ -138,7 +138,7 @@ export default async function PaginaPanel() {
   const misProformas = resMisProformas.ok ? resMisProformas.proformas : [];
 
   const nombre = perfil?.usu_nombres || perfil?.usu_correo || "";
-  const saludo = perfil ? await obtenerSaludo(perfil.usu_id, nombre) : null;
+  const saludo = perfil ? await obtenerSaludo(perfil.usu_id, nombre, NEGOCIO) : null;
   const esAdmin =
     esSuperAdmin ||
     perfiles.some((p) =>

@@ -35,7 +35,28 @@ export async function obtenerPerfilesAsignables(): Promise<PerfilAsignable[]> {
   return (data ?? []).map((p) => ({ clave: p.per_clave, nombre: p.per_nombre, nivel: p.per_nivel }));
 }
 
-// Busca entre los usuarios ya registrados en un negocio o plataforma
+function resolverFiltroNegocio(negocioRaw: string): { canon: string; variantes: string[] } {
+  const limpio = (negocioRaw || "").trim().toLowerCase();
+  if (limpio === "tranqi" || limpio === "tranq" || limpio === "legal") {
+    return { canon: "tranqi", variantes: ["tranqi", "TRANQI", "tranq", "TRANQ", "legal", "LEGAL"] };
+  }
+  if (limpio === "tinkay" || limpio === "tnk") {
+    return { canon: "tinkay", variantes: ["tinkay", "TINKAY", "tnk", "TNK"] };
+  }
+  if (limpio === "fastfix" || limpio === "ffh") {
+    return { canon: "fastfix", variantes: ["fastfix", "FASTFIX", "ffh", "FFH"] };
+  }
+  if (limpio === "margaritas" || limpio === "mrg") {
+    return { canon: "margaritas", variantes: ["margaritas", "MARGARITAS", "mrg", "MRG"] };
+  }
+  const base = (negocioRaw || "").trim();
+  return {
+    canon: base.toLowerCase(),
+    variantes: Array.from(new Set([base.toLowerCase(), base.toUpperCase()])).filter(Boolean),
+  };
+}
+
+// Busca estrictamente entre los usuarios registrados en el negocio indicado
 export async function buscarUsuarios(
   consulta: string,
   negocio: string,
@@ -43,15 +64,11 @@ export async function buscarUsuarios(
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
 
-  // 1. Normalizar el negocio para consultar membresías
-  const negocioUpper = (negocio || "").toUpperCase();
-  const negociosFiltro =
-    negocioUpper === "TRANQI" || negocioUpper === "TRANQ"
-      ? ["TRANQI", "TRANQ", "tranqi", "tranq"]
-      : [negocioUpper, (negocio || "").toLowerCase()];
+  // 1. Normalizar el negocio para consultar estrictamente sus propias membresías
+  const { canon: negocioCanon, variantes: negociosFiltro } = resolverFiltroNegocio(negocio);
 
-  // 2. Traer las membresías que pertenecen estrictamente a este negocio
-  let qMem = adminSupabase
+  // 2. Traer las membresías que pertenecen estrictamente a este negocio (cero cruce con otros negocios)
+  const qMem = adminSupabase
     .schema("comun_seguridad")
     .from("seg_membresia")
     .select("mem_id, mem_usuario_id, mem_estado, mem_negocio, mem_rol")
@@ -67,28 +84,7 @@ export async function buscarUsuarios(
     membresiasNegocio = resMemServ.data || [];
   }
 
-  // Identificar los IDs de los usuarios que pertenecen a este negocio
-  const idsConMembresia = (membresiasNegocio || []).map((m) => m.mem_usuario_id);
-
-  // Incluir además a los SuperAdmins de plataforma (que gestionan todos los negocios)
-  let qSuper = adminSupabase
-    .schema("comun_seguridad")
-    .from("seg_usuario")
-    .select("usu_id")
-    .eq("usu_superadmin_plataforma", true);
-
-  let { data: superAdmins } = await qSuper;
-  if (!superAdmins || superAdmins.length === 0) {
-    const resSuperServ = await supabase
-      .schema("comun_seguridad")
-      .from("seg_usuario")
-      .select("usu_id")
-      .eq("usu_superadmin_plataforma", true);
-    superAdmins = resSuperServ.data || [];
-  }
-
-  const idsSuperAdmins = (superAdmins || []).map((s) => s.usu_id);
-  const idsFiltrados = Array.from(new Set([...idsConMembresia, ...idsSuperAdmins]));
+  const idsFiltrados = Array.from(new Set((membresiasNegocio || []).map((m) => m.mem_usuario_id)));
 
   if (idsFiltrados.length === 0) {
     return { data: [], error: null };
@@ -98,7 +94,9 @@ export async function buscarUsuarios(
   let query = adminSupabase
     .schema("comun_seguridad")
     .from("seg_usuario")
-    .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_superadmin_plataforma")
+    .select(
+      "usu_id, usu_nombres, usu_apellidos, usu_correo, usu_superadmin_plataforma, usu_detalle_usuario"
+    )
     .in("usu_id", idsFiltrados)
     .order("usu_creado_en", { ascending: false })
     .limit(50);
@@ -117,7 +115,9 @@ export async function buscarUsuarios(
     let qServ = supabase
       .schema("comun_seguridad")
       .from("seg_usuario")
-      .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_superadmin_plataforma")
+      .select(
+        "usu_id, usu_nombres, usu_apellidos, usu_correo, usu_superadmin_plataforma, usu_detalle_usuario"
+      )
       .in("usu_id", idsFiltrados)
       .order("usu_creado_en", { ascending: false })
       .limit(50);
@@ -198,10 +198,13 @@ export async function buscarUsuarios(
       nMax = 100;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const regNegocio = (u as any)?.usu_detalle_usuario?.registros_negocio?.[negocioCanon];
+
     return {
       usu_id: u.usu_id,
-      usu_nombres: u.usu_nombres,
-      usu_apellidos: u.usu_apellidos,
+      usu_nombres: regNegocio?.nombres ?? u.usu_nombres,
+      usu_apellidos: regNegocio?.apellidos ?? u.usu_apellidos,
       usu_correo: u.usu_correo,
       perfiles: Array.from(new Set(listaClaves)),
       nivelMaximo: nMax,

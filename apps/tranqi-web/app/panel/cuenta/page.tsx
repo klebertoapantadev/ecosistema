@@ -9,10 +9,10 @@ import type { RolOpcionDef } from "../roles-sistema";
 export const metadata: Metadata = { title: "Mi cuenta — tranqi" };
 
 export default async function PaginaCuenta() {
-  const perfil = await obtenerPerfilActual();
+  const perfil = await obtenerPerfilActual("tranqi");
   const supabase = await crearClienteServidor();
   const adminClient = (crearClienteAdmin() || supabase) as any;
-  const historial = perfil ? await obtenerHistorialAccesos(supabase, perfil.usu_id) : [];
+  const historial = perfil ? await obtenerHistorialAccesos(supabase, perfil.usu_id, 10, "tranqi") : [];
 
   const [perfilesAsignables, perfilesUsuario, materias, provincias, solicitudExistente] = await Promise.all([
     obtenerPerfilesAsignables(),

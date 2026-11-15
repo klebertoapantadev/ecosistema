@@ -1,4 +1,9 @@
-import { crearClienteServidor } from "@eco/supabase/servidor";
+import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
+import {
+  claveNegocioCanonica,
+  codigosNegocio,
+  proyectarPerfilPorNegocio,
+} from "./negocio";
 
 // Server-only. No importar desde un client component.
 
@@ -10,7 +15,24 @@ export async function obtenerSesionActual() {
   return user;
 }
 
-export async function obtenerPerfilActual() {
+export async function obtenerMembresia(usuarioId: string, negocio: string) {
+  const supabase = await crearClienteServidor();
+  const db = crearClienteAdmin() ?? supabase;
+  const { data } = await db
+    .schema("comun_seguridad")
+    .from("seg_membresia")
+    .select("*")
+    .eq("mem_usuario_id", usuarioId)
+    .in("mem_negocio", codigosNegocio(negocio))
+    .eq("mem_estado", "ACTIVO")
+    .order("mem_creado_en", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  return data;
+}
+
+export async function obtenerPerfilActual(negocio?: string) {
   const supabase = await crearClienteServidor();
   const {
     data: { user },
@@ -24,20 +46,17 @@ export async function obtenerPerfilActual() {
     .eq("usu_id", user.id)
     .maybeSingle();
 
-  return perfil;
-}
+  if (!perfil) return null;
+  if (!negocio) return { ...perfil, tiene_membresia_negocio: true };
 
-export async function obtenerMembresia(usuarioId: string, negocio: string) {
-  const supabase = await crearClienteServidor();
-  const { data } = await supabase
-    .schema("comun_seguridad")
-    .from("seg_membresia")
-    .select("*")
-    .eq("mem_usuario_id", usuarioId)
-    .eq("mem_negocio", negocio)
-    .maybeSingle();
+  const membresia = await obtenerMembresia(user.id, claveNegocioCanonica(negocio));
+  const proyectado = proyectarPerfilPorNegocio(perfil, negocio, Boolean(membresia));
+  if (!proyectado) return null;
 
-  return data;
+  return {
+    ...proyectado,
+    tiene_membresia_negocio: Boolean(membresia || perfil.usu_superadmin_plataforma),
+  };
 }
 
 // PLT-003 reglas 3 y 4: claves de perfil que el usuario actual tiene en un

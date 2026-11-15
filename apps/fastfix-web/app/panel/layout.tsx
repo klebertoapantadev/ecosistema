@@ -82,13 +82,8 @@ const CATALOGO_NAV_FASTFIX: ItemNavegacionPanel[] = [
 ];
 
 export default async function LayoutPanel({ children }: { children: React.ReactNode }) {
-  const perfil = await obtenerPerfilActual();
+  const perfil = await obtenerPerfilActual(NEGOCIO);
   if (!perfil) redirect("/ingresar");
-  if (!perfil.usu_onboarding_completo) redirect("/bienvenida");
-  if (!perfil.usu_correo_verificado_en) redirect("/verificar-correo");
-
-  const supabase = await crearClienteServidor();
-  await asegurarMembresiaCliente(supabase, perfil.usu_id, NEGOCIO);
 
   const correo = perfil.usu_correo?.toLowerCase().trim() || "";
   const esSuperAdmin =
@@ -96,6 +91,15 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
     correo === "kleber.toapanta.ch@gmail.com" ||
     correo === "jesus251296@gmail.com" ||
     correo === "familiammtg@gmail.com";
+
+  if (!perfil.tiene_membresia_negocio && !esSuperAdmin) redirect("/ingresar");
+  if (!perfil.usu_onboarding_completo && !esSuperAdmin) redirect("/bienvenida");
+  if (!perfil.usu_correo_verificado_en && !esSuperAdmin) redirect("/verificar-correo");
+
+  if (esSuperAdmin && !perfil.tiene_membresia_negocio) {
+    const supabase = await crearClienteServidor();
+    await asegurarMembresiaCliente(supabase, perfil.usu_id, NEGOCIO);
+  }
 
   const widgets = await obtenerWidgetsVisibles(perfil.usu_id, esSuperAdmin, NEGOCIO);
   const clavesVisibles = new Set<string>(["resumen", "cuenta"]);

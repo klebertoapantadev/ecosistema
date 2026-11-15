@@ -18,6 +18,11 @@ import {
 import { registrarAcceso } from "./acceso";
 import { obtenerPerfiles } from "./consultas";
 import {
+  claveNegocioCanonica,
+  codigosNegocio,
+  obtenerRegistroNegocioDetalle,
+} from "./negocio";
+import {
   notificarNuevoUsuarioRegistrado,
   procesarAutoafiliacionYBienvenidaConvenio,
 } from "@eco/notificaciones/notificar-usuario";
@@ -46,12 +51,10 @@ export async function asegurarMembresiaCliente(
   usuarioId: string,
   negocio: string,
 ) {
-  // PLT-003 regla 2: el alta crea membresia Y perfil CLIENTE. Va por RPC y no
-  // por upsert directo porque seg_membresia_perfil no tiene politica de
-  // escritura -- es donde se aplica el techo jerarquico de la regla 5, y
-  // abrirla al cliente lo saltaria. El RPC solo actua sobre auth.uid(), asi
-  // que `usuarioId` ya no hace falta.
-  await supabase.schema("comun_seguridad").rpc("seg_fn_asegurar_membresia_cliente", { p_negocio: negocio });
+  const negocioCanon = claveNegocioCanonica(negocio);
+  await supabase
+    .schema("comun_seguridad")
+    .rpc("seg_fn_asegurar_membresia_cliente", { p_negocio: negocioCanon });
 }
 
 // PLT-001 regla 6: registra la aceptacion de terminos para el camino de
@@ -80,13 +83,17 @@ export async function asegurarTerminosAceptados(
 // SMTP que ese negocio configuro en su consola (@eco/notificaciones ->
 // Edge Function enviar-correo, ver ADR-0005). Google OAuth sigue sin pasar
 // por esto -- Google ya verifico el correo (ver seg_fn_provisionar_usuario()).
-export async function registrarUsuario(datos: DatosRegistro, negocio: string): Promise<Resultado> {
+export async function registrarUsuario(datos: DatosRegistro, negocio: string): Promise<Resultado<{ requiereVerificacionCorreo: boolean }>> {
   const parseo = esquemaRegistro.safeParse(datos);
   if (!parseo.success) {
     return { ok: false, error: parseo.error.issues[0]?.message ?? "Datos invalidos" };
   }
 
+  const negocioCanon = claveNegocioCanonica(negocio);
+  const codigosNeg = codigosNegocio(negocioCanon);
   const supabase = await crearClienteServidor();
+  const adminDb = crearClienteAdmin();
+
   const { data, error } = await supabase.auth.signUp({
     email: parseo.data.correo,
     password: parseo.data.contrasena,
@@ -94,88 +101,260 @@ export async function registrarUsuario(datos: DatosRegistro, negocio: string): P
       data: {
         given_name: parseo.data.nombres,
         family_name: parseo.data.apellidos,
-        // Leido por seg_fn_provisionar_usuario() -- Google OAuth no permite
-        // inyectar metadata propia, por eso ese camino registra la
-        // aceptacion en el callback en vez de aqui.
         terminos_version: TERMINOS_VERSION,
       },
     },
   });
 
-  if (error) return { ok: false, error: error.message };
-  if (!data.user) return { ok: false, error: "No se pudo crear el usuario" };
+  let usuarioId: string | null = data?.user?.id ?? null;
 
-  // PLT-001: Persistir WhatsApp y consentimiento LOPDP para contacto y envío de información
-  try {
-    const dbCliente = crearClienteAdmin() ?? supabase;
-    const { data: usrPrevio } = await dbCliente
+  if (error) {
+    const esCorreoExistente = /already registered|already been registered|exists|registrado/i.test(
+      error.message
+    );
+    if (!esCorreoExistente) {
+      return { ok: false, error: error.message };
+    }
+
+    // Verificar si ya está registrado específicamente en ESTE negocio
+    if (adminDb) {
+      const { data: usrExistente } = await adminDb
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_id")
+        .ilike("usu_correo", parseo.data.correo.trim())
+        .limit(1)
+        .maybeSingle();
+
+      if (usrExistente?.usu_id) {
+        const { data: memEsteNegocio } = await adminDb
+          .schema("comun_seguridad")
+          .from("seg_membresia")
+          .select("mem_id")
+          .eq("mem_usuario_id", usrExistente.usu_id)
+          .in("mem_negocio", codigosNeg)
+          .eq("mem_estado", "ACTIVO")
+          .limit(1)
+          .maybeSingle();
+
+        if (memEsteNegocio?.mem_id) {
+          return {
+            ok: false,
+            error: "Este correo ya tiene una cuenta activa en este portal. Inicia sesión o recupera tu contraseña.",
+          };
+        }
+      }
+    }
+
+    // La credencial existía en otro negocio independiente: autenticar su clave actual
+    // para darle de alta su cuenta y consentimientos propios en ESTE negocio sin pisar el otro.
+    const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({
+      email: parseo.data.correo,
+      password: parseo.data.contrasena,
+    });
+
+    if (signInErr || !signInData.user) {
+      return {
+        ok: false,
+        error:
+          "Ya existe una credencial asociada a este correo. Ingresa tu contraseña actual para registrarte aquí, usa «Continuar con Google» o restablece tu contraseña en «¿Olvidaste tu contraseña?».",
+      };
+    }
+
+    // Doble chequeo con sesión ya autenticada: si ya tenía membresía en este negocio, avisar
+    const dbCheck = adminDb ?? supabase;
+    const { data: memCheck } = await dbCheck
       .schema("comun_seguridad")
-      .from("seg_usuario")
-      .select("usu_detalle_usuario")
-      .eq("usu_id", data.user.id)
+      .from("seg_membresia")
+      .select("mem_id")
+      .eq("mem_usuario_id", signInData.user.id)
+      .in("mem_negocio", codigosNeg)
+      .eq("mem_estado", "ACTIVO")
+      .limit(1)
       .maybeSingle();
+
+    if (memCheck?.mem_id) {
+      return {
+        ok: false,
+        error: "Este correo ya tiene una cuenta activa en este portal. Inicia sesión directamente.",
+      };
+    }
+
+    usuarioId = signInData.user.id;
+  }
+
+  if (!usuarioId) {
+    return { ok: false, error: "No se pudo crear el usuario" };
+  }
+
+  await asegurarMembresiaCliente(supabase, usuarioId, negocioCanon);
+  await asegurarTerminosAceptados(supabase, usuarioId);
+
+  let correoYaVerificado = false;
+
+  // PLT-001: Persistir identidad, WhatsApp y consentimiento LOPDP AISLADOS por negocio
+  try {
+    const dbCliente = adminDb ?? supabase;
+    const [{ data: usrPrevio }, { data: otrasMembresias }] = await Promise.all([
+      dbCliente
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_nombres, usu_apellidos, usu_whatsapp, usu_correo_verificado_en, usu_detalle_usuario")
+        .eq("usu_id", usuarioId)
+        .maybeSingle(),
+      dbCliente
+        .schema("comun_seguridad")
+        .from("seg_membresia")
+        .select("mem_id, mem_negocio")
+        .eq("mem_usuario_id", usuarioId)
+        .eq("mem_estado", "ACTIVO"),
+    ]);
+
+    correoYaVerificado = Boolean(usrPrevio?.usu_correo_verificado_en);
+    const codigosSetUpper = new Set(codigosNeg.map((c) => c.toUpperCase()));
+    const tieneOtrosNegocios = (otrasMembresias || []).some(
+      (m) => !codigosSetUpper.has((m.mem_negocio || "").toUpperCase())
+    );
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const detalleActual = (usrPrevio?.usu_detalle_usuario as Record<string, any>) || {};
+    const mapaRegistros =
+      detalleActual.registros_negocio && typeof detalleActual.registros_negocio === "object"
+        ? { ...detalleActual.registros_negocio }
+        : {};
     const ahoraIso = new Date().toISOString();
+
+    const registroEsteNegocio = {
+      nombres: parseo.data.nombres,
+      apellidos: parseo.data.apellidos,
+      whatsapp: parseo.data.autorizaWhatsapp ? parseo.data.whatsapp : null,
+      codigo_pais_whatsapp: parseo.data.codigoPaisWhatsapp || "+593",
+      autoriza_whatsapp: Boolean(parseo.data.autorizaWhatsapp),
+      onboarding_completo: true,
+      terminos_version: TERMINOS_VERSION,
+      terminos_aceptados_en: ahoraIso,
+      notificado_registro_staff: true,
+      registrado_en: ahoraIso,
+      actualizado_en: ahoraIso,
+      consentimiento_whatsapp_info: {
+        autorizado: Boolean(parseo.data.autorizaWhatsapp),
+        finalidad: "CONTACTO_COMERCIAL_PROFORMAS_E_INFORMACION",
+        aceptado_en: ahoraIso,
+        negocio: negocioCanon,
+      },
+    };
+
+    mapaRegistros[negocioCanon] = registroEsteNegocio;
+
+    // Si pertenece también a otro negocio, no sobrescribir las columnas globales de aquel negocio
+    const payloadUpdateUsuario: {
+      usu_nombres?: string | null;
+      usu_apellidos?: string | null;
+      usu_whatsapp?: string | null;
+      usu_autorizacion_whatsapp?: boolean;
+      usu_onboarding_completo: boolean;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      usu_detalle_usuario: any;
+      usu_actualizado_en: string;
+    } = {
+      usu_onboarding_completo: true,
+      usu_detalle_usuario: {
+        ...detalleActual,
+        registros_negocio: mapaRegistros,
+      },
+      usu_actualizado_en: ahoraIso,
+    };
+
+    if (!tieneOtrosNegocios) {
+      payloadUpdateUsuario.usu_nombres = parseo.data.nombres;
+      payloadUpdateUsuario.usu_apellidos = parseo.data.apellidos;
+      payloadUpdateUsuario.usu_whatsapp = parseo.data.autorizaWhatsapp ? parseo.data.whatsapp : null;
+      payloadUpdateUsuario.usu_autorizacion_whatsapp = Boolean(parseo.data.autorizaWhatsapp);
+    } else {
+      if (!usrPrevio?.usu_nombres) payloadUpdateUsuario.usu_nombres = parseo.data.nombres;
+      if (!usrPrevio?.usu_apellidos) payloadUpdateUsuario.usu_apellidos = parseo.data.apellidos;
+    }
 
     await dbCliente
       .schema("comun_seguridad")
       .from("seg_usuario")
-      .update({
-        usu_nombres: parseo.data.nombres,
-        usu_apellidos: parseo.data.apellidos,
-        usu_whatsapp: parseo.data.autorizaWhatsapp ? parseo.data.whatsapp : null,
-        usu_autorizacion_whatsapp: Boolean(parseo.data.autorizaWhatsapp),
-        usu_onboarding_completo: true,
-        usu_detalle_usuario: {
-          ...detalleActual,
-          codigo_pais_whatsapp: parseo.data.codigoPaisWhatsapp || "+593",
-          consentimiento_whatsapp_info: {
-            autorizado: Boolean(parseo.data.autorizaWhatsapp),
+      .update(payloadUpdateUsuario)
+      .eq("usu_id", usuarioId);
+
+    // Guardar copia de los datos y consentimientos en la membresía propia del negocio
+    if (adminDb) {
+      await adminDb
+        .schema("comun_seguridad")
+        .from("seg_membresia")
+        .update({
+          mem_detalle_membresia: registroEsteNegocio,
+          mem_actualizado_en: ahoraIso,
+        })
+        .eq("mem_usuario_id", usuarioId)
+        .in("mem_negocio", codigosNeg);
+    }
+
+    // Registrar evidencia auditable de consentimiento LOPDP por negocio
+    try {
+      const { ip, userAgent } = await obtenerIpYAgente();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (dbCliente.schema("comun_seguridad") as any)
+        .from("seg_usuario_consentimiento")
+        .insert({
+          usc_usuario_id: usuarioId,
+          usc_negocio: negocioCanon.toUpperCase(),
+          usc_clave_documento: "consentimiento_whatsapp_lopdp",
+          usc_version: TERMINOS_VERSION,
+          usc_estado: parseo.data.autorizaWhatsapp ? "ACEPTADO" : "RECHAZADO",
+          usc_ip: ip,
+          usc_user_agent: userAgent,
+          usc_metadatos: {
+            whatsapp: parseo.data.autorizaWhatsapp ? parseo.data.whatsapp : null,
             finalidad: "CONTACTO_COMERCIAL_PROFORMAS_E_INFORMACION",
-            aceptado_en: ahoraIso,
-            negocio_origen: negocio,
+            negocio: negocioCanon,
           },
-        },
-        usu_actualizado_en: ahoraIso,
-      })
-      .eq("usu_id", data.user.id);
+        });
+    } catch {
+      // Tabla opcional en entornos antiguos
+    }
   } catch (errWa) {
-    console.warn("Advertencia al guardar WhatsApp en registro:", errWa);
+    console.warn("Advertencia al guardar WhatsApp por negocio en registro:", errWa);
   }
 
-  await asegurarMembresiaCliente(supabase, data.user.id, negocio);
   const { ip, userAgent } = await obtenerIpYAgente();
-  await registrarAcceso(supabase, data.user.id, ip, userAgent, negocio);
+  await registrarAcceso(supabase, usuarioId, ip, userAgent, negocioCanon);
 
-  // Despachar notificación multicanal a Operadores y Administradores de tranqi
+  // Despachar notificación multicanal ESTRICTAMENTE a Operadores y Administradores de ESTE negocio
   await notificarNuevoUsuarioRegistrado({
-    usuarioId: data.user.id,
+    usuarioId,
     nombres: parseo.data.nombres,
     apellidos: parseo.data.apellidos,
     correo: parseo.data.correo,
-    negocio,
+    negocio: negocioCanon,
   });
 
-  try {
-    const { data: codigo, error: errorOtp } = await supabase.schema("comun_seguridad").rpc("seg_fn_generar_otp_registro");
-    if (!errorOtp && codigo) {
-      const envio = await enviarCorreo({
-        negocio,
-        para: parseo.data.correo,
-        asunto: "Tu código de verificación",
-        html: `<p>Hola${parseo.data.nombres ? ` ${parseo.data.nombres}` : ""},</p><p>Tu código de verificación es <strong style="font-size:1.4em; letter-spacing:0.2em;">${codigo}</strong></p><p>Vence en 15 minutos.</p>`,
-      });
-      if (!envio.ok) {
-        console.warn("SMTP no disponible en registro:", envio.error);
+  if (!correoYaVerificado) {
+    try {
+      const { data: codigo, error: errorOtp } = await supabase
+        .schema("comun_seguridad")
+        .rpc("seg_fn_generar_otp_registro");
+      if (!errorOtp && codigo) {
+        const envio = await enviarCorreo({
+          negocio: negocioCanon,
+          para: parseo.data.correo,
+          asunto: "Tu código de verificación",
+          html: `<p>Hola${parseo.data.nombres ? ` ${parseo.data.nombres}` : ""},</p><p>Tu código de verificación es <strong style="font-size:1.4em; letter-spacing:0.2em;">${codigo}</strong></p><p>Vence en 15 minutos.</p>`,
+        });
+        if (!envio.ok) {
+          console.warn("SMTP no disponible en registro:", envio.error);
+        }
       }
+    } catch (errOtp) {
+      console.warn("Error secundario generando OTP:", errOtp);
     }
-  } catch (errOtp) {
-    console.warn("Error secundario generando OTP:", errOtp);
   }
 
-  return { ok: true, data: undefined };
+  return { ok: true, data: { requiereVerificacionCorreo: !correoYaVerificado } };
 }
 
 // Reenvío desde la pantalla de verificación -- mismo RPC, sin volver a crear
@@ -215,6 +394,7 @@ export async function iniciarSesion(datos: DatosIngreso, negocio: string): Promi
     return { ok: false, error: parseo.error.issues[0]?.message ?? "Datos invalidos" };
   }
 
+  const negocioCanon = claveNegocioCanonica(negocio);
   const supabase = await crearClienteServidor();
   const { data, error } = await supabase.auth.signInWithPassword({
     email: parseo.data.correo,
@@ -223,8 +403,47 @@ export async function iniciarSesion(datos: DatosIngreso, negocio: string): Promi
 
   if (error) return { ok: false, error: error.message };
 
+  // PLT-001 / PLT-003: Validar aislamiento estricto por negocio.
+  // Si el usuario existe en otro negocio pero NO se ha registrado en este,
+  // cerrar la sesión de inmediato e invitarlo a registrarse aquí.
+  const db = crearClienteAdmin() ?? supabase;
+  const [{ data: usr }, { data: mem }] = await Promise.all([
+    db
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_superadmin_plataforma, usu_correo")
+      .eq("usu_id", data.user.id)
+      .maybeSingle(),
+    db
+      .schema("comun_seguridad")
+      .from("seg_membresia")
+      .select("mem_id, mem_estado")
+      .eq("mem_usuario_id", data.user.id)
+      .in("mem_negocio", codigosNegocio(negocioCanon))
+      .eq("mem_estado", "ACTIVO")
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const correoLower = (usr?.usu_correo || data.user.email || "").toLowerCase().trim();
+  const esSuperAdminPlataforma =
+    Boolean(usr?.usu_superadmin_plataforma) ||
+    correoLower === "kleber.toapanta.ch@gmail.com" ||
+    correoLower === "jesus251296@gmail.com" ||
+    correoLower === "familiammtg@gmail.com" ||
+    (negocioCanon === "tinkay" && correoLower === "tinkay.uio@gmail.com");
+
+  if (!mem && !esSuperAdminPlataforma) {
+    await supabase.auth.signOut();
+    return {
+      ok: false,
+      error:
+        "No encontramos una cuenta registrada en este portal con ese correo. Crea tu cuenta en «Regístrate» para continuar.",
+    };
+  }
+
   const { ip, userAgent } = await obtenerIpYAgente();
-  await registrarAcceso(supabase, data.user.id, ip, userAgent, negocio);
+  await registrarAcceso(supabase, data.user.id, ip, userAgent, negocioCanon);
 
   return { ok: true, data: undefined };
 }
@@ -286,60 +505,118 @@ export async function restablecerContrasena(token: string, contrasena: string): 
   return { ok: true, data: undefined };
 }
 
-// PLT-001 / PLT-012: Actualizacion de datos de perfil desde el panel Mi Cuenta
-export async function actualizarPerfilUsuario(datos: {
-  nombres: string;
-  apellidos: string;
-  whatsapp?: string | null;
-  autorizaWhatsapp?: boolean;
-  fotoUrl?: string | null;
-  codigoPaisWhatsapp?: string;
-  correosAdicionales?: string[];
-}): Promise<Resultado> {
+// PLT-001 / PLT-012: Actualizacion de datos de perfil desde el panel Mi Cuenta (aislado por negocio)
+export async function actualizarPerfilUsuario(
+  datos: {
+    nombres: string;
+    apellidos: string;
+    whatsapp?: string | null;
+    autorizaWhatsapp?: boolean;
+    fotoUrl?: string | null;
+    codigoPaisWhatsapp?: string;
+    correosAdicionales?: string[];
+  },
+  negocio?: string,
+): Promise<Resultado> {
   const supabase = await crearClienteServidor();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Sesión no encontrada" };
 
-  const { data: usuarioExistente } = await supabase
-    .schema("comun_seguridad")
-    .from("seg_usuario")
-    .select("usu_detalle_usuario")
-    .eq("usu_id", user.id)
-    .maybeSingle();
+  const adminDb = crearClienteAdmin();
+  const db = adminDb ?? supabase;
+  const [{ data: usuarioExistente }, { data: membresiasUsuario }] = await Promise.all([
+    db
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_detalle_usuario")
+      .eq("usu_id", user.id)
+      .maybeSingle(),
+    db
+      .schema("comun_seguridad")
+      .from("seg_membresia")
+      .select("mem_negocio")
+      .eq("mem_usuario_id", user.id)
+      .eq("mem_estado", "ACTIVO"),
+  ]);
+
+  const negocioCanon = negocio ? claveNegocioCanonica(negocio) : null;
+  const codigosSetUpper = negocioCanon
+    ? new Set(codigosNegocio(negocioCanon).map((c) => c.toUpperCase()))
+    : null;
+  const tieneOtrosNegocios = Boolean(
+    codigosSetUpper &&
+      (membresiasUsuario || []).some(
+        (m) => !codigosSetUpper.has((m.mem_negocio || "").toUpperCase())
+      )
+  );
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const detalleActual = (usuarioExistente?.usu_detalle_usuario as Record<string, any>) || {};
+  const mapaRegistros =
+    detalleActual.registros_negocio && typeof detalleActual.registros_negocio === "object"
+      ? { ...detalleActual.registros_negocio }
+      : {};
+  const ahoraIso = new Date().toISOString();
+
+  if (negocioCanon) {
+    const regPrevio = obtenerRegistroNegocioDetalle(detalleActual, negocioCanon);
+    mapaRegistros[negocioCanon] = {
+      ...(regPrevio || {}),
+      nombres: datos.nombres.trim(),
+      apellidos: datos.apellidos.trim(),
+      whatsapp: datos.autorizaWhatsapp ? (datos.whatsapp?.trim() || null) : null,
+      codigo_pais_whatsapp: datos.codigoPaisWhatsapp || regPrevio?.codigo_pais_whatsapp || "+593",
+      autoriza_whatsapp: Boolean(datos.autorizaWhatsapp),
+      onboarding_completo: true,
+      actualizado_en: ahoraIso,
+    };
+  }
+
   const nuevoDetalle = {
     ...detalleActual,
     foto_url: datos.fotoUrl !== undefined ? datos.fotoUrl : (detalleActual.foto_url || null),
     codigo_pais_whatsapp: datos.codigoPaisWhatsapp || detalleActual.codigo_pais_whatsapp || "+593",
     correos_adicionales: datos.correosAdicionales ?? detalleActual.correos_adicionales ?? [],
+    ...(negocioCanon ? { registros_negocio: mapaRegistros } : {}),
   };
+
+  const payloadUpdate: {
+    usu_nombres?: string | null;
+    usu_apellidos?: string | null;
+    usu_whatsapp?: string | null;
+    usu_autorizacion_whatsapp?: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    usu_detalle_usuario: any;
+    usu_actualizado_en: string;
+  } = {
+    usu_detalle_usuario: nuevoDetalle,
+    usu_actualizado_en: ahoraIso,
+  };
+
+  if (!tieneOtrosNegocios) {
+    payloadUpdate.usu_nombres = datos.nombres.trim();
+    payloadUpdate.usu_apellidos = datos.apellidos.trim();
+    payloadUpdate.usu_whatsapp = datos.autorizaWhatsapp ? (datos.whatsapp?.trim() || null) : null;
+    payloadUpdate.usu_autorizacion_whatsapp = Boolean(datos.autorizaWhatsapp);
+  }
 
   const { error } = await supabase
     .schema("comun_seguridad")
     .from("seg_usuario")
-    .update({
-      usu_nombres: datos.nombres.trim(),
-      usu_apellidos: datos.apellidos.trim(),
-      usu_whatsapp: datos.autorizaWhatsapp ? (datos.whatsapp?.trim() || null) : null,
-      usu_autorizacion_whatsapp: Boolean(datos.autorizaWhatsapp),
-      usu_detalle_usuario: nuevoDetalle,
-      usu_actualizado_en: new Date().toISOString(),
-    })
+    .update(payloadUpdate)
     .eq("usu_id", user.id);
 
   if (error) return { ok: false, error: error.message };
 
-  if (user.email) {
+  if (user.email && negocioCanon) {
     await procesarAutoafiliacionYBienvenidaConvenio({
       usuarioId: user.id,
       nombres: datos.nombres.trim(),
       apellidos: datos.apellidos.trim(),
       correo: user.email,
-      negocio: "tranqi",
+      negocio: negocioCanon,
     });
   }
 
@@ -460,75 +737,204 @@ export async function obtenerDatosFacturacionUsuario(): Promise<Resultado<{
 }
 
 // PLT-001 regla 2: confirma identidad (Google no siempre da un nombre claro)
-// y guarda la autorizacion de WhatsApp -- opt-in real, nunca se asume.
-// Marca usu_onboarding_completo para no repetir esta pantalla. A nivel de
-// usuario (comun_seguridad), no por negocio.
-export async function completarBienvenida(datos: DatosBienvenida): Promise<Resultado> {
+// y guarda la autorizacion de WhatsApp -- opt-in real, aislado por negocio.
+export async function completarBienvenida(
+  datos: DatosBienvenida,
+  negocio: string = "tranqi",
+): Promise<Resultado> {
   const parseo = esquemaBienvenida.safeParse(datos);
   if (!parseo.success) {
     return { ok: false, error: parseo.error.issues[0]?.message ?? "Datos invalidos" };
   }
 
+  const negocioCanon = claveNegocioCanonica(negocio);
+  const codigosNeg = codigosNegocio(negocioCanon);
   const supabase = await crearClienteServidor();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Sesión no encontrada" };
 
-  const { data: usrPrevio } = await supabase
-    .schema("comun_seguridad")
-    .from("seg_usuario")
-    .select("usu_detalle_usuario")
-    .eq("usu_id", user.id)
-    .maybeSingle();
+  await asegurarMembresiaCliente(supabase, user.id, negocioCanon);
+  await asegurarTerminosAceptados(supabase, user.id);
+
+  const adminDb = crearClienteAdmin();
+  const db = adminDb ?? supabase;
+
+  const [{ data: usrPrevio }, { data: otrasMembresias }] = await Promise.all([
+    db
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_nombres, usu_apellidos, usu_detalle_usuario")
+      .eq("usu_id", user.id)
+      .maybeSingle(),
+    db
+      .schema("comun_seguridad")
+      .from("seg_membresia")
+      .select("mem_negocio")
+      .eq("mem_usuario_id", user.id)
+      .eq("mem_estado", "ACTIVO"),
+  ]);
+
+  const codigosSetUpper = new Set(codigosNeg.map((c) => c.toUpperCase()));
+  const tieneOtrosNegocios = (otrasMembresias || []).some(
+    (m) => !codigosSetUpper.has((m.mem_negocio || "").toUpperCase())
+  );
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const detallePrevio = (usrPrevio?.usu_detalle_usuario as Record<string, any>) || {};
+  const regPrevio = obtenerRegistroNegocioDetalle(detallePrevio, negocioCanon);
+  const yaNotificadoStaff = Boolean(regPrevio?.notificado_registro_staff);
+  const mapaRegistros =
+    detallePrevio.registros_negocio && typeof detallePrevio.registros_negocio === "object"
+      ? { ...detallePrevio.registros_negocio }
+      : {};
   const ahoraIso = new Date().toISOString();
+
+  const registroEsteNegocio = {
+    ...(regPrevio || {}),
+    nombres: parseo.data.nombres,
+    apellidos: parseo.data.apellidos,
+    whatsapp: parseo.data.autorizaWhatsapp ? parseo.data.whatsapp : null,
+    autoriza_whatsapp: Boolean(parseo.data.autorizaWhatsapp),
+    onboarding_completo: true,
+    terminos_version: TERMINOS_VERSION,
+    terminos_aceptados_en: regPrevio?.terminos_aceptados_en || ahoraIso,
+    notificado_registro_staff: true,
+    registrado_en: regPrevio?.registrado_en || ahoraIso,
+    actualizado_en: ahoraIso,
+    consentimiento_whatsapp_info: {
+      autorizado: Boolean(parseo.data.autorizaWhatsapp),
+      finalidad: "CONTACTO_COMERCIAL_PROFORMAS_E_INFORMACION",
+      aceptado_en: ahoraIso,
+      negocio: negocioCanon,
+    },
+  };
+
+  mapaRegistros[negocioCanon] = registroEsteNegocio;
+
+  const payloadUpdate: {
+    usu_nombres?: string | null;
+    usu_apellidos?: string | null;
+    usu_whatsapp?: string | null;
+    usu_autorizacion_whatsapp?: boolean;
+    usu_onboarding_completo: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    usu_detalle_usuario: any;
+    usu_actualizado_en: string;
+  } = {
+    usu_onboarding_completo: true,
+    usu_detalle_usuario: {
+      ...detallePrevio,
+      registros_negocio: mapaRegistros,
+    },
+    usu_actualizado_en: ahoraIso,
+  };
+
+  if (!tieneOtrosNegocios) {
+    payloadUpdate.usu_nombres = parseo.data.nombres;
+    payloadUpdate.usu_apellidos = parseo.data.apellidos;
+    payloadUpdate.usu_whatsapp = parseo.data.autorizaWhatsapp ? parseo.data.whatsapp : null;
+    payloadUpdate.usu_autorizacion_whatsapp = parseo.data.autorizaWhatsapp;
+  } else {
+    if (!usrPrevio?.usu_nombres) payloadUpdate.usu_nombres = parseo.data.nombres;
+    if (!usrPrevio?.usu_apellidos) payloadUpdate.usu_apellidos = parseo.data.apellidos;
+  }
 
   const { error } = await supabase
     .schema("comun_seguridad")
     .from("seg_usuario")
-    .update({
-      usu_nombres: parseo.data.nombres,
-      usu_apellidos: parseo.data.apellidos,
-      usu_whatsapp: parseo.data.autorizaWhatsapp ? parseo.data.whatsapp : null,
-      usu_autorizacion_whatsapp: parseo.data.autorizaWhatsapp,
-      usu_onboarding_completo: true,
-      usu_detalle_usuario: {
-        ...detallePrevio,
-        consentimiento_whatsapp_info: {
-          autorizado: Boolean(parseo.data.autorizaWhatsapp),
-          finalidad: "CONTACTO_COMERCIAL_PROFORMAS_E_INFORMACION",
-          aceptado_en: ahoraIso,
-        },
-      },
-      usu_actualizado_en: ahoraIso,
-    })
+    .update(payloadUpdate)
     .eq("usu_id", user.id);
 
   if (error) return { ok: false, error: error.message };
 
+  if (adminDb) {
+    await adminDb
+      .schema("comun_seguridad")
+      .from("seg_membresia")
+      .update({
+        mem_detalle_membresia: registroEsteNegocio,
+        mem_actualizado_en: ahoraIso,
+      })
+      .eq("mem_usuario_id", user.id)
+      .in("mem_negocio", codigosNeg);
+  }
+
+  try {
+    const { ip, userAgent } = await obtenerIpYAgente();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db.schema("comun_seguridad") as any)
+      .from("seg_usuario_consentimiento")
+      .insert({
+        usc_usuario_id: user.id,
+        usc_negocio: negocioCanon.toUpperCase(),
+        usc_clave_documento: "consentimiento_whatsapp_lopdp",
+        usc_version: TERMINOS_VERSION,
+        usc_estado: parseo.data.autorizaWhatsapp ? "ACEPTADO" : "RECHAZADO",
+        usc_ip: ip,
+        usc_user_agent: userAgent,
+        usc_metadatos: {
+          whatsapp: parseo.data.autorizaWhatsapp ? parseo.data.whatsapp : null,
+          finalidad: "CONTACTO_COMERCIAL_PROFORMAS_E_INFORMACION",
+          negocio: negocioCanon,
+        },
+      });
+  } catch {
+    // Ignorar en entornos sin tabla de consentimiento
+  }
+
   if (user.email) {
-    await procesarAutoafiliacionYBienvenidaConvenio({
-      usuarioId: user.id,
-      nombres: parseo.data.nombres,
-      apellidos: parseo.data.apellidos,
-      correo: user.email,
-      negocio: "tranqi",
-    });
+    if (!yaNotificadoStaff) {
+      await notificarNuevoUsuarioRegistrado({
+        usuarioId: user.id,
+        nombres: parseo.data.nombres,
+        apellidos: parseo.data.apellidos,
+        correo: user.email,
+        negocio: negocioCanon,
+      });
+    } else {
+      await procesarAutoafiliacionYBienvenidaConvenio({
+        usuarioId: user.id,
+        nombres: parseo.data.nombres,
+        apellidos: parseo.data.apellidos,
+        correo: user.email,
+        negocio: negocioCanon,
+      });
+    }
   }
 
   return { ok: true, data: undefined };
 }
 
-// PLT-012: baja de cuenta / derecho al olvido. Delega toda la decision
-// (eliminar vs. rechazar) al RPC -- ver seg_fn_eliminar_cuenta() y su
-// comentario sobre el chequeo de historial transaccional pendiente para
-// cuando exista comun_facturacion. A nivel de usuario, no por negocio --
-// elimina la identidad completa del ecosistema, no solo una membresia.
-export async function eliminarCuenta(): Promise<Resultado> {
+// PLT-012: baja de cuenta / derecho al olvido aislada por negocio.
+// Si se indica `negocio`, elimina únicamente la membresía y datos registrados en ese negocio,
+// conservando intactas las cuentas que el usuario pueda tener en otros negocios independientes.
+export async function eliminarCuenta(negocio?: string): Promise<Resultado> {
   const supabase = await crearClienteServidor();
+  if (negocio) {
+    const negocioCanon = claveNegocioCanonica(negocio);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase.schema("comun_seguridad") as any).rpc(
+      "seg_fn_eliminar_cuenta_negocio",
+      { p_negocio: negocioCanon }
+    );
+
+    if (error) {
+      // Fallback solo si el RPC aún no fue desplegado y el usuario no pertenece a otros negocios
+      if (/seg_fn_eliminar_cuenta_negocio/i.test(error.message)) {
+        const { error: errLegacy } = await supabase
+          .schema("comun_seguridad")
+          .rpc("seg_fn_eliminar_cuenta");
+        if (errLegacy) return { ok: false, error: errLegacy.message };
+      } else {
+        return { ok: false, error: error.message };
+      }
+    }
+    await supabase.auth.signOut();
+    return { ok: true, data: undefined };
+  }
+
   const { error } = await supabase.schema("comun_seguridad").rpc("seg_fn_eliminar_cuenta");
   if (error) return { ok: false, error: error.message };
   await supabase.auth.signOut();
@@ -799,13 +1205,16 @@ function validarCodigoTotpSecret(secretBase32: string, codigoIngresado: string):
  * Verifica el código TOTP ingresado por el usuario en tiempo real contra el secret asignado a su cuenta.
  * SuperAdmin y Administrador Plataforma BYPASS (PLT-002 Rule: SuperAdmin no requiere MFA jamás).
  */
-export async function verificarCodigoTotpUsuario(codigoTotp: string): Promise<Resultado> {
+export async function verificarCodigoTotpUsuario(
+  codigoTotp: string,
+  negocio: string = "tranqi",
+): Promise<Resultado> {
   const supabase = await crearClienteServidor();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Sesión no encontrada. Inicia sesión nuevamente." };
 
   // 1. REGLA PLT-002: SuperAdmin y Administradores Plataforma NUNCA requieren ni son bloqueados por MFA
-  const perfilesUsuario = await obtenerPerfiles("tranqi");
+  const perfilesUsuario = await obtenerPerfiles(claveNegocioCanonica(negocio));
   if (perfilesUsuario.includes("SUPERADMIN") || perfilesUsuario.includes("ADMINISTRADOR")) {
     return { ok: true, data: undefined };
   }
