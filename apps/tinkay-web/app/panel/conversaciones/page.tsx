@@ -16,7 +16,19 @@ export default async function PaginaConversacionesOmnicanalTinkay() {
     redirect("/panel");
   }
 
-  const res = await obtenerTableroOmnicanalAction(NEGOCIO);
+  let datosIniciales: Awaited<ReturnType<typeof obtenerTableroOmnicanalAction>> | null = null;
+  let errorCargaSSR: string | null = null;
+  try {
+    datosIniciales = await obtenerTableroOmnicanalAction(NEGOCIO);
+    if (!datosIniciales.ok) {
+      errorCargaSSR = datosIniciales.error;
+    }
+  } catch (err) {
+    errorCargaSSR =
+      err instanceof Error
+        ? err.message
+        : "Error temporal al pre-cargar conversaciones en el servidor.";
+  }
 
   return (
     <div
@@ -41,7 +53,8 @@ export default async function PaginaConversacionesOmnicanalTinkay() {
 
       <ConsolaVentasOmnicanal
         negocio={NEGOCIO}
-        datosIniciales={res.ok ? res.datos : undefined}
+        datosIniciales={datosIniciales?.ok ? datosIniciales.datos : undefined}
+        errorInicial={errorCargaSSR}
       />
     </div>
   );

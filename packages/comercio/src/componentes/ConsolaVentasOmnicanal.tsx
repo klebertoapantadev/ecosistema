@@ -61,6 +61,7 @@ import {
 export interface PropsConsolaVentasOmnicanal {
   negocio: string;
   datosIniciales?: DatosTableroOmnicanal;
+  errorInicial?: string | null;
 }
 
 type PestanaPrincipal = "inbox" | "compras" | "usuarios" | "ia_config";
@@ -166,6 +167,7 @@ function badgeEstadoAtencion(estado: EstadoAtencionOmnicanal): {
 export function ConsolaVentasOmnicanal({
   negocio,
   datosIniciales,
+  errorInicial,
 }: PropsConsolaVentasOmnicanal) {
   const negNorm = negocio.trim().toLowerCase();
   const cacheKey = `eco_omnicanal_tablero_${negNorm}`;
@@ -184,7 +186,7 @@ export function ConsolaVentasOmnicanal({
     }
   );
   const [cargando, setCargando] = useState<boolean>(!datosIniciales);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(errorInicial ?? null);
 
   // Estado de la Bandeja estilo ManyChat
   const [filtroIzquierdo, setFiltroIzquierdo] = useState<FiltroBandejaIzquierda>("todos");
@@ -406,7 +408,7 @@ export function ConsolaVentasOmnicanal({
       if (filtroIzquierdo === "ia_activa" && c.estadoAtencion !== "BOT_ACTIVO") return false;
       if (filtroIzquierdo === "recordatorios" && !c.recordatorioEn) return false;
 
-      if (etiquetaFiltroId && !c.etiquetasIds.includes(etiquetaFiltroId)) return false;
+      if (etiquetaFiltroId && !(c.etiquetasIds ?? []).includes(etiquetaFiltroId)) return false;
       if (vendedorFiltroId && c.asesoraAsignadaId !== vendedorFiltroId) return false;
       if (soloNoLeidos && (c.noLeidosAsesora || 0) === 0) return false;
       if ((c.canal || "web") !== "web") return false;
@@ -910,16 +912,16 @@ export function ConsolaVentasOmnicanal({
         id: "etiquetas",
         encabezado: "Etiquetas",
         valor: (u) =>
-          u.etiquetasIds
+          (u.etiquetasIds ?? [])
             .map((id) => mapaEtiquetas.get(id)?.nombre)
             .filter(Boolean)
             .join(", "),
         render: (u) => (
           <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-            {u.etiquetasIds.length === 0 && (
+            {(u.etiquetasIds ?? []).length === 0 && (
               <span style={{ fontSize: "0.72rem", color: "#9CA3AF" }}>Sin etiquetas</span>
             )}
-            {u.etiquetasIds.map((id) => {
+            {(u.etiquetasIds ?? []).map((id) => {
               const etq = mapaEtiquetas.get(id);
               if (!etq) return null;
               return (
@@ -1371,7 +1373,7 @@ export function ConsolaVentasOmnicanal({
               {tablero.etiquetas.map((etq) => {
                 const activa = etiquetaFiltroId === etq.id;
                 const conteo = tablero.conversaciones.filter((c) =>
-                  c.etiquetasIds.includes(etq.id)
+                  (c.etiquetasIds ?? []).includes(etq.id)
                 ).length;
                 return (
                   <button
@@ -1734,7 +1736,7 @@ export function ConsolaVentasOmnicanal({
                           </span>
                         )}
 
-                        {conv.etiquetasIds.slice(0, 3).map((etqId) => {
+                        {(conv.etiquetasIds ?? []).slice(0, 3).map((etqId) => {
                           const etq = mapaEtiquetas.get(etqId);
                           if (!etq) return null;
                           return (
@@ -1965,7 +1967,7 @@ export function ConsolaVentasOmnicanal({
                   <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
                     <Tag size={13} style={{ color: "#64748B" }} />
                     {tablero.etiquetas.map((etq) => {
-                      const puesta = conversacionActiva.etiquetasIds.includes(etq.id);
+                      const puesta = (conversacionActiva.etiquetasIds ?? []).includes(etq.id);
                       return (
                         <button
                           key={etq.id}
