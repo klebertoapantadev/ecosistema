@@ -25,26 +25,26 @@ export const ENLACE_ALBUM_GOOGLE_PHOTOS = 'https://photos.app.goo.gl/tinkay-test
 export const TESTIMONIOS_TINKAY: TestimonioCliente[] = [
   {
     id: 'tst-01',
-    nombreCliente: 'Camila R.',
-    ciudad: 'Quito Norte (La Carolina)',
-    ocasion: '💐 Cumpleaños Sorpresa',
+    nombreCliente: 'Angelo Carvajal',
+    ciudad: 'Quito',
+    ocasion: '🌻 Arreglo Especial de Girasoles',
     comentario:
-      '«¡Llegó puntualísimo a las 9 am a la oficina de mi hermana! Las rosas olían increíble y la dedicatoria en papel verjurado quedó perfecta. 100% recomendados.»',
-    imagenUrl: '/img/extras/bouquet_rojo_recostado_tinkay.jpg',
+      '«El arreglo está muy lindo, le gustó mucho a mi esposa. Muchas gracias por la confirmación y la entrega puntual.»',
+    imagenUrl: '/img/testimonios/testimonio-whatsapp-girasoles.jpg',
     calificacion: 5,
-    fecha: 'Hace 2 días',
+    fecha: 'Reciente',
     destacado: true,
   },
   {
     id: 'tst-02',
-    nombreCliente: 'David S.',
-    ciudad: 'Cumbayá',
-    ocasion: '🌹 Aniversario de Bodas',
+    nombreCliente: 'José González',
+    ciudad: 'Quito y Valles',
+    ocasion: '🎪 Montaje y Decoración de Evento',
     comentario:
-      '«Compré el Abanico Floral con los chocolates Ferrero. La presentación superó las fotos de la página web. Mi esposa quedó fascinada con la frescura de los botones.»',
-    imagenUrl: '/img/extras/bouquet_rojo_caja_ferrero_corazon.jpg',
+      '«Quedó muy bien, muy recomendados. Agradecemos su gentileza y puntualidad con el equipo de instalación.»',
+    imagenUrl: '/img/testimonios/testimonio-whatsapp-evento-mesas.jpg',
     calificacion: 5,
-    fecha: 'Hace 5 días',
+    fecha: 'Reciente',
     destacado: true,
   },
   {
