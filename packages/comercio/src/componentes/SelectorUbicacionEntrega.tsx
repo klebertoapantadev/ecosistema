@@ -913,6 +913,155 @@ export function SelectorUbicacionEntrega({
               </button>
             </div>
 
+            {/* Buscador de dirección + Usar ubicación actual dentro del mapa ampliado */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" }}>
+              <div style={{ display: "flex", gap: "6px", flex: "1 1 280px" }}>
+                <input
+                  type="text"
+                  value={consultaMapa}
+                  onChange={(e) => setConsultaMapa(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void manejarBuscarEnMapa();
+                    }
+                  }}
+                  placeholder="Buscar dirección, barrio o edificio (ej. La Carolina, Cumbayá, USFQ)..."
+                  style={{
+                    flex: 1,
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid #CBD5E1",
+                    fontSize: "0.82rem",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <button
+                  type="button"
+                  disabled={buscandoSugerencias}
+                  onClick={() => void manejarBuscarEnMapa()}
+                  title="Buscar dirección en el mapa"
+                  aria-label="Buscar dirección"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "0 12px",
+                    borderRadius: "8px",
+                    border: "1px solid #18181B",
+                    background: "#18181B",
+                    color: "#FFFFFF",
+                    fontSize: "0.78rem",
+                    fontWeight: 700,
+                    cursor: buscandoSugerencias ? "wait" : "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {buscandoSugerencias ? <Loader2 size={14} /> : <Search size={14} />}
+                  <span>Buscar</span>
+                </button>
+              </div>
+
+              <button
+                type="button"
+                disabled={calculando}
+                onClick={() => {
+                  setSeleccionandoOtraUbicacion(true);
+                  usarMiUbicacionGps();
+                }}
+                title="Detectar mi ubicación GPS actual y calcular envío"
+                aria-label="Usar ubicación actual"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid #0284C7",
+                  background: "#F0F9FF",
+                  color: "#0369A1",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  cursor: calculando ? "wait" : "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {calculando ? <Loader2 size={14} /> : <LocateFixed size={14} />}
+                <span>Usar ubicación actual</span>
+              </button>
+            </div>
+
+            {sugerencias.length > 0 && (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "3px",
+                  maxHeight: "130px",
+                  overflowY: "auto",
+                  border: "1px solid #E2E8F0",
+                  borderRadius: "8px",
+                  padding: "4px",
+                  background: "#F8FAFC",
+                }}
+              >
+                {sugerencias.map((sug, i) => (
+                  <button
+                    key={`modal-${sug.lat}-${sug.lng}-${i}`}
+                    type="button"
+                    onClick={() => {
+                      setSugerencias([]);
+                      setConsultaMapa(sug.nombreCorto);
+                      setSeleccionandoOtraUbicacion(true);
+                      void ejecutarCotizacionPorCoordenadas(
+                        { lat: sug.lat, lng: sug.lng },
+                        undefined,
+                        sug.direccionCompleta
+                      );
+                    }}
+                    style={{
+                      textAlign: "left",
+                      padding: "6px 10px",
+                      borderRadius: "6px",
+                      border: "none",
+                      background: "#FFFFFF",
+                      cursor: "pointer",
+                      fontSize: "0.78rem",
+                      color: "#0F172A",
+                    }}
+                  >
+                    <strong>{sug.nombreCorto}</strong>
+                    <div
+                      style={{
+                        fontSize: "0.7rem",
+                        color: "#64748B",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                      }}
+                    >
+                      {sug.direccionCompleta}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {errorMsg && (
+              <div
+                style={{
+                  background: "#FEF2F2",
+                  border: "1px solid #FECACA",
+                  borderRadius: "8px",
+                  padding: "7px 10px",
+                  fontSize: "0.76rem",
+                  color: "#B91C1C",
+                }}
+              >
+                {errorMsg}
+              </div>
+            )}
+
             <MapaCoberturaPichincha
               origen={{ lat: config.origenLat, lng: config.origenLng }}
               origenNombre={config.origenNombre}
