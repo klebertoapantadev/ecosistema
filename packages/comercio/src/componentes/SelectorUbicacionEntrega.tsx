@@ -75,6 +75,7 @@ export function SelectorUbicacionEntrega({
   const [cotizacion, setCotizacion] = useState<ResultadoCotizacionEnvio | null>(cotizacionInicial);
   const [mapaAbierto, setMapaAbierto] = useState<boolean>(mostrarMapaPorDefecto);
   const [mapaAmpliadoAbierto, setMapaAmpliadoAbierto] = useState<boolean>(false);
+  const [secuenciaCentrarDestino, setSecuenciaCentrarDestino] = useState<number>(0);
   const [seleccionandoOtraUbicacion, setSeleccionandoOtraUbicacion] = useState<boolean>(
     Boolean(enlaceMapaInicial || coordenadasIniciales || cotizacionInicial || mostrarMapaPorDefecto)
   );
@@ -716,6 +717,7 @@ export function SelectorUbicacionEntrega({
                 zonas={config.zonas}
                 zonaResaltadaId={cotizacion?.zonaDetectada?.id ?? null}
                 rutaGeometria={cotizacion?.rutaGeometria}
+                secuenciaCentrarDestino={secuenciaCentrarDestino}
                 alturaPx={235}
                 onSeleccionarPunto={(pt) => {
                   void ejecutarCotizacionPorCoordenadas(pt);
@@ -820,16 +822,43 @@ export function SelectorUbicacionEntrega({
                 </strong>
               </div>
 
-              {cotizacion.detalleDireccion && (
+              {(cotizacion.detalleDireccion || coordenadas) && (
                 <div
                   style={{
-                    fontSize: "0.73rem",
+                    fontSize: "0.72rem",
                     color: "#475569",
-                    lineHeight: 1.38,
-                    marginTop: "2px",
+                    lineHeight: 1.4,
+                    marginTop: "3px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "2px",
                   }}
                 >
-                  📍 {cotizacion.detalleDireccion.resumenDireccion}
+                  {cotizacion.detalleDireccion?.resumenDireccion && (
+                    <div>📍 {cotizacion.detalleDireccion.resumenDireccion}</div>
+                  )}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 10px", fontSize: "0.69rem", color: "#64748B" }}>
+                    {cotizacion.detalleDireccion?.parroquia && (
+                      <span>
+                        <strong>Parroquia:</strong> {cotizacion.detalleDireccion.parroquia}
+                      </span>
+                    )}
+                    {cotizacion.detalleDireccion?.sectorBarrio && (
+                      <span>
+                        <strong>Barrio:</strong> {cotizacion.detalleDireccion.sectorBarrio}
+                      </span>
+                    )}
+                    {cotizacion.detalleDireccion?.callePrincipal && (
+                      <span>
+                        <strong>Calles:</strong> {cotizacion.detalleDireccion.callePrincipal}
+                      </span>
+                    )}
+                    {coordenadas && (
+                      <span>
+                        <strong>GPS:</strong> {coordenadas.lat.toFixed(6)}, {coordenadas.lng.toFixed(6)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -1073,12 +1102,62 @@ export function SelectorUbicacionEntrega({
                 null
               }
               rutaGeometria={cotizacion?.rutaGeometria}
-              alturaPx={440}
+              secuenciaCentrarDestino={secuenciaCentrarDestino}
+              alturaPx={410}
               onSeleccionarPunto={(pt) => {
                 setSeleccionandoOtraUbicacion(true);
                 void ejecutarCotizacionPorCoordenadas(pt);
               }}
             />
+
+            {(coordenadas || cotizacion?.detalleDireccion) && (
+              <div
+                style={{
+                  background: "#F8FAFC",
+                  border: "1px solid #E2E8F0",
+                  borderRadius: "10px",
+                  padding: "8px 12px",
+                  fontSize: "0.76rem",
+                  color: "#334155",
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "6px 14px",
+                  alignItems: "center",
+                }}
+              >
+                {cotizacion?.detalleDireccion?.parroquia && (
+                  <span>
+                    <strong>Parroquia:</strong> {cotizacion.detalleDireccion.parroquia}
+                  </span>
+                )}
+                {cotizacion?.detalleDireccion?.sectorBarrio && (
+                  <span>
+                    <strong>Barrio:</strong> {cotizacion.detalleDireccion.sectorBarrio}
+                  </span>
+                )}
+                {cotizacion?.detalleDireccion?.callePrincipal && (
+                  <span>
+                    <strong>Calles / Intersección:</strong> {cotizacion.detalleDireccion.callePrincipal}
+                  </span>
+                )}
+                {!cotizacion?.detalleDireccion?.callePrincipal &&
+                  cotizacion?.detalleDireccion?.resumenDireccion && (
+                    <span>
+                      <strong>Dirección:</strong> {cotizacion.detalleDireccion.resumenDireccion}
+                    </span>
+                  )}
+                {coordenadas && (
+                  <span>
+                    <strong>Lat / Lng:</strong> {coordenadas.lat.toFixed(6)}, {coordenadas.lng.toFixed(6)}
+                  </span>
+                )}
+                {calculando && (
+                  <span style={{ color: "#0284C7", fontWeight: 700 }}>
+                    Recalculando envío...
+                  </span>
+                )}
+              </div>
+            )}
 
             <div
               style={{
@@ -1090,7 +1169,9 @@ export function SelectorUbicacionEntrega({
               }}
             >
               <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#0F172A" }}>
-                {cotizacion
+                {calculando
+                  ? "Calculando costo de entrega..."
+                  : cotizacion
                   ? cotizacion.costoTotalEnvio === 0 && cotizacion.dentroCobertura
                     ? "✅ Entrega gratuita en zona de cobertura ($0.00)"
                     : cotizacion.dentroCobertura
@@ -1098,22 +1179,48 @@ export function SelectorUbicacionEntrega({
                     : "Ubicación fuera de cobertura automática (por coordinar)"
                   : "✅ Zona gratuita activa ($0.00)"}
               </span>
-              <button
-                type="button"
-                onClick={() => setMapaAmpliadoAbierto(false)}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: "10px",
-                  border: "none",
-                  background: "#065F46",
-                  color: "#FFFFFF",
-                  fontWeight: 700,
-                  fontSize: "0.8rem",
-                  cursor: "pointer",
-                }}
-              >
-                Confirmar y volver
-              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                {coordenadas && (
+                  <button
+                    type="button"
+                    onClick={() => setSecuenciaCentrarDestino((n) => n + 1)}
+                    title="Centrar y acercar el mapa en la ubicación seleccionada"
+                    aria-label="Centrar en ubicación"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                      padding: "8px 12px",
+                      borderRadius: "10px",
+                      border: "1px solid #CBD5E1",
+                      background: "#FFFFFF",
+                      color: "#0F172A",
+                      fontWeight: 700,
+                      fontSize: "0.78rem",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <LocateFixed size={14} />
+                    <span>Centrar en ubicación</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setMapaAmpliadoAbierto(false)}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: "10px",
+                    border: "none",
+                    background: "#065F46",
+                    color: "#FFFFFF",
+                    fontWeight: 700,
+                    fontSize: "0.8rem",
+                    cursor: "pointer",
+                  }}
+                >
+                  Confirmar y volver
+                </button>
+              </div>
             </div>
           </div>
         </div>

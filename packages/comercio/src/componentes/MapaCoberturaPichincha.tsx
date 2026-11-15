@@ -72,6 +72,8 @@ export interface PropsMapaCoberturaPichincha {
   secuenciaEnfoqueZona?: number;
   /** Incrementar para encuadrar todas las zonas activas de Pichincha */
   secuenciaVerTodo?: number;
+  /** Incrementar para centrar y acercar el mapa en la ubicación `destino` seleccionada */
+  secuenciaCentrarDestino?: number;
   onSeleccionarPunto?: (punto: CoordenadaGeo) => void;
   onAgregarVerticePoligono?: (punto: CoordenadaGeo) => void;
 }
@@ -89,6 +91,7 @@ export function MapaCoberturaPichincha({
   verticesDibujo = [],
   secuenciaEnfoqueZona = 0,
   secuenciaVerTodo = 0,
+  secuenciaCentrarDestino = 0,
   onSeleccionarPunto,
   onAgregarVerticePoligono,
 }: PropsMapaCoberturaPichincha) {
@@ -219,6 +222,26 @@ export function MapaCoberturaPichincha({
       // Ignorar coordenadas degeneradas
     }
   }, [estadoCarga, secuenciaEnfoqueZona, zonaResaltadaId, zonas]);
+
+  // Centrar y acercar el mapa en la ubicación de entrega seleccionada
+  useEffect(() => {
+    if (
+      estadoCarga !== "listo" ||
+      !mapaRef.current ||
+      !destino ||
+      !Number.isFinite(destino.lat) ||
+      !Number.isFinite(destino.lng) ||
+      secuenciaCentrarDestino <= 0
+    ) {
+      return;
+    }
+    try {
+      mapaRef.current.invalidateSize();
+      mapaRef.current.setView([destino.lat, destino.lng], 16, { animate: true });
+    } catch {
+      // Ignorar
+    }
+  }, [estadoCarga, secuenciaCentrarDestino, destino]);
 
   // Encuadrar todas las zonas activas de Pichincha al pulsar «Ver Todas»
   useEffect(() => {
