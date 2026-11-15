@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { productoCatalogoCoincideBusqueda } from "./usosCatalogo";
 import type { CategoriaCatalogo, ProductoCatalogo } from "../acciones";
 
-const CATEGORIAS_PRUEBA: CategoriaCatalogo[] = [
+// Fixtures parciales: solo los campos que usa la búsqueda.
+const CATEGORIAS_PRUEBA = [
   {
     ctg_id: "cat-condol-uuid",
     ctg_negocio: "tinkay",
@@ -23,7 +24,7 @@ const CATEGORIAS_PRUEBA: CategoriaCatalogo[] = [
     ctg_orden: 2,
     ctg_activo: true,
   },
-];
+] as CategoriaCatalogo[];
 
 const PRODUCTO_CORONA: ProductoCatalogo = {
   pro_id: "prod-corona",
@@ -57,7 +58,7 @@ const PRODUCTO_CORONA: ProductoCatalogo = {
         beneficios_custom: ["Corona y Botón de rosas blancas."],
       },
     },
-  ],
+  ] as ProductoCatalogo["variantes"],
 };
 
 const PRODUCTO_BOX: ProductoCatalogo = {
@@ -89,7 +90,7 @@ const PRODUCTO_BOX: ProductoCatalogo = {
       precio_total: 60,
       var_detalle_variante: {},
     },
-  ],
+  ] as ProductoCatalogo["variantes"],
 };
 
 describe("productoCatalogoCoincideBusqueda", () => {

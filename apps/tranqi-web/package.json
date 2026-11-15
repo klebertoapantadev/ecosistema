@@ -28,15 +28,15 @@
     "@types/nodemailer": "^8.0.1",
     "docx": "^9.7.1",
     "lucide-react": "1.27.0",
-    "next": "15.5.22",
-    "node-forge": "^1.4.0",
-    "nodemailer": "^9.0.3",
+    "next": "15.5.29",
+    "node-forge": "^1.4.3",
+    "nodemailer": "^10.5.0",
     "pdf-lib": "^1.17.1",
     "qrcode": "^1.5.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "unpdf": "1.8.1",
-    "zod": "4.4.3"
+    "zod": "4.6.6"
   },
   "devDependencies": {
     "@eco/config": "workspace:*",
@@ -47,6 +47,6 @@
     "@types/react-dom": "^19.0.0",
     "eslint": "9.39.5",
     "typescript": "^5.7.0",
-    "vitest": "^3.0.0"
+    "vitest": "^4.0.0"
   }
 }
