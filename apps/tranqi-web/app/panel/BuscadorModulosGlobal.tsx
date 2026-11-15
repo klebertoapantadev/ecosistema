@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Search, X, UserCog, UserCheck, Settings, Mail, Bell, Shield, ShieldCheck,
   CircleUser, ChevronRight, Sliders, Briefcase, FileText, BarChart2, FileCheck, Folder,
-  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard, Building2, Scale, KeyRound, Sparkles, Bot, MapPin, ClipboardList, MessageSquareHeart
+  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard, Building2, Scale, KeyRound, Sparkles, Bot, MapPin, ClipboardList, MessageSquare, MessageSquareHeart
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
@@ -171,6 +171,16 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     minNivel: 80,
     icono: MapPin,
     colorIcono: "#16A34A"
+  },
+  {
+    clave: "consola_chat",
+    nombre: "Ventas Omnicanal & Conversaciones en Vivo",
+    detalle: "Reemplazo ManyChat: monitoreo de chats web, respuestas de vendedores vs ARIA, etiquetas, mensajes predeterminados y compras web",
+    ruta: "/panel/conversaciones",
+    categoria: "Comercio & Pagos",
+    minNivel: 20,
+    icono: MessageSquare,
+    colorIcono: "#DB2777"
   },
   {
     clave: "pedidos_tienda",

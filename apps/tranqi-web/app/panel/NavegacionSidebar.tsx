@@ -6,7 +6,7 @@ import {
   Home, CircleUser, Settings, ShieldCheck, ClipboardList, Wrench, CreditCard,
   PanelLeft, Sliders, Folder, Activity, FileText, UserCog, Briefcase, Calendar, Users,
   CheckSquare, Globe, Building2, Sparkles, Phone, Lock, KeyRound, Terminal, Zap,
-  Eye, Search, Pencil, LogOut, LogIn, ShoppingBag, Bot, MapPin, type LucideIcon
+  Eye, Search, Pencil, LogOut, LogIn, ShoppingBag, Bot, MapPin, MessageSquare, type LucideIcon
 } from "lucide-react";
 import { EnlacePanel } from "./EnlacePanel";
 import { BotonCerrarSesion } from "./BotonCerrarSesion";
@@ -60,6 +60,7 @@ const MAPA_ICONOS_NAV: Record<string, LucideIcon> = {
   PanelLeft,
   Bot,
   MapPin,
+  MessageSquare,
   panel_inicio: Home,
   panel_productos_servicios: ShoppingBag,
   panel_clientes: CircleUser,
@@ -247,6 +248,19 @@ export function NavegacionSidebar({
           const listaCfg = widgetsPorPanel["panel_configuracion"] || [];
           if (!listaCfg.includes("configuracion_facturacion_sri")) {
             widgetsPorPanel["panel_configuracion"] = [...listaCfg, "configuracion_facturacion_sri"];
+          }
+        }
+
+        // Pre-asignación base de consola_chat en panel_administrar para roles comerciales y operativos
+        if (
+          rolKey === "VENTAS" ||
+          rolKey === "VENDEDOR" ||
+          rolKey === "OPERADOR" ||
+          rolKey === "ADMINISTRADOR"
+        ) {
+          const listaAdm = widgetsPorPanel["panel_administrar"] || [];
+          if (!listaAdm.includes("consola_chat")) {
+            widgetsPorPanel["panel_administrar"] = ["consola_chat", ...listaAdm];
           }
         }
 

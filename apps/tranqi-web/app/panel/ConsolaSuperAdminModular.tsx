@@ -6,7 +6,7 @@ import {
   Sparkles, Shield, LayoutGrid, Pencil, Users, UserCheck, Eye,
   Settings, Mail, ShieldCheck, Bell, CircleUser, KeyRound, Sliders, Briefcase,
   Receipt, History, RotateCcw, FileCheck, Folder, ShoppingBag, CreditCard,
-  CalendarClock, CalendarPlus, CalendarCheck, Building2, Scale, Award, BellRing, Bot, MapPin, ClipboardList, MessageSquareHeart, type LucideIcon
+  CalendarClock, CalendarPlus, CalendarCheck, Building2, Scale, Award, BellRing, Bot, MapPin, ClipboardList, MessageSquare, MessageSquareHeart, type LucideIcon
 } from "lucide-react";
 import { resetearSistemaSuperAdminAction } from "@eco/gestion-usuarios/acciones";
 import { ModalNotificacionPush } from "@eco/notificaciones";
@@ -144,6 +144,22 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     perfilesAsignados: ["ADMINISTRADOR", "SUPERADMIN"],
     estadoDuplicidad: "COMPARTIDO",
     fechaRegistro: "2026-11-12",
+  },
+  {
+    clave: "consola_chat",
+    nombre: "Ventas Omnicanal & Conversaciones (HITL)",
+    detalle: "Bandeja unificada (reemplazo ManyChat): chats web en vivo, intervención humana vs ARIA, etiquetas, /atajos, usuarios registrados y compras web",
+    ruta: "/panel/conversaciones",
+    icono: MessageSquare,
+    iconoKey: "MessageSquare",
+    color: "#DB2777",
+    rutaFisica: "packages/comercio/src/componentes/ConsolaVentasOmnicanal.tsx",
+    paquete: "@eco/comercio",
+    panelDestino: "Administrar (/panel/conversaciones)",
+    categoria: "Comercio & Catálogo",
+    perfilesAsignados: ["VENTAS", "VENDEDOR", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "COMPARTIDO",
+    fechaRegistro: "2026-11-15",
   },
   {
     clave: "pedidos_tienda",

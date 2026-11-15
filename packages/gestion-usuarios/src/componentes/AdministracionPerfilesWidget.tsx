@@ -8,7 +8,7 @@ import {
   Palette, UserCheck, X, Sparkles, Trash2, Star, Move, Copy, Package, GripVertical,
   Home, User, Settings, Shield, Folder, Wrench, Building, Briefcase, Bell, Database,
   Activity, Globe, Lock, KeyRound, CheckSquare, Terminal, Zap, Pencil, LogOut, LogIn,
-  Forward, Inbox, FileText, Download, Printer, Share2, RotateCcw, Loader2, Scale, Bot, MapPin, ClipboardList, MessageSquareHeart, type LucideIcon
+  Forward, Inbox, FileText, Download, Printer, Share2, RotateCcw, Loader2, Scale, Bot, MapPin, ClipboardList, MessageSquare, MessageSquareHeart, type LucideIcon
 } from "lucide-react";
 import {
   guardarPerfil,
@@ -318,7 +318,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_red_profesional: ["gestion_red_abogados", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
+      panel_administrar: ["consola_chat", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["notificaciones", "agentes_ia"]
@@ -355,7 +355,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_red_profesional: ["gestion_red_abogados", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
+      panel_administrar: ["consola_chat", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_facturacion_sri", "configuracion_logistica", "configuracion_correo", "configuracion_aria", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
@@ -377,7 +377,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_red_profesional: ["gestion_red_abogados", "mi_perfil_abogado", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "mi_perfil_abogado", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
+      panel_administrar: ["consola_chat", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_facturacion_sri", "configuracion_logistica", "configuracion_correo", "configuracion_aria", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
@@ -588,6 +588,17 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     panelId: "panel_configuracion",
     activo: true,
     creadoEn: "2026-11-12"
+  },
+  {
+    clave: "consola_chat",
+    nombre: "Ventas Omnicanal & Conversaciones (HITL)",
+    descripcion: "Bandeja unificada (reemplazo ManyChat): chats web en vivo, intervención humana vs ARIA, etiquetas, respuestas rápidas, usuarios registrados y compras web.",
+    categoria: "Comercio y Pagos",
+    ruta: "/panel/conversaciones",
+    rutaFisica: "/comercio/componentes/ConsolaVentasOmnicanal.tsx",
+    panelId: "panel_administrar",
+    activo: true,
+    creadoEn: "2026-11-15"
   },
   {
     clave: "pedidos_tienda",
@@ -1092,6 +1103,21 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
           </p>
           <div style={{ padding: "12px", background: "#F0FDF4", borderRadius: "8px", border: "1px dashed #86EFAC", textAlign: "center", fontSize: "0.82rem", color: "#166534", fontWeight: 700 }}>
             Zona Gratis · Polígonos Pichincha · Cálculo por Km OSRM · MCP WhatsApp
+          </div>
+        </div>
+      );
+
+    case "consola_chat":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #DB2777", boxShadow: "0 4px 12px rgba(219,39,119,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#BE185D", marginBottom: "10px" }}>
+            <MessageSquare size={18} /> Ventas Omnicanal & Conversaciones (HITL)
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Bandeja en vivo estilo ManyChat: monitoreo multi-vendedor, intervención humana vs IA ARIA, etiquetas de clientes, atajos (/comando), compras web y conectores YCloud / Meta / TikTok.
+          </p>
+          <div style={{ padding: "12px", background: "#FDF2F8", borderRadius: "8px", border: "1px dashed #F9A8D4", textAlign: "center", fontSize: "0.82rem", color: "#9D174D", fontWeight: 700 }}>
+            Inbox en Vivo · IA ARIA vs Humano · Etiquetas · /Atajos · Compras & Usuarios 360°
           </div>
         </div>
       );

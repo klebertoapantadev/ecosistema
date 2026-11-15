@@ -69,7 +69,19 @@ export default function TranqiLanding() {
   }, []);
 
   useEffect(() => {
-    const convId = crypto.randomUUID();
+    let convId = "";
+    try {
+      const guardado = window.localStorage.getItem("eco_chat_conv_tranqi");
+      if (guardado && /^[A-Za-z0-9_-]{8,64}$/.test(guardado)) {
+        convId = guardado;
+      } else {
+        convId = crypto.randomUUID();
+        window.localStorage.setItem("eco_chat_conv_tranqi", convId);
+      }
+    } catch {
+      convId = crypto.randomUUID();
+    }
+    const idsHumanosVistos = new Set<string>();
     const seen = new Set<string>();
     let busy = false;
     let globoTimer: ReturnType<typeof setTimeout> | undefined;
@@ -211,15 +223,18 @@ export default function TranqiLanding() {
     const esc = (s: string) =>
       s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
-    async function askAgent(prompt: string) {
+    async function askAgent(prompt: string): Promise<{ texto: string; modoHumano?: boolean; asesoraNombre?: string }> {
       const r = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt, conversation_id: convId }),
       });
       const data = await r.json();
+      if (r.ok && data.modoHumano) {
+        return { texto: "", modoHumano: true, asesoraNombre: data.asesoraNombre || "Asesor Legal" };
+      }
       if (!r.ok || data.error) throw new Error(data.error || r.status);
-      return data.response as string;
+      return { texto: String(data.response || "") };
     }
 
     async function comentarSeccion(key: string) {
@@ -230,7 +245,8 @@ export default function TranqiLanding() {
       escribiendo();
       let text: string;
       try {
-        text = await askAgent(`[CONTEXTO: el visitante acaba de llegar a la sección ${key}] evento de navegación`);
+        const res = await askAgent(`[CONTEXTO: el visitante acaba de llegar a la sección ${key}] evento de navegación`);
+        text = res.texto || FALLBACK[key] || PRESENTACION;
       } catch {
         text = FALLBACK[key] || PRESENTACION;
       }
@@ -280,14 +296,19 @@ export default function TranqiLanding() {
       typing.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>';
       log.appendChild(typing);
       log.scrollTop = log.scrollHeight;
-      let answer: string;
+      let answer = "";
+      let enModoHumano = false;
       try {
-        answer = await askAgent(text);
+        const res = await askAgent(text);
+        answer = res.texto;
+        enModoHumano = Boolean(res.modoHumano);
       } catch {
         answer = "Uy, se me cruzaron los cables un segundo. ¿Me lo repites?";
       }
       typing.remove();
-      addMsg(answer, "bot");
+      if (!enModoHumano && answer) {
+        addMsg(answer, "bot");
+      }
       busy = false;
       send.disabled = false;
       input.focus();
@@ -296,6 +317,28 @@ export default function TranqiLanding() {
     send.addEventListener("click", onSendClick);
     const onInputKeydown = (e: KeyboardEvent) => e.key === "Enter" && enviar(input.value);
     input.addEventListener("keydown", onInputKeydown);
+
+    const sincronizarAsesorHumano = async () => {
+      if (cancelado || !chat.classList.contains("open")) return;
+      try {
+        const r = await fetch(`/api/chat?conversation_id=${encodeURIComponent(convId)}`, {
+          method: "GET",
+          cache: "no-store",
+        });
+        if (!r.ok || cancelado) return;
+        const data = await r.json();
+        const recibidos = Array.isArray(data?.mensajesHumanos) ? data.mensajesHumanos : [];
+        for (const m of recibidos) {
+          if (m?.id && !idsHumanosVistos.has(String(m.id))) {
+            idsHumanosVistos.add(String(m.id));
+            addMsg(`👩‍💼 ${m.autorNombre || "Asesor"}: ${m.contenido}`, "bot");
+          }
+        }
+      } catch {
+        // Silencioso ante cortes momentáneos
+      }
+    };
+    const syncHumanTimer = setInterval(sincronizarAsesorHumano, 4500);
 
     // ── ojos: siguen el cursor + parpadeo ───────────────────────────────
     const ojos = document.querySelectorAll<HTMLElement>(".ojo");
@@ -338,6 +381,7 @@ export default function TranqiLanding() {
       clearTimeout(parpadeoTimer);
       clearTimeout(globoTimer);
       clearTimeout(settle);
+      clearInterval(syncHumanTimer);
       removeEventListener("wheel", onWheel);
       removeEventListener("keydown", onKeydown);
       removeEventListener("scroll", onScroll);

@@ -24,6 +24,13 @@ const CATALOGO_NAV_MARGARITAS: ItemNavegacionPanel[] = [
     grupo: "operacion",
   },
   {
+    clave: "consola_chat",
+    nombre: "Ventas y Chats en Vivo",
+    ruta: "/panel/conversaciones",
+    icono: "conversaciones",
+    grupo: "operacion",
+  },
+  {
     clave: "pedidos_tienda",
     nombre: "Pedidos de Tienda",
     ruta: "/panel/pedidos",
@@ -120,6 +127,9 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
 
   for (const w of widgets) {
     clavesVisibles.add(w.wdg_clave);
+  }
+  if (clavesVisibles.has("pedidos_tienda") || clavesVisibles.has("gestion_usuarios")) {
+    clavesVisibles.add("consola_chat");
   }
   if (esSuperAdmin) {
     CATALOGO_NAV_MARGARITAS.forEach((item) => clavesVisibles.add(item.clave));

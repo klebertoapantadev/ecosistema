@@ -5,6 +5,8 @@ import {
   extraerCoordenadasDeTextoOUrl,
   extraerPrimeraUrlDeTexto,
   obtenerConfiguracionLogisticaAction,
+  registrarInteraccionChatWebAction,
+  sincronizarHiloPublicoChatWebAction,
 } from "@eco/comercio";
 
 // Chat publico de la tienda (Mía). Pasa por packages/agentes-ia como exige el
@@ -29,13 +31,66 @@ const FORMATO_CONVERSACION = /^[A-Za-z0-9_-]{8,64}$/;
 const PATRON_DOMINIO_MAPA =
   /(maps\.app\.goo\.gl|goo\.gl\/maps|google\.[a-z.]+\/maps|maps\.google|maps\.apple\.com|waze\.com|openstreetmap\.org)/i;
 
+export async function GET(req: NextRequest) {
+  const convId = req.nextUrl.searchParams.get("conversation_id") ?? "";
+  if (!FORMATO_CONVERSACION.test(convId)) {
+    return NextResponse.json({
+      ok: true,
+      existe: false,
+      estadoAtencion: "BOT_ACTIVO",
+      mensajesHumanos: [],
+    });
+  }
+
+  try {
+    const estado = await sincronizarHiloPublicoChatWebAction(NEGOCIO, convId);
+    return NextResponse.json(estado);
+  } catch {
+    return NextResponse.json({
+      ok: true,
+      existe: false,
+      estadoAtencion: "BOT_ACTIVO",
+      mensajesHumanos: [],
+    });
+  }
+}
+
 export async function POST(req: NextRequest) {
   let prompt: unknown;
   let conversationId: unknown;
+  let visitante: unknown;
+  let respuestaRespaldo: unknown;
   try {
-    ({ prompt, conversation_id: conversationId } = await req.json());
+    ({
+      prompt,
+      conversation_id: conversationId,
+      visitante,
+      respuesta_respaldo: respuestaRespaldo,
+    } = await req.json());
   } catch {
     return NextResponse.json({ error: "Cuerpo inválido" }, { status: 400 });
+  }
+
+  const conversacion =
+    typeof conversationId === "string" && FORMATO_CONVERSACION.test(conversationId)
+      ? conversationId
+      : undefined;
+
+  if (typeof respuestaRespaldo === "string" && respuestaRespaldo.trim() && conversacion) {
+    try {
+      await registrarInteraccionChatWebAction({
+        negocio: NEGOCIO,
+        claveHilo: conversacion,
+        fase: "RESPUESTA_ARIA",
+        contenido: respuestaRespaldo.trim().slice(0, LARGO_MAXIMO_PROMPT),
+        metadatos: {
+          nombre_agente: "Mía (Catálogo Web)",
+        },
+      });
+    } catch {
+      // No interrumpir el flujo público
+    }
+    return NextResponse.json({ ok: true });
   }
 
   if (typeof prompt !== "string" || !prompt.trim()) {
@@ -44,10 +99,6 @@ export async function POST(req: NextRequest) {
   if (prompt.length > LARGO_MAXIMO_PROMPT) {
     return NextResponse.json({ error: "Mensaje demasiado largo" }, { status: 413 });
   }
-  const conversacion =
-    typeof conversationId === "string" && FORMATO_CONVERSACION.test(conversationId)
-      ? conversationId
-      : undefined;
 
   const textoLimpio = prompt.trim();
   const urlEnMensaje = extraerPrimeraUrlDeTexto(textoLimpio);
@@ -142,11 +193,67 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const claveHiloOmnicanal = conversacion ?? `web-anon-${Date.now()}`;
+  let silenciarAriaPorHumano = false;
+  let asesoraNombreActiva: string | null = null;
+
+  const datosVisitante =
+    visitante && typeof visitante === "object" ? (visitante as Record<string, unknown>) : {};
+  const nombreVisitante =
+    typeof datosVisitante.nombre === "string" ? datosVisitante.nombre.trim().slice(0, 90) : "";
+  const correoVisitante =
+    typeof datosVisitante.correo === "string" ? datosVisitante.correo.trim().slice(0, 120) : "";
+  const telefonoVisitante =
+    typeof datosVisitante.telefono === "string" ? datosVisitante.telefono.trim().slice(0, 32) : "";
+
+  try {
+    const trazaEntrada = await registrarInteraccionChatWebAction({
+      negocio: NEGOCIO,
+      claveHilo: claveHiloOmnicanal,
+      fase: "ENTRADA_CLIENTE",
+      contenido: textoLimpio,
+      metadatos: {
+        origen_url: origenTienda,
+        ...(nombreVisitante ? { nombre_cliente: nombreVisitante } : {}),
+        ...(correoVisitante ? { correo: correoVisitante } : {}),
+        ...(telefonoVisitante ? { telefono: telefonoVisitante } : {}),
+        ...(cotizacionEnvio ? { cotizacion_envio: cotizacionEnvio } : {}),
+      },
+    });
+    silenciarAriaPorHumano = trazaEntrada.silenciarAria;
+    asesoraNombreActiva = trazaEntrada.asesoraNombre ?? null;
+  } catch {
+    // No interrumpir la venta en vivo si la bitácora omnicanal tarda
+  }
+
+  if (silenciarAriaPorHumano) {
+    return NextResponse.json({
+      response: null,
+      modoHumano: true,
+      asesoraNombre: asesoraNombreActiva ?? "Asesora Tinkay",
+      cotizacionEnvio,
+    });
+  }
+
   try {
     const data = await invocarAgentePorNegocio(NEGOCIO, promptParaAria, {
       conversationId: conversacion,
       tiempoMaximoMs: ESPERA_ARIA_MS,
     });
+
+    if (data.response) {
+      registrarInteraccionChatWebAction({
+        negocio: NEGOCIO,
+        claveHilo: claveHiloOmnicanal,
+        fase: "RESPUESTA_ARIA",
+        contenido: data.response,
+        metadatos: {
+          nombre_agente: "Mía (ARIA IA)",
+          ...(cotizacionEnvio ? { cotizacion_envio: cotizacionEnvio } : {}),
+        },
+      }).catch(() => {});
+    }
+
     return NextResponse.json({ response: data.response, cotizacionEnvio });
   } catch (e) {
     if (e instanceof ErrorSinConfiguracionAria) {

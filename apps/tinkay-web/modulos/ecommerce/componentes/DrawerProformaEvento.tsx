@@ -307,6 +307,10 @@ export function DrawerProformaEvento() {
       totalFlete: fleteProforma,
       totalPagar: totalProforma,
       vigenciaDias: 15,
+      conversacionWebId:
+        typeof window !== 'undefined'
+          ? window.localStorage.getItem('eco_chat_conv_tinkay') || undefined
+          : undefined,
     });
     setGenerando(false);
 

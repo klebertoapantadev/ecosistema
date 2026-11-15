@@ -1,7 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ErrorSinConfiguracionAria, invocarAgentePorNegocio } from "@eco/agentes-ia";
+import {
+  registrarInteraccionChatWebAction,
+  sincronizarHiloPublicoChatWebAction,
+} from "@eco/comercio";
 
 const NEGOCIO = "tranqi";
+
+export async function GET(req: NextRequest) {
+  const convId = req.nextUrl.searchParams.get("conversation_id") ?? "";
+  if (!convId) {
+    return NextResponse.json({
+      ok: true,
+      existe: false,
+      estadoAtencion: "BOT_ACTIVO",
+      mensajesHumanos: [],
+    });
+  }
+  try {
+    const estado = await sincronizarHiloPublicoChatWebAction(NEGOCIO, convId);
+    return NextResponse.json(estado);
+  } catch {
+    return NextResponse.json({
+      ok: true,
+      existe: false,
+      estadoAtencion: "BOT_ACTIVO",
+      mensajesHumanos: [],
+    });
+  }
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -9,9 +36,52 @@ export async function POST(req: NextRequest) {
     if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
       return NextResponse.json({ error: "prompt vacío" }, { status: 400 });
     }
-    const data = await invocarAgentePorNegocio(NEGOCIO, prompt.trim(), {
+    const textoLimpio = prompt.trim();
+    const esContextoNavegacion = textoLimpio.startsWith("[CONTEXTO:");
+    const claveHilo =
+      typeof conversationId === "string" && conversationId.trim()
+        ? conversationId.trim()
+        : `web-trq-${Date.now()}`;
+
+    let silenciarAria = false;
+    let asesoraNombre: string | null = null;
+    if (!esContextoNavegacion) {
+      try {
+        const traza = await registrarInteraccionChatWebAction({
+          negocio: NEGOCIO,
+          claveHilo,
+          fase: "ENTRADA_CLIENTE",
+          contenido: textoLimpio,
+        });
+        silenciarAria = traza.silenciarAria;
+        asesoraNombre = traza.asesoraNombre ?? null;
+      } catch {
+        // No bloquear la atención si falla el registro secundario
+      }
+    }
+
+    if (silenciarAria) {
+      return NextResponse.json({
+        response: null,
+        modoHumano: true,
+        asesoraNombre: asesoraNombre ?? "Asesor Legal",
+      });
+    }
+
+    const data = await invocarAgentePorNegocio(NEGOCIO, textoLimpio, {
       conversationId: typeof conversationId === "string" ? conversationId : undefined,
     });
+
+    if (data.response && !esContextoNavegacion) {
+      registrarInteraccionChatWebAction({
+        negocio: NEGOCIO,
+        claveHilo,
+        fase: "RESPUESTA_ARIA",
+        contenido: data.response,
+        metadatos: { nombre_agente: "ARIA Tranqi" },
+      }).catch(() => {});
+    }
+
     return NextResponse.json(data);
   } catch (e) {
     if (e instanceof ErrorSinConfiguracionAria) {

@@ -9,6 +9,7 @@ import {
   FileCheck2,
   KeyRound,
   Mail,
+  MessageSquare,
   Receipt,
   Settings,
   ShoppingBag,
@@ -39,6 +40,16 @@ interface WidgetInfo {
 }
 
 const MODULOS_TINKAY: Record<string, WidgetInfo> = {
+  consola_chat: {
+    clave: "consola_chat",
+    nombre: "Ventas Omnicanal & Chats en Vivo",
+    descripcion:
+      "Monitoreo estilo ManyChat: conversaciones web, intervención de asesores vs Mía (ARIA), etiquetas, /atajos, usuarios registrados y compras.",
+    ruta: "/panel/conversaciones",
+    icono: MessageSquare,
+    grupo: "operacion",
+    etiqueta: "Inbox / HITL",
+  },
   pedidos_tienda: {
     clave: "pedidos_tienda",
     nombre: "Pedidos de Tienda y Despachos",

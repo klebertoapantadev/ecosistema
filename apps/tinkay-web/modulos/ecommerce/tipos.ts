@@ -144,7 +144,8 @@ export interface DatosEventoProforma {
 
 export interface MensajeChat {
   id: string;
-  remitente: 'usuario' | 'aria';
+  remitente: 'usuario' | 'aria' | 'asesora';
+  autorNombre?: string;
   texto: string;
   timestamp: string;
   productosSugeridos?: {

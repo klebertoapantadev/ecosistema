@@ -14,6 +14,7 @@ import {
   KeyRound,
   LayoutDashboard,
   Mail,
+  MessageSquare,
   Receipt,
   Settings,
   ShoppingBag,
@@ -26,6 +27,7 @@ import {
 
 export type IconoNavegacionPanel =
   | "resumen"
+  | "conversaciones"
   | "pedidos"
   | "facturacion"
   | "catalogo"
@@ -50,6 +52,7 @@ export interface ItemNavegacionPanel {
 
 const MAPA_ICONOS: Record<IconoNavegacionPanel, LucideIcon> = {
   resumen: LayoutDashboard,
+  conversaciones: MessageSquare,
   pedidos: ClipboardList,
   facturacion: Receipt,
   catalogo: ShoppingBag,

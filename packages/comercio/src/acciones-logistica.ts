@@ -1198,13 +1198,14 @@ export async function registrarPedidoTiendaAction(
     }
     if (entrada.conversacionWebId) {
       try {
-        await esquemaComercio.rpc("com_fn_omnicanal_registrar_interaccion_web", {
-          p_negocio: negNorm,
-          p_clave_hilo: entrada.conversacionWebId.trim().slice(0, 96),
-          p_fase: "EVENTO_ORDEN",
-          p_contenido: `🛍️ Orden Web ${codigoCreado} generada por $${entrada.totalPagar.toFixed(2)} (${metodoPagoNorm.toUpperCase()})`,
-          p_metadatos: {
-            nombre: compradorEfectivo.nombreCompleto,
+        const { registrarInteraccionChatWebAction } = await import("./acciones-omnicanal");
+        await registrarInteraccionChatWebAction({
+          negocio: negNorm,
+          claveHilo: entrada.conversacionWebId.trim().slice(0, 96),
+          fase: "EVENTO_ORDEN",
+          contenido: `🛍️ Orden Web ${codigoCreado} generada por $${entrada.totalPagar.toFixed(2)} (${metodoPagoNorm.toUpperCase()})`,
+          metadatos: {
+            nombre_cliente: compradorEfectivo.nombreCompleto,
             correo: compradorEfectivo.correo,
             telefono: compradorEfectivo.telefono,
             codigo_orden: codigoCreado,
@@ -1418,7 +1419,30 @@ export async function registrarPedidoTiendaAction(
     }
   }
 
+  if (entrada.conversacionWebId) {
+    try {
+      const { registrarInteraccionChatWebAction } = await import("./acciones-omnicanal");
+      await registrarInteraccionChatWebAction({
+        negocio: negNorm,
+        claveHilo: entrada.conversacionWebId.trim().slice(0, 96),
+        fase: "EVENTO_ORDEN",
+        contenido: `🛍️ Orden Web ${codigoOrden} generada por $${entrada.totalPagar.toFixed(2)} (${metodoPagoNorm.toUpperCase()})`,
+        metadatos: {
+          nombre_cliente: compradorEfectivo.nombreCompleto,
+          correo: compradorEfectivo.correo,
+          telefono: compradorEfectivo.telefono,
+          codigo_orden: codigoOrden,
+          total_pagar: entrada.totalPagar,
+          metodo_pago: metodoPagoNorm,
+        },
+      });
+    } catch {
+      // No bloquear el checkout si falla la traza conversacional opcional
+    }
+  }
+
   revalidatePath("/panel/pedidos");
+  revalidatePath("/panel/conversaciones");
   return {
     ok: true,
     id: String(proformaCreada.prf_id),
@@ -1674,6 +1698,7 @@ export async function actualizarEstadoPedidoTiendaAction(
   }
 
   revalidatePath("/panel/pedidos");
+  revalidatePath("/panel/conversaciones");
   return { ok: true };
 }
 
@@ -1706,6 +1731,7 @@ export interface EntradaProformaEvento {
   totalFlete: number;
   totalPagar: number;
   vigenciaDias?: number;
+  conversacionWebId?: string;
 }
 
 export interface ProformaEventoPublica {
@@ -1877,6 +1903,7 @@ const esquemaProformaEvento = z.object({
   totalFlete: z.number().min(0),
   totalPagar: z.number().positive("La proforma debe tener un importe mayor a cero"),
   vigenciaDias: z.number().int().min(1).max(90).optional(),
+  conversacionWebId: z.string().optional(),
   items: z.array(z.any()).min(1, "Agrega al menos un elemento de evento a la proforma"),
 });
 
@@ -2154,13 +2181,36 @@ export async function generarProformaEventoAction(
 
   if (!errRpc && resRpc?.ok && resRpc?.token_aprobacion) {
     const tokenCreado = String(resRpc.token_aprobacion);
+    const codigoPrfCreado = String(resRpc.codigo_proforma);
     await despacharCorreoYNotificacionProforma(tokenCreado);
+    if (entrada.conversacionWebId) {
+      try {
+        const { registrarInteraccionChatWebAction } = await import("./acciones-omnicanal");
+        await registrarInteraccionChatWebAction({
+          negocio: negNorm,
+          claveHilo: entrada.conversacionWebId.trim().slice(0, 96),
+          fase: "EVENTO_ORDEN",
+          contenido: `📋 Proforma de Evento ${codigoPrfCreado} generada por $${entrada.totalPagar.toFixed(2)} (${entrada.evento.tipoEvento})`,
+          metadatos: {
+            nombre_cliente: compradorPayload.nombreCompleto,
+            correo: compradorPayload.correo,
+            telefono: compradorPayload.whatsapp,
+            codigo_orden: codigoPrfCreado,
+            total_pagar: entrada.totalPagar,
+            tipo_evento: entrada.evento.tipoEvento,
+          },
+        });
+      } catch {
+        // Opcional
+      }
+    }
     revalidatePath("/panel/pedidos");
+    revalidatePath("/panel/conversaciones");
     revalidatePath("/panel");
     return {
       ok: true,
       id: String(resRpc.id),
-      codigoProforma: String(resRpc.codigo_proforma),
+      codigoProforma: codigoPrfCreado,
       tokenAprobacion: tokenCreado,
     };
   }
@@ -2393,7 +2443,30 @@ export async function generarProformaEventoAction(
   const tokenFinal = String(proformaCreada.prf_token_aprobacion);
   await despacharCorreoYNotificacionProforma(tokenFinal);
 
+  if (entrada.conversacionWebId) {
+    try {
+      const { registrarInteraccionChatWebAction } = await import("./acciones-omnicanal");
+      await registrarInteraccionChatWebAction({
+        negocio: negNorm,
+        claveHilo: entrada.conversacionWebId.trim().slice(0, 96),
+        fase: "EVENTO_ORDEN",
+        contenido: `📋 Proforma de Evento ${codigoProforma} generada por $${entrada.totalPagar.toFixed(2)} (${entrada.evento.tipoEvento})`,
+        metadatos: {
+          nombre_cliente: compradorPayload.nombreCompleto,
+          correo: compradorPayload.correo,
+          telefono: compradorPayload.whatsapp,
+          codigo_orden: codigoProforma,
+          total_pagar: entrada.totalPagar,
+          tipo_evento: entrada.evento.tipoEvento,
+        },
+      });
+    } catch {
+      // Opcional
+    }
+  }
+
   revalidatePath("/panel/pedidos");
+  revalidatePath("/panel/conversaciones");
   revalidatePath("/panel");
   return {
     ok: true,
@@ -3220,6 +3293,7 @@ export async function eliminarVariacionesProformaClienteAction(entrada: {
 
   revalidatePath("/panel");
   revalidatePath("/panel/pedidos");
+  revalidatePath("/panel/conversaciones");
   return {
     ok: true,
     eliminadas: idsAEliminar.length,
@@ -3426,6 +3500,7 @@ export async function confirmarOrdenTransferenciaProformaAction(entrada: {
   revalidatePath(`/proforma/${tokenLimpio}`);
   revalidatePath("/panel");
   revalidatePath("/panel/pedidos");
+  revalidatePath("/panel/conversaciones");
   return { ok: true };
 }
 

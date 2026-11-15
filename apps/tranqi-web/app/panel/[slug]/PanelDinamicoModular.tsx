@@ -6,7 +6,7 @@ import {
   LayoutGrid, Wrench, Shield, Users, Bell, UserCog, ClipboardList, FileText,
   Settings, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, Calendar, type LucideIcon,
   Bot, ShoppingBag, CreditCard, Receipt, Share2, CheckCircle2, Sparkles, Building2, Scale, Gift,
-  ShieldCheck, Briefcase, Pencil, Coins, MapPin, MessageSquareHeart
+  ShieldCheck, Briefcase, Pencil, Coins, MapPin, MessageSquare, MessageSquareHeart
 } from "lucide-react";
 import { ModalEditarWidget } from "../ModalEditarWidget";
 import { WidgetProximamente } from "../WidgetProximamente";
@@ -46,6 +46,7 @@ import {
   FormularioLogisticaCobertura,
   BandejaPedidosTienda,
   ConsolaTestimoniosClientes,
+  ConsolaVentasOmnicanal,
 } from "@eco/comercio";
 import { SociosWidget } from "../administrar/PanelAdministrarModular";
 import { ConfiguracionContratoAbogadoWidget } from "@/modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
@@ -377,6 +378,13 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     subtitulo: "Polígonos de cobertura en Pichincha, sector de envío gratis por defecto y recargo por km vial",
     icono: MapPin,
     colorIcono: "#16A34A",
+    categoria: "Comercio & Pagos"
+  },
+  consola_chat: {
+    titulo: "Ventas Omnicanal & Conversaciones en Vivo",
+    subtitulo: "Bandeja unificada (reemplazo ManyChat): chats web, intervención humana vs ARIA, etiquetas, /atajos y compras web",
+    icono: MessageSquare,
+    colorIcono: "#DB2777",
     categoria: "Comercio & Pagos"
   },
   pedidos_tienda: {
@@ -981,6 +989,11 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       case "configuracion_logistica":
       case "logistica":
         return <FormularioLogisticaCobertura negocio={negocio} />;
+      case "consola_chat":
+      case "consola-chat":
+      case "conversaciones":
+      case "ventas_omnicanal":
+        return <ConsolaVentasOmnicanal negocio={negocio} />;
       case "pedidos_tienda":
       case "pedidos":
         return <BandejaPedidosTienda negocio={negocio} />;

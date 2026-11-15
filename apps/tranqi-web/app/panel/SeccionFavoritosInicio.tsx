@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, Users, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, ShoppingBag, CreditCard, CalendarPlus, CalendarCheck, CalendarClock, Shuffle, Building2, Scale, Briefcase, Bot, MapPin, ClipboardList, MessageSquareHeart, type LucideIcon } from "lucide-react";
+import { User, Users, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, ShoppingBag, CreditCard, CalendarPlus, CalendarCheck, CalendarClock, Shuffle, Building2, Scale, Briefcase, Bot, MapPin, ClipboardList, MessageSquare, MessageSquareHeart, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
 
@@ -240,6 +240,14 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     icono: MapPin,
     href: "/panel/logistica",
     origen: "Configurar"
+  },
+  consola_chat: {
+    id: "consola_chat",
+    titulo: "Ventas Omnicanal & Chats en Vivo",
+    subtitulo: "Monitoreo de conversaciones, intervención humana vs ARIA, etiquetas, /atajos y compras web",
+    icono: MessageSquare,
+    href: "/panel/conversaciones",
+    origen: "Administrar"
   },
   pedidos_tienda: {
     id: "pedidos_tienda",

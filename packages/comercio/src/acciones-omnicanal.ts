@@ -1,0 +1,1152 @@
+"use server";
+
+import {
+  ETIQUETAS_OMNICANAL_POR_DEFECTO,
+  RESPUESTAS_RAPIDAS_POR_DEFECTO,
+  esPedidoUsuarioRegistrado,
+  normalizarTelefonoOmnicanal,
+  type ContactoUnificadoOmnicanal,
+  type ConversacionOmnicanal,
+  type EstadoAtencionOmnicanal,
+  type EtiquetaOmnicanal,
+  type MensajeOmnicanal,
+  type MiembroEquipoOmnicanal,
+  type RespuestaRapidaOmnicanal,
+} from "./omnicanal";
+import { obtenerPedidosTiendaAction, type PedidoTiendaRegistrado } from "./acciones-logistica";
+import { normalizarIdentificadorNegocio } from "./utils/negocio";
+
+function normalizarNegocioComercio(negocio?: string): string {
+  return normalizarIdentificadorNegocio(negocio).principal;
+}
+
+export interface PedidoWebConTipoCliente extends PedidoTiendaRegistrado {
+  esUsuarioRegistrado: boolean;
+}
+
+export interface DatosTableroOmnicanal {
+  usuarioActualId: string | null;
+  usuarioActualNombre: string;
+  conversaciones: ConversacionOmnicanal[];
+  etiquetas: EtiquetaOmnicanal[];
+  respuestasRapidas: RespuestaRapidaOmnicanal[];
+  equipo: MiembroEquipoOmnicanal[];
+  usuariosYClientes: ContactoUnificadoOmnicanal[];
+  pedidosWeb: PedidoWebConTipoCliente[];
+  usandoRespaldoHibrido?: boolean;
+}
+
+interface AlmacenRespaldoOmnicanal {
+  conversaciones: ConversacionOmnicanal[];
+  mensajesPorConversacion: Record<string, MensajeOmnicanal[]>;
+  etiquetas: EtiquetaOmnicanal[];
+  respuestasRapidas: RespuestaRapidaOmnicanal[];
+}
+
+function esFuncionRpcPendienteMigracion(mensajeError?: string | null): boolean {
+  const m = String(mensajeError ?? "").toLowerCase();
+  return (
+    m.includes("com_fn_omnicanal_") ||
+    m.includes("could not find the function") ||
+    m.includes("pgrst202") ||
+    m.includes("does not exist")
+  );
+}
+
+function variantesCodigoNegocio(negocioCanonico: string): string[] {
+  switch (negocioCanonico) {
+    case "tinkay":
+      return ["tinkay", "tnk", "TINKAY", "TNK"];
+    case "tranqi":
+      return ["tranqi", "tranq", "legal", "TRANQI", "TRANQ", "LEGAL"];
+    case "fastfix":
+      return ["fastfix", "ffh", "FASTFIX", "FFH"];
+    case "margaritas":
+      return ["margaritas", "mrg", "MARGARITAS", "MRG"];
+    default:
+      return [negocioCanonico, negocioCanonico.toUpperCase()];
+  }
+}
+
+async function leerAlmacenRespaldoCfg(negocio: string): Promise<AlmacenRespaldoOmnicanal> {
+  const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+  let cliente: any;
+  try {
+    cliente = crearClienteAdmin();
+  } catch {
+    cliente = await crearClienteServidor();
+  }
+
+  const { data } = await cliente
+    .schema("comun_configuracion")
+    .from("cfg_negocio")
+    .select("cfg_detalle_configuracion")
+    .eq("cfg_negocio", negocio)
+    .maybeSingle();
+
+  const detalle = (data?.cfg_detalle_configuracion ?? {}) as Record<string, any>;
+  const guardado = (detalle.omnicanal_inbox ?? {}) as Partial<AlmacenRespaldoOmnicanal>;
+
+  return {
+    conversaciones: Array.isArray(guardado.conversaciones) ? guardado.conversaciones : [],
+    mensajesPorConversacion:
+      guardado.mensajesPorConversacion && typeof guardado.mensajesPorConversacion === "object"
+        ? guardado.mensajesPorConversacion
+        : {},
+    etiquetas:
+      Array.isArray(guardado.etiquetas) && guardado.etiquetas.length > 0
+        ? guardado.etiquetas
+        : ETIQUETAS_OMNICANAL_POR_DEFECTO,
+    respuestasRapidas:
+      Array.isArray(guardado.respuestasRapidas) && guardado.respuestasRapidas.length > 0
+        ? guardado.respuestasRapidas
+        : RESPUESTAS_RAPIDAS_POR_DEFECTO,
+  };
+}
+
+async function escribirAlmacenRespaldoCfg(
+  negocio: string,
+  almacen: AlmacenRespaldoOmnicanal
+): Promise<{ ok: boolean; error?: string }> {
+  const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+  let cliente: any;
+  try {
+    cliente = crearClienteAdmin();
+  } catch {
+    cliente = await crearClienteServidor();
+  }
+
+  const { data: actual } = await cliente
+    .schema("comun_configuracion")
+    .from("cfg_negocio")
+    .select("cfg_id, cfg_detalle_configuracion")
+    .eq("cfg_negocio", negocio)
+    .maybeSingle();
+
+  const detallePrevio = (actual?.cfg_detalle_configuracion ?? {}) as Record<string, unknown>;
+  const nuevoDetalle = {
+    ...detallePrevio,
+    omnicanal_inbox: {
+      conversaciones: almacen.conversaciones.slice(0, 200),
+      mensajesPorConversacion: almacen.mensajesPorConversacion,
+      etiquetas: almacen.etiquetas,
+      respuestasRapidas: almacen.respuestasRapidas,
+    },
+  };
+
+  if (actual?.cfg_id) {
+    const { error } = await cliente
+      .schema("comun_configuracion")
+      .from("cfg_negocio")
+      .update({ cfg_detalle_configuracion: nuevoDetalle })
+      .eq("cfg_id", actual.cfg_id);
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  }
+
+  return { ok: true };
+}
+
+function extraerDatosContactoDesdeMensajeWeb(texto: string): {
+  correoDetectado?: string;
+  telefonoDetectado?: string;
+} {
+  const matchCorreo = texto.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+  const matchTel = texto.match(/(?:\+?593[\s-]?9\d{2}[\s-]?\d{3}[\s-]?\d{3}|09\d{2}[\s-]?\d{3}[\s-]?\d{3}|\+\d{10,15})/);
+  return {
+    correoDetectado: matchCorreo ? matchCorreo[0].trim().toLowerCase() : undefined,
+    telefonoDetectado: matchTel ? matchTel[0].replace(/[\s-]+/g, "").trim() : undefined,
+  };
+}
+
+/**
+ * Registra cada interacción del Chat Web (entrada del cliente, respuesta de IA ARIA
+ * o evento de compra web) y devuelve si ARIA debe silenciarse porque un vendedor
+ * humano tomó el control de la conversación (`EN_ATENCION_ASESORA`).
+ */
+export async function registrarInteraccionChatWebAction(entrada: {
+  negocio: string;
+  claveHilo: string;
+  fase: "ENTRADA_CLIENTE" | "RESPUESTA_ARIA" | "EVENTO_ORDEN";
+  contenido: string;
+  metadatos?: Record<string, unknown>;
+}): Promise<{
+  ok: boolean;
+  conversacionId?: string;
+  estadoAtencion: EstadoAtencionOmnicanal;
+  asesoraNombre?: string | null;
+  silenciarAria: boolean;
+  error?: string;
+}> {
+  const neg = normalizarNegocioComercio(entrada.negocio);
+  const hilo = (entrada.claveHilo || "").trim().slice(0, 96);
+  const texto = (entrada.contenido || "").trim();
+
+  if (!hilo || !texto) {
+    return {
+      ok: false,
+      estadoAtencion: "BOT_ACTIVO",
+      silenciarAria: false,
+      error: "Conversación o contenido vacío",
+    };
+  }
+
+  const autoContacto =
+    entrada.fase === "ENTRADA_CLIENTE" ? extraerDatosContactoDesdeMensajeWeb(texto) : {};
+  const metaBase = entrada.metadatos ?? {};
+  const nombreMeta = String(metaBase.nombre_cliente || metaBase.nombre || "").trim();
+  const correoMeta =
+    String(metaBase.correo || "").trim().toLowerCase() || autoContacto.correoDetectado || "";
+  const telMeta =
+    String(metaBase.telefono || "").trim() || autoContacto.telefonoDetectado || "";
+
+  const metadatosEfectivos: Record<string, unknown> = {
+    ...metaBase,
+    canal: "web",
+    ...(nombreMeta ? { nombre_cliente: nombreMeta } : {}),
+    ...(correoMeta ? { correo: correoMeta } : {}),
+    ...(telMeta ? { telefono: telMeta } : {}),
+  };
+
+  const { crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+  const { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_registrar_interaccion_web", {
+    p_negocio: neg,
+    p_clave_hilo: hilo,
+    p_fase: entrada.fase,
+    p_contenido: texto,
+    p_metadatos: metadatosEfectivos,
+  });
+
+  if (!error && data?.ok) {
+    return {
+      ok: true,
+      conversacionId: String(data.conversacion_id),
+      estadoAtencion: (data.estado_atencion as EstadoAtencionOmnicanal) || "BOT_ACTIVO",
+      asesoraNombre: data.asesora_nombre ? String(data.asesora_nombre) : null,
+      silenciarAria: Boolean(data.silenciar_aria),
+    };
+  }
+
+  if (error && !esFuncionRpcPendienteMigracion(error.message)) {
+    return {
+      ok: false,
+      estadoAtencion: "BOT_ACTIVO",
+      silenciarAria: false,
+      error: error.message,
+    };
+  }
+
+  // Respaldo híbrido en cfg_negocio mientras se aplica la migración SQL remota
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const almacen = await leerAlmacenRespaldoCfg(neg);
+  const ahora = new Date().toISOString();
+  let conv = almacen.conversaciones.find((c) => c.canal === "web" && c.claveHilo === hilo);
+
+  if (!conv) {
+    const idNuevo =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `cnv-${Date.now()}`;
+    conv = {
+      id: idNuevo,
+      negocio: neg,
+      canal: "web",
+      claveHilo: hilo,
+      remitenteId: user?.id ?? hilo,
+      remitenteNombre:
+        nombreMeta ||
+        user?.email?.split("@")[0] ||
+        `Visitante Web #${hilo.replace(/[^a-zA-Z0-9]/g, "").slice(-4).toUpperCase()}`,
+      remitenteCorreo: correoMeta || user?.email || null,
+      remitenteTelefono: telMeta || null,
+      usuarioId: user?.id ?? null,
+      estadoAtencion: "BOT_ACTIVO",
+      ultimoMensajeTexto: texto.slice(0, 280),
+      ultimoMensajeOrigen:
+        entrada.fase === "RESPUESTA_ARIA"
+          ? "BOT_ARIA"
+          : entrada.fase === "EVENTO_ORDEN"
+            ? "SISTEMA"
+            : "CLIENTE",
+      ultimoMensajeEn: ahora,
+      noLeidosAsesora: entrada.fase === "ENTRADA_CLIENTE" ? 1 : 0,
+      mensajesClienteConteo: entrada.fase === "ENTRADA_CLIENTE" ? 1 : 0,
+      mensajesIaConteo: entrada.fase === "RESPUESTA_ARIA" ? 1 : 0,
+      mensajesHumanoConteo: 0,
+      creadoEn: ahora,
+      etiquetasIds: ["etq-web"],
+    };
+    almacen.conversaciones.unshift(conv);
+  } else {
+    if (nombreMeta && conv.remitenteNombre.startsWith("Visitante Web")) {
+      conv.remitenteNombre = nombreMeta;
+    }
+    if (correoMeta && !conv.remitenteCorreo) {
+      conv.remitenteCorreo = correoMeta;
+    }
+    if (telMeta && !conv.remitenteTelefono) {
+      conv.remitenteTelefono = telMeta;
+    }
+    if (user?.id && !conv.usuarioId) {
+      conv.usuarioId = user.id;
+    }
+    const pideHumano =
+      entrada.fase === "ENTRADA_CLIENTE" &&
+      /(hablar con (un |una )?(asesor|humano|persona|vendedor)|atencion humana|reclamo|queja)/i.test(
+        texto
+      );
+    if (pideHumano && conv.estadoAtencion !== "EN_ATENCION_ASESORA") {
+      conv.estadoAtencion = "ESCALADO_HUMANO";
+      conv.motivoEscalamiento = "Solicitud directa de atención humana";
+    }
+    conv.ultimoMensajeTexto = texto.slice(0, 280);
+    conv.ultimoMensajeEn = ahora;
+    if (entrada.fase === "ENTRADA_CLIENTE") {
+      conv.ultimoMensajeOrigen = "CLIENTE";
+      conv.noLeidosAsesora = (conv.noLeidosAsesora || 0) + 1;
+      conv.mensajesClienteConteo = (conv.mensajesClienteConteo || 0) + 1;
+    } else if (entrada.fase === "RESPUESTA_ARIA") {
+      conv.ultimoMensajeOrigen = "BOT_ARIA";
+      conv.mensajesIaConteo = (conv.mensajesIaConteo || 0) + 1;
+    } else {
+      conv.ultimoMensajeOrigen = "SISTEMA";
+      conv.noLeidosAsesora = (conv.noLeidosAsesora || 0) + 1;
+    }
+  }
+
+  const listaMsgs = almacen.mensajesPorConversacion[conv.id] ?? [];
+  listaMsgs.push({
+    id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    origen:
+      entrada.fase === "RESPUESTA_ARIA"
+        ? "BOT_ARIA"
+        : entrada.fase === "EVENTO_ORDEN"
+          ? "SISTEMA"
+          : "CLIENTE",
+    autorNombre:
+      entrada.fase === "RESPUESTA_ARIA"
+        ? String(entrada.metadatos?.nombre_agente || "ARIA IA")
+        : entrada.fase === "EVENTO_ORDEN"
+          ? "E-Commerce Web"
+          : conv.remitenteNombre,
+    contenido: texto,
+    tipoContenido: entrada.fase === "EVENTO_ORDEN" ? "ORDEN_WEB" : "TEXTO",
+    estadoEntrega: "ENVIADO",
+    detalle: entrada.metadatos,
+    creadoEn: ahora,
+  });
+  almacen.mensajesPorConversacion[conv.id] = listaMsgs;
+
+  await escribirAlmacenRespaldoCfg(neg, almacen);
+
+  return {
+    ok: true,
+    conversacionId: conv.id,
+    estadoAtencion: conv.estadoAtencion,
+    asesoraNombre: conv.asesoraNombre ?? null,
+    silenciarAria: conv.estadoAtencion === "EN_ATENCION_ASESORA",
+  };
+}
+
+/**
+ * Permite al widget de Chat Web del cliente sincronizar en vivo cualquier
+ * respuesta enviada por un vendedor humano desde la Consola Omnicanal.
+ */
+export async function sincronizarHiloPublicoChatWebAction(
+  negocio: string,
+  claveHilo: string
+): Promise<{
+  ok: boolean;
+  existe: boolean;
+  estadoAtencion: EstadoAtencionOmnicanal;
+  asesoraNombre?: string | null;
+  mensajesHumanos: Array<{
+    id: string;
+    autorNombre: string;
+    contenido: string;
+    creadoEn: string;
+  }>;
+}> {
+  const neg = normalizarNegocioComercio(negocio);
+  const hilo = (claveHilo || "").trim();
+  if (!hilo) {
+    return { ok: true, existe: false, estadoAtencion: "BOT_ACTIVO", mensajesHumanos: [] };
+  }
+
+  const { crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+  const { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_sincronizar_hilo_publico", {
+    p_negocio: neg,
+    p_clave_hilo: hilo,
+  });
+
+  if (!error && data?.ok) {
+    return {
+      ok: true,
+      existe: Boolean(data.existe),
+      estadoAtencion: (data.estado_atencion as EstadoAtencionOmnicanal) || "BOT_ACTIVO",
+      asesoraNombre: data.asesora_nombre ? String(data.asesora_nombre) : null,
+      mensajesHumanos: Array.isArray(data.mensajes_humanos) ? data.mensajes_humanos : [],
+    };
+  }
+
+  const almacen = await leerAlmacenRespaldoCfg(neg);
+  const conv = almacen.conversaciones.find((c) => c.canal === "web" && c.claveHilo === hilo);
+  if (!conv) {
+    return { ok: true, existe: false, estadoAtencion: "BOT_ACTIVO", mensajesHumanos: [] };
+  }
+
+  const msgs = (almacen.mensajesPorConversacion[conv.id] ?? [])
+    .filter((m) => m.origen === "ASESORA_HUMANA")
+    .map((m) => ({
+      id: m.id,
+      autorNombre: m.autorNombre || conv.asesoraNombre || "Asesor Comercial",
+      contenido: m.contenido,
+      creadoEn: m.creadoEn,
+    }));
+
+  return {
+    ok: true,
+    existe: true,
+    estadoAtencion: conv.estadoAtencion,
+    asesoraNombre: conv.asesoraNombre ?? null,
+    mensajesHumanos: msgs,
+  };
+}
+
+/**
+ * Obtiene el Tablero Unificado de Ventas Omnicanal:
+ * - Conversaciones en vivo (Web + conectores futuros WhatsApp/IG/FB/TikTok)
+ * - Equipo de ventas con carga activa
+ * - Etiquetas personalizables y Mensajes Predeterminados (/atajos)
+ * - Usuarios registrados en la web + Compradores invitados (No Registrados)
+ * - Todas las compras y proformas realizadas desde la web
+ */
+export async function obtenerTableroOmnicanalAction(
+  negocio: string
+): Promise<{ ok: true; datos: DatosTableroOmnicanal } | { ok: false; error: string }> {
+  const neg = normalizarNegocioComercio(negocio);
+  const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, error: "Inicia sesión en el portal para acceder al monitoreo de ventas." };
+  }
+
+  const [resPedidos, resPerfilActual] = await Promise.all([
+    obtenerPedidosTiendaAction(neg),
+    supabase
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_nombres, usu_apellidos, usu_correo")
+      .eq("usu_id", user.id)
+      .maybeSingle(),
+  ]);
+
+  const usuarioActualNombre =
+    [resPerfilActual.data?.usu_nombres, resPerfilActual.data?.usu_apellidos]
+      .filter(Boolean)
+      .join(" ")
+      .trim() ||
+    resPerfilActual.data?.usu_correo ||
+    user.email ||
+    "Tú";
+
+  const pedidosBase = resPedidos.ok ? resPedidos.pedidos : [];
+  const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+  const { data: rpcTablero, error: errRpc } = await esquemaComercio.rpc(
+    "com_fn_omnicanal_obtener_tablero",
+    { p_negocio: neg }
+  );
+
+  if (!errRpc && rpcTablero?.ok) {
+    const contactos: ContactoUnificadoOmnicanal[] = Array.isArray(rpcTablero.usuariosYClientes)
+      ? rpcTablero.usuariosYClientes
+      : [];
+    const pedidosWeb: PedidoWebConTipoCliente[] = pedidosBase.map((p) => ({
+      ...p,
+      esUsuarioRegistrado: esPedidoUsuarioRegistrado(p, contactos),
+    }));
+
+    // Enriquecer contactos con compras en tiempo real si com_cliente aún no tenía el acumulado
+    const contactosEnriquecidos = enriquecerContactosConPedidos(contactos, pedidosWeb);
+
+    return {
+      ok: true,
+      datos: {
+        usuarioActualId: user.id,
+        usuarioActualNombre,
+        conversaciones: Array.isArray(rpcTablero.conversaciones) ? rpcTablero.conversaciones : [],
+        etiquetas:
+          Array.isArray(rpcTablero.etiquetas) && rpcTablero.etiquetas.length > 0
+            ? rpcTablero.etiquetas
+            : ETIQUETAS_OMNICANAL_POR_DEFECTO,
+        respuestasRapidas:
+          Array.isArray(rpcTablero.respuestasRapidas) && rpcTablero.respuestasRapidas.length > 0
+            ? rpcTablero.respuestasRapidas
+            : RESPUESTAS_RAPIDAS_POR_DEFECTO,
+        equipo: Array.isArray(rpcTablero.equipo) ? rpcTablero.equipo : [],
+        usuariosYClientes: contactosEnriquecidos,
+        pedidosWeb,
+      },
+    };
+  }
+
+  if (errRpc && !esFuncionRpcPendienteMigracion(errRpc.message)) {
+    return { ok: false, error: errRpc.message };
+  }
+  if (rpcTablero && rpcTablero.ok === false) {
+    return { ok: false, error: String(rpcTablero.error || "Acceso no autorizado") };
+  }
+
+  // Respaldo híbrido: consultar miembros y clientes directamente mientras se ejecuta la migración SQL
+  let adminDb: any;
+  try {
+    adminDb = crearClienteAdmin();
+  } catch {
+    adminDb = supabase;
+  }
+
+  const codigos = variantesCodigoNegocio(neg);
+  const [almacen, { data: membresias }, { data: clientesTabla }] = await Promise.all([
+    leerAlmacenRespaldoCfg(neg),
+    adminDb
+      .schema("comun_seguridad")
+      .from("seg_membresia")
+      .select(
+        "mem_usuario_id, mem_rol, mem_creado_en, seg_usuario(usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_cedula, usu_autorizacion_whatsapp, usu_detalle_usuario)"
+      )
+      .in("mem_negocio", codigos)
+      .eq("mem_estado", "ACTIVO"),
+    adminDb
+      .schema("comun_comercio")
+      .from("com_cliente")
+      .select("*")
+      .eq("cli_negocio", neg)
+      .is("cli_eliminado_en", null)
+      .limit(300),
+  ]);
+
+  const equipo: MiembroEquipoOmnicanal[] = [];
+  const contactosMap = new Map<string, ContactoUnificadoOmnicanal>();
+
+  for (const m of membresias ?? []) {
+    const u = Array.isArray(m.seg_usuario) ? m.seg_usuario[0] : m.seg_usuario;
+    if (!u?.usu_id) continue;
+    const rol = String(m.mem_rol || "CLIENTE").toUpperCase();
+    const detalleUsu =
+      u.usu_detalle_usuario && typeof u.usu_detalle_usuario === "object"
+        ? (u.usu_detalle_usuario as Record<string, any>)
+        : {};
+    const regNegocio = detalleUsu.registros_negocio?.[neg] ?? {};
+    const nombreCompleto =
+      [regNegocio.nombres || u.usu_nombres, regNegocio.apellidos || u.usu_apellidos]
+        .filter(Boolean)
+        .join(" ")
+        .trim() ||
+      u.usu_correo ||
+      "Usuario";
+
+    if (["VENTAS", "VENDEDOR", "ASESOR", "OPERADOR", "ADMINISTRADOR", "ADMIN", "SUPERADMIN"].includes(rol)) {
+      equipo.push({
+        usuarioId: u.usu_id,
+        nombre: nombreCompleto,
+        correo: u.usu_correo || "",
+        avatarUrl: typeof detalleUsu.foto === "string" ? detalleUsu.foto : null,
+        rol,
+        chatsActivos: almacen.conversaciones.filter(
+          (c) => c.asesoraAsignadaId === u.usu_id && c.estadoAtencion !== "CERRADO"
+        ).length,
+      });
+    }
+
+    contactosMap.set(`usu:${u.usu_id}`, {
+      claveUnica: `usu:${u.usu_id}`,
+      usuarioId: u.usu_id,
+      clienteId: null,
+      tipoCuenta: "USUARIO_REGISTRADO",
+      nombre: nombreCompleto,
+      correo: u.usu_correo || null,
+      telefono: String(regNegocio.whatsapp || u.usu_whatsapp || "").trim() || null,
+      identificacion: u.usu_cedula || null,
+      autorizaWhatsapp: Boolean(
+        regNegocio.autorizacion_whatsapp ?? u.usu_autorizacion_whatsapp
+      ),
+      rolNegocio: rol,
+      totalCompras: 0,
+      montoAcumulado: 0,
+      creadoEn: m.mem_creado_en || new Date().toISOString(),
+      etiquetasIds: [],
+    });
+  }
+
+  for (const c of clientesTabla ?? []) {
+    const correoNorm = String(c.cli_correo || "").trim().toLowerCase();
+    const existentePorCorreo = Array.from(contactosMap.values()).find(
+      (item) => correoNorm && (item.correo || "").trim().toLowerCase() === correoNorm
+    );
+    if (existentePorCorreo) {
+      existentePorCorreo.clienteId = c.cli_id;
+      existentePorCorreo.identificacion = c.cli_identificacion || existentePorCorreo.identificacion;
+      existentePorCorreo.totalCompras = Number(c.cli_total_compras) || 0;
+      existentePorCorreo.montoAcumulado = Number(c.cli_monto_acumulado) || 0;
+      existentePorCorreo.ultimaCompraEn = c.cli_ultima_compra_en;
+      continue;
+    }
+
+    if (!c.cli_usuario_id) {
+      contactosMap.set(`cli:${c.cli_id}`, {
+        claveUnica: `cli:${c.cli_id}`,
+        usuarioId: null,
+        clienteId: c.cli_id,
+        tipoCuenta: "INVITADO_NO_REGISTRADO",
+        nombre: c.cli_nombre || "Comprador Invitado",
+        correo: c.cli_correo || null,
+        telefono: c.cli_telefono || null,
+        identificacion: c.cli_identificacion || null,
+        autorizaWhatsapp: false,
+        rolNegocio: "INVITADO",
+        totalCompras: Number(c.cli_total_compras) || 0,
+        montoAcumulado: Number(c.cli_monto_acumulado) || 0,
+        ultimaCompraEn: c.cli_ultima_compra_en,
+        creadoEn: c.cli_creado_en || new Date().toISOString(),
+        etiquetasIds: [],
+      });
+    }
+  }
+
+  const contactosBase = Array.from(contactosMap.values());
+  const pedidosWeb: PedidoWebConTipoCliente[] = pedidosBase.map((p) => ({
+    ...p,
+    esUsuarioRegistrado: esPedidoUsuarioRegistrado(p, contactosBase),
+  }));
+
+  return {
+    ok: true,
+    datos: {
+      usuarioActualId: user.id,
+      usuarioActualNombre,
+      conversaciones: almacen.conversaciones,
+      etiquetas: almacen.etiquetas,
+      respuestasRapidas: almacen.respuestasRapidas,
+      equipo,
+      usuariosYClientes: enriquecerContactosConPedidos(contactosBase, pedidosWeb),
+      pedidosWeb,
+      usandoRespaldoHibrido: true,
+    },
+  };
+}
+
+function enriquecerContactosConPedidos(
+  contactos: ContactoUnificadoOmnicanal[],
+  pedidos: PedidoWebConTipoCliente[]
+): ContactoUnificadoOmnicanal[] {
+  const resultado = contactos.map((c) => ({ ...c }));
+
+  for (const ped of pedidos) {
+    if (ped.estado === "CANCELADO" || ped.estado === "NO_ACEPTADA") continue;
+    const correoPed = (ped.compradorCorreo || "").trim().toLowerCase();
+    const telPed = normalizarTelefonoOmnicanal(ped.compradorTelefono);
+
+    let match = resultado.find((c) => {
+      if (correoPed && (c.correo || "").trim().toLowerCase() === correoPed) return true;
+      if (telPed.length >= 9 && normalizarTelefonoOmnicanal(c.telefono) === telPed) return true;
+      return false;
+    });
+
+    if (!match) {
+      const claveInvitado = `ped:${correoPed || telPed || ped.id}`;
+      match = {
+        claveUnica: claveInvitado,
+        usuarioId: null,
+        clienteId: null,
+        tipoCuenta: "INVITADO_NO_REGISTRADO",
+        nombre: ped.compradorNombre || "Comprador Invitado",
+        correo: ped.compradorCorreo || null,
+        telefono: ped.compradorTelefono || null,
+        identificacion: ped.compradorIdentificacion || null,
+        autorizaWhatsapp: Boolean(ped.autorizaWhatsapp),
+        rolNegocio: "INVITADO",
+        totalCompras: 1,
+        montoAcumulado: Number(ped.total) || 0,
+        ultimaCompraEn: ped.creadoEn,
+        creadoEn: ped.creadoEn,
+        etiquetasIds: [],
+      };
+      resultado.push(match);
+    } else if (match.totalCompras === 0) {
+      const pedidosDelContacto = pedidos.filter((x) => {
+        if (x.estado === "CANCELADO" || x.estado === "NO_ACEPTADA") return false;
+        const cx = (x.compradorCorreo || "").trim().toLowerCase();
+        const tx = normalizarTelefonoOmnicanal(x.compradorTelefono);
+        return (
+          (correoPed && cx === correoPed) || (telPed.length >= 9 && tx.length >= 9 && tx === telPed)
+        );
+      });
+      match.totalCompras = pedidosDelContacto.length;
+      match.montoAcumulado =
+        Math.round(
+          pedidosDelContacto.reduce((acc, item) => acc + (Number(item.total) || 0), 0) * 100
+        ) / 100;
+      match.ultimaCompraEn = pedidosDelContacto[0]?.creadoEn ?? match.ultimaCompraEn;
+    }
+  }
+
+  return resultado;
+}
+
+export async function obtenerMensajesConversacionAction(
+  negocio: string,
+  conversacionId: string
+): Promise<{ ok: true; mensajes: MensajeOmnicanal[] } | { ok: false; error: string }> {
+  const neg = normalizarNegocioComercio(negocio);
+  const { crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+  const { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_obtener_mensajes", {
+    p_negocio: neg,
+    p_conversacion_id: conversacionId,
+  });
+
+  if (!error && data?.ok) {
+    return { ok: true, mensajes: Array.isArray(data.mensajes) ? data.mensajes : [] };
+  }
+  if (error && !esFuncionRpcPendienteMigracion(error.message)) {
+    return { ok: false, error: error.message };
+  }
+  if (data && data.ok === false) {
+    return { ok: false, error: String(data.error) };
+  }
+
+  const almacen = await leerAlmacenRespaldoCfg(neg);
+  const conv = almacen.conversaciones.find((c) => c.id === conversacionId);
+  if (conv && conv.noLeidosAsesora > 0) {
+    conv.noLeidosAsesora = 0;
+    await escribirAlmacenRespaldoCfg(neg, almacen);
+  }
+  return { ok: true, mensajes: almacen.mensajesPorConversacion[conversacionId] ?? [] };
+}
+
+export async function enviarMensajeAsesorOmnicanalAction(entrada: {
+  negocio: string;
+  conversacionId: string;
+  contenido: string;
+  esNotaInterna?: boolean;
+  respuestaRapidaId?: string | null;
+}): Promise<
+  | {
+      ok: true;
+      mensaje: MensajeOmnicanal;
+      estadoAtencion: EstadoAtencionOmnicanal;
+      asesoraAsignadaId?: string | null;
+      mensajesHumanoConteo: number;
+    }
+  | { ok: false; error: string }
+> {
+  const neg = normalizarNegocioComercio(entrada.negocio);
+  const texto = (entrada.contenido || "").trim();
+  if (!texto) {
+    return { ok: false, error: "Escribe un mensaje antes de enviar." };
+  }
+
+  const { crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+  const { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_enviar_mensaje_asesor", {
+    p_negocio: neg,
+    p_conversacion_id: entrada.conversacionId,
+    p_contenido: texto,
+    p_es_nota_interna: Boolean(entrada.esNotaInterna),
+    p_respuesta_rapida_id:
+      entrada.respuestaRapidaId && /^[0-9a-f-]{36}$/i.test(entrada.respuestaRapidaId)
+        ? entrada.respuestaRapidaId
+        : null,
+  });
+
+  if (!error && data?.ok) {
+    return {
+      ok: true,
+      mensaje: data.mensaje as MensajeOmnicanal,
+      estadoAtencion: (data.estadoAtencion as EstadoAtencionOmnicanal) || "EN_ATENCION_ASESORA",
+      asesoraAsignadaId: data.asesoraAsignadaId ? String(data.asesoraAsignadaId) : null,
+      mensajesHumanoConteo: Number(data.mensajesHumanoConteo) || 1,
+    };
+  }
+  if (error && !esFuncionRpcPendienteMigracion(error.message)) {
+    return { ok: false, error: error.message };
+  }
+  if (data && data.ok === false) {
+    return { ok: false, error: String(data.error) };
+  }
+
+  // Respaldo híbrido
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false, error: "Sesión expirada." };
+
+  const almacen = await leerAlmacenRespaldoCfg(neg);
+  const conv = almacen.conversaciones.find((c) => c.id === entrada.conversacionId);
+  if (!conv) return { ok: false, error: "Conversación no encontrada." };
+
+  const ahora = new Date().toISOString();
+  const msg: MensajeOmnicanal = {
+    id: `msg-${Date.now()}`,
+    origen: entrada.esNotaInterna ? "NOTA_INTERNA" : "ASESORA_HUMANA",
+    autorUsuarioId: user.id,
+    autorNombre: user.email?.split("@")[0] || "Asesor",
+    contenido: texto,
+    tipoContenido: "TEXTO",
+    estadoEntrega: "ENVIADO",
+    creadoEn: ahora,
+  };
+
+  const lista = almacen.mensajesPorConversacion[conv.id] ?? [];
+  lista.push(msg);
+  almacen.mensajesPorConversacion[conv.id] = lista;
+
+  if (!entrada.esNotaInterna) {
+    conv.estadoAtencion = "EN_ATENCION_ASESORA";
+    conv.asesoraAsignadaId = conv.asesoraAsignadaId || user.id;
+    conv.asesoraNombre = conv.asesoraNombre || msg.autorNombre;
+    conv.ultimoMensajeTexto = texto.slice(0, 280);
+    conv.ultimoMensajeOrigen = "ASESORA_HUMANA";
+    conv.ultimoMensajeEn = ahora;
+    conv.mensajesHumanoConteo = (conv.mensajesHumanoConteo || 0) + 1;
+  }
+
+  const resEsc = await escribirAlmacenRespaldoCfg(neg, almacen);
+  if (!resEsc.ok) return { ok: false, error: resEsc.error || "No se pudo guardar la respuesta" };
+
+  return {
+    ok: true,
+    mensaje: msg,
+    estadoAtencion: conv.estadoAtencion,
+    asesoraAsignadaId: conv.asesoraAsignadaId,
+    mensajesHumanoConteo: conv.mensajesHumanoConteo,
+  };
+}
+
+export async function actualizarConversacionOmnicanalAction(entrada: {
+  negocio: string;
+  conversacionId: string;
+  nuevoEstado?: EstadoAtencionOmnicanal;
+  asesoraId?: string | null;
+  desasignar?: boolean;
+  recordatorioEn?: string | null;
+  recordatorioNota?: string | null;
+  limpiarRecordatorio?: boolean;
+}): Promise<{ ok: true; estadoAtencion: EstadoAtencionOmnicanal } | { ok: false; error: string }> {
+  const neg = normalizarNegocioComercio(entrada.negocio);
+  const { crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+  const { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_actualizar_conversacion", {
+    p_negocio: neg,
+    p_conversacion_id: entrada.conversacionId,
+    p_nuevo_estado: entrada.nuevoEstado ?? null,
+    p_asesora_id: entrada.asesoraId ?? null,
+    p_desasignar: Boolean(entrada.desasignar),
+    p_recordatorio_en: entrada.recordatorioEn ?? null,
+    p_recordatorio_nota: entrada.recordatorioNota ?? null,
+    p_limpiar_recordatorio: Boolean(entrada.limpiarRecordatorio),
+  });
+
+  if (!error && data?.ok) {
+    return {
+      ok: true,
+      estadoAtencion: (data.estadoAtencion as EstadoAtencionOmnicanal) || "BOT_ACTIVO",
+    };
+  }
+  if (error && !esFuncionRpcPendienteMigracion(error.message)) {
+    return { ok: false, error: error.message };
+  }
+  if (data && data.ok === false) {
+    return { ok: false, error: String(data.error) };
+  }
+
+  const almacen = await leerAlmacenRespaldoCfg(neg);
+  const conv = almacen.conversaciones.find((c) => c.id === entrada.conversacionId);
+  if (!conv) return { ok: false, error: "Conversación no encontrada." };
+
+  if (entrada.nuevoEstado) conv.estadoAtencion = entrada.nuevoEstado;
+  if (entrada.desasignar) {
+    conv.asesoraAsignadaId = null;
+    conv.asesoraNombre = null;
+  } else if (entrada.asesoraId) {
+    conv.asesoraAsignadaId = entrada.asesoraId;
+  }
+  if (entrada.limpiarRecordatorio) {
+    conv.recordatorioEn = null;
+    conv.recordatorioNota = null;
+  } else if (entrada.recordatorioEn) {
+    conv.recordatorioEn = entrada.recordatorioEn;
+    conv.recordatorioNota = entrada.recordatorioNota ?? null;
+  }
+
+  const resEsc = await escribirAlmacenRespaldoCfg(neg, almacen);
+  if (!resEsc.ok) return { ok: false, error: resEsc.error || "Error al actualizar conversación" };
+
+  return { ok: true, estadoAtencion: conv.estadoAtencion };
+}
+
+export async function guardarEtiquetaOmnicanalAction(entrada: {
+  negocio: string;
+  nombre: string;
+  color: string;
+  icono: string;
+}): Promise<{ ok: true; etiqueta: EtiquetaOmnicanal } | { ok: false; error: string }> {
+  const neg = normalizarNegocioComercio(entrada.negocio);
+  const { crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+  const { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_guardar_etiqueta", {
+    p_negocio: neg,
+    p_nombre: entrada.nombre,
+    p_color: entrada.color,
+    p_icono: entrada.icono,
+  });
+
+  if (!error && data?.ok) {
+    return { ok: true, etiqueta: data.etiqueta as EtiquetaOmnicanal };
+  }
+  if (error && !esFuncionRpcPendienteMigracion(error.message)) {
+    return { ok: false, error: error.message };
+  }
+
+  const almacen = await leerAlmacenRespaldoCfg(neg);
+  const slug = entrada.nombre
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-");
+  const nueva: EtiquetaOmnicanal = {
+    id: `etq-${slug}-${Date.now()}`,
+    slug,
+    nombre: entrada.nombre.trim(),
+    color: entrada.color || "#2563EB",
+    icono: entrada.icono || "🏷️",
+    orden: almacen.etiquetas.length + 1,
+  };
+  almacen.etiquetas.push(nueva);
+  await escribirAlmacenRespaldoCfg(neg, almacen);
+  return { ok: true, etiqueta: nueva };
+}
+
+export async function alternarEtiquetaOmnicanalAction(entrada: {
+  negocio: string;
+  etiquetaId: string;
+  conversacionId?: string | null;
+  clienteId?: string | null;
+}): Promise<{ ok: true; asignada: boolean } | { ok: false; error: string }> {
+  const neg = normalizarNegocioComercio(entrada.negocio);
+  const { crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+  if (/^[0-9a-f-]{36}$/i.test(entrada.etiquetaId)) {
+    const { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_alternar_etiqueta", {
+      p_negocio: neg,
+      p_etiqueta_id: entrada.etiquetaId,
+      p_conversacion_id: entrada.conversacionId ?? null,
+      p_cliente_id: entrada.clienteId ?? null,
+    });
+
+    if (!error && data?.ok) {
+      return { ok: true, asignada: Boolean(data.asignada) };
+    }
+    if (error && !esFuncionRpcPendienteMigracion(error.message)) {
+      return { ok: false, error: error.message };
+    }
+  }
+
+  const almacen = await leerAlmacenRespaldoCfg(neg);
+  const conv = almacen.conversaciones.find((c) => c.id === entrada.conversacionId);
+  if (!conv) return { ok: true, asignada: false };
+
+  const yaTiene = conv.etiquetasIds.includes(entrada.etiquetaId);
+  conv.etiquetasIds = yaTiene
+    ? conv.etiquetasIds.filter((id) => id !== entrada.etiquetaId)
+    : [...conv.etiquetasIds, entrada.etiquetaId];
+  await escribirAlmacenRespaldoCfg(neg, almacen);
+  return { ok: true, asignada: !yaTiene };
+}
+
+export async function guardarRespuestaRapidaOmnicanalAction(entrada: {
+  negocio: string;
+  id?: string | null;
+  atajo: string;
+  titulo: string;
+  categoria: string;
+  contenido: string;
+}): Promise<{ ok: true; respuesta: RespuestaRapidaOmnicanal } | { ok: false; error: string }> {
+  const neg = normalizarNegocioComercio(entrada.negocio);
+  const { crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+  const { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_guardar_respuesta_rapida", {
+    p_negocio: neg,
+    p_atajo: entrada.atajo,
+    p_titulo: entrada.titulo,
+    p_categoria: entrada.categoria,
+    p_contenido: entrada.contenido,
+    p_id: entrada.id && /^[0-9a-f-]{36}$/i.test(entrada.id) ? entrada.id : null,
+  });
+
+  if (!error && data?.ok) {
+    return { ok: true, respuesta: data.respuesta as RespuestaRapidaOmnicanal };
+  }
+  if (error && !esFuncionRpcPendienteMigracion(error.message)) {
+    return { ok: false, error: error.message };
+  }
+
+  const almacen = await leerAlmacenRespaldoCfg(neg);
+  const atajoNorm = entrada.atajo.trim().startsWith("/")
+    ? entrada.atajo.trim().toLowerCase()
+    : `/${entrada.atajo.trim().toLowerCase()}`;
+  const item: RespuestaRapidaOmnicanal = {
+    id: entrada.id || `rrp-${Date.now()}`,
+    atajo: atajoNorm,
+    titulo: entrada.titulo.trim() || atajoNorm,
+    categoria: entrada.categoria.trim() || "Ventas",
+    contenido: entrada.contenido.trim(),
+    usoConteo: 0,
+  };
+  const idx = almacen.respuestasRapidas.findIndex(
+    (r) => r.id === entrada.id || r.atajo.toLowerCase() === atajoNorm
+  );
+  if (idx >= 0) almacen.respuestasRapidas[idx] = item;
+  else almacen.respuestasRapidas.push(item);
+
+  await escribirAlmacenRespaldoCfg(neg, almacen);
+  return { ok: true, respuesta: item };
+}
+
+export async function eliminarRespuestaRapidaOmnicanalAction(
+  negocio: string,
+  id: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const neg = normalizarNegocioComercio(negocio);
+  const { crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+  if (/^[0-9a-f-]{36}$/i.test(id)) {
+    const { data, error } = await esquemaComercio.rpc(
+      "com_fn_omnicanal_eliminar_respuesta_rapida",
+      { p_negocio: neg, p_id: id }
+    );
+    if (!error && data?.ok) return { ok: true };
+    if (error && !esFuncionRpcPendienteMigracion(error.message)) {
+      return { ok: false, error: error.message };
+    }
+  }
+
+  const almacen = await leerAlmacenRespaldoCfg(neg);
+  almacen.respuestasRapidas = almacen.respuestasRapidas.filter((r) => r.id !== id);
+  await escribirAlmacenRespaldoCfg(neg, almacen);
+  return { ok: true };
+}
+
+export async function abrirSeguimientoContactoOmnicanalAction(entrada: {
+  negocio: string;
+  nombre: string;
+  correo?: string | null;
+  telefono?: string | null;
+  usuarioId?: string | null;
+  clienteId?: string | null;
+  contextoOrden?: string | null;
+}): Promise<{ ok: true; conversacionId: string } | { ok: false; error: string }> {
+  const neg = normalizarNegocioComercio(entrada.negocio);
+  const { crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+  const { data, error } = await esquemaComercio.rpc(
+    "com_fn_omnicanal_abrir_seguimiento_contacto",
+    {
+      p_negocio: neg,
+      p_nombre: entrada.nombre,
+      p_correo: entrada.correo ?? null,
+      p_telefono: entrada.telefono ?? null,
+      p_usuario_id:
+        entrada.usuarioId && /^[0-9a-f-]{36}$/i.test(entrada.usuarioId) ? entrada.usuarioId : null,
+      p_cliente_id:
+        entrada.clienteId && /^[0-9a-f-]{36}$/i.test(entrada.clienteId) ? entrada.clienteId : null,
+      p_contexto_orden: entrada.contextoOrden ?? null,
+    }
+  );
+
+  if (!error && data?.ok) {
+    return { ok: true, conversacionId: String(data.conversacionId) };
+  }
+  if (error && !esFuncionRpcPendienteMigracion(error.message)) {
+    return { ok: false, error: error.message };
+  }
+
+  const almacen = await leerAlmacenRespaldoCfg(neg);
+  const correoNorm = (entrada.correo || "").trim().toLowerCase();
+  const telNorm = normalizarTelefonoOmnicanal(entrada.telefono);
+  let conv = almacen.conversaciones.find(
+    (c) =>
+      (correoNorm && (c.remitenteCorreo || "").toLowerCase() === correoNorm) ||
+      (telNorm.length >= 9 && normalizarTelefonoOmnicanal(c.remitenteTelefono) === telNorm)
+  );
+
+  if (!conv) {
+    const ahora = new Date().toISOString();
+    const nuevoId = `cnv-${Date.now()}`;
+    conv = {
+      id: nuevoId,
+      negocio: neg,
+      canal: "web",
+      claveHilo: `crm-${Date.now()}`,
+      remitenteId: entrada.telefono || entrada.correo || nuevoId,
+      remitenteNombre: entrada.nombre || "Cliente Web",
+      remitenteCorreo: entrada.correo ?? null,
+      remitenteTelefono: entrada.telefono ?? null,
+      usuarioId: entrada.usuarioId ?? null,
+      clienteId: entrada.clienteId ?? null,
+      estadoAtencion: "EN_ATENCION_ASESORA",
+      ultimoMensajeTexto: entrada.contextoOrden || "Seguimiento comercial abierto",
+      ultimoMensajeOrigen: "SISTEMA",
+      ultimoMensajeEn: ahora,
+      noLeidosAsesora: 0,
+      mensajesClienteConteo: 0,
+      mensajesIaConteo: 0,
+      mensajesHumanoConteo: 0,
+      creadoEn: ahora,
+      etiquetasIds: ["etq-seguimiento"],
+    };
+    almacen.conversaciones.unshift(conv);
+    almacen.mensajesPorConversacion[conv.id] = [
+      {
+        id: `msg-${Date.now()}`,
+        origen: "SISTEMA",
+        autorNombre: "Ventas",
+        contenido: entrada.contextoOrden || "Ficha de seguimiento comercial abierta desde el panel.",
+        tipoContenido: entrada.contextoOrden ? "ORDEN_WEB" : "TEXTO",
+        estadoEntrega: "ENVIADO",
+        creadoEn: ahora,
+      },
+    ];
+    await escribirAlmacenRespaldoCfg(neg, almacen);
+  }
+
+  return { ok: true, conversacionId: conv.id };
+}

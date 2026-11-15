@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Pencil, Lock, CreditCard, ShoppingBag, KeyRound, Bot, MapPin, FileCheck, type LucideIcon } from "lucide-react";
+import { Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Pencil, Lock, CreditCard, ShoppingBag, KeyRound, Bot, MapPin, FileCheck, MessageSquare, type LucideIcon } from "lucide-react";
 import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
 import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
 import { FormularioAria } from "@eco/configuracion-negocio/componentes/FormularioAria";
@@ -10,7 +10,7 @@ import { GestionTokensMcpWidget } from "@eco/configuracion-negocio/componentes/G
 import { PreferenciasNotificacionWidget } from "@eco/notificaciones";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
-import { ConfiguracionPasarelaPayphone, ConfiguracionFacturacionSri, CatalogoProductosComercio, FormularioLogisticaCobertura } from "@eco/comercio";
+import { ConfiguracionPasarelaPayphone, ConfiguracionFacturacionSri, CatalogoProductosComercio, FormularioLogisticaCobertura, ConsolaVentasOmnicanal } from "@eco/comercio";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
 import { ModalVerificarMFAWidget } from "../ModalVerificarMFAWidget";
@@ -129,6 +129,15 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     soloAdmin: true
   },
   {
+    id: "consola_chat",
+    titulo: "Ventas Omnicanal & Conectores (YCloud / Meta / TikTok)",
+    subtitulo: "Monitoreo de chats web, etiquetas, /atajos y estado de conectores WhatsApp, Instagram, Facebook y TikTok",
+    icono: MessageSquare,
+    colorIcono: "#DB2777",
+    categoria: "Servicios de Despacho",
+    soloAdmin: true
+  },
+  {
     id: "tokens_mcp",
     titulo: "Tokens & APIs MCP",
     subtitulo: "Gestión y emisión de tokens de acceso para conectar herramientas MCP con bots y agentes externos",
@@ -148,6 +157,9 @@ const ALIAS_WIDGET: Record<string, string> = {
   configuracion_logistica: "configuracion_logistica",
   "configuracion-logistica": "configuracion_logistica",
   logistica: "configuracion_logistica",
+  consola_chat: "consola_chat",
+  "consola-chat": "consola_chat",
+  conversaciones: "consola_chat",
   preferencias_notificacion: "notificaciones",
   terminos: "gestion_terminos_consentimientos",
   mcp_tokens: "tokens_mcp",
@@ -401,6 +413,13 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
             {widgetActivo === "configuracion_logistica" && (
               <div style={{ width: "100%" }}>
                 <FormularioLogisticaCobertura negocio={negocio} />
+              </div>
+            )}
+
+            {/* 11. CONSOLA DE VENTAS OMNICANAL & CONECTORES */}
+            {widgetActivo === "consola_chat" && (
+              <div style={{ width: "100%" }}>
+                <ConsolaVentasOmnicanal negocio={negocio} />
               </div>
             )}
           </div>

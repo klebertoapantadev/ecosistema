@@ -6,6 +6,7 @@ import {
   construirEnlaceCategoriaTienda,
   interpretarEnlaceTienda,
 } from '@eco/comercio';
+import { crearClienteNavegador } from '@eco/supabase/cliente';
 import { useCarrito } from '../contexto-carrito';
 import { PRODUCTOS_TINKAY, FRASES_DEDICATORIAS } from '../datos-catalogo';
 import { ProductoEcommerce, VarianteEcommerce, MensajeChat } from '../tipos';
@@ -43,12 +44,39 @@ type CotizacionChat = NonNullable<MensajeChat['cotizacionEnvio']>;
 
 type ResultadoConsultaAria =
   | { estado: 'ok'; texto: string; cotizacionEnvio?: CotizacionChat }
+  | { estado: 'modo_humano'; asesoraNombre: string; cotizacionEnvio?: CotizacionChat }
   | { estado: 'sin_configurar'; cotizacionEnvio?: CotizacionChat }
   | { estado: 'error_temporal'; cotizacionEnvio?: CotizacionChat };
 
+const CLAVE_CONVERSACION_STORAGE = 'eco_chat_conv_tinkay';
+const CLAVE_VISITANTE_STORAGE = 'eco_chat_visitante_tinkay';
+
+interface PerfilVisitanteChat {
+  nombre: string;
+  correo?: string;
+  telefono?: string;
+  esRegistrado?: boolean;
+}
+
 function crearConversacionId(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) return crypto.randomUUID();
-  return `web-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  if (typeof window !== 'undefined') {
+    const existente = window.localStorage.getItem(CLAVE_CONVERSACION_STORAGE);
+    if (existente && /^[A-Za-z0-9_-]{8,64}$/.test(existente)) {
+      return existente;
+    }
+  }
+  const nuevo =
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `web-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  if (typeof window !== 'undefined') {
+    try {
+      window.localStorage.setItem(CLAVE_CONVERSACION_STORAGE, nuevo);
+    } catch {
+      // Ignorar modo privado sin storage
+    }
+  }
+  return nuevo;
 }
 
 function normalizar(texto: string): string {
@@ -130,9 +158,153 @@ export function ChatAriaFlotante() {
   const [linkChatCopiadoId, setLinkChatCopiadoId] = useState<string | null>(null);
   const [selectorMapaAbierto, setSelectorMapaAbierto] = useState(false);
   const [ubicacionAplicadaId, setUbicacionAplicadaId] = useState<string | null>(null);
+  const [asesoraHumanaActiva, setAsesoraHumanaActiva] = useState<string | null>(null);
+  const [perfilVisitante, setPerfilVisitante] = useState<PerfilVisitanteChat | null>(null);
+  const [editandoVisitante, setEditandoVisitante] = useState(false);
+  const [formNombreVisitante, setFormNombreVisitante] = useState('');
+  const [formContactoVisitante, setFormContactoVisitante] = useState('');
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const conversacionId = useRef<string>(crearConversacionId());
+  const idsHumanosVistos = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const guardado = window.localStorage.getItem(CLAVE_CONVERSACION_STORAGE);
+        if (guardado && /^[A-Za-z0-9_-]{8,64}$/.test(guardado)) {
+          conversacionId.current = guardado;
+        } else {
+          window.localStorage.setItem(CLAVE_CONVERSACION_STORAGE, conversacionId.current);
+        }
+
+        const visRaw = window.localStorage.getItem(CLAVE_VISITANTE_STORAGE);
+        if (visRaw) {
+          const vis = JSON.parse(visRaw) as PerfilVisitanteChat;
+          if (vis?.nombre) {
+            setPerfilVisitante(vis);
+            setFormNombreVisitante(vis.nombre);
+            setFormContactoVisitante(vis.telefono || vis.correo || '');
+          }
+        }
+      } catch {
+        // Ignorar modo privado
+      }
+    }
+
+    let cancelado = false;
+    try {
+      const supabase = crearClienteNavegador();
+      supabase.auth.getUser().then(async ({ data }) => {
+        if (cancelado || !data?.user) return;
+        const { data: u } = await supabase
+          .schema('comun_seguridad')
+          .from('seg_usuario')
+          .select('usu_nombres, usu_apellidos, usu_correo, usu_whatsapp')
+          .eq('usu_id', data.user.id)
+          .maybeSingle();
+        if (cancelado) return;
+        const nombreReg =
+          [u?.usu_nombres, u?.usu_apellidos].filter(Boolean).join(' ').trim() ||
+          data.user.email?.split('@')[0] ||
+          'Cliente';
+        const perfilAuth: PerfilVisitanteChat = {
+          nombre: nombreReg,
+          correo: u?.usu_correo || data.user.email || undefined,
+          telefono: u?.usu_whatsapp || undefined,
+          esRegistrado: true,
+        };
+        setPerfilVisitante(perfilAuth);
+        setFormNombreVisitante(perfilAuth.nombre);
+        setFormContactoVisitante(perfilAuth.telefono || perfilAuth.correo || '');
+      });
+    } catch {
+      // Continuar como visitante invitado
+    }
+    return () => {
+      cancelado = true;
+    };
+  }, []);
+
+  const handleGuardarIdentidadVisitante = (e: React.FormEvent) => {
+    e.preventDefault();
+    const nom = formNombreVisitante.trim();
+    if (nom.length < 2) return;
+    const cont = formContactoVisitante.trim();
+    const esCorreo = cont.includes('@');
+    const nuevo: PerfilVisitanteChat = {
+      nombre: nom,
+      correo: esCorreo ? cont.toLowerCase() : perfilVisitante?.correo,
+      telefono: !esCorreo && cont ? cont : perfilVisitante?.telefono,
+      esRegistrado: perfilVisitante?.esRegistrado,
+    };
+    setPerfilVisitante(nuevo);
+    setEditandoVisitante(false);
+    try {
+      window.localStorage.setItem(CLAVE_VISITANTE_STORAGE, JSON.stringify(nuevo));
+    } catch {
+      // Ignorar modo privado
+    }
+  };
+
+  useEffect(() => {
+    if (!abierto) return;
+    let cancelado = false;
+
+    const sincronizarMensajesAsesora = async () => {
+      try {
+        const res = await fetch(
+          `/api/chat?conversation_id=${encodeURIComponent(conversacionId.current)}`,
+          { method: 'GET', cache: 'no-store' }
+        );
+        if (!res.ok || cancelado) return;
+        const data = (await res.json()) as {
+          existe?: boolean;
+          estadoAtencion?: string;
+          asesoraNombre?: string | null;
+          mensajesHumanos?: Array<{
+            id: string;
+            autorNombre: string;
+            contenido: string;
+            creadoEn: string;
+          }>;
+        };
+        if (cancelado) return;
+
+        if (data.estadoAtencion === 'EN_ATENCION_ASESORA') {
+          setAsesoraHumanaActiva(data.asesoraNombre || 'Asesora Tinkay');
+        } else if (data.estadoAtencion === 'BOT_ACTIVO') {
+          setAsesoraHumanaActiva(null);
+        }
+
+        const recibidos = Array.isArray(data.mensajesHumanos) ? data.mensajesHumanos : [];
+        const nuevos = recibidos.filter((m) => m.id && !idsHumanosVistos.current.has(m.id));
+        if (nuevos.length > 0) {
+          nuevos.forEach((m) => idsHumanosVistos.current.add(m.id));
+          setMensajes((prev) => [
+            ...prev,
+            ...nuevos.map((m) => ({
+              id: `hum-${m.id}`,
+              remitente: 'asesora' as const,
+              autorNombre: m.autorNombre || data.asesoraNombre || 'Asesora Tinkay',
+              texto: m.contenido,
+              timestamp: 'En vivo',
+              productosSugeridos: productosMencionados(m.contenido),
+            })),
+          ]);
+        }
+      } catch {
+        // Silencioso en caso de desconexión temporal
+      }
+    };
+
+    sincronizarMensajesAsesora();
+    const intervalo = window.setInterval(sincronizarMensajesAsesora, 4500);
+    return () => {
+      cancelado = true;
+      window.clearInterval(intervalo);
+    };
+  }, [abierto]);
 
   useEffect(() => {
     if (abierto && scrollRef.current) {
@@ -370,15 +542,37 @@ export function ChatAriaFlotante() {
         const r = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: texto, conversation_id: conversacionId.current }),
+          body: JSON.stringify({
+            prompt: texto,
+            conversation_id: conversacionId.current,
+            ...(perfilVisitante
+              ? {
+                  visitante: {
+                    nombre: perfilVisitante.nombre,
+                    correo: perfilVisitante.correo,
+                    telefono: perfilVisitante.telefono,
+                  },
+                }
+              : {}),
+          }),
         });
 
         const data = (await r.json().catch(() => ({}))) as {
-          response?: string;
+          response?: string | null;
+          modoHumano?: boolean;
+          asesoraNombre?: string;
           cotizacionEnvio?: CotizacionChat;
         };
         if (data.cotizacionEnvio) {
           ultimaCotizacion = data.cotizacionEnvio;
+        }
+
+        if (r.ok && data.modoHumano) {
+          return {
+            estado: 'modo_humano',
+            asesoraNombre: data.asesoraNombre || 'Asesora Tinkay',
+            cotizacionEnvio: ultimaCotizacion,
+          };
         }
 
         if (r.status === 503) {
@@ -492,6 +686,25 @@ export function ChatAriaFlotante() {
 
     const resultado = await consultarAria(texto);
 
+    if (resultado.estado === 'modo_humano') {
+      setAsesoraHumanaActiva(resultado.asesoraNombre);
+      if (resultado.cotizacionEnvio) {
+        setMensajes((prev) => [
+          ...prev,
+          {
+            id: `cot-hum-${Date.now()}`,
+            remitente: 'asesora',
+            autorNombre: resultado.asesoraNombre,
+            texto: `📍 Ubicación recibida por ${resultado.asesoraNombre}. Puedes aplicarla a tu carrito mientras te responde en vivo:`,
+            timestamp: 'En vivo',
+            cotizacionEnvio: resultado.cotizacionEnvio,
+          },
+        ]);
+      }
+      setEscribiendo(false);
+      return;
+    }
+
     let nuevoMensajeAria: MensajeChat;
     if (resultado.estado === 'ok') {
       nuevoMensajeAria = {
@@ -504,6 +717,14 @@ export function ChatAriaFlotante() {
       };
     } else if (resultado.estado === 'sin_configurar') {
       const respaldo = procesarRespaldoSinAgente(texto, resultado.cotizacionEnvio);
+      fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conversation_id: conversacionId.current,
+          respuesta_respaldo: respaldo.texto,
+        }),
+      }).catch(() => {});
       nuevoMensajeAria = {
         id: `aria-${Date.now()}`,
         remitente: 'aria',
@@ -727,8 +948,16 @@ export function ChatAriaFlotante() {
                 <span className="dot-en-linea" />
               </div>
               <div className="titulos-agente">
-                <strong>Mía | Tinkay Floristería</strong>
-                <span>Sommelier floral &amp; Ventas en vivo</span>
+                <strong>
+                  {asesoraHumanaActiva
+                    ? `${asesoraHumanaActiva} | Tinkay en Vivo`
+                    : 'Mía | Tinkay Floristería'}
+                </strong>
+                <span>
+                  {asesoraHumanaActiva
+                    ? '👩‍💼 Asesora humana conectada contigo'
+                    : 'Sommelier floral & Ventas en vivo'}
+                </span>
               </div>
             </div>
 
@@ -742,6 +971,126 @@ export function ChatAriaFlotante() {
             </button>
           </div>
 
+          {/* Franja ligera opcional de identificación para atención personalizada en vivo */}
+          <div
+            style={{
+              padding: '7px 14px',
+              background: '#F8FAFC',
+              borderBottom: '1px solid #E2E8F0',
+              fontSize: '0.75rem',
+              color: '#334155',
+            }}
+          >
+            {!editandoVisitante ? (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '8px',
+                }}
+              >
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {perfilVisitante
+                    ? `👤 ${perfilVisitante.nombre}${
+                        perfilVisitante.esRegistrado ? ' (Cuenta Tinkay)' : ''
+                      }`
+                    : '💬 ¿Deseas dejar tu nombre para atención personalizada?'}
+                </span>
+                {!perfilVisitante?.esRegistrado && (
+                  <button
+                    type="button"
+                    onClick={() => setEditandoVisitante(true)}
+                    title="Indicar tu nombre y contacto para seguimiento de tu pedido"
+                    aria-label={perfilVisitante ? 'Editar datos' : 'Identifícate'}
+                    style={{
+                      border: '1px solid #CBD5E1',
+                      background: '#FFFFFF',
+                      color: '#0F172A',
+                      borderRadius: '999px',
+                      padding: '2px 9px',
+                      fontSize: '0.71rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {perfilVisitante ? 'Cambiar' : 'Identifícate'}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <form
+                onSubmit={handleGuardarIdentidadVisitante}
+                style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}
+              >
+                <input
+                  type="text"
+                  value={formNombreVisitante}
+                  onChange={(e) => setFormNombreVisitante(e.target.value)}
+                  placeholder="Tu nombre"
+                  required
+                  style={{
+                    flex: '1 1 110px',
+                    padding: '5px 8px',
+                    borderRadius: '7px',
+                    border: '1px solid #CBD5E1',
+                    fontSize: '0.75rem',
+                    background: '#FFFFFF',
+                  }}
+                />
+                <input
+                  type="text"
+                  value={formContactoVisitante}
+                  onChange={(e) => setFormContactoVisitante(e.target.value)}
+                  placeholder="Celular o correo (opcional)"
+                  style={{
+                    flex: '1 1 130px',
+                    padding: '5px 8px',
+                    borderRadius: '7px',
+                    border: '1px solid #CBD5E1',
+                    fontSize: '0.75rem',
+                    background: '#FFFFFF',
+                  }}
+                />
+                <button
+                  type="submit"
+                  title="Guardar tus datos en este chat"
+                  aria-label="Guardar"
+                  style={{
+                    padding: '5px 10px',
+                    borderRadius: '7px',
+                    border: 'none',
+                    background: '#0F172A',
+                    color: '#FFFFFF',
+                    fontSize: '0.73rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Guardar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditandoVisitante(false)}
+                  title="Cerrar formulario"
+                  aria-label="Cancelar"
+                  style={{
+                    padding: '4px 7px',
+                    borderRadius: '7px',
+                    border: '1px solid #CBD5E1',
+                    background: '#FFFFFF',
+                    color: '#64748B',
+                    fontSize: '0.72rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  ✕
+                </button>
+              </form>
+            )}
+          </div>
+
           {/* Historial de Mensajes */}
           <div className="cuerpo-mensajes-chat" ref={scrollRef}>
             {mensajes.map((m) => (
@@ -749,13 +1098,27 @@ export function ChatAriaFlotante() {
                 key={m.id}
                 className={`fila-mensaje-chat ${m.remitente === 'usuario' ? 'mensaje-usuario' : 'mensaje-aria'}`}
               >
-                {m.remitente === 'aria' && (
-                  <div className="icono-emisor-mini">🌿</div>
+                {m.remitente !== 'usuario' && (
+                  <div className="icono-emisor-mini">
+                    {m.remitente === 'asesora' ? '👩‍💼' : '🌿'}
+                  </div>
                 )}
 
                 <div className="burbuja-mensaje">
+                  {m.remitente === 'asesora' && m.autorNombre && (
+                    <div
+                      style={{
+                        fontSize: '0.68rem',
+                        fontWeight: 700,
+                        color: '#BE185D',
+                        marginBottom: '4px',
+                      }}
+                    >
+                      👩‍💼 {m.autorNombre} • Atención personalizada
+                    </div>
+                  )}
                   <p style={{ whiteSpace: 'pre-wrap' }}>
-                    {m.remitente === 'aria' ? renderizarTextoConEnlaces(m.texto) : m.texto}
+                    {m.remitente !== 'usuario' ? renderizarTextoConEnlaces(m.texto) : m.texto}
                   </p>
 
                   {m.remitente === 'aria' && (() => {

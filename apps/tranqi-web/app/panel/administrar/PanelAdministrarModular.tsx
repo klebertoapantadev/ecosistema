@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, Eye, Pencil, Sliders, RotateCcw, BarChart2, Receipt, Calendar, Building2, Scale, ShieldCheck, Briefcase, FileText, type LucideIcon } from "lucide-react";
+import { Users, ClipboardList, Bell, Shield, ChevronRight, Star, Lock, Eye, Pencil, Sliders, RotateCcw, BarChart2, Receipt, Calendar, Building2, Scale, ShieldCheck, Briefcase, FileText, MessageSquare, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { ConsultaUsuariosPerfilesWidget } from "@eco/gestion-usuarios/componentes/ConsultaUsuariosPerfilesWidget";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
@@ -13,7 +13,7 @@ import { GestionRedProfesionalWidget } from "../../../modulos/socios/componentes
 import { ConfiguracionHorariosAtencionWidget } from "../../../modulos/agenda/componentes/ConfiguracionHorariosAtencionWidget";
 import { WidgetAsignacionesAgendaInline } from "../../../modulos/agenda/componentes/WidgetsAgendaInline";
 import { BandejaClientesCRM } from "../../../modulos/crm-clientes/componentes/BandejaClientesCRM";
-import { HistorialTransaccionesPago, WidgetFacturacionElectronica, GestionConveniosCorporativos, ConsolaGestionInformativosWidget, ComplianceScoreEmpresarial, LegalHRLaboral } from "@eco/comercio";
+import { HistorialTransaccionesPago, WidgetFacturacionElectronica, GestionConveniosCorporativos, ConsolaGestionInformativosWidget, ComplianceScoreEmpresarial, LegalHRLaboral, ConsolaVentasOmnicanal, BandejaPedidosTienda, ConsolaTestimoniosClientes } from "@eco/comercio";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
@@ -43,6 +43,24 @@ export interface ModuloAdminDef {
 }
 
 const MODULOS_ADMIN: ModuloAdminDef[] = [
+  {
+    id: "consola_chat",
+    titulo: "Ventas Omnicanal & Conversaciones en Vivo",
+    subtitulo: "Bandeja unificada (reemplazo ManyChat): chats web en vivo, intervención humana vs ARIA, etiquetas, respuestas rápidas y compras web",
+    ruta: "/panel/conversaciones",
+    icono: MessageSquare,
+    colorIcono: "#DB2777",
+    categoria: "Comercio & Comunicación"
+  },
+  {
+    id: "pedidos_tienda",
+    titulo: "Pedidos de Tienda y Despachos",
+    subtitulo: "Bandeja operativa de órdenes e-commerce con ubicación GPS, dedicatorias y desglose interno de logística",
+    ruta: "/panel/pedidos",
+    icono: ClipboardList,
+    colorIcono: "#0284C7",
+    categoria: "Comercio y Pagos"
+  },
   {
     id: "gestion_informativos",
     titulo: "Gestión de Informativos & Beneficios",
@@ -926,6 +944,25 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
             {widgetActivo === "asignaciones_agenda" && (
               <div style={{ width: "100%" }}>
                 <WidgetAsignacionesAgendaInline />
+              </div>
+            )}
+
+            {/* 10. VENTAS OMNICANAL & CHATS EN VIVO (REEMPLAZO MANYCHAT) */}
+            {(widgetActivo === "consola_chat" || widgetActivo === "conversaciones") && (
+              <div style={{ width: "100%" }}>
+                <ConsolaVentasOmnicanal negocio={negocio} />
+              </div>
+            )}
+
+            {/* 11. PEDIDOS DE TIENDA & TESTIMONIOS */}
+            {widgetActivo === "pedidos_tienda" && (
+              <div style={{ width: "100%" }}>
+                <BandejaPedidosTienda negocio={negocio} />
+              </div>
+            )}
+            {widgetActivo === "testimonios_clientes" && (
+              <div style={{ width: "100%" }}>
+                <ConsolaTestimoniosClientes negocio={negocio} />
               </div>
             )}
           </div>

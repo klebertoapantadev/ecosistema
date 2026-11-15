@@ -32,6 +32,7 @@ const ETIQUETAS_ROL: Record<RolTinkayPortal, string> = {
 const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
   SUPERADMIN: [
     "resumen",
+    "consola_chat",
     "pedidos_tienda",
     "facturacion_electronica",
     "catalogo_productos",
@@ -48,6 +49,7 @@ const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
   ],
   ADMINISTRADOR: [
     "resumen",
+    "consola_chat",
     "pedidos_tienda",
     "facturacion_electronica",
     "catalogo_productos",
@@ -64,6 +66,7 @@ const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
   ],
   OPERADOR: [
     "resumen",
+    "consola_chat",
     "pedidos_tienda",
     "facturacion_electronica",
     "catalogo_productos",
@@ -73,6 +76,7 @@ const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
   ],
   VENTAS: [
     "resumen",
+    "consola_chat",
     "pedidos_tienda",
     "facturacion_electronica",
     "catalogo_productos",
