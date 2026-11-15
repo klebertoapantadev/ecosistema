@@ -4,15 +4,15 @@ import React, { useEffect, useState } from "react";
 import {
   CreditCard,
   Key,
-  ShieldCheck,
   CheckCircle2,
   AlertCircle,
-  ExternalLink,
   RefreshCw,
   Sparkles,
-  Info,
   Save,
   Lock,
+  Building2,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import {
   ConfiguracionPasarela,
@@ -20,6 +20,16 @@ import {
   guardarConfiguracionPasarelaAction,
   guardarConfiguracionPluxAction,
 } from "../acciones";
+import {
+  crearConfiguracionTiendaCheckoutPorDefecto,
+  type ConfiguracionTiendaCheckout,
+  type CuentaBancariaTransferencia,
+} from "../configuracion-tienda-checkout";
+import {
+  guardarConfiguracionTiendaCheckoutAction,
+  obtenerConfiguracionTiendaCheckoutAction,
+  subirComprobanteTransferenciaAction,
+} from "../acciones-tienda-checkout";
 
 interface Props {
   negocio?: string;
@@ -62,13 +72,23 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
   const [visibilidadPlux, setVisibilidadPlux] = useState<"TODOS" | "PROBADORES">("TODOS");
   const [probadoresTexto, setProbadoresTexto] = useState("");
 
+  // Parámetros configurables de Tienda, Compra Rápida (< $50), WhatsApp y Transferencia / QR DeUna
+  const [configCheckout, setConfigCheckout] = useState<ConfiguracionTiendaCheckout>(() =>
+    crearConfiguracionTiendaCheckoutPorDefecto(negocio)
+  );
+  const [guardandoCheckout, setGuardandoCheckout] = useState(false);
+  const [subiendoQr, setSubiendoQr] = useState(false);
+
   const cargarConfig = async (pasarelaObjetivo?: "PLUX" | "PAYPHONE") => {
     setCargando(true);
     try {
-      const [cPlux, cPayphone] = await Promise.all([
+      const [cPlux, cPayphone, cfgTienda] = await Promise.all([
         obtenerConfiguracionPasarelaAction(negocio, "PLUX"),
         obtenerConfiguracionPasarelaAction(negocio, "PAYPHONE"),
+        obtenerConfiguracionTiendaCheckoutAction(negocio),
       ]);
+
+      setConfigCheckout(cfgTienda);
 
       const activa =
         pasarelaObjetivo ||
@@ -681,6 +701,448 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
             >
               {guardando ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
               Guardar Configuración
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Tarjeta de Parámetros de Compra Rápida, WhatsApp Tienda y Transferencia Bancaria + QR DeUna */}
+      <div
+        style={{
+          marginTop: "28px",
+          background: "#FFFFFF",
+          border: "1px solid #E2E8F0",
+          borderRadius: "16px",
+          padding: "24px",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+          <Building2 size={20} color="#0F766E" />
+          <h2 style={{ margin: 0, fontSize: "1.18rem", fontWeight: 800, color: "#0F172A" }}>
+            Compra Rápida, WhatsApp y Transferencia Bancaria / QR DeUna
+          </h2>
+        </div>
+        <p style={{ margin: "0 0 20px", fontSize: "0.84rem", color: "#64748B" }}>
+          Configura el monto límite sin datos de factura (Consumidor Final), el WhatsApp oficial de atención y las cuentas bancarias visibles en el checkout de <strong>{negocio}</strong>.
+        </p>
+
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setGuardandoCheckout(true);
+            setErrorMsg(null);
+            setMensajeExito(null);
+            try {
+              const res = await guardarConfiguracionTiendaCheckoutAction(negocio, configCheckout);
+              if (!res.ok) {
+                setErrorMsg(res.error);
+              } else {
+                setConfigCheckout(res.data);
+                setMensajeExito("¡Parámetros de compra rápida, WhatsApp y transferencia actualizados!");
+                setTimeout(() => setMensajeExito(null), 4000);
+              }
+            } finally {
+              setGuardandoCheckout(false);
+            }
+          }}
+        >
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+              gap: "16px",
+              marginBottom: "20px",
+            }}
+          >
+            <div>
+              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
+                WhatsApp Oficial de la Tienda *
+              </label>
+              <input
+                type="tel"
+                required
+                placeholder="+593 99 292 2343"
+                value={configCheckout.whatsappTienda}
+                onChange={(e) =>
+                  setConfigCheckout((prev) => ({ ...prev, whatsappTienda: e.target.value }))
+                }
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  fontSize: "0.9rem",
+                  borderRadius: "8px",
+                  border: "1px solid #CBD5E1",
+                  boxSizing: "border-box",
+                }}
+              />
+              <span style={{ display: "block", marginTop: "4px", fontSize: "0.73rem", color: "#64748B" }}>
+                Usado para recibir comprobantes de pago y consultas de proformas.
+              </span>
+            </div>
+
+            <div>
+              <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
+                Monto Máximo sin Datos de Factura (USD) *
+              </label>
+              <input
+                type="number"
+                min={0}
+                max={500}
+                step="0.01"
+                required
+                value={configCheckout.montoMaximoPagoSinDatosUsd}
+                onChange={(e) =>
+                  setConfigCheckout((prev) => ({
+                    ...prev,
+                    montoMaximoPagoSinDatosUsd: Math.max(0, Number(e.target.value || 0)),
+                  }))
+                }
+                style={{
+                  width: "100%",
+                  padding: "10px 14px",
+                  fontSize: "0.9rem",
+                  borderRadius: "8px",
+                  border: "1px solid #CBD5E1",
+                  boxSizing: "border-box",
+                }}
+              />
+              <span style={{ display: "block", marginTop: "4px", fontSize: "0.73rem", color: "#64748B" }}>
+                Si la compra es menor a este monto (ej. $50.00), nombre y cédula son opcionales.
+              </span>
+            </div>
+          </div>
+
+          <div
+            style={{
+              padding: "16px",
+              borderRadius: "12px",
+              background: "#F8FAFC",
+              border: "1px solid #E2E8F0",
+              marginBottom: "20px",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
+              <strong style={{ fontSize: "0.9rem", color: "#0F172A" }}>
+                Datos del Titular para Transferencia Bancaria
+              </strong>
+              <label style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
+                <input
+                  type="checkbox"
+                  checked={configCheckout.transferencia.habilitada}
+                  onChange={(e) =>
+                    setConfigCheckout((prev) => ({
+                      ...prev,
+                      transferencia: { ...prev.transferencia, habilitada: e.target.checked },
+                    }))
+                  }
+                />
+                <span>Habilitar pago por transferencia</span>
+              </label>
+            </div>
+
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                gap: "12px",
+                marginBottom: "16px",
+              }}
+            >
+              <div>
+                <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  Nombre del Titular
+                </label>
+                <input
+                  type="text"
+                  value={configCheckout.transferencia.nombreTitular}
+                  onChange={(e) =>
+                    setConfigCheckout((prev) => ({
+                      ...prev,
+                      transferencia: { ...prev.transferencia, nombreTitular: e.target.value },
+                    }))
+                  }
+                  style={{ width: "100%", padding: "8px 11px", borderRadius: "8px", border: "1px solid #CBD5E1", boxSizing: "border-box", fontSize: "0.85rem" }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  Cédula / RUC Titular
+                </label>
+                <input
+                  type="text"
+                  value={configCheckout.transferencia.identificacionTitular}
+                  onChange={(e) =>
+                    setConfigCheckout((prev) => ({
+                      ...prev,
+                      transferencia: { ...prev.transferencia, identificacionTitular: e.target.value },
+                    }))
+                  }
+                  style={{ width: "100%", padding: "8px 11px", borderRadius: "8px", border: "1px solid #CBD5E1", boxSizing: "border-box", fontSize: "0.85rem" }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  Correo Notificación Bancaria
+                </label>
+                <input
+                  type="email"
+                  value={configCheckout.transferencia.correoTitular}
+                  onChange={(e) =>
+                    setConfigCheckout((prev) => ({
+                      ...prev,
+                      transferencia: { ...prev.transferencia, correoTitular: e.target.value },
+                    }))
+                  }
+                  style={{ width: "100%", padding: "8px 11px", borderRadius: "8px", border: "1px solid #CBD5E1", boxSizing: "border-box", fontSize: "0.85rem" }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+              <strong style={{ fontSize: "0.82rem", color: "#334155" }}>Cuentas Bancarias Activas</strong>
+              <button
+                type="button"
+                title="Agregar nueva cuenta bancaria"
+                aria-label="Agregar Cuenta"
+                onClick={() =>
+                  setConfigCheckout((prev) => ({
+                    ...prev,
+                    transferencia: {
+                      ...prev.transferencia,
+                      cuentas: [
+                        ...prev.transferencia.cuentas,
+                        { banco: "", tipoCuenta: "Ahorros", numeroCuenta: "" },
+                      ],
+                    },
+                  }))
+                }
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  padding: "5px 10px",
+                  borderRadius: "7px",
+                  border: "1px solid #CBD5E1",
+                  background: "#FFFFFF",
+                  color: "#0F172A",
+                  fontSize: "0.76rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                <Plus size={13} />
+                <span>Agregar Cuenta</span>
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "16px" }}>
+              {configCheckout.transferencia.cuentas.map((cta: CuentaBancariaTransferencia, idx: number) => (
+                <div
+                  key={`cta-${idx}`}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1.2fr 0.9fr 1.2fr auto",
+                    gap: "8px",
+                    alignItems: "center",
+                  }}
+                >
+                  <input
+                    type="text"
+                    placeholder="Banco (ej. Banco Pichincha)"
+                    value={cta.banco}
+                    onChange={(e) => {
+                      const nuevas = [...configCheckout.transferencia.cuentas];
+                      nuevas[idx] = { ...cta, banco: e.target.value };
+                      setConfigCheckout((prev) => ({
+                        ...prev,
+                        transferencia: { ...prev.transferencia, cuentas: nuevas },
+                      }));
+                    }}
+                    style={{ padding: "8px 10px", borderRadius: "7px", border: "1px solid #CBD5E1", fontSize: "0.83rem" }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Ahorros / Corriente"
+                    value={cta.tipoCuenta}
+                    onChange={(e) => {
+                      const nuevas = [...configCheckout.transferencia.cuentas];
+                      nuevas[idx] = { ...cta, tipoCuenta: e.target.value };
+                      setConfigCheckout((prev) => ({
+                        ...prev,
+                        transferencia: { ...prev.transferencia, cuentas: nuevas },
+                      }));
+                    }}
+                    style={{ padding: "8px 10px", borderRadius: "7px", border: "1px solid #CBD5E1", fontSize: "0.83rem" }}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Número de cuenta"
+                    value={cta.numeroCuenta}
+                    onChange={(e) => {
+                      const nuevas = [...configCheckout.transferencia.cuentas];
+                      nuevas[idx] = { ...cta, numeroCuenta: e.target.value };
+                      setConfigCheckout((prev) => ({
+                        ...prev,
+                        transferencia: { ...prev.transferencia, cuentas: nuevas },
+                      }));
+                    }}
+                    style={{ padding: "8px 10px", borderRadius: "7px", border: "1px solid #CBD5E1", fontSize: "0.83rem", fontFamily: "monospace" }}
+                  />
+                  <button
+                    type="button"
+                    title="Eliminar cuenta bancaria"
+                    aria-label="Quitar cuenta"
+                    onClick={() => {
+                      const nuevas = configCheckout.transferencia.cuentas.filter((_, i) => i !== idx);
+                      setConfigCheckout((prev) => ({
+                        ...prev,
+                        transferencia: { ...prev.transferencia, cuentas: nuevas },
+                      }));
+                    }}
+                    style={{
+                      padding: "7px",
+                      borderRadius: "7px",
+                      border: "1px solid #FECACA",
+                      background: "#FEF2F2",
+                      color: "#B91C1C",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "14px", alignItems: "center", marginBottom: "14px" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                  Código QR DeUna (URL o Imagen Subida)
+                </label>
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+                  <input
+                    type="text"
+                    placeholder="/img/qr-deuna-tinkay.png"
+                    value={configCheckout.transferencia.qrDeunaUrl || ""}
+                    onChange={(e) =>
+                      setConfigCheckout((prev) => ({
+                        ...prev,
+                        transferencia: {
+                          ...prev.transferencia,
+                          qrDeunaUrl: e.target.value || null,
+                        },
+                      }))
+                    }
+                    style={{ flex: 1, minWidth: "200px", padding: "8px 10px", borderRadius: "7px", border: "1px solid #CBD5E1", fontSize: "0.83rem" }}
+                  />
+                  <label
+                    title="Subir imagen del código QR DeUna"
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: "7px",
+                      border: "1px solid #CBD5E1",
+                      background: "#FFFFFF",
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      cursor: subiendoQr ? "wait" : "pointer",
+                    }}
+                  >
+                    {subiendoQr ? "Subiendo..." : "Subir QR"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={subiendoQr}
+                      style={{ display: "none" }}
+                      onChange={async (ev) => {
+                        const file = ev.target.files?.[0];
+                        if (!file) return;
+                        setSubiendoQr(true);
+                        try {
+                          const fd = new FormData();
+                          fd.set("negocio", negocio);
+                          fd.set("archivo", file);
+                          const resUp = await subirComprobanteTransferenciaAction(fd);
+                          if (resUp.ok) {
+                            setConfigCheckout((prev) => ({
+                              ...prev,
+                              transferencia: {
+                                ...prev.transferencia,
+                                qrDeunaUrl: resUp.comprobante.url,
+                              },
+                            }));
+                          } else {
+                            setErrorMsg(resUp.error);
+                          }
+                        } finally {
+                          setSubiendoQr(false);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+              {configCheckout.transferencia.qrDeunaUrl && (
+                <img
+                  src={configCheckout.transferencia.qrDeunaUrl}
+                  alt="QR DeUna"
+                  style={{
+                    width: "76px",
+                    height: "76px",
+                    objectFit: "contain",
+                    borderRadius: "8px",
+                    border: "1px solid #CBD5E1",
+                    background: "#FFFFFF",
+                  }}
+                />
+              )}
+            </div>
+
+            <div>
+              <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
+                Advertencia de Acreditación en Checkout
+              </label>
+              <input
+                type="text"
+                value={configCheckout.transferencia.advertenciaAcreditacion}
+                onChange={(e) =>
+                  setConfigCheckout((prev) => ({
+                    ...prev,
+                    transferencia: {
+                      ...prev.transferencia,
+                      advertenciaAcreditacion: e.target.value,
+                    },
+                  }))
+                }
+                style={{ width: "100%", padding: "8px 10px", borderRadius: "7px", border: "1px solid #CBD5E1", boxSizing: "border-box", fontSize: "0.83rem" }}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <button
+              type="submit"
+              disabled={guardandoCheckout}
+              title="Guardar parámetros de compra rápida, WhatsApp y transferencia bancaria"
+              aria-label="Guardar Parámetros"
+              style={{
+                background: "#0F766E",
+                color: "#FFFFFF",
+                border: "none",
+                padding: "10px 22px",
+                borderRadius: "8px",
+                fontSize: "0.85rem",
+                fontWeight: 700,
+                cursor: guardandoCheckout ? "not-allowed" : "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              {guardandoCheckout ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
+              <span>Guardar Parámetros</span>
             </button>
           </div>
         </form>

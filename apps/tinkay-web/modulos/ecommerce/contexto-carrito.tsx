@@ -24,9 +24,12 @@ import {
   construirEnlaceCategoriaTienda,
   construirEnlaceProductoTienda,
   crearConfiguracionLogisticaPorDefecto,
+  crearConfiguracionTiendaCheckoutPorDefecto,
   interpretarEnlaceTienda,
   obtenerConfiguracionLogisticaAction,
+  obtenerConfiguracionTiendaCheckoutAction,
   type ConfiguracionLogisticaNegocio,
+  type ConfiguracionTiendaCheckout,
 } from '@eco/comercio';
 
 interface ContextoCarritoValor {
@@ -43,6 +46,7 @@ interface ContextoCarritoValor {
   categoriaActiva: string;
   terminoBusqueda: string;
   configLogistica: ConfiguracionLogisticaNegocio;
+  configTiendaCheckout: ConfiguracionTiendaCheckout;
 
   // Acciones
   setDrawerAbierto: (abierto: boolean) => void;
@@ -62,7 +66,8 @@ interface ContextoCarritoValor {
     variante: VarianteEcommerce,
     dedicatoria?: DedicatoriaArreglo,
     entregaIndividual?: DatosEntrega,
-    cantidadInicial?: number
+    cantidadInicial?: number,
+    abrirDrawer?: boolean
   ) => void;
   eliminarItem: (itemId: string) => void;
   actualizarCantidad: (itemId: string, cantidad: number) => void;
@@ -198,6 +203,9 @@ export function ProveedorCarrito({
   const [terminoBusqueda, setTerminoBusqueda] = useState<string>('');
   const [configLogistica, setConfigLogistica] = useState<ConfiguracionLogisticaNegocio>(() =>
     crearConfiguracionLogisticaPorDefecto('tinkay')
+  );
+  const [configTiendaCheckout, setConfigTiendaCheckout] = useState<ConfiguracionTiendaCheckout>(() =>
+    crearConfiguracionTiendaCheckoutPorDefecto('tinkay')
   );
 
   const sincronizarRutaNavegador = React.useCallback((rutaCompletaONuevaUrl: string) => {
@@ -411,6 +419,12 @@ export function ProveedorCarrito({
         if (cfg) setConfigLogistica(cfg);
       })
       .catch(() => {});
+
+    obtenerConfiguracionTiendaCheckoutAction('tinkay')
+      .then((cfgCheckout) => {
+        if (cfgCheckout) setConfigTiendaCheckout(cfgCheckout);
+      })
+      .catch(() => {});
   }, [categoriaInicialUrl, productoInicialUrl, varianteInicialUrl]);
 
   // Cargar estado inicial desde LocalStorage para resiliencia
@@ -515,7 +529,8 @@ export function ProveedorCarrito({
     variante: VarianteEcommerce,
     dedicatoria?: DedicatoriaArreglo,
     entregaIndividual?: DatosEntrega,
-    cantidadInicial = 1
+    cantidadInicial = 1,
+    abrirDrawer = true
   ) => {
     const cantAgregar = Math.max(1, Math.floor(cantidadInicial || 1));
 
@@ -557,8 +572,10 @@ export function ProveedorCarrito({
       return [...prev, nuevoItem];
     });
 
-    // Abrir automáticamente el cajón del carrito para feedback inmediato
-    setDrawerAbierto(true);
+    // Abrir automáticamente el cajón del carrito salvo cuando el cliente elige Pagar Directo
+    if (abrirDrawer) {
+      setDrawerAbierto(true);
+    }
   };
 
   const eliminarItem = (itemId: string) => {
@@ -830,6 +847,7 @@ export function ProveedorCarrito({
         categoriaActiva,
         terminoBusqueda,
         configLogistica,
+        configTiendaCheckout,
         setDrawerAbierto,
         setProductoSeleccionadoModal,
         setCheckoutAbierto,

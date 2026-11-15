@@ -31,11 +31,24 @@ export function FormularioConfiguracionNegocio({
   negocio: string;
 }) {
   const detalleInicial = (inicial?.cfg_detalle_configuracion as Record<string, unknown> | null) ?? {};
+  const tiendaCheckoutInicial =
+    detalleInicial.tienda_checkout && typeof detalleInicial.tienda_checkout === "object"
+      ? (detalleInicial.tienda_checkout as Record<string, unknown>)
+      : {};
+  const whatsappPorDefecto = negocio.toLowerCase().includes("tinkay") ? "+593 99 292 2343" : "";
   const [identificacion, setIdentificacion] = useState(inicial?.cfg_identificacion ?? "");
   const [nombreComercial, setNombreComercial] = useState(inicial?.cfg_nombre_comercial ?? "");
   const [razonSocial, setRazonSocial] = useState(inicial?.cfg_razon_social ?? "");
   const [correoNotificaciones, setCorreoNotificaciones] = useState(
     typeof detalleInicial.correoNotificaciones === "string" ? detalleInicial.correoNotificaciones : "",
+  );
+  const [whatsappTienda, setWhatsappTienda] = useState(
+    typeof detalleInicial.whatsappTienda === "string" && detalleInicial.whatsappTienda.trim()
+      ? detalleInicial.whatsappTienda
+      : typeof tiendaCheckoutInicial.whatsappTienda === "string" &&
+          tiendaCheckoutInicial.whatsappTienda.trim()
+        ? tiendaCheckoutInicial.whatsappTienda
+        : whatsappPorDefecto,
   );
   const [mensaje, setMensaje] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
   const [guardando, setGuardando] = useState(false);
@@ -47,7 +60,7 @@ export function FormularioConfiguracionNegocio({
     setMensaje(null);
     setGuardando(true);
     const resultado = await actualizarConfiguracionNegocio(
-      { identificacion, nombreComercial, razonSocial, correoNotificaciones },
+      { identificacion, nombreComercial, razonSocial, correoNotificaciones, whatsappTienda },
       negocio,
     );
     setGuardando(false);
@@ -150,6 +163,25 @@ export function FormularioConfiguracionNegocio({
             />
             <span style={estiloTextoAyuda}>
               Dirección interna donde se reciben copias de alertas operativas y pedidos.
+            </span>
+          </div>
+        </div>
+
+        <div style={estiloGrillaDosColumnas}>
+          <div style={estiloGrupoCampo}>
+            <label htmlFor={`cfg-whatsapp-${negocio}`} style={estiloEtiquetaCampo}>
+              WhatsApp oficial de la tienda
+            </label>
+            <input
+              id={`cfg-whatsapp-${negocio}`}
+              style={estiloInputCampo}
+              value={whatsappTienda}
+              onChange={(e) => setWhatsappTienda(e.target.value)}
+              type="tel"
+              placeholder="+593 99 292 2343"
+            />
+            <span style={estiloTextoAyuda}>
+              Número público de atención, envío de comprobantes de transferencia y proformas.
             </span>
           </div>
         </div>

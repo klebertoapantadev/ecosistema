@@ -12,5 +12,6 @@ export const esquemaConfiguracionNegocio = z.object({
   // (reset de contrasena, etc.) sigue saliendo del remitente unico de
   // Supabase Auth hasta que se decida proveedor/dominio por negocio.
   correoNotificaciones: z.string().trim().toLowerCase().email("Correo inválido").optional().or(z.literal("")),
+  whatsappTienda: z.string().trim().max(40, "Número demasiado largo").optional().or(z.literal("")),
 });
 export type DatosConfiguracionNegocio = z.infer<typeof esquemaConfiguracionNegocio>;

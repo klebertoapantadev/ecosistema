@@ -1,21 +1,28 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   BotonPagoPlux,
   confirmarOrdenTransferenciaProformaAction,
+  construirUrlWhatsappTienda,
+  crearConfiguracionTiendaCheckoutPorDefecto,
   descargarArchivoFacturaRideSri,
   eliminarVariacionesProformaClienteAction,
   imprimirFacturaRideSri,
+  obtenerConfiguracionTiendaCheckoutAction,
+  subirComprobanteTransferenciaAction,
+  type ComprobanteTransferenciaSubido,
   type ConfiguracionEmisorSri,
+  type ConfiguracionTiendaCheckout,
   type FacturaElectronicaResumen,
   type ModalidadCobroProforma,
   type PagoPluxConsultado,
   type ProformaEventoPublica,
 } from '@eco/comercio';
 import {
+  AlertTriangle,
   Building2,
   Calendar,
   Check,
@@ -28,10 +35,12 @@ import {
   Layers,
   Loader2,
   MapPin,
+  MessageCircle,
   Printer,
   ShieldCheck,
   Store,
   Trash2,
+  Upload,
 } from 'lucide-react';
 
 interface PropsVistaProformaEventoCliente {
@@ -88,7 +97,21 @@ export function VistaProformaEventoCliente({
   });
 
   const [notaTransferencia, setNotaTransferencia] = useState('');
+  const [configCheckout, setConfigCheckout] = useState<ConfiguracionTiendaCheckout>(() =>
+    crearConfiguracionTiendaCheckoutPorDefecto('tinkay')
+  );
+  const [comprobanteSubido, setComprobanteSubido] =
+    useState<ComprobanteTransferenciaSubido | null>(null);
+  const [subiendoComprobante, setSubiendoComprobante] = useState(false);
   const [procesandoAccion, setProcesandoAccion] = useState(false);
+
+  useEffect(() => {
+    obtenerConfiguracionTiendaCheckoutAction('tinkay')
+      .then((cfg) => {
+        if (cfg) setConfigCheckout(cfg);
+      })
+      .catch(() => {});
+  }, []);
   const [mensajeFeedback, setMensajeFeedback] = useState<{
     tipo: 'ok' | 'error';
     texto: string;
@@ -184,6 +207,13 @@ export function VistaProformaEventoCliente({
 
   const handleConfirmarTransferencia = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!comprobanteSubido?.url) {
+      setMensajeFeedback({
+        tipo: 'error',
+        texto: 'Adjunta el comprobante de transferencia (imagen o PDF) antes de confirmar tu pedido.',
+      });
+      return;
+    }
     setProcesandoAccion(true);
     setMensajeFeedback(null);
     const mod = modalidadCobro === 'TOTAL_100' ? 'TOTAL_100' : 'RESERVA_70';
@@ -191,6 +221,7 @@ export function VistaProformaEventoCliente({
       tokenAprobacion: proformaActiva.tokenAprobacion,
       modalidadCobro: mod,
       notaTransferencia,
+      comprobanteTransferencia: comprobanteSubido,
     });
     setProcesandoAccion(false);
 
@@ -340,11 +371,12 @@ export function VistaProformaEventoCliente({
       ? proformaActiva.saldoPendienteUsd
       : proformaActiva.total;
 
-  const urlWhatsappAsesor = `https://wa.me/593992922343?text=${encodeURIComponent(
+  const urlWhatsappAsesor = construirUrlWhatsappTienda(
+    configCheckout.whatsappTienda,
     `Hola Tinkay, generé la proforma de evento ${proformaActiva.codigoProforma} (${proformaActiva.evento.tipoEvento} — $${proformaActiva.total.toFixed(2)}) y deseo conversar con un asesor: ${
       typeof window !== 'undefined' ? window.location.origin : 'https://tinkay-web.vercel.app'
     }/proforma/${proformaActiva.tokenAprobacion}`
-  )}`;
+  );
   const urlDescargaPdf = `/api/proforma/${proformaActiva.tokenAprobacion}/pdf`;
   const urlCrearCuentaDesdeProforma = `/registro?destino=${encodeURIComponent(
     `/proforma/${proformaActiva.tokenAprobacion}`
@@ -537,7 +569,7 @@ export function VistaProformaEventoCliente({
               <span style={{ display: 'block', fontSize: '0.81rem', color: '#166534', lineHeight: 1.45 }}>
                 Como aún no tienes cuenta registrada en Tinkay, puedes descargar tu proforma en PDF
                 aquí mismo o escribirnos directamente por WhatsApp al{' '}
-                <strong>+593 99 292 2343</strong> para atención personalizada.
+                <strong>{configCheckout.whatsappTienda}</strong> para atención personalizada.
               </span>
             </div>
 
@@ -1551,52 +1583,215 @@ export function VistaProformaEventoCliente({
               >
                 <div
                   style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '8px',
+                    padding: '10px 12px',
+                    borderRadius: '10px',
+                    background: '#FFFBEB',
+                    border: '1px solid #FCD34D',
+                    color: '#92400E',
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <span>{configCheckout.transferencia.advertenciaAcreditacion}</span>
+                </div>
+
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: configCheckout.transferencia.qrDeunaUrl
+                      ? 'repeat(auto-fit, minmax(220px, 1fr))'
+                      : '1fr',
+                    gap: '12px',
                     padding: '14px',
                     borderRadius: '10px',
                     background: '#FAF8F5',
                     border: '1px solid #E7E5E4',
                     fontSize: '0.84rem',
                     lineHeight: 1.5,
+                    alignItems: 'center',
                   }}
                 >
-                  <strong>Banco Pichincha — Cuenta Corriente N° 2100234567</strong>
-                  <br />
-                  Titular: Tinkay Floristería Cía. Ltda. · RUC: 1792837465001 · pagos@tinkay.com
-                  <br />
-                  Importe seleccionado: <strong>${importeModalidadActual.toFixed(2)} USD</strong>
+                  <div>
+                    <strong style={{ display: 'block', marginBottom: '4px' }}>
+                      Datos para la transferencia
+                    </strong>
+                    <div>Nombre: <strong>{configCheckout.transferencia.nombreTitular}</strong></div>
+                    <div>Cédula: <strong>{configCheckout.transferencia.identificacionTitular}</strong></div>
+                    <div>Correo: <strong>{configCheckout.transferencia.correoTitular}</strong></div>
+                    <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {configCheckout.transferencia.cuentas.map((cta, idx) => (
+                        <div key={`${cta.banco}-${idx}`}>
+                          <strong>{cta.banco}:</strong> {cta.tipoCuenta} {cta.numeroCuenta}
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ marginTop: '8px' }}>
+                      Importe seleccionado: <strong>${importeModalidadActual.toFixed(2)} USD</strong>
+                    </div>
+                  </div>
+
+                  {configCheckout.transferencia.qrDeunaUrl && (
+                    <div
+                      style={{
+                        background: '#3B2045',
+                        borderRadius: '12px',
+                        padding: '10px',
+                        textAlign: 'center',
+                        color: '#FFFFFF',
+                        maxWidth: '180px',
+                        justifySelf: 'center',
+                      }}
+                    >
+                      <strong style={{ display: 'block', fontSize: '0.75rem', marginBottom: '6px' }}>
+                        Código QR DeUna
+                      </strong>
+                      <img
+                        src={configCheckout.transferencia.qrDeunaUrl}
+                        alt="Código QR DeUna Tinkay"
+                        style={{
+                          width: '100%',
+                          borderRadius: '8px',
+                          background: '#FFFFFF',
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div
+                  style={{
+                    padding: '12px',
+                    borderRadius: '10px',
+                    background: comprobanteSubido ? '#ECFDF5' : '#FFFFFF',
+                    border: comprobanteSubido ? '1.5px solid #10B981' : '1.5px dashed #94A3B8',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  <label
+                    title="Subir comprobante de transferencia (imagen o PDF)"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      background: '#2D4734',
+                      color: '#FFFFFF',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      cursor: subiendoComprobante ? 'wait' : 'pointer',
+                    }}
+                  >
+                    {subiendoComprobante ? <Loader2 size={15} /> : <Upload size={15} />}
+                    <span>
+                      {subiendoComprobante
+                        ? 'Subiendo...'
+                        : comprobanteSubido
+                        ? 'Cambiar Archivo'
+                        : 'Subir Comprobante'}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf"
+                      disabled={subiendoComprobante}
+                      style={{ display: 'none' }}
+                      onChange={async (ev) => {
+                        const file = ev.target.files?.[0];
+                        if (!file) return;
+                        setSubiendoComprobante(true);
+                        setMensajeFeedback(null);
+                        try {
+                          const fd = new FormData();
+                          fd.set('negocio', 'tinkay');
+                          fd.set('archivo', file);
+                          const resUp = await subirComprobanteTransferenciaAction(fd);
+                          if (!resUp.ok) {
+                            setMensajeFeedback({ tipo: 'error', texto: resUp.error });
+                          } else {
+                            setComprobanteSubido(resUp.comprobante);
+                          }
+                        } finally {
+                          setSubiendoComprobante(false);
+                        }
+                      }}
+                    />
+                  </label>
+                  <span style={{ fontSize: '0.78rem', color: comprobanteSubido ? '#065F46' : '#475569', fontWeight: 600 }}>
+                    {comprobanteSubido
+                      ? `✓ Adjunto: ${comprobanteSubido.nombreArchivo}`
+                      : 'Requerido: imagen o PDF del comprobante bancario'}
+                  </span>
                 </div>
 
                 <input
                   type="text"
-                  placeholder="Número de comprobante o referencia bancaria (opcional)"
+                  placeholder="Número de comprobante o nota adicional (opcional)"
                   value={notaTransferencia}
                   onChange={(e) => setNotaTransferencia(e.target.value)}
                   style={inputEstilo}
                 />
 
-                <button
-                  type="submit"
-                  disabled={procesandoAccion}
-                  title="Confirmar pedido con esta variación mediante transferencia"
-                  aria-label="Confirmar Pedido"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    padding: '12px 20px',
-                    borderRadius: '999px',
-                    border: 'none',
-                    background: '#2D4734',
-                    color: '#FFFFFF',
-                    fontSize: '0.9rem',
-                    fontWeight: 700,
-                    cursor: procesandoAccion ? 'wait' : 'pointer',
-                  }}
-                >
-                  {procesandoAccion ? <Loader2 size={17} /> : <FileText size={17} />}
-                  <span>Confirmar Pedido (${importeModalidadActual.toFixed(2)})</span>
-                </button>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <button
+                    type="submit"
+                    disabled={procesandoAccion || subiendoComprobante}
+                    title="Confirmar pedido con esta variación mediante transferencia"
+                    aria-label="Confirmar Pedido"
+                    style={{
+                      flex: '1 1 220px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      padding: '12px 20px',
+                      borderRadius: '999px',
+                      border: 'none',
+                      background: '#2D4734',
+                      color: '#FFFFFF',
+                      fontSize: '0.9rem',
+                      fontWeight: 700,
+                      cursor: procesandoAccion ? 'wait' : 'pointer',
+                    }}
+                  >
+                    {procesandoAccion ? <Loader2 size={17} /> : <FileText size={17} />}
+                    <span>Confirmar Pedido (${importeModalidadActual.toFixed(2)})</span>
+                  </button>
+
+                  <a
+                    href={construirUrlWhatsappTienda(
+                      configCheckout.whatsappTienda,
+                      `Hola Tinkay, adjunto el comprobante de mi proforma ${proformaActiva.codigoProforma} por $${importeModalidadActual.toFixed(2)} USD.`
+                    )}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`Escribir al WhatsApp ${configCheckout.whatsappTienda} y adjuntar comprobante`}
+                    aria-label="Enviar WhatsApp"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '7px',
+                      padding: '12px 18px',
+                      borderRadius: '999px',
+                      border: '1.5px solid #16A34A',
+                      background: '#F0FDF4',
+                      color: '#15803D',
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                    }}
+                  >
+                    <MessageCircle size={17} />
+                    <span>Enviar WhatsApp</span>
+                  </a>
+                </div>
               </form>
             )}
           </div>

@@ -237,6 +237,22 @@ export function BandejaPedidosTienda({
             <span style={{ fontSize: "0.7rem", color: "#6B7280", textTransform: "uppercase" }}>
               {p.metodoPago}
             </span>
+            {p.comprobanteTransferencia?.url && (
+              <span
+                style={{
+                  fontSize: "0.66rem",
+                  fontWeight: 700,
+                  color: "#065F46",
+                  background: "#ECFDF5",
+                  border: "1px solid #A7F3D0",
+                  borderRadius: "999px",
+                  padding: "1px 6px",
+                  alignSelf: "flex-start",
+                }}
+              >
+                📎 Comprobante
+              </span>
+            )}
           </div>
         ),
       },
@@ -577,9 +593,68 @@ export function BandejaPedidosTienda({
 
                   <div>
                     <strong>Facturación SRI:</strong> {p.compradorNombre} · ID:{" "}
-                    {p.compradorIdentificacion || "—"} · {p.compradorCorreo}
+                    {p.compradorIdentificacion || "—"} · {p.compradorCorreo || "—"}
                     {p.autorizaWhatsapp ? " · ✓ LOPDP WhatsApp" : ""}
                   </div>
+
+                  {p.comprobanteTransferencia?.url && (
+                    <div
+                      style={{
+                        padding: "9px 11px",
+                        borderRadius: "8px",
+                        background: "#ECFDF5",
+                        border: "1px solid #A7F3D0",
+                        color: "#065F46",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "6px",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                        <strong>
+                          📎 Comprobante adjunto:{" "}
+                          {p.comprobanteTransferencia.nombreArchivo || "Archivo"}
+                        </strong>
+                        <a
+                          href={p.comprobanteTransferencia.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          download={p.comprobanteTransferencia.nombreArchivo || "comprobante"}
+                          title="Ver o descargar comprobante de transferencia subido por el cliente"
+                          aria-label="Ver Comprobante"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            padding: "5px 10px",
+                            borderRadius: "6px",
+                            background: "#047857",
+                            color: "#FFFFFF",
+                            textDecoration: "none",
+                            fontSize: "0.73rem",
+                            fontWeight: 700,
+                          }}
+                        >
+                          <span>Ver Comprobante</span>
+                          <ExternalLink size={12} />
+                        </a>
+                      </div>
+                      {p.comprobanteTransferencia.mimeType?.startsWith("image/") && (
+                        <img
+                          src={p.comprobanteTransferencia.url}
+                          alt="Comprobante de pago"
+                          style={{
+                            maxWidth: "220px",
+                            maxHeight: "150px",
+                            objectFit: "contain",
+                            borderRadius: "6px",
+                            border: "1px solid #6EE7B7",
+                            background: "#FFFFFF",
+                          }}
+                        />
+                      )}
+                    </div>
+                  )}
 
                   <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                     {p.tipoOrigen === "PROFORMA_EVENTO" && (

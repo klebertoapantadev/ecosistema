@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
   SelectorUbicacionEntrega,
+  construirUrlWhatsappTienda,
   generarProformaEventoAction,
 } from '@eco/comercio';
 import { ModalTerminosWhatsapp } from '@eco/identidad/componentes/ModalTerminosWhatsapp';
@@ -58,6 +59,7 @@ export function DrawerProformaEvento() {
     actualizarDatosEventoProforma,
     ubicacionEventoProforma,
     actualizarUbicacionEventoProforma,
+    configTiendaCheckout,
     vaciarProforma,
     subtotalProforma,
     descuentoProforma,
@@ -494,7 +496,7 @@ export function DrawerProformaEvento() {
                     }}
                   >
                     Sin cuenta podrás descargar tu PDF al instante y escribirnos al{' '}
-                    <strong>+593 99 292 2343</strong>. Si te registras, guardaremos tus proformas y
+                    <strong>{configTiendaCheckout.whatsappTienda}</strong>. Si te registras, guardaremos tus proformas y
                     variaciones de asesor en tu panel.
                   </p>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -532,12 +534,13 @@ export function DrawerProformaEvento() {
                       Ingresar
                     </Link>
                     <a
-                      href={`https://wa.me/593992922343?text=${encodeURIComponent(
+                      href={construirUrlWhatsappTienda(
+                        configTiendaCheckout.whatsappTienda,
                         'Hola Tinkay, estoy armando una proforma de evento en su tienda web y deseo asesoría.'
-                      )}`}
+                      )}
                       target="_blank"
                       rel="noopener noreferrer"
-                      title="Contactar a Tinkay por WhatsApp al +593 99 292 2343"
+                      title={`Contactar a Tinkay por WhatsApp al ${configTiendaCheckout.whatsappTienda}`}
                       aria-label="Contáctanos WhatsApp"
                       style={{
                         padding: '6px 12px',

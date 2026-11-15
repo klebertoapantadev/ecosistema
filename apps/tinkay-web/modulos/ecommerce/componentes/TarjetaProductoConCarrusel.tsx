@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { describirEscalaVolumen } from '@eco/comercio';
 import { ProductoEcommerce, VarianteEcommerce } from '../tipos';
 import { useCarrito } from '../contexto-carrito';
-import { ChevronLeft, ChevronRight, Eye, ShoppingBag, FileText, Heart, Link2, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, ShoppingBag, FileText, Heart, Link2, Check, CreditCard } from 'lucide-react';
 
 interface Props {
   producto: ProductoEcommerce;
@@ -16,6 +16,8 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
     agregarItem,
     agregarItemProforma,
     setProductoSeleccionadoModal,
+    setDrawerAbierto,
+    setCheckoutAbierto,
     obtenerEnlaceProducto,
   } = useCarrito();
   const [fotoActualIndex, setFotoActualIndex] = useState(0);
@@ -145,6 +147,19 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
       return;
     }
     agregarItem(prodParaCarrito, varianteSeleccionada);
+  };
+
+  const handlePagarDirecto = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const prodParaCarrito: ProductoEcommerce = {
+      ...producto,
+      nombre: producto.nombre,
+      fotos: varianteSeleccionada.foto ? [varianteSeleccionada.foto] : producto.fotos,
+    };
+    agregarItem(prodParaCarrito, varianteSeleccionada, undefined, undefined, 1, false);
+    setDrawerAbierto(false);
+    setProductoSeleccionadoModal(null);
+    setCheckoutAbierto(true);
   };
 
   return (
@@ -438,28 +453,51 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
               )}
           </div>
 
-          <div className="acciones-tarjeta">
+          <div
+            className="acciones-tarjeta"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', justifyContent: 'flex-end' }}
+          >
+            {!esProductoEvento && (
+              <button
+                type="button"
+                className="btn-agregar-rapido btn-responsive-accion"
+                onClick={handleAgregar}
+                title="Agregar este arreglo al carrito de compras"
+                aria-label="Agregar al carrito"
+                style={{
+                  background: '#FFFFFF',
+                  color: '#2D4734',
+                  border: '1.5px solid #2D4734',
+                  padding: '8px 11px',
+                }}
+              >
+                <ShoppingBag size={15} />
+                <span className="btn-texto-responsive">Carrito</span>
+              </button>
+            )}
             <button
               type="button"
               className="btn-agregar-rapido"
-              onClick={handleAgregar}
+              onClick={esProductoEvento ? handleAgregar : handlePagarDirecto}
               title={
                 esProductoEvento
                   ? 'Agregar este elemento a mi proforma de evento'
-                  : 'Agregar este arreglo al carrito'
+                  : 'Pagar este arreglo directamente sin pasar por el carrito'
               }
-              aria-label={esProductoEvento ? 'Agregar a proforma' : 'Agregar al carrito'}
+              aria-label={esProductoEvento ? 'Agregar a proforma' : 'Pagar directo'}
               style={
                 esProductoEvento
                   ? {
                       background: '#2D4734',
                       color: '#FFFFFF',
                     }
-                  : undefined
+                  : {
+                      padding: '8px 12px',
+                    }
               }
             >
-              {esProductoEvento ? <FileText size={16} /> : <ShoppingBag size={16} />}
-              <span>{esProductoEvento ? 'Proforma' : 'Agregar'}</span>
+              {esProductoEvento ? <FileText size={16} /> : <CreditCard size={15} />}
+              <span>{esProductoEvento ? 'Proforma' : 'Pagar'}</span>
             </button>
           </div>
         </div>

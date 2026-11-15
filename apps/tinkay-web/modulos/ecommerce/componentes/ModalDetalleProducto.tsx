@@ -25,12 +25,15 @@ import {
   Eye,
   Link2,
   FileText,
+  CreditCard,
 } from 'lucide-react';
 
 export function ModalDetalleProducto() {
   const {
     productoSeleccionadoModal,
     setProductoSeleccionadoModal,
+    setDrawerAbierto,
+    setCheckoutAbierto,
     agregarItem,
     agregarItemProforma,
     productos,
@@ -484,9 +487,10 @@ export function ModalDetalleProducto() {
     });
   }, [varianteSeleccionada, cantidadModal]);
 
-  const handleAgregarAlCarrito = () => {
+  const handleAgregarAlCarrito = (irDirectoAlPago = false) => {
     if (!producto) return;
 
+    const abrirDrawerCarrito = !irDirectoAlPago;
     const dedicatoriaActiva =
       incluirDedicatoria && dedicatoria.mensaje.trim() ? dedicatoria : undefined;
 
@@ -520,7 +524,14 @@ export function ModalDetalleProducto() {
         if (esProductoEvento) {
           agregarItemProforma(productoSetCarrito, varianteSetCarrito, 1);
         } else {
-          agregarItem(productoSetCarrito, varianteSetCarrito, dedicatoriaActiva, undefined, 1);
+          agregarItem(
+            productoSetCarrito,
+            varianteSetCarrito,
+            dedicatoriaActiva,
+            undefined,
+            1,
+            abrirDrawerCarrito
+          );
         }
       } else {
         if (resumenFinancieroCombo.totalPiezasPersonalizadas <= 0) return;
@@ -546,7 +557,8 @@ export function ModalDetalleProducto() {
               fila.varElegida,
               !dedicatoriaAsignada ? dedicatoriaActiva : undefined,
               undefined,
-              fila.cantidadElegida
+              fila.cantidadElegida,
+              abrirDrawerCarrito
             );
             dedicatoriaAsignada = true;
           }
@@ -569,7 +581,8 @@ export function ModalDetalleProducto() {
           varianteSeleccionada,
           dedicatoriaActiva,
           undefined,
-          cantidadModal
+          cantidadModal,
+          abrirDrawerCarrito
         );
       }
     }
@@ -583,14 +596,18 @@ export function ModalDetalleProducto() {
           if (esProductoEvento) {
             agregarItemProforma(prodComp, varComp, 1);
           } else {
-            agregarItem(prodComp, varComp);
+            agregarItem(prodComp, varComp, undefined, undefined, 1, abrirDrawerCarrito);
           }
         }
       }
     });
 
-    // Cerrar modal
+    // Cerrar modal de producto y abrir checkout directo si corresponde
     setProductoSeleccionadoModal(null);
+    if (irDirectoAlPago && !esProductoEvento) {
+      setDrawerAbierto(false);
+      setCheckoutAbierto(true);
+    }
   };
 
   if (!producto) return null;
@@ -2072,39 +2089,83 @@ export function ModalDetalleProducto() {
                   modoCompraCombo === 'personalizado' &&
                   resumenFinancieroCombo.totalPiezasPersonalizadas <= 0;
 
-                const etiquetaAccion = sinPiezasCombo
+                if (esProductoEvento) {
+                  const etiquetaProforma = sinPiezasCombo
+                    ? 'Elige 1 pieza'
+                    : `Agregar a Proforma — $${totalBoton.toFixed(2)}`;
+                  return (
+                    <button
+                      type="button"
+                      className="btn btn-primario btn-agregar-modal-grande"
+                      onClick={() => handleAgregarAlCarrito(false)}
+                      disabled={sinPiezasCombo}
+                      title="Agregar este elemento a mi proforma de evento"
+                      aria-label="Agregar a proforma"
+                      style={
+                        sinPiezasCombo
+                          ? { opacity: 0.55, cursor: 'not-allowed' }
+                          : { background: '#2D4734', borderColor: '#2D4734', color: '#FFFFFF' }
+                      }
+                    >
+                      <FileText size={20} />
+                      <span>{etiquetaProforma}</span>
+                    </button>
+                  );
+                }
+
+                const etiquetaAgregar = sinPiezasCombo
                   ? 'Elige 1 pieza'
-                  : esProductoEvento
-                  ? `Agregar a Proforma — $${totalBoton.toFixed(2)}`
                   : esComboActivo
                   ? usarSetCerradoBtn
-                    ? `Agregar Set — $${totalBoton.toFixed(2)}`
-                    : `Agregar Selección — $${totalBoton.toFixed(2)}`
-                  : `Agregar al Carrito — $${totalBoton.toFixed(2)}`;
+                    ? 'Agregar Set'
+                    : 'Agregar Selección'
+                  : 'Agregar Carrito';
 
                 return (
-                  <button
-                    type="button"
-                    className="btn btn-primario btn-agregar-modal-grande"
-                    onClick={handleAgregarAlCarrito}
-                    disabled={sinPiezasCombo}
-                    title={
-                      esProductoEvento
-                        ? 'Agregar este elemento a mi proforma de evento'
-                        : etiquetaAccion
-                    }
-                    aria-label={esProductoEvento ? 'Agregar a proforma' : etiquetaAccion}
-                    style={
-                      sinPiezasCombo
-                        ? { opacity: 0.55, cursor: 'not-allowed' }
-                        : esProductoEvento
-                        ? { background: '#2D4734', borderColor: '#2D4734', color: '#FFFFFF' }
-                        : undefined
-                    }
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(185px, 1fr))',
+                      gap: '10px',
+                      width: '100%',
+                    }}
                   >
-                    {esProductoEvento ? <FileText size={20} /> : <ShoppingBag size={20} />}
-                    <span>{etiquetaAccion}</span>
-                  </button>
+                    <button
+                      type="button"
+                      className="btn btn-agregar-modal-grande"
+                      onClick={() => handleAgregarAlCarrito(false)}
+                      disabled={sinPiezasCombo}
+                      title="Agregar este arreglo al carrito y seguir comprando"
+                      aria-label="Agregar al carrito"
+                      style={{
+                        background: '#FFFFFF',
+                        color: '#2D4734',
+                        border: '2px solid #2D4734',
+                        opacity: sinPiezasCombo ? 0.55 : 1,
+                        cursor: sinPiezasCombo ? 'not-allowed' : 'pointer',
+                      }}
+                    >
+                      <ShoppingBag size={18} />
+                      <span>{etiquetaAgregar}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      className="btn btn-primario btn-agregar-modal-grande"
+                      onClick={() => handleAgregarAlCarrito(true)}
+                      disabled={sinPiezasCombo}
+                      title={`Pagar este pedido directamente ($${totalBoton.toFixed(2)} USD)`}
+                      aria-label="Pagar directo"
+                      style={
+                        sinPiezasCombo
+                          ? { opacity: 0.55, cursor: 'not-allowed' }
+                          : undefined
+                      }
+                    >
+                      <CreditCard size={19} />
+                      <span>Pagar Directo (${totalBoton.toFixed(2)})</span>
+                    </button>
+                  </div>
                 );
               })()}
             </div>

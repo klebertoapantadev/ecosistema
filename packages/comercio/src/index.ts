@@ -52,3 +52,5 @@ export * from "./acciones-testimonios";
 export * from "./ride-sri";
 export * from "./acciones-facturacion-sri";
 export * from "./componentes/ConfiguracionFacturacionSri";
+export * from "./configuracion-tienda-checkout";
+export * from "./acciones-tienda-checkout";

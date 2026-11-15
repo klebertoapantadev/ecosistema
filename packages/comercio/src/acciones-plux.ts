@@ -98,7 +98,7 @@ function nombreComercioPorDefecto(negocioPrincipal: string): string {
   return "Tranqi";
 }
 
-const esquemaPagador = z.object({
+const esquemaPagadorEstricto = z.object({
   nombre: z.string().trim().min(3).max(120),
   // Cédula, RUC o pasaporte: el checkout ofrece los tres y PLUX valida el suyo.
   identificacion: z.string().trim().regex(/^[A-Za-z0-9]{5,20}$/, "Identificación no válida"),
@@ -107,10 +107,54 @@ const esquemaPagador = z.object({
   direccion: z.string().trim().min(3).max(200),
 });
 
+// Para compras de tienda / Consumidor Final (< $50 USD) o retiro en tienda donde
+// nombre, identificación, correo o teléfono pueden venir vacíos: se completan con
+// valores estándar de Consumidor Final para el iframe Paybox de PLUX.
+const esquemaPagadorFlexibleTienda = z.object({
+  nombre: z
+    .string()
+    .optional()
+    .transform((v) => {
+      const t = (v ?? "").trim();
+      return t.length >= 2 ? t.slice(0, 120) : "CONSUMIDOR FINAL";
+    }),
+  identificacion: z
+    .string()
+    .optional()
+    .transform((v) => {
+      const t = (v ?? "").trim().replace(/[^A-Za-z0-9]/g, "");
+      return t.length >= 5 ? t.slice(0, 20) : "9999999999";
+    }),
+  email: z
+    .string()
+    .optional()
+    .transform((v) => {
+      const t = (v ?? "").trim();
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t) ? t.slice(0, 120) : "tinkay.uio@gmail.com";
+    }),
+  telefono: z
+    .string()
+    .optional()
+    .transform((v) => {
+      const limpio = (v ?? "").trim().replace(/[^\d+]/g, "");
+      if (limpio.replace(/\D+/g, "").length >= 7) {
+        return limpio.slice(0, 20);
+      }
+      return "0992922343";
+    }),
+  direccion: z
+    .string()
+    .optional()
+    .transform((v) => {
+      const t = (v ?? "").trim();
+      return t.length >= 3 ? t.slice(0, 200) : "Retiro en Tienda - Quito";
+    }),
+});
+
 const esquemaPreparar = z.object({
   negocio: z.string().min(1).default("tranqi"),
   varianteId: z.string().uuid(),
-  pagador: esquemaPagador,
+  pagador: esquemaPagadorEstricto,
 });
 
 export type ModalidadCobroProforma = "TOTAL_100" | "RESERVA_70" | "SALDO_30";
@@ -121,7 +165,7 @@ const esquemaPrepararProforma = z.object({
   tokenAprobacion: z.string().trim().min(8),
   respaldoFirmado: z.string().trim().min(8).optional(),
   modalidadCobro: z.enum(["TOTAL_100", "RESERVA_70", "SALDO_30"]).default("TOTAL_100"),
-  pagador: esquemaPagador,
+  pagador: esquemaPagadorFlexibleTienda,
 });
 
 // El monto lo fija la base de datos a partir de la variante: el navegador

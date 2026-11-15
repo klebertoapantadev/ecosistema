@@ -7,6 +7,8 @@ import {
   firmarOrdenRespaldoServidor,
   verificarOrdenRespaldoServidor,
 } from "./token-orden-firmada";
+import { obtenerConfiguracionTiendaCheckoutAction } from "./acciones-tienda-checkout";
+import type { ComprobanteTransferenciaSubido } from "./configuracion-tienda-checkout";
 import {
   buscarDireccionesPichincha,
   calcularRutaVialOsrm,
@@ -606,6 +608,7 @@ export interface EntradaPedidoTienda {
     nombre: string;
     valorReferencia: number;
   } | null;
+  comprobanteTransferencia?: ComprobanteTransferenciaSubido | null;
   conversacionWebId?: string;
 }
 
@@ -686,6 +689,7 @@ export interface PedidoTiendaRegistrado {
     nombre: string;
     valorReferencia: number;
   } | null;
+  comprobanteTransferencia?: ComprobanteTransferenciaSubido | null;
   conversacionWebId?: string;
 }
 
@@ -693,10 +697,15 @@ const esquemaPedidoTienda = z.object({
   negocio: z.string().min(1),
   metodoPago: z.string().min(2),
   comprador: z.object({
-    nombreCompleto: z.string().trim().min(2, "Indica el nombre o razón social del comprador"),
-    identificacion: z.string().trim().min(4, "Indica la cédula, RUC o pasaporte"),
-    correo: z.string().trim().email("Correo electrónico inválido"),
-    telefono: z.string().trim().min(6, "Indica un teléfono de contacto válido"),
+    nombreCompleto: z.string().trim().optional().default(""),
+    identificacion: z.string().trim().optional().default(""),
+    correo: z
+      .string()
+      .trim()
+      .optional()
+      .default("")
+      .refine((v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), "Correo electrónico inválido"),
+    telefono: z.string().trim().optional().default(""),
   }),
   modalidadEntrega: z.enum(["unificada", "individual"]),
   subtotalBaseImponible: z.number().min(0),
@@ -710,6 +719,16 @@ const esquemaPedidoTienda = z.object({
       sku: z.string().min(1),
       nombre: z.string().min(1),
       valorReferencia: z.number().min(0),
+    })
+    .nullable()
+    .optional(),
+  comprobanteTransferencia: z
+    .object({
+      url: z.string().min(4),
+      nombreArchivo: z.string().min(1),
+      mimeType: z.string().min(3),
+      subidoEn: z.string().optional(),
+      referenciaOpcional: z.string().optional(),
     })
     .nullable()
     .optional(),
@@ -936,11 +955,114 @@ export async function registrarPedidoTiendaAction(
       : 0;
   const baseIva0Centavos = Math.max(0, baseTotalCentavos - baseIvaGravadaCentavos);
 
+  const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const configCheckout = await obtenerConfiguracionTiendaCheckoutAction(negNorm);
+  const umbralSinDatos = Math.max(0, Number(configCheckout.montoMaximoPagoSinDatosUsd ?? 50));
+  const esMenorAlUmbral = Number(entrada.totalPagar) < umbralSinDatos;
+  const esRetiroEnTienda =
+    entrada.modalidadEntrega === "unificada"
+      ? Boolean(logisticaPrincipal.retiro_en_local)
+      : itemsEnriquecidos.every((it) => Boolean(it.entrega_individual?.retiro_en_local));
+
+  let esUsuarioRegistradoNegocio = false;
+  if (user?.id) {
+    try {
+      const dbVerif: any = crearClienteAdmin() ?? supabase;
+      const aliasNeg =
+        negNorm === "tinkay"
+          ? ["TNK", "TINKAY", "tinkay", "tnk"]
+          : negNorm === "margaritas"
+          ? ["MRG", "MARGARITAS", "margaritas", "mrg"]
+          : negNorm === "fastfix"
+          ? ["FFH", "FASTFIX", "fastfix", "ffh"]
+          : ["TRQ", "TRANQ", "TRANQI", "LEGAL", "tranqi"];
+      const [{ data: mem }, { data: usu }] = await Promise.all([
+        dbVerif
+          .schema("comun_seguridad")
+          .from("seg_membresia")
+          .select("mem_id")
+          .eq("mem_usuario_id", user.id)
+          .in("mem_negocio", aliasNeg)
+          .eq("mem_estado", "ACTIVO")
+          .limit(1)
+          .maybeSingle(),
+        dbVerif
+          .schema("comun_seguridad")
+          .from("seg_usuario")
+          .select("usu_superadmin_plataforma")
+          .eq("usu_id", user.id)
+          .maybeSingle(),
+      ]);
+      esUsuarioRegistradoNegocio = Boolean(mem?.mem_id || usu?.usu_superadmin_plataforma);
+    } catch {
+      esUsuarioRegistradoNegocio = Boolean(user);
+    }
+  }
+
+  const nombreIngresado = (entrada.comprador.nombreCompleto || "").trim();
+  const idIngresada = (entrada.comprador.identificacion || "").trim();
+  const correoIngresado = (entrada.comprador.correo || "").trim();
+  const telIngresado = (entrada.comprador.telefono || "").trim();
+  const digitosTel = telIngresado.replace(/\D+/g, "");
+
+  if (!esMenorAlUmbral) {
+    if (nombreIngresado.length < 2) {
+      return {
+        ok: false,
+        error: `Para compras desde $${umbralSinDatos.toFixed(2)} USD es obligatorio ingresar el nombre o razón social para facturación.`,
+      };
+    }
+    if (idIngresada.length < 5) {
+      return {
+        ok: false,
+        error: `Para compras desde $${umbralSinDatos.toFixed(2)} USD es obligatorio ingresar la Cédula, RUC o Pasaporte.`,
+      };
+    }
+  }
+
+  if (!esRetiroEnTienda && !esUsuarioRegistradoNegocio && digitosTel.length < 7) {
+    return {
+      ok: false,
+      error:
+        "El número de WhatsApp es requerido para contactarte y coordinar la entrega de tu pedido.",
+    };
+  }
+
+  if (metodoPagoNorm === "transferencia" && !entrada.comprobanteTransferencia?.url) {
+    return {
+      ok: false,
+      error:
+        "Por favor sube el comprobante de transferencia o pago QR DeUna (imagen o PDF) para registrar tu pedido.",
+    };
+  }
+
+  const compradorEfectivo = {
+    nombreCompleto: nombreIngresado || "CONSUMIDOR FINAL",
+    identificacion: idIngresada || "9999999999999",
+    correo: correoIngresado,
+    telefono: telIngresado,
+  };
+
   const payloadCompleto = {
     tipo_origen: "PEDIDO_TIENDA",
     estado: estadoInicial,
     metodo_pago: entrada.metodoPago,
-    comprador: entrada.comprador,
+    comprador: compradorEfectivo,
+    es_consumidor_final: !idIngresada,
+    comprobante_transferencia: entrada.comprobanteTransferencia
+      ? {
+          url: entrada.comprobanteTransferencia.url,
+          nombre_archivo: entrada.comprobanteTransferencia.nombreArchivo,
+          mime_type: entrada.comprobanteTransferencia.mimeType,
+          subido_en: entrada.comprobanteTransferencia.subidoEn || new Date().toISOString(),
+          referencia_opcional: entrada.comprobanteTransferencia.referenciaOpcional || "",
+        }
+      : null,
     subtotal_base_imponible: entrada.subtotalBaseImponible,
     total_iva: entrada.totalIva,
     total_flete: entrada.totalFlete,
@@ -964,17 +1086,11 @@ export async function registrarPedidoTiendaAction(
     items: itemsEnriquecidos,
   };
 
-  const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
-  const supabase = await crearClienteServidor();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   const payloadFinal = {
     ...payloadCompleto,
-    tipo_comprador: user ? "USUARIO_REGISTRADO" : "USUARIO_NO_AUTORIZADO",
-    usuario_autorizado: Boolean(user),
-    ...(user && entrada.regaloPrimeraCompra
+    tipo_comprador: esUsuarioRegistradoNegocio ? "USUARIO_REGISTRADO" : "USUARIO_NO_AUTORIZADO",
+    usuario_autorizado: esUsuarioRegistradoNegocio,
+    ...(esUsuarioRegistradoNegocio && entrada.regaloPrimeraCompra
       ? {
           regalo_primera_compra: {
             sku: entrada.regaloPrimeraCompra.sku,
@@ -1023,10 +1139,10 @@ export async function registrarPedidoTiendaAction(
             bgc: baseIvaGravadaCentavos,
             iat: new Date().toISOString(),
             cmp: {
-              nom: entrada.comprador.nombreCompleto,
-              ide: entrada.comprador.identificacion,
-              cor: entrada.comprador.correo,
-              tel: entrada.comprador.telefono,
+              nom: compradorEfectivo.nombreCompleto,
+              ide: compradorEfectivo.identificacion,
+              cor: compradorEfectivo.correo,
+              tel: compradorEfectivo.telefono,
             },
             ubi: {
               ret: Boolean(logisticaPrincipal.retiro_en_local),
@@ -1055,9 +1171,9 @@ export async function registrarPedidoTiendaAction(
         await notificarStaffNuevoPedido({
           negocio: negNorm,
           codigo: codigoCreado,
-          clienteNombre: entrada.comprador.nombreCompleto,
-          clienteCorreo: entrada.comprador.correo,
-          clienteTelefono: entrada.comprador.telefono,
+          clienteNombre: compradorEfectivo.nombreCompleto,
+          clienteCorreo: compradorEfectivo.correo || undefined,
+          clienteTelefono: compradorEfectivo.telefono || undefined,
           montoUsd: entrada.totalPagar,
           metodoPago: metodoPagoNorm.toUpperCase(),
           canalOrigen: "Tienda Web",
@@ -1069,6 +1185,9 @@ export async function registrarPedidoTiendaAction(
               : "MULTIDESTINO",
           direccionEntrega: logisticaPrincipal.direccion,
           fechaEntrega: logisticaPrincipal.fecha_entrega,
+          dedicatoria: entrada.comprobanteTransferencia?.nombreArchivo
+            ? `Comprobante subido: ${entrada.comprobanteTransferencia.nombreArchivo}`
+            : undefined,
           itemsResumen: itemsEnriquecidos.map(
             (it) => `${it.cantidad}x ${it.descripcion} ($${it.total_linea.toFixed(2)})`
           ),
@@ -1079,16 +1198,15 @@ export async function registrarPedidoTiendaAction(
     }
     if (entrada.conversacionWebId) {
       try {
-        const { registrarInteraccionChatWebAction } = await import("./acciones-omnicanal");
-        await registrarInteraccionChatWebAction({
-          negocio: negNorm,
-          claveHilo: entrada.conversacionWebId,
-          fase: "EVENTO_ORDEN",
-          contenido: `🛍️ Orden Web ${codigoCreado} generada por $${entrada.totalPagar.toFixed(2)} (${metodoPagoNorm.toUpperCase()})`,
-          metadatos: {
-            nombre: entrada.comprador.nombreCompleto,
-            correo: entrada.comprador.correo,
-            telefono: entrada.comprador.telefono,
+        await esquemaComercio.rpc("com_fn_omnicanal_registrar_interaccion_web", {
+          p_negocio: negNorm,
+          p_clave_hilo: entrada.conversacionWebId.trim().slice(0, 96),
+          p_fase: "EVENTO_ORDEN",
+          p_contenido: `🛍️ Orden Web ${codigoCreado} generada por $${entrada.totalPagar.toFixed(2)} (${metodoPagoNorm.toUpperCase()})`,
+          p_metadatos: {
+            nombre: compradorEfectivo.nombreCompleto,
+            correo: compradorEfectivo.correo,
+            telefono: compradorEfectivo.telefono,
             codigo_orden: codigoCreado,
             total_pagar: entrada.totalPagar,
             metodo_pago: metodoPagoNorm,
@@ -1127,10 +1245,10 @@ export async function registrarPedidoTiendaAction(
     .insert({
       prf_negocio: negNorm,
       prf_cliente_id: user?.id ?? null,
-      prf_cliente_nombre: entrada.comprador.nombreCompleto,
+      prf_cliente_nombre: compradorEfectivo.nombreCompleto,
       prf_cliente_contacto: {
-        ...entrada.comprador,
-        tipo_comprador: user ? "USUARIO_REGISTRADO" : "USUARIO_NO_AUTORIZADO",
+        ...compradorEfectivo,
+        tipo_comprador: esUsuarioRegistradoNegocio ? "USUARIO_REGISTRADO" : "USUARIO_NO_AUTORIZADO",
       },
       prf_estado: estadoInicial,
       prf_subtotal: entrada.subtotalBaseImponible,
@@ -1173,10 +1291,10 @@ export async function registrarPedidoTiendaAction(
         bgc: baseIvaGravadaCentavos,
         iat: new Date().toISOString(),
         cmp: {
-          nom: entrada.comprador.nombreCompleto,
-          ide: entrada.comprador.identificacion,
-          cor: entrada.comprador.correo,
-          tel: entrada.comprador.telefono,
+          nom: compradorEfectivo.nombreCompleto,
+          ide: compradorEfectivo.identificacion,
+          cor: compradorEfectivo.correo,
+          tel: compradorEfectivo.telefono,
         },
         ubi: {
           ret: Boolean(logisticaPrincipal.retiro_en_local),
@@ -1277,9 +1395,9 @@ export async function registrarPedidoTiendaAction(
       await notificarStaffNuevoPedido({
         negocio: negNorm,
         codigo: codigoOrden,
-        clienteNombre: entrada.comprador.nombreCompleto,
-        clienteCorreo: entrada.comprador.correo,
-        clienteTelefono: entrada.comprador.telefono,
+        clienteNombre: compradorEfectivo.nombreCompleto,
+        clienteCorreo: compradorEfectivo.correo || undefined,
+        clienteTelefono: compradorEfectivo.telefono || undefined,
         montoUsd: entrada.totalPagar,
         metodoPago: metodoPagoNorm.toUpperCase(),
         canalOrigen: "Tienda Web",
@@ -1481,6 +1599,28 @@ export async function obtenerPedidosTiendaAction(
         dedicatoria: it.dedicatoria ?? undefined,
         entregaIndividual: it.entrega_individual ?? undefined,
       })),
+      comprobanteTransferencia:
+        det.comprobante_transferencia && typeof det.comprobante_transferencia === "object"
+          ? {
+              url: String(det.comprobante_transferencia.url || ""),
+              nombreArchivo: String(
+                det.comprobante_transferencia.nombre_archivo ||
+                  det.comprobante_transferencia.nombreArchivo ||
+                  "comprobante"
+              ),
+              mimeType: String(
+                det.comprobante_transferencia.mime_type ||
+                  det.comprobante_transferencia.mimeType ||
+                  "image/jpeg"
+              ),
+              subidoEn: det.comprobante_transferencia.subido_en
+                ? String(det.comprobante_transferencia.subido_en)
+                : undefined,
+              referenciaOpcional: det.comprobante_transferencia.referencia_opcional
+                ? String(det.comprobante_transferencia.referencia_opcional)
+                : undefined,
+            }
+          : null,
     };
   });
 
@@ -3097,15 +3237,57 @@ export async function confirmarOrdenTransferenciaProformaAction(entrada: {
   tokenAprobacion: string;
   modalidadCobro: "RESERVA_70" | "TOTAL_100";
   notaTransferencia?: string;
+  comprobanteTransferencia?: ComprobanteTransferenciaSubido | null;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
   const tokenLimpio = (entrada.tokenAprobacion || "").trim();
   if (tokenLimpio.length < 8) {
     return { ok: false, error: "Token de proforma inválido." };
   }
+  if (!entrada.comprobanteTransferencia?.url) {
+    return {
+      ok: false,
+      error: "Adjunta el comprobante de transferencia (imagen o PDF) para confirmar tu pedido.",
+    };
+  }
 
   const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
   const supabase = await crearClienteServidor();
   const esquemaComercio: any = supabase.schema("comun_comercio");
+
+  const persistirComprobanteEnDetalle = async () => {
+    try {
+      const dbAdj: any = crearClienteAdmin() ?? supabase;
+      const { data: filaAdj } = await dbAdj
+        .schema("comun_comercio")
+        .from("com_proforma")
+        .select("prf_id, prf_detalle_proforma")
+        .eq("prf_token_aprobacion", tokenLimpio)
+        .is("prf_eliminado_en", null)
+        .maybeSingle();
+      if (filaAdj?.prf_id) {
+        const detPrev = (filaAdj.prf_detalle_proforma ?? {}) as Record<string, any>;
+        await dbAdj
+          .schema("comun_comercio")
+          .from("com_proforma")
+          .update({
+            prf_detalle_proforma: {
+              ...detPrev,
+              comprobante_transferencia: {
+                url: entrada.comprobanteTransferencia?.url,
+                nombre_archivo: entrada.comprobanteTransferencia?.nombreArchivo || "comprobante",
+                mime_type: entrada.comprobanteTransferencia?.mimeType || "image/jpeg",
+                tamano_bytes: entrada.comprobanteTransferencia?.tamanoBytes || 0,
+                subido_en:
+                  entrada.comprobanteTransferencia?.subidoEn || new Date().toISOString(),
+              },
+            },
+          })
+          .eq("prf_id", filaAdj.prf_id);
+      }
+    } catch {
+      // No bloquear confirmación si el respaldo admin no está activo
+    }
+  };
 
   const notificarTransferenciaStaff = async () => {
     try {
@@ -3150,6 +3332,7 @@ export async function confirmarOrdenTransferenciaProformaAction(entrada: {
       }
     );
     if (!errRpc && resRpc?.ok) {
+      await persistirComprobanteEnDetalle();
       await notificarTransferenciaStaff();
       revalidatePath(`/proforma/${tokenLimpio}`);
       revalidatePath("/panel");
@@ -3187,6 +3370,17 @@ export async function confirmarOrdenTransferenciaProformaAction(entrada: {
         metodo_pago: "transferencia",
         modalidad_comprometida: entrada.modalidadCobro,
         nota_transferencia: entrada.notaTransferencia || "",
+        comprobante_transferencia: entrada.comprobanteTransferencia
+          ? {
+              url: entrada.comprobanteTransferencia.url,
+              nombre_archivo:
+                entrada.comprobanteTransferencia.nombreArchivo || "comprobante",
+              mime_type: entrada.comprobanteTransferencia.mimeType || "image/jpeg",
+              tamano_bytes: entrada.comprobanteTransferencia.tamanoBytes || 0,
+              subido_en:
+                entrada.comprobanteTransferencia.subidoEn || new Date().toISOString(),
+            }
+          : undefined,
         confirmada_transferencia_en: new Date().toISOString(),
         variacion_aceptada: true,
       },
