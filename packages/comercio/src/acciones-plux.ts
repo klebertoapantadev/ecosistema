@@ -872,6 +872,9 @@ export async function confirmarPagoPluxAction(entrada: {
   }
 
   // 3. Respaldo directo en tablas y activación de suscripción en memoria/BDD
+  const {
+    data: { user: usuarioSesionActual },
+  } = await supabase.auth.getUser();
   const detPrevio = (pago?.pag_detalle_transaccion as Record<string, any>) || {};
   const varianteId = detPrevio.variante_id;
   const productoNombre =
@@ -886,7 +889,38 @@ export async function confirmarPagoPluxAction(entrada: {
     entrada.pagador?.nombre ||
     ordenFirmada?.cmp?.nom ||
     "Cliente";
+
+  const correoSesionNorm = String(usuarioSesionActual?.email || "").trim().toLowerCase();
+  const correoIngresadoOrden = String(
+    ordenFirmada?.cmp?.cor || entrada.pagador?.email || "",
+  )
+    .trim()
+    .toLowerCase();
+  const correoCompradorReal =
+    [
+      ordenFirmada?.cmp?.cor,
+      entrada.pagador?.email,
+      usuarioSesionActual?.email,
+      detPrevio.pagador?.email,
+      pago?.pag_titular_email,
+    ]
+      .map((c) => String(c || "").trim())
+      .filter((c) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c))
+      .find((c) => {
+        const low = c.toLowerCase();
+        if (low === "cliente@ecosistema.ec") return false;
+        if (
+          low === "tinkay.uio@gmail.com" &&
+          correoSesionNorm !== "tinkay.uio@gmail.com" &&
+          correoIngresadoOrden !== "tinkay.uio@gmail.com"
+        ) {
+          return false;
+        }
+        return true;
+      }) || null;
+
   const pagadorEmail =
+    correoCompradorReal ||
     pago?.pag_titular_email ||
     detPrevio.pagador?.email ||
     entrada.pagador?.email ||
@@ -1250,34 +1284,14 @@ export async function confirmarPagoPluxAction(entrada: {
     }
   }
 
-  if (clienteDb && pago?.pag_cliente_id) {
-    try {
-      const montoFmt = Number(pago.pag_monto_total || 0).toFixed(2);
-      const infoFactura = facturaEmitida?.numero_comprobante
-        ? `<br/><strong>Factura Electrónica N°:</strong> <code>${facturaEmitida.numero_comprobante}</code>`
-        : "";
-      await clienteDb
-        .schema("comun_notificacion")
-        .from("not_registro")
-        .insert({
-          not_usuario_id: pago.pag_cliente_id,
-          not_negocio: negocio,
-          not_titulo: `🧾 ¡Pago y Factura Confirmados! ${productoNombre}`,
-          not_contenido_html: `<p>Tu pago por <strong>${productoNombre}</strong> por <strong>$${montoFmt} USD</strong> fue procesado exitosamente con PLUX.</p><p><strong>Referencia / Autorización:</strong> <code>${autorizacion}</code><br/><strong>Tarjeta:</strong> ${marcaTarjeta} •••• ${ultimosDigitos}${infoFactura}</p>`,
-          not_url_accion:
-            negocio === "tranqi"
-              ? "/panel/herramientas?widget=facturacion_electronica"
-              : "/panel/cuenta",
-          not_canal: "IN_APP",
-        });
-    } catch {
-      // Continuar
-    }
-  }
-
-  // Notificar al staff (operadores, administradores) del negocio sobre la venta/pago confirmado
+  // Notificar tanto al cliente comprador (correo de comprobante + alerta In-App/Push)
+  // como al staff operativo y administrativo del negocio sobre la venta confirmada.
   try {
-    const { notificarStaffNuevoPedido } = await import("@eco/notificaciones/notificar-usuario");
+    const {
+      notificarClienteCompraConfirmada,
+      notificarStaffNuevoPedido,
+    } = await import("@eco/notificaciones/notificar-usuario");
+    const uidComprador = pago?.pag_cliente_id || usuarioSesionActual?.id || null;
     const montoNotif = Number(pago?.pag_monto_total ?? facturaEmitida?.total ?? montoNotificado ?? 0);
     const codigoVenta = String(detPrevio.codigo_proforma || ordenFirmada?.cod || identificador);
     const telefonoVenta =
@@ -1285,21 +1299,59 @@ export async function confirmarPagoPluxAction(entrada: {
       detPrevio.pagador?.telefono ||
       ordenFirmada?.cmp?.tel ||
       undefined;
-    await notificarStaffNuevoPedido({
-      negocio,
-      codigo: codigoVenta,
-      clienteNombre: pagadorNombre,
-      clienteCorreo: pagadorEmail,
-      clienteTelefono: telefonoVenta,
-      montoUsd: montoNotif,
-      metodoPago: `PLUX (${marcaTarjeta || "Tarjeta"} ${ultimosDigitos ? `•••• ${ultimosDigitos}` : ""})`,
-      canalOrigen: "Pasarela PLUX / Tarjeta",
-      itemsResumen: ordenFirmada?.itm?.length
-        ? ordenFirmada.itm.map((i) => `${i.can}x ${i.dsc}${i.var ? ` (${i.var})` : ""}`)
-        : [productoNombre],
-    });
+    const metodoEtiqueta = `PLUX (${marcaTarjeta || "Tarjeta"}${ultimosDigitos ? ` •••• ${ultimosDigitos}` : ""})`;
+    const itemsResumenNotif = ordenFirmada?.itm?.length
+      ? ordenFirmada.itm.map((i) => `${i.can}x ${i.dsc}${i.var ? ` (${i.var})` : ""}`)
+      : [productoNombre];
+    const direccionNotif =
+      ordenFirmada?.ubi?.dir ||
+      entrada.pagador?.direccion ||
+      detPrevio.pagador?.direccion ||
+      undefined;
+    const modalidadEntregaNotif = ordenFirmada?.ubi
+      ? ordenFirmada.ubi.ret
+        ? "RETIRO EN TIENDA"
+        : ordenFirmada.ubi.zon
+        ? `DOMICILIO (${ordenFirmada.ubi.zon})`
+        : "DOMICILIO"
+      : undefined;
+
+    await Promise.allSettled([
+      notificarClienteCompraConfirmada({
+        negocio,
+        codigoOrden: codigoVenta,
+        clienteUsuarioId: uidComprador,
+        clienteNombre: pagadorNombre,
+        clienteCorreo: correoCompradorReal,
+        montoUsd: montoNotif,
+        metodoPago: metodoEtiqueta,
+        esTransferenciaPendiente: false,
+        modalidadEntrega: modalidadEntregaNotif,
+        direccionEntrega: direccionNotif,
+        numeroFacturaSri: facturaEmitida?.numero_comprobante ?? null,
+        claveAccesoSri: facturaEmitida?.clave_acceso ?? null,
+        autorizacionPago: autorizacion,
+        itemsResumen: itemsResumenNotif,
+      }),
+      notificarStaffNuevoPedido({
+        negocio,
+        codigo: codigoVenta,
+        clienteNombre: pagadorNombre,
+        clienteCorreo: correoCompradorReal || undefined,
+        clienteTelefono: telefonoVenta,
+        montoUsd: montoNotif,
+        metodoPago: metodoEtiqueta,
+        canalOrigen: "Pasarela PLUX / Tarjeta",
+        tipoEntrega: modalidadEntregaNotif,
+        direccionEntrega: direccionNotif,
+        dedicatoria: facturaEmitida?.numero_comprobante
+          ? `Factura SRI N° ${facturaEmitida.numero_comprobante} · Aut. ${autorizacion}`
+          : `Autorización PLUX: ${autorizacion}`,
+        itemsResumen: itemsResumenNotif,
+      }),
+    ]);
   } catch (errNotif) {
-    console.warn("Aviso al notificar pago PLUX a staff:", errNotif);
+    console.warn("Aviso al notificar pago PLUX a cliente y staff:", errNotif);
   }
 
   // 5. Capturar/actualizar perfil del cliente (autorizado o no autorizado) con la compra confirmada

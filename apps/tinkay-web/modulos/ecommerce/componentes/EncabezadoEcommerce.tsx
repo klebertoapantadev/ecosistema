@@ -6,6 +6,7 @@ import {
   obtenerEstadoRegaloPrimeraCompraAction,
   type EstadoRegaloPrimeraCompra,
 } from '@eco/comercio';
+import { CampanaNotificaciones } from '@eco/notificaciones';
 import { useCarrito } from '../contexto-carrito';
 import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from '../datos-catalogo';
 import { expandirProductosVitrina, obtenerCategoriasVisibles } from '../filtrado-catalogo';
@@ -27,13 +28,22 @@ export function EncabezadoEcommerce() {
 
   useEffect(() => {
     let cancelado = false;
-    obtenerEstadoRegaloPrimeraCompraAction('tinkay')
-      .then((res) => {
-        if (!cancelado) setEstadoRegalo(res);
-      })
-      .catch(() => {});
+    const cargarEstado = () => {
+      obtenerEstadoRegaloPrimeraCompraAction('tinkay')
+        .then((res) => {
+          if (!cancelado) setEstadoRegalo(res);
+        })
+        .catch(() => {});
+    };
+    cargarEstado();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('eco:refrescar-notificaciones', cargarEstado);
+    }
     return () => {
       cancelado = true;
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('eco:refrescar-notificaciones', cargarEstado);
+      }
     };
   }, []);
 
@@ -171,9 +181,28 @@ export function EncabezadoEcommerce() {
         </nav>
 
         <div className="acciones-usuario-cabecera">
-          <Link href="/ingresar" className="enlace-ingresar-discreto">
-            Ingresar
-          </Link>
+          {estadoRegalo?.autenticado ? (
+            <>
+              <CampanaNotificaciones negocio="tinkay" variante="clara" />
+              <Link
+                href="/panel"
+                className="enlace-ingresar-discreto"
+                title="Abrir mi panel de cuenta y pedidos"
+                aria-label="Mi Panel"
+              >
+                Mi Panel
+              </Link>
+            </>
+          ) : (
+            <Link
+              href="/ingresar"
+              className="enlace-ingresar-discreto"
+              title="Iniciar sesión en Tinkay"
+              aria-label="Ingresar"
+            >
+              Ingresar
+            </Link>
+          )}
 
           {(cantidadTotalProforma > 0 ||
             (categoriaActiva || '').toLowerCase().includes('evento')) && (

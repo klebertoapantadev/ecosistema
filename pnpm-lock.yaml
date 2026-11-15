@@ -167,6 +167,9 @@ importers:
       '@eco/identidad':
         specifier: workspace:*
         version: link:../../packages/identidad
+      '@eco/notificaciones':
+        specifier: workspace:*
+        version: link:../../packages/notificaciones
       '@eco/primitivas':
         specifier: workspace:*
         version: link:../../packages/primitivas

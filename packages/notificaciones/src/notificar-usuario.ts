@@ -546,39 +546,20 @@ export const ROLES_STAFF_PROFORMA_EVENTOS = [
   "SUPERADMIN",
 ] as const;
 
+export interface DestinatarioAlertaNegocio {
+  id: string | null;
+  correo: string;
+}
+
 export async function obtenerDestinatariosStaffNegocio(
   negocio: string,
   usuarioExcluidoId?: string,
   rolesPersonalizados?: readonly string[]
-): Promise<{ id: string; correo: string }[]> {
+): Promise<DestinatarioAlertaNegocio[]> {
   const metaNeg = resolverMetaNegocioNotif(negocio);
-  const adminSupabase = crearClienteAdmin() || await crearClienteServidor();
+  const adminSupabase = crearClienteAdmin() || (await crearClienteServidor());
 
-  // 1. Obtener usuarios con perfil autorizado ESTRICTAMENTE en este negocio
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: membresiasStaff } = await (adminSupabase as any)
-    .schema("comun_seguridad")
-    .from("seg_membresia")
-    .select(`
-      mem_id,
-      mem_usuario_id,
-      mem_negocio,
-      mem_rol,
-      mem_estado,
-      seg_usuario (
-        usu_id,
-        usu_correo
-      ),
-      seg_membresia_perfil (
-        seg_perfil (
-          per_clave
-        )
-      )
-    `)
-    .in("mem_negocio", metaNeg.codigos)
-    .eq("mem_estado", "ACTIVO");
-
-  const destinatarios: { id: string; correo: string }[] = [];
+  const destinatarios: DestinatarioAlertaNegocio[] = [];
   const correosVistos = new Set<string>();
 
   const rolesPermitidos = new Set(
@@ -588,57 +569,269 @@ export async function obtenerDestinatariosStaffNegocio(
     ).map((r) => r.toUpperCase())
   );
 
-  if (Array.isArray(membresiasStaff)) {
-    for (const m of membresiasStaff) {
-      const usu = Array.isArray(m.seg_usuario) ? m.seg_usuario[0] : m.seg_usuario;
-      const usuId = usu?.usu_id || m.mem_usuario_id;
-      const usuCorreo = (usu?.usu_correo || "").trim();
-      if (!usuId || usuId === usuarioExcluidoId || !usuCorreo) continue;
+  // 1. Vía principal SECURITY DEFINER en comun_seguridad (funciona incluso sin service_role en Vercel
+  //    y cuando quien compra es un cliente autenticado o visitante anónimo).
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: filasRpc } = await (adminSupabase as any)
+      .schema("comun_seguridad")
+      .rpc("seg_fn_obtener_staff_negocio", { p_negocio: metaNeg.canon });
 
-      const mNeg = (m.mem_negocio || "").toUpperCase();
-      if (!metaNeg.codigosUpper.has(mNeg)) continue;
+    if (Array.isArray(filasRpc)) {
+      for (const f of filasRpc) {
+        const usuId = f?.usu_id ? String(f.usu_id) : null;
+        const usuCorreo = String(f?.usu_correo || "").trim();
+        if (!usuCorreo || (usuId && usuId === usuarioExcluidoId)) continue;
 
-      const rolMem = (m.mem_rol || "").toUpperCase();
-      let esStaff = rolesPermitidos.has(rolMem);
+        const perfilesArr = Array.isArray(f?.perfiles)
+          ? (f.perfiles as unknown[]).map((p) => String(p || "").toUpperCase())
+          : [];
+        const califica =
+          perfilesArr.length === 0 ||
+          perfilesArr.some(
+            (p) =>
+              rolesPermitidos.has(p) ||
+              p === "SUPERADMIN" ||
+              p === "ADMINISTRADOR" ||
+              p === "ADMIN"
+          );
 
-      if (!esStaff && Array.isArray(m.seg_membresia_perfil)) {
-        for (const mp of m.seg_membresia_perfil) {
-          const perObj = Array.isArray(mp.seg_perfil) ? mp.seg_perfil[0] : mp.seg_perfil;
-          const clave = (perObj?.per_clave || "").toUpperCase();
-          if (rolesPermitidos.has(clave)) {
-            esStaff = true;
-            break;
-          }
+        const correoLower = usuCorreo.toLowerCase();
+        if (califica && !correosVistos.has(correoLower)) {
+          correosVistos.add(correoLower);
+          destinatarios.push({ id: usuId, correo: usuCorreo });
         }
       }
+    }
+  } catch {
+    // Continuar con lectura directa de membresías
+  }
 
-      const correoLower = usuCorreo.toLowerCase();
-      if (esStaff && !correosVistos.has(correoLower)) {
-        correosVistos.add(correoLower);
-        destinatarios.push({ id: usuId, correo: usuCorreo });
+  // 2. Complemento directo sobre seg_membresia (cubre operadores/vendedores adicionales cuando hay permisos de lectura)
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: membresiasStaff } = await (adminSupabase as any)
+      .schema("comun_seguridad")
+      .from("seg_membresia")
+      .select(`
+        mem_id,
+        mem_usuario_id,
+        mem_negocio,
+        mem_rol,
+        mem_estado,
+        seg_usuario (
+          usu_id,
+          usu_correo,
+          usu_superadmin_plataforma
+        ),
+        seg_membresia_perfil (
+          seg_perfil (
+            per_clave
+          )
+        )
+      `)
+      .in("mem_negocio", metaNeg.codigos)
+      .eq("mem_estado", "ACTIVO");
+
+    if (Array.isArray(membresiasStaff)) {
+      for (const m of membresiasStaff) {
+        const usu = Array.isArray(m.seg_usuario) ? m.seg_usuario[0] : m.seg_usuario;
+        const usuId = usu?.usu_id || m.mem_usuario_id;
+        const usuCorreo = (usu?.usu_correo || "").trim();
+        if (!usuId || usuId === usuarioExcluidoId || !usuCorreo) continue;
+
+        const mNeg = (m.mem_negocio || "").toUpperCase();
+        if (!metaNeg.codigosUpper.has(mNeg)) continue;
+
+        const rolMem = (m.mem_rol || "").toUpperCase();
+        let esStaff = Boolean(usu?.usu_superadmin_plataforma) || rolesPermitidos.has(rolMem);
+
+        if (!esStaff && Array.isArray(m.seg_membresia_perfil)) {
+          for (const mp of m.seg_membresia_perfil) {
+            const perObj = Array.isArray(mp.seg_perfil) ? mp.seg_perfil[0] : mp.seg_perfil;
+            const clave = (perObj?.per_clave || "").toUpperCase();
+            if (rolesPermitidos.has(clave)) {
+              esStaff = true;
+              break;
+            }
+          }
+        }
+
+        const correoLower = usuCorreo.toLowerCase();
+        if (esStaff && !correosVistos.has(correoLower)) {
+          correosVistos.add(correoLower);
+          destinatarios.push({ id: String(usuId), correo: usuCorreo });
+        }
       }
+    }
+  } catch {
+    // Ignorar si RLS acota la lectura a la membresía propia
+  }
+
+  // 3. Respaldo de buzones titulares de tienda Tinkay (garantiza envío de correo aunque no exista service_role)
+  if (metaNeg.canon === "tinkay") {
+    for (const correoBase of [
+      "tinkay.uio@gmail.com",
+      "kleber.toapanta.ch@gmail.com",
+    ]) {
+      if (correosVistos.has(correoBase)) continue;
+      let idEncontrado: string | null = null;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: usuRow } = await (adminSupabase as any)
+          .schema("comun_seguridad")
+          .from("seg_usuario")
+          .select("usu_id, usu_correo")
+          .eq("usu_correo", correoBase)
+          .maybeSingle();
+        if (usuRow?.usu_id) {
+          if (String(usuRow.usu_id) === usuarioExcluidoId) continue;
+          idEncontrado = String(usuRow.usu_id);
+        }
+      } catch {}
+      correosVistos.add(correoBase);
+      destinatarios.push({ id: idEncontrado, correo: correoBase });
     }
   }
 
-  // Respaldo de cuenta principal de Tinkay si no estuviese en la membresía aún
-  if (metaNeg.canon === "tinkay" && !correosVistos.has("tinkay.uio@gmail.com")) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { data: usuTnk } = await (adminSupabase as any)
-        .schema("comun_seguridad")
-        .from("seg_usuario")
-        .select("usu_id, usu_correo")
-        .eq("usu_correo", "tinkay.uio@gmail.com")
-        .maybeSingle();
+  return destinatarios;
+}
 
-      if (usuTnk?.usu_id && usuTnk.usu_id !== usuarioExcluidoId) {
-        destinatarios.push({ id: usuTnk.usu_id, correo: usuTnk.usu_correo });
-        correosVistos.add("tinkay.uio@gmail.com");
-      }
-    } catch {}
+interface RegistroNotificacionInternaInput {
+  usuarioId: string;
+  negocioCode: string;
+  canal: "IN_APP" | "PUSH";
+  titulo: string;
+  contenidoHtml: string;
+  urlAccion: string;
+  claveReferencia?: string;
+}
+
+/**
+ * Persiste alertas In-App / Push con triple respaldo:
+ * 1. RPC SECURITY DEFINER `comun_seguridad.seg_fn_emitir_notificaciones_internas` (funciona sin service_role ni exposición PostgREST de comun_notificacion).
+ * 2. Inserción directa en `comun_notificacion.not_registro` (cuando el esquema está expuesto o hay service_role).
+ * 3. Espejo en `comun_seguridad.seg_usuario.usu_detalle_usuario.notificaciones_bandeja` para cualquier destinatario cuyo registro sea actualizable en la sesión actual.
+ */
+export async function persistirNotificacionesInternasResiliente(
+  negocio: string,
+  items: RegistroNotificacionInternaInput[]
+): Promise<void> {
+  if (!items.length) return;
+  const metaNeg = resolverMetaNegocioNotif(negocio);
+  const adminSupabase = crearClienteAdmin() || (await crearClienteServidor());
+  if (!adminSupabase) return;
+
+  const ahoraIso = new Date().toISOString();
+  let guardadoEnTabla = false;
+
+  // 1. RPC SECURITY DEFINER en comun_seguridad
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: okRpc, error: errRpc } = await (adminSupabase as any)
+      .schema("comun_seguridad")
+      .rpc("seg_fn_emitir_notificaciones_internas", {
+        p_negocio: metaNeg.canon,
+        p_items: items.map((it) => ({
+          usuario_id: it.usuarioId,
+          negocio: it.negocioCode || metaNeg.notifCode,
+          canal: it.canal,
+          titulo: it.titulo,
+          contenido_html: it.contenidoHtml,
+          url_accion: it.urlAccion,
+          clave_referencia: it.claveReferencia || null,
+        })),
+      });
+    if (!errRpc && okRpc !== null) {
+      guardadoEnTabla = true;
+    }
+  } catch {
+    // Continúa a respaldo
   }
 
-  return destinatarios;
+  // 2. Inserción directa en comun_notificacion.not_registro
+  if (!guardadoEnTabla) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: errIns } = await (adminSupabase as any)
+        .schema("comun_notificacion")
+        .from("not_registro")
+        .insert(
+          items.map((it) => ({
+            not_usuario_id: it.usuarioId,
+            not_negocio: it.negocioCode || metaNeg.notifCode,
+            not_canal: it.canal,
+            not_titulo: it.titulo,
+            not_contenido_html: it.contenidoHtml,
+            not_url_accion: it.urlAccion,
+            not_detalles: it.claveReferencia ? { clave_original: it.claveReferencia } : {},
+            not_creado_en: ahoraIso,
+          }))
+        );
+      if (!errIns) {
+        guardadoEnTabla = true;
+      }
+    } catch {
+      // Continúa a espejo en seg_usuario
+    }
+  }
+
+  // 3. Espejo en seg_usuario.usu_detalle_usuario.notificaciones_bandeja (1 registro consolidado por usuario)
+  const porUsuario = new Map<string, RegistroNotificacionInternaInput>();
+  for (const it of items) {
+    if (!it.usuarioId) continue;
+    if (!porUsuario.has(it.usuarioId) || it.canal === "PUSH") {
+      porUsuario.set(it.usuarioId, it);
+    }
+  }
+
+  for (const [uid, it] of porUsuario.entries()) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: rowUsu } = await (adminSupabase as any)
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_detalle_usuario")
+        .eq("usu_id", uid)
+        .maybeSingle();
+
+      if (!rowUsu) continue;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const detActual = (rowUsu.usu_detalle_usuario || {}) as Record<string, any>;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const bandejaPrev: any[] = Array.isArray(detActual.notificaciones_bandeja)
+        ? detActual.notificaciones_bandeja
+        : [];
+      const notId =
+        it.claveReferencia ||
+        `ntf-${metaNeg.canon}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const sinDuplicado = bandejaPrev.filter((b) => b?.not_id !== notId);
+      const nuevoItem = {
+        not_id: notId,
+        not_negocio: metaNeg.canon,
+        not_titulo: it.titulo,
+        not_contenido_html: it.contenidoHtml,
+        not_url_accion: it.urlAccion,
+        not_canal: it.canal,
+        not_leido_en: null,
+        not_creado_en: ahoraIso,
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (adminSupabase as any)
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .update({
+          usu_detalle_usuario: {
+            ...detActual,
+            notificaciones_bandeja: [nuevoItem, ...sinDuplicado].slice(0, 80),
+          },
+        })
+        .eq("usu_id", uid);
+    } catch {
+      // Ignorar cuando RLS impide actualizar otro usuario sin service_role
+    }
+  }
 }
 
 export async function notificarNuevoUsuarioRegistrado(params: ParametrosNuevoUsuarioNotif): Promise<void> {
@@ -646,7 +839,6 @@ export async function notificarNuevoUsuarioRegistrado(params: ParametrosNuevoUsu
     // 0. Verificar y procesar auto-afiliación a convenio corporativo + envío de correo de bienvenida con beneficios
     const infoConvenio = await procesarAutoafiliacionYBienvenidaConvenio(params);
 
-    const adminSupabase = crearClienteAdmin() || await crearClienteServidor();
     const nombreCompleto = [params.nombres, params.apellidos].filter(Boolean).join(" ") || params.correo;
     const metaNeg = resolverMetaNegocioNotif(params.negocio);
     const negocioUpper = metaNeg.notifCode;
@@ -677,37 +869,32 @@ export async function notificarNuevoUsuarioRegistrado(params: ParametrosNuevoUsu
     const destinatarios = await obtenerDestinatariosStaffNegocio(params.negocio, params.usuarioId);
     if (destinatarios.length === 0) return;
 
-    // 2. Insertar registros In-App y Push en comun_notificacion.not_registro
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const notifs: any[] = [];
+    const notifs: RegistroNotificacionInternaInput[] = [];
     for (const d of destinatarios) {
+      if (!d.id) continue;
       notifs.push({
-        not_usuario_id: d.id,
-        not_negocio: negocioUpper,
-        not_canal: "IN_APP",
-        not_titulo: titulo,
-        not_contenido_html: contenidoHTML,
-        not_url_accion: urlAccion,
-        not_creado_en: new Date().toISOString()
+        usuarioId: d.id,
+        negocioCode: negocioUpper,
+        canal: "IN_APP",
+        titulo,
+        contenidoHtml: contenidoHTML,
+        urlAccion,
+        claveReferencia: `usr-reg-${metaNeg.canon}-${params.usuarioId}`,
       });
       notifs.push({
-        not_usuario_id: d.id,
-        not_negocio: negocioUpper,
-        not_canal: "PUSH",
-        not_titulo: titulo,
-        not_contenido_html: contenidoHTML,
-        not_url_accion: urlAccion,
-        not_creado_en: new Date().toISOString()
+        usuarioId: d.id,
+        negocioCode: negocioUpper,
+        canal: "PUSH",
+        titulo,
+        contenidoHtml: contenidoHTML,
+        urlAccion,
+        claveReferencia: `usr-reg-${metaNeg.canon}-${params.usuarioId}`,
       });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (adminSupabase as any)
-      .schema("comun_notificacion")
-      .from("not_registro")
-      .insert(notifs);
+    await persistirNotificacionesInternasResiliente(metaNeg.canon, notifs);
 
-    // 3. Enviar correo SMTP a cada operador/admin usando el SMTP propio del negocio
+    // Enviar correo SMTP a cada operador/admin
     for (const d of destinatarios) {
       try {
         await enviarCorreo({
@@ -745,7 +932,6 @@ export interface ParametrosNuevaProformaNotif {
 export async function notificarStaffNuevaProforma(params: ParametrosNuevaProformaNotif): Promise<void> {
   try {
     const metaNeg = resolverMetaNegocioNotif(params.negocio);
-    const adminSupabase = crearClienteAdmin() || await crearClienteServidor();
     const destinatarios = await obtenerDestinatariosStaffNegocio(
       params.negocio,
       undefined,
@@ -804,34 +990,31 @@ export async function notificarStaffNuevaProforma(params: ParametrosNuevaProform
       </div>
     `;
 
-    // 1. Guardar In-App y Push
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const notifs: any[] = [];
+    const notifs: RegistroNotificacionInternaInput[] = [];
     for (const d of destinatarios) {
+      if (!d.id) continue;
       notifs.push({
-        not_usuario_id: d.id,
-        not_negocio: metaNeg.notifCode,
-        not_canal: "IN_APP",
-        not_titulo: titulo,
-        not_contenido_html: contenidoHTML,
-        not_url_accion: urlAccion,
-        not_creado_en: new Date().toISOString(),
+        usuarioId: d.id,
+        negocioCode: metaNeg.notifCode,
+        canal: "IN_APP",
+        titulo,
+        contenidoHtml: contenidoHTML,
+        urlAccion,
+        claveReferencia: `staff-prf-${params.codigoProforma}-${d.id.slice(0, 8)}`,
       });
       notifs.push({
-        not_usuario_id: d.id,
-        not_negocio: metaNeg.notifCode,
-        not_canal: "PUSH",
-        not_titulo: titulo,
-        not_contenido_html: contenidoHTML,
-        not_url_accion: urlAccion,
-        not_creado_en: new Date().toISOString(),
+        usuarioId: d.id,
+        negocioCode: metaNeg.notifCode,
+        canal: "PUSH",
+        titulo,
+        contenidoHtml: contenidoHTML,
+        urlAccion,
+        claveReferencia: `staff-prf-${params.codigoProforma}-${d.id.slice(0, 8)}`,
       });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert(notifs);
+    await persistirNotificacionesInternasResiliente(metaNeg.canon, notifs);
 
-    // 2. Enviar correo a cada destinatario
     for (const d of destinatarios) {
       try {
         await enviarCorreo({
@@ -869,7 +1052,6 @@ export interface ParametrosNuevoPedidoNotif {
 export async function notificarStaffNuevoPedido(params: ParametrosNuevoPedidoNotif): Promise<void> {
   try {
     const metaNeg = resolverMetaNegocioNotif(params.negocio);
-    const adminSupabase = crearClienteAdmin() || await crearClienteServidor();
     const destinatarios = await obtenerDestinatariosStaffNegocio(
       params.negocio,
       undefined,
@@ -880,6 +1062,7 @@ export async function notificarStaffNuevoPedido(params: ParametrosNuevoPedidoNot
 
     const titulo = `🌸 ¡Venta Realizada! (${metaNeg.nombreVisible}): ${params.codigo} - $${params.montoUsd.toFixed(2)} [${params.metodoPago}]`;
     const urlAccion = params.enlacePanel || `/panel/pedidos?codigo=${encodeURIComponent(params.codigo)}`;
+    const urlAbsolutaPanel = `https://${metaNeg.canon === "tinkay" ? "tinkay-web.vercel.app" : `${metaNeg.canon}-web.vercel.app`}${urlAccion}`;
 
     const itemsHtml = Array.isArray(params.itemsResumen) && params.itemsResumen.length > 0
       ? `<ul style="margin: 8px 0; padding-left: 20px; font-size: 13px; color: #374151;">
@@ -894,7 +1077,7 @@ export async function notificarStaffNuevoPedido(params: ParametrosNuevoPedidoNot
           <h3 style="margin: 4px 0 0; font-size: 18px; font-weight: bold; color: #FFFFFF;">¡Nueva Venta / Pedido Confirmado! (${params.codigo})</h3>
         </div>
         <p style="font-size: 14px; margin: 0 0 12px;">
-          Se ha recibido y confirmado un pago de <strong>$${params.montoUsd.toFixed(2)} USD</strong> mediante <strong>${params.metodoPago}</strong> (${params.canalOrigen || "Tienda Web"}).
+          Se ha registrado una venta de <strong>$${params.montoUsd.toFixed(2)} USD</strong> mediante <strong>${params.metodoPago}</strong> (${params.canalOrigen || "Tienda Web"}).
         </p>
         <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; font-size: 13.5px; line-height: 1.6;">
           <div><strong>Cliente:</strong> ${params.clienteNombre}</div>
@@ -904,48 +1087,45 @@ export async function notificarStaffNuevoPedido(params: ParametrosNuevoPedidoNot
           ${params.tipoEntrega ? `<div><strong>Modalidad Entrega:</strong> ${params.tipoEntrega}</div>` : ""}
           ${params.fechaEntrega ? `<div><strong>Fecha / Horario:</strong> ${params.fechaEntrega}</div>` : ""}
           ${params.direccionEntrega ? `<div><strong>Dirección:</strong> ${params.direccionEntrega}</div>` : ""}
-          ${params.dedicatoria ? `<div style="margin-top: 6px; padding: 6px 10px; background: #FEF9C3; border-radius: 6px; font-style: italic;"><strong>Tarjeta / Dedicatoria:</strong> "${params.dedicatoria}"</div>` : ""}
+          ${params.dedicatoria ? `<div style="margin-top: 6px; padding: 6px 10px; background: #FEF9C3; border-radius: 6px; font-style: italic;"><strong>Detalle / Comprobante:</strong> ${params.dedicatoria}</div>` : ""}
           <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #86EFAC;">
-            <strong>Total Pagado / Abonado:</strong> $${params.montoUsd.toFixed(2)} USD
+            <strong>Total Pagado / Orden:</strong> $${params.montoUsd.toFixed(2)} USD
           </div>
           ${itemsHtml}
         </div>
         <div style="margin-top: 16px;">
-          <a href="${urlAccion}" style="display: inline-block; background: #166534; color: #FFFFFF; padding: 11px 22px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 13.5px;">
+          <a href="${urlAbsolutaPanel}" style="display: inline-block; background: #166534; color: #FFFFFF; padding: 11px 22px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 13.5px;">
             Ver Pedido en Bandeja de Despachos
           </a>
         </div>
       </div>
     `;
 
-    // 1. Guardar In-App y Push
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const notifs: any[] = [];
+    const notifs: RegistroNotificacionInternaInput[] = [];
     for (const d of destinatarios) {
+      if (!d.id) continue;
       notifs.push({
-        not_usuario_id: d.id,
-        not_negocio: metaNeg.notifCode,
-        not_canal: "IN_APP",
-        not_titulo: titulo,
-        not_contenido_html: contenidoHTML,
-        not_url_accion: urlAccion,
-        not_creado_en: new Date().toISOString(),
+        usuarioId: d.id,
+        negocioCode: metaNeg.notifCode,
+        canal: "IN_APP",
+        titulo,
+        contenidoHtml: contenidoHTML,
+        urlAccion,
+        claveReferencia: `staff-ord-${params.codigo}-${d.id.slice(0, 8)}`,
       });
       notifs.push({
-        not_usuario_id: d.id,
-        not_negocio: metaNeg.notifCode,
-        not_canal: "PUSH",
-        not_titulo: titulo,
-        not_contenido_html: contenidoHTML,
-        not_url_accion: urlAccion,
-        not_creado_en: new Date().toISOString(),
+        usuarioId: d.id,
+        negocioCode: metaNeg.notifCode,
+        canal: "PUSH",
+        titulo,
+        contenidoHtml: contenidoHTML,
+        urlAccion,
+        claveReferencia: `staff-ord-${params.codigo}-${d.id.slice(0, 8)}`,
       });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert(notifs);
+    await persistirNotificacionesInternasResiliente(metaNeg.canon, notifs);
 
-    // 2. Enviar correo SMTP a cada destinatario
     for (const d of destinatarios) {
       try {
         await enviarCorreo({
@@ -960,5 +1140,138 @@ export async function notificarStaffNuevoPedido(params: ParametrosNuevoPedidoNot
     }
   } catch (err) {
     console.warn("Error en notificarStaffNuevoPedido:", err);
+  }
+}
+
+export interface ParametrosCompraClienteNotif {
+  negocio: string;
+  codigoOrden: string;
+  clienteUsuarioId?: string | null;
+  clienteNombre: string;
+  clienteCorreo?: string | null;
+  montoUsd: number;
+  metodoPago: string;
+  esTransferenciaPendiente?: boolean;
+  modalidadEntrega?: string;
+  direccionEntrega?: string;
+  fechaEntrega?: string;
+  numeroFacturaSri?: string | null;
+  claveAccesoSri?: string | null;
+  autorizacionPago?: string | null;
+  itemsResumen?: string[];
+  whatsappTienda?: string;
+}
+
+/**
+ * Notifica al propio comprador sobre su compra confirmada (o transferencia recibida),
+ * registrando la alerta In-App / Push en su campana y despachando el comprobante por correo electrónico.
+ */
+export async function notificarClienteCompraConfirmada(
+  params: ParametrosCompraClienteNotif
+): Promise<void> {
+  try {
+    const metaNeg = resolverMetaNegocioNotif(params.negocio);
+    const whatsappOficial = (params.whatsappTienda || "+593 99 292 2343").trim();
+    const waDigitos = whatsappOficial.replace(/\D+/g, "") || "593992922343";
+    const titulo = params.esTransferenciaPendiente
+      ? `🌸 Pedido Recibido (${params.codigoOrden}) — $${params.montoUsd.toFixed(2)} USD`
+      : `🧾 ¡Compra Confirmada! ${params.codigoOrden} — $${params.montoUsd.toFixed(2)} USD`;
+
+    const urlAccion =
+      metaNeg.canon === "tranqi"
+        ? "/panel/herramientas?widget=facturacion_electronica"
+        : "/panel";
+    const urlPortalAbsoluta = `https://${
+      metaNeg.canon === "tinkay" ? "tinkay-web.vercel.app" : `${metaNeg.canon}-web.vercel.app`
+    }${urlAccion}`;
+
+    const itemsHtml =
+      Array.isArray(params.itemsResumen) && params.itemsResumen.length > 0
+        ? `<ul style="margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: #374151;">
+             ${params.itemsResumen.map((it) => `<li>${it}</li>`).join("")}
+           </ul>`
+        : "";
+
+    const bloqueFactura = params.numeroFacturaSri
+      ? `<div style="margin-top: 12px; padding: 12px 14px; background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 8px; font-size: 13px; color: #065F46;">
+           <strong>📄 Factura Electrónica SRI N°:</strong> <code>${params.numeroFacturaSri}</code>
+           ${params.claveAccesoSri ? `<br/><span style="font-size: 11px;">Clave de Acceso: <code>${params.claveAccesoSri}</code></span>` : ""}
+         </div>`
+      : "";
+
+    const notaEstado = params.esTransferenciaPendiente
+      ? `Hemos recibido tu orden <strong>${params.codigoOrden}</strong> junto con tu comprobante adjunto. <strong>El envío se procesará luego de verificar la acreditación del pago.</strong>`
+      : `Hemos acreditado tu pago mediante <strong>${params.metodoPago}</strong> y nuestro equipo inició la preparación de tu orden <strong>${params.codigoOrden}</strong>.`;
+
+    const contenidoHTML = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1F2937; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 14px;">
+        <div style="background: #2D4734; color: #FFFFFF; padding: 18px 20px; border-radius: 10px; margin-bottom: 16px;">
+          <span style="font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #FDE68A;">${metaNeg.nombreVisible} — Comprobante de Orden</span>
+          <h2 style="margin: 4px 0 0; font-size: 19px; color: #FFFFFF;">¡Gracias por tu compra, ${params.clienteNombre}!</h2>
+        </div>
+        <p style="font-size: 14px; line-height: 1.6; margin: 0 0 14px;">
+          ${notaEstado}
+        </p>
+        <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 10px; padding: 14px 16px; font-size: 13.5px; line-height: 1.6;">
+          <div><strong>Orden:</strong> ${params.codigoOrden}</div>
+          <div><strong>Total:</strong> $${params.montoUsd.toFixed(2)} USD</div>
+          <div><strong>Método de Pago:</strong> ${params.metodoPago}</div>
+          ${params.autorizacionPago ? `<div><strong>Autorización / Ref.:</strong> <code>${params.autorizacionPago}</code></div>` : ""}
+          ${params.modalidadEntrega ? `<div><strong>Modalidad:</strong> ${params.modalidadEntrega}</div>` : ""}
+          ${params.fechaEntrega ? `<div><strong>Fecha estimada:</strong> ${params.fechaEntrega}</div>` : ""}
+          ${params.direccionEntrega ? `<div><strong>Dirección / Punto:</strong> ${params.direccionEntrega}</div>` : ""}
+          ${itemsHtml}
+        </div>
+        ${bloqueFactura}
+        <div style="margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap;">
+          <a href="${urlPortalAbsoluta}" style="display: inline-block; background: #2D4734; color: #FFFFFF; padding: 10px 18px; border-radius: 999px; text-decoration: none; font-weight: bold; font-size: 13px; margin-right: 8px;">
+            Ver Mis Compras
+          </a>
+          <a href="https://wa.me/${waDigitos}" style="display: inline-block; background: #16A34A; color: #FFFFFF; padding: 10px 18px; border-radius: 999px; text-decoration: none; font-weight: bold; font-size: 13px;">
+            WhatsApp Tienda (${whatsappOficial})
+          </a>
+        </div>
+      </div>
+    `;
+
+    if (params.clienteUsuarioId) {
+      await persistirNotificacionesInternasResiliente(metaNeg.canon, [
+        {
+          usuarioId: params.clienteUsuarioId,
+          negocioCode: metaNeg.notifCode,
+          canal: "IN_APP",
+          titulo,
+          contenidoHtml: contenidoHTML,
+          urlAccion,
+          claveReferencia: `cli-ord-${params.codigoOrden}`,
+        },
+        {
+          usuarioId: params.clienteUsuarioId,
+          negocioCode: metaNeg.notifCode,
+          canal: "PUSH",
+          titulo,
+          contenidoHtml: contenidoHTML,
+          urlAccion,
+          claveReferencia: `cli-ord-${params.codigoOrden}`,
+        },
+      ]);
+    }
+
+    const correoLimpio = (params.clienteCorreo || "").trim().toLowerCase();
+    if (
+      correoLimpio &&
+      correoLimpio.includes("@") &&
+      correoLimpio !== "cliente@ecosistema.ec" &&
+      !correoLimpio.startsWith("consumidorfinal@")
+    ) {
+      await enviarCorreo({
+        negocio: metaNeg.canon,
+        para: correoLimpio,
+        asunto: titulo,
+        html: contenidoHTML,
+      });
+    }
+  } catch (err) {
+    console.warn("Aviso en notificarClienteCompraConfirmada:", err);
   }
 }

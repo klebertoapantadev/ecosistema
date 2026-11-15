@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./enviar-correo": "./src/enviar-correo.ts",
     "./notificar-usuario": "./src/notificar-usuario.ts",
+    "./api-usuario": "./src/api-usuario.ts",
     "./despachador": "./src/despachador.ts"
   },
   "scripts": {

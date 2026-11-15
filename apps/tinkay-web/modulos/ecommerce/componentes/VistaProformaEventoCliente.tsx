@@ -245,6 +245,9 @@ export function VistaProformaEventoCliente({
       texto:
         '¡Pedido confirmado! Esta variación quedó aceptada y reservada. Envíanos el comprobante de transferencia por WhatsApp para validar el abono.',
     });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('eco:refrescar-notificaciones'));
+    }
     router.refresh();
   };
 
@@ -297,6 +300,9 @@ export function VistaProformaEventoCliente({
           : ''
       }`,
     });
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('eco:refrescar-notificaciones'));
+    }
     router.refresh();
   };
 

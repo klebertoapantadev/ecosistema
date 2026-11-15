@@ -9,6 +9,7 @@ import {
   NavegacionPanelLateral,
   type ItemNavegacionPanel,
 } from "@eco/configuracion-negocio";
+import { CampanaNotificaciones } from "@eco/notificaciones";
 import { crearClienteServidor } from "@eco/supabase/servidor";
 import { obtenerContextoAccesoTinkay } from "./acceso-tinkay";
 
@@ -213,18 +214,28 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
             gap: "2px",
           }}
         >
-          <Link
-            href="/panel"
+          <div
             style={{
-              color: "#FFFFFF",
-              textDecoration: "none",
-              fontSize: "1.35rem",
-              fontWeight: 600,
-              letterSpacing: "-0.01em",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "8px",
             }}
           >
-            tinkay
-          </Link>
+            <Link
+              href="/panel"
+              style={{
+                color: "#FFFFFF",
+                textDecoration: "none",
+                fontSize: "1.35rem",
+                fontWeight: 600,
+                letterSpacing: "-0.01em",
+              }}
+            >
+              tinkay
+            </Link>
+            <CampanaNotificaciones negocio={NEGOCIO} usuarioId={perfil.usu_id} />
+          </div>
           <SelloCompilacion className="sello-compilacion" />
         </div>
 

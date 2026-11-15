@@ -10,14 +10,17 @@ export type { NotificacionItem };
 interface Props {
   negocio: string;
   usuarioId?: string;
+  variante?: "oscura" | "clara";
 }
 
-export function CampanaNotificaciones({ negocio }: Props) {
+export function CampanaNotificaciones({ negocio, variante = "oscura" }: Props) {
   const [abierto, setAbierto] = useState(false);
   const [filtro, setFiltro] = useState<"todas" | "no_leidas" | "eliminadas">("todas");
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
   const [idCopiado, setIdCopiado] = useState<string | null>(null);
+  const [alertaEmergente, setAlertaEmergente] = useState<NotificacionItem | null>(null);
   const overridesLocalRef = React.useRef<Record<string, { expiraEn: number; parche: Partial<NotificacionItem> }>>({});
+  const idsConocidosRef = React.useRef<Set<string> | null>(null);
 
   const registrarOverride = (notId: string, parche: Partial<NotificacionItem>) => {
     overridesLocalRef.current[notId] = {
@@ -26,9 +29,73 @@ export function CampanaNotificaciones({ negocio }: Props) {
     };
   };
 
+  const dispararAlertaEmergenteSiNueva = React.useCallback(
+    (lista: NotificacionItem[]) => {
+      if (typeof window === "undefined") return;
+      const claveStorage = `eco_alertas_toast_${negocio}`;
+      let vistasToast: string[] = [];
+      try {
+        const raw = window.sessionStorage.getItem(claveStorage);
+        if (raw) vistasToast = JSON.parse(raw) as string[];
+      } catch {}
+      const setVistas = new Set(vistasToast);
+      const ahoraMs = Date.now();
+
+      const esPrimeraCarga = idsConocidosRef.current === null;
+      const previos = idsConocidosRef.current ?? new Set<string>();
+      const siguienteSet = new Set<string>();
+      let candidataToast: NotificacionItem | null = null;
+
+      for (const n of lista) {
+        siguienteSet.add(n.not_id);
+        if (n.not_eliminada || n.not_leido_en) continue;
+        const posp = n.not_pospuesta_hasta ? new Date(n.not_pospuesta_hasta).getTime() : 0;
+        if (posp > ahoraMs) continue;
+        if (setVistas.has(n.not_id)) continue;
+
+        const edadMs = ahoraMs - new Date(n.not_creado_en).getTime();
+        const esReciente = Number.isFinite(edadMs) && edadMs >= -60000 && edadMs <= 15 * 60 * 1000;
+        const llegoEnVivo = !esPrimeraCarga && !previos.has(n.not_id);
+
+        if ((llegoEnVivo || esReciente) && !candidataToast) {
+          candidataToast = n;
+        }
+      }
+
+      idsConocidosRef.current = siguienteSet;
+
+      if (candidataToast) {
+        setVistas.add(candidataToast.not_id);
+        try {
+          window.sessionStorage.setItem(
+            claveStorage,
+            JSON.stringify(Array.from(setVistas).slice(-80))
+          );
+        } catch {}
+        setAlertaEmergente(candidataToast);
+
+        if ("Notification" in window && Notification.permission === "granted") {
+          try {
+            new Notification(candidataToast.not_titulo, {
+              body: candidataToast.not_contenido_html
+                .replace(/<[^>]*>?/gm, " ")
+                .replace(/\s+/g, " ")
+                .trim()
+                .slice(0, 140),
+              icon: "/favicon.ico",
+            });
+          } catch {}
+        }
+      }
+    },
+    [negocio]
+  );
+
   // Cargar notificaciones in-app reales desde el servidor y consultar periódicamente
-  const cargarNotificaciones = () => {
-    fetch("/api/notificaciones/usuario")
+  const cargarNotificaciones = React.useCallback(() => {
+    fetch(`/api/notificaciones/usuario?negocio=${encodeURIComponent(negocio)}`, {
+      cache: "no-store",
+    })
       .then(res => res.json())
       .then(data => {
         if (data.success && Array.isArray(data.notificaciones)) {
@@ -41,16 +108,26 @@ export function CampanaNotificaciones({ negocio }: Props) {
             return n;
           });
           setNotificaciones(listaConOverrides);
+          dispararAlertaEmergenteSiNueva(listaConOverrides);
         }
       })
       .catch(() => {});
-  };
+  }, [negocio, dispararAlertaEmergenteSiNueva]);
 
   React.useEffect(() => {
     cargarNotificaciones();
     const interval = setInterval(cargarNotificaciones, 8000);
-    return () => clearInterval(interval);
-  }, [negocio]);
+    const alRefrescar = () => cargarNotificaciones();
+    if (typeof window !== "undefined") {
+      window.addEventListener("eco:refrescar-notificaciones", alRefrescar);
+    }
+    return () => {
+      clearInterval(interval);
+      if (typeof window !== "undefined") {
+        window.removeEventListener("eco:refrescar-notificaciones", alRefrescar);
+      }
+    };
+  }, [cargarNotificaciones]);
 
   const ahora = Date.now();
 
@@ -65,10 +142,11 @@ export function CampanaNotificaciones({ negocio }: Props) {
 
   const enviarAccion = async (item: NotificacionItem, accion: "aceptar" | "eliminar" | "posponer" | "restaurar", horas?: number) => {
     try {
-      await fetch("/api/notificaciones/usuario", {
+      await fetch(`/api/notificaciones/usuario?negocio=${encodeURIComponent(negocio)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          negocio,
           not_id: item.not_id,
           accion,
           horas,
@@ -154,10 +232,10 @@ export function CampanaNotificaciones({ negocio }: Props) {
       }))
     );
     try {
-      await fetch("/api/notificaciones/usuario", {
+      await fetch(`/api/notificaciones/usuario?negocio=${encodeURIComponent(negocio)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accion: "eliminar_todas", items: copiaActual })
+        body: JSON.stringify({ negocio, accion: "eliminar_todas", items: copiaActual })
       });
     } catch {}
   };
@@ -183,26 +261,33 @@ export function CampanaNotificaciones({ negocio }: Props) {
     return true;
   });
 
+  const esClara = variante === "clara";
+
   return (
     <>
       {/* Botón Campana con Badge interactivo */}
       <button
         type="button"
-        onClick={() => setAbierto(true)}
+        onClick={() => {
+          setAlertaEmergente(null);
+          setAbierto(true);
+        }}
         title="Centro de Notificaciones e Historial"
+        aria-label={`Centro de notificaciones (${noLeidasCount} pendientes)`}
         style={{
           position: "relative",
-          background: "#161b22",
-          border: "1px solid #30363d",
+          background: esClara ? "#FFFFFF" : "#161b22",
+          border: esClara ? "1.5px solid #D1D5DB" : "1px solid #30363d",
           borderRadius: "50%",
           width: "40px",
           height: "40px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: "#c9d1d9",
+          color: esClara ? "#2D4734" : "#c9d1d9",
           cursor: "pointer",
-          transition: "all 0.2s ease"
+          transition: "all 0.2s ease",
+          flexShrink: 0,
         }}
       >
         <Bell size={19} />
@@ -210,22 +295,152 @@ export function CampanaNotificaciones({ negocio }: Props) {
           <span
             style={{
               position: "absolute",
-              top: "-2px",
-              right: "-2px",
-              background: "#1f6feb",
+              top: "-3px",
+              right: "-3px",
+              background: esClara ? "#DC2626" : "#1f6feb",
               color: "#ffffff",
               fontSize: "0.7rem",
               fontWeight: 800,
               borderRadius: "10px",
               padding: "1px 6px",
-              boxShadow: "0 0 10px rgba(31, 111, 235, 0.8)",
-              border: "2px solid #0d1117"
+              boxShadow: esClara
+                ? "0 2px 8px rgba(220, 38, 38, 0.45)"
+                : "0 0 10px rgba(31, 111, 235, 0.8)",
+              border: esClara ? "2px solid #FFFFFF" : "2px solid #0d1117",
             }}
           >
             {noLeidasCount}
           </span>
         )}
       </button>
+
+      {/* Alerta Emergente en Vivo (Toast no intrusivo en esquina superior derecha) */}
+      {alertaEmergente && !abierto && (
+        <div
+          role="alert"
+          style={{
+            position: "fixed",
+            top: "18px",
+            right: "18px",
+            width: "calc(100vw - 36px)",
+            maxWidth: "390px",
+            background: "#0F172A",
+            color: "#F8FAFC",
+            borderRadius: "14px",
+            border: "1.5px solid #10B981",
+            boxShadow: "0 18px 40px rgba(15, 23, 42, 0.45)",
+            padding: "14px 16px",
+            zIndex: 100001,
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+              <div
+                style={{
+                  width: "34px",
+                  height: "34px",
+                  borderRadius: "10px",
+                  background: "rgba(16, 185, 129, 0.18)",
+                  color: "#34D399",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <Bell size={18} />
+              </div>
+              <div>
+                <span
+                  style={{
+                    display: "block",
+                    fontSize: "0.68rem",
+                    fontWeight: 800,
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                    color: "#34D399",
+                    marginBottom: "2px",
+                  }}
+                >
+                  Nueva Alerta · {negocio.toUpperCase()}
+                </span>
+                <strong style={{ fontSize: "0.86rem", lineHeight: 1.35, color: "#FFFFFF", display: "block" }}>
+                  {alertaEmergente.not_titulo}
+                </strong>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAlertaEmergente(null)}
+              title="Cerrar alerta"
+              aria-label="Cerrar alerta"
+              style={{
+                background: "rgba(255, 255, 255, 0.08)",
+                border: "none",
+                borderRadius: "50%",
+                width: "26px",
+                height: "26px",
+                color: "#CBD5E1",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                flexShrink: 0,
+              }}
+            >
+              <X size={14} />
+            </button>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px" }}>
+            <button
+              type="button"
+              onClick={() => {
+                marcarComoLeida(alertaEmergente);
+                setAlertaEmergente(null);
+              }}
+              title="Marcar alerta como leída"
+              aria-label="Entendido"
+              style={{
+                padding: "6px 12px",
+                borderRadius: "8px",
+                border: "1px solid #334155",
+                background: "#1E293B",
+                color: "#E2E8F0",
+                fontSize: "0.76rem",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              Entendido
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setAlertaEmergente(null);
+                setAbierto(true);
+              }}
+              title="Ver detalle en el centro de notificaciones"
+              aria-label="Ver Detalle"
+              style={{
+                padding: "6px 14px",
+                borderRadius: "8px",
+                border: "none",
+                background: "#10B981",
+                color: "#052E16",
+                fontSize: "0.76rem",
+                fontWeight: 800,
+                cursor: "pointer",
+              }}
+            >
+              Ver Detalle
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Drawer Lateral Fijo con Fondo Oscuro Backdrop */}
       {abierto && (

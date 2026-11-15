@@ -386,7 +386,10 @@ export function ModalCheckoutTinkay() {
     const usarDatosFactura = mostrarCamposFacturacion;
     const nombreEfectivo = usarDatosFactura ? datosFactura.nombreCompleto.trim() : '';
     const idEfectiva = usarDatosFactura ? datosFactura.identificacion.trim() : '';
-    const correoEfectivo = usarDatosFactura ? datosFactura.correo.trim() : '';
+    const correoCandidato = datosFactura.correo.trim();
+    const correoEfectivo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoCandidato)
+      ? correoCandidato
+      : '';
     const telEfectivo = esRetiroEnTienda && !telefonoNormalizado ? '' : telefonoNormalizado;
 
     return {
@@ -633,6 +636,9 @@ export function ModalCheckoutTinkay() {
     setCodigoOrdenGenerado(resultado.codigoOrden);
     setPaso('exito');
     vaciarCarrito();
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('eco:refrescar-notificaciones'));
+    }
   };
 
   const handleCerrar = () => {
@@ -1524,13 +1530,15 @@ export function ModalCheckoutTinkay() {
                             identificacion: mostrarCamposFacturacion
                               ? datosFactura.identificacion.trim()
                               : '',
-                            email: mostrarCamposFacturacion ? datosFactura.correo.trim() : '',
+                            email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(datosFactura.correo.trim())
+                              ? datosFactura.correo.trim()
+                              : '',
                             telefono: telefonoNormalizado,
                             direccion:
                               (modalidadEntrega === 'unificada' && entregaUnificada.direccion) ||
                               'Quito, Ecuador',
                           }}
-                          etiqueta={`Pagar $${totalPagar.toFixed(2)}`}
+                          etiqueta={`Pagar ${totalPagar.toFixed(2)}`}
                           alPagoAprobado={(_identificador: string, pago: PagoPluxConsultado) => {
                             setResumenExito({
                               totalPagado: totalPagar,
@@ -1543,6 +1551,9 @@ export function ModalCheckoutTinkay() {
                             setCodigoOrdenGenerado(ordenPluxPreparada.codigoOrden);
                             setPaso('exito');
                             vaciarCarrito();
+                            if (typeof window !== 'undefined') {
+                              window.dispatchEvent(new CustomEvent('eco:refrescar-notificaciones'));
+                            }
                           }}
                         />
                       </div>

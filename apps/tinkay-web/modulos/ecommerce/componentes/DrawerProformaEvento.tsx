@@ -321,6 +321,9 @@ export function DrawerProformaEvento() {
 
     vaciarProforma();
     setDrawerProformaAbierto(false);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('eco:refrescar-notificaciones'));
+    }
     router.push(`/proforma/${res.tokenAprobacion}`);
   };
 

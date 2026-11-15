@@ -1044,7 +1044,9 @@ export async function registrarPedidoTiendaAction(
   const compradorEfectivo = {
     nombreCompleto: nombreIngresado || "CONSUMIDOR FINAL",
     identificacion: idIngresada || "9999999999999",
-    correo: correoIngresado,
+    correo:
+      correoIngresado ||
+      (esUsuarioRegistradoNegocio && user?.email ? String(user.email).trim() : ""),
     telefono: telIngresado,
   };
 
@@ -1167,33 +1169,55 @@ export async function registrarPedidoTiendaAction(
         : undefined;
     if (metodoPagoNorm !== "plux") {
       try {
-        const { notificarStaffNuevoPedido } = await import("@eco/notificaciones/notificar-usuario");
-        await notificarStaffNuevoPedido({
-          negocio: negNorm,
-          codigo: codigoCreado,
-          clienteNombre: compradorEfectivo.nombreCompleto,
-          clienteCorreo: compradorEfectivo.correo || undefined,
-          clienteTelefono: compradorEfectivo.telefono || undefined,
-          montoUsd: entrada.totalPagar,
-          metodoPago: metodoPagoNorm.toUpperCase(),
-          canalOrigen: "Tienda Web",
-          tipoEntrega:
-            entrada.modalidadEntrega === "unificada"
-              ? logisticaPrincipal.retiro_en_local
-                ? "RETIRO EN TIENDA"
-                : "DOMICILIO"
-              : "MULTIDESTINO",
-          direccionEntrega: logisticaPrincipal.direccion,
-          fechaEntrega: logisticaPrincipal.fecha_entrega,
-          dedicatoria: entrada.comprobanteTransferencia?.nombreArchivo
-            ? `Comprobante subido: ${entrada.comprobanteTransferencia.nombreArchivo}`
-            : undefined,
-          itemsResumen: itemsEnriquecidos.map(
-            (it) => `${it.cantidad}x ${it.descripcion} ($${it.total_linea.toFixed(2)})`
-          ),
-        });
+        const {
+          notificarClienteCompraConfirmada,
+          notificarStaffNuevoPedido,
+        } = await import("@eco/notificaciones/notificar-usuario");
+        const tipoEntregaTexto =
+          entrada.modalidadEntrega === "unificada"
+            ? logisticaPrincipal.retiro_en_local
+              ? "RETIRO EN TIENDA"
+              : "DOMICILIO"
+            : "MULTIDESTINO";
+        const resumenItemsNotif = itemsEnriquecidos.map(
+          (it) => `${it.cantidad}x ${it.descripcion} ($${it.total_linea.toFixed(2)})`
+        );
+        await Promise.allSettled([
+          notificarClienteCompraConfirmada({
+            negocio: negNorm,
+            codigoOrden: codigoCreado,
+            clienteUsuarioId: user?.id ?? null,
+            clienteNombre: compradorEfectivo.nombreCompleto,
+            clienteCorreo: compradorEfectivo.correo || null,
+            montoUsd: entrada.totalPagar,
+            metodoPago: metodoPagoNorm.toUpperCase(),
+            esTransferenciaPendiente: metodoPagoNorm === "transferencia",
+            modalidadEntrega: tipoEntregaTexto,
+            direccionEntrega: logisticaPrincipal.direccion,
+            fechaEntrega: logisticaPrincipal.fecha_entrega,
+            itemsResumen: resumenItemsNotif,
+            whatsappTienda: configCheckout.whatsappTienda,
+          }),
+          notificarStaffNuevoPedido({
+            negocio: negNorm,
+            codigo: codigoCreado,
+            clienteNombre: compradorEfectivo.nombreCompleto,
+            clienteCorreo: compradorEfectivo.correo || undefined,
+            clienteTelefono: compradorEfectivo.telefono || undefined,
+            montoUsd: entrada.totalPagar,
+            metodoPago: metodoPagoNorm.toUpperCase(),
+            canalOrigen: "Tienda Web",
+            tipoEntrega: tipoEntregaTexto,
+            direccionEntrega: logisticaPrincipal.direccion,
+            fechaEntrega: logisticaPrincipal.fecha_entrega,
+            dedicatoria: entrada.comprobanteTransferencia?.nombreArchivo
+              ? `Comprobante subido: ${entrada.comprobanteTransferencia.nombreArchivo}`
+              : undefined,
+            itemsResumen: resumenItemsNotif,
+          }),
+        ]);
       } catch (errNotif) {
-        console.warn("Aviso al notificar venta de tienda a staff:", errNotif);
+        console.warn("Aviso al notificar venta de tienda a cliente y staff:", errNotif);
       }
     }
     if (entrada.conversacionWebId) {
@@ -1392,30 +1416,55 @@ export async function registrarPedidoTiendaAction(
 
   if (metodoPagoNorm !== "plux") {
     try {
-      const { notificarStaffNuevoPedido } = await import("@eco/notificaciones/notificar-usuario");
-      await notificarStaffNuevoPedido({
-        negocio: negNorm,
-        codigo: codigoOrden,
-        clienteNombre: compradorEfectivo.nombreCompleto,
-        clienteCorreo: compradorEfectivo.correo || undefined,
-        clienteTelefono: compradorEfectivo.telefono || undefined,
-        montoUsd: entrada.totalPagar,
-        metodoPago: metodoPagoNorm.toUpperCase(),
-        canalOrigen: "Tienda Web",
-        tipoEntrega:
-          entrada.modalidadEntrega === "unificada"
-            ? logisticaPrincipal.retiro_en_local
-              ? "RETIRO EN TIENDA"
-              : "DOMICILIO"
-            : "MULTIDESTINO",
-        direccionEntrega: logisticaPrincipal.direccion,
-        fechaEntrega: logisticaPrincipal.fecha_entrega,
-        itemsResumen: itemsEnriquecidos.map(
-          (it) => `${it.cantidad}x ${it.descripcion} ($${it.total_linea.toFixed(2)})`
-        ),
-      });
+      const {
+        notificarClienteCompraConfirmada,
+        notificarStaffNuevoPedido,
+      } = await import("@eco/notificaciones/notificar-usuario");
+      const tipoEntregaTexto =
+        entrada.modalidadEntrega === "unificada"
+          ? logisticaPrincipal.retiro_en_local
+            ? "RETIRO EN TIENDA"
+            : "DOMICILIO"
+          : "MULTIDESTINO";
+      const resumenItemsNotif = itemsEnriquecidos.map(
+        (it) => `${it.cantidad}x ${it.descripcion} ($${it.total_linea.toFixed(2)})`
+      );
+      await Promise.allSettled([
+        notificarClienteCompraConfirmada({
+          negocio: negNorm,
+          codigoOrden: codigoOrden,
+          clienteUsuarioId: user?.id ?? null,
+          clienteNombre: compradorEfectivo.nombreCompleto,
+          clienteCorreo: compradorEfectivo.correo || null,
+          montoUsd: entrada.totalPagar,
+          metodoPago: metodoPagoNorm.toUpperCase(),
+          esTransferenciaPendiente: metodoPagoNorm === "transferencia",
+          modalidadEntrega: tipoEntregaTexto,
+          direccionEntrega: logisticaPrincipal.direccion,
+          fechaEntrega: logisticaPrincipal.fecha_entrega,
+          itemsResumen: resumenItemsNotif,
+          whatsappTienda: configCheckout.whatsappTienda,
+        }),
+        notificarStaffNuevoPedido({
+          negocio: negNorm,
+          codigo: codigoOrden,
+          clienteNombre: compradorEfectivo.nombreCompleto,
+          clienteCorreo: compradorEfectivo.correo || undefined,
+          clienteTelefono: compradorEfectivo.telefono || undefined,
+          montoUsd: entrada.totalPagar,
+          metodoPago: metodoPagoNorm.toUpperCase(),
+          canalOrigen: "Tienda Web",
+          tipoEntrega: tipoEntregaTexto,
+          direccionEntrega: logisticaPrincipal.direccion,
+          fechaEntrega: logisticaPrincipal.fecha_entrega,
+          dedicatoria: entrada.comprobanteTransferencia?.nombreArchivo
+            ? `Comprobante subido: ${entrada.comprobanteTransferencia.nombreArchivo}`
+            : undefined,
+          itemsResumen: resumenItemsNotif,
+        }),
+      ]);
     } catch (errNotif) {
-      console.warn("Aviso al notificar venta de tienda (respaldo) a staff:", errNotif);
+      console.warn("Aviso al notificar venta de tienda (respaldo) a cliente y staff:", errNotif);
     }
   }
 
@@ -3365,34 +3414,58 @@ export async function confirmarOrdenTransferenciaProformaAction(entrada: {
 
   const notificarTransferenciaStaff = async () => {
     try {
-      const { notificarStaffNuevoPedido } = await import("@eco/notificaciones/notificar-usuario");
+      const {
+        notificarClienteCompraConfirmada,
+        notificarStaffNuevoPedido,
+      } = await import("@eco/notificaciones/notificar-usuario");
+      const {
+        data: { user: usrActual },
+      } = await supabase.auth.getUser();
       const consultaNueva = await obtenerProformaPorTokenAction(tokenLimpio);
       if (consultaNueva.ok) {
         const prf = consultaNueva.proforma;
         const montoCobro =
           entrada.modalidadCobro === "RESERVA_70" ? prf.montoReserva70Usd : prf.total;
-        await notificarStaffNuevoPedido({
-          negocio: prf.negocio,
-          codigo: prf.codigoProforma,
-          clienteNombre: prf.comprador.nombreCompleto,
-          clienteCorreo: prf.comprador.correo,
-          clienteTelefono: prf.comprador.whatsapp || undefined,
-          montoUsd: montoCobro,
-          metodoPago: `TRANSFERENCIA BANCARIA (${
-            entrada.modalidadCobro === "RESERVA_70" ? "Reserva 70%" : "Total 100%"
-          })`,
-          canalOrigen: "Proforma Eventos",
-          tipoEntrega: "Evento / Montaje",
-          direccionEntrega: prf.ubicacion?.direccion,
-          fechaEntrega: prf.evento.fechaEvento,
-          dedicatoria: entrada.notaTransferencia,
-          itemsResumen: prf.items.map(
-            (it) => `${it.cantidad}x ${it.descripcion} ($${(it.cantidad * it.precioUnitario).toFixed(2)})`
-          ),
-        });
+        const etiquetaMetodo = `TRANSFERENCIA BANCARIA (${
+          entrada.modalidadCobro === "RESERVA_70" ? "Reserva 70%" : "Total 100%"
+        })`;
+        const resumenItemsPrf = prf.items.map(
+          (it) => `${it.cantidad}x ${it.descripcion} ($${(it.cantidad * it.precioUnitario).toFixed(2)})`
+        );
+        await Promise.allSettled([
+          notificarClienteCompraConfirmada({
+            negocio: prf.negocio,
+            codigoOrden: prf.codigoProforma,
+            clienteUsuarioId: usrActual?.id ?? null,
+            clienteNombre: prf.comprador.nombreCompleto,
+            clienteCorreo: prf.comprador.correo || null,
+            montoUsd: montoCobro,
+            metodoPago: etiquetaMetodo,
+            esTransferenciaPendiente: true,
+            modalidadEntrega: "Evento / Montaje",
+            direccionEntrega: prf.ubicacion?.direccion,
+            fechaEntrega: prf.evento.fechaEvento,
+            itemsResumen: resumenItemsPrf,
+          }),
+          notificarStaffNuevoPedido({
+            negocio: prf.negocio,
+            codigo: prf.codigoProforma,
+            clienteNombre: prf.comprador.nombreCompleto,
+            clienteCorreo: prf.comprador.correo,
+            clienteTelefono: prf.comprador.whatsapp || undefined,
+            montoUsd: montoCobro,
+            metodoPago: etiquetaMetodo,
+            canalOrigen: "Proforma Eventos",
+            tipoEntrega: "Evento / Montaje",
+            direccionEntrega: prf.ubicacion?.direccion,
+            fechaEntrega: prf.evento.fechaEvento,
+            dedicatoria: entrada.notaTransferencia,
+            itemsResumen: resumenItemsPrf,
+          }),
+        ]);
       }
     } catch (errNotif) {
-      console.warn("Aviso al notificar orden transferencia a staff:", errNotif);
+      console.warn("Aviso al notificar orden transferencia a cliente y staff:", errNotif);
     }
   };
 
