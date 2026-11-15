@@ -3,43 +3,47 @@
 -- Descripción:
 --   1. Expone `comun_notificacion` y `comun_facturacion` en PostgREST y aplica
 --      GRANT por columna en `comun_notificacion.not_registro` (Regla 13 AGENTS.md).
---   2. Amplía `comun_seguridad.seg_fn_obtener_staff_negocio` para incluir asesores
---      de ventas (`VENTAS`/`VENDEDOR`), superadmins de plataforma y los buzones
---      operativos/administrativos de Tinkay (`tinkay.uio@gmail.com`,
---      `familiammtg@gmail.com`, `kleber.toapanta.ch@gmail.com`).
---   3. Crea RPCs SECURITY DEFINER en `comun_seguridad` para emitir, listar y
+--   2. Elimina temporalmente políticas RLS dependientes de `not_negocio` antes de
+--      ampliar `not_negocio` a `VARCHAR(40)` y las recrea restringiendo acceso
+--      administrativo únicamente a staff real (nunca a rol CLIENTE).
+--   3. Amplía `comun_seguridad.seg_fn_obtener_staff_negocio` para incluir asesores
+--      de ventas (`VENTAS`/`VENDEDOR`), superadmins de plataforma y las cuentas
+--      titulares operativas de Tinkay (`tinkay.uio@gmail.com`,
+--      `kleber.toapanta.ch@gmail.com`).
+--   4. Crea RPCs SECURITY DEFINER en `comun_seguridad` para emitir, listar y
 --      gestionar alertas In-App / Push sin requerir `service_role` en cliente/SSR:
 --      - `seg_fn_emitir_notificaciones_internas(p_negocio, p_items)`
 --      - `seg_fn_listar_mis_notificaciones(p_negocio)`
 --      - `seg_fn_accion_mi_notificacion(p_not_id, p_accion, p_horas)`
 -- =============================================================================
 
--- 1. Exposición segura en PostgREST y permisos granulares (Regla 13 AGENTS.md)
-ALTER ROLE authenticator SET pgrst.db_schemas = 'public, graphql_public, comun_auditoria, comun_configuracion, comun_seguridad, comun_catalogo, tranqui_legal, comun_comercio, comun_notificacion, comun_facturacion';
-NOTIFY pgrst, 'reload config';
+-- 0. Garantizar función canónica de normalización de negocio (idempotente)
+CREATE OR REPLACE FUNCTION comun_seguridad.seg_fn_normalizar_negocio(p_negocio text)
+RETURNS text
+LANGUAGE sql
+IMMUTABLE
+SET search_path = ''
+AS $$
+  SELECT CASE lower(trim(coalesce(p_negocio, '')))
+    WHEN 'tranqi' THEN 'tranqi'
+    WHEN 'tranq' THEN 'tranqi'
+    WHEN 'trq' THEN 'tranqi'
+    WHEN 'legal' THEN 'tranqi'
+    WHEN 'tinkay' THEN 'tinkay'
+    WHEN 'tnk' THEN 'tinkay'
+    WHEN 'fastfix' THEN 'fastfix'
+    WHEN 'ffh' THEN 'fastfix'
+    WHEN 'margaritas' THEN 'margaritas'
+    WHEN 'mrg' THEN 'margaritas'
+    WHEN '' THEN 'tranqi'
+    ELSE lower(trim(p_negocio))
+  END;
+$$;
 
-GRANT USAGE ON SCHEMA comun_notificacion TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION comun_seguridad.seg_fn_normalizar_negocio(text)
+  TO anon, authenticated, service_role;
 
-ALTER TABLE comun_notificacion.not_registro
-  ALTER COLUMN not_negocio TYPE VARCHAR(40);
-
-REVOKE UPDATE ON comun_notificacion.not_registro FROM anon, authenticated;
-GRANT SELECT ON comun_notificacion.not_registro TO authenticated;
-GRANT UPDATE (not_leido_en, not_detalles) ON comun_notificacion.not_registro TO authenticated;
-GRANT ALL ON comun_notificacion.not_registro TO service_role;
-
-DROP POLICY IF EXISTS not_registro_select_propio ON comun_notificacion.not_registro;
-CREATE POLICY not_registro_select_propio ON comun_notificacion.not_registro
-  FOR SELECT TO authenticated
-  USING (not_usuario_id = auth.uid());
-
-DROP POLICY IF EXISTS not_registro_update_propio ON comun_notificacion.not_registro;
-CREATE POLICY not_registro_update_propio ON comun_notificacion.not_registro
-  FOR UPDATE TO authenticated
-  USING (not_usuario_id = auth.uid())
-  WITH CHECK (not_usuario_id = auth.uid());
-
--- 2. Función auxiliar para resolver código corto de notificación por negocio
+-- 1. Función auxiliar para resolver código corto de notificación por negocio
 CREATE OR REPLACE FUNCTION comun_seguridad.seg_fn_codigo_notificacion_negocio(p_negocio text)
 RETURNS text
 LANGUAGE sql
@@ -57,7 +61,7 @@ $$;
 GRANT EXECUTE ON FUNCTION comun_seguridad.seg_fn_codigo_notificacion_negocio(text)
   TO anon, authenticated, service_role;
 
--- 3. Actualizar seg_fn_obtener_staff_negocio para cubrir ventas, operadores, admins y superadmins
+-- 2. Actualizar seg_fn_obtener_staff_negocio para cubrir ventas, operadores, admins y superadmins
 DROP FUNCTION IF EXISTS comun_seguridad.seg_fn_obtener_staff_negocio(text);
 
 CREATE OR REPLACE FUNCTION comun_seguridad.seg_fn_obtener_staff_negocio(p_negocio text DEFAULT 'tranqi')
@@ -135,6 +139,83 @@ $$;
 
 GRANT EXECUTE ON FUNCTION comun_seguridad.seg_fn_obtener_staff_negocio(text)
   TO anon, authenticated, service_role;
+
+-- 3. Exposición en PostgREST, ampliación de `not_negocio` y recreación limpia de RLS
+ALTER ROLE authenticator SET pgrst.db_schemas = 'public, graphql_public, comun_auditoria, comun_configuracion, comun_seguridad, comun_catalogo, tranqui_legal, comun_comercio, comun_notificacion, comun_facturacion';
+NOTIFY pgrst, 'reload config';
+
+GRANT USAGE ON SCHEMA comun_notificacion TO anon, authenticated, service_role;
+
+-- Eliminar todas las políticas existentes en `not_registro` que dependen de `not_negocio`
+-- antes de cambiar el tipo de la columna (evita SQLSTATE 0A000).
+DO $$
+DECLARE
+  v_pol record;
+BEGIN
+  FOR v_pol IN
+    SELECT policyname
+    FROM pg_policies
+    WHERE schemaname = 'comun_notificacion'
+      AND tablename = 'not_registro'
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON comun_notificacion.not_registro', v_pol.policyname);
+  END LOOP;
+END;
+$$;
+
+ALTER TABLE comun_notificacion.not_registro
+  ALTER COLUMN not_negocio TYPE VARCHAR(40);
+
+ALTER TABLE comun_notificacion.not_registro ENABLE ROW LEVEL SECURITY;
+
+REVOKE UPDATE ON comun_notificacion.not_registro FROM anon, authenticated;
+GRANT SELECT, INSERT ON comun_notificacion.not_registro TO authenticated;
+GRANT UPDATE (not_leido_en, not_detalles) ON comun_notificacion.not_registro TO authenticated;
+GRANT ALL ON comun_notificacion.not_registro TO service_role;
+
+-- Lectura: el destinatario ve únicamente sus propias notificaciones; staff del negocio puede auditar las de su negocio
+CREATE POLICY not_registro_select_propio_o_staff ON comun_notificacion.not_registro
+  FOR SELECT TO authenticated
+  USING (
+    not_usuario_id = auth.uid()
+    OR EXISTS (
+      SELECT 1
+      FROM comun_seguridad.seg_fn_obtener_staff_negocio(not_negocio) s
+      WHERE s.usu_id = auth.uid()
+    )
+  );
+
+-- Actualización (acotada por GRANT UPDATE a `not_leido_en` y `not_detalles`)
+CREATE POLICY not_registro_update_propio_o_staff ON comun_notificacion.not_registro
+  FOR UPDATE TO authenticated
+  USING (
+    not_usuario_id = auth.uid()
+    OR EXISTS (
+      SELECT 1
+      FROM comun_seguridad.seg_fn_obtener_staff_negocio(not_negocio) s
+      WHERE s.usu_id = auth.uid()
+    )
+  )
+  WITH CHECK (
+    not_usuario_id = auth.uid()
+    OR EXISTS (
+      SELECT 1
+      FROM comun_seguridad.seg_fn_obtener_staff_negocio(not_negocio) s
+      WHERE s.usu_id = auth.uid()
+    )
+  );
+
+-- Inserción directa desde consola de campañas / staff autorizado del negocio
+CREATE POLICY not_registro_insert_staff ON comun_notificacion.not_registro
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    not_usuario_id = auth.uid()
+    OR EXISTS (
+      SELECT 1
+      FROM comun_seguridad.seg_fn_obtener_staff_negocio(not_negocio) s
+      WHERE s.usu_id = auth.uid()
+    )
+  );
 
 -- 4. RPC SECURITY DEFINER para emitir alertas In-App / Push (staff del negocio o usuario actual)
 CREATE OR REPLACE FUNCTION comun_seguridad.seg_fn_emitir_notificaciones_internas(
