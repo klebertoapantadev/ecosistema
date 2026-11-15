@@ -91,7 +91,7 @@ export async function obtenerSolicitudPropia(usuarioId: string) {
     .limit(1)
     .maybeSingle();
 
-  if (!data || String((data as any).ssc_resumen_profesional || "").includes(MARCA_REGISTRO_MANUAL)) {
+  if (!data || String((data as Record<string, unknown>).ssc_resumen_profesional || "").includes(MARCA_REGISTRO_MANUAL)) {
     return null;
   }
 
@@ -108,7 +108,7 @@ export async function obtenerSolicitudPropia(usuarioId: string) {
 
     if (ultRev?.rev_decision === "aceptada" && data.ssc_estado !== "aceptada") {
       data.ssc_estado = "aceptada";
-      await (adminSupabase as any)
+      await adminSupabase
         .schema("tranqui_legal")
         .from("trq_solicitud_socio")
         .update({ ssc_estado: "aceptada", ssc_actualizado_en: new Date().toISOString() })
@@ -125,9 +125,8 @@ export async function obtenerSolicitudPropia(usuarioId: string) {
   // Firmar URLs de documentos existentes para el solicitante y normalizar tipos
   const docs = data.trq_documento_socio;
   if (Array.isArray(docs) && docs.length > 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const docsFirmados = await Promise.all(
-      docs.map(async (d: any) => {
+      docs.map(async (d) => {
         const tipoNormalizado = normalizarTipoDocumento(d);
         if (!d.dcs_url) return { ...d, dcs_tipo: tipoNormalizado, url: null };
         if (d.dcs_url.startsWith("data:") || d.dcs_url.startsWith("http")) {
@@ -198,10 +197,11 @@ export async function listarSolicitudesParaAdmin(estado?: string) {
   if (error) throw new Error(error.message);
 
   const dataFiltrada = (data ?? []).filter(
-    (s: any) => !String(s.ssc_resumen_profesional || "").includes(MARCA_REGISTRO_MANUAL)
+    (s) => !String((s as Record<string, unknown>).ssc_resumen_profesional || "").includes(MARCA_REGISTRO_MANUAL)
   );
 
-  const rawList = dataFiltrada.map((s: any) => {
+  const rawList = dataFiltrada.map((s) => {
+    const sReg = s as Record<string, unknown>;
     let estadoReal = s.ssc_estado;
     const revs = (s.trq_revision_solicitud || []) as Array<{ rev_decision: string; rev_creado_en: string }>;
     if (revs.length > 0) {
@@ -223,7 +223,7 @@ export async function listarSolicitudesParaAdmin(estado?: string) {
     const docs = (s.trq_documento_socio || []) as Array<{ dcs_id: string; dcs_tipo: string; dcs_nombre_archivo?: string | null; dcs_comentario?: string | null; dcs_creado_en?: string | null }>;
     const propuestas = docs.filter(d => d.dcs_comentario?.includes("[PROPUESTA_MODIFICACION_CONTRATO]"));
     const tieneContratoFirmado = docs.some(d => d.dcs_tipo === "contrato_socio");
-    const contratoConfirmado = Boolean(s.ssc_contrato_confirmado_en);
+    const contratoConfirmado = Boolean(sReg.ssc_contrato_confirmado_en);
 
     let nivelUrgencia: "activo_confirmado" | "urgente_contrato" | "urgente_propuesta" | "pendiente_revision" | "esperando_abogado" | "observada" | "normal" = "normal";
     let etiquetaUrgencia = "";
@@ -331,7 +331,7 @@ export async function obtenerDetalleSolicitudParaAdmin(solicitudId: string) {
   if (ultDecision === "aceptada" && solicitud.ssc_estado !== "aceptada") {
     solicitud.ssc_estado = "aceptada";
     try {
-      await (adminSupabase as any)
+      await adminSupabase
         .schema("tranqui_legal")
         .from("trq_solicitud_socio")
         .update({ ssc_estado: "aceptada", ssc_actualizado_en: new Date().toISOString() })
@@ -437,9 +437,40 @@ export interface VersionContratoSocio {
   creador_nombre?: string;
 }
 
+type FilaVersionContratoConCreador = VersionContratoSocio & {
+  creador?: {
+    usu_nombres?: string | null;
+    usu_apellidos?: string | null;
+    usu_correo?: string | null;
+  } | null;
+};
+
+interface ClienteTablaGenerica {
+  schema: (esquema: string) => {
+    from: (tabla: string) => {
+      select: (cols: string) => {
+        eq: (col: string, val: string) => {
+          order: (col: string, opts: { ascending: boolean }) => {
+            order: (col: string, opts: { ascending: boolean }) => {
+              limit: (n: number) => {
+                maybeSingle: () => Promise<{ data: unknown; error: { message: string } | null }>;
+              };
+            } & PromiseLike<{ data: unknown[] | null; error: { message: string } | null }>;
+          };
+        };
+        order: (col: string, opts: { ascending: boolean }) => {
+          limit: (n: number) => {
+            maybeSingle: () => Promise<{ data: unknown; error: { message: string } | null }>;
+          };
+        };
+      };
+    };
+  };
+}
+
 export async function obtenerVersionesContratoSocio(solicitudId: string): Promise<VersionContratoSocio[]> {
   const supabase = await crearClienteServidor();
-  const adminSupabase = (crearClienteAdmin() || supabase) as any;
+  const adminSupabase = (crearClienteAdmin() || supabase) as unknown as ClienteTablaGenerica;
 
   const { data, error } = await adminSupabase
     .schema("tranqui_legal")
@@ -454,9 +485,9 @@ export async function obtenerVersionesContratoSocio(solicitudId: string): Promis
 
   if (error || !data) return [];
 
-  return (data as any[]).map((v: any) => {
+  return (data as FilaVersionContratoConCreador[]).map((v) => {
     const creadorNom = v.creador
-      ? [v.creador.usu_nombres, v.creador.usu_apellidos].filter(Boolean).join(" ") || v.creador.usu_correo
+      ? (([v.creador.usu_nombres, v.creador.usu_apellidos].filter(Boolean).join(" ") || v.creador.usu_correo) as string)
       : "Sistema";
     return {
       ...v,
@@ -467,10 +498,10 @@ export async function obtenerVersionesContratoSocio(solicitudId: string): Promis
 
 export async function obtenerUltimaVersionContratoSocio(solicitudId: string) {
   const supabase = await crearClienteServidor();
-  const adminSupabase = (crearClienteAdmin() || supabase) as any;
+  const adminSupabase = (crearClienteAdmin() || supabase) as unknown as ClienteTablaGenerica;
 
   // 1. Buscar si hay una versión personalizada emitida para esta solicitud
-  const { data } = await adminSupabase
+  const { data: rawData } = await adminSupabase
     .schema("tranqui_legal")
     .from("trq_version_contrato_socio")
     .select("*")
@@ -480,20 +511,22 @@ export async function obtenerUltimaVersionContratoSocio(solicitudId: string) {
     .limit(1)
     .maybeSingle();
 
+  const data = rawData as VersionContratoSocio | null;
+
   if (data) {
     return {
       existeVersionPersonalizada: true,
-      version: (data as any).vcs_numero_version as number,
-      titulo: (data as any).vcs_titulo as string,
-      contenido: (data as any).vcs_contenido_md as string,
-      comentarios: (data as any).vcs_comentarios as string | null,
-      tipoEvento: (data as any).vcs_tipo_evento as string,
-      creadoEn: (data as any).vcs_creado_en as string,
+      version: data.vcs_numero_version,
+      titulo: data.vcs_titulo,
+      contenido: data.vcs_contenido_md,
+      comentarios: data.vcs_comentarios,
+      tipoEvento: data.vcs_tipo_evento as string,
+      creadoEn: data.vcs_creado_en,
     };
   }
 
   // 2. Si aún no se ha emitido una versión específica, obtener la plantilla base
-  const { data: plantilla } = await adminSupabase
+  const { data: rawPlantilla } = await adminSupabase
     .schema("tranqui_legal")
     .from("trq_plantilla_contrato")
     .select("*")
@@ -501,11 +534,13 @@ export async function obtenerUltimaVersionContratoSocio(solicitudId: string) {
     .limit(1)
     .maybeSingle();
 
+  const plantilla = rawPlantilla as { pct_titulo?: string | null; pct_contenido?: string | null } | null;
+
   return {
     existeVersionPersonalizada: false,
     version: 1,
-    titulo: (plantilla as any)?.pct_titulo || "CONTRATO DE PRESTACIÓN DE SERVICIOS Y ASOCIACIÓN LEGAL",
-    contenido: (plantilla as any)?.pct_contenido || "",
+    titulo: plantilla?.pct_titulo || "CONTRATO DE PRESTACIÓN DE SERVICIOS Y ASOCIACIÓN LEGAL",
+    contenido: plantilla?.pct_contenido || "",
     comentarios: null,
     tipoEvento: "BORRADOR_INICIAL",
     creadoEn: new Date().toISOString(),
