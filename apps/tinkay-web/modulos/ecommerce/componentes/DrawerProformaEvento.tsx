@@ -125,6 +125,17 @@ export function DrawerProformaEvento() {
     };
   }, [drawerProformaAbierto, correo]);
 
+  useEffect(() => {
+    if (!drawerProformaAbierto) return;
+    const onKeyDown = (ev: KeyboardEvent) => {
+      if (ev.key === 'Escape' && !modalTerminosWaAbierto) {
+        setDrawerProformaAbierto(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [drawerProformaAbierto, modalTerminosWaAbierto, setDrawerProformaAbierto]);
+
   // Sugerir ÚNICAMENTE otros productos de Eventos (cero extras florales, cero cintas, cero renta)
   const sugerenciasEventos = useMemo(() => {
     const catalogo = productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY;
@@ -279,8 +290,13 @@ export function DrawerProformaEvento() {
     router.push(`/proforma/${res.tokenAprobacion}`);
   };
 
-  const urlRegistroConRetorno = `/registro?destino=${encodeURIComponent('/?proforma=abierta')}`;
-  const urlIngresoConRetorno = `/ingresar?destino=${encodeURIComponent('/?proforma=abierta')}`;
+  const rutaBaseRetorno =
+    typeof window !== 'undefined' && window.location.pathname
+      ? window.location.pathname
+      : '/';
+  const destinoConProforma = `${rutaBaseRetorno}?proforma=abierta`;
+  const urlRegistroConRetorno = `/registro?destino=${encodeURIComponent(destinoConProforma)}`;
+  const urlIngresoConRetorno = `/ingresar?destino=${encodeURIComponent(destinoConProforma)}`;
 
   const inputEstilo: React.CSSProperties = {
     width: '100%',
@@ -293,56 +309,125 @@ export function DrawerProformaEvento() {
   };
 
   return (
-    <div
-      className="drawer-backdrop-ecommerce"
-      onClick={() => setDrawerProformaAbierto(false)}
-    >
-      <aside
-        className="drawer-panel-carrito"
-        onClick={(e) => e.stopPropagation()}
-        aria-label="Mi Proforma de Evento"
-        style={{ maxWidth: '520px' }}
+    <>
+      <div
+        className="drawer-backdrop-carrito"
+        onClick={() => setDrawerProformaAbierto(false)}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 120,
+          background: 'rgba(34, 29, 26, 0.55)',
+          backdropFilter: 'blur(4px)',
+          WebkitBackdropFilter: 'blur(4px)',
+          display: 'flex',
+          justifyContent: 'flex-end',
+        }}
       >
-        {/* Cabecera */}
-        <div
-          className="drawer-cabecera"
-          style={{ background: '#2D4734', color: '#FFFFFF', borderBottom: 'none' }}
+        <aside
+          className="drawer-panel-carrito"
+          onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Mi Proforma de Evento"
+          style={{
+            width: 'min(520px, 100%)',
+            maxWidth: '520px',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            background: '#FAF8F5',
+            boxShadow: '-8px 0 30px rgba(0, 0, 0, 0.22)',
+            overflow: 'hidden',
+          }}
         >
-          <div className="titulo-drawer" style={{ color: '#FFFFFF' }}>
-            <FileText size={20} />
-            <div>
-              <h2 style={{ color: '#FFFFFF', margin: 0, fontSize: '1.08rem' }}>
-                Mi Proforma de Evento ({cantidadTotalProforma})
-              </h2>
-              <small style={{ color: '#FDE68A', fontSize: '0.75rem' }}>
-                Autoservicio en PDF + asesoría personalizada y pago online
-              </small>
-            </div>
-          </div>
-          <button
-            type="button"
-            className="btn-cerrar-drawer"
-            onClick={() => setDrawerProformaAbierto(false)}
-            title="Cerrar proforma"
-            aria-label="Cerrar proforma"
-            style={{ color: '#FFFFFF' }}
+          {/* Cabecera */}
+          <div
+            className="cabecera-drawer-carrito"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '18px 20px',
+              background: '#2D4734',
+              color: '#FFFFFF',
+              borderBottom: 'none',
+              flexShrink: 0,
+            }}
           >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Cuerpo */}
-        <div className="drawer-cuerpo-scroll" style={{ padding: '16px' }}>
-          {itemsProforma.length === 0 ? (
-            <div className="carrito-vacio-estado">
-              <Sparkles size={40} style={{ color: '#2D4734', marginBottom: '8px' }} />
-              <h3>Arma tu Proforma de Evento</h3>
-              <p>
-                Selecciona arreglos ceremoniales, carteles de bienvenida o arcos florales para
-                obtener tu proforma formal en PDF al instante.
-              </p>
+            <div
+              className="titulo-con-icono-drawer"
+              style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#FFFFFF' }}
+            >
+              <FileText size={20} />
+              <div>
+                <h2 style={{ color: '#FFFFFF', margin: 0, fontSize: '1.08rem' }}>
+                  Mi Proforma de Evento ({cantidadTotalProforma})
+                </h2>
+                <small style={{ color: '#FDE68A', fontSize: '0.75rem' }}>
+                  Autoservicio en PDF + asesoría personalizada y pago online
+                </small>
+              </div>
             </div>
-          ) : (
+            <button
+              type="button"
+              className="btn-cerrar-drawer"
+              onClick={() => setDrawerProformaAbierto(false)}
+              title="Cerrar proforma"
+              aria-label="Cerrar proforma"
+              style={{
+                color: '#FFFFFF',
+                background: 'rgba(255, 255, 255, 0.14)',
+                border: 'none',
+                borderRadius: '999px',
+                width: '34px',
+                height: '34px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                flexShrink: 0,
+              }}
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Cuerpo */}
+          <div
+            className="cuerpo-scroll-carrito"
+            style={{
+              flex: 1,
+              minHeight: 0,
+              overflowY: 'auto',
+              padding: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+            }}
+          >
+            {itemsProforma.length === 0 ? (
+              <div
+                className="cuerpo-carrito-vacio"
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '40px 20px',
+                  textAlign: 'center',
+                  gap: '10px',
+                }}
+              >
+                <Sparkles size={40} style={{ color: '#2D4734', marginBottom: '4px' }} />
+                <h3 style={{ margin: 0, color: '#1C1917' }}>Arma tu Proforma de Evento</h3>
+                <p style={{ margin: 0, color: '#57534E', fontSize: '0.9rem', lineHeight: 1.5 }}>
+                  Selecciona arreglos ceremoniales, carteles de bienvenida o arcos florales para
+                  obtener tu proforma formal en PDF al instante.
+                </p>
+              </div>
+            ) : (
             <form
               id="form-emitir-proforma-evento"
               onSubmit={handleEmitirProforma}
@@ -962,14 +1047,16 @@ export function DrawerProformaEvento() {
         {/* Pie Fijo con Resumen y Botón Conciso */}
         {itemsProforma.length > 0 && (
           <div
-            className="drawer-pie-totales"
+            className="pie-drawer-carrito"
             style={{
               padding: '14px 16px',
               background: '#FFFFFF',
               borderTop: '1px solid #E7E5E4',
+              flexShrink: 0,
+              gap: '10px',
             }}
           >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '10px', fontSize: '0.82rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '2px', fontSize: '0.82rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span>Subtotal arreglos:</span>
                 <span>${(subtotalProforma + ivaProforma).toFixed(2)}</span>
@@ -1033,6 +1120,7 @@ export function DrawerProformaEvento() {
           </div>
         )}
       </aside>
+      </div>
 
       <ModalTerminosWhatsapp
         abierto={modalTerminosWaAbierto}
@@ -1043,6 +1131,6 @@ export function DrawerProformaEvento() {
         }}
         negocioNombre="Tinkay Floristería"
       />
-    </div>
+    </>
   );
 }

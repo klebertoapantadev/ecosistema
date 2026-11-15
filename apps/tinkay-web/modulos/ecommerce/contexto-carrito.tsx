@@ -158,7 +158,7 @@ export function ProveedorCarrito({
   const [items, setItems] = useState<ItemCarrito[]>([]);
   const [modalidadEntrega, setModalidadEntrega] = useState<ModalidadEntrega>('unificada');
   const [entregaUnificada, setEntregaUnificada] = useState<DatosEntrega>(ENTREGA_INICIAL);
-  const [drawerAbierto, setDrawerAbierto] = useState(false);
+  const [drawerAbierto, setDrawerAbiertoInterno] = useState(false);
   const [productoSeleccionadoModal, setProductoSeleccionadoModalInterno] =
     useState<ProductoEcommerce | null>(null);
   const [checkoutAbierto, setCheckoutAbierto] = useState(false);
@@ -167,7 +167,23 @@ export function ProveedorCarrito({
 
   // Estado independiente de Proforma de Evento
   const [itemsProforma, setItemsProforma] = useState<ItemCarrito[]>([]);
-  const [drawerProformaAbierto, setDrawerProformaAbierto] = useState(false);
+  const [drawerProformaAbierto, setDrawerProformaAbiertoInterno] = useState(false);
+
+  const setDrawerAbierto = React.useCallback((abierto: boolean) => {
+    setDrawerAbiertoInterno(abierto);
+    if (abierto) {
+      setDrawerProformaAbiertoInterno(false);
+    }
+  }, []);
+
+  const setDrawerProformaAbierto = React.useCallback((abierto: boolean) => {
+    setDrawerProformaAbiertoInterno(abierto);
+    if (abierto) {
+      setDrawerAbiertoInterno(false);
+      setProductoSeleccionadoModalInterno(null);
+      setCheckoutAbierto(false);
+    }
+  }, []);
   const [datosEventoProforma, setDatosEventoProforma] =
     useState<DatosEventoProforma>(DATOS_EVENTO_INICIAL);
   const [ubicacionEventoProforma, setUbicacionEventoProforma] = useState<DatosEntrega>(() => ({
