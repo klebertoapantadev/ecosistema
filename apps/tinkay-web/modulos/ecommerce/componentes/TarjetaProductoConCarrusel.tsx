@@ -35,6 +35,7 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
   const [varianteSeleccionada, setVarianteSeleccionada] = useState<VarianteEcommerce>(obtenerVarianteBase);
   const [favorito, setFavorito] = useState(false);
   const [linkCopiado, setLinkCopiado] = useState(false);
+  const [compradoReciente, setCompradoReciente] = useState(false);
 
   const handleCopiarEnlaceProducto = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -146,17 +147,26 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
       agregarItemProforma(prodParaCarrito, varianteSeleccionada);
       return;
     }
-    agregarItem(prodParaCarrito, varianteSeleccionada);
+    agregarItem(prodParaCarrito, varianteSeleccionada, undefined, undefined, 1, false);
+    setCompradoReciente(true);
+  };
+
+  const handleSeguirComprando = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCompradoReciente(false);
   };
 
   const handlePagarDirecto = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const prodParaCarrito: ProductoEcommerce = {
-      ...producto,
-      nombre: producto.nombre,
-      fotos: varianteSeleccionada.foto ? [varianteSeleccionada.foto] : producto.fotos,
-    };
-    agregarItem(prodParaCarrito, varianteSeleccionada, undefined, undefined, 1, false);
+    if (!compradoReciente) {
+      const prodParaCarrito: ProductoEcommerce = {
+        ...producto,
+        nombre: producto.nombre,
+        fotos: varianteSeleccionada.foto ? [varianteSeleccionada.foto] : producto.fotos,
+      };
+      agregarItem(prodParaCarrito, varianteSeleccionada, undefined, undefined, 1, false);
+    }
+    setCompradoReciente(false);
     setDrawerAbierto(false);
     setProductoSeleccionadoModal(null);
     setCheckoutAbierto(true);
@@ -457,48 +467,71 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
             className="acciones-tarjeta"
             style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', justifyContent: 'flex-end' }}
           >
-            {!esProductoEvento && (
+            {esProductoEvento ? (
               <button
                 type="button"
-                className="btn-agregar-rapido btn-responsive-accion"
+                className="btn-agregar-rapido"
                 onClick={handleAgregar}
-                title="Agregar este arreglo al carrito de compras"
-                aria-label="Agregar al carrito"
+                title="Añadir este elemento a mi proforma de evento"
+                aria-label="Proforma"
                 style={{
-                  background: '#FFFFFF',
-                  color: '#2D4734',
-                  border: '1.5px solid #2D4734',
-                  padding: '8px 11px',
+                  background: '#2D4734',
+                  color: '#FFFFFF',
+                }}
+              >
+                <FileText size={16} />
+                <span>Proforma</span>
+              </button>
+            ) : compradoReciente ? (
+              <>
+                <button
+                  type="button"
+                  className="btn-agregar-rapido"
+                  onClick={handleSeguirComprando}
+                  title="Seguir explorando más arreglos"
+                  aria-label="Seguir comprando"
+                  style={{
+                    background: '#FFFFFF',
+                    color: '#2D4734',
+                    border: '1.5px solid #2D4734',
+                    padding: '7px 10px',
+                    fontSize: '0.76rem',
+                  }}
+                >
+                  <span>Seguir comprando</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn-agregar-rapido"
+                  onClick={handlePagarDirecto}
+                  title="Ir directamente al pago"
+                  aria-label="Pagar ahora"
+                  style={{
+                    background: '#065F46',
+                    color: '#FFFFFF',
+                    padding: '7px 11px',
+                    fontSize: '0.76rem',
+                  }}
+                >
+                  <CreditCard size={14} />
+                  <span>Pagar ahora</span>
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                className="btn-agregar-rapido"
+                onClick={handleAgregar}
+                title="Comprar este arreglo floral"
+                aria-label="Comprar"
+                style={{
+                  padding: '8px 14px',
                 }}
               >
                 <ShoppingBag size={15} />
-                <span className="btn-texto-responsive">Carrito</span>
+                <span>Comprar</span>
               </button>
             )}
-            <button
-              type="button"
-              className="btn-agregar-rapido"
-              onClick={esProductoEvento ? handleAgregar : handlePagarDirecto}
-              title={
-                esProductoEvento
-                  ? 'Agregar este elemento a mi proforma de evento'
-                  : 'Pagar este arreglo directamente sin pasar por el carrito'
-              }
-              aria-label={esProductoEvento ? 'Agregar a proforma' : 'Pagar directo'}
-              style={
-                esProductoEvento
-                  ? {
-                      background: '#2D4734',
-                      color: '#FFFFFF',
-                    }
-                  : {
-                      padding: '8px 12px',
-                    }
-              }
-            >
-              {esProductoEvento ? <FileText size={16} /> : <CreditCard size={15} />}
-              <span>{esProductoEvento ? 'Proforma' : 'Pagar'}</span>
-            </button>
           </div>
         </div>
       </div>

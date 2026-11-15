@@ -2117,9 +2117,9 @@ export function ModalDetalleProducto() {
                   ? 'Elige 1 pieza'
                   : esComboActivo
                   ? usarSetCerradoBtn
-                    ? 'Agregar Set'
-                    : 'Agregar Selección'
-                  : 'Agregar Carrito';
+                    ? 'Comprar Set'
+                    : 'Comprar Selección'
+                  : 'Comprar';
 
                 return (
                   <div
@@ -2135,8 +2135,8 @@ export function ModalDetalleProducto() {
                       className="btn btn-agregar-modal-grande"
                       onClick={() => handleAgregarAlCarrito(false)}
                       disabled={sinPiezasCombo}
-                      title="Agregar este arreglo al carrito y seguir comprando"
-                      aria-label="Agregar al carrito"
+                      title="Comprar y seguir explorando la tienda"
+                      aria-label="Comprar"
                       style={{
                         background: '#FFFFFF',
                         color: '#2D4734',

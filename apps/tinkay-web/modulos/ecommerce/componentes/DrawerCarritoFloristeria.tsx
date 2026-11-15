@@ -858,18 +858,9 @@ export function DrawerCarritoFloristeria() {
                     ? `Envío Multidestino (${listaBase.length} destinos)`
                     : entregaUnificada.retiroEnLocal
                     ? `Retiro en ${configLogistica.origenNombre}`
-                    : entregaUnificada.zonaDetectadaNombre
-                    ? `Envío (${entregaUnificada.zonaDetectadaNombre}${
-                        configLogistica.mostrarKilometrosCliente !== false &&
-                        typeof entregaUnificada.distanciaVialKm === 'number'
-                          ? ` · ${entregaUnificada.distanciaVialKm.toFixed(1)} km`
-                          : ''
-                      })`
-                    : typeof entregaUnificada.distanciaVialKm === 'number'
-                    ? configLogistica.mostrarKilometrosCliente !== false
-                      ? `Envío a domicilio (${entregaUnificada.distanciaVialKm.toFixed(1)} km)`
-                      : 'Envío a domicilio'
-                    : `Envío (${configLogistica.zonaGratisNombre})`}
+                    : totalFlete > 0
+                    ? 'Valor adicional de envío'
+                    : `Entrega gratuita (${entregaUnificada.zonaDetectadaNombre || configLogistica.zonaGratisNombre})`}
                 </span>
                 <span
                   style={{

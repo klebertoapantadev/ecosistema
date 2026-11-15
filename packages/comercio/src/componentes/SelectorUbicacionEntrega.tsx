@@ -9,10 +9,12 @@ import {
   LocateFixed,
   Map as MapIcon,
   MapPin,
+  Maximize2,
   Search,
   Store,
   Truck,
   AlertTriangle,
+  X,
 } from "lucide-react";
 import {
   crearConfiguracionLogisticaPorDefecto,
@@ -72,6 +74,10 @@ export function SelectorUbicacionEntrega({
   const [coordenadas, setCoordenadas] = useState<CoordenadaGeo | null>(coordenadasIniciales);
   const [cotizacion, setCotizacion] = useState<ResultadoCotizacionEnvio | null>(cotizacionInicial);
   const [mapaAbierto, setMapaAbierto] = useState<boolean>(mostrarMapaPorDefecto);
+  const [mapaAmpliadoAbierto, setMapaAmpliadoAbierto] = useState<boolean>(false);
+  const [seleccionandoOtraUbicacion, setSeleccionandoOtraUbicacion] = useState<boolean>(
+    Boolean(enlaceMapaInicial || coordenadasIniciales || cotizacionInicial || mostrarMapaPorDefecto)
+  );
 
   const [consultaMapa, setConsultaMapa] = useState<string>("");
   const [sugerencias, setSugerencias] = useState<SugerenciaDireccionMapa[]>([]);
@@ -383,146 +389,221 @@ export function SelectorUbicacionEntrega({
         </div>
       ) : (
         <>
-          {/* Nota de cobertura incluida */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              flexWrap: "wrap",
-              gap: "6px",
-              fontSize: "0.74rem",
-              color: "#52525B",
-            }}
-          >
-            <span>
-              📍 <strong>Envío Gratis:</strong> {config.zonaGratisNombre} · Fuera de zona:{" "}
-              <strong>${config.tarifaPorKm.toFixed(2)}/km</strong> (mín. ${config.recargoMinimoExtra.toFixed(2)})
-            </span>
-          </div>
-
-          {/* Campo de link Google Maps / Apple Maps / Waze */}
-          <div style={{ display: "flex", gap: "6px", alignItems: "stretch" }}>
-            <div style={{ position: "relative", flex: 1 }}>
-              <Link2
-                size={14}
-                style={{
-                  position: "absolute",
-                  left: "10px",
-                  top: "50%",
-                  transform: "translateY(-50%)",
-                  color: "#71717A",
-                  pointerEvents: "none",
-                }}
-              />
-              <input
-                type="text"
-                value={enlaceTexto}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setEnlaceTexto(val);
-                  if (
-                    /^https?:\/\/(?:maps\.app\.goo\.gl|goo\.gl\/maps|www\.google\.[^/]+\/maps|maps\.google\.|waze\.com\/ul|ul\.waze\.com|maps\.apple\.com)/i.test(
-                      val.trim()
-                    )
-                  ) {
-                    void manejarResolverEnlace(val);
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    void manejarResolverEnlace();
-                  }
-                }}
-                placeholder="Pega link de Google Maps, Waze o Apple Maps..."
-                style={{
-                  width: "100%",
-                  padding: "8px 10px 8px 30px",
-                  borderRadius: "8px",
-                  border: "1px solid #D4D4D8",
-                  fontSize: "0.8rem",
-                  color: "#18181B",
-                  boxSizing: "border-box",
-                  background: "#FAFAFA",
-                }}
-              />
-            </div>
-
-            <button
-              type="button"
-              disabled={calculando}
-              onClick={() => void manejarResolverEnlace()}
-              title="Calcular costo de envío según la ubicación ingresada"
-              aria-label="Calcular costo de envío"
+          {/* Estado por defecto: entrega gratuita en zona de cobertura */}
+          {!cotizacion && (
+            <div
               style={{
-                display: "inline-flex",
+                background: "#F0FDF4",
+                border: "1px solid #BBF7D0",
+                borderRadius: "10px",
+                padding: "9px 11px",
+                display: "flex",
                 alignItems: "center",
-                gap: "5px",
-                padding: "0 12px",
-                borderRadius: "8px",
-                border: "1px solid #18181B",
-                background: "#18181B",
-                color: "#FFFFFF",
-                fontSize: "0.76rem",
-                fontWeight: 700,
-                cursor: calculando ? "wait" : "pointer",
-                whiteSpace: "nowrap",
+                justifyContent: "space-between",
+                gap: "8px",
               }}
             >
-              {calculando ? <Loader2 size={14} /> : <MapPin size={14} />}
-              <span className="btn-texto-responsive">Calcular</span>
-            </button>
-          </div>
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontSize: "0.8rem",
+                  fontWeight: 700,
+                  color: "#166534",
+                }}
+              >
+                <CheckCircle2 size={15} color="#16A34A" style={{ flexShrink: 0 }} />
+                <span>Entrega gratuita en zona de cobertura ({config.zonaGratisNombre})</span>
+              </span>
+              <strong style={{ fontSize: "0.84rem", color: "#15803D", whiteSpace: "nowrap" }}>
+                GRATIS ($0.00)
+              </strong>
+            </div>
+          )}
 
-          {/* Acciones rápidas: Seleccionar en Mapa o GPS */}
+          {/* Botones: Ver zona gratuita en mapa ampliado & Seleccionar otra ubicación */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
             <button
               type="button"
-              onClick={() => setMapaAbierto((prev) => !prev)}
-              title={mapaAbierto ? "Ocultar mapa interactivo" : "Buscar dirección o mover el pin en el mapa"}
-              aria-label={mapaAbierto ? "Ocultar mapa" : "Buscar en mapa"}
+              onClick={() => setMapaAmpliadoAbierto(true)}
+              title="Ver zona de cobertura gratuita en el mapa ampliado"
+              aria-label="Ver zona gratuita en mapa"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "5px",
-                padding: "5px 10px",
+                padding: "6px 11px",
                 borderRadius: "999px",
-                border: "1px solid #D4D4D8",
-                background: mapaAbierto ? "#F4F4F5" : "#FFFFFF",
-                color: "#27272A",
+                border: "1px solid #16A34A",
+                background: "#F0FDF4",
+                color: "#166534",
                 fontSize: "0.74rem",
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: "pointer",
               }}
             >
-              <MapIcon size={13} />
-              <span>{mapaAbierto ? "Ocultar Mapa" : "Buscar en Mapa"}</span>
+              <Maximize2 size={13} />
+              <span>Ver zona gratuita en mapa</span>
             </button>
 
             <button
               type="button"
-              onClick={usarMiUbicacionGps}
-              title="Usar ubicación GPS actual de mi dispositivo"
-              aria-label="Usar mi GPS"
+              onClick={() => {
+                setSeleccionandoOtraUbicacion((prev) => !prev);
+                setErrorMsg(null);
+              }}
+              title="Seleccionar otra ubicación de entrega para calcular valor adicional"
+              aria-label="Seleccionar otra ubicación"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "5px",
-                padding: "5px 10px",
+                padding: "6px 11px",
                 borderRadius: "999px",
                 border: "1px solid #D4D4D8",
-                background: "#FFFFFF",
-                color: "#27272A",
+                background: seleccionandoOtraUbicacion ? "#18181B" : "#FFFFFF",
+                color: seleccionandoOtraUbicacion ? "#FFFFFF" : "#27272A",
                 fontSize: "0.74rem",
-                fontWeight: 600,
+                fontWeight: 700,
                 cursor: "pointer",
               }}
             >
-              <LocateFixed size={13} />
-              <span>Mi GPS</span>
+              <MapPin size={13} />
+              <span>
+                {seleccionandoOtraUbicacion
+                  ? "Ocultar selector de ubicación"
+                  : "Seleccionar otra ubicación"}
+              </span>
             </button>
           </div>
+
+          {seleccionandoOtraUbicacion && (
+            <>
+              {/* Campo de link Google Maps / Apple Maps / Waze */}
+              <div style={{ display: "flex", gap: "6px", alignItems: "stretch" }}>
+                <div style={{ position: "relative", flex: 1 }}>
+                  <Link2
+                    size={14}
+                    style={{
+                      position: "absolute",
+                      left: "10px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "#71717A",
+                      pointerEvents: "none",
+                    }}
+                  />
+                  <input
+                    type="text"
+                    value={enlaceTexto}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEnlaceTexto(val);
+                      if (
+                        /^https?:\/\/(?:maps\.app\.goo\.gl|goo\.gl\/maps|www\.google\.[^/]+\/maps|maps\.google\.|waze\.com\/ul|ul\.waze\.com|maps\.apple\.com)/i.test(
+                          val.trim()
+                        )
+                      ) {
+                        void manejarResolverEnlace(val);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        void manejarResolverEnlace();
+                      }
+                    }}
+                    placeholder="Pega link de Google Maps, Waze o Apple Maps..."
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px 8px 30px",
+                      borderRadius: "8px",
+                      border: "1px solid #D4D4D8",
+                      fontSize: "0.8rem",
+                      color: "#18181B",
+                      boxSizing: "border-box",
+                      background: "#FAFAFA",
+                    }}
+                  />
+                </div>
+
+                <button
+                  type="button"
+                  disabled={calculando}
+                  onClick={() => void manejarResolverEnlace()}
+                  title="Calcular valor adicional de envío según la ubicación ingresada"
+                  aria-label="Calcular envío"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "0 12px",
+                    borderRadius: "8px",
+                    border: "1px solid #18181B",
+                    background: "#18181B",
+                    color: "#FFFFFF",
+                    fontSize: "0.76rem",
+                    fontWeight: 700,
+                    cursor: calculando ? "wait" : "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {calculando ? <Loader2 size={14} /> : <MapPin size={14} />}
+                  <span className="btn-texto-responsive">Calcular</span>
+                </button>
+              </div>
+
+              {/* Acciones rápidas: Seleccionar en Mapa o GPS */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                <button
+                  type="button"
+                  onClick={() => setMapaAbierto((prev) => !prev)}
+                  title={mapaAbierto ? "Ocultar mapa interactivo" : "Buscar dirección o mover el pin en el mapa"}
+                  aria-label={mapaAbierto ? "Ocultar mapa" : "Buscar en mapa"}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "5px 10px",
+                    borderRadius: "999px",
+                    border: "1px solid #D4D4D8",
+                    background: mapaAbierto ? "#F4F4F5" : "#FFFFFF",
+                    color: "#27272A",
+                    fontSize: "0.74rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  <MapIcon size={13} />
+                  <span>{mapaAbierto ? "Ocultar Mapa" : "Buscar en Mapa"}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={usarMiUbicacionGps}
+                  title="Usar ubicación GPS actual de mi dispositivo"
+                  aria-label="Usar mi GPS"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "5px 10px",
+                    borderRadius: "999px",
+                    border: "1px solid #D4D4D8",
+                    background: "#FFFFFF",
+                    color: "#27272A",
+                    fontSize: "0.74rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  <LocateFixed size={13} />
+                  <span>Mi GPS</span>
+                </button>
+              </div>
+            </>
+          )}
 
           {/* Buscador + Mapa Interactivo OpenStreetMap */}
           {mapaAbierto && (
@@ -713,7 +794,13 @@ export function SelectorUbicacionEntrega({
                       color={cotizacion.costoTotalEnvio === 0 ? "#16A34A" : "#0284C7"}
                     />
                   )}
-                  <span>{cotizacion.etiquetaResumen}</span>
+                  <span>
+                    {!cotizacion.dentroCobertura
+                      ? "Ubicación fuera de cobertura automática"
+                      : cotizacion.costoTotalEnvio === 0
+                      ? "Entrega gratuita en zona de cobertura"
+                      : "Valor adicional de envío"}
+                  </span>
                 </span>
 
                 <strong
@@ -754,6 +841,133 @@ export function SelectorUbicacionEntrega({
             </div>
           )}
         </>
+      )}
+
+      {/* Modal de mapa ampliado para ver zona de cobertura gratuita y elegir otra ubicación */}
+      {mapaAmpliadoAbierto && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Mapa ampliado de zona de cobertura gratuita"
+          onClick={() => setMapaAmpliadoAbierto(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 1200,
+            backgroundColor: "rgba(15, 23, 42, 0.65)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: "840px",
+              backgroundColor: "#FFFFFF",
+              borderRadius: "16px",
+              padding: "18px",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "12px",
+              }}
+            >
+              <div>
+                <h4 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#0F172A" }}>
+                  Zona de Cobertura Gratuita ({config.zonaGratisNombre})
+                </h4>
+                <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "#475569" }}>
+                  El área resaltada cuenta con entrega gratuita ($0.00). También puedes hacer clic
+                  en otra ubicación para calcular el valor adicional de envío.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMapaAmpliadoAbierto(false)}
+                aria-label="Cerrar mapa ampliado"
+                style={{
+                  border: "1px solid #E2E8F0",
+                  background: "#F8FAFC",
+                  borderRadius: "999px",
+                  width: "32px",
+                  height: "32px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                  color: "#334155",
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <MapaCoberturaPichincha
+              origen={{ lat: config.origenLat, lng: config.origenLng }}
+              origenNombre={config.origenNombre}
+              destino={coordenadas}
+              zonas={config.zonas}
+              zonaResaltadaId={
+                cotizacion?.zonaDetectada?.id ??
+                config.zonas.find((z) => z.modoCobro === "GRATIS")?.id ??
+                null
+              }
+              rutaGeometria={cotizacion?.rutaGeometria}
+              alturaPx={440}
+              onSeleccionarPunto={(pt) => {
+                setSeleccionandoOtraUbicacion(true);
+                void ejecutarCotizacionPorCoordenadas(pt);
+              }}
+            />
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: "8px",
+              }}
+            >
+              <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#0F172A" }}>
+                {cotizacion
+                  ? cotizacion.costoTotalEnvio === 0 && cotizacion.dentroCobertura
+                    ? "✅ Entrega gratuita en zona de cobertura ($0.00)"
+                    : cotizacion.dentroCobertura
+                    ? `Valor adicional de envío: +$${cotizacion.costoTotalEnvio.toFixed(2)}`
+                    : "Ubicación fuera de cobertura automática (por coordinar)"
+                  : "✅ Zona gratuita activa ($0.00)"}
+              </span>
+              <button
+                type="button"
+                onClick={() => setMapaAmpliadoAbierto(false)}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "10px",
+                  border: "none",
+                  background: "#065F46",
+                  color: "#FFFFFF",
+                  fontWeight: 700,
+                  fontSize: "0.8rem",
+                  cursor: "pointer",
+                }}
+              >
+                Confirmar y volver
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

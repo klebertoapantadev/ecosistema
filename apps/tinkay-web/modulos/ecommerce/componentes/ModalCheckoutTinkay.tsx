@@ -379,12 +379,7 @@ export function ModalCheckoutTinkay() {
     modalidadEntrega === 'unificada'
       ? entregaUnificada.retiroEnLocal
         ? `Retiro en ${configLogistica.origenNombre} (${entregaUnificada.fechaEntrega})`
-        : `${entregaUnificada.zonaDetectadaNombre || entregaUnificada.ciudad || 'Domicilio'}${
-            configLogistica.mostrarKilometrosCliente !== false &&
-            typeof entregaUnificada.distanciaVialKm === 'number'
-              ? ` (${entregaUnificada.distanciaVialKm.toFixed(1)} km)`
-              : ''
-          } — ${entregaUnificada.fechaEntrega} (${entregaUnificada.franjaHoraria})`
+        : `${entregaUnificada.zonaDetectadaNombre || entregaUnificada.ciudad || 'Domicilio'} — ${entregaUnificada.fechaEntrega} (${entregaUnificada.franjaHoraria})`
       : 'Multidestino individual';
 
   const construirPayloadPedido = (metodo: 'plux' | 'transferencia') => {
@@ -1920,17 +1915,15 @@ export function ModalCheckoutTinkay() {
                   <span>
                     {esRetiroEnTienda
                       ? 'Retiro en tienda:'
-                      : modalidadEntrega === 'unificada' && entregaUnificada.zonaDetectadaNombre
-                      ? `Envío (${entregaUnificada.zonaDetectadaNombre}${
-                          configLogistica.mostrarKilometrosCliente !== false &&
-                          typeof entregaUnificada.distanciaVialKm === 'number'
-                            ? ` · ${entregaUnificada.distanciaVialKm.toFixed(1)} km`
-                            : ''
-                        }):`
-                      : 'Envío a domicilio:'}
+                      : totalFlete > 0
+                      ? 'Valor adicional de envío:'
+                      : `Entrega gratuita (${
+                          (modalidadEntrega === 'unificada' && entregaUnificada.zonaDetectadaNombre) ||
+                          configLogistica.zonaGratisNombre
+                        }):`}
                   </span>
                   <span style={{ color: totalFlete === 0 ? 'var(--verde)' : 'inherit' }}>
-                    {totalFlete === 0 ? 'GRATIS ($0.00)' : `$${totalFlete.toFixed(2)}`}
+                    {totalFlete === 0 ? 'GRATIS ($0.00)' : `+$${totalFlete.toFixed(2)}`}
                   </span>
                 </div>
                 {totalRecargoHorarioExacto > 0 && (
