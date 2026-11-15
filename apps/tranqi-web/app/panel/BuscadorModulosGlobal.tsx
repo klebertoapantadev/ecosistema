@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Search, X, UserCog, UserCheck, Settings, Mail, Bell, Shield, ShieldCheck,
   CircleUser, ChevronRight, Sliders, Briefcase, FileText, BarChart2, FileCheck, Folder,
-  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard, Building2, Scale, KeyRound, Sparkles, Bot, MapPin, ClipboardList
+  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard, Building2, Scale, KeyRound, Sparkles, Bot, MapPin, ClipboardList, MessageSquareHeart
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
@@ -171,6 +171,16 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     minNivel: 40,
     icono: ClipboardList,
     colorIcono: "#0284C7"
+  },
+  {
+    clave: "testimonios_clientes",
+    nombre: "Testimonios y Reseñas de Clientes",
+    detalle: "Gestión de capturas de WhatsApp, fotos de entregas en taller y enlace a Google Photos",
+    ruta: "/panel/testimonios",
+    categoria: "Comercio & Pagos",
+    minNivel: 40,
+    icono: MessageSquareHeart,
+    colorIcono: "#D97706"
   },
   {
     clave: "tokens_mcp",

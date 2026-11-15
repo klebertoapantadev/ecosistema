@@ -18,6 +18,7 @@ import {
   Truck,
   UserCircle,
   Users,
+  MessageSquareHeart,
   type LucideIcon,
 } from "lucide-react";
 
@@ -26,6 +27,7 @@ export type IconoNavegacionPanel =
   | "pedidos"
   | "catalogo"
   | "usuarios"
+  | "testimonios"
   | "negocio"
   | "logistica"
   | "pasarelas"
@@ -47,6 +49,7 @@ const MAPA_ICONOS: Record<IconoNavegacionPanel, LucideIcon> = {
   pedidos: ClipboardList,
   catalogo: ShoppingBag,
   usuarios: Users,
+  testimonios: MessageSquareHeart,
   negocio: Building2,
   logistica: Truck,
   pasarelas: CreditCard,

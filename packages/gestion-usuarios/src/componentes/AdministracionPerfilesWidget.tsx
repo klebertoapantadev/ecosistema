@@ -8,7 +8,7 @@ import {
   Palette, UserCheck, X, Sparkles, Trash2, Star, Move, Copy, Package, GripVertical,
   Home, User, Settings, Shield, Folder, Wrench, Building, Briefcase, Bell, Database,
   Activity, Globe, Lock, KeyRound, CheckSquare, Terminal, Zap, Pencil, LogOut, LogIn,
-  Forward, Inbox, FileText, Download, Printer, Share2, RotateCcw, Loader2, Scale, Bot, MapPin, ClipboardList, type LucideIcon
+  Forward, Inbox, FileText, Download, Printer, Share2, RotateCcw, Loader2, Scale, Bot, MapPin, ClipboardList, MessageSquareHeart, type LucideIcon
 } from "lucide-react";
 import {
   guardarPerfil,
@@ -656,6 +656,17 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     creadoEn: "2026-08-20"
   },
   {
+    clave: "testimonios_clientes",
+    nombre: "Testimonios y Reseñas de Clientes",
+    descripcion: "Gestión de capturas de WhatsApp, fotos de entregas y reseñas reales con sincronización al carrusel público y álbum de Google Photos.",
+    categoria: "Comercio y Marketing",
+    ruta: "/panel/testimonios",
+    rutaFisica: "/comercio/componentes/ConsolaTestimoniosClientes.tsx",
+    panelId: "panel_administrar",
+    activo: true,
+    creadoEn: "2026-11-15"
+  },
+  {
     clave: "historial_pagos",
     nombre: "Historial de Pagos",
     descripcion: "Valores generados, valores pagados, detalle del rubro facturado y descarga/emisión de facturas electrónicas SRI.",
@@ -1116,6 +1127,21 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
           </p>
           <div style={{ padding: "12px", background: "#FFFBEB", borderRadius: "8px", border: "1px dashed #FDE68A", textAlign: "center", fontSize: "0.82rem", color: "#92400E", fontWeight: 700 }}>
             Credenciales API · Modo Producción / Sandbox · Simulador en Vivo
+          </div>
+        </div>
+      );
+
+    case "testimonios_clientes":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #D97706", boxShadow: "0 4px 12px rgba(217,119,6,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#D97706", marginBottom: "10px" }}>
+            <MessageSquareHeart size={18} /> Testimonios y Reseñas de Clientes
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Gestión de capturas de WhatsApp, fotos de entregas reales y sincronización con el carrusel público y álbum de Google Photos.
+          </p>
+          <div style={{ padding: "12px", background: "#FFFBEB", borderRadius: "8px", border: "1px dashed #FDE68A", textAlign: "center", fontSize: "0.82rem", color: "#92400E", fontWeight: 700 }}>
+            Capturas de Pantalla · Calificaciones 5★ · Lightbox · Google Photos
           </div>
         </div>
       );

@@ -6,7 +6,7 @@ import {
   LayoutGrid, Wrench, Shield, Users, Bell, UserCog, ClipboardList, FileText,
   Settings, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, Calendar, type LucideIcon,
   Bot, ShoppingBag, CreditCard, Receipt, Share2, CheckCircle2, Sparkles, Building2, Scale, Gift,
-  ShieldCheck, Briefcase, Pencil, Coins, MapPin
+  ShieldCheck, Briefcase, Pencil, Coins, MapPin, MessageSquareHeart
 } from "lucide-react";
 import { ModalEditarWidget } from "../ModalEditarWidget";
 import { WidgetProximamente } from "../WidgetProximamente";
@@ -44,6 +44,7 @@ import {
   LegalHRLaboral,
   FormularioLogisticaCobertura,
   BandejaPedidosTienda,
+  ConsolaTestimoniosClientes,
 } from "@eco/comercio";
 import { SociosWidget } from "../administrar/PanelAdministrarModular";
 import { ConfiguracionContratoAbogadoWidget } from "@/modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
@@ -250,6 +251,13 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     icono: CreditCard,
     colorIcono: "#D97706",
     categoria: "Comercio y Pagos"
+  },
+  testimonios_clientes: {
+    titulo: "Testimonios y Reseñas de Clientes",
+    subtitulo: "Gestión de capturas de WhatsApp, fotos de entregas reales y enlace a Google Photos",
+    icono: MessageSquareHeart,
+    colorIcono: "#D97706",
+    categoria: "Comercio & Catálogo"
   },
   facturacion_electronica: {
     titulo: "Historial de Pagos",
@@ -965,6 +973,9 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       case "pedidos_tienda":
       case "pedidos":
         return <BandejaPedidosTienda negocio={negocio} />;
+      case "testimonios_clientes":
+      case "testimonios":
+        return <ConsolaTestimoniosClientes negocio={negocio} />;
       case "tokens_mcp":
       case "tokens":
       case "mcp_tokens":

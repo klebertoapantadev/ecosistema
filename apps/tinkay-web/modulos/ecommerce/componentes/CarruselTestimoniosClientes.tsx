@@ -20,7 +20,33 @@ import {
 
 export function CarruselTestimoniosClientes() {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [listaTestimonios, setListaTestimonios] = useState<TestimonioCliente[]>(TESTIMONIOS_TINKAY);
   const [testimonioSeleccionado, setTestimonioSeleccionado] = useState<TestimonioCliente | null>(null);
+
+  useEffect(() => {
+    async function sincronizarBDD() {
+      try {
+        const { obtenerTestimoniosNegocioAction } = await import('@eco/comercio');
+        const res = await obtenerTestimoniosNegocioAction('tinkay', true);
+        if (res.ok && res.testimonios && res.testimonios.length > 0) {
+          const mapeados: TestimonioCliente[] = res.testimonios.map((t) => ({
+            id: t.tes_id,
+            nombreCliente: t.tes_nombre_cliente,
+            ciudad: t.tes_ciudad,
+            ocasion: t.tes_ocasion,
+            comentario: t.tes_comentario,
+            imagenUrl: t.tes_imagen_url,
+            calificacion: t.tes_calificacion,
+            destacado: t.tes_destacado,
+          }));
+          setListaTestimonios(mapeados);
+        }
+      } catch {
+        // Conserva TESTIMONIOS_TINKAY estático
+      }
+    }
+    sincronizarBDD();
+  }, []);
 
   const scroll = (direccion: 'izq' | 'der') => {
     if (!scrollRef.current) return;
@@ -36,15 +62,15 @@ export function CarruselTestimoniosClientes() {
       if (e.key === 'Escape') {
         setTestimonioSeleccionado(null);
       } else if (e.key === 'ArrowRight') {
-        const idx = TESTIMONIOS_TINKAY.findIndex((t) => t.id === testimonioSeleccionado.id);
-        if (idx !== -1 && idx < TESTIMONIOS_TINKAY.length - 1) {
-          const sig = TESTIMONIOS_TINKAY[idx + 1];
+        const idx = listaTestimonios.findIndex((t) => t.id === testimonioSeleccionado.id);
+        if (idx !== -1 && idx < listaTestimonios.length - 1) {
+          const sig = listaTestimonios[idx + 1];
           if (sig) setTestimonioSeleccionado(sig);
         }
       } else if (e.key === 'ArrowLeft') {
-        const idx = TESTIMONIOS_TINKAY.findIndex((t) => t.id === testimonioSeleccionado.id);
+        const idx = listaTestimonios.findIndex((t) => t.id === testimonioSeleccionado.id);
         if (idx > 0) {
-          const ant = TESTIMONIOS_TINKAY[idx - 1];
+          const ant = listaTestimonios[idx - 1];
           if (ant) setTestimonioSeleccionado(ant);
         }
       }
@@ -52,7 +78,7 @@ export function CarruselTestimoniosClientes() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [testimonioSeleccionado]);
+  }, [testimonioSeleccionado, listaTestimonios]);
 
   return (
     <section className="seccion-testimonios-tinkay" aria-label="Testimonios de Clientes Tinkay">
@@ -97,7 +123,7 @@ export function CarruselTestimoniosClientes() {
 
         {/* Riel Horizontal Deslizable */}
         <div className="riel-testimonios-tinkay" ref={scrollRef}>
-          {TESTIMONIOS_TINKAY.map((testimonio) => (
+          {listaTestimonios.map((testimonio) => (
             <article key={testimonio.id} className="tarjeta-testimonio-card">
               {/* Marco de Captura / Fotografía */}
               <div

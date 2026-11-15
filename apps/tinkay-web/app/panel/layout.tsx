@@ -49,6 +49,14 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel & { soloAdmin?: boolean }> 
     soloAdmin: true,
   },
   {
+    clave: "testimonios_clientes",
+    nombre: "Testimonios y Reseñas",
+    ruta: "/panel/testimonios",
+    icono: "testimonios",
+    grupo: "operacion",
+    soloAdmin: true,
+  },
+  {
     clave: "configuracion_negocio",
     nombre: "Datos de la Floristería",
     ruta: "/panel/configuracion",

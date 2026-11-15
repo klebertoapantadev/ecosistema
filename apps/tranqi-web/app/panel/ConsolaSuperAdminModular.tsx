@@ -6,7 +6,7 @@ import {
   Sparkles, Shield, LayoutGrid, Pencil, Users, UserCheck, Eye,
   Settings, Mail, ShieldCheck, Bell, CircleUser, KeyRound, Sliders, Briefcase,
   Receipt, History, RotateCcw, FileCheck, Folder, ShoppingBag, CreditCard,
-  CalendarClock, CalendarPlus, CalendarCheck, Building2, Scale, Award, BellRing, Bot, MapPin, ClipboardList, type LucideIcon
+  CalendarClock, CalendarPlus, CalendarCheck, Building2, Scale, Award, BellRing, Bot, MapPin, ClipboardList, MessageSquareHeart, type LucideIcon
 } from "lucide-react";
 import { resetearSistemaSuperAdminAction } from "@eco/gestion-usuarios/acciones";
 import { ModalNotificacionPush } from "@eco/notificaciones";
@@ -160,6 +160,22 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     perfilesAsignados: ["OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
     estadoDuplicidad: "COMPARTIDO",
     fechaRegistro: "2026-11-12",
+  },
+  {
+    clave: "testimonios_clientes",
+    nombre: "Testimonios y Reseñas de Clientes",
+    detalle: "Gestión de capturas de WhatsApp, fotos de entregas y reseñas reales con sincronización al carrusel público y álbum de Google Photos",
+    ruta: "/panel/testimonios",
+    icono: MessageSquareHeart,
+    iconoKey: "MessageSquareHeart",
+    color: "#D97706",
+    rutaFisica: "packages/comercio/src/componentes/ConsolaTestimoniosClientes.tsx",
+    paquete: "@eco/comercio",
+    panelDestino: "Administrar (/panel/testimonios)",
+    categoria: "Comercio & Catálogo",
+    perfilesAsignados: ["ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "CANONICO",
+    fechaRegistro: "2026-11-15",
   },
   {
     clave: "gestion_catalogo",

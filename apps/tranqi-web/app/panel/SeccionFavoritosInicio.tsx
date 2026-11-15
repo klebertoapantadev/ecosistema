@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { User, Users, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, ShoppingBag, CreditCard, CalendarPlus, CalendarCheck, CalendarClock, Shuffle, Building2, Scale, Briefcase, Bot, MapPin, ClipboardList, type LucideIcon } from "lucide-react";
+import { User, Users, History, KeyRound, ShieldAlert, Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Receipt, Lock, FileText, BarChart2, FileCheck, Folder, ShoppingBag, CreditCard, CalendarPlus, CalendarCheck, CalendarClock, Shuffle, Building2, Scale, Briefcase, Bot, MapPin, ClipboardList, MessageSquareHeart, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
 
@@ -239,6 +239,14 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     subtitulo: "Bandeja de órdenes con mapa GPS, dedicatorias y desglose interno de logística",
     icono: ClipboardList,
     href: "/panel/pedidos",
+    origen: "Administrar"
+  },
+  testimonios_clientes: {
+    id: "testimonios_clientes",
+    titulo: "Testimonios & Reseñas de Clientes",
+    subtitulo: "Capturas de WhatsApp, entregas en vivo y enlace a Google Photos",
+    icono: MessageSquareHeart,
+    href: "/panel/testimonios",
     origen: "Administrar"
   },
   tokens_mcp: {

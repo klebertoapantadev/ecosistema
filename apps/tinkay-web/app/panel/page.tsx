@@ -13,6 +13,7 @@ import {
   Sparkles,
   Truck,
   Users,
+  MessageSquareHeart,
   type LucideIcon,
 } from "lucide-react";
 import { obtenerMisProformasEventoAction } from "@eco/comercio";
@@ -64,6 +65,15 @@ const MODULOS_TINKAY: Record<string, WidgetInfo> = {
     ruta: "/panel/usuarios",
     icono: Users,
     grupo: "operacion",
+  },
+  testimonios_clientes: {
+    clave: "testimonios_clientes",
+    nombre: "Testimonios & Reseñas de Clientes",
+    descripcion: "Gestión de capturas reales de WhatsApp, fotos de entregas en taller y enlace a Google Photos.",
+    ruta: "/panel/testimonios",
+    icono: MessageSquareHeart,
+    grupo: "operacion",
+    etiqueta: "Social Proof",
   },
   configuracion_negocio: {
     clave: "configuracion_negocio",

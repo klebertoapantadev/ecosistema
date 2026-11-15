@@ -47,3 +47,5 @@ export * from "./componentes/SelectorUbicacionEntrega";
 export * from "./componentes/FormularioLogisticaCobertura";
 export * from "./componentes/BandejaPedidosTienda";
 export * from "./componentes/ModalEditarVariacionProforma";
+export * from "./componentes/ConsolaTestimoniosClientes";
+export * from "./acciones-testimonios";
