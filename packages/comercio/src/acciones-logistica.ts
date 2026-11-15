@@ -606,6 +606,7 @@ export interface EntradaPedidoTienda {
     nombre: string;
     valorReferencia: number;
   } | null;
+  conversacionWebId?: string;
 }
 
 export interface PedidoTiendaRegistrado {
@@ -685,6 +686,7 @@ export interface PedidoTiendaRegistrado {
     nombre: string;
     valorReferencia: number;
   } | null;
+  conversacionWebId?: string;
 }
 
 const esquemaPedidoTienda = z.object({
@@ -1075,7 +1077,29 @@ export async function registrarPedidoTiendaAction(
         console.warn("Aviso al notificar venta de tienda a staff:", errNotif);
       }
     }
+    if (entrada.conversacionWebId) {
+      try {
+        const { registrarInteraccionChatWebAction } = await import("./acciones-omnicanal");
+        await registrarInteraccionChatWebAction({
+          negocio: negNorm,
+          claveHilo: entrada.conversacionWebId,
+          fase: "EVENTO_ORDEN",
+          contenido: `🛍️ Orden Web ${codigoCreado} generada por $${entrada.totalPagar.toFixed(2)} (${metodoPagoNorm.toUpperCase()})`,
+          metadatos: {
+            nombre: entrada.comprador.nombreCompleto,
+            correo: entrada.comprador.correo,
+            telefono: entrada.comprador.telefono,
+            codigo_orden: codigoCreado,
+            total_pagar: entrada.totalPagar,
+            metodo_pago: metodoPagoNorm,
+          },
+        });
+      } catch {
+        // No bloquear el checkout si falla la traza conversacional opcional
+      }
+    }
     revalidatePath("/panel/pedidos");
+    revalidatePath("/panel/conversaciones");
     return {
       ok: true,
       id: String(resRpc.id),
@@ -1306,16 +1330,39 @@ export async function obtenerPedidosTiendaAction(
   }
 
   const admin = crearClienteAdmin();
-  const db: any = admin ?? supabase;
+  let filas: any[] | null = null;
+  let error: { message: string } | null = null;
 
-  const { data: filas, error } = await db
-    .schema("comun_comercio")
-    .from("com_proforma")
-    .select("*")
-    .eq("prf_negocio", negNorm)
-    .is("prf_eliminado_en", null)
-    .order("prf_creado_en", { ascending: false })
-    .limit(250);
+  if (admin) {
+    const resAdmin = await (admin as any)
+      .schema("comun_comercio")
+      .from("com_proforma")
+      .select("*")
+      .eq("prf_negocio", negNorm)
+      .is("prf_eliminado_en", null)
+      .order("prf_creado_en", { ascending: false })
+      .limit(250);
+    filas = resAdmin.data;
+    error = resAdmin.error;
+  } else {
+    const resRpc = await (supabase as any)
+      .schema("comun_comercio")
+      .rpc("com_fn_listar_pedidos_tienda", { p_negocio: negNorm });
+    if (!resRpc.error && Array.isArray(resRpc.data)) {
+      filas = resRpc.data;
+    } else {
+      const resDirecto = await (supabase as any)
+        .schema("comun_comercio")
+        .from("com_proforma")
+        .select("*")
+        .eq("prf_negocio", negNorm)
+        .is("prf_eliminado_en", null)
+        .order("prf_creado_en", { ascending: false })
+        .limit(250);
+      filas = resDirecto.data;
+      error = resDirecto.error;
+    }
+  }
 
   if (error) {
     return { ok: false, error: error.message };

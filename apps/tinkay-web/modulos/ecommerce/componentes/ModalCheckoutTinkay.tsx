@@ -1,15 +1,18 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import {
   BotonPagoPlux,
   descargarArchivoFacturaRideSri,
   imprimirFacturaRideSri,
   obtenerEmisorDefectoPorNegocio,
   obtenerEmisorRideNegocioAction,
+  obtenerEstadoRegaloPrimeraCompraAction,
   obtenerPasarelasCheckoutAction,
   registrarPedidoTiendaAction,
   type ConfiguracionEmisorSri,
+  type EstadoRegaloPrimeraCompra,
   type FacturaElectronicaResumen,
   type PagoPluxConsultado,
 } from '@eco/comercio';
@@ -24,6 +27,7 @@ import {
   Download,
   Printer,
   FileText,
+  Gift,
 } from 'lucide-react';
 
 export function ModalCheckoutTinkay() {
@@ -52,8 +56,10 @@ export function ModalCheckoutTinkay() {
     id: string;
     codigoOrden: string;
     tokenAprobacion: string;
+    respaldoFirmado?: string;
     huella: string;
   } | null>(null);
+  const [estadoRegalo, setEstadoRegalo] = useState<EstadoRegaloPrimeraCompra | null>(null);
   const [resumenExito, setResumenExito] = useState<{
     totalPagado: number;
     entregaTexto: string;
@@ -89,6 +95,11 @@ export function ModalCheckoutTinkay() {
     obtenerEmisorRideNegocioAction('tinkay')
       .then((emi) => {
         if (!cancelado && emi) setEmisorNegocio(emi);
+      })
+      .catch(() => {});
+    obtenerEstadoRegaloPrimeraCompraAction('tinkay')
+      .then((res) => {
+        if (!cancelado) setEstadoRegalo(res);
       })
       .catch(() => {});
     return () => {
@@ -211,6 +222,12 @@ export function ModalCheckoutTinkay() {
     totalFlete,
     totalRecargoHorarioExacto,
     totalPagar,
+    regaloPrimeraCompra:
+      estadoRegalo?.autenticado && estadoRegalo.aplicaRegalo ? estadoRegalo.regalo : null,
+    conversacionWebId:
+      typeof window !== 'undefined'
+        ? window.localStorage.getItem('eco_chat_conv_tinkay') || undefined
+        : undefined,
   });
 
   const validarDatosFacturacion = (): string | null => {
@@ -253,6 +270,7 @@ export function ModalCheckoutTinkay() {
         id: resultado.id,
         codigoOrden: resultado.codigoOrden,
         tokenAprobacion: resultado.tokenAprobacion,
+        respaldoFirmado: resultado.respaldoFirmado,
         huella: huellaActual,
       });
     } finally {
@@ -711,6 +729,7 @@ export function ModalCheckoutTinkay() {
                           negocio="tinkay"
                           proformaId={ordenPluxPreparada.id}
                           tokenAprobacion={ordenPluxPreparada.tokenAprobacion}
+                          respaldoFirmado={ordenPluxPreparada.respaldoFirmado}
                           modalidadCobro="TOTAL_100"
                           ambiente={ambientePlux}
                           pagador={{
@@ -891,6 +910,46 @@ export function ModalCheckoutTinkay() {
                 <span>Total a facturar:</span>
                 <strong>${totalPagar.toFixed(2)} USD</strong>
               </div>
+
+              {estadoRegalo && (!estadoRegalo.autenticado || estadoRegalo.aplicaRegalo) && (
+                <div
+                  style={{
+                    marginTop: '12px',
+                    padding: '10px 12px',
+                    borderRadius: '10px',
+                    background: estadoRegalo.autenticado ? '#ECFDF5' : '#FDF2F8',
+                    border: estadoRegalo.autenticado ? '1px solid #A7F3D0' : '1px solid #FBCFE8',
+                    color: estadoRegalo.autenticado ? '#065F46' : '#831843',
+                    fontSize: '0.76rem',
+                    lineHeight: 1.45,
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '8px',
+                  }}
+                >
+                  <Gift size={15} style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <div>
+                    {estadoRegalo.autenticado ? (
+                      <>
+                        <strong>Regalo 1ra Compra incluido:</strong> 1x Bombón de Chocolate Ferrero
+                        en Esfera Acrílica (<strong>GRATIS $0.00</strong>).
+                      </>
+                    ) : (
+                      <>
+                        <strong>¡Regalo de 1ra Compra!</strong>{' '}
+                        <Link
+                          href="/registro?destino=/"
+                          style={{ color: '#9D174D', fontWeight: 700, textDecoration: 'underline' }}
+                        >
+                          Regístrate
+                        </Link>{' '}
+                        y recibe <strong>1 Bombón de Chocolate en Esfera GRATIS</strong>. (No es
+                        obligatorio registrarse para comprar).
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

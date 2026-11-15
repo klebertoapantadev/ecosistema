@@ -1,7 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
-import { SelectorUbicacionEntrega } from '@eco/comercio';
+import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import {
+  SelectorUbicacionEntrega,
+  obtenerEstadoRegaloPrimeraCompraAction,
+  type EstadoRegaloPrimeraCompra,
+} from '@eco/comercio';
 import { useCarrito } from '../contexto-carrito';
 import { FRASES_DEDICATORIAS, PRODUCTOS_TINKAY } from '../datos-catalogo';
 import { DatosEntrega, FranjaHoraria } from '../tipos';
@@ -52,6 +57,20 @@ export function DrawerCarritoFloristeria() {
   const [itemEditandoDedicatoria, setItemEditandoDedicatoria] = useState<string | null>(null);
   const [itemEditandoEntrega, setItemEditandoEntrega] = useState<string | null>(null);
   const [avisoValidacionEntrega, setAvisoValidacionEntrega] = useState<string | null>(null);
+  const [estadoRegalo, setEstadoRegalo] = useState<EstadoRegaloPrimeraCompra | null>(null);
+
+  useEffect(() => {
+    if (!drawerAbierto) return;
+    let cancelado = false;
+    obtenerEstadoRegaloPrimeraCompraAction('tinkay')
+      .then((res) => {
+        if (!cancelado) setEstadoRegalo(res);
+      })
+      .catch(() => {});
+    return () => {
+      cancelado = true;
+    };
+  }, [drawerAbierto]);
 
   if (!drawerAbierto) return null;
 
@@ -896,6 +915,54 @@ export function DrawerCarritoFloristeria() {
               >
                 <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: '1px' }} />
                 <span>{avisoValidacionEntrega}</span>
+              </div>
+            )}
+
+            {estadoRegalo && (!estadoRegalo.autenticado || estadoRegalo.aplicaRegalo) && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px',
+                  padding: '10px 12px',
+                  marginBottom: '10px',
+                  borderRadius: '10px',
+                  background: estadoRegalo.autenticado ? '#ECFDF5' : '#FDF2F8',
+                  border: estadoRegalo.autenticado ? '1px solid #A7F3D0' : '1px solid #FBCFE8',
+                  color: estadoRegalo.autenticado ? '#065F46' : '#831843',
+                  fontSize: '0.78rem',
+                  lineHeight: 1.4,
+                }}
+              >
+                <Gift size={16} style={{ flexShrink: 0, marginTop: '2px' }} />
+                <div style={{ flex: 1 }}>
+                  {estadoRegalo.autenticado ? (
+                    <span>
+                      <strong>¡Regalo de 1ra Compra incluido!</strong> 1x Bombón de Chocolate
+                      Ferrero en Esfera Acrílica (<strong>GRATIS $0.00</strong>).
+                    </span>
+                  ) : (
+                    <>
+                      <span>
+                        <strong>¡Regalo en tu primera compra!</strong> Regístrate y llévate{' '}
+                        <strong>1 Bombón de Chocolate en Esfera GRATIS</strong>.{' '}
+                      </span>
+                      <Link
+                        href="/registro?destino=/"
+                        style={{
+                          color: '#9D174D',
+                          fontWeight: 700,
+                          textDecoration: 'underline',
+                        }}
+                      >
+                        Registrarme
+                      </Link>
+                      <div style={{ fontSize: '0.72rem', opacity: 0.85, marginTop: '2px' }}>
+                        También puedes continuar sin registrarte (compra como invitado).
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
             )}
 

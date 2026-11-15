@@ -24,6 +24,7 @@ interface Props {
   varianteId?: string;
   proformaId?: string;
   tokenAprobacion?: string;
+  respaldoFirmado?: string;
   modalidadCobro?: ModalidadCobroProforma;
   pagador: PagadorPlux;
   ambiente: string;
@@ -80,6 +81,7 @@ export function BotonPagoPlux({
   varianteId,
   proformaId,
   tokenAprobacion,
+  respaldoFirmado,
   modalidadCobro = "TOTAL_100",
   pagador,
   ambiente,
@@ -160,6 +162,7 @@ export function BotonPagoPlux({
           negocio,
           proformaId,
           tokenAprobacion,
+          respaldoFirmado,
           modalidadCobro,
           pagador,
         })
