@@ -20,7 +20,7 @@ export interface TestimonioCliente {
  * Enlace directo al álbum compartido de Google Photos.
  * Reemplaza esta URL con el enlace de tu álbum compartido.
  */
-export const ENLACE_ALBUM_GOOGLE_PHOTOS = 'https://photos.app.goo.gl/tinkay-testimonios';
+export const ENLACE_ALBUM_GOOGLE_PHOTOS = 'https://photos.app.goo.gl/pARRDFJCASyUW4vRA';
 
 export const TESTIMONIOS_TINKAY: TestimonioCliente[] = [
   {
