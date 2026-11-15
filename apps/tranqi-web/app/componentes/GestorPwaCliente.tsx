@@ -152,7 +152,9 @@ export function GestorPwaCliente() {
           setDeferredPrompt(null);
           mostrarAvisoTemporal("¡Aplicación tranqi instalada con éxito!");
         }
-      } catch {}
+      } catch {
+        // sin soporte en este navegador: se ignora
+      }
       return;
     }
     if (esIos && !instalada) {
@@ -239,7 +241,9 @@ export function GestorPwaCliente() {
     setBannerOculto(true);
     try {
       localStorage.setItem("tranqi_pwa_banner_oculto", "1");
-    } catch {}
+    } catch {
+      // almacenamiento local no disponible: se ignora
+    }
   };
 
   const mostrarBarraPanel =

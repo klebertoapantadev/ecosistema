@@ -166,7 +166,9 @@ self.addEventListener("push", (event) => {
     } catch {
       try {
         payload.body = event.data.text() || payload.body;
-      } catch {}
+      } catch {
+        // sin texto en el evento push: se ignora
+      }
     }
   }
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileCheck, KeyRound, CheckCircle2, ShieldCheck, Download, AlertTriangle, Loader2 } from "lucide-react";
+import { KeyRound, CheckCircle2, ShieldCheck, Loader2 } from "lucide-react";
 import { confirmarContratoSocio } from "../acciones";
 import { ModalFirmaDigitalPdf } from "./ModalFirmaDigitalPdf";
 import { crearClienteNavegador } from "@eco/supabase";

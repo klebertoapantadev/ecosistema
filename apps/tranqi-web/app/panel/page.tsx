@@ -138,7 +138,7 @@ export default async function PagePanel({ searchParams }: Props) {
   const perfil = await obtenerPerfilActual();
   const perfilesBase = await obtenerPerfiles(NEGOCIO);
   const supabase = await crearClienteServidor();
-  const adminClient = (crearClienteAdmin() || supabase) as any;
+  const adminClient = crearClienteAdmin() || supabase;
 
   let regAbogado: { abg_id: string; abg_estado: string } | null = null;
   if (perfil?.usu_id) {

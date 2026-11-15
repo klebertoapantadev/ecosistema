@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import {
-  Users, UserPlus, Search, Building2, User, Scale, Calendar,
-  Folder, Eye, Plus, CheckCircle2, Shield, Sparkles, Filter, ChevronRight,
+  Users, UserPlus, Search, Building2, User,
+  Eye, CheckCircle2,
   RefreshCw, Share2, Pencil, Power, Trash2, AlertCircle, MessageSquare
 } from "lucide-react";
 import {
@@ -16,14 +16,25 @@ import { ModalAltaClienteAsistida } from "./ModalAltaClienteAsistida";
 import { FichaClienteDetalleModal } from "./FichaClienteDetalleModal";
 import { BandejaProspectosChat } from "./BandejaProspectosChat";
 
+type ClienteCRMFila = Awaited<ReturnType<typeof obtenerClientesCRM>>[number] & {
+  clp_telefono?: string | null;
+  clp_usuario_id?: string | null;
+  clp_direccion?: string | null;
+  clp_casillero_electronico?: string | null;
+  clp_detalle_cliente?: {
+    estado_crm?: string;
+    [key: string]: unknown;
+  } | null;
+};
+
 interface Props {
   negocio?: string;
   tipoPersoneriaPorDefecto?: "todas" | "natural" | "juridica";
 }
 
-export function BandejaClientesCRM({ negocio = "TRANQ", tipoPersoneriaPorDefecto }: Props) {
+export function BandejaClientesCRM({ negocio: _negocio = "TRANQ", tipoPersoneriaPorDefecto }: Props) {
   const [pestanaActiva, setPestanaActiva] = useState<"clientes" | "prospectos_chat">("clientes");
-  const [clientes, setClientes] = useState<any[]>([]);
+  const [clientes, setClientes] = useState<ClienteCRMFila[]>([]);
   const [cargando, setCargando] = useState(true);
   const [sincronizando, setSincronizando] = useState(false);
   const [busqueda, setBusqueda] = useState("");
@@ -47,7 +58,7 @@ export function BandejaClientesCRM({ negocio = "TRANQ", tipoPersoneriaPorDefecto
 
   // Modales
   const [modalAltaAbierto, setModalAltaAbierto] = useState(false);
-  const [clienteAEditar, setClienteAEditar] = useState<any | null>(null);
+  const [clienteAEditar, setClienteAEditar] = useState<ClienteCRMFila | null>(null);
   const [clienteSeleccionadoId, setClienteSeleccionadoId] = useState<string | null>(null);
 
   // Mensaje de éxito o error temporal
@@ -140,20 +151,21 @@ export function BandejaClientesCRM({ negocio = "TRANQ", tipoPersoneriaPorDefecto
         setToastError("Error al sincronizar: " + (res.mensaje || "Desconocido"));
         setTimeout(() => setToastError(null), 5000);
       }
-    } catch (err: any) {
-      setToastError("Error al sincronizar: " + err?.message);
+    } catch (err) {
+      const mensaje = err instanceof Error ? err.message : String(err);
+      setToastError("Error al sincronizar: " + mensaje);
       setTimeout(() => setToastError(null), 5000);
     } finally {
       setSincronizando(false);
     }
   };
 
-  const manejarAbrirEditar = (c: any) => {
+  const manejarAbrirEditar = (c: ClienteCRMFila) => {
     setClienteAEditar(c);
     setModalAltaAbierto(true);
   };
 
-  const manejarAlternarEstado = async (c: any) => {
+  const manejarAlternarEstado = async (c: ClienteCRMFila) => {
     const nuevoEstado = !c.clp_activo;
     const accionTexto = nuevoEstado ? "activar" : "inactivar";
     const nombre = c.clp_razon_social || `${c.clp_nombres || ""} ${c.clp_apellidos || ""}`.trim();
@@ -171,13 +183,14 @@ export function BandejaClientesCRM({ negocio = "TRANQ", tipoPersoneriaPorDefecto
         setToastError(res.error || "No se pudo cambiar el estado del cliente.");
         setTimeout(() => setToastError(null), 6000);
       }
-    } catch (e: any) {
-      setToastError("Error: " + e?.message);
+    } catch (e) {
+      const mensaje = e instanceof Error ? e.message : String(e);
+      setToastError("Error: " + mensaje);
       setTimeout(() => setToastError(null), 6000);
     }
   };
 
-  const manejarEliminar = async (c: any) => {
+  const manejarEliminar = async (c: ClienteCRMFila) => {
     const nombre = c.clp_razon_social || `${c.clp_nombres || ""} ${c.clp_apellidos || ""}`.trim();
     if (!confirm(`¿Deseas remover al prospecto "${nombre}"? (Nota: Si posee causas o pagos, el sistema solo permitirá Inactivarlo).`)) {
       return;
@@ -193,8 +206,9 @@ export function BandejaClientesCRM({ negocio = "TRANQ", tipoPersoneriaPorDefecto
         setToastError(res.error || "No se pudo eliminar el cliente.");
         setTimeout(() => setToastError(null), 7000);
       }
-    } catch (e: any) {
-      setToastError("Error: " + e?.message);
+    } catch (e) {
+      const mensaje = e instanceof Error ? e.message : String(e);
+      setToastError("Error: " + mensaje);
       setTimeout(() => setToastError(null), 7000);
     }
   };

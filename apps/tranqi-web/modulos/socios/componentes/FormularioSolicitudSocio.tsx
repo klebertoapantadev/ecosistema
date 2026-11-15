@@ -8,23 +8,14 @@ import {
   X,
   Search,
   Plus,
-  Bold,
-  Italic,
-  Underline,
-  List,
-  Heading,
-  Link as LinkIcon,
-  Code,
   ShieldCheck,
   UploadCloud,
   FileText,
   Camera,
   Paperclip,
   Trash2,
-  Image as ImageIcon,
   ZoomIn,
   ZoomOut,
-  Move,
   RotateCcw,
   Crop,
   Sliders,
@@ -32,7 +23,6 @@ import {
   Sparkles,
   Award,
   ArrowRight,
-  Clock,
   Briefcase,
   GraduationCap,
   Scale,
@@ -42,24 +32,19 @@ import {
   FolderTree,
   AlertTriangle,
   AlertCircle,
-  Eye,
 } from "lucide-react";
-import { crearClienteNavegador } from "@eco/supabase";
 import { ModalNotificacionPush } from "@eco/notificaciones";
 import { BarraVariablesDinamicas } from "@eco/identidad/componentes/BarraVariablesDinamicas";
 import { validarIdentificacion } from "../cedula-ecuador";
 import InspeccionIdentidadAria, { type DictamenAria } from "./InspeccionIdentidadAria";
 import {
   enviarSolicitudSocio,
-  registrarDocumentoSocio,
-  subirDocumentoSocioAction,
   eliminarSolicitudSocioPropiaAction,
   reiniciarSolicitudSocioPropiaAction,
 } from "../acciones";
 import {
   ENLACES_VERIFICACION,
   sanearNombreArchivo,
-  generarRutaRepositorioComun,
   CONCEPTOS_REPOSITORIO,
   type DatosExperienciaLaboral,
 } from "../esquema";
@@ -1116,268 +1101,6 @@ function CampoSubidaArchivo({
   );
 }
 
-// Componente Editor HTML para "Cuéntanos por qué quieres unirte a la red"
-function EditorHtmlResumen({ valor, onChange }: { valor: string; onChange: (val: string) => void }) {
-  const [modoHtml, setModoHtml] = useState(false);
-  const editorRef = useRef<HTMLDivElement>(null);
-  const inputImagenRef = useRef<HTMLInputElement>(null);
-  const inputArchivoRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (editorRef.current && !modoHtml && editorRef.current.innerHTML !== valor) {
-      editorRef.current.innerHTML = valor;
-    }
-  }, [valor, modoHtml]);
-
-  const aplicarComando = (comando: string, arg: string | undefined = undefined) => {
-    document.execCommand(comando, false, arg);
-    if (editorRef.current) {
-      onChange(editorRef.current.innerHTML);
-    }
-  };
-
-  const agregarEnlace = () => {
-    const url = prompt("Ingresa la URL del enlace (ej: https://...):");
-    if (url) {
-      aplicarComando("createLink", url);
-    }
-  };
-
-  const insertarHtmlEnCursor = (htmlText: string) => {
-    if (!editorRef.current) return;
-    editorRef.current.focus();
-    const sel = window.getSelection();
-    if (sel && sel.rangeCount > 0) {
-      const range = sel.getRangeAt(0);
-      range.deleteContents();
-      const el = document.createElement("div");
-      el.innerHTML = htmlText;
-      const frag = document.createDocumentFragment();
-      let node: Node | null;
-      let lastNode: Node | null = null;
-      while ((node = el.firstChild)) {
-        lastNode = frag.appendChild(node);
-      }
-      range.insertNode(frag);
-      if (lastNode) {
-        range.setStartAfter(lastNode);
-        range.collapse(true);
-        sel.removeAllRanges();
-        sel.addRange(range);
-      }
-    } else {
-      editorRef.current.innerHTML += htmlText;
-    }
-    onChange(editorRef.current.innerHTML);
-  };
-
-  const manejarPegar = (e: React.ClipboardEvent<HTMLDivElement>) => {
-    const items = Array.from(e.clipboardData.items ?? []);
-    const imagenItem = items.find((item) => item.type.startsWith("image/"));
-
-    if (imagenItem) {
-      e.preventDefault();
-      const file = imagenItem.getAsFile();
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const dataUrl = event.target?.result as string;
-        if (dataUrl) {
-          insertarHtmlEnCursor(`<img src="${dataUrl}" style="max-width:100%; border-radius:8px; margin:8px 0; display:block;" alt="Imagen pegada" />`);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const manejarSeleccionImagen = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        insertarHtmlEnCursor(`<img src="${dataUrl}" style="max-width:100%; border-radius:8px; margin:8px 0; display:block;" alt="${file.name}" />`);
-      }
-    };
-    reader.readAsDataURL(file);
-    e.target.value = "";
-  };
-
-  const manejarSeleccionArchivo = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        insertarHtmlEnCursor(
-          `<a href="${dataUrl}" download="${file.name}" target="_blank" rel="noopener noreferrer" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; background:#F3E8FF; color:#5000BA; border-radius:8px; text-decoration:none; font-weight:700; font-size:0.82rem; margin:4px 0;">${file.name} (${formatoTamanoArchivo(file.size)})</a>`
-        );
-      }
-    };
-    reader.readAsDataURL(file);
-    e.target.value = "";
-  };
-
-  const [imagenSeleccionada, setImagenSeleccionada] = useState<HTMLImageElement | null>(null);
-
-  const cambiarTamanoImagen = (anchoPorcentaje: string) => {
-    if (imagenSeleccionada) {
-      imagenSeleccionada.style.width = anchoPorcentaje;
-      imagenSeleccionada.style.maxWidth = "100%";
-      imagenSeleccionada.style.height = "auto";
-      if (editorRef.current) {
-        onChange(editorRef.current.innerHTML);
-      }
-    } else if (editorRef.current) {
-      const imgs = editorRef.current.querySelectorAll("img");
-      if (imgs.length > 0) {
-        const ultima = imgs[imgs.length - 1] as HTMLImageElement;
-        ultima.style.width = anchoPorcentaje;
-        ultima.style.maxWidth = "100%";
-        ultima.style.height = "auto";
-        onChange(editorRef.current.innerHTML);
-      }
-    }
-  };
-
-  return (
-    <div style={{ border: "1px solid var(--panel-linea, #E4E4E4)", borderRadius: "10px", overflow: "hidden", background: "#ffffff" }}>
-      <input ref={inputImagenRef} type="file" accept="image/*" onChange={manejarSeleccionImagen} style={{ display: "none" }} />
-      <input ref={inputArchivoRef} type="file" accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain" onChange={manejarSeleccionArchivo} style={{ display: "none" }} />
-
-      {/* Barra de herramientas HTML */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: "4px",
-          padding: "8px 10px",
-          background: "var(--panel-papel, #F7F6FA)",
-          borderBottom: "1px solid var(--panel-linea, #E4E4E4)",
-        }}
-      >
-        <button type="button" title="Negrita" onClick={() => aplicarComando("bold")} style={btnToolStyle}>
-          <Bold size={14} />
-        </button>
-        <button type="button" title="Cursiva" onClick={() => aplicarComando("italic")} style={btnToolStyle}>
-          <Italic size={14} />
-        </button>
-        <button type="button" title="Subrayado" onClick={() => aplicarComando("underline")} style={btnToolStyle}>
-          <Underline size={14} />
-        </button>
-        <div style={{ width: "1px", height: "18px", background: "#E4E4E4", margin: "0 4px" }} />
-        <button type="button" title="Lista de viñetas" onClick={() => aplicarComando("insertUnorderedList")} style={btnToolStyle}>
-          <List size={14} />
-        </button>
-        <button type="button" title="Encabezado h3" onClick={() => aplicarComando("formatBlock", "<h3>")} style={btnToolStyle}>
-          <Heading size={14} />
-        </button>
-        <button type="button" title="Agregar enlace" onClick={agregarEnlace} style={btnToolStyle}>
-          <LinkIcon size={14} />
-        </button>
-        <div style={{ width: "1px", height: "18px", background: "#E4E4E4", margin: "0 4px" }} />
-        <button type="button" title="Insertar imagen" onClick={() => inputImagenRef.current?.click()} style={btnToolStyle}>
-          <ImageIcon size={14} color="var(--violeta, #5000BA)" />
-        </button>
-        <button type="button" title="Adjuntar archivo" onClick={() => inputArchivoRef.current?.click()} style={btnToolStyle}>
-          <Paperclip size={14} color="var(--violeta, #5000BA)" />
-        </button>
-
-        <div style={{ width: "1px", height: "18px", background: "#E4E4E4", margin: "0 4px" }} />
-        <div style={{ display: "inline-flex", alignItems: "center", gap: "3px", background: "rgba(80,0,186,0.06)", padding: "2px 6px", borderRadius: "6px" }}>
-          <span style={{ fontSize: "0.7rem", fontWeight: 700, color: "var(--violeta, #5000BA)" }}>Tamaño Imagen:</span>
-          <button type="button" title="Reducir a 25%" onClick={() => cambiarTamanoImagen("25%")} style={{ ...btnToolStyle, fontSize: "0.7rem", padding: "2px 6px" }}>25%</button>
-          <button type="button" title="Reducir a 50%" onClick={() => cambiarTamanoImagen("50%")} style={{ ...btnToolStyle, fontSize: "0.7rem", padding: "2px 6px" }}>50%</button>
-          <button type="button" title="Reducir a 75%" onClick={() => cambiarTamanoImagen("75%")} style={{ ...btnToolStyle, fontSize: "0.7rem", padding: "2px 6px" }}>75%</button>
-          <button type="button" title="Tamaño 100%" onClick={() => cambiarTamanoImagen("100%")} style={{ ...btnToolStyle, fontSize: "0.7rem", padding: "2px 6px" }}>100%</button>
-        </div>
-
-        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: "6px" }}>
-          <button
-            type="button"
-            onClick={() => setModoHtml(!modoHtml)}
-            style={{
-              ...btnToolStyle,
-              background: modoHtml ? "var(--violeta-suave, #F3E8FF)" : "transparent",
-              color: modoHtml ? "var(--violeta, #5000BA)" : "var(--panel-gris, #737373)",
-              fontWeight: 700,
-              padding: "4px 8px",
-              fontSize: "0.72rem",
-            }}
-          >
-            <Code size={13} /> {modoHtml ? "Vista Visual" : "Código HTML"}
-          </button>
-        </div>
-      </div>
-
-      {/* Áreas de Edición */}
-      {modoHtml ? (
-        <textarea
-          value={valor}
-          onChange={(e) => onChange(e.target.value)}
-          rows={6}
-          placeholder="Escribe o edita etiquetas HTML..."
-          style={{
-            width: "100%",
-            padding: "12px",
-            fontSize: "0.84rem",
-            fontFamily: "monospace",
-            border: "none",
-            outline: "none",
-            background: "#1E1E2E",
-            color: "#A6ADC8",
-            resize: "vertical",
-          }}
-        />
-      ) : (
-        <div
-          ref={editorRef}
-          contentEditable
-          suppressContentEditableWarning
-          onInput={() => editorRef.current && onChange(editorRef.current.innerHTML)}
-          onBlur={() => editorRef.current && onChange(editorRef.current.innerHTML)}
-          onPaste={manejarPegar}
-          onClick={(e) => {
-            const target = e.target as HTMLElement;
-            if (target.tagName === "IMG") {
-              setImagenSeleccionada(target as HTMLImageElement);
-            } else {
-              setImagenSeleccionada(null);
-            }
-          }}
-          style={{
-            minHeight: "120px",
-            maxHeight: "320px",
-            padding: "12px",
-            fontSize: "0.88rem",
-            color: "#111111",
-            outline: "none",
-            overflowY: "auto",
-            lineHeight: "1.5",
-            cursor: "text",
-          }}
-        />
-      )}
-    </div>
-  );
-}
-
-const btnToolStyle: React.CSSProperties = {
-  background: "#ffffff",
-  border: "1px solid var(--panel-linea, #E4E4E4)",
-  borderRadius: "6px",
-  padding: "4px 8px",
-  cursor: "pointer",
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  color: "#333333",
-};
-
 // Componente Selector Multiselección Ajustado (Resuelve la alineación vertical de checkboxes)
 function SelectorMultiSeleccion({
   opciones,
@@ -1695,17 +1418,6 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
 
   const [nombres, setNombres] = useState<string>(nombresIniciales ?? "");
   const [apellidos, setApellidos] = useState<string>(apellidosIniciales ?? "");
-  const [analizandoIdentidadAria, setAnalizandoIdentidadAria] = useState(false);
-  const [dictamenAriaExtraccion, setDictamenAriaExtraccion] = useState<{
-    titular?: string | null;
-    identificacion?: string | null;
-    tipo_detectado?: string | null;
-    fecha_emision?: string | null;
-    fecha_caducidad?: string | null;
-    legible?: boolean;
-    observaciones?: string[];
-    nombre_archivo?: string;
-  } | null>(null);
 
   // Estado y extracción ARIA del Carnet Profesional (Obligatorio)
   const [carnetArchivos, setCarnetArchivos] = useState<File[]>([]);
@@ -1735,7 +1447,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
   );
   const [panelExperienciaAbierto, setPanelExperienciaAbierto] = useState<boolean>(() =>
     Boolean(
-      (solicitudExistente?.trq_experiencia_laboral as any[])?.length ||
+      (solicitudExistente?.trq_experiencia_laboral as unknown[])?.length ||
       (solicitudExistente?.ssc_anos_experiencia && Number(solicitudExistente.ssc_anos_experiencia) > 0) ||
       cvYCertificadosExistentes.length > 0
     )
@@ -1767,7 +1479,6 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
   const [fotoPerfilArchivos, setFotoPerfilArchivos] = useState<File[]>([]);
   const [identificacionArchivos, setIdentificacionArchivos] = useState<File[]>([]);
   const [identificacionPreviewUrl, setIdentificacionPreviewUrl] = useState<string | null>(null);
-  const [avisoLegibilidadIdentificacion, setAvisoLegibilidadIdentificacion] = useState<string | null>(null);
   const [modalInspeccionDoc, setModalInspeccionDoc] = useState<{ url: string; titulo: string } | null>(null);
   const [tituloArchivos, setTituloArchivos] = useState<File[]>([]);
   const [cvYCertificados, setCvYCertificados] = useState<File[]>([]);
@@ -1859,7 +1570,6 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
     if (archivos.length === 0 || !archivos[0]) return;
 
     const arch = archivos[0];
-    setAnalizandoIdentidadAria(true);
     setError(null);
 
     try {
@@ -1873,7 +1583,6 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
 
       const res = await resp.json();
       if (res.ok && res.datos) {
-        setDictamenAriaExtraccion(res.datos);
         if (res.datos.identificacion) {
           setCedula(res.datos.identificacion);
         }
@@ -1888,8 +1597,6 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
       }
     } catch (err) {
       console.warn("Aviso al analizar documento con ARIA:", err);
-    } finally {
-      setAnalizandoIdentidadAria(false);
     }
   };
 
@@ -1899,24 +1606,12 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
       if (arch.type.startsWith("image/")) {
         const url = URL.createObjectURL(arch);
         setIdentificacionPreviewUrl(url);
-
-        const img = new Image();
-        img.onload = () => {
-          if (img.width < 700 || img.height < 500) {
-            setAvisoLegibilidadIdentificacion("La imagen tiene una resolución moderada. Asegúrate de que los números y nombres sean completamente legibles.");
-          } else {
-            setAvisoLegibilidadIdentificacion(null);
-          }
-        };
-        img.src = url;
         return () => URL.revokeObjectURL(url);
       } else {
         setIdentificacionPreviewUrl(null);
-        setAvisoLegibilidadIdentificacion(null);
       }
     } else {
       setIdentificacionPreviewUrl(null);
-      setAvisoLegibilidadIdentificacion(null);
     }
   }, [identificacionArchivos]);
 

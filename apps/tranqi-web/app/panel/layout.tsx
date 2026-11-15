@@ -102,7 +102,7 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   }
 
   const perfilesBase = await obtenerPerfiles(NEGOCIO);
-  const adminClient = (crearClienteAdmin() || supabase) as any;
+  const adminClient = crearClienteAdmin() || supabase;
   const { data: regAbogado } = await adminClient
     .schema("tranqui_legal")
     .from("trq_abogado")

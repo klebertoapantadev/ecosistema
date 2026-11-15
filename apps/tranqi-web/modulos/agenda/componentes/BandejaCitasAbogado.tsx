@@ -4,7 +4,6 @@ import React, { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { salaAbierta } from "@eco/agenda";
 import {
-  Briefcase,
   Building2,
   Calendar,
   CheckCircle2,
@@ -13,7 +12,6 @@ import {
   FileText,
   FolderOpen,
   GitCommit,
-  History,
   MessageCircle,
   Phone,
   Plus,
@@ -41,7 +39,7 @@ import {
   construirEnlacesCalendarioCita,
   construirUrlWhatsappCliente,
 } from "../calendario-ics";
-import { ETIQUETA_COBERTURA, ETIQUETA_ESTADO_CITA } from "../esquema";
+import { ETIQUETA_COBERTURA } from "../esquema";
 import LineaTiempoTrackingCita from "./LineaTiempoTrackingCita";
 import type {
   CitaResumen,
