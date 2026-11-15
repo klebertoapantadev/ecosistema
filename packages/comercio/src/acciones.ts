@@ -20,6 +20,8 @@ import {
   normalizarConfiguracionRenta,
   type ConfiguracionRentaProducto,
 } from "./utils/tiposOferta";
+import { obtenerEmisorRideNegocioAction } from "./acciones-facturacion-sri";
+import type { ConfiguracionEmisorSri, LineaFacturaSriResumen } from "./ride-sri";
 
 export interface CategoriaCatalogo {
   ctg_id: string;
@@ -120,8 +122,12 @@ export interface FacturaElectronicaResumen {
   rubro_facturado: string;
   codigo_rubro?: string;
   subtotal: number;
+  subtotal_15?: number;
+  subtotal_0?: number;
   iva: number;
   total: number;
+  lineas?: LineaFacturaSriResumen[];
+  emisor?: Partial<ConfiguracionEmisorSri>;
   comprador?: {
     tipo_identificacion?: string;
     identificacion?: string;
@@ -5690,9 +5696,9 @@ const RUC_EMISOR_DEFECTO: Record<string, { ruc: string; razonSocial: string; dir
     direccion: "Av. Amazonas y Naciones Unidas, Quito - Ecuador",
   },
   tinkay: {
-    ruc: "1790016935001",
-    razonSocial: "TINKAY FLORISTERIA S.A.S.",
-    direccion: "Av. González Suárez y Orellana, Quito - Ecuador",
+    ruc: "1792837465001",
+    razonSocial: "TINKAY FLORISTERÍA CÍA. LTDA.",
+    direccion: "El Batán Alto / Monteserrín, Quito - Ecuador",
   },
   margaritas: {
     ruc: "1790016943001",
@@ -5861,31 +5867,90 @@ export async function asegurarFacturaElectronicaParaPago(
       return det.factura_electronica as FacturaElectronicaResumen;
     }
 
-    // 3. Generar comprobante electrónico determinístico basado en pag_secuencial
+    // 3. Generar comprobante electrónico determinístico basado en pag_secuencial y emisor configurado del negocio
     const secNum = Number(pago.pag_secuencial || Math.floor(1 + Math.random() * 999));
+    const emisorReal = await obtenerEmisorRideNegocioAction(negCanonico).catch(
+      () => null,
+    );
     const emisorCfg = RUC_EMISOR_DEFECTO[negCanonico] || RUC_EMISOR_DEFECTO.tranqi!;
+    const rucEfectivo = emisorReal?.ruc || emisorCfg.ruc;
+    const estabEfectivo = emisorReal?.establecimiento || "001";
+    const ptoEfectivo = emisorReal?.puntoEmision || "001";
+    const ambEfectivo: 1 | 2 = emisorReal?.ambiente === 2 ? 2 : 1;
     const fechaRef = pago.pag_confirmado_en || pago.pag_creado_en || new Date().toISOString();
-    const numeroComprobante = `001-001-${String(secNum).padStart(9, "0")}`;
+    const numeroComprobante = `${estabEfectivo}-${ptoEfectivo}-${String(secNum).padStart(9, "0")}`;
     const claveAcceso = generarClaveAccesoSri49({
       fechaIso: fechaRef,
-      ruc: emisorCfg.ruc,
-      ambiente: 1,
-      establecimiento: "001",
-      puntoEmision: "001",
+      ruc: rucEfectivo,
+      ambiente: ambEfectivo,
+      establecimiento: estabEfectivo,
+      puntoEmision: ptoEfectivo,
       secuencialNumero: secNum,
     });
 
     const total = Number(pago.pag_monto_total || 0);
     const subtotalGrabado = Number(pago.pag_monto_con_iva || 0);
     const subtotalCero = Number(pago.pag_monto_sin_iva || 0);
+    const ivaExplicito = pago.pag_monto_iva !== undefined && pago.pag_monto_iva !== null ? Number(pago.pag_monto_iva) : null;
     const subtotalCalc =
       subtotalGrabado + subtotalCero > 0
         ? Math.round((subtotalGrabado + subtotalCero) * 100) / 100
-        : Math.round((total / 1.15) * 100) / 100;
+        : ivaExplicito === 0
+          ? total
+          : Math.round((total / 1.15) * 100) / 100;
     const ivaCalc =
-      Number(pago.pag_monto_iva || 0) > 0
-        ? Number(pago.pag_monto_iva)
+      ivaExplicito !== null
+        ? Math.round(ivaExplicito * 100) / 100
         : Math.round((total - subtotalCalc) * 100) / 100;
+
+    // Extraer líneas detalladas si proviene de orden o proforma de tienda (Tinkay / Margaritas / etc.)
+    let lineasOrden: LineaFacturaSriResumen[] | undefined;
+    const proformaRefId = pago.pag_referencia_id || det.proforma_id;
+    if (Array.isArray(det.lineas_factura) && det.lineas_factura.length > 0) {
+      lineasOrden = det.lineas_factura;
+    } else if (proformaRefId && (!det.modalidad_cobro || det.modalidad_cobro === "TOTAL_100")) {
+      try {
+        const { data: prfRow } = await db
+          .schema("comun_comercio")
+          .from("com_proforma")
+          .select("prf_detalle_proforma")
+          .eq("prf_id", proformaRefId)
+          .maybeSingle();
+        const detPrf = (prfRow?.prf_detalle_proforma as Record<string, any>) || {};
+        const itemsPrf: any[] = Array.isArray(detPrf.items) ? detPrf.items : [];
+        if (itemsPrf.length > 0) {
+          lineasOrden = itemsPrf.map((it: any, idx: number) => {
+            const cant = Number(it.cantidad || 1);
+            const pUnit = Number(it.precio_unitario || 0);
+            const sub = Math.round(cant * pUnit * 100) / 100;
+            const grabaIva = String(it.impuesto || "").includes("15");
+            return {
+              codigo: String(it.variante_sku || `ITEM-${idx + 1}`).slice(0, 25),
+              descripcion: String(it.descripcion || it.producto_nombre || "Producto"),
+              cantidad: cant,
+              precio_unitario: pUnit,
+              tarifa_iva: grabaIva ? 15 : 0,
+              subtotal: sub,
+              valor_iva: grabaIva ? Math.round(sub * 0.15 * 100) / 100 : 0,
+            };
+          });
+          const fleteOrden = Number(detPrf.total_flete || 0) + Number(detPrf.total_recargo_horario_exacto || 0);
+          if (fleteOrden > 0) {
+            lineasOrden.push({
+              codigo: "ENV-001",
+              descripcion: "Servicio de entrega a domicilio",
+              cantidad: 1,
+              precio_unitario: Math.round(fleteOrden * 100) / 100,
+              tarifa_iva: 0,
+              subtotal: Math.round(fleteOrden * 100) / 100,
+              valor_iva: 0,
+            });
+          }
+        }
+      } catch {
+        // Mantener resumen global si no se puede leer com_proforma
+      }
+    }
 
     const datosFact = det.datos_facturacion || det.pagador || {};
     const idComprador = String(
@@ -5914,14 +5979,20 @@ export async function asegurarFacturaElectronicaParaPago(
       numero_comprobante: numeroComprobante,
       clave_acceso: claveAcceso,
       estado: "AUTORIZADO",
-      ambiente: 1,
+      ambiente: ambEfectivo,
       fecha_emision: fechaRef.slice(0, 10),
       fecha_autorizacion: fechaRef,
       rubro_facturado: rubro,
-      codigo_rubro: det.codigo_rubro || "SERV-001",
+      codigo_rubro:
+        det.codigo_rubro ||
+        (negCanonico === "tinkay" || negCanonico === "margaritas" ? "FLR-001" : "SERV-001"),
       subtotal: subtotalCalc,
+      subtotal_15: subtotalGrabado,
+      subtotal_0: subtotalCero > 0 ? subtotalCero : ivaCalc === 0 ? subtotalCalc : 0,
       iva: ivaCalc,
       total,
+      lineas: lineasOrden,
+      emisor: emisorReal || undefined,
       comprador: compradorObj,
     };
 
@@ -6260,6 +6331,109 @@ export async function obtenerHistorialTransaccionesAction(
       }
     }
 
+    // Integrar órdenes de tienda y proformas activas en comun_comercio.com_proforma (ej. Tinkay, Margaritas, FastFix)
+    // para que los pedidos por transferencia bancaria (PENDIENTE) o aprobados aparezcan en la consola de facturación
+    if (db && negPrincipal !== "tranqi") {
+      try {
+        let queryPrf = db
+          .schema("comun_comercio")
+          .from("com_proforma")
+          .select("prf_id, prf_secuencial, prf_negocio, prf_cliente_id, prf_cliente_nombre, prf_cliente_contacto, prf_estado, prf_subtotal, prf_iva, prf_total, prf_creado_en, prf_detalle_proforma")
+          .in("prf_negocio", variantesNegocio)
+          .is("prf_eliminado_en", null)
+          .in("prf_estado", ["ORDEN_CONFIRMADA", "PENDIENTE_PAGO", "RESERVADA_70", "APROBADA", "EN_PREPARACION", "EN_RUTA", "ENTREGADO"])
+          .order("prf_creado_en", { ascending: false })
+          .limit(80);
+
+        if (user && (!esStaff || forzarVistaCliente)) {
+          queryPrf = queryPrf.eq("prf_cliente_id", user.id);
+        }
+
+        const { data: prfRows } = await queryPrf;
+        if (Array.isArray(prfRows) && prfRows.length > 0) {
+          const proformasYaEnPagos = new Set(
+            filas
+              .map((f) => String(f.pag_referencia_id || f.pag_detalle_transaccion?.proforma_id || ""))
+              .filter(Boolean),
+          );
+
+          for (const p of prfRows) {
+            if (proformasYaEnPagos.has(String(p.prf_id))) continue;
+            const idSinteticoPrf = `pag-prf-${p.prf_id}`;
+            if (filas.some((f) => f.pag_id === idSinteticoPrf)) continue;
+
+            const detPrf = (p.prf_detalle_proforma as Record<string, any>) || {};
+            const contacto = (p.prf_cliente_contacto || detPrf.comprador || {}) as Record<string, any>;
+            const pagada =
+              ["APROBADA", "EN_PREPARACION", "EN_RUTA", "ENTREGADO"].includes(String(p.prf_estado || "")) ||
+              detPrf.estado_pago === "PAGADO_TOTAL";
+            const totalPrf = Number(p.prf_total || detPrf.total_pagar || 0);
+            const ivaPrf = Number(p.prf_iva || detPrf.total_iva || 0);
+            const subGravado =
+              detPrf.base_iva_gravada_centavos !== undefined
+                ? Number(detPrf.base_iva_gravada_centavos) / 100
+                : ivaPrf > 0
+                  ? Math.round((ivaPrf / 0.15) * 100) / 100
+                  : 0;
+            const subCero = Math.max(0, Math.round((totalPrf - ivaPrf - subGravado) * 100) / 100);
+            const codigoOrden = String(
+              detPrf.codigo_orden ||
+                detPrf.codigo_proforma ||
+                `${negPrincipal.slice(0, 3).toUpperCase()}-ORD-${String(p.prf_secuencial || 1).padStart(4, "0")}`,
+            );
+            const itemsPrf: any[] = Array.isArray(detPrf.items) ? detPrf.items : [];
+            const resumenItems =
+              itemsPrf.length > 0
+                ? itemsPrf
+                    .map((it) => `${it.cantidad || 1}x ${it.descripcion || it.producto_nombre || "Producto"}`)
+                    .join(", ")
+                : "Pedido de Tienda";
+
+            filas.push({
+              pag_id: idSinteticoPrf,
+              pag_secuencial: Number(p.prf_secuencial || 1),
+              pag_negocio: negPrincipal,
+              pag_cliente_id: p.prf_cliente_id || null,
+              pag_pasarela: String(detPrf.metodo_pago || "transferencia").toUpperCase() === "PLUX" ? "PLUX" : "TRANSFERENCIA",
+              pag_identificador_cliente: codigoOrden,
+              pag_transaccion_pasarela_id: detPrf.ultimo_pago_plux?.autorizacion || codigoOrden,
+              pag_autorizacion_codigo: detPrf.ultimo_pago_plux?.autorizacion || null,
+              pag_estado: pagada ? "APROBADO" : "PENDIENTE",
+              pag_monto_total: totalPrf,
+              pag_monto_con_iva: subGravado,
+              pag_monto_sin_iva: subCero,
+              pag_monto_iva: ivaPrf,
+              pag_moneda: "USD",
+              pag_titular_email: contacto.correo || null,
+              pag_titular_identificacion: contacto.identificacion || null,
+              pag_titular_telefono: contacto.telefono || contacto.whatsapp || null,
+              pag_tarjeta_tipo: null,
+              pag_tarjeta_marca: detPrf.ultimo_pago_plux?.marca_tarjeta || null,
+              pag_tarjeta_ultimos_digitos: detPrf.ultimo_pago_plux?.ultimos_digitos || null,
+              pag_creado_en: p.prf_creado_en,
+              pag_confirmado_en: pagada ? detPrf.aprobada_en || p.prf_creado_en : null,
+              pag_detalle_transaccion: {
+                origen: "proforma_tienda",
+                proforma_id: p.prf_id,
+                codigo_proforma: codigoOrden,
+                rubro_facturado: `${codigoOrden} — ${resumenItems}`.slice(0, 180),
+                datos_facturacion: {
+                  razon_social: p.prf_cliente_nombre || contacto.nombreCompleto || "Cliente",
+                  identificacion: contacto.identificacion || "9999999999999",
+                  correo_facturacion: contacto.correo || "",
+                  telefono: contacto.telefono || contacto.whatsapp || "",
+                  direccion: detPrf.logistica_entrega?.direccion || "Quito - Ecuador",
+                },
+                factura_electronica: detPrf.factura_electronica || null,
+              },
+            });
+          }
+        }
+      } catch {
+        // Ignorar si com_proforma está restringido por RLS para este rol
+      }
+    }
+
     // Consultar en lote los perfiles de seg_usuario para todas las filas de pagos
     const mapaUsuariosPagos = new Map<string, any>();
     const idsClientesPagos = Array.from(
@@ -6317,7 +6491,7 @@ export async function obtenerHistorialTransaccionesAction(
 
       // Si el identificador o detalle corresponde a PLUX, asegurar que pag_pasarela sea PLUX
       if (
-        String(t.pag_identificador_cliente || "").startsWith("TRQ-PLX-") ||
+        /^[A-Z]{3}-PLX-/.test(String(t.pag_identificador_cliente || "")) ||
         det.pasarela === "PLUX" ||
         det.paybox_on_authorize
       ) {
@@ -7095,14 +7269,19 @@ export async function registrarPagoManualOperadorAction(datos: {
         });
       }
       if (!factura) {
+        const emisorNeg = await obtenerEmisorRideNegocioAction(negPrincipal).catch(() => null);
+        const rucEmisor = emisorNeg?.ruc || (RUC_EMISOR_DEFECTO[negPrincipal]?.ruc ?? "1790016919001");
+        const estabEmisor = emisorNeg?.establecimiento || "001";
+        const ptoEmisor = emisorNeg?.puntoEmision || "001";
+        const ambEmisor: 1 | 2 = emisorNeg?.ambiente === 2 ? 2 : 1;
         const secNum = Math.floor(105 + Math.random() * 890);
-        const numComp = `001-001-${String(secNum).padStart(9, "0")}`;
+        const numComp = `${estabEmisor}-${ptoEmisor}-${String(secNum).padStart(9, "0")}`;
         const claveSri = generarClaveAccesoSri49({
           fechaIso: ahoraIso,
-          ruc: "1790016919001",
-          ambiente: 1,
-          establecimiento: "001",
-          puntoEmision: "001",
+          ruc: rucEmisor,
+          ambiente: ambEmisor,
+          establecimiento: estabEmisor,
+          puntoEmision: ptoEmisor,
           secuencialNumero: secNum,
         });
         factura = {
@@ -7110,14 +7289,17 @@ export async function registrarPagoManualOperadorAction(datos: {
           numero_comprobante: numComp,
           clave_acceso: claveSri,
           estado: "AUTORIZADO",
-          ambiente: 1,
+          ambiente: ambEmisor,
           fecha_emision: ahoraIso.slice(0, 10),
           fecha_autorizacion: ahoraIso,
           rubro_facturado: rubro,
           codigo_rubro: codigoRubro,
           subtotal: base,
+          subtotal_15: subtotalConIva,
+          subtotal_0: subtotalSinIva,
           iva: montoIva,
           total: montoTotal,
+          emisor: emisorNeg || undefined,
           comprador: {
             tipo_identificacion: datos.comprador.tipoIdentificacion,
             identificacion,
@@ -7259,8 +7441,100 @@ export async function liquidarValorPendienteOperadorAction(datos: {
   const ref = String(datos.referenciaPago || "").trim() || `COB-${hexRef}`;
 
   try {
+    const emisorLiquidacion = await obtenerEmisorRideNegocioAction(negPrincipal).catch(() => null);
+
+    // 0. Si proviene de una orden de tienda com_proforma (pag-prf-<uuid>), aprobar la orden y registrar en com_transaccion_pago
+    let idPagoEfectivo = datos.pagId;
+    if (datos.pagId.startsWith("pag-prf-")) {
+      const prfUuid = datos.pagId.slice("pag-prf-".length);
+      const { data: prfRow } = await db
+        .schema("comun_comercio")
+        .from("com_proforma")
+        .select("*")
+        .eq("prf_id", prfUuid)
+        .maybeSingle();
+
+      if (prfRow) {
+        const detPrf = (prfRow.prf_detalle_proforma as Record<string, any>) || {};
+        const contacto = (prfRow.prf_cliente_contacto || detPrf.comprador || {}) as Record<string, any>;
+        const totalPrf = Number(prfRow.prf_total || detPrf.total_pagar || 0);
+        const ivaPrf = Number(prfRow.prf_iva || detPrf.total_iva || 0);
+        const subGrav =
+          detPrf.base_iva_gravada_centavos !== undefined
+            ? Number(detPrf.base_iva_gravada_centavos) / 100
+            : ivaPrf > 0
+              ? Math.round((ivaPrf / 0.15) * 100) / 100
+              : 0;
+        const subCero = Math.max(0, Math.round((totalPrf - ivaPrf - subGrav) * 100) / 100);
+        const codOrden = String(
+          detPrf.codigo_orden || detPrf.codigo_proforma || `${negPrincipal.slice(0, 3).toUpperCase()}-COB-${hexRef}`,
+        );
+
+        const { data: pagoIns } = await db
+          .schema("comun_comercio")
+          .from("com_transaccion_pago")
+          .insert({
+            pag_negocio: negPrincipal,
+            pag_cliente_id: prfRow.prf_cliente_id || null,
+            pag_pasarela: datos.medioPago,
+            pag_identificador_cliente: `${codOrden}-${hexRef}`,
+            pag_transaccion_pasarela_id: ref,
+            pag_autorizacion_codigo: ref,
+            pag_estado: "APROBADO",
+            pag_monto_total: totalPrf,
+            pag_monto_con_iva: subGrav,
+            pag_monto_sin_iva: subCero,
+            pag_monto_iva: ivaPrf,
+            pag_moneda: "USD",
+            pag_referencia_id: prfRow.prf_id,
+            pag_titular_email: contacto.correo || null,
+            pag_titular_identificacion: contacto.identificacion || "9999999999999",
+            pag_titular_telefono: contacto.telefono || contacto.whatsapp || null,
+            pag_confirmado_en: ahoraIso,
+            pag_detalle_transaccion: {
+              origen: "PROFORMA",
+              proforma_id: prfRow.prf_id,
+              codigo_proforma: codOrden,
+              medio_pago: datos.medioPago,
+              referencia_pago: ref,
+              observaciones_liquidacion: datos.observaciones || null,
+              datos_facturacion: {
+                razon_social: prfRow.prf_cliente_nombre || contacto.nombreCompleto || "Cliente",
+                identificacion: contacto.identificacion || "9999999999999",
+                correo_facturacion: contacto.correo || "",
+                telefono: contacto.telefono || contacto.whatsapp || "",
+                direccion: detPrf.logistica_entrega?.direccion || "Quito - Ecuador",
+              },
+            },
+          })
+          .select("pag_id")
+          .maybeSingle();
+
+        if (pagoIns?.pag_id) {
+          idPagoEfectivo = pagoIns.pag_id;
+        }
+
+        await db
+          .schema("comun_comercio")
+          .from("com_proforma")
+          .update({
+            prf_estado: "APROBADA",
+            prf_detalle_proforma: {
+              ...detPrf,
+              estado: "APROBADA",
+              estado_pago: "PAGADO_TOTAL",
+              metodo_pago: datos.medioPago.toLowerCase(),
+              referencia_pago: ref,
+              aprobada_en: ahoraIso,
+            },
+            prf_actualizado_en: ahoraIso,
+          })
+          .eq("prf_id", prfRow.prf_id);
+      }
+    }
+
     // 1. Si existe en com_transaccion_pago, actualizar a APROBADO y emitir factura
-    if (/^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(datos.pagId)) {
+    if (idPagoEfectivo === datos.pagId && /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(datos.pagId)) {
       const { data: rowExistente } = await db
         .schema("comun_comercio")
         .from("com_transaccion_pago")
@@ -7293,7 +7567,7 @@ export async function liquidarValorPendienteOperadorAction(datos: {
     }
 
     let factura = await asegurarFacturaElectronicaParaPago(db, {
-      pagId: datos.pagId,
+      pagId: idPagoEfectivo,
       negocio: negPrincipal,
     });
 
@@ -7317,16 +7591,24 @@ export async function liquidarValorPendienteOperadorAction(datos: {
         const subtotal =
           Number(item.pag_monto_con_iva || 0) + Number(item.pag_monto_sin_iva || 0) ||
           Math.round((montoTotal / 1.15) * 100) / 100;
-        const iva = Number(item.pag_monto_iva || 0) || Math.round((montoTotal - subtotal) * 100) / 100;
+        const iva =
+          item.pag_monto_iva !== undefined && item.pag_monto_iva !== null
+            ? Number(item.pag_monto_iva)
+            : Math.round((montoTotal - subtotal) * 100) / 100;
         if (!factura) {
+          const rucEmisor =
+            emisorLiquidacion?.ruc || (RUC_EMISOR_DEFECTO[negPrincipal]?.ruc ?? "1790016919001");
+          const estabEmisor = emisorLiquidacion?.establecimiento || "001";
+          const ptoEmisor = emisorLiquidacion?.puntoEmision || "001";
+          const ambEmisor: 1 | 2 = emisorLiquidacion?.ambiente === 2 ? 2 : 1;
           const secNum = Math.floor(105 + Math.random() * 890);
-          const numComp = `001-001-${String(secNum).padStart(9, "0")}`;
+          const numComp = `${estabEmisor}-${ptoEmisor}-${String(secNum).padStart(9, "0")}`;
           const claveSri = generarClaveAccesoSri49({
             fechaIso: ahoraIso,
-            ruc: "1790016919001",
-            ambiente: 1,
-            establecimiento: "001",
-            puntoEmision: "001",
+            ruc: rucEmisor,
+            ambiente: ambEmisor,
+            establecimiento: estabEmisor,
+            puntoEmision: ptoEmisor,
             secuencialNumero: secNum,
           });
           const df = item.pag_detalle_transaccion?.datos_facturacion || {};
@@ -7335,14 +7617,17 @@ export async function liquidarValorPendienteOperadorAction(datos: {
             numero_comprobante: numComp,
             clave_acceso: claveSri,
             estado: "AUTORIZADO",
-            ambiente: 1,
+            ambiente: ambEmisor,
             fecha_emision: ahoraIso.slice(0, 10),
             fecha_autorizacion: ahoraIso,
-            rubro_facturado: item.pag_detalle_transaccion?.rubro_facturado || "Servicio Legal Facturado",
-            codigo_rubro: item.pag_detalle_transaccion?.codigo_rubro || "SERV-001",
+            rubro_facturado: item.pag_detalle_transaccion?.rubro_facturado || "Pedido / Servicio Facturado",
+            codigo_rubro:
+              item.pag_detalle_transaccion?.codigo_rubro ||
+              (negPrincipal === "tinkay" || negPrincipal === "margaritas" ? "FLR-001" : "SERV-001"),
             subtotal,
             iva,
             total: montoTotal,
+            emisor: emisorLiquidacion || undefined,
             comprador: {
               tipo_identificacion: df.tipo_identificacion || "05",
               identificacion: item.pag_titular_identificacion || df.identificacion || "9999999999999",

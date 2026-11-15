@@ -22,7 +22,7 @@ export interface PerfilAsignable {
 // Catalogo de perfiles asignables (PLT-003 regla 4). Excluye los no
 // asignables: SUPERADMIN esta en la escala como techo, pero es un perfil de
 // plataforma, no un perfil de negocio.
-export async function obtenerPerfilesAsignables(): Promise<PerfilAsignable[]> {
+export async function obtenerPerfilesAsignables(negocio?: string): Promise<PerfilAsignable[]> {
   const supabase = await crearClienteServidor();
   const { data } = await supabase
     .schema("comun_seguridad")
@@ -32,7 +32,28 @@ export async function obtenerPerfilesAsignables(): Promise<PerfilAsignable[]> {
     .eq("per_asignable", true)
     .order("per_nivel", { ascending: true });
 
-  return (data ?? []).map((p) => ({ clave: p.per_clave, nombre: p.per_nombre, nivel: p.per_nivel }));
+  let perfiles = (data ?? []).map((p) => ({ clave: p.per_clave, nombre: p.per_nombre, nivel: p.per_nivel }));
+
+  if (negocio) {
+    const negLimpio = negocio.trim().toLowerCase();
+    if (negLimpio === "tinkay" || negLimpio === "tnk") {
+      // Perfiles autorizados exclusivos para Tinkay Floristería
+      const perfilesPermitidos = ["CLIENTE", "VENDEDOR", "OPERADOR", "ADMINISTRADOR"];
+      const mapaExistentes = new Map(perfiles.map((p) => [p.clave.toUpperCase(), p]));
+
+      // Si VENDEDOR aún no ha sido sembrado en la base de datos remota, proveer el descriptor canónico
+      if (!mapaExistentes.has("VENDEDOR")) {
+        mapaExistentes.set("VENDEDOR", { clave: "VENDEDOR", nombre: "Vendedor", nivel: 20 });
+      }
+
+      perfiles = perfilesPermitidos
+        .map((k) => mapaExistentes.get(k))
+        .filter((p): p is PerfilAsignable => Boolean(p))
+        .sort((a, b) => a.nivel - b.nivel);
+    }
+  }
+
+  return perfiles;
 }
 
 function resolverFiltroNegocio(negocioRaw: string): { canon: string; variantes: string[] } {

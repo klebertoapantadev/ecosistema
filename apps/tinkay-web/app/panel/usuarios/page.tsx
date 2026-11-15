@@ -17,7 +17,7 @@ export default async function PaginaGestionUsuarios({
   // lista fija en código: PLT-003 regla 4 los estandariza a nivel plataforma.
   const [{ data: usuarios, error }, perfiles, nivelMaximoGestor] = await Promise.all([
     buscarUsuarios(q, NEGOCIO),
-    obtenerPerfilesAsignables(),
+    obtenerPerfilesAsignables(NEGOCIO),
     obtenerNivelMaximo(NEGOCIO),
   ]);
 

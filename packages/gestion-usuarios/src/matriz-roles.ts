@@ -14,6 +14,16 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
       panel_configuracion: ["notificaciones"]
     }
   },
+  VENDEDOR: {
+    paneles: ["panel_inicio", "panel_clientes", "panel_administrar", "panel_cuenta", "panel_herramientas"],
+    widgetsPorPanel: {
+      panel_inicio: ["favoritos"],
+      panel_clientes: ["vitrina_comercial_personas", "crm_clientes"],
+      panel_administrar: ["pedidos_tienda", "testimonios_clientes", "catalogo_productos"],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
+      panel_herramientas: ["catalogo_productos"]
+    }
+  },
   ABOGADO: {
     paneles: ["panel_inicio", "panel_agendamiento", "panel_herramientas", "panel_cuenta"],
     widgetsPorPanel: {

@@ -188,6 +188,9 @@ export function BotonPagoPlux({
           negocio,
           identificador: idActual,
           respuestaPaybox: respuesta,
+          tokenAprobacion,
+          pagador,
+          modalidadCobro,
         });
         if (conf.ok && conf.data.estado === "APROBADO") {
           resuelto.current = true;

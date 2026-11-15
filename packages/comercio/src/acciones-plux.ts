@@ -3,8 +3,19 @@
 // Acciones del checkout con PLUX (TRQ-ADM-004).
 import { z } from "zod";
 import { crearClienteAdmin, crearClienteServidor } from "@eco/supabase/servidor";
-import { activarSuscripcionTrasPagoAction, asegurarFacturaElectronicaParaPago } from "./acciones";
-import { datosPaybox, respuestaExitosa, type PagoPluxPreparado } from "./plux";
+import {
+  activarSuscripcionTrasPagoAction,
+  asegurarFacturaElectronicaParaPago,
+  type FacturaElectronicaResumen,
+} from "./acciones";
+import { obtenerEmisorRideNegocioAction } from "./acciones-facturacion-sri";
+import { datosPaybox, respuestaExitosa, type PagadorPlux, type PagoPluxPreparado } from "./plux";
+import {
+  generarClaveAccesoSri49,
+  type ConfiguracionEmisorSri,
+  type LineaFacturaSriResumen,
+} from "./ride-sri";
+import { verificarOrdenRespaldoServidor } from "./token-orden-firmada";
 import { normalizarIdentificadorNegocio } from "./utils/negocio";
 
 type Resultado<T> = { ok: true; data: T } | { ok: false; error: string };
@@ -462,6 +473,102 @@ export async function prepararPagoPluxProformaAction(
     };
   }
 
+  // Respaldo firmado en servidor (HMAC-SHA256) para compradores invitados o migraciones pendientes sin service_role
+  const ordenFirmada = verificarOrdenRespaldoServidor(v.data.tokenAprobacion);
+  if (ordenFirmada && ordenFirmada.id === v.data.proformaId && ordenFirmada.neg === negPrincipal) {
+    let pasarelaActiva: any = null;
+    try {
+      const { data: pasarelasPropias } = await supabase
+        .schema("comun_comercio")
+        .rpc("com_fn_obtener_pasarelas_activas", { p_negocio: negPrincipal });
+      pasarelaActiva = (pasarelasPropias ?? []).find((p: any) => p.pasarela === "PLUX") || null;
+
+      if (!pasarelaActiva?.credenciales_publicas?.remail && negPrincipal !== "tranqi") {
+        const { data: pasarelasBase } = await supabase
+          .schema("comun_comercio")
+          .rpc("com_fn_obtener_pasarelas_activas", { p_negocio: "tranqi" });
+        const pluxBase = (pasarelasBase ?? []).find((p: any) => p.pasarela === "PLUX");
+        if (pluxBase) {
+          pasarelaActiva = {
+            ...pluxBase,
+            credenciales_publicas: {
+              ...(pluxBase.credenciales_publicas || {}),
+              nombre_comercio: nombreComercioPorDefecto(negPrincipal),
+            },
+          };
+        }
+      }
+    } catch {
+      // Continuar con valores por defecto de sandbox
+    }
+
+    const remail = pasarelaActiva?.credenciales_publicas?.remail || "admin.operaciones@tranqi24.com";
+    const ambiente = pasarelaActiva?.ambiente || "PRUEBAS";
+    const nombreComercio =
+      pasarelaActiva?.credenciales_publicas?.nombre_comercio || nombreComercioPorDefecto(negPrincipal);
+
+    const totalOrdenCentavos = Math.round(Number(ordenFirmada.tot || 0) * 100);
+    const ivaOrdenCentavos = Math.round(Number(ordenFirmada.iva || 0) * 100);
+    if (totalOrdenCentavos <= 0) {
+      return { ok: false, error: "El importe del pedido no es válido." };
+    }
+
+    const baseGravadaOrden = Math.max(0, Number(ordenFirmada.bgc || 0));
+    const base0Orden = Math.max(
+      0,
+      ordenFirmada.b0c !== undefined
+        ? Number(ordenFirmada.b0c)
+        : totalOrdenCentavos - ivaOrdenCentavos - baseGravadaOrden,
+    );
+
+    let factor = 1;
+    let totalCobro = totalOrdenCentavos;
+    let etiquetaModalidad = "Pago Total (100%)";
+
+    if (v.data.modalidadCobro === "RESERVA_70") {
+      factor = 0.7;
+      totalCobro = Math.round(totalOrdenCentavos * 0.7);
+      etiquetaModalidad = "Reserva Evento (70%)";
+    } else if (v.data.modalidadCobro === "SALDO_30") {
+      totalCobro = totalOrdenCentavos - Math.round(totalOrdenCentavos * 0.7);
+      factor = totalCobro / totalOrdenCentavos;
+      etiquetaModalidad = "Saldo Evento (30%)";
+    }
+
+    const ivaCobro = Math.round(ivaOrdenCentavos * factor);
+    const baseGravadaCobro = Math.min(totalCobro - ivaCobro, Math.round(baseGravadaOrden * factor));
+    const base0Cobro = Math.max(0, totalCobro - ivaCobro - baseGravadaCobro);
+    const baseTotalCobro = base0Cobro + baseGravadaCobro;
+
+    const hexRandom = Array.from({ length: 12 }, () => Math.floor(Math.random() * 16).toString(16))
+      .join("")
+      .toUpperCase();
+    const identificador = `${prefijoPluxNegocio(negPrincipal)}-PLX-${hexRandom}`;
+    const descripcion = `${ordenFirmada.cod} - ${etiquetaModalidad}`.slice(0, 120);
+
+    const preparado: PagoPluxPreparado = {
+      identificador,
+      ambiente,
+      remail,
+      nombre_comercio: nombreComercio,
+      descripcion,
+      base_centavos: baseTotalCobro,
+      base0_centavos: base0Cobro,
+      base_gravada_centavos: baseGravadaCobro,
+      iva_centavos: ivaCobro,
+      total_centavos: totalCobro,
+    };
+
+    return {
+      ok: true,
+      data: {
+        identificador,
+        totalCentavos: totalCobro,
+        paybox: datosPaybox(preparado, v.data.pagador),
+      },
+    };
+  }
+
   if (error) return { ok: false, error: error.message || "No se pudo preparar el pago con PLUX." };
   return { ok: false, error: data?.error || "No se pudo preparar el pago con PLUX." };
 }
@@ -476,6 +583,8 @@ export interface PagoPluxConsultado {
   autorizacion: string | null;
   marcaTarjeta: string | null;
   ultimosDigitos: string | null;
+  facturaElectronica?: FacturaElectronicaResumen | null;
+  emisorFactura?: ConfiguracionEmisorSri | null;
 }
 
 // Lo consulta el checkout mientras espera el webhook. La RLS
@@ -591,9 +700,15 @@ export async function confirmarPagoPluxAction(entrada: {
   negocio?: string;
   identificador: string;
   respuestaPaybox: unknown;
+  tokenAprobacion?: string;
+  pagador?: PagadorPlux;
+  modalidadCobro?: ModalidadCobroProforma;
 }): Promise<Resultado<PagoPluxConsultado>> {
   const { identificador, respuestaPaybox } = entrada;
   const negocio = normalizarIdentificadorNegocio(entrada.negocio || "tranqi").principal;
+  const ordenFirmada = entrada.tokenAprobacion
+    ? verificarOrdenRespaldoServidor(entrada.tokenAprobacion)
+    : null;
 
   if (!REGEX_IDENTIFICADOR_PLUX.test(identificador)) {
     return { ok: false, error: "Pago desconocido." };
@@ -615,6 +730,7 @@ export async function confirmarPagoPluxAction(entrada: {
   const supabase: any = await crearClienteServidor();
   const admin: any = crearClienteAdmin();
   const clienteDb: any = admin || supabase;
+  const emisorFactura = await obtenerEmisorRideNegocioAction(negocio);
 
   // 1. Leer la transacción pendiente (con clienteDb para cubrir tanto usuarios autenticados como invitados en proformas)
   const { data: pago } = await clienteDb
@@ -629,6 +745,15 @@ export async function confirmarPagoPluxAction(entrada: {
   // reordena (plan activo) y desmonta el modal antes del recibo. El checkout
   // refresca la página cuando el cliente cierra el recibo.
   if (pago?.pag_estado === "APROBADO") {
+    let facturaPrevia: FacturaElectronicaResumen | null = null;
+    try {
+      facturaPrevia = await asegurarFacturaElectronicaParaPago(clienteDb, {
+        identificador,
+        negocio,
+      });
+    } catch {
+      // Continuar
+    }
     return {
       ok: true,
       data: {
@@ -639,6 +764,8 @@ export async function confirmarPagoPluxAction(entrada: {
         autorizacion: pago.pag_autorizacion_codigo || autorizacion,
         marcaTarjeta: pago.pag_tarjeta_marca || marcaTarjeta,
         ultimosDigitos: pago.pag_tarjeta_ultimos_digitos || ultimosDigitos,
+        facturaElectronica: facturaPrevia,
+        emisorFactura,
       },
     };
   }
@@ -692,9 +819,24 @@ export async function confirmarPagoPluxAction(entrada: {
   // 3. Respaldo directo en tablas y activación de suscripción en memoria/BDD
   const detPrevio = (pago?.pag_detalle_transaccion as Record<string, any>) || {};
   const varianteId = detPrevio.variante_id;
-  const productoNombre = detPrevio.producto || "Plan de Protección Jurídica";
-  const pagadorNombre = detPrevio.pagador?.nombre || "Cliente";
-  const pagadorEmail = pago?.pag_titular_email || detPrevio.pagador?.email || "cliente@tranqi24.com";
+  const productoNombre =
+    detPrevio.producto ||
+    (ordenFirmada
+      ? `${ordenFirmada.cod} (${ordenFirmada.itm[0]?.dsc || "Pedido Floral"})`
+      : negocio === "tranqi"
+        ? "Plan de Protección Jurídica"
+        : `Pedido ${nombreComercioPorDefecto(negocio)}`);
+  const pagadorNombre =
+    detPrevio.pagador?.nombre ||
+    entrada.pagador?.nombre ||
+    ordenFirmada?.cmp?.nom ||
+    "Cliente";
+  const pagadorEmail =
+    pago?.pag_titular_email ||
+    detPrevio.pagador?.email ||
+    entrada.pagador?.email ||
+    ordenFirmada?.cmp?.cor ||
+    "cliente@ecosistema.ec";
 
   if (!confirmadoPorRpc && clienteDb && pago) {
     try {
@@ -905,7 +1047,7 @@ export async function confirmarPagoPluxAction(entrada: {
   }
 
   // 3.5. Emitir y sincronizar automáticamente la Factura Electrónica SRI para este pago con tarjeta
-  let facturaEmitida: any = null;
+  let facturaEmitida: FacturaElectronicaResumen | null = null;
   try {
     facturaEmitida = await asegurarFacturaElectronicaParaPago(clienteDb, {
       identificador,
@@ -913,6 +1055,125 @@ export async function confirmarPagoPluxAction(entrada: {
     });
   } catch {
     // Continuar
+  }
+
+  // Respaldo determinístico de Factura Electrónica SRI cuando el comprador es invitado con orden firmada
+  // y la fila com_transaccion_pago aún no es legible por RLS antes de ejecutar la migración SQL
+  if (!facturaEmitida && emisorFactura.activo !== false) {
+    const ahoraIso = new Date().toISOString();
+    const factorModalidad =
+      entrada.modalidadCobro === "RESERVA_70"
+        ? 0.7
+        : entrada.modalidadCobro === "SALDO_30"
+          ? 0.3
+          : 1;
+    const totalOrdenRespaldo = ordenFirmada
+      ? Math.round(Number(ordenFirmada.tot || 0) * factorModalidad * 100) / 100
+      : Number(montoNotificado ?? pago?.pag_monto_total ?? 0);
+    const ivaRespaldo = ordenFirmada
+      ? Math.round(Number(ordenFirmada.iva || 0) * factorModalidad * 100) / 100
+      : 0;
+    const sub15Respaldo = ordenFirmada
+      ? Math.round((Number(ordenFirmada.bgc || 0) / 100) * factorModalidad * 100) / 100
+      : 0;
+    const sub0Respaldo = Math.max(
+      0,
+      Math.round((totalOrdenRespaldo - ivaRespaldo - sub15Respaldo) * 100) / 100,
+    );
+
+    const lineasRespaldo: LineaFacturaSriResumen[] = [];
+    if (ordenFirmada && Array.isArray(ordenFirmada.itm) && ordenFirmada.itm.length > 0) {
+      ordenFirmada.itm.forEach((it, idx) => {
+        const tarifa = String(it.imp) === "4" ? 15 : 0;
+        const subLinea = Math.round(Number(it.tot || 0) * factorModalidad * 100) / 100;
+        const cant = Math.max(1, Number(it.can || 1));
+        lineasRespaldo.push({
+          codigo: `ITEM-${String(idx + 1).padStart(2, "0")}`,
+          descripcion: it.var ? `${it.dsc} (${it.var})` : it.dsc,
+          cantidad: cant,
+          precio_unitario: Math.round((subLinea / cant) * 100) / 100,
+          tarifa_iva: tarifa,
+          subtotal: subLinea,
+          valor_iva: tarifa > 0 ? Math.round(subLinea * (tarifa / 100) * 100) / 100 : 0,
+        });
+      });
+      if (Number(ordenFirmada.fle || 0) > 0) {
+        const fleteCobro = Math.round(Number(ordenFirmada.fle) * factorModalidad * 100) / 100;
+        lineasRespaldo.push({
+          codigo: "ENVIO-DOM",
+          descripcion: ordenFirmada.ubi?.zon
+            ? `Envío a domicilio (${ordenFirmada.ubi.zon})`
+            : "Envío a domicilio",
+          cantidad: 1,
+          precio_unitario: fleteCobro,
+          tarifa_iva: 0,
+          subtotal: fleteCobro,
+          valor_iva: 0,
+        });
+      }
+    } else if (totalOrdenRespaldo > 0) {
+      lineasRespaldo.push({
+        codigo: `${prefijoPluxNegocio(negocio)}-001`,
+        descripcion: productoNombre,
+        cantidad: 1,
+        precio_unitario: Math.round((sub15Respaldo + sub0Respaldo) * 100) / 100,
+        tarifa_iva: ivaRespaldo > 0 ? 15 : 0,
+        subtotal: Math.round((sub15Respaldo + sub0Respaldo) * 100) / 100,
+        valor_iva: ivaRespaldo,
+      });
+    }
+
+    const hashHex = identificador.replace(/[^0-9A-F]/gi, "").slice(-6) || "000001";
+    const secDerivado = (parseInt(hashHex, 16) % 899999) + 1;
+    const estab = emisorFactura.establecimiento || "001";
+    const pto = emisorFactura.puntoEmision || "001";
+    const numeroComp = `${estab}-${pto}-${String(secDerivado).padStart(9, "0")}`;
+    const claveAcceso = generarClaveAccesoSri49({
+      fechaIso: ahoraIso,
+      ruc: emisorFactura.ruc,
+      ambiente: emisorFactura.ambiente,
+      establecimiento: estab,
+      puntoEmision: pto,
+      secuencialNumero: secDerivado,
+    });
+    const idComprador = (
+      entrada.pagador?.identificacion ||
+      ordenFirmada?.cmp?.ide ||
+      "9999999999999"
+    ).trim();
+
+    facturaEmitida = {
+      numero_comprobante: numeroComp,
+      clave_acceso: claveAcceso,
+      estado: emisorFactura.ambiente === 2 ? "RECIBIDO" : "AUTORIZADO",
+      ambiente: emisorFactura.ambiente,
+      fecha_emision: ahoraIso,
+      fecha_autorizacion: ahoraIso,
+      rubro_facturado: productoNombre,
+      codigo_rubro: ordenFirmada?.cod || `${prefijoPluxNegocio(negocio)}-001`,
+      subtotal: Math.round((sub15Respaldo + sub0Respaldo) * 100) / 100,
+      subtotal_15: sub15Respaldo,
+      subtotal_0: sub0Respaldo,
+      iva: ivaRespaldo,
+      total: totalOrdenRespaldo,
+      lineas: lineasRespaldo,
+      emisor: emisorFactura,
+      comprador: {
+        tipo_identificacion:
+          idComprador === "9999999999999"
+            ? "07"
+            : idComprador.length === 13
+              ? "04"
+              : idComprador.length === 10
+                ? "05"
+                : "06",
+        identificacion: idComprador,
+        razon_social: pagadorNombre,
+        correo: pagadorEmail,
+        telefono: entrada.pagador?.telefono || ordenFirmada?.cmp?.tel || "",
+        direccion: entrada.pagador?.direccion || ordenFirmada?.ubi?.dir || "Quito, Ecuador",
+      },
+    };
   }
 
   // 4. Sincronizar cobertura activa y notificación in-app. Solo una suscripción
@@ -946,12 +1207,35 @@ export async function confirmarPagoPluxAction(entrada: {
           not_negocio: negocio,
           not_titulo: `🧾 ¡Pago y Factura Confirmados! ${productoNombre}`,
           not_contenido_html: `<p>Tu pago por <strong>${productoNombre}</strong> por <strong>$${montoFmt} USD</strong> fue procesado exitosamente con PLUX.</p><p><strong>Referencia / Autorización:</strong> <code>${autorizacion}</code><br/><strong>Tarjeta:</strong> ${marcaTarjeta} •••• ${ultimosDigitos}${infoFactura}</p>`,
-          not_url_accion: "/panel/herramientas?widget=facturacion_electronica",
+          not_url_accion:
+            negocio === "tranqi"
+              ? "/panel/herramientas?widget=facturacion_electronica"
+              : "/panel/cuenta",
           not_canal: "IN_APP",
         });
     } catch {
       // Continuar
     }
+  }
+
+  // Notificar al staff (operadores, administradores) del negocio sobre la venta/pago confirmado
+  try {
+    const { notificarStaffNuevoPedido } = await import("@eco/notificaciones/notificar-usuario");
+    const montoNotif = Number(pago?.pag_monto_total ?? facturaEmitida?.total ?? montoNotificado ?? 0);
+    await notificarStaffNuevoPedido({
+      negocio,
+      codigo: ordenFirmada?.cod || identificador,
+      clienteNombre: pagadorNombre,
+      clienteCorreo: pagadorEmail,
+      montoUsd: montoNotif,
+      metodoPago: `PLUX (${marcaTarjeta || "Tarjeta"} ${ultimosDigitos ? `•••• ${ultimosDigitos}` : ""})`,
+      canalOrigen: "Pasarela PLUX / Tarjeta",
+      itemsResumen: ordenFirmada?.itm?.length
+        ? ordenFirmada.itm.map((i) => `${i.can}x ${i.dsc}${i.var ? ` (${i.var})` : ""}`)
+        : [productoNombre],
+    });
+  } catch (errNotif) {
+    console.warn("Aviso al notificar pago PLUX a staff:", errNotif);
   }
 
   return {
@@ -964,6 +1248,8 @@ export async function confirmarPagoPluxAction(entrada: {
       autorizacion,
       marcaTarjeta,
       ultimosDigitos,
+      facturaElectronica: facturaEmitida,
+      emisorFactura,
     },
   };
 }

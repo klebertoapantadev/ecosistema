@@ -529,6 +529,95 @@ export async function procesarAutoafiliacionYBienvenidaConvenio(
   }
 }
 
+export async function obtenerDestinatariosStaffNegocio(
+  negocio: string,
+  usuarioExcluidoId?: string
+): Promise<{ id: string; correo: string }[]> {
+  const metaNeg = resolverMetaNegocioNotif(negocio);
+  const adminSupabase = crearClienteAdmin() || await crearClienteServidor();
+
+  // 1. Obtener usuarios con perfil Operador, Administrador, Vendedor o SuperAdmin ESTRICTAMENTE en este negocio
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: membresiasStaff } = await (adminSupabase as any)
+    .schema("comun_seguridad")
+    .from("seg_membresia")
+    .select(`
+      mem_id,
+      mem_usuario_id,
+      mem_negocio,
+      mem_rol,
+      mem_estado,
+      seg_usuario (
+        usu_id,
+        usu_correo
+      ),
+      seg_membresia_perfil (
+        seg_perfil (
+          per_clave
+        )
+      )
+    `)
+    .in("mem_negocio", metaNeg.codigos)
+    .eq("mem_estado", "ACTIVO");
+
+  const destinatarios: { id: string; correo: string }[] = [];
+  const correosVistos = new Set<string>();
+
+  const rolesPermitidos = new Set(["OPERADOR", "ADMINISTRADOR", "SUPERADMIN", "VENDEDOR"]);
+
+  if (Array.isArray(membresiasStaff)) {
+    for (const m of membresiasStaff) {
+      const usu = Array.isArray(m.seg_usuario) ? m.seg_usuario[0] : m.seg_usuario;
+      const usuId = usu?.usu_id || m.mem_usuario_id;
+      const usuCorreo = (usu?.usu_correo || "").trim();
+      if (!usuId || usuId === usuarioExcluidoId || !usuCorreo) continue;
+
+      const mNeg = (m.mem_negocio || "").toUpperCase();
+      if (!metaNeg.codigosUpper.has(mNeg)) continue;
+
+      const rolMem = (m.mem_rol || "").toUpperCase();
+      let esStaff = rolesPermitidos.has(rolMem);
+
+      if (!esStaff && Array.isArray(m.seg_membresia_perfil)) {
+        for (const mp of m.seg_membresia_perfil) {
+          const perObj = Array.isArray(mp.seg_perfil) ? mp.seg_perfil[0] : mp.seg_perfil;
+          const clave = (perObj?.per_clave || "").toUpperCase();
+          if (rolesPermitidos.has(clave)) {
+            esStaff = true;
+            break;
+          }
+        }
+      }
+
+      const correoLower = usuCorreo.toLowerCase();
+      if (esStaff && !correosVistos.has(correoLower)) {
+        correosVistos.add(correoLower);
+        destinatarios.push({ id: usuId, correo: usuCorreo });
+      }
+    }
+  }
+
+  // Respaldo de cuenta principal de Tinkay si no estuviese en la membresía aún
+  if (metaNeg.canon === "tinkay" && !correosVistos.has("tinkay.uio@gmail.com")) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: usuTnk } = await (adminSupabase as any)
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_id, usu_correo")
+        .eq("usu_correo", "tinkay.uio@gmail.com")
+        .maybeSingle();
+
+      if (usuTnk?.usu_id && usuTnk.usu_id !== usuarioExcluidoId) {
+        destinatarios.push({ id: usuTnk.usu_id, correo: usuTnk.usu_correo });
+        correosVistos.add("tinkay.uio@gmail.com");
+      }
+    } catch {}
+  }
+
+  return destinatarios;
+}
+
 export async function notificarNuevoUsuarioRegistrado(params: ParametrosNuevoUsuarioNotif): Promise<void> {
   try {
     // 0. Verificar y procesar auto-afiliación a convenio corporativo + envío de correo de bienvenida con beneficios
@@ -562,66 +651,7 @@ export async function notificarNuevoUsuarioRegistrado(params: ParametrosNuevoUsu
       </div>
     `;
 
-    // 1. Obtener usuarios con perfil Operador, Administrador o SuperAdmin ESTRICTAMENTE en este negocio
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: membresiasStaff } = await (adminSupabase as any)
-      .schema("comun_seguridad")
-      .from("seg_membresia")
-      .select(`
-        mem_id,
-        mem_usuario_id,
-        mem_negocio,
-        mem_rol,
-        mem_estado,
-        seg_usuario (
-          usu_id,
-          usu_correo
-        ),
-        seg_membresia_perfil (
-          seg_perfil (
-            per_clave
-          )
-        )
-      `)
-      .in("mem_negocio", metaNeg.codigos)
-      .eq("mem_estado", "ACTIVO");
-
-    const destinatarios: { id: string; correo: string }[] = [];
-    const correosVistos = new Set<string>();
-
-    if (Array.isArray(membresiasStaff)) {
-      for (const m of membresiasStaff) {
-        const usu = Array.isArray(m.seg_usuario) ? m.seg_usuario[0] : m.seg_usuario;
-        const usuId = usu?.usu_id || m.mem_usuario_id;
-        const usuCorreo = (usu?.usu_correo || "").trim();
-        if (!usuId || usuId === params.usuarioId || !usuCorreo) continue;
-
-        const mNeg = (m.mem_negocio || "").toUpperCase();
-        if (!metaNeg.codigosUpper.has(mNeg)) continue;
-
-        const rolMem = (m.mem_rol || "").toUpperCase();
-        let esStaff =
-          rolMem === "OPERADOR" || rolMem === "ADMINISTRADOR" || rolMem === "SUPERADMIN";
-
-        if (!esStaff && Array.isArray(m.seg_membresia_perfil)) {
-          for (const mp of m.seg_membresia_perfil) {
-            const perObj = Array.isArray(mp.seg_perfil) ? mp.seg_perfil[0] : mp.seg_perfil;
-            const clave = (perObj?.per_clave || "").toUpperCase();
-            if (clave === "OPERADOR" || clave === "ADMINISTRADOR" || clave === "SUPERADMIN") {
-              esStaff = true;
-              break;
-            }
-          }
-        }
-
-        const correoLower = usuCorreo.toLowerCase();
-        if (esStaff && !correosVistos.has(correoLower)) {
-          correosVistos.add(correoLower);
-          destinatarios.push({ id: usuId, correo: usuCorreo });
-        }
-      }
-    }
-
+    const destinatarios = await obtenerDestinatariosStaffNegocio(params.negocio, params.usuarioId);
     if (destinatarios.length === 0) return;
 
     // 2. Insertar registros In-App y Push en comun_notificacion.not_registro
@@ -669,5 +699,227 @@ export async function notificarNuevoUsuarioRegistrado(params: ParametrosNuevoUsu
     }
   } catch (err) {
     console.warn("Error en notificarNuevoUsuarioRegistrado:", err);
+  }
+}
+
+export interface ParametrosNuevaProformaNotif {
+  negocio: string;
+  codigoProforma: string;
+  tokenAprobacion: string;
+  clienteNombre: string;
+  clienteCorreo?: string;
+  clienteTelefono?: string;
+  tipoEvento?: string;
+  fechaEvento?: string;
+  lugarEvento?: string;
+  totalUsd: number;
+  reservaUsd: number;
+  itemsResumen?: string[];
+  origenCanal?: string;
+}
+
+export async function notificarStaffNuevaProforma(params: ParametrosNuevaProformaNotif): Promise<void> {
+  try {
+    const metaNeg = resolverMetaNegocioNotif(params.negocio);
+    const adminSupabase = crearClienteAdmin() || await crearClienteServidor();
+    const destinatarios = await obtenerDestinatariosStaffNegocio(params.negocio);
+
+    if (destinatarios.length === 0) return;
+
+    const titulo = `📋 Nueva Proforma (${metaNeg.nombreVisible}): ${params.codigoProforma} - ${params.clienteNombre} ($${params.totalUsd.toFixed(2)})`;
+    const urlAccion = `/panel/pedidos?codigo=${encodeURIComponent(params.codigoProforma)}`;
+    const urlCliente = `https://${params.negocio.toLowerCase() === "tinkay" ? "tinkay-web.vercel.app" : "ecosistema.vercel.app"}/proforma/${params.tokenAprobacion}`;
+
+    const itemsHtml = Array.isArray(params.itemsResumen) && params.itemsResumen.length > 0
+      ? `<ul style="margin: 8px 0; padding-left: 20px; font-size: 13px; color: #374151;">
+           ${params.itemsResumen.map(it => `<li>${it}</li>`).join("")}
+         </ul>`
+      : "";
+
+    const contenidoHTML = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1F2937; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px;">
+        <div style="background: #2D4734; color: #FFFFFF; padding: 16px 20px; border-radius: 8px; margin-bottom: 16px;">
+          <span style="font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #FDE68A;">${metaNeg.nombreVisible} — Alerta Operativa</span>
+          <h3 style="margin: 4px 0 0; font-size: 18px; font-weight: bold; color: #FFFFFF;">Nueva Proforma Registrada (${params.codigoProforma})</h3>
+        </div>
+        <p style="font-size: 14px; margin: 0 0 12px;">
+          Se ha generado una nueva proforma para cotización de evento desde el canal <strong>${params.origenCanal || "Web Autoservicio"}</strong>.
+        </p>
+        <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; font-size: 13.5px; line-height: 1.6;">
+          <div><strong>Cliente:</strong> ${params.clienteNombre}</div>
+          ${params.clienteTelefono ? `<div><strong>Teléfono:</strong> <a href="https://wa.me/${params.clienteTelefono.replace(/\D/g, '')}">${params.clienteTelefono}</a></div>` : ""}
+          ${params.clienteCorreo ? `<div><strong>Correo:</strong> ${params.clienteCorreo}</div>` : ""}
+          ${params.tipoEvento ? `<div><strong>Tipo de Evento:</strong> ${params.tipoEvento}</div>` : ""}
+          ${params.fechaEvento ? `<div><strong>Fecha Evento:</strong> ${params.fechaEvento}</div>` : ""}
+          ${params.lugarEvento ? `<div><strong>Ubicación:</strong> ${params.lugarEvento}</div>` : ""}
+          <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #D1D5DB;">
+            <strong>Total Estimado:</strong> $${params.totalUsd.toFixed(2)} USD<br/>
+            <strong>Reserva Solicitada (70%):</strong> $${params.reservaUsd.toFixed(2)} USD
+          </div>
+          ${itemsHtml}
+        </div>
+        <div style="margin-top: 16px;">
+          <a href="${urlAccion}" style="display: inline-block; background: #2D4734; color: #FFFFFF; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 13px; margin-right: 10px;">
+            Gestionar en Panel de Pedidos
+          </a>
+          <a href="${urlCliente}" style="display: inline-block; background: #F3F4F6; color: #374151; padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 13px; border: 1px solid #D1D5DB;">
+            Ver Proforma Cliente
+          </a>
+        </div>
+      </div>
+    `;
+
+    // 1. Guardar In-App y Push
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const notifs: any[] = [];
+    for (const d of destinatarios) {
+      notifs.push({
+        not_usuario_id: d.id,
+        not_negocio: metaNeg.notifCode,
+        not_canal: "IN_APP",
+        not_titulo: titulo,
+        not_contenido_html: contenidoHTML,
+        not_url_accion: urlAccion,
+        not_creado_en: new Date().toISOString(),
+      });
+      notifs.push({
+        not_usuario_id: d.id,
+        not_negocio: metaNeg.notifCode,
+        not_canal: "PUSH",
+        not_titulo: titulo,
+        not_contenido_html: contenidoHTML,
+        not_url_accion: urlAccion,
+        not_creado_en: new Date().toISOString(),
+      });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert(notifs);
+
+    // 2. Enviar correo a cada destinatario
+    for (const d of destinatarios) {
+      try {
+        await enviarCorreo({
+          negocio: metaNeg.canon,
+          para: d.correo,
+          asunto: titulo,
+          html: contenidoHTML,
+        });
+      } catch (err) {
+        console.warn("Aviso al notificar proforma a staff:", err);
+      }
+    }
+  } catch (err) {
+    console.warn("Error en notificarStaffNuevaProforma:", err);
+  }
+}
+
+export interface ParametrosNuevoPedidoNotif {
+  negocio: string;
+  codigo: string;
+  clienteNombre: string;
+  clienteCorreo?: string;
+  clienteTelefono?: string;
+  montoUsd: number;
+  metodoPago: string; // 'TRANSFERENCIA' | 'PLUX' | 'PAYPHONE' | 'EFECTIVO'
+  canalOrigen?: string; // 'WEB' | 'WHATSAPP' | 'DIRECTO' | 'PROFORMA'
+  tipoEntrega?: string; // 'DOMICILIO' | 'RETIRO_LOCAL'
+  direccionEntrega?: string;
+  fechaEntrega?: string;
+  dedicatoria?: string;
+  itemsResumen?: string[];
+  enlacePanel?: string;
+}
+
+export async function notificarStaffNuevoPedido(params: ParametrosNuevoPedidoNotif): Promise<void> {
+  try {
+    const metaNeg = resolverMetaNegocioNotif(params.negocio);
+    const adminSupabase = crearClienteAdmin() || await crearClienteServidor();
+    const destinatarios = await obtenerDestinatariosStaffNegocio(params.negocio);
+
+    if (destinatarios.length === 0) return;
+
+    const titulo = `🌸 ¡Nueva Venta Confirmada! (${metaNeg.nombreVisible}): ${params.codigo} - $${params.montoUsd.toFixed(2)} [${params.metodoPago}]`;
+    const urlAccion = params.enlacePanel || `/panel/pedidos?codigo=${encodeURIComponent(params.codigo)}`;
+
+    const itemsHtml = Array.isArray(params.itemsResumen) && params.itemsResumen.length > 0
+      ? `<ul style="margin: 8px 0; padding-left: 20px; font-size: 13px; color: #374151;">
+           ${params.itemsResumen.map(it => `<li>${it}</li>`).join("")}
+         </ul>`
+      : "";
+
+    const contenidoHTML = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1F2937; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px;">
+        <div style="background: #166534; color: #FFFFFF; padding: 16px 20px; border-radius: 8px; margin-bottom: 16px;">
+          <span style="font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #BBF7D0;">${metaNeg.nombreVisible} — Despacho & Ventas</span>
+          <h3 style="margin: 4px 0 0; font-size: 18px; font-weight: bold; color: #FFFFFF;">¡Nueva Venta / Pedido Confirmado! (${params.codigo})</h3>
+        </div>
+        <p style="font-size: 14px; margin: 0 0 12px;">
+          Se ha recibido y confirmado un pago de <strong>$${params.montoUsd.toFixed(2)} USD</strong> mediante <strong>${params.metodoPago}</strong> (${params.canalOrigen || "Tienda Web"}).
+        </p>
+        <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; font-size: 13.5px; line-height: 1.6;">
+          <div><strong>Cliente:</strong> ${params.clienteNombre}</div>
+          ${params.clienteTelefono ? `<div><strong>Teléfono:</strong> <a href="https://wa.me/${params.clienteTelefono.replace(/\D/g, '')}">${params.clienteTelefono}</a></div>` : ""}
+          ${params.clienteCorreo ? `<div><strong>Correo:</strong> ${params.clienteCorreo}</div>` : ""}
+          <div><strong>Método de Pago:</strong> ${params.metodoPago}</div>
+          ${params.tipoEntrega ? `<div><strong>Modalidad Entrega:</strong> ${params.tipoEntrega}</div>` : ""}
+          ${params.fechaEntrega ? `<div><strong>Fecha / Horario:</strong> ${params.fechaEntrega}</div>` : ""}
+          ${params.direccionEntrega ? `<div><strong>Dirección:</strong> ${params.direccionEntrega}</div>` : ""}
+          ${params.dedicatoria ? `<div style="margin-top: 6px; padding: 6px 10px; background: #FEF9C3; border-radius: 6px; font-style: italic;"><strong>Tarjeta / Dedicatoria:</strong> "${params.dedicatoria}"</div>` : ""}
+          <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #86EFAC;">
+            <strong>Total Pagado / Abonado:</strong> $${params.montoUsd.toFixed(2)} USD
+          </div>
+          ${itemsHtml}
+        </div>
+        <div style="margin-top: 16px;">
+          <a href="${urlAccion}" style="display: inline-block; background: #166534; color: #FFFFFF; padding: 11px 22px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 13.5px;">
+            Ver Pedido en Bandeja de Despachos
+          </a>
+        </div>
+      </div>
+    `;
+
+    // 1. Guardar In-App y Push
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const notifs: any[] = [];
+    for (const d of destinatarios) {
+      notifs.push({
+        not_usuario_id: d.id,
+        not_negocio: metaNeg.notifCode,
+        not_canal: "IN_APP",
+        not_titulo: titulo,
+        not_contenido_html: contenidoHTML,
+        not_url_accion: urlAccion,
+        not_creado_en: new Date().toISOString(),
+      });
+      notifs.push({
+        not_usuario_id: d.id,
+        not_negocio: metaNeg.notifCode,
+        not_canal: "PUSH",
+        not_titulo: titulo,
+        not_contenido_html: contenidoHTML,
+        not_url_accion: urlAccion,
+        not_creado_en: new Date().toISOString(),
+      });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert(notifs);
+
+    // 2. Enviar correo SMTP a cada destinatario
+    for (const d of destinatarios) {
+      try {
+        await enviarCorreo({
+          negocio: metaNeg.canon,
+          para: d.correo,
+          asunto: titulo,
+          html: contenidoHTML,
+        });
+      } catch (err) {
+        console.warn("Aviso al notificar pedido a staff:", err);
+      }
+    }
+  } catch (err) {
+    console.warn("Error en notificarStaffNuevoPedido:", err);
   }
 }
