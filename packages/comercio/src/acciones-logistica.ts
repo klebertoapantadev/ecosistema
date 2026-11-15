@@ -568,6 +568,7 @@ export interface ItemPedidoTiendaInput {
   cantidad: number;
   pvpUnitario: number;
   tarifaIva: number;
+  imagen?: string;
   deliveryIncluidoProducto?: boolean;
   recargoLogisticoUsd?: number;
   dedicatoria?: {
@@ -601,6 +602,26 @@ export interface PedidoTiendaRegistrado {
   id: string;
   secuencial: number;
   codigoOrden: string;
+  tipoOrigen?: "PEDIDO_TIENDA" | "PROFORMA_EVENTO" | string;
+  grupoProformaId?: string;
+  versionNumero?: number;
+  esOriginal?: boolean;
+  etiquetaVersion?: string;
+  notaAsesor?: string;
+  tokenAprobacion?: string;
+  vigenciaDias?: number;
+  descuento?: number;
+  montoAbonadoUsd?: number;
+  saldoPendienteUsd?: number;
+  autorizaWhatsapp?: boolean;
+  evento?: {
+    tipoEvento?: string;
+    fechaEvento?: string;
+    horaEvento?: string;
+    invitadosEstimados?: number;
+    paletaColores?: string;
+    notasEvento?: string;
+  };
   negocio: string;
   estado: string;
   metodoPago: string;
@@ -644,6 +665,7 @@ export interface PedidoTiendaRegistrado {
     varianteNombre: string;
     cantidad: number;
     precioUnitario: number;
+    impuesto?: string;
     totalLinea: number;
     dedicatoria?: { para: string; de: string; mensaje: string };
     entregaIndividual?: Record<string, unknown>;
@@ -753,7 +775,7 @@ function enriquecerDestinoConAuditoriaInterna(
 export async function registrarPedidoTiendaAction(
   entrada: EntradaPedidoTienda
 ): Promise<
-  | { ok: true; id: string; codigoOrden: string }
+  | { ok: true; id: string; codigoOrden: string; tokenAprobacion?: string }
   | { ok: false; error: string }
 > {
   const validacion = esquemaPedidoTienda.safeParse(entrada);
@@ -863,8 +885,31 @@ export async function registrarPedidoTiendaAction(
             .join(" | "),
         };
 
+  const metodoPagoNorm = entrada.metodoPago.trim().toLowerCase();
   const estadoInicial =
-    entrada.metodoPago === "transferencia" ? "PENDIENTE_PAGO" : "APROBADA";
+    metodoPagoNorm === "transferencia" || metodoPagoNorm === "plux"
+      ? "PENDIENTE_PAGO"
+      : "APROBADA";
+
+  const totalCentavos = Math.round(entrada.totalPagar * 100);
+  const ivaCentavos = Math.round(entrada.totalIva * 100);
+  const baseTotalCentavos = Math.max(0, totalCentavos - ivaCentavos);
+  const baseItemsGravadosCentavos = entrada.items.reduce((acc, it) => {
+    if ((Number(it.tarifaIva) || 0) > 0) {
+      return acc + Math.round(Number(it.pvpUnitario) * Number(it.cantidad) * 100);
+    }
+    return acc;
+  }, 0);
+  const baseIvaGravadaCentavos =
+    ivaCentavos > 0
+      ? Math.min(
+          baseTotalCentavos,
+          baseItemsGravadosCentavos > 0
+            ? baseItemsGravadosCentavos
+            : Math.round((ivaCentavos * 100) / 15)
+        )
+      : 0;
+  const baseIva0Centavos = Math.max(0, baseTotalCentavos - baseIvaGravadaCentavos);
 
   const payloadCompleto = {
     tipo_origen: "PEDIDO_TIENDA",
@@ -876,6 +921,8 @@ export async function registrarPedidoTiendaAction(
     total_flete: entrada.totalFlete,
     total_recargo_horario_exacto: entrada.totalRecargoHorarioExacto,
     total_pagar: entrada.totalPagar,
+    base_iva_0_centavos: baseIva0Centavos,
+    base_iva_gravada_centavos: baseIvaGravadaCentavos,
     observaciones: logisticaPrincipal.formula_calculo_interno,
     logistica_entrega: {
       modalidad_entrega: entrada.modalidadEntrega,
@@ -917,6 +964,7 @@ export async function registrarPedidoTiendaAction(
       ok: true,
       id: String(resRpc.id),
       codigoOrden: String(resRpc.codigo_orden),
+      tokenAprobacion: resRpc.token_aprobacion ? String(resRpc.token_aprobacion) : undefined,
     };
   }
 
@@ -951,7 +999,7 @@ export async function registrarPedidoTiendaAction(
       prf_observaciones: logisticaPrincipal.formula_calculo_interno,
       prf_detalle_proforma: payloadCompleto,
     })
-    .select("prf_id, prf_secuencial")
+    .select("prf_id, prf_secuencial, prf_token_aprobacion")
     .single();
 
   if (errPrf || !proformaCreada) {
@@ -1024,6 +1072,9 @@ export async function registrarPedidoTiendaAction(
     ok: true,
     id: String(proformaCreada.prf_id),
     codigoOrden,
+    tokenAprobacion: proformaCreada.prf_token_aprobacion
+      ? String(proformaCreada.prf_token_aprobacion)
+      : undefined,
   };
 }
 
@@ -1077,20 +1128,52 @@ export async function obtenerPedidosTiendaAction(
     const paramsSnap = log.parametros_tarifarios_snapshot as Record<string, any> | undefined;
     const itemsRaw = Array.isArray(det.items) ? det.items : [];
     const sec = Number(f.prf_secuencial ?? 0);
+    const esProformaEvento = det.tipo_origen === "PROFORMA_EVENTO";
+    const prefijoDoc = esProformaEvento ? "PRF" : "ORD";
+    const totalNum = Number(f.prf_total ?? det.total_pagar ?? 0);
+    const eventoRaw = det.evento && typeof det.evento === "object" ? det.evento : null;
 
     return {
       id: String(f.prf_id),
       secuencial: sec,
       codigoOrden: String(
-        det.codigo_orden || `${prefijo}-ORD-${String(sec || 1).padStart(4, "0")}`
+        det.codigo_proforma ||
+          det.codigo_orden ||
+          `${prefijo}-${prefijoDoc}-${String(sec || 1).padStart(4, "0")}`
       ),
+      tipoOrigen: String(det.tipo_origen || "PEDIDO_TIENDA"),
+      grupoProformaId: det.grupo_proforma_id ? String(det.grupo_proforma_id) : String(f.prf_id),
+      versionNumero: Number(det.version_numero ?? 1),
+      esOriginal: det.es_original !== undefined ? Boolean(det.es_original) : true,
+      etiquetaVersion: det.etiqueta_version ? String(det.etiqueta_version) : undefined,
+      notaAsesor: det.nota_asesor ? String(det.nota_asesor) : undefined,
+      tokenAprobacion: f.prf_token_aprobacion ? String(f.prf_token_aprobacion) : undefined,
+      vigenciaDias: typeof f.prf_vigencia_dias === "number" ? f.prf_vigencia_dias : 15,
+      descuento: Number(f.prf_descuento ?? det.descuento_total ?? 0),
+      montoAbonadoUsd: Number(det.monto_abonado_usd ?? 0),
+      saldoPendienteUsd:
+        det.saldo_pendiente_usd !== undefined ? Number(det.saldo_pendiente_usd) : totalNum,
+      autorizaWhatsapp: Boolean(contacto.autorizaWhatsapp),
+      evento: eventoRaw
+        ? {
+            tipoEvento: eventoRaw.tipoEvento ? String(eventoRaw.tipoEvento) : undefined,
+            fechaEvento: eventoRaw.fechaEvento ? String(eventoRaw.fechaEvento) : undefined,
+            horaEvento: eventoRaw.horaEvento ? String(eventoRaw.horaEvento) : undefined,
+            invitadosEstimados:
+              typeof eventoRaw.invitadosEstimados === "number"
+                ? eventoRaw.invitadosEstimados
+                : undefined,
+            paletaColores: eventoRaw.paletaColores ? String(eventoRaw.paletaColores) : undefined,
+            notasEvento: eventoRaw.notasEvento ? String(eventoRaw.notasEvento) : undefined,
+          }
+        : undefined,
       negocio: String(f.prf_negocio || negNorm),
       estado: String(f.prf_estado || det.estado || "APROBADA"),
-      metodoPago: String(det.metodo_pago || "payphone"),
+      metodoPago: String(det.metodo_pago || (esProformaEvento ? "proforma" : "plux")),
       compradorNombre: String(f.prf_cliente_nombre || contacto.nombreCompleto || "Cliente"),
       compradorIdentificacion: String(contacto.identificacion || ""),
       compradorCorreo: String(contacto.correo || ""),
-      compradorTelefono: String(contacto.telefono || ""),
+      compradorTelefono: String(contacto.whatsapp || contacto.telefono || ""),
       subtotal: Number(f.prf_subtotal ?? det.subtotal_base_imponible ?? 0),
       iva: Number(f.prf_iva ?? det.total_iva ?? 0),
       costoEnvio: Number(det.total_flete ?? log.costo_envio_usd ?? 0),
@@ -1137,6 +1220,7 @@ export async function obtenerPedidosTiendaAction(
         varianteNombre: String(it.variante_nombre || ""),
         cantidad: Number(it.cantidad ?? 1),
         precioUnitario: Number(it.precio_unitario ?? 0),
+        impuesto: String(it.impuesto || "IVA_0"),
         totalLinea: Number(it.total_linea ?? 0),
         dedicatoria: it.dedicatoria ?? undefined,
         entregaIndividual: it.entrega_individual ?? undefined,
@@ -1154,8 +1238,12 @@ export async function actualizarEstadoPedidoTiendaAction(
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const negNorm = (negocio || "tinkay").trim().toLowerCase();
   const estadosPermitidos = [
+    "ENVIADA",
     "PENDIENTE_PAGO",
+    "ORDEN_CONFIRMADA",
+    "RESERVADA_70",
     "APROBADA",
+    "NO_ACEPTADA",
     "EN_PREPARACION",
     "EN_RUTA",
     "ENTREGADO",
@@ -1191,5 +1279,1485 @@ export async function actualizarEstadoPedidoTiendaAction(
 
   revalidatePath("/panel/pedidos");
   return { ok: true };
+}
+
+// ============================================================================
+// PROFORMAS DE EVENTOS EN AUTOSERVICIO (CPQ + RESERVA 70% / PAGO 100% PLUX)
+// ============================================================================
+
+export interface EntradaProformaEvento {
+  negocio: string;
+  comprador: {
+    nombreCompleto: string;
+    identificacion?: string;
+    correo: string;
+    whatsapp: string;
+    autorizaWhatsapp: boolean;
+  };
+  evento: {
+    tipoEvento: string;
+    fechaEvento: string;
+    horaEvento?: string;
+    invitadosEstimados?: number;
+    paletaColores?: string;
+    notasEvento?: string;
+  };
+  ubicacionEvento?: DestinoEntregaPedidoInput;
+  items: ItemPedidoTiendaInput[];
+  subtotalBaseImponible: number;
+  descuentoTotal?: number;
+  totalIva: number;
+  totalFlete: number;
+  totalPagar: number;
+  vigenciaDias?: number;
+}
+
+export interface ProformaEventoPublica {
+  id: string;
+  secuencial: number;
+  codigoProforma: string;
+  grupoProformaId?: string;
+  versionNumero?: number;
+  esOriginal?: boolean;
+  etiquetaVersion?: string;
+  notaAsesor?: string;
+  asesorNombre?: string;
+  negocio: string;
+  estado: string;
+  vigenciaDias: number;
+  tokenAprobacion: string;
+  creadoEn: string;
+  comprador: {
+    nombreCompleto: string;
+    identificacion: string;
+    correo: string;
+    whatsapp: string;
+    autorizaWhatsapp: boolean;
+  };
+  evento: {
+    tipoEvento: string;
+    fechaEvento: string;
+    horaEvento?: string;
+    invitadosEstimados?: number;
+    paletaColores?: string;
+    notasEvento?: string;
+  };
+  ubicacion: {
+    retiroEnLocal: boolean;
+    direccion: string;
+    referencia: string;
+    zonaDetectada?: string;
+    distanciaVialKm?: number;
+    enlaceMapa?: string;
+  };
+  subtotal: number;
+  descuento: number;
+  baseIva0: number;
+  baseIvaGravada: number;
+  iva: number;
+  flete: number;
+  total: number;
+  montoReserva70Usd: number;
+  montoAbonadoUsd: number;
+  saldoPendienteUsd: number;
+  ultimoPagoPlux?: {
+    identificador: string;
+    autorizacion: string;
+    marca?: string;
+    ultimosDigitos?: string;
+    montoUsd: number;
+    confirmadoEn?: string;
+  } | null;
+  items: Array<{
+    descripcion: string;
+    varianteNombre?: string;
+    cantidad: number;
+    precioUnitario: number;
+    impuesto: string;
+    totalLinea: number;
+    imagen?: string;
+  }>;
+}
+
+export interface ResumenMiProformaEvento {
+  id: string;
+  secuencial: number;
+  codigo: string;
+  grupoProformaId?: string;
+  versionNumero?: number;
+  esOriginal?: boolean;
+  etiquetaVersion?: string;
+  tipoOrigen: string;
+  estado: string;
+  total: number;
+  vigenciaDias: number;
+  tokenAprobacion: string;
+  tipoEvento?: string;
+  fechaEvento?: string;
+  montoAbonadoUsd: number;
+  saldoPendienteUsd: number;
+  bloqueadaPorPagoGrupo?: boolean;
+  creadoEn: string;
+}
+
+export interface EntradaVariacionProformaAsesor {
+  proformaBaseId: string;
+  negocio: string;
+  etiquetaVersion?: string;
+  notaAsesor?: string;
+  vigenciaDias?: number;
+  descuentoTotal?: number;
+  costoEnvio?: number;
+  evento: {
+    tipoEvento: string;
+    fechaEvento: string;
+    horaEvento?: string;
+    invitadosEstimados?: number;
+    paletaColores?: string;
+    notasEvento?: string;
+  };
+  direccionEvento?: string;
+  referenciaEvento?: string;
+  items: Array<{
+    descripcion: string;
+    varianteNombre?: string;
+    cantidad: number;
+    precioUnitario: number;
+    tarifaIva: number;
+    imagen?: string;
+  }>;
+}
+
+const esquemaProformaEvento = z.object({
+  negocio: z.string().min(1),
+  comprador: z.object({
+    nombreCompleto: z.string().trim().min(2, "Indica tu nombre completo o empresa"),
+    identificacion: z.string().trim().optional(),
+    correo: z.string().trim().email("Ingresa un correo electrónico válido"),
+    whatsapp: z.string().trim().min(7, "Ingresa un número de WhatsApp válido"),
+    autorizaWhatsapp: z.boolean().refine((v) => v === true, {
+      message: "Debes autorizar el contacto y envío de información por WhatsApp",
+    }),
+  }),
+  evento: z.object({
+    tipoEvento: z.string().trim().min(2, "Selecciona el tipo de evento"),
+    fechaEvento: z.string().trim().min(4, "Indica la fecha tentativa del evento"),
+    horaEvento: z.string().optional(),
+    invitadosEstimados: z.number().int().min(1).max(10000).optional(),
+    paletaColores: z.string().optional(),
+    notasEvento: z.string().optional(),
+  }),
+  subtotalBaseImponible: z.number().min(0),
+  descuentoTotal: z.number().min(0).optional(),
+  totalIva: z.number().min(0),
+  totalFlete: z.number().min(0),
+  totalPagar: z.number().positive("La proforma debe tener un importe mayor a cero"),
+  vigenciaDias: z.number().int().min(1).max(90).optional(),
+  items: z.array(z.any()).min(1, "Agrega al menos un elemento de evento a la proforma"),
+});
+
+/**
+ * Genera una proforma formal numerada en autoservicio (`TNK-PRF-xxxx`) para un evento,
+ * con enlace compartible por token, reserva sugerida del 70% y sincronización de WhatsApp LOPDP.
+ */
+export async function generarProformaEventoAction(
+  entrada: EntradaProformaEvento
+): Promise<
+  | {
+      ok: true;
+      id: string;
+      codigoProforma: string;
+      tokenAprobacion: string;
+    }
+  | { ok: false; error: string }
+> {
+  const validacion = esquemaProformaEvento.safeParse(entrada);
+  if (!validacion.success) {
+    return {
+      ok: false,
+      error: validacion.error.issues[0]?.message ?? "Completa los datos requeridos de la proforma",
+    };
+  }
+
+  const negNorm = entrada.negocio.trim().toLowerCase();
+  const config = await obtenerConfiguracionLogisticaAction(negNorm);
+
+  const algunConDeliveryIncluido = entrada.items.some(
+    (it) => it.deliveryIncluidoProducto !== false
+  );
+  const recargoProductosTotal = entrada.items.reduce(
+    (acc, it) => acc + (Number(it.recargoLogisticoUsd) || 0) * (Number(it.cantidad) || 1),
+    0
+  );
+
+  const itemsEnriquecidos = entrada.items.map((it: any) => {
+    const totalLinea = Math.round(Number(it.pvpUnitario) * Number(it.cantidad) * 100) / 100;
+    return {
+      producto_id: it.productoId,
+      descripcion:
+        it.varianteNombre && it.varianteNombre.trim() !== it.productoNombre.trim()
+          ? `${it.productoNombre} (${it.varianteNombre})`
+          : it.productoNombre,
+      producto_nombre: it.productoNombre,
+      variante_sku: it.varianteSku,
+      variante_nombre: it.varianteNombre,
+      cantidad: Number(it.cantidad) || 1,
+      precio_unitario: Number(it.pvpUnitario) || 0,
+      impuesto: (Number(it.tarifaIva) || 0) > 0 ? `IVA_${it.tarifaIva}` : "IVA_0",
+      total_linea: totalLinea,
+      imagen: it.imagen || null,
+    };
+  });
+
+  let ubicacionConGeo = entrada.ubicacionEvento;
+  if (
+    ubicacionConGeo &&
+    !ubicacionConGeo.retiroEnLocal &&
+    !ubicacionConGeo.detalleDireccionGeo &&
+    esCoordenadaValida(Number(ubicacionConGeo.lat), Number(ubicacionConGeo.lng))
+  ) {
+    const geoResuelta = await geocodificarInversoCoordenadas({
+      lat: Number(ubicacionConGeo.lat),
+      lng: Number(ubicacionConGeo.lng),
+    });
+    if (geoResuelta) {
+      ubicacionConGeo = {
+        ...ubicacionConGeo,
+        detalleDireccionGeo: geoResuelta,
+        direccion: ubicacionConGeo.direccion || geoResuelta.resumenDireccion,
+      };
+    }
+  }
+
+  const logisticaEvento = ubicacionConGeo
+    ? enriquecerDestinoConAuditoriaInterna(
+        ubicacionConGeo,
+        config,
+        algunConDeliveryIncluido,
+        recargoProductosTotal
+      )
+    : {
+        retiro_en_local: false,
+        destinatario_nombre: entrada.comprador.nombreCompleto,
+        destinatario_telefono: entrada.comprador.whatsapp,
+        direccion: "Por confirmar locación exacta del evento",
+        referencia: "",
+        fecha_entrega: entrada.evento.fechaEvento,
+        franja_horaria: entrada.evento.horaEvento || "evento",
+        costo_envio_usd: entrada.totalFlete,
+        formula_calculo_interno: "Cotización preliminar de evento (locación por confirmar).",
+      };
+
+  const totalCentavos = Math.round(entrada.totalPagar * 100);
+  const ivaCentavos = Math.round(entrada.totalIva * 100);
+  const baseTotalCentavos = Math.max(0, totalCentavos - ivaCentavos);
+  const baseItemsGravadosCentavos = entrada.items.reduce((acc, it) => {
+    if ((Number(it.tarifaIva) || 0) > 0) {
+      return acc + Math.round(Number(it.pvpUnitario) * Number(it.cantidad) * 100);
+    }
+    return acc;
+  }, 0);
+  const baseIvaGravadaCentavos =
+    ivaCentavos > 0
+      ? Math.min(
+          baseTotalCentavos,
+          baseItemsGravadosCentavos > 0
+            ? baseItemsGravadosCentavos
+            : Math.round((ivaCentavos * 100) / 15)
+        )
+      : 0;
+  const baseIva0Centavos = Math.max(0, baseTotalCentavos - baseIvaGravadaCentavos);
+  const vigenciaDias = entrada.vigenciaDias ?? 15;
+  const montoReserva70Usd = Math.round(entrada.totalPagar * 0.7 * 100) / 100;
+
+  const compradorPayload = {
+    nombreCompleto: entrada.comprador.nombreCompleto.trim(),
+    identificacion: (entrada.comprador.identificacion || "9999999999").trim(),
+    correo: entrada.comprador.correo.trim().toLowerCase(),
+    telefono: entrada.comprador.whatsapp.trim(),
+    whatsapp: entrada.comprador.whatsapp.trim(),
+    autorizaWhatsapp: true,
+    consentimientoWhatsappEn: new Date().toISOString(),
+  };
+
+  const payloadProforma = {
+    tipo_origen: "PROFORMA_EVENTO",
+    estado: "ENVIADA",
+    vigencia_dias: vigenciaDias,
+    comprador: compradorPayload,
+    evento: entrada.evento,
+    subtotal_base_imponible: entrada.subtotalBaseImponible,
+    descuento_total: entrada.descuentoTotal ?? 0,
+    total_iva: entrada.totalIva,
+    total_flete: entrada.totalFlete,
+    total_pagar: entrada.totalPagar,
+    base_iva_0_centavos: baseIva0Centavos,
+    base_iva_gravada_centavos: baseIvaGravadaCentavos,
+    porcentaje_reserva_sugerido: 70,
+    monto_reserva_70_usd: montoReserva70Usd,
+    monto_abonado_usd: 0,
+    saldo_pendiente_usd: entrada.totalPagar,
+    observaciones: [
+      `Evento: ${entrada.evento.tipoEvento} (${entrada.evento.fechaEvento}${
+        entrada.evento.horaEvento ? ` ${entrada.evento.horaEvento}` : ""
+      })`,
+      entrada.evento.paletaColores ? `Paleta: ${entrada.evento.paletaColores}` : null,
+      entrada.evento.notasEvento ? `Notas: ${entrada.evento.notasEvento}` : null,
+      logisticaEvento.formula_calculo_interno,
+    ]
+      .filter(Boolean)
+      .join(" · "),
+    logistica_entrega: {
+      modalidad_entrega: "unificada",
+      ...logisticaEvento,
+      parametros_tarifarios_snapshot: {
+        tarifa_por_km: config.tarifaPorKm,
+        subsidio_base_usd: config.subsidioBaseUsd,
+        recargo_minimo_extra: config.recargoMinimoExtra,
+        zona_gratis_nombre: config.zonaGratisNombre,
+      },
+    },
+    items: itemsEnriquecidos,
+  };
+
+  const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const esquemaComercio: any = supabase.schema("comun_comercio");
+
+  // 1. Intentar RPC transaccional SECURITY DEFINER
+  const { data: resRpc, error: errRpc } = await esquemaComercio.rpc(
+    "com_fn_generar_proforma_evento",
+    {
+      p_negocio: negNorm,
+      p_payload: payloadProforma,
+    }
+  );
+
+  if (!errRpc && resRpc?.ok && resRpc?.token_aprobacion) {
+    const tokenCreado = String(resRpc.token_aprobacion);
+    try {
+      const consultaNueva = await obtenerProformaPorTokenAction(tokenCreado);
+      if (consultaNueva.ok) {
+        const { enviarCorreoProformaEvento } = await import("./pdf-proforma");
+        await enviarCorreoProformaEvento({ proformaActual: consultaNueva.proforma });
+      }
+    } catch {
+      // No bloquear la emisión en línea si el servidor SMTP no está disponible
+    }
+    revalidatePath("/panel/pedidos");
+    revalidatePath("/panel");
+    return {
+      ok: true,
+      id: String(resRpc.id),
+      codigoProforma: String(resRpc.codigo_proforma),
+      tokenAprobacion: tokenCreado,
+    };
+  }
+
+  // 2. Respaldo resiliente con service_role en tablas existentes si la migración RPC aún no se aplicó
+  const clienteEscritura: any = crearClienteAdmin() ?? supabase;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const prefijo =
+    negNorm === "tinkay"
+      ? "TNK"
+      : negNorm === "margaritas"
+      ? "MRG"
+      : negNorm === "fastfix"
+      ? "FFH"
+      : "TRQ";
+
+  const { data: proformaCreada, error: errPrf } = await clienteEscritura
+    .schema("comun_comercio")
+    .from("com_proforma")
+    .insert({
+      prf_negocio: negNorm,
+      prf_cliente_id: user?.id ?? null,
+      prf_cliente_nombre: compradorPayload.nombreCompleto,
+      prf_cliente_contacto: compradorPayload,
+      prf_estado: "ENVIADA",
+      prf_subtotal: entrada.subtotalBaseImponible,
+      prf_descuento: entrada.descuentoTotal ?? 0,
+      prf_iva: entrada.totalIva,
+      prf_total: entrada.totalPagar,
+      prf_vigencia_dias: vigenciaDias,
+      prf_observaciones: payloadProforma.observaciones,
+      prf_detalle_proforma: payloadProforma,
+    })
+    .select("prf_id, prf_secuencial, prf_token_aprobacion")
+    .single();
+
+  if (errPrf || !proformaCreada) {
+    return {
+      ok: false,
+      error:
+        errPrf?.message ||
+        errRpc?.message ||
+        "No se pudo emitir la proforma en la base de datos.",
+    };
+  }
+
+  const codigoProforma = `${prefijo}-PRF-${String(proformaCreada.prf_secuencial ?? 1).padStart(
+    4,
+    "0"
+  )}`;
+
+  await clienteEscritura
+    .schema("comun_comercio")
+    .from("com_proforma")
+    .update({
+      prf_detalle_proforma: {
+        ...payloadProforma,
+        codigo_orden: codigoProforma,
+        codigo_proforma: codigoProforma,
+        codigo_base_proforma: codigoProforma,
+        grupo_proforma_id: String(proformaCreada.prf_id),
+        proforma_origen_id: String(proformaCreada.prf_id),
+        version_numero: 1,
+        es_original: true,
+        etiqueta_version: "Original (Autoservicio)",
+        creada_por_rol: "CLIENTE",
+      },
+    })
+    .eq("prf_id", proformaCreada.prf_id);
+
+  if (itemsEnriquecidos.length > 0) {
+    const filasItems = itemsEnriquecidos.map((it) => ({
+      pfi_negocio: negNorm,
+      pfi_proforma_id: proformaCreada.prf_id,
+      pfi_variante_id: null,
+      pfi_es_item_libre: true,
+      pfi_descripcion: it.descripcion,
+      pfi_cantidad: it.cantidad,
+      pfi_precio_unitario: it.precio_unitario,
+      pfi_descuento: 0,
+      pfi_impuesto: it.impuesto,
+      pfi_total_linea: it.total_linea,
+      pfi_detalle_item: it,
+    }));
+
+    const { error: errItems } = await clienteEscritura
+      .schema("comun_comercio")
+      .from("com_proforma_item")
+      .insert(filasItems);
+
+    if (errItems) {
+      return { ok: false, error: errItems.message };
+    }
+  }
+
+  await clienteEscritura
+    .schema("comun_comercio")
+    .from("com_despacho_asignacion")
+    .insert({
+      dsp_negocio: negNorm,
+      dsp_orden_id: proformaCreada.prf_id,
+      dsp_modalidad: logisticaEvento.retiro_en_local ? "RETIRO_LOCAL" : "PROPIO",
+      dsp_tracking_url:
+        "enlace_mapa" in logisticaEvento && logisticaEvento.enlace_mapa
+          ? String(logisticaEvento.enlace_mapa)
+          : null,
+      dsp_costo_envio: entrada.totalFlete,
+      dsp_estado: "ASIGNADO",
+      dsp_observaciones_coordinacion: payloadProforma.observaciones,
+      dsp_detalle_despacho: payloadProforma.logistica_entrega,
+    });
+
+  if (user?.id) {
+    try {
+      await clienteEscritura
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .update({
+          usu_whatsapp: compradorPayload.whatsapp,
+          usu_autorizacion_whatsapp: true,
+          usu_actualizado_en: new Date().toISOString(),
+        })
+        .eq("usu_id", user.id);
+    } catch {
+      // Continuar
+    }
+  }
+
+  const tokenFinal = String(proformaCreada.prf_token_aprobacion);
+  try {
+    const consultaNueva = await obtenerProformaPorTokenAction(tokenFinal);
+    if (consultaNueva.ok) {
+      const { enviarCorreoProformaEvento } = await import("./pdf-proforma");
+      await enviarCorreoProformaEvento({ proformaActual: consultaNueva.proforma });
+    }
+  } catch {
+    // Continuar si falla correo
+  }
+
+  revalidatePath("/panel/pedidos");
+  revalidatePath("/panel");
+  return {
+    ok: true,
+    id: String(proformaCreada.prf_id),
+    codigoProforma,
+    tokenAprobacion: tokenFinal,
+  };
+}
+
+const ESTADOS_PROFORMA_CON_PEDIDO_O_PAGO = new Set([
+  "RESERVADA_70",
+  "APROBADA",
+  "ORDEN_CONFIRMADA",
+  "FACTURADA",
+  "PAGADO",
+  "EN_PREPARACION",
+  "EN_RUTA",
+  "DESPACHADO",
+  "ENTREGADO",
+]);
+
+function mapearProformaPublicaDesdeFila(f: any, itemsTabla: any[] = []): ProformaEventoPublica {
+  const det = (f.detalle ?? f.prf_detalle_proforma ?? {}) as Record<string, any>;
+  const contacto = (f.cliente_contacto ?? f.prf_cliente_contacto ?? det.comprador ?? {}) as Record<
+    string,
+    any
+  >;
+  const ev = (det.evento ?? {}) as Record<string, any>;
+  const log = (det.logistica_entrega ?? {}) as Record<string, any>;
+  const neg = String(f.negocio ?? f.prf_negocio ?? "tinkay");
+  const prefijo =
+    neg === "tinkay" ? "TNK" : neg === "margaritas" ? "MRG" : neg === "fastfix" ? "FFH" : "TRQ";
+  const idStr = String(f.id ?? f.prf_id);
+  const sec = Number(f.secuencial ?? f.prf_secuencial ?? 1);
+  const versionNumero = Number(det.version_numero ?? 1);
+  const esOriginal = det.es_original !== undefined ? Boolean(det.es_original) : versionNumero === 1;
+  const total = Number(f.total ?? f.prf_total ?? det.total_pagar ?? 0);
+  const iva = Number(f.iva ?? f.prf_iva ?? det.total_iva ?? 0);
+  const subtotal = Number(f.subtotal ?? f.prf_subtotal ?? det.subtotal_base_imponible ?? 0);
+  const descuento = Number(f.descuento ?? f.prf_descuento ?? det.descuento_total ?? 0);
+  const flete = Number(det.total_flete ?? log.costo_envio_usd ?? 0);
+  const baseTotal = Math.max(0, Math.round((total - iva) * 100) / 100);
+  const baseGravada =
+    det.base_iva_gravada_centavos !== undefined
+      ? Number(det.base_iva_gravada_centavos) / 100
+      : iva > 0
+      ? Math.min(baseTotal, Math.round((iva / 0.15) * 100) / 100)
+      : 0;
+  const base0 = Math.max(0, Math.round((baseTotal - baseGravada) * 100) / 100);
+
+  const itemsFuente =
+    Array.isArray(f.items) && f.items.length > 0
+      ? f.items
+      : itemsTabla.length > 0
+      ? itemsTabla
+      : Array.isArray(det.items)
+      ? det.items
+      : [];
+
+  const ultimoPlux = det.ultimo_pago_plux as Record<string, any> | undefined;
+
+  return {
+    id: idStr,
+    secuencial: sec,
+    codigoProforma: String(
+      det.codigo_proforma ||
+        det.codigo_orden ||
+        `${prefijo}-PRF-${String(sec).padStart(4, "0")}`
+    ),
+    grupoProformaId: String(det.grupo_proforma_id || idStr),
+    versionNumero,
+    esOriginal,
+    etiquetaVersion: String(
+      det.etiqueta_version ||
+        (esOriginal ? "Original (Autoservicio)" : `Propuesta V${versionNumero} (Asesor)`)
+    ),
+    notaAsesor: det.nota_asesor ? String(det.nota_asesor) : undefined,
+    asesorNombre: det.asesor_nombre ? String(det.asesor_nombre) : undefined,
+    negocio: neg,
+    estado: String(f.estado ?? f.prf_estado ?? det.estado ?? "ENVIADA"),
+    vigenciaDias: Number(f.vigencia_dias ?? f.prf_vigencia_dias ?? det.vigencia_dias ?? 15),
+    tokenAprobacion: String(f.token_aprobacion ?? f.prf_token_aprobacion ?? ""),
+    creadoEn: String(f.creado_en ?? f.prf_creado_en ?? new Date().toISOString()),
+    comprador: {
+      nombreCompleto: String(
+        f.cliente_nombre ?? f.prf_cliente_nombre ?? contacto.nombreCompleto ?? "Cliente"
+      ),
+      identificacion: String(contacto.identificacion || "9999999999"),
+      correo: String(contacto.correo || ""),
+      whatsapp: String(contacto.whatsapp || contacto.telefono || ""),
+      autorizaWhatsapp: Boolean(contacto.autorizaWhatsapp),
+    },
+    evento: {
+      tipoEvento: String(ev.tipoEvento || "Evento Especial"),
+      fechaEvento: String(ev.fechaEvento || log.fecha_entrega || ""),
+      horaEvento: ev.horaEvento ? String(ev.horaEvento) : undefined,
+      invitadosEstimados:
+        typeof ev.invitadosEstimados === "number" ? ev.invitadosEstimados : undefined,
+      paletaColores: ev.paletaColores ? String(ev.paletaColores) : undefined,
+      notasEvento: ev.notasEvento ? String(ev.notasEvento) : undefined,
+    },
+    ubicacion: {
+      retiroEnLocal: Boolean(log.retiro_en_local),
+      direccion: String(log.direccion || "Locación por confirmar"),
+      referencia: String(log.referencia || ""),
+      zonaDetectada: log.zona_detectada ? String(log.zona_detectada) : undefined,
+      distanciaVialKm:
+        typeof log.distancia_vial_km === "number" ? log.distancia_vial_km : undefined,
+      enlaceMapa: log.enlace_mapa ? String(log.enlace_mapa) : undefined,
+    },
+    subtotal,
+    descuento,
+    baseIva0: base0,
+    baseIvaGravada: baseGravada,
+    iva,
+    flete,
+    total,
+    montoReserva70Usd:
+      det.monto_reserva_70_usd !== undefined
+        ? Number(det.monto_reserva_70_usd)
+        : Math.round(total * 0.7 * 100) / 100,
+    montoAbonadoUsd: Number(det.monto_abonado_usd ?? 0),
+    saldoPendienteUsd:
+      det.saldo_pendiente_usd !== undefined ? Number(det.saldo_pendiente_usd) : total,
+    ultimoPagoPlux: ultimoPlux
+      ? {
+          identificador: String(ultimoPlux.identificador || ""),
+          autorizacion: String(ultimoPlux.autorizacion || ""),
+          marca: ultimoPlux.marca || ultimoPlux.marca_tarjeta || undefined,
+          ultimosDigitos: ultimoPlux.ultimos_digitos || undefined,
+          montoUsd: Number(ultimoPlux.monto_usd ?? 0),
+          confirmadoEn: ultimoPlux.confirmado_en ? String(ultimoPlux.confirmado_en) : undefined,
+        }
+      : null,
+    items: itemsFuente.map((it: any) => {
+      const detIt = (it.detalle ?? it.pfi_detalle_item ?? it) as Record<string, any>;
+      return {
+        descripcion: String(
+          it.descripcion ?? it.pfi_descripcion ?? detIt.descripcion ?? "Servicio de Evento"
+        ),
+        varianteNombre: detIt.variante_nombre ? String(detIt.variante_nombre) : undefined,
+        cantidad: Number(it.cantidad ?? it.pfi_cantidad ?? detIt.cantidad ?? 1),
+        precioUnitario: Number(
+          it.precio_unitario ?? it.pfi_precio_unitario ?? detIt.precio_unitario ?? 0
+        ),
+        impuesto: String(it.impuesto ?? it.pfi_impuesto ?? detIt.impuesto ?? "IVA_0"),
+        totalLinea: Number(it.total_linea ?? it.pfi_total_linea ?? detIt.total_linea ?? 0),
+        imagen: detIt.imagen ? String(detIt.imagen) : undefined,
+      };
+    }),
+  };
+}
+
+/**
+ * Obtiene una proforma por su token único (`prf_token_aprobacion`), junto con todas las
+ * variaciones activas de su grupo (`V1 Original`, `V2 Asesor`, etc.) para que el cliente
+ * compare, descarte las no aceptadas y pague la elegida.
+ */
+export async function obtenerProformaPorTokenAction(
+  token: string
+): Promise<
+  | {
+      ok: true;
+      proforma: ProformaEventoPublica;
+      variaciones: ProformaEventoPublica[];
+      bloqueadaPorPagoGrupo: boolean;
+    }
+  | { ok: false; error: string }
+> {
+  const tokenLimpio = (token || "").trim();
+  if (tokenLimpio.length < 8) {
+    return { ok: false, error: "Enlace de proforma no válido." };
+  }
+
+  const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const esquemaComercio: any = supabase.schema("comun_comercio");
+
+  try {
+    const { data: resRpc, error: errRpc } = await esquemaComercio.rpc(
+      "com_fn_obtener_proforma_por_token",
+      { p_token: tokenLimpio }
+    );
+    if (!errRpc && resRpc?.ok && resRpc?.proforma) {
+      const principal = mapearProformaPublicaDesdeFila(resRpc.proforma);
+      const varsMapeadas = Array.isArray(resRpc.variaciones)
+        ? resRpc.variaciones.map((v: any) => mapearProformaPublicaDesdeFila(v))
+        : [principal];
+      const bloqueada =
+        Boolean(resRpc.bloqueada_por_pago_grupo) ||
+        varsMapeadas.some(
+          (v: ProformaEventoPublica) =>
+            ESTADOS_PROFORMA_CON_PEDIDO_O_PAGO.has(v.estado) || v.montoAbonadoUsd > 0
+        );
+      return {
+        ok: true,
+        proforma: principal,
+        variaciones: varsMapeadas.length > 0 ? varsMapeadas : [principal],
+        bloqueadaPorPagoGrupo: bloqueada,
+      };
+    }
+  } catch {
+    // Continuar al respaldo directo
+  }
+
+  const db: any = crearClienteAdmin() ?? supabase;
+  const { data: fila, error } = await db
+    .schema("comun_comercio")
+    .from("com_proforma")
+    .select("*")
+    .eq("prf_token_aprobacion", tokenLimpio)
+    .is("prf_eliminado_en", null)
+    .maybeSingle();
+
+  if (error || !fila) {
+    return { ok: false, error: "La proforma solicitada no existe o fue eliminada." };
+  }
+
+  const grupoId = String(fila.prf_detalle_proforma?.grupo_proforma_id || fila.prf_id);
+
+  const { data: filasNegocio } = await db
+    .schema("comun_comercio")
+    .from("com_proforma")
+    .select("*")
+    .eq("prf_negocio", fila.prf_negocio)
+    .is("prf_eliminado_en", null)
+    .order("prf_creado_en", { ascending: true })
+    .limit(250);
+
+  const filasGrupo = (filasNegocio ?? [fila]).filter((f: any) => {
+    const gId = String(f.prf_detalle_proforma?.grupo_proforma_id || f.prf_id);
+    return gId === grupoId;
+  });
+
+  const idsGrupo = filasGrupo.map((f: any) => f.prf_id);
+  const { data: itemsGrupo } = await db
+    .schema("comun_comercio")
+    .from("com_proforma_item")
+    .select("*")
+    .in("pfi_proforma_id", idsGrupo.length > 0 ? idsGrupo : [fila.prf_id])
+    .is("pfi_eliminado_en", null)
+    .order("pfi_secuencial", { ascending: true });
+
+  const mapaItems = new Map<string, any[]>();
+  (itemsGrupo ?? []).forEach((it: any) => {
+    const k = String(it.pfi_proforma_id);
+    const arr = mapaItems.get(k) ?? [];
+    arr.push(it);
+    mapaItems.set(k, arr);
+  });
+
+  const variaciones: ProformaEventoPublica[] = (filasGrupo.length > 0 ? filasGrupo : [fila])
+    .map((fg: any) => mapearProformaPublicaDesdeFila(fg, mapaItems.get(String(fg.prf_id)) ?? []))
+    .sort(
+      (a: ProformaEventoPublica, b: ProformaEventoPublica) =>
+        (a.versionNumero ?? 1) - (b.versionNumero ?? 1)
+    );
+
+  const principal =
+    variaciones.find((v: ProformaEventoPublica) => v.id === String(fila.prf_id)) ??
+    mapearProformaPublicaDesdeFila(fila, mapaItems.get(String(fila.prf_id)) ?? []);
+
+  const bloqueadaPorPagoGrupo = variaciones.some(
+    (v: ProformaEventoPublica) =>
+      ESTADOS_PROFORMA_CON_PEDIDO_O_PAGO.has(v.estado) || v.montoAbonadoUsd > 0
+  );
+
+  return {
+    ok: true,
+    proforma: principal,
+    variaciones: variaciones.length > 0 ? variaciones : [principal],
+    bloqueadaPorPagoGrupo,
+  };
+}
+
+/**
+ * Permite al asesor de ventas crear una nueva variación (`V2`, `V3`, ...) sobre una proforma
+ * existente (ej. tras una llamada con el cliente), conservando intacta la proforma original (`V1`)
+ * y todas las variaciones previas, y enviando al cliente por correo el PDF Original + el PDF Actualizado.
+ */
+export async function crearVariacionProformaAsesorAction(
+  entrada: EntradaVariacionProformaAsesor
+): Promise<
+  | {
+      ok: true;
+      id: string;
+      codigoProforma: string;
+      tokenAprobacion: string;
+      versionNumero: number;
+      correoEnviado: boolean;
+      avisoCorreo?: string;
+    }
+  | { ok: false; error: string }
+> {
+  if (!entrada.proformaBaseId || entrada.items.length === 0) {
+    return { ok: false, error: "La variación debe contener al menos un ítem válido." };
+  }
+
+  const negNorm = (entrada.negocio || "tinkay").trim().toLowerCase();
+  const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "Debes iniciar sesión como asesor o administrador." };
+  }
+
+  const dbAdmin: any = crearClienteAdmin() ?? supabase;
+
+  // Verificar membresía activa de staff o superadmin
+  const [{ data: uRow }, { data: memRows }] = await Promise.all([
+    dbAdmin
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_nombres, usu_apellidos, usu_es_superadmin")
+      .eq("usu_id", user.id)
+      .maybeSingle(),
+    dbAdmin
+      .schema("comun_seguridad")
+      .from("seg_membresia")
+      .select("mem_rol, mem_estado, mem_negocio")
+      .eq("mem_usuario_id", user.id)
+      .eq("mem_estado", "ACTIVA"),
+  ]);
+
+  const prefijoNeg =
+    negNorm === "tinkay"
+      ? "tnk"
+      : negNorm === "margaritas"
+      ? "mrg"
+      : negNorm === "fastfix"
+      ? "ffh"
+      : "trq";
+
+  const tieneRolStaff =
+    Boolean(uRow?.usu_es_superadmin) ||
+    (memRows ?? []).some((m: any) => {
+      const mNeg = String(m.mem_negocio || "").toLowerCase();
+      const rol = String(m.mem_rol || "").toUpperCase();
+      return (
+        (mNeg === negNorm || mNeg === prefijoNeg) &&
+        ["SUPERADMIN", "ADMINISTRADOR", "ADMIN", "OPERADOR", "ASESOR", "VENTAS"].includes(rol)
+      );
+    });
+
+  if (!tieneRolStaff) {
+    return { ok: false, error: "No cuentas con permisos de asesor/administrador en este negocio." };
+  }
+
+  const nombreAsesor =
+    [uRow?.usu_nombres, uRow?.usu_apellidos].filter(Boolean).join(" ").trim() ||
+    user.email ||
+    "Asesor Comercial";
+
+  // Leer proforma base para heredar comprador, grupo y logística
+  const { data: filaBase, error: errBase } = await dbAdmin
+    .schema("comun_comercio")
+    .from("com_proforma")
+    .select("*")
+    .eq("prf_id", entrada.proformaBaseId)
+    .is("prf_eliminado_en", null)
+    .maybeSingle();
+
+  if (errBase || !filaBase) {
+    return { ok: false, error: "La proforma base ya no existe o fue eliminada por el cliente." };
+  }
+
+  const detBase = (filaBase.prf_detalle_proforma ?? {}) as Record<string, any>;
+  const compradorBase = (filaBase.prf_cliente_contacto ?? detBase.comprador ?? {}) as Record<
+    string,
+    any
+  >;
+  const logBase = (detBase.logistica_entrega ?? {}) as Record<string, any>;
+
+  // Recalcular desglose financiero exacto (IVA 0% vs IVA 15%)
+  let subtotalSinIva = 0;
+  let totalIva = 0;
+  let baseGravadaCentavos = 0;
+  let base0Centavos = 0;
+
+  const itemsNormalizados = entrada.items.map((it) => {
+    const cant = Math.max(0.01, Number(it.cantidad) || 1);
+    const pvpUnit = Math.max(0, Number(it.precioUnitario) || 0);
+    const tarifa = Number(it.tarifaIva) > 0 ? Number(it.tarifaIva) : 0;
+    const totalLinea = Math.round(pvpUnit * cant * 100) / 100;
+    const baseLinea =
+      tarifa > 0 ? Math.round((totalLinea / (1 + tarifa / 100)) * 100) / 100 : totalLinea;
+    const ivaLinea = Math.max(0, Math.round((totalLinea - baseLinea) * 100) / 100);
+
+    subtotalSinIva += baseLinea;
+    totalIva += ivaLinea;
+    if (tarifa > 0) {
+      baseGravadaCentavos += Math.round(baseLinea * 100);
+    } else {
+      base0Centavos += Math.round(baseLinea * 100);
+    }
+
+    return {
+      descripcion: it.descripcion.trim(),
+      producto_nombre: it.descripcion.trim(),
+      variante_nombre: it.varianteNombre?.trim() || "",
+      cantidad: cant,
+      precio_unitario: pvpUnit,
+      impuesto: tarifa > 0 ? `IVA_${tarifa}` : "IVA_0",
+      total_linea: totalLinea,
+      imagen: it.imagen || null,
+    };
+  });
+
+  const descuentoTotal = Math.max(0, Math.round((Number(entrada.descuentoTotal) || 0) * 100) / 100);
+  const totalFlete = Math.max(
+    0,
+    Math.round((Number(entrada.costoEnvio ?? detBase.total_flete ?? 0) || 0) * 100) / 100
+  );
+  // Agregar transporte a base 0% (o mantener exactitud con total)
+  base0Centavos = Math.max(0, base0Centavos + Math.round(totalFlete * 100) - Math.round(descuentoTotal * 100));
+
+  const subtotalRedondeado = Math.round(subtotalSinIva * 100) / 100;
+  const ivaRedondeado = Math.round(totalIva * 100) / 100;
+  const totalPagar = Math.max(
+    0.01,
+    Math.round((subtotalRedondeado + ivaRedondeado + totalFlete - descuentoTotal) * 100) / 100
+  );
+  const vigenciaDias = entrada.vigenciaDias ?? Number(filaBase.prf_vigencia_dias ?? 15);
+
+  const payloadVariacion = {
+    comprador: compradorBase,
+    evento: entrada.evento,
+    etiqueta_version: entrada.etiquetaVersion?.trim() || undefined,
+    nota_asesor: entrada.notaAsesor?.trim() || undefined,
+    asesor_nombre: nombreAsesor,
+    vigencia_dias: vigenciaDias,
+    subtotal_base_imponible: subtotalRedondeado,
+    descuento_total: descuentoTotal,
+    total_iva: ivaRedondeado,
+    total_flete: totalFlete,
+    total_pagar: totalPagar,
+    base_iva_0_centavos: base0Centavos,
+    base_iva_gravada_centavos: baseGravadaCentavos,
+    observaciones: [
+      entrada.notaAsesor ? `Asesor (${nombreAsesor}): ${entrada.notaAsesor}` : null,
+      `Evento: ${entrada.evento.tipoEvento} (${entrada.evento.fechaEvento})`,
+    ]
+      .filter(Boolean)
+      .join(" · "),
+    logistica_entrega: {
+      ...logBase,
+      direccion: entrada.direccionEvento ?? logBase.direccion ?? "Locación por confirmar",
+      referencia: entrada.referenciaEvento ?? logBase.referencia ?? "",
+      fecha_entrega: entrada.evento.fechaEvento || logBase.fecha_entrega || "",
+      costo_envio_usd: totalFlete,
+    },
+    items: itemsNormalizados,
+  };
+
+  let nuevoId = "";
+  let nuevoCodigo = "";
+  let nuevoToken = "";
+  let nuevaVersion = 2;
+  let tokenOrigen = "";
+
+  const esquemaComercio: any = supabase.schema("comun_comercio");
+  const { data: resRpc, error: errRpc } = await esquemaComercio.rpc(
+    "com_fn_crear_variacion_proforma_asesor",
+    {
+      p_proforma_base_id: entrada.proformaBaseId,
+      p_payload: payloadVariacion,
+    }
+  );
+
+  if (!errRpc && resRpc?.ok && resRpc?.token_aprobacion) {
+    nuevoId = String(resRpc.id);
+    nuevoCodigo = String(resRpc.codigo_proforma);
+    nuevoToken = String(resRpc.token_aprobacion);
+    nuevaVersion = Number(resRpc.version_numero ?? 2);
+    tokenOrigen = String(resRpc.token_origen || "");
+  } else {
+    // Respaldo resiliente con service_role si aún no se corrió la migración SQL
+    const grupoId = String(detBase.grupo_proforma_id || filaBase.prf_id);
+    const { data: filasMismoNeg } = await dbAdmin
+      .schema("comun_comercio")
+      .from("com_proforma")
+      .select("prf_id, prf_secuencial, prf_token_aprobacion, prf_cliente_id, prf_detalle_proforma, prf_creado_en")
+      .eq("prf_negocio", filaBase.prf_negocio)
+      .order("prf_creado_en", { ascending: true });
+
+    const hermanas = (filasMismoNeg ?? [filaBase]).filter(
+      (h: any) => String(h.prf_detalle_proforma?.grupo_proforma_id || h.prf_id) === grupoId
+    );
+    const origenFila = hermanas[0] ?? filaBase;
+    tokenOrigen = String(origenFila.prf_token_aprobacion || filaBase.prf_token_aprobacion || "");
+    const maxVer = hermanas.reduce(
+      (m: number, h: any) => Math.max(m, Number(h.prf_detalle_proforma?.version_numero ?? 1)),
+      1
+    );
+    nuevaVersion = maxVer + 1;
+
+    const prefijoDoc =
+      filaBase.prf_negocio === "tinkay"
+        ? "TNK"
+        : filaBase.prf_negocio === "margaritas"
+        ? "MRG"
+        : filaBase.prf_negocio === "fastfix"
+        ? "FFH"
+        : "TRQ";
+    const codigoBase = String(
+      origenFila.prf_detalle_proforma?.codigo_base_proforma ||
+        origenFila.prf_detalle_proforma?.codigo_proforma ||
+        `${prefijoDoc}-PRF-${String(origenFila.prf_secuencial ?? 1).padStart(4, "0")}`
+    );
+    nuevoCodigo = `${codigoBase}-V${nuevaVersion}`;
+
+    const { data: insertada, error: errIns } = await dbAdmin
+      .schema("comun_comercio")
+      .from("com_proforma")
+      .insert({
+        prf_negocio: filaBase.prf_negocio,
+        prf_cliente_id: origenFila.prf_cliente_id ?? filaBase.prf_cliente_id ?? null,
+        prf_cliente_nombre: filaBase.prf_cliente_nombre,
+        prf_cliente_contacto: compradorBase,
+        prf_estado: "ENVIADA",
+        prf_subtotal: subtotalRedondeado,
+        prf_descuento: descuentoTotal,
+        prf_iva: ivaRedondeado,
+        prf_total: totalPagar,
+        prf_vigencia_dias: vigenciaDias,
+        prf_observaciones: payloadVariacion.observaciones,
+        prf_detalle_proforma: {
+          ...payloadVariacion,
+          tipo_origen: "PROFORMA_EVENTO",
+          estado: "ENVIADA",
+          codigo_orden: nuevoCodigo,
+          codigo_proforma: nuevoCodigo,
+          codigo_base_proforma: codigoBase,
+          grupo_proforma_id: grupoId,
+          proforma_origen_id: String(origenFila.prf_id),
+          proforma_base_edicion_id: String(filaBase.prf_id),
+          version_numero: nuevaVersion,
+          es_original: false,
+          etiqueta_version:
+            entrada.etiquetaVersion?.trim() || `Propuesta V${nuevaVersion} (Asesor)`,
+          creada_por_rol: "ASESOR",
+          porcentaje_reserva_sugerido: 70,
+          monto_reserva_70_usd: Math.round(totalPagar * 0.7 * 100) / 100,
+          monto_abonado_usd: 0,
+          saldo_pendiente_usd: totalPagar,
+        },
+      })
+      .select("prf_id, prf_token_aprobacion")
+      .single();
+
+    if (errIns || !insertada) {
+      return { ok: false, error: errIns?.message || "No se pudo guardar la variación." };
+    }
+
+    nuevoId = String(insertada.prf_id);
+    nuevoToken = String(insertada.prf_token_aprobacion);
+
+    const filasItems = itemsNormalizados.map((it) => ({
+      pfi_negocio: filaBase.prf_negocio,
+      pfi_proforma_id: nuevoId,
+      pfi_variante_id: null,
+      pfi_es_item_libre: true,
+      pfi_descripcion: it.descripcion,
+      pfi_cantidad: it.cantidad,
+      pfi_precio_unitario: it.precio_unitario,
+      pfi_descuento: 0,
+      pfi_impuesto: it.impuesto,
+      pfi_total_linea: it.total_linea,
+      pfi_detalle_item: it,
+    }));
+
+    const { error: errIt } = await dbAdmin
+      .schema("comun_comercio")
+      .from("com_proforma_item")
+      .insert(filasItems);
+
+    if (errIt) {
+      return { ok: false, error: errIt.message };
+    }
+  }
+
+  // Enviar por correo ambos PDFs: Proforma Original (V1) + Nueva Variación Actualizada (V2+)
+  let correoEnviado = false;
+  let avisoCorreo: string | undefined;
+  try {
+    const consultaNueva = await obtenerProformaPorTokenAction(nuevoToken);
+    if (consultaNueva.ok) {
+      const originalEnGrupo =
+        consultaNueva.variaciones.find((v) => v.esOriginal || v.versionNumero === 1) ?? null;
+      let proformaOrig = originalEnGrupo;
+      if (!proformaOrig && tokenOrigen) {
+        const cOrig = await obtenerProformaPorTokenAction(tokenOrigen);
+        if (cOrig.ok) proformaOrig = cOrig.proforma;
+      }
+
+      const { enviarCorreoProformaEvento } = await import("./pdf-proforma");
+      const resMail = await enviarCorreoProformaEvento({
+        proformaActual: consultaNueva.proforma,
+        proformaOriginal: proformaOrig,
+      });
+      correoEnviado = resMail.ok;
+      if (!resMail.ok) avisoCorreo = resMail.error;
+    }
+  } catch (e: any) {
+    avisoCorreo = e?.message;
+  }
+
+  revalidatePath("/panel/pedidos");
+  revalidatePath(`/proforma/${nuevoToken}`);
+  return {
+    ok: true,
+    id: nuevoId,
+    codigoProforma: nuevoCodigo,
+    tokenAprobacion: nuevoToken,
+    versionNumero: nuevaVersion,
+    correoEnviado,
+    avisoCorreo,
+  };
+}
+
+/**
+ * Permite al cliente eliminar variaciones no aceptadas (`UNA` u `OTRAS`) o cancelar todas (`TODAS`)
+ * estrictamente ANTES de realizar el pedido o confirmar el pago.
+ */
+export async function eliminarVariacionesProformaClienteAction(entrada: {
+  tokenAprobacion?: string;
+  modo: "UNA" | "OTRAS" | "TODAS";
+  proformaObjetivoId?: string;
+}): Promise<
+  | { ok: true; eliminadas: number; tokenRestante: string | null }
+  | { ok: false; error: string }
+> {
+  const modo = entrada.modo;
+  if (!["UNA", "OTRAS", "TODAS"].includes(modo)) {
+    return { ok: false, error: "Modo de eliminación inválido." };
+  }
+
+  const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const esquemaComercio: any = supabase.schema("comun_comercio");
+
+  try {
+    const { data: resRpc, error: errRpc } = await esquemaComercio.rpc(
+      "com_fn_eliminar_proformas_cliente",
+      {
+        p_token: entrada.tokenAprobacion ?? null,
+        p_modo: modo,
+        p_proforma_objetivo_id: entrada.proformaObjetivoId ?? null,
+      }
+    );
+    if (!errRpc && resRpc) {
+      if (!resRpc.ok) {
+        return { ok: false, error: String(resRpc.error || "No se pudo eliminar la proforma.") };
+      }
+      revalidatePath("/panel");
+      revalidatePath("/panel/pedidos");
+      return {
+        ok: true,
+        eliminadas: Number(resRpc.eliminadas ?? 1),
+        tokenRestante: resRpc.token_restante ? String(resRpc.token_restante) : null,
+      };
+    }
+  } catch {
+    // Continuar al respaldo directo
+  }
+
+  const db: any = crearClienteAdmin() ?? supabase;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  let refRow: any = null;
+  if (entrada.tokenAprobacion && entrada.tokenAprobacion.trim().length >= 8) {
+    const { data } = await db
+      .schema("comun_comercio")
+      .from("com_proforma")
+      .select("*")
+      .eq("prf_token_aprobacion", entrada.tokenAprobacion.trim())
+      .is("prf_eliminado_en", null)
+      .maybeSingle();
+    refRow = data;
+  } else if (entrada.proformaObjetivoId && user?.id) {
+    const { data } = await db
+      .schema("comun_comercio")
+      .from("com_proforma")
+      .select("*")
+      .eq("prf_id", entrada.proformaObjetivoId)
+      .eq("prf_cliente_id", user.id)
+      .is("prf_eliminado_en", null)
+      .maybeSingle();
+    refRow = data;
+  }
+
+  if (!refRow) {
+    return { ok: false, error: "No se encontró la proforma o ya fue eliminada." };
+  }
+
+  const grupoId = String(refRow.prf_detalle_proforma?.grupo_proforma_id || refRow.prf_id);
+  const { data: filasNeg } = await db
+    .schema("comun_comercio")
+    .from("com_proforma")
+    .select("*")
+    .eq("prf_negocio", refRow.prf_negocio)
+    .is("prf_eliminado_en", null);
+
+  const hermanas = (filasNeg ?? [refRow]).filter(
+    (h: any) => String(h.prf_detalle_proforma?.grupo_proforma_id || h.prf_id) === grupoId
+  );
+
+  const bloqueada = hermanas.some(
+    (h: any) =>
+      ESTADOS_PROFORMA_CON_PEDIDO_O_PAGO.has(String(h.prf_estado || "")) ||
+      Number(h.prf_detalle_proforma?.monto_abonado_usd ?? 0) > 0
+  );
+
+  if (bloqueada) {
+    return {
+      ok: false,
+      error: "No es posible eliminar proformas después de realizar el pedido o confirmar el pago.",
+    };
+  }
+
+  const idRefObjetivo = String(entrada.proformaObjetivoId || refRow.prf_id);
+  const idsAEliminar =
+    modo === "UNA"
+      ? hermanas.filter((h: any) => String(h.prf_id) === idRefObjetivo).map((h: any) => h.prf_id)
+      : modo === "OTRAS"
+      ? hermanas.filter((h: any) => String(h.prf_id) !== idRefObjetivo).map((h: any) => h.prf_id)
+      : hermanas.map((h: any) => h.prf_id);
+
+  if (idsAEliminar.length > 0) {
+    const { error: errUpd } = await db
+      .schema("comun_comercio")
+      .from("com_proforma")
+      .update({
+        prf_eliminado_en: new Date().toISOString(),
+        prf_estado: "ANULADA",
+        prf_actualizado_en: new Date().toISOString(),
+      })
+      .in("prf_id", idsAEliminar);
+
+    if (errUpd) {
+      return { ok: false, error: errUpd.message };
+    }
+  }
+
+  const sobrevivientes = hermanas
+    .filter((h: any) => !idsAEliminar.includes(h.prf_id))
+    .sort(
+      (a: any, b: any) =>
+        Number(b.prf_detalle_proforma?.version_numero ?? 1) -
+        Number(a.prf_detalle_proforma?.version_numero ?? 1)
+    );
+
+  revalidatePath("/panel");
+  revalidatePath("/panel/pedidos");
+  return {
+    ok: true,
+    eliminadas: idsAEliminar.length,
+    tokenRestante: sobrevivientes[0]?.prf_token_aprobacion
+      ? String(sobrevivientes[0].prf_token_aprobacion)
+      : null,
+  };
+}
+
+/**
+ * Confirma el pedido de una variación mediante Transferencia Bancaria, bloqueando
+ * la eliminación posterior y marcando las variaciones hermanas como `NO_ACEPTADA`.
+ */
+export async function confirmarOrdenTransferenciaProformaAction(entrada: {
+  tokenAprobacion: string;
+  modalidadCobro: "RESERVA_70" | "TOTAL_100";
+  notaTransferencia?: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
+  const tokenLimpio = (entrada.tokenAprobacion || "").trim();
+  if (tokenLimpio.length < 8) {
+    return { ok: false, error: "Token de proforma inválido." };
+  }
+
+  const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const esquemaComercio: any = supabase.schema("comun_comercio");
+
+  try {
+    const { data: resRpc, error: errRpc } = await esquemaComercio.rpc(
+      "com_fn_confirmar_orden_transferencia_proforma",
+      {
+        p_token: tokenLimpio,
+        p_modalidad_cobro: entrada.modalidadCobro,
+        p_nota: entrada.notaTransferencia ?? null,
+      }
+    );
+    if (!errRpc && resRpc?.ok) {
+      revalidatePath(`/proforma/${tokenLimpio}`);
+      revalidatePath("/panel");
+      revalidatePath("/panel/pedidos");
+      return { ok: true };
+    }
+  } catch {
+    // Continuar a respaldo directo
+  }
+
+  const db: any = crearClienteAdmin() ?? supabase;
+  const { data: fila, error } = await db
+    .schema("comun_comercio")
+    .from("com_proforma")
+    .select("*")
+    .eq("prf_token_aprobacion", tokenLimpio)
+    .is("prf_eliminado_en", null)
+    .maybeSingle();
+
+  if (error || !fila) {
+    return { ok: false, error: "No se encontró la proforma seleccionada." };
+  }
+
+  const det = (fila.prf_detalle_proforma ?? {}) as Record<string, any>;
+  const grupoId = String(det.grupo_proforma_id || fila.prf_id);
+
+  const { error: errConfirm } = await db
+    .schema("comun_comercio")
+    .from("com_proforma")
+    .update({
+      prf_estado: "ORDEN_CONFIRMADA",
+      prf_detalle_proforma: {
+        ...det,
+        estado: "ORDEN_CONFIRMADA",
+        metodo_pago: "transferencia",
+        modalidad_comprometida: entrada.modalidadCobro,
+        nota_transferencia: entrada.notaTransferencia || "",
+        confirmada_transferencia_en: new Date().toISOString(),
+        variacion_aceptada: true,
+      },
+      prf_actualizado_en: new Date().toISOString(),
+    })
+    .eq("prf_id", fila.prf_id);
+
+  if (errConfirm) {
+    return { ok: false, error: errConfirm.message };
+  }
+
+  const { data: filasNeg } = await db
+    .schema("comun_comercio")
+    .from("com_proforma")
+    .select("prf_id, prf_estado, prf_detalle_proforma")
+    .eq("prf_negocio", fila.prf_negocio)
+    .is("prf_eliminado_en", null);
+
+  const hermanasNoPagadas = (filasNeg ?? []).filter(
+    (h: any) =>
+      String(h.prf_id) !== String(fila.prf_id) &&
+      String(h.prf_detalle_proforma?.grupo_proforma_id || h.prf_id) === grupoId &&
+      ["ENVIADA", "PENDIENTE_PAGO"].includes(String(h.prf_estado || ""))
+  );
+
+  for (const h of hermanasNoPagadas) {
+    await db
+      .schema("comun_comercio")
+      .from("com_proforma")
+      .update({
+        prf_estado: "NO_ACEPTADA",
+        prf_detalle_proforma: {
+          ...(h.prf_detalle_proforma ?? {}),
+          estado: "NO_ACEPTADA",
+          descartada_por_aceptacion_id: String(fila.prf_id),
+        },
+        prf_actualizado_en: new Date().toISOString(),
+      })
+      .eq("prf_id", h.prf_id);
+  }
+
+  revalidatePath(`/proforma/${tokenLimpio}`);
+  revalidatePath("/panel");
+  revalidatePath("/panel/pedidos");
+  return { ok: true };
+}
+
+/**
+ * Lista las proformas y órdenes vinculadas al usuario autenticado actual.
+ */
+export async function obtenerMisProformasEventoAction(
+  negocio: string
+): Promise<{ ok: true; proformas: ResumenMiProformaEvento[] } | { ok: false; error: string }> {
+  const negNorm = (negocio || "tinkay").trim().toLowerCase();
+  const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: true, proformas: [] };
+  }
+
+  const prefijo =
+    negNorm === "tinkay"
+      ? "TNK"
+      : negNorm === "margaritas"
+      ? "MRG"
+      : negNorm === "fastfix"
+      ? "FFH"
+      : "TRQ";
+
+  const db: any = crearClienteAdmin() ?? supabase;
+  const { data: filas, error } = await db
+    .schema("comun_comercio")
+    .from("com_proforma")
+    .select("*")
+    .eq("prf_negocio", negNorm)
+    .eq("prf_cliente_id", user.id)
+    .is("prf_eliminado_en", null)
+    .order("prf_creado_en", { ascending: false })
+    .limit(80);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  const gruposBloqueados = new Set<string>();
+  (filas ?? []).forEach((f: any) => {
+    const det = (f.prf_detalle_proforma ?? {}) as Record<string, any>;
+    const gId = String(det.grupo_proforma_id || f.prf_id);
+    if (
+      ESTADOS_PROFORMA_CON_PEDIDO_O_PAGO.has(String(f.prf_estado || "")) ||
+      Number(det.monto_abonado_usd ?? 0) > 0
+    ) {
+      gruposBloqueados.add(gId);
+    }
+  });
+
+  const proformas: ResumenMiProformaEvento[] = (filas ?? []).map((f: any) => {
+    const det = (f.prf_detalle_proforma ?? {}) as Record<string, any>;
+    const sec = Number(f.prf_secuencial ?? 1);
+    const total = Number(f.prf_total ?? 0);
+    const grupoId = String(det.grupo_proforma_id || f.prf_id);
+    const verNum = Number(det.version_numero ?? 1);
+    return {
+      id: String(f.prf_id),
+      secuencial: sec,
+      codigo: String(
+        det.codigo_proforma ||
+          det.codigo_orden ||
+          `${prefijo}-PRF-${String(sec).padStart(4, "0")}`
+      ),
+      grupoProformaId: grupoId,
+      versionNumero: verNum,
+      esOriginal: det.es_original !== undefined ? Boolean(det.es_original) : verNum === 1,
+      etiquetaVersion: det.etiqueta_version ? String(det.etiqueta_version) : undefined,
+      tipoOrigen: String(det.tipo_origen || "PROFORMA_EVENTO"),
+      estado: String(f.prf_estado || "ENVIADA"),
+      total,
+      vigenciaDias: Number(f.prf_vigencia_dias ?? 15),
+      tokenAprobacion: String(f.prf_token_aprobacion || ""),
+      tipoEvento: det.evento?.tipoEvento ? String(det.evento.tipoEvento) : undefined,
+      fechaEvento: det.evento?.fechaEvento ? String(det.evento.fechaEvento) : undefined,
+      montoAbonadoUsd: Number(det.monto_abonado_usd ?? 0),
+      saldoPendienteUsd:
+        det.saldo_pendiente_usd !== undefined ? Number(det.saldo_pendiente_usd) : total,
+      bloqueadaPorPagoGrupo: gruposBloqueados.has(grupoId),
+      creadoEn: String(f.prf_creado_en),
+    };
+  });
+
+  return { ok: true, proformas };
 }
 

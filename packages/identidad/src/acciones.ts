@@ -105,6 +105,46 @@ export async function registrarUsuario(datos: DatosRegistro, negocio: string): P
   if (error) return { ok: false, error: error.message };
   if (!data.user) return { ok: false, error: "No se pudo crear el usuario" };
 
+  // PLT-001: Persistir WhatsApp y consentimiento LOPDP para contacto y envío de información
+  try {
+    const dbCliente = crearClienteAdmin() ?? supabase;
+    const { data: usrPrevio } = await dbCliente
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_detalle_usuario")
+      .eq("usu_id", data.user.id)
+      .maybeSingle();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const detalleActual = (usrPrevio?.usu_detalle_usuario as Record<string, any>) || {};
+    const ahoraIso = new Date().toISOString();
+
+    await dbCliente
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .update({
+        usu_nombres: parseo.data.nombres,
+        usu_apellidos: parseo.data.apellidos,
+        usu_whatsapp: parseo.data.autorizaWhatsapp ? parseo.data.whatsapp : null,
+        usu_autorizacion_whatsapp: Boolean(parseo.data.autorizaWhatsapp),
+        usu_onboarding_completo: true,
+        usu_detalle_usuario: {
+          ...detalleActual,
+          codigo_pais_whatsapp: parseo.data.codigoPaisWhatsapp || "+593",
+          consentimiento_whatsapp_info: {
+            autorizado: Boolean(parseo.data.autorizaWhatsapp),
+            finalidad: "CONTACTO_COMERCIAL_PROFORMAS_E_INFORMACION",
+            aceptado_en: ahoraIso,
+            negocio_origen: negocio,
+          },
+        },
+        usu_actualizado_en: ahoraIso,
+      })
+      .eq("usu_id", data.user.id);
+  } catch (errWa) {
+    console.warn("Advertencia al guardar WhatsApp en registro:", errWa);
+  }
+
   await asegurarMembresiaCliente(supabase, data.user.id, negocio);
   const { ip, userAgent } = await obtenerIpYAgente();
   await registrarAcceso(supabase, data.user.id, ip, userAgent, negocio);
@@ -435,6 +475,17 @@ export async function completarBienvenida(datos: DatosBienvenida): Promise<Resul
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Sesión no encontrada" };
 
+  const { data: usrPrevio } = await supabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .select("usu_detalle_usuario")
+    .eq("usu_id", user.id)
+    .maybeSingle();
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const detallePrevio = (usrPrevio?.usu_detalle_usuario as Record<string, any>) || {};
+  const ahoraIso = new Date().toISOString();
+
   const { error } = await supabase
     .schema("comun_seguridad")
     .from("seg_usuario")
@@ -444,6 +495,15 @@ export async function completarBienvenida(datos: DatosBienvenida): Promise<Resul
       usu_whatsapp: parseo.data.autorizaWhatsapp ? parseo.data.whatsapp : null,
       usu_autorizacion_whatsapp: parseo.data.autorizaWhatsapp,
       usu_onboarding_completo: true,
+      usu_detalle_usuario: {
+        ...detallePrevio,
+        consentimiento_whatsapp_info: {
+          autorizado: Boolean(parseo.data.autorizaWhatsapp),
+          finalidad: "CONTACTO_COMERCIAL_PROFORMAS_E_INFORMACION",
+          aceptado_en: ahoraIso,
+        },
+      },
+      usu_actualizado_en: ahoraIso,
     })
     .eq("usu_id", user.id);
 

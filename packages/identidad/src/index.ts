@@ -68,3 +68,6 @@ export { WidgetConfiguracionMfa } from "./componentes/WidgetConfiguracionMfa";
 export { GestionTerminosConsentimientosWidget } from "./componentes/GestionTerminosConsentimientosWidget";
 export { BarraVariablesDinamicas, VARIABLES_ESTANDAR } from "./componentes/BarraVariablesDinamicas";
 export type { VariableDinamicaDef } from "./componentes/BarraVariablesDinamicas";
+export { ModalTerminosWhatsapp } from "./componentes/ModalTerminosWhatsapp";
+export { PAISES_TELEFONO, PAIS_TELEFONO_DEFECTO } from "./paises";
+export type { PaisTelefono } from "./paises";

@@ -229,14 +229,14 @@ export function ModalTerminosWhatsapp({
             Al marcar la opción de contacto por WhatsApp en la Plataforma <strong>{negocioNombre}</strong>, autorizas de forma libre, voluntaria, explícita e informada la vinculación de tu número telefónico registrado para la recepción de mensajes automáticos e interactivos de WhatsApp.
           </p>
 
-          <h4 style={{ fontSize: "0.95rem", color: "#111827" }}>1. Finalidad del Contacto</h4>
+          <h4 style={{ fontSize: "0.95rem", color: "#111827" }}>1. Finalidad del Contacto y Envío de Información</h4>
           <p>
-            Tu número telefónico se utilizará exclusivamente para:
+            Tu número telefónico de WhatsApp se utilizará para:
           </p>
           <ul style={{ paddingLeft: "20px", marginTop: "4px" }}>
-            <li>Notificaciones de estado de tus solicitudes, trámites, pedidos o servicios contratados.</li>
-            <li>Recordatorios de citas, confirmaciones de autenticación de seguridad e inicios de sesión.</li>
-            <li>Comunicaciones de soporte al cliente e interacciones autorizadas del sistema.</li>
+            <li>Envío de proformas, cotizaciones personalizadas, información de productos/servicios y asesoría comercial solicitada.</li>
+            <li>Notificaciones de estado de tus solicitudes, eventos, trámites, pedidos o servicios contratados.</li>
+            <li>Recordatorios de citas, entregas, confirmaciones de seguridad y soporte directo al cliente.</li>
           </ul>
 
           <h4 style={{ fontSize: "0.95rem", color: "#111827" }}>2. Confidencialidad y Protección LOPDP</h4>

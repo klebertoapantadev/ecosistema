@@ -37,7 +37,20 @@ export function VerificacionCorreo({
       setError("Código incorrecto o vencido. Puedes pedir uno nuevo.");
       return;
     }
-    router.push("/panel");
+    let destinoRedireccion = "/panel";
+    if (typeof document !== "undefined") {
+      const coincidencia = document.cookie
+        .split("; ")
+        .find((c) => c.startsWith("tranqi_destino="));
+      if (coincidencia) {
+        const crudo = decodeURIComponent(coincidencia.split("=").slice(1).join("="));
+        if (crudo.startsWith("/") && !crudo.startsWith("//")) {
+          destinoRedireccion = crudo;
+        }
+        document.cookie = "tranqi_destino=; path=/; max-age=0";
+      }
+    }
+    router.push(destinoRedireccion);
     router.refresh();
   }
 

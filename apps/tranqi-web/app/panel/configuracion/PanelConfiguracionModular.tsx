@@ -146,6 +146,7 @@ const ALIAS_WIDGET: Record<string, string> = {
   "mcp-tokens": "tokens_mcp",
   gestion_terminos_consentimientos: "gestion_terminos_consentimientos",
   pasarela_payphone: "pasarela_payphone",
+  configuracion_pasarela: "pasarela_payphone",
   payphone: "pasarela_payphone",
   pasarela: "pasarela_payphone",
   catalogo_productos: "catalogo_productos",

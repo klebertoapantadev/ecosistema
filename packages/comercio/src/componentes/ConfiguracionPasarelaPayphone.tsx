@@ -25,9 +25,21 @@ interface Props {
   negocio?: string;
 }
 
+function nombreComercioDefectoPorNegocio(negocio: string): string {
+  const n = negocio.toLowerCase();
+  if (n.includes("tinkay")) return "Tinkay Floristería";
+  if (n.includes("margarita")) return "Margaritas Floristería";
+  if (n.includes("fastfix")) return "FastFix Home";
+  return "Tranqi";
+}
+
 export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
+  const negLower = negocio.toLowerCase();
+  const prefierePluxPorDefecto = negLower.includes("tranq") || negLower.includes("tinkay");
+  const nombreDefecto = nombreComercioDefectoPorNegocio(negocio);
+
   const [pasarelaSeleccionada, setPasarelaSeleccionada] = useState<"PLUX" | "PAYPHONE">(
-    negocio.toLowerCase().includes("tranq") ? "PLUX" : "PAYPHONE"
+    prefierePluxPorDefecto ? "PLUX" : "PAYPHONE"
   );
   const [config, setConfig] = useState<ConfiguracionPasarela | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -44,7 +56,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
 
   // Campos editables PLUX
   const [remail, setRemail] = useState("admin.operaciones@tranqi24.com");
-  const [nombreComercio, setNombreComercio] = useState("Tranqi");
+  const [nombreComercio, setNombreComercio] = useState(nombreDefecto);
   const [clienteIdPlux, setClienteIdPlux] = useState("");
   const [claveSecretaPlux, setClaveSecretaPlux] = useState("");
   const [visibilidadPlux, setVisibilidadPlux] = useState<"TODOS" | "PROBADORES">("TODOS");
@@ -60,7 +72,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
 
       const activa =
         pasarelaObjetivo ||
-        (cPlux.psc_activo ? "PLUX" : cPayphone.psc_activo ? "PAYPHONE" : negocio.toLowerCase().includes("tranq") ? "PLUX" : "PAYPHONE");
+        (cPlux.psc_activo ? "PLUX" : cPayphone.psc_activo ? "PAYPHONE" : prefierePluxPorDefecto ? "PLUX" : "PAYPHONE");
 
       setPasarelaSeleccionada(activa);
       const c = activa === "PLUX" ? cPlux : cPayphone;
@@ -73,7 +85,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
       setModoSimulado(cPayphone.modoSimulado);
 
       setRemail(cPlux.remail || "admin.operaciones@tranqi24.com");
-      setNombreComercio(cPlux.nombreComercio || "Tranqi");
+      setNombreComercio(cPlux.nombreComercio || nombreDefecto);
       setVisibilidadPlux(cPlux.visibilidad || "TODOS");
       setProbadoresTexto((cPlux.probadores || []).join(", "));
     } catch (err: any) {
@@ -452,6 +464,24 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                     }}
                   />
                 </div>
+              </div>
+
+              <div
+                style={{
+                  marginBottom: "20px",
+                  padding: "12px 14px",
+                  borderRadius: "10px",
+                  background: "#F8FAFC",
+                  border: "1px solid #E2E8F0",
+                  fontSize: "0.8rem",
+                  color: "#334155",
+                }}
+              >
+                <strong>Webhook exclusivo de esta empresa ({negocio}):</strong>{" "}
+                <code style={{ background: "#E2E8F0", padding: "2px 6px", borderRadius: "4px" }}>
+                  {`/functions/v1/plux-webhook?negocio=${negocio.toLowerCase()}`}
+                </code>{" "}
+                — Las credenciales guardadas aquí se aíslan estrictamente por comercio sin afectar a las demás empresas del ecosistema.
               </div>
             </>
           ) : (

@@ -27,6 +27,20 @@ describe("montosPaybox", () => {
       PayboxBase12: "0.00",
     });
   });
+
+  it("una proforma mixta (flores 0% + servicio/flete 15%) separa Base0 y Base12", () => {
+    expect(
+      montosPaybox({
+        base_centavos: 12000,
+        base0_centavos: 10000,
+        base_gravada_centavos: 2000,
+        iva_centavos: 300,
+      }),
+    ).toEqual({
+      PayboxBase0: "100.00",
+      PayboxBase12: "23.00",
+    });
+  });
 });
 
 describe("datosPaybox", () => {

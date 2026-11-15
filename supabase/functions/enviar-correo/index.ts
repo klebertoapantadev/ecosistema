@@ -58,7 +58,12 @@ Deno.serve(async (req: Request) => {
     para?: unknown;
     asunto?: unknown;
     html?: unknown;
-    adjuntos?: Array<{ filename?: string; content?: string; contentType?: string }>;
+    adjuntos?: Array<{
+      filename?: string;
+      content?: string;
+      contentType?: string;
+      encoding?: "base64" | "text";
+    }>;
   };
   try {
     cuerpo = await req.json();
@@ -108,12 +113,17 @@ Deno.serve(async (req: Request) => {
     const attachments = Array.isArray(adjuntos)
       ? adjuntos
           .filter((a) => a && typeof a.filename === "string" && typeof a.content === "string")
-          .map((a) => ({
-            encoding: "text" as const,
-            filename: a.filename!,
-            content: a.content!,
-            contentType: a.contentType || "text/calendar; charset=utf-8; method=REQUEST",
-          }))
+          .map((a) => {
+            const usarBase64 =
+              a.encoding === "base64" ||
+              (a.contentType || "").toLowerCase().includes("application/pdf");
+            return {
+              encoding: usarBase64 ? ("base64" as const) : ("text" as const),
+              filename: a.filename!,
+              content: a.content!,
+              contentType: a.contentType || "text/calendar; charset=utf-8; method=REQUEST",
+            };
+          })
       : undefined;
 
     await cliente.send({

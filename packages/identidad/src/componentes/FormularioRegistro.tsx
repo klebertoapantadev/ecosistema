@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { AsYouType, isValidPhoneNumber, parsePhoneNumberFromString, type CountryCode } from "libphonenumber-js";
 import { registrarUsuario } from "../acciones";
 import { crearClienteNavegador } from "@eco/supabase";
+import { PAISES_TELEFONO, PAIS_TELEFONO_DEFECTO } from "../paises";
 import { IconoGoogle } from "./IconoGoogle";
 import { ModalTerminosServicio } from "./ModalTerminosServicio";
+import { ModalTerminosWhatsapp } from "./ModalTerminosWhatsapp";
 
 interface FormularioRegistroProps {
   negocio: string;
@@ -19,11 +22,20 @@ export function FormularioRegistro({ negocio, intencion = "", destino = "" }: Fo
   const [apellidos, setApellidos] = useState("");
   const [correo, setCorreo] = useState("");
   const [contrasena, setContrasena] = useState("");
+  const [paisWhatsapp, setPaisWhatsapp] = useState<CountryCode>(PAIS_TELEFONO_DEFECTO);
+  const [numeroWhatsapp, setNumeroWhatsapp] = useState("");
+  const [autorizaWhatsapp, setAutorizaWhatsapp] = useState(false);
+  const [modalWhatsappAbierto, setModalWhatsappAbierto] = useState(false);
   const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [modalTerminosAbierto, setModalTerminosAbierto] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
 
+  const paisSeleccionado = PAISES_TELEFONO.find((p) => p.codigo === paisWhatsapp) ?? {
+    codigo: PAIS_TELEFONO_DEFECTO,
+    nombre: "Ecuador",
+    prefijo: "+593",
+  };
   const esAbogado = intencion === "abogado" || destino.includes("solicitud-socio");
   const destinoTarget = destino || (esAbogado ? "/panel/solicitud-socio" : "/panel");
 
@@ -32,9 +44,13 @@ export function FormularioRegistro({ negocio, intencion = "", destino = "" }: Fo
       document.cookie = `tranqi_intencion=${intencion}; path=/; max-age=86400`;
     }
     if (destinoTarget) {
-      document.cookie = `tranqi_destino=${destinoTarget}; path=/; max-age=86400`;
+      document.cookie = `tranqi_destino=${encodeURIComponent(destinoTarget)}; path=/; max-age=86400`;
     }
   }, [intencion, destinoTarget]);
+
+  function alCambiarWhatsapp(valor: string) {
+    setNumeroWhatsapp(new AsYouType(paisWhatsapp).input(valor));
+  }
 
   async function alEnviar(e: React.FormEvent) {
     e.preventDefault();
@@ -42,9 +58,31 @@ export function FormularioRegistro({ negocio, intencion = "", destino = "" }: Fo
       setModalTerminosAbierto(true);
       return;
     }
+    if (!isValidPhoneNumber(numeroWhatsapp, paisWhatsapp)) {
+      setError(`Ingresa un número de WhatsApp válido de ${paisSeleccionado.nombre}.`);
+      return;
+    }
+    if (!autorizaWhatsapp) {
+      setError("Debes autorizar el contacto y envío de información por WhatsApp para continuar.");
+      return;
+    }
+    const whatsappFormateado = parsePhoneNumberFromString(numeroWhatsapp, paisWhatsapp)?.number ?? numeroWhatsapp.trim();
+
     setError(null);
     setCargando(true);
-    const resultado = await registrarUsuario({ nombres, apellidos, correo, contrasena, aceptaTerminos }, negocio);
+    const resultado = await registrarUsuario(
+      {
+        nombres,
+        apellidos,
+        correo,
+        contrasena,
+        whatsapp: whatsappFormateado,
+        codigoPaisWhatsapp: paisSeleccionado.prefijo,
+        autorizaWhatsapp,
+        aceptaTerminos,
+      },
+      negocio
+    );
     setCargando(false);
     if (!resultado.ok) {
       setError(resultado.error);
@@ -189,6 +227,105 @@ export function FormularioRegistro({ negocio, intencion = "", destino = "" }: Fo
           required
         />
 
+        {/* Campo WhatsApp + Consentimiento explícito LOPDP (PLT-001 / PLT-011.12) */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+            padding: "12px",
+            borderRadius: "10px",
+            background: "#F9FAFB",
+            border: "1px solid #E5E7EB",
+          }}
+        >
+          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#374151" }}>
+            Número de WhatsApp
+          </span>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", width: "100%" }}>
+            <select
+              value={paisWhatsapp}
+              aria-label="Código de país de WhatsApp"
+              onChange={(e) => {
+                setPaisWhatsapp(e.target.value as CountryCode);
+                setNumeroWhatsapp("");
+              }}
+              style={{
+                width: "125px",
+                flexShrink: 0,
+                padding: "10px 8px",
+                borderRadius: "8px",
+                border: "1px solid #D1D5DB",
+                background: "#FFFFFF",
+                fontSize: "0.88rem",
+                fontWeight: 600,
+                color: "#111827",
+                margin: 0,
+              }}
+            >
+              {PAISES_TELEFONO.map((p) => (
+                <option key={p.codigo} value={p.codigo}>
+                  {p.prefijo} {p.codigo}
+                </option>
+              ))}
+            </select>
+            <input
+              value={numeroWhatsapp}
+              onChange={(e) => alCambiarWhatsapp(e.target.value)}
+              type="tel"
+              placeholder="Ej: 099 123 4567"
+              autoComplete="tel-national"
+              required
+              style={{ flex: 1, minWidth: 0, margin: 0 }}
+            />
+          </div>
+
+          <label
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "8px",
+              cursor: "pointer",
+              fontSize: "0.8rem",
+              lineHeight: 1.4,
+              color: "#374151",
+              fontWeight: 600,
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={autorizaWhatsapp}
+              onChange={(e) => setAutorizaWhatsapp(e.target.checked)}
+              style={{ width: "17px", height: "17px", marginTop: "2px", flexShrink: 0, accentColor: "#059669", cursor: "pointer" }}
+            />
+            <span>
+              Autorizo que me contacten y envíen cotizaciones, estados de pedido e información por WhatsApp conforme a la{" "}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setModalWhatsappAbierto(true);
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  color: "#059669",
+                  fontWeight: 800,
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                  fontSize: "inherit",
+                  fontFamily: "inherit",
+                }}
+              >
+                Cláusula LOPDP de WhatsApp
+              </button>
+              .
+            </span>
+          </label>
+        </div>
+
         {error && (
           <p className="error-auth" role="alert">
             {error}
@@ -228,6 +365,12 @@ export function FormularioRegistro({ negocio, intencion = "", destino = "" }: Fo
         alCerrar={() => setModalTerminosAbierto(false)}
         alAceptar={() => setAceptaTerminos(true)}
         negocioNombre={negocio.toUpperCase()}
+      />
+
+      <ModalTerminosWhatsapp
+        abierto={modalWhatsappAbierto}
+        alCerrar={() => setModalWhatsappAbierto(false)}
+        alAceptar={() => setAutorizaWhatsapp(true)}
       />
     </div>
   );

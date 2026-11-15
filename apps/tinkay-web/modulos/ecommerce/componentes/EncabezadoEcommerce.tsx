@@ -5,12 +5,14 @@ import Link from 'next/link';
 import { useCarrito } from '../contexto-carrito';
 import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from '../datos-catalogo';
 import { expandirProductosVitrina, obtenerCategoriasVisibles } from '../filtrado-catalogo';
-import { ShoppingBag, Feather } from 'lucide-react';
+import { ShoppingBag, Feather, FileText } from 'lucide-react';
 
 export function EncabezadoEcommerce() {
   const {
     cantidadTotal,
+    cantidadTotalProforma,
     setDrawerAbierto,
+    setDrawerProformaAbierto,
     productos,
     categorias,
     categoriaActiva,
@@ -91,6 +93,33 @@ export function EncabezadoEcommerce() {
           <Link href="/ingresar" className="enlace-ingresar-discreto">
             Ingresar
           </Link>
+
+          {(cantidadTotalProforma > 0 ||
+            (categoriaActiva || '').toLowerCase().includes('evento')) && (
+            <button
+              type="button"
+              className="btn-carrito-cabecera btn-responsive-accion"
+              onClick={() => setDrawerProformaAbierto(true)}
+              title="Abrir mi proforma de evento"
+              aria-label={`Abrir proforma de evento con ${cantidadTotalProforma} elementos`}
+              style={{
+                background: '#2D4734',
+                color: '#FFFFFF',
+                borderColor: '#2D4734',
+              }}
+            >
+              <FileText size={19} />
+              <span className="texto-carrito-btn btn-texto-responsive">Proforma</span>
+              {cantidadTotalProforma > 0 && (
+                <span
+                  className="badge-cantidad-carrito"
+                  style={{ background: '#FDE68A', color: '#1F2937' }}
+                >
+                  {cantidadTotalProforma}
+                </span>
+              )}
+            </button>
+          )}
 
           <button
             type="button"

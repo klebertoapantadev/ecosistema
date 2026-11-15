@@ -5,6 +5,7 @@ import {
   Bot,
   Building2,
   ClipboardList,
+  CreditCard,
   KeyRound,
   Mail,
   Settings,
@@ -14,6 +15,8 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import { obtenerMisProformasEventoAction } from "@eco/comercio";
+import { ListaMisProformasCliente } from "./AccionesProformaPanelCliente";
 import {
   obtenerPerfilActual,
   obtenerWidgetsVisibles,
@@ -79,6 +82,15 @@ const MODULOS_TINKAY: Record<string, WidgetInfo> = {
     grupo: "configuracion",
     etiqueta: "Pichincha / GPS",
   },
+  pasarela_payphone: {
+    clave: "pasarela_payphone",
+    nombre: "Pasarela de Pagos (PLUX / Payphone)",
+    descripcion: "Credenciales propias de Tinkay Floristería para cobros con tarjeta, abono 70% de eventos y webhook.",
+    ruta: "/panel/pasarelas",
+    icono: CreditCard,
+    grupo: "configuracion",
+    etiqueta: "PLUX / Tarjeta",
+  },
   configuracion_aria: {
     clave: "configuracion_aria",
     nombre: "Agente Conversacional ARIA (Mía)",
@@ -116,10 +128,14 @@ export default async function PaginaPanel() {
     correo === "tinkay.uio@gmail.com";
   const esSuperAdmin = esSuperAdminEmail || Boolean(perfil?.usu_superadmin_plataforma);
 
-  const perfiles = perfil ? await obtenerPerfiles(NEGOCIO) : [];
-  const widgets = perfil
-    ? await obtenerWidgetsVisibles(perfil.usu_id, esSuperAdmin, NEGOCIO)
-    : [];
+  const [perfiles, widgets, resMisProformas] = perfil
+    ? await Promise.all([
+        obtenerPerfiles(NEGOCIO),
+        obtenerWidgetsVisibles(perfil.usu_id, esSuperAdmin, NEGOCIO),
+        obtenerMisProformasEventoAction(NEGOCIO),
+      ])
+    : [[], [], { ok: true as const, proformas: [] }];
+  const misProformas = resMisProformas.ok ? resMisProformas.proformas : [];
 
   const nombre = perfil?.usu_nombres || perfil?.usu_correo || "";
   const saludo = perfil ? await obtenerSaludo(perfil.usu_id, nombre) : null;
@@ -140,6 +156,8 @@ export default async function PaginaPanel() {
     widgets.forEach((w) => {
       if (w.wdg_clave === "vitrina_comercial" || w.wdg_clave === "gestion_catalogo") {
         clavesVisibles.add("catalogo_productos");
+      } else if (w.wdg_clave === "configuracion_pasarela") {
+        clavesVisibles.add("pasarela_payphone");
       } else if (MODULOS_TINKAY[w.wdg_clave]) {
         clavesVisibles.add(w.wdg_clave);
       }
@@ -223,6 +241,9 @@ export default async function PaginaPanel() {
           )}
         </div>
       </div>
+
+      {/* Mis Proformas de Eventos y Pedidos del Cliente */}
+      <ListaMisProformasCliente proformasIniciales={misProformas} />
 
       {/* Grupo 1: Operación Comercial */}
       {modulosOperacion.length > 0 && (

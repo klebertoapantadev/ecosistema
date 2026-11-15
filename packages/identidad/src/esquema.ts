@@ -7,16 +7,26 @@ import { isValidPhoneNumber } from "libphonenumber-js";
 // acepto una version vieja se puede identificar y renotificar.
 export const TERMINOS_VERSION = "v1";
 
-// PLT-001: registro cero-friccion via correo -- exactamente 4 campos + el
-// consentimiento de terminos (PLT-001 regla 6), obligatorio para ambos
-// caminos de registro.
-export const esquemaRegistro = z.object({
-  nombres: z.string().min(1, "Requerido"),
-  apellidos: z.string().min(1, "Requerido"),
-  correo: z.string().email("Correo invalido"),
-  contrasena: z.string().min(8, "Minimo 8 caracteres"),
-  aceptaTerminos: z.boolean().refine((v) => v === true, { message: "Debes aceptar los Términos de Servicio" }),
-});
+// PLT-001: registro via correo con captura de WhatsApp y consentimiento
+// expreso LOPDP para contactar y enviar informacion comercial / proformas,
+// mas aceptacion de Terminos de Servicio (PLT-001 regla 6).
+export const esquemaRegistro = z
+  .object({
+    nombres: z.string().trim().min(1, "Requerido"),
+    apellidos: z.string().trim().min(1, "Requerido"),
+    correo: z.string().trim().email("Correo invalido"),
+    contrasena: z.string().min(8, "Minimo 8 caracteres"),
+    whatsapp: z.string().trim().min(1, "Ingresa tu número de WhatsApp"),
+    codigoPaisWhatsapp: z.string().trim().optional(),
+    autorizaWhatsapp: z.boolean().refine((v) => v === true, {
+      message: "Debes autorizar el consentimiento para contactarte y enviarte información por WhatsApp",
+    }),
+    aceptaTerminos: z.boolean().refine((v) => v === true, { message: "Debes aceptar los Términos de Servicio" }),
+  })
+  .refine((d) => isValidPhoneNumber(d.whatsapp), {
+    message: "Ingresa un número de WhatsApp válido",
+    path: ["whatsapp"],
+  });
 export type DatosRegistro = z.infer<typeof esquemaRegistro>;
 
 export const esquemaIngreso = z.object({

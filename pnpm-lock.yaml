@@ -381,12 +381,18 @@ importers:
       '@eco/db':
         specifier: workspace:*
         version: link:../db
+      '@eco/notificaciones':
+        specifier: workspace:*
+        version: link:../notificaciones
       '@eco/supabase':
         specifier: workspace:*
         version: link:../supabase
       lucide-react:
         specifier: 1.27.0
         version: 1.27.0(react@19.2.8)
+      pdf-lib:
+        specifier: 1.17.1
+        version: 1.17.1
       zod:
         specifier: 4.4.3
         version: 4.4.3

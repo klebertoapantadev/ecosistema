@@ -1,0 +1,1048 @@
+'use client';
+
+import React, { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import {
+  SelectorUbicacionEntrega,
+  generarProformaEventoAction,
+} from '@eco/comercio';
+import { ModalTerminosWhatsapp } from '@eco/identidad/componentes/ModalTerminosWhatsapp';
+import {
+  PAISES_TELEFONO,
+  PAIS_TELEFONO_DEFECTO,
+} from '@eco/identidad/paises';
+import { crearClienteNavegador } from '@eco/supabase/cliente';
+import { useCarrito } from '../contexto-carrito';
+import { PRODUCTOS_TINKAY } from '../datos-catalogo';
+import {
+  X,
+  Trash2,
+  Plus,
+  Minus,
+  FileText,
+  Calendar,
+  MapPin,
+  Sparkles,
+  UserPlus,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  CheckCircle2,
+} from 'lucide-react';
+
+const TIPOS_EVENTO = [
+  'Boda / Ceremonia',
+  'Bautizo / Primera Comunión',
+  'Evento Corporativo / Gala',
+  'Cumpleaños / Aniversario',
+  'Pedida de Mano / Cena Romántica',
+  'Otro Evento Especial',
+];
+
+export function DrawerProformaEvento() {
+  const router = useRouter();
+  const {
+    itemsProforma,
+    cantidadTotalProforma,
+    drawerProformaAbierto,
+    setDrawerProformaAbierto,
+    agregarItemProforma,
+    eliminarItemProforma,
+    actualizarCantidadProforma,
+    datosEventoProforma,
+    actualizarDatosEventoProforma,
+    ubicacionEventoProforma,
+    actualizarUbicacionEventoProforma,
+    vaciarProforma,
+    subtotalProforma,
+    descuentoProforma,
+    ivaProforma,
+    fleteProforma,
+    totalProforma,
+    reserva70Proforma,
+    configLogistica,
+    productos,
+  } = useCarrito();
+
+  const [usuarioAutenticado, setUsuarioAutenticado] = useState<{
+    id: string;
+    email: string;
+  } | null>(null);
+  const [nombreCompleto, setNombreCompleto] = useState('');
+  const [identificacion, setIdentificacion] = useState('');
+  const [correo, setCorreo] = useState('');
+  const [codigoPais, setCodigoPais] = useState(PAIS_TELEFONO_DEFECTO);
+  const [whatsappDigitos, setWhatsappDigitos] = useState('');
+  const [autorizaWhatsapp, setAutorizaWhatsapp] = useState(false);
+  const [modalTerminosWaAbierto, setModalTerminosWaAbierto] = useState(false);
+  const [mostrarMapaEvento, setMostrarMapaEvento] = useState(false);
+  const [generando, setGenerando] = useState(false);
+  const [errorForm, setErrorForm] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!drawerProformaAbierto) return;
+    let cancelado = false;
+    const supabase = crearClienteNavegador();
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (cancelado || !data?.user) return;
+      setUsuarioAutenticado({
+        id: data.user.id,
+        email: data.user.email || '',
+      });
+      if (!correo && data.user.email) {
+        setCorreo(data.user.email);
+      }
+
+      const { data: perfil } = await supabase
+        .schema('comun_seguridad')
+        .from('seg_usuario')
+        .select('usu_nombres, usu_apellidos, usu_cedula, usu_whatsapp, usu_autorizacion_whatsapp')
+        .eq('usu_id', data.user.id)
+        .maybeSingle();
+
+      if (cancelado || !perfil) return;
+      const nom = [perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(' ').trim();
+      if (nom) setNombreCompleto((prev) => prev || nom);
+      if (perfil.usu_cedula) setIdentificacion((prev) => prev || String(perfil.usu_cedula));
+      if (perfil.usu_whatsapp) {
+        const raw = String(perfil.usu_whatsapp).trim();
+        const paisEncontrado = PAISES_TELEFONO.find((p) => raw.startsWith(p.prefijo));
+        if (paisEncontrado) {
+          setCodigoPais(paisEncontrado.codigo);
+          setWhatsappDigitos((prev) => prev || raw.slice(paisEncontrado.prefijo.length));
+        } else {
+          setWhatsappDigitos((prev) => prev || raw.replace(/\D+/g, ''));
+        }
+      }
+      if (perfil.usu_autorizacion_whatsapp) {
+        setAutorizaWhatsapp(true);
+      }
+    });
+
+    return () => {
+      cancelado = true;
+    };
+  }, [drawerProformaAbierto, correo]);
+
+  // Sugerir ÚNICAMENTE otros productos de Eventos (cero extras florales, cero cintas, cero renta)
+  const sugerenciasEventos = useMemo(() => {
+    const catalogo = productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY;
+    return catalogo
+      .filter((p) => {
+        if (p.esExtra || p.esComplemento) return false;
+        const catPrincipal = (p.categoriaPrincipal || '').toLowerCase();
+        const catNombre = (p.categoriaNombre || '').toLowerCase();
+        if (catPrincipal.includes('extra') || catNombre.includes('extra')) return false;
+
+        const esRentaItem = Boolean(
+          p.esRenta === true ||
+            p.tipoOferta?.toUpperCase().includes('RENTA') ||
+            p.tipoOferta?.toUpperCase().includes('ALQUILER') ||
+            (p.etiquetas || []).some(
+              (e) => e.toLowerCase().includes('renta') || e.toLowerCase().includes('alquiler')
+            )
+        );
+        if (esRentaItem) return false;
+
+        const esEventoItem = Boolean(
+          p.esEvento === true ||
+            catPrincipal.includes('evento') ||
+            catNombre.includes('evento') ||
+            catNombre.includes('ceremonia') ||
+            (p.tipoOferta || '').toUpperCase() === 'SERVICIO'
+        );
+        if (!esEventoItem) return false;
+
+        return !itemsProforma.some(
+          (it) =>
+            it.producto.id === p.id ||
+            (p.proIdUuid && it.producto.proIdUuid === p.proIdUuid) ||
+            it.producto.slug === p.slug
+        );
+      })
+      .slice(0, 6);
+  }, [productos, itemsProforma]);
+
+  if (!drawerProformaAbierto) return null;
+
+  const paisActual =
+    PAISES_TELEFONO.find((p) => p.codigo === codigoPais) ?? PAISES_TELEFONO[0]!;
+
+  const construirWhatsappE164 = () => {
+    const limpio = whatsappDigitos.replace(/\D+/g, '').replace(/^0+/, '');
+    return limpio ? `${paisActual.prefijo}${limpio}` : '';
+  };
+
+  const handleEmitirProforma = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorForm(null);
+
+    if (itemsProforma.length === 0) {
+      setErrorForm('Agrega al menos un producto de eventos a tu proforma.');
+      return;
+    }
+    if (nombreCompleto.trim().length < 2) {
+      setErrorForm('Por favor ingresa tu nombre completo o empresa.');
+      return;
+    }
+    if (!correo.trim().includes('@')) {
+      setErrorForm('Por favor ingresa un correo electrónico válido para recibir tu PDF.');
+      return;
+    }
+    const waE164 = construirWhatsappE164();
+    if (waE164.length < 10) {
+      setErrorForm('Ingresa un número de WhatsApp válido.');
+      return;
+    }
+    if (!autorizaWhatsapp) {
+      setErrorForm(
+        'Debes marcar el consentimiento para contactarte y enviarte información de tu proforma por WhatsApp.'
+      );
+      return;
+    }
+    if (!datosEventoProforma.fechaEvento) {
+      setErrorForm('Selecciona la fecha estimada de tu evento.');
+      return;
+    }
+
+    setGenerando(true);
+    const res = await generarProformaEventoAction({
+      negocio: 'tinkay',
+      comprador: {
+        nombreCompleto: nombreCompleto.trim(),
+        identificacion: identificacion.trim() || undefined,
+        correo: correo.trim(),
+        whatsapp: waE164,
+        autorizaWhatsapp: true,
+      },
+      evento: {
+        tipoEvento: datosEventoProforma.tipoEvento || 'Evento Especial',
+        fechaEvento: datosEventoProforma.fechaEvento,
+        horaEvento: datosEventoProforma.horaEvento || undefined,
+        invitadosEstimados: datosEventoProforma.invitadosEstimados
+          ? Number(datosEventoProforma.invitadosEstimados)
+          : undefined,
+        paletaColores: datosEventoProforma.paletaColores || undefined,
+        notasEvento: datosEventoProforma.notasEvento || undefined,
+      },
+      ubicacionEvento: {
+        retiroEnLocal: Boolean(ubicacionEventoProforma.retiroEnLocal),
+        destinatarioNombre: nombreCompleto.trim(),
+        destinatarioTelefono: waE164,
+        direccion:
+          ubicacionEventoProforma.direccion || 'Locación del evento en Quito / Valles (por confirmar)',
+        referencia: ubicacionEventoProforma.referencia || '',
+        ciudad: ubicacionEventoProforma.ciudad || 'Quito',
+        fechaEntrega: datosEventoProforma.fechaEvento,
+        franjaHoraria: 'hora_exacta',
+        horaExacta: datosEventoProforma.horaEvento || '16:00',
+        enlaceMapa: ubicacionEventoProforma.enlaceMapa,
+        lat: ubicacionEventoProforma.lat,
+        lng: ubicacionEventoProforma.lng,
+        zonaDetectadaNombre: ubicacionEventoProforma.zonaDetectadaNombre,
+        reglaLogisticaAplicada: ubicacionEventoProforma.reglaLogisticaAplicada,
+        distanciaVialKm: ubicacionEventoProforma.distanciaVialKm,
+        costoEnvioCalculado: fleteProforma,
+        etiquetaCotizacion: ubicacionEventoProforma.etiquetaCotizacion,
+        formulaCalculoInterno: ubicacionEventoProforma.formulaCalculoInterno,
+        detalleDireccionGeo: ubicacionEventoProforma.detalleDireccionGeo ?? null,
+      },
+      items: itemsProforma.map((it) => ({
+        productoId: it.producto.id,
+        productoNombre: it.producto.nombre,
+        varianteSku: it.variante.sku,
+        varianteNombre: it.variante.nombre,
+        cantidad: it.cantidad,
+        pvpUnitario: it.variante.pvp,
+        tarifaIva: it.variante.tarifaIva,
+        imagen: it.producto.fotos[0],
+        deliveryIncluidoProducto: it.producto.deliveryIncluido !== false,
+        recargoLogisticoUsd: it.producto.recargoLogisticoUsd || 0,
+      })),
+      subtotalBaseImponible: subtotalProforma,
+      descuentoTotal: descuentoProforma,
+      totalIva: ivaProforma,
+      totalFlete: fleteProforma,
+      totalPagar: totalProforma,
+      vigenciaDias: 15,
+    });
+    setGenerando(false);
+
+    if (!res.ok) {
+      setErrorForm(res.error);
+      return;
+    }
+
+    vaciarProforma();
+    setDrawerProformaAbierto(false);
+    router.push(`/proforma/${res.tokenAprobacion}`);
+  };
+
+  const urlRegistroConRetorno = `/registro?destino=${encodeURIComponent('/?proforma=abierta')}`;
+  const urlIngresoConRetorno = `/ingresar?destino=${encodeURIComponent('/?proforma=abierta')}`;
+
+  const inputEstilo: React.CSSProperties = {
+    width: '100%',
+    padding: '9px 11px',
+    borderRadius: '9px',
+    border: '1px solid #D6D3D1',
+    fontSize: '0.86rem',
+    color: '#1C1917',
+    background: '#FFFFFF',
+  };
+
+  return (
+    <div
+      className="drawer-backdrop-ecommerce"
+      onClick={() => setDrawerProformaAbierto(false)}
+    >
+      <aside
+        className="drawer-panel-carrito"
+        onClick={(e) => e.stopPropagation()}
+        aria-label="Mi Proforma de Evento"
+        style={{ maxWidth: '520px' }}
+      >
+        {/* Cabecera */}
+        <div
+          className="drawer-cabecera"
+          style={{ background: '#2D4734', color: '#FFFFFF', borderBottom: 'none' }}
+        >
+          <div className="titulo-drawer" style={{ color: '#FFFFFF' }}>
+            <FileText size={20} />
+            <div>
+              <h2 style={{ color: '#FFFFFF', margin: 0, fontSize: '1.08rem' }}>
+                Mi Proforma de Evento ({cantidadTotalProforma})
+              </h2>
+              <small style={{ color: '#FDE68A', fontSize: '0.75rem' }}>
+                Autoservicio en PDF + asesoría personalizada y pago online
+              </small>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="btn-cerrar-drawer"
+            onClick={() => setDrawerProformaAbierto(false)}
+            title="Cerrar proforma"
+            aria-label="Cerrar proforma"
+            style={{ color: '#FFFFFF' }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Cuerpo */}
+        <div className="drawer-cuerpo-scroll" style={{ padding: '16px' }}>
+          {itemsProforma.length === 0 ? (
+            <div className="carrito-vacio-estado">
+              <Sparkles size={40} style={{ color: '#2D4734', marginBottom: '8px' }} />
+              <h3>Arma tu Proforma de Evento</h3>
+              <p>
+                Selecciona arreglos ceremoniales, carteles de bienvenida o arcos florales para
+                obtener tu proforma formal en PDF al instante.
+              </p>
+            </div>
+          ) : (
+            <form
+              id="form-emitir-proforma-evento"
+              onSubmit={handleEmitirProforma}
+              style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}
+            >
+              {/* Banner Sugerencia de Registro (No bloqueante) */}
+              {!usuarioAutenticado ? (
+                <div
+                  style={{
+                    padding: '12px 14px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 100%)',
+                    border: '1px solid #A7F3D0',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      marginBottom: '6px',
+                      color: '#14532D',
+                      fontWeight: 700,
+                      fontSize: '0.85rem',
+                    }}
+                  >
+                    <UserPlus size={16} />
+                    <span>Sugerencia: Guarda tus proformas y variaciones en tu cuenta</span>
+                  </div>
+                  <p
+                    style={{
+                      margin: '0 0 10px',
+                      fontSize: '0.78rem',
+                      color: '#166534',
+                      lineHeight: 1.45,
+                    }}
+                  >
+                    Al registrarte conservaremos tu selección actual y podrás gestionar desde tu
+                    panel tanto tu proforma original como las actualizaciones que te envíe tu
+                    asesor.
+                  </p>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <Link
+                      href={urlRegistroConRetorno}
+                      title="Crear cuenta y volver a esta proforma"
+                      aria-label="Crear Cuenta"
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '999px',
+                        background: '#2D4734',
+                        color: '#FFFFFF',
+                        textDecoration: 'none',
+                        fontSize: '0.77rem',
+                        fontWeight: 700,
+                      }}
+                    >
+                      Crear Cuenta
+                    </Link>
+                    <Link
+                      href={urlIngresoConRetorno}
+                      title="Iniciar sesión con tu cuenta"
+                      aria-label="Ya tengo cuenta"
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '999px',
+                        border: '1px solid #2D4734',
+                        background: '#FFFFFF',
+                        color: '#2D4734',
+                        textDecoration: 'none',
+                        fontSize: '0.77rem',
+                        fontWeight: 700,
+                      }}
+                    >
+                      Ingresar
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '9px 12px',
+                    borderRadius: '10px',
+                    background: '#F0FDF4',
+                    border: '1px solid #BBF7D0',
+                    color: '#166534',
+                    fontSize: '0.8rem',
+                  }}
+                >
+                  <CheckCircle2 size={16} />
+                  <span>
+                    Sesión activa ({usuarioAutenticado.email}) · Esta proforma y sus variaciones
+                    quedarán guardadas en tu cuenta.
+                  </span>
+                </div>
+              )}
+
+              {/* Lista de ítems de Evento */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <strong style={{ fontSize: '0.85rem', color: '#1C1917' }}>
+                  1. Elementos seleccionados para tu evento
+                </strong>
+                {itemsProforma.map((item) => {
+                  const nominal = item.variante.pvpNominalSinVolumen ?? item.variante.pvp;
+                  const ahorroLinea = Math.max(0, (nominal - item.variante.pvp) * item.cantidad);
+                  return (
+                    <div
+                      key={item.id}
+                      style={{
+                        display: 'flex',
+                        gap: '10px',
+                        padding: '10px',
+                        borderRadius: '12px',
+                        background: '#FFFFFF',
+                        border: '1px solid #E7E5E4',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <img
+                        src={item.producto.fotos[0] || '/img/slide4_flores_amor.jpg'}
+                        alt={item.producto.nombre}
+                        style={{
+                          width: '58px',
+                          height: '58px',
+                          borderRadius: '9px',
+                          objectFit: 'cover',
+                          flexShrink: 0,
+                        }}
+                      />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <strong
+                          style={{
+                            display: 'block',
+                            fontSize: '0.86rem',
+                            color: '#1C1917',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {item.producto.nombre}
+                        </strong>
+                        <span style={{ fontSize: '0.75rem', color: '#57534E' }}>
+                          {item.variante.nombre} · ${item.variante.pvp.toFixed(2)} c/u
+                        </span>
+                        {ahorroLinea > 0.01 && (
+                          <div style={{ fontSize: '0.72rem', color: '#B45309', fontWeight: 700 }}>
+                            🏷️ Ahorro volumen: -${ahorroLinea.toFixed(2)}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        <button
+                          type="button"
+                          onClick={() => actualizarCantidadProforma(item.id, item.cantidad - 1)}
+                          title="Disminuir cantidad"
+                          aria-label="Disminuir"
+                          style={{
+                            width: '26px',
+                            height: '26px',
+                            borderRadius: '6px',
+                            border: '1px solid #D6D3D1',
+                            background: '#FAFAF9',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <Minus size={13} />
+                        </button>
+                        <span style={{ minWidth: '20px', textAlign: 'center', fontWeight: 700, fontSize: '0.85rem' }}>
+                          {item.cantidad}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => actualizarCantidadProforma(item.id, item.cantidad + 1)}
+                          title="Aumentar cantidad"
+                          aria-label="Aumentar"
+                          style={{
+                            width: '26px',
+                            height: '26px',
+                            borderRadius: '6px',
+                            border: '1px solid #D6D3D1',
+                            background: '#FAFAF9',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <Plus size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => eliminarItemProforma(item.id)}
+                          title="Quitar de la proforma"
+                          aria-label="Quitar"
+                          style={{
+                            width: '26px',
+                            height: '26px',
+                            borderRadius: '6px',
+                            border: '1px solid #FECACA',
+                            background: '#FEF2F2',
+                            color: '#B91C1C',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: 'pointer',
+                            marginLeft: '2px',
+                          }}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Sugerencias exclusivas de OTROS productos de Eventos */}
+              {sugerenciasEventos.length > 0 && (
+                <div
+                  style={{
+                    padding: '11px 12px',
+                    borderRadius: '12px',
+                    background: '#FAF8F5',
+                    border: '1px solid #E7E5E4',
+                  }}
+                >
+                  <span
+                    style={{
+                      display: 'block',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      color: '#2D4734',
+                      marginBottom: '8px',
+                    }}
+                  >
+                    ✨ Otros elementos de Eventos que puedes sumar a tu proforma:
+                  </span>
+                  <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+                    {sugerenciasEventos.map((sug) => {
+                      const varSug = sug.variantes[0];
+                      if (!varSug) return null;
+                      return (
+                        <div
+                          key={sug.id}
+                          style={{
+                            minWidth: '148px',
+                            maxWidth: '148px',
+                            padding: '8px',
+                            borderRadius: '10px',
+                            background: '#FFFFFF',
+                            border: '1px solid #E7E5E4',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '5px',
+                          }}
+                        >
+                          <img
+                            src={sug.fotos[0] || '/img/slide4_flores_amor.jpg'}
+                            alt={sug.nombre}
+                            style={{
+                              width: '100%',
+                              height: '74px',
+                              objectFit: 'cover',
+                              borderRadius: '7px',
+                            }}
+                          />
+                          <strong
+                            style={{
+                              fontSize: '0.75rem',
+                              lineHeight: 1.25,
+                              color: '#1C1917',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                            }}
+                          >
+                            {sug.nombre}
+                          </strong>
+                          <div
+                            style={{
+                              marginTop: 'auto',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#2D4734' }}>
+                              ${varSug.pvp.toFixed(2)}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => agregarItemProforma(sug, varSug, 1)}
+                              title={`Sumar ${sug.nombre} a la proforma`}
+                              aria-label="Sumar"
+                              style={{
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                border: 'none',
+                                background: '#2D4734',
+                                color: '#FFFFFF',
+                                fontSize: '0.72rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              + Sumar
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Datos del Evento */}
+              <div
+                style={{
+                  padding: '12px',
+                  borderRadius: '12px',
+                  background: '#FFFFFF',
+                  border: '1px solid #E7E5E4',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '9px',
+                }}
+              >
+                <strong style={{ fontSize: '0.85rem', color: '#1C1917', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Calendar size={15} style={{ color: '#2D4734' }} />
+                  <span>2. Datos de tu Evento</span>
+                </strong>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <select
+                      value={datosEventoProforma.tipoEvento}
+                      onChange={(e) => actualizarDatosEventoProforma({ tipoEvento: e.target.value })}
+                      style={inputEstilo}
+                    >
+                      {TIPOS_EVENTO.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.73rem', color: '#57534E', marginBottom: '3px' }}>
+                      Fecha estimada *
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={datosEventoProforma.fechaEvento}
+                      onChange={(e) =>
+                        actualizarDatosEventoProforma({ fechaEvento: e.target.value })
+                      }
+                      style={inputEstilo}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.73rem', color: '#57534E', marginBottom: '3px' }}>
+                      Hora de montaje / inicio
+                    </label>
+                    <input
+                      type="time"
+                      value={datosEventoProforma.horaEvento}
+                      onChange={(e) =>
+                        actualizarDatosEventoProforma({ horaEvento: e.target.value })
+                      }
+                      style={inputEstilo}
+                    />
+                  </div>
+                  <input
+                    type="number"
+                    min={1}
+                    placeholder="N° invitados aprox."
+                    value={datosEventoProforma.invitadosEstimados}
+                    onChange={(e) =>
+                      actualizarDatosEventoProforma({ invitadosEstimados: e.target.value })
+                    }
+                    style={inputEstilo}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Paleta de colores (ej. blanco y olivo)"
+                    value={datosEventoProforma.paletaColores}
+                    onChange={(e) =>
+                      actualizarDatosEventoProforma({ paletaColores: e.target.value })
+                    }
+                    style={inputEstilo}
+                  />
+                </div>
+
+                <textarea
+                  rows={2}
+                  placeholder="Notas adicionales o ideas para tu asesor de eventos..."
+                  value={datosEventoProforma.notasEvento}
+                  onChange={(e) => actualizarDatosEventoProforma({ notasEvento: e.target.value })}
+                  style={inputEstilo}
+                />
+
+                {/* Ubicación / Locación opcional con cálculo GPS */}
+                <div style={{ borderTop: '1px solid #F5F5F4', paddingTop: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setMostrarMapaEvento(!mostrarMapaEvento)}
+                    title="Indicar locación del evento en el mapa"
+                    aria-label="Locación del Evento"
+                    style={{
+                      width: '100%',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '7px 10px',
+                      borderRadius: '8px',
+                      border: '1px solid #E7E5E4',
+                      background: '#FAFAF9',
+                      fontSize: '0.8rem',
+                      fontWeight: 600,
+                      color: '#2D4734',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <MapPin size={14} />
+                      <span>
+                        {ubicacionEventoProforma.direccion
+                          ? `Locación: ${ubicacionEventoProforma.direccion.slice(0, 34)}...`
+                          : 'Cotizar transporte según locación GPS (opcional)'}
+                      </span>
+                    </span>
+                    {mostrarMapaEvento ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                  </button>
+
+                  {mostrarMapaEvento && (
+                    <div style={{ marginTop: '8px' }}>
+                      <SelectorUbicacionEntrega
+                        negocio="tinkay"
+                        configuracionInicial={configLogistica}
+                        permitirModoRetiro={true}
+                        retiroEnLocal={Boolean(ubicacionEventoProforma.retiroEnLocal)}
+                        enlaceMapaInicial={ubicacionEventoProforma.enlaceMapa}
+                        onCambioCotizacion={(ev) => {
+                          actualizarUbicacionEventoProforma({
+                            retiroEnLocal: ev.retiroEnLocal,
+                            enlaceMapa: ev.enlaceMapa,
+                            direccion:
+                              ev.direccionSugerida || ubicacionEventoProforma.direccion || '',
+                            lat: ev.cotizacion.destino.lat,
+                            lng: ev.cotizacion.destino.lng,
+                            zonaDetectadaNombre: ev.cotizacion.zonaDetectada?.nombre,
+                            reglaLogisticaAplicada: ev.cotizacion.reglaAplicada,
+                            distanciaVialKm: ev.cotizacion.distanciaVialKm,
+                            costoEnvioCalculado: ev.cotizacion.costoTotalEnvio,
+                            dentroCobertura: ev.cotizacion.dentroCobertura,
+                            etiquetaCotizacion: ev.cotizacion.etiquetaResumen,
+                            formulaCalculoInterno: ev.cotizacion.formulaDetalle,
+                            detalleDireccionGeo: ev.detalleDireccionGeo ?? null,
+                          });
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Datos de Contacto + WhatsApp + Consentimiento LOPDP */}
+              <div
+                style={{
+                  padding: '12px',
+                  borderRadius: '12px',
+                  background: '#FFFFFF',
+                  border: '1px solid #E7E5E4',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '9px',
+                }}
+              >
+                <strong style={{ fontSize: '0.85rem', color: '#1C1917' }}>
+                  3. Tus datos para recibir la Proforma en PDF
+                </strong>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Nombre completo o empresa *"
+                    value={nombreCompleto}
+                    onChange={(e) => setNombreCompleto(e.target.value)}
+                    style={{ ...inputEstilo, gridColumn: '1 / -1' }}
+                  />
+                  <input
+                    type="email"
+                    required
+                    placeholder="Correo electrónico (recibirás PDF) *"
+                    value={correo}
+                    onChange={(e) => setCorreo(e.target.value)}
+                    style={inputEstilo}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Cédula / RUC (opcional)"
+                    value={identificacion}
+                    onChange={(e) => setIdentificacion(e.target.value)}
+                    style={inputEstilo}
+                  />
+                </div>
+
+                {/* WhatsApp con selector compacto de país */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 600, color: '#44403C', marginBottom: '4px' }}>
+                    Número de WhatsApp *
+                  </label>
+                  <div style={{ display: 'flex', gap: '6px' }}>
+                    <select
+                      value={codigoPais}
+                      onChange={(e) => setCodigoPais(e.target.value)}
+                      aria-label="País de WhatsApp"
+                      style={{
+                        ...inputEstilo,
+                        width: '108px',
+                        flexShrink: 0,
+                        padding: '9px 6px',
+                      }}
+                    >
+                      {PAISES_TELEFONO.map((p) => (
+                        <option key={p.codigo} value={p.codigo}>
+                          {p.codigo} ({p.prefijo})
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="99 123 4567"
+                      value={whatsappDigitos}
+                      onChange={(e) => setWhatsappDigitos(e.target.value)}
+                      style={inputEstilo}
+                    />
+                  </div>
+                </div>
+
+                {/* Consentimiento expreso LOPDP */}
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '8px',
+                    padding: '9px 10px',
+                    borderRadius: '9px',
+                    background: '#FAF8F5',
+                    border: '1px solid #E7E5E4',
+                    fontSize: '0.76rem',
+                    color: '#44403C',
+                    lineHeight: 1.4,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={autorizaWhatsapp}
+                    onChange={(e) => setAutorizaWhatsapp(e.target.checked)}
+                    style={{ marginTop: '2px' }}
+                  />
+                  <span>
+                    Autorizo a Tinkay a contactarme por WhatsApp y correo para enviarme esta
+                    proforma, variaciones actualizadas por un asesor e información de mi evento.{' '}
+                    <button
+                      type="button"
+                      onClick={(ev) => {
+                        ev.preventDefault();
+                        setModalTerminosWaAbierto(true);
+                      }}
+                      style={{
+                        border: 'none',
+                        background: 'transparent',
+                        color: '#2D4734',
+                        textDecoration: 'underline',
+                        fontWeight: 700,
+                        padding: 0,
+                        cursor: 'pointer',
+                        fontSize: '0.76rem',
+                      }}
+                    >
+                      Ver cláusula LOPDP
+                    </button>
+                  </span>
+                </label>
+              </div>
+
+              {errorForm && (
+                <div
+                  style={{
+                    padding: '10px 12px',
+                    borderRadius: '9px',
+                    background: '#FEF2F2',
+                    border: '1px solid #FECACA',
+                    color: '#B91C1C',
+                    fontSize: '0.8rem',
+                  }}
+                >
+                  {errorForm}
+                </div>
+              )}
+            </form>
+          )}
+        </div>
+
+        {/* Pie Fijo con Resumen y Botón Conciso */}
+        {itemsProforma.length > 0 && (
+          <div
+            className="drawer-pie-totales"
+            style={{
+              padding: '14px 16px',
+              background: '#FFFFFF',
+              borderTop: '1px solid #E7E5E4',
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '10px', fontSize: '0.82rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Subtotal arreglos:</span>
+                <span>${(subtotalProforma + ivaProforma).toFixed(2)}</span>
+              </div>
+              {descuentoProforma > 0 && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#B45309', fontWeight: 700 }}>
+                  <span>Ahorro por volumen:</span>
+                  <span>-${descuentoProforma.toFixed(2)}</span>
+                </div>
+              )}
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Transporte / logística:</span>
+                <span>{fleteProforma === 0 ? 'Incluido ($0.00)' : `$${fleteProforma.toFixed(2)}`}</span>
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  paddingTop: '6px',
+                  borderTop: '1px solid #E7E5E4',
+                  fontSize: '0.96rem',
+                  fontWeight: 800,
+                  color: '#2D4734',
+                }}
+              >
+                <span>Total Proforma:</span>
+                <span>${totalProforma.toFixed(2)} USD</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.76rem', color: '#57534E' }}>
+                <span>Reserva de fecha sugerida (70%):</span>
+                <strong>${reserva70Proforma.toFixed(2)} USD</strong>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              form="form-emitir-proforma-evento"
+              disabled={generando}
+              title="Emitir proforma numerada en PDF y abrir opciones de pago"
+              aria-label="Generar Proforma"
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '12px 16px',
+                borderRadius: '999px',
+                border: 'none',
+                background: '#2D4734',
+                color: '#FFFFFF',
+                fontSize: '0.92rem',
+                fontWeight: 700,
+                cursor: generando ? 'wait' : 'pointer',
+                opacity: generando ? 0.75 : 1,
+              }}
+            >
+              {generando ? <Loader2 size={18} /> : <FileText size={18} />}
+              <span>{generando ? 'Generando...' : 'Generar Proforma'}</span>
+            </button>
+          </div>
+        )}
+      </aside>
+
+      <ModalTerminosWhatsapp
+        abierto={modalTerminosWaAbierto}
+        alCerrar={() => setModalTerminosWaAbierto(false)}
+        alAceptar={() => {
+          setAutorizaWhatsapp(true);
+          setModalTerminosWaAbierto(false);
+        }}
+        negocioNombre="Tinkay Floristería"
+      />
+    </div>
+  );
+}

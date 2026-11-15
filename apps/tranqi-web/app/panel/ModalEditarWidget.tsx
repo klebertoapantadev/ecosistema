@@ -106,6 +106,7 @@ const MAPA_RUTAS_FISICAS_WIDGETS: Record<string, string> = {
   "catalogo": "packages/comercio/src/componentes/ConsolaGestionCatalogo.tsx",
   "honorarios": "packages/comercio/src/componentes/ConsolaGestionCatalogo.tsx",
   "pasarela_payphone": "packages/comercio/src/componentes/ConfiguracionPasarelaPayphone.tsx",
+  "configuracion_pasarela": "packages/comercio/src/componentes/ConfiguracionPasarelaPayphone.tsx",
   "pasarela-payphone": "packages/comercio/src/componentes/ConfiguracionPasarelaPayphone.tsx",
   "payphone": "packages/comercio/src/componentes/ConfiguracionPasarelaPayphone.tsx",
   "historial_pagos": "packages/comercio/src/componentes/HistorialTransaccionesPago.tsx",

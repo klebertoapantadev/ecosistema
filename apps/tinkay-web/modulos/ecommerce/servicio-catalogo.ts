@@ -495,6 +495,13 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
           catNombre.toLowerCase().includes('evento') ||
           catNombre.toLowerCase().includes('ceremonia') ||
           catSlug.toLowerCase().includes('evento');
+        const esEventoProd = Boolean(
+          !esRentaProd &&
+            !esExtra &&
+            (esCatEventos ||
+              catTipo === 'EVENTO' ||
+              (p.pro_tipo || '').toUpperCase() === 'SERVICIO')
+        );
 
         const esCondol =
           catEncontrada?.ctg_detalle_categoria?.modo_visual_sobrio === true ||
@@ -633,6 +640,7 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
           comboComponentes: esCombo && comboComponentes.length > 0 ? comboComponentes : undefined,
           tipoOferta: p.pro_tipo || 'FISICO',
           esRenta: esRentaProd,
+          esEvento: esEventoProd,
           etiquetaTipoOferta: obtenerEtiquetaCortaTipoOferta(p.pro_tipo, detalle),
           rentaConfig: esRentaProd ? normalizarConfiguracionRenta(detalle.renta_config) : undefined,
           usos,
@@ -644,6 +652,8 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
           ),
           etiquetas: esRentaProd
             ? Array.from(new Set([...etiquetasDb, 'En Renta', 'Alquiler Mobiliario']))
+            : esEventoProd
+            ? Array.from(new Set([...etiquetasDb, 'Cotización Evento']))
             : etiquetasDb,
           deliveryIncluido:
             typeof detalle.logistica?.delivery_incluido === 'boolean'

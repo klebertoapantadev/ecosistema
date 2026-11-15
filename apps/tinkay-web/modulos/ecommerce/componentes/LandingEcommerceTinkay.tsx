@@ -10,6 +10,7 @@ import { VitrinaCatalogoTinkay } from './VitrinaCatalogoTinkay';
 import { CarruselTestimoniosClientes } from './CarruselTestimoniosClientes';
 import { ModalDetalleProducto } from './ModalDetalleProducto';
 import { DrawerCarritoFloristeria } from './DrawerCarritoFloristeria';
+import { DrawerProformaEvento } from './DrawerProformaEvento';
 import { ModalCheckoutTinkay } from './ModalCheckoutTinkay';
 import { ChatAriaFlotante } from './ChatAriaFlotante';
 import { Sparkles, ShieldCheck, Heart, Truck, Phone, MapPin } from 'lucide-react';
@@ -80,10 +81,10 @@ function ContenidoPaginaEcommerceTinkay() {
               <div className="icono-circulo-dorado">
                 <ShieldCheck size={24} />
               </div>
-              <h3>Pago 100% Seguro con Payphone</h3>
+              <h3>Pago 100% Seguro con PLUX</h3>
               <p>
                 Aceptamos todas las tarjetas de crédito y débito Visa y Mastercard con facturación
-                electrónica avalada por el SRI.
+                electrónica avalada por el SRI y reserva de eventos en línea.
               </p>
             </div>
           </div>
@@ -194,29 +195,29 @@ function ContenidoPaginaEcommerceTinkay() {
               <h4>Colecciones</h4>
               <ul>
                 <li>
-                  <a href="/categoria/box-florales" onClick={(e) => irAColeccion(e, 'box-florales')}>
+                  <Link href="/categoria/box-florales" onClick={(e) => irAColeccion(e, 'box-florales')}>
                     Box Florales de Lujo
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="/categoria/cat-coreanos" onClick={(e) => irAColeccion(e, 'cat-coreanos')}>
+                  <Link href="/categoria/cat-coreanos" onClick={(e) => irAColeccion(e, 'cat-coreanos')}>
                     Bouquets Estilo Coreano
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="/categoria/cat-floreros" onClick={(e) => irAColeccion(e, 'cat-floreros')}>
+                  <Link href="/categoria/cat-floreros" onClick={(e) => irAColeccion(e, 'cat-floreros')}>
                     Ramos Clásicos para Florero
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="/categoria/eventos-y-ceremonias" onClick={(e) => irAColeccion(e, 'eventos')}>
+                  <Link href="/categoria/eventos-y-ceremonias" onClick={(e) => irAColeccion(e, 'eventos')}>
                     Eventos &amp; Ceremonias
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="/categoria/cat-ocas-condol" onClick={(e) => irAColeccion(e, 'cat-ocas-condol')}>
+                  <Link href="/categoria/cat-ocas-condol" onClick={(e) => irAColeccion(e, 'cat-ocas-condol')}>
                     Condolencias &amp; Funerarios
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -254,7 +255,10 @@ function ContenidoPaginaEcommerceTinkay() {
       {/* Drawer Lateral del Carrito de Compras */}
       <DrawerCarritoFloristeria />
 
-      {/* Modal de Checkout Payphone y Transferencia */}
+      {/* Drawer Lateral de Autoservicio de Proforma de Evento */}
+      <DrawerProformaEvento />
+
+      {/* Modal de Checkout PLUX y Transferencia */}
       <ModalCheckoutTinkay />
 
       {/* Agente de Chat ARIA ("Mía") */}

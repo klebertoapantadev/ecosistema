@@ -19,7 +19,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 
 | Código | Funcionalidad / Requerimiento | Estado | Avance (%) | Responsable Asignado |
 | :--- | :--- | :---: | :---: | :--- |
-| **`PLT-001`** | Identidad Única, Registro Cero Fricción y Auth | ✅ Implementado | **85%** | Kleber Toapanta |
+| **`PLT-001`** | Identidad Única, Registro con WhatsApp + Consentimiento LOPDP y Auth | ✅ Implementado | **90%** | Kleber Toapanta |
 | **`PLT-002`** | Autenticación Multifactor (MFA TOTP) & Expiración por Inactividad | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-003`** | Membresías, Jerarquía & Active Role Switcher | ✅ Implementado | **100%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-004`** | **Buddie Conversacional (Chat IA ARIA & OCR Multimodal)** | 🟡 En Desarrollo | **85%** | **Kleber Toapanta / Jesus Navarrete** |
@@ -27,7 +27,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-006`** | Datos de Facturación SRI, Emisión Automática con Tarjeta, Pagos Manuales y Widget de Comprobantes | ✅ Implementado | **100%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-007`** | Catálogo Geográfico (Ecuador 24 Provincias) | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-008`** | Configuración de Negocio & SMTP en Vault | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`PLT-009`** | Catálogo Comercial Unificado (Productos, Sets/Combos Configurables, Descuentos por Volumen, Enlaces Directos Omnicanal, Despachos y Pasarela Payphone) | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`PLT-009`** | Catálogo Comercial Unificado (Productos, Sets/Combos, Proformas Eventos Multi-Variación + PDF Correo, Despachos y Pasarela Multiempresa PLUX / Payphone) | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-010`** | **Integración Omnicanal (WhatsApp YCloud, ARIA, Deep Links de Tienda y Supervisión Humana HITL)** | 🟡 En Desarrollo | **55%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-011`** | Sistema de Widgets por Rol & DataGrids 2 Capas | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-012`** | **Baja de Cuenta y Derecho al Olvido** | ✅ Implementado | **100%** | Kleber Toapanta |
@@ -56,13 +56,14 @@ Un usuario posee una **única identidad base** en todo el ecosistema (`comun_seg
 ### Reglas de Negocio
 1. **Registro Inicial Ultra-Fluido (Cero Frenos):**
    - **Vía Google OAuth 2.0:** Se completa en 1 solo clic. Se extraen automáticamente el nombre, apellido, correo electrónico y la foto/logo del registro de Gmail. No se solicita ningún dato obligatorio adicional en este paso.
-   - **Vía Correo Directo (Registro Simple):** Formulario mínimo con únicamente 4 campos: Nombres, Apellidos, Correo Electrónico y Contraseña.
+   - **Vía Correo Directo:** Formulario directo con Nombres, Apellidos, Correo Electrónico, Contraseña, **Número de WhatsApp (`+593` u otro código internacional)** y casilla de consentimiento expreso LOPDP para contacto comercial/operativo.
 2. **Carga de Foto de Perfil & Sincronización de Avatar de Gmail en Mi Cuenta (`mi_cuenta`):**
    - En la configuración del perfil (`/panel/cuenta`), se habilita la opción de **carga y actualización de Foto de Perfil personalizada** (almacenada y optimizada en WebP en `comun-publico/[NEGOCIO]/avatares-perfil/...`).
    - Cuando el usuario se registró mediante **Google OAuth / Gmail**, la interfaz ofrece explícitamente la opción de sincronizar/utilizar la **foto/logo oficial de su cuenta de Gmail** o cargar un avatar personalizado propio.
-3. **Opción "Contáctame vía WhatsApp" (Exclusivamente Post-Registro):**
-   - La opción de ingresar el número de WhatsApp y autorizar contacto **NUNCA debe ser un freno en el formulario de registro inicial**.
-   - Se presenta únicamente **DESPUÉS** de que el usuario ha completado el registro (en la pantalla de bienvenida/onboarding posterior o dentro de la edición de su perfil), mediante un campo opcional con casilla de verificación (*checkbox*) desmarcada por defecto para autorización explícita (`autorizacion_contacto_whatsapp`).
+3. **Captura de WhatsApp y Consentimiento Expreso LOPDP (`autorizacion_contacto_whatsapp`):**
+   - Tanto en el registro directo por correo (`/registro`), como en la pantalla de bienvenida post-OAuth (`/bienvenida`) y en la emisión de proformas en autoservicio, se solicita el número de WhatsApp con selector internacional de país (`+593` por defecto) y una casilla desmarcada por defecto de **consentimiento expreso LOPDP** (`ModalTerminosWhatsapp.tsx`) para autorizar contacto, envío de cotizaciones/proformas e información comercial.
+   - Se preserva el parámetro `destino` a lo largo de `/registro`, `/verificar-correo`, callback OAuth y `/bienvenida` (ej. `/?proforma=abierta`), retornando al comprador exactamente al punto comercial donde inició su flujo.
+   - Sobre `comun_seguridad.seg_usuario` rige `REVOKE UPDATE` de tabla completa y `GRANT UPDATE` exclusivo por columnas no privilegiadas (`usu_nombres`, `usu_apellidos`, `usu_telefono_codigo_pais`, `usu_telefono_numero`, `usu_autoriza_whatsapp`, `usu_consentimiento_whatsapp_en`, `usu_avatar_url`, `usu_terminos_version`, `usu_terminos_aceptados_en`).
 4. **Información Transparente de Ubicación y Alcance Local:** En la pantalla de registro u onboarding de cada producto se expone de forma clara la información de presencia local en Ecuador y el alcance de atención (gestionados a través de `PLT-008`).
 5. **Registro e Identidad Independiente por Negocio (`comun_seguridad.seg_membresia`):**
    - Aunque la cuenta base exista en el ecosistema, la suscripción a cada negocio crea un registro de membresía **100% independiente** que contiene:
@@ -85,8 +86,8 @@ Actualizado en cada PR que toque este requerimiento. `Parcial` significa que exi
 
 | Regla / Ítem | Estado | Dónde vive / Detalle de lo que falta |
 | :--- | :---: | :--- |
-| 1 · Registro Ultra-Fluido (Google OAuth + Correo) | ✅ Implementado | `packages/identidad` (`FormularioRegistro.tsx`, `oaybbpdxhlxjbpwnoymy.supabase.co`) |
-| 2 · WhatsApp Opcional Post-Registro | ✅ Implementado | `autorizacion_contacto_whatsapp` en `seg_usuario`, no frena el registro |
+| 1 · Registro Fluido (Google OAuth + Correo) | ✅ Implementado | `packages/identidad` (`FormularioRegistro.tsx`, `FormularioBienvenida.tsx`, preservación de `destino`) |
+| 2 · WhatsApp + Consentimiento LOPDP en Registro y Onboarding | ✅ Implementado | `usu_telefono_codigo_pais`, `usu_telefono_numero`, `usu_autoriza_whatsapp` y `ModalTerminosWhatsapp.tsx` |
 | 3 · Ubicación y Alcance Local | ✅ Implementado | Expuesto en onboarding y footer según catálogo `PLT-008` |
 | 4 · Identidad Base y Membresías Independientes | ✅ Implementado | `comun_seguridad.seg_usuario` y `comun_seguridad.seg_membresia` |
 | 5 · Biometría (Face ID / Touch ID) y PIN Móvil | ⏳ Pendiente | Plugin `@capacitor-community/biometrics` en apps nativas Capacitor |
@@ -600,6 +601,12 @@ Motor centralizado de gestión de bienes, servicios, recetas (BOM), inventarios,
     - **Administración Completa desde Consola y Modales (`+ Nueva` / `⚙ Gestionar`):** Junto al selector *Tipo de Oferta Comercial* (en creación/edición de productos y barra superior de `/panel/catalogo-productos`), el administrador puede crear nuevos tipos de oferta, editar nombres/etiquetas y eliminar los que no estén en uso (`com_fn_obtener_tipos_oferta_con_uso`, `com_fn_guardar_tipo_oferta`, `com_fn_eliminar_tipo_oferta`). Si 1 o más productos activos usan ese tipo, la baja se bloquea estrictamente mostrando el conteo y ejemplos.
     - **Modalidad Oficial `RENTA` ("Renta de Mobiliario / Alquiler para Eventos"):** Pre-cargada por defecto para floristerías y eventos (pedestales, backings, arcos, bases) y mantenimiento, con configuración de condiciones de alquiler en `pro_detalle_producto.renta_config` (`periodo` ej. *Por evento (24h)*, `deposito_garantia_usd`, `incluye_retiro` y `nota_condiciones`).
     - **Visibilidad Clara al Comprador y Agentes IA:** En vitrina pública, ficha modal, carrito y respuestas MCP de ARIA (`es_renta`, `condiciones_renta`), el producto exhibe claramente el distintivo `🪑 EN RENTA` junto con el periodo incluido y la coordinación de entrega/retiro posterior al evento.
+30. **Proformas de Eventos en Autoservicio, Versionado Colaborativo de Asesor + Envío de Doble PDF por Correo y Pasarela Multiempresa PLUX (`com_proforma`, `pdf-proforma.ts`, `plux.ts`, `BotonPagoPlux.tsx`):**
+    - **Emisión en Autoservicio (`V1 · Original`):** El comprador arma su proforma formal numerada por negocio (`{PREFIJO}-PRF-xxxx`, ej. `TNK-PRF-0001`), capturando datos del evento, WhatsApp con consentimiento LOPDP y ubicación geoespacial, recibiendo de inmediato el correo con el PDF formal y el enlace único `/proforma/{token}`.
+    - **Actualización por Asesor de Ventas con Almacenamiento Multi-Variación (`V2`, `V3`, ...):** Tras una llamada o asesoría comercial, el operador/asesor edita ítems, cantidades, descuentos o condiciones desde `BandejaPedidosTienda.tsx` (`ModalEditarVariacionProforma.tsx`). Cada actualización se almacena como una **nueva variación independiente** vinculada por `grupo_proforma_id` (`{PREFIJO}-PRF-xxxx-V2`), preservando intacta la `V1` original.
+    - **Correo Automático con Doble Adjunto PDF (`Original` + `Actualizada`):** Al emitir una nueva variación desde asesoría, `@eco/comercio/pdf-proforma` genera en servidor (`pdf-lib`) y despacha vía `@eco/notificaciones/enviar-correo` (con soporte `encoding: "base64"` en la Edge Function `enviar-correo`) **ambos documentos PDF adjuntos**: `Proforma_Original_{CODIGO}.pdf` y `Proforma_Actualizada_{CODIGO-Vn}.pdf`, junto con tabla comparativa y enlaces directos.
+    - **Elección de Variación, Eliminación Pre-Pago y Bloqueo Post-Orden:** Desde `/proforma/{token}` o `/panel`, el cliente compara todas las variaciones, descarga el PDF de cualquiera de ellas (`/api/proforma/[token]/pdf`), elige cuál variación pagar (**Reserva 70%** o **Pago Total 100%** con PLUX o Transferencia Bancaria) y puede **eliminar variaciones no aceptadas o eliminar todas** (`com_fn_eliminar_proformas_cliente`: modos `UNA`, `OTRAS`, `TODAS`) **únicamente antes de confirmar el pedido o acreditar un pago**. Al confirmarse pago u orden sobre una variación, la eliminación queda bloqueada en todo el grupo y las variaciones hermanas pendientes pasan a `NO_ACEPTADA`.
+    - **Pasarela Multiempresa PLUX Aislada por Negocio (`com_pasarela_configuracion`):** Cada empresa (`tranqi`, `tinkay`, `fastfix`, `margaritas`) mantiene su propia fila `PLUX` con credenciales en Vault, `nombre_comercio` propio, prefijo transaccional (`TRQ-PLX-...`, `TNK-PLX-...`) y webhook parametrizado (`plux-webhook?negocio={negocio}`), administrable desde el widget pre-configurado `pasarela_payphone` (`/panel/pasarelas`).
 
 **Implementación técnica:** ver [`especificacion-tecnica.md`](especificacion-tecnica.md) §7 (`comun_comercio`).
 

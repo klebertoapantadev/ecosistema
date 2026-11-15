@@ -5,6 +5,7 @@ import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import {
   ClipboardList,
   ExternalLink,
+  FilePlus2,
   Loader2,
   MapPin,
   PackageCheck,
@@ -16,6 +17,7 @@ import {
   obtenerPedidosTiendaAction,
   type PedidoTiendaRegistrado,
 } from "../acciones-logistica";
+import { ModalEditarVariacionProforma } from "./ModalEditarVariacionProforma";
 
 interface PropsBandejaPedidosTienda {
   negocio: string;
@@ -23,12 +25,16 @@ interface PropsBandejaPedidosTienda {
 }
 
 const ESTADOS_PEDIDO: Array<{ valor: string; etiqueta: string; colorFondo: string; colorTexto: string }> = [
+  { valor: "ENVIADA", etiqueta: "Proforma Emitida", colorFondo: "#F3E8FF", colorTexto: "#6B21A8" },
   { valor: "PENDIENTE_PAGO", etiqueta: "Pendiente Pago", colorFondo: "#FEF3C7", colorTexto: "#92400E" },
+  { valor: "ORDEN_CONFIRMADA", etiqueta: "Orden Confirmada", colorFondo: "#FEF9C3", colorTexto: "#854D0E" },
+  { valor: "RESERVADA_70", etiqueta: "Reserva 70%", colorFondo: "#DBEAFE", colorTexto: "#1D4ED8" },
   { valor: "APROBADA", etiqueta: "Confirmado", colorFondo: "#DCFCE7", colorTexto: "#166534" },
-  { valor: "EN_PREPARACION", etiqueta: "En Taller", colorFondo: "#DBEAFE", colorTexto: "#1E40AF" },
+  { valor: "NO_ACEPTADA", etiqueta: "No Aceptada", colorFondo: "#F1F5F9", colorTexto: "#64748B" },
+  { valor: "EN_PREPARACION", etiqueta: "En Taller", colorFondo: "#E0F2FE", colorTexto: "#0369A1" },
   { valor: "EN_RUTA", etiqueta: "En Ruta", colorFondo: "#E0E7FF", colorTexto: "#3730A3" },
   { valor: "ENTREGADO", etiqueta: "Entregado", colorFondo: "#F0FDF4", colorTexto: "#15803D" },
-  { valor: "CANCELADO", etiqueta: "Cancelado", colorFondo: "#FEE2E2", colorTexto: "#991B1B" },
+  { valor: "CANCELADO", etiqueta: "Cancelado", colorFondo: "#FEE2F2", colorTexto: "#991B1B" },
 ];
 
 function estiloEstado(estado: string) {
@@ -52,6 +58,8 @@ export function BandejaPedidosTienda({
   const [cargando, setCargando] = useState<boolean>(!pedidosIniciales);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [actualizandoId, setActualizandoId] = useState<string | null>(null);
+  const [proformaEditandoVariacion, setProformaEditandoVariacion] =
+    useState<PedidoTiendaRegistrado | null>(null);
 
   const cargarPedidos = useCallback(async () => {
     setCargando(true);
@@ -123,19 +131,37 @@ export function BandejaPedidosTienda({
     () => [
       {
         id: "orden",
-        encabezado: "Orden",
-        valor: (p) => p.codigoOrden,
-        render: (p) => (
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <strong style={{ color: "#111827", fontSize: "0.84rem" }}>{p.codigoOrden}</strong>
-            <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>
-              {new Date(p.creadoEn).toLocaleString("es-EC", {
-                dateStyle: "short",
-                timeStyle: "short",
-              })}
-            </span>
-          </div>
-        ),
+        encabezado: "Orden / Proforma",
+        valor: (p) => `${p.codigoOrden} ${p.tipoOrigen || ""}`,
+        render: (p) => {
+          const esProforma = p.tipoOrigen === "PROFORMA_EVENTO";
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                <strong style={{ color: "#111827", fontSize: "0.84rem" }}>{p.codigoOrden}</strong>
+                <span
+                  style={{
+                    fontSize: "0.66rem",
+                    fontWeight: 700,
+                    padding: "2px 6px",
+                    borderRadius: "999px",
+                    background: esProforma ? "#FAF5FF" : "#F1F5F9",
+                    color: esProforma ? "#7E22CE" : "#475569",
+                    border: `1px solid ${esProforma ? "#E9D5FF" : "#E2E8F0"}`,
+                  }}
+                >
+                  {esProforma ? "✨ Evento" : "🛍️ Tienda"}
+                </span>
+              </div>
+              <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>
+                {new Date(p.creadoEn).toLocaleString("es-EC", {
+                  dateStyle: "short",
+                  timeStyle: "short",
+                })}
+              </span>
+            </div>
+          );
+        },
       },
       {
         id: "cliente",
@@ -202,6 +228,12 @@ export function BandejaPedidosTienda({
             <strong style={{ fontSize: "0.86rem", color: "#111827" }}>
               ${p.total.toFixed(2)}
             </strong>
+            {typeof p.montoAbonadoUsd === "number" && p.montoAbonadoUsd > 0 && (
+              <span style={{ fontSize: "0.7rem", color: "#1D4ED8", fontWeight: 700 }}>
+                Abono: ${p.montoAbonadoUsd.toFixed(2)} · Saldo: $
+                {Math.max(0, p.saldoPendienteUsd ?? p.total - p.montoAbonadoUsd).toFixed(2)}
+              </span>
+            )}
             <span style={{ fontSize: "0.7rem", color: "#6B7280", textTransform: "uppercase" }}>
               {p.metodoPago}
             </span>
@@ -516,16 +548,160 @@ export function BandejaPedidosTienda({
                     borderTop: "1px solid #E2E8F0",
                     fontSize: "0.75rem",
                     color: "#475569",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
                   }}
                 >
-                  <strong>Facturación SRI:</strong> {p.compradorNombre} · ID:{" "}
-                  {p.compradorIdentificacion || "—"} · {p.compradorCorreo}
+                  {p.evento && (
+                    <div
+                      style={{
+                        padding: "8px 10px",
+                        borderRadius: "7px",
+                        background: "#FAF5FF",
+                        border: "1px solid #E9D5FF",
+                        color: "#581C87",
+                      }}
+                    >
+                      <strong>✨ Evento:</strong> {p.evento.tipoEvento || "Evento"} · Fecha:{" "}
+                      {p.evento.fechaEvento || "—"}
+                      {p.evento.horaEvento ? ` (${p.evento.horaEvento})` : ""}
+                      {p.evento.paletaColores ? ` · Paleta: ${p.evento.paletaColores}` : ""}
+                      {p.evento.notasEvento ? (
+                        <div style={{ marginTop: "3px" }}>
+                          <strong>Notas:</strong> {p.evento.notasEvento}
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+
+                  <div>
+                    <strong>Facturación SRI:</strong> {p.compradorNombre} · ID:{" "}
+                    {p.compradorIdentificacion || "—"} · {p.compradorCorreo}
+                    {p.autorizaWhatsapp ? " · ✓ LOPDP WhatsApp" : ""}
+                  </div>
+
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    {p.tipoOrigen === "PROFORMA_EVENTO" && (
+                      <button
+                        type="button"
+                        onClick={() => setProformaEditandoVariacion(p)}
+                        title="Actualizar proforma creando una nueva variación y enviar PDF original + actualizado por correo al cliente"
+                        aria-label="Nueva Variación"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          padding: "6px 11px",
+                          borderRadius: "7px",
+                          border: "none",
+                          background: "#7C3AED",
+                          color: "#FFFFFF",
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <FilePlus2 size={13} />
+                        <span>Nueva Variación</span>
+                      </button>
+                    )}
+                    {p.tokenAprobacion && (
+                      <a
+                        href={`/proforma/${p.tokenAprobacion}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Abrir proforma pública con selector de variaciones y pago"
+                        aria-label="Ver Proforma"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          padding: "6px 11px",
+                          borderRadius: "7px",
+                          background: "#2D4A3E",
+                          color: "#FFFFFF",
+                          textDecoration: "none",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                        }}
+                      >
+                        <span>Ver Proforma</span>
+                        <ExternalLink size={12} />
+                      </a>
+                    )}
+                    {p.tokenAprobacion && (
+                      <a
+                        href={`/api/proforma/${p.tokenAprobacion}/pdf`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Descargar archivo PDF de esta versión"
+                        aria-label="Descargar PDF"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          padding: "6px 11px",
+                          borderRadius: "7px",
+                          border: "1px solid #CBD5E1",
+                          background: "#FFFFFF",
+                          color: "#0F172A",
+                          textDecoration: "none",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                        }}
+                      >
+                        <span>Descargar PDF</span>
+                        <ExternalLink size={12} />
+                      </a>
+                    )}
+                    {p.compradorTelefono && (
+                      <a
+                        href={`https://wa.me/${p.compradorTelefono.replace(/\D+/g, "")}?text=${encodeURIComponent(
+                          `Hola ${p.compradorNombre}, te escribimos de ${negocio.toUpperCase()} respecto a tu proforma ${p.codigoOrden}${
+                            p.tokenAprobacion
+                              ? ` (${typeof window !== "undefined" ? window.location.origin : ""}/proforma/${p.tokenAprobacion})`
+                              : ""
+                          }.`
+                        )}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Contactar al cliente por WhatsApp"
+                        aria-label="WhatsApp"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          padding: "6px 11px",
+                          borderRadius: "7px",
+                          background: "#059669",
+                          color: "#FFFFFF",
+                          textDecoration: "none",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                        }}
+                      >
+                        <span>WhatsApp</span>
+                        <ExternalLink size={12} />
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
           )}
         />
       </div>
+
+      {proformaEditandoVariacion && (
+        <ModalEditarVariacionProforma
+          pedidoBase={proformaEditandoVariacion}
+          alCerrar={() => setProformaEditandoVariacion(null)}
+          alVariacionCreada={() => {
+            cargarPedidos();
+          }}
+        />
+      )}
     </div>
   );
 }

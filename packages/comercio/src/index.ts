@@ -46,3 +46,4 @@ export * from "./componentes/MapaCoberturaPichincha";
 export * from "./componentes/SelectorUbicacionEntrega";
 export * from "./componentes/FormularioLogisticaCobertura";
 export * from "./componentes/BandejaPedidosTienda";
+export * from "./componentes/ModalEditarVariacionProforma";

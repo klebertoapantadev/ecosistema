@@ -23,6 +23,8 @@ export interface PagoPluxPreparado {
   nombre_comercio: string;
   descripcion: string;
   base_centavos: number;
+  base0_centavos?: number;
+  base_gravada_centavos?: number;
   iva_centavos: number;
   total_centavos: number;
 }
@@ -43,8 +45,19 @@ export function centavosATexto(centavos: number): string {
 }
 
 // PayboxBase12 es lo que grava IVA CON el IVA incluido; PayboxBase0, lo que no
-// lo grava (guía del botón 4.5, §2). Un producto es una cosa o la otra.
-export function montosPaybox(p: Pick<PagoPluxPreparado, "base_centavos" | "iva_centavos">) {
+// lo grava (guía del botón 4.5, §2). Soporta tanto ítems puros como órdenes/proformas
+// mixtas (ej. flores frescas 0% IVA + logística/montaje 15% IVA en Tinkay).
+export function montosPaybox(
+  p: Pick<PagoPluxPreparado, "base_centavos" | "iva_centavos" | "base0_centavos" | "base_gravada_centavos">,
+) {
+  if (p.base0_centavos !== undefined || p.base_gravada_centavos !== undefined) {
+    const base0 = p.base0_centavos ?? 0;
+    const baseGravada = p.base_gravada_centavos ?? 0;
+    return {
+      PayboxBase0: centavosATexto(base0),
+      PayboxBase12: centavosATexto(baseGravada + p.iva_centavos),
+    };
+  }
   const gravado = p.iva_centavos > 0;
   return {
     PayboxBase0: centavosATexto(gravado ? 0 : p.base_centavos),

@@ -7,6 +7,7 @@ import {
   VarianteEcommerce,
   DedicatoriaArreglo,
   DatosEntrega,
+  DatosEventoProforma,
   ModalidadEntrega,
   CategoriaEcommerce,
 } from './tipos';
@@ -70,12 +71,36 @@ interface ContextoCarritoValor {
   actualizarEntregaUnificada: (datos: Partial<DatosEntrega>) => void;
   vaciarCarrito: () => void;
 
-  // Totales
+  // Totales Carrito Directo
   subtotalBaseImponible: number;
   totalIva: number;
   totalFlete: number;
   totalRecargoHorarioExacto: number;
   totalPagar: number;
+
+  // Proforma de Eventos en Autoservicio
+  itemsProforma: ItemCarrito[];
+  cantidadTotalProforma: number;
+  drawerProformaAbierto: boolean;
+  datosEventoProforma: DatosEventoProforma;
+  ubicacionEventoProforma: DatosEntrega;
+  setDrawerProformaAbierto: (abierto: boolean) => void;
+  agregarItemProforma: (
+    producto: ProductoEcommerce,
+    variante: VarianteEcommerce,
+    cantidadInicial?: number
+  ) => void;
+  eliminarItemProforma: (itemId: string) => void;
+  actualizarCantidadProforma: (itemId: string, cantidad: number) => void;
+  actualizarDatosEventoProforma: (datos: Partial<DatosEventoProforma>) => void;
+  actualizarUbicacionEventoProforma: (datos: Partial<DatosEntrega>) => void;
+  vaciarProforma: () => void;
+  subtotalProforma: number;
+  descuentoProforma: number;
+  ivaProforma: number;
+  fleteProforma: number;
+  totalProforma: number;
+  reserva70Proforma: number;
 }
 
 const FECHA_POR_DEFECTO = () => {
@@ -100,6 +125,22 @@ const ENTREGA_INICIAL: DatosEntrega = {
 const ContextoCarrito = createContext<ContextoCarritoValor | undefined>(undefined);
 
 const CLAVE_LOCALSTORAGE = 'tinkay_carrito_v1';
+const CLAVE_PROFORMA_LOCALSTORAGE = 'tinkay_proforma_evento_v1';
+
+const FECHA_EVENTO_POR_DEFECTO = () => {
+  const futura = new Date();
+  futura.setDate(futura.getDate() + 14);
+  return futura.toISOString().split('T')[0] ?? '';
+};
+
+const DATOS_EVENTO_INICIAL: DatosEventoProforma = {
+  tipoEvento: 'Boda / Ceremonia',
+  fechaEvento: FECHA_EVENTO_POR_DEFECTO(),
+  horaEvento: '16:00',
+  invitadosEstimados: '',
+  paletaColores: '',
+  notasEvento: '',
+};
 
 export interface ProveedorCarritoProps {
   children: React.ReactNode;
@@ -123,6 +164,16 @@ export function ProveedorCarrito({
   const [checkoutAbierto, setCheckoutAbierto] = useState(false);
   const [ordenConfirmadaId, setOrdenConfirmadaId] = useState<string | null>(null);
   const [cargado, setCargado] = useState(false);
+
+  // Estado independiente de Proforma de Evento
+  const [itemsProforma, setItemsProforma] = useState<ItemCarrito[]>([]);
+  const [drawerProformaAbierto, setDrawerProformaAbierto] = useState(false);
+  const [datosEventoProforma, setDatosEventoProforma] =
+    useState<DatosEventoProforma>(DATOS_EVENTO_INICIAL);
+  const [ubicacionEventoProforma, setUbicacionEventoProforma] = useState<DatosEntrega>(() => ({
+    ...ENTREGA_INICIAL,
+    fechaEntrega: FECHA_EVENTO_POR_DEFECTO(),
+  }));
 
   // Catálogo dinámico sincronizado con Supabase en tiempo real
   const [productos, setProductos] = useState<ProductoEcommerce[]>(PRODUCTOS_TINKAY);
@@ -356,6 +407,27 @@ export function ProveedorCarrito({
         if (parsed.modalidadEntrega) setModalidadEntrega(parsed.modalidadEntrega);
         if (parsed.entregaUnificada) setEntregaUnificada(parsed.entregaUnificada);
       }
+      const guardadoProforma = localStorage.getItem(CLAVE_PROFORMA_LOCALSTORAGE);
+      if (guardadoProforma) {
+        const parsedPrf = JSON.parse(guardadoProforma);
+        if (Array.isArray(parsedPrf.itemsProforma)) setItemsProforma(parsedPrf.itemsProforma);
+        if (parsedPrf.datosEventoProforma) {
+          setDatosEventoProforma((prev) => ({ ...prev, ...parsedPrf.datosEventoProforma }));
+        }
+        if (parsedPrf.ubicacionEventoProforma) {
+          setUbicacionEventoProforma((prev) => ({ ...prev, ...parsedPrf.ubicacionEventoProforma }));
+        }
+      }
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('proforma') === 'abierta') {
+          setDrawerProformaAbierto(true);
+          params.delete('proforma');
+          const nuevaQuery = params.toString();
+          const limpia = `${window.location.pathname}${nuevaQuery ? `?${nuevaQuery}` : ''}${window.location.hash}`;
+          window.history.replaceState(null, '', limpia);
+        }
+      }
     } catch {
       // Ignorar errores de parsing inicial
     } finally {
@@ -379,6 +451,23 @@ export function ProveedorCarrito({
       // Fallback silencioso si excede cuota
     }
   }, [items, modalidadEntrega, entregaUnificada, cargado]);
+
+  // Persistir borrador de Proforma de Evento en LocalStorage
+  useEffect(() => {
+    if (!cargado) return;
+    try {
+      localStorage.setItem(
+        CLAVE_PROFORMA_LOCALSTORAGE,
+        JSON.stringify({
+          itemsProforma,
+          datosEventoProforma,
+          ubicacionEventoProforma,
+        })
+      );
+    } catch {
+      // Fallback silencioso si excede cuota
+    }
+  }, [itemsProforma, datosEventoProforma, ubicacionEventoProforma, cargado]);
 
   const recalcularVarianteConVolumen = (
     variante: VarianteEcommerce,
@@ -498,6 +587,141 @@ export function ProveedorCarrito({
     setItems([]);
   };
 
+  // --- Acciones Proforma de Evento ---
+  const agregarItemProforma = (
+    producto: ProductoEcommerce,
+    variante: VarianteEcommerce,
+    cantidadInicial = 1
+  ) => {
+    const cantAgregar = Math.max(1, Math.floor(cantidadInicial || 1));
+
+    setItemsProforma((prev) => {
+      const indexExistente = prev.findIndex(
+        (i) => i.producto.id === producto.id && i.variante.sku === variante.sku
+      );
+      if (indexExistente >= 0) {
+        const clon = [...prev];
+        const actual = clon[indexExistente];
+        if (actual) {
+          const nuevaCantidad = actual.cantidad + cantAgregar;
+          clon[indexExistente] = {
+            ...actual,
+            cantidad: nuevaCantidad,
+            variante: recalcularVarianteConVolumen(actual.variante, nuevaCantidad),
+          };
+        }
+        return clon;
+      }
+
+      const nuevoId = `prf-${producto.id}-${variante.sku}-${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(2, 6)}`;
+      const nuevoItem: ItemCarrito = {
+        id: nuevoId,
+        producto,
+        variante: recalcularVarianteConVolumen(variante, cantAgregar),
+        cantidad: cantAgregar,
+      };
+      return [...prev, nuevoItem];
+    });
+
+    setDrawerAbierto(false);
+    setDrawerProformaAbierto(true);
+  };
+
+  const eliminarItemProforma = (itemId: string) => {
+    setItemsProforma((prev) => prev.filter((i) => i.id !== itemId));
+  };
+
+  const actualizarCantidadProforma = (itemId: string, cantidad: number) => {
+    if (cantidad <= 0) {
+      eliminarItemProforma(itemId);
+      return;
+    }
+    setItemsProforma((prev) =>
+      prev.map((i) =>
+        i.id === itemId
+          ? {
+              ...i,
+              cantidad,
+              variante: recalcularVarianteConVolumen(i.variante, cantidad),
+            }
+          : i
+      )
+    );
+  };
+
+  const actualizarDatosEventoProforma = (datos: Partial<DatosEventoProforma>) => {
+    setDatosEventoProforma((prev) => ({ ...prev, ...datos }));
+  };
+
+  const actualizarUbicacionEventoProforma = (datos: Partial<DatosEntrega>) => {
+    setUbicacionEventoProforma((prev) => ({ ...prev, ...datos }));
+  };
+
+  const vaciarProforma = () => {
+    setItemsProforma([]);
+  };
+
+  const cantidadTotalProforma = useMemo(() => {
+    return itemsProforma.reduce((acc, curr) => acc + curr.cantidad, 0);
+  }, [itemsProforma]);
+
+  const {
+    subtotalProforma,
+    descuentoProforma,
+    ivaProforma,
+    fleteProforma,
+    totalProforma,
+    reserva70Proforma,
+  } = useMemo(() => {
+    let subtotalBase = 0;
+    let iva = 0;
+    let ahorroVolumen = 0;
+
+    itemsProforma.forEach((item) => {
+      const baseItem = item.variante.baseImponible * item.cantidad;
+      const ivaItem = (item.variante.pvp - item.variante.baseImponible) * item.cantidad;
+      const nominalUnit = item.variante.pvpNominalSinVolumen ?? item.variante.pvp;
+      const ahorroItem = Math.max(0, (nominalUnit - item.variante.pvp) * item.cantidad);
+      subtotalBase += baseItem;
+      iva += ivaItem;
+      ahorroVolumen += ahorroItem;
+    });
+
+    let flete = 0;
+    if (itemsProforma.length > 0) {
+      const algunoNoIncluye = itemsProforma.some(
+        (it) =>
+          it.producto.deliveryIncluido === false &&
+          it.producto.modalidadTransporte !== 'SOLO_RETIRO'
+      );
+      const recargoEspecialTotal = itemsProforma.reduce(
+        (acc, it) => acc + (it.producto.recargoLogisticoUsd || 0) * it.cantidad,
+        0
+      );
+
+      if (ubicacionEventoProforma.retiroEnLocal) {
+        flete = 0;
+      } else if (typeof ubicacionEventoProforma.costoEnvioCalculado === 'number') {
+        flete = ubicacionEventoProforma.costoEnvioCalculado;
+      } else {
+        flete =
+          (algunoNoIncluye ? configLogistica.tarifaBaseNoIncluido : 0) + recargoEspecialTotal;
+      }
+    }
+
+    const total = Math.round((subtotalBase + iva + flete) * 100) / 100;
+    return {
+      subtotalProforma: Math.round(subtotalBase * 100) / 100,
+      descuentoProforma: Math.round(ahorroVolumen * 100) / 100,
+      ivaProforma: Math.round(iva * 100) / 100,
+      fleteProforma: Math.round(flete * 100) / 100,
+      totalProforma: total,
+      reserva70Proforma: Math.round(total * 0.7 * 100) / 100,
+    };
+  }, [itemsProforma, ubicacionEventoProforma, configLogistica]);
+
   const cantidadTotal = useMemo(() => {
     return items.reduce((acc, curr) => acc + curr.cantidad, 0);
   }, [items]);
@@ -613,6 +837,24 @@ export function ProveedorCarrito({
         totalFlete,
         totalRecargoHorarioExacto,
         totalPagar,
+        itemsProforma,
+        cantidadTotalProforma,
+        drawerProformaAbierto,
+        datosEventoProforma,
+        ubicacionEventoProforma,
+        setDrawerProformaAbierto,
+        agregarItemProforma,
+        eliminarItemProforma,
+        actualizarCantidadProforma,
+        actualizarDatosEventoProforma,
+        actualizarUbicacionEventoProforma,
+        vaciarProforma,
+        subtotalProforma,
+        descuentoProforma,
+        ivaProforma,
+        fleteProforma,
+        totalProforma,
+        reserva70Proforma,
       }}
     >
       {children}

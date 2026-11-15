@@ -9,6 +9,7 @@ import {
   ChevronDown,
   ChevronRight,
   ClipboardList,
+  CreditCard,
   KeyRound,
   LayoutDashboard,
   Mail,
@@ -27,6 +28,7 @@ export type IconoNavegacionPanel =
   | "usuarios"
   | "negocio"
   | "logistica"
+  | "pasarelas"
   | "aria"
   | "correo"
   | "tokens"
@@ -47,6 +49,7 @@ const MAPA_ICONOS: Record<IconoNavegacionPanel, LucideIcon> = {
   usuarios: Users,
   negocio: Building2,
   logistica: Truck,
+  pasarelas: CreditCard,
   aria: Bot,
   correo: Mail,
   tokens: KeyRound,
@@ -58,6 +61,7 @@ export function NavegacionPanelLateral({ items }: { items: ItemNavegacionPanel[]
   const enRutaConfiguracion =
     pathname.startsWith("/panel/configuracion") ||
     pathname.startsWith("/panel/logistica") ||
+    pathname.startsWith("/panel/pasarelas") ||
     pathname.startsWith("/panel/aria") ||
     pathname.startsWith("/panel/correo") ||
     pathname.startsWith("/panel/tokens-mcp");

@@ -13,13 +13,18 @@ import {
   confirmarPagoPluxAction,
   consultarPagoPluxAction,
   prepararPagoPluxAction,
+  prepararPagoPluxProformaAction,
+  type ModalidadCobroProforma,
   type PagoPluxConsultado,
 } from "../acciones-plux";
 import { SCRIPT_JQUERY, SCRIPT_PAYBOX, respuestaExitosa, type PagadorPlux } from "../plux";
 
 interface Props {
   negocio: string;
-  varianteId: string;
+  varianteId?: string;
+  proformaId?: string;
+  tokenAprobacion?: string;
+  modalidadCobro?: ModalidadCobroProforma;
   pagador: PagadorPlux;
   ambiente: string;
   alPagoAprobado: (identificador: string, pago: PagoPluxConsultado) => void;
@@ -70,7 +75,18 @@ async function esperarEntornoPlux(): Promise<void> {
   throw new Error("PLUX no terminó de cargar");
 }
 
-export function BotonPagoPlux({ negocio, varianteId, pagador, ambiente, alPagoAprobado, alCambiarFase, etiqueta }: Props) {
+export function BotonPagoPlux({
+  negocio,
+  varianteId,
+  proformaId,
+  tokenAprobacion,
+  modalidadCobro = "TOTAL_100",
+  pagador,
+  ambiente,
+  alPagoAprobado,
+  alCambiarFase,
+  etiqueta,
+}: Props) {
   const [fase, setFase] = useState<Fase>("inicio");
   const [mensaje, setMensaje] = useState<string | null>(null);
   const identificador = useRef<string | null>(null);
@@ -90,9 +106,9 @@ export function BotonPagoPlux({ negocio, varianteId, pagador, ambiente, alPagoAp
     if (fase === "listo") (window as any).jQuery?.(window).trigger("load");
   }, [fase]);
 
-  // Si cambian los datos de facturación con el botón ya preparado, el pago
-  // preparado lleva los viejos: se vuelve a empezar.
-  const claveDatos = JSON.stringify([varianteId, pagador]);
+  // Si cambian los datos de facturación o modalidad con el botón ya preparado,
+  // el pago preparado lleva los viejos: se vuelve a empezar.
+  const claveDatos = JSON.stringify([varianteId, proformaId, tokenAprobacion, modalidadCobro, pagador]);
   useEffect(() => {
     setFase((f) => (f === "listo" ? "inicio" : f));
   }, [claveDatos]);
@@ -139,7 +155,17 @@ export function BotonPagoPlux({ negocio, varianteId, pagador, ambiente, alPagoAp
     setFase("preparando");
     setMensaje(null);
     motivo.current = null;
-    const r = await prepararPagoPluxAction({ negocio, varianteId, pagador });
+    const r = proformaId && tokenAprobacion
+      ? await prepararPagoPluxProformaAction({
+          negocio,
+          proformaId,
+          tokenAprobacion,
+          modalidadCobro,
+          pagador,
+        })
+      : varianteId
+        ? await prepararPagoPluxAction({ negocio, varianteId, pagador })
+        : { ok: false as const, error: "Falta el producto o la proforma para iniciar el pago." };
     if (!r.ok) {
       setFase("error");
       setMensaje(r.error);
@@ -190,23 +216,98 @@ export function BotonPagoPlux({ negocio, varianteId, pagador, ambiente, alPagoAp
   const preparando = fase === "preparando";
   const conBoton = fase === "inicio" || fase === "error" || fase === "rechazado" || preparando;
 
-  // Clases del checkout (ver checkout/estilos.ts): este botón solo vive dentro de él.
+  // Funciona tanto dentro del checkout modal (.ckt-velo) como en páginas autónomas (/proforma/[token], ModalCheckoutTinkay).
   return (
-    <div className="ckt-plux-zona">
+    <div className="ckt-plux-zona" style={{ display: "flex", flexDirection: "column", gap: "10px", width: "100%" }}>
+      <style>{`
+        @keyframes ecoPluxSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .ckt-plux-zona .ckt-girar { animation: ecoPluxSpin 0.9s linear infinite; }
+        .ckt-plux-zona #ButtonPaybox { display: flex; justify-content: center; width: 100%; margin-top: 4px; }
+      `}</style>
       {conBoton && (
-        <button type="button" className="ckt-btn ckt-btn-primario" onClick={preparar} disabled={preparando}>
+        <button
+          type="button"
+          className="ckt-btn ckt-btn-primario"
+          onClick={preparar}
+          disabled={preparando}
+          style={{
+            width: "100%",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
+            padding: "13px 20px",
+            borderRadius: "12px",
+            border: "none",
+            background: preparando ? "#9CA3AF" : "linear-gradient(135deg, #2D4A3E 0%, #1F352C 100%)",
+            color: "#FFFFFF",
+            fontWeight: 700,
+            fontSize: "0.95rem",
+            cursor: preparando ? "wait" : "pointer",
+            boxShadow: "0 4px 14px rgba(31, 53, 44, 0.22)",
+          }}
+        >
           {preparando ? <RefreshCw size={18} className="ckt-girar" /> : <Lock size={18} />}
-          {preparando ? "Preparando…" : fase === "inicio" ? etiqueta ?? "Pagar" : "Reintentar"}
+          {preparando ? "Preparando…" : fase === "inicio" ? etiqueta ?? "Pagar con PLUX" : "Reintentar"}
         </button>
       )}
 
-      {fase === "listo" && <p className="ckt-nota">Pulsa el botón de PLUX y escribe tu tarjeta en su ventana segura.</p>}
+      {fase === "listo" && (
+        <p
+          className="ckt-nota"
+          style={{
+            margin: 0,
+            padding: "10px 12px",
+            borderRadius: "10px",
+            background: "#F0FDF4",
+            border: "1px solid #BBF7D0",
+            color: "#166534",
+            fontSize: "0.83rem",
+            fontWeight: 600,
+            textAlign: "center",
+          }}
+        >
+          Pulsa el botón oficial de PLUX abajo e ingresa tu tarjeta en su ventana segura.
+        </p>
+      )}
+
+      {fase === "esperando" && (
+        <p
+          className="ckt-nota"
+          style={{
+            margin: 0,
+            padding: "10px 12px",
+            borderRadius: "10px",
+            background: "#EFF6FF",
+            border: "1px solid #BFDBFE",
+            color: "#1E40AF",
+            fontSize: "0.83rem",
+            fontWeight: 600,
+            textAlign: "center",
+          }}
+        >
+          Verificando autorización bancaria con PLUX…
+        </p>
+      )}
 
       {/* PLUX inyecta aquí su botón "Pagar ahora" y, al pulsarlo, su modal. */}
       {(fase === "listo" || fase === "esperando" || fase === "sin_confirmar") && <div id="ButtonPaybox" />}
 
-      {mensaje && fase === "error" && (
-        <p className="ckt-error" role="alert">
+      {mensaje && (fase === "error" || fase === "rechazado" || fase === "sin_confirmar") && (
+        <p
+          className="ckt-error"
+          role="alert"
+          style={{
+            margin: 0,
+            padding: "10px 12px",
+            borderRadius: "10px",
+            background: "#FEF2F2",
+            border: "1px solid #FECACA",
+            color: "#B91C1C",
+            fontSize: "0.82rem",
+            fontWeight: 600,
+          }}
+        >
           {mensaje}
         </p>
       )}

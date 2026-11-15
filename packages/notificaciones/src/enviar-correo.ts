@@ -6,6 +6,7 @@ export interface AdjuntoCorreo {
   filename: string;
   content: string;
   contentType?: string;
+  encoding?: "base64" | "text";
 }
 
 export async function enviarCorreo({

@@ -98,8 +98,8 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   },
   pasarela_payphone: {
     id: "pasarela_payphone",
-    titulo: "Pasarela Payphone",
-    subtitulo: "Configuración del Botón de Pago Payphone y simulación de transacciones",
+    titulo: "Pasarela PLUX / Payphone",
+    subtitulo: "Credenciales multiempresa PLUX y Payphone en Vault y webhook de pagos",
     icono: CreditCard,
     href: "/panel/configuracion?widget=pasarela_payphone",
     origen: "Configurar"

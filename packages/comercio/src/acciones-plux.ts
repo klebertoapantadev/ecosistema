@@ -69,6 +69,24 @@ export async function obtenerPasarelasCheckoutAction(negocio = "tranqi"): Promis
   };
 }
 
+const REGEX_IDENTIFICADOR_PLUX = /^[A-Z]{3}-PLX-[0-9A-F]{12}$/;
+
+function prefijoPluxNegocio(negocioPrincipal: string): string {
+  const n = negocioPrincipal.toLowerCase();
+  if (n.includes("tinkay")) return "TNK";
+  if (n.includes("margarita")) return "MRG";
+  if (n.includes("fastfix")) return "FFH";
+  return "TRQ";
+}
+
+function nombreComercioPorDefecto(negocioPrincipal: string): string {
+  const n = negocioPrincipal.toLowerCase();
+  if (n.includes("tinkay")) return "Tinkay Floristería";
+  if (n.includes("margarita")) return "Margaritas Floristería";
+  if (n.includes("fastfix")) return "FastFix Home";
+  return "Tranqi";
+}
+
 const esquemaPagador = z.object({
   nombre: z.string().trim().min(3).max(120),
   // Cédula, RUC o pasaporte: el checkout ofrece los tres y PLUX valida el suyo.
@@ -81,6 +99,16 @@ const esquemaPagador = z.object({
 const esquemaPreparar = z.object({
   negocio: z.string().min(1).default("tranqi"),
   varianteId: z.string().uuid(),
+  pagador: esquemaPagador,
+});
+
+export type ModalidadCobroProforma = "TOTAL_100" | "RESERVA_70" | "SALDO_30";
+
+const esquemaPrepararProforma = z.object({
+  negocio: z.string().min(1).default("tinkay"),
+  proformaId: z.string().uuid(),
+  tokenAprobacion: z.string().trim().min(8),
+  modalidadCobro: z.enum(["TOTAL_100", "RESERVA_70", "SALDO_30"]).default("TOTAL_100"),
   pagador: esquemaPagador,
 });
 
@@ -163,10 +191,11 @@ export async function prepararPagoPluxAction(
     const hexRandom = Array.from({ length: 12 }, () => Math.floor(Math.random() * 16).toString(16))
       .join("")
       .toUpperCase();
-    const identificador = `TRQ-PLX-${hexRandom}`;
+    const identificador = `${prefijoPluxNegocio(negPrincipal)}-PLX-${hexRandom}`;
     const ambiente = rowPlux?.psc_ambiente || "PRUEBAS";
     const remail = rowPlux?.psc_credenciales_publicas?.remail || "admin.operaciones@tranqi24.com";
-    const nombreComercio = rowPlux?.psc_credenciales_publicas?.nombre_comercio || "Tranqi";
+    const nombreComercio =
+      rowPlux?.psc_credenciales_publicas?.nombre_comercio || nombreComercioPorDefecto(negPrincipal);
     const descripcion = `${nombreProd} - ${nombreVariante}`;
 
     await admin
@@ -220,6 +249,223 @@ export async function prepararPagoPluxAction(
   return { ok: false, error: data?.error || "No se pudo preparar el pago." };
 }
 
+/**
+ * Prepara el cobro PLUX sobre una proforma de evento o pedido de tienda (`com_proforma`),
+ * admitiendo Pago Total (100%), Reserva del Evento (70%) o Saldo Restante (30%).
+ * El importe siempre se calcula en el servidor a partir de `com_proforma`.
+ */
+export async function prepararPagoPluxProformaAction(
+  entrada: z.input<typeof esquemaPrepararProforma>,
+): Promise<Resultado<{ identificador: string; totalCentavos: number; paybox: ReturnType<typeof datosPaybox> }>> {
+  const v = esquemaPrepararProforma.safeParse(entrada);
+  if (!v.success) {
+    return { ok: false, error: v.error.issues[0]?.message || "Datos de facturación incompletos." };
+  }
+
+  const negPrincipal = normalizarIdentificadorNegocio(v.data.negocio).principal;
+  const supabase: any = await crearClienteServidor();
+
+  const { data, error } = await supabase.schema("comun_comercio").rpc("com_fn_preparar_pago_plux_proforma", {
+    p_negocio: negPrincipal,
+    p_proforma_id: v.data.proformaId,
+    p_token: v.data.tokenAprobacion,
+    p_pagador: v.data.pagador,
+    p_modalidad_cobro: v.data.modalidadCobro,
+  });
+
+  if (!error && data?.ok) {
+    const preparado = data as PagoPluxPreparado;
+    return {
+      ok: true,
+      data: {
+        identificador: preparado.identificador,
+        totalCentavos: preparado.total_centavos,
+        paybox: datosPaybox(preparado, v.data.pagador),
+      },
+    };
+  }
+
+  // Respaldo resiliente con service_role si la migración RPC aún no se aplicó en remoto
+  const admin: any = crearClienteAdmin();
+  if (admin) {
+    const { data: proforma } = await admin
+      .schema("comun_comercio")
+      .from("com_proforma")
+      .select("*")
+      .eq("prf_id", v.data.proformaId)
+      .eq("prf_token_aprobacion", v.data.tokenAprobacion)
+      .eq("prf_negocio", negPrincipal)
+      .is("prf_eliminado_en", null)
+      .maybeSingle();
+
+    if (!proforma) {
+      return { ok: false, error: "Proforma u orden no encontrada o token inválido." };
+    }
+    if (proforma.prf_estado === "RECHAZADA" || proforma.prf_estado === "VENCIDA") {
+      return { ok: false, error: "Esta proforma ya no se encuentra vigente." };
+    }
+
+    // Buscar credenciales PLUX de la empresa actual; si aún no se sembraron, heredar temporalmente de tranqi con razón social propia
+    let { data: rowPlux } = await admin
+      .schema("comun_comercio")
+      .from("com_pasarela_configuracion")
+      .select("*")
+      .eq("psc_negocio", negPrincipal)
+      .eq("psc_pasarela", "PLUX")
+      .is("psc_eliminado_en", null)
+      .maybeSingle();
+
+    if (!rowPlux?.psc_credenciales_publicas?.remail) {
+      const { data: rowPluxTranqi } = await admin
+        .schema("comun_comercio")
+        .from("com_pasarela_configuracion")
+        .select("*")
+        .eq("psc_negocio", "tranqi")
+        .eq("psc_pasarela", "PLUX")
+        .is("psc_eliminado_en", null)
+        .maybeSingle();
+      if (rowPluxTranqi) {
+        rowPlux = {
+          ...rowPluxTranqi,
+          psc_credenciales_publicas: {
+            ...(rowPluxTranqi.psc_credenciales_publicas || {}),
+            nombre_comercio: nombreComercioPorDefecto(negPrincipal),
+          },
+        };
+      }
+    }
+
+    const remail = rowPlux?.psc_credenciales_publicas?.remail;
+    if (!remail) {
+      return { ok: false, error: "La pasarela PLUX aún no tiene correo de comercio configurado." };
+    }
+
+    const detPrf = (proforma.prf_detalle_proforma as Record<string, any>) || {};
+    const totalOrdenCentavos = Math.round(Number(proforma.prf_total || 0) * 100);
+    const ivaOrdenCentavos = Math.round(Number(proforma.prf_iva ?? detPrf.total_iva ?? 0) * 100);
+    const abonadoPrevioCentavos = Math.round(Number(detPrf.monto_abonado_usd || 0) * 100);
+
+    if (totalOrdenCentavos <= 0) {
+      return { ok: false, error: "El importe de la proforma no es válido." };
+    }
+    if (proforma.prf_estado === "APROBADA" && abonadoPrevioCentavos >= totalOrdenCentavos) {
+      return { ok: false, error: "Esta proforma ya se encuentra pagada en su totalidad." };
+    }
+
+    const baseGravadaOrden =
+      detPrf.base_iva_gravada_centavos !== undefined
+        ? Number(detPrf.base_iva_gravada_centavos)
+        : ivaOrdenCentavos > 0
+          ? Math.min(totalOrdenCentavos - ivaOrdenCentavos, Math.round((ivaOrdenCentavos * 100) / 15))
+          : 0;
+    const base0Orden = Math.max(0, totalOrdenCentavos - ivaOrdenCentavos - baseGravadaOrden);
+
+    let factor = 1;
+    let totalCobro = totalOrdenCentavos;
+    let etiquetaModalidad = "Pago Total (100%)";
+
+    if (v.data.modalidadCobro === "RESERVA_70") {
+      factor = 0.7;
+      totalCobro = Math.round(totalOrdenCentavos * 0.7);
+      etiquetaModalidad = "Reserva Evento (70%)";
+    } else if (v.data.modalidadCobro === "SALDO_30") {
+      totalCobro =
+        abonadoPrevioCentavos > 0
+          ? Math.max(0, totalOrdenCentavos - abonadoPrevioCentavos)
+          : totalOrdenCentavos - Math.round(totalOrdenCentavos * 0.7);
+      if (totalCobro <= 0) {
+        return { ok: false, error: "No existe saldo pendiente por pagar en esta proforma." };
+      }
+      factor = totalCobro / totalOrdenCentavos;
+      etiquetaModalidad = "Saldo Evento (30%)";
+    } else if (abonadoPrevioCentavos > 0 && abonadoPrevioCentavos < totalOrdenCentavos) {
+      totalCobro = totalOrdenCentavos - abonadoPrevioCentavos;
+      factor = totalCobro / totalOrdenCentavos;
+      etiquetaModalidad = "Saldo Pendiente";
+    }
+
+    const ivaCobro = Math.round(ivaOrdenCentavos * factor);
+    const baseGravadaCobro = Math.min(totalCobro - ivaCobro, Math.round(baseGravadaOrden * factor));
+    const base0Cobro = Math.max(0, totalCobro - ivaCobro - baseGravadaCobro);
+    const baseTotalCobro = base0Cobro + baseGravadaCobro;
+
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+
+    const hexRandom = Array.from({ length: 12 }, () => Math.floor(Math.random() * 16).toString(16))
+      .join("")
+      .toUpperCase();
+    const identificador = `${prefijoPluxNegocio(negPrincipal)}-PLX-${hexRandom}`;
+    const ambiente = rowPlux?.psc_ambiente || "PRUEBAS";
+    const nombreComercio =
+      rowPlux?.psc_credenciales_publicas?.nombre_comercio || nombreComercioPorDefecto(negPrincipal);
+    const codigoDoc =
+      detPrf.codigo_proforma ||
+      detPrf.codigo_orden ||
+      `${prefijoPluxNegocio(negPrincipal)}-PRF-${String(proforma.prf_secuencial || 1).padStart(4, "0")}`;
+    const descripcion = `${codigoDoc} - ${etiquetaModalidad}`.slice(0, 120);
+
+    const { error: errInsert } = await admin
+      .schema("comun_comercio")
+      .from("com_transaccion_pago")
+      .insert({
+        pag_negocio: negPrincipal,
+        pag_cliente_id: proforma.prf_cliente_id || authUser?.id || null,
+        pag_pasarela: "PLUX",
+        pag_identificador_cliente: identificador,
+        pag_estado: "PENDIENTE",
+        pag_monto_total: totalCobro / 100,
+        pag_monto_con_iva: baseGravadaCobro / 100,
+        pag_monto_sin_iva: base0Cobro / 100,
+        pag_monto_iva: ivaCobro / 100,
+        pag_moneda: "USD",
+        pag_referencia_id: proforma.prf_id,
+        pag_titular_email: v.data.pagador.email,
+        pag_titular_telefono: v.data.pagador.telefono,
+        pag_titular_identificacion: v.data.pagador.identificacion,
+        pag_detalle_transaccion: {
+          origen: "PROFORMA",
+          proforma_id: proforma.prf_id,
+          codigo_proforma: codigoDoc,
+          modalidad_cobro: v.data.modalidadCobro,
+          producto: descripcion,
+          ambiente,
+          pagador: v.data.pagador,
+        },
+      });
+
+    if (errInsert) {
+      return { ok: false, error: `No se pudo registrar la intención de pago: ${errInsert.message}` };
+    }
+
+    const preparado: PagoPluxPreparado = {
+      identificador,
+      ambiente,
+      remail,
+      nombre_comercio: nombreComercio,
+      descripcion,
+      base_centavos: baseTotalCobro,
+      base0_centavos: base0Cobro,
+      base_gravada_centavos: baseGravadaCobro,
+      iva_centavos: ivaCobro,
+      total_centavos: totalCobro,
+    };
+
+    return {
+      ok: true,
+      data: {
+        identificador,
+        totalCentavos: totalCobro,
+        paybox: datosPaybox(preparado, v.data.pagador),
+      },
+    };
+  }
+
+  if (error) return { ok: false, error: error.message || "No se pudo preparar el pago con PLUX." };
+  return { ok: false, error: data?.error || "No se pudo preparar el pago con PLUX." };
+}
+
 export type EstadoPagoPlux = "PENDIENTE" | "APROBADO" | "RECHAZADO" | "CANCELADO" | "REVERSADO";
 
 export interface PagoPluxConsultado {
@@ -237,27 +483,78 @@ export interface PagoPluxConsultado {
 export async function consultarPagoPluxAction(
   identificador: string,
 ): Promise<Resultado<PagoPluxConsultado>> {
-  if (!/^TRQ-PLX-[0-9A-F]{12}$/.test(identificador)) return { ok: false, error: "Pago desconocido." };
+  if (!REGEX_IDENTIFICADOR_PLUX.test(identificador)) return { ok: false, error: "Pago desconocido." };
   const supabase: any = await crearClienteServidor();
-  const { data, error } = await supabase
+  const { data } = await supabase
     .schema("comun_comercio")
     .from("com_transaccion_pago")
     .select("pag_id, pag_estado, pag_autorizacion_codigo, pag_tarjeta_marca, pag_tarjeta_ultimos_digitos, pag_detalle_transaccion")
     .eq("pag_identificador_cliente", identificador)
     .maybeSingle();
-  if (error || !data) return { ok: false, error: "Pago desconocido." };
-  return {
-    ok: true,
-    data: {
-      pagoId: data.pag_id,
-      pasarela: "PLUX",
-      estado: data.pag_estado,
-      motivo: data.pag_detalle_transaccion?.motivo ?? null,
-      autorizacion: data.pag_autorizacion_codigo,
-      marcaTarjeta: data.pag_tarjeta_marca,
-      ultimosDigitos: data.pag_tarjeta_ultimos_digitos,
-    },
-  };
+
+  if (data) {
+    return {
+      ok: true,
+      data: {
+        pagoId: data.pag_id,
+        pasarela: "PLUX",
+        estado: data.pag_estado,
+        motivo: data.pag_detalle_transaccion?.motivo ?? null,
+        autorizacion: data.pag_autorizacion_codigo,
+        marcaTarjeta: data.pag_tarjeta_marca,
+        ultimosDigitos: data.pag_tarjeta_ultimos_digitos,
+      },
+    };
+  }
+
+  // Consulta pública acotada para compradores invitados o proformas compartidas por enlace
+  try {
+    const { data: rpcPub } = await supabase
+      .schema("comun_comercio")
+      .rpc("com_fn_consultar_pago_plux_publico", { p_identificador: identificador });
+    if (rpcPub?.ok) {
+      return {
+        ok: true,
+        data: {
+          pagoId: rpcPub.pago_id ?? rpcPub.pagoId ?? null,
+          pasarela: "PLUX",
+          estado: rpcPub.estado,
+          motivo: rpcPub.motivo ?? null,
+          autorizacion: rpcPub.autorizacion ?? null,
+          marcaTarjeta: rpcPub.marca_tarjeta ?? rpcPub.marcaTarjeta ?? null,
+          ultimosDigitos: rpcPub.ultimos_digitos ?? rpcPub.ultimosDigitos ?? null,
+        },
+      };
+    }
+  } catch {
+    // Continuar al respaldo admin
+  }
+
+  const admin: any = crearClienteAdmin();
+  if (admin) {
+    const { data: rowAdmin } = await admin
+      .schema("comun_comercio")
+      .from("com_transaccion_pago")
+      .select("pag_id, pag_estado, pag_autorizacion_codigo, pag_tarjeta_marca, pag_tarjeta_ultimos_digitos, pag_detalle_transaccion")
+      .eq("pag_identificador_cliente", identificador)
+      .maybeSingle();
+    if (rowAdmin) {
+      return {
+        ok: true,
+        data: {
+          pagoId: rowAdmin.pag_id,
+          pasarela: "PLUX",
+          estado: rowAdmin.pag_estado,
+          motivo: rowAdmin.pag_detalle_transaccion?.motivo ?? null,
+          autorizacion: rowAdmin.pag_autorizacion_codigo,
+          marcaTarjeta: rowAdmin.pag_tarjeta_marca,
+          ultimosDigitos: rowAdmin.pag_tarjeta_ultimos_digitos,
+        },
+      };
+    }
+  }
+
+  return { ok: false, error: "Pago desconocido." };
 }
 
 /**
@@ -298,7 +595,7 @@ export async function confirmarPagoPluxAction(entrada: {
   const { identificador, respuestaPaybox } = entrada;
   const negocio = normalizarIdentificadorNegocio(entrada.negocio || "tranqi").principal;
 
-  if (!/^TRQ-PLX-[0-9A-F]{12}$/.test(identificador)) {
+  if (!REGEX_IDENTIFICADOR_PLUX.test(identificador)) {
     return { ok: false, error: "Pago desconocido." };
   }
   if (!respuestaExitosa(respuestaPaybox)) {
@@ -319,8 +616,8 @@ export async function confirmarPagoPluxAction(entrada: {
   const admin: any = crearClienteAdmin();
   const clienteDb: any = admin || supabase;
 
-  // 1. Leer la transacción pendiente del usuario
-  const { data: pago } = await supabase
+  // 1. Leer la transacción pendiente (con clienteDb para cubrir tanto usuarios autenticados como invitados en proformas)
+  const { data: pago } = await clienteDb
     .schema("comun_comercio")
     .from("com_transaccion_pago")
     .select("pag_id, pag_negocio, pag_cliente_id, pag_estado, pag_monto_total, pag_titular_email, pag_autorizacion_codigo, pag_tarjeta_marca, pag_tarjeta_ultimos_digitos, pag_detalle_transaccion")
@@ -452,6 +749,103 @@ export async function confirmarPagoPluxAction(entrada: {
               sub_ultimo_cobro_en: new Date().toISOString(),
               sub_detalle_suscripcion: { pago_id: pago.pag_id, pasarela: "PLUX", autorizacion },
             });
+        }
+      }
+
+      // Actualizar estado de proforma/orden de tienda (RESERVADA_70 o APROBADA) cuando aplica
+      const proformaIdDestino = detPrevio.proforma_id;
+      if (proformaIdDestino) {
+        const { data: prfActual } = await clienteDb
+          .schema("comun_comercio")
+          .from("com_proforma")
+          .select("prf_id, prf_total, prf_estado, prf_detalle_proforma")
+          .eq("prf_id", proformaIdDestino)
+          .maybeSingle();
+
+        if (prfActual) {
+          const detPrfActual = (prfActual.prf_detalle_proforma as Record<string, any>) || {};
+          const abonadoPrevio = Number(detPrfActual.monto_abonado_usd || 0);
+          const nuevoAbonado = Math.round((abonadoPrevio + Number(pago.pag_monto_total || 0)) * 100) / 100;
+          const saldoPendiente = Math.max(
+            0,
+            Math.round((Number(prfActual.prf_total || 0) - nuevoAbonado) * 100) / 100,
+          );
+          const nuevoEstadoPrf =
+            detPrevio.modalidad_cobro === "RESERVA_70" && saldoPendiente > 0.01
+              ? "RESERVADA_70"
+              : "APROBADA";
+          const pagosPluxPrevios = Array.isArray(detPrfActual.pagos_plux) ? detPrfActual.pagos_plux : [];
+
+          await clienteDb
+            .schema("comun_comercio")
+            .from("com_proforma")
+            .update({
+              prf_estado: nuevoEstadoPrf,
+              prf_detalle_proforma: {
+                ...detPrfActual,
+                estado: nuevoEstadoPrf,
+                metodo_pago: "plux",
+                estado_pago: saldoPendiente <= 0.01 ? "PAGADO_TOTAL" : "ABONO_RESERVA_70",
+                monto_abonado_usd: nuevoAbonado,
+                saldo_pendiente_usd: saldoPendiente,
+                aprobada_en: new Date().toISOString(),
+                ultimo_pago_plux: {
+                  pago_id: pago.pag_id,
+                  identificador,
+                  autorizacion,
+                  marca_tarjeta: marcaTarjeta,
+                  ultimos_digitos: ultimosDigitos,
+                  monto_usd: Number(pago.pag_monto_total || 0),
+                  modalidad_cobro: detPrevio.modalidad_cobro || "TOTAL_100",
+                  confirmado_en: new Date().toISOString(),
+                },
+                pagos_plux: [
+                  ...pagosPluxPrevios,
+                  {
+                    identificador,
+                    autorizacion,
+                    monto_usd: Number(pago.pag_monto_total || 0),
+                    modalidad_cobro: detPrevio.modalidad_cobro || "TOTAL_100",
+                    fecha: new Date().toISOString(),
+                  },
+                ],
+                variacion_aceptada: true,
+              },
+              prf_actualizado_en: new Date().toISOString(),
+            })
+            .eq("prf_id", proformaIdDestino);
+
+          const grupoIdPrf = String(detPrfActual.grupo_proforma_id || "");
+          if (grupoIdPrf) {
+            const { data: hermanasPrf } = await clienteDb
+              .schema("comun_comercio")
+              .from("com_proforma")
+              .select("prf_id, prf_estado, prf_detalle_proforma")
+              .eq("prf_negocio", negocio)
+              .is("prf_eliminado_en", null);
+
+            for (const h of hermanasPrf ?? []) {
+              if (
+                String(h.prf_id) !== String(proformaIdDestino) &&
+                String(h.prf_detalle_proforma?.grupo_proforma_id || h.prf_id) === grupoIdPrf &&
+                ["ENVIADA", "PENDIENTE_PAGO"].includes(String(h.prf_estado || ""))
+              ) {
+                await clienteDb
+                  .schema("comun_comercio")
+                  .from("com_proforma")
+                  .update({
+                    prf_estado: "NO_ACEPTADA",
+                    prf_detalle_proforma: {
+                      ...(h.prf_detalle_proforma || {}),
+                      estado: "NO_ACEPTADA",
+                      descartada_por_pago_id: String(proformaIdDestino),
+                    },
+                    prf_actualizado_en: new Date().toISOString(),
+                  })
+                  .eq("prf_id", h.prf_id);
+              }
+            }
+          }
         }
       }
     } catch {

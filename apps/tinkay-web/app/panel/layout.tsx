@@ -65,6 +65,14 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel & { soloAdmin?: boolean }> 
     soloAdmin: true,
   },
   {
+    clave: "pasarela_payphone",
+    nombre: "Pasarela de Pagos",
+    ruta: "/panel/pasarelas",
+    icono: "pasarelas",
+    grupo: "configuracion",
+    soloAdmin: true,
+  },
+  {
     clave: "configuracion_aria",
     nombre: "Agente ARIA (Mía)",
     ruta: "/panel/aria",
@@ -138,6 +146,8 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
     for (const w of widgets) {
       if (w.wdg_clave === "vitrina_comercial" || w.wdg_clave === "gestion_catalogo") {
         clavesAutorizadas.add("catalogo_productos");
+      } else if (w.wdg_clave === "configuracion_pasarela") {
+        clavesAutorizadas.add("pasarela_payphone");
       } else if (CATALOGO_NAV_TINKAY.some((m) => m.clave === w.wdg_clave)) {
         clavesAutorizadas.add(w.wdg_clave);
       }

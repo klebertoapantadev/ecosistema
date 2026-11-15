@@ -646,8 +646,8 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
   },
   {
     clave: "pasarela_payphone",
-    nombre: "Pasarela Payphone (Botón de Pago)",
-    descripcion: "Configuración del Botón de Pago Payphone, credenciales API, StoreID y simulador de cobro.",
+    nombre: "Pasarelas de Pago (PLUX / Payphone)",
+    descripcion: "Configuración independiente por empresa de PLUX (PagoPlux) y Payphone, ambiente, visibilidad y webhook.",
     categoria: "Comercio y Pagos",
     ruta: "/panel/configuracion?widget=pasarela_payphone",
     rutaFisica: "/comercio/componentes/ConfiguracionPasarelaPayphone.tsx",
@@ -1105,6 +1105,7 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
       );
 
     case "pasarela_payphone":
+    case "configuracion_pasarela":
       return (
         <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #D97706", boxShadow: "0 4px 12px rgba(217,119,6,0.08)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#D97706", marginBottom: "10px" }}>

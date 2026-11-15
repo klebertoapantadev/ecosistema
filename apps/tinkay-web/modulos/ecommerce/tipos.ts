@@ -69,6 +69,7 @@ export interface ProductoEcommerce {
   comboComponentes?: ComponenteComboConfig[];
   tipoOferta?: string; // 'FISICO' | 'SERVICIO' | 'RENTA' | 'SUSCRIPCION' | 'DIGITAL' | custom
   esRenta?: boolean; // Modalidad de Renta de Mobiliario / Alquiler temporal
+  esEvento?: boolean; // Producto o servicio de Eventos y Ceremonias (flujo de Proforma)
   etiquetaTipoOferta?: string;
   rentaConfig?: ConfiguracionRentaProducto;
   usos?: string[]; // Usos recomendados (ej. 'condolencias', 'cumpleanos')
@@ -131,6 +132,15 @@ export interface ItemCarrito {
 }
 
 export type ModalidadEntrega = 'unificada' | 'individual';
+
+export interface DatosEventoProforma {
+  tipoEvento: string;
+  fechaEvento: string;
+  horaEvento: string;
+  invitadosEstimados: string;
+  paletaColores: string;
+  notasEvento: string;
+}
 
 export interface MensajeChat {
   id: string;

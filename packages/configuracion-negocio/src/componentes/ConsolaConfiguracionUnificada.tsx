@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bot, Building2, CheckCircle2, CircleDashed, KeyRound, Mail, SlidersHorizontal, Truck, type LucideIcon } from "lucide-react";
+import { Bot, Building2, CheckCircle2, CircleDashed, CreditCard, KeyRound, Mail, SlidersHorizontal, Truck, type LucideIcon } from "lucide-react";
 import {
+  ConfiguracionPasarelaPayphone,
   FormularioLogisticaCobertura,
   type ConfiguracionLogisticaNegocio,
 } from "@eco/comercio";
@@ -17,7 +18,13 @@ import { estiloTarjetaConfig } from "./estilos-configuracion";
 type CfgNegocio = Tables<{ schema: "comun_configuracion" }, "cfg_negocio">;
 type CfgSmtp = Tables<{ schema: "comun_configuracion" }, "cfg_smtp">;
 
-export type SeccionConfiguracion = "negocio" | "logistica" | "aria" | "correo" | "tokens";
+export type SeccionConfiguracion =
+  | "negocio"
+  | "logistica"
+  | "pasarelas"
+  | "aria"
+  | "correo"
+  | "tokens";
 
 export interface PropsConsolaConfiguracionUnificada {
   negocio: string;
@@ -28,6 +35,7 @@ export interface PropsConsolaConfiguracionUnificada {
   aria: ConfiguracionAriaVista | null;
   logistica?: ConfiguracionLogisticaNegocio | null;
   mostrarLogistica?: boolean;
+  mostrarPasarelas?: boolean;
   mostrarCorreo?: boolean;
   mostrarAria?: boolean;
   mostrarTokens?: boolean;
@@ -52,6 +60,12 @@ const TABS_CONFIGURACION: DefinicionTab[] = [
     etiqueta: "Envíos y Cobertura",
     ruta: "/panel/logistica",
     icono: Truck,
+  },
+  {
+    id: "pasarelas",
+    etiqueta: "Pasarela de Pagos",
+    ruta: "/panel/pasarelas",
+    icono: CreditCard,
   },
   {
     id: "aria",
@@ -82,6 +96,7 @@ export function ConsolaConfiguracionUnificada({
   aria,
   logistica = null,
   mostrarLogistica = true,
+  mostrarPasarelas = true,
   mostrarCorreo = true,
   mostrarAria = true,
   mostrarTokens = true,
@@ -94,6 +109,7 @@ export function ConsolaConfiguracionUnificada({
 
   const tabsVisibles = TABS_CONFIGURACION.filter((tab) => {
     if (tab.id === "logistica" && !mostrarLogistica) return false;
+    if (tab.id === "pasarelas" && !mostrarPasarelas) return false;
     if (tab.id === "correo" && !mostrarCorreo) return false;
     if (tab.id === "aria" && !mostrarAria) return false;
     if (tab.id === "tokens" && !mostrarTokens) return false;
@@ -311,6 +327,10 @@ export function ConsolaConfiguracionUnificada({
           <div style={{ ...estiloTarjetaConfig, padding: "24px" }}>
             <FormularioLogisticaCobertura negocio={negocio} configuracionInicial={logistica} />
           </div>
+        )}
+
+        {seccionActiva === "pasarelas" && mostrarPasarelas && (
+          <ConfiguracionPasarelaPayphone negocio={negocio} />
         )}
 
         {seccionActiva === "aria" && mostrarAria && (

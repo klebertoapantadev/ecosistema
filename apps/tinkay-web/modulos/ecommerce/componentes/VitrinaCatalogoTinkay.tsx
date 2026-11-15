@@ -245,7 +245,11 @@ export function VitrinaCatalogoTinkay() {
               <ArrowUpDown size={15} />
               <select
                 value={criterioOrden}
-                onChange={(e) => setCriterioOrden(e.target.value as any)}
+                onChange={(e) =>
+                  setCriterioOrden(
+                    e.target.value as 'precio-desc' | 'precio-asc' | 'destacados' | 'nombre-asc'
+                  )
+                }
                 className="select-criterio-orden"
                 aria-label="Ordenar productos por precio o destacados"
               >

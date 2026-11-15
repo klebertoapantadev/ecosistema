@@ -923,6 +923,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       case "honorarios":
         return <CatalogoProductosComercio negocio={negocio} />;
       case "pasarela_payphone":
+      case "configuracion_pasarela":
       case "payphone":
       case "pasarela":
         return <ConfiguracionPasarelaPayphone negocio={negocio} />;

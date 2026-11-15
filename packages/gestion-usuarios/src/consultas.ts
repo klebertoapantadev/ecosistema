@@ -43,11 +43,63 @@ export async function buscarUsuarios(
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
 
-  // 1. Traer directamente los usuarios registrados desde seg_usuario
+  // 1. Normalizar el negocio para consultar membresías
+  const negocioUpper = (negocio || "").toUpperCase();
+  const negociosFiltro =
+    negocioUpper === "TRANQI" || negocioUpper === "TRANQ"
+      ? ["TRANQI", "TRANQ", "tranqi", "tranq"]
+      : [negocioUpper, (negocio || "").toLowerCase()];
+
+  // 2. Traer las membresías que pertenecen estrictamente a este negocio
+  let qMem = adminSupabase
+    .schema("comun_seguridad")
+    .from("seg_membresia")
+    .select("mem_id, mem_usuario_id, mem_estado, mem_negocio, mem_rol")
+    .in("mem_negocio", negociosFiltro);
+
+  let { data: membresiasNegocio, error: errMem } = await qMem;
+  if (errMem || !membresiasNegocio) {
+    const resMemServ = await supabase
+      .schema("comun_seguridad")
+      .from("seg_membresia")
+      .select("mem_id, mem_usuario_id, mem_estado, mem_negocio, mem_rol")
+      .in("mem_negocio", negociosFiltro);
+    membresiasNegocio = resMemServ.data || [];
+  }
+
+  // Identificar los IDs de los usuarios que pertenecen a este negocio
+  const idsConMembresia = (membresiasNegocio || []).map((m) => m.mem_usuario_id);
+
+  // Incluir además a los SuperAdmins de plataforma (que gestionan todos los negocios)
+  let qSuper = adminSupabase
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .select("usu_id")
+    .eq("usu_superadmin_plataforma", true);
+
+  let { data: superAdmins } = await qSuper;
+  if (!superAdmins || superAdmins.length === 0) {
+    const resSuperServ = await supabase
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_id")
+      .eq("usu_superadmin_plataforma", true);
+    superAdmins = resSuperServ.data || [];
+  }
+
+  const idsSuperAdmins = (superAdmins || []).map((s) => s.usu_id);
+  const idsFiltrados = Array.from(new Set([...idsConMembresia, ...idsSuperAdmins]));
+
+  if (idsFiltrados.length === 0) {
+    return { data: [], error: null };
+  }
+
+  // 3. Traer directamente los usuarios registrados que pertenecen a este negocio
   let query = adminSupabase
     .schema("comun_seguridad")
     .from("seg_usuario")
     .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_superadmin_plataforma")
+    .in("usu_id", idsFiltrados)
     .order("usu_creado_en", { ascending: false })
     .limit(50);
 
@@ -66,6 +118,7 @@ export async function buscarUsuarios(
       .schema("comun_seguridad")
       .from("seg_usuario")
       .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_superadmin_plataforma")
+      .in("usu_id", idsFiltrados)
       .order("usu_creado_en", { ascending: false })
       .limit(50);
     if (texto) {
@@ -84,30 +137,13 @@ export async function buscarUsuarios(
   if (error) return { data: [], error: error.message };
   if (!usuarios || usuarios.length === 0) return { data: [], error: null };
 
-  const ids = usuarios.map(u => u.usu_id);
-
-  // 2. Traer membresías
-  const { data: membresias } = await adminSupabase
-    .schema("comun_seguridad")
-    .from("seg_membresia")
-    .select("mem_id, mem_usuario_id, mem_estado, mem_negocio, mem_rol")
-    .in("mem_usuario_id", ids);
-
-  const negocioUpper = (negocio || "").toUpperCase();
+  // 4. Mapear membresías específicas del negocio
   const mapaMembresia = new Map<string, any>();
-
-  (membresias || []).forEach((m) => {
-    const esNegocio =
-      (m.mem_negocio || "").toUpperCase() === negocioUpper ||
-      (negocioUpper === "TRANQI" && (m.mem_negocio || "").toUpperCase() === "TRANQ") ||
-      (negocioUpper === "TRANQ" && (m.mem_negocio || "").toUpperCase() === "TRANQI");
-
-    if (esNegocio || !mapaMembresia.has(m.mem_usuario_id)) {
-      mapaMembresia.set(m.mem_usuario_id, m);
-    }
+  (membresiasNegocio || []).forEach((m) => {
+    mapaMembresia.set(m.mem_usuario_id, m);
   });
 
-  // 3. Traer perfiles asociados directamente por mem_id
+  // 5. Traer perfiles asociados directamente por mem_id (solo de este negocio)
   const memIds = Array.from(mapaMembresia.values()).map((m) => m.mem_id).filter(Boolean);
   const mapaPerfilesMembresia = new Map<string, Array<{ per_clave: string; per_nivel: number }>>();
 
@@ -127,6 +163,7 @@ export async function buscarUsuarios(
     });
   }
 
+  // 6. Construir resultado tipado para la tabla
   const resultado: UsuarioConMembresia[] = usuarios.map((u) => {
     const m = mapaMembresia.get(u.usu_id);
     const perfilesRaw = m?.mem_id ? (mapaPerfilesMembresia.get(m.mem_id) || []) : [];

@@ -17,11 +17,12 @@ export function crearManejadorCallbackOAuth(negocio: string) {
         const { data: usuarioPrevio } = await supabase
           .schema("comun_seguridad")
           .from("seg_usuario")
-          .select("usu_correo_verificado_en, usu_nombres, usu_apellidos, usu_correo")
+          .select("usu_correo_verificado_en, usu_onboarding_completo, usu_nombres, usu_apellidos, usu_correo")
           .eq("usu_id", data.user.id)
           .maybeSingle();
 
         const esNuevo = !usuarioPrevio?.usu_correo_verificado_en;
+        const faltaOnboarding = !usuarioPrevio?.usu_onboarding_completo;
 
         await asegurarMembresiaCliente(supabase, data.user.id, negocio);
         await asegurarTerminosAceptados(supabase, data.user.id);
@@ -47,7 +48,13 @@ export function crearManejadorCallbackOAuth(negocio: string) {
 
         const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
         await registrarAcceso(supabase, data.user.id, ip, request.headers.get("user-agent"), negocio);
-        return NextResponse.redirect(`${origin}${siguiente}`);
+        const rutaDestinoSegura = siguiente.startsWith("/") && !siguiente.startsWith("//") ? siguiente : "/panel";
+        if (faltaOnboarding) {
+          return NextResponse.redirect(
+            `${origin}/bienvenida?destino=${encodeURIComponent(rutaDestinoSegura)}`
+          );
+        }
+        return NextResponse.redirect(`${origin}${rutaDestinoSegura}`);
       }
     }
 

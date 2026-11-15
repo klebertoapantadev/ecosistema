@@ -1,7 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
-import { registrarPedidoTiendaAction } from '@eco/comercio';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  BotonPagoPlux,
+  obtenerPasarelasCheckoutAction,
+  registrarPedidoTiendaAction,
+  type PagoPluxConsultado,
+} from '@eco/comercio';
 import { useCarrito } from '../contexto-carrito';
 import {
   X,
@@ -9,6 +14,7 @@ import {
   Building2,
   ShieldCheck,
   CheckCircle2,
+  Lock,
 } from 'lucide-react';
 
 export function ModalCheckoutTinkay() {
@@ -27,13 +33,22 @@ export function ModalCheckoutTinkay() {
     vaciarCarrito,
   } = useCarrito();
 
-  const [metodoPago, setMetodoPago] = useState<'payphone' | 'transferencia'>('payphone');
+  const [metodoPago, setMetodoPago] = useState<'plux' | 'transferencia'>('plux');
+  const [ambientePlux, setAmbientePlux] = useState<string>('PRUEBAS');
   const [paso, setPaso] = useState<'formulario' | 'procesando' | 'exito'>('formulario');
   const [codigoOrdenGenerado, setCodigoOrdenGenerado] = useState<string>('');
   const [errorPago, setErrorPago] = useState<string | null>(null);
+  const [preparandoOrdenPlux, setPreparandoOrdenPlux] = useState<boolean>(false);
+  const [ordenPluxPreparada, setOrdenPluxPreparada] = useState<{
+    id: string;
+    codigoOrden: string;
+    tokenAprobacion: string;
+    huella: string;
+  } | null>(null);
   const [resumenExito, setResumenExito] = useState<{
     totalPagado: number;
     entregaTexto: string;
+    esTransferencia?: boolean;
   } | null>(null);
 
   // Datos de Facturación SRI
@@ -44,115 +59,204 @@ export function ModalCheckoutTinkay() {
     telefono: '',
   });
 
-  // Datos Tarjeta Simulada Payphone
-  const [datosTarjeta, setDatosTarjeta] = useState({
-    numero: '4111 2222 3333 4444',
-    titular: '',
-    expiracion: '12/28',
-    cvv: '123',
-    diferido: '0',
-  });
+  useEffect(() => {
+    if (!checkoutAbierto) return;
+    let cancelado = false;
+    obtenerPasarelasCheckoutAction('tinkay')
+      .then((res) => {
+        if (cancelado || !res.ok) return;
+        const plux = res.data.find((p) => p.pasarela === 'PLUX');
+        if (plux?.ambiente) setAmbientePlux(plux.ambiente);
+      })
+      .catch(() => {
+        // Mantiene PRUEBAS por defecto si no hay conexión
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [checkoutAbierto]);
+
+  const huellaActual = useMemo(
+    () =>
+      JSON.stringify({
+        nombre: datosFactura.nombreCompleto.trim(),
+        id: datosFactura.identificacion.trim(),
+        correo: datosFactura.correo.trim().toLowerCase(),
+        tel: datosFactura.telefono.trim(),
+        total: Math.round(totalPagar * 100),
+        itemsLen: items.length,
+      }),
+    [datosFactura, totalPagar, items.length]
+  );
+
+  useEffect(() => {
+    if (ordenPluxPreparada && ordenPluxPreparada.huella !== huellaActual) {
+      setOrdenPluxPreparada(null);
+    }
+  }, [huellaActual, ordenPluxPreparada]);
 
   if (!checkoutAbierto) return null;
 
-  const handlePagar = async (e: React.FormEvent) => {
+  const entregaTextoConfirmado =
+    modalidadEntrega === 'unificada'
+      ? entregaUnificada.retiroEnLocal
+        ? `Retiro en ${configLogistica.origenNombre} (${entregaUnificada.fechaEntrega})`
+        : `${entregaUnificada.zonaDetectadaNombre || entregaUnificada.ciudad || 'Domicilio'}${
+            configLogistica.mostrarKilometrosCliente !== false &&
+            typeof entregaUnificada.distanciaVialKm === 'number'
+              ? ` (${entregaUnificada.distanciaVialKm.toFixed(1)} km)`
+              : ''
+          } — ${entregaUnificada.fechaEntrega} (${entregaUnificada.franjaHoraria})`
+      : 'Multidestino individual';
+
+  const construirPayloadPedido = (metodo: 'plux' | 'transferencia') => ({
+    negocio: 'tinkay',
+    metodoPago: metodo,
+    comprador: {
+      nombreCompleto: datosFactura.nombreCompleto.trim(),
+      identificacion: datosFactura.identificacion.trim(),
+      correo: datosFactura.correo.trim(),
+      telefono: datosFactura.telefono.trim(),
+    },
+    modalidadEntrega,
+    entregaUnificada:
+      modalidadEntrega === 'unificada'
+        ? {
+            retiroEnLocal: entregaUnificada.retiroEnLocal,
+            destinatarioNombre:
+              entregaUnificada.destinatarioNombre || datosFactura.nombreCompleto.trim(),
+            destinatarioTelefono:
+              entregaUnificada.destinatarioTelefono || datosFactura.telefono.trim(),
+            direccion: entregaUnificada.direccion,
+            referencia: entregaUnificada.referencia,
+            ciudad: entregaUnificada.ciudad,
+            fechaEntrega: entregaUnificada.fechaEntrega,
+            franjaHoraria: entregaUnificada.franjaHoraria,
+            horaExacta: entregaUnificada.horaExacta,
+            enlaceMapa: entregaUnificada.enlaceMapa,
+            lat: entregaUnificada.lat,
+            lng: entregaUnificada.lng,
+            zonaDetectadaNombre: entregaUnificada.zonaDetectadaNombre,
+            reglaLogisticaAplicada: entregaUnificada.reglaLogisticaAplicada,
+            distanciaVialKm: entregaUnificada.distanciaVialKm,
+            costoEnvioCalculado: totalFlete,
+            etiquetaCotizacion: entregaUnificada.etiquetaCotizacion,
+            formulaCalculoInterno: entregaUnificada.formulaCalculoInterno,
+            detalleDireccionGeo: entregaUnificada.detalleDireccionGeo ?? null,
+          }
+        : undefined,
+    items: items.map((it) => ({
+      productoId: it.producto.id,
+      productoNombre: it.producto.nombre,
+      varianteSku: it.variante.sku,
+      varianteNombre: it.variante.nombre,
+      cantidad: it.cantidad,
+      pvpUnitario: it.variante.pvp,
+      tarifaIva: it.variante.tarifaIva,
+      deliveryIncluidoProducto: it.producto.deliveryIncluido !== false,
+      recargoLogisticoUsd: it.producto.recargoLogisticoUsd || 0,
+      dedicatoria: it.dedicatoria
+        ? {
+            para: it.dedicatoria.para,
+            de: it.dedicatoria.de,
+            mensaje: it.dedicatoria.mensaje,
+          }
+        : undefined,
+      entregaIndividual: it.entregaIndividual
+        ? {
+            retiroEnLocal: it.entregaIndividual.retiroEnLocal,
+            destinatarioNombre: it.entregaIndividual.destinatarioNombre,
+            destinatarioTelefono: it.entregaIndividual.destinatarioTelefono,
+            direccion: it.entregaIndividual.direccion,
+            referencia: it.entregaIndividual.referencia,
+            ciudad: it.entregaIndividual.ciudad,
+            fechaEntrega: it.entregaIndividual.fechaEntrega,
+            franjaHoraria: it.entregaIndividual.franjaHoraria,
+            horaExacta: it.entregaIndividual.horaExacta,
+            enlaceMapa: it.entregaIndividual.enlaceMapa,
+            lat: it.entregaIndividual.lat,
+            lng: it.entregaIndividual.lng,
+            zonaDetectadaNombre: it.entregaIndividual.zonaDetectadaNombre,
+            reglaLogisticaAplicada: it.entregaIndividual.reglaLogisticaAplicada,
+            distanciaVialKm: it.entregaIndividual.distanciaVialKm,
+            costoEnvioCalculado: it.entregaIndividual.costoEnvioCalculado,
+            etiquetaCotizacion: it.entregaIndividual.etiquetaCotizacion,
+            formulaCalculoInterno: it.entregaIndividual.formulaCalculoInterno,
+            detalleDireccionGeo: it.entregaIndividual.detalleDireccionGeo ?? null,
+          }
+        : undefined,
+    })),
+    subtotalBaseImponible,
+    totalIva,
+    totalFlete,
+    totalRecargoHorarioExacto,
+    totalPagar,
+  });
+
+  const validarDatosFacturacion = (): string | null => {
+    if (datosFactura.nombreCompleto.trim().length < 3) {
+      return 'Ingresa el nombre completo o razón social para la factura.';
+    }
+    if (!/^[A-Za-z0-9]{5,20}$/.test(datosFactura.identificacion.trim())) {
+      return 'Ingresa una Cédula, RUC o Pasaporte válido (sin espacios ni guiones).';
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(datosFactura.correo.trim())) {
+      return 'Ingresa un correo electrónico válido para enviar tu factura.';
+    }
+    if (datosFactura.telefono.trim().length < 7) {
+      return 'Ingresa un número de WhatsApp o teléfono válido.';
+    }
+    return null;
+  };
+
+  const handlePrepararOrdenPlux = async () => {
+    setErrorPago(null);
+    const errorValidacion = validarDatosFacturacion();
+    if (errorValidacion) {
+      setErrorPago(errorValidacion);
+      return;
+    }
+
+    setPreparandoOrdenPlux(true);
+    try {
+      const resultado = await registrarPedidoTiendaAction(construirPayloadPedido('plux'));
+      if (!resultado.ok || !resultado.tokenAprobacion) {
+        setErrorPago(
+          !resultado.ok
+            ? resultado.error
+            : 'No se pudo generar el token seguro de orden para PLUX.'
+        );
+        return;
+      }
+
+      setOrdenPluxPreparada({
+        id: resultado.id,
+        codigoOrden: resultado.codigoOrden,
+        tokenAprobacion: resultado.tokenAprobacion,
+        huella: huellaActual,
+      });
+    } finally {
+      setPreparandoOrdenPlux(false);
+    }
+  };
+
+  const handleConfirmarTransferencia = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorPago(null);
+
+    if (metodoPago === 'plux') {
+      await handlePrepararOrdenPlux();
+      return;
+    }
+
+    const errorValidacion = validarDatosFacturacion();
+    if (errorValidacion) {
+      setErrorPago(errorValidacion);
+      return;
+    }
+
     setPaso('procesando');
-
-    const entregaTextoConfirmado =
-      modalidadEntrega === 'unificada'
-        ? entregaUnificada.retiroEnLocal
-          ? `Retiro en ${configLogistica.origenNombre} (${entregaUnificada.fechaEntrega})`
-          : `${entregaUnificada.zonaDetectadaNombre || entregaUnificada.ciudad || 'Domicilio'}${
-              configLogistica.mostrarKilometrosCliente !== false &&
-              typeof entregaUnificada.distanciaVialKm === 'number'
-                ? ` (${entregaUnificada.distanciaVialKm.toFixed(1)} km)`
-                : ''
-            } — ${entregaUnificada.fechaEntrega} (${entregaUnificada.franjaHoraria})`
-        : 'Multidestino individual';
-
-    const resultado = await registrarPedidoTiendaAction({
-      negocio: 'tinkay',
-      metodoPago,
-      comprador: {
-        nombreCompleto: datosFactura.nombreCompleto,
-        identificacion: datosFactura.identificacion,
-        correo: datosFactura.correo,
-        telefono: datosFactura.telefono,
-      },
-      modalidadEntrega,
-      entregaUnificada:
-        modalidadEntrega === 'unificada'
-          ? {
-              retiroEnLocal: entregaUnificada.retiroEnLocal,
-              destinatarioNombre: entregaUnificada.destinatarioNombre || datosFactura.nombreCompleto,
-              destinatarioTelefono: entregaUnificada.destinatarioTelefono || datosFactura.telefono,
-              direccion: entregaUnificada.direccion,
-              referencia: entregaUnificada.referencia,
-              ciudad: entregaUnificada.ciudad,
-              fechaEntrega: entregaUnificada.fechaEntrega,
-              franjaHoraria: entregaUnificada.franjaHoraria,
-              horaExacta: entregaUnificada.horaExacta,
-              enlaceMapa: entregaUnificada.enlaceMapa,
-              lat: entregaUnificada.lat,
-              lng: entregaUnificada.lng,
-              zonaDetectadaNombre: entregaUnificada.zonaDetectadaNombre,
-              reglaLogisticaAplicada: entregaUnificada.reglaLogisticaAplicada,
-              distanciaVialKm: entregaUnificada.distanciaVialKm,
-              costoEnvioCalculado: totalFlete,
-              etiquetaCotizacion: entregaUnificada.etiquetaCotizacion,
-              formulaCalculoInterno: entregaUnificada.formulaCalculoInterno,
-              detalleDireccionGeo: entregaUnificada.detalleDireccionGeo ?? null,
-            }
-          : undefined,
-      items: items.map((it) => ({
-        productoId: it.producto.id,
-        productoNombre: it.producto.nombre,
-        varianteSku: it.variante.sku,
-        varianteNombre: it.variante.nombre,
-        cantidad: it.cantidad,
-        pvpUnitario: it.variante.pvp,
-        tarifaIva: it.variante.tarifaIva,
-        deliveryIncluidoProducto: it.producto.deliveryIncluido !== false,
-        recargoLogisticoUsd: it.producto.recargoLogisticoUsd || 0,
-        dedicatoria: it.dedicatoria
-          ? {
-              para: it.dedicatoria.para,
-              de: it.dedicatoria.de,
-              mensaje: it.dedicatoria.mensaje,
-            }
-          : undefined,
-        entregaIndividual: it.entregaIndividual
-          ? {
-              retiroEnLocal: it.entregaIndividual.retiroEnLocal,
-              destinatarioNombre: it.entregaIndividual.destinatarioNombre,
-              destinatarioTelefono: it.entregaIndividual.destinatarioTelefono,
-              direccion: it.entregaIndividual.direccion,
-              referencia: it.entregaIndividual.referencia,
-              ciudad: it.entregaIndividual.ciudad,
-              fechaEntrega: it.entregaIndividual.fechaEntrega,
-              franjaHoraria: it.entregaIndividual.franjaHoraria,
-              horaExacta: it.entregaIndividual.horaExacta,
-              enlaceMapa: it.entregaIndividual.enlaceMapa,
-              lat: it.entregaIndividual.lat,
-              lng: it.entregaIndividual.lng,
-              zonaDetectadaNombre: it.entregaIndividual.zonaDetectadaNombre,
-              reglaLogisticaAplicada: it.entregaIndividual.reglaLogisticaAplicada,
-              distanciaVialKm: it.entregaIndividual.distanciaVialKm,
-              costoEnvioCalculado: it.entregaIndividual.costoEnvioCalculado,
-              etiquetaCotizacion: it.entregaIndividual.etiquetaCotizacion,
-              formulaCalculoInterno: it.entregaIndividual.formulaCalculoInterno,
-              detalleDireccionGeo: it.entregaIndividual.detalleDireccionGeo ?? null,
-            }
-          : undefined,
-      })),
-      subtotalBaseImponible,
-      totalIva,
-      totalFlete,
-      totalRecargoHorarioExacto,
-      totalPagar,
-    });
+    const resultado = await registrarPedidoTiendaAction(construirPayloadPedido('transferencia'));
 
     if (!resultado.ok) {
       setErrorPago(resultado.error);
@@ -163,6 +267,7 @@ export function ModalCheckoutTinkay() {
     setResumenExito({
       totalPagado: totalPagar,
       entregaTexto: entregaTextoConfirmado,
+      esTransferencia: true,
     });
     setCodigoOrdenGenerado(resultado.codigoOrden);
     setPaso('exito');
@@ -173,6 +278,7 @@ export function ModalCheckoutTinkay() {
     setCheckoutAbierto(false);
     setPaso('formulario');
     setErrorPago(null);
+    setOrdenPluxPreparada(null);
   };
 
   return (
@@ -187,6 +293,7 @@ export function ModalCheckoutTinkay() {
           type="button"
           className="btn-cerrar-modal"
           onClick={handleCerrar}
+          title="Cerrar ventana de pago"
           aria-label="Cerrar checkout"
         >
           <X size={20} />
@@ -195,8 +302,8 @@ export function ModalCheckoutTinkay() {
         {paso === 'procesando' && (
           <div className="pantalla-procesando-pago">
             <div className="spinner-botanico" />
-            <h3>Procesando transacción segura...</h3>
-            <p>Conectando con la pasarela oficial Payphone para Tinkay Floristería.</p>
+            <h3>Registrando tu pedido seguro...</h3>
+            <p>Conectando con la plataforma de Tinkay Floristería.</p>
           </div>
         )}
 
@@ -205,20 +312,32 @@ export function ModalCheckoutTinkay() {
             <div className="circulo-icono-exito">
               <CheckCircle2 size={54} />
             </div>
-            <span className="badge-exito">¡Pago Confirmado con Éxito!</span>
+            <span className="badge-exito">
+              {resumenExito?.esTransferencia ? '¡Pedido Reservado!' : '¡Pago Confirmado con Éxito!'}
+            </span>
             <h2>Gracias por tu compra en Tinkay</h2>
             <p className="codigo-orden-destacado">
               Orden de Taller: <strong>{codigoOrdenGenerado}</strong>
             </p>
             <p className="instrucciones-exito">
-              Hemos registrado tu pedido y enviado la factura electrónica a{' '}
-              <strong>{datosFactura.correo || 'tu correo'}</strong>. Nuestras maestras floristas han
-              iniciado la selección de flores frescas para el armado de tu arreglo.
+              {resumenExito?.esTransferencia ? (
+                <>
+                  Hemos reservado tu pedido y enviado el detalle a{' '}
+                  <strong>{datosFactura.correo || 'tu correo'}</strong>. Envía tu comprobante de
+                  transferencia por WhatsApp indicando la orden <strong>{codigoOrdenGenerado}</strong>.
+                </>
+              ) : (
+                <>
+                  Hemos acreditado tu pago con PLUX y enviado el comprobante a{' '}
+                  <strong>{datosFactura.correo || 'tu correo'}</strong>. Nuestro taller ha iniciado
+                  la preparación de tu orden.
+                </>
+              )}
             </p>
 
             <div className="tarjeta-resumen-confirmacion">
               <div className="fila-resumen-c">
-                <span>Total pagado:</span>
+                <span>{resumenExito?.esTransferencia ? 'Total de la orden:' : 'Total pagado:'}</span>
                 <strong>${(resumenExito?.totalPagado ?? totalPagar).toFixed(2)} USD</strong>
               </div>
               <div className="fila-resumen-c">
@@ -231,8 +350,10 @@ export function ModalCheckoutTinkay() {
               type="button"
               className="btn btn-primario btn-terminar-pedido"
               onClick={handleCerrar}
+              title="Cerrar y volver a la floristería"
+              aria-label="Volver a Tienda"
             >
-              Volver a la Floristería
+              Volver a Tienda
             </button>
           </div>
         )}
@@ -245,7 +366,7 @@ export function ModalCheckoutTinkay() {
                 <h2>Caja de Pago Seguro</h2>
                 <div className="sello-seguridad">
                   <ShieldCheck size={16} />
-                  <span>Transacción 256-bit SSL</span>
+                  <span>PLUX 256-bit SSL</span>
                 </div>
               </div>
 
@@ -253,20 +374,30 @@ export function ModalCheckoutTinkay() {
               <div className="pills-metodos-pago">
                 <button
                   type="button"
-                  className={`btn-metodo-pago ${metodoPago === 'payphone' ? 'activo' : ''}`}
-                  onClick={() => setMetodoPago('payphone')}
+                  className={`btn-metodo-pago ${metodoPago === 'plux' ? 'activo' : ''}`}
+                  onClick={() => {
+                    setMetodoPago('plux');
+                    setErrorPago(null);
+                  }}
+                  title="Pagar en línea con tarjeta de crédito o débito mediante PLUX"
+                  aria-label="Tarjeta PLUX"
                 >
                   <CreditCard size={18} />
                   <div>
-                    <strong>Payphone</strong>
-                    <small>Tarjetas Visa / Mastercard / Saldo</small>
+                    <strong>Tarjeta (PLUX)</strong>
+                    <small>Visa / Mastercard / Diners / Débito</small>
                   </div>
                 </button>
 
                 <button
                   type="button"
                   className={`btn-metodo-pago ${metodoPago === 'transferencia' ? 'activo' : ''}`}
-                  onClick={() => setMetodoPago('transferencia')}
+                  onClick={() => {
+                    setMetodoPago('transferencia');
+                    setErrorPago(null);
+                  }}
+                  title="Pagar mediante transferencia o depósito bancario"
+                  aria-label="Transferencia Bancaria"
                 >
                   <Building2 size={18} />
                   <div>
@@ -276,7 +407,7 @@ export function ModalCheckoutTinkay() {
                 </button>
               </div>
 
-              <form onSubmit={handlePagar} className="form-checkout-flujo">
+              <form onSubmit={handleConfirmarTransferencia} className="form-checkout-flujo">
                 {/* Datos de Factura SRI */}
                 <div className="grupo-campos-checkout">
                   <label className="titulo-seccion-form">
@@ -299,7 +430,10 @@ export function ModalCheckoutTinkay() {
                       required
                       value={datosFactura.identificacion}
                       onChange={(e) =>
-                        setDatosFactura({ ...datosFactura, identificacion: e.target.value })
+                        setDatosFactura({
+                          ...datosFactura,
+                          identificacion: e.target.value.replace(/[\s-]/g, ''),
+                        })
                       }
                       className="input-checkout"
                     />
@@ -327,71 +461,105 @@ export function ModalCheckoutTinkay() {
                 </div>
 
                 {/* Formulario según Método */}
-                {metodoPago === 'payphone' ? (
-                  <div className="grupo-campos-checkout payphone-box">
-                    <label className="titulo-seccion-form">
-                      2. Datos de Tarjeta de Crédito o Débito
+                {metodoPago === 'plux' ? (
+                  <div
+                    className="grupo-campos-checkout"
+                    style={{
+                      background: '#F8FAFC',
+                      border: '1px solid #E2E8F0',
+                      borderRadius: '14px',
+                      padding: '16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px',
+                    }}
+                  >
+                    <label className="titulo-seccion-form" style={{ marginBottom: 0 }}>
+                      2. Pasarela Oficial PagoPlux — Tinkay Floristería
                     </label>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: '0.82rem',
+                        color: '#475569',
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      Tus datos de tarjeta se ingresan directamente en la ventana cifrada de{' '}
+                      <strong>PLUX ({ambientePlux === 'PRODUCCION' ? 'Producción' : 'Sandbox'})</strong>{' '}
+                      y nunca pasan por nuestros servidores.
+                    </p>
 
-                    <div className="tarjeta-visual-simulada">
-                      <div className="chip-tarjeta-simulado" />
-                      <div className="numero-tarjeta-visual">
-                        {datosTarjeta.numero || '•••• •••• •••• ••••'}
-                      </div>
-                      <div className="pie-tarjeta-visual">
-                        <span>{datosFactura.nombreCompleto || 'TITULAR DE LA TARJETA'}</span>
-                        <span>{datosTarjeta.expiracion}</span>
-                      </div>
-                    </div>
-
-                    <div className="grid-dos-columnas">
-                      <input
-                        type="text"
-                        placeholder="Número de tarjeta (16 dígitos)"
-                        required
-                        value={datosTarjeta.numero}
-                        onChange={(e) =>
-                          setDatosTarjeta({ ...datosTarjeta, numero: e.target.value })
-                        }
-                        className="input-checkout input-col-2"
-                      />
-                      <input
-                        type="text"
-                        placeholder="MM/AA"
-                        required
-                        value={datosTarjeta.expiracion}
-                        onChange={(e) =>
-                          setDatosTarjeta({ ...datosTarjeta, expiracion: e.target.value })
-                        }
-                        className="input-checkout"
-                      />
-                      <input
-                        type="password"
-                        maxLength={4}
-                        placeholder="CVV"
-                        required
-                        value={datosTarjeta.cvv}
-                        onChange={(e) =>
-                          setDatosTarjeta({ ...datosTarjeta, cvv: e.target.value })
-                        }
-                        className="input-checkout"
-                      />
-
-                      <div className="selector-diferido-caja input-col-2">
-                        <label>Plazo de pago / Diferido:</label>
-                        <select
-                          value={datosTarjeta.diferido}
-                          onChange={(e) =>
-                            setDatosTarjeta({ ...datosTarjeta, diferido: e.target.value })
-                          }
-                          className="input-checkout"
+                    {!ordenPluxPreparada ? (
+                      <button
+                        type="button"
+                        onClick={handlePrepararOrdenPlux}
+                        disabled={preparandoOrdenPlux}
+                        className="btn btn-primario btn-confirmar-pago-grande"
+                        title="Validar datos de facturación y habilitar botón de pago seguro PLUX"
+                        aria-label="Continuar a PLUX"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '8px',
+                        }}
+                      >
+                        <Lock size={16} />
+                        <span>{preparandoOrdenPlux ? 'Preparando...' : 'Continuar a PLUX'}</span>
+                      </button>
+                    ) : (
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '10px',
+                          paddingTop: '4px',
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: '0.78rem',
+                            color: '#166534',
+                            background: '#DCFCE7',
+                            border: '1px solid #BBF7D0',
+                            padding: '8px 12px',
+                            borderRadius: '8px',
+                            fontWeight: 600,
+                          }}
                         >
-                          <option value="0">Corriente / Débito (1 pago)</option>
-                          <option value="3">3 Meses sin intereses</option>
-                          <option value="6">6 Meses sin intereses</option>
-                        </select>
+                          Orden lista ({ordenPluxPreparada.codigoOrden}) · Importe exacto:{' '}
+                          <strong>${totalPagar.toFixed(2)} USD</strong>
+                        </div>
+                        <BotonPagoPlux
+                          negocio="tinkay"
+                          proformaId={ordenPluxPreparada.id}
+                          tokenAprobacion={ordenPluxPreparada.tokenAprobacion}
+                          modalidadCobro="TOTAL_100"
+                          ambiente={ambientePlux}
+                          pagador={{
+                            nombre: datosFactura.nombreCompleto.trim(),
+                            identificacion: datosFactura.identificacion.trim(),
+                            email: datosFactura.correo.trim(),
+                            telefono: datosFactura.telefono.trim(),
+                            direccion:
+                              (modalidadEntrega === 'unificada' && entregaUnificada.direccion) ||
+                              'Quito, Ecuador',
+                          }}
+                          etiqueta={`Pagar $${totalPagar.toFixed(2)}`}
+                          alPagoAprobado={(_identificador: string, _pago: PagoPluxConsultado) => {
+                            setResumenExito({
+                              totalPagado: totalPagar,
+                              entregaTexto: entregaTextoConfirmado,
+                              esTransferencia: false,
+                            });
+                            setCodigoOrdenGenerado(ordenPluxPreparada.codigoOrden);
+                            setPaso('exito');
+                            vaciarCarrito();
+                          }}
+                        />
                       </div>
-                    </div>
+                    )}
                   </div>
                 ) : (
                   <div className="grupo-campos-checkout transferencia-box">
@@ -415,8 +583,8 @@ export function ModalCheckoutTinkay() {
                       </p>
                     </div>
                     <small className="aviso-transferencia">
-                      Al presionar &quot;Confirmar Pedido&quot;, reservaremos tus flores y te enviaremos
-                      el enlace de WhatsApp para subir tu comprobante de transferencia.
+                      Al presionar &quot;Confirmar Pedido&quot;, reservaremos tu orden y podrás
+                      enviar el comprobante de transferencia por WhatsApp.
                     </small>
                   </div>
                 )}
@@ -437,9 +605,16 @@ export function ModalCheckoutTinkay() {
                   </div>
                 )}
 
-                <button type="submit" className="btn btn-primario btn-confirmar-pago-grande">
-                  <span>Confirmar Pedido (${totalPagar.toFixed(2)})</span>
-                </button>
+                {metodoPago === 'transferencia' && (
+                  <button
+                    type="submit"
+                    className="btn btn-primario btn-confirmar-pago-grande"
+                    title={`Confirmar pedido por transferencia bancaria ($${totalPagar.toFixed(2)} USD)`}
+                    aria-label="Confirmar Pedido"
+                  >
+                    <span>Confirmar Pedido</span>
+                  </button>
+                )}
               </form>
             </div>
 

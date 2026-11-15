@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { describirEscalaVolumen } from '@eco/comercio';
 import { ProductoEcommerce, VarianteEcommerce } from '../tipos';
 import { useCarrito } from '../contexto-carrito';
-import { ChevronLeft, ChevronRight, Eye, ShoppingBag, Heart, Link2, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, ShoppingBag, FileText, Heart, Link2, Check } from 'lucide-react';
 
 interface Props {
   producto: ProductoEcommerce;
@@ -12,7 +12,12 @@ interface Props {
 }
 
 export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
-  const { agregarItem, setProductoSeleccionadoModal, obtenerEnlaceProducto } = useCarrito();
+  const {
+    agregarItem,
+    agregarItemProforma,
+    setProductoSeleccionadoModal,
+    obtenerEnlaceProducto,
+  } = useCarrito();
   const [fotoActualIndex, setFotoActualIndex] = useState(0);
   const obtenerVarianteBase = () =>
     (producto.varianteInicialSku
@@ -108,6 +113,26 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
     cambiarFotoCard(index);
   };
 
+  const esProductoRenta = Boolean(
+    producto.esRenta ||
+      producto.tipoOferta?.toUpperCase().includes('RENTA') ||
+      producto.tipoOferta?.toUpperCase().includes('ALQUILER') ||
+      (producto.etiquetas || []).some(
+        (et: string) => et.toLowerCase().includes('renta') || et.toLowerCase().includes('alquiler')
+      )
+  );
+
+  const esProductoEvento = Boolean(
+    !esProductoRenta &&
+      !producto.esExtra &&
+      !producto.esComplemento &&
+      (producto.esEvento === true ||
+        (producto.categoriaPrincipal || '').toLowerCase().includes('evento') ||
+        (producto.categoriaNombre || '').toLowerCase().includes('evento') ||
+        (producto.categoriaNombre || '').toLowerCase().includes('ceremonia') ||
+        (producto.tipoOferta || '').toUpperCase() === 'SERVICIO')
+  );
+
   const handleAgregar = (e: React.MouseEvent) => {
     e.stopPropagation();
     const prodParaCarrito: ProductoEcommerce = {
@@ -115,6 +140,10 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
       nombre: producto.nombre,
       fotos: varianteSeleccionada.foto ? [varianteSeleccionada.foto] : producto.fotos,
     };
+    if (esProductoEvento) {
+      agregarItemProforma(prodParaCarrito, varianteSeleccionada);
+      return;
+    }
     agregarItem(prodParaCarrito, varianteSeleccionada);
   };
 
@@ -161,7 +190,7 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
               </span>
             )
           )}
-          {producto.esRenta ? (
+          {esProductoRenta ? (
             <span
               className="chip-etiqueta"
               style={{
@@ -175,6 +204,18 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
               }
             >
               🪑 EN RENTA
+            </span>
+          ) : esProductoEvento ? (
+            <span
+              className="chip-etiqueta"
+              style={{
+                background: 'rgba(45, 71, 52, 0.92)',
+                color: '#FEF3C7',
+                border: '1px solid rgba(253, 224, 71, 0.45)',
+              }}
+              title="Producto de Eventos y Ceremonias bajo proforma personalizada"
+            >
+              ✨ EVENTOS
             </span>
           ) : (
             producto.entregaHoy && (
@@ -402,10 +443,23 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
               type="button"
               className="btn-agregar-rapido"
               onClick={handleAgregar}
-              title="Agregar este arreglo al carrito"
+              title={
+                esProductoEvento
+                  ? 'Agregar este elemento a mi proforma de evento'
+                  : 'Agregar este arreglo al carrito'
+              }
+              aria-label={esProductoEvento ? 'Agregar a proforma' : 'Agregar al carrito'}
+              style={
+                esProductoEvento
+                  ? {
+                      background: '#2D4734',
+                      color: '#FFFFFF',
+                    }
+                  : undefined
+              }
             >
-              <ShoppingBag size={16} />
-              <span>Agregar</span>
+              {esProductoEvento ? <FileText size={16} /> : <ShoppingBag size={16} />}
+              <span>{esProductoEvento ? 'Proforma' : 'Agregar'}</span>
             </button>
           </div>
         </div>

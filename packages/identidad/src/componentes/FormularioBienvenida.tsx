@@ -18,7 +18,7 @@ export function FormularioBienvenida({ nombresIniciales, apellidosIniciales, int
   const router = useRouter();
   const [nombres, setNombres] = useState(nombresIniciales);
   const [apellidos, setApellidos] = useState(apellidosIniciales);
-  const [autorizaWhatsapp, setAutorizaWhatsapp] = useState(false);
+  const [autorizaWhatsapp, setAutorizaWhatsapp] = useState(true);
   const [aceptaTerminosWhatsapp, setAceptaTerminosWhatsapp] = useState(false);
   const [modalWhatsappAbierto, setModalWhatsappAbierto] = useState(false);
   const [paisWhatsapp, setPaisWhatsapp] = useState<CountryCode>(PAIS_TELEFONO_DEFECTO);
@@ -98,23 +98,36 @@ export function FormularioBienvenida({ nombresIniciales, apellidosIniciales, int
             onChange={(e) => toggleAutorizaWhatsapp(e.target.checked)}
             style={{ width: "18px", height: "18px", accentColor: "#5000BA" }}
           />
-          <span>¿Podemos contactarte por WhatsApp?</span>
+          <span>Registrar mi WhatsApp para cotizaciones y seguimiento</span>
         </label>
       </div>
 
       {autorizaWhatsapp && (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px", background: "#F9FAFB", padding: "14px", borderRadius: "12px", border: "1px solid #E5E7EB", marginBottom: "12px" }}>
-          <div className="campo-telefono" style={{ margin: 0 }}>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center", width: "100%" }}>
             <select
               value={paisWhatsapp}
+              aria-label="Código de país de WhatsApp"
               onChange={(e) => {
                 setPaisWhatsapp(e.target.value as CountryCode);
                 setNumeroWhatsapp("");
               }}
+              style={{
+                width: "125px",
+                flexShrink: 0,
+                padding: "10px 8px",
+                borderRadius: "8px",
+                border: "1px solid #D1D5DB",
+                background: "#FFFFFF",
+                fontSize: "0.88rem",
+                fontWeight: 600,
+                color: "#111827",
+                margin: 0,
+              }}
             >
               {PAISES_TELEFONO.map((p) => (
                 <option key={p.codigo} value={p.codigo}>
-                  {p.prefijo} {p.nombre}
+                  {p.prefijo} {p.codigo}
                 </option>
               ))}
             </select>
@@ -122,35 +135,51 @@ export function FormularioBienvenida({ nombresIniciales, apellidosIniciales, int
               value={numeroWhatsapp}
               onChange={(e) => alCambiarNumero(e.target.value)}
               type="tel"
-              placeholder="Número de WhatsApp"
+              placeholder="Ej: 099 123 4567"
               autoComplete="tel-national"
+              style={{ flex: 1, minWidth: 0, margin: 0 }}
             />
           </div>
 
           <label
             style={{ display: "flex", alignItems: "flex-start", gap: "8px", cursor: "pointer", fontSize: "0.8rem", color: "#374151", fontWeight: 600 }}
-            onClick={(e) => {
-              e.preventDefault();
-              setModalWhatsappAbierto(true);
-            }}
           >
             <input
               type="checkbox"
               checked={aceptaTerminosWhatsapp}
-              readOnly
-              style={{ width: "16px", height: "16px", marginTop: "2px", accentColor: "#059669" }}
+              onChange={(e) => setAceptaTerminosWhatsapp(e.target.checked)}
+              style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0, accentColor: "#059669", cursor: "pointer" }}
             />
             <span>
-              Autorizo expresamente la{" "}
-              <span style={{ color: "#059669", fontWeight: 800, textDecoration: "underline" }}>
-                Cláusula LOPDP para Notificaciones y Contacto por WhatsApp
-              </span>
+              Autorizo que me contacten y envíen cotizaciones e información por WhatsApp conforme a la{" "}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setModalWhatsappAbierto(true);
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  color: "#059669",
+                  fontWeight: 800,
+                  textDecoration: "underline",
+                  cursor: "pointer",
+                  fontSize: "inherit",
+                  fontFamily: "inherit",
+                }}
+              >
+                Cláusula LOPDP de WhatsApp
+              </button>
+              .
             </span>
           </label>
 
           {!aceptaTerminosWhatsapp && (
             <p style={{ fontSize: "0.76rem", color: "#DC2626", fontWeight: 700, margin: 0 }}>
-              Debes autorizar la cláusula LOPDP para guardar tu teléfono de WhatsApp.
+              Marca la autorización LOPDP para guardar tu número de WhatsApp (o desmarca la opción si prefieres omitirlo).
             </p>
           )}
         </div>

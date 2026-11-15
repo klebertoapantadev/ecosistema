@@ -24,6 +24,7 @@ import {
   Check,
   Eye,
   Link2,
+  FileText,
 } from 'lucide-react';
 
 export function ModalDetalleProducto() {
@@ -31,6 +32,7 @@ export function ModalDetalleProducto() {
     productoSeleccionadoModal,
     setProductoSeleccionadoModal,
     agregarItem,
+    agregarItemProforma,
     productos,
     obtenerEnlaceProducto,
   } = useCarrito();
@@ -123,9 +125,24 @@ export function ModalDetalleProducto() {
     )
   );
 
+  // Detectar si el producto actual pertenece a Eventos y Ceremonias (flujo de Proforma)
+  const esProductoEvento = React.useMemo(() => {
+    if (!producto || esProductoRenta || producto.esExtra || producto.esComplemento) return false;
+    const catPrincipal = (producto.categoriaPrincipal || '').toLowerCase();
+    const catNombre = (producto.categoriaNombre || '').toLowerCase();
+    const tipoOferta = (producto.tipoOferta || '').toUpperCase();
+    return (
+      producto.esEvento === true ||
+      catPrincipal.includes('evento') ||
+      catNombre.includes('evento') ||
+      catNombre.includes('ceremonia') ||
+      tipoOferta === 'SERVICIO'
+    );
+  }, [producto, esProductoRenta]);
+
   // Detectar si el producto actual es de Condolencias & Funerarios
   const esProductoCondolencias = React.useMemo(() => {
-    if (!producto || esProductoRenta) return false;
+    if (!producto || esProductoRenta || esProductoEvento) return false;
     const catPrincipal = (producto.categoriaPrincipal || '').toLowerCase();
     const catNombre = (producto.categoriaNombre || '').toLowerCase();
     const secundarias = (producto.categoriasSecundarias || []).map((s: string) => s.toLowerCase());
@@ -144,7 +161,7 @@ export function ModalDetalleProducto() {
       usos.some((u: string) => u.includes('condol') || u.includes('duelo') || u.includes('pesame')) ||
       etiquetas.some((e: string) => e.includes('condol') || e.includes('duelo') || e.includes('fúnebre') || e.includes('funebre'))
     );
-  }, [producto, esProductoRenta]);
+  }, [producto, esProductoRenta, esProductoEvento]);
 
   // Helper para verificar si un producto Extra tiene uso "Condolencias"
   const tieneUsoCondolencias = (extra: ProductoEcommerce) => {
@@ -206,6 +223,42 @@ export function ModalDetalleProducto() {
       });
     }
 
+    // REGLA ESTRICTA EVENTOS: Para productos de eventos, ÚNICAMENTE sugerir otros productos de eventos (cero extras, cero cintas funerarias, cero renta).
+    if (esProductoEvento) {
+      return catalogo.filter((p) => {
+        if (
+          p.id === producto.id ||
+          (producto.proIdUuid && p.proIdUuid === producto.proIdUuid) ||
+          (producto.slug && p.slug === producto.slug)
+        ) {
+          return false;
+        }
+        if (p.esExtra || p.esComplemento) return false;
+        const catPrincipal = (p.categoriaPrincipal || '').toLowerCase();
+        const catNombre = (p.categoriaNombre || '').toLowerCase();
+        if (catPrincipal.includes('extra') || catNombre.includes('extra')) return false;
+
+        const esRentaItem = Boolean(
+          p.esRenta === true ||
+            p.tipoOferta?.toUpperCase().includes('RENTA') ||
+            p.tipoOferta?.toUpperCase().includes('ALQUILER') ||
+            (p.etiquetas || []).some(
+              (e: string) => e.toLowerCase().includes('renta') || e.toLowerCase().includes('alquiler')
+            )
+        );
+        if (esRentaItem) return false;
+
+        const esEventoItem = Boolean(
+          p.esEvento === true ||
+            catPrincipal.includes('evento') ||
+            catNombre.includes('evento') ||
+            catNombre.includes('ceremonia') ||
+            (p.tipoOferta || '').toUpperCase() === 'SERVICIO'
+        );
+        return esEventoItem;
+      });
+    }
+
     // Modalidad venta floral estándar:
     const extras = catalogo.filter((p) => {
       // Excluir artículos de renta del listado de extras florales
@@ -233,7 +286,7 @@ export function ModalDetalleProducto() {
       // Resto de productos: presenta Extras con uso DIFERENTE de "Condolencias"
       return extras.filter((extra) => !tieneUsoCondolencias(extra));
     }
-  }, [producto, esProductoRenta, esProductoCondolencias, productos]);
+  }, [producto, esProductoRenta, esProductoEvento, esProductoCondolencias, productos]);
 
   const toggleComplemento = (id: string) => {
     setComplementosSeleccionados((prev) =>
@@ -464,7 +517,11 @@ export function ModalDetalleProducto() {
           nombre: `Set Completo: ${resumenPiezas}`,
         };
 
-        agregarItem(productoSetCarrito, varianteSetCarrito, dedicatoriaActiva, undefined, 1);
+        if (esProductoEvento) {
+          agregarItemProforma(productoSetCarrito, varianteSetCarrito, 1);
+        } else {
+          agregarItem(productoSetCarrito, varianteSetCarrito, dedicatoriaActiva, undefined, 1);
+        }
       } else {
         if (resumenFinancieroCombo.totalPiezasPersonalizadas <= 0) return;
         let dedicatoriaAsignada = false;
@@ -481,14 +538,18 @@ export function ModalDetalleProducto() {
             nombre: tituloItem,
             fotos: fila.varElegida.foto ? [fila.varElegida.foto] : fila.prodHijo.fotos,
           };
-          agregarItem(
-            prodItemCarrito,
-            fila.varElegida,
-            !dedicatoriaAsignada ? dedicatoriaActiva : undefined,
-            undefined,
-            fila.cantidadElegida
-          );
-          dedicatoriaAsignada = true;
+          if (esProductoEvento) {
+            agregarItemProforma(prodItemCarrito, fila.varElegida, fila.cantidadElegida);
+          } else {
+            agregarItem(
+              prodItemCarrito,
+              fila.varElegida,
+              !dedicatoriaAsignada ? dedicatoriaActiva : undefined,
+              undefined,
+              fila.cantidadElegida
+            );
+            dedicatoriaAsignada = true;
+          }
         });
       }
     } else {
@@ -499,14 +560,18 @@ export function ModalDetalleProducto() {
         fotos: varianteSeleccionada.foto ? [varianteSeleccionada.foto] : producto.fotos,
       };
 
-      // 1. Agregar el arreglo principal con su variante, cantidad y dedicatoria
-      agregarItem(
-        productoParaCarrito,
-        varianteSeleccionada,
-        dedicatoriaActiva,
-        undefined,
-        cantidadModal
-      );
+      // 1. Agregar el arreglo principal con su variante, cantidad y dedicatoria (o a la Proforma si es Evento)
+      if (esProductoEvento) {
+        agregarItemProforma(productoParaCarrito, varianteSeleccionada, cantidadModal);
+      } else {
+        agregarItem(
+          productoParaCarrito,
+          varianteSeleccionada,
+          dedicatoriaActiva,
+          undefined,
+          cantidadModal
+        );
+      }
     }
 
     // 2. Agregar los complementos marcados con su variante elegida
@@ -515,7 +580,11 @@ export function ModalDetalleProducto() {
       if (prodComp) {
         const varComp = variantesExtrasElegidas[compId] || obtenerVarianteComplemento(prodComp);
         if (varComp) {
-          agregarItem(prodComp, varComp);
+          if (esProductoEvento) {
+            agregarItemProforma(prodComp, varComp, 1);
+          } else {
+            agregarItem(prodComp, varComp);
+          }
         }
       }
     });
@@ -1771,8 +1840,8 @@ export function ModalDetalleProducto() {
               </div>
             )}
 
-            {/* Tarjeta de Dedicatoria Personalizada Opcional (solo para productos físicos / florales, nunca en renta de mobiliario) */}
-            {!esProductoRenta && (
+            {/* Tarjeta de Dedicatoria Personalizada Opcional (solo para ramos/arreglos retail, nunca en renta ni en eventos bajo proforma) */}
+            {!esProductoRenta && !esProductoEvento && (
               <div className="bloque-dedicatoria-modal">
                 <div className="encabezado-dedicatoria-toggle">
                   <label className="etiqueta-check-dedicatoria">
@@ -1866,11 +1935,15 @@ export function ModalDetalleProducto() {
                   <label className="etiqueta-bloque">
                     {esProductoRenta
                       ? '¿Deseas agregar otro mobiliario o artículo en renta para tu evento?'
+                      : esProductoEvento
+                      ? '¿Deseas cotizar otros elementos decorativos para tu evento?'
                       : '2. ¿Deseas acompañar tu arreglo con algún detalle?'}
                   </label>
                   <span className="subtitulo-seccion-complementos">
                     {esProductoRenta
                       ? 'Complementa tu ambientación con otros elementos disponibles en modalidad de renta temporal (24h). Haz clic para ver fotos y detalles.'
+                      : esProductoEvento
+                      ? 'Selecciona otros arreglos, arcos o estructuras de eventos para incluirlos juntos en tu proforma.'
                       : 'Haz clic en cualquier producto para ver su fotografía ampliada y detalles completos antes de agregarlo.'}
                   </span>
                 </div>
@@ -2001,6 +2074,8 @@ export function ModalDetalleProducto() {
 
                 const etiquetaAccion = sinPiezasCombo
                   ? 'Elige 1 pieza'
+                  : esProductoEvento
+                  ? `Agregar a Proforma — $${totalBoton.toFixed(2)}`
                   : esComboActivo
                   ? usarSetCerradoBtn
                     ? `Agregar Set — $${totalBoton.toFixed(2)}`
@@ -2013,15 +2088,21 @@ export function ModalDetalleProducto() {
                     className="btn btn-primario btn-agregar-modal-grande"
                     onClick={handleAgregarAlCarrito}
                     disabled={sinPiezasCombo}
-                    title={etiquetaAccion}
-                    aria-label={etiquetaAccion}
+                    title={
+                      esProductoEvento
+                        ? 'Agregar este elemento a mi proforma de evento'
+                        : etiquetaAccion
+                    }
+                    aria-label={esProductoEvento ? 'Agregar a proforma' : etiquetaAccion}
                     style={
                       sinPiezasCombo
                         ? { opacity: 0.55, cursor: 'not-allowed' }
+                        : esProductoEvento
+                        ? { background: '#2D4734', borderColor: '#2D4734', color: '#FFFFFF' }
                         : undefined
                     }
                   >
-                    <ShoppingBag size={20} />
+                    {esProductoEvento ? <FileText size={20} /> : <ShoppingBag size={20} />}
                     <span>{etiquetaAccion}</span>
                   </button>
                 );
