@@ -6,26 +6,25 @@ import {
   Building2,
   ClipboardList,
   CreditCard,
+  FileCheck2,
   KeyRound,
   Mail,
+  Receipt,
   Settings,
   ShoppingBag,
   Sparkles,
   Truck,
   Users,
   MessageSquareHeart,
+  UserCheck,
   type LucideIcon,
 } from "lucide-react";
 import { obtenerMisProformasEventoAction } from "@eco/comercio";
 import { ListaMisProformasCliente } from "./AccionesProformaPanelCliente";
-import {
-  obtenerPerfilActual,
-  obtenerWidgetsVisibles,
-  obtenerSaludo,
-  obtenerPerfiles,
-} from "@eco/identidad";
+import { obtenerSaludo } from "@eco/identidad";
+import { obtenerContextoAccesoTinkay } from "./acceso-tinkay";
 
-export const metadata: Metadata = { title: "Panel de Control — Tinkay Floristería" };
+export const metadata: Metadata = { title: "Panel — Tinkay Floristería" };
 
 const NEGOCIO = "tinkay";
 
@@ -49,6 +48,15 @@ const MODULOS_TINKAY: Record<string, WidgetInfo> = {
     grupo: "operacion",
     etiqueta: "Taller / Envíos",
   },
+  facturacion_electronica: {
+    clave: "facturacion_electronica",
+    nombre: "Facturación Electrónica & Cobros",
+    descripcion: "Emisión automática con PLUX, liquidación de transferencias bancarias y descarga de RIDE SRI.",
+    ruta: "/panel/facturacion",
+    icono: Receipt,
+    grupo: "operacion",
+    etiqueta: "SRI / Pagos",
+  },
   catalogo_productos: {
     clave: "catalogo_productos",
     nombre: "Catálogo Comercial & Portafolio",
@@ -60,8 +68,8 @@ const MODULOS_TINKAY: Record<string, WidgetInfo> = {
   },
   gestion_usuarios: {
     clave: "gestion_usuarios",
-    nombre: "Gestión de Usuarios & Roles",
-    descripcion: "Asignación de membresías, roles de asesoras de ventas y permisos del taller floral.",
+    nombre: "Gestión de Usuarios, Invitaciones & Roles",
+    descripcion: "Envío de invitaciones por correo y asignación de roles (Ventas, Operador, Delivery, Administrador).",
     ruta: "/panel/usuarios",
     icono: Users,
     grupo: "operacion",
@@ -83,6 +91,15 @@ const MODULOS_TINKAY: Record<string, WidgetInfo> = {
     icono: Building2,
     grupo: "configuracion",
   },
+  configuracion_facturacion_sri: {
+    clave: "configuracion_facturacion_sri",
+    nombre: "Parámetros de Facturación SRI",
+    descripcion: "RUC, régimen RIMPE/General, serie 001-001, secuenciales y firma electrónica .p12 en Vault.",
+    ruta: "/panel/facturacion-sri",
+    icono: FileCheck2,
+    grupo: "configuracion",
+    etiqueta: "SRI / Firma .p12",
+  },
   configuracion_logistica: {
     clave: "configuracion_logistica",
     nombre: "Envíos, Zonas y Cobertura",
@@ -92,8 +109,8 @@ const MODULOS_TINKAY: Record<string, WidgetInfo> = {
     grupo: "configuracion",
     etiqueta: "Pichincha / GPS",
   },
-  pasarela_payphone: {
-    clave: "pasarela_payphone",
+  pasarelas_pago: {
+    clave: "pasarelas_pago",
     nombre: "Pasarela de Pagos (PLUX / Payphone)",
     descripcion: "Credenciales propias de Tinkay Floristería para cobros con tarjeta, abono 70% de eventos y webhook.",
     ruta: "/panel/pasarelas",
@@ -110,8 +127,8 @@ const MODULOS_TINKAY: Record<string, WidgetInfo> = {
     grupo: "configuracion",
     etiqueta: "Vault / IA",
   },
-  configuracion_correo: {
-    clave: "configuracion_correo",
+  servidor_correo: {
+    clave: "servidor_correo",
     nombre: "Servidor de Correo (SMTP)",
     descripcion: "Credenciales de despacho para códigos de seguridad, alertas y confirmaciones.",
     ruta: "/panel/correo",
@@ -128,54 +145,173 @@ const MODULOS_TINKAY: Record<string, WidgetInfo> = {
   },
 };
 
-export default async function PaginaPanel() {
-  const perfil = await obtenerPerfilActual(NEGOCIO);
-  const correo = perfil?.usu_correo?.toLowerCase().trim() || "";
-  const esSuperAdminEmail =
-    correo === "kleber.toapanta.ch@gmail.com" ||
-    correo === "familiammtg@gmail.com" ||
-    correo === "jesus251296@gmail.com" ||
-    correo === "tinkay.uio@gmail.com";
-  const esSuperAdmin = esSuperAdminEmail || Boolean(perfil?.usu_superadmin_plataforma);
+const DESCRIPCION_BANNER_POR_ROL: Record<string, { subtitulo: string; descripcion: string }> = {
+  SUPERADMIN: {
+    subtitulo: "Administración Tinkay",
+    descripcion:
+      "Centro de operaciones y configuración de Tinkay Floristería. Administra el catálogo floral, el equipo (Ventas, Operador, Delivery) y las integraciones.",
+  },
+  ADMINISTRADOR: {
+    subtitulo: "Administración Tinkay",
+    descripcion:
+      "Centro de operaciones y configuración de Tinkay Floristería. Administra el catálogo floral, el equipo (Ventas, Operador, Delivery) y las integraciones.",
+  },
+  OPERADOR: {
+    subtitulo: "Taller Floral & Operaciones",
+    descripcion:
+      "Gestiona la preparación de pedidos del taller floral, hoja de ruta, catálogo de arreglos y cobertura logística.",
+  },
+  VENTAS: {
+    subtitulo: "Portal Comercial & Ventas",
+    descripcion:
+      "Gestiona pedidos de tienda, proformas de eventos (variaciones V2/V3), catálogo floral y reseñas de clientes.",
+  },
+  DELIVERY: {
+    subtitulo: "Portal de Despachos & Delivery",
+    descripcion:
+      "Consulta los pedidos programados para entrega, destinatarios, horarios y abre la navegación GPS en Waze o Google Maps.",
+  },
+  CLIENTE: {
+    subtitulo: "Portal de Clientes · Tinkay",
+    descripcion:
+      "Consulta el historial de tus compras, revisa el estado de entrega de tus arreglos florales y gestiona tus proformas de eventos.",
+  },
+};
 
-  const [perfiles, widgets, resMisProformas] = perfil
-    ? await Promise.all([
-        obtenerPerfiles(NEGOCIO),
-        obtenerWidgetsVisibles(perfil.usu_id, esSuperAdmin, NEGOCIO),
-        obtenerMisProformasEventoAction(NEGOCIO),
-      ])
-    : [[], [], { ok: true as const, proformas: [] }];
+export default async function PaginaPanel() {
+  const ctx = await obtenerContextoAccesoTinkay();
+  const { perfil, rolPrincipal, esAdminTienda, esCliente, clavesAutorizadas } = ctx;
+
+  const resMisProformas = perfil
+    ? await obtenerMisProformasEventoAction(NEGOCIO)
+    : { ok: true as const, proformas: [] };
   const misProformas = resMisProformas.ok ? resMisProformas.proformas : [];
 
   const nombre = perfil?.usu_nombres || perfil?.usu_correo || "";
   const saludo = perfil ? await obtenerSaludo(perfil.usu_id, nombre, NEGOCIO) : null;
-  const esAdmin =
-    esSuperAdmin ||
-    perfiles.some((p) =>
-      ["ADMINISTRADOR", "SUPERADMIN", "OPERADOR"].includes(p.toUpperCase().trim())
-    ) ||
-    widgets.some((w) =>
-      ["gestion_usuarios", "catalogo_productos", "configuracion_negocio"].includes(w.wdg_clave)
+  const infoBanner = DESCRIPCION_BANNER_POR_ROL[rolPrincipal] ?? DESCRIPCION_BANNER_POR_ROL.CLIENTE!;
+
+  // Si es CLIENTE, mostrar exclusivamente su portal de cliente (Historial de Compras + Mis Proformas + Mi Cuenta)
+  if (esCliente) {
+    return (
+      <div
+        style={{
+          maxWidth: "1120px",
+          margin: "0 auto",
+          display: "flex",
+          flexDirection: "column",
+          gap: "28px",
+        }}
+      >
+        <div
+          style={{
+            background: "linear-gradient(135deg, #2D4334 0%, #1F2E24 100%)",
+            borderRadius: "16px",
+            padding: "28px 32px",
+            color: "#FFFFFF",
+            boxShadow: "0 8px 20px -6px rgba(31, 46, 36, 0.25)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+              flexWrap: "wrap",
+              gap: "16px",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  background: "rgba(255,255,255,0.12)",
+                  padding: "4px 11px",
+                  borderRadius: "999px",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  marginBottom: "10px",
+                }}
+              >
+                <Sparkles size={13} />
+                {infoBanner.subtitulo}
+              </div>
+              <h1 style={{ fontSize: "24px", fontWeight: 700, margin: "0 0 6px 0", color: "#FFFFFF" }}>
+                {saludo ?? `Hola, ${nombre}`}
+              </h1>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: "14px",
+                  color: "rgba(255,255,255,0.82)",
+                  maxWidth: "620px",
+                  lineHeight: 1.5,
+                }}
+              >
+                {infoBanner.descripcion}
+              </p>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+              <Link
+                href="/#catalogo"
+                title="Explorar el catálogo floral de la tienda"
+                aria-label="Tienda Floral"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "10px 16px",
+                  borderRadius: "10px",
+                  background: "#C27D5F",
+                  color: "#FFFFFF",
+                  textDecoration: "none",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                }}
+              >
+                <ShoppingBag size={15} />
+                <span>Tienda Floral</span>
+              </Link>
+              <Link
+                href="/panel/cuenta"
+                title="Ver mis datos personales y perfil"
+                aria-label="Mi Cuenta"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "10px 16px",
+                  borderRadius: "10px",
+                  background: "rgba(255, 255, 255, 0.12)",
+                  border: "1px solid rgba(255, 255, 255, 0.22)",
+                  color: "#FFFFFF",
+                  textDecoration: "none",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                }}
+              >
+                <UserCheck size={15} />
+                <span>Mi Cuenta</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        <ListaMisProformasCliente proformasIniciales={misProformas} mostrarSiempre={true} />
+      </div>
     );
-
-  const clavesVisibles = new Set<string>(["catalogo_productos"]);
-
-  if (esAdmin) {
-    Object.keys(MODULOS_TINKAY).forEach((k) => clavesVisibles.add(k));
-  } else {
-    widgets.forEach((w) => {
-      if (w.wdg_clave === "vitrina_comercial" || w.wdg_clave === "gestion_catalogo") {
-        clavesVisibles.add("catalogo_productos");
-      } else if (w.wdg_clave === "configuracion_pasarela") {
-        clavesVisibles.add("pasarela_payphone");
-      } else if (MODULOS_TINKAY[w.wdg_clave]) {
-        clavesVisibles.add(w.wdg_clave);
-      }
-    });
   }
 
-  const modulosDisponibles = Object.values(MODULOS_TINKAY).filter((m) =>
-    clavesVisibles.has(m.clave)
+  // Vista para Personal de Tienda (DELIVERY, VENTAS, OPERADOR, ADMINISTRADOR, SUPERADMIN)
+  const modulosDisponibles = Object.values(MODULOS_TINKAY).filter(
+    (m) =>
+      clavesAutorizadas.has(m.clave) ||
+      (esAdminTienda &&
+        (m.clave === "facturacion_electronica" || m.clave === "configuracion_facturacion_sri"))
   );
   const modulosOperacion = modulosDisponibles.filter((m) => m.grupo === "operacion");
   const modulosConfiguracion = modulosDisponibles.filter((m) => m.grupo === "configuracion");
@@ -218,17 +354,16 @@ export default async function PaginaPanel() {
               }}
             >
               <Sparkles size={13} />
-              Administración Tinkay
+              {infoBanner.subtitulo}
             </div>
             <h1 style={{ fontSize: "24px", fontWeight: 700, margin: "0 0 6px 0", color: "#FFFFFF" }}>
               {saludo ?? `Hola, ${nombre}`}
             </h1>
             <p style={{ margin: 0, fontSize: "14px", color: "rgba(255,255,255,0.82)", maxWidth: "600px", lineHeight: 1.5 }}>
-              Centro de operaciones y configuración de Tinkay Floristería. Administra el catálogo floral,
-              el equipo de ventas y las integraciones de atención automatizada.
+              {infoBanner.descripcion}
             </p>
           </div>
-          {modulosConfiguracion.length > 0 && (
+          {esAdminTienda && modulosConfiguracion.length > 0 && (
             <Link
               href="/panel/configuracion"
               style={{
@@ -252,7 +387,7 @@ export default async function PaginaPanel() {
         </div>
       </div>
 
-      {/* Mis Proformas de Eventos y Pedidos del Cliente */}
+      {/* Mis Proformas de Eventos y Pedidos personales si tuviese */}
       <ListaMisProformasCliente proformasIniciales={misProformas} />
 
       {/* Grupo 1: Operación Comercial */}
@@ -368,7 +503,7 @@ function TarjetaModuloPanel({ mod }: { mod: WidgetInfo }) {
           color: "#18181B",
         }}
       >
-        Configurar
+        Abrir
         <ArrowRight size={14} />
       </div>
     </Link>

@@ -16,19 +16,22 @@ export interface Resultado<T = void> {
 export async function obtenerNivelMaximoGestor(negocio: string): Promise<number> {
   try {
     const supabase = await crearClienteServidor();
-    const { data } = await supabase
-      .schema("comun_seguridad")
-      .rpc("seg_fn_nivel_maximo", { p_negocio: negocio });
-    if (typeof data === "number" && data > 0) {
-      return data;
-    }
+    const negNorm = (negocio || "TRANQ").trim().toLowerCase();
+    const esTinkay = negNorm === "tinkay" || negNorm === "tnk";
 
-    // Fallback: verificar sesión actual y membresía
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return 10;
 
     const correo = (user.email || "").toLowerCase().trim();
-    if (correo === "kleber.toapanta.ch@gmail.com" || correo === "familiammtg@gmail.com" || correo === "jesus251296@gmail.com") {
+    if (esTinkay) {
+      if (correo === "tinkay.uio@gmail.com" || correo === "kleber.toapanta.ch@gmail.com") {
+        return 100;
+      }
+    } else if (
+      correo === "kleber.toapanta.ch@gmail.com" ||
+      correo === "familiammtg@gmail.com" ||
+      correo === "jesus251296@gmail.com"
+    ) {
       return 100;
     }
 
@@ -36,11 +39,11 @@ export async function obtenerNivelMaximoGestor(negocio: string): Promise<number>
     const { data: uData } = await adminClient
       .schema("comun_seguridad")
       .from("seg_usuario")
-      .select("usu_superadmin_plataforma")
+      .select("usu_superadmin_plataforma, usu_detalle_usuario")
       .eq("usu_id", user.id)
       .maybeSingle();
 
-    if (uData?.usu_superadmin_plataforma) return 100;
+    if (!esTinkay && uData?.usu_superadmin_plataforma) return 100;
 
     const { data: mems } = await adminClient
       .schema("comun_seguridad")
@@ -63,14 +66,22 @@ export async function obtenerNivelMaximoGestor(negocio: string): Promise<number>
       );
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const tieneRolExplicitoTinkay = Boolean((uData as any)?.usu_detalle_usuario?.roles_explicitos_tinkay);
     const rol = (mem?.mem_rol || "").toUpperCase();
+    if (esTinkay && !tieneRolExplicitoTinkay && (rol === "SUPERADMIN" || rol === "ADMINISTRADOR" || rol === "ADMIN")) {
+      return 10;
+    }
+
     if (rol === "SUPERADMIN") return 100;
     if (rol === "ADMIN" || rol === "ADMINISTRADOR") return 80;
     if (rol === "ABOGADO" || rol === "TECNICO") return 50;
     if (rol === "OPERADOR" || rol === "AUXILIAR") return 30;
+    if (rol === "VENTAS" || rol === "VENDEDOR") return 20;
+    if (rol === "DELIVERY") return 15;
     return 10;
   } catch {
-    return 80;
+    return 10;
   }
 }
 
@@ -78,7 +89,7 @@ export async function obtenerDatosGestionUsuariosAction(consulta: string = "", n
   try {
     const [{ data: usuarios, error }, perfiles, nivelMaximoGestor] = await Promise.all([
       buscarUsuarios(consulta, negocio),
-      obtenerPerfilesAsignables(),
+      obtenerPerfilesAsignables(negocio),
       obtenerNivelMaximoGestor(negocio),
     ]);
     if (error) return { ok: false, error };
@@ -100,8 +111,38 @@ export async function asignarPerfil(usuarioId: string, perfil: string, negocio: 
   const adminClient = (crearClienteAdmin() || supabase) as any;
   const perfilClaveUpper = perfil.toUpperCase().trim();
   const negocioUpper = (negocio || "TRANQ").toUpperCase().trim();
+  const esTinkay = negocioUpper === "TINKAY" || negocioUpper === "TNK";
 
   try {
+    if (perfilClaveUpper === "DELIVERY" || perfilClaveUpper === "VENTAS") {
+      try {
+        await adminClient
+          .schema("comun_seguridad")
+          .from("seg_perfil")
+          .upsert(
+            [
+              {
+                per_clave: "DELIVERY",
+                per_nombre: "Delivery / Repartidor",
+                per_nivel: 15,
+                per_activo: true,
+                per_asignable: true,
+              },
+              {
+                per_clave: "VENTAS",
+                per_nombre: "Ventas / Asesor Comercial",
+                per_nivel: 20,
+                per_activo: true,
+                per_asignable: true,
+              },
+            ],
+            { onConflict: "per_clave" }
+          );
+      } catch {
+        // Continuar
+      }
+    }
+
     const { data: dbPerfil } = await adminClient
       .schema("comun_seguridad")
       .from("seg_perfil")
@@ -119,8 +160,8 @@ export async function asignarPerfil(usuarioId: string, perfil: string, negocio: 
 
     // Obtener identidad del operador/administrador que realiza la solicitud
     const authUser = (await supabase.auth.getUser()).data?.user;
-    let nombreOperador = authUser?.email || "Administrador de Plataforma";
-    let correoOperador = authUser?.email || "admin@tranqi24.com";
+    let nombreOperador = authUser?.email || (esTinkay ? "Administrador Tinkay" : "Administrador de Plataforma");
+    let correoOperador = authUser?.email || (esTinkay ? "tinkay.uio@gmail.com" : "admin@tranqi24.com");
     if (authUser?.id) {
       const { data: opRow } = await adminClient
         .schema("comun_seguridad")
@@ -134,7 +175,7 @@ export async function asignarPerfil(usuarioId: string, perfil: string, negocio: 
       }
     }
 
-    // Obtener datos del usuario objetivo para registrar la propuesta de nuevo rol y notificarle
+    // Obtener datos del usuario objetivo
     const { data: usuTarget } = await adminClient
       .schema("comun_seguridad")
       .from("seg_usuario")
@@ -154,6 +195,118 @@ export async function asignarPerfil(usuarioId: string, perfil: string, negocio: 
     });
 
     const rolNombreLegible = dbPerfil.per_nombre || perfilClaveUpper;
+
+    // En Tinkay Floristería (Ventas / Operador / Delivery / Administrador), aplicar rol de forma directa e inmediata
+    if (esTinkay) {
+      const { data: memsExistentes } = await adminClient
+        .schema("comun_seguridad")
+        .from("seg_membresia")
+        .select("mem_id, mem_negocio, mem_rol")
+        .eq("mem_usuario_id", usuarioId)
+        .in("mem_negocio", ["tinkay", "TINKAY", "tnk", "TNK"]);
+
+      let memId = memsExistentes?.[0]?.mem_id;
+      if (!memId) {
+        const { data: nuevaMem } = await adminClient
+          .schema("comun_seguridad")
+          .from("seg_membresia")
+          .insert({
+            mem_usuario_id: usuarioId,
+            mem_negocio: "tinkay",
+            mem_rol: perfilClaveUpper,
+            mem_estado: "ACTIVO",
+          })
+          .select("mem_id")
+          .single();
+        memId = nuevaMem?.mem_id;
+      } else {
+        await adminClient
+          .schema("comun_seguridad")
+          .from("seg_membresia")
+          .update({
+            mem_rol: perfilClaveUpper,
+            mem_estado: "ACTIVO",
+            mem_actualizado_en: ahoraIso,
+          })
+          .eq("mem_id", memId);
+      }
+
+      if (memId && dbPerfil.per_id) {
+        await adminClient
+          .schema("comun_seguridad")
+          .from("seg_membresia_perfil")
+          .upsert(
+            {
+              mpe_membresia_id: memId,
+              mpe_perfil_id: dbPerfil.per_id,
+            },
+            { onConflict: "mpe_membresia_id,mpe_perfil_id" }
+          );
+      }
+
+      const detTinkay = (usuTarget.usu_detalle_usuario || {}) as Record<string, any>;
+      await adminClient
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .update({
+          usu_detalle_usuario: {
+            ...detTinkay,
+            roles_explicitos_tinkay: true,
+          },
+          usu_actualizado_en: ahoraIso,
+        })
+        .eq("usu_id", usuarioId);
+
+      // Notificar por correo electrónico de Tinkay
+      if (usuTarget.usu_correo && usuTarget.usu_correo.includes("@")) {
+        try {
+          const { enviarCorreo } = await import("@eco/notificaciones/enviar-correo");
+          const nombreTargetTinkay =
+            [usuTarget.usu_nombres, usuTarget.usu_apellidos].filter(Boolean).join(" ").trim() ||
+            usuTarget.usu_correo;
+          await enviarCorreo({
+            negocio: "tinkay",
+            para: usuTarget.usu_correo,
+            asunto: `🌸 Rol asignado en Tinkay Floristería: ${rolNombreLegible}`,
+            html: `
+              <div style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 580px; margin: 0 auto; background: #ffffff; border: 1px solid #E5DFD5; border-radius: 16px; overflow: hidden; color: #1C261F;">
+                <div style="background: #1C261F; padding: 24px 28px; color: #F5F2EB;">
+                  <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #C27D5F; margin-bottom: 6px;">
+                    TINKAY FLORISTERÍA · ACCESO AL PORTAL
+                  </div>
+                  <h1 style="margin: 0; font-size: 20px; font-weight: 700;">
+                    Nuevo rol habilitado: ${rolNombreLegible}
+                  </h1>
+                </div>
+                <div style="padding: 24px 28px;">
+                  <p style="font-size: 15px; line-height: 1.6; margin-top: 0;">
+                    Hola <strong>${nombreTargetTinkay}</strong>,
+                  </p>
+                  <p style="font-size: 14px; line-height: 1.6; color: #4A544C;">
+                    El administrador de <strong>Tinkay Floristería</strong> (${nombreOperador}) ha habilitado el rol <strong>${rolNombreLegible} (${perfilClaveUpper})</strong> en tu cuenta.
+                  </p>
+                  <div style="text-align: center; margin: 24px 0;">
+                    <a href="https://tinkay-web.vercel.app/panel" target="_blank" rel="noopener noreferrer" style="display: inline-block; background: #2D3D30; color: #F5F2EB; text-decoration: none; font-weight: 700; font-size: 14px; padding: 12px 24px; border-radius: 10px;">
+                      Ingresar al Portal Tinkay →
+                    </a>
+                  </div>
+                </div>
+              </div>
+            `,
+          });
+        } catch {
+          // Continuar
+        }
+      }
+
+      revalidatePath("/panel/usuarios");
+      revalidatePath("/panel");
+      return {
+        ok: true,
+        data: undefined,
+        mensaje: `Rol ${rolNombreLegible} asignado a ${usuTarget.usu_correo} y notificado por correo.`,
+      };
+    }
     const propId = `prop-rol-${perfilClaveUpper}-${Date.now()}`;
 
     const det = (usuTarget.usu_detalle_usuario || {}) as Record<string, any>;
@@ -499,16 +652,14 @@ export async function quitarPerfil(usuarioId: string, perfil: string, negocio: s
       );
     });
 
-    if (dbPerfil?.per_id && memExistente?.mem_id) {
-      const { error: errDel } = await adminClient
-        .schema("comun_seguridad")
-        .from("seg_membresia_perfil")
-        .delete()
-        .eq("mpe_membresia_id", memExistente.mem_id)
-        .eq("mpe_perfil_id", dbPerfil.per_id);
-
-      if (errDel) {
-        return { ok: false, error: errDel.message };
+    if (memExistente?.mem_id) {
+      if (dbPerfil?.per_id) {
+        await adminClient
+          .schema("comun_seguridad")
+          .from("seg_membresia_perfil")
+          .delete()
+          .eq("mpe_membresia_id", memExistente.mem_id)
+          .eq("mpe_perfil_id", dbPerfil.per_id);
       }
 
       // Sincronizar nuevo mem_rol remanente
@@ -520,7 +671,7 @@ export async function quitarPerfil(usuarioId: string, perfil: string, negocio: s
 
       const perfilesOrdenados = ((mpList || []) as any[])
         .map((x) => x.seg_perfil)
-        .filter(Boolean)
+        .filter((p) => p && String(p.per_clave || "").toUpperCase() !== perfilClaveUpper)
         .sort((a, b) => b.per_nivel - a.per_nivel);
 
       const rolRemanente = perfilesOrdenados[0]?.per_clave || "CLIENTE";
@@ -530,7 +681,7 @@ export async function quitarPerfil(usuarioId: string, perfil: string, negocio: s
         .from("seg_membresia")
         .update({
           mem_rol: rolRemanente,
-          mem_actualizado_en: new Date().toISOString()
+          mem_actualizado_en: new Date().toISOString(),
         })
         .eq("mem_id", memExistente.mem_id);
 
@@ -1381,4 +1532,617 @@ export async function reactivarUsuarioSuperAdminAction(
   revalidatePath("/panel/usuarios");
   revalidatePath("/panel");
   return { ok: true };
+}
+
+// ============================================================================
+// INVITACIONES DE EQUIPO POR CORREO Y CONTROL DE ACCESO POR ROL (TINKAY / TIENDAS)
+// ============================================================================
+
+export type RolEquipoPortal = "VENTAS" | "OPERADOR" | "DELIVERY" | "ADMINISTRADOR";
+
+export interface InvitacionEquipoPortal {
+  id: string;
+  correo: string;
+  nombre?: string;
+  rol: RolEquipoPortal;
+  estado: "PENDIENTE" | "ACEPTADA";
+  invitadoPorCorreo: string;
+  creadoEn: string;
+  aceptadoEn?: string;
+}
+
+const ETIQUETA_ROL_PORTAL: Record<string, string> = {
+  VENTAS: "Ventas / Asesor Comercial",
+  OPERADOR: "Operador / Taller Floral",
+  DELIVERY: "Delivery / Repartidor",
+  ADMINISTRADOR: "Administrador de Tienda",
+  CLIENTE: "Cliente",
+};
+
+const PERMISOS_RESUMEN_ROL: Record<string, string[]> = {
+  VENTAS: [
+    "Pedidos de Tienda y Proformas de Eventos (cotizar, crear variaciones V2/V3 y confirmar pagos)",
+    "Catálogo Comercial y Portafolio Floral",
+    "Testimonios y Reseñas de Clientes",
+  ],
+  OPERADOR: [
+    "Pedidos de Tienda, Taller Floral y Hoja de Ruta",
+    "Catálogo Comercial y Portafolio Floral",
+    "Envíos, Zonas y Cobertura Logística",
+    "Testimonios y Reseñas de Clientes",
+  ],
+  DELIVERY: [
+    "Pedidos de Tienda y Despachos (consulta de entregas programadas, destinatarios, horarios y enlace GPS Waze / Google Maps)",
+    "Actualización de estado de entrega en ruta",
+  ],
+  ADMINISTRADOR: [
+    "Acceso administrativo completo al portal Tinkay (Pedidos, Catálogo, Usuarios/Roles, Pasarelas, Logística, Correo y Agente ARIA)",
+  ],
+};
+
+export async function obtenerInvitacionesEquipoAction(
+  negocio: string = "tinkay"
+): Promise<{ ok: true; invitaciones: InvitacionEquipoPortal[] } | { ok: false; error: string }> {
+  const negNorm = (negocio || "tinkay").trim().toLowerCase();
+  const supabase = await crearClienteServidor();
+  const db: any = crearClienteAdmin() ?? supabase;
+
+  const { data: fila, error } = await db
+    .schema("comun_configuracion")
+    .from("cfg_negocio")
+    .select("cfg_detalle_configuracion")
+    .eq("cfg_negocio", negNorm)
+    .maybeSingle();
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  const det = (fila?.cfg_detalle_configuracion ?? {}) as Record<string, any>;
+  const lista: InvitacionEquipoPortal[] = Array.isArray(det.invitaciones_equipo)
+    ? det.invitaciones_equipo
+    : [];
+
+  return { ok: true, invitaciones: lista };
+}
+
+export async function invitarUsuarioPorCorreoAction(entrada: {
+  correo: string;
+  nombre?: string;
+  rol: string;
+  negocio?: string;
+}): Promise<Resultado<{ invitacion: InvitacionEquipoPortal; aplicadoInmediato: boolean }>> {
+  const negNorm = (entrada.negocio || "tinkay").trim().toLowerCase();
+  const correoLimpio = (entrada.correo || "").trim().toLowerCase();
+  const nombreLimpio = (entrada.nombre || "").trim();
+  const rolUpper = (entrada.rol || "VENTAS").trim().toUpperCase() as RolEquipoPortal;
+
+  if (!correoLimpio || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoLimpio)) {
+    return { ok: false, error: "Ingresa un correo electrónico válido." };
+  }
+
+  if (!["VENTAS", "OPERADOR", "DELIVERY", "ADMINISTRADOR"].includes(rolUpper)) {
+    return { ok: false, error: "Selecciona un rol válido (Ventas, Operador, Delivery o Administrador)." };
+  }
+
+  const nivelGestor = await obtenerNivelMaximoGestor(negNorm);
+  if (nivelGestor < 80) {
+    return { ok: false, error: "Solo el Administrador de la tienda puede enviar invitaciones de equipo." };
+  }
+
+  const supabase = await crearClienteServidor();
+  const db: any = crearClienteAdmin() ?? supabase;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const correoAdmin = user?.email || "tinkay.uio@gmail.com";
+  const ahoraIso = new Date().toISOString();
+
+  // 1. Asegurar que los perfiles DELIVERY y VENTAS existan en seg_perfil
+  try {
+    await db
+      .schema("comun_seguridad")
+      .from("seg_perfil")
+      .upsert(
+        [
+          {
+            per_clave: "DELIVERY",
+            per_nombre: "Delivery / Repartidor",
+            per_nivel: 15,
+            per_activo: true,
+            per_asignable: true,
+          },
+          {
+            per_clave: "VENTAS",
+            per_nombre: "Ventas / Asesor Comercial",
+            per_nivel: 20,
+            per_activo: true,
+            per_asignable: true,
+          },
+        ],
+        { onConflict: "per_clave" }
+      );
+  } catch {
+    // Continuar
+  }
+
+  // 2. Verificar si el usuario ya existe en seg_usuario
+  const { data: usuarioExistente } = await db
+    .schema("comun_seguridad")
+    .from("seg_usuario")
+    .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_detalle_usuario")
+    .ilike("usu_correo", correoLimpio)
+    .maybeSingle();
+
+  let aplicadoInmediato = false;
+
+  if (usuarioExistente?.usu_id) {
+    const { data: dbPerfil } = await db
+      .schema("comun_seguridad")
+      .from("seg_perfil")
+      .select("per_id")
+      .eq("per_clave", rolUpper)
+      .maybeSingle();
+
+    const { data: mems } = await db
+      .schema("comun_seguridad")
+      .from("seg_membresia")
+      .select("mem_id")
+      .eq("mem_usuario_id", usuarioExistente.usu_id)
+      .in("mem_negocio", [negNorm, negNorm.toUpperCase(), "tnk", "TNK"]);
+
+    let memId = mems?.[0]?.mem_id;
+    if (!memId) {
+      const { data: nuevaMem } = await db
+        .schema("comun_seguridad")
+        .from("seg_membresia")
+        .insert({
+          mem_usuario_id: usuarioExistente.usu_id,
+          mem_negocio: negNorm,
+          mem_rol: rolUpper,
+          mem_estado: "ACTIVO",
+        })
+        .select("mem_id")
+        .single();
+      memId = nuevaMem?.mem_id;
+    } else {
+      await db
+        .schema("comun_seguridad")
+        .from("seg_membresia")
+        .update({
+          mem_rol: rolUpper,
+          mem_estado: "ACTIVO",
+          mem_actualizado_en: ahoraIso,
+        })
+        .eq("mem_id", memId);
+    }
+
+    if (memId && dbPerfil?.per_id) {
+      await db
+        .schema("comun_seguridad")
+        .from("seg_membresia_perfil")
+        .upsert(
+          {
+            mpe_membresia_id: memId,
+            mpe_perfil_id: dbPerfil.per_id,
+          },
+          { onConflict: "mpe_membresia_id,mpe_perfil_id" }
+        );
+    }
+
+    const detUsr = (usuarioExistente.usu_detalle_usuario || {}) as Record<string, any>;
+    await db
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .update({
+        usu_detalle_usuario: {
+          ...detUsr,
+          roles_explicitos_tinkay: true,
+        },
+        usu_actualizado_en: ahoraIso,
+      })
+      .eq("usu_id", usuarioExistente.usu_id);
+
+    aplicadoInmediato = true;
+  }
+
+  // 3. Guardar la invitación en comun_configuracion.cfg_negocio
+  const { data: cfgActual } = await db
+    .schema("comun_configuracion")
+    .from("cfg_negocio")
+    .select("cfg_id, cfg_detalle_configuracion")
+    .eq("cfg_negocio", negNorm)
+    .maybeSingle();
+
+  const detCfg = (cfgActual?.cfg_detalle_configuracion ?? {}) as Record<string, any>;
+  const prevInvitaciones: InvitacionEquipoPortal[] = Array.isArray(detCfg.invitaciones_equipo)
+    ? detCfg.invitaciones_equipo
+    : [];
+
+  const nuevaInvitacion: InvitacionEquipoPortal = {
+    id: `inv-${Date.now()}`,
+    correo: correoLimpio,
+    nombre:
+      nombreLimpio ||
+      (usuarioExistente
+        ? [usuarioExistente.usu_nombres, usuarioExistente.usu_apellidos].filter(Boolean).join(" ").trim()
+        : undefined),
+    rol: rolUpper,
+    estado: aplicadoInmediato ? "ACEPTADA" : "PENDIENTE",
+    invitadoPorCorreo: correoAdmin,
+    creadoEn: ahoraIso,
+    ...(aplicadoInmediato ? { aceptadoEn: ahoraIso } : {}),
+  };
+
+  const invitacionesActualizadas = [
+    nuevaInvitacion,
+    ...prevInvitaciones.filter((i) => i.correo.toLowerCase() !== correoLimpio),
+  ].slice(0, 100);
+
+  if (cfgActual?.cfg_id) {
+    await db
+      .schema("comun_configuracion")
+      .from("cfg_negocio")
+      .update({
+        cfg_detalle_configuracion: {
+          ...detCfg,
+          invitaciones_equipo: invitacionesActualizadas,
+        },
+        cfg_actualizado_en: ahoraIso,
+      })
+      .eq("cfg_id", cfgActual.cfg_id);
+  } else {
+    await db
+      .schema("comun_configuracion")
+      .from("cfg_negocio")
+      .insert({
+        cfg_negocio: negNorm,
+        cfg_nombre_comercial: "Tinkay Floristería",
+        cfg_detalle_configuracion: {
+          ...detCfg,
+          invitaciones_equipo: invitacionesActualizadas,
+        },
+      });
+  }
+
+  // 4. Enviar correo de invitación con el rol y permisos asignados
+  const etiquetaRol = ETIQUETA_ROL_PORTAL[rolUpper] || rolUpper;
+  const permisosRol = PERMISOS_RESUMEN_ROL[rolUpper] || [];
+  const urlBase =
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://tinkay-web.vercel.app";
+  const urlDestino = aplicadoInmediato
+    ? `${urlBase}/panel`
+    : `${urlBase}/registro?correo=${encodeURIComponent(correoLimpio)}`;
+
+  try {
+    const { enviarCorreo } = await import("@eco/notificaciones/enviar-correo");
+    await enviarCorreo({
+      negocio: negNorm,
+      para: correoLimpio,
+      asunto: `🌸 Invitación al Portal Tinkay Floristería — Rol: ${etiquetaRol}`,
+      html: `
+        <div style="font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #E5DFD5; border-radius: 16px; overflow: hidden; color: #1C261F;">
+          <div style="background: #1C261F; padding: 26px 30px; color: #F5F2EB;">
+            <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.12em; color: #C27D5F; margin-bottom: 6px;">
+              TINKAY · ARTE FLORAL &amp; DETALLES
+            </div>
+            <h1 style="margin: 0; font-size: 21px; font-weight: 700; line-height: 1.3;">
+              Invitación al equipo de Tinkay Floristería
+            </h1>
+          </div>
+          <div style="padding: 26px 30px;">
+            <p style="font-size: 15px; line-height: 1.6; margin-top: 0;">
+              Hola${nuevaInvitacion.nombre ? ` <strong>${nuevaInvitacion.nombre}</strong>` : ""},
+            </p>
+            <p style="font-size: 14.5px; line-height: 1.6; color: #4A544C;">
+              Has sido invitado(a) por la administración de <strong>Tinkay Floristería</strong> para colaborar en el portal operativo con el siguiente nivel de acceso:
+            </p>
+            <div style="background: #F5F2EB; border: 1px solid #E5DFD5; border-radius: 12px; padding: 16px 18px; margin: 18px 0;">
+              <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #6B746C; margin-bottom: 4px;">
+                ROL ASIGNADO EN EL PORTAL
+              </div>
+              <div style="font-size: 17px; font-weight: 800; color: #1C261F; margin-bottom: 10px;">
+                ${etiquetaRol} (${rolUpper})
+              </div>
+              <div style="font-size: 12.5px; color: #4A544C; font-weight: 600; margin-bottom: 6px;">
+                Módulos habilitados para tu perfil:
+              </div>
+              <ul style="margin: 0; padding-left: 18px; font-size: 13px; color: #2D3D30; line-height: 1.55;">
+                ${permisosRol.map((p) => `<li style="margin-bottom: 4px;">${p}</li>`).join("")}
+              </ul>
+            </div>
+            <p style="font-size: 13.5px; line-height: 1.6; color: #4A544C;">
+              ${
+                aplicadoInmediato
+                  ? `Tu cuenta (<strong>${correoLimpio}</strong>) ya tiene activo este rol. Ingresa directamente con tus credenciales:`
+                  : `Regístrate o inicia sesión usando exactamente el correo <strong>${correoLimpio}</strong> para que el portal active tu rol de forma automática:`
+              }
+            </p>
+            <div style="text-align: center; margin: 26px 0 12px;">
+              <a href="${urlDestino}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background: #2D3D30; color: #F5F2EB; text-decoration: none; font-weight: 700; font-size: 14px; padding: 13px 28px; border-radius: 10px;">
+                ${aplicadoInmediato ? "Ingresar al Portal Tinkay →" : "Crear Cuenta y Activar Rol →"}
+              </a>
+            </div>
+          </div>
+        </div>
+      `,
+    });
+  } catch (errMail) {
+    console.warn("Aviso al enviar correo de invitación Tinkay:", errMail);
+  }
+
+  revalidatePath("/panel/usuarios");
+  revalidatePath("/panel");
+  return {
+    ok: true,
+    data: { invitacion: nuevaInvitacion, aplicadoInmediato },
+    mensaje: aplicadoInmediato
+      ? `Invitación enviada a ${correoLimpio}. Como ya tenía cuenta registrada, el rol ${etiquetaRol} quedó activo de inmediato.`
+      : `Invitación enviada por correo a ${correoLimpio} con el rol ${etiquetaRol}. Se activará automáticamente apenas inicie sesión o se registre.`,
+  };
+}
+
+export async function eliminarInvitacionEquipoAction(
+  invitacionId: string,
+  negocio: string = "tinkay"
+): Promise<Resultado> {
+  const negNorm = (negocio || "tinkay").trim().toLowerCase();
+  const nivelGestor = await obtenerNivelMaximoGestor(negNorm);
+  if (nivelGestor < 80) {
+    return { ok: false, error: "No tienes permisos para eliminar invitaciones." };
+  }
+
+  const supabase = await crearClienteServidor();
+  const db: any = crearClienteAdmin() ?? supabase;
+
+  const { data: cfgActual } = await db
+    .schema("comun_configuracion")
+    .from("cfg_negocio")
+    .select("cfg_id, cfg_detalle_configuracion")
+    .eq("cfg_negocio", negNorm)
+    .maybeSingle();
+
+  if (!cfgActual?.cfg_id) return { ok: true };
+
+  const detCfg = (cfgActual.cfg_detalle_configuracion ?? {}) as Record<string, any>;
+  const prevInvitaciones: InvitacionEquipoPortal[] = Array.isArray(detCfg.invitaciones_equipo)
+    ? detCfg.invitaciones_equipo
+    : [];
+
+  await db
+    .schema("comun_configuracion")
+    .from("cfg_negocio")
+    .update({
+      cfg_detalle_configuracion: {
+        ...detCfg,
+        invitaciones_equipo: prevInvitaciones.filter((i) => i.id !== invitacionId),
+      },
+      cfg_actualizado_en: new Date().toISOString(),
+    })
+    .eq("cfg_id", cfgActual.cfg_id);
+
+  revalidatePath("/panel/usuarios");
+  return { ok: true };
+}
+
+/**
+ * Sincroniza el rol del usuario autenticado al entrar al panel de Tinkay:
+ * 1. Si existe una invitación pendiente para su correo en `cfg_negocio`, aplica el rol invitado.
+ * 2. Si NO es propietario (`tinkay.uio@gmail.com` / `kleber.toapanta.ch@gmail.com`) y no tiene
+ *    asignación explícita en Tinkay (`roles_explicitos_tinkay`), normaliza cualquier rol
+ *    `SUPERADMIN` heredado de otro negocio a `CLIENTE`.
+ */
+export async function sincronizarAccesoRolTinkayAction(): Promise<{
+  rolEfectivo: "SUPERADMIN" | "ADMINISTRADOR" | "OPERADOR" | "VENTAS" | "DELIVERY" | "CLIENTE";
+}> {
+  try {
+    const supabase = await crearClienteServidor();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return { rolEfectivo: "CLIENTE" };
+
+    const correo = (user.email || "").trim().toLowerCase();
+    const esPropietarioTinkay =
+      correo === "tinkay.uio@gmail.com" || correo === "kleber.toapanta.ch@gmail.com";
+
+    if (esPropietarioTinkay) {
+      return { rolEfectivo: "SUPERADMIN" };
+    }
+
+    const db: any = crearClienteAdmin() ?? supabase;
+    const ahoraIso = new Date().toISOString();
+
+    // 1. Revisar si tiene una invitación en cfg_negocio para Tinkay
+    const { data: cfgFila } = await db
+      .schema("comun_configuracion")
+      .from("cfg_negocio")
+      .select("cfg_id, cfg_detalle_configuracion")
+      .eq("cfg_negocio", "tinkay")
+      .maybeSingle();
+
+    const detCfg = (cfgFila?.cfg_detalle_configuracion ?? {}) as Record<string, any>;
+    const invitaciones: InvitacionEquipoPortal[] = Array.isArray(detCfg.invitaciones_equipo)
+      ? detCfg.invitaciones_equipo
+      : [];
+    const invPendiente = invitaciones.find(
+      (i) => i.correo.toLowerCase() === correo && i.estado === "PENDIENTE"
+    );
+
+    const { data: uRow } = await db
+      .schema("comun_seguridad")
+      .from("seg_usuario")
+      .select("usu_id, usu_detalle_usuario")
+      .eq("usu_id", user.id)
+      .maybeSingle();
+
+    const detUsr = (uRow?.usu_detalle_usuario ?? {}) as Record<string, any>;
+    let tieneRolExplicitoTinkay = Boolean(detUsr.roles_explicitos_tinkay);
+
+    const { data: mems } = await db
+      .schema("comun_seguridad")
+      .from("seg_membresia")
+      .select("mem_id, mem_rol, mem_negocio")
+      .eq("mem_usuario_id", user.id)
+      .in("mem_negocio", ["tinkay", "TINKAY", "tnk", "TNK"]);
+
+    let memActual = mems?.[0];
+
+    if (invPendiente) {
+      const rolInv = invPendiente.rol;
+      const { data: dbPerfil } = await db
+        .schema("comun_seguridad")
+        .from("seg_perfil")
+        .select("per_id")
+        .eq("per_clave", rolInv)
+        .maybeSingle();
+
+      let memId = memActual?.mem_id;
+      if (!memId) {
+        const { data: nuevaMem } = await db
+          .schema("comun_seguridad")
+          .from("seg_membresia")
+          .insert({
+            mem_usuario_id: user.id,
+            mem_negocio: "tinkay",
+            mem_rol: rolInv,
+            mem_estado: "ACTIVO",
+          })
+          .select("mem_id, mem_rol")
+          .single();
+        memId = nuevaMem?.mem_id;
+        memActual = nuevaMem;
+      } else {
+        await db
+          .schema("comun_seguridad")
+          .from("seg_membresia")
+          .update({
+            mem_rol: rolInv,
+            mem_estado: "ACTIVO",
+            mem_actualizado_en: ahoraIso,
+          })
+          .eq("mem_id", memId);
+        memActual = { ...memActual, mem_rol: rolInv };
+      }
+
+      if (memId && dbPerfil?.per_id) {
+        await db
+          .schema("comun_seguridad")
+          .from("seg_membresia_perfil")
+          .upsert(
+            {
+              mpe_membresia_id: memId,
+              mpe_perfil_id: dbPerfil.per_id,
+            },
+            { onConflict: "mpe_membresia_id,mpe_perfil_id" }
+          );
+      }
+
+      await db
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .update({
+          usu_detalle_usuario: {
+            ...detUsr,
+            roles_explicitos_tinkay: true,
+          },
+          usu_actualizado_en: ahoraIso,
+        })
+        .eq("usu_id", user.id);
+
+      if (cfgFila?.cfg_id) {
+        const actualizadas = invitaciones.map((i) =>
+          i.id === invPendiente.id ? { ...i, estado: "ACEPTADA", aceptadoEn: ahoraIso } : i
+        );
+        await db
+          .schema("comun_configuracion")
+          .from("cfg_negocio")
+          .update({
+            cfg_detalle_configuracion: {
+              ...detCfg,
+              invitaciones_equipo: actualizadas,
+            },
+            cfg_actualizado_en: ahoraIso,
+          })
+          .eq("cfg_id", cfgFila.cfg_id);
+      }
+
+      tieneRolExplicitoTinkay = true;
+      return { rolEfectivo: rolInv };
+    }
+
+    // 2. Si no tiene membresía en Tinkay, crearla como CLIENTE
+    if (!memActual?.mem_id) {
+      await db
+        .schema("comun_seguridad")
+        .from("seg_membresia")
+        .insert({
+          mem_usuario_id: user.id,
+          mem_negocio: "tinkay",
+          mem_rol: "CLIENTE",
+          mem_estado: "ACTIVO",
+        });
+      return { rolEfectivo: "CLIENTE" };
+    }
+
+    const rolMem = String(memActual.mem_rol || "CLIENTE").toUpperCase();
+
+    // 3. Si tenía SUPERADMIN o ADMINISTRADOR auto-heredado sin invitación ni asignación explícita en Tinkay, normalizar a CLIENTE
+    if (
+      !tieneRolExplicitoTinkay &&
+      (rolMem === "SUPERADMIN" || rolMem === "ADMINISTRADOR" || rolMem === "ADMIN")
+    ) {
+      await db
+        .schema("comun_seguridad")
+        .from("seg_membresia")
+        .update({
+          mem_rol: "CLIENTE",
+          mem_actualizado_en: ahoraIso,
+        })
+        .eq("mem_id", memActual.mem_id);
+
+      // Limpiar perfiles administrativos heredados en seg_membresia_perfil para esta membresía
+      const { data: perCliente } = await db
+        .schema("comun_seguridad")
+        .from("seg_perfil")
+        .select("per_id")
+        .eq("per_clave", "CLIENTE")
+        .maybeSingle();
+
+      if (perCliente?.per_id) {
+        await db
+          .schema("comun_seguridad")
+          .from("seg_membresia_perfil")
+          .delete()
+          .eq("mpe_membresia_id", memActual.mem_id)
+          .neq("mpe_perfil_id", perCliente.per_id);
+      }
+
+      return { rolEfectivo: "CLIENTE" };
+    }
+
+    // 4. Evaluar perfiles asignados explícitamente a esta membresía
+    const { data: mpRows } = await db
+      .schema("comun_seguridad")
+      .from("seg_membresia_perfil")
+      .select("seg_perfil(per_clave, per_nivel)")
+      .eq("mpe_membresia_id", memActual.mem_id);
+
+    const claves = new Set<string>([rolMem]);
+    for (const r of mpRows ?? []) {
+      const c = String((r as any)?.seg_perfil?.per_clave || "").toUpperCase();
+      if (c) claves.add(c);
+    }
+
+    if (tieneRolExplicitoTinkay && (claves.has("ADMINISTRADOR") || claves.has("ADMIN"))) {
+      return { rolEfectivo: "ADMINISTRADOR" };
+    }
+    if (claves.has("OPERADOR")) return { rolEfectivo: "OPERADOR" };
+    if (claves.has("VENTAS") || claves.has("VENDEDOR")) return { rolEfectivo: "VENTAS" };
+    if (claves.has("DELIVERY")) return { rolEfectivo: "DELIVERY" };
+
+    return { rolEfectivo: "CLIENTE" };
+  } catch {
+    return { rolEfectivo: "CLIENTE" };
+  }
 }

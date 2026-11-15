@@ -104,6 +104,14 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     href: "/panel/configuracion?widget=pasarela_payphone",
     origen: "Configurar"
   },
+  configuracion_facturacion_sri: {
+    id: "configuracion_facturacion_sri",
+    titulo: "Parámetros Facturación SRI",
+    subtitulo: "RUC, régimen RIMPE/General, serie 001-001, secuenciales y firma electrónica .p12 en Vault",
+    icono: FileCheck,
+    href: "/panel/configuracion?widget=configuracion_facturacion_sri",
+    origen: "Configurar"
+  },
   perfil: {
     id: "perfil",
     titulo: "Perfil & Datos de Contacto",

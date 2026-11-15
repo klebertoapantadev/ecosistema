@@ -7,9 +7,15 @@ export {
   resetearSistemaSuperAdminAction,
   guardarConfiguracionPanelesPerfilAction,
   obtenerConfiguracionNavegacionRolAction,
-  obtenerConfiguracionTodosPerfilesAction
+  obtenerConfiguracionTodosPerfilesAction,
+  obtenerInvitacionesEquipoAction,
+  invitarUsuarioPorCorreoAction,
+  eliminarInvitacionEquipoAction,
+  sincronizarAccesoRolTinkayAction,
 } from "./acciones";
+export type { InvitacionEquipoPortal, RolEquipoPortal } from "./acciones";
 export { FilaUsuario } from "./componentes/FilaUsuario";
+export { FormularioInvitacionEquipo } from "./componentes/FormularioInvitacionEquipo";
 export { AdministracionPerfilesWidget } from "./componentes/AdministracionPerfilesWidget";
 export { ConsultaUsuariosPerfilesWidget } from "./componentes/ConsultaUsuariosPerfilesWidget";
 export * from "./matriz-roles";

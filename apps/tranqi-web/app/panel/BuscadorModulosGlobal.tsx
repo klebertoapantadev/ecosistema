@@ -143,6 +143,16 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     colorIcono: "#D97706"
   },
   {
+    clave: "configuracion_facturacion_sri",
+    nombre: "Parámetros de Facturación Electrónica SRI (.p12)",
+    detalle: "Configuración de RUC, razón social, régimen RIMPE/General, serie 001-001, secuenciales y certificado .p12 en Supabase Vault",
+    ruta: "/panel/configuracion?widget=configuracion_facturacion_sri",
+    categoria: "Comercio & Pagos",
+    minNivel: 80,
+    icono: FileCheck,
+    colorIcono: "#059669"
+  },
+  {
     clave: "configuracion_aria",
     nombre: "Agente Conversacional ARIA",
     detalle: "Parámetros ARIA_BASE, ARIA_AGENT_ID y claves en Supabase Vault propios de este negocio",

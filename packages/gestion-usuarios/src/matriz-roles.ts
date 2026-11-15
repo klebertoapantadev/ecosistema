@@ -62,7 +62,7 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
       panel_administrar: ["pedidos_tienda", "testimonios_clientes", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
-      panel_configuracion: ["configuracion_negocio", "configuracion_logistica", "configuracion_correo", "configuracion_aria", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
+      panel_configuracion: ["configuracion_negocio", "configuracion_facturacion_sri", "configuracion_logistica", "configuracion_correo", "configuracion_aria", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
     }
   },
   SUPERADMIN: {
@@ -78,7 +78,7 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
       panel_administrar: ["pedidos_tienda", "testimonios_clientes", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
-      panel_configuracion: ["configuracion_negocio", "configuracion_logistica", "configuracion_correo", "configuracion_aria", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
+      panel_configuracion: ["configuracion_negocio", "configuracion_facturacion_sri", "configuracion_logistica", "configuracion_correo", "configuracion_aria", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
     }
   }
 };

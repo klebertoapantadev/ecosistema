@@ -2,21 +2,19 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { SelloCompilacion } from "@eco/primitivas";
 import {
-  obtenerPerfilActual,
-  obtenerWidgetsVisibles,
   cerrarSesion,
   asegurarMembresiaCliente,
-  obtenerPerfiles,
 } from "@eco/identidad";
 import {
   NavegacionPanelLateral,
   type ItemNavegacionPanel,
 } from "@eco/configuracion-negocio";
 import { crearClienteServidor } from "@eco/supabase/servidor";
+import { obtenerContextoAccesoTinkay } from "./acceso-tinkay";
 
 const NEGOCIO = "tinkay";
 
-const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel & { soloAdmin?: boolean }> = [
+const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel> = [
   {
     clave: "resumen",
     nombre: "Resumen del Panel",
@@ -30,7 +28,13 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel & { soloAdmin?: boolean }> 
     ruta: "/panel/pedidos",
     icono: "pedidos",
     grupo: "operacion",
-    soloAdmin: true,
+  },
+  {
+    clave: "facturacion_electronica",
+    nombre: "Facturación Electrónica",
+    ruta: "/panel/facturacion",
+    icono: "facturacion",
+    grupo: "operacion",
   },
   {
     clave: "catalogo_productos",
@@ -38,7 +42,6 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel & { soloAdmin?: boolean }> 
     ruta: "/panel/catalogo-productos",
     icono: "catalogo",
     grupo: "operacion",
-    soloAdmin: false,
   },
   {
     clave: "gestion_usuarios",
@@ -46,7 +49,6 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel & { soloAdmin?: boolean }> 
     ruta: "/panel/usuarios",
     icono: "usuarios",
     grupo: "operacion",
-    soloAdmin: true,
   },
   {
     clave: "testimonios_clientes",
@@ -54,7 +56,6 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel & { soloAdmin?: boolean }> 
     ruta: "/panel/testimonios",
     icono: "testimonios",
     grupo: "operacion",
-    soloAdmin: true,
   },
   {
     clave: "configuracion_negocio",
@@ -62,7 +63,13 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel & { soloAdmin?: boolean }> 
     ruta: "/panel/configuracion",
     icono: "negocio",
     grupo: "configuracion",
-    soloAdmin: true,
+  },
+  {
+    clave: "configuracion_facturacion_sri",
+    nombre: "Facturación SRI",
+    ruta: "/panel/facturacion-sri",
+    icono: "facturacion_sri",
+    grupo: "configuracion",
   },
   {
     clave: "configuracion_logistica",
@@ -70,15 +77,13 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel & { soloAdmin?: boolean }> 
     ruta: "/panel/logistica",
     icono: "logistica",
     grupo: "configuracion",
-    soloAdmin: true,
   },
   {
-    clave: "pasarela_payphone",
+    clave: "pasarelas_pago",
     nombre: "Pasarela de Pagos",
     ruta: "/panel/pasarelas",
     icono: "pasarelas",
     grupo: "configuracion",
-    soloAdmin: true,
   },
   {
     clave: "configuracion_aria",
@@ -86,15 +91,13 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel & { soloAdmin?: boolean }> 
     ruta: "/panel/aria",
     icono: "aria",
     grupo: "configuracion",
-    soloAdmin: true,
   },
   {
-    clave: "configuracion_correo",
+    clave: "servidor_correo",
     nombre: "Servidor de Correo",
     ruta: "/panel/correo",
     icono: "correo",
     grupo: "configuracion",
-    soloAdmin: true,
   },
   {
     clave: "tokens_mcp",
@@ -102,7 +105,6 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel & { soloAdmin?: boolean }> 
     ruta: "/panel/tokens-mcp",
     icono: "tokens",
     grupo: "configuracion",
-    soloAdmin: true,
   },
   {
     clave: "cuenta",
@@ -113,17 +115,50 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel & { soloAdmin?: boolean }> 
   },
 ];
 
-export default async function LayoutPanel({ children }: { children: React.ReactNode }) {
-  const perfil = await obtenerPerfilActual(NEGOCIO);
-  if (!perfil) redirect("/ingresar");
+const CATALOGO_NAV_CLIENTE_TINKAY: Array<ItemNavegacionPanel> = [
+  {
+    clave: "resumen",
+    nombre: "Mis Compras y Proformas",
+    ruta: "/panel",
+    icono: "pedidos",
+    grupo: "operacion",
+  },
+  {
+    clave: "tienda_floral",
+    nombre: "Catálogo de la Tienda",
+    ruta: "/#catalogo",
+    icono: "catalogo",
+    grupo: "operacion",
+  },
+  {
+    clave: "cotizar_evento",
+    nombre: "Cotizar un Evento",
+    ruta: "/#eventos",
+    icono: "resumen",
+    grupo: "operacion",
+  },
+  {
+    clave: "cuenta",
+    nombre: "Mi Cuenta",
+    ruta: "/panel/cuenta",
+    icono: "cuenta",
+    grupo: "cuenta",
+  },
+];
 
-  const correo = perfil.usu_correo?.toLowerCase().trim() || "";
-  const esSuperAdminEmail =
-    correo === "kleber.toapanta.ch@gmail.com" ||
-    correo === "familiammtg@gmail.com" ||
-    correo === "jesus251296@gmail.com" ||
-    correo === "tinkay.uio@gmail.com";
-  const esSuperAdmin = esSuperAdminEmail || Boolean(perfil.usu_superadmin_plataforma);
+const COLOR_BADGE_ROL: Record<string, { bg: string; color: string }> = {
+  SUPERADMIN: { bg: "#C27D5F", color: "#FFFFFF" },
+  ADMINISTRADOR: { bg: "#3D5A45", color: "#FFFFFF" },
+  OPERADOR: { bg: "#15803D", color: "#FFFFFF" },
+  VENTAS: { bg: "#1D4ED8", color: "#FFFFFF" },
+  DELIVERY: { bg: "#B45309", color: "#FFFFFF" },
+  CLIENTE: { bg: "rgba(255, 255, 255, 0.14)", color: "#F5F2EB" },
+};
+
+export default async function LayoutPanel({ children }: { children: React.ReactNode }) {
+  const ctx = await obtenerContextoAccesoTinkay();
+  const { perfil, rolPrincipal, etiquetaRol, esSuperAdmin, esAdminTienda, esCliente, clavesAutorizadas } = ctx;
+  if (!perfil) redirect("/ingresar");
 
   // Aislamiento estricto: si la sesión viene de otro negocio sin membresía en Tinkay, exigir ingreso/registro propio
   if (!perfil.tiene_membresia_negocio && !esSuperAdmin) {
@@ -140,43 +175,16 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
     await asegurarMembresiaCliente(supabase, perfil.usu_id, NEGOCIO);
   }
 
-  const perfiles = await obtenerPerfiles(NEGOCIO);
-  const widgets = await obtenerWidgetsVisibles(perfil.usu_id, esSuperAdmin, NEGOCIO);
+  const navItemsVisibles: ItemNavegacionPanel[] = esCliente
+    ? CATALOGO_NAV_CLIENTE_TINKAY
+    : CATALOGO_NAV_TINKAY.filter(
+        (m) =>
+          clavesAutorizadas.has(m.clave) ||
+          (esAdminTienda &&
+            (m.clave === "facturacion_electronica" || m.clave === "configuracion_facturacion_sri"))
+      );
 
-  const esAdmin =
-    esSuperAdmin ||
-    perfiles.some((p) =>
-      ["ADMINISTRADOR", "SUPERADMIN", "OPERADOR"].includes(p.toUpperCase().trim())
-    ) ||
-    widgets.some((w) =>
-      ["gestion_usuarios", "catalogo_productos", "configuracion_negocio"].includes(w.wdg_clave)
-    );
-
-  const clavesAutorizadas = new Set<string>(["resumen", "catalogo_productos", "cuenta"]);
-
-  if (esAdmin) {
-    CATALOGO_NAV_TINKAY.forEach((m) => clavesAutorizadas.add(m.clave));
-  } else {
-    for (const w of widgets) {
-      if (w.wdg_clave === "vitrina_comercial" || w.wdg_clave === "gestion_catalogo") {
-        clavesAutorizadas.add("catalogo_productos");
-      } else if (w.wdg_clave === "configuracion_pasarela") {
-        clavesAutorizadas.add("pasarela_payphone");
-      } else if (CATALOGO_NAV_TINKAY.some((m) => m.clave === w.wdg_clave)) {
-        clavesAutorizadas.add(w.wdg_clave);
-      }
-    }
-  }
-
-  const navItemsVisibles: ItemNavegacionPanel[] = CATALOGO_NAV_TINKAY.filter((m) =>
-    clavesAutorizadas.has(m.clave)
-  ).map(({ clave, nombre, ruta, icono, grupo }) => ({
-    clave,
-    nombre,
-    ruta,
-    icono,
-    grupo,
-  }));
+  const estiloBadge = COLOR_BADGE_ROL[rolPrincipal] ?? COLOR_BADGE_ROL.CLIENTE!;
 
   return (
     <div className="panel-layout">
@@ -225,7 +233,7 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
           }}
         >
           <span className="nombre-usuario-activo" style={{ fontSize: "0.86rem", color: "#FFFFFF" }}>
-            {[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ") || "Administrador"}
+            {[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ") || etiquetaRol}
           </span>
           <span
             className="correo-usuario-activo"
@@ -247,16 +255,15 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
               flexWrap: "wrap",
             }}
           >
-            {esSuperAdmin ? (
-              <span className="etiqueta-superadmin">SuperAdmin</span>
-            ) : esAdmin ? (
-              <span
-                className="etiqueta-superadmin"
-                style={{ background: "#3D5A45", color: "#FFFFFF" }}
-              >
-                Administrador
-              </span>
-            ) : null}
+            <span
+              className="etiqueta-superadmin"
+              style={{
+                background: estiloBadge.bg,
+                color: estiloBadge.color,
+              }}
+            >
+              {etiquetaRol}
+            </span>
             <form action={cerrarSesionYRedirigir}>
               <button
                 type="submit"

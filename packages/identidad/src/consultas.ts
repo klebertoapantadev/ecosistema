@@ -59,6 +59,8 @@ export async function obtenerPerfilActual(negocio?: string) {
   };
 }
 
+export type PerfilUsuario = NonNullable<Awaited<ReturnType<typeof obtenerPerfilActual>>>;
+
 // PLT-003 reglas 3 y 4: claves de perfil que el usuario actual tiene en un
 // negocio, y su nivel jerarquico maximo. Ambos salen de RPC y no de una
 // consulta directa: la verdad vive en seg_membresia_perfil, y las funciones

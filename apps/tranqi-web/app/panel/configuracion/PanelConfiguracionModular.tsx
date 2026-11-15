@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Pencil, Lock, CreditCard, ShoppingBag, KeyRound, Bot, MapPin, type LucideIcon } from "lucide-react";
+import { Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Pencil, Lock, CreditCard, ShoppingBag, KeyRound, Bot, MapPin, FileCheck, type LucideIcon } from "lucide-react";
 import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
 import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
 import { FormularioAria } from "@eco/configuracion-negocio/componentes/FormularioAria";
@@ -10,7 +10,7 @@ import { GestionTokensMcpWidget } from "@eco/configuracion-negocio/componentes/G
 import { PreferenciasNotificacionWidget } from "@eco/notificaciones";
 import { AdministracionPerfilesWidget } from "@eco/gestion-usuarios/componentes/AdministracionPerfilesWidget";
 import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes/GestionTerminosConsentimientosWidget";
-import { ConfiguracionPasarelaPayphone, CatalogoProductosComercio, FormularioLogisticaCobertura } from "@eco/comercio";
+import { ConfiguracionPasarelaPayphone, ConfiguracionFacturacionSri, CatalogoProductosComercio, FormularioLogisticaCobertura } from "@eco/comercio";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
 import { ModalVerificarMFAWidget } from "../ModalVerificarMFAWidget";
@@ -46,6 +46,15 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     icono: CreditCard,
     colorIcono: "#D97706",
     categoria: "Servicios de Despacho",
+    soloAdmin: true
+  },
+  {
+    id: "configuracion_facturacion_sri",
+    titulo: "Parámetros de Facturación Electrónica SRI",
+    subtitulo: "RUC, régimen RIMPE/General, serie 001-001, secuenciales y firma electrónica .p12 en Supabase Vault",
+    icono: FileCheck,
+    colorIcono: "#059669",
+    categoria: "Parámetros del Negocio",
     soloAdmin: true
   },
   {
@@ -149,6 +158,10 @@ const ALIAS_WIDGET: Record<string, string> = {
   configuracion_pasarela: "pasarela_payphone",
   payphone: "pasarela_payphone",
   pasarela: "pasarela_payphone",
+  configuracion_facturacion_sri: "configuracion_facturacion_sri",
+  "configuracion-facturacion-sri": "configuracion_facturacion_sri",
+  "facturacion-sri": "configuracion_facturacion_sri",
+  facturacion_sri: "configuracion_facturacion_sri",
   catalogo_productos: "catalogo_productos",
   catalogo: "catalogo_productos",
   honorarios: "catalogo_productos",
@@ -353,6 +366,13 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
             {widgetActivo === "pasarela_payphone" && (
               <div style={{ width: "100%" }}>
                 <ConfiguracionPasarelaPayphone negocio={negocio} />
+              </div>
+            )}
+
+            {/* 6B. PARÁMETROS DE FACTURACIÓN ELECTRÓNICA SRI */}
+            {widgetActivo === "configuracion_facturacion_sri" && (
+              <div style={{ width: "100%" }}>
+                <ConfiguracionFacturacionSri negocio={negocio} />
               </div>
             )}
 

@@ -49,3 +49,6 @@ export * from "./componentes/BandejaPedidosTienda";
 export * from "./componentes/ModalEditarVariacionProforma";
 export * from "./componentes/ConsolaTestimoniosClientes";
 export * from "./acciones-testimonios";
+export * from "./ride-sri";
+export * from "./acciones-facturacion-sri";
+export * from "./componentes/ConfiguracionFacturacionSri";

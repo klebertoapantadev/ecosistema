@@ -10,9 +10,11 @@ import {
   ChevronRight,
   ClipboardList,
   CreditCard,
+  FileCheck2,
   KeyRound,
   LayoutDashboard,
   Mail,
+  Receipt,
   Settings,
   ShoppingBag,
   Truck,
@@ -25,10 +27,12 @@ import {
 export type IconoNavegacionPanel =
   | "resumen"
   | "pedidos"
+  | "facturacion"
   | "catalogo"
   | "usuarios"
   | "testimonios"
   | "negocio"
+  | "facturacion_sri"
   | "logistica"
   | "pasarelas"
   | "aria"
@@ -47,10 +51,12 @@ export interface ItemNavegacionPanel {
 const MAPA_ICONOS: Record<IconoNavegacionPanel, LucideIcon> = {
   resumen: LayoutDashboard,
   pedidos: ClipboardList,
+  facturacion: Receipt,
   catalogo: ShoppingBag,
   usuarios: Users,
   testimonios: MessageSquareHeart,
   negocio: Building2,
+  facturacion_sri: FileCheck2,
   logistica: Truck,
   pasarelas: CreditCard,
   aria: Bot,
@@ -63,6 +69,7 @@ export function NavegacionPanelLateral({ items }: { items: ItemNavegacionPanel[]
   const pathname = usePathname() || "/panel";
   const enRutaConfiguracion =
     pathname.startsWith("/panel/configuracion") ||
+    pathname.startsWith("/panel/facturacion-sri") ||
     pathname.startsWith("/panel/logistica") ||
     pathname.startsWith("/panel/pasarelas") ||
     pathname.startsWith("/panel/aria") ||

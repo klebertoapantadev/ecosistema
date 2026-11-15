@@ -59,6 +59,8 @@ export function FilaUsuario({
       } else if (resultado.pendienteAceptacion) {
         setAsignados(estadoPrevio);
         setMensaje(resultado.mensaje ?? "Notificación enviada al usuario para que confirme su aceptación del nuevo rol.");
+      } else if (resultado.mensaje) {
+        setMensaje(resultado.mensaje);
       }
     } catch (err: any) {
       setAsignados(estadoPrevio);

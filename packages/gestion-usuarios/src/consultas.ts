@@ -37,13 +37,60 @@ export async function obtenerPerfilesAsignables(negocio?: string): Promise<Perfi
   if (negocio) {
     const negLimpio = negocio.trim().toLowerCase();
     if (negLimpio === "tinkay" || negLimpio === "tnk") {
-      // Perfiles autorizados exclusivos para Tinkay Floristería
-      const perfilesPermitidos = ["CLIENTE", "VENDEDOR", "OPERADOR", "ADMINISTRADOR"];
+      // Sembrar de forma resiliente los perfiles canónicos de Tinkay (VENTAS, DELIVERY, OPERADOR, ADMINISTRADOR)
+      const adminClient = crearClienteAdmin();
+      if (adminClient) {
+        try {
+          await adminClient
+            .schema("comun_seguridad")
+            .from("seg_perfil")
+            .upsert(
+              [
+                {
+                  per_clave: "DELIVERY",
+                  per_nombre: "Delivery / Repartidor",
+                  per_nivel: 15,
+                  per_activo: true,
+                  per_asignable: true,
+                },
+                {
+                  per_clave: "VENTAS",
+                  per_nombre: "Ventas / Asesor Comercial",
+                  per_nivel: 20,
+                  per_activo: true,
+                  per_asignable: true,
+                },
+              ],
+              { onConflict: "per_clave" }
+            );
+        } catch {
+          // Continuar con descriptores en memoria si falla upsert
+        }
+      }
+
+      // Perfiles autorizados para Tinkay Floristería (Ventas / Operador / Delivery / Administrador / Cliente)
+      const perfilesPermitidos = ["CLIENTE", "DELIVERY", "VENTAS", "OPERADOR", "ADMINISTRADOR"];
       const mapaExistentes = new Map(perfiles.map((p) => [p.clave.toUpperCase(), p]));
 
-      // Si VENDEDOR aún no ha sido sembrado en la base de datos remota, proveer el descriptor canónico
-      if (!mapaExistentes.has("VENDEDOR")) {
-        mapaExistentes.set("VENDEDOR", { clave: "VENDEDOR", nombre: "Vendedor", nivel: 20 });
+      if (!mapaExistentes.has("CLIENTE")) {
+        mapaExistentes.set("CLIENTE", { clave: "CLIENTE", nombre: "Cliente", nivel: 10 });
+      }
+      if (!mapaExistentes.has("DELIVERY")) {
+        mapaExistentes.set("DELIVERY", { clave: "DELIVERY", nombre: "Delivery / Repartidor", nivel: 15 });
+      }
+      if (!mapaExistentes.has("VENTAS")) {
+        mapaExistentes.set("VENTAS", { clave: "VENTAS", nombre: "Ventas / Asesor Comercial", nivel: 20 });
+      } else {
+        mapaExistentes.set("VENTAS", {
+          ...mapaExistentes.get("VENTAS")!,
+          nombre: "Ventas / Asesor Comercial",
+        });
+      }
+      if (!mapaExistentes.has("OPERADOR")) {
+        mapaExistentes.set("OPERADOR", { clave: "OPERADOR", nombre: "Operador / Taller Floral", nivel: 30 });
+      }
+      if (!mapaExistentes.has("ADMINISTRADOR")) {
+        mapaExistentes.set("ADMINISTRADOR", { clave: "ADMINISTRADOR", nombre: "Administrador", nivel: 80 });
       }
 
       perfiles = perfilesPermitidos
@@ -190,26 +237,55 @@ export async function buscarUsuarios(
     const perfilesRaw = m?.mem_id ? (mapaPerfilesMembresia.get(m.mem_id) || []) : [];
     const perfilesOrdenados = [...perfilesRaw].sort((a, b) => b.per_nivel - a.per_nivel);
 
-    let listaClaves = perfilesOrdenados.map((p) => p.per_clave.toUpperCase());
-    if (m?.mem_rol && !listaClaves.includes(m.mem_rol.toUpperCase())) {
-      listaClaves.push(m.mem_rol.toUpperCase());
+    let listaClaves = perfilesOrdenados.map((p) => {
+      const c = p.per_clave.toUpperCase();
+      return negocioCanon === "tinkay" && c === "VENDEDOR" ? "VENTAS" : c;
+    });
+    if (m?.mem_rol) {
+      const rolMembresia =
+        negocioCanon === "tinkay" && m.mem_rol.toUpperCase() === "VENDEDOR"
+          ? "VENTAS"
+          : m.mem_rol.toUpperCase();
+      if (!listaClaves.includes(rolMembresia)) {
+        listaClaves.push(rolMembresia);
+      }
+    }
+
+    const correoLower = (u.usu_correo || "").toLowerCase().trim();
+    const esPropietarioTinkay =
+      correoLower === "tinkay.uio@gmail.com" || correoLower === "kleber.toapanta.ch@gmail.com";
+
+    // En Tinkay, ningún usuario ajeno a los propietarios hereda SUPERADMIN de plataforma por accidente
+    if (negocioCanon === "tinkay" && !esPropietarioTinkay) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const tieneRolExplicitoTinkay = Boolean((u as any)?.usu_detalle_usuario?.roles_explicitos_tinkay);
+      if (!tieneRolExplicitoTinkay) {
+        listaClaves = listaClaves.filter((c) => c !== "SUPERADMIN" && c !== "ADMINISTRADOR" && c !== "ADMIN");
+      } else {
+        listaClaves = listaClaves.filter((c) => c !== "SUPERADMIN");
+      }
     }
 
     if (!listaClaves.includes("CLIENTE")) {
       listaClaves.push("CLIENTE");
     }
 
-    let nMax = perfilesOrdenados[0]?.per_nivel ?? 10;
-    if (m?.mem_rol) {
-      const rolUpper = m.mem_rol.toUpperCase();
-      if (rolUpper === "SUPERADMIN") nMax = Math.max(nMax, 100);
-      else if (rolUpper === "ADMIN" || rolUpper === "ADMINISTRADOR") nMax = Math.max(nMax, 80);
-      else if (rolUpper === "ABOGADO" || rolUpper === "TECNICO") nMax = Math.max(nMax, 50);
-      else if (rolUpper === "OPERADOR" || rolUpper === "AUXILIAR") nMax = Math.max(nMax, 30);
+    let nMax = 10;
+    for (const c of listaClaves) {
+      if (c === "SUPERADMIN") nMax = Math.max(nMax, 100);
+      else if (c === "ADMIN" || c === "ADMINISTRADOR") nMax = Math.max(nMax, 80);
+      else if (c === "ABOGADO" || c === "TECNICO") nMax = Math.max(nMax, 50);
+      else if (c === "OPERADOR" || c === "AUXILIAR") nMax = Math.max(nMax, 30);
+      else if (c === "VENTAS" || c === "VENDEDOR") nMax = Math.max(nMax, 20);
+      else if (c === "DELIVERY") nMax = Math.max(nMax, 15);
     }
 
-    const correoLower = (u.usu_correo || "").toLowerCase().trim();
-    if (
+    if (negocioCanon === "tinkay") {
+      if (esPropietarioTinkay) {
+        listaClaves = Array.from(new Set(["SUPERADMIN", ...listaClaves]));
+        nMax = 100;
+      }
+    } else if (
       u.usu_superadmin_plataforma ||
       correoLower === "kleber.toapanta.ch@gmail.com" ||
       correoLower === "familiammtg@gmail.com" ||

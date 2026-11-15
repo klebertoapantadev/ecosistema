@@ -3,8 +3,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   BotonPagoPlux,
+  descargarArchivoFacturaRideSri,
+  imprimirFacturaRideSri,
+  obtenerEmisorDefectoPorNegocio,
+  obtenerEmisorRideNegocioAction,
   obtenerPasarelasCheckoutAction,
   registrarPedidoTiendaAction,
+  type ConfiguracionEmisorSri,
+  type FacturaElectronicaResumen,
   type PagoPluxConsultado,
 } from '@eco/comercio';
 import { useCarrito } from '../contexto-carrito';
@@ -15,6 +21,9 @@ import {
   ShieldCheck,
   CheckCircle2,
   Lock,
+  Download,
+  Printer,
+  FileText,
 } from 'lucide-react';
 
 export function ModalCheckoutTinkay() {
@@ -49,7 +58,13 @@ export function ModalCheckoutTinkay() {
     totalPagado: number;
     entregaTexto: string;
     esTransferencia?: boolean;
+    autorizacionPlux?: string | null;
+    facturaElectronica?: FacturaElectronicaResumen | null;
+    emisorFactura?: ConfiguracionEmisorSri | null;
   } | null>(null);
+  const [emisorNegocio, setEmisorNegocio] = useState<ConfiguracionEmisorSri>(() =>
+    obtenerEmisorDefectoPorNegocio('tinkay')
+  );
 
   // Datos de Facturación SRI
   const [datosFactura, setDatosFactura] = useState({
@@ -71,6 +86,11 @@ export function ModalCheckoutTinkay() {
       .catch(() => {
         // Mantiene PRUEBAS por defecto si no hay conexión
       });
+    obtenerEmisorRideNegocioAction('tinkay')
+      .then((emi) => {
+        if (!cancelado && emi) setEmisorNegocio(emi);
+      })
+      .catch(() => {});
     return () => {
       cancelado = true;
     };
@@ -346,6 +366,162 @@ export function ModalCheckoutTinkay() {
               </div>
             </div>
 
+            {resumenExito?.facturaElectronica && (
+              <div
+                style={{
+                  width: '100%',
+                  marginTop: '12px',
+                  marginBottom: '12px',
+                  padding: '14px 16px',
+                  borderRadius: '12px',
+                  backgroundColor: '#ECFDF5',
+                  border: '1px solid #A7F3D0',
+                  textAlign: 'left',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '7px',
+                    fontSize: '0.82rem',
+                    fontWeight: 800,
+                    color: '#065F46',
+                    marginBottom: '4px',
+                  }}
+                >
+                  <FileText size={16} />
+                  <span>
+                    Factura Electrónica SRI N° {resumenExito.facturaElectronica.numero_comprobante}
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.74rem', color: '#047857', marginBottom: '10px' }}>
+                  Emisor:{' '}
+                  <strong>
+                    {resumenExito.emisorFactura?.razonSocial || emisorNegocio.razonSocial}
+                  </strong>{' '}
+                  (RUC {resumenExito.emisorFactura?.ruc || emisorNegocio.ruc})
+                </div>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const fac = resumenExito.facturaElectronica!;
+                      imprimirFacturaRideSri({
+                        negocio: 'tinkay',
+                        emisor: resumenExito.emisorFactura || emisorNegocio,
+                        numeroComprobante: fac.numero_comprobante,
+                        claveAcceso: fac.clave_acceso,
+                        estadoSri: fac.estado,
+                        ambiente: fac.ambiente,
+                        fechaEmision: fac.fecha_emision,
+                        fechaAutorizacion: fac.fecha_autorizacion,
+                        comprador: {
+                          razonSocial:
+                            fac.comprador?.razon_social ||
+                            datosFactura.nombreCompleto ||
+                            'CONSUMIDOR FINAL',
+                          identificacion:
+                            fac.comprador?.identificacion ||
+                            datosFactura.identificacion ||
+                            '9999999999999',
+                          correo: fac.comprador?.correo || datosFactura.correo,
+                          telefono: fac.comprador?.telefono || datosFactura.telefono,
+                          direccion: fac.comprador?.direccion || 'Quito, Ecuador',
+                        },
+                        lineas: fac.lineas,
+                        rubroPrincipal: fac.rubro_facturado,
+                        codigoRubroPrincipal: fac.codigo_rubro,
+                        subtotal15: fac.subtotal_15,
+                        subtotal0: fac.subtotal_0,
+                        subtotalGeneral: fac.subtotal,
+                        iva15: fac.iva,
+                        total: fac.total,
+                        formaPagoTexto: '19 - TARJETA DE CRÉDITO / DÉBITO (PLUX)',
+                        referenciaPago: resumenExito.autorizacionPlux || codigoOrdenGenerado,
+                      });
+                    }}
+                    title="Abrir comprobante electrónico RIDE para imprimir o guardar como PDF"
+                    aria-label="Imprimir PDF"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      backgroundColor: '#065F46',
+                      color: '#FFFFFF',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <Printer size={14} />
+                    <span>Imprimir PDF</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const fac = resumenExito.facturaElectronica!;
+                      descargarArchivoFacturaRideSri({
+                        negocio: 'tinkay',
+                        emisor: resumenExito.emisorFactura || emisorNegocio,
+                        numeroComprobante: fac.numero_comprobante,
+                        claveAcceso: fac.clave_acceso,
+                        estadoSri: fac.estado,
+                        ambiente: fac.ambiente,
+                        fechaEmision: fac.fecha_emision,
+                        fechaAutorizacion: fac.fecha_autorizacion,
+                        comprador: {
+                          razonSocial:
+                            fac.comprador?.razon_social ||
+                            datosFactura.nombreCompleto ||
+                            'CONSUMIDOR FINAL',
+                          identificacion:
+                            fac.comprador?.identificacion ||
+                            datosFactura.identificacion ||
+                            '9999999999999',
+                          correo: fac.comprador?.correo || datosFactura.correo,
+                          telefono: fac.comprador?.telefono || datosFactura.telefono,
+                          direccion: fac.comprador?.direccion || 'Quito, Ecuador',
+                        },
+                        lineas: fac.lineas,
+                        rubroPrincipal: fac.rubro_facturado,
+                        codigoRubroPrincipal: fac.codigo_rubro,
+                        subtotal15: fac.subtotal_15,
+                        subtotal0: fac.subtotal_0,
+                        subtotalGeneral: fac.subtotal,
+                        iva15: fac.iva,
+                        total: fac.total,
+                        formaPagoTexto: '19 - TARJETA DE CRÉDITO / DÉBITO (PLUX)',
+                        referenciaPago: resumenExito.autorizacionPlux || codigoOrdenGenerado,
+                      });
+                    }}
+                    title="Descargar archivo RIDE de la factura electrónica"
+                    aria-label="Descargar RIDE"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '8px 14px',
+                      borderRadius: '8px',
+                      border: '1px solid #059669',
+                      backgroundColor: '#FFFFFF',
+                      color: '#065F46',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <Download size={14} />
+                    <span>Descargar RIDE</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
             <button
               type="button"
               className="btn btn-primario btn-terminar-pedido"
@@ -547,11 +723,14 @@ export function ModalCheckoutTinkay() {
                               'Quito, Ecuador',
                           }}
                           etiqueta={`Pagar $${totalPagar.toFixed(2)}`}
-                          alPagoAprobado={(_identificador: string, _pago: PagoPluxConsultado) => {
+                          alPagoAprobado={(_identificador: string, pago: PagoPluxConsultado) => {
                             setResumenExito({
                               totalPagado: totalPagar,
                               entregaTexto: entregaTextoConfirmado,
                               esTransferencia: false,
+                              autorizacionPlux: pago.autorizacion,
+                              facturaElectronica: pago.facturaElectronica || null,
+                              emisorFactura: pago.emisorFactura || emisorNegocio,
                             });
                             setCodigoOrdenGenerado(ordenPluxPreparada.codigoOrden);
                             setPaso('exito');
@@ -570,16 +749,16 @@ export function ModalCheckoutTinkay() {
                       <p>
                         <strong>Banco Pichincha — Cuenta Corriente:</strong>
                         <br />
-                        N° 2100234567 — Tinkay Floristería Cía. Ltda.
+                        N° 2100234567 — {emisorNegocio.razonSocial}
                         <br />
-                        RUC: 1792837465001 — pagos@tinkay.com
+                        RUC: {emisorNegocio.ruc} — {emisorNegocio.correoCopia || 'pagos@tinkay.com'}
                       </p>
                     </div>
                     <div className="caja-datos-banco">
                       <p>
                         <strong>Banco Produbanco — Cuenta de Ahorros:</strong>
                         <br />
-                        N° 12005678901 — Tinkay Floristería Cía. Ltda.
+                        N° 12005678901 — {emisorNegocio.razonSocial}
                       </p>
                     </div>
                     <small className="aviso-transferencia">

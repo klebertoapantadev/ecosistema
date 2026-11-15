@@ -31,6 +31,13 @@ const CATALOGO_NAV_MARGARITAS: ItemNavegacionPanel[] = [
     grupo: "operacion",
   },
   {
+    clave: "facturacion_electronica",
+    nombre: "Facturación Electrónica",
+    ruta: "/panel/facturacion",
+    icono: "facturacion",
+    grupo: "operacion",
+  },
+  {
     clave: "gestion_usuarios",
     nombre: "Usuarios y Roles",
     ruta: "/panel/usuarios",
@@ -42,6 +49,13 @@ const CATALOGO_NAV_MARGARITAS: ItemNavegacionPanel[] = [
     nombre: "Datos de la Floristería",
     ruta: "/panel/configuracion",
     icono: "negocio",
+    grupo: "configuracion",
+  },
+  {
+    clave: "configuracion_facturacion_sri",
+    nombre: "Facturación SRI",
+    ruta: "/panel/facturacion-sri",
+    icono: "facturacion_sri",
     grupo: "configuracion",
   },
   {

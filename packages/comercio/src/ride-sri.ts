@@ -232,18 +232,22 @@ export interface DatosDocumentoRideSri {
   codigoRubroPrincipal?: string;
   subtotal15?: number;
   subtotal0?: number;
+  subtotalGeneral?: number;
   iva15?: number;
   total: number;
   formaPagoSri?: string;
+  formaPagoTexto?: string;
   medioPagoRegistrado?: string;
   codigoAutorizacionPago?: string | null;
   referenciaTransaccion?: string | null;
+  referenciaPago?: string | null;
 }
 
 export function calcularDesgloseImpuestosRide(datos: {
   total: number;
   subtotal15?: number;
   subtotal0?: number;
+  subtotalGeneral?: number;
   iva15?: number;
   lineas?: LineaFacturaSriResumen[];
 }): { subtotal15: number; subtotal0: number; iva15: number; total: number } {

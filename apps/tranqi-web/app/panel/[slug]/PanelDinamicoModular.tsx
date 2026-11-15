@@ -33,6 +33,7 @@ import {
   VitrinaComercialVisual,
   CatalogoProductosComercio,
   ConfiguracionPasarelaPayphone,
+  ConfiguracionFacturacionSri,
   HistorialTransaccionesPago,
   WidgetFacturacionElectronica,
   GestionConveniosCorporativos,
@@ -250,6 +251,13 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     subtitulo: "Configuración del Botón de Pago Payphone, credenciales y simulador de cobro",
     icono: CreditCard,
     colorIcono: "#D97706",
+    categoria: "Comercio y Pagos"
+  },
+  configuracion_facturacion_sri: {
+    titulo: "Parámetros de Facturación Electrónica SRI",
+    subtitulo: "RUC, régimen RIMPE/General, serie 001-001, secuenciales y firma electrónica .p12 en Supabase Vault",
+    icono: FileCheck,
+    colorIcono: "#059669",
     categoria: "Comercio y Pagos"
   },
   testimonios_clientes: {
@@ -935,6 +943,9 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       case "payphone":
       case "pasarela":
         return <ConfiguracionPasarelaPayphone negocio={negocio} />;
+      case "configuracion_facturacion_sri":
+      case "parametros_facturacion_sri":
+        return <ConfiguracionFacturacionSri negocio={negocio} />;
       case "facturacion_electronica":
       case "comprobantes_electronicos":
       case "facturacion_sri":

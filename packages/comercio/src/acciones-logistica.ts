@@ -1466,6 +1466,17 @@ export interface ResumenMiProformaEvento {
   saldoPendienteUsd: number;
   bloqueadaPorPagoGrupo?: boolean;
   creadoEn: string;
+  metodoPago?: string;
+  destinatarioNombre?: string;
+  fechaEntrega?: string;
+  franjaHoraria?: string;
+  direccionEntrega?: string;
+  itemsResumen?: Array<{
+    nombre: string;
+    variante?: string;
+    cantidad: number;
+    subtotal: number;
+  }>;
 }
 
 export interface EntradaVariacionProformaAsesor {
@@ -2965,7 +2976,8 @@ export async function confirmarOrdenTransferenciaProformaAction(entrada: {
 }
 
 /**
- * Lista las proformas y órdenes vinculadas al usuario autenticado actual.
+ * Lista las proformas y órdenes vinculadas al usuario autenticado actual
+ * (por `prf_cliente_id` o coincidencia de correo electrónico en comprador/contacto).
  */
 export async function obtenerMisProformasEventoAction(
   negocio: string
@@ -2990,19 +3002,47 @@ export async function obtenerMisProformasEventoAction(
       ? "FFH"
       : "TRQ";
 
+  const correoUsuario = (user.email || "").trim().toLowerCase();
   const db: any = crearClienteAdmin() ?? supabase;
-  const { data: filas, error } = await db
+  const { data: filasRaw, error } = await db
     .schema("comun_comercio")
     .from("com_proforma")
     .select("*")
     .eq("prf_negocio", negNorm)
-    .eq("prf_cliente_id", user.id)
     .is("prf_eliminado_en", null)
     .order("prf_creado_en", { ascending: false })
-    .limit(80);
+    .limit(200);
 
   if (error) {
     return { ok: false, error: error.message };
+  }
+
+  const filas = (filasRaw ?? []).filter((f: any) => {
+    if (f.prf_cliente_id && String(f.prf_cliente_id) === user.id) {
+      return true;
+    }
+    if (!correoUsuario) return false;
+    const det = (f.prf_detalle_proforma ?? {}) as Record<string, any>;
+    const contacto = (f.prf_cliente_contacto ?? {}) as Record<string, any>;
+    const correoContacto = String(contacto.correo || "").trim().toLowerCase();
+    const correoComprador = String(det.comprador?.correo || "").trim().toLowerCase();
+    return correoContacto === correoUsuario || correoComprador === correoUsuario;
+  });
+
+  // Vincular automáticamente prf_cliente_id si estaba nulo pero coincidió por correo
+  const idsSinCliente = filas
+    .filter((f: any) => !f.prf_cliente_id)
+    .map((f: any) => String(f.prf_id));
+  if (idsSinCliente.length > 0) {
+    try {
+      await db
+        .schema("comun_comercio")
+        .from("com_proforma")
+        .update({ prf_cliente_id: user.id })
+        .in("prf_id", idsSinCliente);
+    } catch {
+      // Continuar
+    }
   }
 
   const gruposBloqueados = new Set<string>();
@@ -3019,23 +3059,39 @@ export async function obtenerMisProformasEventoAction(
 
   const proformas: ResumenMiProformaEvento[] = (filas ?? []).map((f: any) => {
     const det = (f.prf_detalle_proforma ?? {}) as Record<string, any>;
+    const log = (det.logistica_entrega ?? {}) as Record<string, any>;
+    const primerDestino = Array.isArray(log.destinos) && log.destinos.length > 0 ? log.destinos[0] : null;
     const sec = Number(f.prf_secuencial ?? 1);
     const total = Number(f.prf_total ?? 0);
     const grupoId = String(det.grupo_proforma_id || f.prf_id);
     const verNum = Number(det.version_numero ?? 1);
+    const tipoOrigen = String(det.tipo_origen || "PROFORMA_EVENTO");
+    const itemsRaw = Array.isArray(det.items) ? det.items : [];
+    const itemsResumen = itemsRaw.map((it: any) => {
+      const cantidad = Number(it.cantidad ?? 1);
+      const unitario = Number(it.pvp_unitario ?? it.precio_unitario ?? 0);
+      const subtotal = Number(it.total_linea ?? Math.round(cantidad * unitario * 100) / 100);
+      return {
+        nombre: String(it.producto_nombre || it.descripcion || "Arreglo floral"),
+        variante: it.variante_nombre ? String(it.variante_nombre) : undefined,
+        cantidad,
+        subtotal,
+      };
+    });
+
     return {
       id: String(f.prf_id),
       secuencial: sec,
       codigo: String(
         det.codigo_proforma ||
           det.codigo_orden ||
-          `${prefijo}-PRF-${String(sec).padStart(4, "0")}`
+          `${prefijo}-${tipoOrigen === "ORDEN_DIRECTA" ? "ORD" : "PRF"}-${String(sec).padStart(4, "0")}`
       ),
       grupoProformaId: grupoId,
       versionNumero: verNum,
       esOriginal: det.es_original !== undefined ? Boolean(det.es_original) : verNum === 1,
       etiquetaVersion: det.etiqueta_version ? String(det.etiqueta_version) : undefined,
-      tipoOrigen: String(det.tipo_origen || "PROFORMA_EVENTO"),
+      tipoOrigen,
       estado: String(f.prf_estado || "ENVIADA"),
       total,
       vigenciaDias: Number(f.prf_vigencia_dias ?? 15),
@@ -3047,6 +3103,20 @@ export async function obtenerMisProformasEventoAction(
         det.saldo_pendiente_usd !== undefined ? Number(det.saldo_pendiente_usd) : total,
       bloqueadaPorPagoGrupo: gruposBloqueados.has(grupoId),
       creadoEn: String(f.prf_creado_en),
+      metodoPago: det.metodo_pago ? String(det.metodo_pago) : undefined,
+      destinatarioNombre: String(
+        primerDestino?.destinatario_nombre || log.destinatario_nombre || ""
+      ) || undefined,
+      fechaEntrega: String(
+        primerDestino?.fecha_entrega || log.fecha_entrega || det.evento?.fechaEvento || ""
+      ) || undefined,
+      franjaHoraria: String(
+        primerDestino?.franja_horaria || log.franja_horaria || det.evento?.horaEvento || ""
+      ) || undefined,
+      direccionEntrega: String(
+        primerDestino?.direccion || log.direccion || ""
+      ) || undefined,
+      itemsResumen,
     };
   });
 

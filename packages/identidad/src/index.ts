@@ -41,6 +41,7 @@ export {
   obtenerNivelMaximo,
   obtenerWidgetsVisibles,
 } from "./consultas";
+export type { PerfilUsuario } from "./consultas";
 
 export {
   registrarAcceso,

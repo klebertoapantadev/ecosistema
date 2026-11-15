@@ -17,6 +17,7 @@
   "dependencies": {
     "@eco/datagrid": "workspace:*",
     "@eco/db": "workspace:*",
+    "@eco/notificaciones": "workspace:*",
     "@eco/supabase": "workspace:*",
     "lucide-react": "1.27.0"
   },

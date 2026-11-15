@@ -242,6 +242,14 @@ export function NavegacionSidebar({
           }
         }
 
+        // Pre-asignación base de parámetros de Facturación SRI para ADMINISTRADOR en panel_configuracion
+        if (rolKey === "ADMINISTRADOR") {
+          const listaCfg = widgetsPorPanel["panel_configuracion"] || [];
+          if (!listaCfg.includes("configuracion_facturacion_sri")) {
+            widgetsPorPanel["panel_configuracion"] = [...listaCfg, "configuracion_facturacion_sri"];
+          }
+        }
+
         // REGLA GENERAL: Mostrar panel únicamente si tiene al menos 1 widget asignado (o si es panel de inicio / mi cuenta)
         const filtrados = listaPaneles.filter((p) => {
           const esNucleo = p.id === "panel_inicio" || p.id === "panel_cuenta";

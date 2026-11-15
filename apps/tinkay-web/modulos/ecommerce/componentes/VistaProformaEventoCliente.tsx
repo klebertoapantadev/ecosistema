@@ -6,7 +6,11 @@ import { useRouter } from 'next/navigation';
 import {
   BotonPagoPlux,
   confirmarOrdenTransferenciaProformaAction,
+  descargarArchivoFacturaRideSri,
   eliminarVariacionesProformaClienteAction,
+  imprimirFacturaRideSri,
+  type ConfiguracionEmisorSri,
+  type FacturaElectronicaResumen,
   type ModalidadCobroProforma,
   type PagoPluxConsultado,
   type ProformaEventoPublica,
@@ -86,6 +90,11 @@ export function VistaProformaEventoCliente({
   const [mensajeFeedback, setMensajeFeedback] = useState<{
     tipo: 'ok' | 'error';
     texto: string;
+  } | null>(null);
+  const [facturaEmitidaReciente, setFacturaEmitidaReciente] = useState<{
+    factura: FacturaElectronicaResumen;
+    emisor?: ConfiguracionEmisorSri | null;
+    autorizacion?: string | null;
   } | null>(null);
   const [proformasEliminadasTodas, setProformasEliminadasTodas] = useState(false);
 
@@ -240,9 +249,20 @@ export function VistaProformaEventoCliente({
           : v
       )
     );
+    if (pago.facturaElectronica) {
+      setFacturaEmitidaReciente({
+        factura: pago.facturaElectronica,
+        emisor: pago.emisorFactura || null,
+        autorizacion: pago.autorizacion,
+      });
+    }
     setMensajeFeedback({
       tipo: 'ok',
-      texto: `¡Pago aprobado en PLUX! Autorización: ${pago.autorizacion || 'Confirmada'}.`,
+      texto: `¡Pago aprobado en PLUX! Autorización: ${pago.autorizacion || 'Confirmada'}.${
+        pago.facturaElectronica?.numero_comprobante
+          ? ` Factura Electrónica N° ${pago.facturaElectronica.numero_comprobante} emitida.`
+          : ''
+      }`,
     });
     router.refresh();
   };
@@ -693,7 +713,124 @@ export function VistaProformaEventoCliente({
               fontWeight: 600,
             }}
           >
-            {mensajeFeedback.texto}
+            <div>{mensajeFeedback.texto}</div>
+            {facturaEmitidaReciente && mensajeFeedback.tipo === 'ok' && (
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const f = facturaEmitidaReciente.factura;
+                    imprimirFacturaRideSri({
+                      negocio: 'tinkay',
+                      emisor: facturaEmitidaReciente.emisor,
+                      numeroComprobante: f.numero_comprobante,
+                      claveAcceso: f.clave_acceso,
+                      estadoSri: f.estado,
+                      ambiente: f.ambiente,
+                      fechaEmision: f.fecha_emision,
+                      fechaAutorizacion: f.fecha_autorizacion,
+                      comprador: {
+                        razonSocial:
+                          f.comprador?.razon_social || datosPagador.nombre || 'CONSUMIDOR FINAL',
+                        identificacion:
+                          f.comprador?.identificacion ||
+                          datosPagador.identificacion ||
+                          '9999999999999',
+                        correo: f.comprador?.correo || datosPagador.email,
+                        telefono: f.comprador?.telefono || datosPagador.telefono,
+                        direccion: f.comprador?.direccion || datosPagador.direccion,
+                      },
+                      lineas: f.lineas,
+                      rubroPrincipal: f.rubro_facturado,
+                      codigoRubroPrincipal: f.codigo_rubro,
+                      subtotal15: f.subtotal_15,
+                      subtotal0: f.subtotal_0,
+                      subtotalGeneral: f.subtotal,
+                      iva15: f.iva,
+                      total: f.total,
+                      formaPagoTexto: '19 - TARJETA DE CRÉDITO / DÉBITO (PLUX)',
+                      referenciaPago:
+                        facturaEmitidaReciente.autorizacion || proformaActiva.codigoProforma,
+                    });
+                  }}
+                  title="Imprimir o guardar en PDF la Factura Electrónica SRI"
+                  aria-label="Imprimir Factura"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '7px 14px',
+                    borderRadius: '8px',
+                    border: 'none',
+                    backgroundColor: '#166534',
+                    color: '#FFFFFF',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Printer size={14} />
+                  <span>Imprimir Factura</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const f = facturaEmitidaReciente.factura;
+                    descargarArchivoFacturaRideSri({
+                      negocio: 'tinkay',
+                      emisor: facturaEmitidaReciente.emisor,
+                      numeroComprobante: f.numero_comprobante,
+                      claveAcceso: f.clave_acceso,
+                      estadoSri: f.estado,
+                      ambiente: f.ambiente,
+                      fechaEmision: f.fecha_emision,
+                      fechaAutorizacion: f.fecha_autorizacion,
+                      comprador: {
+                        razonSocial:
+                          f.comprador?.razon_social || datosPagador.nombre || 'CONSUMIDOR FINAL',
+                        identificacion:
+                          f.comprador?.identificacion ||
+                          datosPagador.identificacion ||
+                          '9999999999999',
+                        correo: f.comprador?.correo || datosPagador.email,
+                        telefono: f.comprador?.telefono || datosPagador.telefono,
+                        direccion: f.comprador?.direccion || datosPagador.direccion,
+                      },
+                      lineas: f.lineas,
+                      rubroPrincipal: f.rubro_facturado,
+                      codigoRubroPrincipal: f.codigo_rubro,
+                      subtotal15: f.subtotal_15,
+                      subtotal0: f.subtotal_0,
+                      subtotalGeneral: f.subtotal,
+                      iva15: f.iva,
+                      total: f.total,
+                      formaPagoTexto: '19 - TARJETA DE CRÉDITO / DÉBITO (PLUX)',
+                      referenciaPago:
+                        facturaEmitidaReciente.autorizacion || proformaActiva.codigoProforma,
+                    });
+                  }}
+                  title="Descargar comprobante electrónico RIDE"
+                  aria-label="Descargar RIDE"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '7px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid #166534',
+                    backgroundColor: '#FFFFFF',
+                    color: '#166534',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Download size={14} />
+                  <span>Descargar RIDE</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
 

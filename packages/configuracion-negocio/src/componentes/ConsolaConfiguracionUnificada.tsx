@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bot, Building2, CheckCircle2, CircleDashed, CreditCard, KeyRound, Mail, SlidersHorizontal, Truck, type LucideIcon } from "lucide-react";
+import { Bot, Building2, CheckCircle2, CircleDashed, CreditCard, FileCheck2, KeyRound, Mail, SlidersHorizontal, Truck, type LucideIcon } from "lucide-react";
 import {
+  ConfiguracionFacturacionSri,
   ConfiguracionPasarelaPayphone,
   FormularioLogisticaCobertura,
   type ConfiguracionLogisticaNegocio,
@@ -20,6 +21,7 @@ type CfgSmtp = Tables<{ schema: "comun_configuracion" }, "cfg_smtp">;
 
 export type SeccionConfiguracion =
   | "negocio"
+  | "facturacion_sri"
   | "logistica"
   | "pasarelas"
   | "aria"
@@ -34,6 +36,7 @@ export interface PropsConsolaConfiguracionUnificada {
   smtp: CfgSmtp | null;
   aria: ConfiguracionAriaVista | null;
   logistica?: ConfiguracionLogisticaNegocio | null;
+  mostrarFacturacionSri?: boolean;
   mostrarLogistica?: boolean;
   mostrarPasarelas?: boolean;
   mostrarCorreo?: boolean;
@@ -54,6 +57,12 @@ const TABS_CONFIGURACION: DefinicionTab[] = [
     etiqueta: "Datos del Negocio",
     ruta: "/panel/configuracion",
     icono: Building2,
+  },
+  {
+    id: "facturacion_sri",
+    etiqueta: "Facturación SRI",
+    ruta: "/panel/facturacion-sri",
+    icono: FileCheck2,
   },
   {
     id: "logistica",
@@ -95,6 +104,7 @@ export function ConsolaConfiguracionUnificada({
   smtp,
   aria,
   logistica = null,
+  mostrarFacturacionSri = true,
   mostrarLogistica = true,
   mostrarPasarelas = true,
   mostrarCorreo = true,
@@ -108,6 +118,7 @@ export function ConsolaConfiguracionUnificada({
   }, [seccionInicial]);
 
   const tabsVisibles = TABS_CONFIGURACION.filter((tab) => {
+    if (tab.id === "facturacion_sri" && !mostrarFacturacionSri) return false;
     if (tab.id === "logistica" && !mostrarLogistica) return false;
     if (tab.id === "pasarelas" && !mostrarPasarelas) return false;
     if (tab.id === "correo" && !mostrarCorreo) return false;
@@ -321,6 +332,10 @@ export function ConsolaConfiguracionUnificada({
       <div>
         {seccionActiva === "negocio" && (
           <FormularioConfiguracionNegocio inicial={configuracion} negocio={negocio} />
+        )}
+
+        {seccionActiva === "facturacion_sri" && mostrarFacturacionSri && (
+          <ConfiguracionFacturacionSri negocio={negocio} />
         )}
 
         {seccionActiva === "logistica" && mostrarLogistica && (

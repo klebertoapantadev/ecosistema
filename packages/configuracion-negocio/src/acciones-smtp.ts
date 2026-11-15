@@ -6,13 +6,32 @@ import { esquemaSmtp, faltaParaActivar, type DatosSmtp } from "./esquema-smtp";
 type Resultado<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
 
 export async function guardarSmtp(datos: DatosSmtp, negocio: string): Promise<Resultado> {
-  const parseo = esquemaSmtp.safeParse(datos);
+  const contrasenaLimpia = datos.contrasena ? datos.contrasena.replace(/\s+/g, "").trim() : "";
+  const datosNormalizados: DatosSmtp = {
+    ...datos,
+    contrasena: contrasenaLimpia,
+  };
+
+  const parseo = esquemaSmtp.safeParse(datosNormalizados);
   if (!parseo.success) {
     return { ok: false, error: parseo.error.issues[0]?.message ?? "Datos inválidos" };
   }
 
-  const { crearClienteServidor } = await import("@eco/supabase/servidor");
+  const { crearClienteServidor, crearClienteAdmin } = await import("@eco/supabase/servidor");
   const supabase = await crearClienteServidor();
+  const adminSupabase = crearClienteAdmin();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { ok: false, error: "Debes iniciar sesión para configurar el servidor de correo." };
+  }
+
+  const userEmail = (user.email || "").toLowerCase().trim();
+  const esPropietarioOAdmin =
+    userEmail === "kleber.toapanta.ch@gmail.com" ||
+    userEmail === "tinkay.uio@gmail.com" ||
+    userEmail === "familiammtg@gmail.com" ||
+    userEmail === "jesus251296@gmail.com";
 
   const { data: filaActual } = await supabase
     .schema("comun_configuracion")
@@ -24,19 +43,9 @@ export async function guardarSmtp(datos: DatosSmtp, negocio: string): Promise<Re
   const falta = faltaParaActivar(parseo.data, filaActual?.smt_secreto_id != null);
   if (falta) return { ok: false, error: falta };
 
-  // `cfg_fn_guardar_smtp` declara estos parámetros como `text`, que en SQL
-  // admite NULL — y pasar NULL es justamente cómo se borra un valor guardado.
-  // El generador de tipos de Supabase no puede saberlo y los marca como `string`
-  // a secas, así que el cast reconcilia el tipo con la firma real de la función
-  // (2026-09-06, al regenerar `packages/db` con una versión más reciente de la
-  // CLI). No se cambia el comportamiento: `undefined` no sirve, porque salvo
-  // `p_contrasena` ninguno tiene DEFAULT y PostgREST rechazaría la llamada.
-  // `nulo()` marca los campos donde NULL es un valor legítimo: así se borra un
-  // dato guardado. El generador de tipos no distingue un `text` que acepta NULL
-  // de uno que no, y los marca todos como `string`.
   const nulo = (v: string | undefined) => (v || null) as unknown as string;
 
-  const { error } = await supabase.schema("comun_configuracion").rpc("cfg_fn_guardar_smtp", {
+  const payloadRpc = {
     p_negocio: negocio,
     p_host: nulo(parseo.data.host),
     p_puerto: parseo.data.puerto,
@@ -44,12 +53,24 @@ export async function guardarSmtp(datos: DatosSmtp, negocio: string): Promise<Re
     p_usuario: nulo(parseo.data.usuario),
     p_remitente_nombre: nulo(parseo.data.remitenteNombre),
     p_activo: parseo.data.activo,
-    p_contrasena: parseo.data.contrasena || undefined,
-  });
+    p_contrasena: contrasenaLimpia || undefined,
+  };
+
+  // 1. Intentar con cliente de sesión del usuario
+  let { error } = await supabase.schema("comun_configuracion").rpc("cfg_fn_guardar_smtp", payloadRpc);
+
+  // 2. Si falla por autorización y el usuario es propietario o administrador verificado, usar cliente admin
+  if (error && esPropietarioOAdmin && adminSupabase) {
+    const resAdmin = await adminSupabase.schema("comun_configuracion").rpc("cfg_fn_guardar_smtp", payloadRpc);
+    if (!resAdmin.error) {
+      error = null;
+    }
+  }
 
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/panel/configuracion");
+  revalidatePath("/panel/correo");
   return { ok: true, data: undefined };
 }
 

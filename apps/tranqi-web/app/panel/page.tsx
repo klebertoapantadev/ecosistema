@@ -80,6 +80,7 @@ const WIDGETS_ADMIN: { clave: string; icono: LucideIcon; nombre: string; detalle
   { clave: "compliance_score_legal", icono: ShieldCheck, nombre: "Compliance & Score Legal", detalle: "Matriz regulatoria y salud jurídica", ruta: "/panel/administrar?widget=compliance_score_legal", estado: "registrado" },
   { clave: "legal_hr_laboral", icono: Briefcase, nombre: "Legal HR & Finiquitos", detalle: "Contratos de trabajo y actas SUT", ruta: "/panel/administrar?widget=legal_hr_laboral", estado: "registrado" },
   { clave: "pasarela_payphone", icono: CreditCard, nombre: "Pasarela Payphone", detalle: "Botón de pago y simulador", ruta: "/panel/configuracion?widget=pasarela_payphone", estado: "registrado" },
+  { clave: "configuracion_facturacion_sri", icono: FileCheck, nombre: "Facturación SRI (.p12)", detalle: "Emisor, firma .p12 y secuenciales", ruta: "/panel/configuracion?widget=configuracion_facturacion_sri", estado: "registrado" },
   { clave: "crm_clientes", icono: Users, nombre: "CRM Jurídico & Clientes", detalle: "Expedientes y conflict check", ruta: "/panel/clientes", estado: "registrado" },
   { clave: "billetera_documentos", icono: Folder, nombre: "Billetera digital", detalle: "Bóveda segura OCR/TTL", ruta: "/panel/billetera-documentos", estado: "registrado" },
   { clave: "gestion_usuarios", icono: Users, nombre: "Gestión de usuarios", detalle: "Membresías y perfiles", ruta: "/panel/usuarios", estado: "registrado" },
