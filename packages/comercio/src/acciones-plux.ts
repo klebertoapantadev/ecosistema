@@ -119,6 +119,7 @@ const esquemaPrepararProforma = z.object({
   negocio: z.string().min(1).default("tinkay"),
   proformaId: z.string().uuid(),
   tokenAprobacion: z.string().trim().min(8),
+  respaldoFirmado: z.string().trim().min(8).optional(),
   modalidadCobro: z.enum(["TOTAL_100", "RESERVA_70", "SALDO_30"]).default("TOTAL_100"),
   pagador: esquemaPagador,
 });
@@ -474,7 +475,9 @@ export async function prepararPagoPluxProformaAction(
   }
 
   // Respaldo firmado en servidor (HMAC-SHA256) para compradores invitados o migraciones pendientes sin service_role
-  const ordenFirmada = verificarOrdenRespaldoServidor(v.data.tokenAprobacion);
+  const ordenFirmada = verificarOrdenRespaldoServidor(
+    v.data.respaldoFirmado || v.data.tokenAprobacion,
+  );
   if (ordenFirmada && ordenFirmada.id === v.data.proformaId && ordenFirmada.neg === negPrincipal) {
     let pasarelaActiva: any = null;
     try {
@@ -1232,11 +1235,18 @@ export async function confirmarPagoPluxAction(entrada: {
   try {
     const { notificarStaffNuevoPedido } = await import("@eco/notificaciones/notificar-usuario");
     const montoNotif = Number(pago?.pag_monto_total ?? facturaEmitida?.total ?? montoNotificado ?? 0);
+    const codigoVenta = String(detPrevio.codigo_proforma || ordenFirmada?.cod || identificador);
+    const telefonoVenta =
+      entrada.pagador?.telefono ||
+      detPrevio.pagador?.telefono ||
+      ordenFirmada?.cmp?.tel ||
+      undefined;
     await notificarStaffNuevoPedido({
       negocio,
-      codigo: ordenFirmada?.cod || identificador,
+      codigo: codigoVenta,
       clienteNombre: pagadorNombre,
       clienteCorreo: pagadorEmail,
+      clienteTelefono: telefonoVenta,
       montoUsd: montoNotif,
       metodoPago: `PLUX (${marcaTarjeta || "Tarjeta"} ${ultimosDigitos ? `•••• ${ultimosDigitos}` : ""})`,
       canalOrigen: "Pasarela PLUX / Tarjeta",
@@ -1246,6 +1256,40 @@ export async function confirmarPagoPluxAction(entrada: {
     });
   } catch (errNotif) {
     console.warn("Aviso al notificar pago PLUX a staff:", errNotif);
+  }
+
+  // 5. Capturar/actualizar perfil del cliente (autorizado o no autorizado) con la compra confirmada
+  if (clienteDb) {
+    try {
+      const montoConfirmado = Number(pago?.pag_monto_total ?? facturaEmitida?.total ?? montoNotificado ?? 0);
+      await clienteDb.schema("comun_comercio").rpc("com_fn_capturar_cliente_compra", {
+        p_negocio: negocio,
+        p_usuario_id: pago?.pag_cliente_id || null,
+        p_comprador: {
+          nombreCompleto: pagadorNombre,
+          identificacion:
+            entrada.pagador?.identificacion ||
+            detPrevio.pagador?.identificacion ||
+            ordenFirmada?.cmp?.ide ||
+            "",
+          correo: pagadorEmail,
+          telefono:
+            entrada.pagador?.telefono ||
+            detPrevio.pagador?.telefono ||
+            ordenFirmada?.cmp?.tel ||
+            "",
+          direccion:
+            entrada.pagador?.direccion ||
+            detPrevio.pagador?.direccion ||
+            ordenFirmada?.ubi?.dir ||
+            "",
+        },
+        p_monto_confirmado: montoConfirmado,
+        p_incluye_regalo: Boolean(detPrevio.regalo_primera_compra),
+      });
+    } catch {
+      // Continuar si la migración com_cliente aún no fue aplicada en remoto
+    }
   }
 
   return {

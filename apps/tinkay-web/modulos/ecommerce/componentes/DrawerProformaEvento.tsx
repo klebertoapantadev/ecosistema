@@ -90,13 +90,6 @@ export function DrawerProformaEvento() {
     const supabase = crearClienteNavegador();
     supabase.auth.getUser().then(async ({ data }) => {
       if (cancelado || !data?.user) return;
-      setUsuarioAutenticado({
-        id: data.user.id,
-        email: data.user.email || '',
-      });
-      if (!correo && data.user.email) {
-        setCorreo(data.user.email);
-      }
 
       const [{ data: perfilRaw }, { data: memTinkay }] = await Promise.all([
         supabase
@@ -118,9 +111,17 @@ export function DrawerProformaEvento() {
           .maybeSingle(),
       ]);
 
-      if (cancelado || !perfilRaw || !memTinkay) return;
+      if (cancelado || !perfilRaw) return;
       const perfil = proyectarPerfilPorNegocio(perfilRaw, 'tinkay', Boolean(memTinkay));
       if (!perfil) return;
+
+      setUsuarioAutenticado({
+        id: data.user.id,
+        email: data.user.email || '',
+      });
+      if (data.user.email) {
+        setCorreo((prev) => prev || data.user.email || '');
+      }
 
       const nom = [perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(' ').trim();
       if (nom) setNombreCompleto((prev) => prev || nom);
@@ -134,8 +135,10 @@ export function DrawerProformaEvento() {
         } else {
           setWhatsappDigitos((prev) => prev || raw.replace(/\D+/g, ''));
         }
-      }
-      if (perfil.usu_autorizacion_whatsapp) {
+        if (raw.replace(/\D+/g, '').length > 0) {
+          setAutorizaWhatsapp(true);
+        }
+      } else if (perfil.usu_autorizacion_whatsapp) {
         setAutorizaWhatsapp(true);
       }
     });
@@ -143,7 +146,7 @@ export function DrawerProformaEvento() {
     return () => {
       cancelado = true;
     };
-  }, [drawerProformaAbierto, correo]);
+  }, [drawerProformaAbierto]);
 
   useEffect(() => {
     if (!drawerProformaAbierto) return;
@@ -221,16 +224,21 @@ export function DrawerProformaEvento() {
       setErrorForm('Por favor ingresa un correo electrónico válido para recibir tu PDF.');
       return;
     }
-    const waE164 = construirWhatsappE164();
-    if (waE164.length < 10) {
-      setErrorForm('Ingresa un número de WhatsApp válido.');
-      return;
-    }
-    if (!autorizaWhatsapp) {
-      setErrorForm(
-        'Debes marcar el consentimiento para contactarte y enviarte información de tu proforma por WhatsApp.'
-      );
-      return;
+    const tieneWhatsapp = whatsappDigitos.replace(/\D+/g, '').length > 0;
+    const waE164 = tieneWhatsapp ? construirWhatsappE164() : '';
+    if (tieneWhatsapp) {
+      if (waE164.length < 10) {
+        setErrorForm(
+          'Ingresa un número de WhatsApp válido o deja el campo vacío para recibir tu proforma por correo.'
+        );
+        return;
+      }
+      if (!autorizaWhatsapp) {
+        setErrorForm(
+          'Al ingresar tu número de WhatsApp debes mantener marcado el consentimiento para contactarte.'
+        );
+        return;
+      }
     }
     if (!datosEventoProforma.fechaEvento) {
       setErrorForm('Selecciona la fecha estimada de tu evento.');
@@ -245,7 +253,7 @@ export function DrawerProformaEvento() {
         identificacion: identificacion.trim() || undefined,
         correo: correo.trim(),
         whatsapp: waE164,
-        autorizaWhatsapp: true,
+        autorizaWhatsapp: tieneWhatsapp ? Boolean(autorizaWhatsapp) : false,
       },
       evento: {
         tipoEvento: datosEventoProforma.tipoEvento || 'Evento Especial',
@@ -485,9 +493,9 @@ export function DrawerProformaEvento() {
                       lineHeight: 1.45,
                     }}
                   >
-                    Al registrarte conservaremos tu selección actual y podrás gestionar desde tu
-                    panel tanto tu proforma original como las actualizaciones que te envíe tu
-                    asesor.
+                    Sin cuenta podrás descargar tu PDF al instante y escribirnos al{' '}
+                    <strong>+593 99 292 2343</strong>. Si te registras, guardaremos tus proformas y
+                    variaciones de asesor en tu panel.
                   </p>
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     <Link
@@ -523,6 +531,26 @@ export function DrawerProformaEvento() {
                     >
                       Ingresar
                     </Link>
+                    <a
+                      href={`https://wa.me/593992922343?text=${encodeURIComponent(
+                        'Hola Tinkay, estoy armando una proforma de evento en su tienda web y deseo asesoría.'
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Contactar a Tinkay por WhatsApp al +593 99 292 2343"
+                      aria-label="Contáctanos WhatsApp"
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '999px',
+                        background: '#059669',
+                        color: '#FFFFFF',
+                        textDecoration: 'none',
+                        fontSize: '0.77rem',
+                        fontWeight: 700,
+                      }}
+                    >
+                      Contáctanos WhatsApp
+                    </a>
                   </div>
                 </div>
               ) : (
@@ -964,10 +992,10 @@ export function DrawerProformaEvento() {
                   />
                 </div>
 
-                {/* WhatsApp con selector compacto de país */}
+                {/* WhatsApp opcional con selector compacto de país */}
                 <div>
                   <label style={{ display: 'block', fontSize: '0.74rem', fontWeight: 600, color: '#44403C', marginBottom: '4px' }}>
-                    Número de WhatsApp *
+                    Número de WhatsApp (opcional)
                   </label>
                   <div style={{ display: 'flex', gap: '6px' }}>
                     <select
@@ -989,16 +1017,27 @@ export function DrawerProformaEvento() {
                     </select>
                     <input
                       type="tel"
-                      required
-                      placeholder="99 123 4567"
+                      placeholder="99 123 4567 (si lo dejas vacío se envía a tu correo)"
                       value={whatsappDigitos}
-                      onChange={(e) => setWhatsappDigitos(e.target.value)}
+                      onChange={(e) => {
+                        const nuevoValor = e.target.value;
+                        setWhatsappDigitos(nuevoValor);
+                        const digitos = nuevoValor.replace(/\D+/g, '');
+                        if (digitos.length > 0) {
+                          setAutorizaWhatsapp(true);
+                        } else {
+                          setAutorizaWhatsapp(false);
+                        }
+                      }}
                       style={inputEstilo}
                     />
                   </div>
+                  <small style={{ display: 'block', marginTop: '4px', fontSize: '0.71rem', color: '#57534E' }}>
+                    Si no ingresas WhatsApp, enviaremos tu proforma en PDF directamente a tu correo electrónico.
+                  </small>
                 </div>
 
-                {/* Consentimiento expreso LOPDP */}
+                {/* Consentimiento expreso LOPDP (se marca automáticamente al escribir WhatsApp) */}
                 <label
                   style={{
                     display: 'flex',

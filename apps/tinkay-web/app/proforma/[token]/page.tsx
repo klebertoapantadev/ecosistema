@@ -4,6 +4,7 @@ import {
   obtenerPasarelasCheckoutAction,
   obtenerProformaPorTokenAction,
 } from '@eco/comercio';
+import { obtenerPerfilActual } from '@eco/identidad';
 import { VistaProformaEventoCliente } from '../../../modulos/ecommerce/componentes/VistaProformaEventoCliente';
 
 export const dynamic = 'force-dynamic';
@@ -14,9 +15,10 @@ export default async function PaginaProformaPublica({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
-  const [resProforma, resPasarelas] = await Promise.all([
+  const [resProforma, resPasarelas, perfilActual] = await Promise.all([
     obtenerProformaPorTokenAction(token),
     obtenerPasarelasCheckoutAction('tinkay'),
+    obtenerPerfilActual('tinkay').catch(() => null),
   ]);
 
   if (!resProforma.ok) {
@@ -76,6 +78,9 @@ export default async function PaginaProformaPublica({
     ? resPasarelas.data.find((p) => p.pasarela === 'PLUX')
     : undefined;
   const ambientePlux = pasarelaPlux?.ambiente || 'PRUEBAS';
+  const usuarioRegistrado = Boolean(
+    perfilActual?.tiene_membresia_negocio || resProforma.proforma.clienteId
+  );
 
   return (
     <VistaProformaEventoCliente
@@ -83,6 +88,7 @@ export default async function PaginaProformaPublica({
       variacionesIniciales={resProforma.variaciones}
       bloqueadaPorPagoInicial={resProforma.bloqueadaPorPagoGrupo}
       ambientePlux={ambientePlux}
+      usuarioRegistrado={usuarioRegistrado}
     />
   );
 }

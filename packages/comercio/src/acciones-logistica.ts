@@ -601,6 +601,11 @@ export interface EntradaPedidoTienda {
   totalFlete: number;
   totalRecargoHorarioExacto: number;
   totalPagar: number;
+  regaloPrimeraCompra?: {
+    sku: string;
+    nombre: string;
+    valorReferencia: number;
+  } | null;
 }
 
 export interface PedidoTiendaRegistrado {
@@ -675,6 +680,11 @@ export interface PedidoTiendaRegistrado {
     dedicatoria?: { para: string; de: string; mensaje: string };
     entregaIndividual?: Record<string, unknown>;
   }>;
+  regaloPrimeraCompra?: {
+    sku: string;
+    nombre: string;
+    valorReferencia: number;
+  } | null;
 }
 
 const esquemaPedidoTienda = z.object({
@@ -693,6 +703,14 @@ const esquemaPedidoTienda = z.object({
   totalRecargoHorarioExacto: z.number().min(0),
   totalPagar: z.number().min(0),
   items: z.array(z.any()).min(1, "El pedido debe incluir al menos un producto"),
+  regaloPrimeraCompra: z
+    .object({
+      sku: z.string().min(1),
+      nombre: z.string().min(1),
+      valorReferencia: z.number().min(0),
+    })
+    .nullable()
+    .optional(),
 });
 
 function enriquecerDestinoConAuditoriaInterna(
@@ -780,7 +798,7 @@ function enriquecerDestinoConAuditoriaInterna(
 export async function registrarPedidoTiendaAction(
   entrada: EntradaPedidoTienda
 ): Promise<
-  | { ok: true; id: string; codigoOrden: string; tokenAprobacion?: string }
+  | { ok: true; id: string; codigoOrden: string; tokenAprobacion?: string; respaldoFirmado?: string }
   | { ok: false; error: string }
 > {
   const validacion = esquemaPedidoTienda.safeParse(entrada);
@@ -946,6 +964,25 @@ export async function registrarPedidoTiendaAction(
 
   const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
   const supabase = await crearClienteServidor();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const payloadFinal = {
+    ...payloadCompleto,
+    tipo_comprador: user ? "USUARIO_REGISTRADO" : "USUARIO_NO_AUTORIZADO",
+    usuario_autorizado: Boolean(user),
+    ...(user && entrada.regaloPrimeraCompra
+      ? {
+          regalo_primera_compra: {
+            sku: entrada.regaloPrimeraCompra.sku,
+            nombre: entrada.regaloPrimeraCompra.nombre,
+            valor_referencia: entrada.regaloPrimeraCompra.valorReferencia,
+            precio_cobrado: 0,
+          },
+        }
+      : {}),
+  };
 
   // 1. Vía principal: RPC transaccional SECURITY DEFINER (funciona para compradores invitados y autenticados)
   const esquemaComercio = supabase.schema("comun_comercio") as unknown as {
@@ -959,25 +996,97 @@ export async function registrarPedidoTiendaAction(
     "com_fn_registrar_pedido_tienda",
     {
       p_negocio: negNorm,
-      p_payload: payloadCompleto,
+      p_payload: payloadFinal,
     }
   );
 
   if (!errRpc && resRpc?.ok) {
+    const codigoCreado = String(resRpc.codigo_orden);
+    const respaldoFirmado =
+      Number(entrada.totalPagar) > 0
+        ? firmarOrdenRespaldoServidor({
+            v: 1,
+            id: String(resRpc.id),
+            neg: negNorm,
+            cod: codigoCreado,
+            ori: "PEDIDO_TIENDA",
+            est: estadoInicial,
+            vig: 15,
+            sub: entrada.subtotalBaseImponible,
+            des: 0,
+            iva: entrada.totalIva,
+            fle: entrada.totalFlete,
+            tot: entrada.totalPagar,
+            b0c: baseIva0Centavos,
+            bgc: baseIvaGravadaCentavos,
+            iat: new Date().toISOString(),
+            cmp: {
+              nom: entrada.comprador.nombreCompleto,
+              ide: entrada.comprador.identificacion,
+              cor: entrada.comprador.correo,
+              tel: entrada.comprador.telefono,
+            },
+            ubi: {
+              ret: Boolean(logisticaPrincipal.retiro_en_local),
+              dir: String(logisticaPrincipal.direccion || "Quito, Ecuador"),
+              ref: String(logisticaPrincipal.referencia || ""),
+              zon: logisticaPrincipal.zona_detectada ? String(logisticaPrincipal.zona_detectada) : undefined,
+              km:
+                typeof logisticaPrincipal.distancia_vial_km === "number"
+                  ? logisticaPrincipal.distancia_vial_km
+                  : undefined,
+              map: logisticaPrincipal.enlace_mapa ? String(logisticaPrincipal.enlace_mapa) : undefined,
+            },
+            itm: itemsEnriquecidos.map((it) => ({
+              dsc: it.descripcion,
+              var: it.variante_nombre ? String(it.variante_nombre) : undefined,
+              can: Number(it.cantidad || 1),
+              pun: Number(it.precio_unitario || 0),
+              imp: it.impuesto,
+              tot: Number(it.total_linea || 0),
+            })),
+          })
+        : undefined;
+    if (metodoPagoNorm !== "plux") {
+      try {
+        const { notificarStaffNuevoPedido } = await import("@eco/notificaciones/notificar-usuario");
+        await notificarStaffNuevoPedido({
+          negocio: negNorm,
+          codigo: codigoCreado,
+          clienteNombre: entrada.comprador.nombreCompleto,
+          clienteCorreo: entrada.comprador.correo,
+          clienteTelefono: entrada.comprador.telefono,
+          montoUsd: entrada.totalPagar,
+          metodoPago: metodoPagoNorm.toUpperCase(),
+          canalOrigen: "Tienda Web",
+          tipoEntrega:
+            entrada.modalidadEntrega === "unificada"
+              ? logisticaPrincipal.retiro_en_local
+                ? "RETIRO EN TIENDA"
+                : "DOMICILIO"
+              : "MULTIDESTINO",
+          direccionEntrega: logisticaPrincipal.direccion,
+          fechaEntrega: logisticaPrincipal.fecha_entrega,
+          itemsResumen: itemsEnriquecidos.map(
+            (it) => `${it.cantidad}x ${it.descripcion} ($${it.total_linea.toFixed(2)})`
+          ),
+        });
+      } catch (errNotif) {
+        console.warn("Aviso al notificar venta de tienda a staff:", errNotif);
+      }
+    }
     revalidatePath("/panel/pedidos");
     return {
       ok: true,
       id: String(resRpc.id),
-      codigoOrden: String(resRpc.codigo_orden),
+      codigoOrden: codigoCreado,
       tokenAprobacion: resRpc.token_aprobacion ? String(resRpc.token_aprobacion) : undefined,
+      respaldoFirmado,
     };
   }
 
   // 2. Respaldo resiliente sobre tablas existentes en producción (`com_proforma`, `com_proforma_item`, `com_despacho_asignacion`)
   const clienteEscritura: any = crearClienteAdmin() ?? supabase;
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   const prefijo =
     negNorm === "tinkay"
@@ -995,14 +1104,17 @@ export async function registrarPedidoTiendaAction(
       prf_negocio: negNorm,
       prf_cliente_id: user?.id ?? null,
       prf_cliente_nombre: entrada.comprador.nombreCompleto,
-      prf_cliente_contacto: entrada.comprador,
+      prf_cliente_contacto: {
+        ...entrada.comprador,
+        tipo_comprador: user ? "USUARIO_REGISTRADO" : "USUARIO_NO_AUTORIZADO",
+      },
       prf_estado: estadoInicial,
       prf_subtotal: entrada.subtotalBaseImponible,
       prf_descuento: 0,
       prf_iva: entrada.totalIva,
       prf_total: entrada.totalPagar,
       prf_observaciones: logisticaPrincipal.formula_calculo_interno,
-      prf_detalle_proforma: payloadCompleto,
+      prf_detalle_proforma: payloadFinal,
     })
     .select("prf_id, prf_secuencial, prf_token_aprobacion")
     .single();
@@ -1134,6 +1246,35 @@ export async function registrarPedidoTiendaAction(
       dsp_observaciones_coordinacion: logisticaPrincipal.formula_calculo_interno,
       dsp_detalle_despacho: payloadCompleto.logistica_entrega,
     });
+
+  if (metodoPagoNorm !== "plux") {
+    try {
+      const { notificarStaffNuevoPedido } = await import("@eco/notificaciones/notificar-usuario");
+      await notificarStaffNuevoPedido({
+        negocio: negNorm,
+        codigo: codigoOrden,
+        clienteNombre: entrada.comprador.nombreCompleto,
+        clienteCorreo: entrada.comprador.correo,
+        clienteTelefono: entrada.comprador.telefono,
+        montoUsd: entrada.totalPagar,
+        metodoPago: metodoPagoNorm.toUpperCase(),
+        canalOrigen: "Tienda Web",
+        tipoEntrega:
+          entrada.modalidadEntrega === "unificada"
+            ? logisticaPrincipal.retiro_en_local
+              ? "RETIRO EN TIENDA"
+              : "DOMICILIO"
+            : "MULTIDESTINO",
+        direccionEntrega: logisticaPrincipal.direccion,
+        fechaEntrega: logisticaPrincipal.fecha_entrega,
+        itemsResumen: itemsEnriquecidos.map(
+          (it) => `${it.cantidad}x ${it.descripcion} ($${it.total_linea.toFixed(2)})`
+        ),
+      });
+    } catch (errNotif) {
+      console.warn("Aviso al notificar venta de tienda (respaldo) a staff:", errNotif);
+    }
+  }
 
   revalidatePath("/panel/pedidos");
   return {
@@ -1359,8 +1500,8 @@ export interface EntradaProformaEvento {
     nombreCompleto: string;
     identificacion?: string;
     correo: string;
-    whatsapp: string;
-    autorizaWhatsapp: boolean;
+    whatsapp?: string;
+    autorizaWhatsapp?: boolean;
   };
   evento: {
     tipoEvento: string;
@@ -1384,6 +1525,7 @@ export interface ProformaEventoPublica {
   id: string;
   secuencial: number;
   codigoProforma: string;
+  clienteId?: string | null;
   grupoProformaId?: string;
   versionNumero?: number;
   esOriginal?: boolean;
@@ -1509,15 +1651,31 @@ export interface EntradaVariacionProformaAsesor {
 
 const esquemaProformaEvento = z.object({
   negocio: z.string().min(1),
-  comprador: z.object({
-    nombreCompleto: z.string().trim().min(2, "Indica tu nombre completo o empresa"),
-    identificacion: z.string().trim().optional(),
-    correo: z.string().trim().email("Ingresa un correo electrónico válido"),
-    whatsapp: z.string().trim().min(7, "Ingresa un número de WhatsApp válido"),
-    autorizaWhatsapp: z.boolean().refine((v) => v === true, {
-      message: "Debes autorizar el contacto y envío de información por WhatsApp",
+  comprador: z
+    .object({
+      nombreCompleto: z.string().trim().min(2, "Indica tu nombre completo o empresa"),
+      identificacion: z.string().trim().optional(),
+      correo: z.string().trim().email("Ingresa un correo electrónico válido para recibir tu proforma"),
+      whatsapp: z
+        .string()
+        .trim()
+        .optional()
+        .default("")
+        .refine((v) => v.length === 0 || v.length >= 7, {
+          message: "Ingresa un número de WhatsApp válido o déjalo vacío para recibir solo por correo",
+        }),
+      autorizaWhatsapp: z.boolean().optional().default(false),
+    })
+    .superRefine((c, ctx) => {
+      if (c.whatsapp.trim().length > 0 && !c.autorizaWhatsapp) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ["autorizaWhatsapp"],
+          message:
+            "Autoriza el contacto por WhatsApp o deja el número vacío para recibir la proforma en tu correo",
+        });
+      }
     }),
-  }),
   evento: z.object({
     tipoEvento: z.string().trim().min(2, "Selecciona el tipo de evento"),
     fechaEvento: z.string().trim().min(4, "Indica la fecha tentativa del evento"),
@@ -1608,6 +1766,12 @@ export async function generarProformaEventoAction(
     }
   }
 
+  const whatsappNormalizado = (entrada.comprador.whatsapp || "").trim();
+  const tieneWhatsappProporcionado = whatsappNormalizado.length >= 7;
+  const autorizaWhatsappFinal = tieneWhatsappProporcionado
+    ? Boolean(entrada.comprador.autorizaWhatsapp ?? true)
+    : false;
+
   const logisticaEvento = ubicacionConGeo
     ? enriquecerDestinoConAuditoriaInterna(
         ubicacionConGeo,
@@ -1618,7 +1782,7 @@ export async function generarProformaEventoAction(
     : {
         retiro_en_local: false,
         destinatario_nombre: entrada.comprador.nombreCompleto,
-        destinatario_telefono: entrada.comprador.whatsapp,
+        destinatario_telefono: whatsappNormalizado,
         direccion: "Por confirmar locación exacta del evento",
         referencia: "",
         fecha_entrega: entrada.evento.fechaEvento,
@@ -1653,10 +1817,10 @@ export async function generarProformaEventoAction(
     nombreCompleto: entrada.comprador.nombreCompleto.trim(),
     identificacion: (entrada.comprador.identificacion || "9999999999").trim(),
     correo: entrada.comprador.correo.trim().toLowerCase(),
-    telefono: entrada.comprador.whatsapp.trim(),
-    whatsapp: entrada.comprador.whatsapp.trim(),
-    autorizaWhatsapp: true,
-    consentimientoWhatsappEn: new Date().toISOString(),
+    telefono: whatsappNormalizado,
+    whatsapp: whatsappNormalizado,
+    autorizaWhatsapp: autorizaWhatsappFinal,
+    ...(autorizaWhatsappFinal ? { consentimientoWhatsappEn: new Date().toISOString() } : {}),
   };
 
   const payloadProforma = {
@@ -1701,62 +1865,6 @@ export async function generarProformaEventoAction(
 
   const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
   const supabase = await crearClienteServidor();
-  const esquemaComercio: any = supabase.schema("comun_comercio");
-
-  // 1. Intentar RPC transaccional SECURITY DEFINER
-  const { data: resRpc, error: errRpc } = await esquemaComercio.rpc(
-    "com_fn_generar_proforma_evento",
-    {
-      p_negocio: negNorm,
-      p_payload: payloadProforma,
-    }
-  );
-
-  if (!errRpc && resRpc?.ok && resRpc?.token_aprobacion) {
-    const tokenCreado = String(resRpc.token_aprobacion);
-    try {
-      const consultaNueva = await obtenerProformaPorTokenAction(tokenCreado);
-      if (consultaNueva.ok) {
-        const { enviarCorreoProformaEvento } = await import("./pdf-proforma");
-        await enviarCorreoProformaEvento({ proformaActual: consultaNueva.proforma });
-
-        // Notificar en tiempo real al staff (operadores, administradores) de Tinkay / negocio
-        try {
-          const { notificarStaffNuevaProforma } = await import("@eco/notificaciones/notificar-usuario");
-          await notificarStaffNuevaProforma({
-            negocio: negNorm,
-            codigoProforma: consultaNueva.proforma.codigoProforma,
-            tokenAprobacion: tokenCreado,
-            clienteNombre: consultaNueva.proforma.comprador.nombreCompleto,
-            clienteCorreo: consultaNueva.proforma.comprador.correo,
-            clienteTelefono: consultaNueva.proforma.comprador.whatsapp,
-            tipoEvento: consultaNueva.proforma.evento.tipoEvento,
-            fechaEvento: consultaNueva.proforma.evento.fechaEvento,
-            lugarEvento: consultaNueva.proforma.ubicacion?.direccion,
-            totalUsd: consultaNueva.proforma.total,
-            reservaUsd: consultaNueva.proforma.montoReserva70Usd,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            itemsResumen: consultaNueva.proforma.items.map((it: any) => `${it.cantidad}x ${it.productoNombre} ($${(it.cantidad * it.precioUnitario).toFixed(2)})`),
-            origenCanal: "Web Autoservicio",
-          });
-        } catch (errStaff) {
-          console.warn("Aviso al notificar proforma a staff:", errStaff);
-        }
-      }
-    } catch {
-      // No bloquear la emisión en línea si el servidor SMTP no está disponible
-    }
-    revalidatePath("/panel/pedidos");
-    revalidatePath("/panel");
-    return {
-      ok: true,
-      id: String(resRpc.id),
-      codigoProforma: String(resRpc.codigo_proforma),
-      tokenAprobacion: tokenCreado,
-    };
-  }
-
-  // 2. Respaldo resiliente con service_role en tablas existentes si la migración RPC aún no se aplicó
   const clienteEscritura: any = crearClienteAdmin() ?? supabase;
   const {
     data: { user },
@@ -1770,6 +1878,107 @@ export async function generarProformaEventoAction(
       : negNorm === "fastfix"
       ? "FFH"
       : "TRQ";
+
+  let esClienteRegistrado = false;
+  if (user?.id) {
+    try {
+      const [{ data: memActiva }, { data: usrFlag }] = await Promise.all([
+        clienteEscritura
+          .schema("comun_seguridad")
+          .from("seg_membresia")
+          .select("mem_id")
+          .eq("mem_usuario_id", user.id)
+          .in("mem_negocio", [negNorm, negNorm.toUpperCase(), prefijo, prefijo.toLowerCase()])
+          .eq("mem_estado", "ACTIVO")
+          .limit(1)
+          .maybeSingle(),
+        clienteEscritura
+          .schema("comun_seguridad")
+          .from("seg_usuario")
+          .select("usu_superadmin_plataforma")
+          .eq("usu_id", user.id)
+          .maybeSingle(),
+      ]);
+      esClienteRegistrado = Boolean(memActiva?.mem_id || usrFlag?.usu_superadmin_plataforma);
+    } catch {
+      esClienteRegistrado = true;
+    }
+  }
+
+  // Regla de negocio: notificar a vendedores, operadores y administradores
+  // ÚNICAMENTE si el cliente está registrado y/o proporcionó su número de WhatsApp.
+  const debeNotificarStaffProforma = esClienteRegistrado || tieneWhatsappProporcionado;
+
+  const despacharCorreoYNotificacionProforma = async (tokenDestino: string) => {
+    try {
+      const consultaNueva = await obtenerProformaPorTokenAction(tokenDestino);
+      if (!consultaNueva.ok) return;
+
+      try {
+        const { enviarCorreoProformaEvento } = await import("./pdf-proforma");
+        await enviarCorreoProformaEvento({ proformaActual: consultaNueva.proforma });
+      } catch {
+        // No bloquear la emisión si el servidor SMTP no está disponible
+      }
+
+      if (debeNotificarStaffProforma) {
+        try {
+          const { notificarStaffNuevaProforma } = await import(
+            "@eco/notificaciones/notificar-usuario"
+          );
+          await notificarStaffNuevaProforma({
+            negocio: negNorm,
+            codigoProforma: consultaNueva.proforma.codigoProforma,
+            tokenAprobacion: tokenDestino,
+            clienteNombre: consultaNueva.proforma.comprador.nombreCompleto,
+            clienteCorreo: consultaNueva.proforma.comprador.correo,
+            clienteTelefono: consultaNueva.proforma.comprador.whatsapp || undefined,
+            clienteRegistrado: esClienteRegistrado,
+            tipoEvento: consultaNueva.proforma.evento.tipoEvento,
+            fechaEvento: consultaNueva.proforma.evento.fechaEvento,
+            lugarEvento: consultaNueva.proforma.ubicacion?.direccion,
+            totalUsd: consultaNueva.proforma.total,
+            reservaUsd: consultaNueva.proforma.montoReserva70Usd,
+            itemsResumen: consultaNueva.proforma.items.map(
+              (it) =>
+                `${it.cantidad}x ${it.descripcion} ($${(it.cantidad * it.precioUnitario).toFixed(2)})`
+            ),
+            origenCanal: "Web Autoservicio",
+          });
+        } catch (errStaff) {
+          console.warn("Aviso al notificar proforma a staff:", errStaff);
+        }
+      }
+    } catch {
+      // Continuar sin bloquear la emisión
+    }
+  };
+
+  const esquemaComercio: any = supabase.schema("comun_comercio");
+
+  // 1. Intentar RPC transaccional SECURITY DEFINER
+  const { data: resRpc, error: errRpc } = await esquemaComercio.rpc(
+    "com_fn_generar_proforma_evento",
+    {
+      p_negocio: negNorm,
+      p_payload: payloadProforma,
+    }
+  );
+
+  if (!errRpc && resRpc?.ok && resRpc?.token_aprobacion) {
+    const tokenCreado = String(resRpc.token_aprobacion);
+    await despacharCorreoYNotificacionProforma(tokenCreado);
+    revalidatePath("/panel/pedidos");
+    revalidatePath("/panel");
+    return {
+      ok: true,
+      id: String(resRpc.id),
+      codigoProforma: String(resRpc.codigo_proforma),
+      tokenAprobacion: tokenCreado,
+    };
+  }
+
+  // 2. Respaldo resiliente con service_role en tablas existentes si la migración RPC aún no se aplicó
 
   const { data: proformaCreada, error: errPrf } = await clienteEscritura
     .schema("comun_comercio")
@@ -1860,6 +2069,8 @@ export async function generarProformaEventoAction(
         })),
       });
 
+      await despacharCorreoYNotificacionProforma(tokenFirmado);
+
       return {
         ok: true,
         id: idRespaldo,
@@ -1943,7 +2154,7 @@ export async function generarProformaEventoAction(
       dsp_detalle_despacho: payloadProforma.logistica_entrega,
     });
 
-  if (user?.id) {
+  if (user?.id && tieneWhatsappProporcionado && autorizaWhatsappFinal) {
     try {
       const { data: usrActual } = await clienteEscritura
         .schema("comun_seguridad")
@@ -1993,15 +2204,7 @@ export async function generarProformaEventoAction(
   }
 
   const tokenFinal = String(proformaCreada.prf_token_aprobacion);
-  try {
-    const consultaNueva = await obtenerProformaPorTokenAction(tokenFinal);
-    if (consultaNueva.ok) {
-      const { enviarCorreoProformaEvento } = await import("./pdf-proforma");
-      await enviarCorreoProformaEvento({ proformaActual: consultaNueva.proforma });
-    }
-  } catch {
-    // Continuar si falla correo
-  }
+  await despacharCorreoYNotificacionProforma(tokenFinal);
 
   revalidatePath("/panel/pedidos");
   revalidatePath("/panel");
@@ -2068,6 +2271,7 @@ function mapearProformaPublicaDesdeFila(f: any, itemsTabla: any[] = []): Proform
   return {
     id: idStr,
     secuencial: sec,
+    clienteId: f.cliente_id ?? f.prf_cliente_id ?? null,
     codigoProforma: String(
       det.codigo_proforma ||
         det.codigo_orden ||
@@ -2856,6 +3060,39 @@ export async function confirmarOrdenTransferenciaProformaAction(entrada: {
   const supabase = await crearClienteServidor();
   const esquemaComercio: any = supabase.schema("comun_comercio");
 
+  const notificarTransferenciaStaff = async () => {
+    try {
+      const { notificarStaffNuevoPedido } = await import("@eco/notificaciones/notificar-usuario");
+      const consultaNueva = await obtenerProformaPorTokenAction(tokenLimpio);
+      if (consultaNueva.ok) {
+        const prf = consultaNueva.proforma;
+        const montoCobro =
+          entrada.modalidadCobro === "RESERVA_70" ? prf.montoReserva70Usd : prf.total;
+        await notificarStaffNuevoPedido({
+          negocio: prf.negocio,
+          codigo: prf.codigoProforma,
+          clienteNombre: prf.comprador.nombreCompleto,
+          clienteCorreo: prf.comprador.correo,
+          clienteTelefono: prf.comprador.whatsapp || undefined,
+          montoUsd: montoCobro,
+          metodoPago: `TRANSFERENCIA BANCARIA (${
+            entrada.modalidadCobro === "RESERVA_70" ? "Reserva 70%" : "Total 100%"
+          })`,
+          canalOrigen: "Proforma Eventos",
+          tipoEntrega: "Evento / Montaje",
+          direccionEntrega: prf.ubicacion?.direccion,
+          fechaEntrega: prf.evento.fechaEvento,
+          dedicatoria: entrada.notaTransferencia,
+          itemsResumen: prf.items.map(
+            (it) => `${it.cantidad}x ${it.descripcion} ($${(it.cantidad * it.precioUnitario).toFixed(2)})`
+          ),
+        });
+      }
+    } catch (errNotif) {
+      console.warn("Aviso al notificar orden transferencia a staff:", errNotif);
+    }
+  };
+
   try {
     const { data: resRpc, error: errRpc } = await esquemaComercio.rpc(
       "com_fn_confirmar_orden_transferencia_proforma",
@@ -2866,32 +3103,7 @@ export async function confirmarOrdenTransferenciaProformaAction(entrada: {
       }
     );
     if (!errRpc && resRpc?.ok) {
-      try {
-        const { notificarStaffNuevoPedido } = await import("@eco/notificaciones/notificar-usuario");
-        const consultaNueva = await obtenerProformaPorTokenAction(tokenLimpio);
-        if (consultaNueva.ok) {
-          const prf = consultaNueva.proforma;
-          const montoCobro = entrada.modalidadCobro === "RESERVA_70" ? prf.montoReserva70Usd : prf.total;
-          await notificarStaffNuevoPedido({
-            negocio: prf.negocio,
-            codigo: prf.codigoProforma,
-            clienteNombre: prf.comprador.nombreCompleto,
-            clienteCorreo: prf.comprador.correo,
-            clienteTelefono: prf.comprador.whatsapp,
-            montoUsd: montoCobro,
-            metodoPago: `TRANSFERENCIA BANCARIA (${entrada.modalidadCobro === "RESERVA_70" ? "Reserva 70%" : "Total 100%"})`,
-            canalOrigen: "Proforma Eventos",
-            tipoEntrega: "Evento / Montaje",
-            direccionEntrega: prf.ubicacion?.direccion,
-            fechaEntrega: prf.evento.fechaEvento,
-            dedicatoria: entrada.notaTransferencia,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            itemsResumen: prf.items.map((it: any) => `${it.cantidad}x ${it.productoNombre} ($${(it.cantidad * it.precioUnitario).toFixed(2)})`),
-          });
-        }
-      } catch (errNotif) {
-        console.warn("Aviso al notificar orden transferencia a staff:", errNotif);
-      }
+      await notificarTransferenciaStaff();
       revalidatePath(`/proforma/${tokenLimpio}`);
       revalidatePath("/panel");
       revalidatePath("/panel/pedidos");
@@ -2969,6 +3181,7 @@ export async function confirmarOrdenTransferenciaProformaAction(entrada: {
       .eq("prf_id", h.prf_id);
   }
 
+  await notificarTransferenciaStaff();
   revalidatePath(`/proforma/${tokenLimpio}`);
   revalidatePath("/panel");
   revalidatePath("/panel/pedidos");
@@ -3121,5 +3334,85 @@ export async function obtenerMisProformasEventoAction(
   });
 
   return { ok: true, proformas };
+}
+
+export interface EstadoRegaloPrimeraCompra {
+  autenticado: boolean;
+  aplicaRegalo: boolean;
+  regalo: {
+    sku: string;
+    nombre: string;
+    valorReferencia: number;
+  };
+}
+
+/**
+ * Verifica si el usuario actual está registrado y califica para recibir el regalo
+ * de primera compra (Bombón Ferrero x1 en Esfera Acrílica sin costo adicional).
+ */
+export async function obtenerEstadoRegaloPrimeraCompraAction(
+  negocio = "tinkay"
+): Promise<EstadoRegaloPrimeraCompra> {
+  const negNorm = (negocio || "tinkay").trim().toLowerCase();
+  const regaloPorDefecto = {
+    sku: "TIN-VAR-6",
+    nombre: "Bombón Ferrero x1 en Esfera Acrílica",
+    valorReferencia: 1.5,
+  };
+
+  try {
+    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return {
+        autenticado: false,
+        aplicaRegalo: false,
+        regalo: regaloPorDefecto,
+      };
+    }
+
+    const { data, error } = await (supabase as any)
+      .schema("comun_comercio")
+      .rpc("com_fn_verificar_primera_compra_usuario", { p_negocio: negNorm });
+
+    if (!error && data && typeof data.aplica_regalo === "boolean") {
+      return {
+        autenticado: Boolean(data.autenticado),
+        aplicaRegalo: Boolean(data.aplica_regalo),
+        regalo: {
+          sku: String(data.regalo?.sku || regaloPorDefecto.sku),
+          nombre: String(data.regalo?.nombre || regaloPorDefecto.nombre),
+          valorReferencia: Number(data.regalo?.valor_referencia ?? regaloPorDefecto.valorReferencia),
+        },
+      };
+    }
+
+    // Respaldo si el RPC aún no está en caché
+    const db: any = crearClienteAdmin() ?? supabase;
+    const { count } = await db
+      .schema("comun_comercio")
+      .from("com_proforma")
+      .select("prf_id", { count: "exact", head: true })
+      .eq("prf_negocio", negNorm)
+      .eq("prf_cliente_id", user.id)
+      .in("prf_estado", ["APROBADA", "RESERVADA_70", "EN_PRODUCCION", "EN_CAMINO", "ENTREGADO"])
+      .is("prf_eliminado_en", null);
+
+    return {
+      autenticado: true,
+      aplicaRegalo: (count ?? 0) === 0,
+      regalo: regaloPorDefecto,
+    };
+  } catch {
+    return {
+      autenticado: false,
+      aplicaRegalo: false,
+      regalo: regaloPorDefecto,
+    };
+  }
 }
 

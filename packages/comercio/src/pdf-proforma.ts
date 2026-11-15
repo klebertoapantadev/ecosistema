@@ -220,13 +220,18 @@ export async function generarPdfProformaBytes(
     color: colorGris,
   });
   yIzq -= 13;
-  pagina.drawText(textoSeguroPdf(`WhatsApp: ${proforma.comprador.whatsapp}`), {
-    x: colIzqX,
-    y: yIzq,
-    size: 8.5,
-    font: fontReg,
-    color: colorGris,
-  });
+  pagina.drawText(
+    textoSeguroPdf(
+      `WhatsApp: ${proforma.comprador.whatsapp || "No indicado (enviado por correo)"}`
+    ),
+    {
+      x: colIzqX,
+      y: yIzq,
+      size: 8.5,
+      font: fontReg,
+      color: colorGris,
+    }
+  );
 
   pagina.drawText("DETALLES DEL EVENTO", {
     x: colDerX,
@@ -706,7 +711,7 @@ export async function enviarCorreoProformaEvento(params: {
 
       <hr style="border:none;border-top:1px solid #E5E7EB;margin:20px 0;" />
       <p style="margin:0;font-size:12px;color:#6B7280;text-align:center;">
-        Tinkay Floristería &amp; Eventos · Quito, Ecuador
+        Tinkay Floristería &amp; Eventos · Quito, Ecuador · WhatsApp Tienda: <a href="https://wa.me/593992922343" style="color:#2D4734;font-weight:700;text-decoration:none;">+593 99 292 2343</a>
       </p>
     </div>`;
 

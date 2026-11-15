@@ -529,14 +529,32 @@ export async function procesarAutoafiliacionYBienvenidaConvenio(
   }
 }
 
+export const ROLES_STAFF_OPERATIVO_Y_ADMIN = [
+  "OPERADOR",
+  "ADMINISTRADOR",
+  "ADMIN",
+  "SUPERADMIN",
+] as const;
+
+export const ROLES_STAFF_PROFORMA_EVENTOS = [
+  "VENDEDOR",
+  "VENTAS",
+  "ASESOR",
+  "OPERADOR",
+  "ADMINISTRADOR",
+  "ADMIN",
+  "SUPERADMIN",
+] as const;
+
 export async function obtenerDestinatariosStaffNegocio(
   negocio: string,
-  usuarioExcluidoId?: string
+  usuarioExcluidoId?: string,
+  rolesPersonalizados?: readonly string[]
 ): Promise<{ id: string; correo: string }[]> {
   const metaNeg = resolverMetaNegocioNotif(negocio);
   const adminSupabase = crearClienteAdmin() || await crearClienteServidor();
 
-  // 1. Obtener usuarios con perfil Operador, Administrador, Vendedor o SuperAdmin ESTRICTAMENTE en este negocio
+  // 1. Obtener usuarios con perfil autorizado ESTRICTAMENTE en este negocio
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: membresiasStaff } = await (adminSupabase as any)
     .schema("comun_seguridad")
@@ -563,7 +581,12 @@ export async function obtenerDestinatariosStaffNegocio(
   const destinatarios: { id: string; correo: string }[] = [];
   const correosVistos = new Set<string>();
 
-  const rolesPermitidos = new Set(["OPERADOR", "ADMINISTRADOR", "SUPERADMIN", "VENDEDOR"]);
+  const rolesPermitidos = new Set(
+    (rolesPersonalizados && rolesPersonalizados.length > 0
+      ? rolesPersonalizados
+      : ROLES_STAFF_OPERATIVO_Y_ADMIN
+    ).map((r) => r.toUpperCase())
+  );
 
   if (Array.isArray(membresiasStaff)) {
     for (const m of membresiasStaff) {
@@ -709,6 +732,7 @@ export interface ParametrosNuevaProformaNotif {
   clienteNombre: string;
   clienteCorreo?: string;
   clienteTelefono?: string;
+  clienteRegistrado?: boolean;
   tipoEvento?: string;
   fechaEvento?: string;
   lugarEvento?: string;
@@ -722,13 +746,17 @@ export async function notificarStaffNuevaProforma(params: ParametrosNuevaProform
   try {
     const metaNeg = resolverMetaNegocioNotif(params.negocio);
     const adminSupabase = crearClienteAdmin() || await crearClienteServidor();
-    const destinatarios = await obtenerDestinatariosStaffNegocio(params.negocio);
+    const destinatarios = await obtenerDestinatariosStaffNegocio(
+      params.negocio,
+      undefined,
+      ROLES_STAFF_PROFORMA_EVENTOS
+    );
 
     if (destinatarios.length === 0) return;
 
-    const titulo = `📋 Nueva Proforma (${metaNeg.nombreVisible}): ${params.codigoProforma} - ${params.clienteNombre} ($${params.totalUsd.toFixed(2)})`;
+    const titulo = `📋 Proforma de Evento (${metaNeg.nombreVisible}): ${params.clienteNombre} generó ${params.codigoProforma} ($${params.totalUsd.toFixed(2)})`;
     const urlAccion = `/panel/pedidos?codigo=${encodeURIComponent(params.codigoProforma)}`;
-    const urlCliente = `https://${params.negocio.toLowerCase() === "tinkay" ? "tinkay-web.vercel.app" : "ecosistema.vercel.app"}/proforma/${params.tokenAprobacion}`;
+    const urlCliente = `https://${metaNeg.canon === "tinkay" ? "tinkay-web.vercel.app" : `${metaNeg.canon}-web.vercel.app`}/proforma/${params.tokenAprobacion}`;
 
     const itemsHtml = Array.isArray(params.itemsResumen) && params.itemsResumen.length > 0
       ? `<ul style="margin: 8px 0; padding-left: 20px; font-size: 13px; color: #374151;">
@@ -736,25 +764,32 @@ export async function notificarStaffNuevaProforma(params: ParametrosNuevaProform
          </ul>`
       : "";
 
+    const badgeCondicion = [
+      params.clienteRegistrado ? "Cuenta registrada" : "Visitante con datos de contacto",
+      params.clienteTelefono ? "WhatsApp proporcionado" : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
     const contenidoHTML = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1F2937; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px;">
         <div style="background: #2D4734; color: #FFFFFF; padding: 16px 20px; border-radius: 8px; margin-bottom: 16px;">
-          <span style="font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #FDE68A;">${metaNeg.nombreVisible} — Alerta Operativa</span>
-          <h3 style="margin: 4px 0 0; font-size: 18px; font-weight: bold; color: #FFFFFF;">Nueva Proforma Registrada (${params.codigoProforma})</h3>
+          <span style="font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: #FDE68A;">${metaNeg.nombreVisible} — Alerta Comercial de Eventos</span>
+          <h3 style="margin: 4px 0 0; font-size: 18px; font-weight: bold; color: #FFFFFF;">${params.clienteNombre} generó una Proforma de Evento (${params.codigoProforma})</h3>
         </div>
         <p style="font-size: 14px; margin: 0 0 12px;">
-          Se ha generado una nueva proforma para cotización de evento desde el canal <strong>${params.origenCanal || "Web Autoservicio"}</strong>.
+          El usuario <strong>${params.clienteNombre}</strong> generó una proforma de evento desde <strong>${params.origenCanal || "Web Autoservicio"}</strong> (${badgeCondicion}).
         </p>
         <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; font-size: 13.5px; line-height: 1.6;">
           <div><strong>Cliente:</strong> ${params.clienteNombre}</div>
-          ${params.clienteTelefono ? `<div><strong>Teléfono:</strong> <a href="https://wa.me/${params.clienteTelefono.replace(/\D/g, '')}">${params.clienteTelefono}</a></div>` : ""}
+          ${params.clienteTelefono ? `<div><strong>WhatsApp:</strong> <a href="https://wa.me/${params.clienteTelefono.replace(/\D/g, '')}">${params.clienteTelefono}</a></div>` : `<div><strong>WhatsApp:</strong> No indicado (enviado por correo)</div>`}
           ${params.clienteCorreo ? `<div><strong>Correo:</strong> ${params.clienteCorreo}</div>` : ""}
           ${params.tipoEvento ? `<div><strong>Tipo de Evento:</strong> ${params.tipoEvento}</div>` : ""}
           ${params.fechaEvento ? `<div><strong>Fecha Evento:</strong> ${params.fechaEvento}</div>` : ""}
           ${params.lugarEvento ? `<div><strong>Ubicación:</strong> ${params.lugarEvento}</div>` : ""}
           <div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed #D1D5DB;">
-            <strong>Total Estimado:</strong> $${params.totalUsd.toFixed(2)} USD<br/>
-            <strong>Reserva Solicitada (70%):</strong> $${params.reservaUsd.toFixed(2)} USD
+            <strong>Total Proforma:</strong> $${params.totalUsd.toFixed(2)} USD<br/>
+            <strong>Reserva Sugerida (70%):</strong> $${params.reservaUsd.toFixed(2)} USD
           </div>
           ${itemsHtml}
         </div>
@@ -835,11 +870,15 @@ export async function notificarStaffNuevoPedido(params: ParametrosNuevoPedidoNot
   try {
     const metaNeg = resolverMetaNegocioNotif(params.negocio);
     const adminSupabase = crearClienteAdmin() || await crearClienteServidor();
-    const destinatarios = await obtenerDestinatariosStaffNegocio(params.negocio);
+    const destinatarios = await obtenerDestinatariosStaffNegocio(
+      params.negocio,
+      undefined,
+      ROLES_STAFF_OPERATIVO_Y_ADMIN
+    );
 
     if (destinatarios.length === 0) return;
 
-    const titulo = `🌸 ¡Nueva Venta Confirmada! (${metaNeg.nombreVisible}): ${params.codigo} - $${params.montoUsd.toFixed(2)} [${params.metodoPago}]`;
+    const titulo = `🌸 ¡Venta Realizada! (${metaNeg.nombreVisible}): ${params.codigo} - $${params.montoUsd.toFixed(2)} [${params.metodoPago}]`;
     const urlAccion = params.enlacePanel || `/panel/pedidos?codigo=${encodeURIComponent(params.codigo)}`;
 
     const itemsHtml = Array.isArray(params.itemsResumen) && params.itemsResumen.length > 0

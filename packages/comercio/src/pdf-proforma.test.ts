@@ -78,6 +78,21 @@ describe("generarPdfProformaBytes", () => {
     expect(bytes.byteLength).toBeGreaterThan(1200);
     const cabecera = Buffer.from(bytes.slice(0, 5)).toString("ascii");
     expect(cabecera).toBe("%PDF-");
+
+    const bytesSinWhatsapp = await generarPdfProformaBytes(
+      {
+        ...proformaMock,
+        comprador: {
+          ...proformaMock.comprador,
+          whatsapp: "",
+          autorizaWhatsapp: false,
+        },
+      },
+      {
+        urlPublica: "https://tinkay-web.vercel.app/proforma/abcdef1234567890abcdef1234567890",
+      }
+    );
+    expect(bytesSinWhatsapp.byteLength).toBeGreaterThan(1200);
   });
 });
 

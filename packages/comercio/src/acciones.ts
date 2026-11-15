@@ -5573,6 +5573,17 @@ export async function confirmarPagoPayphoneAction(datos: {
               not_canal: "IN_APP",
             });
         }
+        const { notificarStaffNuevoPedido } = await import("@eco/notificaciones/notificar-usuario");
+        await notificarStaffNuevoPedido({
+          negocio,
+          codigo: datos.clientTxId,
+          clienteNombre: datos.titularNombre || "Cliente",
+          clienteCorreo: datos.clienteEmail,
+          montoUsd: Number(datos.montoTotal ?? varEncontrada?.precio_total ?? 0),
+          metodoPago: `PAYPHONE (${marca} •••• ${ultimosDigitos})`,
+          canalOrigen: "Pasarela Payphone",
+          itemsResumen: [datos.productoNombre || "Servicio / Producto"],
+        });
       } catch {
         // Continuar
       }
@@ -5658,6 +5669,22 @@ export async function confirmarPagoPayphoneAction(datos: {
             identificador: datos.clientTxId,
             negocio,
           });
+          try {
+            const { notificarStaffNuevoPedido } = await import("@eco/notificaciones/notificar-usuario");
+            await notificarStaffNuevoPedido({
+              negocio,
+              codigo: datos.clientTxId,
+              clienteNombre: datos.titularNombre || confirmData.optionalParameter4 || "Cliente",
+              clienteCorreo: datos.clienteEmail || confirmData.email,
+              clienteTelefono: confirmData.phoneNumber,
+              montoUsd: Number(datos.montoTotal ?? (Number(confirmData.amount || 0) / 100)),
+              metodoPago: `PAYPHONE (${confirmData.cardBrand || "Tarjeta"} •••• ${confirmData.lastDigits || ""})`,
+              canalOrigen: "Pasarela Payphone",
+              itemsResumen: [datos.productoNombre || detPrevio.producto || "Pedido / Servicio"],
+            });
+          } catch {
+            // Continuar
+          }
         }
       } catch {
         // Continuar

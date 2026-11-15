@@ -39,6 +39,7 @@ interface PropsVistaProformaEventoCliente {
   variacionesIniciales: ProformaEventoPublica[];
   bloqueadaPorPagoInicial: boolean;
   ambientePlux: string;
+  usuarioRegistrado?: boolean;
 }
 
 export function VistaProformaEventoCliente({
@@ -46,6 +47,7 @@ export function VistaProformaEventoCliente({
   variacionesIniciales,
   bloqueadaPorPagoInicial,
   ambientePlux,
+  usuarioRegistrado = false,
 }: PropsVistaProformaEventoCliente) {
   const router = useRouter();
   const [variaciones, setVariaciones] = useState<ProformaEventoPublica[]>(
@@ -338,10 +340,14 @@ export function VistaProformaEventoCliente({
       ? proformaActiva.saldoPendienteUsd
       : proformaActiva.total;
 
-  const urlWhatsappAsesor = `https://wa.me/593991234567?text=${encodeURIComponent(
-    `Hola Tinkay, revisé mi proforma de evento ${proformaActiva.codigoProforma} (${proformaActiva.evento.tipoEvento} — $${proformaActiva.total.toFixed(2)}) y deseo conversar con un asesor: ${
+  const urlWhatsappAsesor = `https://wa.me/593992922343?text=${encodeURIComponent(
+    `Hola Tinkay, generé la proforma de evento ${proformaActiva.codigoProforma} (${proformaActiva.evento.tipoEvento} — $${proformaActiva.total.toFixed(2)}) y deseo conversar con un asesor: ${
       typeof window !== 'undefined' ? window.location.origin : 'https://tinkay-web.vercel.app'
     }/proforma/${proformaActiva.tokenAprobacion}`
+  )}`;
+  const urlDescargaPdf = `/api/proforma/${proformaActiva.tokenAprobacion}/pdf`;
+  const urlCrearCuentaDesdeProforma = `/registro?destino=${encodeURIComponent(
+    `/proforma/${proformaActiva.tokenAprobacion}`
   )}`;
 
   const inputEstilo: React.CSSProperties = {
@@ -415,9 +421,10 @@ export function VistaProformaEventoCliente({
 
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <a
-              href={`/api/proforma/${proformaActiva.tokenAprobacion}/pdf`}
-              title="Descargar archivo PDF oficial de esta variación"
-              aria-label="Descargar PDF"
+              href={urlDescargaPdf}
+              download={`Proforma-${proformaActiva.codigoProforma}.pdf`}
+              title="Descargar archivo PDF oficial de esta proforma"
+              aria-label="Descargar Proforma"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -432,7 +439,7 @@ export function VistaProformaEventoCliente({
               }}
             >
               <Download size={15} />
-              <span>Descargar PDF</span>
+              <span>Descargar Proforma</span>
             </a>
 
             <button
@@ -485,8 +492,8 @@ export function VistaProformaEventoCliente({
               href={urlWhatsappAsesor}
               target="_blank"
               rel="noopener noreferrer"
-              title="Hablar con un asesor de eventos para ajustar o actualizar tu proforma"
-              aria-label="Asesor WhatsApp"
+              title="Contactar a Tinkay por WhatsApp al +593 99 292 2343"
+              aria-label="Contáctanos WhatsApp"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -500,11 +507,109 @@ export function VistaProformaEventoCliente({
                 fontWeight: 700,
               }}
             >
-              <span>WhatsApp</span>
+              <span>Contáctanos WhatsApp</span>
               <ExternalLink size={14} />
             </a>
           </div>
         </div>
+
+        {/* Bloque Destacado para Visitantes No Registrados: Descarga Directa + WhatsApp Tienda +593 99 292 2343 */}
+        {!usuarioRegistrado && (
+          <div
+            className="ocultar-en-impresion"
+            style={{
+              padding: '16px 18px',
+              borderRadius: '16px',
+              background: 'linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%)',
+              border: '1px solid #6EE7B7',
+              marginBottom: '16px',
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '14px',
+            }}
+          >
+            <div style={{ flex: '1 1 320px' }}>
+              <strong style={{ display: 'block', fontSize: '0.94rem', color: '#14532D', marginBottom: '4px' }}>
+                Tu proforma está lista (enviada a {proformaActiva.comprador.correo})
+              </strong>
+              <span style={{ display: 'block', fontSize: '0.81rem', color: '#166534', lineHeight: 1.45 }}>
+                Como aún no tienes cuenta registrada en Tinkay, puedes descargar tu proforma en PDF
+                aquí mismo o escribirnos directamente por WhatsApp al{' '}
+                <strong>+593 99 292 2343</strong> para atención personalizada.
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <a
+                href={urlDescargaPdf}
+                download={`Proforma-${proformaActiva.codigoProforma}.pdf`}
+                title="Descargar proforma oficial en formato PDF"
+                aria-label="Descargar Proforma"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '9px 15px',
+                  borderRadius: '999px',
+                  background: '#2D4734',
+                  color: '#FFFFFF',
+                  textDecoration: 'none',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                }}
+              >
+                <Download size={15} />
+                <span>Descargar Proforma</span>
+              </a>
+
+              <a
+                href={urlWhatsappAsesor}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Contáctanos vía WhatsApp al +593 99 292 2343"
+                aria-label="Contáctanos WhatsApp"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '9px 15px',
+                  borderRadius: '999px',
+                  background: '#059669',
+                  color: '#FFFFFF',
+                  textDecoration: 'none',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                }}
+              >
+                <span>Contáctanos WhatsApp</span>
+                <ExternalLink size={14} />
+              </a>
+
+              <Link
+                href={urlCrearCuentaDesdeProforma}
+                title="Crear cuenta en Tinkay para guardar tus proformas"
+                aria-label="Crear Cuenta"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '9px 14px',
+                  borderRadius: '999px',
+                  border: '1px solid #2D4734',
+                  background: '#FFFFFF',
+                  color: '#2D4734',
+                  textDecoration: 'none',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                }}
+              >
+                <span>Crear Cuenta</span>
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Selector de Variaciones Almacenadas + Gestión / Eliminación por el Cliente */}
         <div
