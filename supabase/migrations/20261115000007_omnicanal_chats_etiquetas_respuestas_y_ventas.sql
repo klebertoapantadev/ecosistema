@@ -823,7 +823,10 @@ begin
         'nombre', coalesce(nullif(btrim(coalesce(u.usu_nombres, '') || ' ' || coalesce(u.usu_apellidos, '')), ''), u.usu_correo),
         'correo', u.usu_correo,
         'avatarUrl', u.usu_detalle_usuario->>'foto',
-        'rol', coalesce(p.per_clave, m.mem_rol, 'VENTAS'),
+        'rol', case
+          when u.usu_superadmin_plataforma or (v_negocio = 'tinkay' and lower(btrim(coalesce(u.usu_correo, ''))) = 'tinkay.uio@gmail.com') then 'SUPERADMIN'
+          else coalesce(p.per_clave, m.mem_rol, 'VENTAS')
+        end,
         'chatsActivos', (
           select count(*)
           from comun_agentes.agc_conversacion ca
@@ -846,7 +849,9 @@ begin
         or (v_negocio = 'margaritas' and lower(m.mem_negocio) in ('margaritas', 'mrg'))
       )
       and (
-        upper(coalesce(p.per_clave, '')) in ('VENTAS', 'VENDEDOR', 'ASESOR', 'OPERADOR', 'ADMINISTRADOR', 'SUPERADMIN')
+        u.usu_superadmin_plataforma
+        or (v_negocio = 'tinkay' and lower(btrim(coalesce(u.usu_correo, ''))) = 'tinkay.uio@gmail.com')
+        or upper(coalesce(p.per_clave, '')) in ('VENTAS', 'VENDEDOR', 'ASESOR', 'OPERADOR', 'ADMINISTRADOR', 'SUPERADMIN')
         or upper(coalesce(m.mem_rol, '')) in ('VENTAS', 'VENDEDOR', 'ASESOR', 'OPERADOR', 'ADMINISTRADOR', 'SUPERADMIN')
       )
   ) sub;

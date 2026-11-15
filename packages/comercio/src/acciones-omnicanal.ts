@@ -4,11 +4,13 @@ import {
   ETIQUETAS_OMNICANAL_POR_DEFECTO,
   RESPUESTAS_RAPIDAS_POR_DEFECTO,
   esPedidoUsuarioRegistrado,
+  nombreCanalRealtimeOmnicanal,
   normalizarTelefonoOmnicanal,
   type ContactoUnificadoOmnicanal,
   type ConversacionOmnicanal,
   type EstadoAtencionOmnicanal,
   type EtiquetaOmnicanal,
+  type EventoBroadcastChatWeb,
   type MensajeOmnicanal,
   type MiembroEquipoOmnicanal,
   type RespuestaRapidaOmnicanal,
@@ -18,6 +20,26 @@ import { normalizarIdentificadorNegocio } from "./utils/negocio";
 
 function normalizarNegocioComercio(negocio?: string): string {
   return normalizarIdentificadorNegocio(negocio).principal;
+}
+
+async function emitirBroadcastServidorOmnicanal(
+  supabase: any,
+  negocio: string,
+  evento: string,
+  payload: Record<string, unknown>
+): Promise<void> {
+  try {
+    const canal = supabase.channel(nombreCanalRealtimeOmnicanal(negocio));
+    if (typeof (canal as any).httpSend === "function") {
+      await Promise.race([
+        (canal as any).httpSend(evento, payload),
+        new Promise((resolve) => setTimeout(resolve, 1200)),
+      ]);
+    }
+    void supabase.removeChannel?.(canal);
+  } catch {
+    // El cliente también emite por WebSocket directo; no interrumpir flujo principal
+  }
 }
 
 export interface PedidoWebConTipoCliente extends PedidoTiendaRegistrado {
@@ -34,6 +56,7 @@ export interface DatosTableroOmnicanal {
   usuariosYClientes: ContactoUnificadoOmnicanal[];
   pedidosWeb: PedidoWebConTipoCliente[];
   usandoRespaldoHibrido?: boolean;
+  avisoMigracionSql?: string | null;
 }
 
 interface AlmacenRespaldoOmnicanal {
@@ -236,6 +259,32 @@ export async function registrarInteraccionChatWebAction(entrada: {
   });
 
   if (!error && data?.ok) {
+    const ahoraIso = new Date().toISOString();
+    const payloadRt: EventoBroadcastChatWeb = {
+      eventoId: String(data.mensaje_id || `${hilo}:${entrada.fase}:${ahoraIso}`),
+      claveHilo: hilo,
+      conversacionId: String(data.conversacion_id),
+      fase: entrada.fase,
+      contenido: texto,
+      autorNombre:
+        entrada.fase === "RESPUESTA_ARIA"
+          ? String(entrada.metadatos?.nombre_agente || "ARIA IA")
+          : entrada.fase === "EVENTO_ORDEN"
+            ? "E-Commerce Web"
+            : nombreMeta || null,
+      remitenteNombre: nombreMeta || null,
+      remitenteCorreo: correoMeta || null,
+      remitenteTelefono: telMeta || null,
+      estadoAtencion: (data.estado_atencion as EstadoAtencionOmnicanal) || "BOT_ACTIVO",
+      creadoEn: ahoraIso,
+    };
+    await emitirBroadcastServidorOmnicanal(
+      supabase,
+      neg,
+      "actividad_chat_web",
+      payloadRt as unknown as Record<string, unknown>
+    );
+
     return {
       ok: true,
       conversacionId: String(data.conversacion_id),
@@ -553,7 +602,7 @@ export async function obtenerTableroOmnicanalAction(
           .schema("comun_seguridad")
           .from("seg_membresia")
           .select(
-            "mem_usuario_id, mem_rol, mem_creado_en, seg_usuario(usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_cedula, usu_autorizacion_whatsapp, usu_detalle_usuario)"
+            "mem_usuario_id, mem_rol, mem_creado_en, seg_usuario(usu_id, usu_nombres, usu_apellidos, usu_correo, usu_whatsapp, usu_cedula, usu_autorizacion_whatsapp, usu_superadmin_plataforma, usu_detalle_usuario)"
           )
           .in("mem_negocio", codigos)
           .eq("mem_estado", "ACTIVO")
@@ -628,7 +677,15 @@ export async function obtenerTableroOmnicanalAction(
     for (const m of membresias) {
       const u = Array.isArray(m.seg_usuario) ? m.seg_usuario[0] : m.seg_usuario;
       if (!u?.usu_id) continue;
-      const rol = String(m.mem_rol || "CLIENTE").toUpperCase();
+      const esSuperAdminCorreo =
+        Boolean(u.usu_superadmin_plataforma) ||
+        (neg === "tinkay" &&
+          String(u.usu_correo || "")
+            .trim()
+            .toLowerCase() === "tinkay.uio@gmail.com");
+      const rol = esSuperAdminCorreo
+        ? "SUPERADMIN"
+        : String(m.mem_rol || "CLIENTE").toUpperCase();
       const detalleUsu =
         u.usu_detalle_usuario && typeof u.usu_detalle_usuario === "object"
           ? (u.usu_detalle_usuario as Record<string, any>)
@@ -798,6 +855,7 @@ export async function obtenerTableroOmnicanalAction(
         usuariosYClientes: enriquecerContactosConPedidos(contactosBase, pedidosWeb),
         pedidosWeb,
         usandoRespaldoHibrido: convsTabla === null,
+        avisoMigracionSql: convsTabla === null && errRpc ? errRpc.message : null,
       },
     };
   } catch (err) {

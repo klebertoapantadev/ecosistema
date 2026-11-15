@@ -5,6 +5,9 @@ import {
   SelectorUbicacionEntrega,
   construirEnlaceCategoriaTienda,
   interpretarEnlaceTienda,
+  nombreCanalRealtimeOmnicanal,
+  type EventoBroadcastChatWeb,
+  type EventoBroadcastIntervencionAsesor,
 } from '@eco/comercio';
 import { crearClienteNavegador } from '@eco/supabase/cliente';
 import { useCarrito } from '../contexto-carrito';
@@ -43,8 +46,18 @@ const SUGERENCIAS_RAPIDAS = [
 type CotizacionChat = NonNullable<MensajeChat['cotizacionEnvio']>;
 
 type ResultadoConsultaAria =
-  | { estado: 'ok'; texto: string; cotizacionEnvio?: CotizacionChat }
-  | { estado: 'modo_humano'; asesoraNombre: string; cotizacionEnvio?: CotizacionChat }
+  | {
+      estado: 'ok';
+      texto: string;
+      conversacionOmnicanalId?: string | null;
+      cotizacionEnvio?: CotizacionChat;
+    }
+  | {
+      estado: 'modo_humano';
+      asesoraNombre: string;
+      conversacionOmnicanalId?: string | null;
+      cotizacionEnvio?: CotizacionChat;
+    }
   | { estado: 'sin_configurar'; cotizacionEnvio?: CotizacionChat }
   | { estado: 'error_temporal'; cotizacionEnvio?: CotizacionChat };
 
@@ -167,6 +180,26 @@ export function ChatAriaFlotante() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const conversacionId = useRef<string>(crearConversacionId());
   const idsHumanosVistos = useRef<Set<string>>(new Set());
+  const canalRealtimeRef = useRef<any>(null);
+  const realtimeConectadoRef = useRef<boolean>(false);
+
+  const emitirEventoRealtimeCliente = (payload: EventoBroadcastChatWeb) => {
+    try {
+      const canal = canalRealtimeRef.current;
+      if (!canal) return;
+      if (realtimeConectadoRef.current) {
+        void canal.send({
+          type: 'broadcast',
+          event: 'actividad_chat_web',
+          payload,
+        });
+      } else if (typeof canal.httpSend === 'function') {
+        void canal.httpSend('actividad_chat_web', payload).catch(() => {});
+      }
+    } catch {
+      // Silencioso
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -246,6 +279,66 @@ export function ChatAriaFlotante() {
       // Ignorar modo privado
     }
   };
+
+  // Canal WebSocket Supabase Realtime instantáneo (<50ms) bidireccional con /panel/conversaciones
+  useEffect(() => {
+    let supabase: ReturnType<typeof crearClienteNavegador> | null = null;
+    let canal: any = null;
+    try {
+      supabase = crearClienteNavegador();
+      canal = supabase
+        .channel(nombreCanalRealtimeOmnicanal('tinkay'), {
+          config: { broadcast: { self: false } },
+        })
+        .on(
+          'broadcast',
+          { event: 'intervencion_asesor' },
+          ({ payload }: { payload: EventoBroadcastIntervencionAsesor }) => {
+            if (!payload || payload.claveHilo !== conversacionId.current) return;
+
+            if (payload.estadoAtencion === 'EN_ATENCION_ASESORA') {
+              setAsesoraHumanaActiva(payload.asesoraNombre || 'Asesora Tinkay');
+            } else if (payload.estadoAtencion === 'BOT_ACTIVO') {
+              setAsesoraHumanaActiva(null);
+            }
+
+            if (payload.mensaje && !payload.esNotaInterna && payload.mensaje.id) {
+              if (!idsHumanosVistos.current.has(payload.mensaje.id)) {
+                idsHumanosVistos.current.add(payload.mensaje.id);
+                const contenidoMsg = payload.mensaje.contenido;
+                setMensajes((prev) => [
+                  ...prev,
+                  {
+                    id: `hum-${payload.mensaje!.id}`,
+                    remitente: 'asesora',
+                    autorNombre:
+                      payload.mensaje!.autorNombre || payload.asesoraNombre || 'Asesora Tinkay',
+                    texto: contenidoMsg,
+                    timestamp: 'En vivo',
+                    productosSugeridos: productosMencionados(contenidoMsg),
+                  },
+                ]);
+                setAbierto(true);
+              }
+            }
+          }
+        )
+        .subscribe((status: string) => {
+          realtimeConectadoRef.current = status === 'SUBSCRIBED';
+        });
+      canalRealtimeRef.current = canal;
+    } catch {
+      // Respaldo por polling activo abajo
+    }
+
+    return () => {
+      realtimeConectadoRef.current = false;
+      canalRealtimeRef.current = null;
+      if (supabase && canal) {
+        void supabase.removeChannel(canal);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!abierto) return;
@@ -561,6 +654,7 @@ export function ChatAriaFlotante() {
           response?: string | null;
           modoHumano?: boolean;
           asesoraNombre?: string;
+          conversacionOmnicanalId?: string | null;
           cotizacionEnvio?: CotizacionChat;
         };
         if (data.cotizacionEnvio) {
@@ -571,6 +665,7 @@ export function ChatAriaFlotante() {
           return {
             estado: 'modo_humano',
             asesoraNombre: data.asesoraNombre || 'Asesora Tinkay',
+            conversacionOmnicanalId: data.conversacionOmnicanalId ?? null,
             cotizacionEnvio: ultimaCotizacion,
           };
         }
@@ -585,6 +680,7 @@ export function ChatAriaFlotante() {
             return {
               estado: 'ok',
               texto: limpiarMarkdown(respuesta),
+              conversacionOmnicanalId: data.conversacionOmnicanalId ?? null,
               cotizacionEnvio: ultimaCotizacion,
             };
           }
@@ -680,6 +776,20 @@ export function ChatAriaFlotante() {
       };
       setMensajes((prev) => [...prev, nuevoMensajeUsuario]);
       setInputTexto('');
+
+      // Notificación instantánea (<50ms) a la Consola de Ventas antes de que responda la IA
+      const ahoraCli = new Date().toISOString();
+      emitirEventoRealtimeCliente({
+        eventoId: `cli-${conversacionId.current}-${Date.now()}`,
+        claveHilo: conversacionId.current,
+        fase: 'ENTRADA_CLIENTE',
+        contenido: texto,
+        autorNombre: perfilVisitante?.nombre || null,
+        remitenteNombre: perfilVisitante?.nombre || null,
+        remitenteCorreo: perfilVisitante?.correo || null,
+        remitenteTelefono: perfilVisitante?.telefono || null,
+        creadoEn: ahoraCli,
+      });
     }
 
     setEscribiendo(true);
@@ -749,6 +859,19 @@ export function ChatAriaFlotante() {
 
     setMensajes((prev) => [...prev, nuevoMensajeAria]);
     setEscribiendo(false);
+
+    if (resultado.estado === 'ok' || resultado.estado === 'sin_configurar') {
+      emitirEventoRealtimeCliente({
+        eventoId: `ia-${conversacionId.current}-${Date.now()}`,
+        claveHilo: conversacionId.current,
+        conversacionId:
+          resultado.estado === 'ok' ? resultado.conversacionOmnicanalId ?? null : null,
+        fase: 'RESPUESTA_ARIA',
+        contenido: nuevoMensajeAria.texto,
+        autorNombre: 'Mía (ARIA IA)',
+        creadoEn: new Date().toISOString(),
+      });
+    }
   };
 
   const aplicarCotizacionAlCarrito = (mensajeId: string, cot: CotizacionChat) => {

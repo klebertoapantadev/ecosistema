@@ -196,6 +196,7 @@ export async function POST(req: NextRequest) {
   const claveHiloOmnicanal = conversacion ?? `web-anon-${Date.now()}`;
   let silenciarAriaPorHumano = false;
   let asesoraNombreActiva: string | null = null;
+  let conversacionOmnicanalId: string | null = null;
 
   const datosVisitante =
     visitante && typeof visitante === "object" ? (visitante as Record<string, unknown>) : {};
@@ -222,6 +223,7 @@ export async function POST(req: NextRequest) {
     });
     silenciarAriaPorHumano = trazaEntrada.silenciarAria;
     asesoraNombreActiva = trazaEntrada.asesoraNombre ?? null;
+    conversacionOmnicanalId = trazaEntrada.conversacionId ?? null;
   } catch {
     // No interrumpir la venta en vivo si la bitácora omnicanal tarda
   }
@@ -231,6 +233,7 @@ export async function POST(req: NextRequest) {
       response: null,
       modoHumano: true,
       asesoraNombre: asesoraNombreActiva ?? "Asesora Tinkay",
+      conversacionOmnicanalId,
       cotizacionEnvio,
     });
   }
@@ -242,19 +245,27 @@ export async function POST(req: NextRequest) {
     });
 
     if (data.response) {
-      registrarInteraccionChatWebAction({
-        negocio: NEGOCIO,
-        claveHilo: claveHiloOmnicanal,
-        fase: "RESPUESTA_ARIA",
-        contenido: data.response,
-        metadatos: {
-          nombre_agente: "Mía (ARIA IA)",
-          ...(cotizacionEnvio ? { cotizacion_envio: cotizacionEnvio } : {}),
-        },
-      }).catch(() => {});
+      try {
+        await registrarInteraccionChatWebAction({
+          negocio: NEGOCIO,
+          claveHilo: claveHiloOmnicanal,
+          fase: "RESPUESTA_ARIA",
+          contenido: data.response,
+          metadatos: {
+            nombre_agente: "Mía (ARIA IA)",
+            ...(cotizacionEnvio ? { cotizacion_envio: cotizacionEnvio } : {}),
+          },
+        });
+      } catch {
+        // Ignorar fallo de bitácora secundaria
+      }
     }
 
-    return NextResponse.json({ response: data.response, cotizacionEnvio });
+    return NextResponse.json({
+      response: data.response,
+      conversacionOmnicanalId,
+      cotizacionEnvio,
+    });
   } catch (e) {
     if (e instanceof ErrorSinConfiguracionAria) {
       return NextResponse.json({ error: e.message, cotizacionEnvio }, { status: 503 });

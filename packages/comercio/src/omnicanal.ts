@@ -276,6 +276,35 @@ export function emparejarComprasConConversacion(
   });
 }
 
+export function nombreCanalRealtimeOmnicanal(negocio: string): string {
+  return `eco-omnicanal-live-${(negocio || "tinkay").trim().toLowerCase()}`;
+}
+
+export interface EventoBroadcastChatWeb {
+  eventoId: string;
+  claveHilo: string;
+  conversacionId?: string | null;
+  fase: "ENTRADA_CLIENTE" | "RESPUESTA_ARIA" | "EVENTO_ORDEN";
+  contenido: string;
+  autorNombre?: string | null;
+  remitenteNombre?: string | null;
+  remitenteCorreo?: string | null;
+  remitenteTelefono?: string | null;
+  estadoAtencion?: EstadoAtencionOmnicanal;
+  creadoEn: string;
+}
+
+export interface EventoBroadcastIntervencionAsesor {
+  eventoId: string;
+  claveHilo: string;
+  conversacionId: string;
+  estadoAtencion: EstadoAtencionOmnicanal;
+  asesoraAsignadaId?: string | null;
+  asesoraNombre?: string | null;
+  esNotaInterna?: boolean;
+  mensaje?: MensajeOmnicanal | null;
+}
+
 export function calcularMetricasOmnicanal(
   conversaciones: ConversacionOmnicanal[],
   pedidos: Array<PedidoTiendaRegistrado & { esUsuarioRegistrado?: boolean }>,

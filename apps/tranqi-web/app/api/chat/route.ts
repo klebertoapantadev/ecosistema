@@ -73,13 +73,17 @@ export async function POST(req: NextRequest) {
     });
 
     if (data.response && !esContextoNavegacion) {
-      registrarInteraccionChatWebAction({
-        negocio: NEGOCIO,
-        claveHilo,
-        fase: "RESPUESTA_ARIA",
-        contenido: data.response,
-        metadatos: { nombre_agente: "ARIA Tranqi" },
-      }).catch(() => {});
+      try {
+        await registrarInteraccionChatWebAction({
+          negocio: NEGOCIO,
+          claveHilo,
+          fase: "RESPUESTA_ARIA",
+          contenido: data.response,
+          metadatos: { nombre_agente: "ARIA Tranqi" },
+        });
+      } catch {
+        // Ignorar fallo de bitácora secundaria
+      }
     }
 
     return NextResponse.json(data);

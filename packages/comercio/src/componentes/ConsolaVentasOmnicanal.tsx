@@ -5,6 +5,7 @@ import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import { crearClienteNavegador } from "@eco/supabase/cliente";
 import {
   AlertTriangle,
+  ArrowLeft,
   BarChart3,
   Bell,
   Bot,
@@ -12,6 +13,7 @@ import {
   CheckCircle2,
   Clock,
   ExternalLink,
+  Filter,
   Globe,
   Hand,
   Inbox,
@@ -27,6 +29,7 @@ import {
   StickyNote,
   Tag,
   Trash2,
+  User,
   UserCheck,
   UserPlus,
   Users,
@@ -49,11 +52,14 @@ import {
   calcularMetricasOmnicanal,
   emparejarComprasConConversacion,
   interpolarRespuestaRapida,
+  nombreCanalRealtimeOmnicanal,
   type CanalOmnicanal,
   type ContactoUnificadoOmnicanal,
   type ConversacionOmnicanal,
   type EstadoAtencionOmnicanal,
   type EtiquetaOmnicanal,
+  type EventoBroadcastChatWeb,
+  type EventoBroadcastIntervencionAsesor,
   type MensajeOmnicanal,
   type RespuestaRapidaOmnicanal,
 } from "../omnicanal";
@@ -238,7 +244,57 @@ export function ConsolaVentasOmnicanal({
     "todos" | "registrados" | "invitados"
   >("todos");
 
+  // Adaptación responsive de la bandeja de 4 columnas (móvil / tablet / desktop)
+  const [modoLayoutInbox, setModoLayoutInbox] = useState<"desktop" | "tablet" | "movil">("desktop");
+  const [vistaMovilInbox, setVistaMovilInbox] = useState<"lista" | "chat" | "ficha">("lista");
+  const [mostrarFiltrosInbox, setMostrarFiltrosInbox] = useState<boolean>(false);
+  const [mostrarFichaTablet, setMostrarFichaTablet] = useState<boolean>(false);
+
+  useEffect(() => {
+    const actualizarModo = () => {
+      const ancho = window.innerWidth;
+      if (ancho <= 820) {
+        setModoLayoutInbox("movil");
+      } else if (ancho <= 1220) {
+        setModoLayoutInbox("tablet");
+      } else {
+        setModoLayoutInbox("desktop");
+      }
+    };
+    actualizarModo();
+    window.addEventListener("resize", actualizarModo);
+    return () => window.removeEventListener("resize", actualizarModo);
+  }, []);
+
   const scrollMensajesRef = useRef<HTMLDivElement>(null);
+  const canalLiveRef = useRef<any>(null);
+  const liveConectadoRef = useRef<boolean>(false);
+  const [realtimeConectado, setRealtimeConectado] = useState<boolean>(false);
+  const huellasBroadcastVistasRef = useRef<Map<string, number>>(new Map());
+  const conversacionActivaIdRef = useRef<string | null>(conversacionActivaId);
+  const mensajesBufferLiveRef = useRef<Record<string, MensajeOmnicanal[]>>({});
+
+  useEffect(() => {
+    conversacionActivaIdRef.current = conversacionActivaId;
+  }, [conversacionActivaId]);
+
+  const emitirBroadcastAsesor = useCallback((payload: EventoBroadcastIntervencionAsesor) => {
+    try {
+      const canal = canalLiveRef.current;
+      if (!canal) return;
+      if (liveConectadoRef.current) {
+        void canal.send({
+          type: "broadcast",
+          event: "intervencion_asesor",
+          payload,
+        });
+      } else if (typeof canal.httpSend === "function") {
+        void canal.httpSend("intervencion_asesor", payload).catch(() => {});
+      }
+    } catch {
+      // Silencioso
+    }
+  }, []);
 
   const recargarTablero = useCallback(
     async (silencioso = false) => {
@@ -250,8 +306,26 @@ export function ConsolaVentasOmnicanal({
         return;
       }
       setErrorMsg(null);
-      setTablero(res.datos);
-      setConversacionActivaId((prev) => prev ?? res.datos.conversaciones[0]?.id ?? null);
+      setTablero((prev) => {
+        const clavesServidor = new Set(res.datos.conversaciones.map((c) => c.claveHilo));
+        const pendientesTiempoReal = prev.conversaciones.filter(
+          (c) => c.id.startsWith("rt-") && !clavesServidor.has(c.claveHilo)
+        );
+        const fusionadas = [...pendientesTiempoReal, ...res.datos.conversaciones];
+        return {
+          ...res.datos,
+          conversaciones: fusionadas,
+        };
+      });
+      setConversacionActivaId((prev) => {
+        if (prev && prev.startsWith("rt-")) {
+          const hilo = prev.slice(3);
+          const encontrada = res.datos.conversaciones.find((c) => c.claveHilo === hilo);
+          if (encontrada) return encontrada.id;
+          return prev;
+        }
+        return prev ?? res.datos.conversaciones[0]?.id ?? null;
+      });
       try {
         localStorage.setItem(cacheKey, JSON.stringify(res.datos));
       } catch {
@@ -289,10 +363,17 @@ export function ConsolaVentasOmnicanal({
 
   const cargarMensajesConversacion = useCallback(
     async (convId: string, silencioso = false) => {
+      if (convId.startsWith("rt-")) {
+        const hilo = convId.slice(3);
+        setMensajesActivos(mensajesBufferLiveRef.current[hilo] ?? []);
+        return;
+      }
       if (!silencioso) setCargandoMensajes(true);
       const res = await obtenerMensajesConversacionAction(negNorm, convId);
       if (res.ok) {
-        setMensajesActivos(res.mensajes);
+        if (res.mensajes.length > 0 || !silencioso) {
+          setMensajesActivos(res.mensajes);
+        }
         setTablero((prev) => ({
           ...prev,
           conversaciones: prev.conversaciones.map((c) =>
@@ -319,11 +400,218 @@ export function ConsolaVentasOmnicanal({
     }
   }, [mensajesActivos.length, conversacionActivaId]);
 
-  // Suscripción Supabase Realtime + refresco ligero para trabajo colaborativo multi-vendedor
+  // Canal WebSocket Instantáneo (<50ms Broadcast) + Postgres Changes + respaldo periódico suave
   useEffect(() => {
     const supabase = crearClienteNavegador();
-    const canal = supabase
-      .channel(`omnicanal-${negNorm}`)
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const programarSincronizacionSuave = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        void recargarTablero(true);
+        const idActual = conversacionActivaIdRef.current;
+        if (idActual && !idActual.startsWith("rt-")) {
+          void cargarMensajesConversacion(idActual, true);
+        }
+      }, 900);
+    };
+
+    const canalLive = supabase
+      .channel(nombreCanalRealtimeOmnicanal(negNorm), {
+        config: { broadcast: { self: false } },
+      })
+      .on(
+        "broadcast",
+        { event: "actividad_chat_web" },
+        ({ payload }: { payload: EventoBroadcastChatWeb }) => {
+          if (!payload || !payload.claveHilo || !payload.contenido) return;
+
+          // Deduplicación entre WebSocket directo del visitante (<50ms) y httpSend del servidor
+          const huella = `${payload.claveHilo}::${payload.fase}::${payload.contenido.trim().slice(0, 100)}`;
+          const ahoraMs = Date.now();
+          const ultimoMs = huellasBroadcastVistasRef.current.get(huella) ?? 0;
+          if (ahoraMs - ultimoMs < 12000) {
+            if (payload.conversacionId) {
+              setTablero((prev) => ({
+                ...prev,
+                conversaciones: prev.conversaciones.map((c) =>
+                  c.claveHilo === payload.claveHilo && c.id.startsWith("rt-")
+                    ? { ...c, id: String(payload.conversacionId) }
+                    : c
+                ),
+              }));
+              setConversacionActivaId((prev) =>
+                prev === `rt-${payload.claveHilo}` ? String(payload.conversacionId) : prev
+              );
+            }
+            return;
+          }
+          huellasBroadcastVistasRef.current.set(huella, ahoraMs);
+
+          const origenMsg: MensajeOmnicanal["origen"] =
+            payload.fase === "RESPUESTA_ARIA"
+              ? "BOT_ARIA"
+              : payload.fase === "EVENTO_ORDEN"
+                ? "SISTEMA"
+                : "CLIENTE";
+
+          const nuevoMsg: MensajeOmnicanal = {
+            id: payload.eventoId || `rtm-${ahoraMs}`,
+            origen: origenMsg,
+            autorNombre:
+              payload.autorNombre ||
+              (origenMsg === "BOT_ARIA"
+                ? "ARIA IA"
+                : origenMsg === "SISTEMA"
+                  ? "E-Commerce Web"
+                  : payload.remitenteNombre || "Visitante Web"),
+            contenido: payload.contenido,
+            tipoContenido: payload.fase === "EVENTO_ORDEN" ? "ORDEN_WEB" : "TEXTO",
+            estadoEntrega: "ENVIADO",
+            creadoEn: payload.creadoEn || new Date().toISOString(),
+          };
+
+          const bufActual = mensajesBufferLiveRef.current[payload.claveHilo] ?? [];
+          mensajesBufferLiveRef.current[payload.claveHilo] = [...bufActual, nuevoMsg];
+
+          const idObjetivo = payload.conversacionId || `rt-${payload.claveHilo}`;
+          let idSeleccionadoFinal = conversacionActivaIdRef.current;
+
+          setTablero((prev) => {
+            const existente = prev.conversaciones.find((c) => c.claveHilo === payload.claveHilo);
+            const idEfectivo =
+              payload.conversacionId ||
+              (existente && !existente.id.startsWith("rt-") ? existente.id : idObjetivo);
+            const estaAbierta =
+              idSeleccionadoFinal === idEfectivo ||
+              idSeleccionadoFinal === `rt-${payload.claveHilo}` ||
+              idSeleccionadoFinal === null;
+
+            if (existente) {
+              const actualizada: ConversacionOmnicanal = {
+                ...existente,
+                id: idEfectivo,
+                remitenteNombre:
+                  payload.remitenteNombre && existente.remitenteNombre.startsWith("Visitante Web")
+                    ? payload.remitenteNombre
+                    : existente.remitenteNombre,
+                remitenteCorreo: payload.remitenteCorreo || existente.remitenteCorreo,
+                remitenteTelefono: payload.remitenteTelefono || existente.remitenteTelefono,
+                estadoAtencion: payload.estadoAtencion || existente.estadoAtencion,
+                ultimoMensajeTexto: payload.contenido.slice(0, 280),
+                ultimoMensajeOrigen: origenMsg,
+                ultimoMensajeEn: nuevoMsg.creadoEn,
+                noLeidosAsesora:
+                  origenMsg === "CLIENTE" && !estaAbierta
+                    ? (existente.noLeidosAsesora || 0) + 1
+                    : existente.noLeidosAsesora,
+                mensajesClienteConteo:
+                  origenMsg === "CLIENTE"
+                    ? (existente.mensajesClienteConteo || 0) + 1
+                    : existente.mensajesClienteConteo,
+                mensajesIaConteo:
+                  origenMsg === "BOT_ARIA"
+                    ? (existente.mensajesIaConteo || 0) + 1
+                    : existente.mensajesIaConteo,
+              };
+              return {
+                ...prev,
+                conversaciones: [
+                  actualizada,
+                  ...prev.conversaciones.filter((c) => c.claveHilo !== payload.claveHilo),
+                ],
+              };
+            }
+
+            const nuevaConv: ConversacionOmnicanal = {
+              id: idEfectivo,
+              negocio: negNorm,
+              canal: "web",
+              claveHilo: payload.claveHilo,
+              remitenteId: payload.claveHilo,
+              remitenteNombre:
+                payload.remitenteNombre ||
+                `Visitante Web #${payload.claveHilo.replace(/[^a-zA-Z0-9]/g, "").slice(-4).toUpperCase()}`,
+              remitenteCorreo: payload.remitenteCorreo ?? null,
+              remitenteTelefono: payload.remitenteTelefono ?? null,
+              estadoAtencion: payload.estadoAtencion || "BOT_ACTIVO",
+              ultimoMensajeTexto: payload.contenido.slice(0, 280),
+              ultimoMensajeOrigen: origenMsg,
+              ultimoMensajeEn: nuevoMsg.creadoEn,
+              noLeidosAsesora: idSeleccionadoFinal === null ? 0 : 1,
+              mensajesClienteConteo: origenMsg === "CLIENTE" ? 1 : 0,
+              mensajesIaConteo: origenMsg === "BOT_ARIA" ? 1 : 0,
+              mensajesHumanoConteo: 0,
+              creadoEn: nuevoMsg.creadoEn,
+              etiquetasIds: [],
+            };
+            return {
+              ...prev,
+              conversaciones: [nuevaConv, ...prev.conversaciones],
+            };
+          });
+
+          if (!conversacionActivaIdRef.current) {
+            conversacionActivaIdRef.current = idObjetivo;
+            setConversacionActivaId(idObjetivo);
+            setMensajesActivos([nuevoMsg]);
+          } else {
+            setTablero((prev) => {
+              const activaObj = prev.conversaciones.find(
+                (c) => c.id === conversacionActivaIdRef.current
+              );
+              if (
+                activaObj?.claveHilo === payload.claveHilo ||
+                conversacionActivaIdRef.current === `rt-${payload.claveHilo}` ||
+                (payload.conversacionId &&
+                  conversacionActivaIdRef.current === payload.conversacionId)
+              ) {
+                setMensajesActivos((msgs) => {
+                  const yaEsta = msgs.some(
+                    (m) =>
+                      m.id === nuevoMsg.id ||
+                      (m.origen === nuevoMsg.origen &&
+                        m.contenido.trim() === nuevoMsg.contenido.trim() &&
+                        Math.abs(new Date(m.creadoEn).getTime() - ahoraMs) < 12000)
+                  );
+                  return yaEsta ? msgs : [...msgs, nuevoMsg];
+                });
+              }
+              return prev;
+            });
+          }
+
+          programarSincronizacionSuave();
+        }
+      )
+      .on(
+        "broadcast",
+        { event: "intervencion_asesor" },
+        ({ payload }: { payload: EventoBroadcastIntervencionAsesor }) => {
+          if (!payload) return;
+          programarSincronizacionSuave();
+          if (
+            payload.mensaje &&
+            (conversacionActivaIdRef.current === payload.conversacionId ||
+              conversacionActivaIdRef.current === `rt-${payload.claveHilo}`)
+          ) {
+            const msgRecibido = payload.mensaje;
+            setMensajesActivos((prev) =>
+              prev.some((m) => m.id === msgRecibido.id) ? prev : [...prev, msgRecibido]
+            );
+          }
+        }
+      )
+      .subscribe((status: string) => {
+        const ok = status === "SUBSCRIBED";
+        liveConectadoRef.current = ok;
+        setRealtimeConectado(ok);
+      });
+
+    canalLiveRef.current = canalLive;
+
+    const canalPg = supabase
+      .channel(`omnicanal-pg-${negNorm}`)
       .on(
         "postgres_changes",
         {
@@ -333,7 +621,7 @@ export function ConsolaVentasOmnicanal({
           filter: `cnv_negocio=eq.${negNorm}`,
         },
         () => {
-          void recargarTablero(true);
+          programarSincronizacionSuave();
         }
       )
       .on(
@@ -343,14 +631,8 @@ export function ConsolaVentasOmnicanal({
           schema: "comun_agentes",
           table: "agc_mensaje",
         },
-        (payload: any) => {
-          void recargarTablero(true);
-          if (
-            conversacionActivaId &&
-            payload?.new?.msg_conversacion_id === conversacionActivaId
-          ) {
-            void cargarMensajesConversacion(conversacionActivaId, true);
-          }
+        () => {
+          programarSincronizacionSuave();
         }
       )
       .subscribe();
@@ -358,17 +640,22 @@ export function ConsolaVentasOmnicanal({
     const timer = setInterval(() => {
       if (pestana === "inbox") {
         void recargarTablero(true);
-        if (conversacionActivaId) {
-          void cargarMensajesConversacion(conversacionActivaId, true);
+        const idActual = conversacionActivaIdRef.current;
+        if (idActual && !idActual.startsWith("rt-")) {
+          void cargarMensajesConversacion(idActual, true);
         }
       }
-    }, 8000);
+    }, 12000);
 
     return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       clearInterval(timer);
-      void supabase.removeChannel(canal);
+      liveConectadoRef.current = false;
+      canalLiveRef.current = null;
+      void supabase.removeChannel(canalLive);
+      void supabase.removeChannel(canalPg);
     };
-  }, [negNorm, pestana, conversacionActivaId, recargarTablero, cargarMensajesConversacion]);
+  }, [negNorm, pestana, recargarTablero, cargarMensajesConversacion]);
 
   const metricas = useMemo(
     () =>
@@ -509,6 +796,23 @@ export function ConsolaVentasOmnicanal({
     setTextoRespuesta("");
     setRespuestaSeleccionadaId(null);
     setMensajesActivos((prev) => [...prev, res.mensaje]);
+    if (conversacionActiva.claveHilo) {
+      const buf = mensajesBufferLiveRef.current[conversacionActiva.claveHilo] ?? [];
+      mensajesBufferLiveRef.current[conversacionActiva.claveHilo] = [...buf, res.mensaje];
+    }
+
+    // Emitir respuesta del asesor en tiempo real (<50ms) directo al widget web del visitante
+    emitirBroadcastAsesor({
+      eventoId: res.mensaje.id,
+      claveHilo: conversacionActiva.claveHilo,
+      conversacionId: conversacionActiva.id,
+      estadoAtencion: res.estadoAtencion,
+      asesoraAsignadaId: res.asesoraAsignadaId ?? conversacionActiva.asesoraAsignadaId,
+      asesoraNombre: conversacionActiva.asesoraNombre ?? tablero.usuarioActualNombre,
+      esNotaInterna: modoNotaInterna,
+      mensaje: res.mensaje,
+    });
+
     setTablero((prev) => ({
       ...prev,
       conversaciones: prev.conversaciones.map((c) =>
@@ -530,17 +834,38 @@ export function ConsolaVentasOmnicanal({
 
   const handleCambiarEstado = async (nuevoEstado: EstadoAtencionOmnicanal) => {
     if (!conversacionActiva) return;
-    const res = await actualizarConversacionOmnicanalAction({
-      negocio: negNorm,
-      conversacionId: conversacionActiva.id,
-      nuevoEstado,
-    });
-    if (!res.ok) {
-      setErrorMsg(res.error);
-      return;
+    if (!conversacionActiva.id.startsWith("rt-")) {
+      const res = await actualizarConversacionOmnicanalAction({
+        negocio: negNorm,
+        conversacionId: conversacionActiva.id,
+        nuevoEstado,
+      });
+      if (!res.ok) {
+        setErrorMsg(res.error);
+        return;
+      }
+    } else {
+      setTablero((prev) => ({
+        ...prev,
+        conversaciones: prev.conversaciones.map((c) =>
+          c.id === conversacionActiva.id ? { ...c, estadoAtencion: nuevoEstado } : c
+        ),
+      }));
     }
-    void recargarTablero(true);
-    void cargarMensajesConversacion(conversacionActiva.id, true);
+
+    emitirBroadcastAsesor({
+      eventoId: `est-${Date.now()}`,
+      claveHilo: conversacionActiva.claveHilo,
+      conversacionId: conversacionActiva.id,
+      estadoAtencion: nuevoEstado,
+      asesoraAsignadaId: conversacionActiva.asesoraAsignadaId ?? tablero.usuarioActualId,
+      asesoraNombre: conversacionActiva.asesoraNombre ?? tablero.usuarioActualNombre,
+    });
+
+    if (!conversacionActiva.id.startsWith("rt-")) {
+      void recargarTablero(true);
+      void cargarMensajesConversacion(conversacionActiva.id, true);
+    }
   };
 
   const handleAsignarVendedor = async (valor: string) => {
@@ -644,6 +969,8 @@ export function ConsolaVentasOmnicanal({
     setEstadoAperturaFiltro("todos");
     setFiltroIzquierdo("todos");
     setConversacionActivaId(res.conversacionId);
+    setMostrarFichaTablet(false);
+    setVistaMovilInbox("chat");
     setPestana("inbox");
   };
 
@@ -1080,10 +1407,11 @@ export function ConsolaVentasOmnicanal({
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: "10px",
-              fontSize: "0.76rem",
+              flexWrap: "wrap",
+              gap: "8px",
+              fontSize: "0.75rem",
               padding: "6px 12px",
-              borderRadius: "999px",
+              borderRadius: "12px",
               background: "#F8FAFC",
               border: "1px solid #E2E8F0",
               color: "#334155",
@@ -1101,6 +1429,37 @@ export function ConsolaVentasOmnicanal({
               💰 Ventas Web: <strong>${metricas.montoTotalVentasUsd.toFixed(2)}</strong>
             </span>
           </div>
+
+          <span
+            title={
+              realtimeConectado
+                ? "Canal WebSocket en vivo conectado: los mensajes nuevos aparecen al instante sin recargar"
+                : "Sincronizando canal en tiempo real..."
+            }
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "6px 10px",
+              borderRadius: "999px",
+              background: realtimeConectado ? "#ECFDF5" : "#F8FAFC",
+              border: `1px solid ${realtimeConectado ? "#A7F3D0" : "#E2E8F0"}`,
+              color: realtimeConectado ? "#047857" : "#64748B",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+            }}
+          >
+            <span
+              style={{
+                width: "8px",
+                height: "8px",
+                borderRadius: "50%",
+                background: realtimeConectado ? "#10B981" : "#94A3B8",
+                boxShadow: realtimeConectado ? "0 0 0 3px rgba(16, 185, 129, 0.2)" : "none",
+              }}
+            />
+            {realtimeConectado ? "En vivo" : "Conectando..."}
+          </span>
 
           <button
             type="button"
@@ -1127,6 +1486,33 @@ export function ConsolaVentasOmnicanal({
           </button>
         </div>
       </div>
+
+      {tablero.usandoRespaldoHibrido && (
+        <div
+          style={{
+            padding: "10px 14px",
+            borderRadius: "10px",
+            background: "#FFFBEB",
+            border: "1px solid #FDE68A",
+            color: "#92400E",
+            fontSize: "0.8rem",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            flexWrap: "wrap",
+          }}
+        >
+          <AlertTriangle size={15} style={{ flexShrink: 0 }} />
+          <span>
+            <strong>Sincronización SQL pendiente:</strong> La transmisión instantánea en vivo está
+            activa, pero para guardar permanentemente el historial de visitantes anónimos vuelve a
+            ejecutar la versión actualizada de{" "}
+            <code>20261115000007_omnicanal_chats_etiquetas_respuestas_y_ventas.sql</code> en el SQL
+            Editor de Supabase
+            {tablero.avisoMigracionSql ? ` (${tablero.avisoMigracionSql})` : ""}.
+          </span>
+        </div>
+      )}
 
       {errorMsg && (
         <div
@@ -1168,8 +1554,13 @@ export function ConsolaVentasOmnicanal({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "220px 300px minmax(340px, 1fr) 290px",
-            minHeight: "650px",
+            gridTemplateColumns:
+              modoLayoutInbox === "desktop"
+                ? "210px 290px minmax(320px, 1fr) 280px"
+                : modoLayoutInbox === "tablet"
+                  ? "275px minmax(0, 1fr)"
+                  : "minmax(0, 1fr)",
+            minHeight: modoLayoutInbox === "movil" ? "540px" : "650px",
             background: "#FFFFFF",
             border: "1px solid #E2E8F0",
             borderRadius: "16px",
@@ -1181,9 +1572,15 @@ export function ConsolaVentasOmnicanal({
           <div
             style={{
               background: "#F8FAFC",
-              borderRight: "1px solid #E2E8F0",
+              borderRight: modoLayoutInbox === "desktop" ? "1px solid #E2E8F0" : "none",
+              borderBottom: modoLayoutInbox !== "desktop" ? "1px solid #E2E8F0" : "none",
+              gridColumn: modoLayoutInbox === "tablet" ? "1 / -1" : undefined,
               padding: "14px 10px",
-              display: "flex",
+              display:
+                modoLayoutInbox === "desktop" ||
+                (mostrarFiltrosInbox && (modoLayoutInbox === "tablet" || vistaMovilInbox === "lista"))
+                  ? "flex"
+                  : "none",
               flexDirection: "column",
               gap: "16px",
               overflowY: "auto",
@@ -1481,10 +1878,12 @@ export function ConsolaVentasOmnicanal({
           {/* COLUMNA 2: LISTA DE HILOS CON FILTROS RÁPIDOS ESTILO MANYCHAT */}
           <div
             style={{
-              borderRight: "1px solid #E2E8F0",
-              display: "flex",
+              borderRight: modoLayoutInbox !== "movil" ? "1px solid #E2E8F0" : "none",
+              display:
+                modoLayoutInbox !== "movil" || vistaMovilInbox === "lista" ? "flex" : "none",
               flexDirection: "column",
               background: "#FFFFFF",
+              minWidth: 0,
             }}
           >
             <div
@@ -1517,12 +1916,37 @@ export function ConsolaVentasOmnicanal({
                     padding: "7px 10px 7px 30px",
                     borderRadius: "8px",
                     border: "1px solid #CBD5E1",
-                    fontSize: "0.8rem",
+                    fontSize: modoLayoutInbox === "movil" ? "16px" : "0.8rem",
                   }}
                 />
               </div>
 
-              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+                {modoLayoutInbox !== "desktop" && (
+                  <button
+                    type="button"
+                    onClick={() => setMostrarFiltrosInbox((v) => !v)}
+                    title="Mostrar u ocultar vistas de bandeja, etiquetas y asesores"
+                    aria-label="Filtros de bandeja"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      padding: "4px 8px",
+                      borderRadius: "7px",
+                      border: mostrarFiltrosInbox ? "1px solid #0F172A" : "1px solid #CBD5E1",
+                      background: mostrarFiltrosInbox ? "#0F172A" : "#FFFFFF",
+                      color: mostrarFiltrosInbox ? "#FFFFFF" : "#334155",
+                      fontSize: "0.74rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Filter size={12} />
+                    <span>Filtros</span>
+                  </button>
+                )}
+
                 <select
                   value={estadoAperturaFiltro}
                   onChange={(e) => setEstadoAperturaFiltro(e.target.value as any)}
@@ -1608,11 +2032,19 @@ export function ConsolaVentasOmnicanal({
                   return (
                     <div
                       key={conv.id}
-                      onClick={() => setConversacionActivaId(conv.id)}
+                      onClick={() => {
+                        setConversacionActivaId(conv.id);
+                        setMostrarFichaTablet(false);
+                        setVistaMovilInbox("chat");
+                      }}
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") setConversacionActivaId(conv.id);
+                        if (e.key === "Enter" || e.key === " ") {
+                          setConversacionActivaId(conv.id);
+                          setMostrarFichaTablet(false);
+                          setVistaMovilInbox("chat");
+                        }
                       }}
                       style={{
                         padding: "12px 14px",
@@ -1766,10 +2198,16 @@ export function ConsolaVentasOmnicanal({
           {/* COLUMNA 3: VISOR DE CONVERSACIÓN EN VIVO Y COMPOSITOR DE RESPUESTA HUMANA */}
           <div
             style={{
-              borderRight: "1px solid #E2E8F0",
-              display: "flex",
+              borderRight: modoLayoutInbox === "desktop" ? "1px solid #E2E8F0" : "none",
+              display:
+                modoLayoutInbox === "desktop" ||
+                (modoLayoutInbox === "tablet" && !mostrarFichaTablet) ||
+                (modoLayoutInbox === "movil" && vistaMovilInbox === "chat")
+                  ? "flex"
+                  : "none",
               flexDirection: "column",
               background: "#F8FAFC",
+              minWidth: 0,
             }}
           >
             {!conversacionActiva ? (
@@ -1780,17 +2218,42 @@ export function ConsolaVentasOmnicanal({
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  padding: "36px",
+                  padding: "clamp(20px, 5vw, 36px)",
                   textAlign: "center",
                   color: "#475569",
                 }}
               >
+                {modoLayoutInbox === "movil" && (
+                  <button
+                    type="button"
+                    onClick={() => setVistaMovilInbox("lista")}
+                    title="Volver a la lista de hilos"
+                    aria-label="Volver a hilos"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "6px 12px",
+                      marginBottom: "16px",
+                      borderRadius: "8px",
+                      border: "1px solid #CBD5E1",
+                      background: "#FFFFFF",
+                      color: "#0F172A",
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <ArrowLeft size={14} />
+                    <span>Hilos</span>
+                  </button>
+                )}
                 <Sparkles size={40} style={{ color: "#0284C7", marginBottom: "12px" }} />
                 <h3 style={{ margin: "0 0 6px", fontSize: "1.05rem", color: "#0F172A" }}>
                   Monitoreo Omnicanal de Ventas e IA ARIA
                 </h3>
                 <p style={{ margin: 0, maxWidth: "400px", fontSize: "0.84rem", lineHeight: 1.55 }}>
-                  Selecciona una conversación a la izquierda o abre el seguimiento de un cliente
+                  Selecciona una conversación o abre el seguimiento de un cliente
                   desde las pestañas <strong>Compras Web</strong> o{" "}
                   <strong>Usuarios y Clientes</strong>.
                 </p>
@@ -1801,7 +2264,7 @@ export function ConsolaVentasOmnicanal({
                 <div
                   style={{
                     background: "#FFFFFF",
-                    padding: "12px 16px",
+                    padding: "12px 14px",
                     borderBottom: "1px solid #E2E8F0",
                     display: "flex",
                     flexDirection: "column",
@@ -1817,7 +2280,31 @@ export function ConsolaVentasOmnicanal({
                       gap: "8px",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                      {modoLayoutInbox === "movil" && (
+                        <button
+                          type="button"
+                          onClick={() => setVistaMovilInbox("lista")}
+                          title="Volver a la lista de conversaciones"
+                          aria-label="Volver a hilos"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            padding: "5px 9px",
+                            borderRadius: "8px",
+                            border: "1px solid #CBD5E1",
+                            background: "#F8FAFC",
+                            color: "#0F172A",
+                            fontSize: "0.75rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <ArrowLeft size={14} />
+                          <span>Hilos</span>
+                        </button>
+                      )}
                       <strong style={{ fontSize: "0.95rem", color: "#0F172A" }}>
                         {conversacionActiva.remitenteNombre}
                       </strong>
@@ -1958,6 +2445,37 @@ export function ConsolaVentasOmnicanal({
                           }}
                         >
                           Reabrir
+                        </button>
+                      )}
+
+                      {modoLayoutInbox !== "desktop" && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (modoLayoutInbox === "movil") {
+                              setVistaMovilInbox("ficha");
+                            } else {
+                              setMostrarFichaTablet(true);
+                            }
+                          }}
+                          title="Ver Ficha 360° del cliente, compras y asignación"
+                          aria-label="Ficha 360°"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            padding: "6px 10px",
+                            borderRadius: "8px",
+                            border: "1px solid #CBD5E1",
+                            background: "#F8FAFC",
+                            color: "#0F172A",
+                            fontSize: "0.75rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <User size={13} />
+                          <span>Ficha 360°</span>
                         </button>
                       )}
                     </div>
@@ -2242,8 +2760,8 @@ export function ConsolaVentasOmnicanal({
                     </div>
                   )}
 
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ display: "flex", gap: "6px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
+                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
                       <button
                         type="button"
                         onClick={() => setModoNotaInterna(false)}
@@ -2365,12 +2883,61 @@ export function ConsolaVentasOmnicanal({
             style={{
               background: "#FFFFFF",
               padding: "14px",
-              display: "flex",
+              display:
+                modoLayoutInbox === "desktop" ||
+                (modoLayoutInbox === "tablet" && mostrarFichaTablet) ||
+                (modoLayoutInbox === "movil" && vistaMovilInbox === "ficha")
+                  ? "flex"
+                  : "none",
               flexDirection: "column",
               gap: "14px",
               overflowY: "auto",
+              minWidth: 0,
             }}
           >
+            {modoLayoutInbox !== "desktop" && (
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  paddingBottom: "10px",
+                  borderBottom: "1px solid #E2E8F0",
+                }}
+              >
+                <strong style={{ fontSize: "0.86rem", color: "#0F172A" }}>
+                  Ficha 360° del Contacto
+                </strong>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (modoLayoutInbox === "movil") {
+                      setVistaMovilInbox("chat");
+                    } else {
+                      setMostrarFichaTablet(false);
+                    }
+                  }}
+                  title="Volver al visor de conversación"
+                  aria-label="Volver al chat"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "5px 10px",
+                    borderRadius: "8px",
+                    border: "1px solid #CBD5E1",
+                    background: "#F8FAFC",
+                    color: "#0F172A",
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  <ArrowLeft size={13} />
+                  <span>Volver al Chat</span>
+                </button>
+              </div>
+            )}
             {!conversacionActiva ? (
               <div style={{ fontSize: "0.8rem", color: "#64748B" }}>
                 <strong>Resumen Rápido del Portal</strong>
@@ -2617,7 +3184,7 @@ export function ConsolaVentasOmnicanal({
             background: "#FFFFFF",
             border: "1px solid #E2E8F0",
             borderRadius: "16px",
-            padding: "20px",
+            padding: "clamp(14px, 3vw, 20px)",
             display: "flex",
             flexDirection: "column",
             gap: "16px",
@@ -2725,7 +3292,7 @@ export function ConsolaVentasOmnicanal({
             background: "#FFFFFF",
             border: "1px solid #E2E8F0",
             borderRadius: "16px",
-            padding: "20px",
+            padding: "clamp(14px, 3vw, 20px)",
             display: "flex",
             flexDirection: "column",
             gap: "16px",
@@ -2750,7 +3317,7 @@ export function ConsolaVentasOmnicanal({
               </p>
             </div>
 
-            <div style={{ display: "flex", gap: "6px" }}>
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
               {(
                 [
                   { id: "todos", texto: `Todos (${tablero.usuariosYClientes.length})` },
@@ -2808,9 +3375,9 @@ export function ConsolaVentasOmnicanal({
               background: "#FFFFFF",
               border: "1px solid #E2E8F0",
               borderRadius: "16px",
-              padding: "20px",
+              padding: "clamp(14px, 3vw, 20px)",
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))",
               gap: "14px",
             }}
           >
@@ -2878,7 +3445,7 @@ export function ConsolaVentasOmnicanal({
               background: "#FFFFFF",
               border: "1px solid #E2E8F0",
               borderRadius: "16px",
-              padding: "20px",
+              padding: "clamp(14px, 3vw, 20px)",
               display: "flex",
               flexDirection: "column",
               gap: "14px",
@@ -2898,7 +3465,8 @@ export function ConsolaVentasOmnicanal({
               onSubmit={handleGuardarRespuestaRapida}
               style={{
                 display: "grid",
-                gridTemplateColumns: "140px 1fr 150px auto",
+                gridTemplateColumns:
+                  modoLayoutInbox === "desktop" ? "140px 1fr 150px auto" : "minmax(0, 1fr)",
                 gap: "8px",
                 alignItems: "start",
                 background: "#F8FAFC",
@@ -2980,7 +3548,7 @@ export function ConsolaVentasOmnicanal({
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fill, minmax(min(260px, 100%), 1fr))",
                 gap: "10px",
               }}
             >
