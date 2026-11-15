@@ -186,10 +186,14 @@ async function obtenerClienteSupabase(): Promise<any> {
   try {
     const admin = crearClienteAdmin();
     if (admin) return admin;
-  } catch {}
+  } catch {
+    // sin cliente admin disponible: se ignora
+  }
   try {
     return await crearClienteServidor();
-  } catch {}
+  } catch {
+    // sin contexto de servidor disponible: se ignora
+  }
   return null;
 }
 
@@ -305,7 +309,9 @@ export async function eliminarSuscripcionPushUsuario(
           },
         })
         .eq("usu_id", usuarioId);
-    } catch {}
+    } catch {
+      // respaldo en memoria activo: se ignora
+    }
   }
 
   return filtradas;

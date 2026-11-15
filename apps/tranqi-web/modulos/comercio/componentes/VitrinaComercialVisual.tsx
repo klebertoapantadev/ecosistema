@@ -3,20 +3,13 @@
 import React, { useEffect, useState } from "react";
 import {
   ShoppingBag,
-  Scale,
-  ShieldCheck,
-  FileCheck,
   CreditCard,
   Search,
   Sparkles,
   CheckCircle2,
-  Clock,
   Play,
-  Info,
   RefreshCw,
-  ExternalLink,
   ChevronRight,
-  Layers,
   Truck,
 } from "lucide-react";
 import {
@@ -433,7 +426,7 @@ export function VitrinaComercialVisual({ negocio = "tranqi" }: Props) {
                       position: "relative",
                       width: "100%",
                       height: "100%",
-                      objectFit: fotoAjuste as any,
+                      objectFit: fotoAjuste as React.CSSProperties["objectFit"],
                       objectPosition: fotoPosicion,
                       transform: scaleFactor !== 1 ? `scale(${scaleFactor})` : undefined,
                       transformOrigin: fotoPosicion,

@@ -11,6 +11,38 @@ export type Resultado<T = void> =
   | { ok: true; data: T }
   | { ok: false; error: string };
 
+interface QueryFlex {
+  select: (cols: string) => QueryFlex;
+  insert: (vals: unknown) => QueryFlex;
+  update: (vals: Record<string, unknown>) => QueryFlex;
+  upsert: (vals: Record<string, unknown>, opts?: { onConflict?: string; ignoreDuplicates?: boolean }) => QueryFlex;
+  delete: () => QueryFlex;
+  eq: (col: string, val: unknown) => QueryFlex;
+  neq: (col: string, val: unknown) => QueryFlex;
+  in: (col: string, vals: unknown[]) => QueryFlex;
+  is: (col: string, val: unknown) => QueryFlex;
+  lt: (col: string, val: unknown) => QueryFlex;
+  ilike: (col: string, val: string) => QueryFlex;
+  order: (col: string, opts?: { ascending?: boolean }) => QueryFlex;
+  limit: (n: number) => QueryFlex;
+  single: () => Promise<{ data: Record<string, unknown> | null; error: { message: string } | null }>;
+  maybeSingle: () => Promise<{ data: Record<string, unknown> | null; error: { message: string } | null }>;
+  then: Promise<{ data: Record<string, unknown>[] | null; error: { message: string } | null }>["then"];
+  catch: Promise<unknown>["catch"];
+}
+
+interface ClienteRedFlex {
+  schema: (esquema: string) => {
+    from: (tabla: string) => QueryFlex;
+    rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+  };
+  auth: {
+    admin: {
+      createUser: (args: Record<string, unknown>) => Promise<{ data: { user: { id: string } | null } | null; error: { message: string } | null }>;
+    };
+  };
+}
+
 const MARCA_REGISTRO_MANUAL = "[REGISTRO_MANUAL_EQUIPO]";
 const FECHA_CORTE_PURGA_SOLICITUDES = "2026-11-08T13:30:00.000Z";
 const URL_REGISTRO_ABOGADOS = "https://www.tranqi24.com/abogados";
@@ -197,40 +229,42 @@ async function verificarEsOperadorOAdmin(): Promise<boolean> {
  * para que el usuario convertido en abogado activo vea inmediatamente la plataforma como Abogado.
  */
 async function sincronizarRolAbogadoEnSeguridad(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  adminSupabase: any,
+  adminSupabase: ClienteRedFlex | Awaited<ReturnType<typeof crearClienteServidor>>,
   usuarioId: string,
   activar: boolean,
   asignadoPorId?: string | null
 ) {
+  const cliente = adminSupabase as unknown as ClienteRedFlex;
   try {
-    const { data: perfAbg } = await adminSupabase
+    const { data: perfAbg } = await cliente
       .schema("comun_seguridad")
       .from("seg_perfil")
       .select("per_id, per_clave")
       .eq("per_clave", "ABOGADO")
       .maybeSingle();
 
-    const { data: perfCli } = await adminSupabase
+    const { data: perfCli } = await cliente
       .schema("comun_seguridad")
       .from("seg_perfil")
       .select("per_id, per_clave")
       .eq("per_clave", "CLIENTE")
       .maybeSingle();
 
-    const { data: mems } = await adminSupabase
+    const { data: mems } = await cliente
       .schema("comun_seguridad")
       .from("seg_membresia")
       .select("mem_id, mem_negocio, mem_rol")
       .eq("mem_usuario_id", usuarioId);
 
-    const memsTranqi = (mems || []).filter((m: { mem_negocio?: string }) =>
+    const memsTranqi: { mem_id?: unknown; mem_negocio?: string; mem_rol?: string }[] = (
+      (mems || []) as { mem_id?: unknown; mem_negocio?: string; mem_rol?: string }[]
+    ).filter((m) =>
       (m.mem_negocio || "").toUpperCase().startsWith("TRANQ")
     );
 
     if (memsTranqi.length === 0 && activar) {
       for (const negClave of ["tranqi", "TRANQ"]) {
-        const { data: nuevaMem } = await adminSupabase
+        const { data: nuevaMem } = await cliente
           .schema("comun_seguridad")
           .from("seg_membresia")
           .insert({
@@ -241,14 +275,14 @@ async function sincronizarRolAbogadoEnSeguridad(
           })
           .select("mem_id, mem_negocio, mem_rol")
           .maybeSingle();
-        if (nuevaMem) memsTranqi.push(nuevaMem);
+        if (nuevaMem) memsTranqi.push(nuevaMem as { mem_id?: unknown; mem_negocio?: string; mem_rol?: string });
       }
     }
 
     for (const mem of memsTranqi) {
       if (activar) {
         if (perfCli?.per_id) {
-          await adminSupabase
+          await cliente
             .schema("comun_seguridad")
             .from("seg_membresia_perfil")
             .upsert(
@@ -262,7 +296,7 @@ async function sincronizarRolAbogadoEnSeguridad(
             );
         }
         if (perfAbg?.per_id) {
-          await adminSupabase
+          await cliente
             .schema("comun_seguridad")
             .from("seg_membresia_perfil")
             .upsert(
@@ -279,7 +313,7 @@ async function sincronizarRolAbogadoEnSeguridad(
         const nuevoRol = ["SUPERADMIN", "ADMINISTRADOR", "ADMIN"].includes(rolActual)
           ? rolActual
           : "ABOGADO";
-        await adminSupabase
+        await cliente
           .schema("comun_seguridad")
           .from("seg_membresia")
           .update({
@@ -290,7 +324,7 @@ async function sincronizarRolAbogadoEnSeguridad(
           .eq("mem_id", mem.mem_id);
       } else {
         if (perfAbg?.per_id) {
-          await adminSupabase
+          await cliente
             .schema("comun_seguridad")
             .from("seg_membresia_perfil")
             .delete()
@@ -299,7 +333,7 @@ async function sincronizarRolAbogadoEnSeguridad(
         }
         const rolActual = (mem.mem_rol || "").toUpperCase();
         if (rolActual === "ABOGADO") {
-          await adminSupabase
+          await cliente
             .schema("comun_seguridad")
             .from("seg_membresia")
             .update({
@@ -320,12 +354,12 @@ async function sincronizarRolAbogadoEnSeguridad(
  * y permite también purgar el 100% de las solicitudes bajo demanda del operador.
  */
 export async function ejecutarPurgaSolicitudesSocioInterna(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  adminSupabase: any,
+  adminSupabase: ClienteRedFlex | Awaited<ReturnType<typeof crearClienteServidor>>,
   soloPreviasACorte: boolean = false
 ): Promise<number> {
+  const cliente = adminSupabase as unknown as ClienteRedFlex;
   try {
-    let query = adminSupabase
+    let query = cliente
       .schema("tranqui_legal")
       .from("trq_solicitud_socio")
       .select("ssc_id, ssc_usuario_id, ssc_resumen_profesional, ssc_creado_en");
@@ -338,68 +372,65 @@ export async function ejecutarPurgaSolicitudesSocioInterna(
     if (!sols || sols.length === 0) return 0;
 
     // Filtrar las filas técnicas de respaldo de registro manual (si existen)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const aBorrar = (sols as any[]).filter(
+    const aBorrar = sols.filter(
       (s) => !String(s.ssc_resumen_profesional || "").includes(MARCA_REGISTRO_MANUAL)
     );
 
     if (aBorrar.length === 0) return 0;
-    const ids = aBorrar.map((s) => s.ssc_id);
+    const ids = aBorrar.map((s) => String(s.ssc_id));
 
     // 1. Buscar abogados atados a estas solicitudes de autogestión
-    const { data: abgsAtados } = await adminSupabase
+    const { data: abgsAtados } = await cliente
       .schema("tranqui_legal")
       .from("trq_abogado")
       .select("abg_id, abg_usuario_id, abg_solicitud_id")
       .in("abg_solicitud_id", ids);
 
     if (abgsAtados && abgsAtados.length > 0) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const abgIds = (abgsAtados as any[]).map((a) => a.abg_id);
-      await adminSupabase
+      const abgIds = abgsAtados.map((a) => String(a.abg_id));
+      await cliente
         .schema("tranqui_legal")
         .from("trq_honorario")
         .delete()
         .in("hon_abogado_id", abgIds);
 
-      await adminSupabase
+      await cliente
         .schema("tranqui_legal")
         .from("trq_abogado_materia")
         .delete()
         .in("amt_abogado_id", abgIds);
 
-      await adminSupabase
+      await cliente
         .schema("tranqui_legal")
         .from("trq_abogado_provincia")
         .delete()
         .in("apr_abogado_id", abgIds);
 
-      await adminSupabase
+      await cliente
         .schema("tranqui_legal")
         .from("trq_abogado")
         .delete()
         .in("abg_id", abgIds);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      for (const abg of abgsAtados as any[]) {
+      for (const abg of abgsAtados) {
         if (abg.abg_usuario_id) {
-          await sincronizarRolAbogadoEnSeguridad(adminSupabase, abg.abg_usuario_id, false);
+          await sincronizarRolAbogadoEnSeguridad(cliente, String(abg.abg_usuario_id), false);
         }
       }
     }
 
     // 2. Eliminar tablas dependientes de trq_solicitud_socio
     await Promise.all([
-      adminSupabase.schema("tranqui_legal").from("trq_version_contrato_socio").delete().in("vcs_solicitud_id", ids),
-      adminSupabase.schema("tranqui_legal").from("trq_revision_solicitud").delete().in("rev_solicitud_id", ids),
-      adminSupabase.schema("tranqui_legal").from("trq_documento_socio").delete().in("dcs_solicitud_id", ids),
-      adminSupabase.schema("tranqui_legal").from("trq_experiencia_laboral").delete().in("exp_solicitud_id", ids),
-      adminSupabase.schema("tranqui_legal").from("trq_solicitud_materia").delete().in("sma_solicitud_id", ids),
-      adminSupabase.schema("tranqui_legal").from("trq_solicitud_provincia").delete().in("spr_solicitud_id", ids),
+      cliente.schema("tranqui_legal").from("trq_version_contrato_socio").delete().in("vcs_solicitud_id", ids),
+      cliente.schema("tranqui_legal").from("trq_revision_solicitud").delete().in("rev_solicitud_id", ids),
+      cliente.schema("tranqui_legal").from("trq_documento_socio").delete().in("dcs_solicitud_id", ids),
+      cliente.schema("tranqui_legal").from("trq_experiencia_laboral").delete().in("exp_solicitud_id", ids),
+      cliente.schema("tranqui_legal").from("trq_solicitud_materia").delete().in("sma_solicitud_id", ids),
+      cliente.schema("tranqui_legal").from("trq_solicitud_provincia").delete().in("spr_solicitud_id", ids),
     ]);
 
     // 3. Eliminar físicamente las solicitudes de socio
-    await adminSupabase
+    await cliente
       .schema("tranqui_legal")
       .from("trq_solicitud_socio")
       .delete()
@@ -439,7 +470,7 @@ export async function eliminarSolicitudSocioIndividualAction(
   }
 
   const supabase = await crearClienteServidor();
-  const adminSupabase = (crearClienteAdmin() || supabase) as any;
+  const adminSupabase = (crearClienteAdmin() || supabase) as unknown as ClienteRedFlex;
 
   try {
     const { data: abgs } = await adminSupabase
@@ -449,12 +480,12 @@ export async function eliminarSolicitudSocioIndividualAction(
       .eq("abg_solicitud_id", solicitudId);
 
     if (abgs && abgs.length > 0) {
-      const abgIds = abgs.map((a: { abg_id: string }) => a.abg_id);
+      const abgIds = abgs.map((a) => String(a.abg_id));
       await adminSupabase.schema("tranqui_legal").from("trq_honorario").delete().in("hon_abogado_id", abgIds);
       await adminSupabase.schema("tranqui_legal").from("trq_abogado").delete().in("abg_id", abgIds);
       for (const a of abgs) {
         if (a.abg_usuario_id) {
-          await sincronizarRolAbogadoEnSeguridad(adminSupabase, a.abg_usuario_id, false);
+          await sincronizarRolAbogadoEnSeguridad(adminSupabase, String(a.abg_usuario_id), false);
         }
       }
     }
@@ -488,35 +519,35 @@ export async function eliminarSolicitudSocioIndividualAction(
 }
 
 async function obtenerProvinciasResiliente(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: any,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  adminSupabase: any
+  supabase: ClienteRedFlex | Awaited<ReturnType<typeof crearClienteServidor>>,
+  adminSupabase: ClienteRedFlex | Awaited<ReturnType<typeof crearClienteServidor>>
 ): Promise<ProvinciaItem[]> {
+  const clienteAuth = supabase as unknown as ClienteRedFlex;
+  const clienteAdmin = adminSupabase as unknown as ClienteRedFlex;
   try {
     // 1. Consultar primero con el cliente autenticado (comun_catalogo tiene GRANT SELECT TO authenticated)
-    const { data: provAuth } = await supabase
+    const { data: provAuth } = await clienteAuth
       .schema("comun_catalogo")
       .from("cat_provincia")
       .select("cat_id, cat_nombre")
       .order("cat_nombre");
 
     if (Array.isArray(provAuth) && provAuth.length > 0) {
-      return provAuth as ProvinciaItem[];
+      return provAuth as unknown as ProvinciaItem[];
     }
   } catch {
     // Continuar con fallback adminSupabase
   }
 
   try {
-    const { data: provAdmin } = await adminSupabase
+    const { data: provAdmin } = await clienteAdmin
       .schema("comun_catalogo")
       .from("cat_provincia")
       .select("cat_id, cat_nombre")
       .order("cat_nombre");
 
     if (Array.isArray(provAdmin) && provAdmin.length > 0) {
-      return provAdmin as ProvinciaItem[];
+      return provAdmin as unknown as ProvinciaItem[];
     }
   } catch {
     // Continuar con fallback estático de las 24 provincias del Ecuador
@@ -622,7 +653,7 @@ export async function crearEspecialidadLegalAction(
 
   try {
     const supabase = await crearClienteServidor();
-    const adminSupabase = (crearClienteAdmin() || supabase) as any;
+    const adminSupabase = (crearClienteAdmin() || supabase) as unknown as ClienteRedFlex;
 
     // 1. Verificar si ya existe por nombre (activa o inactiva)
     const { data: existentes } = await adminSupabase
@@ -631,7 +662,7 @@ export async function crearEspecialidadLegalAction(
       .select("mat_id, mat_nombre, mat_activa");
 
     const coincidencia = (existentes ?? []).find(
-      (m: { mat_id: string; mat_nombre: string; mat_activa?: boolean }) =>
+      (m) =>
         String(m.mat_nombre || "").toLowerCase().trim() === nombreLimpio.toLowerCase()
     );
 
@@ -648,7 +679,7 @@ export async function crearEspecialidadLegalAction(
       revalidatePath("/panel");
       return {
         ok: true,
-        data: { mat_id: coincidencia.mat_id, mat_nombre: nombreLimpio },
+        data: { mat_id: String(coincidencia.mat_id), mat_nombre: nombreLimpio },
       };
     }
 
@@ -693,13 +724,13 @@ export async function crearEspecialidadLegalAction(
       revalidatePath("/panel/red-profesional");
       revalidatePath("/panel/socios");
       revalidatePath("/panel");
-      return { ok: true, data: insertadaSimple as MateriaItem };
+      return { ok: true, data: insertadaSimple as unknown as MateriaItem };
     }
 
     revalidatePath("/panel/red-profesional");
     revalidatePath("/panel/socios");
     revalidatePath("/panel");
-    return { ok: true, data: insertada as MateriaItem };
+    return { ok: true, data: insertada as unknown as MateriaItem };
   } catch (err: unknown) {
     return {
       ok: false,
@@ -723,7 +754,7 @@ export async function eliminarEspecialidadLegalAction(
 
   try {
     const supabase = await crearClienteServidor();
-    const adminSupabase = (crearClienteAdmin() || supabase) as any;
+    const adminSupabase = (crearClienteAdmin() || supabase) as unknown as ClienteRedFlex;
 
     // 1. Desvincular de relaciones N:M para evitar bloqueo por FK restrict
     await Promise.all([
@@ -783,7 +814,7 @@ export async function buscarUsuariosPlataformaParaAbogadoAction(
 
   try {
     const supabase = await crearClienteServidor();
-    const adminSupabase = (crearClienteAdmin() || supabase) as any;
+    const adminSupabase = (crearClienteAdmin() || supabase) as unknown as ClienteRedFlex;
 
     const [{ data: usuarios }, { data: abogados }] = await Promise.all([
       adminSupabase
@@ -801,28 +832,28 @@ export async function buscarUsuariosPlataformaParaAbogadoAction(
 
     const mapaAbogados = new Map<string, { abg_id: string; abg_estado: "verificado" | "suspendido" }>();
     for (const a of abogados ?? []) {
-      mapaAbogados.set(a.abg_usuario_id, { abg_id: a.abg_id, abg_estado: a.abg_estado });
+      mapaAbogados.set(String(a.abg_usuario_id), { abg_id: String(a.abg_id), abg_estado: a.abg_estado as "verificado" | "suspendido" });
     }
 
     const q = busqueda.trim().toLowerCase();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const items: UsuarioPlataformaItem[] = (usuarios ?? []).map((u: any) => {
-      const det = (u.usu_detalle_usuario || {}) as Record<string, any>;
-      const ficha = (det.ficha_abogado || {}) as Record<string, any>;
-      const fac = (det.datos_facturacion || {}) as Record<string, any>;
-      const nombres = u.usu_nombres || "";
-      const apellidos = u.usu_apellidos || "";
-      const nombreCompleto = [nombres, apellidos].filter(Boolean).join(" ").trim() || u.usu_correo || "Usuario";
+    const items: UsuarioPlataformaItem[] = (usuarios ?? []).map((u) => {
+      const det = (u.usu_detalle_usuario || {}) as Record<string, unknown>;
+      const ficha = (det.ficha_abogado || {}) as Record<string, unknown>;
+      const fac = (det.datos_facturacion || {}) as Record<string, unknown>;
+      const nombres = String(u.usu_nombres || "");
+      const apellidos = String(u.usu_apellidos || "");
+      const correoStr = String(u.usu_correo || "");
+      const nombreCompleto = [nombres, apellidos].filter(Boolean).join(" ").trim() || correoStr || "Usuario";
       const cedula = String(ficha.cedula || det.cedula || fac.identificacion || "");
       const telefono = String(ficha.telefono || u.usu_whatsapp || fac.telefono || "");
-      const abg = mapaAbogados.get(u.usu_id);
+      const abg = mapaAbogados.get(String(u.usu_id));
 
       return {
-        usu_id: u.usu_id,
+        usu_id: String(u.usu_id),
         nombres,
         apellidos,
         nombreCompleto,
-        correo: u.usu_correo || "",
+        correo: correoStr,
         telefono,
         cedula,
         yaEsAbogado: Boolean(abg),
@@ -855,7 +886,7 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
 > {
   try {
     const supabase = await crearClienteServidor();
-    const adminSupabase = (crearClienteAdmin() || supabase) as any;
+    const adminSupabase = (crearClienteAdmin() || supabase) as unknown as ClienteRedFlex;
 
     // Asegurar que las solicitudes antiguas estén purgadas
     await ejecutarPurgaSolicitudesSocioInterna(adminSupabase, true);
@@ -870,9 +901,9 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
       return { ok: true, data: [] };
     }
 
-    const abgIds = abogados.map((a: { abg_id: string }) => a.abg_id);
-    const usuIds = abogados.map((a: { abg_usuario_id: string }) => a.abg_usuario_id).filter(Boolean);
-    const solIds = abogados.map((a: { abg_solicitud_id?: string | null }) => a.abg_solicitud_id).filter(Boolean);
+    const abgIds = abogados.map((a) => String(a.abg_id));
+    const usuIds = abogados.map((a) => String(a.abg_usuario_id || "")).filter(Boolean);
+    const solIds = abogados.map((a) => String(a.abg_solicitud_id || "")).filter(Boolean);
 
     const [
       usuRes,
@@ -897,7 +928,7 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
             .from("trq_solicitud_socio")
             .select("*")
             .in("ssc_id", solIds)
-        : Promise.resolve({ data: [] }),
+        : Promise.resolve({ data: [] as Record<string, unknown>[] }),
       adminSupabase
         .schema("tranqui_legal")
         .from("trq_abogado_materia")
@@ -945,33 +976,36 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
     const casosPorAbogado = new Map<string, Set<string>>();
     for (const c of casosTitularRes?.data ?? []) {
       if (c.cas_abogado_id) {
-        const set = casosPorAbogado.get(c.cas_abogado_id) ?? new Set<string>();
-        set.add(c.cas_id);
-        casosPorAbogado.set(c.cas_abogado_id, set);
+        const abgKey = String(c.cas_abogado_id);
+        const set = casosPorAbogado.get(abgKey) ?? new Set<string>();
+        set.add(String(c.cas_id));
+        casosPorAbogado.set(abgKey, set);
       }
     }
     for (const ce of casosEquipoRes?.data ?? []) {
       if (ce.cae_abogado_id && ce.cae_caso_id) {
-        const set = casosPorAbogado.get(ce.cae_abogado_id) ?? new Set<string>();
-        set.add(ce.cae_caso_id);
-        casosPorAbogado.set(ce.cae_abogado_id, set);
+        const abgKey = String(ce.cae_abogado_id);
+        const set = casosPorAbogado.get(abgKey) ?? new Set<string>();
+        set.add(String(ce.cae_caso_id));
+        casosPorAbogado.set(abgKey, set);
       }
     }
 
     const citasPorAbogado = new Map<string, number>();
     for (const ci of citasActivasRes?.data ?? []) {
       if (ci.cit_abogado_id) {
-        citasPorAbogado.set(ci.cit_abogado_id, (citasPorAbogado.get(ci.cit_abogado_id) ?? 0) + 1);
+        const abgKey = String(ci.cit_abogado_id);
+        citasPorAbogado.set(abgKey, (citasPorAbogado.get(abgKey) ?? 0) + 1);
       }
     }
 
-    const mapaUsuarios = new Map<string, any>((usuRes.data ?? []).map((u: any) => [u.usu_id, u]));
-    const mapaSolicitudes = new Map<string, any>((solRes.data ?? []).map((s: any) => [s.ssc_id, s]));
-    const mapaCatMaterias = new Map<string, MateriaItem>((catMatRes.data ?? []).map((m: MateriaItem) => [m.mat_id, m]));
+    const mapaUsuarios = new Map<string, Record<string, unknown>>((usuRes.data ?? []).map((u) => [String(u.usu_id), u]));
+    const mapaSolicitudes = new Map<string, Record<string, unknown>>((solRes.data ?? []).map((s) => [String(s.ssc_id), s]));
+    const mapaCatMaterias = new Map<string, MateriaItem>(((catMatRes.data ?? []) as unknown as MateriaItem[]).map((m: MateriaItem) => [m.mat_id, m]));
     const mapaCatProvincias = new Map<string, ProvinciaItem>((catProvRes ?? []).map((p: ProvinciaItem) => [p.cat_id, p]));
-    const mapaProfesional = new Map<string, any>((profRes.data ?? []).map((p: any) => [p.agp_usuario_id, p]));
+    const mapaProfesional = new Map<string, Record<string, unknown>>((profRes.data ?? []).map((p) => [String(p.agp_usuario_id), p]));
 
-    const profIds = (profRes.data ?? []).map((p: any) => p.agp_id);
+    const profIds = (profRes.data ?? []).map((p) => String(p.agp_id));
     const { data: franjasData } =
       profIds.length > 0
         ? await adminSupabase
@@ -982,55 +1016,60 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
             .is("fra_eliminado_en", null)
             .order("fra_dia_semana")
             .order("fra_hora_inicio")
-        : { data: [] };
+        : { data: [] as Record<string, unknown>[] };
 
     const franjasPorProf = new Map<string, Franja[]>();
     for (const f of franjasData ?? []) {
-      const lista = franjasPorProf.get(f.fra_profesional_id) ?? [];
+      const profKey = String(f.fra_profesional_id);
+      const lista = franjasPorProf.get(profKey) ?? [];
       lista.push({
         dia_semana: Number(f.fra_dia_semana),
         hora_inicio: String(f.fra_hora_inicio).slice(0, 5),
         hora_fin: String(f.fra_hora_fin).slice(0, 5),
         modalidad: (f.fra_modalidad || "ambas") as "virtual" | "presencial" | "ambas",
       });
-      franjasPorProf.set(f.fra_profesional_id, lista);
+      franjasPorProf.set(profKey, lista);
     }
 
     const materiasPorAbogado = new Map<string, MateriaItem[]>();
     for (const am of abgMatRes.data ?? []) {
-      const m = mapaCatMaterias.get(am.amt_materia_id);
+      const m = mapaCatMaterias.get(String(am.amt_materia_id));
       if (m) {
-        const arr = materiasPorAbogado.get(am.amt_abogado_id) ?? [];
+        const abgKey = String(am.amt_abogado_id);
+        const arr = materiasPorAbogado.get(abgKey) ?? [];
         if (!arr.some((x) => x.mat_id === m.mat_id)) arr.push(m);
-        materiasPorAbogado.set(am.amt_abogado_id, arr);
+        materiasPorAbogado.set(abgKey, arr);
       }
     }
 
     const provinciasPorAbogado = new Map<string, ProvinciaItem[]>();
     for (const ap of abgProvRes.data ?? []) {
-      const p = mapaCatProvincias.get(ap.apr_provincia_id);
+      const p = mapaCatProvincias.get(String(ap.apr_provincia_id));
       if (p) {
-        const arr = provinciasPorAbogado.get(ap.apr_abogado_id) ?? [];
+        const abgKey = String(ap.apr_abogado_id);
+        const arr = provinciasPorAbogado.get(abgKey) ?? [];
         if (!arr.some((x) => x.cat_id === p.cat_id)) arr.push(p);
-        provinciasPorAbogado.set(ap.apr_abogado_id, arr);
+        provinciasPorAbogado.set(abgKey, arr);
       }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const resultado: AbogadoRedItem[] = (abogados as any[]).map((a) => {
-      const u = mapaUsuarios.get(a.abg_usuario_id) || {};
-      const sol = a.abg_solicitud_id ? mapaSolicitudes.get(a.abg_solicitud_id) || {} : {};
-      const detUsuario = (u.usu_detalle_usuario || {}) as Record<string, any>;
-      const ficha = (detUsuario.ficha_abogado || {}) as Record<string, any>;
+    const resultado: AbogadoRedItem[] = abogados.map((a) => {
+      const abgIdStr = String(a.abg_id);
+      const usuIdStr = String(a.abg_usuario_id);
+      const u = mapaUsuarios.get(usuIdStr) || {};
+      const sol = a.abg_solicitud_id ? mapaSolicitudes.get(String(a.abg_solicitud_id)) || {} : {};
+      const detUsuario = (u.usu_detalle_usuario || {}) as Record<string, unknown>;
+      const ficha = (detUsuario.ficha_abogado || {}) as Record<string, unknown>;
 
-      const nombres = u.usu_nombres || "";
-      const apellidos = u.usu_apellidos || "";
-      const nombreCompleto = [nombres, apellidos].filter(Boolean).join(" ").trim() || u.usu_correo || "Socio Abogado";
+      const nombres = String(u.usu_nombres || "");
+      const apellidos = String(u.usu_apellidos || "");
+      const correoUsu = String(u.usu_correo || "");
+      const nombreCompleto = [nombres, apellidos].filter(Boolean).join(" ").trim() || correoUsu || "Socio Abogado";
 
-      const cedula = a.abg_cedula || ficha.cedula || sol.ssc_cedula || "";
-      const matriculaProfesional = a.abg_matricula_profesional || ficha.matricula_profesional || sol.ssc_matricula_profesional || "";
-      const telefono = a.abg_telefono || ficha.telefono || u.usu_whatsapp || sol.ssc_telefono_contacto || "";
-      const universidad = a.abg_universidad || ficha.universidad || (sol.ssc_universidad !== "REGISTRO_MANUAL_INTERNO" ? sol.ssc_universidad : "") || "";
+      const cedula = String(a.abg_cedula || ficha.cedula || sol.ssc_cedula || "");
+      const matriculaProfesional = String(a.abg_matricula_profesional || ficha.matricula_profesional || sol.ssc_matricula_profesional || "");
+      const telefono = String(a.abg_telefono || ficha.telefono || u.usu_whatsapp || sol.ssc_telefono_contacto || "");
+      const universidad = String(a.abg_universidad || ficha.universidad || (sol.ssc_universidad !== "REGISTRO_MANUAL_INTERNO" ? sol.ssc_universidad : "") || "");
       const anioGraduacion = Number(a.abg_anio_graduacion || ficha.anio_graduacion || sol.ssc_anio_graduacion || new Date().getFullYear());
       const anosExperiencia = Number(a.abg_anos_experiencia ?? ficha.anos_experiencia ?? sol.ssc_anos_experiencia ?? 0);
       const resumenRaw = a.abg_resumen_profesional || ficha.resumen_profesional || sol.ssc_resumen_profesional || "";
@@ -1042,8 +1081,8 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
         !a.abg_solicitud_id ||
         String(sol.ssc_resumen_profesional || "").includes(MARCA_REGISTRO_MANUAL);
 
-      const prof = mapaProfesional.get(a.abg_usuario_id);
-      const franjasBd = prof ? franjasPorProf.get(prof.agp_id) ?? [] : [];
+      const prof = mapaProfesional.get(usuIdStr);
+      const franjasBd = prof ? franjasPorProf.get(String(prof.agp_id)) ?? [] : [];
       const franjasFicha = Array.isArray(ficha.franjas_agenda) ? (ficha.franjas_agenda as Franja[]) : [];
       const franjas: Franja[] =
         franjasBd.length > 0
@@ -1057,7 +1096,7 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
       const configFicha = (ficha.configuracion_agenda || null) as ConfiguracionAgendaAbogado | null;
       const configuracionAgenda: ConfiguracionAgendaAbogado = prof
         ? {
-            zona_horaria: prof.agp_zona_horaria || "America/Guayaquil",
+            zona_horaria: String(prof.agp_zona_horaria || "America/Guayaquil"),
             duracion_cita_min: Number(prof.agp_duracion_cita_min || 45),
             holgura_min: Number(prof.agp_holgura_min ?? 15),
             antelacion_minima_horas: Number(prof.agp_antelacion_minima_horas ?? 12),
@@ -1066,7 +1105,7 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
               ? prof.agp_modalidades
               : ["virtual", "presencial"]) as ("virtual" | "presencial")[],
             acepta_turno: Boolean(prof.agp_acepta_turno ?? true),
-            direccion: prof.agp_direccion ?? configFicha?.direccion ?? null,
+            direccion: (prof.agp_direccion as string | null) ?? configFicha?.direccion ?? null,
             fechas_especiales: Array.isArray(configFicha?.fechas_especiales)
               ? configFicha.fechas_especiales
               : [],
@@ -1107,7 +1146,7 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
       const registradoPorCorreo = String(
         ficha.registrado_por_correo ||
           propAbogado?.solicitadoPorCorreo ||
-          (esManual ? "satcomla.ti@gmail.com" : u.usu_correo || "")
+          (esManual ? "satcomla.ti@gmail.com" : correoUsu || "")
       );
       const fechaRegistro = String(
         ficha.registrado_en ||
@@ -1122,10 +1161,11 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
         ficha.estado_aceptacion === "rechazado"
           ? ficha.estado_aceptacion
           : propAbogado?.estado || (a.abg_estado === "verificado" ? "aceptado" : "pendiente_aceptacion");
-      const fechaAceptacion: string | null =
+      const fechaAceptacionRaw =
         ficha.aceptado_en ||
         propAbogado?.respondidoEn ||
         (estadoAceptacion === "aceptado" ? a.abg_verificado_en || fechaRegistro : null);
+      const fechaAceptacion: string | null = fechaAceptacionRaw ? String(fechaAceptacionRaw) : null;
 
       const bajaLogica = Boolean(ficha.baja_logica === true);
       const fechaBajaLogica: string | null = ficha.dado_de_baja_en ? String(ficha.dado_de_baja_en) : null;
@@ -1133,8 +1173,8 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
         ? String(ficha.dado_de_baja_por_nombre)
         : null;
 
-      const casosAsignadosActivos = casosPorAbogado.get(a.abg_id)?.size ?? 0;
-      const citasActivas = citasPorAbogado.get(a.abg_id) ?? 0;
+      const casosAsignadosActivos = casosPorAbogado.get(abgIdStr)?.size ?? 0;
+      const citasActivas = citasPorAbogado.get(abgIdStr) ?? 0;
 
       const historialGuardado: HistorialCambioRolItem[] = Array.isArray(detUsuario.historial_cambios_rol)
         ? (detUsuario.historial_cambios_rol as HistorialCambioRolItem[])
@@ -1146,19 +1186,19 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
               ...(fechaAceptacion && estadoAceptacion === "aceptado"
                 ? [
                     {
-                      id: `hist-acep-${a.abg_id}`,
+                      id: `hist-acep-${abgIdStr}`,
                       fecha: fechaAceptacion,
                       accion: "ACEPTACION_USUARIO" as const,
                       rol: "ABOGADO",
                       estadoResultante: "activo" as const,
                       ejecutadoPorNombre: nombreCompleto,
-                      ejecutadoPorCorreo: u.usu_correo || "",
+                      ejecutadoPorCorreo: correoUsu,
                       detalle: "El usuario confirmó la aceptación del rol de Socio Abogado.",
                     },
                   ]
                 : []),
               {
-                id: `hist-reg-${a.abg_id}`,
+                id: `hist-reg-${abgIdStr}`,
                 fecha: fechaRegistro,
                 accion: "PROPUESTA_ASIGNACION" as const,
                 rol: "ABOGADO",
@@ -1172,12 +1212,12 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
             ];
 
       return {
-        abg_id: a.abg_id,
-        usu_id: a.abg_usuario_id,
+        abg_id: abgIdStr,
+        usu_id: usuIdStr,
         nombres,
         apellidos,
         nombreCompleto,
-        correo: u.usu_correo || "",
+        correo: correoUsu,
         telefono,
         cedula,
         matriculaProfesional,
@@ -1187,7 +1227,7 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
         resumenProfesional,
         origenRegistro: esManual ? "manual_operador" : "autogestion",
         estado: a.abg_estado === "suspendido" ? "suspendido" : "verificado",
-        verificadoEn: a.abg_verificado_en || a.abg_creado_en || new Date().toISOString(),
+        verificadoEn: String(a.abg_verificado_en || a.abg_creado_en || new Date().toISOString()),
         registradoPorNombre,
         registradoPorCorreo,
         fechaRegistro,
@@ -1200,16 +1240,16 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
         citasActivas,
         historialCambiosRol,
         materias:
-          (materiasPorAbogado.get(a.abg_id) ?? []).length > 0
-            ? materiasPorAbogado.get(a.abg_id)!
+          (materiasPorAbogado.get(abgIdStr) ?? []).length > 0
+            ? materiasPorAbogado.get(abgIdStr)!
             : Array.isArray(ficha.materias_objetos)
-            ? ficha.materias_objetos
+            ? (ficha.materias_objetos as MateriaItem[])
             : [],
         provincias:
-          (provinciasPorAbogado.get(a.abg_id) ?? []).length > 0
-            ? provinciasPorAbogado.get(a.abg_id)!
+          (provinciasPorAbogado.get(abgIdStr) ?? []).length > 0
+            ? provinciasPorAbogado.get(abgIdStr)!
             : Array.isArray(ficha.provincias_objetos)
-            ? ficha.provincias_objetos
+            ? (ficha.provincias_objetos as ProvinciaItem[])
             : [],
         agendaConfigurada: franjas.length > 0,
         configuracionAgenda,
@@ -1232,12 +1272,12 @@ export async function listarRedProfesionalAbogadosAction(): Promise<
  * en comun_agenda y guarda respaldo sincronizado en seg_usuario.usu_detalle_usuario.ficha_abogado.
  */
 async function guardarDisponibilidadAgendaInterna(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  adminSupabase: any,
+  adminSupabase: ClienteRedFlex | Awaited<ReturnType<typeof crearClienteServidor>>,
   usuarioId: string,
   config: ConfiguracionAgendaAbogado,
   franjas: Franja[]
 ): Promise<{ ok: boolean; error?: string }> {
+  const cliente = adminSupabase as unknown as ClienteRedFlex;
   try {
     const ahoraIso = new Date().toISOString();
     const modalidadesLimpias =
@@ -1259,7 +1299,7 @@ async function guardarDisponibilidadAgendaInterna(
 
     // 1. Guardar respaldo en seg_usuario.usu_detalle_usuario.ficha_abogado para resiliencia total
     try {
-      const { data: usuRow } = await adminSupabase
+      const { data: usuRow } = await cliente
         .schema("comun_seguridad")
         .from("seg_usuario")
         .select("usu_detalle_usuario")
@@ -1269,7 +1309,7 @@ async function guardarDisponibilidadAgendaInterna(
       const detPrevio = (usuRow?.usu_detalle_usuario || {}) as Record<string, unknown>;
       const fichaPrevia = ((detPrevio.ficha_abogado || {}) as Record<string, unknown>);
 
-      await adminSupabase
+      await cliente
         .schema("comun_seguridad")
         .from("seg_usuario")
         .update({
@@ -1291,7 +1331,7 @@ async function guardarDisponibilidadAgendaInterna(
 
     // 2. Intentar sincronizar en comun_agenda.age_profesional y age_franja
     try {
-      const { data: prof, error: errProf } = await adminSupabase
+      const { data: prof, error: errProf } = await cliente
         .schema("comun_agenda")
         .from("age_profesional")
         .upsert(
@@ -1316,7 +1356,7 @@ async function guardarDisponibilidadAgendaInterna(
         .single();
 
       if (!errProf && prof?.agp_id) {
-        await adminSupabase
+        await cliente
           .schema("comun_agenda")
           .from("age_franja")
           .update({ fra_eliminado_en: ahoraIso, fra_actualizado_en: ahoraIso })
@@ -1332,7 +1372,7 @@ async function guardarDisponibilidadAgendaInterna(
             fra_modalidad: f.modalidad || "ambas",
           }));
 
-          await adminSupabase
+          await cliente
             .schema("comun_agenda")
             .from("age_franja")
             .insert(filasFranjas);
@@ -1365,8 +1405,7 @@ type TipoEventoRedAbogado =
  * al usuario cuando se propone convertirlo en Socio Abogado o cuando cambia su estado / perfil en la red.
  */
 async function notificarEventoRedAbogadoMulticanal(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  adminSupabase: any,
+  adminSupabaseIn: ClienteRedFlex | Awaited<ReturnType<typeof crearClienteServidor>>,
   parametros: {
     usuarioId: string;
     tipoEvento: TipoEventoRedAbogado;
@@ -1379,6 +1418,7 @@ async function notificarEventoRedAbogadoMulticanal(
     abogadoId?: string | null;
   }
 ): Promise<void> {
+  const adminSupabase = adminSupabaseIn as unknown as ClienteRedFlex;
   try {
     const { data: usu } = await adminSupabase
       .schema("comun_seguridad")
@@ -1612,12 +1652,12 @@ async function notificarEventoRedAbogadoMulticanal(
         .eq("usu_id", parametros.usuarioId)
         .maybeSingle();
 
-      const det = (uRow?.usu_detalle_usuario || {}) as Record<string, any>;
-      const bandejaActual: any[] = Array.isArray(det.notificaciones_bandeja)
-        ? [...det.notificaciones_bandeja]
+      const det = (uRow?.usu_detalle_usuario || {}) as Record<string, unknown>;
+      const bandejaActual: Record<string, unknown>[] = Array.isArray(det.notificaciones_bandeja)
+        ? [...(det.notificaciones_bandeja as Record<string, unknown>[])]
         : [];
-      const propuestasActuales: any[] = Array.isArray(det.propuestas_cambio_rol)
-        ? [...det.propuestas_cambio_rol]
+      const propuestasActuales: Record<string, unknown>[] = Array.isArray(det.propuestas_cambio_rol)
+        ? [...(det.propuestas_cambio_rol as Record<string, unknown>[])]
         : [];
 
       const notifId =
@@ -1863,7 +1903,7 @@ export async function registrarOConvertirAbogadoAction(
   }
 
   const supabase = await crearClienteServidor();
-  const adminSupabase = (crearClienteAdmin() || supabase) as any;
+  const adminSupabase = (crearClienteAdmin() || supabase) as unknown as ClienteRedFlex;
   const perfilOperador = await obtenerPerfilActual();
   const ahoraIso = new Date().toISOString();
 
@@ -1881,7 +1921,7 @@ export async function registrarOConvertirAbogadoAction(
         .maybeSingle();
 
       if (usuExistente?.usu_id) {
-        targetUsuId = usuExistente.usu_id;
+        targetUsuId = String(usuExistente.usu_id);
       } else {
         // Crear cuenta en Supabase Auth para que pueda iniciar sesión
         const passwordTemporal = `Tranqi.${cedula.slice(-4)}#${ new Date().getFullYear() }`;
@@ -1903,7 +1943,7 @@ export async function registrarOConvertirAbogadoAction(
             error: `No se pudo crear la cuenta de usuario (${authErr.message}). Si ya existe, búscalo en el selector de usuarios registrados.`,
           };
         }
-        targetUsuId = authData.user.id;
+        targetUsuId = authData?.user?.id || null;
       }
     }
 
@@ -1917,7 +1957,7 @@ export async function registrarOConvertirAbogadoAction(
       obtenerProvinciasResiliente(supabase, adminSupabase),
     ]);
     const mapaMat = new Map<string, MateriaItem>(
-      (catMatRes.data ?? []).map((m: MateriaItem) => [m.mat_id, m])
+      ((catMatRes.data ?? []) as unknown as MateriaItem[]).map((m: MateriaItem) => [m.mat_id, m])
     );
     const materiasObjetos = materiasIds
       .map((id) => mapaMat.get(id))
@@ -1942,8 +1982,8 @@ export async function registrarOConvertirAbogadoAction(
       .maybeSingle();
 
     const eraAbogadoPrevio = Boolean(abgPrevio?.abg_id);
-    const estadoPrevio = abgPrevio?.abg_estado ?? null;
-    let abgId: string | null = abgPrevio?.abg_id ?? null;
+    const estadoPrevio = abgPrevio?.abg_estado ? String(abgPrevio.abg_estado) : null;
+    let abgId: string | null = abgPrevio?.abg_id ? String(abgPrevio.abg_id) : null;
 
     const nombreOperador =
       [perfilOperador?.usu_nombres, perfilOperador?.usu_apellidos].filter(Boolean).join(" ").trim() ||
@@ -1957,8 +1997,8 @@ export async function registrarOConvertirAbogadoAction(
       ? "suspendido"
       : estado;
 
-    const detPrevio = (usuActual?.usu_detalle_usuario || {}) as Record<string, any>;
-    const fichaPrevia = (detPrevio.ficha_abogado || {}) as Record<string, any>;
+    const detPrevio = (usuActual?.usu_detalle_usuario || {}) as Record<string, unknown>;
+    const fichaPrevia = (detPrevio.ficha_abogado || {}) as Record<string, unknown>;
 
     const fichaAbogado = {
       ...fichaPrevia,
@@ -2059,7 +2099,7 @@ export async function registrarOConvertirAbogadoAction(
       .maybeSingle();
 
     if (!errNuevo && upsertedNuevo?.abg_id) {
-      abgId = upsertedNuevo.abg_id;
+      abgId = String(upsertedNuevo.abg_id);
     } else {
       // Fallback en caso de que la migración 20261108000001 aún no haya corrido en el servidor remoto
       let solicitudRespaldoId = abgPrevio?.abg_solicitud_id ?? null;
@@ -2104,7 +2144,7 @@ export async function registrarOConvertirAbogadoAction(
       if (errCompat || !upsertedCompat?.abg_id) {
         return { ok: false, error: errCompat?.message || "No se pudo registrar al abogado." };
       }
-      abgId = upsertedCompat.abg_id;
+      abgId = String(upsertedCompat.abg_id);
     }
 
     if (!abgId) {
@@ -2230,7 +2270,7 @@ export async function cambiarEstadoAbogadoRedAction(
 
   try {
     const supabase = await crearClienteServidor();
-    const adminSupabase = (crearClienteAdmin() || supabase) as any;
+    const adminSupabase = (crearClienteAdmin() || supabase) as unknown as ClienteRedFlex;
     const perfilOperador = await obtenerPerfilActual();
     const ahoraIso = new Date().toISOString();
 
@@ -2249,6 +2289,8 @@ export async function cambiarEstadoAbogadoRedAction(
       return { ok: false, error: errAbg?.message || "Abogado no encontrado." };
     }
 
+    const abgUsuarioId = abg.abg_usuario_id as string;
+
     const nombreOperador =
       [perfilOperador?.usu_nombres, perfilOperador?.usu_apellidos].filter(Boolean).join(" ").trim() ||
       "Mesa Operativa Tranqi";
@@ -2260,13 +2302,13 @@ export async function cambiarEstadoAbogadoRedAction(
         .schema("comun_seguridad")
         .from("seg_usuario")
         .select("usu_detalle_usuario")
-        .eq("usu_id", abg.abg_usuario_id)
+        .eq("usu_id", abgUsuarioId)
         .maybeSingle();
 
-      const det = (usu?.usu_detalle_usuario || {}) as Record<string, any>;
-      const ficha = (det.ficha_abogado || {}) as Record<string, any>;
+      const det = (usu?.usu_detalle_usuario || {}) as Record<string, unknown>;
+      const ficha = (det.ficha_abogado || {}) as Record<string, unknown>;
       const historial: HistorialCambioRolItem[] = Array.isArray(det.historial_cambios_rol)
-        ? [...det.historial_cambios_rol]
+        ? [...(det.historial_cambios_rol as HistorialCambioRolItem[])]
         : [];
       historial.unshift({
         id: `hist-${Date.now()}`,
@@ -2306,20 +2348,20 @@ export async function cambiarEstadoAbogadoRedAction(
           },
           usu_actualizado_en: ahoraIso,
         })
-        .eq("usu_id", abg.abg_usuario_id);
+        .eq("usu_id", abgUsuarioId);
     } catch {
       // Continuar
     }
 
     await sincronizarRolAbogadoEnSeguridad(
       adminSupabase,
-      abg.abg_usuario_id,
+      abgUsuarioId,
       nuevoEstado === "verificado",
       perfilOperador?.usu_id ?? null
     );
 
     await notificarEventoRedAbogadoMulticanal(adminSupabase, {
-      usuarioId: abg.abg_usuario_id,
+      usuarioId: abgUsuarioId,
       tipoEvento: nuevoEstado === "verificado" ? "ACTIVADO" : "SUSPENDIDO",
       operadorCorreo: perfilOperador?.usu_correo ?? null,
       operadorNombre: nombreOperador,
@@ -2348,7 +2390,7 @@ export async function reenviarSolicitudAceptacionAbogadoAction(
 
   try {
     const supabase = await crearClienteServidor();
-    const adminSupabase = (crearClienteAdmin() || supabase) as any;
+    const adminSupabase = (crearClienteAdmin() || supabase) as unknown as ClienteRedFlex;
     const perfilOperador = await obtenerPerfilActual();
 
     const { data: abg } = await adminSupabase
@@ -2362,23 +2404,25 @@ export async function reenviarSolicitudAceptacionAbogadoAction(
       return { ok: false, error: "Abogado no encontrado." };
     }
 
+    const abgUsuarioId = String(abg.abg_usuario_id);
+
     const { data: usu } = await adminSupabase
       .schema("comun_seguridad")
       .from("seg_usuario")
       .select("usu_detalle_usuario")
-      .eq("usu_id", abg.abg_usuario_id)
+      .eq("usu_id", abgUsuarioId)
       .maybeSingle();
 
-    const det = (usu?.usu_detalle_usuario || {}) as Record<string, any>;
-    const ficha = (det.ficha_abogado || {}) as Record<string, any>;
+    const det = (usu?.usu_detalle_usuario || {}) as Record<string, unknown>;
+    const ficha = (det.ficha_abogado || {}) as Record<string, unknown>;
     const materiasNombres: string[] = Array.isArray(ficha.materias_objetos)
-      ? ficha.materias_objetos
-          .map((m: { mat_nombre?: string }) => m.mat_nombre)
+      ? (ficha.materias_objetos as Array<{ mat_nombre?: string }>)
+          .map((m) => m.mat_nombre)
           .filter((v): v is string => Boolean(v))
       : [];
     const provinciasNombres: string[] = Array.isArray(ficha.provincias_objetos)
-      ? ficha.provincias_objetos
-          .map((p: { cat_nombre?: string }) => p.cat_nombre)
+      ? (ficha.provincias_objetos as Array<{ cat_nombre?: string }>)
+          .map((p) => p.cat_nombre)
           .filter((v): v is string => Boolean(v))
       : [];
 
@@ -2387,14 +2431,14 @@ export async function reenviarSolicitudAceptacionAbogadoAction(
       "Mesa Operativa Tranqi";
 
     await notificarEventoRedAbogadoMulticanal(adminSupabase, {
-      usuarioId: abg.abg_usuario_id,
+      usuarioId: abgUsuarioId,
       tipoEvento: "PROPUESTA_CONVERSION",
       especialidadesNombres: materiasNombres,
       provinciasNombres: provinciasNombres,
       operadorCorreo: perfilOperador?.usu_correo ?? null,
       operadorNombre: nombreOperador,
       operadorId: perfilOperador?.usu_id ?? null,
-      abogadoId: abg.abg_id,
+      abogadoId: String(abg.abg_id),
     });
 
     revalidatePath("/panel/red-profesional");
@@ -2419,7 +2463,7 @@ export async function eliminarAbogadoRedAction(
 
   try {
     const supabase = await crearClienteServidor();
-    const adminSupabase = (crearClienteAdmin() || supabase) as any;
+    const adminSupabase = (crearClienteAdmin() || supabase) as unknown as ClienteRedFlex;
     const perfilOperador = await obtenerPerfilActual();
 
     const { data: abg } = await adminSupabase
@@ -2460,10 +2504,10 @@ export async function eliminarAbogadoRedAction(
 
     const idsCasosActivos = new Set<string>();
     for (const c of casosTitularRes?.data ?? []) {
-      if (c.cas_id) idsCasosActivos.add(c.cas_id);
+      if (c.cas_id) idsCasosActivos.add(String(c.cas_id));
     }
     for (const ce of casosEquipoRes?.data ?? []) {
-      if (ce.cae_caso_id) idsCasosActivos.add(ce.cae_caso_id);
+      if (ce.cae_caso_id) idsCasosActivos.add(String(ce.cae_caso_id));
     }
     const totalCasosActivos = idsCasosActivos.size;
     const totalCitasActivas = (citasActivasRes?.data ?? []).length;
@@ -2498,8 +2542,10 @@ export async function eliminarAbogadoRedAction(
       })
       .eq("abg_id", abogadoId);
 
+    const abgUsuarioId = abg.abg_usuario_id ? String(abg.abg_usuario_id) : "";
+
     // Pausar recepción de turnos en comun_agenda.age_profesional sin eliminar historial
-    if (abg.abg_usuario_id) {
+    if (abgUsuarioId) {
       await adminSupabase
         .schema("comun_agenda")
         .from("age_profesional")
@@ -2507,24 +2553,24 @@ export async function eliminarAbogadoRedAction(
           agp_acepta_turno: false,
           agp_actualizado_en: ahoraIso,
         })
-        .eq("agp_usuario_id", abg.abg_usuario_id)
+        .eq("agp_usuario_id", abgUsuarioId)
         .eq("agp_negocio", "tranqi");
     }
 
     // 3. Registrar Baja Lógica y almacenar en el Historial de Cambios de Rol (seg_usuario.usu_detalle_usuario)
-    if (abg.abg_usuario_id) {
+    if (abgUsuarioId) {
       try {
         const { data: usu } = await adminSupabase
           .schema("comun_seguridad")
           .from("seg_usuario")
           .select("usu_detalle_usuario")
-          .eq("usu_id", abg.abg_usuario_id)
+          .eq("usu_id", abgUsuarioId)
           .maybeSingle();
 
-        const det = (usu?.usu_detalle_usuario || {}) as Record<string, any>;
-        const ficha = (det.ficha_abogado || {}) as Record<string, any>;
+        const det = (usu?.usu_detalle_usuario || {}) as Record<string, unknown>;
+        const ficha = (det.ficha_abogado || {}) as Record<string, unknown>;
         const historial: HistorialCambioRolItem[] = Array.isArray(det.historial_cambios_rol)
-          ? [...det.historial_cambios_rol]
+          ? [...(det.historial_cambios_rol as HistorialCambioRolItem[])]
           : [];
 
         const motivoTexto =
@@ -2561,20 +2607,20 @@ export async function eliminarAbogadoRedAction(
             },
             usu_actualizado_en: ahoraIso,
           })
-          .eq("usu_id", abg.abg_usuario_id);
+          .eq("usu_id", abgUsuarioId);
       } catch {
         // Continuar
       }
 
       await sincronizarRolAbogadoEnSeguridad(
         adminSupabase,
-        abg.abg_usuario_id,
+        abgUsuarioId,
         false,
         perfilOperador?.usu_id ?? null
       );
 
       await notificarEventoRedAbogadoMulticanal(adminSupabase, {
-        usuarioId: abg.abg_usuario_id,
+        usuarioId: abgUsuarioId,
         tipoEvento: "RETIRADO",
         operadorCorreo: perfilOperador?.usu_correo ?? null,
         operadorNombre: nombreOperador,
@@ -2667,7 +2713,7 @@ export async function guardarMiPerfilYEspecialidadesAbogadoAction(entrada: {
     }
 
     const supabase = await crearClienteServidor();
-    const adminSupabase = (crearClienteAdmin() || supabase) as any;
+    const adminSupabase = (crearClienteAdmin() || supabase) as unknown as ClienteRedFlex;
     const ahoraIso = new Date().toISOString();
 
     const { data: abg } = await adminSupabase
@@ -2687,7 +2733,7 @@ export async function guardarMiPerfilYEspecialidadesAbogadoAction(entrada: {
       obtenerProvinciasResiliente(supabase, adminSupabase),
     ]);
     const mapaMat = new Map<string, MateriaItem>(
-      (catMatRes.data ?? []).map((m: MateriaItem) => [m.mat_id, m])
+      ((catMatRes.data ?? []) as unknown as MateriaItem[]).map((m: MateriaItem) => [m.mat_id, m])
     );
     const materiasObjetos = materiasIds
       .map((id) => mapaMat.get(id))
@@ -2704,8 +2750,8 @@ export async function guardarMiPerfilYEspecialidadesAbogadoAction(entrada: {
       .eq("usu_id", targetUsuId)
       .maybeSingle();
 
-    const detPrevio = (usuActual?.usu_detalle_usuario || {}) as Record<string, any>;
-    const fichaPrevia = (detPrevio.ficha_abogado || {}) as Record<string, any>;
+    const detPrevio = (usuActual?.usu_detalle_usuario || {}) as Record<string, unknown>;
+    const fichaPrevia = (detPrevio.ficha_abogado || {}) as Record<string, unknown>;
 
     await adminSupabase
       .schema("comun_seguridad")
@@ -2820,7 +2866,7 @@ export async function guardarDisponibilidadCitasAbogadoAction(entrada: {
     }
 
     const supabase = await crearClienteServidor();
-    const adminSupabase = (crearClienteAdmin() || supabase) as any;
+    const adminSupabase = (crearClienteAdmin() || supabase) as unknown as ClienteRedFlex;
 
     const res = await guardarDisponibilidadAgendaInterna(
       adminSupabase,
@@ -2945,7 +2991,7 @@ export async function enviarInvitacionesRegistroAbogadosAction(entrada: {
     `;
 
     const supabase = await crearClienteServidor();
-    const adminSupabase = (crearClienteAdmin() || supabase) as any;
+    const adminSupabase = (crearClienteAdmin() || supabase) as unknown as ClienteRedFlex;
 
     let enviados = 0;
     const correosEnviados: string[] = [];
@@ -2965,14 +3011,14 @@ export async function enviarInvitacionesRegistroAbogadosAction(entrada: {
           const { data: vaultData } = await adminSupabase
             .schema("comun_configuracion")
             .rpc("cfg_fn_obtener_smtp_credenciales", { p_negocio: negClave });
-          const cfg = Array.isArray(vaultData) ? vaultData[0] : vaultData;
+          const cfg = (Array.isArray(vaultData) ? vaultData[0] : vaultData) as Record<string, unknown> | null;
           if (cfg?.host && cfg?.usuario && cfg?.contrasena) {
-            smtpHost = cfg.host;
+            smtpHost = String(cfg.host);
             smtpPort = Number(cfg.puerto || 465);
-            smtpUser = cfg.usuario;
-            smtpPass = cfg.contrasena;
+            smtpUser = String(cfg.usuario);
+            smtpPass = String(cfg.contrasena);
             smtpSecure = Boolean(cfg.seguro ?? smtpPort === 465);
-            remitenteNombre = cfg.remitente_nombre || remitenteNombre;
+            remitenteNombre = cfg.remitente_nombre ? String(cfg.remitente_nombre) : remitenteNombre;
             detalleMetodo = "SMTP Vault";
             break;
           }
@@ -3046,12 +3092,12 @@ export async function enviarInvitacionesRegistroAbogadosAction(entrada: {
         .in("usu_correo", correosUnicos);
 
       if (Array.isArray(usuariosExistentes) && usuariosExistentes.length > 0) {
-        const filasNotif = usuariosExistentes.map((u: { usu_id: string; usu_correo: string }) => ({
-          not_usuario_id: u.usu_id,
+        const filasNotif = usuariosExistentes.map((u) => ({
+          not_usuario_id: String(u.usu_id),
           not_negocio: "TRANQ",
           not_canal: "IN_APP",
           not_titulo: asunto,
-          not_contenido_html: construirHtmlInvitacion(u.usu_correo),
+          not_contenido_html: construirHtmlInvitacion(String(u.usu_correo)),
           not_url_accion: URL_REGISTRO_ABOGADOS,
           not_creado_en: new Date().toISOString(),
         }));

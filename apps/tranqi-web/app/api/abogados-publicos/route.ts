@@ -1,11 +1,47 @@
 import { NextResponse } from "next/server";
 import { crearClienteAdmin, crearClienteServidor } from "@eco/supabase/servidor";
 
+interface FilaAbogadoPublico {
+  abg_id: string;
+  abg_usuario_id: string;
+  abg_estado: string;
+  abg_anos_experiencia?: number | null;
+  abg_verificado_en?: string | null;
+  trq_abogado_materia?: Array<{
+    amt_eliminado_en?: string | null;
+    trq_materia?: { mat_nombre?: string } | null;
+  }> | null;
+  trq_abogado_provincia?: Array<{
+    apr_eliminado_en?: string | null;
+    comun_catalogo?: { cat_nombre?: string } | null;
+  }> | null;
+  trq_solicitud_socio?: {
+    ssc_id?: string;
+    ssc_anos_experiencia?: number | null;
+    ssc_universidad?: string | null;
+    ssc_matricula_profesional?: string | null;
+    trq_solicitud_materia?: Array<{
+      trq_materia?: { mat_nombre?: string } | null;
+    }> | null;
+    trq_solicitud_provincia?: Array<{
+      comun_catalogo?: { cat_nombre?: string } | null;
+    }> | null;
+  } | null;
+}
+
+interface FilaUsuarioPublico {
+  usu_id: string;
+  usu_nombres?: string | null;
+  usu_apellidos?: string | null;
+  usu_correo?: string | null;
+  usu_detalle_usuario?: Record<string, unknown> | null;
+}
+
 export async function GET() {
   try {
-    const adminSupabase = (crearClienteAdmin() || (await crearClienteServidor())) as any;
+    const adminSupabase = crearClienteAdmin() || (await crearClienteServidor());
 
-    const { data: abogados, error: errAbg } = await adminSupabase
+    const { data: abogadosData, error: errAbg } = await adminSupabase
       .schema("tranqui_legal")
       .from("trq_abogado")
       .select(`
@@ -39,46 +75,48 @@ export async function GET() {
       .order("abg_verificado_en", { ascending: false })
       .limit(16);
 
-    if (errAbg || !abogados || abogados.length === 0) {
+    const abogados = (abogadosData ?? []) as unknown as FilaAbogadoPublico[];
+    if (errAbg || !abogadosData || abogados.length === 0) {
       return NextResponse.json({ ok: true, abogados: [] });
     }
 
-    const uIds = abogados.map((a: any) => a.abg_usuario_id).filter(Boolean);
-    const { data: usuarios } = await adminSupabase
+    const uIds = abogados.map((a) => a.abg_usuario_id).filter(Boolean);
+    const { data: usuariosData } = await adminSupabase
       .schema("comun_seguridad")
       .from("seg_usuario")
       .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_detalle_usuario")
       .in("usu_id", uIds);
 
-    const mapaUsuarios = new Map<string, any>((usuarios ?? []).map((u: any) => [u.usu_id, u]));
+    const usuarios = (usuariosData ?? []) as unknown as FilaUsuarioPublico[];
+    const mapaUsuarios = new Map<string, FilaUsuarioPublico>(usuarios.map((u) => [u.usu_id, u]));
 
-    const resultado = (abogados as any[]).map((a) => {
+    const resultado = abogados.map((a) => {
       const u = mapaUsuarios.get(a.abg_usuario_id);
       const nombreCompleto =
         [u?.usu_nombres, u?.usu_apellidos].filter(Boolean).join(" ") || "Socio Abogado tranqi";
       const sol = a.trq_solicitud_socio || {};
-      const detUsuario = (u?.usu_detalle_usuario || {}) as Record<string, any>;
-      const ficha = (detUsuario.ficha_abogado || {}) as Record<string, any>;
+      const detUsuario = (u?.usu_detalle_usuario || {}) as Record<string, unknown>;
+      const ficha = (detUsuario.ficha_abogado || {}) as Record<string, unknown>;
 
       const materiasDirectas = (a.trq_abogado_materia ?? [])
-        .filter((m: any) => !m.amt_eliminado_en)
-        .map((m: any) => m.trq_materia?.mat_nombre)
+        .filter((m) => !m.amt_eliminado_en)
+        .map((m) => m.trq_materia?.mat_nombre)
         .filter(Boolean);
 
       const materiasSolicitud = (sol.trq_solicitud_materia ?? [])
-        .map((m: any) => m.trq_materia?.mat_nombre)
+        .map((m) => m.trq_materia?.mat_nombre)
         .filter(Boolean);
 
       const materias = materiasDirectas.length > 0 ? materiasDirectas : materiasSolicitud;
       const materiaPrincipal = materias[0] || "Derecho General";
 
       const provinciasDirectas = (a.trq_abogado_provincia ?? [])
-        .filter((p: any) => !p.apr_eliminado_en)
-        .map((p: any) => p.comun_catalogo?.cat_nombre)
+        .filter((p) => !p.apr_eliminado_en)
+        .map((p) => p.comun_catalogo?.cat_nombre)
         .filter(Boolean);
 
       const provinciasSolicitud = (sol.trq_solicitud_provincia ?? [])
-        .map((p: any) => p.comun_catalogo?.cat_nombre)
+        .map((p) => p.comun_catalogo?.cat_nombre)
         .filter(Boolean);
 
       const provincias = provinciasDirectas.length > 0 ? provinciasDirectas : provinciasSolicitud;
@@ -86,7 +124,7 @@ export async function GET() {
         provincias.length > 0 ? `${provincias[0]} · ${provincias.length} prov.` : "Ecuador";
 
       const anosExp = a.abg_anos_experiencia || ficha.anos_experiencia || sol.ssc_anos_experiencia;
-      const fotoUrl = detUsuario.foto_url || null;
+      const fotoUrl = (detUsuario.foto_url as string | undefined) || null;
 
       return {
         id: a.abg_id,

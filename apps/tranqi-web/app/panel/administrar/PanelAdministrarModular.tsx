@@ -13,7 +13,7 @@ import { GestionRedProfesionalWidget } from "../../../modulos/socios/componentes
 import { ConfiguracionHorariosAtencionWidget } from "../../../modulos/agenda/componentes/ConfiguracionHorariosAtencionWidget";
 import { WidgetAsignacionesAgendaInline } from "../../../modulos/agenda/componentes/WidgetsAgendaInline";
 import { BandejaClientesCRM } from "../../../modulos/crm-clientes/componentes/BandejaClientesCRM";
-import { HistorialTransaccionesPago, WidgetFacturacionElectronica, GestionConveniosCorporativos, ConsolaGestionInformativosWidget, ComplianceScoreEmpresarial, LegalHRLaboral, ConsolaVentasOmnicanal, BandejaPedidosTienda, ConsolaTestimoniosClientes } from "@eco/comercio";
+import { WidgetFacturacionElectronica, GestionConveniosCorporativos, ConsolaGestionInformativosWidget, ComplianceScoreEmpresarial, LegalHRLaboral, ConsolaVentasOmnicanal, BandejaPedidosTienda, ConsolaTestimoniosClientes } from "@eco/comercio";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";

@@ -10,7 +10,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  FileText,
   GitCommit,
   History,
   MessageCircle,

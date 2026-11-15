@@ -13,12 +13,8 @@ import {
   MessageSquare,
   Send,
   ShieldCheck,
-  HelpCircle,
   KeyRound,
   FileCheck2,
-  Lock,
-  ChevronRight,
-  AlertTriangle,
 } from "lucide-react";
 import { crearClienteNavegador } from "@eco/supabase";
 import {
@@ -28,9 +24,19 @@ import {
 import { ModalFirmaDigitalPdf } from "./ModalFirmaDigitalPdf";
 import type { InfoCertificado } from "../servicios/servicioFirmaDigital";
 
+interface DocumentoSocioItem {
+  dcs_tipo?: string;
+  dcs_nombre_archivo?: string | null;
+}
+
+interface SolicitudContratoPostulante {
+  ssc_id: string;
+  trq_documento_socio?: DocumentoSocioItem[] | null;
+  [key: string]: unknown;
+}
+
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  solicitud: any;
+  solicitud: SolicitudContratoPostulante;
 }
 
 export function GestionContratoPostulante({ solicitud }: Props) {
@@ -47,8 +53,7 @@ export function GestionContratoPostulante({ solicitud }: Props) {
   const [enviandoObs, setEnviandoObs] = useState(false);
 
   const documentos = solicitud.trq_documento_socio || [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const contratoFirmado = documentos.find((d: any) => d.dcs_tipo === "contrato_socio");
+  const contratoFirmado = documentos.find((d) => d.dcs_tipo === "contrato_socio");
 
   const urlPdfOriginal = `/api/solicitud-socio/contrato/pdf?solicitudId=${solicitud.ssc_id}`;
 

@@ -3,14 +3,12 @@
 import React, { useState, useEffect, useTransition } from "react";
 import {
   X, User, Building2, ShieldCheck, AlertTriangle, Sparkles, Upload,
-  FileText, CheckCircle2, ArrowRight, Calendar, Scale, Info, Check, Eye,
-  Copy, Layers, FileCheck, HelpCircle, Briefcase, ChevronDown, ChevronUp,
-  UserCheck, Send, CheckSquare, Hash, Award, Building, Wallet, Lock, Shield,
-  Trash2, FilePlus2, RotateCcw, Edit3
+  CheckCircle2, Calendar, Scale, Check, Eye,
+  Copy, ChevronDown, ChevronUp,
+  UserCheck, Wallet,
+  Trash2, RotateCcw, Edit3
 } from "lucide-react";
 import {
-  validarCedulaEcuador,
-  validarRucEcuador,
   analizarIdentificacionConAria,
   analizarNombramientoConAria,
   verificarDuplicado,
@@ -25,10 +23,53 @@ import {
   type ResultadoVerificacionCliente,
 } from "../acciones";
 
+interface ClienteEditarCRM {
+  clp_id: string;
+  clp_usuario_id?: string | null;
+  clp_tipo_personeria?: string | null;
+  clp_tipo_identificacion?: string | null;
+  clp_identificacion?: string | null;
+  clp_nombres?: string | null;
+  clp_apellidos?: string | null;
+  clp_razon_social?: string | null;
+  clp_nombre_comercial?: string | null;
+  clp_correo?: string | null;
+  clp_celular?: string | null;
+  clp_telefono?: string | null;
+  clp_direccion?: string | null;
+  clp_casillero_judicial?: string | null;
+  clp_casillero_electronico?: string | null;
+  clp_detalle_cliente?: {
+    nacionalidad?: string | null;
+    fecha_nacimiento?: string | null;
+    lugar_nacimiento?: string | null;
+    sexo?: string | null;
+    estado_civil?: string | null;
+    conyuge?: string | null;
+    fecha_expiracion_documento?: string | null;
+    actividad_economica?: string | null;
+    representante_legal?: {
+      nombres?: string;
+      cedula?: string;
+      cargo?: string;
+      nombramientoVence?: string;
+      correo?: string;
+      celular?: string;
+    } | null;
+    apoderado_persona_natural?: {
+      nombres?: string;
+      cedula?: string;
+      calidadPoder?: string;
+      notariaVigencia?: string;
+    } | null;
+    [key: string]: unknown;
+  } | null;
+}
+
 interface Props {
   abierto: boolean;
   alCerrar: () => void;
-  clienteAEditar?: any | null;
+  clienteAEditar?: ClienteEditarCRM | null;
   alGuardarExitoso: (resultado: {
     clienteId: string;
     usuarioId: string;
@@ -43,7 +84,7 @@ interface ArchivoBilleteraEstado {
   base64: string;
   mimetype: string;
   tamano: number;
-  resultadoOcr?: any;
+  resultadoOcr?: ResultadoAriaIdentificacion | ResultadoAriaNombramiento | Record<string, unknown>;
 }
 
 function IndicadorOrigenCampo({ esAria, esModificado }: { esAria?: boolean; esModificado?: boolean }) {
@@ -143,8 +184,8 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
   // Precargar datos si se abre en modo edición
   useEffect(() => {
     if (clienteAEditar) {
-      setTipoPersoneria(clienteAEditar.clp_tipo_personeria || "natural");
-      setTipoIdentificacion(clienteAEditar.clp_tipo_identificacion || "cedula");
+      setTipoPersoneria((clienteAEditar.clp_tipo_personeria || "natural") as "natural" | "juridica");
+      setTipoIdentificacion((clienteAEditar.clp_tipo_identificacion || "cedula") as "cedula" | "ruc" | "pasaporte");
       setIdentificacion(clienteAEditar.clp_identificacion || "");
       setNombres(clienteAEditar.clp_nombres || "");
       setApellidos(clienteAEditar.clp_apellidos || "");
@@ -209,7 +250,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
   const [badgeAriaNom, setBadgeAriaNom] = useState<string | null>(null);
   const [badgeAriaRepCedula, setBadgeAriaRepCedula] = useState<string | null>(null);
   const [errorValidacion, setErrorValidacion] = useState<string | null>(null);
-  const [avisoDuplicado, setAvisoDuplicado] = useState<string | null>(null);
+  const [_avisoDuplicado, setAvisoDuplicado] = useState<string | null>(null);
   const [resVerificacion, setResVerificacion] = useState<ResultadoVerificacionCliente | null>(null);
   const [metadatosAria, setMetadatosAria] = useState<Record<string, unknown> | null>(null);
   const [logExtraccionAria, setLogExtraccionAria] = useState<ItemLogExtraccionAria[]>([]);
@@ -617,7 +658,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
             titularIdentificacion: identificacion.trim(),
             fechaNacimiento: fechaNacimiento || undefined,
             fechaCaducidad: fechaExpiracionDocumento || undefined,
-            metadatosOcr: archivoCedulaNatural.resultadoOcr || {},
+            metadatosOcr: (archivoCedulaNatural.resultadoOcr || {}) as Record<string, unknown>,
             detalles: {
               nacionalidad,
               estado_civil: estadoCivil,
@@ -641,7 +682,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
               numeroDocumento: repCedula.trim(),
               titularNombre: repNombres.trim(),
               titularIdentificacion: repCedula.trim(),
-              metadatosOcr: archivoRepCedula.resultadoOcr || {},
+              metadatosOcr: (archivoRepCedula.resultadoOcr || {}) as Record<string, unknown>,
               detalles: {
                 cargo: repCargo,
                 empresa_ruc: identificacion.trim(),
@@ -663,7 +704,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
               titularNombre: repNombres.trim(),
               titularIdentificacion: repCedula.trim(),
               fechaCaducidad: repVencimientoNombramiento || undefined,
-              metadatosOcr: archivoNombramiento.resultadoOcr || {},
+              metadatosOcr: (archivoNombramiento.resultadoOcr || {}) as Record<string, unknown>,
               detalles: {
                 cargo: repCargo,
                 ruc_empresa: identificacion.trim(),
@@ -684,7 +725,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
               numeroDocumento: identificacion.trim(),
               titularNombre: razonSocial.trim(),
               titularIdentificacion: identificacion.trim(),
-              metadatosOcr: archivoRucSRI.resultadoOcr || {},
+              metadatosOcr: (archivoRucSRI.resultadoOcr || {}) as Record<string, unknown>,
             });
           }
         }
@@ -769,8 +810,9 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
             accionContinuidad,
           });
         }
-      } catch (err: any) {
-        setErrorValidacion(err?.message || "Error al procesar la solicitud.");
+      } catch (err) {
+        const mensaje = err instanceof Error ? err.message : String(err);
+        setErrorValidacion(mensaje || "Error al procesar la solicitud.");
       }
     });
   };
@@ -1327,7 +1369,7 @@ export function ModalAltaClienteAsistida({ abierto, alCerrar, clienteAEditar, al
                     <select
                       value={tipoIdentificacion}
                       onChange={(e) => {
-                        setTipoIdentificacion(e.target.value as any);
+                        setTipoIdentificacion(e.target.value as "cedula" | "ruc" | "pasaporte");
                         marcarCampoModificado("tipoIdentificacion");
                       }}
                       style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.82rem" }}

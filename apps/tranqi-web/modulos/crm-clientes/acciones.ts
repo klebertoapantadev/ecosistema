@@ -729,8 +729,8 @@ export async function analizarIdentificacionConAria(
       confianza: Math.min(confianza, 99),
       mensaje: `Documento procesado con éxito por Tranqi. ${logExtraccion.length} datos identificados (${logExtraccion.filter(l => l.estado === "mapeado_formulario").length} mapeados a pantalla).`,
     };
-  } catch (error: any) {
-    return { ok: false, confianza: 0, mensaje: error?.message || "Error al procesar documento con Tranqi." };
+  } catch (error) {
+    return { ok: false, confianza: 0, mensaje: error instanceof Error && error.message ? error.message : "Error al procesar documento con Tranqi." };
   }
 }
 
@@ -755,7 +755,7 @@ export interface ResultadoAriaNombramiento {
  */
 export async function analizarNombramientoConAria(
   archivoBase64: string,
-  archivoNombre: string
+  _archivoNombre: string
 ): Promise<ResultadoAriaNombramiento> {
   try {
     if (!archivoBase64) {
@@ -840,14 +840,203 @@ export async function analizarNombramientoConAria(
       confianza: 98,
       mensaje: `Nombramiento mercantil certificado por Tranqi. ${logExtraccion.length} datos extraídos (${logExtraccion.filter(l => l.estado === "mapeado_formulario").length} mapeados a pantalla).`,
     };
-  } catch (error: any) {
-    return { ok: false, confianza: 0, mensaje: error?.message || "Error al procesar el nombramiento." };
+  } catch (error) {
+    return { ok: false, confianza: 0, mensaje: error instanceof Error && error.message ? error.message : "Error al procesar el nombramiento." };
   }
 }
 
 // ==============================================================================
 // 3. CONSULTAS DE CONFLICT CHECK Y DEDUPLICACIÓN
 // ==============================================================================
+
+export interface DetalleClienteCRM {
+  estado_crm?: string;
+  nacionalidad?: string;
+  fecha_nacimiento?: string | null;
+  lugar_nacimiento?: string | null;
+  sexo?: string | null;
+  estado_civil?: string | null;
+  conyuge?: string | null;
+  fecha_expiracion_documento?: string | null;
+  actividad_economica?: string | null;
+  representante_legal?: {
+    nombres?: string;
+    cedula?: string;
+    cargo?: string;
+    nombramientoVence?: string;
+    documentoValidadoAria?: boolean;
+    correo?: string;
+    celular?: string;
+  } | null;
+  apoderado_persona_natural?: {
+    nombres?: string;
+    cedula?: string;
+    calidadPoder?: string;
+    notariaVigencia?: string;
+  } | null;
+  contacto_facturacion?: {
+    nombre?: string;
+    correo?: string;
+    telefono?: string;
+  } | null;
+  contraparte_preliminar?: {
+    nombres?: string;
+    identificacion?: string;
+  } | null;
+  validacion_omitida?: boolean;
+  motivo_excepcion?: string | null;
+  metadatos_aria?: Record<string, unknown> | null;
+  campos_leidos_aria?: string[];
+  log_extraccion_aria?: ItemLogExtraccionAria[];
+  documentos_billetera_guardados?: Array<{
+    tipo: string;
+    titulo: string;
+    archivoNombre: string;
+  }>;
+  notas?: Array<{ texto: string; en: string; por?: string }>;
+  [key: string]: unknown;
+}
+
+export interface FilaClientePerfilCRM {
+  clp_id: string;
+  clp_secuencial?: number;
+  clp_usuario_id?: string | null;
+  clp_tipo_personeria: "natural" | "juridica" | string;
+  clp_tipo_identificacion: "cedula" | "ruc" | "pasaporte" | string;
+  clp_identificacion: string;
+  clp_nombres?: string | null;
+  clp_apellidos?: string | null;
+  clp_razon_social?: string | null;
+  clp_nombre_comercial?: string | null;
+  clp_correo?: string | null;
+  clp_telefono?: string | null;
+  clp_celular?: string | null;
+  clp_direccion?: string | null;
+  clp_casillero_judicial?: string | null;
+  clp_casillero_electronico?: string | null;
+  clp_origen_registro?: string | null;
+  clp_creado_por?: string | null;
+  clp_activo?: boolean;
+  clp_creado_en?: string;
+  clp_actualizado_en?: string;
+  clp_eliminado_en?: string | null;
+  clp_detalle_cliente?: DetalleClienteCRM | null;
+  usu_id?: string;
+  usu_nombre_completo?: string | null;
+  usu_nombres?: string | null;
+  usu_apellidos?: string | null;
+  usu_correo?: string;
+  usu_creado_en?: string;
+  usu_whatsapp?: string | null;
+  usu_cedula?: string | null;
+  sub_id?: string;
+  sub_estado?: string;
+  sub_frecuencia?: string;
+  sub_monto_periodo?: number;
+  sub_proximo_cobro_en?: string | null;
+  com_variante?: {
+    var_nombre?: string;
+    var_sku?: string;
+    var_detalle_variante?: Record<string, unknown>;
+  } | null;
+  der_incluidos?: number | null;
+  der_consumidos?: number;
+  cas_id?: string;
+  cas_codigo_expediente?: string;
+  cas_titulo?: string;
+  cas_estado?: string;
+  cas_etapa_procesal?: string;
+  cas_tipo_tramite?: string;
+  cas_abierto_en?: string;
+  cas_abogado_id?: string;
+  cit_id?: string;
+  cit_inicio_en?: string;
+  cit_fin_en?: string;
+  cit_modalidad?: string;
+  cit_estado?: string;
+  cit_motivo?: string;
+  reg_id?: string;
+  reg_operacion?: string;
+  reg_usuario_id?: string | null;
+  reg_creado_en?: string;
+  reg_datos_nuevos?: {
+    cliente_id?: string;
+    tipo_evento?: string;
+    detalle?: string;
+    timestamp?: string;
+    usuario_email?: string;
+    [key: string]: unknown;
+  };
+  psp_id?: string;
+  psp_secuencial?: number;
+  psp_negocio?: string;
+  psp_nombre?: string;
+  psp_whatsapp?: string;
+  psp_correo?: string | null;
+  psp_ciudad?: string | null;
+  psp_servicio_sku?: string | null;
+  psp_interes?: string | null;
+  psp_canal?: string;
+  psp_autoriza_contacto?: boolean;
+  psp_autorizado_en?: string;
+  psp_estado?: "NUEVO" | "CONTACTADO" | "CONVERTIDO" | "DESCARTADO";
+  psp_atendido_por?: string | null;
+  psp_atendido_en?: string | null;
+  psp_detalle_prospecto?: {
+    token_nombre?: string;
+    notas?: Array<{ texto: string; en: string; por?: string }>;
+    [key: string]: unknown;
+  };
+  psp_creado_en?: string;
+  psp_actualizado_en?: string;
+  total_sincronizados?: number;
+  caso_id?: string;
+  codigo_expediente?: string;
+  titulo_caso?: string;
+  rol_en_caso?: string;
+  abogado_nombre?: string;
+  estado_caso?: string;
+  [key: string]: unknown;
+}
+
+interface QueryCrmFlex {
+  select: (cols?: string, opts?: { count?: string; head?: boolean }) => QueryCrmFlex;
+  insert: (vals: unknown) => QueryCrmFlex;
+  update: (vals: unknown) => QueryCrmFlex;
+  upsert: (vals: unknown, opts?: { onConflict?: string }) => QueryCrmFlex;
+  eq: (col: string, val: unknown) => QueryCrmFlex;
+  is: (col: string, val: unknown) => QueryCrmFlex;
+  or: (filtro: string) => QueryCrmFlex;
+  contains: (col: string, val: unknown) => QueryCrmFlex;
+  order: (col: string, opts?: { ascending?: boolean }) => QueryCrmFlex;
+  limit: (n: number) => QueryCrmFlex;
+  single: () => Promise<{ data: FilaClientePerfilCRM | null; error: { message: string } | null }>;
+  maybeSingle: () => Promise<{ data: FilaClientePerfilCRM | null; error: { message: string } | null }>;
+  then: PromiseLike<{ data: FilaClientePerfilCRM[] | null; count?: number | null; error: { message: string } | null }>["then"];
+}
+
+interface ClienteCrmFlex {
+  schema: (esquema: string) => { from: (tabla: string) => QueryCrmFlex };
+  from: (tabla: string) => QueryCrmFlex;
+  rpc: (
+    fn: string,
+    args?: Record<string, unknown>
+  ) => Promise<{ data: FilaClientePerfilCRM[] | null; error: { message: string } | null }>;
+  auth: {
+    getUser: () => Promise<{
+      data: { user: { id: string; email?: string } | null };
+      error: { message: string } | null;
+    }>;
+    admin?: {
+      createUser?: (opts: Record<string, unknown>) => Promise<{ data?: { user?: { id: string } } }>;
+      listUsers: () => Promise<{ data?: { users?: Array<{ id: string; email?: string }> } }>;
+    };
+  };
+}
+
+function usarClienteCrm(cliente: unknown): ClienteCrmFlex {
+  return cliente as ClienteCrmFlex;
+}
 
 /**
  * Verifica si la identificación o correo ya existen en el sistema
@@ -868,7 +1057,7 @@ export interface ResultadoVerificacionCliente {
   tipo?: "cliente_perfil" | "usuario_existente" | "ambos";
   esUsuarioWeb: boolean;
   tienePlanActivo: boolean;
-  clienteCRM?: any;
+  clienteCRM?: FilaClientePerfilCRM | null;
   usuarioWeb?: {
     id: string;
     nombreCompleto: string;
@@ -893,12 +1082,12 @@ export async function verificarDuplicado(
   correo?: string,
   negocio = "tranqi"
 ): Promise<ResultadoVerificacionCliente> {
-  const supabase: any = await crearClienteServidor();
+  const supabase = usarClienteCrm(await crearClienteServidor());
   const idLimpio = identificacion ? identificacion.trim() : "";
   const correoLimpio = correo ? correo.trim().toLowerCase() : "";
 
-  let clienteCRM: any = null;
-  let usuarioWeb: any = null;
+  let clienteCRM: FilaClientePerfilCRM | null = null;
+  let usuarioWeb: ResultadoVerificacionCliente["usuarioWeb"] = undefined;
   let planActivo: InformacionPlanClienteVerif | undefined = undefined;
   const advertencias: Array<{ tipo: "info" | "alerta" | "exito"; titulo: string; descripcion: string }> = [];
 
@@ -937,7 +1126,7 @@ export async function verificarDuplicado(
   if (targetUserId) {
     const { data: uData } = await supabase
       .schema("comun_seguridad")
-      .from("seg_usuario" as any)
+      .from("seg_usuario")
       .select("usu_id, usu_nombre_completo, usu_nombres, usu_apellidos, usu_correo, usu_creado_en")
       .eq("usu_id", targetUserId)
       .is("usu_eliminado_en", null)
@@ -945,16 +1134,16 @@ export async function verificarDuplicado(
 
     if (uData) {
       usuarioWeb = {
-        id: uData.usu_id,
+        id: uData.usu_id || "",
         nombreCompleto: uData.usu_nombre_completo || `${uData.usu_nombres || ""} ${uData.usu_apellidos || ""}`.trim(),
-        correo: uData.usu_correo,
+        correo: uData.usu_correo || "",
         creadoEn: uData.usu_creado_en,
       };
     }
   } else if (correoLimpio.length > 4) {
     const { data: uDataCorreo } = await supabase
       .schema("comun_seguridad")
-      .from("seg_usuario" as any)
+      .from("seg_usuario")
       .select("usu_id, usu_nombre_completo, usu_nombres, usu_apellidos, usu_correo, usu_creado_en")
       .eq("usu_correo", correoLimpio)
       .is("usu_eliminado_en", null)
@@ -962,9 +1151,9 @@ export async function verificarDuplicado(
 
     if (uDataCorreo) {
       usuarioWeb = {
-        id: uDataCorreo.usu_id,
+        id: uDataCorreo.usu_id || "",
         nombreCompleto: uDataCorreo.usu_nombre_completo || `${uDataCorreo.usu_nombres || ""} ${uDataCorreo.usu_apellidos || ""}`.trim(),
-        correo: uDataCorreo.usu_correo,
+        correo: uDataCorreo.usu_correo || "",
         creadoEn: uDataCorreo.usu_creado_en,
       };
     }
@@ -985,9 +1174,9 @@ export async function verificarDuplicado(
         .order("sub_creado_en", { ascending: false })
         .limit(1);
 
-      if (subs && subs.length > 0) {
+      if (subs && subs.length > 0 && subs[0]) {
         const sub = subs[0];
-        const variante = (sub as any).com_variante || {};
+        const variante = sub.com_variante || {};
         const monto = Number(sub.sub_monto_periodo || 0);
         const sku = variante.var_sku || "PLAN";
         const nombre = variante.var_nombre || "Plan Vigente";
@@ -1006,19 +1195,19 @@ export async function verificarDuplicado(
             .maybeSingle();
 
           if (der) {
-            consultasDisponibles = der.der_incluidos !== null ? Math.max(0, der.der_incluidos - der.der_consumidos) : null;
+            consultasDisponibles = der.der_incluidos !== null && der.der_incluidos !== undefined ? Math.max(0, der.der_incluidos - (der.der_consumidos || 0)) : null;
           }
         } catch {
           // Ignorar fallback
         }
 
         planActivo = {
-          suscripcionId: sub.sub_id,
+          suscripcionId: sub.sub_id || "",
           planNombre: nombre,
           planSku: sku,
-          frecuencia: sub.sub_frecuencia,
+          frecuencia: sub.sub_frecuencia || "MENSUAL",
           monto,
-          proximoCobro: sub.sub_proximo_cobro_en,
+          proximoCobro: sub.sub_proximo_cobro_en || null,
           consultasDisponibles,
           esGratuito: monto === 0 || sku.includes("FREE"),
         };
@@ -1076,7 +1265,7 @@ export async function verificarDuplicado(
  * Ejecuta el Conflict of Interest Check contra litigios activos
  */
 export async function verificarConflictoIntereses(identificacion: string, nombres?: string) {
-  const supabase: any = await crearClienteServidor();
+  const supabase = usarClienteCrm(await crearClienteServidor());
 
   const { data, error } = await supabase.rpc("trq_fn_verificar_conflicto_intereses", {
     p_identificacion: identificacion.trim(),
@@ -1217,8 +1406,8 @@ export interface ResultadoCreacionCliente {
  */
 export async function crearClienteManual(datos: DatosCreacionCliente): Promise<ResultadoCreacionCliente> {
   try {
-    const supabase: any = await crearClienteServidor();
-    const adminClient: any = crearClienteAdmin() || supabase;
+    const supabase = usarClienteCrm(await crearClienteServidor());
+    const adminClient = usarClienteCrm(crearClienteAdmin() || supabase);
 
     const { data: authUser } = await supabase.auth.getUser();
     if (!authUser?.user) {
@@ -1316,14 +1505,14 @@ export async function crearClienteManual(datos: DatosCreacionCliente): Promise<R
         } else {
           const { data: listData } = await adminClient.auth.admin.listUsers();
           const matched = listData?.users?.find(
-            (u: any) => u.email?.toLowerCase() === emailFinal.toLowerCase()
+            (u) => u.email?.toLowerCase() === emailFinal.toLowerCase()
           );
           if (matched?.id) {
             usuarioId = matched.id;
           }
         }
-      } catch (errAuth: any) {
-        console.warn("Aviso al crear en auth.admin:", errAuth?.message);
+      } catch (errAuth) {
+        console.warn("Aviso al crear en auth.admin:", errAuth instanceof Error ? errAuth.message : errAuth);
       }
     }
 
@@ -1348,8 +1537,8 @@ export async function crearClienteManual(datos: DatosCreacionCliente): Promise<R
           },
           { onConflict: "usu_id" }
         );
-    } catch (errSeg: any) {
-      console.warn("Aviso al actualizar seg_usuario:", errSeg?.message);
+    } catch (errSeg) {
+      console.warn("Aviso al actualizar seg_usuario:", errSeg instanceof Error ? errSeg.message : errSeg);
     }
 
     // Asegurar membresía de CLIENTE
@@ -1366,12 +1555,12 @@ export async function crearClienteManual(datos: DatosCreacionCliente): Promise<R
           },
           { onConflict: "mem_usuario_id,mem_negocio" }
         );
-    } catch (errMem: any) {
-      console.warn("Aviso al asegurar membresía:", errMem?.message);
+    } catch (errMem) {
+      console.warn("Aviso al asegurar membresía:", errMem instanceof Error ? errMem.message : errMem);
     }
 
     // 3. Insertar o actualizar perfil en tranqui_legal.trq_cliente_perfil
-    const payloadPerfil: any = {
+    const payloadPerfil: Record<string, unknown> = {
       clp_usuario_id: usuarioId,
       clp_tipo_personeria: datos.tipoPersoneria,
       clp_tipo_identificacion: datos.tipoIdentificacion,
@@ -1417,7 +1606,7 @@ export async function crearClienteManual(datos: DatosCreacionCliente): Promise<R
     };
 
     // Buscar si ya existe perfil por identificación o por usuario
-    let perfilExistente: { clp_id: string; clp_usuario_id?: string; clp_activo?: boolean } | null = null;
+    let perfilExistente: { clp_id: string; clp_usuario_id?: string | null; clp_activo?: boolean } | null = null;
 
     try {
       const { data: pPorId } = await adminClient
@@ -1520,8 +1709,8 @@ export async function crearClienteManual(datos: DatosCreacionCliente): Promise<R
               doc_meses_anticipacion_alerta: 3,
             });
           cantidadDocsGuardados++;
-        } catch (errDoc: any) {
-          console.warn("Aviso al guardar documento en billetera:", errDoc?.message);
+        } catch (errDoc) {
+          console.warn("Aviso al guardar documento en billetera:", errDoc instanceof Error ? errDoc.message : errDoc);
         }
       }
     }
@@ -1558,8 +1747,8 @@ export async function crearClienteManual(datos: DatosCreacionCliente): Promise<R
             </div>
           `,
         });
-      } catch (errCorreo: any) {
-        console.warn("Aviso al enviar correo de invitación:", errCorreo?.message);
+      } catch (errCorreo) {
+        console.warn("Aviso al enviar correo de invitación:", errCorreo instanceof Error ? errCorreo.message : errCorreo);
       }
     }
 
@@ -1589,9 +1778,9 @@ export async function crearClienteManual(datos: DatosCreacionCliente): Promise<R
       identificacion: idLimpio,
       documentosGuardados: cantidadDocsGuardados,
     };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error en crearClienteManual:", error);
-    return { ok: false, error: error?.message || "Error al procesar el registro del cliente." };
+    return { ok: false, error: error instanceof Error && error.message ? error.message : "Error al procesar el registro del cliente." };
   }
 }
 
@@ -1603,8 +1792,8 @@ export async function actualizarClienteCRMAction(
   datos: DatosCreacionCliente
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    const supabase: any = await crearClienteServidor();
-    const adminClient: any = crearClienteAdmin() || supabase;
+    const supabase = usarClienteCrm(await crearClienteServidor());
+    const adminClient = usarClienteCrm(crearClienteAdmin() || supabase);
     const { data: authUser, error: authError } = await supabase.auth.getUser();
 
     if (authError || !authUser?.user) {
@@ -1648,7 +1837,7 @@ export async function actualizarClienteCRMAction(
       modificado_por: authUser.user.email,
     };
 
-    const payloadUpd: any = {
+    const payloadUpd: Record<string, unknown> = {
       clp_tipo_personeria: datos.tipoPersoneria,
       clp_tipo_identificacion: datos.tipoIdentificacion,
       clp_identificacion: idLimpio,
@@ -1720,8 +1909,8 @@ export async function actualizarClienteCRMAction(
               doc_alertar_caducidad: true,
               doc_meses_anticipacion_alerta: 3,
             });
-        } catch (errDoc: any) {
-          console.warn("Aviso al guardar documento en billetera:", errDoc?.message);
+        } catch (errDoc) {
+          console.warn("Aviso al guardar documento en billetera:", errDoc instanceof Error ? errDoc.message : errDoc);
         }
       }
     }
@@ -1736,9 +1925,9 @@ export async function actualizarClienteCRMAction(
     revalidatePath("/panel/clientes");
     revalidatePath("/panel/usuarios");
     return { ok: true };
-  } catch (err: any) {
+  } catch (err) {
     console.error("Error en actualizarClienteCRMAction:", err);
-    return { ok: false, error: err?.message || "Error al actualizar los datos del cliente." };
+    return { ok: false, error: err instanceof Error && err.message ? err.message : "Error al actualizar los datos del cliente." };
   }
 }
 
@@ -1750,8 +1939,8 @@ export async function alternarEstadoClienteCRMAction(
   activo: boolean
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    const supabase: any = await crearClienteServidor();
-    const adminClient: any = crearClienteAdmin() || supabase;
+    const supabase = usarClienteCrm(await crearClienteServidor());
+    const adminClient = usarClienteCrm(crearClienteAdmin() || supabase);
     const { data: authUser, error: authError } = await supabase.auth.getUser();
 
     if (authError || !authUser?.user) {
@@ -1800,9 +1989,9 @@ export async function alternarEstadoClienteCRMAction(
 
     revalidatePath("/panel/clientes");
     return { ok: true };
-  } catch (err: any) {
+  } catch (err) {
     console.error("Error en alternarEstadoClienteCRMAction:", err);
-    return { ok: false, error: err?.message || "Error al alternar estado del cliente." };
+    return { ok: false, error: err instanceof Error && err.message ? err.message : "Error al alternar estado del cliente." };
   }
 }
 
@@ -1812,8 +2001,8 @@ export async function alternarEstadoClienteCRMAction(
  */
 export async function eliminarClienteCRMAction(clienteId: string): Promise<{ ok: boolean; error?: string }> {
   try {
-    const supabase: any = await crearClienteServidor();
-    const adminClient: any = crearClienteAdmin() || supabase;
+    const supabase = usarClienteCrm(await crearClienteServidor());
+    const adminClient = usarClienteCrm(crearClienteAdmin() || supabase);
     const { data: authUser, error: authError } = await supabase.auth.getUser();
 
     if (authError || !authUser?.user) {
@@ -1911,9 +2100,9 @@ export async function eliminarClienteCRMAction(clienteId: string): Promise<{ ok:
 
     revalidatePath("/panel/clientes");
     return { ok: true };
-  } catch (err: any) {
+  } catch (err) {
     console.error("Error en eliminarClienteCRMAction:", err);
-    return { ok: false, error: err?.message || "Error al procesar la eliminación del cliente." };
+    return { ok: false, error: err instanceof Error && err.message ? err.message : "Error al procesar la eliminación del cliente." };
   }
 }
 
@@ -1926,8 +2115,8 @@ export async function obtenerClientesCRM(filtros?: {
   tipoPersoneria?: "todas" | "natural" | "juridica";
   limite?: number;
 }) {
-  const supabase: any = await crearClienteServidor();
-  const adminClient: any = crearClienteAdmin() || supabase;
+  const supabase = usarClienteCrm(await crearClienteServidor());
+  const adminClient = usarClienteCrm(crearClienteAdmin() || supabase);
 
   let query = adminClient
     .schema("tranqui_legal")
@@ -2019,7 +2208,7 @@ export async function obtenerClientesCRM(filtros?: {
  */
 export async function sincronizarUsuariosAProspectosCRMAction(): Promise<{ ok: boolean; count: number; mensaje?: string }> {
   try {
-    const supabaseAdmin: any = await crearClienteAdmin();
+    const supabaseAdmin = usarClienteCrm(await crearClienteAdmin());
 
     // 1. Ejecutar función RPC si ya fue aplicada en la base de datos
     try {
@@ -2047,12 +2236,12 @@ export async function sincronizarUsuariosAProspectosCRMAction(): Promise<{ ok: b
       .from("trq_cliente_perfil")
       .select("clp_usuario_id, clp_identificacion");
 
-    const idsExistentes = new Set((existentes || []).map((e: any) => e.clp_usuario_id));
-    const identExistentes = new Set((existentes || []).map((e: any) => e.clp_identificacion));
+    const idsExistentes = new Set((existentes || []).map((e) => e.clp_usuario_id));
+    const identExistentes = new Set((existentes || []).map((e) => e.clp_identificacion));
 
-    const aInsertar: any[] = [];
+    const aInsertar: Array<Record<string, unknown>> = [];
     for (const u of usuarios) {
-      if (idsExistentes.has(u.usu_id)) continue;
+      if (!u.usu_id || idsExistentes.has(u.usu_id)) continue;
 
       let ident = (u.usu_cedula || "").trim();
       if (!ident || identExistentes.has(ident)) {
@@ -2060,14 +2249,15 @@ export async function sincronizarUsuariosAProspectosCRMAction(): Promise<{ ok: b
       }
       identExistentes.add(ident);
 
+      const correoUsu = u.usu_correo || "";
       aInsertar.push({
         clp_usuario_id: u.usu_id,
         clp_tipo_personeria: "natural",
         clp_tipo_identificacion: "cedula",
         clp_identificacion: ident,
-        clp_nombres: u.usu_nombres || u.usu_correo.split("@")[0],
+        clp_nombres: u.usu_nombres || correoUsu.split("@")[0],
         clp_apellidos: u.usu_apellidos || "",
-        clp_correo: u.usu_correo,
+        clp_correo: correoUsu,
         clp_celular: u.usu_whatsapp || null,
         clp_origen_registro: "web",
         clp_activo: true,
@@ -2093,9 +2283,9 @@ export async function sincronizarUsuariosAProspectosCRMAction(): Promise<{ ok: b
 
     revalidatePath("/panel/clientes");
     return { ok: true, count: aInsertar.length };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error en sincronizarUsuariosAProspectosCRMAction:", error);
-    return { ok: false, count: 0, mensaje: error?.message || "Error inesperado" };
+    return { ok: false, count: 0, mensaje: error instanceof Error && error.message ? error.message : "Error inesperado" };
   }
 }
 
@@ -2103,8 +2293,8 @@ export async function sincronizarUsuariosAProspectosCRMAction(): Promise<{ ok: b
  * Obtiene la información 360° del cliente (Expedientes, Billetera, Citas, Tracking)
  */
 export async function obtenerDetalleCliente360(clienteId: string) {
-  const supabase: any = await crearClienteServidor();
-  const adminClient: any = crearClienteAdmin() || supabase;
+  const supabase = usarClienteCrm(await crearClienteServidor());
+  const adminClient = usarClienteCrm(crearClienteAdmin() || supabase);
 
   const { data: perfil, error: errPerfil } = await adminClient
     .schema("tranqui_legal")
@@ -2118,7 +2308,7 @@ export async function obtenerDetalleCliente360(clienteId: string) {
     throw new Error("Cliente no encontrado.");
   }
 
-  const usuarioId = (perfil as any).clp_usuario_id;
+  const usuarioId = perfil.clp_usuario_id;
 
   // 1. Obtener Expedientes del cliente
   const { data: expedientes } = await adminClient
@@ -2165,8 +2355,8 @@ export async function registrarEventoAuditoriaCliente(
   detalle: string
 ) {
   try {
-    const supabase: any = await crearClienteServidor();
-    const adminClient: any = crearClienteAdmin() || supabase;
+    const supabase = usarClienteCrm(await crearClienteServidor());
+    const adminClient = usarClienteCrm(crearClienteAdmin() || supabase);
     const { data: authUser } = await supabase.auth.getUser();
 
     await adminClient
@@ -2194,8 +2384,8 @@ export async function registrarEventoAuditoriaCliente(
  * Obtiene el historial cronológico de auditoría y accesos al cliente
  */
 export async function obtenerHistorialAuditoriaCliente(clienteId: string) {
-  const supabase: any = await crearClienteServidor();
-  const adminClient: any = crearClienteAdmin() || supabase;
+  const supabase = usarClienteCrm(await crearClienteServidor());
+  const adminClient = usarClienteCrm(crearClienteAdmin() || supabase);
 
   const { data, error } = await adminClient
     .schema("comun_auditoria")
@@ -2253,7 +2443,7 @@ export async function obtenerProspectosChatAction(estado?: string): Promise<{
   error?: string;
 }> {
   try {
-    const supabase: any = await crearClienteServidor();
+    const supabase = usarClienteCrm(await crearClienteServidor());
     let query = supabase
       .schema("tranqui_legal")
       .from("trq_prospecto")
@@ -2273,7 +2463,7 @@ export async function obtenerProspectosChatAction(estado?: string): Promise<{
       return { ok: false, error: error.message };
     }
 
-    return { ok: true, datos: data || [] };
+    return { ok: true, datos: (data || []) as unknown as ProspectoChat[] };
   } catch (err) {
     console.error("Error en obtenerProspectosChatAction:", err);
     return { ok: false, error: err instanceof Error ? err.message : "Error al consultar los prospectos de chat." };
@@ -2289,7 +2479,7 @@ export async function actualizarEstadoProspectoAction(
   nota?: string
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    const supabase: any = await crearClienteServidor();
+    const supabase = usarClienteCrm(await crearClienteServidor());
     const { data: authData, error: authErr } = await supabase.auth.getUser();
 
     if (authErr || !authData?.user) {

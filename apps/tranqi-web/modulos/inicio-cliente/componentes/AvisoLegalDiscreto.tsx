@@ -76,7 +76,7 @@ export function AvisoLegalDiscreto({ negocio = "tranqi", audiencia = "TODOS" }: 
   const aviso = avisos[indice % Math.max(avisos.length, 1)];
   if (!aviso) return null;
 
-  const detalle = (aviso.inf_detalle || {}) as Record<string, any>;
+  const detalle = (aviso.inf_detalle || {}) as { categoria?: string; cta_url?: string; cta_texto?: string };
   const etiqueta = ETIQUETA_TIPO[aviso.inf_tipo] || detalle.categoria || "Aviso";
   const enlace = typeof detalle.cta_url === "string" && detalle.cta_url.trim() ? detalle.cta_url.trim() : null;
   const externo = enlace ? /^https?:\/\//i.test(enlace) : false;

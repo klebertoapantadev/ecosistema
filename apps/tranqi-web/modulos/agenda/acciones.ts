@@ -19,11 +19,9 @@ import {
 } from "./clasificador-aria";
 import {
   actualizarCacheConfigAgendaNegocio,
-  listarAbogadosAsignables,
   listarAgendaDelAbogado,
   listarCitasCalendarioOperador,
   listarCitasDelCliente,
-  listarCitasEnContingencia,
   listarMateriasAgendables,
   listarServiciosAgendables,
   obtenerCobertura,

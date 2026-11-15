@@ -17,7 +17,6 @@ import {
   UserCheck,
   Download,
   Send,
-  Move,
   RotateCcw,
   Sparkles,
   FileText,
@@ -54,9 +53,9 @@ export function ModalFirmaDigitalPdf({
   abierto,
   onCerrar,
   urlPdfOriginal,
-  solicitudId,
+  solicitudId: _solicitudId,
   rolFirmante,
-  nombreSujetoEsperado,
+  nombreSujetoEsperado: _nombreSujetoEsperado,
   onFirmaCompletada,
 }: ModalFirmaDigitalPdfProps) {
   const [pasoActual, setPasoActual] = useState<PasoModal>("1_VALIDAR_CERTIFICADO");

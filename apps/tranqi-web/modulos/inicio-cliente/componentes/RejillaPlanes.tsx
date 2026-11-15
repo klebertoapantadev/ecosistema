@@ -86,7 +86,7 @@ const PERIODO: Record<string, string> = { MENSUAL: " al mes", ANUAL: " al año",
 
 // Los derechos de la variante (lo que consume com_fn_consumir_derecho) dicen
 // qué incluye cada modalidad; si no hay, se usan los beneficios del producto.
-function textoDerecho(d: any): string | null {
+function textoDerecho(d: { incluidos?: number | null; periodo?: string; concepto?: string; porcentaje?: number; nombre?: string } | null | undefined): string | null {
   const n: number | null = d?.incluidos ?? null;
   const per = PERIODO[String(d?.periodo || "").toUpperCase()] ?? "";
   switch (d?.concepto) {

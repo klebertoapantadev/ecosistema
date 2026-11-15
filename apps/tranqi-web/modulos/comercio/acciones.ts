@@ -3,6 +3,14 @@
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import { revalidatePath } from "next/cache";
 
+export interface DetalleCategoriaCatalogo {
+  imagen_url?: string | null;
+  video_url?: string | null;
+  album_fotos_url?: string | null;
+  icono?: string | null;
+  [key: string]: unknown;
+}
+
 export interface CategoriaCatalogo {
   ctg_id: string;
   ctg_negocio: string;
@@ -12,7 +20,38 @@ export interface CategoriaCatalogo {
   ctg_tipo: string;
   ctg_orden: number;
   ctg_activo: boolean;
-  ctg_detalle_categoria?: any;
+  ctg_detalle_categoria?: DetalleCategoriaCatalogo;
+}
+
+export interface DetalleProductoCatalogo {
+  ambito?: string;
+  icono?: string;
+  codigo_gobernanza?: string;
+  imagen_url?: string | null;
+  foto_posicion?: string;
+  foto_ajuste?: "cover" | "contain";
+  foto_zoom?: number;
+  album_fotos_url?: string;
+  video_url?: string | null;
+  galeria_urls?: string[];
+  tiempo_entrega?: string | null;
+  descripcion_corta?: string;
+  etiquetas?: string[];
+  beneficios?: string[];
+  requisitos?: string[];
+  modalidad_pago?: string;
+  tarifa_iva_predeterminada?: number;
+  codigo_impuesto_sri?: string;
+  logistica?: {
+    delivery_incluido?: boolean;
+    modalidad_transporte?: string;
+    etiqueta_transporte?: string;
+    cobertura_texto?: string;
+    [key: string]: unknown;
+  };
+  creado_desde_panel?: boolean;
+  editado_en?: string;
+  [key: string]: unknown;
 }
 
 export interface ProductoCatalogo {
@@ -24,13 +63,50 @@ export interface ProductoCatalogo {
   pro_tipo: "FISICO" | "SERVICIO" | "SUSCRIPCION" | "DIGITAL";
   pro_destacado: boolean;
   pro_categoria_principal_id: string | null;
-  pro_detalle_producto: any;
+  pro_activo?: boolean;
+  pro_detalle_producto: DetalleProductoCatalogo;
   categoria?: {
     ctg_id: string;
     ctg_nombre: string;
     ctg_slug: string;
   } | null;
   variantes: VarianteCatalogo[];
+}
+
+export interface DerechoVarianteDefinicion {
+  concepto: string;
+  nombre?: string;
+  incluidos?: number | null;
+  porcentaje?: number;
+}
+
+export interface DetalleVarianteCatalogo {
+  duracion_min?: number;
+  concepto_derecho?: string;
+  materia_codigo?: string;
+  modalidades?: string[];
+  cupo_consultas_mes?: number;
+  miembros_cubiertos?: number;
+  descuento_tramites_pct?: number;
+  derechos?: DerechoVarianteDefinicion[];
+  tramo?: string;
+  tarifa_por_colaborador?: number;
+  pvp_nominal?: number;
+  tallos?: number;
+  tamano?: string;
+  portada_url?: string | null;
+  foto_posicion?: string;
+  foto_ajuste?: "cover" | "contain";
+  foto_zoom?: number;
+  video_url?: string;
+  tiempo_entrega?: string | null;
+  album_url?: string;
+  beneficios_modo?: "heredar" | "anexar" | "reemplazar";
+  beneficios_custom?: string[] | string;
+  modalidad_pago?: string;
+  unidades?: number;
+  tipo_honorario?: string;
+  [key: string]: unknown;
 }
 
 export interface VarianteCatalogo {
@@ -45,7 +121,7 @@ export interface VarianteCatalogo {
   var_tipo_oferta: string;
   var_frecuencia_recurrencia?: string | null;
   var_activo: boolean;
-  var_detalle_variante: any;
+  var_detalle_variante: DetalleVarianteCatalogo;
   // Calculados
   monto_iva: number;
   precio_total: number;
@@ -64,7 +140,7 @@ export interface ItemDisponibilidadOperativa {
   color_hex?: string;
   color_nombre?: string;
   imagen_url?: string;
-  detalle?: any;
+  detalle?: Record<string, unknown>;
 }
 
 export interface ConfiguracionPasarela {
@@ -78,7 +154,7 @@ export interface ConfiguracionPasarela {
   modoSimulado: boolean;
   token?: string;
   comisionPorcentaje: number;
-  detalle?: any;
+  detalle?: Record<string, unknown>;
 }
 
 export interface TransaccionPagoCRM {
@@ -102,7 +178,13 @@ export interface TransaccionPagoCRM {
   pag_tarjeta_ultimos_digitos: string | null;
   pag_confirmado_en: string | null;
   pag_creado_en: string;
-  pag_detalle_transaccion: any;
+  pag_detalle_transaccion: {
+    modo_simulado?: boolean;
+    simulacion?: boolean;
+    nombre_servicio?: string;
+    variante_id?: string;
+    [key: string]: unknown;
+  };
 }
 
 // ==============================================================================
@@ -1274,24 +1356,184 @@ function generarSlug(texto: string): string {
 // 2. ACCIONES DE CONSULTA
 // ==============================================================================
 
+interface FilaComercioFlex {
+  ctg_id: string;
+  ctg_negocio: string;
+  ctg_nombre: string;
+  ctg_slug: string;
+  ctg_descripcion: string | null;
+  ctg_tipo: string;
+  ctg_orden: number;
+  ctg_activo: boolean;
+  ctg_detalle_categoria?: DetalleCategoriaCatalogo;
+  pro_id: string;
+  pro_negocio: string;
+  pro_nombre: string;
+  pro_slug: string;
+  pro_descripcion: string | null;
+  pro_tipo: "FISICO" | "SERVICIO" | "SUSCRIPCION" | "DIGITAL";
+  pro_destacado: boolean;
+  pro_categoria_principal_id: string | null;
+  pro_activo?: boolean;
+  pro_detalle_producto?: DetalleProductoCatalogo;
+  var_id: string;
+  var_producto_id: string;
+  var_sku: string;
+  var_nombre: string;
+  var_precio: number;
+  var_precio_comparacion?: number | null;
+  var_codigo_impuesto_sri: string;
+  var_tarifa_iva_porcentaje: number;
+  var_tipo_oferta: string;
+  var_frecuencia_recurrencia?: string | null;
+  var_activo: boolean;
+  var_detalle_variante?: DetalleVarianteCatalogo;
+  psc_id?: string;
+  psc_negocio: string;
+  psc_pasarela: string;
+  psc_nombre_visible: string;
+  psc_ambiente?: "PRUEBAS" | "PRODUCCION";
+  psc_activo?: boolean;
+  psc_comision_porcentaje?: number;
+  psc_credenciales_publicas?: {
+    storeId?: string;
+    modoSimulado?: boolean;
+    [key: string]: unknown;
+  };
+  psc_credenciales_privadas?: {
+    modoSimulado?: boolean;
+    token?: string;
+    [key: string]: unknown;
+  };
+  psc_detalle_pasarela?: Record<string, unknown>;
+  usu_nombres?: string | null;
+  usu_apellidos?: string | null;
+  usu_correo?: string | null;
+  usu_whatsapp?: string | null;
+  usu_detalle_usuario?: {
+    datos_facturacion?: {
+      razon_social?: string;
+      tipo_identificacion?: string;
+      identificacion?: string;
+      telefono?: string;
+      direccion?: string;
+      correo_facturacion?: string;
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  };
+  pag_id: string;
+  pag_secuencial: number;
+  pag_negocio: string;
+  pag_pasarela: string;
+  pag_identificador_cliente: string;
+  pag_transaccion_pasarela_id: string | null;
+  pag_autorizacion_codigo: string | null;
+  pag_estado: "PENDIENTE" | "APROBADO" | "RECHAZADO" | "CANCELADO" | "REVERSADO";
+  pag_monto_total: number;
+  pag_monto_sin_iva: number;
+  pag_monto_con_iva: number;
+  pag_monto_iva: number;
+  pag_moneda: string;
+  pag_titular_email: string | null;
+  pag_titular_identificacion: string | null;
+  pag_tarjeta_tipo: string | null;
+  pag_tarjeta_marca: string | null;
+  pag_tarjeta_ultimos_digitos: string | null;
+  pag_confirmado_en: string | null;
+  pag_creado_en: string;
+  pag_detalle_transaccion: Record<string, unknown>;
+  inv_id: string;
+  inv_negocio: string;
+  inv_insumo_id: string;
+  inv_stock_actual?: number;
+  com_insumo?: {
+    ins_codigo?: string;
+    ins_nombre?: string;
+    ins_unidad_medida?: ItemDisponibilidadOperativa["unidad"];
+    ins_detalle_insumo?: {
+      categoria_tipo?: ItemDisponibilidadOperativa["categoria_tipo"];
+      color_hex?: string;
+      color_nombre?: string;
+      [key: string]: unknown;
+    };
+  } | null;
+  sub_id: string;
+  sub_frecuencia?: string;
+  sub_estado: string;
+  com_variante?: {
+    var_nombre?: string;
+    var_sku?: string;
+    var_detalle_variante?: DetalleVarianteCatalogo;
+  } | null;
+  der_concepto: string;
+  der_consumidos?: number;
+}
+
+interface ResultadoRpcComercio {
+  ok?: boolean;
+  categoria?: CategoriaCatalogo;
+  [key: string]: unknown;
+}
+
+interface QueryComercioFlex {
+  select: (cols?: string) => QueryComercioFlex;
+  insert: (vals: unknown) => QueryComercioFlex;
+  update: (vals: unknown) => QueryComercioFlex;
+  upsert: (vals: unknown, opts?: { onConflict?: string }) => QueryComercioFlex;
+  eq: (col: string, val: unknown) => QueryComercioFlex;
+  order: (col: string, opts?: { ascending?: boolean }) => QueryComercioFlex;
+  limit: (n: number) => QueryComercioFlex;
+  single: () => Promise<{ data: FilaComercioFlex | null; error: { message: string } | null }>;
+  maybeSingle: () => Promise<{ data: FilaComercioFlex | null; error: { message: string } | null }>;
+  then: PromiseLike<{ data: FilaComercioFlex[] | null; error: { message: string } | null }>["then"];
+}
+
+interface ClienteComercioFlex {
+  schema: (esquema: string) => {
+    from: (tabla: string) => QueryComercioFlex;
+    rpc: (
+      fn: string,
+      args?: Record<string, unknown>
+    ) => Promise<{ data: ResultadoRpcComercio | null; error: { message: string } | null }>;
+  };
+  from: (tabla: string) => QueryComercioFlex;
+  rpc: (
+    fn: string,
+    args?: Record<string, unknown>
+  ) => Promise<{ data: ResultadoRpcComercio | null; error: { message: string } | null }>;
+  auth: {
+    getUser: () => Promise<{
+      data: { user: { id: string; email?: string } | null };
+      error?: { message: string } | null;
+    }>;
+  };
+}
+
+function usarClienteComercio(cliente: unknown): ClienteComercioFlex | null {
+  return (cliente as ClienteComercioFlex | null) || null;
+}
+
 /**
  * Obtiene todas las categorías disponibles para el negocio
  */
 export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<CategoriaCatalogo[]> {
-  const admin: any = crearClienteAdmin();
-  const supabase: any = await crearClienteServidor();
+  const admin = usarClienteComercio(crearClienteAdmin());
+  const supabase = usarClienteComercio(await crearClienteServidor());
   const clienteActivo = admin || supabase;
 
-  let categoriasDb: any[] = [];
+  let categoriasDb: CategoriaCatalogo[] = [];
   if (clienteActivo) {
     try {
-      let { data: catCom, error: errCom } = await clienteActivo
+      const resCatCom = await clienteActivo
         .schema("comun_comercio")
         .from("com_categoria")
         .select("*")
         .eq("ctg_negocio", negocio)
         .eq("ctg_activo", true)
         .order("ctg_orden", { ascending: true });
+      let catCom = resCatCom.data;
+      const errCom = resCatCom.error;
 
       if (errCom || !catCom || catCom.length === 0) {
         const { data: catPub } = await clienteActivo
@@ -1330,23 +1572,25 @@ export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<Categ
  * Obtiene el catálogo de productos y variantes activas agrupadas con cálculo impositivo ecuatoriano (IVA 15%)
  */
 export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promise<ProductoCatalogo[]> {
-  const admin: any = crearClienteAdmin();
-  const supabase: any = await crearClienteServidor();
+  const admin = usarClienteComercio(crearClienteAdmin());
+  const supabase = usarClienteComercio(await crearClienteServidor());
   const clienteActivo = admin || supabase;
 
-  let prodsDb: any[] = [];
-  let varsDb: any[] = [];
-  let catsDb: any[] = [];
+  let prodsDb: FilaComercioFlex[] = [];
+  let varsDb: FilaComercioFlex[] = [];
+  let catsDb: FilaComercioFlex[] = [];
 
   if (clienteActivo) {
     try {
       // 1. Categorías para resolución exacta
-      let { data: cData, error: errC } = await clienteActivo
+      const resC = await clienteActivo
         .schema("comun_comercio")
         .from("com_categoria")
         .select("ctg_id, ctg_nombre, ctg_slug, ctg_negocio, ctg_activo")
         .eq("ctg_negocio", negocio)
         .eq("ctg_activo", true);
+      let cData = resC.data;
+      const errC = resC.error;
       
       if (errC || !cData || cData.length === 0) {
         const { data: cDataPub } = await clienteActivo
@@ -1359,13 +1603,15 @@ export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promis
       catsDb = cData || [];
 
       // 2. Productos
-      let { data: pCom, error: errPCom } = await clienteActivo
+      const resPCom = await clienteActivo
         .schema("comun_comercio")
         .from("com_producto")
         .select("*")
         .eq("pro_negocio", negocio)
         .eq("pro_activo", true)
         .order("pro_destacado", { ascending: false });
+      let pCom = resPCom.data;
+      const errPCom = resPCom.error;
 
       if (errPCom || !pCom || pCom.length === 0) {
         const { data: pPub } = await clienteActivo
@@ -1379,13 +1625,15 @@ export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promis
 
       if (pCom && pCom.length > 0) {
         prodsDb = pCom;
-        let { data: vCom, error: errVCom } = await clienteActivo
+        const resVCom = await clienteActivo
           .schema("comun_comercio")
           .from("com_variante")
           .select("*")
           .eq("var_negocio", negocio)
           .eq("var_activo", true)
           .order("var_precio", { ascending: true });
+        let vCom = resVCom.data;
+        const errVCom = resVCom.error;
 
         if (errVCom || !vCom || vCom.length === 0) {
           const { data: vPub } = await clienteActivo
@@ -1406,12 +1654,12 @@ export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promis
   let listaFinal: ProductoCatalogo[] = [];
 
   if (prodsDb.length > 0) {
-    const mapaCategorias = (catsDb || []).reduce((acc: any, c: any) => {
+    const mapaCategorias = (catsDb || []).reduce<Record<string, { ctg_id: string; ctg_nombre: string; ctg_slug: string }>>((acc, c) => {
       acc[c.ctg_id] = { ctg_id: c.ctg_id, ctg_nombre: c.ctg_nombre, ctg_slug: c.ctg_slug };
       return acc;
     }, {});
 
-    const mapaVariantes = (varsDb || []).reduce((acc: Record<string, VarianteCatalogo[]>, v: any) => {
+    const mapaVariantes = (varsDb || []).reduce((acc: Record<string, VarianteCatalogo[]>, v) => {
       const base = Number(v.var_precio) || 0;
       const tarifaIva = Number(v.var_tarifa_iva_porcentaje) || 15;
       const iva = Number(((base * tarifaIva) / 100).toFixed(4));
@@ -1442,7 +1690,7 @@ export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promis
       return acc;
     }, {});
 
-    listaFinal = prodsDb.map((p: any) => ({
+    listaFinal = prodsDb.map((p) => ({
       pro_id: p.pro_id,
       pro_negocio: p.pro_negocio,
       pro_nombre: p.pro_nombre,
@@ -1452,7 +1700,7 @@ export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promis
       pro_destacado: p.pro_destacado,
       pro_categoria_principal_id: p.pro_categoria_principal_id,
       pro_detalle_producto: p.pro_detalle_producto || {},
-      categoria: mapaCategorias[p.pro_categoria_principal_id] || null,
+      categoria: (p.pro_categoria_principal_id ? mapaCategorias[p.pro_categoria_principal_id] : null) || null,
       variantes: mapaVariantes[p.pro_id] || [],
     }));
   } else {
@@ -1472,7 +1720,7 @@ export async function obtenerCatalogoProductosAction(negocio = "tranqi"): Promis
   });
 
   // Filtrar productos inactivos o eliminados
-  return listaFinal.filter((p: any) => p.pro_activo !== false);
+  return listaFinal.filter((p) => p.pro_activo !== false);
 }
 
 // ==============================================================================
@@ -1523,8 +1771,8 @@ export async function crearCategoriaAction(datos: {
     };
 
     // 1. Intentar persistir en Supabase vía RPC atómico (Security Definer)
-    const admin: any = crearClienteAdmin();
-    const supabase: any = await crearClienteServidor();
+    const admin = usarClienteComercio(crearClienteAdmin());
+    const supabase = usarClienteComercio(await crearClienteServidor());
     const clienteActivo = admin || supabase;
 
     let categoriaGuardada: CategoriaCatalogo = nuevaCat;
@@ -1611,8 +1859,8 @@ export async function crearCategoriaAction(datos: {
 
     revalidatePath("/panel/catalogo-productos");
     return { ok: true, categoria: categoriaGuardada };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Error al crear la categoría." };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error && err.message ? err.message : "Error al crear la categoría." };
   }
 }
 
@@ -1670,7 +1918,7 @@ export async function resolverUrlImagenDirectaAction(
 
       // Prioridad 1: Coincidencias de fotos de álbum público /pw/
       const matchesPw = [
-        ...html.matchAll(/https:\/\/lh3\.googleusercontent\.com\/pw\/[a-zA-Z0-9_\-]+/g),
+        ...html.matchAll(/https:\/\/lh3\.googleusercontent\.com\/pw\/[a-zA-Z0-9_-]+/g),
       ].map((m) => m[0]);
 
       if (matchesPw.length > 0 && matchesPw[0]) {
@@ -1685,7 +1933,7 @@ export async function resolverUrlImagenDirectaAction(
 
       // Prioridad 2: Coincidencias de tokens largos de googleusercontent (excluyendo fotos de perfil /a/)
       const matchesGen = [
-        ...html.matchAll(/https:\/\/[a-z0-9]+\.googleusercontent\.com\/[a-zA-Z0-9_\-]+/g),
+        ...html.matchAll(/https:\/\/[a-z0-9]+\.googleusercontent\.com\/[a-zA-Z0-9_-]+/g),
       ]
         .map((m) => m[0])
         .filter(
@@ -1710,10 +1958,10 @@ export async function resolverUrlImagenDirectaAction(
         error:
           "No se pudo extraer la imagen directa del visor de Google Fotos. Copia la dirección directa con clic derecho sobre la foto ('Copiar dirección de la imagen').",
       };
-    } catch (err: any) {
+    } catch (err) {
       return {
         ok: false,
-        error: `Error al procesar el enlace de Google Fotos: ${err.message || err}`,
+        error: `Error al procesar el enlace de Google Fotos: ${err instanceof Error ? err.message : String(err)}`,
       };
     }
   }
@@ -1831,8 +2079,8 @@ export async function crearProductoAction(datos: {
     };
 
     // 1. Intentar persistir en Supabase
-    const admin: any = crearClienteAdmin();
-    const supabase: any = await crearClienteServidor();
+    const admin = usarClienteComercio(crearClienteAdmin());
+    const supabase = usarClienteComercio(await crearClienteServidor());
     const clienteActivo = admin || supabase;
 
     if (clienteActivo) {
@@ -1902,8 +2150,8 @@ export async function crearProductoAction(datos: {
 
     revalidatePath("/panel/catalogo-productos");
     return { ok: true, producto: nuevoProducto };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Error al registrar el producto." };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error && err.message ? err.message : "Error al registrar el producto." };
   }
 }
 
@@ -1949,7 +2197,7 @@ export async function editarProductoAction(datos: {
     var_precio_comparacion?: number | null;
     var_tarifa_iva_porcentaje?: number;
     var_codigo_impuesto_sri?: string;
-    var_detalle_variante?: any;
+    var_detalle_variante?: DetalleVarianteCatalogo;
     var_activo?: boolean;
   }>;
   negocio?: string;
@@ -2092,7 +2340,7 @@ export async function editarProductoAction(datos: {
         icono: datos.icono || prodActual.pro_detalle_producto?.icono || "Sparkles",
         imagen_url: resolvedImagenUrl,
         foto_posicion: datos.fotoPosicion !== undefined ? datos.fotoPosicion : (prodActual.pro_detalle_producto?.foto_posicion || "center center"),
-        foto_ajuste: datos.fotoAjuste !== undefined ? datos.fotoAjuste : (prodActual.pro_detalle_producto?.foto_ajuste || "cover"),
+        foto_ajuste: datos.fotoAjuste !== undefined ? (datos.fotoAjuste as DetalleProductoCatalogo["foto_ajuste"]) : (prodActual.pro_detalle_producto?.foto_ajuste || "cover"),
         foto_zoom: datos.fotoZoom !== undefined ? datos.fotoZoom : (prodActual.pro_detalle_producto?.foto_zoom || 100),
         album_fotos_url: datos.albumFotosUrl !== undefined ? datos.albumFotosUrl.trim() : prodActual.pro_detalle_producto?.album_fotos_url,
         video_url: datos.videoUrl !== undefined ? datos.videoUrl.trim() : prodActual.pro_detalle_producto?.video_url,
@@ -2117,8 +2365,8 @@ export async function editarProductoAction(datos: {
     };
 
     // 1. Intentar actualizar en Supabase
-    const admin: any = crearClienteAdmin();
-    const supabase: any = await crearClienteServidor();
+    const admin = usarClienteComercio(crearClienteAdmin());
+    const supabase = usarClienteComercio(await crearClienteServidor());
     const clienteActivo = admin || supabase;
 
     if (clienteActivo) {
@@ -2230,7 +2478,7 @@ export async function editarProductoAction(datos: {
           if (dbProdId) {
             for (const v of variantesActualizadas) {
               const varDetalle = v.var_detalle_variante || {};
-              const varPayload: any = {
+              const varPayload: Record<string, unknown> = {
                 var_producto_id: dbProdId,
                 var_negocio: negocio,
                 var_sku: v.var_sku,
@@ -2287,8 +2535,8 @@ export async function editarProductoAction(datos: {
 
     revalidatePath("/panel/catalogo-productos");
     return { ok: true, producto: prodEditado };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Error al actualizar el producto." };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error && err.message ? err.message : "Error al actualizar el producto." };
   }
 }
 
@@ -2300,8 +2548,8 @@ export async function eliminarProductoAction(
   negocio = "tranqi"
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    const admin: any = crearClienteAdmin();
-    const supabase: any = await crearClienteServidor();
+    const admin = usarClienteComercio(crearClienteAdmin());
+    const supabase = usarClienteComercio(await crearClienteServidor());
     const clienteActivo = admin || supabase;
 
     if (clienteActivo) {
@@ -2326,14 +2574,14 @@ export async function eliminarProductoAction(
     // Almacén en memoria: marcar como inactivo (tombstone)
     const actuales = storeCustomProductos.get(negocio) || [];
     const filtrados = actuales.filter((p) => p.pro_id !== pro_id);
-    const tombstone: any = { pro_id, pro_activo: false };
+    const tombstone = { pro_id, pro_activo: false } as ProductoCatalogo;
     filtrados.push(tombstone);
     storeCustomProductos.set(negocio, filtrados);
 
     revalidatePath("/panel/catalogo-productos");
     return { ok: true };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Error al eliminar el producto." };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error && err.message ? err.message : "Error al eliminar el producto." };
   }
 }
 
@@ -2344,8 +2592,8 @@ export async function restaurarCatalogoEjemploAction(
   negocio = "tranqi"
 ): Promise<{ ok: boolean; mensaje?: string; error?: string; cantidad?: number }> {
   try {
-    const admin: any = crearClienteAdmin();
-    const supabase: any = await crearClienteServidor();
+    const admin = usarClienteComercio(crearClienteAdmin());
+    const supabase = usarClienteComercio(await crearClienteServidor());
     const clienteActivo = admin || supabase;
 
     const categorias = negocio === "tinkay" ? CATEGORIAS_SEMILLA_TINKAY : (negocio === "tranqi" ? CATEGORIAS_SEMILLA_TRANQI : []);
@@ -2430,8 +2678,8 @@ export async function restaurarCatalogoEjemploAction(
       mensaje: `Catálogo de ${negocio.toUpperCase()} restaurado con éxito (${productos.length} productos y ${categorias.length} categorías).`,
       cantidad: productos.length,
     };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Error al restaurar catálogo inicial." };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error && err.message ? err.message : "Error al restaurar catálogo inicial." };
   }
 }
 
@@ -2446,30 +2694,32 @@ export async function obtenerConfiguracionPasarelaAction(
   negocio = "tranqi",
   pasarela = "PAYPHONE"
 ): Promise<ConfiguracionPasarela> {
-  const supabase: any = await crearClienteServidor();
+  const supabase = usarClienteComercio(await crearClienteServidor());
 
-  let data: any = null;
-  try {
-    const { data: dCom } = await supabase
-      .schema("comun_comercio")
-      .from("com_pasarela_configuracion")
-      .select("*")
-      .eq("psc_negocio", negocio)
-      .eq("psc_pasarela", pasarela)
-      .maybeSingle();
-    data = dCom;
-
-    if (!data) {
-      const { data: dPub } = await supabase
+  let data: FilaComercioFlex | null = null;
+  if (supabase) {
+    try {
+      const { data: dCom } = await supabase
+        .schema("comun_comercio")
         .from("com_pasarela_configuracion")
         .select("*")
         .eq("psc_negocio", negocio)
         .eq("psc_pasarela", pasarela)
         .maybeSingle();
-      data = dPub;
+      data = dCom;
+
+      if (!data) {
+        const { data: dPub } = await supabase
+          .from("com_pasarela_configuracion")
+          .select("*")
+          .eq("psc_negocio", negocio)
+          .eq("psc_pasarela", pasarela)
+          .maybeSingle();
+        data = dPub;
+      }
+    } catch {
+      // Modo simulado por defecto
     }
-  } catch {
-    // Modo simulado por defecto
   }
 
   if (!data) {
@@ -2515,8 +2765,8 @@ export async function guardarConfiguracionPasarelaAction(datos: {
   activo: boolean;
 }): Promise<{ ok: boolean; error?: string }> {
   const negocio = datos.negocio || "tranqi";
-  const admin: any = crearClienteAdmin();
-  const supabase: any = await crearClienteServidor();
+  const admin = usarClienteComercio(crearClienteAdmin());
+  const supabase = usarClienteComercio(await crearClienteServidor());
   const clienteActivo = admin || supabase;
 
   const pub = {
@@ -2526,7 +2776,7 @@ export async function guardarConfiguracionPasarelaAction(datos: {
     pais: "EC",
   };
 
-  const privPayload: Record<string, any> = {
+  const privPayload: Record<string, unknown> = {
     modoSimulado: datos.modoSimulado,
   };
   if (datos.token && datos.token.trim().length > 0) {
@@ -2566,7 +2816,7 @@ export async function guardarConfiguracionPasarelaAction(datos: {
           },
           { onConflict: "psc_negocio, psc_pasarela" }
         );
-      } catch (err: any) {
+      } catch (err) {
         console.error("Error al guardar pasarela:", err);
       }
     }
@@ -2590,7 +2840,7 @@ export async function obtenerDatosFacturacionAction(): Promise<{
   correoFacturacion: string;
   error?: string;
 }> {
-  const supabase: any = await crearClienteServidor();
+  const supabase = usarClienteComercio(await crearClienteServidor()) as ClienteComercioFlex;
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return {
@@ -2627,7 +2877,7 @@ export async function obtenerDatosFacturacionAction(): Promise<{
     };
   }
 
-  const detalle = (usuario.usu_detalle_usuario as Record<string, any>) || {};
+  const detalle = usuario.usu_detalle_usuario || {};
   const datosFact = detalle.datos_facturacion;
 
   if (datosFact && (datosFact.razon_social || datosFact.identificacion)) {
@@ -2685,8 +2935,8 @@ export async function prepararPagoPayphoneAction(datos: {
   esSimulado?: boolean;
 }) {
   const negocio = datos.negocio || "tranqi";
-  const supabase: any = await crearClienteServidor();
-  const admin: any = crearClienteAdmin();
+  const supabase = usarClienteComercio(await crearClienteServidor());
+  const admin = usarClienteComercio(crearClienteAdmin());
   const clienteDb = admin || supabase;
 
   const cfg = await obtenerConfiguracionPasarelaAction(negocio, "PAYPHONE");
@@ -2699,8 +2949,8 @@ export async function prepararPagoPayphoneAction(datos: {
   // Obtener usuario autenticado si existe
   let clienteId = null;
   try {
-    const { data: authUser } = await supabase.auth.getUser();
-    clienteId = authUser?.user?.id || null;
+    const authRes = supabase ? await supabase.auth.getUser() : null;
+    clienteId = authRes?.data?.user?.id || null;
   } catch {
     // Sin sesión
   }
@@ -2731,7 +2981,7 @@ export async function prepararPagoPayphoneAction(datos: {
         .eq("usu_id", clienteId)
         .maybeSingle();
 
-      const detUsr = (usrRow?.usu_detalle_usuario as Record<string, any>) || {};
+      const detUsr = (usrRow?.usu_detalle_usuario as Record<string, unknown>) || {};
       await clienteDb
         .schema("comun_seguridad")
         .from("seg_usuario")
@@ -2917,10 +3167,10 @@ export async function prepararPagoPayphoneAction(datos: {
       payWithPayPhone: payphoneData.payWithPayPhone,
       payWithCard: payphoneData.payWithCard,
     };
-  } catch (error: any) {
+  } catch (error) {
     return {
       ok: false,
-      error: `Error de conexión con Payphone: ${error?.message || "Error de red"}`,
+      error: `Error de conexión con Payphone: ${error instanceof Error && error.message ? error.message : "Error de red"}`,
     };
   }
 }
@@ -2943,8 +3193,8 @@ export async function confirmarPagoPayphoneAction(datos: {
   montoTotal?: number;
 }) {
   const negocio = datos.negocio || "tranqi";
-  const admin: any = crearClienteAdmin();
-  const supabase: any = await crearClienteServidor();
+  const admin = usarClienteComercio(crearClienteAdmin());
+  const supabase = usarClienteComercio(await crearClienteServidor());
   const clienteDb = admin || supabase;
 
   const cfg = await obtenerConfiguracionPasarelaAction(negocio, "PAYPHONE");
@@ -2969,7 +3219,7 @@ export async function confirmarPagoPayphoneAction(datos: {
           .maybeSingle();
 
         pagoIdResuelto = pagoExistente?.pag_id ?? null;
-        const detPrevio = (pagoExistente?.pag_detalle_transaccion as Record<string, any>) || {};
+        const detPrevio = (pagoExistente?.pag_detalle_transaccion as Record<string, unknown>) || {};
 
         await clienteDb
           .schema("comun_comercio")
@@ -3093,10 +3343,10 @@ export async function confirmarPagoPayphoneAction(datos: {
       tarjeta: `${confirmData.cardBrand || "Tarjeta"} •••• ${confirmData.lastDigits || ""}`,
       fecha: new Date().toISOString(),
     };
-  } catch (error: any) {
+  } catch (error) {
     return {
       ok: false,
-      error: `Error al confirmar transacción: ${error?.message || "Error desconocido"}`,
+      error: `Error al confirmar transacción: ${error instanceof Error && error.message ? error.message : "Error desconocido"}`,
     };
   }
 }
@@ -3105,7 +3355,8 @@ export async function confirmarPagoPayphoneAction(datos: {
  * Obtiene el historial de transacciones de pago
  */
 export async function obtenerHistorialTransaccionesAction(negocio = "tranqi"): Promise<TransaccionPagoCRM[]> {
-  const supabase: any = await crearClienteServidor();
+  const supabase = usarClienteComercio(await crearClienteServidor());
+  if (!supabase) return [];
 
   try {
     const { data: dCom } = await supabase
@@ -3390,11 +3641,11 @@ const storeDisponibilidad = new Map<string, ItemDisponibilidadOperativa[]>();
 export async function obtenerDisponibilidadOperativaAction(
   negocio = "tranqi"
 ): Promise<ItemDisponibilidadOperativa[]> {
-  const admin: any = crearClienteAdmin();
-  const supabase: any = await crearClienteServidor();
+  const admin = usarClienteComercio(crearClienteAdmin());
+  const supabase = usarClienteComercio(await crearClienteServidor());
   const clienteActivo = admin || supabase;
 
-  let dbItems: any[] = [];
+  let dbItems: ItemDisponibilidadOperativa[] = [];
   if (clienteActivo) {
     try {
       const { data } = await clienteActivo
@@ -3404,7 +3655,7 @@ export async function obtenerDisponibilidadOperativaAction(
         .eq("inv_negocio", negocio);
 
       if (data && data.length > 0) {
-        dbItems = data.map((d: any) => ({
+        dbItems = data.map((d) => ({
           id: d.inv_id,
           negocio: d.inv_negocio,
           codigo: d.com_insumo?.ins_codigo || d.inv_insumo_id,
@@ -3453,8 +3704,8 @@ export async function actualizarDisponibilidadOperativaAction(
   try {
     storeDisponibilidad.set(negocio, itemsActualizados);
 
-    const admin: any = crearClienteAdmin();
-    const supabase: any = await crearClienteServidor();
+    const admin = usarClienteComercio(crearClienteAdmin());
+    const supabase = usarClienteComercio(await crearClienteServidor());
     const clienteActivo = admin || supabase;
 
     if (clienteActivo) {
@@ -3482,8 +3733,8 @@ export async function actualizarDisponibilidadOperativaAction(
     revalidatePath("/panel");
     revalidatePath("/panel/catalogo-productos");
     return { ok: true, items: itemsActualizados };
-  } catch (err: any) {
-    return { ok: false, error: err.message || "Error al actualizar disponibilidad." };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error && err.message ? err.message : "Error al actualizar disponibilidad." };
   }
 }
 
@@ -3517,8 +3768,8 @@ const storeCoberturaCliente = new Map<string, EstadoCoberturaCliente>();
 export async function obtenerCoberturaUsuarioAction(
   negocio = "tranqi"
 ): Promise<EstadoCoberturaCliente> {
-  const admin: any = crearClienteAdmin();
-  const supabase: any = await crearClienteServidor();
+  const admin = usarClienteComercio(crearClienteAdmin());
+  const supabase = usarClienteComercio(await crearClienteServidor());
   const clienteActivo = admin || supabase;
 
   // 1. Intentar consultar en Supabase
@@ -3538,10 +3789,10 @@ export async function obtenerCoberturaUsuarioAction(
           .order("sub_creado_en", { ascending: false })
           .limit(1);
 
-        if (subs && subs.length > 0) {
+        if (subs && subs.length > 0 && subs[0]) {
           const sub = subs[0];
           const varDetalle = sub.com_variante?.var_detalle_variante || {};
-          const derechosDef: any[] = varDetalle.derechos || [];
+          const derechosDef: DerechoVarianteDefinicion[] = varDetalle.derechos || [];
 
           const primerDiaMes = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split("T")[0];
           const { data: consumos } = await clienteActivo
@@ -3552,11 +3803,11 @@ export async function obtenerCoberturaUsuarioAction(
             .eq("der_periodo", primerDiaMes);
 
           const mapaConsumos = new Map<string, number>();
-          consumos?.forEach((c: any) => {
+          consumos?.forEach((c) => {
             mapaConsumos.set(c.der_concepto, c.der_consumidos || 0);
           });
 
-          const derechos: DerechoCobertura[] = derechosDef.map((d: any) => {
+          const derechos: DerechoCobertura[] = derechosDef.map((d) => {
             const consumidos = mapaConsumos.get(d.concepto) || 0;
             const restantes = d.incluidos !== null && d.incluidos !== undefined
               ? Math.max(0, d.incluidos - consumidos)
@@ -3673,8 +3924,8 @@ export async function consumirDerechoUsuarioAction(datos: {
   storeCoberturaCliente.set(negocio, { ...cobertura });
 
   // Intentar persistir en Supabase RPC
-  const admin: any = crearClienteAdmin();
-  const supabase: any = await crearClienteServidor();
+  const admin = usarClienteComercio(crearClienteAdmin());
+  const supabase = usarClienteComercio(await crearClienteServidor());
   const clienteActivo = admin || supabase;
   if (clienteActivo && cobertura.suscripcionId && !cobertura.suscripcionId.startsWith("sub-demo")) {
     try {
@@ -3703,9 +3954,9 @@ export async function activarSuscripcionTrasPagoAction(datos: {
   clienteNombre: string;
 }) {
   const prods = await obtenerCatalogoProductosAction(datos.negocio);
-  let varianteEncontrada: any = null;
+  let varianteEncontrada: VarianteCatalogo | null = null;
   for (const p of prods) {
-    const v = p.variantes?.find((varItem: any) => varItem.var_id === datos.varianteId);
+    const v = p.variantes?.find((varItem) => varItem.var_id === datos.varianteId);
     if (v) {
       varianteEncontrada = v;
       break;
@@ -3713,14 +3964,14 @@ export async function activarSuscripcionTrasPagoAction(datos: {
   }
 
   const varDetalle = varianteEncontrada?.var_detalle_variante || {};
-  const derechosDef = varDetalle.derechos || [
+  const derechosDef: DerechoVarianteDefinicion[] = varDetalle.derechos || [
     { concepto: "CONSULTA_TELEMATICA", nombre: "Citas Telemáticas Especializadas", incluidos: 4 },
     { concepto: "REVISION_CONTRATO", nombre: "Revisiones y Dictámenes de Contratos", incluidos: 2 },
     { concepto: "CONSULTA_ARIA_IA", nombre: "Consultas Ilimitadas Asistente Tranqi IA 24/7", incluidos: null },
     { concepto: "DESCUENTO_NOTARIAL", nombre: "Descuento en Trámites Notariales", incluidos: null, porcentaje: 35 },
   ];
 
-  const derechos: DerechoCobertura[] = derechosDef.map((d: any) => ({
+  const derechos: DerechoCobertura[] = derechosDef.map((d) => ({
     concepto: d.concepto,
     nombre: d.nombre || d.concepto,
     incluidos: d.incluidos ?? null,

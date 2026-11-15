@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  Users,
   UserPlus,
   Search,
   CheckCircle2,
@@ -29,7 +28,7 @@ import {
 } from "lucide-react";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import { ModalNotificacionPush } from "@eco/notificaciones";
-import { DIAS_SEMANA, huecosPorSemana, type Franja } from "@eco/agenda";
+import { huecosPorSemana, type Franja } from "@eco/agenda";
 import {
   listarRedProfesionalAbogadosAction,
   obtenerCatalogosRedProfesionalAction,
@@ -135,7 +134,6 @@ export function GestionRedProfesionalWidget() {
   const [abogados, setAbogados] = useState<AbogadoRedItem[]>([]);
   const [materiasCat, setMateriasCat] = useState<MateriaItem[]>([]);
   const [provinciasCat, setProvinciasCat] = useState<ProvinciaItem[]>(PROVINCIAS_ECUADOR_INICIALES);
-  const [cargando, setCargando] = useState(true);
   const [mensaje, setMensaje] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
 
   // Modal de Alta / Conversión / Edición de Socio Abogado
@@ -273,23 +271,18 @@ export function GestionRedProfesionalWidget() {
   };
 
   const cargarTodo = async () => {
-    setCargando(true);
-    try {
-      const [redRes, catRes] = await Promise.all([
-        listarRedProfesionalAbogadosAction(),
-        obtenerCatalogosRedProfesionalAction(),
-      ]);
-      if (redRes.ok) setAbogados(redRes.data);
-      if (catRes.ok) {
-        if (catRes.data.materias.length > 0) setMateriasCat(catRes.data.materias);
-        if (catRes.data.provincias.length > 0) {
-          setProvinciasCat(catRes.data.provincias);
-        } else {
-          setProvinciasCat(PROVINCIAS_ECUADOR_INICIALES);
-        }
+    const [redRes, catRes] = await Promise.all([
+      listarRedProfesionalAbogadosAction(),
+      obtenerCatalogosRedProfesionalAction(),
+    ]);
+    if (redRes.ok) setAbogados(redRes.data);
+    if (catRes.ok) {
+      if (catRes.data.materias.length > 0) setMateriasCat(catRes.data.materias);
+      if (catRes.data.provincias.length > 0) {
+        setProvinciasCat(catRes.data.provincias);
+      } else {
+        setProvinciasCat(PROVINCIAS_ECUADOR_INICIALES);
       }
-    } finally {
-      setCargando(false);
     }
   };
 

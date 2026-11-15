@@ -3,15 +3,10 @@
 import React, { useEffect, useState, useTransition } from "react";
 import {
   Calendar,
-  CheckCircle2,
   Clock,
   Download,
-  FileText,
   GitCommit,
   MessageSquarePlus,
-  RefreshCw,
-  UserCheck,
-  XCircle,
 } from "lucide-react";
 import { registrarComentarioTrackingCitaAction } from "../acciones";
 import { construirEnlacesCalendarioCita } from "../calendario-ics";

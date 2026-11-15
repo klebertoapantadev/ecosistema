@@ -10,17 +10,49 @@ import {
   esquemaDecisionSolicitud,
   type DatosSolicitudSocio,
   generarRutaRepositorioComun,
-  sanearNombreArchivo,
   CONCEPTOS_REPOSITORIO,
 } from "./esquema";
 
 type Resultado<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
+type ClienteSupabaseServidor = Awaited<ReturnType<typeof crearClienteServidor>>;
+
+interface EsquemaFlex {
+  from: (tabla: string) => {
+    select: (cols: string) => {
+      eq: (col: string, val: string) => {
+        single: () => Promise<{ data: Record<string, unknown> | null; error: { message: string } | null }>;
+        order: (col: string, opts: { ascending: boolean }) => {
+          limit: (n: number) => {
+            maybeSingle: () => Promise<{ data: Record<string, unknown> | null; error: { message: string } | null }>;
+          };
+        };
+      };
+      order: (col: string, opts: { ascending: boolean }) => {
+        limit: (n: number) => {
+          maybeSingle: () => Promise<{ data: Record<string, unknown> | null; error: { message: string } | null }>;
+        };
+      };
+      limit: (n: number) => {
+        maybeSingle: () => Promise<{ data: Record<string, unknown> | null; error: { message: string } | null }>;
+      };
+    };
+    insert: (vals: unknown) => Promise<{ data: unknown; error: { message: string } | null }>;
+    update: (vals: Record<string, unknown>) => {
+      eq: (col: string, val: string) => Promise<{ data: unknown; error: { message: string } | null }>;
+    };
+    upsert: (vals: Record<string, unknown>, opts?: { onConflict?: string; ignoreDuplicates?: boolean }) => Promise<{ data: unknown; error: { message: string } | null }>;
+  };
+  rpc: (fn: string, args?: Record<string, unknown>) => Promise<{ data: unknown; error: { message: string } | null }>;
+}
+
+function usarEsquema(cliente: ClienteSupabaseServidor, nombre: string): EsquemaFlex {
+  return (cliente as unknown as { schema: (s: string) => EsquemaFlex }).schema(nombre);
+}
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function obtenerDestinatariosStaffTranqi(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  clientSupabase: any,
+  clientSupabase: ClienteSupabaseServidor,
   excluirUsuarioId?: string
 ): Promise<{ id: string; correo: string }[]> {
   const destinatariosAdmin: { id: string; correo: string }[] = [];
@@ -28,12 +60,11 @@ async function obtenerDestinatariosStaffTranqi(
 
   try {
     // 1. Intentar RPC con SECURITY DEFINER
-    const { data: staffRpc, error: errRpc } = await clientSupabase
-      .schema("comun_seguridad")
+    const { data: staffRpc, error: errRpc } = await usarEsquema(clientSupabase, "comun_seguridad")
       .rpc("seg_fn_obtener_staff_negocio", { p_negocio: "TRANQ" });
 
     if (!errRpc && Array.isArray(staffRpc) && staffRpc.length > 0) {
-      for (const st of staffRpc) {
+      for (const st of staffRpc as { usu_id: string; usu_correo: string }[]) {
         const correo = (st.usu_correo || "").toLowerCase().trim();
         if (st.usu_id !== excluirUsuarioId && correo && !correosVistos.has(correo)) {
           correosVistos.add(correo);
@@ -57,7 +88,7 @@ async function obtenerDestinatariosStaffTranqi(
       .in("mem_rol", ["OPERADOR", "ADMINISTRADOR", "SUPERADMIN", "AUXILIAR"])
       .eq("mem_estado", "ACTIVO");
 
-    const idsStaff = new Set<string>((membresias || []).map((m: any) => m.mem_usuario_id));
+    const idsStaff = new Set<string>((membresias || []).map((m: { mem_usuario_id: string }) => m.mem_usuario_id));
 
     const { data: usuarios } = await clientSupabase
       .schema("comun_seguridad")
@@ -68,7 +99,7 @@ async function obtenerDestinatariosStaffTranqi(
       for (const u of usuarios) {
         const correo = (u.usu_correo || "").toLowerCase().trim();
         const esSuperAdmin = Boolean(
-          u.usu_superadmin_plataforma ||
+          (u as Record<string, unknown>).usu_superadmin_plataforma ||
           correo === "kleber.toapanta.ch@gmail.com" ||
           correo === "familiammtg@gmail.com" ||
           correo === "jesus251296@gmail.com"
@@ -131,8 +162,7 @@ async function notificarSolicitudEnviada(
     `;
 
     // 2. Insertar notificación in-app para el usuario postulante
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert([
+    await usarEsquema(adminSupabase, "comun_notificacion").from("not_registro").insert([
       {
         not_usuario_id: u.usu_id,
         not_negocio: "TRANQ",
@@ -146,7 +176,7 @@ async function notificarSolicitudEnviada(
     // 2.b. Notificar multicanal (In-App, Push y Email) a Operadores, Administradores y SuperAdmins
     const urlRevision = `/panel/socios/${solicitudId}`;
     const destinatariosAdmin = await obtenerDestinatariosStaffTranqi(adminSupabase, u.usu_id);
-    let correosAdmins: string[] = destinatariosAdmin.map((adm) => adm.correo);
+    const correosAdmins: string[] = destinatariosAdmin.map((adm) => adm.correo);
 
     if (destinatariosAdmin.length > 0) {
       const tituloAdmin = esActualizacion
@@ -165,7 +195,7 @@ async function notificarSolicitudEnviada(
         </div>
       `;
 
-      const notifsAdmins: any[] = [];
+      const notifsAdmins: Record<string, unknown>[] = [];
       for (const adm of destinatariosAdmin) {
         notifsAdmins.push({
           not_usuario_id: adm.id,
@@ -189,8 +219,7 @@ async function notificarSolicitudEnviada(
 
       if (notifsAdmins.length > 0) {
         try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert(notifsAdmins);
+          await usarEsquema(adminSupabase, "comun_notificacion").from("not_registro").insert(notifsAdmins);
         } catch (errNotInsert) {
           console.warn("Aviso al insertar notificaciones para staff:", errNotInsert);
         }
@@ -198,8 +227,7 @@ async function notificarSolicitudEnviada(
 
       // Invocar RPC SECURITY DEFINER para asegurar la inserción de notificaciones sin bloqueo de RLS
       try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (adminSupabase as any).schema("comun_notificacion").rpc("not_fn_notificar_staff", {
+        await usarEsquema(adminSupabase, "comun_notificacion").rpc("not_fn_notificar_staff", {
           p_negocio: "TRANQ",
           p_titulo: tituloAdmin,
           p_contenido_html: contenidoAdmin,
@@ -295,7 +323,7 @@ export async function enviarSolicitudSocio(
     const d = parseo.data;
 
     const supabase = await crearClienteServidor();
-    const adminSupabase = (crearClienteAdmin() || supabase) as any;
+    const adminSupabase = crearClienteAdmin() || supabase;
 
     // Verificar si ya existe una solicitud para este usuario con adminSupabase
     const { data: existente } = await adminSupabase
@@ -349,15 +377,14 @@ export async function enviarSolicitudSocio(
       }
 
       // Actualizar datos oficiales en seg_usuario (nombres completos extraídos, cédula y whatsapp)
-      const updateUsuario: Record<string, any> = {};
+      const updateUsuario: Record<string, string> = {};
       if (d.cedula) updateUsuario.usu_cedula = d.cedula;
       if (d.nombres) updateUsuario.usu_nombres = d.nombres;
       if (d.apellidos) updateUsuario.usu_apellidos = d.apellidos;
       if (d.telefonoContacto) updateUsuario.usu_whatsapp = d.telefonoContacto;
 
       if (Object.keys(updateUsuario).length > 0) {
-        await adminSupabase
-          .schema("comun_seguridad")
+        await usarEsquema(adminSupabase, "comun_seguridad")
           .from("seg_usuario")
           .update(updateUsuario)
           .eq("usu_id", usuarioId);
@@ -394,15 +421,14 @@ export async function enviarSolicitudSocio(
       solicitudId = solicitud.ssc_id;
 
       // Actualizar datos oficiales en seg_usuario (nombres completos extraídos, cédula y whatsapp)
-      const updateUsuarioNuevo: Record<string, any> = {};
+      const updateUsuarioNuevo: Record<string, string> = {};
       if (d.cedula) updateUsuarioNuevo.usu_cedula = d.cedula;
       if (d.nombres) updateUsuarioNuevo.usu_nombres = d.nombres;
       if (d.apellidos) updateUsuarioNuevo.usu_apellidos = d.apellidos;
       if (d.telefonoContacto) updateUsuarioNuevo.usu_whatsapp = d.telefonoContacto;
 
       if (Object.keys(updateUsuarioNuevo).length > 0) {
-        await adminSupabase
-          .schema("comun_seguridad")
+        await usarEsquema(adminSupabase, "comun_seguridad")
           .from("seg_usuario")
           .update(updateUsuarioNuevo)
           .eq("usu_id", usuarioId);
@@ -464,7 +490,7 @@ export async function enviarSolicitudSocio(
           .from("cat_provincia")
           .select("cat_id");
         if (provsCat && Array.isArray(provsCat)) {
-          provinciaUuids = provsCat.map((p: any) => p.cat_id).filter((id: string) => UUID_REGEX.test(id));
+          provinciaUuids = provsCat.map((p: { cat_id: string }) => p.cat_id).filter((id: string) => UUID_REGEX.test(id));
         }
       } catch (errCat) {
         console.warn("Aviso al consultar catálogo de provincias:", errCat);
@@ -497,9 +523,10 @@ export async function enviarSolicitudSocio(
     } catch { /* Ignorar en caso de Server Component */ }
 
     return { ok: true, data: { solicitudId } };
-  } catch (err: any) {
+  } catch (err) {
     console.error("Error crítico en enviarSolicitudSocio:", err);
-    return { ok: false, error: err?.message || "Ocurrió un error inesperado al procesar tu solicitud. Por favor intenta nuevamente." };
+    const msg = err instanceof Error ? err.message : "";
+    return { ok: false, error: msg || "Ocurrió un error inesperado al procesar tu solicitud. Por favor intenta nuevamente." };
   }
 }
 
@@ -596,8 +623,7 @@ export async function subirDocumentoSocioAction(formData: FormData): Promise<Res
             .eq("usu_id", targetUsuId)
             .maybeSingle();
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const detalleActual = (uExistente?.usu_detalle_usuario as Record<string, any>) || {};
+          const detalleActual = (uExistente?.usu_detalle_usuario as Record<string, unknown>) || {};
           await adminSupabase
             .schema("comun_seguridad")
             .from("seg_usuario")
@@ -713,7 +739,7 @@ export async function enviarPropuestaModificacionContratoAction(datos: {
 
     const destinatariosAdmin = await obtenerDestinatariosStaffTranqi(adminSupabase, user.id);
 
-    const notifsAdmins: any[] = [];
+    const notifsAdmins: Record<string, unknown>[] = [];
     for (const adm of destinatariosAdmin) {
       notifsAdmins.push({
         not_usuario_id: adm.id,
@@ -737,7 +763,7 @@ export async function enviarPropuestaModificacionContratoAction(datos: {
 
     if (notifsAdmins.length > 0) {
       try {
-        await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert(notifsAdmins);
+        await usarEsquema(adminSupabase, "comun_notificacion").from("not_registro").insert(notifsAdmins);
       } catch (errNotInsertProp) {
         console.warn("Aviso al insertar notificaciones de propuesta:", errNotInsertProp);
       }
@@ -745,7 +771,7 @@ export async function enviarPropuestaModificacionContratoAction(datos: {
 
     // Invocar RPC SECURITY DEFINER para asegurar inserción de notificación a staff
     try {
-      await (adminSupabase as any).schema("comun_notificacion").rpc("not_fn_notificar_staff", {
+      await usarEsquema(adminSupabase, "comun_notificacion").rpc("not_fn_notificar_staff", {
         p_negocio: "TRANQ",
         p_titulo: tituloAdmin,
         p_contenido_html: contenidoHTMLAdmin,
@@ -779,7 +805,9 @@ export async function enviarPropuestaModificacionContratoAction(datos: {
             subject: tituloAdmin,
             html: contenidoHTMLAdmin,
           });
-        } catch (errSmtp) {}
+        } catch {
+          // Falla individual de envío SMTP: se ignora para continuar con el resto
+        }
       }
     }
 
@@ -921,7 +949,7 @@ export async function registrarDocumentoSocio(
       // 2. Buscar administradores y operadores
       const destinatariosAdmin = await obtenerDestinatariosStaffTranqi(adminSupabase, user.id);
 
-      const notifsAdmins: any[] = [];
+      const notifsAdmins: Record<string, unknown>[] = [];
       for (const adm of destinatariosAdmin) {
         notifsAdmins.push({
           not_usuario_id: adm.id,
@@ -945,7 +973,7 @@ export async function registrarDocumentoSocio(
 
       if (notifsAdmins.length > 0) {
         try {
-          await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert(notifsAdmins);
+          await usarEsquema(adminSupabase, "comun_notificacion").from("not_registro").insert(notifsAdmins);
         } catch (errNotInsertDoc) {
           console.warn("Aviso al insertar notificaciones de contrato subido:", errNotInsertDoc);
         }
@@ -953,7 +981,7 @@ export async function registrarDocumentoSocio(
 
       // Invocar RPC SECURITY DEFINER para asegurar inserción de notificación a staff
       try {
-        await (adminSupabase as any).schema("comun_notificacion").rpc("not_fn_notificar_staff", {
+        await usarEsquema(adminSupabase, "comun_notificacion").rpc("not_fn_notificar_staff", {
           p_negocio: "TRANQ",
           p_titulo: tituloAdmin,
           p_contenido_html: contenidoHTMLAdmin,
@@ -1126,8 +1154,7 @@ export async function decidirSolicitudSocio(datos: {
         `;
 
         // 1. Guardar notificaciones en base de datos (In-App y Push)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert([
+        await usarEsquema(adminSupabase, "comun_notificacion").from("not_registro").insert([
           {
             not_usuario_id: uApplicant.usu_id,
             not_negocio: "TRANQ",
@@ -1211,7 +1238,7 @@ export async function reenviarNotificacionAceptacionAction(solicitudId: string):
   const { data: { user } } = await supabase.auth.getUser();
 
   // 1. Obtener la solicitud
-  const { data: solData, error: solErr } = await (adminSupabase as any)
+  const { data: solData, error: solErr } = await adminSupabase
     .schema("tranqui_legal")
     .from("trq_solicitud_socio")
     .select("ssc_id, ssc_usuario_id, ssc_estado")
@@ -1280,7 +1307,7 @@ export async function reenviarNotificacionAceptacionAction(solicitudId: string):
 
   // 1. Guardar notificaciones in-app y push
   try {
-    await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert([
+    await usarEsquema(adminSupabase, "comun_notificacion").from("not_registro").insert([
       {
         not_usuario_id: uApplicant.usu_id,
         not_negocio: "TRANQ",
@@ -1371,7 +1398,7 @@ export async function reenviarNotificacionAceptacionAction(solicitudId: string):
   return { ok: true, data: { correo: uApplicant.usu_correo } };
 }
 
-export async function obtenerListaSolicitudesSociosAction(): Promise<Resultado<any[]>> {
+export async function obtenerListaSolicitudesSociosAction(): Promise<Resultado<Record<string, unknown>[]>> {
   const supabase = await crearClienteServidor();
   const adminSupabase = crearClienteAdmin() || supabase;
 
@@ -1405,7 +1432,7 @@ export async function obtenerListaSolicitudesSociosAction(): Promise<Resultado<a
   if (sErr) return { ok: false, error: sErr.message };
   if (!sData || sData.length === 0) return { ok: true, data: [] };
 
-  const sDataSincronizadas = (sData || []).map((s: any) => {
+  const sDataSincronizadas = (sData || []).map((s) => {
     let estadoReal = s.ssc_estado;
     const revs = (s.trq_revision_solicitud || []) as Array<{ rev_decision: string; rev_creado_en: string }>;
     if (revs.length > 0) {
@@ -1487,13 +1514,13 @@ export async function obtenerListaSolicitudesSociosAction(): Promise<Resultado<a
 
 export async function obtenerPlantillaContrato(): Promise<Resultado<{ pct_titulo: string; pct_contenido: string }>> {
   const supabase = await crearClienteServidor();
-  const { data, error } = await (supabase as any)
-    .schema("tranqui_legal")
+  const { data: rawData, error } = await usarEsquema(supabase, "tranqui_legal")
     .from("trq_plantilla_contrato")
     .select("pct_titulo, pct_contenido")
     .order("pct_creado_en", { ascending: false })
     .limit(1)
     .maybeSingle();
+  const data = rawData as { pct_titulo?: string; pct_contenido?: string } | null;
 
   const DEFAULT_TEMPLATE = `# CONTRATO MARCO DE INTERMEDIACIÓN TECNOLÓGICA Y PRESTACIÓN DE SERVICIOS PROFESIONALES INDEPENDIENTES
 
@@ -1547,7 +1574,7 @@ En la ciudad de Quito, Distrito Metropolitano, a la fecha de aceptación formal 
   if (!data || !data.pct_contenido || data.pct_contenido.trim().length < 50) {
     return { ok: true, data: { pct_titulo: "Contrato de Prestación de Servicios de Socio Abogado", pct_contenido: DEFAULT_TEMPLATE } };
   }
-  return { ok: true, data: { pct_titulo: data.pct_titulo, pct_contenido: data.pct_contenido } };
+  return { ok: true, data: { pct_titulo: data.pct_titulo as string, pct_contenido: data.pct_contenido } };
 }
 
 export async function guardarPlantillaContrato(titulo: string, contenido: string): Promise<Resultado> {
@@ -1560,24 +1587,21 @@ export async function guardarPlantillaContrato(titulo: string, contenido: string
   const esAdmin = Array.isArray(perfiles) && (perfiles.includes("ADMINISTRADOR") || perfiles.includes("SUPERADMIN") || perfiles.includes("OPERADOR"));
   if (!esAdmin) return { ok: false, error: "No autorizado para configurar plantillas de contrato" };
 
-  const { data: existente } = await (supabase as any)
-    .schema("tranqui_legal")
+  const { data: existente } = await usarEsquema(supabase, "tranqui_legal")
     .from("trq_plantilla_contrato")
     .select("pct_id")
     .limit(1)
     .maybeSingle();
 
   let error;
-  if (existente?.pct_id) {
-    const res = await (supabase as any)
-      .schema("tranqui_legal")
+  if (existente && typeof existente.pct_id === "string") {
+    const res = await usarEsquema(supabase, "tranqui_legal")
       .from("trq_plantilla_contrato")
       .update({ pct_titulo: titulo, pct_contenido: contenido, pct_actualizado_en: new Date().toISOString() })
       .eq("pct_id", existente.pct_id);
     error = res.error;
   } else {
-    const res = await (supabase as any)
-      .schema("tranqui_legal")
+    const res = await usarEsquema(supabase, "tranqui_legal")
       .from("trq_plantilla_contrato")
       .insert({ pct_titulo: titulo, pct_contenido: contenido });
     error = res.error;
@@ -1598,8 +1622,7 @@ export async function confirmarContratoSocio(
   const { data: { user } } = await supabase.auth.getUser();
 
   // 1. Obtener la solicitud
-  const { data: solData, error: solErr } = await (adminSupabase as any)
-    .schema("tranqui_legal")
+  const { data: solData, error: solErr } = await usarEsquema(adminSupabase, "tranqui_legal")
     .from("trq_solicitud_socio")
     .select("ssc_id, ssc_usuario_id, ssc_estado, ssc_contrato_confirmado_en")
     .eq("ssc_id", solicitudId)
@@ -1609,7 +1632,7 @@ export async function confirmarContratoSocio(
     return { ok: false, error: solErr?.message || "Solicitud no encontrada" };
   }
 
-  const targetUsuId = solData.ssc_usuario_id;
+  const targetUsuId = String(solData.ssc_usuario_id || "");
   const ahoraIso = new Date().toISOString();
 
   // 2. Si se adjunta el contrato bi-firmado de Tranqi, registrarlo como documento oficial
@@ -1632,13 +1655,11 @@ export async function confirmarContratoSocio(
   }
 
   // 3. Intentar ejecutar el RPC de PostgreSQL o actualización directa con adminSupabase
-  const { error: rpcError } = await (supabase as any)
-    .schema("tranqui_legal")
+  const { error: rpcError } = await usarEsquema(supabase, "tranqui_legal")
     .rpc("trq_fn_confirmar_contrato_socio", { p_solicitud_id: solicitudId, p_comentario: comentario || null });
 
   // Actualizar directamente con adminSupabase para asegurar consistencia
-  const { error: updErr } = await (adminSupabase as any)
-    .schema("tranqui_legal")
+  const { error: updErr } = await usarEsquema(adminSupabase, "tranqui_legal")
     .from("trq_solicitud_socio")
     .update({
       ssc_estado: "aceptada",
@@ -1651,7 +1672,7 @@ export async function confirmarContratoSocio(
   if (updErr && rpcError) return { ok: false, error: updErr.message };
 
   // Activar en trq_abogado
-  await (adminSupabase as any)
+  await adminSupabase
     .schema("tranqui_legal")
     .from("trq_abogado")
     .upsert({
@@ -1674,8 +1695,7 @@ export async function confirmarContratoSocio(
 
   // Asignar perfil ABOGADO en comun_seguridad
   try {
-    await (adminSupabase as any)
-      .schema("comun_seguridad")
+    await usarEsquema(adminSupabase, "comun_seguridad")
       .rpc("seg_fn_asignar_perfil", {
         p_target_usuario_id: targetUsuId,
         p_negocio: "TRANQ",
@@ -1684,7 +1704,7 @@ export async function confirmarContratoSocio(
   } catch {
     // Fallback de asignación directa
     try {
-      const { data: mem } = await (adminSupabase as any)
+      const { data: mem } = await adminSupabase
         .schema("comun_seguridad")
         .from("seg_membresia")
         .select("mem_id")
@@ -1693,7 +1713,7 @@ export async function confirmarContratoSocio(
         .maybeSingle();
 
       if (mem?.mem_id) {
-        const { data: perfAbg } = await (adminSupabase as any)
+        const { data: perfAbg } = await adminSupabase
           .schema("comun_seguridad")
           .from("seg_perfil")
           .select("per_id")
@@ -1701,8 +1721,7 @@ export async function confirmarContratoSocio(
           .maybeSingle();
 
         if (perfAbg?.per_id) {
-          await (adminSupabase as any)
-            .schema("comun_seguridad")
+          await usarEsquema(adminSupabase, "comun_seguridad")
             .from("seg_membresia_perfil")
             .upsert({
               mep_membresia_id: mem.mem_id,
@@ -1753,7 +1772,7 @@ export async function confirmarContratoSocio(
         </div>
       `;
 
-      await (adminSupabase as any).schema("comun_notificacion").from("not_registro").insert([
+      await usarEsquema(adminSupabase, "comun_notificacion").from("not_registro").insert([
         {
           not_usuario_id: uApplicant.usu_id,
           not_negocio: "TRANQ",
@@ -1904,7 +1923,7 @@ export async function guardarYEnviarVersionContratoAction(
     }
 
     // 2. Obtener el número de versión anterior
-    const { data: ultVersion } = await (adminSupabase.schema("tranqui_legal") as any)
+    const { data: ultVersion } = await usarEsquema(adminSupabase, "tranqui_legal")
       .from("trq_version_contrato_socio")
       .select("vcs_numero_version")
       .eq("vcs_solicitud_id", solicitudId)
@@ -1912,12 +1931,12 @@ export async function guardarYEnviarVersionContratoAction(
       .limit(1)
       .maybeSingle();
 
-    const nuevaVersion = ultVersion ? ultVersion.vcs_numero_version + 1 : 1;
+    const nuevaVersion = ultVersion ? Number(ultVersion.vcs_numero_version) + 1 : 1;
     const tipoEvento = nuevaVersion === 1 ? "EMISION_CONTRATO" : "MODIFICACION_OPERADOR";
     const rolCreador = perfiles.includes("ADMINISTRADOR") || perfil.usu_superadmin_plataforma ? "ADMINISTRADOR" : "OPERADOR";
 
     // 3. Insertar nueva versión inmutable
-    const { error: insErr } = await (adminSupabase.schema("tranqui_legal") as any)
+    const { error: insErr } = await usarEsquema(adminSupabase, "tranqui_legal")
       .from("trq_version_contrato_socio")
       .insert({
         vcs_solicitud_id: solicitudId,
@@ -1959,7 +1978,7 @@ export async function guardarYEnviarVersionContratoAction(
         : `El equipo de tranqi ha preparado la versión ${nuevaVersion} de tu contrato de sociedad. Ingresa a tu panel para revisarlo y firmarlo digitalmente.`;
 
       // In-App
-      await (adminSupabase.schema("comun_notificaciones") as any).from("not_notificacion").insert([
+      await usarEsquema(adminSupabase, "comun_notificaciones").from("not_notificacion").insert([
         {
           not_usuario_id: usuarioDest.usu_id,
           not_negocio: "TRANQ",
@@ -2035,7 +2054,7 @@ export async function enviarObservacionesContratoAction(
     }
 
     // 2. Obtener la última versión activa
-    const { data: ultVersion } = await (adminSupabase.schema("tranqui_legal") as any)
+    const { data: ultVersion } = await usarEsquema(adminSupabase, "tranqui_legal")
       .from("trq_version_contrato_socio")
       .select("*")
       .eq("vcs_solicitud_id", solicitudId)
@@ -2043,12 +2062,12 @@ export async function enviarObservacionesContratoAction(
       .limit(1)
       .maybeSingle();
 
-    const versionNum = ultVersion ? ultVersion.vcs_numero_version : 1;
-    const titulo = ultVersion ? ultVersion.vcs_titulo : "CONTRATO DE SOCIEDAD";
-    const contenido = ultVersion ? ultVersion.vcs_contenido_md : "";
+    const versionNum = ultVersion ? Number(ultVersion.vcs_numero_version) : 1;
+    const titulo = ultVersion ? String(ultVersion.vcs_titulo || "CONTRATO DE SOCIEDAD") : "CONTRATO DE SOCIEDAD";
+    const contenido = ultVersion ? String(ultVersion.vcs_contenido_md || "") : "";
 
     // 3. Registrar la observación inmutable en la tabla de versiones
-    const { error: insErr } = await (adminSupabase.schema("tranqui_legal") as any)
+    const { error: insErr } = await usarEsquema(adminSupabase, "tranqui_legal")
       .from("trq_version_contrato_socio")
       .insert({
         vcs_solicitud_id: solicitudId,
@@ -2073,7 +2092,7 @@ export async function enviarObservacionesContratoAction(
     const mensajeStaff = `${nombreSocio} ha enviado observaciones sobre el contrato v${versionNum}: "${comentarios.trim()}". Ingresa al detalle de la solicitud para revisar o ajustar las cláusulas.`;
 
     for (const staff of destinatariosStaff) {
-      await (adminSupabase.schema("comun_notificaciones") as any).from("not_notificacion").insert([
+      await usarEsquema(adminSupabase, "comun_notificaciones").from("not_notificacion").insert([
         {
           not_usuario_id: staff.id,
           not_negocio: "TRANQ",
