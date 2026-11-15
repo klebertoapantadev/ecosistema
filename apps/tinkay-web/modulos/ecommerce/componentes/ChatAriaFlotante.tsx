@@ -187,15 +187,11 @@ export function ChatAriaFlotante() {
     try {
       const canal = canalRealtimeRef.current;
       if (!canal) return;
-      if (realtimeConectadoRef.current) {
-        void canal.send({
-          type: 'broadcast',
-          event: 'actividad_chat_web',
-          payload,
-        });
-      } else if (typeof canal.httpSend === 'function') {
-        void canal.httpSend('actividad_chat_web', payload).catch(() => {});
-      }
+      void canal.send({
+        type: 'broadcast',
+        event: 'actividad_chat_web',
+        payload,
+      });
     } catch {
       // Silencioso
     }

@@ -30,12 +30,14 @@ async function emitirBroadcastServidorOmnicanal(
 ): Promise<void> {
   try {
     const canal = supabase.channel(nombreCanalRealtimeOmnicanal(negocio));
-    if (typeof (canal as any).httpSend === "function") {
-      await Promise.race([
-        (canal as any).httpSend(evento, payload),
-        new Promise((resolve) => setTimeout(resolve, 1200)),
-      ]);
-    }
+    await Promise.race([
+      canal.send({
+        type: "broadcast",
+        event: evento,
+        payload,
+      }),
+      new Promise((resolve) => setTimeout(resolve, 1500)),
+    ]);
     void supabase.removeChannel?.(canal);
   } catch {
     // El cliente también emite por WebSocket directo; no interrumpir flujo principal
@@ -407,6 +409,31 @@ export async function registrarInteraccionChatWebAction(entrada: {
   almacen.mensajesPorConversacion[conv.id] = listaMsgs;
 
   await escribirAlmacenRespaldoCfg(neg, almacen);
+
+  const payloadFallbackRt: EventoBroadcastChatWeb = {
+    eventoId: `fb-${hilo}-${entrada.fase}-${ahora}`,
+    claveHilo: hilo,
+    conversacionId: conv.id.startsWith("cnv-") ? null : conv.id,
+    fase: entrada.fase,
+    contenido: texto,
+    autorNombre:
+      entrada.fase === "RESPUESTA_ARIA"
+        ? String(entrada.metadatos?.nombre_agente || "ARIA IA")
+        : entrada.fase === "EVENTO_ORDEN"
+          ? "E-Commerce Web"
+          : conv.remitenteNombre,
+    remitenteNombre: conv.remitenteNombre,
+    remitenteCorreo: conv.remitenteCorreo ?? null,
+    remitenteTelefono: conv.remitenteTelefono ?? null,
+    estadoAtencion: conv.estadoAtencion,
+    creadoEn: ahora,
+  };
+  await emitirBroadcastServidorOmnicanal(
+    supabase,
+    neg,
+    "actividad_chat_web",
+    payloadFallbackRt as unknown as Record<string, unknown>
+  );
 
   return {
     ok: true,

@@ -417,6 +417,24 @@ end $$;
 -- 9. RPCs TRANSACCIONALES EN comun_comercio (EXPUESTO EN POSTGREST)
 -- =============================================================================
 
+-- 9.0 Función canónica de negocio autónoma en comun_comercio (sin depender de comun_facturacion)
+create or replace function comun_comercio.com_fn_omnicanal_negocio_canonico(p_negocio text)
+returns text
+language sql
+immutable
+set search_path = ''
+as $$
+  select case
+    when upper(btrim(coalesce(p_negocio, ''))) in ('TRANQ', 'TRANQI', 'LEGAL') then 'tranqi'
+    when upper(btrim(coalesce(p_negocio, ''))) in ('FFH', 'FASTFIX') then 'fastfix'
+    when upper(btrim(coalesce(p_negocio, ''))) in ('TNK', 'TINKAY') then 'tinkay'
+    when upper(btrim(coalesce(p_negocio, ''))) in ('MRG', 'MARGARITAS') then 'margaritas'
+    else lower(btrim(coalesce(nullif(p_negocio, ''), 'tinkay')))
+  end;
+$$;
+
+grant execute on function comun_comercio.com_fn_omnicanal_negocio_canonico(text) to anon, authenticated, service_role;
+
 -- 9.A Registrar interacción desde el Chat Web (Visitante o Usuario Registrado) + estado HITL
 create or replace function comun_comercio.com_fn_omnicanal_registrar_interaccion_web(
   p_negocio text,
@@ -431,7 +449,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_negocio text := comun_facturacion.fac_fn_negocio_canonico(coalesce(p_negocio, 'tinkay'));
+  v_negocio text := comun_comercio.com_fn_omnicanal_negocio_canonico(coalesce(p_negocio, 'tinkay'));
   v_hilo text := left(btrim(coalesce(p_clave_hilo, '')), 96);
   v_uid uuid := auth.uid();
   v_usu_nombre text;
@@ -692,7 +710,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_negocio text := comun_facturacion.fac_fn_negocio_canonico(coalesce(p_negocio, 'tinkay'));
+  v_negocio text := comun_comercio.com_fn_omnicanal_negocio_canonico(coalesce(p_negocio, 'tinkay'));
   v_cnv record;
   v_asesora_nombre text;
   v_mensajes jsonb;
@@ -766,7 +784,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_negocio text := comun_facturacion.fac_fn_negocio_canonico(coalesce(p_negocio, 'tinkay'));
+  v_negocio text := comun_comercio.com_fn_omnicanal_negocio_canonico(coalesce(p_negocio, 'tinkay'));
   v_conversaciones jsonb;
   v_etiquetas jsonb;
   v_respuestas jsonb;
@@ -1040,7 +1058,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_negocio text := comun_facturacion.fac_fn_negocio_canonico(coalesce(p_negocio, 'tinkay'));
+  v_negocio text := comun_comercio.com_fn_omnicanal_negocio_canonico(coalesce(p_negocio, 'tinkay'));
   v_mensajes jsonb;
 begin
   if not comun_seguridad.seg_fn_es_equipo_ventas_negocio(v_negocio) then
@@ -1092,7 +1110,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_negocio text := comun_facturacion.fac_fn_negocio_canonico(coalesce(p_negocio, 'tinkay'));
+  v_negocio text := comun_comercio.com_fn_omnicanal_negocio_canonico(coalesce(p_negocio, 'tinkay'));
   v_uid uuid := auth.uid();
   v_autor_nombre text;
   v_texto text := btrim(coalesce(p_contenido, ''));
@@ -1209,7 +1227,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_negocio text := comun_facturacion.fac_fn_negocio_canonico(coalesce(p_negocio, 'tinkay'));
+  v_negocio text := comun_comercio.com_fn_omnicanal_negocio_canonico(coalesce(p_negocio, 'tinkay'));
   v_uid uuid := auth.uid();
   v_actor text;
   v_prev record;
@@ -1303,7 +1321,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_negocio text := comun_facturacion.fac_fn_negocio_canonico(coalesce(p_negocio, 'tinkay'));
+  v_negocio text := comun_comercio.com_fn_omnicanal_negocio_canonico(coalesce(p_negocio, 'tinkay'));
   v_nombre text := btrim(coalesce(p_nombre, ''));
   v_slug text := lower(regexp_replace(v_nombre, '[^a-zA-Z0-9]+', '-', 'g'));
   v_etq record;
@@ -1356,7 +1374,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_negocio text := comun_facturacion.fac_fn_negocio_canonico(coalesce(p_negocio, 'tinkay'));
+  v_negocio text := comun_comercio.com_fn_omnicanal_negocio_canonico(coalesce(p_negocio, 'tinkay'));
   v_uid uuid := auth.uid();
   v_existe uuid;
   v_asignada boolean := false;
@@ -1436,7 +1454,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_negocio text := comun_facturacion.fac_fn_negocio_canonico(coalesce(p_negocio, 'tinkay'));
+  v_negocio text := comun_comercio.com_fn_omnicanal_negocio_canonico(coalesce(p_negocio, 'tinkay'));
   v_atajo text := case
     when left(btrim(coalesce(p_atajo, '')), 1) = '/' then lower(btrim(p_atajo))
     else '/' || lower(btrim(coalesce(p_atajo, '')))
@@ -1504,7 +1522,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_negocio text := comun_facturacion.fac_fn_negocio_canonico(coalesce(p_negocio, 'tinkay'));
+  v_negocio text := comun_comercio.com_fn_omnicanal_negocio_canonico(coalesce(p_negocio, 'tinkay'));
 begin
   if not comun_seguridad.seg_fn_es_equipo_ventas_negocio(v_negocio) then
     return jsonb_build_object('ok', false, 'error', 'Sin permisos para eliminar respuestas rápidas.');
@@ -1540,7 +1558,7 @@ security definer
 set search_path = ''
 as $$
 declare
-  v_negocio text := comun_facturacion.fac_fn_negocio_canonico(coalesce(p_negocio, 'tinkay'));
+  v_negocio text := comun_comercio.com_fn_omnicanal_negocio_canonico(coalesce(p_negocio, 'tinkay'));
   v_uid uuid := auth.uid();
   v_cnv record;
   v_clave text;

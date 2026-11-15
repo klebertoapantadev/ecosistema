@@ -282,15 +282,11 @@ export function ConsolaVentasOmnicanal({
     try {
       const canal = canalLiveRef.current;
       if (!canal) return;
-      if (liveConectadoRef.current) {
-        void canal.send({
-          type: "broadcast",
-          event: "intervencion_asesor",
-          payload,
-        });
-      } else if (typeof canal.httpSend === "function") {
-        void canal.httpSend("intervencion_asesor", payload).catch(() => {});
-      }
+      void canal.send({
+        type: "broadcast",
+        event: "intervencion_asesor",
+        payload,
+      });
     } catch {
       // Silencioso
     }
@@ -553,6 +549,9 @@ export function ConsolaVentasOmnicanal({
 
           if (!conversacionActivaIdRef.current) {
             conversacionActivaIdRef.current = idObjetivo;
+            setFiltroIzquierdo("todos");
+            setEstadoAperturaFiltro("abiertos");
+            setSoloNoLeidos(false);
             setConversacionActivaId(idObjetivo);
             setMensajesActivos([nuevoMsg]);
           } else {
