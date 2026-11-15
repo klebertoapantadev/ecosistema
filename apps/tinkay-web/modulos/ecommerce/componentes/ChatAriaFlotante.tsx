@@ -145,6 +145,9 @@ function seleccionarVarianteMencionada(
   return producto.variantes[0];
 }
 
+/** Canal de Supabase Realtime tal como lo devuelve `supabase.channel()`. */
+type CanalRealtimeChat = ReturnType<ReturnType<typeof crearClienteNavegador>['channel']>;
+
 export function ChatAriaFlotante() {
   const {
     agregarItem,
@@ -180,7 +183,7 @@ export function ChatAriaFlotante() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const conversacionId = useRef<string>(crearConversacionId());
   const idsHumanosVistos = useRef<Set<string>>(new Set());
-  const canalRealtimeRef = useRef<any>(null);
+  const canalRealtimeRef = useRef<CanalRealtimeChat | null>(null);
   const realtimeConectadoRef = useRef<boolean>(false);
 
   const emitirEventoRealtimeCliente = (payload: EventoBroadcastChatWeb) => {
@@ -279,7 +282,7 @@ export function ChatAriaFlotante() {
   // Canal WebSocket Supabase Realtime instantáneo (<50ms) bidireccional con /panel/conversaciones
   useEffect(() => {
     let supabase: ReturnType<typeof crearClienteNavegador> | null = null;
-    let canal: any = null;
+    let canal: CanalRealtimeChat | null = null;
     try {
       supabase = crearClienteNavegador();
       canal = supabase
