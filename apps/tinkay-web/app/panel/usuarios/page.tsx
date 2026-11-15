@@ -1,62 +1,124 @@
 import type { Metadata } from "next";
-import { buscarUsuarios, obtenerPerfilesAsignables, FilaUsuario } from "@eco/gestion-usuarios";
-import { obtenerNivelMaximo } from "@eco/identidad";
+import { redirect } from "next/navigation";
+import {
+  buscarUsuarios,
+  obtenerPerfilesAsignables,
+  obtenerInvitacionesEquipoAction,
+  FilaUsuario,
+  FormularioInvitacionEquipo,
+} from "@eco/gestion-usuarios";
+import { obtenerContextoAccesoTinkay } from "../acceso-tinkay";
 
-export const metadata: Metadata = { title: "Gestión de usuarios — tinkay" };
+export const metadata: Metadata = { title: "Usuarios, Invitaciones y Roles — Tinkay Floristería" };
+export const dynamic = "force-dynamic";
 
 const NEGOCIO = "tinkay";
-
 
 export default async function PaginaGestionUsuarios({
   searchParams,
 }: {
   searchParams: Promise<{ q?: string }>;
 }) {
+  const ctx = await obtenerContextoAccesoTinkay();
+  if (!ctx.clavesAutorizadas.has("gestion_usuarios")) {
+    redirect("/panel");
+  }
+
   const { q = "" } = await searchParams;
-  // El catálogo de perfiles y el techo del gestor salen de la base, no de una
-  // lista fija en código: PLT-003 regla 4 los estandariza a nivel plataforma.
-  const [{ data: usuarios, error }, perfiles, nivelMaximoGestor] = await Promise.all([
+  const [{ data: usuarios, error }, perfiles, resInv] = await Promise.all([
     buscarUsuarios(q, NEGOCIO),
     obtenerPerfilesAsignables(NEGOCIO),
-    obtenerNivelMaximo(NEGOCIO),
+    obtenerInvitacionesEquipoAction(NEGOCIO),
   ]);
 
+  const nivelMaximoGestor = ctx.esSuperAdmin ? 100 : ctx.esAdminTienda ? 80 : 10;
+  const invitaciones = resInv.ok ? resInv.invitaciones : [];
+
   return (
-    <div>
-      <h1>Gestión de usuarios</h1>
-      <form method="GET" className="form-busqueda">
-        <input type="search" name="q" defaultValue={q} placeholder="Buscar por nombre o correo…" />
-        <button type="submit" className="btn-mini">Buscar</button>
-      </form>
+    <div style={{ maxWidth: "1140px", margin: "0 auto" }}>
+      <div style={{ marginBottom: 20 }}>
+        <h1 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 6px 0", color: "#1C261F" }}>
+          Gestión de Equipo, Invitaciones y Roles
+        </h1>
+        <p style={{ margin: 0, fontSize: "13.5px", color: "#6B746C", lineHeight: 1.5 }}>
+          Envía invitaciones por correo electrónico definiendo el rol en el portal (<strong>Ventas</strong>, <strong>Operador</strong>, <strong>Delivery</strong> o <strong>Administrador</strong>) y administra los permisos de los usuarios registrados en Tinkay.
+        </p>
+      </div>
 
-      {error && <p className="error-auth">{error}</p>}
+      <FormularioInvitacionEquipo
+        negocio={NEGOCIO}
+        invitacionesIniciales={invitaciones}
+      />
 
-      <table className="tabla-panel">
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Correo</th>
-            <th>Estado</th>
-            <th>Perfiles</th>
-            </tr>
-        </thead>
-        <tbody>
-          {usuarios.map((u) => (
-            <FilaUsuario
-              key={u.usu_id}
-              usuario={u}
-              negocio={NEGOCIO}
-              perfiles={perfiles}
-              nivelMaximoGestor={nivelMaximoGestor}
+      <section
+        style={{
+          background: "#FFFFFF",
+          border: "1px solid #E5DFD5",
+          borderRadius: 16,
+          padding: 24,
+          boxShadow: "0 4px 18px rgba(28, 38, 31, 0.04)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 12,
+            marginBottom: 16,
+          }}
+        >
+          <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#1C261F" }}>
+            Usuarios Registrados en Tinkay ({usuarios.length})
+          </h2>
+          <form method="GET" className="form-busqueda" style={{ margin: 0 }}>
+            <input
+              type="search"
+              name="q"
+              defaultValue={q}
+              placeholder="Buscar por nombre o correo…"
             />
-          ))}
-          {usuarios.length === 0 && (
+            <button
+              type="submit"
+              className="btn-mini"
+              title="Buscar usuario por nombre o correo"
+              aria-label="Buscar"
+            >
+              Buscar
+            </button>
+          </form>
+        </div>
+
+        {error && <p className="error-auth">{error}</p>}
+
+        <table className="tabla-panel">
+          <thead>
             <tr>
-              <td colSpan={4}>Sin resultados.</td>
+              <th>Nombre</th>
+              <th>Correo</th>
+              <th>Estado</th>
+              <th>Roles en el Portal (Cliente / Delivery / Ventas / Operador / Administrador)</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {usuarios.map((u) => (
+              <FilaUsuario
+                key={u.usu_id}
+                usuario={u}
+                negocio={NEGOCIO}
+                perfiles={perfiles}
+                nivelMaximoGestor={nivelMaximoGestor}
+              />
+            ))}
+            {usuarios.length === 0 && (
+              <tr>
+                <td colSpan={4}>Sin usuarios encontrados para esta búsqueda.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </section>
     </div>
   );
 }

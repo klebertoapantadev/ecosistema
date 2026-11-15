@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { BandejaPedidosTienda, obtenerPedidosTiendaAction } from "@eco/comercio";
+import { obtenerContextoAccesoTinkay } from "../acceso-tinkay";
 
 export const metadata: Metadata = {
   title: "Pedidos de Tienda y Despachos — Tinkay Floristería",
@@ -9,6 +11,11 @@ export const dynamic = "force-dynamic";
 const NEGOCIO = "tinkay";
 
 export default async function PaginaPedidosTinkay() {
+  const ctx = await obtenerContextoAccesoTinkay();
+  if (!ctx.clavesAutorizadas.has("pedidos_tienda")) {
+    redirect("/panel");
+  }
+
   const res = await obtenerPedidosTiendaAction(NEGOCIO);
 
   return (

@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import { obtenerPerfilActual } from "@eco/identidad";
 import { CatalogoProductosComercio } from "@eco/comercio";
 import Link from "next/link";
 import { X } from "lucide-react";
+import { obtenerContextoAccesoTinkay } from "../acceso-tinkay";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -13,10 +13,13 @@ export const metadata = {
 };
 
 export default async function PaginaCatalogoProductosTinkay() {
-  const perfil = await obtenerPerfilActual();
+  const ctx = await obtenerContextoAccesoTinkay();
 
-  if (!perfil) {
+  if (!ctx.perfil) {
     redirect("/ingresar?redirect=/panel/catalogo-productos");
+  }
+  if (!ctx.clavesAutorizadas.has("catalogo_productos")) {
+    redirect("/panel");
   }
 
   return (
