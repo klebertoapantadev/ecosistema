@@ -978,7 +978,7 @@ export async function subirCertificadoFirmaSriAction(
         error:
           "El certificado (.p12) fue validado correctamente (" +
           meta.titular +
-          "), pero falta ejecutar la migración SQL de Vault (20261115000003) en Supabase para custodiar la clave privada cifrada.",
+          "), pero falta ejecutar la migración SQL de Vault (20261115000005) en Supabase para custodiar la clave privada cifrada.",
       };
     }
     return { ok: false, error: rpcErr.message };

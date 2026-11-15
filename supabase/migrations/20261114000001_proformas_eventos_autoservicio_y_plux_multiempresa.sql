@@ -139,20 +139,15 @@ begin
     )
     on conflict (wdg_negocio, wdg_clave) do update set
       wdg_activo = true,
-      wdg_eliminado_en = null
+      wdg_actualizado_en = now()
     returning wdg_id into v_wdg_id;
 
     if v_wdg_id is not null then
-      for v_per_id in
-        select per_id
-        from comun_seguridad.seg_perfil
-        where per_negocio = v_negocio
-          and upper(per_codigo) in ('SUPERADMIN', 'ADMINISTRADOR', 'ADMIN')
-      loop
-        insert into comun_seguridad.seg_rol_widget (rwg_perfil_id, rwg_widget_id)
-        values (v_per_id, v_wdg_id)
-        on conflict do nothing;
-      end loop;
+      insert into comun_seguridad.seg_rol_widget (rlw_negocio, rlw_rol, rlw_widget_id, rlw_visible)
+      values
+        (v_negocio, 'SUPERADMIN', v_wdg_id, true),
+        (v_negocio, 'ADMINISTRADOR', v_wdg_id, true)
+      on conflict (rlw_negocio, rlw_rol, rlw_widget_id) do update set rlw_visible = true;
     end if;
   end loop;
 end $$;
@@ -713,13 +708,13 @@ begin
   elsif v_usuario is not null then
     select exists (
       select 1 from comun_seguridad.seg_usuario u
-      where u.usu_id = v_usuario and u.usu_es_superadmin = true
+      where u.usu_id = v_usuario and u.usu_superadmin_plataforma = true
     ) or exists (
       select 1 from comun_seguridad.seg_membresia m
       where m.mem_usuario_id = v_usuario
         and lower(m.mem_negocio) in (lower(v_base.prf_negocio), lower(comun_comercio.com_fn_prefijo_negocio(v_base.prf_negocio)))
-        and m.mem_estado = 'ACTIVA'
-        and upper(m.mem_rol) in ('SUPERADMIN', 'ADMINISTRADOR', 'ADMIN', 'OPERADOR', 'ASESOR', 'VENTAS')
+        and m.mem_estado in ('ACTIVO', 'ACTIVA')
+        and upper(m.mem_rol) in ('SUPERADMIN', 'ADMINISTRADOR', 'ADMIN', 'OPERADOR', 'ASESOR', 'VENTAS', 'VENDEDOR')
     ) into v_es_autorizado;
   end if;
 

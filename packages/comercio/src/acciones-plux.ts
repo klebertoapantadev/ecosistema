@@ -632,6 +632,7 @@ export async function consultarPagoPluxAction(
           autorizacion: rpcPub.autorizacion ?? null,
           marcaTarjeta: rpcPub.marca_tarjeta ?? rpcPub.marcaTarjeta ?? null,
           ultimosDigitos: rpcPub.ultimos_digitos ?? rpcPub.ultimosDigitos ?? null,
+          facturaElectronica: rpcPub.factura_electronica ?? null,
         },
       };
     }
@@ -785,6 +786,7 @@ export async function confirmarPagoPluxAction(entrada: {
 
   // 2. Intentar confirmar mediante RPC transaccional (cliente o service_role)
   let confirmadoPorRpc = false;
+  let facturaDesdeRpc: FacturaElectronicaResumen | null = null;
   try {
     const { data: rpcClienteRes, error: rpcClienteErr } = await supabase
       .schema("comun_comercio")
@@ -795,6 +797,12 @@ export async function confirmarPagoPluxAction(entrada: {
       });
     if (!rpcClienteErr && rpcClienteRes?.ok && rpcClienteRes?.estado === "APROBADO") {
       confirmadoPorRpc = true;
+      if (rpcClienteRes.factura_electronica?.clave_acceso) {
+        facturaDesdeRpc = {
+          ...(rpcClienteRes.factura_electronica as FacturaElectronicaResumen),
+          emisor: emisorFactura,
+        };
+      }
     }
   } catch {
     // Continúa al siguiente mecanismo si la migración aún no está aplicada
@@ -1047,14 +1055,16 @@ export async function confirmarPagoPluxAction(entrada: {
   }
 
   // 3.5. Emitir y sincronizar automáticamente la Factura Electrónica SRI para este pago con tarjeta
-  let facturaEmitida: FacturaElectronicaResumen | null = null;
-  try {
-    facturaEmitida = await asegurarFacturaElectronicaParaPago(clienteDb, {
-      identificador,
-      negocio,
-    });
-  } catch {
-    // Continuar
+  let facturaEmitida: FacturaElectronicaResumen | null = facturaDesdeRpc;
+  if (!facturaEmitida) {
+    try {
+      facturaEmitida = await asegurarFacturaElectronicaParaPago(clienteDb, {
+        identificador,
+        negocio,
+      });
+    } catch {
+      // Continuar
+    }
   }
 
   // Respaldo determinístico de Factura Electrónica SRI cuando el comprador es invitado con orden firmada
