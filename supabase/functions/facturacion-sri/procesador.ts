@@ -9,6 +9,12 @@
 //                             └─ sin respuesta ─▶ sigue RECIBIDO, reintenta con backoff hasta 48 h
 //   SRI caído (red, 5xx) ─▶ mismo estado, reintento con backoff; error de datos ─▶ ERROR.
 //
+// Modo simulación (FACTURACION_SIMULACION=true): un comprobante de ambiente 1
+// cuyo emisor no tiene certificado no se firma ni se envía al SRI. Pasa las
+// mismas validaciones, genera el XML sin firma, el RIDE, lo publica y manda el
+// correo, y queda AUTORIZADO con un mensaje SIMULACION. Sirve para probar la
+// tubería completa antes de tener el .p12. Nunca aplica en ambiente 2.
+//
 // Los importes los calcula aquí calcularTotales(): nunca se firman importes
 // que vengan del navegador.
 
@@ -36,6 +42,7 @@ import { calcularTotales } from "../_compartido/sri/totales.ts";
 import { firmarComprobante } from "../_compartido/sri/xades.ts";
 import { generarXmlAutorizado } from "../_compartido/sri/xml-autorizado.ts";
 import { generarXmlComprobante } from "../_compartido/sri/xml-comprobante.ts";
+import { documento } from "../_compartido/sri/xml.ts";
 import { decodeBase64 } from "jsr:@std/encoding@1.0.10/base64";
 
 // ── Filas tal como las devuelve fac_fn_tomar_lote ────────────────────────────
@@ -119,7 +126,12 @@ export interface Dependencias {
   esperar(ms: number): Promise<void>;
   /** Cerrojo del despliegue: sin él, nada de ambiente 2 llega al SRI. */
   permitirProduccion: boolean;
+  /** FACTURACION_SIMULACION: ambiente 1 sin certificado se simula en vez de fallar. */
+  simulacion?: boolean;
 }
+
+/** Identificador del mensaje que marca un comprobante simulado (no enviado al SRI). */
+export const MENSAJE_SIMULACION = "SIMULACION";
 
 /** Error de datos o de configuración: el comprobante pasa a ERROR con este mensaje. */
 export class ErrorComprobante extends Error {}
@@ -353,6 +365,11 @@ export class Procesador {
       throw new ErrorComprobante("La clave de acceso no corresponde a los datos del comprobante (¿cambió el RUC del emisor?)");
     }
 
+    if (this.dep.simulacion === true && c.cmp_ambiente === 1 && !item.emisor.emi_certificado_id) {
+      await this.simular(item, comprobante, totales);
+      return;
+    }
+
     let xmlFirmado: string;
     try {
       const raiz = generarXmlComprobante(comprobante, totales);
@@ -394,6 +411,31 @@ export class Procesador {
     await this.autorizar({ ...item, comprobante: { ...c, cmp_estado: "RECIBIDO", cmp_intentos: 0 } }, xmlFirmado);
   }
 
+  /** Sin firma ni SRI: autorización ficticia y el resto de la tubería tal cual. */
+  private async simular(item: ItemCola, comprobante: Comprobante, totales: Totales): Promise<void> {
+    let xml: string;
+    try {
+      xml = documento(generarXmlComprobante(comprobante, totales));
+    } catch (e) {
+      throw new ErrorComprobante(`No se pudo generar el XML: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    const ahora = this.dep.ahora().toISOString();
+    const a: AutorizacionSri = {
+      estado: "AUTORIZADO",
+      numeroAutorizacion: item.comprobante.cmp_clave_acceso,
+      fechaAutorizacion: ahora,
+      ambiente: "PRUEBAS - SIMULACION, NO ENVIADO AL SRI",
+      comprobanteXml: xml,
+      mensajes: [{
+        identificador: MENSAJE_SIMULACION,
+        mensaje: "Comprobante simulado: no se firmó ni se envió al SRI (FACTURACION_SIMULACION)",
+        informacionAdicional: null,
+        tipo: "ADVERTENCIA",
+      }],
+    };
+    await this.publicarAutorizado(item, a, xml, true);
+  }
+
   private async autorizar(item: ItemCola, xmlFirmado: string | null): Promise<void> {
     const c = item.comprobante;
     const respuesta = await this.dep.autorizacion(c.cmp_ambiente, c.cmp_clave_acceso);
@@ -427,7 +469,12 @@ export class Procesador {
     await this.publicarAutorizado(item, a, xmlFirmado);
   }
 
-  private async publicarAutorizado(item: ItemCola, a: AutorizacionSri, xmlFirmado: string | null): Promise<void> {
+  private async publicarAutorizado(
+    item: ItemCola,
+    a: AutorizacionSri,
+    xmlFirmado: string | null,
+    simulado = false,
+  ): Promise<void> {
     const c = item.comprobante;
     const carpeta = `${c.cmp_negocio}/${c.cmp_ambiente}/${c.cmp_fecha_emision.slice(0, 4)}`;
     const rutaXml = `${carpeta}/${c.cmp_clave_acceso}.xml`;
@@ -460,17 +507,17 @@ export class Procesador {
         ...cambiosTotales(totales, comprobante.pagos),
       },
       "autorizado",
-      { numero_autorizacion: a.numeroAutorizacion },
+      simulado ? { numero_autorizacion: a.numeroAutorizacion, simulado: true } : { numero_autorizacion: a.numeroAutorizacion },
     );
 
     await this.correo(item, comprobante, [
       { nombre: `${c.cmp_clave_acceso}.xml`, contenido: bytesXml, tipo: "application/xml" },
       { nombre: `${c.cmp_clave_acceso}.pdf`, contenido: ride, tipo: "application/pdf" },
-    ]);
+    ], simulado);
   }
 
   /** XML y RIDE al comprador (entregar solo uno de los dos es falta de entrega). Su fallo no cambia el estado. */
-  private async correo(item: ItemCola, comprobante: Comprobante, adjuntos: Adjunto[]): Promise<void> {
+  private async correo(item: ItemCola, comprobante: Comprobante, adjuntos: Adjunto[], simulado = false): Promise<void> {
     const c = item.comprobante;
     const para = comprobante.comprador.correo;
     if (!para) {
@@ -485,11 +532,17 @@ export class Procesador {
       const resultado = await this.dep.enviarCorreo(c.cmp_negocio, {
         para,
         copia: item.emisor.emi_correo_copia,
-        asunto: `${tipo} electrónica ${numero} de ${emisor}${comprobante.ambiente === 1 ? " (PRUEBAS)" : ""}`,
+        asunto: `${tipo} electrónica ${numero} de ${emisor}${
+          simulado ? " (SIMULACIÓN)" : comprobante.ambiente === 1 ? " (PRUEBAS)" : ""
+        }`,
         html: `<p>Estimado/a ${escapar(comprobante.comprador.razonSocial)}:</p>` +
-          `<p>Adjuntamos su ${tipo.toLowerCase()} electrónica <b>${numero}</b> autorizada por el SRI ` +
-          `(clave de acceso ${c.cmp_clave_acceso}), en XML y en PDF (RIDE).</p>` +
-          (comprobante.ambiente === 1 ? "<p><b>Comprobante de pruebas, sin validez tributaria.</b></p>" : "") +
+          (simulado
+            ? `<p>Adjuntamos la simulación de su ${tipo.toLowerCase()} electrónica <b>${numero}</b> ` +
+              `(clave de acceso ${c.cmp_clave_acceso}), en XML y en PDF (RIDE).</p>` +
+              "<p><b>Simulación: este comprobante no se firmó ni se envió al SRI y no tiene validez tributaria.</b></p>"
+            : `<p>Adjuntamos su ${tipo.toLowerCase()} electrónica <b>${numero}</b> autorizada por el SRI ` +
+              `(clave de acceso ${c.cmp_clave_acceso}), en XML y en PDF (RIDE).</p>` +
+              (comprobante.ambiente === 1 ? "<p><b>Comprobante de pruebas, sin validez tributaria.</b></p>" : "")) +
           `<p>${escapar(emisor)}</p>`,
         adjuntos,
       });
