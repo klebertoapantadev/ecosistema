@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useTransition } from "react";
 import {
   X, User, Building2, ShieldCheck, AlertTriangle, Sparkles, Upload,
-  CheckCircle2, Calendar, Scale, Check, Eye,
+  CheckCircle2, Scale, Check, Eye,
   Copy, ChevronDown, ChevronUp,
   UserCheck, Wallet,
   Trash2, RotateCcw, Edit3

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Folder, Shield, Upload, Share2, CheckCircle2, AlertTriangle, XCircle,
+  Folder, Upload, Share2, CheckCircle2, AlertTriangle, XCircle,
   FileText, Search, Eye, Trash2, Copy, Check, Sparkles,
   Flame, RefreshCw, Calendar, Tag, User,
   Plus, X, Image as ImageIcon, BellRing, Layers,

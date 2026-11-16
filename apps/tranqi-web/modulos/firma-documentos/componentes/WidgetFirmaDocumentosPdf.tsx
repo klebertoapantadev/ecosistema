@@ -5,7 +5,6 @@ import {
   FileText,
   Upload,
   KeyRound,
-  ShieldCheck,
   CheckCircle2,
   AlertCircle,
   Download,
@@ -19,7 +18,7 @@ import {
   ArrowRight,
   RefreshCw,
   QrCode,
-  FileCheck,
+  Lock,
   Sparkles,
   X
 } from "lucide-react";
