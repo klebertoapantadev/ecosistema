@@ -23,6 +23,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@eco/agentes-ia": "workspace:*",
     "@eco/datagrid": "workspace:*",
     "@eco/db": "workspace:*",
     "@eco/notificaciones": "workspace:*",

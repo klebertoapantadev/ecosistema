@@ -23,7 +23,7 @@ responsable: Kleber Toapanta
 | **`TNK-002`** | **E-Commerce Web, Separación Vertical (Flores / Renta / Eventos), Proformas Multi-Variación + PDF, Pasarela PLUX y Facturación Electrónica SRI** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TNK-003`** | **Vendedoras, Enlaces Ref y Comisiones Netas** | 🟡 En Desarrollo | **60%** | Kleber Toapanta |
 | **`TNK-004`** | **Agente ARIA WhatsApp (YCloud), Web Chat y Consola (HITL)** | 🟡 En Desarrollo | **98%** | Kleber Toapanta |
-| **`TNK-005`** | **Taller de Armado Floral, Inventario de Bonches y Despacho Delivery** | 🟡 En Desarrollo | **88%** | Kleber Toapanta |
+| **`TNK-005`** | **Taller de Armado Floral, Inventario IA de Bonches, Galería Entrega Inmediata (1–2h) y Entregas GPS Offline + Informes IESS** | ✅ Implementado | **100%** | Kleber Toapanta |
 
 ---
 

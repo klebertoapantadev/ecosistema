@@ -249,6 +249,30 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     href: "/panel/conversaciones",
     origen: "Administrar"
   },
+  galeria_inmediata: {
+    id: "galeria_inmediata",
+    titulo: "Entrega Inmediata (1–2h)",
+    subtitulo: "Arreglos listos en tienda con precio especial y baja automática al venderse",
+    icono: MessageSquare,
+    href: "/panel/entrega-inmediata",
+    origen: "Administrar"
+  },
+  inventario_rosas: {
+    id: "inventario_rosas",
+    titulo: "Inventario de Rosas (Conteo IA)",
+    subtitulo: "Conteo fotográfico de bonches por color asistido por ARIA",
+    icono: MessageSquare,
+    href: "/panel/inventario-rosas",
+    origen: "Administrar"
+  },
+  confirmacion_entregas: {
+    id: "confirmacion_entregas",
+    titulo: "Entregas e Informes GPS",
+    subtitulo: "Confirmación offline de entregas, OTs Exequiales IESS e informes quincenales PDF",
+    icono: MessageSquare,
+    href: "/panel/entregas",
+    origen: "Administrar"
+  },
   pedidos_tienda: {
     id: "pedidos_tienda",
     titulo: "Pedidos de Tienda y Despachos",

@@ -183,6 +183,36 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     colorIcono: "#DB2777"
   },
   {
+    clave: "galeria_inmediata",
+    nombre: "Galería de Entrega Inmediata (1 a 2 Horas)",
+    detalle: "Publicar arreglos listos en tienda con precio especial y baja automática al venderse",
+    ruta: "/panel/entrega-inmediata",
+    categoria: "Comercio & Pagos",
+    minNivel: 20,
+    icono: MessageSquare,
+    colorIcono: "#D97706"
+  },
+  {
+    clave: "inventario_rosas",
+    nombre: "Inventario de Rosas con IA (ARIA)",
+    detalle: "Subir fotos de bonches de rosas para conteo automático por colores y consolidado",
+    ruta: "/panel/inventario-rosas",
+    categoria: "Comercio & Pagos",
+    minNivel: 20,
+    icono: MessageSquare,
+    colorIcono: "#BE185D"
+  },
+  {
+    clave: "confirmacion_entregas",
+    nombre: "Confirmación de Entregas GPS e Informes Exequiales IESS",
+    detalle: "PWA Offline para foto georreferenciada, órdenes de trabajo e informe quincenal PDF",
+    ruta: "/panel/entregas",
+    categoria: "Comercio & Pagos",
+    minNivel: 15,
+    icono: MessageSquare,
+    colorIcono: "#059669"
+  },
+  {
     clave: "pedidos_tienda",
     nombre: "Pedidos de Tienda y Despachos",
     detalle: "Órdenes e-commerce con ubicación GPS, dedicatorias y fórmula logística interna",

@@ -7,8 +7,10 @@ import {
   ClipboardList,
   CreditCard,
   FileCheck2,
+  Flower2,
   KeyRound,
   Mail,
+  MapPinCheck,
   MessageSquare,
   Receipt,
   Settings,
@@ -18,6 +20,7 @@ import {
   Users,
   MessageSquareHeart,
   UserCheck,
+  Zap,
   type LucideIcon,
 } from "lucide-react";
 import { obtenerMisProformasEventoAction } from "@eco/comercio";
@@ -49,6 +52,36 @@ const MODULOS_TINKAY: Record<string, WidgetInfo> = {
     icono: MessageSquare,
     grupo: "operacion",
     etiqueta: "Inbox / HITL",
+  },
+  galeria_inmediata: {
+    clave: "galeria_inmediata",
+    nombre: "Galería Entrega Inmediata (1–2h)",
+    descripcion:
+      "Sube fotos de arreglos recién armados con precio especial. Se publican en Web y Chat y se retiran solos al venderse.",
+    ruta: "/panel/entrega-inmediata",
+    icono: Zap,
+    grupo: "operacion",
+    etiqueta: "Listos Hoy",
+  },
+  inventario_rosas: {
+    clave: "inventario_rosas",
+    nombre: "Inventario de Rosas (Conteo IA)",
+    descripcion:
+      "Adjunta fotos de bonches para que ARIA cuente paquetes por colores y muestre siempre el último inventario consolidado.",
+    ruta: "/panel/inventario-rosas",
+    icono: Flower2,
+    grupo: "operacion",
+    etiqueta: "Visión ARIA",
+  },
+  confirmacion_entregas: {
+    clave: "confirmacion_entregas",
+    nombre: "Confirmación de Entregas & Exequiales IESS",
+    descripcion:
+      "App móvil offline para foto + GPS sin anuncios, órdenes de trabajo Exequiales IESS e informes quincenales numerados en PDF.",
+    ruta: "/panel/entregas",
+    icono: MapPinCheck,
+    grupo: "operacion",
+    etiqueta: "PWA Offline / GPS",
   },
   pedidos_tienda: {
     clave: "pedidos_tienda",

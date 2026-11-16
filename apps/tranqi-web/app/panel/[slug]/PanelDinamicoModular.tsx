@@ -47,6 +47,9 @@ import {
   BandejaPedidosTienda,
   ConsolaTestimoniosClientes,
   ConsolaVentasOmnicanal,
+  ConsolaInventarioRosas,
+  ConsolaEntregaInmediata,
+  ConsolaConfirmacionEntregas,
 } from "@eco/comercio";
 import { SociosWidget } from "../administrar/PanelAdministrarModular";
 import { ConfiguracionContratoAbogadoWidget } from "@/modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
@@ -266,6 +269,27 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     subtitulo: "Gestión de capturas de WhatsApp, fotos de entregas reales y enlace a Google Photos",
     icono: MessageSquareHeart,
     colorIcono: "#D97706",
+    categoria: "Comercio & Catálogo"
+  },
+  galeria_inmediata: {
+    titulo: "Galería de Entrega Inmediata (1–2h)",
+    subtitulo: "Publicación de arreglos listos en tienda con precio especial y retiro automático al venderse",
+    icono: Sparkles,
+    colorIcono: "#D97706",
+    categoria: "Comercio & Catálogo"
+  },
+  inventario_rosas: {
+    titulo: "Inventario de Rosas con Conteo IA",
+    subtitulo: "Conteo fotográfico de paquetes de rosas por color asistido por ARIA Visión",
+    icono: Sparkles,
+    colorIcono: "#BE185D",
+    categoria: "Comercio & Catálogo"
+  },
+  confirmacion_entregas: {
+    titulo: "Confirmación de Entregas e Informes GPS",
+    subtitulo: "PWA Offline-First para evidencias georreferenciadas, OTs Exequiales IESS e informes quincenales PDF",
+    icono: MapPin,
+    colorIcono: "#059669",
     categoria: "Comercio & Catálogo"
   },
   facturacion_electronica: {
@@ -994,6 +1018,14 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       case "conversaciones":
       case "ventas_omnicanal":
         return <ConsolaVentasOmnicanal negocio={negocio} />;
+      case "galeria_inmediata":
+      case "entrega_inmediata":
+        return <ConsolaEntregaInmediata negocio={negocio} />;
+      case "inventario_rosas":
+        return <ConsolaInventarioRosas negocio={negocio} />;
+      case "confirmacion_entregas":
+      case "entregas":
+        return <ConsolaConfirmacionEntregas negocio={negocio} />;
       case "pedidos_tienda":
       case "pedidos":
         return <BandejaPedidosTienda negocio={negocio} />;

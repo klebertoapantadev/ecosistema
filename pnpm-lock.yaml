@@ -386,6 +386,9 @@ importers:
 
   packages/comercio:
     dependencies:
+      '@eco/agentes-ia':
+        specifier: workspace:*
+        version: link:../agentes-ia
       '@eco/datagrid':
         specifier: workspace:*
         version: link:../datagrid

@@ -11,9 +11,11 @@ import {
   ClipboardList,
   CreditCard,
   FileCheck2,
+  Flower2,
   KeyRound,
   LayoutDashboard,
   Mail,
+  MapPinCheck,
   MessageSquare,
   Receipt,
   Settings,
@@ -22,12 +24,16 @@ import {
   UserCircle,
   Users,
   MessageSquareHeart,
+  Zap,
   type LucideIcon,
 } from "lucide-react";
 
 export type IconoNavegacionPanel =
   | "resumen"
   | "conversaciones"
+  | "inventario"
+  | "entrega_inmediata"
+  | "entregas_gps"
   | "pedidos"
   | "facturacion"
   | "catalogo"
@@ -53,6 +59,9 @@ export interface ItemNavegacionPanel {
 const MAPA_ICONOS: Record<IconoNavegacionPanel, LucideIcon> = {
   resumen: LayoutDashboard,
   conversaciones: MessageSquare,
+  inventario: Flower2,
+  entrega_inmediata: Zap,
+  entregas_gps: MapPinCheck,
   pedidos: ClipboardList,
   facturacion: Receipt,
   catalogo: ShoppingBag,

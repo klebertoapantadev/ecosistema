@@ -255,12 +255,18 @@ export function NavegacionSidebar({
         if (
           rolKey === "VENTAS" ||
           rolKey === "VENDEDOR" ||
+          rolKey === "DELIVERY" ||
           rolKey === "OPERADOR" ||
           rolKey === "ADMINISTRADOR"
         ) {
           const listaAdm = widgetsPorPanel["panel_administrar"] || [];
-          if (!listaAdm.includes("consola_chat")) {
-            widgetsPorPanel["panel_administrar"] = ["consola_chat", ...listaAdm];
+          const baseNuevos =
+            rolKey === "DELIVERY"
+              ? ["confirmacion_entregas"]
+              : ["consola_chat", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas"];
+          const faltantes = baseNuevos.filter((w) => !listaAdm.includes(w));
+          if (faltantes.length > 0) {
+            widgetsPorPanel["panel_administrar"] = [...faltantes, ...listaAdm];
           }
         }
 

@@ -4,6 +4,7 @@ import {
   cotizarEnvioDesdeEntradaAction,
   extraerCoordenadasDeTextoOUrl,
   extraerPrimeraUrlDeTexto,
+  listarEntregaInmediataAction,
   obtenerConfiguracionLogisticaAction,
   registrarInteraccionChatWebAction,
   sincronizarHiloPublicoChatWebAction,
@@ -129,12 +130,32 @@ export async function POST(req: NextRequest) {
     "https://tinkay-web.vercel.app"
   ).replace(/\/+$/, "");
 
+  let bloqueEntregaInmediata = "";
+  try {
+    const resInm = await listarEntregaInmediataAction(NEGOCIO, false);
+    if (resInm.ok && resInm.items.length > 0) {
+      const resumenInm = resInm.items
+        .slice(0, 6)
+        .map(
+          (i) =>
+            `"${i.nombre}" a $${Number(i.precio).toFixed(2)} USD (${i.tiempoEntregaTexto}, link: ${origenTienda}/producto/${i.slug})`
+        )
+        .join("; ");
+      bloqueEntregaInmediata =
+        `\n[ARREGLOS LISTOS EN TIENDA PARA ENTREGA INMEDIATA (1 A 2 HORAS): ${resumenInm}. ` +
+        `Ver todos en ${origenTienda}/categoria/entrega-inmediata. Ofrécelos con prioridad si el cliente busca entrega rápida hoy.]`;
+    }
+  } catch {
+    // Continuar sin bloquear chat
+  }
+
   const guiaEnlacesTienda =
     `[ENLACES DIRECTOS E-COMMERCE TINKAY: ` +
     `Para redirigir al cliente a una categoría usa ${origenTienda}/categoria/{slug} ` +
-    `(ej. Eventos: ${origenTienda}/categoria/eventos-y-ceremonias, Box Florales: ${origenTienda}/categoria/box-florales, Estilo Coreano: ${origenTienda}/categoria/cat-coreanos, Condolencias: ${origenTienda}/categoria/condolencias). ` +
+    `(ej. Entrega Inmediata: ${origenTienda}/categoria/entrega-inmediata, Eventos: ${origenTienda}/categoria/eventos-y-ceremonias, Box Florales: ${origenTienda}/categoria/box-florales, Estilo Coreano: ${origenTienda}/categoria/cat-coreanos, Condolencias: ${origenTienda}/categoria/condolencias). ` +
     `Para redirigir directamente a un producto usa el campo url_tienda_producto del catálogo (${origenTienda}/producto/{slug}). ` +
-    `Incluye el link directo cuando recomiendes una colección o arreglo específico.]`;
+    `Incluye el link directo cuando recomiendes una colección o arreglo específico.]` +
+    bloqueEntregaInmediata;
 
   let promptParaAria = `${textoLimpio}\n\n${guiaEnlacesTienda}`;
 

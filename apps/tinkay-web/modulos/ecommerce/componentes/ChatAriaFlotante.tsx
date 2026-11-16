@@ -36,6 +36,7 @@ const MENSAJES_INICIALES: MensajeChat[] = [
 ];
 
 const SUGERENCIAS_RAPIDAS = [
+  { id: 'inmediata', texto: '⚡ Entrega Inmediata (1–2h)' },
   { id: 'eventos', texto: '🎉 Eventos y Bodas' },
   { id: 'amor', texto: '🌹 Sorpresa de Amor / Aniversario' },
   { id: 'cumple', texto: '🎂 Cumpleaños Alegre' },

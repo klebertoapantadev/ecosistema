@@ -318,7 +318,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_red_profesional: ["gestion_red_abogados", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["consola_chat", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
+      panel_administrar: ["consola_chat", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["notificaciones", "agentes_ia"]
@@ -355,7 +355,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_red_profesional: ["gestion_red_abogados", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["consola_chat", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
+      panel_administrar: ["consola_chat", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_facturacion_sri", "configuracion_logistica", "configuracion_correo", "configuracion_aria", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
@@ -377,7 +377,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_red_profesional: ["gestion_red_abogados", "mi_perfil_abogado", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "mi_perfil_abogado", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["consola_chat", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
+      panel_administrar: ["consola_chat", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_facturacion_sri", "configuracion_logistica", "configuracion_correo", "configuracion_aria", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
@@ -596,6 +596,39 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     categoria: "Comercio y Pagos",
     ruta: "/panel/conversaciones",
     rutaFisica: "/comercio/componentes/ConsolaVentasOmnicanal.tsx",
+    panelId: "panel_administrar",
+    activo: true,
+    creadoEn: "2026-11-15"
+  },
+  {
+    clave: "galeria_inmediata",
+    nombre: "Galería de Entrega Inmediata (1–2h)",
+    descripcion: "Publicación rápida de arreglos listos en tienda con precio especial y baja automática al venderse en web.",
+    categoria: "Comercio y Pagos",
+    ruta: "/panel/entrega-inmediata",
+    rutaFisica: "/comercio/componentes/ConsolaEntregaInmediata.tsx",
+    panelId: "panel_administrar",
+    activo: true,
+    creadoEn: "2026-11-15"
+  },
+  {
+    clave: "inventario_rosas",
+    nombre: "Inventario de Rosas (Conteo IA)",
+    descripcion: "Conteo fotográfico de bonches de rosas por color asistido por ARIA Visión y consolidado del último corte.",
+    categoria: "Comercio y Pagos",
+    ruta: "/panel/inventario-rosas",
+    rutaFisica: "/comercio/componentes/ConsolaInventarioRosas.tsx",
+    panelId: "panel_administrar",
+    activo: true,
+    creadoEn: "2026-11-15"
+  },
+  {
+    clave: "confirmacion_entregas",
+    nombre: "Confirmación de Entregas e Informes GPS",
+    descripcion: "PWA Offline-First para evidencias georreferenciadas, órdenes de trabajo Exequiales IESS e informes quincenales PDF.",
+    categoria: "Comercio y Pagos",
+    ruta: "/panel/entregas",
+    rutaFisica: "/comercio/componentes/ConsolaConfirmacionEntregas.tsx",
     panelId: "panel_administrar",
     activo: true,
     creadoEn: "2026-11-15"
@@ -1119,6 +1152,20 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
           <div style={{ padding: "12px", background: "#FDF2F8", borderRadius: "8px", border: "1px dashed #F9A8D4", textAlign: "center", fontSize: "0.82rem", color: "#9D174D", fontWeight: 700 }}>
             Inbox en Vivo · IA ARIA vs Humano · Etiquetas · /Atajos · Compras & Usuarios 360°
           </div>
+        </div>
+      );
+
+    case "galeria_inmediata":
+    case "inventario_rosas":
+    case "confirmacion_entregas":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #059669", boxShadow: "0 4px 12px rgba(5,150,105,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#047857", marginBottom: "10px" }}>
+            <ClipboardList size={18} /> Operaciones de Taller & Entregas GPS ({clave})
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "0" }}>
+            Inventario fotográfico de rosas con ARIA, galería de entrega inmediata (1–2h) y confirmación de entregas offline con informes quincenales PDF.
+          </p>
         </div>
       );
 

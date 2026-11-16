@@ -36,6 +36,16 @@ import {
   Zap,
 } from "lucide-react";
 import {
+  listarEntregaInmediataAction,
+  obtenerInventarioRosasAction,
+} from "../acciones-operaciones-taller";
+import {
+  formatearFechaCorteInventario,
+  formatearResumenInventarioTexto,
+  type ArregloEntregaInmediata,
+  type CorteInventarioRosas,
+} from "../operaciones-taller";
+import {
   abrirSeguimientoContactoOmnicanalAction,
   actualizarConversacionOmnicanalAction,
   alternarEtiquetaOmnicanalAction,
@@ -270,6 +280,23 @@ export function ConsolaVentasOmnicanal({
   const canalLiveRef = useRef<any>(null);
   const liveConectadoRef = useRef<boolean>(false);
   const [realtimeConectado, setRealtimeConectado] = useState<boolean>(false);
+  const [disponiblesHoy, setDisponiblesHoy] = useState<ArregloEntregaInmediata[]>([]);
+  const [ultimoInvRosas, setUltimoInvRosas] = useState<CorteInventarioRosas | null>(null);
+
+  useEffect(() => {
+    let cancelado = false;
+    Promise.all([
+      listarEntregaInmediataAction(negNorm, false).catch(() => null),
+      obtenerInventarioRosasAction(negNorm).catch(() => null),
+    ]).then(([resInm, resInv]) => {
+      if (cancelado) return;
+      if (resInm && resInm.ok) setDisponiblesHoy(resInm.items);
+      if (resInv && resInv.ok) setUltimoInvRosas(resInv.ultimoCorte);
+    });
+    return () => {
+      cancelado = true;
+    };
+  }, [negNorm]);
   const huellasBroadcastVistasRef = useRef<Map<string, number>>(new Map());
   const conversacionActivaIdRef = useRef<string | null>(conversacionActivaId);
   const mensajesBufferLiveRef = useRef<Record<string, MensajeOmnicanal[]>>({});
@@ -3168,6 +3195,116 @@ export function ConsolaVentasOmnicanal({
                     ))
                   )}
                 </div>
+
+                {/* APOYO DE TALLER PARA VENDEDORAS: DISPONIBLES 1-2H E INVENTARIO DE ROSAS */}
+                {disponiblesHoy.length > 0 && (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "6px",
+                      paddingTop: "10px",
+                      borderTop: "1px solid #F1F5F9",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "0.72rem",
+                        fontWeight: 700,
+                        color: "#B45309",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      ⚡ Entrega Inmediata 1–2h ({disponiblesHoy.length})
+                    </span>
+                    {disponiblesHoy.slice(0, 4).map((disp) => (
+                      <div
+                        key={disp.productoId}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          padding: "7px 8px",
+                          borderRadius: "9px",
+                          border: "1px solid #FDE68A",
+                          background: "#FFFBEB",
+                        }}
+                      >
+                        {disp.imagenUrl && (
+                          <img
+                            src={disp.imagenUrl}
+                            alt={disp.nombre}
+                            style={{
+                              width: "36px",
+                              height: "36px",
+                              borderRadius: "6px",
+                              objectFit: "cover",
+                            }}
+                          />
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <strong
+                            style={{
+                              display: "block",
+                              fontSize: "0.75rem",
+                              color: "#0F172A",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {disp.nombre}
+                          </strong>
+                          <span style={{ fontSize: "0.72rem", color: "#059669", fontWeight: 700 }}>
+                            ${Number(disp.precio).toFixed(2)}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const orig =
+                              typeof window !== "undefined" ? window.location.origin : "";
+                            setTextoRespuesta(
+                              `¡Tenemos disponible para entrega inmediata (1 a 2 horas) "${disp.nombre}" por $${Number(disp.precio).toFixed(2)} USD! 🌸 Puedes ver la foto real y pedirlo aquí: ${orig}/producto/${disp.slug}`
+                            );
+                          }}
+                          title="Insertar oferta de entrega inmediata en el mensaje"
+                          aria-label="Ofrecer arreglo"
+                          style={{
+                            padding: "4px 8px",
+                            borderRadius: "7px",
+                            border: "none",
+                            background: "#D97706",
+                            color: "#FFFFFF",
+                            fontSize: "0.7rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Ofrecer
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {ultimoInvRosas && (
+                  <div
+                    style={{
+                      padding: "9px 10px",
+                      borderRadius: "9px",
+                      background: "#F8FAFC",
+                      border: "1px solid #E2E8F0",
+                      fontSize: "0.73rem",
+                      color: "#334155",
+                    }}
+                  >
+                    <strong style={{ display: "block", color: "#0F172A", marginBottom: "2px" }}>
+                      🌹 Rosas ({formatearFechaCorteInventario(ultimoInvRosas.fechaCorte)})
+                    </strong>
+                    <span>{formatearResumenInventarioTexto(ultimoInvRosas.resumenColores)}</span>
+                  </div>
+                )}
               </>
             )}
           </div>

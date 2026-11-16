@@ -32,6 +32,27 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel> = [
     grupo: "operacion",
   },
   {
+    clave: "galeria_inmediata",
+    nombre: "Entrega Inmediata (1–2h)",
+    ruta: "/panel/entrega-inmediata",
+    icono: "entrega_inmediata",
+    grupo: "operacion",
+  },
+  {
+    clave: "inventario_rosas",
+    nombre: "Inventario de Rosas (IA)",
+    ruta: "/panel/inventario-rosas",
+    icono: "inventario",
+    grupo: "operacion",
+  },
+  {
+    clave: "confirmacion_entregas",
+    nombre: "Entregas e Informes GPS",
+    ruta: "/panel/entregas",
+    icono: "entregas_gps",
+    grupo: "operacion",
+  },
+  {
     clave: "pedidos_tienda",
     nombre: "Pedidos de Tienda",
     ruta: "/panel/pedidos",
