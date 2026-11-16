@@ -668,8 +668,8 @@ export function GestionRedProfesionalWidget() {
       valor: (a) => `${a.nombreCompleto} ${a.correo}`,
       render: (a) => (
         <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-          <strong style={{ color: "#111827", fontSize: "0.88rem" }}>{a.nombreCompleto}</strong>
-          <span style={{ fontSize: "0.76rem", color: "#4B5563" }}>{a.correo}</span>
+          <strong style={{ color: "var(--texto)", fontSize: "0.88rem" }}>{a.nombreCompleto}</strong>
+          <span style={{ fontSize: "0.76rem", color: "var(--texto-2)" }}>{a.correo}</span>
           {a.telefono && (
             <span style={{ fontSize: "0.73rem", color: "#05876E", fontWeight: 600 }}>
               Tel: {a.telefono}
@@ -728,8 +728,8 @@ export function GestionRedProfesionalWidget() {
                   borderRadius: "999px",
                   fontSize: "0.68rem",
                   fontWeight: 800,
-                  background: a.origenRegistro === "manual_operador" ? "#EEF2FF" : "#F3F4F6",
-                  color: a.origenRegistro === "manual_operador" ? "#4338CA" : "#374151",
+                  background: a.origenRegistro === "manual_operador" ? "var(--acento-diluido)" : "var(--fondo-hundido)",
+                  color: a.origenRegistro === "manual_operador" ? "var(--acento-hondo)" : "var(--texto-2)",
                 }}
               >
                 {a.origenRegistro === "manual_operador" ? "Equipo Manual" : "Autogestión"}
@@ -744,16 +744,16 @@ export function GestionRedProfesionalWidget() {
                   fontWeight: 800,
                   background:
                     a.estadoAceptacion === "aceptado"
-                      ? "#ECFDF5"
+                      ? "var(--exito-diluido)"
                       : a.estadoAceptacion === "rechazado"
-                        ? "#FEF2F2"
-                        : "#FEF3C7",
+                        ? "var(--error-diluido)"
+                        : "var(--aviso-diluido)",
                   color:
                     a.estadoAceptacion === "aceptado"
-                      ? "#065F46"
+                      ? "var(--exito-texto)"
                       : a.estadoAceptacion === "rechazado"
-                        ? "#991B1B"
-                        : "#92400E",
+                        ? "var(--error-texto)"
+                        : "var(--aviso-texto)",
                 }}
               >
                 {a.estadoAceptacion === "aceptado"
@@ -763,10 +763,10 @@ export function GestionRedProfesionalWidget() {
                     : "⏳ Pendiente Aceptación"}
               </span>
             </div>
-            <span style={{ color: "#374151" }}>
+            <span style={{ color: "var(--texto-2)" }}>
               <b>Por:</b> {a.registradoPorNombre}
             </span>
-            <span style={{ color: "#6B7280", fontSize: "0.7rem" }}>
+            <span style={{ color: "var(--texto-suave)", fontSize: "0.7rem" }}>
               <b>Alta:</b> {fechaAlta}
             </span>
             {fechaConfirm && a.estadoAceptacion === "aceptado" && (
@@ -775,7 +775,7 @@ export function GestionRedProfesionalWidget() {
               </span>
             )}
             {a.bajaLogica && a.fechaBajaLogica && (
-              <span style={{ color: "#991B1B", fontSize: "0.7rem", fontWeight: 700 }}>
+              <span style={{ color: "var(--error-texto)", fontSize: "0.7rem", fontWeight: 700 }}>
                 <b>Baja Lógica:</b>{" "}
                 {new Date(a.fechaBajaLogica).toLocaleString("es-EC", {
                   day: "2-digit",
@@ -798,16 +798,16 @@ export function GestionRedProfesionalWidget() {
       render: (a) => (
         <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", maxWidth: "240px" }}>
           {a.materias.length === 0 ? (
-            <span style={{ fontSize: "0.75rem", color: "#9CA3AF" }}>Sin asignar</span>
+            <span style={{ fontSize: "0.75rem", color: "var(--texto-tenue)" }}>Sin asignar</span>
           ) : (
             a.materias.slice(0, 3).map((m) => (
               <span
                 key={m.mat_id}
                 style={{
                   fontSize: "0.7rem",
-                  background: "#F5F3FF",
+                  background: "var(--acento-diluido)",
                   color: "#5000BA",
-                  border: "1px solid #DDD6FE",
+                  border: "1px solid var(--acento-linea)",
                   borderRadius: "6px",
                   padding: "2px 6px",
                   fontWeight: 700,
@@ -818,7 +818,7 @@ export function GestionRedProfesionalWidget() {
             ))
           )}
           {a.materias.length > 3 && (
-            <span style={{ fontSize: "0.7rem", color: "#6B7280", fontWeight: 700 }}>
+            <span style={{ fontSize: "0.7rem", color: "var(--texto-suave)", fontWeight: 700 }}>
               +{a.materias.length - 3}
             </span>
           )}
@@ -832,13 +832,13 @@ export function GestionRedProfesionalWidget() {
       render: (a) => (
         <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", maxWidth: "200px" }}>
           {a.provincias.length === 0 ? (
-            <span style={{ fontSize: "0.75rem", color: "#9CA3AF" }}>Sin zona</span>
+            <span style={{ fontSize: "0.75rem", color: "var(--texto-tenue)" }}>Sin zona</span>
           ) : a.provincias.length >= 20 ? (
             <span
               style={{
                 fontSize: "0.72rem",
-                background: "#ECFDF5",
-                color: "#065F46",
+                background: "var(--exito-diluido)",
+                color: "var(--exito-texto)",
                 borderRadius: "6px",
                 padding: "2px 7px",
                 fontWeight: 800,
@@ -853,9 +853,9 @@ export function GestionRedProfesionalWidget() {
                   key={p.cat_id}
                   style={{
                     fontSize: "0.7rem",
-                    background: "#F0F9FF",
-                    color: "#0369A1",
-                    border: "1px solid #BAE6FD",
+                    background: "var(--acento-diluido)",
+                    color: "var(--acento-hondo)",
+                    border: "1px solid var(--acento-linea)",
                     borderRadius: "6px",
                     padding: "2px 6px",
                     fontWeight: 700,
@@ -865,7 +865,7 @@ export function GestionRedProfesionalWidget() {
                 </span>
               ))}
               {a.provincias.length > 2 && (
-                <span style={{ fontSize: "0.7rem", color: "#0369A1", fontWeight: 700 }}>
+                <span style={{ fontSize: "0.7rem", color: "var(--acento-hondo)", fontWeight: 700 }}>
                   +{a.provincias.length - 2}
                 </span>
               )}
@@ -887,8 +887,8 @@ export function GestionRedProfesionalWidget() {
                 <span
                   style={{
                     fontSize: "0.68rem",
-                    background: "#EFF6FF",
-                    color: "#1D4ED8",
+                    background: "var(--acento-diluido)",
+                    color: "var(--acento-hondo)",
                     padding: "1px 6px",
                     borderRadius: "4px",
                     fontWeight: 700,
@@ -901,8 +901,8 @@ export function GestionRedProfesionalWidget() {
                 <span
                   style={{
                     fontSize: "0.68rem",
-                    background: "#FEF3C7",
-                    color: "#92400E",
+                    background: "var(--aviso-diluido)",
+                    color: "var(--aviso-texto)",
                     padding: "1px 6px",
                     borderRadius: "4px",
                     fontWeight: 700,
@@ -912,13 +912,13 @@ export function GestionRedProfesionalWidget() {
                 </span>
               )}
             </div>
-            <span style={{ fontSize: "0.74rem", color: a.citasPorSemana > 0 ? "#05876E" : "#DC2626", fontWeight: 700 }}>
+            <span style={{ fontSize: "0.74rem", color: a.citasPorSemana > 0 ? "#05876E" : "var(--error)", fontWeight: 700 }}>
               {a.citasPorSemana > 0 ? `${a.citasPorSemana} cupos/sem` : "Sin franjas"}
             </span>
             <span
               style={{
                 fontSize: "0.7rem",
-                color: (a.casosAsignadosActivos || 0) > 0 ? "#B45309" : "#6B7280",
+                color: (a.casosAsignadosActivos || 0) > 0 ? "var(--aviso-texto)" : "var(--texto-suave)",
                 fontWeight: 700,
                 display: "inline-flex",
                 alignItems: "center",
@@ -952,19 +952,19 @@ export function GestionRedProfesionalWidget() {
             fontSize: "0.73rem",
             fontWeight: 800,
             background: a.bajaLogica
-              ? "#F1F5F9"
+              ? "var(--fondo-hundido)"
               : a.estado === "verificado"
-                ? "#ECFDF5"
-                : "#FEF2F2",
+                ? "var(--exito-diluido)"
+                : "var(--error-diluido)",
             color: a.bajaLogica
-              ? "#475569"
+              ? "var(--texto-2)"
               : a.estado === "verificado"
-                ? "#065F46"
-                : "#991B1B",
+                ? "var(--exito-texto)"
+                : "var(--error-texto)",
             border: a.bajaLogica
-              ? "1px solid #94A3B8"
+              ? "1px solid var(--texto-tenue)"
               : a.estado === "verificado"
-                ? "1px solid #10B981"
+                ? "1px solid var(--exito)"
                 : "1px solid #F87171",
           }}
         >
@@ -994,9 +994,9 @@ export function GestionRedProfesionalWidget() {
             title="Editar datos, especialidades y zonas de cobertura del abogado"
             aria-label="Editar abogado"
             style={{
-              background: "#F5F3FF",
+              background: "var(--acento-diluido)",
               color: "#5000BA",
-              border: "1px solid #DDD6FE",
+              border: "1px solid var(--acento-linea)",
               borderRadius: "8px",
               padding: "5px 9px",
               fontSize: "0.75rem",
@@ -1018,9 +1018,9 @@ export function GestionRedProfesionalWidget() {
             title="Configurar disponibilidad de citas presenciales y teleconsulta"
             aria-label="Configurar horarios de citas"
             style={{
-              background: "#ECFDF5",
+              background: "var(--exito-diluido)",
               color: "#05876E",
-              border: "1px solid #A7F3D0",
+              border: "1px solid var(--exito-linea)",
               borderRadius: "8px",
               padding: "5px 9px",
               fontSize: "0.75rem",
@@ -1042,9 +1042,9 @@ export function GestionRedProfesionalWidget() {
             title="Enviar notificación Push/In-App y correo electrónico de confirmación de nuevo rol al abogado"
             aria-label="Notificar al abogado"
             style={{
-              background: "#EFF6FF",
-              color: "#1D4ED8",
-              border: "1px solid #BFDBFE",
+              background: "var(--acento-diluido)",
+              color: "var(--acento-hondo)",
+              border: "1px solid var(--acento-linea)",
               borderRadius: "8px",
               padding: "5px 9px",
               fontSize: "0.75rem",
@@ -1066,9 +1066,9 @@ export function GestionRedProfesionalWidget() {
             title="Ver historial completo de asignación, aceptación y cambios de rol"
             aria-label="Ver historial de cambios de rol"
             style={{
-              background: "#F8FAFC",
-              color: "#334155",
-              border: "1px solid #CBD5E1",
+              background: "var(--fondo-suave)",
+              color: "var(--texto-2)",
+              border: "1px solid var(--linea-fuerte)",
               borderRadius: "8px",
               padding: "5px 9px",
               fontSize: "0.75rem",
@@ -1090,9 +1090,9 @@ export function GestionRedProfesionalWidget() {
             title={a.estado === "verificado" ? "Suspender socio abogado" : "Activar / Reactivar rol de socio abogado"}
             aria-label={a.estado === "verificado" ? "Suspender abogado" : "Activar abogado"}
             style={{
-              background: a.estado === "verificado" ? "#FFFBEB" : "#ECFDF5",
-              color: a.estado === "verificado" ? "#B45309" : "#065F46",
-              border: a.estado === "verificado" ? "1px solid #FDE68A" : "1px solid #A7F3D0",
+              background: a.estado === "verificado" ? "var(--aviso-diluido)" : "var(--exito-diluido)",
+              color: a.estado === "verificado" ? "var(--aviso-texto)" : "var(--exito-texto)",
+              border: a.estado === "verificado" ? "1px solid var(--aviso-linea)" : "1px solid var(--exito-linea)",
               borderRadius: "8px",
               padding: "5px 9px",
               fontSize: "0.75rem",
@@ -1117,9 +1117,9 @@ export function GestionRedProfesionalWidget() {
               title="Dar de baja lógica el rol de socio abogado (verifica que no tenga casos asignados y registra en el historial)"
               aria-label="Dar de baja rol de abogado"
               style={{
-                background: "#FEF2F2",
-                color: "#DC2626",
-                border: "1px solid #FECACA",
+                background: "var(--error-diluido)",
+                color: "var(--error)",
+                border: "1px solid var(--error-linea)",
                 borderRadius: "8px",
                 padding: "5px 9px",
                 fontSize: "0.75rem",
@@ -1186,7 +1186,7 @@ export function GestionRedProfesionalWidget() {
             aria-label="Incorporar socio abogado"
             style={{
               background: "#FEE300",
-              color: "#111827",
+              color: "var(--texto)",
               border: "none",
               borderRadius: "10px",
               padding: "10px 16px",
@@ -1310,25 +1310,25 @@ export function GestionRedProfesionalWidget() {
           gap: "12px",
         }}
       >
-        <div style={{ background: "#ffffff", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px 16px" }}>
-          <span style={{ fontSize: "0.75rem", color: "#6B7280", fontWeight: 700 }}>Total Red Profesional</span>
-          <div style={{ fontSize: "1.5rem", fontWeight: 900, color: "#111827", marginTop: "4px" }}>{kpis.total}</div>
+        <div style={{ background: "#ffffff", border: "1px solid var(--linea)", borderRadius: "12px", padding: "14px 16px" }}>
+          <span style={{ fontSize: "0.75rem", color: "var(--texto-suave)", fontWeight: 700 }}>Total Red Profesional</span>
+          <div style={{ fontSize: "1.5rem", fontWeight: 900, color: "var(--texto)", marginTop: "4px" }}>{kpis.total}</div>
           <span style={{ fontSize: "0.72rem", color: "#05876E" }}>Abogados registrados</span>
         </div>
-        <div style={{ background: "#ffffff", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px 16px" }}>
-          <span style={{ fontSize: "0.75rem", color: "#6B7280", fontWeight: 700 }}>Socios Activos</span>
+        <div style={{ background: "#ffffff", border: "1px solid var(--linea)", borderRadius: "12px", padding: "14px 16px" }}>
+          <span style={{ fontSize: "0.75rem", color: "var(--texto-suave)", fontWeight: 700 }}>Socios Activos</span>
           <div style={{ fontSize: "1.5rem", fontWeight: 900, color: "#05876E", marginTop: "4px" }}>{kpis.activos}</div>
-          <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>Con vista de Abogado habilitada</span>
+          <span style={{ fontSize: "0.72rem", color: "var(--texto-suave)" }}>Con vista de Abogado habilitada</span>
         </div>
-        <div style={{ background: "#ffffff", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px 16px" }}>
-          <span style={{ fontSize: "0.75rem", color: "#6B7280", fontWeight: 700 }}>Alta Manual / Equipo</span>
+        <div style={{ background: "#ffffff", border: "1px solid var(--linea)", borderRadius: "12px", padding: "14px 16px" }}>
+          <span style={{ fontSize: "0.75rem", color: "var(--texto-suave)", fontWeight: 700 }}>Alta Manual / Equipo</span>
           <div style={{ fontSize: "1.5rem", fontWeight: 900, color: "#5000BA", marginTop: "4px" }}>{kpis.manuales}</div>
-          <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>Incorporados por operador</span>
+          <span style={{ fontSize: "0.72rem", color: "var(--texto-suave)" }}>Incorporados por operador</span>
         </div>
-        <div style={{ background: "#ffffff", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px 16px" }}>
-          <span style={{ fontSize: "0.75rem", color: "#6B7280", fontWeight: 700 }}>Con Agenda Activa</span>
-          <div style={{ fontSize: "1.5rem", fontWeight: 900, color: "#0284C7", marginTop: "4px" }}>{kpis.conAgenda}</div>
-          <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>Presencial y Teleconsulta</span>
+        <div style={{ background: "#ffffff", border: "1px solid var(--linea)", borderRadius: "12px", padding: "14px 16px" }}>
+          <span style={{ fontSize: "0.75rem", color: "var(--texto-suave)", fontWeight: 700 }}>Con Agenda Activa</span>
+          <div style={{ fontSize: "1.5rem", fontWeight: 900, color: "var(--acento)", marginTop: "4px" }}>{kpis.conAgenda}</div>
+          <span style={{ fontSize: "0.72rem", color: "var(--texto-suave)" }}>Presencial y Teleconsulta</span>
         </div>
       </div>
 
@@ -1339,9 +1339,9 @@ export function GestionRedProfesionalWidget() {
             borderRadius: "10px",
             fontSize: "0.85rem",
             fontWeight: 700,
-            background: mensaje.tipo === "ok" ? "#ECFDF5" : "#FEF2F2",
-            color: mensaje.tipo === "ok" ? "#065F46" : "#991B1B",
-            border: mensaje.tipo === "ok" ? "1px solid #10B981" : "1px solid #F87171",
+            background: mensaje.tipo === "ok" ? "var(--exito-diluido)" : "var(--error-diluido)",
+            color: mensaje.tipo === "ok" ? "var(--exito-texto)" : "var(--error-texto)",
+            border: mensaje.tipo === "ok" ? "1px solid var(--exito)" : "1px solid #F87171",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
@@ -1394,12 +1394,12 @@ export function GestionRedProfesionalWidget() {
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 900, color: "#111827" }}>
+                <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 900, color: "var(--texto)" }}>
                   {editandoAbogadoId
                     ? "Editar Ficha Profesional, Especialidades y Cobertura"
                     : "Incorporar Socio Abogado al Equipo"}
                 </h3>
-                <p style={{ margin: "4px 0 0 0", fontSize: "0.82rem", color: "#6B7280" }}>
+                <p style={{ margin: "4px 0 0 0", fontSize: "0.82rem", color: "var(--texto-suave)" }}>
                   {editandoAbogadoId
                     ? "Actualiza los datos mínimos, materias legales y zonas de cobertura."
                     : "Busca un usuario ya registrado en la plataforma para convertirlo en abogado o registra uno nuevo."}
@@ -1408,7 +1408,7 @@ export function GestionRedProfesionalWidget() {
               <button
                 type="button"
                 onClick={() => setModalAbierto(false)}
-                style={{ background: "#F3F4F6", border: "none", borderRadius: "50%", width: "34px", height: "34px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                style={{ background: "var(--fondo-hundido)", border: "none", borderRadius: "50%", width: "34px", height: "34px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
               >
                 <X size={18} />
               </button>
@@ -1427,9 +1427,9 @@ export function GestionRedProfesionalWidget() {
                       fontWeight: 800,
                       fontSize: "0.82rem",
                       cursor: "pointer",
-                      border: modoOrigenUsuario === "existente" ? "2px solid #05876E" : "1px solid #D1D5DB",
-                      background: modoOrigenUsuario === "existente" ? "#ECFDF5" : "#ffffff",
-                      color: modoOrigenUsuario === "existente" ? "#065F46" : "#374151",
+                      border: modoOrigenUsuario === "existente" ? "2px solid #05876E" : "1px solid var(--linea-fuerte)",
+                      background: modoOrigenUsuario === "existente" ? "var(--exito-diluido)" : "#ffffff",
+                      color: modoOrigenUsuario === "existente" ? "var(--exito-texto)" : "var(--texto-2)",
                     }}
                   >
                     1. Buscar Usuario Registrado en Plataforma
@@ -1447,9 +1447,9 @@ export function GestionRedProfesionalWidget() {
                       fontWeight: 800,
                       fontSize: "0.82rem",
                       cursor: "pointer",
-                      border: modoOrigenUsuario === "nuevo" ? "2px solid #5000BA" : "1px solid #D1D5DB",
-                      background: modoOrigenUsuario === "nuevo" ? "#F5F3FF" : "#ffffff",
-                      color: modoOrigenUsuario === "nuevo" ? "#5000BA" : "#374151",
+                      border: modoOrigenUsuario === "nuevo" ? "2px solid #5000BA" : "1px solid var(--linea-fuerte)",
+                      background: modoOrigenUsuario === "nuevo" ? "var(--acento-diluido)" : "#ffffff",
+                      color: modoOrigenUsuario === "nuevo" ? "#5000BA" : "var(--texto-2)",
                     }}
                   >
                     2. Crear Usuario Nuevo Directamente
@@ -1459,14 +1459,14 @@ export function GestionRedProfesionalWidget() {
                 {modoOrigenUsuario === "existente" && (
                   <div
                     style={{
-                      background: "#F9FAFB",
-                      border: "1px solid #E5E7EB",
+                      background: "var(--fondo-suave)",
+                      border: "1px solid var(--linea)",
                       borderRadius: "12px",
                       padding: "12px",
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                      <Search size={16} color="#6B7280" />
+                      <Search size={16} color="var(--texto-suave)" />
                       <input
                         type="text"
                         value={busquedaUsuario}
@@ -1476,7 +1476,7 @@ export function GestionRedProfesionalWidget() {
                           width: "100%",
                           padding: "8px 10px",
                           borderRadius: "8px",
-                          border: "1px solid #D1D5DB",
+                          border: "1px solid var(--linea-fuerte)",
                           fontSize: "0.84rem",
                         }}
                       />
@@ -1492,11 +1492,11 @@ export function GestionRedProfesionalWidget() {
                       }}
                     >
                       {buscandoUsuarios ? (
-                        <span style={{ fontSize: "0.78rem", color: "#6B7280", padding: "6px" }}>
+                        <span style={{ fontSize: "0.78rem", color: "var(--texto-suave)", padding: "6px" }}>
                           Buscando usuarios en la plataforma...
                         </span>
                       ) : usuariosEncontrados.length === 0 ? (
-                        <span style={{ fontSize: "0.78rem", color: "#6B7280", padding: "6px" }}>
+                        <span style={{ fontSize: "0.78rem", color: "var(--texto-suave)", padding: "6px" }}>
                           No se encontraron usuarios con ese criterio.
                         </span>
                       ) : (
@@ -1514,16 +1514,16 @@ export function GestionRedProfesionalWidget() {
                                 textAlign: "left",
                                 padding: "8px 10px",
                                 borderRadius: "8px",
-                                border: seleccionado ? "2px solid #05876E" : "1px solid #E5E7EB",
-                                background: seleccionado ? "#ECFDF5" : "#ffffff",
+                                border: seleccionado ? "2px solid #05876E" : "1px solid var(--linea)",
+                                background: seleccionado ? "var(--exito-diluido)" : "#ffffff",
                                 cursor: "pointer",
                               }}
                             >
                               <div>
-                                <strong style={{ fontSize: "0.82rem", color: "#111827" }}>
+                                <strong style={{ fontSize: "0.82rem", color: "var(--texto)" }}>
                                   {u.nombreCompleto}
                                 </strong>
-                                <span style={{ fontSize: "0.76rem", color: "#6B7280", marginLeft: "8px" }}>
+                                <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)", marginLeft: "8px" }}>
                                   {u.correo}
                                 </span>
                               </div>
@@ -1533,8 +1533,8 @@ export function GestionRedProfesionalWidget() {
                                   fontWeight: 800,
                                   padding: "2px 7px",
                                   borderRadius: "999px",
-                                  background: u.yaEsAbogado ? "#EDE9FE" : seleccionado ? "#05876E" : "#F3F4F6",
-                                  color: u.yaEsAbogado ? "#5B21B6" : seleccionado ? "#ffffff" : "#374151",
+                                  background: u.yaEsAbogado ? "var(--acento-diluido)" : seleccionado ? "#05876E" : "var(--fondo-hundido)",
+                                  color: u.yaEsAbogado ? "var(--acento-hondo)" : seleccionado ? "#ffffff" : "var(--texto-2)",
                                 }}
                               >
                                 {u.yaEsAbogado
@@ -1564,7 +1564,7 @@ export function GestionRedProfesionalWidget() {
                     value={nombres}
                     onChange={(e) => setNombres(e.target.value)}
                     placeholder="Ej. Carlos Andrés"
-                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)" }}
                   />
                 </label>
                 <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.8rem", fontWeight: 700 }}>
@@ -1575,7 +1575,7 @@ export function GestionRedProfesionalWidget() {
                     value={apellidos}
                     onChange={(e) => setApellidos(e.target.value)}
                     placeholder="Ej. Mendoza Paredes"
-                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)" }}
                   />
                 </label>
                 <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.8rem", fontWeight: 700 }}>
@@ -1586,7 +1586,7 @@ export function GestionRedProfesionalWidget() {
                     value={correo}
                     onChange={(e) => setCorreo(e.target.value)}
                     placeholder="abogado@dominio.com"
-                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)" }}
                   />
                 </label>
                 <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.8rem", fontWeight: 700 }}>
@@ -1597,7 +1597,7 @@ export function GestionRedProfesionalWidget() {
                     value={cedula}
                     onChange={(e) => setCedula(e.target.value)}
                     placeholder="1700000000"
-                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)" }}
                   />
                 </label>
                 <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.8rem", fontWeight: 700 }}>
@@ -1608,7 +1608,7 @@ export function GestionRedProfesionalWidget() {
                     value={matricula}
                     onChange={(e) => setMatricula(e.target.value)}
                     placeholder="Ej. 17-2019-452"
-                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)" }}
                   />
                 </label>
                 <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.8rem", fontWeight: 700 }}>
@@ -1619,7 +1619,7 @@ export function GestionRedProfesionalWidget() {
                     value={telefono}
                     onChange={(e) => setTelefono(e.target.value)}
                     placeholder="0990000000"
-                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)" }}
                   />
                 </label>
               </div>
@@ -1630,7 +1630,7 @@ export function GestionRedProfesionalWidget() {
                   <select
                     value={estadoAbogado}
                     onChange={(e) => setEstadoAbogado(e.target.value as "verificado" | "suspendido")}
-                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #D1D5DB", fontWeight: 700 }}
+                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontWeight: 700 }}
                   >
                     <option value="verificado">Activo (Verificado — Ve portal de Abogado)</option>
                     <option value="suspendido">Suspendido / Inactivo</option>
@@ -1644,7 +1644,7 @@ export function GestionRedProfesionalWidget() {
                     max={60}
                     value={anosExperiencia}
                     onChange={(e) => setAnosExperiencia(Number(e.target.value))}
-                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)" }}
                   />
                 </label>
                 <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.8rem", fontWeight: 700 }}>
@@ -1654,15 +1654,15 @@ export function GestionRedProfesionalWidget() {
                     value={universidad}
                     onChange={(e) => setUniversidad(e.target.value)}
                     placeholder="Ej. PUCE / USFQ / UCE"
-                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                    style={{ padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)" }}
                   />
                 </label>
               </div>
 
               {/* Selección y Gestión de Especialidades Legales */}
-              <div style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "12px" }}>
+              <div style={{ background: "var(--fondo-suave)", border: "1px solid var(--linea)", borderRadius: "12px", padding: "12px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
-                  <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#111827", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--texto)", display: "inline-flex", alignItems: "center", gap: "6px" }}>
                     <Scale size={15} color="#5000BA" />
                     Especialidades Legales ({materiasSeleccionadas.length} seleccionadas) *
                   </span>
@@ -1671,9 +1671,9 @@ export function GestionRedProfesionalWidget() {
                       type="button"
                       onClick={() => setModoGestionarEspecialidadesEnModal((prev) => !prev)}
                       style={{
-                        background: modoGestionarEspecialidadesEnModal ? "#5000BA" : "#F5F3FF",
+                        background: modoGestionarEspecialidadesEnModal ? "#5000BA" : "var(--acento-diluido)",
                         color: modoGestionarEspecialidadesEnModal ? "#ffffff" : "#5000BA",
-                        border: "1px solid #DDD6FE",
+                        border: "1px solid var(--acento-linea)",
                         borderRadius: "999px",
                         padding: "3px 10px",
                         fontSize: "0.73rem",
@@ -1711,7 +1711,7 @@ export function GestionRedProfesionalWidget() {
                       alignItems: "center",
                       marginBottom: "10px",
                       background: "#ffffff",
-                      border: "1px solid #DDD6FE",
+                      border: "1px solid var(--acento-linea)",
                       borderRadius: "10px",
                       padding: "8px 10px",
                     }}
@@ -1731,7 +1731,7 @@ export function GestionRedProfesionalWidget() {
                         flex: 1,
                         padding: "6px 10px",
                         borderRadius: "8px",
-                        border: "1px solid #D1D5DB",
+                        border: "1px solid var(--linea-fuerte)",
                         fontSize: "0.8rem",
                       }}
                     />
@@ -1774,9 +1774,9 @@ export function GestionRedProfesionalWidget() {
                           display: "inline-flex",
                           alignItems: "center",
                           borderRadius: "999px",
-                          border: activa ? "1.5px solid #5000BA" : "1px solid #D1D5DB",
+                          border: activa ? "1.5px solid #5000BA" : "1px solid var(--linea-fuerte)",
                           background: activa ? "#5000BA" : "#ffffff",
-                          color: activa ? "#ffffff" : "#374151",
+                          color: activa ? "#ffffff" : "var(--texto-2)",
                           overflow: "hidden",
                         }}
                       >
@@ -1806,7 +1806,7 @@ export function GestionRedProfesionalWidget() {
                               padding: "5px 8px 5px 4px",
                               border: "none",
                               background: "transparent",
-                              color: activa ? "#FECACA" : "#DC2626",
+                              color: activa ? "var(--error-linea)" : "var(--error)",
                               cursor: "pointer",
                               display: "inline-flex",
                               alignItems: "center",
@@ -1822,9 +1822,9 @@ export function GestionRedProfesionalWidget() {
               </div>
 
               {/* Selección de Zonas de Cobertura (Provincias) */}
-              <div style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "12px" }}>
+              <div style={{ background: "var(--fondo-suave)", border: "1px solid var(--linea)", borderRadius: "12px", padding: "12px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                  <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#111827", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--texto)", display: "inline-flex", alignItems: "center", gap: "6px" }}>
                     <MapPin size={15} color="#05876E" />
                     Zonas de Cobertura — Provincias ({provinciasSeleccionadas.length} seleccionadas) *
                   </span>
@@ -1858,9 +1858,9 @@ export function GestionRedProfesionalWidget() {
                           fontSize: "0.74rem",
                           fontWeight: 700,
                           cursor: "pointer",
-                          border: activa ? "1.5px solid #05876E" : "1px solid #D1D5DB",
+                          border: activa ? "1.5px solid #05876E" : "1px solid var(--linea-fuerte)",
                           background: activa ? "#05876E" : "#ffffff",
-                          color: activa ? "#ffffff" : "#374151",
+                          color: activa ? "#ffffff" : "var(--texto-2)",
                         }}
                       >
                         {p.cat_nombre}
@@ -1877,7 +1877,7 @@ export function GestionRedProfesionalWidget() {
                   style={{
                     padding: "9px 16px",
                     borderRadius: "10px",
-                    border: "1px solid #D1D5DB",
+                    border: "1px solid var(--linea-fuerte)",
                     background: "#ffffff",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -1934,17 +1934,17 @@ export function GestionRedProfesionalWidget() {
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px" }}>
               <div>
-                <h3 style={{ margin: 0, fontSize: "1.12rem", fontWeight: 900, color: "#111827" }}>
+                <h3 style={{ margin: 0, fontSize: "1.12rem", fontWeight: 900, color: "var(--texto)" }}>
                   Disponibilidad de Citas — {abogadoAgendaModal.nombreCompleto} ({huecosCalculadosModal} citas/semana)
                 </h3>
-                <p style={{ margin: "3px 0 0 0", fontSize: "0.8rem", color: "#6B7280" }}>
+                <p style={{ margin: "3px 0 0 0", fontSize: "0.8rem", color: "var(--texto-suave)" }}>
                   1. Horario Laborable Normal (Consultas Telemáticas y Consultas en Oficina) y parámetros de cita.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setAbogadoAgendaModal(null)}
-                style={{ background: "#F3F4F6", border: "none", borderRadius: "50%", width: "34px", height: "34px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                style={{ background: "var(--fondo-hundido)", border: "none", borderRadius: "50%", width: "34px", height: "34px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
               >
                 <X size={18} />
               </button>
@@ -1963,7 +1963,7 @@ export function GestionRedProfesionalWidget() {
                 <section
                   style={{
                     borderRadius: "16px",
-                    border: "1px solid #DDD6FE",
+                    border: "1px solid var(--acento-linea)",
                     background: "#FAF8FF",
                     padding: "16px",
                     display: "flex",
@@ -1989,10 +1989,10 @@ export function GestionRedProfesionalWidget() {
                         <Video size={17} />
                       </div>
                       <div>
-                        <h4 style={{ margin: 0, fontSize: "0.88rem", fontWeight: 800, color: "#0F172A" }}>
+                        <h4 style={{ margin: 0, fontSize: "0.88rem", fontWeight: 800, color: "var(--texto)" }}>
                           Horario Normal — Consultas Telemáticas
                         </h4>
-                        <p style={{ margin: "2px 0 0", fontSize: "0.72rem", color: "#64748B" }}>
+                        <p style={{ margin: "2px 0 0", fontSize: "0.72rem", color: "var(--texto-suave)" }}>
                           Videollamada (Por defecto Lun–Vie 08:00 a 19:00, Sáb 09:00 a 14:00)
                         </p>
                       </div>
@@ -2009,12 +2009,12 @@ export function GestionRedProfesionalWidget() {
                         }
                         style={{
                           borderRadius: "8px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid var(--linea-fuerte)",
                           background: "#FFFFFF",
                           padding: "5px 9px",
                           fontSize: "0.73rem",
                           fontWeight: 700,
-                          color: "#334155",
+                          color: "var(--texto-2)",
                           cursor: "pointer",
                         }}
                       >
@@ -2061,7 +2061,7 @@ export function GestionRedProfesionalWidget() {
                             justifyContent: "space-between",
                             gap: "8px",
                             borderRadius: "10px",
-                            border: "1px solid #E2E8F0",
+                            border: "1px solid var(--linea)",
                             background: "#FFFFFF",
                             padding: "7px 10px",
                           }}
@@ -2075,7 +2075,7 @@ export function GestionRedProfesionalWidget() {
                                 )
                               )
                             }
-                            style={{ padding: "6px 8px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.8rem", fontWeight: 600 }}
+                            style={{ padding: "6px 8px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontSize: "0.8rem", fontWeight: 600 }}
                           >
                             {DIAS_SEMANA_ORDENADOS.map((d) => (
                               <option key={d.dia} value={d.dia}>{d.nombre}</option>
@@ -2094,7 +2094,7 @@ export function GestionRedProfesionalWidget() {
                                   )
                                 )
                               }
-                              style={{ padding: "5px 7px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.8rem", fontWeight: 600 }}
+                              style={{ padding: "5px 7px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontSize: "0.8rem", fontWeight: 600 }}
                             />
                             <span>a</span>
                             <input
@@ -2107,7 +2107,7 @@ export function GestionRedProfesionalWidget() {
                                   )
                                 )
                               }
-                              style={{ padding: "5px 7px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.8rem", fontWeight: 600 }}
+                              style={{ padding: "5px 7px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontSize: "0.8rem", fontWeight: 600 }}
                             />
                           </div>
 
@@ -2116,9 +2116,9 @@ export function GestionRedProfesionalWidget() {
                             onClick={() => setFranjasAgenda((arr) => arr.filter((_, i) => i !== idx))}
                             title="Quitar día telemático"
                             style={{
-                              background: "#FFF1F2",
-                              color: "#E11D48",
-                              border: "1px solid #FEE2E2",
+                              background: "var(--error-diluido)",
+                              color: "var(--error)",
+                              border: "1px solid var(--error-diluido)",
                               borderRadius: "8px",
                               padding: "6px",
                               cursor: "pointer",
@@ -2135,8 +2135,8 @@ export function GestionRedProfesionalWidget() {
                 <section
                   style={{
                     borderRadius: "16px",
-                    border: "1px solid #CBD5E1",
-                    background: "#F8FAFC",
+                    border: "1px solid var(--linea-fuerte)",
+                    background: "var(--fondo-suave)",
                     padding: "16px",
                     display: "flex",
                     flexDirection: "column",
@@ -2150,7 +2150,7 @@ export function GestionRedProfesionalWidget() {
                           width: "34px",
                           height: "34px",
                           borderRadius: "10px",
-                          background: "#0F172A",
+                          background: "var(--texto)",
                           color: "#FFFFFF",
                           display: "flex",
                           alignItems: "center",
@@ -2161,10 +2161,10 @@ export function GestionRedProfesionalWidget() {
                         <Building2 size={17} />
                       </div>
                       <div>
-                        <h4 style={{ margin: 0, fontSize: "0.88rem", fontWeight: 800, color: "#0F172A" }}>
+                        <h4 style={{ margin: 0, fontSize: "0.88rem", fontWeight: 800, color: "var(--texto)" }}>
                           Horario Normal — Consultas en Oficina
                         </h4>
-                        <p style={{ margin: "2px 0 0", fontSize: "0.72rem", color: "#64748B" }}>
+                        <p style={{ margin: "2px 0 0", fontSize: "0.72rem", color: "var(--texto-suave)" }}>
                           Atención presencial en despacho (Por defecto Lun–Vie 09:00 a 17:30)
                         </p>
                       </div>
@@ -2181,12 +2181,12 @@ export function GestionRedProfesionalWidget() {
                         }
                         style={{
                           borderRadius: "8px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid var(--linea-fuerte)",
                           background: "#FFFFFF",
                           padding: "5px 9px",
                           fontSize: "0.73rem",
                           fontWeight: 700,
-                          color: "#334155",
+                          color: "var(--texto-2)",
                           cursor: "pointer",
                         }}
                       >
@@ -2203,7 +2203,7 @@ export function GestionRedProfesionalWidget() {
                         style={{
                           borderRadius: "8px",
                           border: "none",
-                          background: "#0F172A",
+                          background: "var(--texto)",
                           padding: "5px 10px",
                           fontSize: "0.73rem",
                           fontWeight: 700,
@@ -2233,7 +2233,7 @@ export function GestionRedProfesionalWidget() {
                             justifyContent: "space-between",
                             gap: "8px",
                             borderRadius: "10px",
-                            border: "1px solid #E2E8F0",
+                            border: "1px solid var(--linea)",
                             background: "#FFFFFF",
                             padding: "7px 10px",
                           }}
@@ -2247,7 +2247,7 @@ export function GestionRedProfesionalWidget() {
                                 )
                               )
                             }
-                            style={{ padding: "6px 8px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.8rem", fontWeight: 600 }}
+                            style={{ padding: "6px 8px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontSize: "0.8rem", fontWeight: 600 }}
                           >
                             {DIAS_SEMANA_ORDENADOS.map((d) => (
                               <option key={d.dia} value={d.dia}>{d.nombre}</option>
@@ -2255,7 +2255,7 @@ export function GestionRedProfesionalWidget() {
                           </select>
 
                           <div style={{ display: "flex", alignItems: "center", gap: "5px", fontSize: "0.78rem" }}>
-                            <Clock size={13} color="#0F172A" />
+                            <Clock size={13} color="var(--texto)" />
                             <input
                               type="time"
                               value={f.hora_inicio.slice(0, 5)}
@@ -2266,7 +2266,7 @@ export function GestionRedProfesionalWidget() {
                                   )
                                 )
                               }
-                              style={{ padding: "5px 7px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.8rem", fontWeight: 600 }}
+                              style={{ padding: "5px 7px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontSize: "0.8rem", fontWeight: 600 }}
                             />
                             <span>a</span>
                             <input
@@ -2279,7 +2279,7 @@ export function GestionRedProfesionalWidget() {
                                   )
                                 )
                               }
-                              style={{ padding: "5px 7px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.8rem", fontWeight: 600 }}
+                              style={{ padding: "5px 7px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontSize: "0.8rem", fontWeight: 600 }}
                             />
                           </div>
 
@@ -2288,9 +2288,9 @@ export function GestionRedProfesionalWidget() {
                             onClick={() => setFranjasAgenda((arr) => arr.filter((_, i) => i !== idx))}
                             title="Quitar día presencial"
                             style={{
-                              background: "#FFF1F2",
-                              color: "#E11D48",
-                              border: "1px solid #FEE2E2",
+                              background: "var(--error-diluido)",
+                              color: "var(--error)",
+                              border: "1px solid var(--error-diluido)",
                               borderRadius: "8px",
                               padding: "6px",
                               cursor: "pointer",
@@ -2303,7 +2303,7 @@ export function GestionRedProfesionalWidget() {
                   </div>
 
                   <div style={{ paddingTop: "4px" }}>
-                    <label style={{ display: "block", fontSize: "0.74rem", fontWeight: 700, color: "#475569", marginBottom: "5px" }}>
+                    <label style={{ display: "block", fontSize: "0.74rem", fontWeight: 700, color: "var(--texto-2)", marginBottom: "5px" }}>
                       Dirección de la Oficina para Consultas Presenciales
                     </label>
                     <input
@@ -2311,20 +2311,20 @@ export function GestionRedProfesionalWidget() {
                       value={configAgenda.direccion ?? ""}
                       onChange={(e) => setConfigAgenda({ ...configAgenda, direccion: e.target.value })}
                       placeholder="Ej. Despacho Central Tranqi · Quito, Ecuador"
-                      style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", fontWeight: 600 }}
+                      style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)", fontSize: "0.82rem", fontWeight: 600 }}
                     />
                   </div>
                 </section>
               </div>
 
               {/* Parámetros de cita */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px", background: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "12px", padding: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "10px", background: "var(--fondo-suave)", border: "1px solid var(--linea)", borderRadius: "12px", padding: "12px" }}>
                 <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.78rem", fontWeight: 700 }}>
                   Duración Cita
                   <select
                     value={configAgenda.duracion_cita_min}
                     onChange={(e) => setConfigAgenda({ ...configAgenda, duracion_cita_min: Number(e.target.value) })}
-                    style={{ padding: "8px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                    style={{ padding: "8px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)" }}
                   >
                     {[15, 30, 45, 60, 90].map((n) => (
                       <option key={n} value={n}>{n} minutos</option>
@@ -2337,7 +2337,7 @@ export function GestionRedProfesionalWidget() {
                   <select
                     value={configAgenda.holgura_min}
                     onChange={(e) => setConfigAgenda({ ...configAgenda, holgura_min: Number(e.target.value) })}
-                    style={{ padding: "8px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                    style={{ padding: "8px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)" }}
                   >
                     {[0, 5, 10, 15, 30].map((n) => (
                       <option key={n} value={n}>{n} minutos</option>
@@ -2350,7 +2350,7 @@ export function GestionRedProfesionalWidget() {
                   <select
                     value={configAgenda.antelacion_minima_horas}
                     onChange={(e) => setConfigAgenda({ ...configAgenda, antelacion_minima_horas: Number(e.target.value) })}
-                    style={{ padding: "8px", borderRadius: "8px", border: "1px solid #D1D5DB" }}
+                    style={{ padding: "8px", borderRadius: "8px", border: "1px solid var(--linea-fuerte)" }}
                   >
                     {[1, 2, 6, 12, 24, 48].map((n) => (
                       <option key={n} value={n}>{n} horas</option>
@@ -2366,7 +2366,7 @@ export function GestionRedProfesionalWidget() {
                   style={{
                     padding: "9px 16px",
                     borderRadius: "10px",
-                    border: "1px solid #D1D5DB",
+                    border: "1px solid var(--linea-fuerte)",
                     background: "#ffffff",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -2430,7 +2430,7 @@ export function GestionRedProfesionalWidget() {
                     fontWeight: 800,
                     textTransform: "uppercase",
                     letterSpacing: "0.05em",
-                    background: "#F5F3FF",
+                    background: "var(--acento-diluido)",
                     color: "#5000BA",
                     padding: "3px 9px",
                     borderRadius: "999px",
@@ -2438,17 +2438,17 @@ export function GestionRedProfesionalWidget() {
                 >
                   Convocatoria de Red Profesional
                 </span>
-                <h3 style={{ margin: "6px 0 2px 0", fontSize: "1.15rem", fontWeight: 900, color: "#111827" }}>
+                <h3 style={{ margin: "6px 0 2px 0", fontSize: "1.15rem", fontWeight: 900, color: "var(--texto)" }}>
                   Invitar Abogados por Correo Electrónico
                 </h3>
-                <p style={{ margin: 0, fontSize: "0.82rem", color: "#6B7280" }}>
+                <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--texto-suave)" }}>
                   Ingresa uno o varios correos o carga un archivo con tu lista para enviar el enlace oficial de registro.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setModalInvitarAbierto(false)}
-                style={{ background: "#F3F4F6", border: "none", borderRadius: "50%", width: "34px", height: "34px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                style={{ background: "var(--fondo-hundido)", border: "none", borderRadius: "50%", width: "34px", height: "34px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
               >
                 <X size={18} />
               </button>
@@ -2458,8 +2458,8 @@ export function GestionRedProfesionalWidget() {
               {/* Enlace destino informativo */}
               <div
                 style={{
-                  background: "#ECFDF5",
-                  border: "1px solid #A7F3D0",
+                  background: "var(--exito-diluido)",
+                  border: "1px solid var(--exito-linea)",
                   borderRadius: "12px",
                   padding: "12px 14px",
                   display: "flex",
@@ -2469,7 +2469,7 @@ export function GestionRedProfesionalWidget() {
                   gap: "8px",
                 }}
               >
-                <div style={{ fontSize: "0.8rem", color: "#065F46" }}>
+                <div style={{ fontSize: "0.8rem", color: "var(--exito-texto)" }}>
                   <strong>Enlace incluido en el correo:</strong>{" "}
                   <a
                     href="https://www.tranqi24.com/abogados"
@@ -2483,9 +2483,9 @@ export function GestionRedProfesionalWidget() {
               </div>
 
               {/* Entrada de correo individual o pegado de lista + carga de archivo CSV/TXT */}
-              <div style={{ background: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "14px" }}>
+              <div style={{ background: "var(--fondo-suave)", border: "1px solid var(--linea)", borderRadius: "12px", padding: "14px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "8px" }}>
-                  <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "#111827" }}>
+                  <span style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--texto)" }}>
                     1. Ingresar correo(s) o pegar lista de correos
                   </span>
                   <label
@@ -2493,9 +2493,9 @@ export function GestionRedProfesionalWidget() {
                     title="Cargar un archivo .CSV o .TXT con una lista de correos electrónicos"
                     aria-label="Cargar lista de correos desde archivo"
                     style={{
-                      background: "#F5F3FF",
+                      background: "var(--acento-diluido)",
                       color: "#5000BA",
-                      border: "1px solid #DDD6FE",
+                      border: "1px solid var(--acento-linea)",
                       borderRadius: "8px",
                       padding: "6px 12px",
                       fontSize: "0.76rem",
@@ -2526,14 +2526,14 @@ export function GestionRedProfesionalWidget() {
                     width: "100%",
                     padding: "10px",
                     borderRadius: "8px",
-                    border: "1px solid #D1D5DB",
+                    border: "1px solid var(--linea-fuerte)",
                     fontSize: "0.82rem",
                     fontFamily: "inherit",
                   }}
                 />
 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px", flexWrap: "wrap", gap: "8px" }}>
-                  <span style={{ fontSize: "0.74rem", color: "#6B7280" }}>
+                  <span style={{ fontSize: "0.74rem", color: "var(--texto-suave)" }}>
                     Detecta automáticamente todos los correos pegados o del archivo cargado.
                   </span>
                   <button
@@ -2563,9 +2563,9 @@ export function GestionRedProfesionalWidget() {
               </div>
 
               {/* Lista de destinatarios en cola */}
-              <div style={{ background: "#ffffff", border: "1px solid #E5E7EB", borderRadius: "12px", padding: "12px" }}>
+              <div style={{ background: "#ffffff", border: "1px solid var(--linea)", borderRadius: "12px", padding: "12px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                  <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "#111827" }}>
+                  <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--texto)" }}>
                     Destinatarios en lista ({listaCorreosInvitar.length})
                   </span>
                   {listaCorreosInvitar.length > 0 && (
@@ -2575,7 +2575,7 @@ export function GestionRedProfesionalWidget() {
                       style={{
                         background: "none",
                         border: "none",
-                        color: "#DC2626",
+                        color: "var(--error)",
                         fontSize: "0.75rem",
                         fontWeight: 700,
                         cursor: "pointer",
@@ -2587,7 +2587,7 @@ export function GestionRedProfesionalWidget() {
                 </div>
 
                 {listaCorreosInvitar.length === 0 ? (
-                  <p style={{ margin: 0, fontSize: "0.78rem", color: "#9CA3AF" }}>
+                  <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--texto-tenue)" }}>
                     Aún no has agregado correos a la lista (también puedes escribir arriba y pulsar directamente &quot;Enviar Invitaciones&quot;).
                   </p>
                 ) : (
@@ -2599,9 +2599,9 @@ export function GestionRedProfesionalWidget() {
                           display: "inline-flex",
                           alignItems: "center",
                           gap: "6px",
-                          background: "#F5F3FF",
+                          background: "var(--acento-diluido)",
                           color: "#5000BA",
-                          border: "1px solid #DDD6FE",
+                          border: "1px solid var(--acento-linea)",
                           borderRadius: "999px",
                           padding: "3px 10px",
                           fontSize: "0.75rem",
@@ -2641,7 +2641,7 @@ export function GestionRedProfesionalWidget() {
                   style={{
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #D1D5DB",
+                    border: "1px solid var(--linea-fuerte)",
                     fontSize: "0.82rem",
                     fontFamily: "inherit",
                   }}
@@ -2655,7 +2655,7 @@ export function GestionRedProfesionalWidget() {
                   style={{
                     padding: "9px 16px",
                     borderRadius: "10px",
-                    border: "1px solid #D1D5DB",
+                    border: "1px solid var(--linea-fuerte)",
                     background: "#ffffff",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -2727,7 +2727,7 @@ export function GestionRedProfesionalWidget() {
                     fontWeight: 800,
                     textTransform: "uppercase",
                     letterSpacing: "0.05em",
-                    background: "#F5F3FF",
+                    background: "var(--acento-diluido)",
                     color: "#5000BA",
                     padding: "3px 9px",
                     borderRadius: "999px",
@@ -2735,17 +2735,17 @@ export function GestionRedProfesionalWidget() {
                 >
                   Catálogo Jurídico · tranqi
                 </span>
-                <h3 style={{ margin: "6px 0 2px 0", fontSize: "1.15rem", fontWeight: 900, color: "#111827" }}>
+                <h3 style={{ margin: "6px 0 2px 0", fontSize: "1.15rem", fontWeight: 900, color: "var(--texto)" }}>
                   Gestionar Especialidades Legales ({materiasCat.length})
                 </h3>
-                <p style={{ margin: 0, fontSize: "0.82rem", color: "#6B7280" }}>
+                <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--texto-suave)" }}>
                   Agrega nuevas especialidades o elimina las que ya no requieras en el directorio profesional.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setModalEspecialidadesAbierto(false)}
-                style={{ background: "#F3F4F6", border: "none", borderRadius: "50%", width: "34px", height: "34px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
+                style={{ background: "var(--fondo-hundido)", border: "none", borderRadius: "50%", width: "34px", height: "34px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
               >
                 <X size={18} />
               </button>
@@ -2755,8 +2755,8 @@ export function GestionRedProfesionalWidget() {
               {/* Formulario para agregar nueva especialidad */}
               <div
                 style={{
-                  background: "#F9FAFB",
-                  border: "1px solid #E5E7EB",
+                  background: "var(--fondo-suave)",
+                  border: "1px solid var(--linea)",
                   borderRadius: "12px",
                   padding: "12px",
                   display: "flex",
@@ -2779,7 +2779,7 @@ export function GestionRedProfesionalWidget() {
                     flex: 1,
                     padding: "9px 12px",
                     borderRadius: "8px",
-                    border: "1px solid #D1D5DB",
+                    border: "1px solid var(--linea-fuerte)",
                     fontSize: "0.84rem",
                   }}
                 />
@@ -2814,7 +2814,7 @@ export function GestionRedProfesionalWidget() {
               {/* Lista de especialidades existentes */}
               <div
                 style={{
-                  border: "1px solid #E5E7EB",
+                  border: "1px solid var(--linea)",
                   borderRadius: "12px",
                   padding: "12px",
                   maxHeight: "340px",
@@ -2825,7 +2825,7 @@ export function GestionRedProfesionalWidget() {
                 }}
               >
                 {materiasCat.length === 0 ? (
-                  <span style={{ fontSize: "0.8rem", color: "#9CA3AF" }}>
+                  <span style={{ fontSize: "0.8rem", color: "var(--texto-tenue)" }}>
                     No hay especialidades registradas.
                   </span>
                 ) : (
@@ -2838,11 +2838,11 @@ export function GestionRedProfesionalWidget() {
                         alignItems: "center",
                         padding: "8px 12px",
                         borderRadius: "10px",
-                        border: "1px solid #E5E7EB",
+                        border: "1px solid var(--linea)",
                         background: "#ffffff",
                       }}
                     >
-                      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#111827", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--texto)", display: "inline-flex", alignItems: "center", gap: "6px" }}>
                         <Scale size={14} color="#5000BA" />
                         {m.mat_nombre}
                       </span>
@@ -2853,9 +2853,9 @@ export function GestionRedProfesionalWidget() {
                         title={`Eliminar especialidad "${m.mat_nombre}"`}
                         aria-label={`Eliminar ${m.mat_nombre}`}
                         style={{
-                          background: "#FEF2F2",
-                          color: "#DC2626",
-                          border: "1px solid #FECACA",
+                          background: "var(--error-diluido)",
+                          color: "var(--error)",
+                          border: "1px solid var(--error-linea)",
                           borderRadius: "6px",
                           padding: "4px 6px",
                           cursor: "pointer",
@@ -2916,7 +2916,7 @@ export function GestionRedProfesionalWidget() {
               maxHeight: "88vh",
               overflowY: "auto",
               boxShadow: "0 25px 50px -12px rgba(0,0,0,0.3)",
-              border: "1px solid #E5E7EB",
+              border: "1px solid var(--linea)",
               padding: "24px",
             }}
           >
@@ -2928,7 +2928,7 @@ export function GestionRedProfesionalWidget() {
                     fontWeight: 800,
                     textTransform: "uppercase",
                     letterSpacing: "0.05em",
-                    background: "#F5F3FF",
+                    background: "var(--acento-diluido)",
                     color: "#5000BA",
                     padding: "3px 9px",
                     borderRadius: "999px",
@@ -2936,10 +2936,10 @@ export function GestionRedProfesionalWidget() {
                 >
                   Trazabilidad & Auditoría de Rol
                 </span>
-                <h3 style={{ margin: "6px 0 2px 0", fontSize: "1.15rem", fontWeight: 900, color: "#111827" }}>
+                <h3 style={{ margin: "6px 0 2px 0", fontSize: "1.15rem", fontWeight: 900, color: "var(--texto)" }}>
                   Historial de Cambios de Rol — {abogadoHistorialModal.nombreCompleto}
                 </h3>
-                <p style={{ margin: 0, fontSize: "0.82rem", color: "#6B7280" }}>
+                <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--texto-suave)" }}>
                   {abogadoHistorialModal.correo} · Cédula: {abogadoHistorialModal.cedula || "—"} · Casos activos:{" "}
                   <b>{abogadoHistorialModal.casosAsignadosActivos || 0}</b>
                 </p>
@@ -2948,7 +2948,7 @@ export function GestionRedProfesionalWidget() {
                 type="button"
                 onClick={() => setAbogadoHistorialModal(null)}
                 style={{
-                  background: "#F3F4F6",
+                  background: "var(--fondo-hundido)",
                   border: "none",
                   borderRadius: "50%",
                   width: "34px",
@@ -2965,7 +2965,7 @@ export function GestionRedProfesionalWidget() {
 
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {(abogadoHistorialModal.historialCambiosRol || []).length === 0 ? (
-                <p style={{ fontSize: "0.85rem", color: "#6B7280", textAlign: "center", padding: "20px" }}>
+                <p style={{ fontSize: "0.85rem", color: "var(--texto-suave)", textAlign: "center", padding: "20px" }}>
                   No se registran movimientos adicionales en el historial.
                 </p>
               ) : (
@@ -2981,23 +2981,23 @@ export function GestionRedProfesionalWidget() {
                     : "—";
                   const badgeColor =
                     item.estadoResultante === "activo"
-                      ? { bg: "#ECFDF5", fg: "#065F46", label: "✓ Rol Activo" }
+                      ? { bg: "var(--exito-diluido)", fg: "var(--exito-texto)", label: "✓ Rol Activo" }
                       : item.estadoResultante === "baja_logica"
-                        ? { bg: "#FEF2F2", fg: "#991B1B", label: "Baja Lógica" }
+                        ? { bg: "var(--error-diluido)", fg: "var(--error-texto)", label: "Baja Lógica" }
                         : item.estadoResultante === "suspendido"
-                          ? { bg: "#FFFBEB", fg: "#92400E", label: "Suspendido" }
+                          ? { bg: "var(--aviso-diluido)", fg: "var(--aviso-texto)", label: "Suspendido" }
                           : item.estadoResultante === "rechazado"
-                            ? { bg: "#FEF2F2", fg: "#991B1B", label: "Rechazado" }
-                            : { bg: "#EFF6FF", fg: "#1D4ED8", label: "Pendiente Aceptación" };
+                            ? { bg: "var(--error-diluido)", fg: "var(--error-texto)", label: "Rechazado" }
+                            : { bg: "var(--acento-diluido)", fg: "var(--acento-hondo)", label: "Pendiente Aceptación" };
 
                   return (
                     <div
                       key={item.id}
                       style={{
-                        border: "1px solid #E5E7EB",
+                        border: "1px solid var(--linea)",
                         borderRadius: "12px",
                         padding: "12px 14px",
-                        background: "#F9FAFB",
+                        background: "var(--fondo-suave)",
                         display: "flex",
                         flexDirection: "column",
                         gap: "6px",
@@ -3017,18 +3017,18 @@ export function GestionRedProfesionalWidget() {
                           >
                             {badgeColor.label}
                           </span>
-                          <strong style={{ fontSize: "0.84rem", color: "#111827" }}>
+                          <strong style={{ fontSize: "0.84rem", color: "var(--texto)" }}>
                             {item.accion.replace(/_/g, " ")} ({item.rol})
                           </strong>
                         </div>
-                        <span style={{ fontSize: "0.76rem", color: "#6B7280", fontWeight: 700 }}>
+                        <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)", fontWeight: 700 }}>
                           {fechaFmt}
                         </span>
                       </div>
 
-                      <p style={{ margin: 0, fontSize: "0.82rem", color: "#374151" }}>{item.detalle}</p>
+                      <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--texto-2)" }}>{item.detalle}</p>
 
-                      <div style={{ fontSize: "0.75rem", color: "#6B7280" }}>
+                      <div style={{ fontSize: "0.75rem", color: "var(--texto-suave)" }}>
                         <b>Ejecutado por:</b> {item.ejecutadoPorNombre}{" "}
                         {item.ejecutadoPorCorreo ? `(${item.ejecutadoPorCorreo})` : ""}
                       </div>

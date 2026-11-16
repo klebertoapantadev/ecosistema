@@ -106,9 +106,9 @@ export default function ListaCitasCliente({
           style={{
             padding: "10px 14px",
             borderRadius: "10px",
-            background: "#FEF2F2",
-            border: "1px solid #FECACA",
-            color: "#991B1B",
+            background: "var(--error-diluido)",
+            border: "1px solid var(--error-linea)",
+            color: "var(--error-texto)",
             fontSize: "0.84rem",
             fontWeight: 700,
             marginBottom: "10px",
@@ -122,9 +122,9 @@ export default function ListaCitasCliente({
           style={{
             padding: "10px 14px",
             borderRadius: "10px",
-            background: "#ECFDF5",
-            border: "1px solid #A7F3D0",
-            color: "#065F46",
+            background: "var(--exito-diluido)",
+            border: "1px solid var(--exito-linea)",
+            color: "var(--exito-texto)",
             fontSize: "0.84rem",
             fontWeight: 700,
             marginBottom: "10px",
@@ -167,8 +167,8 @@ export default function ListaCitasCliente({
                 key={c.cit_id}
                 className="agenda-cita"
                 style={{
-                  background: "#F1F5F9",
-                  border: "1px solid #CBD5E1",
+                  background: "var(--fondo-hundido)",
+                  border: "1px solid var(--linea-fuerte)",
                   padding: "12px 16px",
                   opacity: 0.78,
                 }}
@@ -190,7 +190,7 @@ export default function ListaCitasCliente({
                       flexWrap: "wrap",
                     }}
                   >
-                    <strong style={{ textTransform: "capitalize", color: "#475569", fontSize: "0.92rem" }}>
+                    <strong style={{ textTransform: "capitalize", color: "var(--texto-2)", fontSize: "0.92rem" }}>
                       {FORMATO.format(inicio)}
                     </strong>
                     <span
@@ -199,8 +199,8 @@ export default function ListaCitasCliente({
                         borderRadius: "999px",
                         fontSize: "0.72rem",
                         fontWeight: 700,
-                        background: "#E2E8F0",
-                        color: "#475569",
+                        background: "var(--linea)",
+                        color: "var(--texto-2)",
                       }}
                     >
                       {c.cit_modalidad === "virtual" ? "🎥 Videollamada" : "🏢 Presencial"}
@@ -212,15 +212,15 @@ export default function ListaCitasCliente({
                           borderRadius: "999px",
                           fontSize: "0.72rem",
                           fontWeight: 700,
-                          background: "#E2E8F0",
-                          color: "#475569",
+                          background: "var(--linea)",
+                          color: "var(--texto-2)",
                         }}
                       >
                         ⚖️ {c.materia_nombre}
                       </span>
                     )}
                     {c.abogado_nombre && (
-                      <span style={{ fontSize: "0.8rem", color: "#475569" }}>
+                      <span style={{ fontSize: "0.8rem", color: "var(--texto-2)" }}>
                         · 👨‍⚖️ Dr(a). {c.abogado_nombre}
                       </span>
                     )}
@@ -233,9 +233,9 @@ export default function ListaCitasCliente({
                         borderRadius: "999px",
                         fontSize: "0.73rem",
                         fontWeight: 800,
-                        background: "#E2E8F0",
-                        color: "#334155",
-                        border: "1px solid #CBD5E1",
+                        background: "var(--linea)",
+                        color: "var(--texto-2)",
+                        border: "1px solid var(--linea-fuerte)",
                       }}
                     >
                       ✅ Consulta Realizada
@@ -252,9 +252,9 @@ export default function ListaCitasCliente({
                         gap: "5px",
                         padding: "5px 10px",
                         borderRadius: "8px",
-                        border: "1px solid #94A3B8",
-                        background: verTracking ? "#334155" : "#FFFFFF",
-                        color: verTracking ? "#FFFFFF" : "#334155",
+                        border: "1px solid var(--texto-tenue)",
+                        background: verTracking ? "var(--texto-2)" : "#FFFFFF",
+                        color: verTracking ? "#FFFFFF" : "var(--texto-2)",
                         fontSize: "0.75rem",
                         fontWeight: 800,
                         cursor: "pointer",
@@ -318,7 +318,7 @@ export default function ListaCitasCliente({
                     margin: "4px 0 6px 0",
                     fontSize: "0.84rem",
                     fontWeight: 700,
-                    color: "#059669",
+                    color: "var(--exito)",
                   }}
                 >
                   👨‍⚖️ Abogado asignado: Dr(a). {c.abogado_nombre}
@@ -331,8 +331,8 @@ export default function ListaCitasCliente({
                     margin: "6px 0",
                     padding: "8px 12px",
                     borderRadius: "8px",
-                    background: "#F5F3FF",
-                    border: "1px solid #DDD6FE",
+                    background: "var(--acento-diluido)",
+                    border: "1px solid var(--acento-linea)",
                     fontSize: "0.8rem",
                     color: "#4C1D95",
                   }}
@@ -348,15 +348,15 @@ export default function ListaCitasCliente({
                       margin: "6px 0",
                       padding: "8px 12px",
                       borderRadius: "8px",
-                      background: "#F8FAFC",
-                      border: "1px solid #E2E8F0",
+                      background: "var(--fondo-suave)",
+                      border: "1px solid var(--linea)",
                       fontSize: "0.8rem",
                     }}
                   >
-                    <strong style={{ display: "block", marginBottom: "4px", color: "#0F172A" }}>
+                    <strong style={{ display: "block", marginBottom: "4px", color: "var(--texto)" }}>
                       📌 Siguientes pasos acordados en tu consulta:
                     </strong>
-                    <ul style={{ margin: 0, paddingLeft: "18px", color: "#334155" }}>
+                    <ul style={{ margin: 0, paddingLeft: "18px", color: "var(--texto-2)" }}>
                       {c.gestion_reunion.siguientes_pasos.map((p) => (
                         <li key={p.id}>
                           {p.descripcion} —{" "}
@@ -377,8 +377,8 @@ export default function ListaCitasCliente({
                       margin: "8px 0",
                       padding: "10px 12px",
                       borderRadius: "10px",
-                      background: "#F5F3FF",
-                      border: "1px solid #DDD6FE",
+                      background: "var(--acento-diluido)",
+                      border: "1px solid var(--acento-linea)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
@@ -386,7 +386,7 @@ export default function ListaCitasCliente({
                       gap: "10px",
                     }}
                   >
-                    <div style={{ fontSize: "0.82rem", color: "#1E293B" }}>
+                    <div style={{ fontSize: "0.82rem", color: "var(--texto)" }}>
                       <strong>📹 Enlace para tu consulta telemática:</strong>{" "}
                       <a
                         href={c.cit_enlace}
@@ -435,7 +435,7 @@ export default function ListaCitasCliente({
                   flexWrap: "wrap",
                   marginTop: "10px",
                   paddingTop: "8px",
-                  borderTop: "1px solid #F1F5F9",
+                  borderTop: "1px solid var(--fondo-hundido)",
                 }}
               >
                 <button
@@ -449,9 +449,9 @@ export default function ListaCitasCliente({
                     gap: "5px",
                     padding: "7px 12px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    background: verTracking ? "#0F172A" : "#FFFFFF",
-                    color: verTracking ? "#FFFFFF" : "#334155",
+                    border: "1px solid var(--linea-fuerte)",
+                    background: verTracking ? "var(--texto)" : "#FFFFFF",
+                    color: verTracking ? "#FFFFFF" : "var(--texto-2)",
                     fontSize: "0.78rem",
                     fontWeight: 800,
                     cursor: "pointer",
@@ -486,8 +486,8 @@ export default function ListaCitasCliente({
                       gap: "5px",
                       padding: "7px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #C4B5FD",
-                      background: reagendando === c.cit_id ? "#5000BA" : "#F5F3FF",
+                      border: "1px solid var(--acento-linea)",
+                      background: reagendando === c.cit_id ? "#5000BA" : "var(--acento-diluido)",
                       color: reagendando === c.cit_id ? "#FFFFFF" : "#5000BA",
                       fontSize: "0.78rem",
                       fontWeight: 800,
@@ -512,7 +512,7 @@ export default function ListaCitasCliente({
                         gap: "5px",
                         padding: "7px 11px",
                         borderRadius: "8px",
-                        border: "1px solid #DDD6FE",
+                        border: "1px solid var(--acento-linea)",
                         background: "#FFFFFF",
                         color: "#5000BA",
                         fontSize: "0.76rem",
@@ -532,9 +532,9 @@ export default function ListaCitasCliente({
                         gap: "5px",
                         padding: "7px 11px",
                         borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid var(--linea-fuerte)",
                         background: "#FFFFFF",
-                        color: "#334155",
+                        color: "var(--texto-2)",
                         fontSize: "0.76rem",
                         fontWeight: 700,
                         textDecoration: "none",
@@ -564,8 +564,8 @@ export default function ListaCitasCliente({
                     marginTop: "10px",
                     padding: "12px 14px",
                     borderRadius: "10px",
-                    background: "#F5F3FF",
-                    border: "1px solid #C4B5FD",
+                    background: "var(--acento-diluido)",
+                    border: "1px solid var(--acento-linea)",
                     display: "flex",
                     flexDirection: "column",
                     gap: "8px",
@@ -591,7 +591,7 @@ export default function ListaCitasCliente({
                       style={{
                         padding: "8px 10px",
                         borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid var(--linea-fuerte)",
                         background: "#FFFFFF",
                         fontSize: "0.82rem",
                       }}
@@ -608,7 +608,7 @@ export default function ListaCitasCliente({
                       style={{
                         padding: "8px 10px",
                         borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid var(--linea-fuerte)",
                         background: "#FFFFFF",
                         fontSize: "0.82rem",
                       }}

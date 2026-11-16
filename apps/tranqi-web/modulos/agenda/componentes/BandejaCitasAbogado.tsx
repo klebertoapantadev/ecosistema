@@ -466,8 +466,8 @@ export default function BandejaCitasAbogado({
                 textAlign: "left",
                 padding: "12px 14px",
                 borderRadius: "12px",
-                border: activo ? "2px solid #05876E" : "1px solid #E2E8F0",
-                background: activo ? "#ECFDF5" : "#FFFFFF",
+                border: activo ? "2px solid #05876E" : "1px solid var(--linea)",
+                background: activo ? "var(--exito-diluido)" : "#FFFFFF",
                 cursor: "pointer",
                 display: "flex",
                 flexDirection: "column",
@@ -478,16 +478,16 @@ export default function BandejaCitasAbogado({
                 style={{
                   fontSize: "0.75rem",
                   fontWeight: 800,
-                  color: activo ? "#047857" : "#64748B",
+                  color: activo ? "var(--exito-texto)" : "var(--texto-suave)",
                   textTransform: "uppercase",
                 }}
               >
                 {item.titulo}
               </span>
-              <strong style={{ fontSize: "1.4rem", fontWeight: 900, color: "#0F172A" }}>
+              <strong style={{ fontSize: "1.4rem", fontWeight: 900, color: "var(--texto)" }}>
                 {item.total}
               </strong>
-              <span style={{ fontSize: "0.74rem", color: "#475569" }}>{item.sub}</span>
+              <span style={{ fontSize: "0.74rem", color: "var(--texto-2)" }}>{item.sub}</span>
             </button>
           );
         })}
@@ -498,9 +498,9 @@ export default function BandejaCitasAbogado({
           style={{
             padding: "12px 16px",
             borderRadius: "10px",
-            background: "#FEF2F2",
-            border: "1px solid #FECACA",
-            color: "#991B1B",
+            background: "var(--error-diluido)",
+            border: "1px solid var(--error-linea)",
+            color: "var(--error-texto)",
             fontSize: "0.86rem",
             fontWeight: 700,
           }}
@@ -514,9 +514,9 @@ export default function BandejaCitasAbogado({
           style={{
             padding: "12px 16px",
             borderRadius: "10px",
-            background: "#ECFDF5",
-            border: "1px solid #A7F3D0",
-            color: "#065F46",
+            background: "var(--exito-diluido)",
+            border: "1px solid var(--exito-linea)",
+            color: "var(--exito-texto)",
             fontSize: "0.86rem",
             fontWeight: 700,
           }}
@@ -530,10 +530,10 @@ export default function BandejaCitasAbogado({
           style={{
             padding: "28px 20px",
             borderRadius: "12px",
-            background: "#F8FAFC",
-            border: "1px dashed #CBD5E1",
+            background: "var(--fondo-suave)",
+            border: "1px dashed var(--linea-fuerte)",
             textAlign: "center",
-            color: "#64748B",
+            color: "var(--texto-suave)",
             fontSize: "0.9rem",
           }}
         >
@@ -585,9 +585,9 @@ export default function BandejaCitasAbogado({
                 <div
                   key={c.cit_id}
                   style={{
-                    background: "#F1F5F9",
+                    background: "var(--fondo-hundido)",
                     borderRadius: "12px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid var(--linea-fuerte)",
                     padding: "12px 16px",
                     opacity: 0.78,
                     display: "flex",
@@ -615,7 +615,7 @@ export default function BandejaCitasAbogado({
                       <strong
                         style={{
                           fontSize: "0.92rem",
-                          color: "#475569",
+                          color: "var(--texto-2)",
                           textTransform: "capitalize",
                         }}
                       >
@@ -630,8 +630,8 @@ export default function BandejaCitasAbogado({
                           borderRadius: "999px",
                           fontSize: "0.72rem",
                           fontWeight: 700,
-                          background: "#E2E8F0",
-                          color: "#475569",
+                          background: "var(--linea)",
+                          color: "var(--texto-2)",
                         }}
                       >
                         {esPresencial ? <Building2 size={12} /> : <Video size={12} />}
@@ -643,13 +643,13 @@ export default function BandejaCitasAbogado({
                           borderRadius: "999px",
                           fontSize: "0.72rem",
                           fontWeight: 700,
-                          background: "#E2E8F0",
-                          color: "#475569",
+                          background: "var(--linea)",
+                          color: "var(--texto-2)",
                         }}
                       >
                         ⚖️ {c.materia_nombre ?? "General"}
                       </span>
-                      <span style={{ fontSize: "0.82rem", color: "#475569" }}>
+                      <span style={{ fontSize: "0.82rem", color: "var(--texto-2)" }}>
                         · <strong>👤 Cliente:</strong> {c.cliente_nombre ?? "Afiliado"}
                       </span>
                       {c.caso_vinculado && (
@@ -657,8 +657,8 @@ export default function BandejaCitasAbogado({
                           style={{
                             fontSize: "0.72rem",
                             fontWeight: 700,
-                            color: "#475569",
-                            background: "#E2E8F0",
+                            color: "var(--texto-2)",
+                            background: "var(--linea)",
                             padding: "2px 8px",
                             borderRadius: "6px",
                           }}
@@ -682,9 +682,9 @@ export default function BandejaCitasAbogado({
                           borderRadius: "999px",
                           fontSize: "0.73rem",
                           fontWeight: 800,
-                          background: "#E2E8F0",
-                          color: "#334155",
-                          border: "1px solid #CBD5E1",
+                          background: "var(--linea)",
+                          color: "var(--texto-2)",
+                          border: "1px solid var(--linea-fuerte)",
                         }}
                       >
                         ✅ Consulta Realizada
@@ -701,9 +701,9 @@ export default function BandejaCitasAbogado({
                           gap: "5px",
                           padding: "5px 10px",
                           borderRadius: "8px",
-                          border: "1px solid #94A3B8",
-                          background: logAbierto ? "#334155" : "#FFFFFF",
-                          color: logAbierto ? "#FFFFFF" : "#334155",
+                          border: "1px solid var(--texto-tenue)",
+                          background: logAbierto ? "var(--texto-2)" : "#FFFFFF",
+                          color: logAbierto ? "#FFFFFF" : "var(--texto-2)",
                           fontWeight: 800,
                           fontSize: "0.75rem",
                           cursor: "pointer",
@@ -726,9 +726,9 @@ export default function BandejaCitasAbogado({
                           gap: "4px",
                           padding: "5px 9px",
                           borderRadius: "8px",
-                          border: "1px solid #CBD5E1",
-                          background: gestionAbierta ? "#475569" : "transparent",
-                          color: gestionAbierta ? "#FFFFFF" : "#475569",
+                          border: "1px solid var(--linea-fuerte)",
+                          background: gestionAbierta ? "var(--texto-2)" : "transparent",
+                          color: gestionAbierta ? "#FFFFFF" : "var(--texto-2)",
                           fontWeight: 700,
                           fontSize: "0.73rem",
                           cursor: "pointer",
@@ -775,8 +775,8 @@ export default function BandejaCitasAbogado({
                   borderRadius: "14px",
                   border:
                     estadoAceptacion === "pendiente"
-                      ? "1.5px solid #F59E0B"
-                      : "1px solid #E2E8F0",
+                      ? "1.5px solid var(--aviso)"
+                      : "1px solid var(--linea)",
                   padding: "18px",
                   display: "flex",
                   flexDirection: "column",
@@ -805,7 +805,7 @@ export default function BandejaCitasAbogado({
                       <strong
                         style={{
                           fontSize: "1rem",
-                          color: "#0F172A",
+                          color: "var(--texto)",
                           textTransform: "capitalize",
                         }}
                       >
@@ -820,8 +820,8 @@ export default function BandejaCitasAbogado({
                           borderRadius: "999px",
                           fontSize: "0.75rem",
                           fontWeight: 800,
-                          background: esPresencial ? "#E0F2FE" : "#F3E8FF",
-                          color: esPresencial ? "#0369A1" : "#6D28D9",
+                          background: esPresencial ? "var(--acento-diluido)" : "var(--acento-diluido)",
+                          color: esPresencial ? "var(--acento-hondo)" : "var(--acento)",
                         }}
                       >
                         {esPresencial ? <Building2 size={13} /> : <Video size={13} />}
@@ -833,8 +833,8 @@ export default function BandejaCitasAbogado({
                           borderRadius: "999px",
                           fontSize: "0.75rem",
                           fontWeight: 800,
-                          background: "#F1F5F9",
-                          color: "#334155",
+                          background: "var(--fondo-hundido)",
+                          color: "var(--texto-2)",
                         }}
                       >
                         ⚖️ {c.materia_nombre ?? "General"} ·{" "}
@@ -849,7 +849,7 @@ export default function BandejaCitasAbogado({
                         gap: "8px",
                         flexWrap: "wrap",
                         fontSize: "0.85rem",
-                        color: "#334155",
+                        color: "var(--texto-2)",
                         marginTop: "6px",
                       }}
                     >
@@ -867,9 +867,9 @@ export default function BandejaCitasAbogado({
                               gap: "4px",
                               padding: "2px 9px",
                               borderRadius: "999px",
-                              background: "#ECFDF5",
-                              border: "1px solid #A7F3D0",
-                              color: "#065F46",
+                              background: "var(--exito-diluido)",
+                              border: "1px solid var(--exito-linea)",
+                              color: "var(--exito-texto)",
                               fontSize: "0.76rem",
                               fontWeight: 800,
                             }}
@@ -897,7 +897,7 @@ export default function BandejaCitasAbogado({
                                   gap: "4px",
                                   padding: "3px 10px",
                                   borderRadius: "999px",
-                                  background: "#16A34A",
+                                  background: "var(--exito)",
                                   color: "#FFFFFF",
                                   fontSize: "0.74rem",
                                   fontWeight: 800,
@@ -919,9 +919,9 @@ export default function BandejaCitasAbogado({
                               gap: "4px",
                               padding: "3px 9px",
                               borderRadius: "999px",
-                              background: "#F1F5F9",
-                              border: "1px solid #CBD5E1",
-                              color: "#334155",
+                              background: "var(--fondo-hundido)",
+                              border: "1px solid var(--linea-fuerte)",
+                              color: "var(--texto-2)",
                               fontSize: "0.73rem",
                               fontWeight: 700,
                               textDecoration: "none",
@@ -943,7 +943,7 @@ export default function BandejaCitasAbogado({
                             style={{
                               background: "none",
                               border: "none",
-                              color: "#64748B",
+                              color: "var(--texto-suave)",
                               fontSize: "0.72rem",
                               fontWeight: 700,
                               textDecoration: "underline",
@@ -971,9 +971,9 @@ export default function BandejaCitasAbogado({
                             gap: "4px",
                             padding: "2px 9px",
                             borderRadius: "999px",
-                            background: "#FFFBEB",
-                            border: "1px solid #FDE68A",
-                            color: "#92400E",
+                            background: "var(--aviso-diluido)",
+                            border: "1px solid var(--aviso-linea)",
+                            color: "var(--aviso-texto)",
                             fontSize: "0.74rem",
                             fontWeight: 700,
                             cursor: "pointer",
@@ -1003,7 +1003,7 @@ export default function BandejaCitasAbogado({
                           style={{
                             padding: "5px 10px",
                             borderRadius: "7px",
-                            border: "1px solid #CBD5E1",
+                            border: "1px solid var(--linea-fuerte)",
                             fontSize: "0.78rem",
                             width: "160px",
                           }}
@@ -1069,20 +1069,20 @@ export default function BandejaCitasAbogado({
                         fontWeight: 800,
                         background:
                           c.cit_estado === "realizada"
-                            ? "#DCFCE7"
+                            ? "var(--exito-diluido)"
                             : estadoAceptacion === "aceptada"
-                            ? "#DCFCE7"
+                            ? "var(--exito-diluido)"
                             : estadoAceptacion === "rechazada"
-                            ? "#FEE2E2"
-                            : "#FEF3C7",
+                            ? "var(--error-diluido)"
+                            : "var(--aviso-diluido)",
                         color:
                           c.cit_estado === "realizada"
-                            ? "#166534"
+                            ? "var(--exito-texto)"
                             : estadoAceptacion === "aceptada"
-                            ? "#166534"
+                            ? "var(--exito-texto)"
                             : estadoAceptacion === "rechazada"
-                            ? "#991B1B"
-                            : "#92400E",
+                            ? "var(--error-texto)"
+                            : "var(--aviso-texto)",
                       }}
                     >
                       {c.cit_estado === "realizada"
@@ -1099,7 +1099,7 @@ export default function BandejaCitasAbogado({
                           fontSize: "0.74rem",
                           fontWeight: 800,
                           color: "#5000BA",
-                          background: "#F5F3FF",
+                          background: "var(--acento-diluido)",
                           padding: "2px 8px",
                           borderRadius: "6px",
                         }}
@@ -1115,10 +1115,10 @@ export default function BandejaCitasAbogado({
                     style={{
                       padding: "10px 12px",
                       borderRadius: "10px",
-                      background: "#F8FAFC",
-                      border: "1px solid #E2E8F0",
+                      background: "var(--fondo-suave)",
+                      border: "1px solid var(--linea)",
                       fontSize: "0.85rem",
-                      color: "#1E293B",
+                      color: "var(--texto)",
                     }}
                   >
                     <strong>Motivo de la consulta:</strong> {c.cit_motivo}
@@ -1131,8 +1131,8 @@ export default function BandejaCitasAbogado({
                     style={{
                       padding: "10px 12px",
                       borderRadius: "10px",
-                      background: c.cit_enlace ? "#F5F3FF" : "#FFFBEB",
-                      border: `1px solid ${c.cit_enlace ? "#DDD6FE" : "#FDE68A"}`,
+                      background: c.cit_enlace ? "var(--acento-diluido)" : "var(--aviso-diluido)",
+                      border: `1px solid ${c.cit_enlace ? "var(--acento-linea)" : "var(--aviso-linea)"}`,
                       display: "flex",
                       flexDirection: "column",
                       gap: "8px",
@@ -1158,9 +1158,9 @@ export default function BandejaCitasAbogado({
                       >
                         <Video
                           size={15}
-                          color={c.cit_enlace ? "#5000BA" : "#B45309"}
+                          color={c.cit_enlace ? "#5000BA" : "var(--aviso-texto)"}
                         />
-                        <strong style={{ color: "#0F172A" }}>
+                        <strong style={{ color: "var(--texto)" }}>
                           Link de Consulta Telemática:
                         </strong>
                         {c.cit_enlace ? (
@@ -1186,9 +1186,9 @@ export default function BandejaCitasAbogado({
                                   gap: "3px",
                                   padding: "2px 7px",
                                   borderRadius: "999px",
-                                  background: "#ECFDF5",
-                                  border: "1px solid #A7F3D0",
-                                  color: "#065F46",
+                                  background: "var(--exito-diluido)",
+                                  border: "1px solid var(--exito-linea)",
+                                  color: "var(--exito-texto)",
                                   fontSize: "0.68rem",
                                   fontWeight: 800,
                                 }}
@@ -1199,7 +1199,7 @@ export default function BandejaCitasAbogado({
                             )}
                           </>
                         ) : (
-                          <span style={{ color: "#B45309", fontWeight: 700 }}>
+                          <span style={{ color: "var(--aviso-texto)", fontWeight: 700 }}>
                             ⚠️ Pendiente registrar link de videollamada (Daily.co / Meet / Zoom)
                           </span>
                         )}
@@ -1257,9 +1257,9 @@ export default function BandejaCitasAbogado({
                               gap: "5px",
                               padding: "6px 10px",
                               borderRadius: "8px",
-                              border: "1px solid #A7F3D0",
-                              background: "#ECFDF5",
-                              color: "#065F46",
+                              border: "1px solid var(--exito-linea)",
+                              background: "var(--exito-diluido)",
+                              color: "var(--exito-texto)",
                               fontSize: "0.75rem",
                               fontWeight: 800,
                               cursor: enviando ? "wait" : "pointer",
@@ -1300,7 +1300,7 @@ export default function BandejaCitasAbogado({
                               gap: "5px",
                               padding: "6px 10px",
                               borderRadius: "8px",
-                              border: "1px solid #C4B5FD",
+                              border: "1px solid var(--acento-linea)",
                               background: "#FFFFFF",
                               color: "#5000BA",
                               fontSize: "0.75rem",
@@ -1324,9 +1324,9 @@ export default function BandejaCitasAbogado({
                               gap: "4px",
                               padding: "4px 8px",
                               borderRadius: "999px",
-                              background: "#F1F5F9",
-                              border: "1px solid #CBD5E1",
-                              color: "#64748B",
+                              background: "var(--fondo-hundido)",
+                              border: "1px solid var(--linea-fuerte)",
+                              color: "var(--texto-suave)",
                               fontSize: "0.72rem",
                               fontWeight: 700,
                             }}
@@ -1361,7 +1361,7 @@ export default function BandejaCitasAbogado({
                           style={{
                             padding: "7px 10px",
                             borderRadius: "8px",
-                            border: "1px solid #CBD5E1",
+                            border: "1px solid var(--linea-fuerte)",
                             fontSize: "0.82rem",
                             background: "#FFFFFF",
                             width: "100%",
@@ -1381,7 +1381,7 @@ export default function BandejaCitasAbogado({
                           style={{
                             padding: "7px 10px",
                             borderRadius: "8px",
-                            border: "1px solid #CBD5E1",
+                            border: "1px solid var(--linea-fuerte)",
                             fontSize: "0.8rem",
                             background: "#FFFFFF",
                             width: "100%",
@@ -1429,16 +1429,16 @@ export default function BandejaCitasAbogado({
                       borderRadius: "10px",
                       background:
                         estadoAceptacion === "aceptada"
-                          ? "#F8FAFC"
+                          ? "var(--fondo-suave)"
                           : estadoAceptacion === "rechazada"
-                          ? "#FEF2F2"
-                          : "#FFFBEB",
+                          ? "var(--error-diluido)"
+                          : "var(--aviso-diluido)",
                       border: `1px solid ${
                         estadoAceptacion === "aceptada"
-                          ? "#E2E8F0"
+                          ? "var(--linea)"
                           : estadoAceptacion === "rechazada"
-                          ? "#FECACA"
-                          : "#FDE68A"
+                          ? "var(--error-linea)"
+                          : "var(--aviso-linea)"
                       }`,
                       display: "flex",
                       flexDirection: "column",
@@ -1454,7 +1454,7 @@ export default function BandejaCitasAbogado({
                         gap: "8px",
                       }}
                     >
-                      <strong style={{ fontSize: "0.8rem", color: "#0F172A" }}>
+                      <strong style={{ fontSize: "0.8rem", color: "var(--texto)" }}>
                         {estadoAceptacion === "aceptada"
                           ? "✅ Ya confirmaste esta cita. Puedes cancelar la aceptación (volver a pendiente) o pedir reasignación si surgió un imprevisto:"
                           : estadoAceptacion === "rechazada"
@@ -1489,7 +1489,7 @@ export default function BandejaCitasAbogado({
                         style={{
                           padding: "8px 12px",
                           borderRadius: "8px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid var(--linea-fuerte)",
                           fontSize: "0.83rem",
                           background: "#FFFFFF",
                         }}
@@ -1549,9 +1549,9 @@ export default function BandejaCitasAbogado({
                               gap: "5px",
                               padding: "8px 12px",
                               borderRadius: "8px",
-                              border: "1px solid #F59E0B",
-                              background: "#FFFBEB",
-                              color: "#92400E",
+                              border: "1px solid var(--aviso)",
+                              background: "var(--aviso-diluido)",
+                              color: "var(--aviso-texto)",
                               fontWeight: 800,
                               fontSize: "0.78rem",
                               cursor: enviando ? "wait" : "pointer",
@@ -1586,9 +1586,9 @@ export default function BandejaCitasAbogado({
                               gap: "5px",
                               padding: "8px 12px",
                               borderRadius: "8px",
-                              border: "1px solid #FCA5A5",
-                              background: "#FEF2F2",
-                              color: "#991B1B",
+                              border: "1px solid var(--error-linea)",
+                              background: "var(--error-diluido)",
+                              color: "var(--error-texto)",
                               fontWeight: 700,
                               fontSize: "0.78rem",
                               cursor: enviando ? "wait" : "pointer",
@@ -1628,9 +1628,9 @@ export default function BandejaCitasAbogado({
                             gap: "5px",
                             padding: "8px 12px",
                             borderRadius: "8px",
-                            border: "1px solid #CBD5E1",
-                            background: reagendando === c.cit_id ? "#F5F3FF" : "#FFFFFF",
-                            color: reagendando === c.cit_id ? "#5000BA" : "#334155",
+                            border: "1px solid var(--linea-fuerte)",
+                            background: reagendando === c.cit_id ? "var(--acento-diluido)" : "#FFFFFF",
+                            color: reagendando === c.cit_id ? "#5000BA" : "var(--texto-2)",
                             fontWeight: 800,
                             fontSize: "0.78rem",
                             cursor: "pointer",
@@ -1670,7 +1670,7 @@ export default function BandejaCitasAbogado({
                         padding: "8px 14px",
                         borderRadius: "8px",
                         border: "1.5px solid #5000BA",
-                        background: gestionAbierta ? "#5000BA" : "#F5F3FF",
+                        background: gestionAbierta ? "#5000BA" : "var(--acento-diluido)",
                         color: gestionAbierta ? "#FFFFFF" : "#5000BA",
                         fontWeight: 800,
                         fontSize: "0.8rem",
@@ -1692,9 +1692,9 @@ export default function BandejaCitasAbogado({
                         gap: "5px",
                         padding: "8px 12px",
                         borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
-                        background: logAbierto ? "#0F172A" : "#FFFFFF",
-                        color: logAbierto ? "#FFFFFF" : "#334155",
+                        border: "1px solid var(--linea-fuerte)",
+                        background: logAbierto ? "var(--texto)" : "#FFFFFF",
+                        color: logAbierto ? "#FFFFFF" : "var(--texto-2)",
                         fontWeight: 800,
                         fontSize: "0.78rem",
                         cursor: "pointer",
@@ -1735,7 +1735,7 @@ export default function BandejaCitasAbogado({
                               gap: "5px",
                               padding: "8px 11px",
                               borderRadius: "8px",
-                              border: "1px solid #DDD6FE",
+                              border: "1px solid var(--acento-linea)",
                               background: "#FFFFFF",
                               color: "#5000BA",
                               fontWeight: 700,
@@ -1756,9 +1756,9 @@ export default function BandejaCitasAbogado({
                               gap: "5px",
                               padding: "8px 11px",
                               borderRadius: "8px",
-                              border: "1px solid #CBD5E1",
+                              border: "1px solid var(--linea-fuerte)",
                               background: "#FFFFFF",
-                              color: "#334155",
+                              color: "var(--texto-2)",
                               fontWeight: 700,
                               fontSize: "0.76rem",
                               textDecoration: "none",
@@ -1782,9 +1782,9 @@ export default function BandejaCitasAbogado({
                       style={{
                         padding: "7px 12px",
                         borderRadius: "8px",
-                        border: "1px solid #A7F3D0",
-                        background: "#ECFDF5",
-                        color: "#065F46",
+                        border: "1px solid var(--exito-linea)",
+                        background: "var(--exito-diluido)",
+                        color: "var(--exito-texto)",
                         fontWeight: 800,
                         fontSize: "0.78rem",
                         cursor: enviando ? "wait" : "pointer",
@@ -1805,8 +1805,8 @@ export default function BandejaCitasAbogado({
                     style={{
                       padding: "14px 16px",
                       borderRadius: "12px",
-                      background: "#F5F3FF",
-                      border: "1.5px solid #C4B5FD",
+                      background: "var(--acento-diluido)",
+                      border: "1.5px solid var(--acento-linea)",
                       display: "flex",
                       flexDirection: "column",
                       gap: "10px",
@@ -1828,8 +1828,8 @@ export default function BandejaCitasAbogado({
                         style={{
                           padding: "2px 8px",
                           borderRadius: "999px",
-                          background: "#EDE9FE",
-                          color: "#5B21B6",
+                          background: "var(--acento-diluido)",
+                          color: "var(--acento-hondo)",
                           fontSize: "0.72rem",
                           fontWeight: 800,
                         }}
@@ -1853,7 +1853,7 @@ export default function BandejaCitasAbogado({
                             display: "block",
                             fontSize: "0.75rem",
                             fontWeight: 800,
-                            color: "#334155",
+                            color: "var(--texto-2)",
                             marginBottom: "4px",
                           }}
                         >
@@ -1874,7 +1874,7 @@ export default function BandejaCitasAbogado({
                             width: "100%",
                             padding: "8px 10px",
                             borderRadius: "8px",
-                            border: "1px solid #CBD5E1",
+                            border: "1px solid var(--linea-fuerte)",
                             background: "#FFFFFF",
                             fontSize: "0.83rem",
                           }}
@@ -1888,7 +1888,7 @@ export default function BandejaCitasAbogado({
                             display: "block",
                             fontSize: "0.75rem",
                             fontWeight: 800,
-                            color: "#334155",
+                            color: "var(--texto-2)",
                             marginBottom: "4px",
                           }}
                         >
@@ -1911,7 +1911,7 @@ export default function BandejaCitasAbogado({
                             width: "100%",
                             padding: "8px 10px",
                             borderRadius: "8px",
-                            border: "1px solid #CBD5E1",
+                            border: "1px solid var(--linea-fuerte)",
                             background: "#FFFFFF",
                             fontSize: "0.83rem",
                           }}
@@ -2010,9 +2010,9 @@ export default function BandejaCitasAbogado({
                         style={{
                           padding: "8px 12px",
                           borderRadius: "8px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid var(--linea-fuerte)",
                           background: "#FFFFFF",
-                          color: "#334155",
+                          color: "var(--texto-2)",
                           fontSize: "0.78rem",
                           fontWeight: 700,
                           cursor: "pointer",
@@ -2232,8 +2232,8 @@ function PanelGestionReunionYExpediente({
         marginTop: "6px",
         padding: "16px",
         borderRadius: "12px",
-        background: "#F8FAFC",
-        border: "1.5px solid #DDD6FE",
+        background: "var(--fondo-suave)",
+        border: "1.5px solid var(--acento-linea)",
         display: "flex",
         flexDirection: "column",
         gap: "16px",
@@ -2244,8 +2244,8 @@ function PanelGestionReunionYExpediente({
         style={{
           padding: "10px 14px",
           borderRadius: "10px",
-          background: "#F5F3FF",
-          border: "1px solid #DDD6FE",
+          background: "var(--acento-diluido)",
+          border: "1px solid var(--acento-linea)",
           fontSize: "0.8rem",
           color: "#4C1D95",
         }}
@@ -2262,9 +2262,9 @@ function PanelGestionReunionYExpediente({
           style={{
             padding: "10px 12px",
             borderRadius: "8px",
-            background: "#FEF2F2",
-            border: "1px solid #FECACA",
-            color: "#991B1B",
+            background: "var(--error-diluido)",
+            border: "1px solid var(--error-linea)",
+            color: "var(--error-texto)",
             fontSize: "0.82rem",
             fontWeight: 700,
           }}
@@ -2280,7 +2280,7 @@ function PanelGestionReunionYExpediente({
             display: "block",
             fontSize: "0.82rem",
             fontWeight: 800,
-            color: "#0F172A",
+            color: "var(--texto)",
             marginBottom: "6px",
           }}
         >
@@ -2295,7 +2295,7 @@ function PanelGestionReunionYExpediente({
             width: "100%",
             padding: "10px 12px",
             borderRadius: "8px",
-            border: "1px solid #CBD5E1",
+            border: "1px solid var(--linea-fuerte)",
             fontSize: "0.85rem",
             background: "#FFFFFF",
           }}
@@ -2309,7 +2309,7 @@ function PanelGestionReunionYExpediente({
             display: "block",
             fontSize: "0.82rem",
             fontWeight: 800,
-            color: "#0F172A",
+            color: "var(--texto)",
             marginBottom: "6px",
           }}
         >
@@ -2338,7 +2338,7 @@ function PanelGestionReunionYExpediente({
                   padding: "7px 10px",
                   borderRadius: "8px",
                   background: "#FFFFFF",
-                  border: "1px solid #E2E8F0",
+                  border: "1px solid var(--linea)",
                   fontSize: "0.82rem",
                 }}
               >
@@ -2366,7 +2366,7 @@ function PanelGestionReunionYExpediente({
                   style={{
                     background: "none",
                     border: "none",
-                    color: "#DC2626",
+                    color: "var(--error)",
                     cursor: "pointer",
                   }}
                 >
@@ -2393,7 +2393,7 @@ function PanelGestionReunionYExpediente({
             style={{
               padding: "8px 10px",
               borderRadius: "8px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid var(--linea-fuerte)",
               fontSize: "0.82rem",
               background: "#FFFFFF",
             }}
@@ -2406,7 +2406,7 @@ function PanelGestionReunionYExpediente({
             style={{
               padding: "8px 10px",
               borderRadius: "8px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid var(--linea-fuerte)",
               fontSize: "0.82rem",
               background: "#FFFFFF",
             }}
@@ -2419,7 +2419,7 @@ function PanelGestionReunionYExpediente({
             style={{
               padding: "8px 10px",
               borderRadius: "8px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid var(--linea-fuerte)",
               fontSize: "0.82rem",
               background: "#FFFFFF",
             }}
@@ -2437,7 +2437,7 @@ function PanelGestionReunionYExpediente({
               gap: "4px",
               padding: "8px 12px",
               borderRadius: "8px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid var(--linea-fuerte)",
               background: "#FFFFFF",
               fontWeight: 800,
               fontSize: "0.78rem",
@@ -2456,7 +2456,7 @@ function PanelGestionReunionYExpediente({
             display: "block",
             fontSize: "0.82rem",
             fontWeight: 800,
-            color: "#0F172A",
+            color: "var(--texto)",
             marginBottom: "6px",
           }}
         >
@@ -2486,7 +2486,7 @@ function PanelGestionReunionYExpediente({
                   padding: "8px 12px",
                   borderRadius: "8px",
                   background: "#FFFFFF",
-                  border: "1px solid #E2E8F0",
+                  border: "1px solid var(--linea)",
                   fontSize: "0.82rem",
                 }}
               >
@@ -2499,8 +2499,8 @@ function PanelGestionReunionYExpediente({
                         fontSize: "0.72rem",
                         padding: "1px 6px",
                         borderRadius: "6px",
-                        background: "#F1F5F9",
-                        color: "#475569",
+                        background: "var(--fondo-hundido)",
+                        color: "var(--texto-2)",
                         fontWeight: 700,
                       }}
                     >
@@ -2508,7 +2508,7 @@ function PanelGestionReunionYExpediente({
                     </span>
                   </span>
                   {doc.notas && (
-                    <span style={{ fontSize: "0.75rem", color: "#64748B" }}>
+                    <span style={{ fontSize: "0.75rem", color: "var(--texto-suave)" }}>
                       Nota: {doc.notas}
                     </span>
                   )}
@@ -2527,8 +2527,8 @@ function PanelGestionReunionYExpediente({
                         gap: "4px",
                         padding: "4px 10px",
                         borderRadius: "6px",
-                        background: "#F5F3FF",
-                        border: "1px solid #DDD6FE",
+                        background: "var(--acento-diluido)",
+                        border: "1px solid var(--acento-linea)",
                         color: "#5000BA",
                         fontSize: "0.75rem",
                         fontWeight: 800,
@@ -2549,7 +2549,7 @@ function PanelGestionReunionYExpediente({
                     style={{
                       background: "none",
                       border: "none",
-                      color: "#DC2626",
+                      color: "var(--error)",
                       cursor: "pointer",
                     }}
                   >
@@ -2567,7 +2567,7 @@ function PanelGestionReunionYExpediente({
             padding: "12px",
             borderRadius: "10px",
             background: "#FFFFFF",
-            border: "1px dashed #94A3B8",
+            border: "1px dashed var(--texto-tenue)",
             display: "flex",
             flexDirection: "column",
             gap: "8px",
@@ -2590,7 +2590,7 @@ function PanelGestionReunionYExpediente({
               style={{
                 padding: "8px 10px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--linea-fuerte)",
                 fontSize: "0.82rem",
                 background: "#FFFFFF",
               }}
@@ -2612,7 +2612,7 @@ function PanelGestionReunionYExpediente({
               style={{
                 padding: "8px 10px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--linea-fuerte)",
                 fontSize: "0.82rem",
                 background: "#FFFFFF",
               }}
@@ -2626,7 +2626,7 @@ function PanelGestionReunionYExpediente({
                 gap: "6px",
                 padding: "8px 14px",
                 borderRadius: "8px",
-                background: subiendoArchivo ? "#94A3B8" : "#5000BA",
+                background: subiendoArchivo ? "var(--texto-tenue)" : "#5000BA",
                 color: "#FFFFFF",
                 fontWeight: 800,
                 fontSize: "0.8rem",
@@ -2645,7 +2645,7 @@ function PanelGestionReunionYExpediente({
               />
             </label>
           </div>
-          <span style={{ fontSize: "0.74rem", color: "#64748B" }}>
+          <span style={{ fontSize: "0.74rem", color: "var(--texto-suave)" }}>
             Formatos soportados: PDF, Word (.doc/.docx), Imágenes (JPG/PNG/WebP), TXT o ZIP (máx. 20 MB).
           </span>
         </div>
@@ -2667,7 +2667,7 @@ function PanelGestionReunionYExpediente({
             style={{
               padding: "8px 10px",
               borderRadius: "8px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid var(--linea-fuerte)",
               fontSize: "0.82rem",
               background: "#FFFFFF",
             }}
@@ -2680,7 +2680,7 @@ function PanelGestionReunionYExpediente({
             style={{
               padding: "8px 10px",
               borderRadius: "8px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid var(--linea-fuerte)",
               fontSize: "0.82rem",
               background: "#FFFFFF",
             }}
@@ -2694,7 +2694,7 @@ function PanelGestionReunionYExpediente({
               gap: "4px",
               padding: "8px 12px",
               borderRadius: "8px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid var(--linea-fuerte)",
               background: "#FFFFFF",
               fontWeight: 800,
               fontSize: "0.78rem",
@@ -2712,13 +2712,13 @@ function PanelGestionReunionYExpediente({
           padding: "12px",
           borderRadius: "10px",
           background: "#FFFFFF",
-          border: "1px solid #E2E8F0",
+          border: "1px solid var(--linea)",
           display: "flex",
           flexDirection: "column",
           gap: "10px",
         }}
       >
-        <strong style={{ fontSize: "0.84rem", color: "#0F172A" }}>
+        <strong style={{ fontSize: "0.84rem", color: "var(--texto)" }}>
           📁 4. Expediente del Cliente: Relación entre esta Consulta y un Caso Legal
         </strong>
 
@@ -2730,9 +2730,9 @@ function PanelGestionReunionYExpediente({
               padding: "6px 12px",
               borderRadius: "8px",
               border:
-                accionCaso === "ninguna" ? "1.5px solid #5000BA" : "1px solid #CBD5E1",
-              background: accionCaso === "ninguna" ? "#F5F3FF" : "#FFFFFF",
-              color: accionCaso === "ninguna" ? "#5000BA" : "#334155",
+                accionCaso === "ninguna" ? "1.5px solid #5000BA" : "1px solid var(--linea-fuerte)",
+              background: accionCaso === "ninguna" ? "var(--acento-diluido)" : "#FFFFFF",
+              color: accionCaso === "ninguna" ? "#5000BA" : "var(--texto-2)",
               fontSize: "0.78rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -2751,10 +2751,10 @@ function PanelGestionReunionYExpediente({
                 border:
                   accionCaso === "vincular_existente"
                     ? "1.5px solid #5000BA"
-                    : "1px solid #CBD5E1",
+                    : "1px solid var(--linea-fuerte)",
                 background:
-                  accionCaso === "vincular_existente" ? "#F5F3FF" : "#FFFFFF",
-                color: accionCaso === "vincular_existente" ? "#5000BA" : "#334155",
+                  accionCaso === "vincular_existente" ? "var(--acento-diluido)" : "#FFFFFF",
+                color: accionCaso === "vincular_existente" ? "#5000BA" : "var(--texto-2)",
                 fontSize: "0.78rem",
                 fontWeight: 700,
                 cursor: "pointer",
@@ -2773,9 +2773,9 @@ function PanelGestionReunionYExpediente({
               border:
                 accionCaso === "crear_nuevo"
                   ? "1.5px solid #05876E"
-                  : "1px solid #CBD5E1",
-              background: accionCaso === "crear_nuevo" ? "#ECFDF5" : "#FFFFFF",
-              color: accionCaso === "crear_nuevo" ? "#047857" : "#334155",
+                  : "1px solid var(--linea-fuerte)",
+              background: accionCaso === "crear_nuevo" ? "var(--exito-diluido)" : "#FFFFFF",
+              color: accionCaso === "crear_nuevo" ? "var(--exito-texto)" : "var(--texto-2)",
               fontSize: "0.78rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -2794,7 +2794,7 @@ function PanelGestionReunionYExpediente({
                 width: "100%",
                 padding: "8px 10px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--linea-fuerte)",
                 fontSize: "0.84rem",
               }}
             >
@@ -2824,7 +2824,7 @@ function PanelGestionReunionYExpediente({
               style={{
                 padding: "8px 10px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--linea-fuerte)",
                 fontSize: "0.82rem",
               }}
             />
@@ -2836,7 +2836,7 @@ function PanelGestionReunionYExpediente({
               style={{
                 padding: "8px 10px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--linea-fuerte)",
                 fontSize: "0.82rem",
               }}
             />
@@ -2848,7 +2848,7 @@ function PanelGestionReunionYExpediente({
               style={{
                 padding: "8px 10px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--linea-fuerte)",
                 fontSize: "0.82rem",
               }}
             >
@@ -2864,7 +2864,7 @@ function PanelGestionReunionYExpediente({
               style={{
                 padding: "8px 10px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--linea-fuerte)",
                 fontSize: "0.82rem",
               }}
             />
@@ -2878,14 +2878,14 @@ function PanelGestionReunionYExpediente({
               marginTop: "6px",
               padding: "10px",
               borderRadius: "8px",
-              background: "#F8FAFC",
-              border: "1px solid #E2E8F0",
+              background: "var(--fondo-suave)",
+              border: "1px solid var(--linea)",
               display: "flex",
               flexDirection: "column",
               gap: "8px",
             }}
           >
-            <strong style={{ fontSize: "0.8rem", color: "#0F172A" }}>
+            <strong style={{ fontSize: "0.8rem", color: "var(--texto)" }}>
               ⏱️ Agregar actuación / mensaje a la Línea de Tiempo del Caso
             </strong>
             <div
@@ -2905,7 +2905,7 @@ function PanelGestionReunionYExpediente({
                 style={{
                   padding: "7px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid var(--linea-fuerte)",
                   fontSize: "0.8rem",
                   background: "#FFFFFF",
                 }}
@@ -2923,7 +2923,7 @@ function PanelGestionReunionYExpediente({
                 style={{
                   padding: "7px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid var(--linea-fuerte)",
                   fontSize: "0.8rem",
                   background: "#FFFFFF",
                 }}
@@ -2936,7 +2936,7 @@ function PanelGestionReunionYExpediente({
                 style={{
                   padding: "7px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid var(--linea-fuerte)",
                   fontSize: "0.8rem",
                   background: "#FFFFFF",
                 }}
@@ -2950,7 +2950,7 @@ function PanelGestionReunionYExpediente({
               style={{
                 padding: "7px 10px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--linea-fuerte)",
                 fontSize: "0.8rem",
                 background: "#FFFFFF",
               }}
@@ -2961,7 +2961,7 @@ function PanelGestionReunionYExpediente({
                 <strong
                   style={{
                     fontSize: "0.78rem",
-                    color: "#334155",
+                    color: "var(--texto-2)",
                     display: "block",
                     marginBottom: "6px",
                   }}
@@ -2994,16 +2994,16 @@ function PanelGestionReunionYExpediente({
                         <strong>
                           [{ev.tipo}] {ev.titulo}
                         </strong>
-                        <span style={{ color: "#64748B", fontSize: "0.72rem" }}>
+                        <span style={{ color: "var(--texto-suave)", fontSize: "0.72rem" }}>
                           {FORMATO_LOG.format(new Date(ev.fecha))}
                         </span>
                       </div>
                       {ev.detalle && (
-                        <div style={{ color: "#475569", marginTop: "2px" }}>
+                        <div style={{ color: "var(--texto-2)", marginTop: "2px" }}>
                           {ev.detalle}
                         </div>
                       )}
-                      <div style={{ color: "#64748B", fontSize: "0.72rem", marginTop: "2px" }}>
+                      <div style={{ color: "var(--texto-suave)", fontSize: "0.72rem", marginTop: "2px" }}>
                         Responsable: {ev.responsable_nombre} ({ev.responsable_rol})
                       </div>
                     </li>
@@ -3032,7 +3032,7 @@ function PanelGestionReunionYExpediente({
             gap: "8px",
             fontSize: "0.82rem",
             fontWeight: 700,
-            color: "#334155",
+            color: "var(--texto-2)",
           }}
         >
           <input

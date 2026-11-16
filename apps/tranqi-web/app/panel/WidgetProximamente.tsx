@@ -22,7 +22,7 @@ export function WidgetProximamente({
       style={{
         background: "#ffffff",
         borderRadius: "20px",
-        border: "1px solid #E4E4E4",
+        border: "1px solid var(--linea)",
         padding: "36px 28px",
         boxShadow: "0 10px 30px rgba(80, 0, 186, 0.06)",
         display: "flex",
@@ -43,7 +43,7 @@ export function WidgetProximamente({
           left: 0,
           right: 0,
           height: "6px",
-          background: "linear-gradient(90deg, var(--violeta, #5000BA) 0%, #05876E 50%, #F59E0B 100%)",
+          background: "linear-gradient(90deg, var(--violeta, #5000BA) 0%, #05876E 50%, var(--aviso) 100%)",
         }}
       />
 
@@ -53,8 +53,8 @@ export function WidgetProximamente({
           width: "72px",
           height: "72px",
           borderRadius: "20px",
-          background: "linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%)",
-          border: "1.5px solid #DDD6FE",
+          background: "linear-gradient(135deg, var(--acento-diluido) 0%, var(--acento-diluido) 100%)",
+          border: "1.5px solid var(--acento-linea)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -75,9 +75,9 @@ export function WidgetProximamente({
           display: "inline-flex",
           alignItems: "center",
           gap: "6px",
-          background: "#FFFBEB",
-          border: "1px solid #FDE68A",
-          color: "#B45309",
+          background: "var(--aviso-diluido)",
+          border: "1px solid var(--aviso-linea)",
+          color: "var(--aviso-texto)",
           padding: "5px 14px",
           borderRadius: "999px",
           fontSize: "0.74rem",
@@ -87,7 +87,7 @@ export function WidgetProximamente({
           marginBottom: "14px",
         }}
       >
-        <Clock size={13} color="#D97706" />
+        <Clock size={13} color="var(--aviso)" />
         <span>Próximamente Disponible</span>
       </div>
 
@@ -96,7 +96,7 @@ export function WidgetProximamente({
         style={{
           fontSize: "1.45rem",
           fontWeight: 900,
-          color: "#111827",
+          color: "var(--texto)",
           margin: "0 0 8px 0",
           letterSpacing: "-0.02em",
         }}
@@ -119,7 +119,7 @@ export function WidgetProximamente({
       <p
         style={{
           fontSize: "0.92rem",
-          color: "#4B5563",
+          color: "var(--texto-2)",
           lineHeight: 1.6,
           maxWidth: "560px",
           margin: "0 0 24px 0",
@@ -141,8 +141,8 @@ export function WidgetProximamente({
       >
         <div
           style={{
-            background: "#F8FAFC",
-            border: "1px solid #E2E8F0",
+            background: "var(--fondo-suave)",
+            border: "1px solid var(--linea)",
             borderRadius: "12px",
             padding: "14px",
             display: "flex",
@@ -152,10 +152,10 @@ export function WidgetProximamente({
         >
           <CheckCircle2 size={18} color="#05876E" style={{ flexShrink: 0, marginTop: "2px" }} />
           <div>
-            <strong style={{ display: "block", fontSize: "0.82rem", color: "#1E293B", marginBottom: "2px" }}>
+            <strong style={{ display: "block", fontSize: "0.82rem", color: "var(--texto)", marginBottom: "2px" }}>
               {esFinanciamiento ? "Cuotas Flexibles" : "Experiencia Integrada"}
             </strong>
-            <span style={{ fontSize: "0.76rem", color: "#64748B", lineHeight: 1.4, display: "block" }}>
+            <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)", lineHeight: 1.4, display: "block" }}>
               {esFinanciamiento
                 ? "Planes de pago adaptados a cada etapa de tu proceso legal."
                 : "Acceso directo desde tu panel sin trámites adicionales."}
@@ -165,8 +165,8 @@ export function WidgetProximamente({
 
         <div
           style={{
-            background: "#F8FAFC",
-            border: "1px solid #E2E8F0",
+            background: "var(--fondo-suave)",
+            border: "1px solid var(--linea)",
             borderRadius: "12px",
             padding: "14px",
             display: "flex",
@@ -176,10 +176,10 @@ export function WidgetProximamente({
         >
           <CheckCircle2 size={18} color="var(--violeta, #5000BA)" style={{ flexShrink: 0, marginTop: "2px" }} />
           <div>
-            <strong style={{ display: "block", fontSize: "0.82rem", color: "#1E293B", marginBottom: "2px" }}>
+            <strong style={{ display: "block", fontSize: "0.82rem", color: "var(--texto)", marginBottom: "2px" }}>
               {esFinanciamiento ? "Simulador en Línea" : "100% Digital y Seguro"}
             </strong>
-            <span style={{ fontSize: "0.76rem", color: "#64748B", lineHeight: 1.4, display: "block" }}>
+            <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)", lineHeight: 1.4, display: "block" }}>
               {esFinanciamiento
                 ? "Calcula tus cuotas con total transparencia antes de contratar."
                 : "Protegido con los estándares de seguridad y privacidad de Tranqi."}
@@ -189,8 +189,8 @@ export function WidgetProximamente({
 
         <div
           style={{
-            background: "#F8FAFC",
-            border: "1px solid #E2E8F0",
+            background: "var(--fondo-suave)",
+            border: "1px solid var(--linea)",
             borderRadius: "12px",
             padding: "14px",
             display: "flex",
@@ -198,12 +198,12 @@ export function WidgetProximamente({
             gap: "10px",
           }}
         >
-          <CheckCircle2 size={18} color="#D97706" style={{ flexShrink: 0, marginTop: "2px" }} />
+          <CheckCircle2 size={18} color="var(--aviso)" style={{ flexShrink: 0, marginTop: "2px" }} />
           <div>
-            <strong style={{ display: "block", fontSize: "0.82rem", color: "#1E293B", marginBottom: "2px" }}>
+            <strong style={{ display: "block", fontSize: "0.82rem", color: "var(--texto)", marginBottom: "2px" }}>
               {esFinanciamiento ? "Aprobación Ágil" : "Aviso de Lanzamiento"}
             </strong>
-            <span style={{ fontSize: "0.76rem", color: "#64748B", lineHeight: 1.4, display: "block" }}>
+            <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)", lineHeight: 1.4, display: "block" }}>
               {esFinanciamiento
                 ? "Evaluación rápida asistida para que tu defensa legal no se detenga."
                 : "Te notificaremos apenas la funcionalidad quede habilitada."}
@@ -228,9 +228,9 @@ export function WidgetProximamente({
           title="Volver al menú de inicio del panel"
           aria-label="Volver al menú de inicio del panel"
           style={{
-            background: "#F8FAFC",
-            border: "1px solid #CBD5E1",
-            color: "#334155",
+            background: "var(--fondo-suave)",
+            border: "1px solid var(--linea-fuerte)",
+            color: "var(--texto-2)",
             padding: "10px 18px",
             borderRadius: "12px",
             fontSize: "0.85rem",
@@ -275,9 +275,9 @@ export function WidgetProximamente({
           title="Agendar una cita con un abogado especialista"
           aria-label="Agendar una cita con un abogado especialista"
           style={{
-            background: "#ECFDF5",
-            border: "1px solid #A7F3D0",
-            color: "#065F46",
+            background: "var(--exito-diluido)",
+            border: "1px solid var(--exito-linea)",
+            color: "var(--exito-texto)",
             padding: "10px 18px",
             borderRadius: "12px",
             fontSize: "0.85rem",
