@@ -55,7 +55,7 @@ export default async function PaginaGestionUsuarios({
           background: "#FFFFFF",
           border: "1px solid #E5DFD5",
           borderRadius: 16,
-          padding: 24,
+          padding: "clamp(14px, 3.5vw, 24px)",
           boxShadow: "0 4px 18px rgba(28, 38, 31, 0.04)",
         }}
       >
@@ -92,32 +92,35 @@ export default async function PaginaGestionUsuarios({
 
         {error && <p className="error-auth">{error}</p>}
 
-        <table className="tabla-panel">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Correo</th>
-              <th>Estado</th>
-              <th>Roles en el Portal (Cliente / Delivery / Ventas / Operador / Administrador)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {usuarios.map((u) => (
-              <FilaUsuario
-                key={u.usu_id}
-                usuario={u}
-                negocio={NEGOCIO}
-                perfiles={perfiles}
-                nivelMaximoGestor={nivelMaximoGestor}
-              />
-            ))}
-            {usuarios.length === 0 && (
+        <div className="tabla-panel-envoltura">
+          <table className="tabla-panel">
+            <thead>
               <tr>
-                <td colSpan={4}>Sin usuarios encontrados para esta búsqueda.</td>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Estado</th>
+                <th>Roles en el Portal</th>
+                <th style={{ textAlign: "center" }}>Acciones</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {usuarios.map((u) => (
+                <FilaUsuario
+                  key={u.usu_id}
+                  usuario={u}
+                  negocio={NEGOCIO}
+                  perfiles={perfiles}
+                  nivelMaximoGestor={nivelMaximoGestor}
+                />
+              ))}
+              {usuarios.length === 0 && (
+                <tr>
+                  <td colSpan={5}>Sin usuarios encontrados para esta búsqueda.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </section>
     </div>
   );

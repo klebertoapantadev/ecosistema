@@ -54,7 +54,7 @@ export default async function PaginaCuenta() {
           background: "#FFFFFF",
           border: "1px solid #E5E7EB",
           borderRadius: "16px",
-          padding: "20px 24px",
+          padding: "clamp(14px, 3.5vw, 24px)",
         }}
       >
         <WidgetFacturacionElectronica negocio="tinkay" modoVistaForzado="cliente" />

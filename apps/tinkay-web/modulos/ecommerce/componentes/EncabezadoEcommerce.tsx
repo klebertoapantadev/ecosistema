@@ -10,7 +10,7 @@ import { CampanaNotificaciones } from '@eco/notificaciones';
 import { useCarrito } from '../contexto-carrito';
 import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from '../datos-catalogo';
 import { expandirProductosVitrina, obtenerCategoriasVisibles } from '../filtrado-catalogo';
-import { ShoppingBag, Feather, FileText, Gift } from 'lucide-react';
+import { ShoppingBag, Feather, FileText, Gift, Menu, X, User, MapPin } from 'lucide-react';
 
 export function EncabezadoEcommerce() {
   const {
@@ -25,6 +25,21 @@ export function EncabezadoEcommerce() {
   } = useCarrito();
 
   const [estadoRegalo, setEstadoRegalo] = useState<EstadoRegaloPrimeraCompra | null>(null);
+  const [menuMovilAbierto, setMenuMovilAbierto] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!menuMovilAbierto) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const alEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenuMovilAbierto(false);
+    };
+    window.addEventListener('keydown', alEscape);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', alEscape);
+    };
+  }, [menuMovilAbierto]);
 
   useEffect(() => {
     let cancelado = false;
@@ -80,6 +95,7 @@ export function EncabezadoEcommerce() {
       {/* Anuncio de regalo en primera compra para clientes registrados */}
       {(!estadoRegalo || !estadoRegalo.autenticado || estadoRegalo.aplicaRegalo) && (
         <div
+          className="barra-regalo-anuncio"
           style={{
             background:
               estadoRegalo?.autenticado && estadoRegalo.aplicaRegalo
@@ -141,14 +157,27 @@ export function EncabezadoEcommerce() {
       )}
 
       <div className="contenedor-cabecera-principal">
-        <Link href="/" className="logo-tinkay-marca" aria-label="Tinkay Flores y Eventos">
-          <img
-            src="/img/logo/tinkay-logo.jpg"
-            alt="Tinkay Flores y Eventos"
-            className="logo-tinkay-imagen-cabecera"
-          />
-          <span className="sr-only">Tinkay Flores y Eventos</span>
-        </Link>
+        <div className="cabecera-marca-y-menu">
+          <button
+            type="button"
+            className="btn-menu-movil-ecommerce"
+            onClick={() => setMenuMovilAbierto(true)}
+            title="Abrir menú de categorías y opciones"
+            aria-label="Abrir menú"
+            aria-expanded={menuMovilAbierto}
+          >
+            <Menu size={20} />
+          </button>
+
+          <Link href="/" className="logo-tinkay-marca" aria-label="Tinkay Flores y Eventos">
+            <img
+              src="/img/logo/tinkay-logo.jpg"
+              alt="Tinkay Flores y Eventos"
+              className="logo-tinkay-imagen-cabecera"
+            />
+            <span className="sr-only">Tinkay Flores y Eventos</span>
+          </Link>
+        </div>
 
         <nav className="nav-enlaces-floristeria" aria-label="Categorías principales">
           {categoriasMenu.map((cat) => {
@@ -186,21 +215,25 @@ export function EncabezadoEcommerce() {
               <CampanaNotificaciones negocio="tinkay" variante="clara" />
               <Link
                 href="/panel"
-                className="enlace-ingresar-discreto"
+                className="enlace-ingresar-discreto btn-responsive-accion"
                 title="Abrir mi panel de cuenta y pedidos"
                 aria-label="Mi Panel"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               >
-                Mi Panel
+                <User size={17} />
+                <span className="btn-texto-responsive">Mi Panel</span>
               </Link>
             </>
           ) : (
             <Link
               href="/ingresar"
-              className="enlace-ingresar-discreto"
+              className="enlace-ingresar-discreto btn-responsive-accion"
               title="Iniciar sesión en Tinkay"
               aria-label="Ingresar"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
             >
-              Ingresar
+              <User size={17} />
+              <span className="btn-texto-responsive">Ingresar</span>
             </Link>
           )}
 
@@ -246,6 +279,222 @@ export function EncabezadoEcommerce() {
           </button>
         </div>
       </div>
+
+      {/* Franja rápida de categorías deslizable en móvil / tablet */}
+      <nav className="franja-categorias-movil" aria-label="Categorías rápidas">
+        {categoriasMenu.map((cat) => {
+          const esTodos = cat.id === 'cat-todos';
+          const estaActiva = categoriaActiva === cat.id;
+          const etiquetaMenu = esTodos
+            ? 'Catálogo'
+            : cat.modoVisualSobrio
+            ? 'Condolencias'
+            : cat.nombre;
+
+          return (
+            <a
+              key={cat.id}
+              href="#catalogo"
+              onClick={(e) => handleSeleccionMenu(e, cat.id)}
+              aria-current={estaActiva ? 'true' : undefined}
+              className={[
+                'chip-cat-cabecera-movil',
+                cat.modoVisualSobrio ? 'condolencias' : '',
+                estaActiva ? 'activa' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              {cat.modoVisualSobrio && <Feather size={13} />}
+              <span>{etiquetaMenu}</span>
+            </a>
+          );
+        })}
+      </nav>
+
+      {/* Drawer de Navegación Móvil */}
+      {menuMovilAbierto && (
+        <div
+          className="backdrop-menu-movil-ecommerce"
+          onClick={() => setMenuMovilAbierto(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menú principal Tinkay"
+        >
+          <div
+            className="drawer-menu-movil-ecommerce"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                paddingBottom: '12px',
+                borderBottom: '1px solid var(--linea)',
+              }}
+            >
+              <strong style={{ fontSize: '1.05rem', color: 'var(--tinta)' }}>
+                Tinkay Floristería
+              </strong>
+              <button
+                type="button"
+                onClick={() => setMenuMovilAbierto(false)}
+                title="Cerrar menú"
+                aria-label="Cerrar menú"
+                style={{
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: '999px',
+                  border: '1px solid var(--linea)',
+                  background: '#FFFFFF',
+                  color: 'var(--tinta)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <span
+                style={{
+                  fontSize: '0.7rem',
+                  fontWeight: 800,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  color: 'var(--gris)',
+                  marginBottom: '4px',
+                }}
+              >
+                Colecciones Florales
+              </span>
+              {categoriasMenu.map((cat) => {
+                const esTodos = cat.id === 'cat-todos';
+                const estaActiva = categoriaActiva === cat.id;
+                const etiquetaMenu = esTodos
+                  ? 'Todo el Catálogo'
+                  : cat.modoVisualSobrio
+                  ? 'Condolencias'
+                  : cat.nombre;
+
+                return (
+                  <a
+                    key={cat.id}
+                    href="#catalogo"
+                    onClick={(e) => {
+                      handleSeleccionMenu(e, cat.id);
+                      setMenuMovilAbierto(false);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      textDecoration: 'none',
+                      fontSize: '0.9rem',
+                      fontWeight: estaActiva ? 700 : 600,
+                      background: estaActiva ? 'rgba(236, 127, 167, 0.14)' : 'transparent',
+                      color: estaActiva ? 'var(--rosa-oscuro)' : 'var(--tinta)',
+                    }}
+                  >
+                    {cat.modoVisualSobrio && <Feather size={15} />}
+                    <span>{etiquetaMenu}</span>
+                  </a>
+                );
+              })}
+            </div>
+
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                paddingTop: '12px',
+                borderTop: '1px solid var(--linea)',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuMovilAbierto(false);
+                  setDrawerProformaAbierto(true);
+                }}
+                title="Cotizar arreglos para bodas y eventos"
+                aria-label="Cotizar Evento"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '11px 14px',
+                  borderRadius: '12px',
+                  border: 'none',
+                  background: '#2D4734',
+                  color: '#FFFFFF',
+                  fontSize: '0.86rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                <FileText size={16} />
+                <span>Cotizar Evento</span>
+              </button>
+
+              <Link
+                href={estadoRegalo?.autenticado ? '/panel' : '/ingresar'}
+                onClick={() => setMenuMovilAbierto(false)}
+                title={estadoRegalo?.autenticado ? 'Ir a mi panel de cuenta' : 'Iniciar sesión o registrarme'}
+                aria-label={estadoRegalo?.autenticado ? 'Mi Panel' : 'Ingresar'}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '11px 14px',
+                  borderRadius: '12px',
+                  border: '1px solid var(--linea)',
+                  background: '#FFFFFF',
+                  color: 'var(--tinta)',
+                  fontSize: '0.86rem',
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                }}
+              >
+                <User size={16} />
+                <span>{estadoRegalo?.autenticado ? 'Mi Panel y Pedidos' : 'Ingresar / Registrarme'}</span>
+              </Link>
+
+              <a
+                href="https://maps.app.goo.gl/D56gQohzuwha4sLf8"
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Ver tienda física de Tinkay en Google Maps"
+                aria-label="Tienda en Maps"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  padding: '9px 12px',
+                  borderRadius: '10px',
+                  color: 'var(--verde)',
+                  fontSize: '0.82rem',
+                  fontWeight: 600,
+                  textDecoration: 'none',
+                }}
+              >
+                <MapPin size={15} />
+                <span>Tienda Física (Maps)</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }

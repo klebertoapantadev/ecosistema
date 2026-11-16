@@ -8,6 +8,7 @@ import {
   asegurarMembresiaCliente,
 } from "@eco/identidad";
 import {
+  MarcoPanelLateral,
   NavegacionPanelLateral,
   type ItemNavegacionPanel,
 } from "@eco/configuracion-negocio";
@@ -138,52 +139,52 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   const navItems = CATALOGO_NAV_FASTFIX.filter((item) => clavesVisibles.has(item.clave));
 
   return (
-    <div className="panel-layout">
-      <aside
-        className="panel-nav"
-        style={{
-          width: "260px",
-          padding: "22px 16px",
-          gap: "20px",
-          borderRight: "1px solid rgba(255, 255, 255, 0.08)",
-        }}
-      >
-        <div className="panel-marca" style={{ padding: "0 8px" }}>
-          <Link href="/panel" style={{ color: "#FFFFFF", textDecoration: "none" }}>
-            FastFix Home
-          </Link>
-          <SelloCompilacion className="sello-compilacion" />
-        </div>
-        <div
-          className="panel-usuario"
-          style={{
-            padding: "12px",
-            borderRadius: "10px",
-            background: "rgba(255, 255, 255, 0.04)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            gap: "6px",
-            opacity: 1,
-          }}
-        >
-          <span className="nombre-usuario-activo" style={{ color: "#FFFFFF" }}>
-            {[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ")}
-          </span>
-          <span className="correo-usuario-activo" style={{ wordBreak: "break-all" }}>
-            {perfil.usu_correo}
-          </span>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginTop: "4px" }}>
-            {esSuperAdmin ? <span className="etiqueta-superadmin">SuperAdmin</span> : <span />}
-            <form action={cerrarSesionYRedirigir}>
-              <button type="submit" className="btn-mini" title="Cerrar sesión" aria-label="Cerrar sesión">
-                Salir
-              </button>
-            </form>
+    <MarcoPanelLateral
+      marcaNombre="FastFix Home"
+      marcaHref="/panel"
+      etiquetaRol={esSuperAdmin ? "SuperAdmin" : undefined}
+      urlTienda="/"
+      etiquetaTienda="Inicio"
+      barraLateral={
+        <>
+          <div className="panel-marca" style={{ padding: "0 8px" }}>
+            <Link href="/panel" style={{ color: "#FFFFFF", textDecoration: "none" }}>
+              FastFix Home
+            </Link>
+            <SelloCompilacion className="sello-compilacion" />
           </div>
-        </div>
-        <NavegacionPanelLateral items={navItems} />
-      </aside>
-      <main className="panel-contenido">{children}</main>
-    </div>
+          <div
+            className="panel-usuario"
+            style={{
+              padding: "12px",
+              borderRadius: "10px",
+              background: "rgba(255, 255, 255, 0.04)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              gap: "6px",
+              opacity: 1,
+            }}
+          >
+            <span className="nombre-usuario-activo" style={{ color: "#FFFFFF" }}>
+              {[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ")}
+            </span>
+            <span className="correo-usuario-activo" style={{ wordBreak: "break-all" }}>
+              {perfil.usu_correo}
+            </span>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginTop: "4px" }}>
+              {esSuperAdmin ? <span className="etiqueta-superadmin">SuperAdmin</span> : <span />}
+              <form action={cerrarSesionYRedirigir}>
+                <button type="submit" className="btn-mini" title="Cerrar sesión" aria-label="Cerrar sesión">
+                  Salir
+                </button>
+              </form>
+            </div>
+          </div>
+          <NavegacionPanelLateral items={navItems} />
+        </>
+      }
+    >
+      {children}
+    </MarcoPanelLateral>
   );
 }
 

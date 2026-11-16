@@ -532,11 +532,8 @@ export function EditorSetComboConfigurable({
 
                 <div
                   style={{
-                    display: "grid",
-                    gridTemplateColumns:
-                      prodActivoParaAgregar && prodActivoParaAgregar.variantes.length > 1
-                        ? "1.4fr 1fr 74px auto"
-                        : "1fr 74px auto",
+                    display: "flex",
+                    flexWrap: "wrap",
                     gap: "8px",
                     alignItems: "center",
                   }}
@@ -549,7 +546,8 @@ export function EditorSetComboConfigurable({
                       setVarSeleccionadaSku(nuevoProd?.variantes[0]?.var_sku || "");
                     }}
                     style={{
-                      width: "100%",
+                      flex: "2 1 190px",
+                      minWidth: 0,
                       padding: "7px 8px",
                       borderRadius: "6px",
                       border: "1px solid #CBD5E1",
@@ -576,7 +574,8 @@ export function EditorSetComboConfigurable({
                       onChange={(e) => setVarSeleccionadaSku(e.target.value)}
                       title="Tamaño / Variante predefinida en el Set Completo"
                       style={{
-                        width: "100%",
+                        flex: "1 1 140px",
+                        minWidth: 0,
                         padding: "7px 8px",
                         borderRadius: "6px",
                         border: "1px solid #CBD5E1",
@@ -601,7 +600,7 @@ export function EditorSetComboConfigurable({
                     onChange={(e) => setCantidadAgregar(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
                     title="Cantidad incluida en el Set"
                     style={{
-                      width: "100%",
+                      width: "74px",
                       padding: "7px 6px",
                       borderRadius: "6px",
                       border: "1px solid #CBD5E1",
@@ -869,7 +868,7 @@ export function EditorSetComboConfigurable({
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))",
                   gap: "12px",
                   alignItems: "center",
                 }}

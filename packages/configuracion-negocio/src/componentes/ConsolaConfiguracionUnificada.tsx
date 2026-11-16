@@ -162,7 +162,7 @@ export function ConsolaConfiguracionUnificada({
           background: "#FFFFFF",
           border: "1px solid #E5E7EB",
           borderRadius: "14px",
-          padding: "22px 24px",
+          padding: "clamp(14px, 3.5vw, 24px)",
           boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)",
           display: "flex",
           flexDirection: "column",

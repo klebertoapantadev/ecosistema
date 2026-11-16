@@ -529,13 +529,14 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
               <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#374151", marginBottom: "6px" }}>
                 Bearer Token ({tokenGenerado.nombre}):
               </label>
-              <div style={{ display: "flex", gap: "8px" }}>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                 <input
                   type="text"
                   readOnly
                   value={tokenGenerado.token_secreto}
                   style={{
-                    flex: 1,
+                    flex: "1 1 200px",
+                    minWidth: 0,
                     padding: "10px 12px",
                     borderRadius: "8px",
                     border: "1px solid #D1D5DB",

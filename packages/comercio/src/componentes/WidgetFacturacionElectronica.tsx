@@ -1676,7 +1676,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))",
                   gap: "8px",
                   marginBottom: "16px",
                   background: "#F1F5F9",
@@ -2026,7 +2026,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "2fr 1fr",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))",
                     gap: "10px",
                     marginBottom: "10px",
                   }}
@@ -3088,7 +3088,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                     <div
                       style={{
                         display: "grid",
-                        gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(min(265px, 100%), 1fr))",
                         gap: "14px",
                       }}
                     >

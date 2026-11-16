@@ -1056,7 +1056,7 @@ export function ModalDetalleProducto() {
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(min(135px, 100%), 1fr))',
                     gap: '6px',
                     background: '#EDE9FE',
                     padding: '4px',
@@ -2125,7 +2125,7 @@ export function ModalDetalleProducto() {
                   <div
                     style={{
                       display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(185px, 1fr))',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(155px, 100%), 1fr))',
                       gap: '10px',
                       width: '100%',
                     }}

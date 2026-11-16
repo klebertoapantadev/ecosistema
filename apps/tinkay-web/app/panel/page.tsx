@@ -218,7 +218,7 @@ export default async function PaginaPanel() {
           style={{
             background: "linear-gradient(135deg, #2D4334 0%, #1F2E24 100%)",
             borderRadius: "16px",
-            padding: "28px 32px",
+            padding: "clamp(18px, 4vw, 28px) clamp(16px, 4.5vw, 32px)",
             color: "#FFFFFF",
             boxShadow: "0 8px 20px -6px rgba(31, 46, 36, 0.25)",
           }}
@@ -232,7 +232,7 @@ export default async function PaginaPanel() {
               gap: "16px",
             }}
           >
-            <div>
+            <div style={{ minWidth: 0 }}>
               <div
                 style={{
                   display: "inline-flex",
@@ -251,14 +251,14 @@ export default async function PaginaPanel() {
                 <Sparkles size={13} />
                 {infoBanner.subtitulo}
               </div>
-              <h1 style={{ fontSize: "24px", fontWeight: 700, margin: "0 0 6px 0", color: "#FFFFFF" }}>
+              <h1 style={{ fontSize: "clamp(1.25rem, 4vw, 1.55rem)", fontWeight: 700, margin: "0 0 6px 0", color: "#FFFFFF" }}>
                 {saludo ?? `Hola, ${nombre}`}
               </h1>
               <p
                 style={{
                   margin: 0,
-                  fontSize: "14px",
-                  color: "rgba(255,255,255,0.82)",
+                  fontSize: "13.5px",
+                  color: "rgba(255,255,255,0.84)",
                   maxWidth: "620px",
                   lineHeight: 1.5,
                 }}
@@ -266,7 +266,7 @@ export default async function PaginaPanel() {
                 {infoBanner.descripcion}
               </p>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", width: "100%", maxWidth: "fit-content" }}>
               <Link
                 href="/#catalogo"
                 title="Explorar el catálogo floral de la tienda"
@@ -334,7 +334,7 @@ export default async function PaginaPanel() {
         style={{
           background: "linear-gradient(135deg, #2D4334 0%, #1F2E24 100%)",
           borderRadius: "16px",
-          padding: "28px 32px",
+          padding: "clamp(18px, 4vw, 28px) clamp(16px, 4.5vw, 32px)",
           color: "#FFFFFF",
           boxShadow: "0 8px 20px -6px rgba(31, 46, 36, 0.25)",
         }}
@@ -348,7 +348,7 @@ export default async function PaginaPanel() {
             gap: "16px",
           }}
         >
-          <div>
+          <div style={{ minWidth: 0 }}>
             <div
               style={{
                 display: "inline-flex",
@@ -367,16 +367,18 @@ export default async function PaginaPanel() {
               <Sparkles size={13} />
               {infoBanner.subtitulo}
             </div>
-            <h1 style={{ fontSize: "24px", fontWeight: 700, margin: "0 0 6px 0", color: "#FFFFFF" }}>
+            <h1 style={{ fontSize: "clamp(1.25rem, 4vw, 1.55rem)", fontWeight: 700, margin: "0 0 6px 0", color: "#FFFFFF" }}>
               {saludo ?? `Hola, ${nombre}`}
             </h1>
-            <p style={{ margin: 0, fontSize: "14px", color: "rgba(255,255,255,0.82)", maxWidth: "600px", lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: "13.5px", color: "rgba(255,255,255,0.84)", maxWidth: "600px", lineHeight: 1.5 }}>
               {infoBanner.descripcion}
             </p>
           </div>
           {esAdminTienda && modulosConfiguracion.length > 0 && (
             <Link
               href="/panel/configuracion"
+              title="Abrir parámetros e integraciones de tienda"
+              aria-label="Configuración"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -392,7 +394,7 @@ export default async function PaginaPanel() {
               }}
             >
               <Settings size={15} />
-              Centro de Configuración
+              <span>Configuración</span>
             </Link>
           )}
         </div>
@@ -410,7 +412,7 @@ export default async function PaginaPanel() {
             </h2>
             <span style={{ fontSize: "12.5px", color: "#6B7280" }}>Gestión diaria de la floristería</span>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(275px, 100%), 1fr))", gap: "14px" }}>
             {modulosOperacion.map((mod) => (
               <TarjetaModuloPanel key={mod.clave} mod={mod} />
             ))}
@@ -427,7 +429,7 @@ export default async function PaginaPanel() {
             </h2>
             <span style={{ fontSize: "12.5px", color: "#6B7280" }}>Parámetros exclusivos de Tinkay en Vault</span>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(250px, 1fr))", gap: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(240px, 100%), 1fr))", gap: "14px" }}>
             {modulosConfiguracion.map((mod) => (
               <TarjetaModuloPanel key={mod.clave} mod={mod} />
             ))}

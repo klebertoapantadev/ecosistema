@@ -794,7 +794,7 @@ export function ModalCrearProducto({
           </div>
 
           {/* Categoría y Tipo */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(210px, 100%), 1fr))", gap: "12px", marginBottom: "14px" }}>
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                 <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
@@ -1055,7 +1055,7 @@ export function ModalCrearProducto({
             </p>
 
             {/* 3 Modos de Vigencia */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px", marginBottom: "10px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(140px, 100%), 1fr))", gap: "6px", marginBottom: "10px" }}>
               <button
                 type="button"
                 onClick={() => setVigenciaTipo("SIEMPRE")}
@@ -1120,7 +1120,7 @@ export function ModalCrearProducto({
 
             {/* Campos contextuales para Rango de Fechas o Estacional Anual */}
             {vigenciaTipo === "RANGO_FECHAS" && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "8px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(170px, 100%), 1fr))", gap: "10px", marginTop: "8px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
                     Fecha de Inicio (YYYY-MM-DD)
@@ -1165,7 +1165,7 @@ export function ModalCrearProducto({
 
             {vigenciaTipo === "ESTACIONAL_ANUAL" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(170px, 100%), 1fr))", gap: "10px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
                       Fecha Inicio Anual (MM-DD, ej. 02-10)
@@ -1209,7 +1209,7 @@ export function ModalCrearProducto({
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "10px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: "10px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
                       Etiqueta de Temporada
@@ -1266,7 +1266,7 @@ export function ModalCrearProducto({
               marginBottom: "14px",
             }}
           >
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(165px, 100%), 1fr))", gap: "12px" }}>
               <div>
                 <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
                   Precio Base Imponible ($ USD) *
@@ -1462,9 +1462,9 @@ export function ModalCrearProducto({
               </span>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: "10px", marginBottom: "10px" }}>
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px", flexWrap: "wrap", gap: "4px" }}>
                   <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
                     URL Imagen de Portada Principal *
                   </label>
@@ -1479,7 +1479,7 @@ export function ModalCrearProducto({
                     </span>
                   )}
                 </div>
-                <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
                   <input
                     type="url"
                     placeholder="https://... o sube una imagen desde tu PC ➔"
@@ -1495,7 +1495,8 @@ export function ModalCrearProducto({
                       setExitoAutoConvertir(null);
                     }}
                     style={{
-                      flex: 1,
+                      flex: "1 1 160px",
+                      minWidth: 0,
                       padding: "7px 10px",
                       borderRadius: "6px",
                       border: (imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
@@ -1659,7 +1660,7 @@ export function ModalCrearProducto({
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "10px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: "10px", marginTop: "10px" }}>
               <div>
                 <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
                   URL Video / GIF Demostrativo (YouTube / MP4)

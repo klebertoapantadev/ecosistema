@@ -6,6 +6,7 @@ import {
   asegurarMembresiaCliente,
 } from "@eco/identidad";
 import {
+  MarcoPanelLateral,
   NavegacionPanelLateral,
   type ItemNavegacionPanel,
 } from "@eco/configuracion-negocio";
@@ -195,120 +196,121 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   const estiloBadge = COLOR_BADGE_ROL[rolPrincipal] ?? COLOR_BADGE_ROL.CLIENTE!;
 
   return (
-    <div className="panel-layout">
-      <aside
-        className="panel-nav"
-        style={{
-          width: "260px",
-          padding: "22px 16px",
-          gap: "20px",
-          borderRight: "1px solid rgba(255, 255, 255, 0.08)",
-        }}
-      >
-        <div
-          className="panel-marca"
-          style={{
-            padding: "0 8px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "2px",
-          }}
-        >
+    <MarcoPanelLateral
+      marcaNombre="tinkay"
+      marcaHref="/panel"
+      etiquetaRol={etiquetaRol}
+      estiloBadgeRol={estiloBadge}
+      urlTienda="/"
+      etiquetaTienda="Tienda"
+      barraLateral={
+        <>
           <div
+            className="panel-marca"
             style={{
+              padding: "0 8px",
               display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "8px",
+              flexDirection: "column",
+              gap: "2px",
             }}
           >
-            <Link
-              href="/panel"
+            <div
               style={{
-                color: "#FFFFFF",
-                textDecoration: "none",
-                fontSize: "1.35rem",
-                fontWeight: 600,
-                letterSpacing: "-0.01em",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "8px",
               }}
             >
-              tinkay
-            </Link>
-            <CampanaNotificaciones negocio={NEGOCIO} usuarioId={perfil.usu_id} />
-          </div>
-          <SelloCompilacion className="sello-compilacion" />
-        </div>
-
-        <div
-          className="panel-usuario"
-          style={{
-            padding: "12px",
-            borderRadius: "10px",
-            background: "rgba(255, 255, 255, 0.04)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            gap: "6px",
-            opacity: 1,
-          }}
-        >
-          <span className="nombre-usuario-activo" style={{ fontSize: "0.86rem", color: "#FFFFFF" }}>
-            {[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ") || etiquetaRol}
-          </span>
-          <span
-            className="correo-usuario-activo"
-            style={{
-              fontSize: "0.74rem",
-              color: "rgba(255, 255, 255, 0.65)",
-              wordBreak: "break-all",
-            }}
-          >
-            {perfil.usu_correo}
-          </span>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "8px",
-              marginTop: "6px",
-              flexWrap: "wrap",
-            }}
-          >
-            <span
-              className="etiqueta-superadmin"
-              style={{
-                background: estiloBadge.bg,
-                color: estiloBadge.color,
-              }}
-            >
-              {etiquetaRol}
-            </span>
-            <form action={cerrarSesionYRedirigir}>
-              <button
-                type="submit"
-                title="Cerrar sesión activa"
-                aria-label="Cerrar sesión activa"
+              <Link
+                href="/panel"
                 style={{
-                  padding: "5px 11px",
-                  borderRadius: "7px",
-                  border: "1px solid rgba(255, 255, 255, 0.18)",
-                  background: "rgba(255, 255, 255, 0.06)",
                   color: "#FFFFFF",
-                  fontFamily: "inherit",
-                  fontSize: "0.74rem",
+                  textDecoration: "none",
+                  fontSize: "1.35rem",
                   fontWeight: 600,
-                  cursor: "pointer",
+                  letterSpacing: "-0.01em",
                 }}
               >
-                Salir
-              </button>
-            </form>
+                tinkay
+              </Link>
+              <CampanaNotificaciones negocio={NEGOCIO} usuarioId={perfil.usu_id} />
+            </div>
+            <SelloCompilacion className="sello-compilacion" />
           </div>
-        </div>
 
-        <NavegacionPanelLateral items={navItemsVisibles} />
-      </aside>
-      <main className="panel-contenido">{children}</main>
-    </div>
+          <div
+            className="panel-usuario"
+            style={{
+              padding: "12px",
+              borderRadius: "10px",
+              background: "rgba(255, 255, 255, 0.04)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              gap: "6px",
+              opacity: 1,
+            }}
+          >
+            <span className="nombre-usuario-activo" style={{ fontSize: "0.86rem", color: "#FFFFFF" }}>
+              {[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ") || etiquetaRol}
+            </span>
+            <span
+              className="correo-usuario-activo"
+              style={{
+                fontSize: "0.74rem",
+                color: "rgba(255, 255, 255, 0.65)",
+                wordBreak: "break-all",
+              }}
+            >
+              {perfil.usu_correo}
+            </span>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "8px",
+                marginTop: "6px",
+                flexWrap: "wrap",
+              }}
+            >
+              <span
+                className="etiqueta-superadmin"
+                style={{
+                  background: estiloBadge.bg,
+                  color: estiloBadge.color,
+                }}
+              >
+                {etiquetaRol}
+              </span>
+              <form action={cerrarSesionYRedirigir}>
+                <button
+                  type="submit"
+                  title="Cerrar sesión activa"
+                  aria-label="Cerrar sesión activa"
+                  style={{
+                    padding: "5px 11px",
+                    borderRadius: "7px",
+                    border: "1px solid rgba(255, 255, 255, 0.18)",
+                    background: "rgba(255, 255, 255, 0.06)",
+                    color: "#FFFFFF",
+                    fontFamily: "inherit",
+                    fontSize: "0.74rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Salir
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <NavegacionPanelLateral items={navItemsVisibles} />
+        </>
+      }
+    >
+      {children}
+    </MarcoPanelLateral>
   );
 }
 

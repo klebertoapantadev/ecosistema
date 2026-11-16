@@ -556,7 +556,7 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
                 }}
               >
                 {/* Info Izquierda */}
-                <div style={{ display: "flex", alignItems: "center", gap: "14px", minWidth: "260px", flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "14px", minWidth: "min(220px, 100%)", flex: 1 }}>
                   {/* Thumbnail o Icono */}
                   <div
                     style={{

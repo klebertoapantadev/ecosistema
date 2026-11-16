@@ -451,8 +451,8 @@ export function ModalEditarVariacionProforma({
                   <div
                     key={lin.idLocal}
                     style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 76px 96px 86px 34px",
+                      display: "flex",
+                      flexWrap: "wrap",
                       gap: "6px",
                       alignItems: "center",
                     }}
@@ -463,61 +463,64 @@ export function ModalEditarVariacionProforma({
                       placeholder="Descripción del arreglo o servicio de evento"
                       value={lin.descripcion}
                       onChange={(e) => actualizarLinea(lin.idLocal, { descripcion: e.target.value })}
-                      style={inputEstilo}
+                      style={{ ...inputEstilo, flex: "1 1 220px", minWidth: 0 }}
                     />
-                    <input
-                      type="number"
-                      min={1}
-                      step={1}
-                      value={lin.cantidad}
-                      onChange={(e) =>
-                        actualizarLinea(lin.idLocal, { cantidad: Math.max(1, Number(e.target.value) || 1) })
-                      }
-                      title="Cantidad"
-                      style={inputEstilo}
-                    />
-                    <input
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      value={lin.precioUnitario}
-                      onChange={(e) =>
-                        actualizarLinea(lin.idLocal, {
-                          precioUnitario: Math.max(0, Number(e.target.value) || 0),
-                        })
-                      }
-                      title="Precio unitario PVP (USD)"
-                      style={inputEstilo}
-                    />
-                    <select
-                      value={lin.tarifaIva}
-                      onChange={(e) =>
-                        actualizarLinea(lin.idLocal, { tarifaIva: Number(e.target.value) })
-                      }
-                      title="Tarifa IVA"
-                      style={inputEstilo}
-                    >
-                      <option value={0}>IVA 0%</option>
-                      <option value={15}>IVA 15%</option>
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => eliminarLinea(lin.idLocal)}
-                      disabled={lineas.length <= 1}
-                      title="Quitar ítem"
-                      aria-label="Quitar ítem"
-                      style={{
-                        border: "1px solid #FECACA",
-                        background: "#FEF2F2",
-                        color: "#B91C1C",
-                        borderRadius: "7px",
-                        padding: "7px",
-                        cursor: lineas.length <= 1 ? "not-allowed" : "pointer",
-                        opacity: lineas.length <= 1 ? 0.45 : 1,
-                      }}
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    <div style={{ display: "flex", gap: "6px", alignItems: "center", flex: "1 1 auto", flexWrap: "nowrap" }}>
+                      <input
+                        type="number"
+                        min={1}
+                        step={1}
+                        value={lin.cantidad}
+                        onChange={(e) =>
+                          actualizarLinea(lin.idLocal, { cantidad: Math.max(1, Number(e.target.value) || 1) })
+                        }
+                        title="Cantidad"
+                        style={{ ...inputEstilo, width: "68px", flex: "0 0 68px" }}
+                      />
+                      <input
+                        type="number"
+                        min={0}
+                        step="0.01"
+                        value={lin.precioUnitario}
+                        onChange={(e) =>
+                          actualizarLinea(lin.idLocal, {
+                            precioUnitario: Math.max(0, Number(e.target.value) || 0),
+                          })
+                        }
+                        title="Precio unitario PVP (USD)"
+                        style={{ ...inputEstilo, width: "92px", flex: "1 1 84px", minWidth: "74px" }}
+                      />
+                      <select
+                        value={lin.tarifaIva}
+                        onChange={(e) =>
+                          actualizarLinea(lin.idLocal, { tarifaIva: Number(e.target.value) })
+                        }
+                        title="Tarifa IVA"
+                        style={{ ...inputEstilo, width: "86px", flex: "0 0 86px" }}
+                      >
+                        <option value={0}>IVA 0%</option>
+                        <option value={15}>IVA 15%</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => eliminarLinea(lin.idLocal)}
+                        disabled={lineas.length <= 1}
+                        title="Quitar ítem"
+                        aria-label="Quitar ítem"
+                        style={{
+                          border: "1px solid #FECACA",
+                          background: "#FEF2F2",
+                          color: "#B91C1C",
+                          borderRadius: "7px",
+                          padding: "7px",
+                          flexShrink: 0,
+                          cursor: lineas.length <= 1 ? "not-allowed" : "pointer",
+                          opacity: lineas.length <= 1 ? 0.45 : 1,
+                        }}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>

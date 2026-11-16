@@ -619,7 +619,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(285px, 100%), 1fr))",
             gap: "20px",
           }}
         >
@@ -972,7 +972,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
 
             <form onSubmit={handleGuardar} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               {/* Tipo y Prioridad */}
-              <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))", gap: "12px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
                     Tipo de Comunicado / Campaña *
@@ -1063,7 +1063,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
               </div>
 
               {/* Institución & Descuento */}
-              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: "12px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
                     Institución / Entidad Emisora
@@ -1174,7 +1174,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
               </div>
 
               {/* Fechas de Vigencia */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: "12px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
                     Fecha Inicio de Campaña *
@@ -1241,7 +1241,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                   </button>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: "10px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#64748B", marginBottom: "2px" }}>
                       URL Imagen de Portada
@@ -1284,7 +1284,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
               </div>
 
               {/* Botón de Acción / CTA */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: "12px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
                     Texto Botón CTA

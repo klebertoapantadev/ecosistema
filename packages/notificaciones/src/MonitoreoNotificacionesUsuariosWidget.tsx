@@ -606,7 +606,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
 
             <div style={{ padding: "20px", overflowY: "auto", flex: 1, fontSize: "0.85rem" }}>
               {/* Info Remitente y Destinatario */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "14px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: "10px", marginBottom: "14px" }}>
                 <div style={{ background: "#f8fafc", padding: "12px 14px", borderRadius: "10px", border: "1px solid #e2e8f0" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                     <span style={{ fontSize: "0.7rem", color: "#64748b", fontWeight: 800, textTransform: "uppercase" }}>Remitente (Quién Envía)</span>

@@ -3219,7 +3219,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               transition: "all 0.25s ease"
             }}
           >
-            <div style={{ minWidth: "300px" }}>
+            <div style={{ minWidth: "min(280px, 100%)", flex: "1 1 260px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
                 <Palette size={18} color={temaPerfilActivo.colorPrimario} />
                 <label style={{ fontSize: "0.82rem", fontWeight: 800, color: temaPerfilActivo.colorTexto, textTransform: "uppercase", letterSpacing: "0.04em" }}>
@@ -3254,7 +3254,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               </select>
             </div>
 
-            <div style={{ flex: 1, minWidth: "240px" }}>
+            <div style={{ flex: "2 1 240px", minWidth: "min(240px, 100%)" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", marginBottom: "6px" }}>
                 <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: temaPerfilActivo.badgeBg, color: temaPerfilActivo.badgeTexto, padding: "4px 12px", borderRadius: "999px", fontWeight: 800, fontSize: "0.78rem" }}>
                   <UserCheck size={14} /> MODO CONFIGURACIÓN: {perfilActualObj?.nombre.toUpperCase()} (NIVEL {perfilActualObj?.nivel})
@@ -3890,7 +3890,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                       flexWrap: "wrap"
                                     }}
                                   >
-                                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, minWidth: "260px" }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1, minWidth: "min(220px, 100%)" }}>
                                       <span title="Arrastrar para mover entre paneles" style={{ display: "inline-flex", cursor: "grab", flexShrink: 0 }}>
                                         <GripVertical size={16} color="var(--panel-gris, #737373)" style={{ opacity: 0.6 }} />
                                       </span>
@@ -3959,7 +3959,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                     </div>
 
                                     {/* Botones de acción */}
-                                    <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+                                    <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap", flexShrink: 0 }}>
                                       <a
                                         href={w.clave === "favoritos" ? (panel.ruta || "/panel") : `${panel.ruta || "/panel"}?widget=${w.clave}`}
                                         target="_blank"
@@ -4211,7 +4211,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
                           {/* 3. MODO TARJETAS / REJILLA MEJORADA */}
                           {modoVistaWidgets === "rejilla" && (
-                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "12px" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(275px, 100%), 1fr))", gap: "12px" }}>
                               {widgetsFiltrados.map((w, idx) => {
                                 const esFavoritos = w.clave === "favoritos";
                                 const esArrastrando = widgetArrastrado?.widgetClave === w.clave;
@@ -4574,7 +4574,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 </div>
 
                 {widgetsOrdenados.length > 0 ? (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: "12px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(265px, 100%), 1fr))", gap: "12px" }}>
                     {widgetsOrdenados.map(w => {
                       const esArrastrando = widgetArrastrado?.widgetClave === w.clave;
                       const nuevo = esCreadoHoy(w.creadoEn);
@@ -4928,7 +4928,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
             </button>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(275px, 100%), 1fr))", gap: "16px" }}>
             {inventarioWidgets.map(w => (
               <div key={w.clave} style={{ border: "1px solid var(--panel-linea, #E4E4E4)", borderRadius: "12px", padding: "16px", background: "#ffffff", display: "flex", flexDirection: "column" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "8px" }}>
@@ -4985,7 +4985,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
       {tabActiva === "perfiles" && (
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
-            <div style={{ position: "relative", minWidth: "260px", flex: 1 }}>
+            <div style={{ position: "relative", minWidth: "min(220px, 100%)", flex: 1 }}>
               <Search size={16} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--panel-gris, #737373)" }} />
               <input
                 type="text"
@@ -5412,7 +5412,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     </div>
 
                     {/* CUERPO DEL REPORTE: PANELES / WIDGETS Y USUARIOS */}
-                    <div style={{ padding: "20px 24px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "20px" }}>
+                    <div style={{ padding: "clamp(14px, 3vw, 20px) clamp(14px, 3.5vw, 24px)", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(270px, 100%), 1fr))", gap: "20px" }}>
                       {/* COLUMNA 1: PANELES & WIDGETS ASIGNADOS */}
                       <div style={{ background: "#FBFBFE", padding: "18px", borderRadius: "12px", border: "1px solid #EAE8F2" }}>
                         <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#1e1b4b", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "14px", display: "flex", alignItems: "center", gap: "8px" }}>

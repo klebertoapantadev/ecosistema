@@ -290,7 +290,7 @@ export function SelectorUbicacionEntrega({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "1fr 1fr",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(135px, 100%), 1fr))",
             gap: "6px",
             background: "#F4F4F5",
             padding: "4px",

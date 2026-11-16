@@ -531,7 +531,7 @@ export function VistaProformaEventoCliente({
               target="_blank"
               rel="noopener noreferrer"
               title="Contactar a Tinkay por WhatsApp al +593 99 292 2343"
-              aria-label="Contáctanos WhatsApp"
+              aria-label="WhatsApp"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -545,7 +545,7 @@ export function VistaProformaEventoCliente({
                 fontWeight: 700,
               }}
             >
-              <span>Contáctanos WhatsApp</span>
+              <span>WhatsApp</span>
               <ExternalLink size={14} />
             </a>
           </div>
@@ -994,7 +994,7 @@ export function VistaProformaEventoCliente({
             style={{
               background: '#2D4734',
               color: '#FFFFFF',
-              padding: '26px 28px',
+              padding: 'clamp(16px, 4vw, 26px) clamp(16px, 4vw, 28px)',
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'flex-start',
@@ -1014,7 +1014,7 @@ export function VistaProformaEventoCliente({
               >
                 Tinkay Floristería &amp; Eventos · Quito
               </span>
-              <h1 style={{ margin: '6px 0 4px', fontSize: '1.5rem', fontWeight: 800 }}>
+              <h1 style={{ margin: '6px 0 4px', fontSize: 'clamp(1.2rem, 3.8vw, 1.5rem)', fontWeight: 800 }}>
                 Proforma {proformaActiva.codigoProforma}
               </h1>
               <span style={{ fontSize: '0.84rem', color: '#E2E8F0' }}>
@@ -1022,7 +1022,7 @@ export function VistaProformaEventoCliente({
               </span>
             </div>
 
-            <div style={{ textAlign: 'right' }}>
+            <div>
               <span
                 style={{
                   display: 'inline-block',
@@ -1070,7 +1070,7 @@ export function VistaProformaEventoCliente({
             </div>
           </div>
 
-          <div style={{ padding: '26px 28px' }}>
+          <div style={{ padding: 'clamp(16px, 4vw, 26px) clamp(16px, 4vw, 28px)' }}>
             {/* Nota del Asesor si existe */}
             {proformaActiva.notaAsesor && (
               <div
@@ -1097,7 +1097,7 @@ export function VistaProformaEventoCliente({
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))',
                 gap: '16px',
                 padding: '16px',
                 borderRadius: '12px',
@@ -1323,7 +1323,7 @@ export function VistaProformaEventoCliente({
               background: '#FFFFFF',
               borderRadius: '18px',
               border: '1px solid #E7E5E4',
-              padding: '24px 28px',
+              padding: 'clamp(16px, 4vw, 24px) clamp(16px, 4vw, 28px)',
               boxShadow: '0 10px 30px rgba(28, 25, 23, 0.06)',
             }}
           >
@@ -1367,7 +1367,7 @@ export function VistaProformaEventoCliente({
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(210px, 100%), 1fr))',
                 gap: '10px',
                 marginBottom: '18px',
               }}
@@ -1492,7 +1492,7 @@ export function VistaProformaEventoCliente({
                 <div
                   style={{
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(min(190px, 100%), 1fr))',
                     gap: '10px',
                   }}
                 >
@@ -1609,7 +1609,7 @@ export function VistaProformaEventoCliente({
                   style={{
                     display: 'grid',
                     gridTemplateColumns: configCheckout.transferencia.qrDeunaUrl
-                      ? 'repeat(auto-fit, minmax(220px, 1fr))'
+                      ? 'repeat(auto-fit, minmax(min(210px, 100%), 1fr))'
                       : '1fr',
                     gap: '12px',
                     padding: '14px',

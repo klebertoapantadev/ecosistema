@@ -1059,7 +1059,7 @@ export function ConfiguracionFacturacionSri({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))",
           gap: "20px",
         }}
       >
@@ -1342,7 +1342,7 @@ export function ConfiguracionFacturacionSri({
           {/* Conmutador Pruebas vs Producción */}
           <div style={{ marginBottom: "16px" }}>
             <label style={ESTILO_LABEL}>Ambiente de Emisión Activo</label>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(170px, 100%), 1fr))", gap: "8px" }}>
               <button
                 type="button"
                 disabled={procesandoAccion === "amb-1"}

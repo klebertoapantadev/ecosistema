@@ -479,7 +479,7 @@ export function ModalGestionTiposOferta({
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "1.6fr 1fr",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))",
                   gap: "12px",
                   marginBottom: "12px",
                 }}
@@ -652,7 +652,7 @@ export function ModalGestionTiposOferta({
                     <div
                       style={{
                         display: "grid",
-                        gridTemplateColumns: "1fr 1fr",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(min(170px, 100%), 1fr))",
                         gap: "10px",
                         marginBottom: "8px",
                       }}
@@ -1140,7 +1140,7 @@ export function PanelCondicionesRentaProducto({ config, onChange }: PanelCondici
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1.3fr 1fr",
+          gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))",
           gap: "10px",
           marginBottom: "8px",
         }}

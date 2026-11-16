@@ -445,7 +445,7 @@ export function ModalCrearCategoria({
                 />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: "10px", marginBottom: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(160px, 100%), 1fr))", gap: "10px", marginBottom: "12px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
                     Identificador Slug
@@ -504,7 +504,7 @@ export function ModalCrearCategoria({
                   </span>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginBottom: "8px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(170px, 100%), 1fr))", gap: "8px", marginBottom: "8px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#334155", marginBottom: "2px" }}>
                       URL Portada / Banner

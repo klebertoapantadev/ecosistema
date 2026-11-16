@@ -2131,7 +2131,7 @@ export function ModalEditarProducto({
                 />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "14px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(210px, 100%), 1fr))", gap: "12px", marginBottom: "14px" }}>
                 <div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
                     <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
@@ -2392,7 +2392,7 @@ export function ModalEditarProducto({
                 </p>
 
                 {/* 3 Modos de Vigencia */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px", marginBottom: "10px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(145px, 100%), 1fr))", gap: "6px", marginBottom: "10px" }}>
                   <button
                     type="button"
                     onClick={() => setVigenciaTipo("SIEMPRE")}
@@ -2457,7 +2457,7 @@ export function ModalEditarProducto({
 
                 {/* Campos contextuales para Rango de Fechas o Estacional Anual */}
                 {vigenciaTipo === "RANGO_FECHAS" && (
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "8px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(170px, 100%), 1fr))", gap: "10px", marginTop: "8px" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
                         Fecha de Inicio (Desde YYYY-MM-DD)
@@ -2502,7 +2502,7 @@ export function ModalEditarProducto({
 
                 {vigenciaTipo === "ESTACIONAL_ANUAL" && (
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(170px, 100%), 1fr))", gap: "10px" }}>
                       <div>
                         <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
                           Fecha Inicio Anual (Mes-Día, ej. 02-10 para 10 Feb)
@@ -2546,7 +2546,7 @@ export function ModalEditarProducto({
                       </div>
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "10px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: "10px" }}>
                       <div>
                         <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
                           Etiqueta de Temporada (Badge visible)
@@ -2849,7 +2849,7 @@ export function ModalEditarProducto({
                 )}
 
                 {/* Álbum y Video / GIF */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(210px, 100%), 1fr))", gap: "10px", marginBottom: "10px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
                       URL Álbum de Muestras Reales (Google Photos / Instagram)
@@ -2989,7 +2989,7 @@ export function ModalEditarProducto({
                 />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "16px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(210px, 100%), 1fr))", gap: "12px", marginBottom: "16px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
                     Descripción Detallada Base (Global)
@@ -3075,7 +3075,7 @@ export function ModalEditarProducto({
                   </button>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))", gap: "8px" }}>
                   <button
                     type="button"
                     onClick={() => {
@@ -3210,7 +3210,7 @@ export function ModalEditarProducto({
                   )}
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "6px", marginBottom: "10px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(155px, 100%), 1fr))", gap: "6px", marginBottom: "10px" }}>
                   {esLegal ? (
                     <>
                       <button
@@ -3363,7 +3363,7 @@ export function ModalEditarProducto({
                 <div
                   style={{
                     display: "grid",
-                    gridTemplateColumns: esLegal ? "1fr 1fr" : "1.2fr 1.2fr 0.9fr",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))",
                     gap: "10px",
                   }}
                 >
@@ -3929,7 +3929,7 @@ export function ModalEditarProducto({
                     </button>
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(165px, 100%), 1fr))", gap: "10px", marginBottom: "12px" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
                         Código SKU / Referencia *
@@ -4001,7 +4001,7 @@ export function ModalEditarProducto({
                     </div>
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(190px, 100%), 1fr))", gap: "10px" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
                         Stock Disponible (Unidades)
@@ -4412,7 +4412,7 @@ export function ModalEditarProducto({
                   </div>
 
                   {/* 2. Datos básicos de la variante (Nombre y SKU) */}
-                  <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: "10px", marginBottom: "10px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: "10px", marginBottom: "10px" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
                         Nombre de la Variante / Tamaño *
@@ -4456,7 +4456,7 @@ export function ModalEditarProducto({
                     </div>
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr 1.1fr", gap: "10px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(165px, 100%), 1fr))", gap: "10px" }}>
                     <div>
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
                         Precio Venta Sin IVA ($) *

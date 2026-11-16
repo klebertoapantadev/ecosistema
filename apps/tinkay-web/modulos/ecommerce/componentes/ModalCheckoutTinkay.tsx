@@ -959,14 +959,7 @@ export function ModalCheckoutTinkay() {
                     <label className="titulo-seccion-form" style={{ marginBottom: '10px' }}>
                       1. ¿Cómo deseas recibir tu pedido?
                     </label>
-                    <div
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: '8px',
-                        marginBottom: '10px',
-                      }}
-                    >
+                    <div className="grid-toggle-entrega">
                       <button
                         type="button"
                         onClick={() => {
@@ -1056,14 +1049,7 @@ export function ModalCheckoutTinkay() {
                     </div>
 
                     {esRetiroEnTienda ? (
-                      <div
-                        style={{
-                          display: 'grid',
-                          gridTemplateColumns: '1fr 1fr',
-                          gap: '8px',
-                          paddingTop: '4px',
-                        }}
-                      >
+                      <div className="grid-form-responsive-2col" style={{ paddingTop: '4px' }}>
                         <div>
                           <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>
                             Fecha de retiro
@@ -1188,14 +1174,7 @@ export function ModalCheckoutTinkay() {
                                 });
                               }}
                             />
-                            <div
-                              style={{
-                                display: 'grid',
-                                gridTemplateColumns: '1fr 1fr',
-                                gap: '8px',
-                                marginTop: '8px',
-                              }}
-                            >
+                            <div className="grid-form-responsive-2col" style={{ marginTop: '8px' }}>
                               <input
                                 type="text"
                                 placeholder="Referencia / Edificio / Casa (opcional)"
@@ -1538,7 +1517,7 @@ export function ModalCheckoutTinkay() {
                               (modalidadEntrega === 'unificada' && entregaUnificada.direccion) ||
                               'Quito, Ecuador',
                           }}
-                          etiqueta={`Pagar ${totalPagar.toFixed(2)}`}
+                          etiqueta={`Pagar $${totalPagar.toFixed(2)}`}
                           alPagoAprobado={(_identificador: string, pago: PagoPluxConsultado) => {
                             setResumenExito({
                               totalPagado: totalPagar,

@@ -1460,7 +1460,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(285px, 100%), 1fr))",
             gap: "20px",
           }}
         >

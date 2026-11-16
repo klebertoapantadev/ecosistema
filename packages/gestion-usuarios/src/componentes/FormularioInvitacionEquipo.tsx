@@ -111,7 +111,7 @@ export function FormularioInvitacionEquipo({
         background: "#FFFFFF",
         border: "1px solid #E5DFD5",
         borderRadius: 16,
-        padding: 24,
+        padding: "clamp(14px, 3.5vw, 24px)",
         marginBottom: 24,
         boxShadow: "0 4px 18px rgba(28, 38, 31, 0.04)",
       }}

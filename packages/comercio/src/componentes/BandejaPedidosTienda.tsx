@@ -384,7 +384,8 @@ export function BandejaPedidosTienda({
           background: "#FFFFFF",
           border: "1px solid #E5E7EB",
           borderRadius: "12px",
-          padding: "16px",
+          padding: "clamp(10px, 2.5vw, 16px)",
+          minWidth: 0,
         }}
       >
         <DataGrid
@@ -396,7 +397,7 @@ export function BandejaPedidosTienda({
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(240px, 100%), 1fr))",
                 gap: "14px",
                 padding: "12px",
                 background: "#F8FAFC",

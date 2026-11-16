@@ -841,7 +841,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(285px, 100%), 1fr))",
             gap: "16px",
           }}
         >
@@ -1177,7 +1177,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
 
             <form onSubmit={handleGuardarConvenio} style={{ display: "grid", gap: "14px" }}>
               {/* Sección 1: Datos de la Empresa */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: "12px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
                     Razón Social / Nombre Empresa *
@@ -1206,7 +1206,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: "12px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
                     Dominio de Correo (Auto-afiliación)
@@ -1241,7 +1241,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                   borderRadius: "12px",
                   padding: "12px 14px",
                   display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))",
                   gap: "12px",
                   alignItems: "center",
                 }}
@@ -1306,7 +1306,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                 </div>
 
                 {/* 1. Consultas Telemáticas */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: "10px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "3px" }}>
                       ⚖️ Consultas Telemáticas ($0.00):

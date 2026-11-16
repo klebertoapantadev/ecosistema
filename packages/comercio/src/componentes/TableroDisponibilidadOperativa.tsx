@@ -919,7 +919,7 @@ export function TableroDisponibilidadOperativa({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fill, minmax(min(265px, 100%), 1fr))",
           gap: "14px",
         }}
       >

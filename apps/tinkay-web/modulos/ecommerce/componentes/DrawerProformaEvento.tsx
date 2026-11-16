@@ -598,6 +598,7 @@ export function DrawerProformaEvento() {
                       key={item.id}
                       style={{
                         display: 'flex',
+                        flexWrap: 'wrap',
                         gap: '10px',
                         padding: '10px',
                         borderRadius: '12px',
@@ -610,14 +611,14 @@ export function DrawerProformaEvento() {
                         src={item.producto.fotos[0] || '/img/slide4_flores_amor.jpg'}
                         alt={item.producto.nombre}
                         style={{
-                          width: '58px',
-                          height: '58px',
+                          width: '52px',
+                          height: '52px',
                           borderRadius: '9px',
                           objectFit: 'cover',
                           flexShrink: 0,
                         }}
                       />
-                      <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ flex: '1 1 140px', minWidth: 0 }}>
                         <strong
                           style={{
                             display: 'block',
@@ -825,7 +826,7 @@ export function DrawerProformaEvento() {
                   <span>2. Datos de tu Evento</span>
                 </strong>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <div className="grid-form-responsive-2col">
                   <div style={{ gridColumn: '1 / -1' }}>
                     <select
                       value={datosEventoProforma.tipoEvento}
@@ -976,7 +977,7 @@ export function DrawerProformaEvento() {
                   3. Tus datos para recibir la Proforma en PDF
                 </strong>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <div className="grid-form-responsive-2col">
                   <input
                     type="text"
                     required

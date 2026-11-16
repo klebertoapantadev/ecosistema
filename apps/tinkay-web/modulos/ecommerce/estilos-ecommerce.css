@@ -2,6 +2,18 @@
    Estilos Ecommerce Tinkay Floristería — Sistema Botánico & Editorial
    ============================================================================== */
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Barra de Anuncios y Cabecera */
 .barra-superior-anuncio {
   background: var(--verde);
@@ -1901,7 +1913,8 @@
 .drawer-panel-carrito {
   background: var(--crema);
   width: min(520px, 100%);
-  height: 100%;
+  height: 100dvh;
+  max-height: 100dvh;
   display: flex;
   flex-direction: column;
   box-shadow: -8px 0 30px rgba(0, 0, 0, 0.2);
@@ -2607,8 +2620,10 @@
 .tarjeta-resumen-confirmacion {
   background: var(--crema);
   border-radius: 14px;
-  padding: 16px 24px;
-  min-width: 320px;
+  padding: 16px 20px;
+  width: 100%;
+  max-width: 380px;
+  min-width: 0;
 }
 .fila-resumen-c {
   display: flex;
@@ -3672,6 +3687,141 @@
 }
 
 /* ==============================================================================
+   Navegación Móvil Ecommerce & Rejillas Auxiliares Responsive
+   ============================================================================== */
+
+.cabecera-marca-y-menu {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.btn-menu-movil-ecommerce {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--linea);
+  background: var(--blanco);
+  color: var(--tinta);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+.btn-menu-movil-ecommerce:hover {
+  background: var(--crema);
+}
+
+.franja-categorias-movil {
+  display: none;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 14px 10px;
+  border-top: 1px solid rgba(34, 29, 26, 0.05);
+}
+.franja-categorias-movil::-webkit-scrollbar {
+  display: none;
+}
+
+.chip-cat-cabecera-movil {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--linea);
+  background: var(--blanco);
+  color: var(--tinta);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.chip-cat-cabecera-movil.activa {
+  background: var(--tinta);
+  color: var(--blanco);
+  border-color: var(--tinta);
+}
+.chip-cat-cabecera-movil.condolencias.activa {
+  background: var(--verde);
+  border-color: var(--verde);
+}
+
+.backdrop-menu-movil-ecommerce {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  background: rgba(24, 20, 18, 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: flex-start;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.drawer-menu-movil-ecommerce {
+  width: min(310px, 86vw);
+  height: 100dvh;
+  background: #FBF9F5;
+  border-right: 1px solid var(--linea);
+  box-shadow: 12px 0 36px rgba(0, 0, 0, 0.22);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 18px 16px max(24px, env(safe-area-inset-bottom));
+  gap: 16px;
+}
+
+.grid-form-responsive-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.grid-form-responsive-2col > * {
+  min-width: 0;
+}
+
+.grid-toggle-entrega {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.grid-toggle-entrega > * {
+  min-width: 0;
+}
+
+@media (max-width: 920px) {
+  .nav-enlaces-floristeria {
+    display: none;
+  }
+  .btn-menu-movil-ecommerce {
+    display: inline-flex;
+  }
+  .franja-categorias-movil {
+    display: flex;
+  }
+}
+
+@media (max-width: 540px) {
+  .grid-form-responsive-2col {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .grid-toggle-entrega {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==============================================================================
    ADAPTACIÓN MÓVIL 100% RESPONSIVE & ESTÁNDAR SOLO ÍCONO (<640px)
    ============================================================================== */
 
@@ -3681,7 +3831,51 @@
     display: none !important;
   }
   .btn-carrito-cabecera {
-    padding: 9px 12px;
+    padding: 8px 11px;
+    gap: 5px;
+  }
+  .acciones-usuario-cabecera {
+    gap: 8px;
+  }
+  .enlace-ingresar-discreto {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 10px;
+    border: 1px solid var(--linea);
+    background: var(--blanco);
+  }
+  .logo-tinkay-imagen-cabecera {
+    height: 36px;
+    max-width: 128px;
+  }
+  .barra-superior-anuncio {
+    font-size: 0.72rem;
+    padding: 5px 10px;
+  }
+  .enlace-tienda-maps-top {
+    display: none;
+  }
+  .barra-regalo-anuncio {
+    padding: 5px 10px !important;
+    font-size: 0.72rem !important;
+    gap: 6px !important;
+  }
+
+  /* Evitar auto-zoom en iOS Safari al enfocar campos */
+  .input-busqueda-catalogo,
+  .select-filtro-presupuesto,
+  .select-criterio-orden,
+  .input-dedicatoria,
+  .textarea-dedicatoria,
+  .input-mini,
+  .textarea-mini,
+  .select-mini,
+  .input-entrega,
+  .select-entrega,
+  .input-checkout,
+  .input-texto-chat {
+    font-size: 16px !important;
   }
 }
 
@@ -3839,6 +4033,13 @@
   }
   .pills-modalidad-entrega {
     grid-template-columns: 1fr;
+  }
+  .campos-de-para-mini,
+  .fila-fecha-franja-mini {
+    flex-direction: column;
+  }
+  .grid-complementos-sugeridos {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   /* Chat Mía en Pantalla Completa Móvil */

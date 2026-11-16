@@ -424,7 +424,7 @@ export function FormularioLogisticaCobertura({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))",
             gap: "12px",
           }}
         >
@@ -450,21 +450,21 @@ export function FormularioLogisticaCobertura({
 
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+            display: "flex",
+            flexWrap: "wrap",
             gap: "10px",
-            alignItems: "end",
+            alignItems: "flex-end",
           }}
         >
-          <div style={{ gridColumn: "span 2" }}>
+          <div style={{ flex: "2 1 240px", minWidth: 0 }}>
             <label style={estiloLabel}>Enlace Oficial de Google Maps / Waze del Taller</label>
-            <div style={{ display: "flex", gap: "6px" }}>
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
               <input
                 type="text"
                 value={form.origenMapaUrl}
                 onChange={(e) => setForm({ ...form, origenMapaUrl: e.target.value })}
                 placeholder="https://maps.app.goo.gl/..."
-                style={estiloInput}
+                style={{ ...estiloInput, flex: "1 1 180px", minWidth: 0 }}
               />
               <button
                 type="button"
@@ -476,7 +476,7 @@ export function FormularioLogisticaCobertura({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "5px",
-                  padding: "0 12px",
+                  padding: "8px 12px",
                   borderRadius: "8px",
                   border: "1px solid #D4D4D8",
                   background: "#FFFFFF",
@@ -493,7 +493,7 @@ export function FormularioLogisticaCobertura({
             </div>
           </div>
 
-          <div>
+          <div style={{ flex: "1 1 140px", minWidth: 0 }}>
             <label style={estiloLabel}>Latitud Taller</label>
             <input
               type="number"
@@ -504,7 +504,7 @@ export function FormularioLogisticaCobertura({
             />
           </div>
 
-          <div>
+          <div style={{ flex: "1 1 140px", minWidth: 0 }}>
             <label style={estiloLabel}>Longitud Taller</label>
             <input
               type="number"
@@ -1059,58 +1059,62 @@ export function FormularioLogisticaCobertura({
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "auto auto minmax(180px, 1.4fr) minmax(165px, 1fr) minmax(115px, 0.7fr) minmax(200px, 1.5fr)",
+                gridTemplateColumns: "repeat(auto-fit, minmax(min(175px, 100%), 1fr))",
                 gap: "10px",
                 alignItems: "end",
               }}
             >
-              <label
-                title="Habilitar o deshabilitar temporalmente esta área"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  height: "35px",
-                  padding: "0 8px",
-                  borderRadius: "8px",
-                  background: "#FFFFFF",
-                  border: "1px solid #E2E8F0",
-                  fontSize: "0.78rem",
-                  fontWeight: 700,
-                  color: "#0F172A",
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={zonaSeleccionada.activo}
-                  onChange={(e) =>
-                    actualizarZona(zonaSeleccionada.id, { activo: e.target.checked })
-                  }
-                />
-                <span>Activa</span>
-              </label>
-
-              <div>
-                <label style={estiloLabel}>Color</label>
-                <input
-                  type="color"
-                  value={zonaSeleccionada.color || "#0284C7"}
-                  title="Color del polígono en el mapa (útil para distinguir áreas solapadas)"
-                  onChange={(e) =>
-                    actualizarZona(zonaSeleccionada.id, { color: e.target.value })
-                  }
+              <div style={{ display: "flex", gap: "8px", alignItems: "flex-end", flexWrap: "wrap" }}>
+                <label
+                  title="Habilitar o deshabilitar temporalmente esta área"
                   style={{
-                    width: "40px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
                     height: "35px",
-                    padding: "2px",
+                    padding: "0 10px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
                     background: "#FFFFFF",
+                    border: "1px solid #E2E8F0",
+                    fontSize: "0.78rem",
+                    fontWeight: 700,
+                    color: "#0F172A",
                     cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    flex: "1 1 auto",
                   }}
-                />
+                >
+                  <input
+                    type="checkbox"
+                    checked={zonaSeleccionada.activo}
+                    onChange={(e) =>
+                      actualizarZona(zonaSeleccionada.id, { activo: e.target.checked })
+                    }
+                  />
+                  <span>Activa</span>
+                </label>
+
+                <div>
+                  <label style={estiloLabel}>Color</label>
+                  <input
+                    type="color"
+                    value={zonaSeleccionada.color || "#0284C7"}
+                    title="Color del polígono en el mapa (útil para distinguir áreas solapadas)"
+                    onChange={(e) =>
+                      actualizarZona(zonaSeleccionada.id, { color: e.target.value })
+                    }
+                    style={{
+                      width: "44px",
+                      height: "35px",
+                      padding: "2px",
+                      borderRadius: "8px",
+                      border: "1px solid #CBD5E1",
+                      background: "#FFFFFF",
+                      cursor: "pointer",
+                      display: "block",
+                    }}
+                  />
+                </div>
               </div>
 
               <div>

@@ -330,7 +330,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
         <form onSubmit={manejarGuardar}>
           {pasarelaSeleccionada === "PLUX" ? (
             <>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "20px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: "20px", marginBottom: "20px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
                     Correo del Comercio en PLUX (PayboxRemail) *
@@ -374,7 +374,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "20px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: "20px", marginBottom: "20px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
                     Ambiente de Ejecución
@@ -442,7 +442,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                 </div>
               )}
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "24px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: "20px", marginBottom: "24px" }}>
                 <div>
                   <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
                     PLUX Id Cliente (Webhook API, opcional si ya está guardado)
@@ -559,7 +559,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                 </label>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "20px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: "20px", marginBottom: "20px" }}>
                 {/* Store ID */}
                 <div>
                   <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
@@ -943,8 +943,8 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                 <div
                   key={`cta-${idx}`}
                   style={{
-                    display: "grid",
-                    gridTemplateColumns: "1.2fr 0.9fr 1.2fr auto",
+                    display: "flex",
+                    flexWrap: "wrap",
                     gap: "8px",
                     alignItems: "center",
                   }}
@@ -961,7 +961,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                         transferencia: { ...prev.transferencia, cuentas: nuevas },
                       }));
                     }}
-                    style={{ padding: "8px 10px", borderRadius: "7px", border: "1px solid #CBD5E1", fontSize: "0.83rem" }}
+                    style={{ flex: "1 1 160px", minWidth: 0, padding: "8px 10px", borderRadius: "7px", border: "1px solid #CBD5E1", fontSize: "0.83rem" }}
                   />
                   <input
                     type="text"
@@ -975,7 +975,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                         transferencia: { ...prev.transferencia, cuentas: nuevas },
                       }));
                     }}
-                    style={{ padding: "8px 10px", borderRadius: "7px", border: "1px solid #CBD5E1", fontSize: "0.83rem" }}
+                    style={{ flex: "1 1 120px", minWidth: 0, padding: "8px 10px", borderRadius: "7px", border: "1px solid #CBD5E1", fontSize: "0.83rem" }}
                   />
                   <input
                     type="text"
@@ -989,7 +989,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                         transferencia: { ...prev.transferencia, cuentas: nuevas },
                       }));
                     }}
-                    style={{ padding: "8px 10px", borderRadius: "7px", border: "1px solid #CBD5E1", fontSize: "0.83rem", fontFamily: "monospace" }}
+                    style={{ flex: "1 1 160px", minWidth: 0, padding: "8px 10px", borderRadius: "7px", border: "1px solid #CBD5E1", fontSize: "0.83rem", fontFamily: "monospace" }}
                   />
                   <button
                     type="button"
@@ -1017,7 +1017,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
               ))}
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "14px", alignItems: "center", marginBottom: "14px" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "14px", alignItems: "center", marginBottom: "14px" }}>
               <div>
                 <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}>
                   Código QR DeUna (URL o Imagen Subida)

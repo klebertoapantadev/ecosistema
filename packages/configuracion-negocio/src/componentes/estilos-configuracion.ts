@@ -10,7 +10,7 @@ export const estiloTarjetaConfig: CSSProperties = {
 };
 
 export const estiloCabeceraTarjeta: CSSProperties = {
-  padding: "20px 24px",
+  padding: "clamp(14px, 3vw, 20px) clamp(14px, 3.5vw, 24px)",
   background: "#FAFAFA",
   borderBottom: "1px solid #E5E7EB",
   display: "flex",
@@ -34,7 +34,7 @@ export const estiloCajaIconoCabecera: CSSProperties = {
 };
 
 export const estiloCuerpoTarjeta: CSSProperties = {
-  padding: "24px",
+  padding: "clamp(14px, 3.5vw, 24px)",
   display: "flex",
   flexDirection: "column",
   gap: "20px",
@@ -42,7 +42,7 @@ export const estiloCuerpoTarjeta: CSSProperties = {
 
 export const estiloGrillaDosColumnas: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+  gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))",
   gap: "18px",
 };
 

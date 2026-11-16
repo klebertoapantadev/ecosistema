@@ -687,7 +687,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
       {/* MODO 1: EDITOR & CONFIGURACIÓN DE TÉRMINOS */}
       {/* ═══════════════════════════════════════════════════════════════ */}
       {pestanaPrincipal === "editor" && (
-        <div style={{ display: "grid", gridTemplateColumns: "320px 1fr", gap: "20px", alignItems: "start" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))", gap: "20px", alignItems: "start" }}>
           {/* PANEL IZQUIERDO: SELECTOR DE DOCUMENTOS ERGONÓMICO */}
           <div
             style={{
@@ -901,7 +901,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
             </div>
 
             {/* Parámetros de Versión, Título y Vigencia */}
-            <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1.2fr", gap: "12px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(175px, 100%), 1fr))", gap: "12px" }}>
               <div>
                 <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
                   Título del Documento
@@ -1186,7 +1186,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
               </button>
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "340px 1fr", gap: "16px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))", gap: "16px" }}>
               {/* Lista de Versiones */}
               <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "500px", overflowY: "auto" }}>
                 {listaHistorial.map((hist, index) => {

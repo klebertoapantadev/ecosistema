@@ -198,7 +198,7 @@ export function ListaMisProformasCliente({
               style={{
                 background: "#FFFFFF",
                 borderRadius: "14px",
-                padding: "26px 24px",
+                padding: "clamp(16px, 4vw, 26px) clamp(14px, 4vw, 24px)",
                 border: "1px solid #E5DFD5",
                 display: "flex",
                 alignItems: "center",
@@ -256,7 +256,7 @@ export function ListaMisProformasCliente({
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fill, minmax(min(285px, 100%), 1fr))",
                 gap: "14px",
               }}
             >
@@ -517,7 +517,7 @@ export function ListaMisProformasCliente({
               style={{
                 background: "#FFFFFF",
                 borderRadius: "14px",
-                padding: "26px 24px",
+                padding: "clamp(16px, 4vw, 26px) clamp(14px, 4vw, 24px)",
                 border: "1px solid #E5DFD5",
                 display: "flex",
                 alignItems: "center",
@@ -575,7 +575,7 @@ export function ListaMisProformasCliente({
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(310px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fill, minmax(min(280px, 100%), 1fr))",
                 gap: "14px",
               }}
             >
