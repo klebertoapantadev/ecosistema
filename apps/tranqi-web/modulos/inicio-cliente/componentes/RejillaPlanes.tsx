@@ -29,8 +29,9 @@ const USD = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" 
 const DURACION_DIAPO_MS = 12000;
 
 // Tono del degradado de cada modalidad (canales RGB, ver `--tono` en
-// globals.css): violeta, esmeralda y azul de la paleta de marca, en tinta.
-const TONOS_PLAN = ["30, 0, 70", "5, 42, 35", "10, 32, 92"];
+// globals.css): violeta, esmeralda y azul de la marca a plena saturación. En
+// tinta (casi negros) se confundían entre sí, sobre todo con la misma foto.
+const TONOS_PLAN = ["80, 0, 186", "5, 135, 110", "47, 79, 176"];
 const MAX_DIAPOS = 5;
 
 function esPlan(p: ProductoCatalogo) {

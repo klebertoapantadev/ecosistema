@@ -695,7 +695,7 @@ p { line-height: 1.55; }
    Página pública: arriba el registro expresivo de la landing (violeta pleno,
    píldoras), abajo el sobrio de las pantallas de trabajo (papel, tarjetas
    blancas con línea de 1 px). Antes llevaba la paleta oscura de GitHub en 55
-   estilos inline y `font-family: sans-serif`, que tapaba a Archivo. */
+   estilos inline y `font-family: sans-serif`, que tapaba la fuente de marca. */
 .vacantes { min-height: 100vh; background: var(--papel-cliente); color: var(--negro); }
 
 .vacantes-nav {

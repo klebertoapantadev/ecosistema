@@ -1,11 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { GestorPwaCliente } from "./componentes/GestorPwaCliente";
 
-const archivo = Archivo({
+// Inter: tipografía del brandbook de tranqi (antes Archivo).
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "700", "800", "900"],
+  weight: ["400", "500", "600", "700", "800", "900"],
 });
 
 export const viewport: Viewport = {
@@ -36,7 +37,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body className={archivo.className}>
+      <body className={inter.className}>
         {children}
         <GestorPwaCliente />
       </body>
