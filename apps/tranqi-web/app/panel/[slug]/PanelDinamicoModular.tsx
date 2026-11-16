@@ -50,6 +50,8 @@ import {
   ConsolaInventarioRosas,
   ConsolaEntregaInmediata,
   ConsolaConfirmacionEntregas,
+  ConsolaEnvioPedidosTaller,
+  ConsolaTallerFloral,
 } from "@eco/comercio";
 import { SociosWidget } from "../administrar/PanelAdministrarModular";
 import { ConfiguracionContratoAbogadoWidget } from "@/modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
@@ -283,6 +285,20 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     subtitulo: "Conteo fotográfico de paquetes de rosas por color asistido por ARIA Visión",
     icono: Sparkles,
     colorIcono: "#BE185D",
+    categoria: "Comercio & Catálogo"
+  },
+  envio_pedidos_taller: {
+    titulo: "Enviar Pedidos a Taller",
+    subtitulo: "Validación de ventas, calendario Hoy/Semana/Mes, llamadas Exequiales y despacho diario",
+    icono: ClipboardList,
+    colorIcono: "#0F172A",
+    categoria: "Comercio & Catálogo"
+  },
+  taller_floral: {
+    titulo: "Taller — Producción y Elaboración",
+    subtitulo: "Consola de producción con notificaciones en vivo y cambio de estado (En preparación / Listo entrega)",
+    icono: Sparkles,
+    colorIcono: "#059669",
     categoria: "Comercio & Catálogo"
   },
   confirmacion_entregas: {
@@ -1023,6 +1039,12 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
         return <ConsolaEntregaInmediata negocio={negocio} />;
       case "inventario_rosas":
         return <ConsolaInventarioRosas negocio={negocio} />;
+      case "envio_pedidos_taller":
+      case "envio-pedidos":
+        return <ConsolaEnvioPedidosTaller negocio={negocio} />;
+      case "taller_floral":
+      case "taller":
+        return <ConsolaTallerFloral negocio={negocio} />;
       case "confirmacion_entregas":
       case "entregas":
         return <ConsolaConfirmacionEntregas negocio={negocio} />;

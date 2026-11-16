@@ -121,7 +121,7 @@ const ENTREGA_INICIAL: DatosEntrega = {
   referencia: '',
   ciudad: 'Centro-Norte de Quito',
   fechaEntrega: FECHA_POR_DEFECTO(),
-  franjaHoraria: 'manana',
+  franjaHoraria: 'A) 09:00 - 13:00',
   horaExacta: '08:30',
   retiroEnLocal: false,
   dentroCobertura: true,

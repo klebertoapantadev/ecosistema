@@ -203,6 +203,26 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     colorIcono: "#BE185D"
   },
   {
+    clave: "envio_pedidos_taller",
+    nombre: "Enviar Pedidos a Taller y Programación",
+    detalle: "Validar ventas, calendario Hoy/Semana/Mes, llamadas Exequiales y despacho diario a Taller",
+    ruta: "/panel/envio-pedidos",
+    categoria: "Comercio & Pagos",
+    minNivel: 20,
+    icono: ClipboardList,
+    colorIcono: "#0F172A"
+  },
+  {
+    clave: "taller_floral",
+    nombre: "Taller — Producción y Elaboración",
+    detalle: "Notificaciones en vivo de nuevos pedidos, calendario de elaboración y estado En Preparación / Listo Entrega",
+    ruta: "/panel/taller",
+    categoria: "Comercio & Pagos",
+    minNivel: 15,
+    icono: ClipboardList,
+    colorIcono: "#059669"
+  },
+  {
     clave: "confirmacion_entregas",
     nombre: "Confirmación de Entregas GPS e Informes Exequiales IESS",
     detalle: "PWA Offline para foto georreferenciada, órdenes de trabajo e informe quincenal PDF",

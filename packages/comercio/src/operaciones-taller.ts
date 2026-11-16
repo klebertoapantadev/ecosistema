@@ -341,6 +341,256 @@ export const OPCIONES_DESCRIPCION_SERVICIO_EXEQUIALES = [
   "Cubre cofre (1 arreglo)",
 ] as const;
 
+export const SOLICITANTES_EXEQUIALES_FRECUENTES = [
+  "Cristian Montaluisa",
+  "Cristina",
+] as const;
+
+export const RANGOS_HORARIO_ENTREGA_TIENDA = [
+  { codigo: "A", valor: "A) 09:00 - 13:00", etiqueta: "A) 09:00 - 13:00", corto: "09:00–13:00" },
+  { codigo: "B", valor: "B) 13:00 - 17:00", etiqueta: "B) 13:00 - 17:00", corto: "13:00–17:00" },
+  { codigo: "C", valor: "C) 17:00 - 20:00", etiqueta: "C) 17:00 - 20:00", corto: "17:00–20:00" },
+] as const;
+
+export function normalizarFranjaHorariaTienda(valor?: string | null): string {
+  const v = (valor || "").trim();
+  if (!v) return "A) 09:00 - 13:00";
+  const low = v.toLowerCase();
+  if (low === "manana" || low.startsWith("a)") || low.includes("09:00")) {
+    return "A) 09:00 - 13:00";
+  }
+  if (
+    low === "tarde" ||
+    low.startsWith("b)") ||
+    low.includes("13:00") ||
+    low.includes("14:00")
+  ) {
+    return "B) 13:00 - 17:00";
+  }
+  if (low === "noche" || low.startsWith("c)") || low.includes("17:00")) {
+    return "C) 17:00 - 20:00";
+  }
+  return v;
+}
+
+export type EstadoOrdenTaller =
+  | "PENDIENTE_ENVIO"
+  | "ENVIADO_TALLER"
+  | "EN_PREPARACION"
+  | "LISTO_ENTREGA"
+  | "ENTREGADO"
+  | "ANULADO";
+
+export type OrigenOrdenTaller =
+  | "VENTA_TIENDA"
+  | "PROFORMA_EVENTO"
+  | "MANUAL_ADMIN"
+  | "EXEQUIALES_LLAMADA";
+
+export interface ItemOrdenTaller {
+  productoId?: string;
+  sku?: string;
+  descripcion: string;
+  cantidad: number;
+  precioUnitario?: number;
+  dedicatoria?: string;
+}
+
+export interface OrdenTrabajoTaller {
+  id: string;
+  codigo: string;
+  origenTipo: OrigenOrdenTaller;
+  proformaId?: string | null;
+  entregaId?: string | null;
+  estadoTaller: EstadoOrdenTaller;
+  estadoPago?: string;
+  metodoPago?: string;
+  fechaPedido: string;
+  /** Fecha en que el pedido debe entregarse al cliente / sala (YYYY-MM-DD) */
+  fechaEntrega: string;
+  /** Fecha en que el operador programó o envió a elaboración en taller (YYYY-MM-DD) */
+  fechaElaboracion?: string;
+  /** Para ventas regulares: A) 09:00 - 13:00 | B) 13:00 - 17:00 | C) 17:00 - 20:00 */
+  franjaHoraria?: string | null;
+  /** Para Exequiales vía llamada: hora solicitada (ej. '10:30' o 'Lo antes posible') */
+  horaEspecifica?: string | null;
+  productoResumen: string;
+  items: ItemOrdenTaller[];
+  /** Comprador o persona que solicita en llamada Exequiales ("Cristian Montaluisa", "Cristina") */
+  clienteSolicita: string;
+  clienteTelefono?: string;
+  /** Destinatario del arreglo o nombre del fallecido en Exequiales */
+  destinatarioFallecido: string;
+  salaServicio?: string | null;
+  ubicacionEntrega?: string;
+  enlaceMapa?: string | null;
+  retiroEnLocal?: boolean;
+  dedicatoria?: string;
+  observaciones?: string;
+  totalUsd?: number;
+  enviadoTallerEn?: string | null;
+  enviadoNombre?: string | null;
+  preparacionEn?: string | null;
+  listoEn?: string | null;
+  entregadoEn?: string | null;
+  actualizadoTallerNombre?: string | null;
+}
+
+export interface ProductoLigeroSelectorTaller {
+  productoId: string;
+  productoNombre: string;
+  varianteId?: string;
+  sku: string;
+  varianteNombre: string;
+  pvp: number;
+  portadaUrl?: string;
+}
+
+export function obtenerFechaHoyEcuadorYmd(base: Date = new Date()): string {
+  try {
+    const partes = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Guayaquil",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(base);
+    const y = partes.find((p) => p.type === "year")?.value;
+    const m = partes.find((p) => p.type === "month")?.value;
+    const d = partes.find((p) => p.type === "day")?.value;
+    if (y && m && d) return `${y}-${m}-${d}`;
+  } catch {
+    // Fallback UTC-5 manual
+  }
+  const ajustada = new Date(base.getTime() - 5 * 3600 * 1000);
+  return ajustada.toISOString().slice(0, 10);
+}
+
+export function sumarDiasYmd(ymd: string, dias: number): string {
+  const limpio = (ymd || "").slice(0, 10);
+  const [y, m, d] = limpio.split("-").map((n) => Number(n));
+  if (!y || !m || !d) return obtenerFechaHoyEcuadorYmd();
+  const dt = new Date(Date.UTC(y, m - 1, d + dias, 12, 0, 0));
+  return dt.toISOString().slice(0, 10);
+}
+
+export function obtenerRangoSemanaLunesADomingo(ymdReferencia: string): {
+  inicioLunes: string;
+  finDomingo: string;
+  dias: string[];
+} {
+  const limpio = (ymdReferencia || "").slice(0, 10);
+  const [y, m, d] = limpio.split("-").map((n) => Number(n));
+  const base = y && m && d ? new Date(Date.UTC(y, m - 1, d, 12, 0, 0)) : new Date();
+  const dow = base.getUTCDay(); // 0 Dom .. 6 Sab
+  const offsetALunes = dow === 0 ? -6 : 1 - dow;
+  const lunes = new Date(base.getTime() + offsetALunes * 86400 * 1000);
+  const dias: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    const cur = new Date(lunes.getTime() + i * 86400 * 1000);
+    dias.push(cur.toISOString().slice(0, 10));
+  }
+  return {
+    inicioLunes: dias[0]!,
+    finDomingo: dias[6]!,
+    dias,
+  };
+}
+
+export interface CeldaDiaCalendarioMes {
+  ymd: string;
+  diaMes: number;
+  enMesActual: boolean;
+}
+
+export function generarCuadriculaMesCalendario(anio: number, mes1a12: number): CeldaDiaCalendarioMes[] {
+  const primerDia = new Date(Date.UTC(anio, mes1a12 - 1, 1, 12, 0, 0));
+  const dow = primerDia.getUTCDay(); // 0 Dom .. 6 Sab
+  const offsetInicio = dow === 0 ? -6 : 1 - dow;
+  const cursor = new Date(primerDia.getTime() + offsetInicio * 86400 * 1000);
+
+  const celdas: CeldaDiaCalendarioMes[] = [];
+  for (let i = 0; i < 42; i++) {
+    const dt = new Date(cursor.getTime() + i * 86400 * 1000);
+    celdas.push({
+      ymd: dt.toISOString().slice(0, 10),
+      diaMes: dt.getUTCDate(),
+      enMesActual: dt.getUTCMonth() === mes1a12 - 1 && dt.getUTCFullYear() === anio,
+    });
+  }
+  return celdas;
+}
+
+/**
+ * Determina si una orden corresponde a la vista "Hoy (Elaboración)" de una fecha dada:
+ * incluye tanto pedidos cuya entrega es ese día como pedidos ya despachados/programados
+ * para elaborarse ese día aunque su entrega sea mañana o días futuros.
+ */
+export function esPedidoDeElaboracionEnFecha(
+  orden: Pick<
+    OrdenTrabajoTaller,
+    "fechaEntrega" | "fechaElaboracion" | "enviadoTallerEn" | "estadoTaller"
+  >,
+  fechaYmd: string,
+  hoyYmd: string
+): boolean {
+  if (orden.estadoTaller === "ANULADO") return false;
+  const fEnt = (orden.fechaEntrega || "").slice(0, 10);
+  const fElab =
+    (orden.fechaElaboracion || "").slice(0, 10) ||
+    (orden.enviadoTallerEn ? orden.enviadoTallerEn.slice(0, 10) : "");
+
+  if (fEnt === fechaYmd) return true;
+  if (fElab && fElab === fechaYmd && fEnt >= fechaYmd) return true;
+  if (
+    fechaYmd === hoyYmd &&
+    (orden.estadoTaller === "ENVIADO_TALLER" || orden.estadoTaller === "EN_PREPARACION") &&
+    fEnt >= hoyYmd
+  ) {
+    return true;
+  }
+  return false;
+}
+
+export function formatearFechaEntregaHumana(ymd: string, hoyYmd?: string): {
+  etiquetaPrincipal: string;
+  horizonte: "HOY" | "MANANA" | "FUTURO" | "PASADO";
+} {
+  const baseHoy = hoyYmd || obtenerFechaHoyEcuadorYmd();
+  const limpio = (ymd || "").slice(0, 10);
+  if (!limpio) return { etiquetaPrincipal: "Sin fecha", horizonte: "HOY" };
+  const manana = sumarDiasYmd(baseHoy, 1);
+
+  const [y, m, d] = limpio.split("-").map((n) => Number(n));
+  const dt = y && m && d ? new Date(Date.UTC(y, m - 1, d, 12, 0, 0)) : new Date();
+  const diasNom = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+  const mesesNom = [
+    "Ene",
+    "Feb",
+    "Mar",
+    "Abr",
+    "May",
+    "Jun",
+    "Jul",
+    "Ago",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dic",
+  ];
+  const corto = `${diasNom[dt.getUTCDay()]} ${dt.getUTCDate()} ${mesesNom[dt.getUTCMonth()]}`;
+
+  if (limpio === baseHoy) {
+    return { etiquetaPrincipal: `Hoy (${corto})`, horizonte: "HOY" };
+  }
+  if (limpio === manana) {
+    return { etiquetaPrincipal: `Mañana (${corto})`, horizonte: "MANANA" };
+  }
+  if (limpio > manana) {
+    return { etiquetaPrincipal: corto, horizonte: "FUTURO" };
+  }
+  return { etiquetaPrincipal: corto, horizonte: "PASADO" };
+}
+
 export const DATOS_PROVEEDOR_TINKAY_DEFECTO: DatosProveedorInformeIess = {
   tituloInforme: "INFORME DE SERVICIO PROVEEDORES",
   nombreProveedor: "Matías Gabriel Toapanta Guerrero",
@@ -380,6 +630,9 @@ export interface RegistroEntregaEvidencia {
   tipoOrigen: TipoOrigenEntrega;
   convenioId?: string | null;
   proformaId?: string | null;
+  ordenTallerId?: string | null;
+  estadoTaller?: EstadoOrdenTaller | null;
+  horaSolicitada?: string | null;
   entregadoPor?: string | null;
   entregadorNombre: string;
   fallecidoDestinatario: string;
@@ -407,8 +660,12 @@ export interface RegistroEntregaEvidencia {
 
 export interface PedidoPendienteConfirmacion {
   proformaId: string;
+  ordenTallerId?: string | null;
   codigoOrden: string;
   estadoPago: string;
+  estadoTaller?: EstadoOrdenTaller | null;
+  fechaEntrega?: string | null;
+  franjaHoraria?: string | null;
   compradorNombre: string;
   destinatarioNombre: string;
   destinatarioTelefono: string;

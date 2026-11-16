@@ -32,6 +32,27 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel> = [
     grupo: "operacion",
   },
   {
+    clave: "envio_pedidos_taller",
+    nombre: "Enviar Pedidos",
+    ruta: "/panel/envio-pedidos",
+    icono: "envio_pedidos",
+    grupo: "operacion",
+  },
+  {
+    clave: "taller_floral",
+    nombre: "Taller",
+    ruta: "/panel/taller",
+    icono: "taller",
+    grupo: "operacion",
+  },
+  {
+    clave: "confirmacion_entregas",
+    nombre: "Entregas e Informes GPS",
+    ruta: "/panel/entregas",
+    icono: "entregas_gps",
+    grupo: "operacion",
+  },
+  {
     clave: "galeria_inmediata",
     nombre: "Entrega Inmediata (1–2h)",
     ruta: "/panel/entrega-inmediata",
@@ -43,13 +64,6 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel> = [
     nombre: "Inventario de Rosas (IA)",
     ruta: "/panel/inventario-rosas",
     icono: "inventario",
-    grupo: "operacion",
-  },
-  {
-    clave: "confirmacion_entregas",
-    nombre: "Entregas e Informes GPS",
-    ruta: "/panel/entregas",
-    icono: "entregas_gps",
     grupo: "operacion",
   },
   {

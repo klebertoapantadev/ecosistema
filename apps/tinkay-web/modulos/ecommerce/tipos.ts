@@ -89,7 +89,14 @@ export interface DedicatoriaArreglo {
   ocasion?: string;
 }
 
-export type FranjaHoraria = 'manana' | 'tarde' | 'hora_exacta';
+export type FranjaHoraria =
+  | 'A) 09:00 - 13:00'
+  | 'B) 13:00 - 17:00'
+  | 'C) 17:00 - 20:00'
+  | 'manana'
+  | 'tarde'
+  | 'noche'
+  | 'hora_exacta';
 
 export interface DatosEntrega {
   destinatarioNombre: string;

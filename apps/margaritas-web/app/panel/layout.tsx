@@ -46,6 +46,20 @@ const CATALOGO_NAV_MARGARITAS: ItemNavegacionPanel[] = [
     grupo: "operacion",
   },
   {
+    clave: "envio_pedidos_taller",
+    nombre: "Enviar Pedidos",
+    ruta: "/panel/envio-pedidos",
+    icono: "envio_pedidos",
+    grupo: "operacion",
+  },
+  {
+    clave: "taller_floral",
+    nombre: "Taller",
+    ruta: "/panel/taller",
+    icono: "taller",
+    grupo: "operacion",
+  },
+  {
     clave: "confirmacion_entregas",
     nombre: "Entregas e Informes GPS",
     ruta: "/panel/entregas",
@@ -152,6 +166,8 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   }
   if (clavesVisibles.has("pedidos_tienda") || clavesVisibles.has("gestion_usuarios")) {
     clavesVisibles.add("consola_chat");
+    clavesVisibles.add("envio_pedidos_taller");
+    clavesVisibles.add("taller_floral");
     clavesVisibles.add("galeria_inmediata");
     clavesVisibles.add("inventario_rosas");
     clavesVisibles.add("confirmacion_entregas");

@@ -511,6 +511,12 @@ export function ConsolaConfirmacionEntregas({
 
   const handleSeleccionarOtProgramada = (otId: string) => {
     setOtSeleccionadaId(otId);
+    if (!otId) {
+      setSalaServicio("");
+      setFallecidoDestinatario("");
+      setCoordinadorNombre("");
+      return;
+    }
     const ot = otsProgramadas.find((x) => x.id === otId);
     if (ot) {
       setSalaServicio(ot.salaServicio || "");
@@ -1762,37 +1768,92 @@ export function ConsolaConfirmacionEntregas({
           </div>
 
           {tipoOrigenCaptura === "ORDEN_TRABAJO_CONVENIO" && otsProgramadas.length > 0 && (
-            <div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <label
                 style={{
                   display: "block",
-                  fontSize: "0.8rem",
-                  fontWeight: 700,
+                  fontSize: "0.82rem",
+                  fontWeight: 800,
                   color: "#0F172A",
-                  marginBottom: "6px",
                 }}
               >
-                Órdenes de Trabajo Programadas Pendientes ({otsProgramadas.length})
+                📋 Pedidos Exequiales Enviados desde Operador / Taller ({otsProgramadas.length}) — toca
+                para precargar y confirmar (o cambiar Sala si hubo cambio)
               </label>
-              <select
-                value={otSeleccionadaId}
-                onChange={(e) => handleSeleccionarOtProgramada(e.target.value)}
+              <div
                 style={{
-                  width: "100%",
-                  padding: "10px 12px",
-                  borderRadius: "10px",
-                  border: "1px solid #CBD5E1",
-                  fontSize: "0.86rem",
-                  background: "#F8FAFC",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+                  gap: "8px",
                 }}
               >
-                <option value="">-- Nueva entrega directa en sitio (sin OT previa) --</option>
-                {otsProgramadas.map((ot) => (
-                  <option key={ot.id} value={ot.id}>
-                    {ot.codigoOt} · {ot.salaServicio || "Sin sala"} · {ot.fallecidoDestinatario}
-                  </option>
-                ))}
-              </select>
+                {otsProgramadas.map((ot) => {
+                  const sel = otSeleccionadaId === ot.id;
+                  const listo = ot.estadoTaller === "LISTO_ENTREGA";
+                  const enPrep = ot.estadoTaller === "EN_PREPARACION";
+                  return (
+                    <button
+                      key={ot.id}
+                      type="button"
+                      onClick={() =>
+                        handleSeleccionarOtProgramada(sel ? "" : ot.id)
+                      }
+                      style={{
+                        padding: "10px 12px",
+                        borderRadius: "12px",
+                        border: sel
+                          ? "2px solid #059669"
+                          : listo
+                            ? "1.5px solid #86EFAC"
+                            : "1px solid #CBD5E1",
+                        background: sel ? "#ECFDF5" : "#FFFFFF",
+                        textAlign: "left",
+                        cursor: "pointer",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "4px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: "6px",
+                        }}
+                      >
+                        <strong style={{ fontSize: "0.82rem", color: "#0F172A" }}>
+                          {ot.codigoOt} {ot.salaServicio ? `· 🏛️ ${ot.salaServicio}` : ""}
+                        </strong>
+                        <span
+                          style={{
+                            padding: "2px 7px",
+                            borderRadius: "999px",
+                            fontSize: "0.68rem",
+                            fontWeight: 800,
+                            background: listo ? "#DCFCE7" : enPrep ? "#FFEDD5" : "#F3E8FF",
+                            color: listo ? "#15803D" : enPrep ? "#C2410C" : "#6B21A8",
+                          }}
+                        >
+                          {listo
+                            ? "🟢 Listo entrega"
+                            : enPrep
+                              ? "🔨 En preparación"
+                              : "📨 En Taller"}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#1E293B" }}>
+                        💐 {ot.descripcionServicio}
+                      </span>
+                      <span style={{ fontSize: "0.73rem", color: "#475569" }}>
+                        {ot.coordinadorNombre ? `Solicita: ${ot.coordinadorNombre} · ` : ""}
+                        {ot.horaSolicitada ? `⏰ ${ot.horaSolicitada} · ` : ""}
+                        🕊️ {ot.fallecidoDestinatario}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           )}
 
@@ -1807,7 +1868,7 @@ export function ConsolaConfirmacionEntregas({
                   marginBottom: "6px",
                 }}
               >
-                Seleccionar Pedido Pendiente de Entrega
+                Seleccionar Pedido Pendiente de Entrega ({tablero.pedidosPendientesTienda.length})
               </label>
               <select
                 value={pedidoSeleccionadoId}
@@ -1823,7 +1884,13 @@ export function ConsolaConfirmacionEntregas({
                 <option value="">-- Selecciona un pedido o llena manualmente abajo --</option>
                 {tablero.pedidosPendientesTienda.map((p) => (
                   <option key={p.proformaId} value={p.proformaId}>
-                    {p.codigoOrden} · {p.destinatarioNombre} — {p.direccionEntrega}
+                    {p.estadoTaller === "LISTO_ENTREGA"
+                      ? "🟢 [Listo] "
+                      : p.estadoTaller === "EN_PREPARACION"
+                        ? "🔨 [Preparación] "
+                        : ""}
+                    {p.codigoOrden} · {p.fechaEntrega || ""} {p.franjaHoraria ? `(${p.franjaHoraria})` : ""} ·{" "}
+                    {p.destinatarioNombre} — {p.resumenItems}
                   </option>
                 ))}
               </select>

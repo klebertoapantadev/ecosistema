@@ -3,10 +3,17 @@ import {
   DATOS_PROVEEDOR_TINKAY_DEFECTO,
   OPCIONES_DESCRIPCION_SERVICIO_EXEQUIALES,
   OPCIONES_SALA_EXEQUIALES,
+  RANGOS_HORARIO_ENTREGA_TIENDA,
+  SOLICITANTES_EXEQUIALES_FRECUENTES,
   consolidarFotosInventario,
+  esPedidoDeElaboracionEnFecha,
   extraerConteoJsonDesdeRespuestaAria,
   formatearFechaCorteInventario,
+  formatearFechaEntregaHumana,
   formatearResumenInventarioTexto,
+  generarCuadriculaMesCalendario,
+  normalizarFranjaHorariaTienda,
+  obtenerRangoSemanaLunesADomingo,
 } from "./operaciones-taller";
 import { generarPdfInformeQuincenalIess } from "./pdf-informe-iess";
 
@@ -57,6 +64,41 @@ describe("operaciones-taller y pdf-informe-iess", () => {
       "Set condolencias (3 arreglos)",
       "Cubre cofre (1 arreglo)",
     ]);
+    expect(SOLICITANTES_EXEQUIALES_FRECUENTES).toEqual(["Cristian Montaluisa", "Cristina"]);
+  });
+
+  it("normaliza los 3 rangos horarios oficiales A/B/C y calcula calendario Hoy/Semana/Mes", () => {
+    expect(RANGOS_HORARIO_ENTREGA_TIENDA.map((r) => r.valor)).toEqual([
+      "A) 09:00 - 13:00",
+      "B) 13:00 - 17:00",
+      "C) 17:00 - 20:00",
+    ]);
+    expect(normalizarFranjaHorariaTienda("manana")).toBe("A) 09:00 - 13:00");
+    expect(normalizarFranjaHorariaTienda("tarde")).toBe("B) 13:00 - 17:00");
+    expect(normalizarFranjaHorariaTienda("C) 17:00 - 20:00")).toBe("C) 17:00 - 20:00");
+
+    const sem = obtenerRangoSemanaLunesADomingo("2026-11-18");
+    expect(sem.dias).toHaveLength(7);
+    expect(sem.inicioLunes).toBe("2026-11-16");
+    expect(sem.finDomingo).toBe("2026-11-22");
+
+    const mes = generarCuadriculaMesCalendario(2026, 11);
+    expect(mes).toHaveLength(42);
+
+    // Pedido enviado a elaboración hoy (16 Nov) pero cuya entrega es el miércoles 18 Nov
+    expect(
+      esPedidoDeElaboracionEnFecha(
+        {
+          fechaEntrega: "2026-11-18",
+          fechaElaboracion: "2026-11-16",
+          estadoTaller: "ENVIADO_TALLER",
+        },
+        "2026-11-16",
+        "2026-11-16"
+      )
+    ).toBe(true);
+
+    expect(formatearFechaEntregaHumana("2026-11-17", "2026-11-16").horizonte).toBe("MANANA");
   });
 
   it("genera el PDF oficial INFORME DE SERVICIO PROVEEDORES con portada, sala y fichas", async () => {

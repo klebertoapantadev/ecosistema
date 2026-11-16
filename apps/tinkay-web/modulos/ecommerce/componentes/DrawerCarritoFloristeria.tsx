@@ -560,7 +560,7 @@ export function DrawerCarritoFloristeria() {
                               <label className="label-campo-mini">
                                 Horario:
                                 <select
-                                  value={item.entregaIndividual?.franjaHoraria || 'manana'}
+                                  value={item.entregaIndividual?.franjaHoraria || 'A) 09:00 - 13:00'}
                                   onChange={(e) =>
                                     actualizarEntregaIndividual(item.id, {
                                       ...(item.entregaIndividual || ({} as DatosEntrega)),
@@ -569,13 +569,9 @@ export function DrawerCarritoFloristeria() {
                                   }
                                   className="select-mini"
                                 >
-                                  <option value="manana">Mañana (09:00 - 13:00)</option>
-                                  <option value="tarde">Tarde (14:00 - 18:00)</option>
-                                  {!item.entregaIndividual?.retiroEnLocal && (
-                                    <option value="hora_exacta">
-                                      Hora Exacta (+ ${tarifaHoraExacta.toFixed(2)})
-                                    </option>
-                                  )}
+                                  <option value="A) 09:00 - 13:00">A) 09:00 - 13:00</option>
+                                  <option value="B) 13:00 - 17:00">B) 13:00 - 17:00</option>
+                                  <option value="C) 17:00 - 20:00">C) 17:00 - 20:00</option>
                                 </select>
                               </label>
                             </div>
@@ -748,7 +744,7 @@ export function DrawerCarritoFloristeria() {
                   </div>
 
                   <div className="campo-franja-horaria">
-                    <label>Franja Horaria:</label>
+                    <label>Rango de Horario:</label>
                     <select
                       value={entregaUnificada.franjaHoraria}
                       onChange={(e) =>
@@ -758,13 +754,9 @@ export function DrawerCarritoFloristeria() {
                       }
                       className="select-entrega"
                     >
-                      <option value="manana">Mañana (09:00 - 13:00) — Sin costo</option>
-                      <option value="tarde">Tarde (14:00 - 18:00) — Sin costo</option>
-                      {!entregaUnificada.retiroEnLocal && (
-                        <option value="hora_exacta">
-                          Hora Exacta / Madrugador (+ ${tarifaHoraExacta.toFixed(2)})
-                        </option>
-                      )}
+                      <option value="A) 09:00 - 13:00">A) 09:00 - 13:00</option>
+                      <option value="B) 13:00 - 17:00">B) 13:00 - 17:00</option>
+                      <option value="C) 17:00 - 20:00">C) 17:00 - 20:00</option>
                     </select>
                   </div>
 

@@ -12,12 +12,14 @@ import {
   CreditCard,
   FileCheck2,
   Flower2,
+  Hammer,
   KeyRound,
   LayoutDashboard,
   Mail,
   MapPinCheck,
   MessageSquare,
   Receipt,
+  Send,
   Settings,
   ShoppingBag,
   Truck,
@@ -34,6 +36,8 @@ export type IconoNavegacionPanel =
   | "inventario"
   | "entrega_inmediata"
   | "entregas_gps"
+  | "envio_pedidos"
+  | "taller"
   | "pedidos"
   | "facturacion"
   | "catalogo"
@@ -62,6 +66,8 @@ const MAPA_ICONOS: Record<IconoNavegacionPanel, LucideIcon> = {
   inventario: Flower2,
   entrega_inmediata: Zap,
   entregas_gps: MapPinCheck,
+  envio_pedidos: Send,
+  taller: Hammer,
   pedidos: ClipboardList,
   facturacion: Receipt,
   catalogo: ShoppingBag,

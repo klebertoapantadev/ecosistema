@@ -265,6 +265,22 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     href: "/panel/inventario-rosas",
     origen: "Administrar"
   },
+  envio_pedidos_taller: {
+    id: "envio_pedidos_taller",
+    titulo: "Enviar Pedidos a Taller",
+    subtitulo: "Validación de ventas, calendario de entregas, llamadas Exequiales y despacho diario",
+    icono: ClipboardList,
+    href: "/panel/envio-pedidos",
+    origen: "Administrar"
+  },
+  taller_floral: {
+    id: "taller_floral",
+    titulo: "Taller — Producción",
+    subtitulo: "Alertas en tiempo real, calendario de elaboración y estado En Preparación / Listo Entrega",
+    icono: ClipboardList,
+    href: "/panel/taller",
+    origen: "Administrar"
+  },
   confirmacion_entregas: {
     id: "confirmacion_entregas",
     titulo: "Entregas e Informes GPS",

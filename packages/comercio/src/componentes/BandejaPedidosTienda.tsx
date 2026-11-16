@@ -338,30 +338,73 @@ export function BandejaPedidosTienda({
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => void cargarPedidos()}
-          disabled={cargando}
-          title="Actualizar listado de pedidos de la tienda"
-          aria-label="Actualizar"
-          className="btn-responsive-accion"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            padding: "8px 14px",
-            borderRadius: "8px",
-            border: "1px solid #D4D4D8",
-            background: "#FFFFFF",
-            color: "#18181B",
-            fontSize: "0.8rem",
-            fontWeight: 600,
-            cursor: cargando ? "wait" : "pointer",
-          }}
-        >
-          {cargando ? <Loader2 size={14} /> : <RefreshCw size={14} />}
-          <span className="btn-texto-responsive">Actualizar</span>
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+          <a
+            href="/panel/envio-pedidos"
+            title="Ir a validación, calendario y envío diario de pedidos a Taller"
+            aria-label="Enviar Pedidos"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "8px 13px",
+              borderRadius: "8px",
+              background: "#0F172A",
+              color: "#FFFFFF",
+              textDecoration: "none",
+              fontSize: "0.8rem",
+              fontWeight: 700,
+            }}
+          >
+            <span>📤 Enviar a Taller</span>
+          </a>
+
+          <a
+            href="/panel/taller"
+            title="Abrir pantalla de producción del Taller"
+            aria-label="Ver Taller"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "8px 13px",
+              borderRadius: "8px",
+              border: "1px solid #86EFAC",
+              background: "#ECFDF5",
+              color: "#065F46",
+              textDecoration: "none",
+              fontSize: "0.8rem",
+              fontWeight: 700,
+            }}
+          >
+            <span>🔨 Taller</span>
+          </a>
+
+          <button
+            type="button"
+            onClick={() => void cargarPedidos()}
+            disabled={cargando}
+            title="Actualizar listado de pedidos de la tienda"
+            aria-label="Actualizar"
+            className="btn-responsive-accion"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "8px 14px",
+              borderRadius: "8px",
+              border: "1px solid #D4D4D8",
+              background: "#FFFFFF",
+              color: "#18181B",
+              fontSize: "0.8rem",
+              fontWeight: 600,
+              cursor: cargando ? "wait" : "pointer",
+            }}
+          >
+            {cargando ? <Loader2 size={14} /> : <RefreshCw size={14} />}
+            <span className="btn-texto-responsive">Actualizar</span>
+          </button>
+        </div>
       </div>
 
       {errorMsg && (

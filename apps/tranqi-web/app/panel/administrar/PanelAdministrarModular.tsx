@@ -13,7 +13,7 @@ import { GestionRedProfesionalWidget } from "../../../modulos/socios/componentes
 import { ConfiguracionHorariosAtencionWidget } from "../../../modulos/agenda/componentes/ConfiguracionHorariosAtencionWidget";
 import { WidgetAsignacionesAgendaInline } from "../../../modulos/agenda/componentes/WidgetsAgendaInline";
 import { BandejaClientesCRM } from "../../../modulos/crm-clientes/componentes/BandejaClientesCRM";
-import { WidgetFacturacionElectronica, GestionConveniosCorporativos, ConsolaGestionInformativosWidget, ComplianceScoreEmpresarial, LegalHRLaboral, ConsolaVentasOmnicanal, BandejaPedidosTienda, ConsolaTestimoniosClientes } from "@eco/comercio";
+import { WidgetFacturacionElectronica, GestionConveniosCorporativos, ConsolaGestionInformativosWidget, ComplianceScoreEmpresarial, LegalHRLaboral, ConsolaVentasOmnicanal, BandejaPedidosTienda, ConsolaTestimoniosClientes, ConsolaEnvioPedidosTaller, ConsolaTallerFloral } from "@eco/comercio";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
@@ -51,6 +51,24 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     icono: MessageSquare,
     colorIcono: "#DB2777",
     categoria: "Comercio & Comunicación"
+  },
+  {
+    id: "envio_pedidos_taller",
+    titulo: "Enviar Pedidos a Taller",
+    subtitulo: "Validación de ventas, calendario de entregas (Hoy/Semana/Mes), llamadas Exequiales y despacho diario a Taller",
+    ruta: "/panel/administrar?widget=envio_pedidos_taller",
+    icono: ClipboardList,
+    colorIcono: "#0F172A",
+    categoria: "Comercio y Pagos"
+  },
+  {
+    id: "taller_floral",
+    titulo: "Taller — Producción y Elaboración",
+    subtitulo: "Consola de producción con alertas en tiempo real y actualización de estado (En preparación / Listo entrega)",
+    ruta: "/panel/administrar?widget=taller_floral",
+    icono: ClipboardList,
+    colorIcono: "#059669",
+    categoria: "Comercio y Pagos"
   },
   {
     id: "pedidos_tienda",
@@ -954,7 +972,17 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
               </div>
             )}
 
-            {/* 11. PEDIDOS DE TIENDA & TESTIMONIOS */}
+            {/* 11. PEDIDOS DE TIENDA, DESPACHO A TALLER & TESTIMONIOS */}
+            {widgetActivo === "envio_pedidos_taller" && (
+              <div style={{ width: "100%" }}>
+                <ConsolaEnvioPedidosTaller negocio={negocio} />
+              </div>
+            )}
+            {widgetActivo === "taller_floral" && (
+              <div style={{ width: "100%" }}>
+                <ConsolaTallerFloral negocio={negocio} />
+              </div>
+            )}
             {widgetActivo === "pedidos_tienda" && (
               <div style={{ width: "100%" }}>
                 <BandejaPedidosTienda negocio={negocio} />

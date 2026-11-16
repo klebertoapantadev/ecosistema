@@ -33,9 +33,11 @@ const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
   SUPERADMIN: [
     "resumen",
     "consola_chat",
+    "envio_pedidos_taller",
+    "taller_floral",
+    "confirmacion_entregas",
     "galeria_inmediata",
     "inventario_rosas",
-    "confirmacion_entregas",
     "pedidos_tienda",
     "facturacion_electronica",
     "catalogo_productos",
@@ -53,9 +55,11 @@ const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
   ADMINISTRADOR: [
     "resumen",
     "consola_chat",
+    "envio_pedidos_taller",
+    "taller_floral",
+    "confirmacion_entregas",
     "galeria_inmediata",
     "inventario_rosas",
-    "confirmacion_entregas",
     "pedidos_tienda",
     "facturacion_electronica",
     "catalogo_productos",
@@ -73,9 +77,11 @@ const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
   OPERADOR: [
     "resumen",
     "consola_chat",
+    "envio_pedidos_taller",
+    "taller_floral",
+    "confirmacion_entregas",
     "galeria_inmediata",
     "inventario_rosas",
-    "confirmacion_entregas",
     "pedidos_tienda",
     "facturacion_electronica",
     "catalogo_productos",
@@ -86,6 +92,7 @@ const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
   VENTAS: [
     "resumen",
     "consola_chat",
+    "envio_pedidos_taller",
     "galeria_inmediata",
     "inventario_rosas",
     "pedidos_tienda",
@@ -94,7 +101,7 @@ const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
     "testimonios_clientes",
     "cuenta",
   ],
-  DELIVERY: ["resumen", "confirmacion_entregas", "pedidos_tienda", "cuenta"],
+  DELIVERY: ["resumen", "taller_floral", "confirmacion_entregas", "pedidos_tienda", "cuenta"],
   CLIENTE: ["resumen", "mis_compras", "mis_proformas", "cuenta"],
 };
 

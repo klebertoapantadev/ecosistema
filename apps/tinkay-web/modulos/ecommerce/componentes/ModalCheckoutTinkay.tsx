@@ -1311,7 +1311,7 @@ export function ModalCheckoutTinkay() {
                             direccion: `Retiro en ${configLogistica.origenNombre}`,
                             franjaHoraria:
                               entregaUnificada.franjaHoraria === 'hora_exacta'
-                                ? 'manana'
+                                ? 'A) 09:00 - 13:00'
                                 : entregaUnificada.franjaHoraria,
                           });
                         }}
@@ -1359,7 +1359,7 @@ export function ModalCheckoutTinkay() {
                         </div>
                         <div>
                           <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>
-                            Horario
+                            Rango de Horario
                           </label>
                           <select
                             value={entregaUnificada.franjaHoraria}
@@ -1370,8 +1370,9 @@ export function ModalCheckoutTinkay() {
                             }
                             className="input-checkout"
                           >
-                            <option value="manana">Mañana (09:00 - 13:00)</option>
-                            <option value="tarde">Tarde (14:00 - 18:00)</option>
+                            <option value="A) 09:00 - 13:00">A) 09:00 - 13:00</option>
+                            <option value="B) 13:00 - 17:00">B) 13:00 - 17:00</option>
+                            <option value="C) 17:00 - 20:00">C) 17:00 - 20:00</option>
                           </select>
                         </div>
                       </div>
@@ -1504,11 +1505,9 @@ export function ModalCheckoutTinkay() {
                                 }
                                 className="input-checkout"
                               >
-                                <option value="manana">Mañana (09:00 - 13:00)</option>
-                                <option value="tarde">Tarde (14:00 - 18:00)</option>
-                                <option value="hora_exacta">
-                                  Hora Exacta (+${tarifaHoraExacta.toFixed(2)})
-                                </option>
+                                <option value="A) 09:00 - 13:00">A) 09:00 - 13:00</option>
+                                <option value="B) 13:00 - 17:00">B) 13:00 - 17:00</option>
+                                <option value="C) 17:00 - 20:00">C) 17:00 - 20:00</option>
                               </select>
                             </div>
                           </div>
