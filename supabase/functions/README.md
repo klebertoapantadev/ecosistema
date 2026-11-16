@@ -76,6 +76,8 @@ Sin esos dos secretos `fac_fn_despertar_worker()` no hace nada (los comprobantes
 
 **Producción, cerrada por defecto:** la función solo envía comprobantes de ambiente 2 si además existe el secreto `FACTURACION_PERMITIR_PRODUCCION=true`. Antes de eso, un superadmin habilita el negocio (`fac_fn_habilitar_produccion`) y su administrador, con MFA, cambia el ambiente (`fac_fn_cambiar_ambiente`), que exige una factura ya autorizada en pruebas.
 
+**Modo simulación, para probar sin `.p12`:** con el secreto `FACTURACION_SIMULACION=true`, los comprobantes de ambiente 1 cuyo emisor todavía no tiene certificado no se firman ni se envían al SRI: pasan las mismas validaciones, se genera el XML (sin firma) y el RIDE, se publican en Storage, se envía el correo con «(SIMULACIÓN)» en el asunto y quedan `AUTORIZADO` con un mensaje `SIMULACION` en `cmp_mensajes_sri`. En cuanto el emisor tiene certificado, sus comprobantes van al SRI de verdad. Nunca aplica en ambiente 2, y una factura simulada no cuenta como «autorizada en pruebas» para pasar a producción (migración `20261116000002`).
+
 Puesta en marcha de un negocio (en pruebas): datos del emisor (`fac_fn_guardar_emisor`), `.p12` por `facturacion-certificado`, SMTP del negocio activo (`PLT-008`, para enviar XML y RIDE al comprador) y una factura de prueba hasta ver `AUTORIZADO`.
 
 Pruebas (desde `supabase/functions`, con Deno 2):

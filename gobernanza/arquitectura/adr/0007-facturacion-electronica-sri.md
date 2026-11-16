@@ -46,6 +46,11 @@ resolvió en .NET con un worker propio.
    - `emi_produccion_habilitada` solo la activa un superadmin, y el paso a ambiente 2 exige `aal2`,
      certificado vigente y una factura ya autorizada en pruebas.
    - La función no envía nada de ambiente 2 sin `FACTURACION_PERMITIR_PRODUCCION=true`.
+   - Con `FACTURACION_SIMULACION=true`, un comprobante de ambiente 1 cuyo emisor aún no tiene `.p12`
+     se simula (sin firma ni SRI) y queda `AUTORIZADO` con un mensaje `SIMULACION`; esas facturas
+     no cuentan como «autorizada en pruebas» para el paso a ambiente 2. Las dos vías de cambio de
+     ambiente (`fac_fn_cambiar_ambiente` y `com_fn_cambiar_ambiente_sri` del panel) exigen MFA,
+     certificado vigente y una factura autorizada por el SRI en pruebas.
 
    Con el emisor en producción, un pago simulado o de una pasarela en sandbox no se factura.
 6. **Factura automática por disparador** sobre `com_transaccion_pago` (`APROBADO`):

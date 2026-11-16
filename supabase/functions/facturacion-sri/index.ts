@@ -12,7 +12,9 @@
 //
 // Variables: SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY (las pone Supabase),
 // FACTURACION_FUNCION_CLAVE y FACTURACION_PERMITIR_PRODUCCION ("true" para
-// dejar salir comprobantes de ambiente 2; por defecto, no).
+// dejar salir comprobantes de ambiente 2; por defecto, no) y FACTURACION_SIMULACION
+// ("true" para simular, sin firma ni SRI, los comprobantes de ambiente 1 cuyo
+// emisor aún no tiene certificado; ver procesador.ts).
 import { createClient } from "jsr:@supabase/supabase-js@2";
 // denomailer, como enviar-correo: versión fijada.
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
@@ -118,6 +120,7 @@ function dependencias(): Dependencias {
     ahora: () => new Date(),
     esperar: (ms) => new Promise((r) => setTimeout(r, ms)),
     permitirProduccion: Deno.env.get("FACTURACION_PERMITIR_PRODUCCION") === "true",
+    simulacion: Deno.env.get("FACTURACION_SIMULACION") === "true",
   };
 }
 

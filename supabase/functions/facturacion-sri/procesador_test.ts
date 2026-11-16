@@ -6,10 +6,10 @@ import { generarClaveAcceso } from "../_compartido/sri/clave-acceso.ts";
 import type { RespuestaAutorizacion, RespuestaRecepcion } from "../_compartido/sri/comprobante.ts";
 import { crearP12 } from "../_compartido/sri/pruebas/certificado-prueba.ts";
 import { SriNoDisponible } from "../_compartido/sri/soap.ts";
-import { type Dependencias, type ItemCola, Procesador } from "./procesador.ts";
+import { type Dependencias, type ItemCola, MENSAJE_SIMULACION, Procesador } from "./procesador.ts";
 
-const p12 = crearP12();
 const AHORA = new Date("2026-11-08T15:00:00Z");
+const p12 = crearP12({ desde: AHORA });
 const RUC = "0993381762001";
 
 function item(parcial: Partial<ItemCola["comprobante"]> = {}, total = 10): ItemCola {
@@ -77,6 +77,7 @@ function dobles(opciones: {
   subir?: () => Promise<void>;
   smtp?: boolean;
   permitirProduccion?: boolean;
+  simulacion?: boolean;
 } = {}): { dep: Dependencias; r: Registro } {
   const r: Registro = { resultados: [], correos: [], subidas: [], enviados: [], consultas: 0 };
   const dep: Dependencias = {
@@ -106,6 +107,7 @@ function dobles(opciones: {
     ahora: () => AHORA,
     esperar: () => Promise.resolve(),
     permitirProduccion: opciones.permitirProduccion ?? false,
+    simulacion: opciones.simulacion ?? false,
   };
   return { dep, r };
 }
@@ -241,4 +243,64 @@ Deno.test("procesador: sin SMTP el comprobante queda autorizado y se anota el co
   await new Procesador(dep).procesar(item({ cmp_estado: "RECIBIDO" }));
   assertEquals(estados(r), ["AUTORIZADO"]);
   assertEquals(r.correos[0].enviado, false);
+});
+
+// ── Modo simulación (FACTURACION_SIMULACION) ─────────────────────────────────
+
+function sinCertificado(it: ItemCola): ItemCola {
+  return { ...it, emisor: { ...it.emisor, emi_certificado_id: null } };
+}
+
+Deno.test("simulación: ambiente 1 sin certificado → AUTORIZADO sin firmar ni tocar el SRI", async () => {
+  const { dep, r } = dobles({ simulacion: true });
+  const it = sinCertificado(item());
+  await new Procesador(dep).procesar(it);
+  assertEquals(estados(r), ["AUTORIZADO"]);
+  assertEquals(r.enviados.length, 0);
+  assertEquals(r.consultas, 0);
+  const cambios = r.resultados[0].cambios;
+  assertEquals(cambios.numero_autorizacion, it.comprobante.cmp_clave_acceso);
+  assertEquals(cambios.importe_total, "11.50");
+  const mensajes = cambios.mensajes_sri as { identificador: string }[];
+  assertEquals(mensajes[0].identificador, MENSAJE_SIMULACION);
+  assertEquals(r.subidas.length, 2);
+  assert(r.subidas[0].endsWith(".xml") && r.subidas[1].endsWith(".pdf"));
+  assertEquals(r.correos[0].enviado, true);
+});
+
+Deno.test("simulación: el XML publicado es el comprobante sin firma", async () => {
+  let xmlSubido = "";
+  const { dep } = dobles({ simulacion: true });
+  dep.subir = (ruta, contenido) => {
+    if (ruta.endsWith(".xml")) xmlSubido = new TextDecoder().decode(contenido);
+    return Promise.resolve();
+  };
+  await new Procesador(dep).procesar(sinCertificado(item()));
+  assertStringIncludes(xmlSubido, "<estado>AUTORIZADO</estado>");
+  assertStringIncludes(xmlSubido, "factura");
+  assert(!xmlSubido.includes("ds:Signature"), "no debe llevar firma");
+});
+
+Deno.test("simulación: nunca en ambiente 2", async () => {
+  const { dep, r } = dobles({ simulacion: true, permitirProduccion: true });
+  await new Procesador(dep).procesar(sinCertificado(item({ cmp_ambiente: 2 })));
+  assertEquals(estados(r), ["ERROR"]);
+  assertEquals(r.enviados.length, 0);
+  assertEquals(r.subidas.length, 0);
+});
+
+Deno.test("simulación: si el emisor ya tiene certificado, firma y envía al SRI de verdad", async () => {
+  const { dep, r } = dobles({ simulacion: true });
+  await new Procesador(dep).procesar(item());
+  assertEquals(estados(r), ["RECIBIDO", "AUTORIZADO"]);
+  assertEquals(r.enviados.length, 1);
+  const mensajes = r.resultados[1].cambios.mensajes_sri as { identificador: string }[];
+  assert(!mensajes.some((m) => m.identificador === MENSAJE_SIMULACION));
+});
+
+Deno.test("simulación: apagada, ambiente 1 sin certificado sigue siendo ERROR", async () => {
+  const { dep, r } = dobles();
+  await new Procesador(dep).procesar(sinCertificado(item()));
+  assertEquals(estados(r), ["ERROR"]);
+  assertEquals(r.subidas.length, 0);
 });
