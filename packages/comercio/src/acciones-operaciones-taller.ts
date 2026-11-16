@@ -442,11 +442,12 @@ export async function registrarOSincronizarEntregaAction(entrada: {
   proformaId?: string | null;
   soloProgramarOt?: boolean;
   entregadorNombre?: string;
-  fallecidoDestinatario: string;
+  fallecidoDestinatario?: string;
   fechaServicio?: string;
   capturadoEn?: string;
   descripcionServicio: string;
-  ubicacionNombre: string;
+  salaServicio?: string;
+  ubicacionNombre?: string;
   coordinadorNombre?: string;
   recursosUtilizados?: string;
   latitud?: number | null;
@@ -487,11 +488,15 @@ export async function registrarOSincronizarEntregaAction(entrada: {
             : null,
         soloProgramarOt: Boolean(entrada.soloProgramarOt),
         entregadorNombre: entrada.entregadorNombre,
-        fallecidoDestinatario: entrada.fallecidoDestinatario,
+        fallecidoDestinatario: entrada.fallecidoDestinatario ?? "",
         fechaServicio: entrada.fechaServicio,
         capturadoEn: entrada.capturadoEn,
         descripcionServicio: entrada.descripcionServicio,
-        ubicacionNombre: entrada.ubicacionNombre,
+        salaServicio: entrada.salaServicio ?? "",
+        ubicacionNombre: entrada.ubicacionNombre ?? "",
+        detalleExtra: entrada.salaServicio
+          ? { sala_servicio: entrada.salaServicio }
+          : undefined,
         coordinadorNombre: entrada.coordinadorNombre,
         recursosUtilizados: entrada.recursosUtilizados,
         latitud: entrada.latitud != null ? String(entrada.latitud) : null,
@@ -534,6 +539,7 @@ export async function actualizarEntregaEvidenciaAction(entrada: {
     fallecidoDestinatario?: string;
     fechaServicio?: string;
     descripcionServicio?: string;
+    salaServicio?: string;
     ubicacionNombre?: string;
     coordinadorNombre?: string;
     recursosUtilizados?: string;

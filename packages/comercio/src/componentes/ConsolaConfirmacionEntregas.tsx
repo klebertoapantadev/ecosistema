@@ -7,22 +7,22 @@ import {
   AlertTriangle,
   Camera,
   CheckCircle2,
-  ClipboardList,
   CloudOff,
   Download,
   Edit3,
-  ExternalLink,
   FileText,
-  History,
   Loader2,
   MapPin,
+  MessageCircle,
   Navigation,
   Plus,
   RefreshCw,
   Save,
+  Share2,
   Smartphone,
   Upload,
   Wifi,
+  X,
 } from "lucide-react";
 import {
   actualizarEntregaEvidenciaAction,
@@ -33,6 +33,8 @@ import {
 } from "../acciones-operaciones-taller";
 import {
   DATOS_PROVEEDOR_TINKAY_DEFECTO,
+  OPCIONES_DESCRIPCION_SERVICIO_EXEQUIALES,
+  OPCIONES_SALA_EXEQUIALES,
   eliminarDeColaOfflineEntrega,
   guardarEntregaEnColaOffline,
   listarColaOfflineEntregas,
@@ -44,10 +46,14 @@ import {
 } from "../operaciones-taller";
 import { generarPdfInformeQuincenalIess } from "../pdf-informe-iess";
 import {
-  comprimirYEstamparFotoArchivo,
+  compartirImagenEvidenciaWhatsapp,
   dataUrlABlob,
+  estamparDataUrlConTarjetaGps,
   generarTarjetaMapaGpsDataUrl,
+  leerYComprimirFotoBase,
+  obtenerDireccionLegibleGps,
   subirArchivoOperativoStorage,
+  type DireccionGpsResuelta,
 } from "../utils/evidenciaImagenGps";
 
 export interface PropsConsolaConfirmacionEntregas {
@@ -101,10 +107,20 @@ export function ConsolaConfirmacionEntregas({
   const [colaOffline, setColaOffline] = useState<ItemColaOfflineEntrega[]>([]);
   const [sincronizandoOffline, setSincronizandoOffline] = useState<boolean>(false);
   const [eventoInstalacionPwa, setEventoInstalacionPwa] = useState<any>(null);
+  const [appInstalada, setAppInstalada] = useState<boolean>(false);
+  const [esDispositivoIos, setEsDispositivoIos] = useState<boolean>(false);
+  const [mostrarGuiaPwa, setMostrarGuiaPwa] = useState<boolean>(false);
 
   const [cargando, setCargando] = useState<boolean>(false);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [compartiendoWhatsapp, setCompartiendoWhatsapp] = useState<boolean>(false);
+  const [ultimaFotoConfirmada, setUltimaFotoConfirmada] = useState<{
+    imagenOrigen: string;
+    urlPublica?: string | null;
+    textoResumen: string;
+    codigoOt: string;
+  } | null>(null);
 
   // =========================================================================
   // ESTADO DE CAPTURA EN CAMPO (ONLINE + OFFLINE)
@@ -115,23 +131,38 @@ export function ConsolaConfirmacionEntregas({
   const [otSeleccionadaId, setOtSeleccionadaId] = useState<string>("");
   const [pedidoSeleccionadoId, setPedidoSeleccionadoId] = useState<string>("");
 
+  const [salaServicio, setSalaServicio] = useState<string>("");
+  const [opcionServicio, setOpcionServicio] = useState<
+    "Set condolencias (3 arreglos)" | "Cubre cofre (1 arreglo)" | "OTROS"
+  >("Set condolencias (3 arreglos)");
+  const [descripcionServicioLibre, setDescripcionServicioLibre] = useState<string>("");
   const [fallecidoDestinatario, setFallecidoDestinatario] = useState<string>("");
   const [ubicacionNombre, setUbicacionNombre] = useState<string>("");
-  const [descripcionServicio, setDescripcionServicio] = useState<string>(
-    "Set de condolencias (3 arreglos florales)"
-  );
   const [coordinadorNombre, setCoordinadorNombre] = useState<string>("");
   const [recursosUtilizados, setRecursosUtilizados] = useState<string>(
     "Flores, follaje, bases y oasis"
   );
   const [observacionesCaptura, setObservacionesCaptura] = useState<string>("");
 
+  const descripcionServicio = useMemo(() => {
+    if (tipoOrigenCaptura === "PEDIDO_TIENDA") {
+      return descripcionServicioLibre.trim() || "Entrega de pedido floral";
+    }
+    if (opcionServicio === "OTROS") {
+      return descripcionServicioLibre.trim() || "Arreglo exequial personalizado";
+    }
+    return opcionServicio;
+  }, [tipoOrigenCaptura, opcionServicio, descripcionServicioLibre]);
+
   const [latitud, setLatitud] = useState<number | null>(null);
   const [longitud, setLongitud] = useState<number | null>(null);
   const [precisionMetros, setPrecisionMetros] = useState<number | null>(null);
+  const [direccionGpsResuelta, setDireccionGpsResuelta] =
+    useState<DireccionGpsResuelta | null>(null);
   const [obteniendoGps, setObteniendoGps] = useState<boolean>(false);
   const [estadoGpsTexto, setEstadoGpsTexto] = useState<string>("Listo para capturar GPS");
 
+  const [fotoBaseSinSelloDataUrl, setFotoBaseSinSelloDataUrl] = useState<string>("");
   const [fotoCapturadaDataUrl, setFotoCapturadaDataUrl] = useState<string>("");
   const [mapaGeneradoDataUrl, setMapaGeneradoDataUrl] = useState<string>("");
   const [horaCapturaIso, setHoraCapturaIso] = useState<string>("");
@@ -141,11 +172,13 @@ export function ConsolaConfirmacionEntregas({
   // =========================================================================
   // ESTADO DE PROGRAMACIÓN RÁPIDA DE ORDEN DE TRABAJO (TALLER / ADMIN)
   // =========================================================================
+  const [otNuevaSala, setOtNuevaSala] = useState<string>("Sala 1");
   const [otNuevaFallecido, setOtNuevaFallecido] = useState<string>("");
   const [otNuevaUbicacion, setOtNuevaUbicacion] = useState<string>("");
-  const [otNuevaDescripcion, setOtNuevaDescripcion] = useState<string>(
-    "Set de condolencias (3 arreglos florales)"
-  );
+  const [otNuevaOpcionServicio, setOtNuevaOpcionServicio] = useState<
+    "Set condolencias (3 arreglos)" | "Cubre cofre (1 arreglo)" | "OTROS"
+  >("Set condolencias (3 arreglos)");
+  const [otNuevaDescripcionLibre, setOtNuevaDescripcionLibre] = useState<string>("");
   const [otNuevaCoordinador, setOtNuevaCoordinador] = useState<string>("");
   const [creandoOt, setCreandoOt] = useState<boolean>(false);
 
@@ -222,17 +255,40 @@ export function ConsolaConfirmacionEntregas({
     setEnLinea(navigator.onLine !== false);
     const onOnline = () => setEnLinea(true);
     const onOffline = () => setEnLinea(false);
+
+    const esStandalone =
+      window.matchMedia?.("(display-mode: standalone)")?.matches === true ||
+      (window.navigator as unknown as { standalone?: boolean }).standalone === true;
+    setAppInstalada(esStandalone);
+
+    const ua = window.navigator.userAgent || "";
+    setEsDispositivoIos(/iphone|ipad|ipod/i.test(ua));
+
+    const globalPrompt = (window as unknown as { __ecoDeferredInstallPrompt?: any })
+      .__ecoDeferredInstallPrompt;
+    if (globalPrompt) {
+      setEventoInstalacionPwa(globalPrompt);
+    }
+
     const onBeforeInstall = (ev: Event) => {
       ev.preventDefault();
+      (window as unknown as { __ecoDeferredInstallPrompt?: any }).__ecoDeferredInstallPrompt = ev;
       setEventoInstalacionPwa(ev);
+    };
+
+    const onAppInstalled = () => {
+      setAppInstalada(true);
+      setEventoInstalacionPwa(null);
+      setMostrarGuiaPwa(false);
     };
 
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
     window.addEventListener("beforeinstallprompt", onBeforeInstall);
+    window.addEventListener("appinstalled", onAppInstalled);
 
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw-operaciones.js").catch(() => {});
+      navigator.serviceWorker.register("/sw-operaciones.js", { scope: "/" }).catch(() => {});
     }
 
     if (!datosIniciales) {
@@ -261,8 +317,34 @@ export function ConsolaConfirmacionEntregas({
       window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", onOffline);
       window.removeEventListener("beforeinstallprompt", onBeforeInstall);
+      window.removeEventListener("appinstalled", onAppInstalled);
     };
   }, [datosIniciales, cacheKey, recargarTablero, refrescarColaOffline]);
+
+  const handleInstalarPwa = useCallback(async () => {
+    const promptObj =
+      eventoInstalacionPwa ||
+      (typeof window !== "undefined"
+        ? (window as unknown as { __ecoDeferredInstallPrompt?: any }).__ecoDeferredInstallPrompt
+        : null);
+
+    if (promptObj && typeof promptObj.prompt === "function") {
+      try {
+        await promptObj.prompt();
+        const choice = await promptObj.userChoice?.catch(() => null);
+        if (choice?.outcome === "accepted") {
+          setAppInstalada(true);
+          setEventoInstalacionPwa(null);
+          (window as unknown as { __ecoDeferredInstallPrompt?: any }).__ecoDeferredInstallPrompt =
+            null;
+        }
+        return;
+      } catch {
+        // Si ya fue consumido, mostrar guía rápida
+      }
+    }
+    setMostrarGuiaPwa(true);
+  }, [eventoInstalacionPwa]);
 
   // Sincronizador automático de la cola IndexedDB cuando vuelve el internet
   const sincronizarPendientesOffline = useCallback(async () => {
@@ -317,6 +399,7 @@ export function ConsolaConfirmacionEntregas({
           convenioId: item.convenioId,
           proformaId: item.proformaId,
           entregadorNombre: item.entregadorNombre,
+          salaServicio: item.salaServicio ?? undefined,
           fallecidoDestinatario: item.fallecidoDestinatario,
           fechaServicio: item.fechaServicio,
           capturadoEn: item.capturadoEn,
@@ -356,11 +439,12 @@ export function ConsolaConfirmacionEntregas({
     }
   }, [enLinea, colaOffline.length, sincronizarPendientesOffline]);
 
-  // Captura de coordenadas GPS del dispositivo (funciona incluso sin datos usando chip GPS)
+  // Captura de coordenadas GPS del dispositivo + geocodificación inversa legible
   const capturarUbicacionGps = useCallback((): Promise<{
     lat: number;
     lng: number;
     acc: number;
+    dir: DireccionGpsResuelta | null;
   } | null> => {
     return new Promise((resolve) => {
       if (typeof navigator === "undefined" || !navigator.geolocation) {
@@ -379,16 +463,32 @@ export function ConsolaConfirmacionEntregas({
           setLongitud(lng);
           setPrecisionMetros(acc);
           setObteniendoGps(false);
+
+          let dir: DireccionGpsResuelta | null = null;
+          try {
+            dir = await obtenerDireccionLegibleGps(lat, lng);
+            setDireccionGpsResuelta(dir);
+          } catch {
+            // Ignorar si no hay red
+          }
+
           setEstadoGpsTexto(
-            `GPS listo: ${lat.toFixed(5)}, ${lng.toFixed(5)} (±${Math.round(acc)}m)`
+            dir?.direccionCompleta
+              ? `GPS listo (±${Math.round(acc)}m): ${dir.direccionCompleta.slice(0, 58)}`
+              : `GPS listo: ${lat.toFixed(5)}, ${lng.toFixed(5)} (±${Math.round(acc)}m)`
           );
           try {
-            const mapaData = await generarTarjetaMapaGpsDataUrl(lat, lng, acc, ubicacionNombre);
+            const mapaData = await generarTarjetaMapaGpsDataUrl(
+              lat,
+              lng,
+              acc,
+              ubicacionNombre || dir?.direccionCompleta
+            );
             setMapaGeneradoDataUrl(mapaData);
           } catch {
             // Ignorar
           }
-          resolve({ lat, lng, acc });
+          resolve({ lat, lng, acc, dir });
         },
         (err) => {
           setObteniendoGps(false);
@@ -413,9 +513,27 @@ export function ConsolaConfirmacionEntregas({
     setOtSeleccionadaId(otId);
     const ot = otsProgramadas.find((x) => x.id === otId);
     if (ot) {
-      setFallecidoDestinatario(ot.fallecidoDestinatario);
-      setUbicacionNombre(ot.ubicacionNombre);
-      setDescripcionServicio(ot.descripcionServicio);
+      setSalaServicio(ot.salaServicio || "");
+      setFallecidoDestinatario(
+        ot.fallecidoDestinatario.startsWith("Por confirmar") ? "" : ot.fallecidoDestinatario
+      );
+      setUbicacionNombre(ot.ubicacionNombre || "");
+      if (
+        ot.descripcionServicio === "Set condolencias (3 arreglos)" ||
+        ot.descripcionServicio === "Cubre cofre (1 arreglo)"
+      ) {
+        setOpcionServicio(ot.descripcionServicio);
+        setDescripcionServicioLibre("");
+      } else if (ot.descripcionServicio.toLowerCase().includes("cubre cofre")) {
+        setOpcionServicio("Cubre cofre (1 arreglo)");
+        setDescripcionServicioLibre("");
+      } else if (ot.descripcionServicio.toLowerCase().includes("condolencia")) {
+        setOpcionServicio("Set condolencias (3 arreglos)");
+        setDescripcionServicioLibre("");
+      } else {
+        setOpcionServicio("OTROS");
+        setDescripcionServicioLibre(ot.descripcionServicio);
+      }
       setCoordinadorNombre(ot.coordinadorNombre || "");
       setRecursosUtilizados(ot.recursosUtilizados || "Flores, follaje, bases y oasis");
     }
@@ -427,7 +545,7 @@ export function ConsolaConfirmacionEntregas({
     if (ped) {
       setFallecidoDestinatario(`${ped.destinatarioNombre} (${ped.codigoOrden})`);
       setUbicacionNombre(ped.direccionEntrega);
-      setDescripcionServicio(ped.resumenItems);
+      setDescripcionServicioLibre(ped.resumenItems);
     }
   };
 
@@ -439,23 +557,49 @@ export function ConsolaConfirmacionEntregas({
     setProcesandoFoto(true);
     setErrorMsg(null);
 
-    let coords =
+    let coords: {
+      lat: number;
+      lng: number;
+      acc: number;
+      dir: DireccionGpsResuelta | null;
+    } | null =
       latitud != null && longitud != null
-        ? { lat: latitud, lng: longitud, acc: precisionMetros ?? 15 }
+        ? {
+            lat: latitud,
+            lng: longitud,
+            acc: precisionMetros ?? 15,
+            dir: direccionGpsResuelta,
+          }
         : null;
+
     if (!coords) {
       coords = await capturarUbicacionGps();
+    } else if (!coords.dir) {
+      try {
+        const dir = await obtenerDireccionLegibleGps(coords.lat, coords.lng);
+        setDireccionGpsResuelta(dir);
+        coords = { ...coords, dir };
+      } catch {
+        // Ignorar
+      }
     }
 
     const instanteIso = new Date().toISOString();
     setHoraCapturaIso(instanteIso);
 
     try {
-      const estampada = await comprimirYEstamparFotoArchivo(archivo, 1280, 0.84, {
+      const baseDataUrl = await leerYComprimirFotoBase(archivo, 1360, 0.86);
+      setFotoBaseSinSelloDataUrl(baseDataUrl);
+
+      const estampada = await estamparDataUrlConTarjetaGps(baseDataUrl, {
         latitud: coords?.lat ?? latitud,
         longitud: coords?.lng ?? longitud,
         precisionMetros: coords?.acc ?? precisionMetros,
         fechaHoraIso: instanteIso,
+        tituloCiudad: coords?.dir?.tituloCiudad,
+        direccionGps: coords?.dir?.direccionCompleta,
+        salaTexto: tipoOrigenCaptura === "ORDEN_TRABAJO_CONVENIO" ? salaServicio || undefined : undefined,
+        servicioTexto: descripcionServicio,
         ubicacionTexto: ubicacionNombre || undefined,
         entregadorNombre: tablero.usuarioActualNombre,
       });
@@ -466,7 +610,7 @@ export function ConsolaConfirmacionEntregas({
           coords.lat,
           coords.lng,
           coords.acc,
-          ubicacionNombre
+          ubicacionNombre || coords.dir?.direccionCompleta
         );
         setMapaGeneradoDataUrl(mapa);
       }
@@ -477,13 +621,119 @@ export function ConsolaConfirmacionEntregas({
     }
   };
 
+  // Re-estampa automáticamente la tarjeta GPS sobre la foto original cuando cambia Sala o Servicio
+  useEffect(() => {
+    if (!fotoBaseSinSelloDataUrl) return;
+    let cancelado = false;
+    const timer = setTimeout(() => {
+      void estamparDataUrlConTarjetaGps(fotoBaseSinSelloDataUrl, {
+        latitud,
+        longitud,
+        precisionMetros,
+        fechaHoraIso: horaCapturaIso || new Date().toISOString(),
+        tituloCiudad: direccionGpsResuelta?.tituloCiudad,
+        direccionGps: direccionGpsResuelta?.direccionCompleta,
+        salaTexto:
+          tipoOrigenCaptura === "ORDEN_TRABAJO_CONVENIO" ? salaServicio || undefined : undefined,
+        servicioTexto: descripcionServicio,
+        ubicacionTexto: ubicacionNombre || undefined,
+        entregadorNombre: tablero.usuarioActualNombre,
+      }).then((nuevaEstampada) => {
+        if (!cancelado) setFotoCapturadaDataUrl(nuevaEstampada);
+      });
+    }, 180);
+    return () => {
+      cancelado = true;
+      clearTimeout(timer);
+    };
+  }, [
+    fotoBaseSinSelloDataUrl,
+    latitud,
+    longitud,
+    precisionMetros,
+    direccionGpsResuelta,
+    salaServicio,
+    descripcionServicio,
+    ubicacionNombre,
+    horaCapturaIso,
+    tipoOrigenCaptura,
+    tablero.usuarioActualNombre,
+  ]);
+
+  const construirResumenWhatsapp = useCallback(
+    (datos: {
+      codigoOt?: string;
+      sala?: string | null;
+      servicio?: string;
+      fallecido?: string;
+      ubicacion?: string;
+      lat?: number | null;
+      lng?: number | null;
+    }) => {
+      const lineas = [
+        `🌸 *Confirmación de Entrega — Tinkay*`,
+        datos.codigoOt ? `📋 *Orden:* ${datos.codigoOt}` : null,
+        datos.sala ? `🏛️ *Sala:* ${datos.sala}` : null,
+        datos.servicio ? `💐 *Servicio:* ${datos.servicio}` : null,
+        datos.fallecido && !datos.fallecido.startsWith("Por confirmar")
+          ? `🕊️ *Destinatario:* ${datos.fallecido}`
+          : null,
+        datos.ubicacion ? `📍 *Ubicación:* ${datos.ubicacion}` : null,
+        datos.lat != null && datos.lng != null
+          ? `🗺️ *GPS:* https://maps.google.com/?q=${datos.lat},${datos.lng}`
+          : null,
+      ].filter(Boolean);
+      return lineas.join("\n");
+    },
+    []
+  );
+
+  const handleCompartirWhatsapp = useCallback(
+    async (opciones: {
+      imagenOrigen: string;
+      urlPublica?: string | null;
+      textoResumen: string;
+      nombreBase?: string;
+    }) => {
+      setCompartiendoWhatsapp(true);
+      setErrorMsg(null);
+      try {
+        const res = await compartirImagenEvidenciaWhatsapp({
+          imagenOrigen: opciones.imagenOrigen,
+          nombreArchivo: `${(opciones.nombreBase || "evidencia-tinkay").replace(/[^a-zA-Z0-9-_]/g, "_")}.jpg`,
+          textoResumen: opciones.textoResumen,
+          urlPublicaRespaldo: opciones.urlPublica ?? null,
+        });
+        if (res.ok && res.modo === "whatsapp_enlace") {
+          setMensajeExito(
+            "📥 La imagen georreferenciada se descargó en tu equipo y se abrió WhatsApp lista para adjuntarla."
+          );
+        }
+      } finally {
+        setCompartiendoWhatsapp(false);
+      }
+    },
+    []
+  );
+
+  const handleDescargarFotoLocal = useCallback((dataUrl: string, sufijo: string) => {
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = `evidencia-gps-${sufijo}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }, []);
+
   const limpiarFormularioCaptura = () => {
     setOtSeleccionadaId("");
     setPedidoSeleccionadoId("");
+    setSalaServicio("");
     setFallecidoDestinatario("");
     setUbicacionNombre("");
     setCoordinadorNombre("");
     setObservacionesCaptura("");
+    setFotoBaseSinSelloDataUrl("");
     setFotoCapturadaDataUrl("");
     setMapaGeneradoDataUrl("");
     setHoraCapturaIso("");
@@ -492,15 +742,17 @@ export function ConsolaConfirmacionEntregas({
   const handleRegistrarEntregaCampo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fotoCapturadaDataUrl) {
-      setErrorMsg("Toma o adjunta la fotografía de respaldo de la entrega.");
+      setErrorMsg("Toma o adjunta la fotografía georreferenciada de la entrega.");
       return;
     }
-    if (!fallecidoDestinatario.trim()) {
-      setErrorMsg(
-        tipoOrigenCaptura === "ORDEN_TRABAJO_CONVENIO"
-          ? "Ingresa el nombre del fallecido / servicio."
-          : "Selecciona el pedido o ingresa el destinatario."
-      );
+
+    if (tipoOrigenCaptura === "ORDEN_TRABAJO_CONVENIO") {
+      if (!salaServicio.trim()) {
+        setErrorMsg("Selecciona el número de Sala (Sala 1 a 4 o Capilla / Oficina).");
+        return;
+      }
+    } else if (!pedidoSeleccionadoId && !fallecidoDestinatario.trim()) {
+      setErrorMsg("Selecciona el pedido de la tienda o ingresa el destinatario.");
       return;
     }
 
@@ -514,6 +766,17 @@ export function ConsolaConfirmacionEntregas({
         : `${Date.now()}-0000-4000-8000-${Math.random().toString(16).slice(2, 14)}`;
     const instante = horaCapturaIso || new Date().toISOString();
 
+    const destinatarioFinal =
+      fallecidoDestinatario.trim() ||
+      (tipoOrigenCaptura === "ORDEN_TRABAJO_CONVENIO"
+        ? `Por confirmar (${salaServicio.trim()})`
+        : "Entrega directa tienda");
+
+    const ubicacionFinal =
+      ubicacionNombre.trim() || direccionGpsResuelta?.direccionCompleta || "";
+
+    const fotoRespaldoParaWhatsapp = fotoCapturadaDataUrl;
+
     const paqueteOffline: ItemColaOfflineEntrega = {
       uuidCliente: uuidCli,
       negocio: negNorm,
@@ -522,27 +785,45 @@ export function ConsolaConfirmacionEntregas({
       convenioId: convenioPrincipal?.id ?? null,
       proformaId: tipoOrigenCaptura === "PEDIDO_TIENDA" ? pedidoSeleccionadoId || null : null,
       entregadorNombre: tablero.usuarioActualNombre,
-      fallecidoDestinatario: fallecidoDestinatario.trim(),
+      salaServicio:
+        tipoOrigenCaptura === "ORDEN_TRABAJO_CONVENIO" ? salaServicio.trim() : null,
+      fallecidoDestinatario: destinatarioFinal,
       fechaServicio: instante,
       capturadoEn: instante,
-      descripcionServicio: descripcionServicio.trim() || "Entrega floral",
-      ubicacionNombre: ubicacionNombre.trim(),
+      descripcionServicio: descripcionServicio.trim() || "Set condolencias (3 arreglos)",
+      ubicacionNombre: ubicacionFinal,
       coordinadorNombre: coordinadorNombre.trim() || undefined,
       recursosUtilizados: recursosUtilizados.trim() || undefined,
       latitud,
       longitud,
       precisionMetros,
+      direccionGps: direccionGpsResuelta?.direccionCompleta,
       fotoDataUrl: fotoCapturadaDataUrl,
       mapaDataUrl: mapaGeneradoDataUrl || null,
       observaciones: observacionesCaptura.trim() || undefined,
       intentosSync: 0,
     };
 
+    const resumenPrevio = construirResumenWhatsapp({
+      sala: paqueteOffline.salaServicio,
+      servicio: paqueteOffline.descripcionServicio,
+      fallecido: fallecidoDestinatario.trim(),
+      ubicacion: ubicacionFinal,
+      lat: latitud,
+      lng: longitud,
+    });
+
     // Si estamos sin internet, guardar directamente en IndexedDB
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       try {
         await guardarEntregaEnColaOffline(paqueteOffline);
         await refrescarColaOffline();
+        setUltimaFotoConfirmada({
+          imagenOrigen: fotoRespaldoParaWhatsapp,
+          urlPublica: null,
+          textoResumen: resumenPrevio,
+          codigoOt: salaServicio || "offline",
+        });
         limpiarFormularioCaptura();
         setMensajeExito(
           "📲 Guardada en el teléfono sin internet (Offline). Se sincronizará automáticamente apenas recuperes señal."
@@ -592,6 +873,7 @@ export function ConsolaConfirmacionEntregas({
         convenioId: convenioPrincipal?.id ?? null,
         proformaId: tipoOrigenCaptura === "PEDIDO_TIENDA" ? pedidoSeleccionadoId || null : null,
         entregadorNombre: tablero.usuarioActualNombre,
+        salaServicio: paqueteOffline.salaServicio ?? undefined,
         fallecidoDestinatario: paqueteOffline.fallecidoDestinatario,
         fechaServicio: instante,
         capturadoEn: instante,
@@ -602,6 +884,7 @@ export function ConsolaConfirmacionEntregas({
         latitud,
         longitud,
         precisionMetros,
+        direccionGps: paqueteOffline.direccionGps,
         fotoUrl: upFoto.publicUrl,
         mapaUrl: mapaUrlSubida,
         observaciones: paqueteOffline.observaciones,
@@ -611,6 +894,20 @@ export function ConsolaConfirmacionEntregas({
         throw new Error(res.error);
       }
 
+      setUltimaFotoConfirmada({
+        imagenOrigen: fotoRespaldoParaWhatsapp,
+        urlPublica: upFoto.publicUrl,
+        textoResumen: construirResumenWhatsapp({
+          codigoOt: res.codigoOt,
+          sala: paqueteOffline.salaServicio,
+          servicio: paqueteOffline.descripcionServicio,
+          fallecido: fallecidoDestinatario.trim(),
+          ubicacion: ubicacionFinal,
+          lat: latitud,
+          lng: longitud,
+        }),
+        codigoOt: res.codigoOt,
+      });
       limpiarFormularioCaptura();
       setMensajeExito(`✅ Entrega registrada y georreferenciada (${res.codigoOt}).`);
       await recargarTablero(true);
@@ -618,6 +915,12 @@ export function ConsolaConfirmacionEntregas({
       try {
         await guardarEntregaEnColaOffline(paqueteOffline);
         await refrescarColaOffline();
+        setUltimaFotoConfirmada({
+          imagenOrigen: fotoRespaldoParaWhatsapp,
+          urlPublica: null,
+          textoResumen: resumenPrevio,
+          codigoOt: salaServicio || "offline",
+        });
         limpiarFormularioCaptura();
         setMensajeExito(
           `📲 Red inestable (${errRed instanceof Error ? errRed.message : "corte"}): la entrega se guardó segura en el teléfono y se sincronizará sola.`
@@ -635,7 +938,10 @@ export function ConsolaConfirmacionEntregas({
   // Programar nueva Orden de Trabajo Exequiales desde taller
   const handleProgramarOt = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otNuevaFallecido.trim()) return;
+    if (!otNuevaSala.trim()) {
+      setErrorMsg("Selecciona la Sala para programar la Orden de Trabajo.");
+      return;
+    }
     setCreandoOt(true);
     setErrorMsg(null);
 
@@ -644,16 +950,22 @@ export function ConsolaConfirmacionEntregas({
         ? crypto.randomUUID()
         : `${Date.now()}-0000-4000-8000-111111111111`;
 
+    const descProgramada =
+      otNuevaOpcionServicio === "OTROS"
+        ? otNuevaDescripcionLibre.trim() || "Arreglo exequial personalizado"
+        : otNuevaOpcionServicio;
+
     const res = await registrarOSincronizarEntregaAction({
       negocio: negNorm,
       uuidCliente: uuidCli,
       tipoOrigen: "ORDEN_TRABAJO_CONVENIO",
       convenioId: convenioPrincipal?.id ?? null,
       soloProgramarOt: true,
-      fallecidoDestinatario: otNuevaFallecido.trim(),
+      salaServicio: otNuevaSala.trim(),
+      fallecidoDestinatario:
+        otNuevaFallecido.trim() || `Por confirmar (${otNuevaSala.trim()})`,
       ubicacionNombre: otNuevaUbicacion.trim(),
-      descripcionServicio:
-        otNuevaDescripcion.trim() || "Set de condolencias (3 arreglos florales)",
+      descripcionServicio: descProgramada,
       coordinadorNombre: otNuevaCoordinador.trim() || undefined,
     });
 
@@ -665,8 +977,9 @@ export function ConsolaConfirmacionEntregas({
 
     setOtNuevaFallecido("");
     setOtNuevaUbicacion("");
+    setOtNuevaDescripcionLibre("");
     setOtNuevaCoordinador("");
-    setMensajeExito(`Orden de Trabajo ${res.codigoOt} creada y lista para el repartidor.`);
+    setMensajeExito(`Orden de Trabajo ${res.codigoOt} (${otNuevaSala}) creada.`);
     await recargarTablero(true);
   };
 
@@ -678,6 +991,7 @@ export function ConsolaConfirmacionEntregas({
       negocio: negNorm,
       entregaId: entregaEditando.id,
       cambios: {
+        salaServicio: entregaEditando.salaServicio ?? "",
         fallecidoDestinatario: entregaEditando.fallecidoDestinatario,
         fechaServicio: entregaEditando.fechaServicio,
         descripcionServicio: entregaEditando.descripcionServicio,
@@ -867,12 +1181,28 @@ export function ConsolaConfirmacionEntregas({
       },
       {
         id: "ubicacion",
-        encabezado: "Ubicación y Coordinador",
-        valor: (r) => `${r.ubicacionNombre} ${r.coordinadorNombre || ""}`,
+        encabezado: "Sala y Ubicación",
+        valor: (r) => `${r.salaServicio || ""} ${r.ubicacionNombre} ${r.coordinadorNombre || ""}`,
         render: (r) => (
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <span style={{ fontSize: "0.82rem", color: "#0F172A" }}>
-              {r.ubicacionNombre || "Por definir"}
+          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+            {r.salaServicio && (
+              <span
+                style={{
+                  alignSelf: "flex-start",
+                  padding: "2px 8px",
+                  borderRadius: "999px",
+                  background: "#ECFDF5",
+                  border: "1px solid #A7F3D0",
+                  color: "#065F46",
+                  fontSize: "0.72rem",
+                  fontWeight: 700,
+                }}
+              >
+                🏛️ {r.salaServicio}
+              </span>
+            )}
+            <span style={{ fontSize: "0.81rem", color: "#0F172A" }}>
+              {r.ubicacionNombre || r.direccionGps || "Ubicación GPS registrada"}
             </span>
             {r.coordinadorNombre && (
               <span style={{ fontSize: "0.72rem", color: "#64748B" }}>
@@ -887,15 +1217,15 @@ export function ConsolaConfirmacionEntregas({
         encabezado: "Foto + GPS + Entregador",
         valor: (r) => `${r.entregadorNombre} ${r.latitud || ""}`,
         render: (r) => (
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
             {r.fotoUrl && (
-              <a href={r.fotoUrl} target="_blank" rel="noreferrer" title="Abrir fotografía">
+              <a href={r.fotoUrl} target="_blank" rel="noreferrer" title="Abrir fotografía georreferenciada">
                 <img
                   src={r.fotoUrl}
                   alt="Evidencia"
                   style={{
-                    width: "44px",
-                    height: "44px",
+                    width: "48px",
+                    height: "48px",
                     borderRadius: "8px",
                     objectFit: "cover",
                     border: "1px solid #CBD5E1",
@@ -903,22 +1233,64 @@ export function ConsolaConfirmacionEntregas({
                 />
               </a>
             )}
-            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
               <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "#0F172A" }}>
                 {r.entregadorNombre}
               </span>
-              {r.latitud != null && r.longitud != null ? (
-                <a
-                  href={`https://www.google.com/maps?q=${r.latitud},${r.longitud}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{ fontSize: "0.72rem", color: "#2563EB", textDecoration: "none" }}
-                >
-                  📍 Ver Pin GPS
-                </a>
-              ) : (
-                <span style={{ fontSize: "0.71rem", color: "#94A3B8" }}>Sin GPS aún</span>
-              )}
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                {r.latitud != null && r.longitud != null ? (
+                  <a
+                    href={`https://www.google.com/maps?q=${r.latitud},${r.longitud}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ fontSize: "0.72rem", color: "#2563EB", textDecoration: "none" }}
+                  >
+                    📍 Mapa GPS
+                  </a>
+                ) : (
+                  <span style={{ fontSize: "0.71rem", color: "#94A3B8" }}>Sin GPS aún</span>
+                )}
+                {r.fotoUrl && (
+                  <button
+                    type="button"
+                    disabled={compartiendoWhatsapp}
+                    onClick={() =>
+                      void handleCompartirWhatsapp({
+                        imagenOrigen: r.fotoUrl!,
+                        urlPublica: r.fotoUrl,
+                        nombreBase: r.codigoOt,
+                        textoResumen: construirResumenWhatsapp({
+                          codigoOt: r.codigoOt,
+                          sala: r.salaServicio,
+                          servicio: r.descripcionServicio,
+                          fallecido: r.fallecidoDestinatario,
+                          ubicacion: (r.ubicacionNombre || r.direccionGps) ?? undefined,
+                          lat: r.latitud,
+                          lng: r.longitud,
+                        }),
+                      })
+                    }
+                    title="Compartir imagen georreferenciada por WhatsApp"
+                    aria-label="Compartir por WhatsApp"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      padding: "2px 7px",
+                      borderRadius: "6px",
+                      border: "1px solid #86EFAC",
+                      background: "#F0FDF4",
+                      color: "#15803D",
+                      fontSize: "0.7rem",
+                      fontWeight: 700,
+                      cursor: compartiendoWhatsapp ? "wait" : "pointer",
+                    }}
+                  >
+                    <MessageCircle size={11} />
+                    <span>WhatsApp</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ),
@@ -976,7 +1348,12 @@ export function ConsolaConfirmacionEntregas({
         },
       },
     ],
-    [tablero.esAdminOperador]
+    [
+      tablero.esAdminOperador,
+      compartiendoWhatsapp,
+      construirResumenWhatsapp,
+      handleCompartirWhatsapp,
+    ]
   );
 
   const columnasInformesHistoricos = useMemo<ColumnaDataGrid<InformeQuincenalEntregas>[]>(
@@ -1164,14 +1541,11 @@ export function ConsolaConfirmacionEntregas({
             </button>
           )}
 
-          {eventoInstalacionPwa && (
+          {!appInstalada && (
             <button
               type="button"
-              onClick={() => {
-                eventoInstalacionPwa.prompt();
-                setEventoInstalacionPwa(null);
-              }}
-              title="Instalar aplicación en la pantalla de inicio del celular para uso sin internet"
+              onClick={() => void handleInstalarPwa()}
+              title="Instalar aplicación en la pantalla de inicio del celular"
               aria-label="Instalar App"
               style={{
                 display: "inline-flex",
@@ -1234,10 +1608,9 @@ export function ConsolaConfirmacionEntregas({
         >
           <AlertTriangle size={16} />
           <span>
-            Ejecuta la migración{" "}
-            <code>20261115000010_herramientas_taller_inventario_inmediata_y_entregas_iess.sql</code>{" "}
-            en Supabase para habilitar el almacenamiento centralizado (las capturas en teléfono ya
-            funcionan offline).
+            Ejecuta las migraciones{" "}
+            <code>20261115000010</code> y <code>20261115000011</code> en Supabase para habilitar el
+            almacenamiento centralizado (las capturas en teléfono ya funcionan offline).
           </span>
         </div>
       )}
@@ -1260,24 +1633,60 @@ export function ConsolaConfirmacionEntregas({
       {mensajeExito && (
         <div
           style={{
-            padding: "11px 14px",
-            borderRadius: "10px",
+            padding: "12px 14px",
+            borderRadius: "12px",
             background: "#ECFDF5",
             border: "1px solid #A7F3D0",
             color: "#065F46",
             fontSize: "0.84rem",
             display: "flex",
+            justifyContent: "space-between",
             alignItems: "center",
-            gap: "8px",
+            gap: "10px",
+            flexWrap: "wrap",
           }}
         >
-          <CheckCircle2 size={16} />
-          <span>{mensajeExito}</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <CheckCircle2 size={16} />
+            <span>{mensajeExito}</span>
+          </div>
+          {ultimaFotoConfirmada && (
+            <button
+              type="button"
+              disabled={compartiendoWhatsapp}
+              onClick={() =>
+                void handleCompartirWhatsapp({
+                  imagenOrigen: ultimaFotoConfirmada.imagenOrigen,
+                  urlPublica: ultimaFotoConfirmada.urlPublica,
+                  nombreBase: ultimaFotoConfirmada.codigoOt,
+                  textoResumen: ultimaFotoConfirmada.textoResumen,
+                })
+              }
+              title="Enviar la fotografía georreferenciada directamente por WhatsApp"
+              aria-label="Compartir WhatsApp"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "7px 13px",
+                borderRadius: "9px",
+                border: "none",
+                background: "#16A34A",
+                color: "#FFFFFF",
+                fontSize: "0.8rem",
+                fontWeight: 700,
+                cursor: compartiendoWhatsapp ? "wait" : "pointer",
+              }}
+            >
+              {compartiendoWhatsapp ? <Loader2 size={14} /> : <MessageCircle size={14} />}
+              <span>Compartir WhatsApp</span>
+            </button>
+          )}
         </div>
       )}
 
       {/* =====================================================================
-          PESTAÑA 1: CAPTURA MÓVIL DE ENTREGA (SIN PUBLICIDAD + OFFLINE)
+          PESTAÑA 1: CAPTURA MÓVIL DE ENTREGA (ESTILO GPS MAP CAMERA + WHATSAPP)
       ===================================================================== */}
       {pestana === "captura" && (
         <form
@@ -1298,7 +1707,8 @@ export function ConsolaConfirmacionEntregas({
               onClick={() => {
                 setTipoOrigenCaptura("ORDEN_TRABAJO_CONVENIO");
                 limpiarFormularioCaptura();
-                setDescripcionServicio("Set de condolencias (3 arreglos florales)");
+                setOpcionServicio("Set condolencias (3 arreglos)");
+                setDescripcionServicioLibre("");
               }}
               style={{
                 flex: "1 1 240px",
@@ -1318,7 +1728,7 @@ export function ConsolaConfirmacionEntregas({
                 🕊️ Orden de Trabajo — Exequiales IESS
               </strong>
               <span style={{ fontSize: "0.76rem", color: "#64748B" }}>
-                Foto + Georreferencia obligatoria para el informe quincenal
+                Solo Foto GPS + Número de Sala obligatorios en entrega rápida
               </span>
             </button>
 
@@ -1327,7 +1737,7 @@ export function ConsolaConfirmacionEntregas({
               onClick={() => {
                 setTipoOrigenCaptura("PEDIDO_TIENDA");
                 limpiarFormularioCaptura();
-                setDescripcionServicio("Entrega de pedido floral");
+                setDescripcionServicioLibre("Entrega de pedido floral");
               }}
               style={{
                 flex: "1 1 240px",
@@ -1379,7 +1789,7 @@ export function ConsolaConfirmacionEntregas({
                 <option value="">-- Nueva entrega directa en sitio (sin OT previa) --</option>
                 {otsProgramadas.map((ot) => (
                   <option key={ot.id} value={ot.id}>
-                    {ot.codigoOt} · {ot.fallecidoDestinatario} ({ot.ubicacionNombre || "Sin sala"})
+                    {ot.codigoOt} · {ot.salaServicio || "Sin sala"} · {ot.fallecidoDestinatario}
                   </option>
                 ))}
               </select>
@@ -1420,7 +1830,185 @@ export function ConsolaConfirmacionEntregas({
             </div>
           )}
 
-          {/* CÁMARA + GPS EN UN SOLO BLOQUE TÁCTIL */}
+          {/* 1. ÚNICO CAMPO OBLIGATORIO EN EXEQUIALES: NÚMERO DE SALA */}
+          {tipoOrigenCaptura === "ORDEN_TRABAJO_CONVENIO" && (
+            <div
+              style={{
+                padding: "14px 16px",
+                borderRadius: "14px",
+                background: salaServicio ? "#F0FDF4" : "#FFFBEB",
+                border: salaServicio ? "1px solid #86EFAC" : "1px solid #FDE68A",
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: "8px",
+                  flexWrap: "wrap",
+                }}
+              >
+                <label
+                  style={{
+                    fontSize: "0.84rem",
+                    fontWeight: 800,
+                    color: "#0F172A",
+                  }}
+                >
+                  Número de Sala *{" "}
+                  <span style={{ fontWeight: 500, fontSize: "0.76rem", color: "#475569" }}>
+                    (único dato obligatorio junto a la foto)
+                  </span>
+                </label>
+                {salaServicio && (
+                  <span
+                    style={{
+                      fontSize: "0.76rem",
+                      fontWeight: 700,
+                      color: "#15803D",
+                    }}
+                  >
+                    ✓ Seleccionado: {salaServicio}
+                  </span>
+                )}
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(115px, 1fr))",
+                  gap: "8px",
+                }}
+              >
+                {OPCIONES_SALA_EXEQUIALES.map((opSala) => {
+                  const activa = salaServicio === opSala;
+                  return (
+                    <button
+                      key={opSala}
+                      type="button"
+                      onClick={() => setSalaServicio(opSala)}
+                      title={`Seleccionar ${opSala}`}
+                      aria-label={opSala}
+                      style={{
+                        padding: "11px 10px",
+                        borderRadius: "10px",
+                        border: activa ? "2px solid #059669" : "1px solid #CBD5E1",
+                        background: activa ? "#059669" : "#FFFFFF",
+                        color: activa ? "#FFFFFF" : "#0F172A",
+                        fontSize: "0.84rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        textAlign: "center",
+                      }}
+                    >
+                      {opSala}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 2. DESCRIPCIÓN DEL SERVICIO: 3 OPCIONES TÁCTILES + LIBRE ESCRITURA */}
+          {tipoOrigenCaptura === "ORDEN_TRABAJO_CONVENIO" ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <label
+                style={{
+                  fontSize: "0.8rem",
+                  fontWeight: 700,
+                  color: "#334155",
+                }}
+              >
+                Descripción del Servicio
+              </label>
+              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                {(
+                  [
+                    ...OPCIONES_DESCRIPCION_SERVICIO_EXEQUIALES.map((label) => ({
+                      valor: label,
+                      etiqueta: label,
+                    })),
+                    { valor: "OTROS" as const, etiqueta: "Otros (editable)" },
+                  ] as const
+                ).map((item) => {
+                  const activa = opcionServicio === item.valor;
+                  return (
+                    <button
+                      key={item.valor}
+                      type="button"
+                      onClick={() => setOpcionServicio(item.valor)}
+                      title={`Seleccionar ${item.etiqueta}`}
+                      aria-label={item.etiqueta}
+                      style={{
+                        flex: "1 1 180px",
+                        padding: "10px 12px",
+                        borderRadius: "10px",
+                        border: activa ? "2px solid #0F172A" : "1px solid #CBD5E1",
+                        background: activa ? "#0F172A" : "#FFFFFF",
+                        color: activa ? "#FFFFFF" : "#1E293B",
+                        fontSize: "0.82rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        textAlign: "left",
+                      }}
+                    >
+                      {item.etiqueta}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {opcionServicio === "OTROS" && (
+                <input
+                  type="text"
+                  value={descripcionServicioLibre}
+                  onChange={(e) => setDescripcionServicioLibre(e.target.value)}
+                  placeholder="Escribe el detalle del arreglo (ej. 2 pedestales + corona)"
+                  style={{
+                    width: "100%",
+                    padding: "10px 12px",
+                    borderRadius: "10px",
+                    border: "1px solid #94A3B8",
+                    fontSize: "0.85rem",
+                    background: "#F8FAFC",
+                  }}
+                />
+              )}
+            </div>
+          ) : (
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  color: "#334155",
+                  marginBottom: "4px",
+                }}
+              >
+                Descripción del Pedido
+              </label>
+              <input
+                type="text"
+                value={descripcionServicioLibre}
+                onChange={(e) => setDescripcionServicioLibre(e.target.value)}
+                placeholder="Detalle del pedido floral entregado"
+                style={{
+                  width: "100%",
+                  padding: "9px 11px",
+                  borderRadius: "9px",
+                  border: "1px solid #CBD5E1",
+                  fontSize: "0.85rem",
+                }}
+              />
+            </div>
+          )}
+
+          {/* 3. CÁMARA + GEORREFERENCIA ESTAMPADA EN LA IMAGEN + COMPARTIR WHATSAPP */}
           <div
             style={{
               padding: "16px",
@@ -1444,9 +2032,9 @@ export function ConsolaConfirmacionEntregas({
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <MapPin
                   size={18}
-                  style={{ color: latitud != null ? "#059669" : "#D97706" }}
+                  style={{ color: latitud != null ? "#059669" : "#D97706", flexShrink: 0 }}
                 />
-                <span style={{ fontSize: "0.83rem", fontWeight: 600, color: "#1E293B" }}>
+                <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#1E293B" }}>
                   {estadoGpsTexto}
                 </span>
               </div>
@@ -1456,7 +2044,7 @@ export function ConsolaConfirmacionEntregas({
                   type="button"
                   onClick={() => void capturarUbicacionGps()}
                   disabled={obteniendoGps}
-                  title="Obtener coordenadas GPS actuales del teléfono"
+                  title="Actualizar coordenadas GPS actuales del teléfono"
                   aria-label="Capturar GPS"
                   style={{
                     display: "inline-flex",
@@ -1477,8 +2065,8 @@ export function ConsolaConfirmacionEntregas({
                 </button>
 
                 <label
-                  title="Abrir cámara del teléfono y estampar hora y coordenadas GPS automáticamente"
-                  aria-label="Tomar foto entrega"
+                  title="Abrir cámara y estampar mapa satelital, dirección, coordenadas y hora sobre la foto"
+                  aria-label="Tomar foto GPS"
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -1505,8 +2093,8 @@ export function ConsolaConfirmacionEntregas({
                 </label>
 
                 <label
-                  title="Subir foto desde galería del teléfono"
-                  aria-label="Subir desde galería"
+                  title="Subir foto desde galería y estampar sello GPS"
+                  aria-label="Galería"
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
@@ -1535,36 +2123,106 @@ export function ConsolaConfirmacionEntregas({
             </div>
 
             {fotoCapturadaDataUrl && (
-              <div style={{ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "center" }}>
-                <img
-                  src={fotoCapturadaDataUrl}
-                  alt="Vista previa evidencia georreferenciada"
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                <div
                   style={{
-                    maxWidth: "300px",
-                    width: "100%",
-                    height: "200px",
-                    objectFit: "cover",
-                    borderRadius: "10px",
+                    background: "#0F172A",
+                    borderRadius: "12px",
+                    padding: "6px",
                     border: "2px solid #10B981",
+                    display: "flex",
+                    justifyContent: "center",
                   }}
-                />
-                {mapaGeneradoDataUrl && (
+                >
                   <img
-                    src={mapaGeneradoDataUrl}
-                    alt="Tarjeta Mapa GPS"
+                    src={fotoCapturadaDataUrl}
+                    alt="Fotografía con mapa GPS y georreferencia incrustada"
                     style={{
-                      width: "142px",
-                      height: "200px",
-                      objectFit: "cover",
-                      borderRadius: "10px",
-                      border: "1px solid #CBD5E1",
+                      maxWidth: "100%",
+                      maxHeight: "440px",
+                      width: "auto",
+                      height: "auto",
+                      objectFit: "contain",
+                      borderRadius: "8px",
                     }}
                   />
-                )}
+                </div>
+
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    disabled={compartiendoWhatsapp}
+                    onClick={() =>
+                      void handleCompartirWhatsapp({
+                        imagenOrigen: fotoCapturadaDataUrl,
+                        nombreBase: salaServicio || "entrega-gps",
+                        textoResumen: construirResumenWhatsapp({
+                          sala:
+                            tipoOrigenCaptura === "ORDEN_TRABAJO_CONVENIO"
+                              ? salaServicio || undefined
+                              : undefined,
+                          servicio: descripcionServicio,
+                          fallecido: fallecidoDestinatario.trim(),
+                          ubicacion:
+                            ubicacionNombre.trim() || direccionGpsResuelta?.direccionCompleta,
+                          lat: latitud,
+                          lng: longitud,
+                        }),
+                      })
+                    }
+                    title="Compartir esta imagen georreferenciada directamente por WhatsApp"
+                    aria-label="Compartir WhatsApp"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "7px",
+                      padding: "9px 15px",
+                      borderRadius: "9px",
+                      border: "none",
+                      background: "#16A34A",
+                      color: "#FFFFFF",
+                      fontSize: "0.82rem",
+                      fontWeight: 700,
+                      cursor: compartiendoWhatsapp ? "wait" : "pointer",
+                    }}
+                  >
+                    {compartiendoWhatsapp ? <Loader2 size={15} /> : <MessageCircle size={15} />}
+                    <span>Compartir WhatsApp</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      handleDescargarFotoLocal(
+                        fotoCapturadaDataUrl,
+                        (salaServicio || "tinkay").replace(/[^a-zA-Z0-9-_]/g, "_")
+                      )
+                    }
+                    title="Guardar fotografía con sello GPS en la galería del teléfono"
+                    aria-label="Descargar Foto"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "9px 14px",
+                      borderRadius: "9px",
+                      border: "1px solid #CBD5E1",
+                      background: "#FFFFFF",
+                      color: "#0F172A",
+                      fontSize: "0.81rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Download size={14} />
+                    <span>Descargar Foto</span>
+                  </button>
+                </div>
               </div>
             )}
           </div>
 
+          {/* 4. DATOS COMPLEMENTARIOS OPCIONALES (SE PUEDEN COMPLETAR DESPUÉS PARA EL INFORME) */}
           <div
             style={{
               display: "grid",
@@ -1583,17 +2241,16 @@ export function ConsolaConfirmacionEntregas({
                 }}
               >
                 {tipoOrigenCaptura === "ORDEN_TRABAJO_CONVENIO"
-                  ? "Nombre del Fallecido *"
-                  : "Destinatario / Orden *"}
+                  ? "Nombre del Fallecido (opcional)"
+                  : "Destinatario / Orden"}
               </label>
               <input
                 type="text"
-                required
                 value={fallecidoDestinatario}
                 onChange={(e) => setFallecidoDestinatario(e.target.value)}
                 placeholder={
                   tipoOrigenCaptura === "ORDEN_TRABAJO_CONVENIO"
-                    ? "Ej. Rodríguez Navarrete Myrian Graciela"
+                    ? "Opcional en entrega — editable luego"
                     : "Nombre de quien recibe"
                 }
                 style={{
@@ -1616,40 +2273,13 @@ export function ConsolaConfirmacionEntregas({
                   marginBottom: "4px",
                 }}
               >
-                Ubicación / Funeraria / Edificio *
+                Ubicación / Funeraria (opcional)
               </label>
               <input
                 type="text"
-                required
                 value={ubicacionNombre}
                 onChange={(e) => setUbicacionNombre(e.target.value)}
-                placeholder="Ej. Funeraria América / Sala Exequiales IESS"
-                style={{
-                  width: "100%",
-                  padding: "9px 11px",
-                  borderRadius: "9px",
-                  border: "1px solid #CBD5E1",
-                  fontSize: "0.85rem",
-                }}
-              />
-            </div>
-
-            <div>
-              <label
-                style={{
-                  display: "block",
-                  fontSize: "0.78rem",
-                  fontWeight: 700,
-                  color: "#334155",
-                  marginBottom: "4px",
-                }}
-              >
-                Descripción del Servicio
-              </label>
-              <input
-                type="text"
-                value={descripcionServicio}
-                onChange={(e) => setDescripcionServicio(e.target.value)}
+                placeholder="Se autocompleta con la dirección GPS si queda vacío"
                 style={{
                   width: "100%",
                   padding: "9px 11px",
@@ -1671,7 +2301,7 @@ export function ConsolaConfirmacionEntregas({
                     marginBottom: "4px",
                   }}
                 >
-                  Coordinador del Servicio (IESS)
+                  Coordinador del Servicio IESS (opcional)
                 </label>
                 <input
                   type="text"
@@ -1709,7 +2339,7 @@ export function ConsolaConfirmacionEntregas({
               type="submit"
               disabled={guardandoEntrega}
               title="Registrar entrega georreferenciada (en línea o en memoria offline)"
-              aria-label="Confirmar entrega"
+              aria-label="Confirmar Entrega"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -1754,16 +2384,76 @@ export function ConsolaConfirmacionEntregas({
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(185px, 1fr))",
                 gap: "10px",
               }}
             >
+              <select
+                value={otNuevaSala}
+                onChange={(e) => setOtNuevaSala(e.target.value)}
+                aria-label="Sala de servicio"
+                style={{
+                  padding: "9px 11px",
+                  borderRadius: "9px",
+                  border: "1px solid #CBD5E1",
+                  fontSize: "0.84rem",
+                  fontWeight: 700,
+                  background: "#F8FAFC",
+                }}
+              >
+                {OPCIONES_SALA_EXEQUIALES.map((s) => (
+                  <option key={s} value={s}>
+                    {s} *
+                  </option>
+                ))}
+              </select>
+
+              <select
+                value={otNuevaOpcionServicio}
+                onChange={(e) =>
+                  setOtNuevaOpcionServicio(
+                    e.target.value as
+                      | "Set condolencias (3 arreglos)"
+                      | "Cubre cofre (1 arreglo)"
+                      | "OTROS"
+                  )
+                }
+                aria-label="Descripción del servicio"
+                style={{
+                  padding: "9px 11px",
+                  borderRadius: "9px",
+                  border: "1px solid #CBD5E1",
+                  fontSize: "0.84rem",
+                }}
+              >
+                {OPCIONES_DESCRIPCION_SERVICIO_EXEQUIALES.map((op) => (
+                  <option key={op} value={op}>
+                    {op}
+                  </option>
+                ))}
+                <option value="OTROS">Otros (editable)</option>
+              </select>
+
+              {otNuevaOpcionServicio === "OTROS" && (
+                <input
+                  type="text"
+                  value={otNuevaDescripcionLibre}
+                  onChange={(e) => setOtNuevaDescripcionLibre(e.target.value)}
+                  placeholder="Detalle libre del servicio"
+                  style={{
+                    padding: "9px 11px",
+                    borderRadius: "9px",
+                    border: "1px solid #CBD5E1",
+                    fontSize: "0.84rem",
+                  }}
+                />
+              )}
+
               <input
                 type="text"
-                required
                 value={otNuevaFallecido}
                 onChange={(e) => setOtNuevaFallecido(e.target.value)}
-                placeholder="Nombre del Fallecido *"
+                placeholder="Nombre del Fallecido (opcional)"
                 style={{
                   padding: "9px 11px",
                   borderRadius: "9px",
@@ -1771,11 +2461,12 @@ export function ConsolaConfirmacionEntregas({
                   fontSize: "0.84rem",
                 }}
               />
+
               <input
                 type="text"
                 value={otNuevaUbicacion}
                 onChange={(e) => setOtNuevaUbicacion(e.target.value)}
-                placeholder="Funeraria / Edificio"
+                placeholder="Funeraria / Edificio (opcional)"
                 style={{
                   padding: "9px 11px",
                   borderRadius: "9px",
@@ -1783,24 +2474,13 @@ export function ConsolaConfirmacionEntregas({
                   fontSize: "0.84rem",
                 }}
               />
-              <input
-                type="text"
-                value={otNuevaDescripcion}
-                onChange={(e) => setOtNuevaDescripcion(e.target.value)}
-                placeholder="Descripción (ej. Set de condolencias 3 arreglos)"
-                style={{
-                  padding: "9px 11px",
-                  borderRadius: "9px",
-                  border: "1px solid #CBD5E1",
-                  fontSize: "0.84rem",
-                }}
-              />
+
               <div style={{ display: "flex", gap: "8px" }}>
                 <input
                   type="text"
                   value={otNuevaCoordinador}
                   onChange={(e) => setOtNuevaCoordinador(e.target.value)}
-                  placeholder="Coordinador IESS"
+                  placeholder="Coordinador IESS (opcional)"
                   style={{
                     flex: 1,
                     padding: "9px 11px",
@@ -2299,10 +2979,106 @@ export function ConsolaConfirmacionEntregas({
               Editar Registro de Servicio ({entregaEditando.codigoOt})
             </h3>
 
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "0.76rem",
+                  fontWeight: 700,
+                  color: "#334155",
+                  marginBottom: "3px",
+                }}
+              >
+                Sala del Servicio
+              </label>
+              <select
+                value={entregaEditando.salaServicio ?? ""}
+                onChange={(e) =>
+                  setEntregaEditando((prev) =>
+                    prev ? { ...prev, salaServicio: e.target.value } : null
+                  )
+                }
+                style={{
+                  width: "100%",
+                  padding: "8px 10px",
+                  borderRadius: "8px",
+                  border: "1px solid #CBD5E1",
+                  fontSize: "0.84rem",
+                }}
+              >
+                <option value="">-- Sin sala asignada --</option>
+                {OPCIONES_SALA_EXEQUIALES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "0.76rem",
+                  fontWeight: 700,
+                  color: "#334155",
+                  marginBottom: "4px",
+                }}
+              >
+                Descripción del Servicio
+              </label>
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "6px" }}>
+                {OPCIONES_DESCRIPCION_SERVICIO_EXEQUIALES.map((op) => (
+                  <button
+                    key={op}
+                    type="button"
+                    onClick={() =>
+                      setEntregaEditando((prev) =>
+                        prev ? { ...prev, descripcionServicio: op } : null
+                      )
+                    }
+                    style={{
+                      padding: "5px 10px",
+                      borderRadius: "8px",
+                      border:
+                        entregaEditando.descripcionServicio === op
+                          ? "1px solid #059669"
+                          : "1px solid #CBD5E1",
+                      background:
+                        entregaEditando.descripcionServicio === op ? "#ECFDF5" : "#F8FAFC",
+                      color:
+                        entregaEditando.descripcionServicio === op ? "#065F46" : "#334155",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {op}
+                  </button>
+                ))}
+              </div>
+              <input
+                type="text"
+                value={String(entregaEditando.descripcionServicio ?? "")}
+                onChange={(e) =>
+                  setEntregaEditando((prev) =>
+                    prev ? { ...prev, descripcionServicio: e.target.value } : null
+                  )
+                }
+                placeholder="O escribe otra descripción libre..."
+                style={{
+                  width: "100%",
+                  padding: "8px 10px",
+                  borderRadius: "8px",
+                  border: "1px solid #CBD5E1",
+                  fontSize: "0.84rem",
+                }}
+              />
+            </div>
+
             {(
               [
                 ["fallecidoDestinatario", "Nombre del Fallecido / Destinatario"],
-                ["descripcionServicio", "Descripción del Servicio"],
                 ["ubicacionNombre", "Ubicación del Servicio / Funeraria"],
                 ["coordinadorNombre", "Coordinador del Servicio"],
                 ["recursosUtilizados", "Equipo y Recursos Utilizados"],
@@ -2423,6 +3199,142 @@ export function ConsolaConfirmacionEntregas({
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* MODAL DE INSTALACIÓN RÁPIDA DE APLICACIÓN MÓVIL (PWA) */}
+      {mostrarGuiaPwa && (
+        <div
+          onClick={() => setMostrarGuiaPwa(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.62)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            onClick={(ev) => ev.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: "400px",
+              background: "#FFFFFF",
+              borderRadius: "18px",
+              padding: "20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.28)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <strong style={{ fontSize: "1rem", color: "#0F172A" }}>
+                📲 Instalar Aplicación en tu Celular
+              </strong>
+              <button
+                type="button"
+                onClick={() => setMostrarGuiaPwa(false)}
+                title="Cerrar ventana"
+                aria-label="Cerrar"
+                style={{
+                  border: "none",
+                  background: "#F1F5F9",
+                  borderRadius: "8px",
+                  width: "30px",
+                  height: "30px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  cursor: "pointer",
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {esDispositivoIos ? (
+              <div
+                style={{
+                  background: "#F8FAFC",
+                  border: "1px solid #E2E8F0",
+                  borderRadius: "12px",
+                  padding: "13px",
+                  fontSize: "0.85rem",
+                  color: "#1E293B",
+                  lineHeight: 1.5,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                }}
+              >
+                <div>
+                  <strong>1.</strong> Toca el botón{" "}
+                  <strong style={{ color: "#2563EB" }}>Compartir (↑)</strong> en la barra de Safari.
+                </div>
+                <div>
+                  <strong>2.</strong> Selecciona{" "}
+                  <strong>&ldquo;Agregar a Inicio&rdquo;</strong> y pulsa{" "}
+                  <strong>Agregar</strong>.
+                </div>
+              </div>
+            ) : (
+              <div
+                style={{
+                  background: "#F8FAFC",
+                  border: "1px solid #E2E8F0",
+                  borderRadius: "12px",
+                  padding: "13px",
+                  fontSize: "0.85rem",
+                  color: "#1E293B",
+                  lineHeight: 1.5,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "6px",
+                }}
+              >
+                <div>
+                  <strong>1.</strong> Toca el menú <strong>⋮</strong> arriba a la derecha en Chrome.
+                </div>
+                <div>
+                  <strong>2.</strong> Pulsa{" "}
+                  <strong style={{ color: "#059669" }}>
+                    &ldquo;Instalar aplicación&rdquo;
+                  </strong>{" "}
+                  o <strong>&ldquo;Agregar a la pantalla principal&rdquo;</strong>.
+                </div>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setMostrarGuiaPwa(false)}
+              title="Cerrar instrucciones"
+              aria-label="Entendido"
+              style={{
+                padding: "10px 14px",
+                borderRadius: "10px",
+                border: "none",
+                background: "#059669",
+                color: "#FFFFFF",
+                fontWeight: 700,
+                fontSize: "0.86rem",
+                cursor: "pointer",
+              }}
+            >
+              Entendido
+            </button>
+          </div>
         </div>
       )}
     </div>

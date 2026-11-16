@@ -396,10 +396,15 @@ export async function generarPdfInformeQuincenalIess(
       fontRegular,
       fontBold
     );
+    const ubicacionConSala = [entrega.salaServicio, entrega.ubicacionNombre || entrega.direccionGps]
+      .map((s) => (s || "").trim())
+      .filter(Boolean)
+      .join(" — ");
+
     y = dibujarFilaCampo(
       page,
       "Ubicacion del Servicio:",
-      entrega.ubicacionNombre || entrega.direccionGps || "-",
+      ubicacionConSala || "-",
       y,
       fontRegular,
       fontBold

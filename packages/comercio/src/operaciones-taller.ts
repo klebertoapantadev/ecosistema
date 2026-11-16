@@ -328,6 +328,19 @@ export interface DatosProveedorInformeIess {
   recursosDefecto?: string;
 }
 
+export const OPCIONES_SALA_EXEQUIALES = [
+  "Sala 1",
+  "Sala 2",
+  "Sala 3",
+  "Sala 4",
+  "Capilla / Oficina",
+] as const;
+
+export const OPCIONES_DESCRIPCION_SERVICIO_EXEQUIALES = [
+  "Set condolencias (3 arreglos)",
+  "Cubre cofre (1 arreglo)",
+] as const;
+
 export const DATOS_PROVEEDOR_TINKAY_DEFECTO: DatosProveedorInformeIess = {
   tituloInforme: "INFORME DE SERVICIO PROVEEDORES",
   nombreProveedor: "Matías Gabriel Toapanta Guerrero",
@@ -337,7 +350,7 @@ export const DATOS_PROVEEDOR_TINKAY_DEFECTO: DatosProveedorInformeIess = {
   telefono: "0991444515",
   correoElectronico: "tinkay.uio@gmail.com",
   personaContacto: "Carolina Colcha",
-  descripcionServicioDefecto: "Set de condolencias (3 arreglos florales)",
+  descripcionServicioDefecto: "Set condolencias (3 arreglos)",
   recursosDefecto: "Flores, follaje, bases y oasis",
 };
 
@@ -374,6 +387,7 @@ export interface RegistroEntregaEvidencia {
   capturadoEn: string;
   sincronizadoEn?: string;
   descripcionServicio: string;
+  salaServicio?: string | null;
   ubicacionNombre: string;
   coordinadorNombre?: string | null;
   recursosUtilizados?: string | null;
@@ -437,6 +451,7 @@ export interface ItemColaOfflineEntrega {
   fechaServicio: string;
   capturadoEn: string;
   descripcionServicio: string;
+  salaServicio?: string | null;
   ubicacionNombre: string;
   coordinadorNombre?: string;
   recursosUtilizados?: string;

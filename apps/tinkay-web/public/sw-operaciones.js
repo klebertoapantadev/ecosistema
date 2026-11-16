@@ -1,6 +1,11 @@
 // Service Worker Offline-First para operaciones de campo y entregas (/panel/entregas)
-const CACHE_NAME = "eco-operaciones-entregas-v1";
-const RUTAS_PRECACHE = ["/panel/entregas", "/panel"];
+const CACHE_NAME = "eco-operaciones-entregas-v2";
+const RUTAS_PRECACHE = [
+  "/panel/entregas",
+  "/panel",
+  "/icons/icon-192.png",
+  "/icons/icon-512.png",
+];
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -29,6 +34,7 @@ self.addEventListener("fetch", (event) => {
 
   const esRutaOperativaOActivo =
     url.pathname.startsWith("/panel/entregas") ||
+    url.pathname.startsWith("/icons/") ||
     url.pathname.startsWith("/_next/static/") ||
     url.pathname.endsWith(".jpg") ||
     url.pathname.endsWith(".png");

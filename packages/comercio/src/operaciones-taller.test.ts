@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   DATOS_PROVEEDOR_TINKAY_DEFECTO,
+  OPCIONES_DESCRIPCION_SERVICIO_EXEQUIALES,
+  OPCIONES_SALA_EXEQUIALES,
   consolidarFotosInventario,
   extraerConteoJsonDesdeRespuestaAria,
   formatearFechaCorteInventario,
@@ -43,7 +45,21 @@ describe("operaciones-taller y pdf-informe-iess", () => {
     expect(texto).toContain("8:00AM");
   });
 
-  it("genera el PDF oficial INFORME DE SERVICIO PROVEEDORES con portada y fichas", async () => {
+  it("expone exactamente las 5 salas exequiales y las opciones base de descripción de servicio", () => {
+    expect(OPCIONES_SALA_EXEQUIALES).toEqual([
+      "Sala 1",
+      "Sala 2",
+      "Sala 3",
+      "Sala 4",
+      "Capilla / Oficina",
+    ]);
+    expect(OPCIONES_DESCRIPCION_SERVICIO_EXEQUIALES).toEqual([
+      "Set condolencias (3 arreglos)",
+      "Cubre cofre (1 arreglo)",
+    ]);
+  });
+
+  it("genera el PDF oficial INFORME DE SERVICIO PROVEEDORES con portada, sala y fichas", async () => {
     const bytes = await generarPdfInformeQuincenalIess({
       numeroInforme: "INF-IESS-2026-001",
       fechaInforme: "2026-11-15",
@@ -58,11 +74,12 @@ describe("operaciones-taller y pdf-informe-iess", () => {
           codigoOt: "OT-0001",
           tipoOrigen: "ORDEN_TRABAJO_CONVENIO",
           entregadorNombre: "Carlos Repartidor",
-          fallecidoDestinatario: "Rodríguez Navarrete Myrian Graciela",
+          salaServicio: "Sala 2",
+          fallecidoDestinatario: "Por confirmar (Sala 2)",
           fechaServicio: "2026-11-10T14:30:00.000Z",
           capturadoEn: "2026-11-10T14:30:00.000Z",
-          descripcionServicio: "Set de condolencias (3 arreglos florales)",
-          ubicacionNombre: "Funeraria América",
+          descripcionServicio: "Set condolencias (3 arreglos)",
+          ubicacionNombre: "",
           coordinadorNombre: "Cristian Montaluiza",
           recursosUtilizados: "Flores, follaje, bases y oasis",
           latitud: -0.176234,
