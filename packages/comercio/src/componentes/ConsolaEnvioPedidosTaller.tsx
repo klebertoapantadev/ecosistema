@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import {
+  asignarRepartidorEntregaAction,
   crearOActualizarPedidoOperadorAction,
   enviarPedidosATallerAction,
   obtenerConsolaTallerYDespachoAction,
@@ -177,7 +178,47 @@ export function ConsolaEnvioPedidosTaller({
         // Ignorar
       }
     }
-  }, [datosIniciales, cacheKey, recargarDatos]);
+
+    // Escuchar ubicación GPS en vivo de repartidores en ruta + cambios de estado
+    const supabase = crearClienteNavegador();
+    const canal = supabase
+      .channel(`eco-taller-${negNorm}`)
+      .on("broadcast", { event: "ubicacion_delivery_ruta" }, (payload) => {
+        const p = (payload?.payload ?? {}) as {
+          ordenTallerId?: string;
+          entregaId?: string;
+          proformaId?: string;
+          enRuta?: boolean;
+          lat?: number;
+          lng?: number;
+          repartidorNombre?: string;
+          emitidoEn?: string;
+        };
+        setDatos((prev) => ({
+          ...prev,
+          ordenes: prev.ordenes.map((o) => {
+            const coincide =
+              (p.ordenTallerId && o.id === p.ordenTallerId) ||
+              (p.entregaId && o.entregaId === p.entregaId) ||
+              (p.proformaId && (o.proformaId === p.proformaId || o.id === p.proformaId));
+            if (!coincide) return o;
+            return {
+              ...o,
+              enRuta: Boolean(p.enRuta),
+              repartidorNombre: p.repartidorNombre || o.repartidorNombre,
+              rutaLatitud: p.lat ?? o.rutaLatitud,
+              rutaLongitud: p.lng ?? o.rutaLongitud,
+              rutaActualizadaEn: p.emitidoEn || new Date().toISOString(),
+            };
+          }),
+        }));
+      })
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(canal);
+    };
+  }, [datosIniciales, cacheKey, negNorm, recargarDatos]);
 
   // Métricas rápidas
   const ordenesActivas = useMemo(
@@ -461,6 +502,45 @@ export function ConsolaEnvioPedidosTaller({
     });
   }, []);
 
+  const handleAsignarRepartidor = useCallback(
+    async (orden: OrdenTrabajoTaller, repartidorId: string) => {
+      const rep = (datos.repartidoresNegocio ?? []).find((r) => r.usuarioId === repartidorId);
+      setIdProcesando(orden.id);
+      const res = await asignarRepartidorEntregaAction({
+        negocio: negNorm,
+        ordenTallerId: orden.id,
+        entregaId: orden.entregaId ?? null,
+        repartidorId: repartidorId || null,
+        repartidorNombre: rep?.nombre ?? null,
+        repartidorTipo: rep?.modalidad ?? null,
+      });
+      setIdProcesando(null);
+      if (!res.ok) {
+        setErrorMsg(res.error);
+        return;
+      }
+      setDatos((prev) => ({
+        ...prev,
+        ordenes: prev.ordenes.map((o) =>
+          o.id === orden.id
+            ? {
+                ...o,
+                repartidorId: res.repartidorId,
+                repartidorNombre: res.repartidorNombre,
+                repartidorTipo: res.repartidorTipo,
+              }
+            : o
+        ),
+      }));
+      setMensajeExito(
+        res.repartidorNombre
+          ? `🛵 Pedido ${orden.codigo} asignado a ${res.repartidorNombre} (${res.repartidorTipo === "EXTERNO" ? "Subcontratado" : "Interno"}).`
+          : `Asignación de repartidor retirada en ${orden.codigo}.`
+      );
+    },
+    [datos.repartidoresNegocio, negNorm]
+  );
+
   const columnasBandeja = useMemo<ColumnaDataGrid<OrdenTrabajoTaller>[]>(
     () => [
       {
@@ -576,10 +656,10 @@ export function ConsolaEnvioPedidosTaller({
       },
       {
         id: "pago_taller",
-        encabezado: "Venta / Estado Taller",
-        valor: (o) => `${o.estadoPago || ""} ${o.estadoTaller}`,
+        encabezado: "Estado Taller / Delivery",
+        valor: (o) => `${o.estadoPago || ""} ${o.estadoTaller} ${o.repartidorNombre || ""}`,
         render: (o) => (
-          <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
             <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "#334155" }}>
               Pago: {o.estadoPago || "APROBADA"}
               {o.totalUsd ? ` ($${o.totalUsd.toFixed(2)})` : ""}
@@ -619,6 +699,58 @@ export function ConsolaEnvioPedidosTaller({
                       ? "🟢 Listo para entrega"
                       : "✅ Entregado"}
             </span>
+
+            {!o.retiroEnLocal &&
+              o.estadoTaller !== "ENTREGADO" &&
+              (datos.repartidoresNegocio?.length ?? 0) > 0 && (
+                <select
+                  value={o.repartidorId || ""}
+                  onChange={(e) => void handleAsignarRepartidor(o, e.target.value)}
+                  aria-label={`Asignar repartidor a ${o.codigo}`}
+                  title="Asignar repartidor interno o subcontratado"
+                  style={{
+                    padding: "4px 7px",
+                    borderRadius: "7px",
+                    border: "1px solid #CBD5E1",
+                    fontSize: "0.72rem",
+                    fontWeight: 600,
+                    background: o.repartidorId ? "#F0FDF4" : "#FFFFFF",
+                    color: "#0F172A",
+                    maxWidth: "185px",
+                  }}
+                >
+                  <option value="">🛵 Sin asignar</option>
+                  {(datos.repartidoresNegocio ?? []).map((rep) => (
+                    <option key={rep.usuarioId} value={rep.usuarioId}>
+                      {rep.nombre} ({rep.modalidad === "EXTERNO" ? "Externo" : "Interno"})
+                    </option>
+                  ))}
+                </select>
+              )}
+
+            {o.enRuta && o.rutaLatitud != null && o.rutaLongitud != null && (
+              <a
+                href={`https://www.google.com/maps?q=${o.rutaLatitud},${o.rutaLongitud}`}
+                target="_blank"
+                rel="noreferrer"
+                title="Ver ubicación GPS en vivo del repartidor en ruta"
+                style={{
+                  alignSelf: "flex-start",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  padding: "2px 8px",
+                  borderRadius: "999px",
+                  background: "#059669",
+                  color: "#FFFFFF",
+                  fontSize: "0.69rem",
+                  fontWeight: 800,
+                  textDecoration: "none",
+                }}
+              >
+                📍 En Ruta · GPS Vivo
+              </a>
+            )}
           </div>
         ),
       },
@@ -683,7 +815,15 @@ export function ConsolaEnvioPedidosTaller({
         },
       },
     ],
-    [hoyYmd, idProcesando, seleccionadosIds, toggleSeleccion, handleEnviarIdsATaller]
+    [
+      hoyYmd,
+      idProcesando,
+      seleccionadosIds,
+      datos.repartidoresNegocio,
+      toggleSeleccion,
+      handleEnviarIdsATaller,
+      handleAsignarRepartidor,
+    ]
   );
 
   const labelStyle: React.CSSProperties = {

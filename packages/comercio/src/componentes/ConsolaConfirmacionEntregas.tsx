@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import { crearClienteNavegador } from "@eco/supabase/cliente";
 import {
@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import {
   actualizarEntregaEvidenciaAction,
+  actualizarUbicacionRutaDeliveryAction,
   emitirInformeQuincenalAction,
   obtenerTableroEntregasAction,
   registrarOSincronizarEntregaAction,
@@ -59,6 +60,7 @@ import {
 export interface PropsConsolaConfirmacionEntregas {
   negocio: string;
   datosIniciales?: DatosTableroEntregas | null;
+  modoRolDelivery?: "DELIVERY" | "DELIVERY_EXTERNO" | null;
 }
 
 type PestanaEntregas = "captura" | "ordenes_ot" | "informe_quincenal" | "historico";
@@ -77,6 +79,7 @@ function fechaInicioQuincenaIso(): string {
 export function ConsolaConfirmacionEntregas({
   negocio,
   datosIniciales = null,
+  modoRolDelivery = null,
 }: PropsConsolaConfirmacionEntregas) {
   const negNorm = negocio.trim().toLowerCase();
   const cacheKey = `eco_tablero_entregas_${negNorm}`;
@@ -85,7 +88,8 @@ export function ConsolaConfirmacionEntregas({
     datosIniciales ?? {
       usuarioActualId: null,
       usuarioActualNombre: "Colaborador",
-      esAdminOperador: true,
+      esAdminOperador: modoRolDelivery == null,
+      esSubcontratado: modoRolDelivery === "DELIVERY_EXTERNO",
       convenios: [
         {
           id: "conv-exequiales-defecto",
@@ -101,6 +105,8 @@ export function ConsolaConfirmacionEntregas({
       pedidosPendientesTienda: [],
     }
   );
+  const esSubcontratado =
+    modoRolDelivery === "DELIVERY_EXTERNO" || Boolean(tablero.esSubcontratado);
 
   const [pestana, setPestana] = useState<PestanaEntregas>("captura");
   const [enLinea, setEnLinea] = useState<boolean>(true);
@@ -161,6 +167,10 @@ export function ConsolaConfirmacionEntregas({
     useState<DireccionGpsResuelta | null>(null);
   const [obteniendoGps, setObteniendoGps] = useState<boolean>(false);
   const [estadoGpsTexto, setEstadoGpsTexto] = useState<string>("Listo para capturar GPS");
+  const [enRutaActiva, setEnRutaActiva] = useState<boolean>(false);
+  const [ultimoPulsoRutaTexto, setUltimoPulsoRutaTexto] = useState<string>("");
+  const watchIdRutaRef = useRef<number | null>(null);
+  const ultimoEnvioRutaTsRef = useRef<number>(0);
 
   const [fotoBaseSinSelloDataUrl, setFotoBaseSinSelloDataUrl] = useState<string>("");
   const [fotoCapturadaDataUrl, setFotoCapturadaDataUrl] = useState<string>("");
@@ -509,6 +519,134 @@ export function ConsolaConfirmacionEntregas({
     [tablero.entregas]
   );
 
+  const pedidoTiendaSeleccionadoObj = useMemo(
+    () =>
+      tablero.pedidosPendientesTienda.find((p) => p.proformaId === pedidoSeleccionadoId) ?? null,
+    [tablero.pedidosPendientesTienda, pedidoSeleccionadoId]
+  );
+
+  const otSeleccionadaObj = useMemo(
+    () => otsProgramadas.find((x) => x.id === otSeleccionadaId) ?? null,
+    [otsProgramadas, otSeleccionadaId]
+  );
+
+  const emitirPulsoRuta = useCallback(
+    async (params: { enRuta: boolean; lat?: number | null; lng?: number | null; acc?: number | null }) => {
+      const ordenTallerId =
+        tipoOrigenCaptura === "ORDEN_TRABAJO_CONVENIO"
+          ? otSeleccionadaObj?.ordenTallerId ?? null
+          : pedidoTiendaSeleccionadoObj?.ordenTallerId ?? null;
+      const entregaId =
+        tipoOrigenCaptura === "ORDEN_TRABAJO_CONVENIO" ? otSeleccionadaId || null : null;
+      const proformaId =
+        tipoOrigenCaptura === "PEDIDO_TIENDA" ? pedidoSeleccionadoId || null : null;
+
+      try {
+        const supabase = crearClienteNavegador();
+        const ch = supabase.channel(`eco-taller-${negNorm}`);
+        await ch.subscribe();
+        await ch.send({
+          type: "broadcast",
+          event: "ubicacion_delivery_ruta",
+          payload: {
+            ordenTallerId,
+            entregaId,
+            proformaId,
+            enRuta: params.enRuta,
+            lat: params.lat ?? null,
+            lng: params.lng ?? null,
+            repartidorNombre: tablero.usuarioActualNombre,
+            emitidoEn: new Date().toISOString(),
+          },
+        });
+        void supabase.removeChannel(ch);
+      } catch {
+        // Ignorar sin red
+      }
+
+      if (typeof navigator === "undefined" || navigator.onLine !== false) {
+        await actualizarUbicacionRutaDeliveryAction({
+          negocio: negNorm,
+          ordenTallerId,
+          entregaId,
+          proformaId,
+          enRuta: params.enRuta,
+          latitud: params.lat ?? null,
+          longitud: params.lng ?? null,
+          precision: params.acc ?? null,
+        }).catch(() => {});
+      }
+    },
+    [
+      negNorm,
+      otSeleccionadaId,
+      otSeleccionadaObj,
+      pedidoSeleccionadoId,
+      pedidoTiendaSeleccionadoObj,
+      tablero.usuarioActualNombre,
+      tipoOrigenCaptura,
+    ]
+  );
+
+  const detenerSeguimientoRuta = useCallback(
+    async (notificarServidor = true) => {
+      if (watchIdRutaRef.current !== null && typeof navigator !== "undefined") {
+        navigator.geolocation?.clearWatch(watchIdRutaRef.current);
+        watchIdRutaRef.current = null;
+      }
+      setEnRutaActiva(false);
+      setUltimoPulsoRutaTexto("");
+      if (notificarServidor) {
+        await emitirPulsoRuta({ enRuta: false, lat: latitud, lng: longitud, acc: precisionMetros });
+      }
+    },
+    [emitirPulsoRuta, latitud, longitud, precisionMetros]
+  );
+
+  const iniciarSeguimientoRuta = useCallback(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) {
+      setErrorMsg("El teléfono no permite compartir ubicación GPS en este navegador.");
+      return;
+    }
+    if (watchIdRutaRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRutaRef.current);
+    }
+    setEnRutaActiva(true);
+    ultimoEnvioRutaTsRef.current = 0;
+    setUltimoPulsoRutaTexto("Activando GPS en vivo...");
+
+    watchIdRutaRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        const acc = pos.coords.accuracy;
+        setLatitud(lat);
+        setLongitud(lng);
+        setPrecisionMetros(acc);
+        const ahora = Date.now();
+        if (ahora - ultimoEnvioRutaTsRef.current >= 14000) {
+          ultimoEnvioRutaTsRef.current = ahora;
+          setUltimoPulsoRutaTexto(
+            `En ruta · ${new Date().toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit" })} (±${Math.round(acc)}m)`
+          );
+          void emitirPulsoRuta({ enRuta: true, lat, lng, acc });
+        }
+      },
+      (err) => {
+        setUltimoPulsoRutaTexto(`Señal GPS débil (${err.message})`);
+      },
+      { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
+    );
+  }, [emitirPulsoRuta]);
+
+  useEffect(() => {
+    return () => {
+      if (watchIdRutaRef.current !== null && typeof navigator !== "undefined") {
+        navigator.geolocation?.clearWatch(watchIdRutaRef.current);
+      }
+    };
+  }, []);
+
   const handleSeleccionarOtProgramada = (otId: string) => {
     setOtSeleccionadaId(otId);
     if (!otId) {
@@ -824,6 +962,7 @@ export function ConsolaConfirmacionEntregas({
       try {
         await guardarEntregaEnColaOffline(paqueteOffline);
         await refrescarColaOffline();
+        void detenerSeguimientoRuta(false);
         setUltimaFotoConfirmada({
           imagenOrigen: fotoRespaldoParaWhatsapp,
           urlPublica: null,
@@ -900,6 +1039,7 @@ export function ConsolaConfirmacionEntregas({
         throw new Error(res.error);
       }
 
+      void detenerSeguimientoRuta(false);
       setUltimaFotoConfirmada({
         imagenOrigen: fotoRespaldoParaWhatsapp,
         urlPublica: upFoto.publicUrl,
@@ -921,6 +1061,7 @@ export function ConsolaConfirmacionEntregas({
       try {
         await guardarEntregaEnColaOffline(paqueteOffline);
         await refrescarColaOffline();
+        void detenerSeguimientoRuta(false);
         setUltimaFotoConfirmada({
           imagenOrigen: fotoRespaldoParaWhatsapp,
           urlPublica: null,
@@ -1708,6 +1849,22 @@ export function ConsolaConfirmacionEntregas({
           }}
         >
           <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+            {esSubcontratado && (
+              <div
+                style={{
+                  flex: "1 1 100%",
+                  padding: "10px 14px",
+                  borderRadius: "10px",
+                  background: "#FFF7ED",
+                  border: "1px solid #FED7AA",
+                  color: "#9A3412",
+                  fontSize: "0.8rem",
+                  fontWeight: 700,
+                }}
+              >
+                🛵 Modo Delivery Subcontratado: ves únicamente las entregas asignadas a tu cuenta.
+              </div>
+            )}
             <button
               type="button"
               onClick={() => {
@@ -1894,6 +2051,97 @@ export function ConsolaConfirmacionEntregas({
                   </option>
                 ))}
               </select>
+
+              {pedidoTiendaSeleccionadoObj?.enlaceMapa && (
+                <div style={{ marginTop: "8px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  <a
+                    href={pedidoTiendaSeleccionadoObj.enlaceMapa}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Abrir ubicación de destino en Google Maps / Waze"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                      padding: "6px 12px",
+                      borderRadius: "8px",
+                      background: "#EFF6FF",
+                      border: "1px solid #BFDBFE",
+                      color: "#1D4ED8",
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      textDecoration: "none",
+                    }}
+                  >
+                    <Navigation size={13} />
+                    <span>Abrir Mapa Destino</span>
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* BARRA DE COMPARTIR UBICACIÓN GPS EN VIVO MIENTRAS ESTÁ EN RUTA */}
+          {(otSeleccionadaId || pedidoSeleccionadoId || enRutaActiva) && (
+            <div
+              style={{
+                padding: "12px 14px",
+                borderRadius: "12px",
+                background: enRutaActiva ? "#ECFDF5" : "#F8FAFC",
+                border: enRutaActiva ? "1.5px solid #10B981" : "1px solid #CBD5E1",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "10px",
+                flexWrap: "wrap",
+              }}
+            >
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <strong
+                  style={{
+                    fontSize: "0.84rem",
+                    color: enRutaActiva ? "#065F46" : "#0F172A",
+                  }}
+                >
+                  {enRutaActiva
+                    ? "🛵 Compartiendo ubicación en vivo con la tienda"
+                    : "🛵 ¿Ya saliste a entregar este pedido?"}
+                </strong>
+                <span style={{ fontSize: "0.75rem", color: "#475569" }}>
+                  {enRutaActiva
+                    ? `${ultimoPulsoRutaTexto || "GPS activo"} · Se apagará solo al confirmar la entrega.`
+                    : "Activa Iniciar Ruta para que Ventas y Operaciones vean tu avance en vivo."}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() =>
+                  enRutaActiva ? void detenerSeguimientoRuta(true) : iniciarSeguimientoRuta()
+                }
+                title={
+                  enRutaActiva
+                    ? "Detener envío de ubicación GPS en ruta"
+                    : "Compartir ubicación GPS en vivo mientras vas en camino"
+                }
+                aria-label={enRutaActiva ? "Detener Ruta" : "Iniciar Ruta"}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "8px 14px",
+                  borderRadius: "9px",
+                  border: "none",
+                  background: enRutaActiva ? "#DC2626" : "#059669",
+                  color: "#FFFFFF",
+                  fontSize: "0.8rem",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                }}
+              >
+                <Navigation size={14} />
+                <span>{enRutaActiva ? "Detener Ruta" : "Iniciar Ruta"}</span>
+              </button>
             </div>
           )}
 
@@ -2433,6 +2681,7 @@ export function ConsolaConfirmacionEntregas({
       ===================================================================== */}
       {pestana === "ordenes_ot" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {tablero.esAdminOperador && (
           <form
             onSubmit={(e) => void handleProgramarOt(e)}
             style={{
@@ -2581,6 +2830,7 @@ export function ConsolaConfirmacionEntregas({
               </div>
             </div>
           </form>
+          )}
 
           <div
             style={{

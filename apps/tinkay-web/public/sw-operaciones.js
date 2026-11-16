@@ -1,8 +1,9 @@
-// Service Worker Offline-First para operaciones de campo y entregas (/panel/entregas)
-const CACHE_NAME = "eco-operaciones-entregas-v2";
+// Service Worker Offline-First para la PWA unificada de Tinkay (/panel, /panel/entregas, /panel/taller, /panel/conversaciones)
+const CACHE_NAME = "eco-portal-operaciones-v3";
 const RUTAS_PRECACHE = [
-  "/panel/entregas",
   "/panel",
+  "/panel/entregas",
+  "/panel/taller",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
 ];
@@ -33,7 +34,9 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   const esRutaOperativaOActivo =
+    url.pathname === "/panel" ||
     url.pathname.startsWith("/panel/entregas") ||
+    url.pathname.startsWith("/panel/taller") ||
     url.pathname.startsWith("/icons/") ||
     url.pathname.startsWith("/_next/static/") ||
     url.pathname.endsWith(".jpg") ||
@@ -50,6 +53,10 @@ self.addEventListener("fetch", (event) => {
         }
         return res;
       })
-      .catch(() => caches.match(req).then((cached) => cached || caches.match("/panel/entregas")))
+      .catch(() =>
+        caches
+          .match(req)
+          .then((cached) => cached || caches.match("/panel/entregas") || caches.match("/panel"))
+      )
   );
 });

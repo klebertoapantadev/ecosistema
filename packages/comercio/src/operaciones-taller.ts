@@ -434,6 +434,21 @@ export interface OrdenTrabajoTaller {
   listoEn?: string | null;
   entregadoEn?: string | null;
   actualizadoTallerNombre?: string | null;
+  repartidorId?: string | null;
+  repartidorNombre?: string | null;
+  repartidorTipo?: "INTERNO" | "EXTERNO" | string | null;
+  enRuta?: boolean;
+  enRutaDesde?: string | null;
+  rutaLatitud?: number | null;
+  rutaLongitud?: number | null;
+  rutaActualizadaEn?: string | null;
+}
+
+export interface RepartidorDisponibleNegocio {
+  usuarioId: string;
+  nombre: string;
+  correo?: string;
+  modalidad: "INTERNO" | "EXTERNO";
 }
 
 export interface ProductoLigeroSelectorTaller {
@@ -635,6 +650,13 @@ export interface RegistroEntregaEvidencia {
   horaSolicitada?: string | null;
   entregadoPor?: string | null;
   entregadorNombre: string;
+  repartidorAsignadoId?: string | null;
+  repartidorAsignadoNombre?: string | null;
+  repartidorTipo?: "INTERNO" | "EXTERNO" | string | null;
+  enRuta?: boolean;
+  rutaLatitud?: number | null;
+  rutaLongitud?: number | null;
+  rutaActualizadaEn?: string | null;
   fallecidoDestinatario: string;
   fechaServicio: string;
   capturadoEn: string;
@@ -672,6 +694,13 @@ export interface PedidoPendienteConfirmacion {
   direccionEntrega: string;
   enlaceMapa?: string | null;
   resumenItems: string;
+  repartidorAsignadoId?: string | null;
+  repartidorAsignadoNombre?: string | null;
+  repartidorTipo?: "INTERNO" | "EXTERNO" | string | null;
+  enRuta?: boolean;
+  rutaLatitud?: number | null;
+  rutaLongitud?: number | null;
+  rutaActualizadaEn?: string | null;
   creadoEn: string;
 }
 

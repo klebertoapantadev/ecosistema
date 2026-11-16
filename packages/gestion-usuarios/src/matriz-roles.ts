@@ -14,24 +14,43 @@ export const MATRIZ_FUNCIONAL_ROLES: Record<string, { paneles: string[]; widgets
       panel_configuracion: ["notificaciones"]
     }
   },
+  DELIVERY_EXTERNO: {
+    paneles: ["panel_administrar", "panel_cuenta"],
+    widgetsPorPanel: {
+      panel_administrar: ["confirmacion_entregas"],
+      panel_cuenta: ["mi_cuenta", "mfa_seguridad", "historial_accesos"]
+    }
+  },
+  DELIVERY: {
+    paneles: ["panel_administrar", "panel_cuenta"],
+    widgetsPorPanel: {
+      panel_administrar: ["confirmacion_entregas"],
+      panel_cuenta: ["mi_cuenta", "mfa_seguridad", "historial_accesos"]
+    }
+  },
+  TALLER: {
+    paneles: ["panel_administrar", "panel_cuenta"],
+    widgetsPorPanel: {
+      panel_administrar: ["taller_floral", "inventario_rosas", "galeria_inmediata"],
+      panel_cuenta: ["mi_cuenta", "mfa_seguridad", "historial_accesos"]
+    }
+  },
   VENDEDOR: {
-    paneles: ["panel_inicio", "panel_clientes", "panel_administrar", "panel_cuenta", "panel_herramientas"],
+    paneles: ["panel_inicio", "panel_clientes", "panel_administrar", "panel_cuenta"],
     widgetsPorPanel: {
       panel_inicio: ["favoritos"],
       panel_clientes: ["vitrina_comercial_personas", "crm_clientes"],
-      panel_administrar: ["consola_chat", "pedidos_tienda", "testimonios_clientes", "catalogo_productos"],
-      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["catalogo_productos"]
+      panel_administrar: ["consola_chat", "envio_pedidos_taller", "pedidos_tienda", "galeria_inmediata", "inventario_rosas"],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"]
     }
   },
   VENTAS: {
-    paneles: ["panel_inicio", "panel_clientes", "panel_administrar", "panel_cuenta", "panel_herramientas"],
+    paneles: ["panel_inicio", "panel_clientes", "panel_administrar", "panel_cuenta"],
     widgetsPorPanel: {
       panel_inicio: ["favoritos"],
       panel_clientes: ["vitrina_comercial_personas", "crm_clientes"],
-      panel_administrar: ["consola_chat", "pedidos_tienda", "testimonios_clientes", "catalogo_productos"],
-      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"],
-      panel_herramientas: ["catalogo_productos"]
+      panel_administrar: ["consola_chat", "envio_pedidos_taller", "pedidos_tienda", "galeria_inmediata", "inventario_rosas"],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"]
     }
   },
   ABOGADO: {

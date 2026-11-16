@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   ArrowRight,
   Bot,
@@ -28,7 +29,10 @@ import {
 import { obtenerMisProformasEventoAction } from "@eco/comercio";
 import { ListaMisProformasCliente } from "./AccionesProformaPanelCliente";
 import { obtenerSaludo } from "@eco/identidad";
-import { obtenerContextoAccesoTinkay } from "./acceso-tinkay";
+import {
+  obtenerContextoAccesoTinkay,
+  obtenerRutaAterrizajePorRolTinkay,
+} from "./acceso-tinkay";
 
 export const metadata: Metadata = { title: "Panel — Tinkay Floristería" };
 
@@ -247,6 +251,12 @@ const DESCRIPCION_BANNER_POR_ROL: Record<string, { subtitulo: string; descripcio
 export default async function PaginaPanel() {
   const ctx = await obtenerContextoAccesoTinkay();
   const { perfil, rolPrincipal, esAdminTienda, esCliente, clavesAutorizadas } = ctx;
+
+  // Aterrizaje directo por rol (Ventas -> Conversaciones, Taller -> Taller, Delivery -> Entregas)
+  const rutaDirecta = obtenerRutaAterrizajePorRolTinkay(rolPrincipal);
+  if (rutaDirecta) {
+    redirect(rutaDirecta);
+  }
 
   const resMisProformas = perfil
     ? await obtenerMisProformasEventoAction(NEGOCIO)

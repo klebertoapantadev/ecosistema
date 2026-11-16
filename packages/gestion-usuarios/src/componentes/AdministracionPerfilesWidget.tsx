@@ -79,6 +79,42 @@ export const TEMAS_PERFIL: Record<string, TemaPerfilDef> = {
     badgeTexto: "#581C87",
     iconoColor: "#6D28D9"
   },
+  DELIVERY_EXTERNO: {
+    colorPrimario: "#C2410C",
+    colorFondoSuave: "#FFF7ED",
+    colorBorde: "#EA580C",
+    colorTexto: "#9A3412",
+    badgeBg: "#FFEDD5",
+    badgeTexto: "#9A3412",
+    iconoColor: "#C2410C"
+  },
+  DELIVERY: {
+    colorPrimario: "#B45309",
+    colorFondoSuave: "#FFFBEB",
+    colorBorde: "#D97706",
+    colorTexto: "#92400E",
+    badgeBg: "#FEF3C7",
+    badgeTexto: "#92400E",
+    iconoColor: "#B45309"
+  },
+  TALLER: {
+    colorPrimario: "#15803D",
+    colorFondoSuave: "#F0FDF4",
+    colorBorde: "#16A34A",
+    colorTexto: "#166534",
+    badgeBg: "#DCFCE7",
+    badgeTexto: "#14532D",
+    iconoColor: "#15803D"
+  },
+  VENTAS: {
+    colorPrimario: "#1D4ED8",
+    colorFondoSuave: "#EFF6FF",
+    colorBorde: "#2563EB",
+    colorTexto: "#1E40AF",
+    badgeBg: "#DBEAFE",
+    badgeTexto: "#1E3A8A",
+    iconoColor: "#1D4ED8"
+  },
   OPERADOR: {
     colorPrimario: "#0284C7", // Cyan / Azul Operativo
     colorFondoSuave: "#F0F9FF",
@@ -300,6 +336,60 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_herramientas: ["firma_documentos_pdf", "billetera_documentos", "financiamiento"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_configuracion: ["notificaciones"]
+    },
+    activo: true
+  },
+  {
+    clave: "DELIVERY_EXTERNO",
+    nombre: "Delivery Subcontratado",
+    nivel: 12,
+    ambito: "Empresa",
+    descripcion: "Repartidor externo subcontratado: ve únicamente los pedidos asignados explícitamente a su cuenta, comparte GPS en ruta y confirma entrega.",
+    panelesAsignados: ["panel_administrar", "panel_cuenta"],
+    widgetsAsignadosPorPanel: {
+      panel_administrar: ["confirmacion_entregas"],
+      panel_cuenta: ["mi_cuenta", "mfa_seguridad", "historial_accesos"]
+    },
+    activo: true
+  },
+  {
+    clave: "DELIVERY",
+    nombre: "Delivery Interno",
+    nivel: 15,
+    ambito: "Empresa",
+    descripcion: "Repartidor interno: ve pedidos listos y asignados, comparte GPS en ruta y confirma entrega con fotografía georreferenciada.",
+    panelesAsignados: ["panel_administrar", "panel_cuenta"],
+    widgetsAsignadosPorPanel: {
+      panel_administrar: ["confirmacion_entregas"],
+      panel_cuenta: ["mi_cuenta", "mfa_seguridad", "historial_accesos"]
+    },
+    activo: true
+  },
+  {
+    clave: "TALLER",
+    nombre: "Taller Floral",
+    nivel: 18,
+    ambito: "Empresa",
+    descripcion: "Producción floral enfocada: cola de elaboración sin precios, cambio de estado (En Preparación / Listo Entrega), Inventario de Rosas y Entrega Inmediata.",
+    panelesAsignados: ["panel_administrar", "panel_cuenta"],
+    widgetsAsignadosPorPanel: {
+      panel_administrar: ["taller_floral", "inventario_rosas", "galeria_inmediata"],
+      panel_cuenta: ["mi_cuenta", "mfa_seguridad", "historial_accesos"]
+    },
+    activo: true
+  },
+  {
+    clave: "VENTAS",
+    nombre: "Ventas / Asesor Comercial",
+    nivel: 20,
+    ambito: "Empresa",
+    descripcion: "Atención comercial enfocada en Ventas y Chats en Vivo, Enviar Pedidos a Taller, Proformas (V2/V3), Entrega Inmediata e Inventario de Rosas.",
+    panelesAsignados: ["panel_inicio", "panel_clientes", "panel_administrar", "panel_cuenta"],
+    widgetsAsignadosPorPanel: {
+      panel_inicio: ["favoritos"],
+      panel_clientes: ["vitrina_comercial_personas", "crm_clientes"],
+      panel_administrar: ["consola_chat", "envio_pedidos_taller", "pedidos_tienda", "galeria_inmediata", "inventario_rosas"],
+      panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"]
     },
     activo: true
   },

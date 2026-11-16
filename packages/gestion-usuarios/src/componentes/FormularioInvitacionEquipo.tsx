@@ -19,28 +19,47 @@ const OPCIONES_ROL: Array<{
   {
     clave: "VENTAS",
     etiqueta: "Ventas / Asesor Comercial",
-    resumen: "Acceso a Pedidos de Tienda, Proformas de Eventos (V2/V3), Catálogo y Testimonios.",
+    resumen:
+      "Aterriza directo en Ventas y Chats en Vivo. Acceso a Enviar Pedidos, Proformas (V2/V3), Entrega Inmediata e Inventario.",
     colorFondo: "#EFF6FF",
     colorTexto: "#1D4ED8",
   },
   {
-    clave: "OPERADOR",
-    etiqueta: "Operador / Taller Floral",
-    resumen: "Acceso a Pedidos, Taller Floral, Hoja de Ruta, Catálogo y Cobertura Logística.",
+    clave: "TALLER",
+    etiqueta: "Taller Floral",
+    resumen:
+      "Aterriza directo en Taller (sin precios). Actualiza estado (En Preparación / Listo Entrega), Inventario de Rosas y Entrega Inmediata.",
     colorFondo: "#F0FDF4",
     colorTexto: "#15803D",
   },
   {
     clave: "DELIVERY",
-    etiqueta: "Delivery / Repartidor",
-    resumen: "Acceso exclusivo a Despachos, Destinatarios, Enlace GPS (Waze/Maps) y Estado de Ruta.",
+    etiqueta: "Delivery Interno",
+    resumen:
+      "Aterriza directo en Entregas GPS. Ve pedidos listos y asignados, comparte GPS en ruta y confirma entrega con foto.",
     colorFondo: "#FEF3C7",
     colorTexto: "#B45309",
   },
   {
+    clave: "DELIVERY_EXTERNO",
+    etiqueta: "Delivery Subcontratado",
+    resumen:
+      "Aterriza directo en Entregas GPS. Ve ÚNICAMENTE los pedidos asignados a su cuenta, comparte GPS en ruta y confirma entrega.",
+    colorFondo: "#FFF7ED",
+    colorTexto: "#C2410C",
+  },
+  {
+    clave: "OPERADOR",
+    etiqueta: "Operador General",
+    resumen:
+      "Coordinación integral: Enviar Pedidos, Taller, Entregas e Informes IESS, Inventario, Entrega Inmediata y Logística.",
+    colorFondo: "#ECFEFF",
+    colorTexto: "#0369A1",
+  },
+  {
     clave: "ADMINISTRADOR",
     etiqueta: "Administrador de Tienda",
-    resumen: "Acceso completo a Operación, Usuarios/Roles y Configuración de Tienda.",
+    resumen: "Acceso completo 360° a Operación, Facturación, Usuarios/Roles y Configuración de Tienda.",
     colorFondo: "#F3E8FF",
     colorTexto: "#6B21A8",
   },
@@ -153,7 +172,7 @@ export function FormularioInvitacionEquipo({
               Invitar Miembro del Equipo por Correo
             </h2>
             <p style={{ margin: "2px 0 0", fontSize: "0.82rem", color: "#6B746C" }}>
-              Envía una invitación al correo electrónico definiendo su nivel de acceso en el portal (Ventas, Operador, Delivery o Administrador).
+              Envía una invitación definiendo su rol exacto (Ventas, Taller, Delivery Interno, Delivery Subcontratado, Operador o Administrador).
             </p>
           </div>
         </div>

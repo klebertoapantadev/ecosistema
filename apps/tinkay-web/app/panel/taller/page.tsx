@@ -49,6 +49,7 @@ export default async function PaginaTallerFloralTinkay() {
       <ConsolaTallerFloral
         negocio={NEGOCIO}
         datosIniciales={res?.ok ? res.datos : null}
+        modoSoloTaller={ctx.rolPrincipal === "TALLER"}
       />
     </div>
   );

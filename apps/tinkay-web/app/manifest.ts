@@ -2,12 +2,12 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    id: "/panel/entregas",
-    name: "Tinkay — Operaciones, Entregas y Tienda",
+    id: "/panel",
+    name: "Tinkay — Portal y Operaciones",
     short_name: "Tinkay",
     description:
-      "Confirmación de entregas georreferenciadas offline, órdenes de trabajo Exequiales IESS, entrega inmediata e inventario floral.",
-    start_url: "/panel/entregas",
+      "Aplicación única adaptable por rol: Clientes, Ventas, Taller Floral y Delivery con entregas georreferenciadas offline.",
+    start_url: "/panel",
     scope: "/",
     display: "standalone",
     orientation: "portrait",

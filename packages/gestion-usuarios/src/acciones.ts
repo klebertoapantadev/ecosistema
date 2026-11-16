@@ -1538,7 +1538,13 @@ export async function reactivarUsuarioSuperAdminAction(
 // INVITACIONES DE EQUIPO POR CORREO Y CONTROL DE ACCESO POR ROL (TINKAY / TIENDAS)
 // ============================================================================
 
-export type RolEquipoPortal = "VENTAS" | "OPERADOR" | "DELIVERY" | "ADMINISTRADOR";
+export type RolEquipoPortal =
+  | "VENTAS"
+  | "TALLER"
+  | "DELIVERY"
+  | "DELIVERY_EXTERNO"
+  | "OPERADOR"
+  | "ADMINISTRADOR";
 
 export interface InvitacionEquipoPortal {
   id: string;
@@ -1553,30 +1559,41 @@ export interface InvitacionEquipoPortal {
 
 const ETIQUETA_ROL_PORTAL: Record<string, string> = {
   VENTAS: "Ventas / Asesor Comercial",
-  OPERADOR: "Operador / Taller Floral",
-  DELIVERY: "Delivery / Repartidor",
+  TALLER: "Taller Floral",
+  DELIVERY: "Delivery Interno",
+  DELIVERY_EXTERNO: "Delivery Subcontratado",
+  OPERADOR: "Operador General",
   ADMINISTRADOR: "Administrador de Tienda",
   CLIENTE: "Cliente",
 };
 
 const PERMISOS_RESUMEN_ROL: Record<string, string[]> = {
   VENTAS: [
-    "Pedidos de Tienda y Proformas de Eventos (cotizar, crear variaciones V2/V3 y confirmar pagos)",
-    "Catálogo Comercial y Portafolio Floral",
-    "Testimonios y Reseñas de Clientes",
+    "Ventas y Chats en Vivo (atención comercial, etiquetas y respuestas rápidas)",
+    "Enviar Pedidos a Taller y programación de órdenes de trabajo",
+    "Pedidos de Tienda y Proformas de Eventos (cotizar, variaciones V2/V3 y confirmar pagos)",
+    "Galería de Entrega Inmediata (1–2h) y consulta de Inventario de Rosas",
   ],
-  OPERADOR: [
-    "Pedidos de Tienda, Taller Floral y Hoja de Ruta",
-    "Catálogo Comercial y Portafolio Floral",
-    "Envíos, Zonas y Cobertura Logística",
-    "Testimonios y Reseñas de Clientes",
+  TALLER: [
+    "Consola de Taller Floral (cola de elaboración en tiempo real y actualización de estado: En Preparación / Listo Entrega, sin precios)",
+    "Inventario Fotográfico de Rosas con conteo IA ARIA",
+    "Galería de Disponibles para Entrega Inmediata (subir arreglos listos en tienda)",
   ],
   DELIVERY: [
-    "Pedidos de Tienda y Despachos (consulta de entregas programadas, destinatarios, horarios y enlace GPS Waze / Google Maps)",
-    "Actualización de estado de entrega en ruta",
+    "Confirmación de Entregas GPS (Offline-First): ver pedidos listos y asignados",
+    "Botón Iniciar Ruta para compartir ubicación GPS en vivo mientras está en camino",
+    "Captura de fotografía con sello GPS y confirmación de entrega",
+  ],
+  DELIVERY_EXTERNO: [
+    "Confirmación de Entregas GPS restringida únicamente a los pedidos asignados explícitamente a su cuenta",
+    "Compartir ubicación GPS en ruta y confirmar entrega con fotografía georreferenciada",
+  ],
+  OPERADOR: [
+    "Coordinación operativa integral: Enviar Pedidos, Taller Floral, Entregas e Informes Quincenales IESS",
+    "Inventario de Rosas, Entrega Inmediata, Pedidos, Catálogo y Cobertura Logística",
   ],
   ADMINISTRADOR: [
-    "Acceso administrativo completo al portal Tinkay (Pedidos, Catálogo, Usuarios/Roles, Pasarelas, Logística, Correo y Agente ARIA)",
+    "Acceso administrativo completo al portal (Ventas, Taller, Entregas/Informes, Facturación, Catálogo, Usuarios/Roles, Pasarelas, Logística, Correo y ARIA)",
   ],
 };
 
@@ -1621,8 +1638,16 @@ export async function invitarUsuarioPorCorreoAction(entrada: {
     return { ok: false, error: "Ingresa un correo electrónico válido." };
   }
 
-  if (!["VENTAS", "OPERADOR", "DELIVERY", "ADMINISTRADOR"].includes(rolUpper)) {
-    return { ok: false, error: "Selecciona un rol válido (Ventas, Operador, Delivery o Administrador)." };
+  if (
+    !["VENTAS", "TALLER", "DELIVERY", "DELIVERY_EXTERNO", "OPERADOR", "ADMINISTRADOR"].includes(
+      rolUpper
+    )
+  ) {
+    return {
+      ok: false,
+      error:
+        "Selecciona un rol válido (Ventas, Taller, Delivery Interno, Delivery Subcontratado, Operador o Administrador).",
+    };
   }
 
   const nivelGestor = await obtenerNivelMaximoGestor(negNorm);
@@ -1638,7 +1663,7 @@ export async function invitarUsuarioPorCorreoAction(entrada: {
   const correoAdmin = user?.email || "tinkay.uio@gmail.com";
   const ahoraIso = new Date().toISOString();
 
-  // 1. Asegurar que los perfiles DELIVERY y VENTAS existan en seg_perfil
+  // 1. Asegurar que los perfiles operativos dedicados existan en seg_perfil
   try {
     await db
       .schema("comun_seguridad")
@@ -1646,9 +1671,23 @@ export async function invitarUsuarioPorCorreoAction(entrada: {
       .upsert(
         [
           {
+            per_clave: "DELIVERY_EXTERNO",
+            per_nombre: "Delivery Subcontratado",
+            per_nivel: 12,
+            per_activo: true,
+            per_asignable: true,
+          },
+          {
             per_clave: "DELIVERY",
-            per_nombre: "Delivery / Repartidor",
+            per_nombre: "Delivery Interno",
             per_nivel: 15,
+            per_activo: true,
+            per_asignable: true,
+          },
+          {
+            per_clave: "TALLER",
+            per_nombre: "Taller Floral",
+            per_nivel: 18,
             per_activo: true,
             per_asignable: true,
           },
@@ -1933,7 +1972,15 @@ export async function eliminarInvitacionEquipoAction(
  *    `SUPERADMIN` heredado de otro negocio a `CLIENTE`.
  */
 export async function sincronizarAccesoRolTinkayAction(): Promise<{
-  rolEfectivo: "SUPERADMIN" | "ADMINISTRADOR" | "OPERADOR" | "VENTAS" | "DELIVERY" | "CLIENTE";
+  rolEfectivo:
+    | "SUPERADMIN"
+    | "ADMINISTRADOR"
+    | "OPERADOR"
+    | "VENTAS"
+    | "TALLER"
+    | "DELIVERY"
+    | "DELIVERY_EXTERNO"
+    | "CLIENTE";
 }> {
   try {
     const supabase = await crearClienteServidor();
@@ -2137,9 +2184,13 @@ export async function sincronizarAccesoRolTinkayAction(): Promise<{
     if (tieneRolExplicitoTinkay && (claves.has("ADMINISTRADOR") || claves.has("ADMIN"))) {
       return { rolEfectivo: "ADMINISTRADOR" };
     }
-    if (claves.has("OPERADOR")) return { rolEfectivo: "OPERADOR" };
+    if (claves.has("OPERADOR") || claves.has("AUXILIAR")) return { rolEfectivo: "OPERADOR" };
     if (claves.has("VENTAS") || claves.has("VENDEDOR")) return { rolEfectivo: "VENTAS" };
-    if (claves.has("DELIVERY")) return { rolEfectivo: "DELIVERY" };
+    if (claves.has("TALLER") || claves.has("FLORISTA")) return { rolEfectivo: "TALLER" };
+    if (claves.has("DELIVERY") || claves.has("REPARTIDOR")) return { rolEfectivo: "DELIVERY" };
+    if (claves.has("DELIVERY_EXTERNO") || claves.has("SUBCONTRATADO")) {
+      return { rolEfectivo: "DELIVERY_EXTERNO" };
+    }
 
     return { rolEfectivo: "CLIENTE" };
   } catch {

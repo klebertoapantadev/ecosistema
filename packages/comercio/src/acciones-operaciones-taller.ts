@@ -19,6 +19,7 @@ import {
   type PedidoPendienteConfirmacion,
   type ProductoLigeroSelectorTaller,
   type RegistroEntregaEvidencia,
+  type RepartidorDisponibleNegocio,
   type TipoOrigenEntrega,
 } from "./operaciones-taller";
 import { normalizarIdentificadorNegocio } from "./utils/negocio";
@@ -349,7 +350,9 @@ export async function descartarEntregaInmediataAction(entrada: {
 export interface DatosTableroEntregas {
   usuarioActualId: string | null;
   usuarioActualNombre: string;
+  rolOperativo?: string;
   esAdminOperador: boolean;
+  esSubcontratado?: boolean;
   convenios: ConvenioEntregaConfig[];
   entregas: RegistroEntregaEvidencia[];
   informes: InformeQuincenalEntregas[];
@@ -390,7 +393,9 @@ export async function obtenerTableroEntregasAction(
         datos: {
           usuarioActualId: data.usuarioActualId ? String(data.usuarioActualId) : null,
           usuarioActualNombre: String(data.usuarioActualNombre || "Colaborador"),
+          rolOperativo: data.rolOperativo ? String(data.rolOperativo) : undefined,
           esAdminOperador: Boolean(data.esAdminOperador),
+          esSubcontratado: Boolean(data.esSubcontratado),
           convenios,
           entregas: Array.isArray(data.entregas) ? data.entregas : [],
           informes: Array.isArray(data.informes) ? data.informes : [],
@@ -653,9 +658,11 @@ export async function emitirInformeQuincenalAction(entrada: {
 // =============================================================================
 
 export interface DatosConsolaTallerYDespacho {
+  rolOperativo?: string;
   usuarioActualNombre: string;
   ordenes: OrdenTrabajoTaller[];
   productosCatalogo: ProductoLigeroSelectorTaller[];
+  repartidoresNegocio?: RepartidorDisponibleNegocio[];
   migracionPendiente?: boolean;
 }
 
@@ -758,12 +765,25 @@ export async function obtenerConsolaTallerYDespachoAction(
           }))
         : [];
 
+      const repartidoresNegocio: RepartidorDisponibleNegocio[] = Array.isArray(
+        data.repartidoresNegocio
+      )
+        ? (data.repartidoresNegocio as any[]).map((r) => ({
+            usuarioId: String(r.usuarioId),
+            nombre: String(r.nombre || "Repartidor"),
+            correo: r.correo ? String(r.correo) : undefined,
+            modalidad: r.modalidad === "EXTERNO" ? "EXTERNO" : "INTERNO",
+          }))
+        : [];
+
       return {
         ok: true,
         datos: {
+          rolOperativo: data.rolOperativo ? String(data.rolOperativo) : undefined,
           usuarioActualNombre: String(data.usuarioActualNombre || "Operador"),
           ordenes,
           productosCatalogo,
+          repartidoresNegocio,
         },
       };
     }
@@ -1022,7 +1042,7 @@ export async function crearOActualizarPedidoOperadorAction(entrada: {
                <p><strong>Entrega:</strong> ${entrada.fechaEntrega} (${entrada.franjaHoraria || "Horario estándar"})</p>
                <p><strong>Destinatario:</strong> ${entrada.destinatarioFallecido || entrada.clienteSolicita}</p>`,
           urlAccion: "/panel/taller",
-          roles: ["OPERADOR", "AUXILIAR", "ADMINISTRADOR", "SUPERADMIN"],
+          roles: ["TALLER", "OPERADOR", "AUXILIAR", "ADMINISTRADOR", "SUPERADMIN"],
           claveReferencia: `taller-nuevo:${data.ordenId}`,
         });
       }
@@ -1181,7 +1201,7 @@ export async function enviarPedidosATallerAction(entrada: {
           data.enviados || ids.length
         )}</strong> pedido(s) para elaboración en Taller: <strong>${codigos.join(", ")}</strong>.</p>`,
         urlAccion: "/panel/taller",
-        roles: ["OPERADOR", "AUXILIAR", "ADMINISTRADOR", "SUPERADMIN"],
+        roles: ["TALLER", "OPERADOR", "AUXILIAR", "ADMINISTRADOR", "SUPERADMIN"],
         claveReferencia: `taller-lote:${Date.now()}`,
       });
 
@@ -1341,6 +1361,120 @@ export async function actualizarEstadoOrdenTallerAction(entrada: {
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Error al actualizar estado en Taller",
+    };
+  }
+}
+
+export async function asignarRepartidorEntregaAction(entrada: {
+  negocio: string;
+  ordenTallerId?: string | null;
+  entregaId?: string | null;
+  repartidorId: string | null;
+  repartidorNombre?: string | null;
+  repartidorTipo?: "INTERNO" | "EXTERNO" | null;
+}): Promise<
+  | {
+      ok: true;
+      repartidorId: string | null;
+      repartidorNombre: string | null;
+      repartidorTipo: string | null;
+    }
+  | { ok: false; error: string }
+> {
+  try {
+    const neg = normalizarNegocio(entrada.negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquema = supabase.schema("comun_comercio") as any;
+
+    const { data, error } = await esquema.rpc("com_fn_asignar_repartidor_entrega", {
+      p_negocio: neg,
+      p_orden_taller_id: entrada.ordenTallerId ?? null,
+      p_entrega_id: entrada.entregaId ?? null,
+      p_repartidor_id: entrada.repartidorId ?? null,
+      p_repartidor_nombre: entrada.repartidorNombre ?? null,
+      p_repartidor_tipo: entrada.repartidorTipo ?? "INTERNO",
+    });
+
+    if (!error && data?.ok) {
+      if (entrada.repartidorId) {
+        await notificarPersonalTallerODespacho({
+          negocio: neg,
+          titulo: `🛵 Entrega asignada: ${entrada.repartidorNombre || "Delivery"}`,
+          contenidoHtml: `<p>Tienes un pedido asignado para entrega en tu consola de Entregas GPS.</p>`,
+          urlAccion: "/panel/entregas",
+          roles: ["DELIVERY", "DELIVERY_EXTERNO", "REPARTIDOR"],
+          claveReferencia: `delivery-asignado:${entrada.ordenTallerId || entrada.entregaId || Date.now()}`,
+        });
+      }
+      revalidarRutasTienda(neg);
+      return {
+        ok: true,
+        repartidorId: data.repartidorId ? String(data.repartidorId) : null,
+        repartidorNombre: data.repartidorNombre ? String(data.repartidorNombre) : null,
+        repartidorTipo: data.repartidorTipo ? String(data.repartidorTipo) : null,
+      };
+    }
+
+    if (error && !esErrorMigracionPendiente(error.message)) {
+      return { ok: false, error: error.message };
+    }
+    if (data && data.ok === false) {
+      return { ok: false, error: String(data.error || "No se pudo asignar el repartidor") };
+    }
+
+    return {
+      ok: true,
+      repartidorId: entrada.repartidorId,
+      repartidorNombre: entrada.repartidorNombre ?? null,
+      repartidorTipo: entrada.repartidorTipo ?? null,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error asignando repartidor",
+    };
+  }
+}
+
+export async function actualizarUbicacionRutaDeliveryAction(entrada: {
+  negocio: string;
+  ordenTallerId?: string | null;
+  entregaId?: string | null;
+  proformaId?: string | null;
+  enRuta: boolean;
+  latitud?: number | null;
+  longitud?: number | null;
+  precision?: number | null;
+}): Promise<{ ok: true; enRuta: boolean } | { ok: false; error: string }> {
+  try {
+    const neg = normalizarNegocio(entrada.negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquema = supabase.schema("comun_comercio") as any;
+
+    const { data, error } = await esquema.rpc("com_fn_actualizar_ubicacion_ruta_delivery", {
+      p_negocio: neg,
+      p_orden_taller_id: entrada.ordenTallerId ?? null,
+      p_entrega_id: entrada.entregaId ?? null,
+      p_proforma_id: entrada.proformaId ?? null,
+      p_en_ruta: entrada.enRuta,
+      p_latitud: entrada.latitud ?? null,
+      p_longitud: entrada.longitud ?? null,
+      p_precision: entrada.precision ?? null,
+    });
+
+    if (!error && data?.ok) {
+      return { ok: true, enRuta: Boolean(data.enRuta) };
+    }
+    if (error && !esErrorMigracionPendiente(error.message)) {
+      return { ok: false, error: error.message };
+    }
+    return { ok: true, enRuta: entrada.enRuta };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error reportando ubicación en ruta",
     };
   }
 }

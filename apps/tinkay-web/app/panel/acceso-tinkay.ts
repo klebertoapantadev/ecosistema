@@ -6,13 +6,16 @@ export type RolTinkayPortal =
   | "ADMINISTRADOR"
   | "OPERADOR"
   | "VENTAS"
+  | "TALLER"
   | "DELIVERY"
+  | "DELIVERY_EXTERNO"
   | "CLIENTE";
 
 export interface ContextoAccesoTinkay {
   perfil: PerfilUsuario | null;
   rolPrincipal: RolTinkayPortal;
   etiquetaRol: string;
+  rutaInicioRol: string;
   esSuperAdmin: boolean;
   esAdminTienda: boolean;
   esPersonalTienda: boolean;
@@ -25,9 +28,29 @@ const ETIQUETAS_ROL: Record<RolTinkayPortal, string> = {
   ADMINISTRADOR: "Administrador",
   OPERADOR: "Operador",
   VENTAS: "Ventas",
-  DELIVERY: "Delivery",
+  TALLER: "Taller",
+  DELIVERY: "Delivery Interno",
+  DELIVERY_EXTERNO: "Delivery Externo",
   CLIENTE: "Cliente",
 };
+
+/**
+ * Ruta de aterrizaje directo al abrir el portal o la PWA instalada (`/panel`).
+ * Los roles operativos específicos entran directo a su herramienta sin pasar por un menú intermedio.
+ */
+export function obtenerRutaAterrizajePorRolTinkay(rol: RolTinkayPortal): string | null {
+  switch (rol) {
+    case "VENTAS":
+      return "/panel/conversaciones";
+    case "TALLER":
+      return "/panel/taller";
+    case "DELIVERY":
+    case "DELIVERY_EXTERNO":
+      return "/panel/entregas";
+    default:
+      return null;
+  }
+}
 
 const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
   SUPERADMIN: [
@@ -89,19 +112,20 @@ const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
     "configuracion_logistica",
     "cuenta",
   ],
+  // Ventas: concentrado en chats, envío de órdenes de trabajo, proformas/pedidos, entrega inmediata e inventario
   VENTAS: [
-    "resumen",
     "consola_chat",
     "envio_pedidos_taller",
+    "pedidos_tienda",
     "galeria_inmediata",
     "inventario_rosas",
-    "pedidos_tienda",
-    "facturacion_electronica",
-    "catalogo_productos",
-    "testimonios_clientes",
     "cuenta",
   ],
-  DELIVERY: ["resumen", "taller_floral", "confirmacion_entregas", "pedidos_tienda", "cuenta"],
+  // Taller: producción floral sin precios + inventario de rosas + entrega inmediata
+  TALLER: ["taller_floral", "inventario_rosas", "galeria_inmediata", "cuenta"],
+  // Delivery Interno y Subcontratado: únicamente confirmación de entregas + GPS en ruta
+  DELIVERY: ["confirmacion_entregas", "cuenta"],
+  DELIVERY_EXTERNO: ["confirmacion_entregas", "cuenta"],
   CLIENTE: ["resumen", "mis_compras", "mis_proformas", "cuenta"],
 };
 
@@ -116,6 +140,7 @@ export async function obtenerContextoAccesoTinkay(): Promise<ContextoAccesoTinka
       perfil: null,
       rolPrincipal: "CLIENTE",
       etiquetaRol: "Cliente",
+      rutaInicioRol: "/panel",
       esSuperAdmin: false,
       esAdminTienda: false,
       esPersonalTienda: false,
@@ -131,13 +156,16 @@ export async function obtenerContextoAccesoTinkay(): Promise<ContextoAccesoTinka
     esAdminTienda ||
     rolPrincipal === "OPERADOR" ||
     rolPrincipal === "VENTAS" ||
-    rolPrincipal === "DELIVERY";
+    rolPrincipal === "TALLER" ||
+    rolPrincipal === "DELIVERY" ||
+    rolPrincipal === "DELIVERY_EXTERNO";
   const esCliente = rolPrincipal === "CLIENTE";
 
   return {
     perfil,
     rolPrincipal,
     etiquetaRol: ETIQUETAS_ROL[rolPrincipal] || "Cliente",
+    rutaInicioRol: obtenerRutaAterrizajePorRolTinkay(rolPrincipal) || "/panel",
     esSuperAdmin,
     esAdminTienda,
     esPersonalTienda,

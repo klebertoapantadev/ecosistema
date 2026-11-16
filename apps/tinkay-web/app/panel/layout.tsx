@@ -193,15 +193,26 @@ const CATALOGO_NAV_CLIENTE_TINKAY: Array<ItemNavegacionPanel> = [
 const COLOR_BADGE_ROL: Record<string, { bg: string; color: string }> = {
   SUPERADMIN: { bg: "#C27D5F", color: "#FFFFFF" },
   ADMINISTRADOR: { bg: "#3D5A45", color: "#FFFFFF" },
-  OPERADOR: { bg: "#15803D", color: "#FFFFFF" },
+  OPERADOR: { bg: "#0284C7", color: "#FFFFFF" },
   VENTAS: { bg: "#1D4ED8", color: "#FFFFFF" },
+  TALLER: { bg: "#15803D", color: "#FFFFFF" },
   DELIVERY: { bg: "#B45309", color: "#FFFFFF" },
+  DELIVERY_EXTERNO: { bg: "#C2410C", color: "#FFFFFF" },
   CLIENTE: { bg: "rgba(255, 255, 255, 0.14)", color: "#F5F2EB" },
 };
 
 export default async function LayoutPanel({ children }: { children: React.ReactNode }) {
   const ctx = await obtenerContextoAccesoTinkay();
-  const { perfil, rolPrincipal, etiquetaRol, esSuperAdmin, esAdminTienda, esCliente, clavesAutorizadas } = ctx;
+  const {
+    perfil,
+    rolPrincipal,
+    etiquetaRol,
+    rutaInicioRol,
+    esSuperAdmin,
+    esAdminTienda,
+    esCliente,
+    clavesAutorizadas,
+  } = ctx;
   if (!perfil) redirect("/ingresar");
 
   // Aislamiento estricto: si la sesión viene de otro negocio sin membresía en Tinkay, exigir ingreso/registro propio
@@ -233,7 +244,7 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
   return (
     <MarcoPanelLateral
       marcaNombre="tinkay"
-      marcaHref="/panel"
+      marcaHref={rutaInicioRol}
       etiquetaRol={etiquetaRol}
       estiloBadgeRol={estiloBadge}
       urlTienda="/"

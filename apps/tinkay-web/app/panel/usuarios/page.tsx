@@ -41,7 +41,7 @@ export default async function PaginaGestionUsuarios({
           Gestión de Equipo, Invitaciones y Roles
         </h1>
         <p style={{ margin: 0, fontSize: "13.5px", color: "#6B746C", lineHeight: 1.5 }}>
-          Envía invitaciones por correo electrónico definiendo el rol en el portal (<strong>Ventas</strong>, <strong>Operador</strong>, <strong>Delivery</strong> o <strong>Administrador</strong>) y administra los permisos de los usuarios registrados en Tinkay.
+          Envía invitaciones por correo electrónico definiendo el rol en el portal (<strong>Ventas</strong>, <strong>Taller Floral</strong>, <strong>Delivery Interno</strong>, <strong>Delivery Subcontratado</strong>, <strong>Operador</strong> o <strong>Administrador</strong>). Al instalar una única App en su celular, cada perfil ingresa directamente a las pantallas de su rol.
         </p>
       </div>
 

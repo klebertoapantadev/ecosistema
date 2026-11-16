@@ -7,6 +7,7 @@ import { crearClienteNavegador } from "@eco/supabase/cliente";
 import {
   Bell,
   BellRing,
+  Camera,
   CheckCircle2,
   Eye,
   EyeOff,
@@ -17,6 +18,7 @@ import {
   Send,
   Volume2,
   X,
+  Zap,
 } from "lucide-react";
 import {
   actualizarEstadoOrdenTallerAction,
@@ -35,6 +37,7 @@ import { CalendarioPedidosTaller } from "./CalendarioPedidosTaller";
 export interface PropsConsolaTallerFloral {
   negocio: string;
   datosIniciales?: DatosConsolaTallerYDespacho | null;
+  modoSoloTaller?: boolean;
 }
 
 type FiltroHorizonteTaller = "activos_hoy_y_futuros" | "hoy" | "futuros" | "todos";
@@ -69,6 +72,7 @@ function reproducirCampanaTaller(urgente = false) {
 export function ConsolaTallerFloral({
   negocio,
   datosIniciales = null,
+  modoSoloTaller = false,
 }: PropsConsolaTallerFloral) {
   const negNorm = negocio.trim().toLowerCase();
   const cacheKey = `eco_consola_taller_floral_${negNorm}`;
@@ -81,6 +85,7 @@ export function ConsolaTallerFloral({
       productosCatalogo: [],
     }
   );
+  const esSoloTaller = modoSoloTaller || datos.rolOperativo === "TALLER";
   const [filtro, setFiltro] = useState<FiltroHorizonteTaller>("activos_hoy_y_futuros");
   // Por requerimiento explícito: los históricos están OCULTOS por defecto
   const [mostrarHistoricos, setMostrarHistoricos] = useState<boolean>(false);
@@ -668,49 +673,99 @@ export function ConsolaTallerFloral({
             <span>{permisoNotifNav === "granted" ? "Alertas Activas" : "Activar Sonido"}</span>
           </button>
 
-          <Link
-            href="/panel/envio-pedidos"
-            title="Abrir pantalla de carga y envío de pedidos"
-            aria-label="Enviar Pedidos"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "5px",
-              padding: "7px 11px",
-              borderRadius: "9px",
-              border: "1px solid #CBD5E1",
-              background: "#F8FAFC",
-              color: "#0F172A",
-              textDecoration: "none",
-              fontSize: "0.78rem",
-              fontWeight: 700,
-            }}
-          >
-            <Send size={13} />
-            <span>Enviar Pedidos</span>
-          </Link>
+          {esSoloTaller ? (
+            <>
+              <Link
+                href="/panel/inventario-rosas"
+                title="Registrar conteo fotográfico de paquetes de rosas"
+                aria-label="Inventario Rosas"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  padding: "7px 11px",
+                  borderRadius: "9px",
+                  border: "1px solid #CBD5E1",
+                  background: "#F8FAFC",
+                  color: "#0F172A",
+                  textDecoration: "none",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                }}
+              >
+                <Camera size={13} />
+                <span>Inventario Rosas</span>
+              </Link>
 
-          <Link
-            href="/panel/entregas"
-            title="Ir a Confirmación de Entregas GPS"
-            aria-label="Confirmar Entregas"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "5px",
-              padding: "7px 11px",
-              borderRadius: "9px",
-              border: "1px solid #86EFAC",
-              background: "#F0FDF4",
-              color: "#166534",
-              textDecoration: "none",
-              fontSize: "0.78rem",
-              fontWeight: 700,
-            }}
-          >
-            <MapPinCheck size={14} />
-            <span>Entregas GPS</span>
-          </Link>
+              <Link
+                href="/panel/entrega-inmediata"
+                title="Publicar arreglo listo para entrega inmediata (1 a 2h)"
+                aria-label="Entrega Inmediata"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  padding: "7px 11px",
+                  borderRadius: "9px",
+                  border: "1px solid #86EFAC",
+                  background: "#F0FDF4",
+                  color: "#166534",
+                  textDecoration: "none",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                }}
+              >
+                <Zap size={13} />
+                <span>Entrega Inmediata</span>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/panel/envio-pedidos"
+                title="Abrir pantalla de carga y envío de pedidos"
+                aria-label="Enviar Pedidos"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  padding: "7px 11px",
+                  borderRadius: "9px",
+                  border: "1px solid #CBD5E1",
+                  background: "#F8FAFC",
+                  color: "#0F172A",
+                  textDecoration: "none",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                }}
+              >
+                <Send size={13} />
+                <span>Enviar Pedidos</span>
+              </Link>
+
+              <Link
+                href="/panel/entregas"
+                title="Ir a Confirmación de Entregas GPS"
+                aria-label="Confirmar Entregas"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  padding: "7px 11px",
+                  borderRadius: "9px",
+                  border: "1px solid #86EFAC",
+                  background: "#F0FDF4",
+                  color: "#166534",
+                  textDecoration: "none",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                }}
+              >
+                <MapPinCheck size={14} />
+                <span>Entregas GPS</span>
+              </Link>
+            </>
+          )}
 
           <button
             type="button"
