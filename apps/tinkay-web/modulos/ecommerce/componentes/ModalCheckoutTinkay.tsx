@@ -351,7 +351,6 @@ export function ModalCheckoutTinkay() {
     (acc, it) => acc + (it.producto.recargoLogisticoUsd || 0) * it.cantidad,
     0
   );
-  const tarifaHoraExacta = configLogistica.recargoHoraExacta ?? 10;
 
   const tieneUbicacionDomicilioConfirmada = Boolean(
     esRetiroEnTienda ||

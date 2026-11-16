@@ -16,7 +16,8 @@
     "./ride-sri": "./src/ride-sri.ts",
     "./pdf-proforma": "./src/pdf-proforma.ts",
     "./logistica": "./src/logistica.ts",
-    "./plux": "./src/plux.ts"
+    "./plux": "./src/plux.ts",
+    "./periodo-derecho": "./src/utils/periodoDerecho.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
