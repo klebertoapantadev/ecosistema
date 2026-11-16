@@ -10,7 +10,7 @@ import { CampanaNotificaciones } from '@eco/notificaciones';
 import { useCarrito } from '../contexto-carrito';
 import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from '../datos-catalogo';
 import { expandirProductosVitrina, obtenerCategoriasVisibles } from '../filtrado-catalogo';
-import { ShoppingBag, Feather, FileText, Gift, Menu, X, User, MapPin } from 'lucide-react';
+import { ShoppingBag, Feather, FileText, Menu, X, User, MapPin } from 'lucide-react';
 
 export function EncabezadoEcommerce() {
   const {
@@ -91,70 +91,6 @@ export function EncabezadoEcommerce() {
           </a>
         </div>
       </div>
-
-      {/* Anuncio de regalo en primera compra para clientes registrados */}
-      {(!estadoRegalo || !estadoRegalo.autenticado || estadoRegalo.aplicaRegalo) && (
-        <div
-          className="barra-regalo-anuncio"
-          style={{
-            background:
-              estadoRegalo?.autenticado && estadoRegalo.aplicaRegalo
-                ? 'linear-gradient(90deg, #065F46 0%, #047857 100%)'
-                : 'linear-gradient(90deg, #9D174D 0%, #BE185D 55%, #9D174D 100%)',
-            color: '#FFFFFF',
-            padding: '7px 16px',
-            fontSize: '0.8rem',
-            lineHeight: 1.35,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexWrap: 'wrap',
-            gap: '10px',
-            textAlign: 'center',
-          }}
-        >
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              fontWeight: 600,
-            }}
-          >
-            <Gift size={15} style={{ flexShrink: 0, color: '#FDE68A' }} />
-            {estadoRegalo?.autenticado && estadoRegalo.aplicaRegalo ? (
-              <span>
-                ¡Beneficio activo! Tu <strong>primera compra</strong> incluye{' '}
-                <strong>1 Bombón de Chocolate Ferrero en Esfera GRATIS</strong>
-              </span>
-            ) : (
-              <span>
-                ¡Regalo de bienvenida! <strong>Regístrate</strong> y recibe{' '}
-                <strong>1 Bombón de Chocolate en Esfera GRATIS</strong> en tu primera compra
-              </span>
-            )}
-          </span>
-          {!estadoRegalo?.autenticado && (
-            <Link
-              href="/registro?destino=/"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '3px 11px',
-                borderRadius: '999px',
-                backgroundColor: '#FDE68A',
-                color: '#831843',
-                fontWeight: 700,
-                fontSize: '0.74rem',
-                textDecoration: 'none',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              Registrarme gratis →
-            </Link>
-          )}
-        </div>
-      )}
 
       <div className="contenedor-cabecera-principal">
         <div className="cabecera-marca-y-menu">

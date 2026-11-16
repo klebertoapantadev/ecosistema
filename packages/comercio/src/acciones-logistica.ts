@@ -607,6 +607,8 @@ export interface EntradaPedidoTienda {
     sku: string;
     nombre: string;
     valorReferencia: number;
+    imagenUrl?: string;
+    productoId?: string;
   } | null;
   comprobanteTransferencia?: ComprobanteTransferenciaSubido | null;
   conversacionWebId?: string;
@@ -688,6 +690,8 @@ export interface PedidoTiendaRegistrado {
     sku: string;
     nombre: string;
     valorReferencia: number;
+    imagenUrl?: string;
+    productoId?: string;
   } | null;
   comprobanteTransferencia?: ComprobanteTransferenciaSubido | null;
   conversacionWebId?: string;
@@ -719,6 +723,8 @@ const esquemaPedidoTienda = z.object({
       sku: z.string().min(1),
       nombre: z.string().min(1),
       valorReferencia: z.number().min(0),
+      imagenUrl: z.string().optional(),
+      productoId: z.string().optional(),
     })
     .nullable()
     .optional(),
@@ -1050,6 +1056,63 @@ export async function registrarPedidoTiendaAction(
     telefono: telIngresado,
   };
 
+  // Si el comprador está registrado y aceptó la promoción de bienvenida en primera compra,
+  // verificar elegibilidad y agregar el ítem extra con valor $0.00 directamente al pedido.
+  let regaloVerificadoOrden: EstadoRegaloPrimeraCompra["regalo"] | null = null;
+  if (esUsuarioRegistradoNegocio && entrada.regaloPrimeraCompra) {
+    try {
+      const estadoRegaloSrv = await obtenerEstadoRegaloPrimeraCompraAction(negNorm);
+      if (estadoRegaloSrv.autenticado && estadoRegaloSrv.aplicaRegalo) {
+        regaloVerificadoOrden = {
+          sku: entrada.regaloPrimeraCompra.sku || estadoRegaloSrv.regalo.sku,
+          nombre: entrada.regaloPrimeraCompra.nombre || estadoRegaloSrv.regalo.nombre,
+          valorReferencia:
+            entrada.regaloPrimeraCompra.valorReferencia ??
+            estadoRegaloSrv.regalo.valorReferencia,
+          imagenUrl:
+            entrada.regaloPrimeraCompra.imagenUrl || estadoRegaloSrv.regalo.imagenUrl,
+          productoId:
+            entrada.regaloPrimeraCompra.productoId || estadoRegaloSrv.regalo.productoId,
+        };
+      }
+    } catch {
+      regaloVerificadoOrden = {
+        sku: entrada.regaloPrimeraCompra.sku,
+        nombre: entrada.regaloPrimeraCompra.nombre,
+        valorReferencia: entrada.regaloPrimeraCompra.valorReferencia,
+        imagenUrl:
+          entrada.regaloPrimeraCompra.imagenUrl ||
+          URL_IMAGEN_REGALO_BIENVENIDA_TINKAY,
+        productoId: entrada.regaloPrimeraCompra.productoId,
+      };
+    }
+
+    if (
+      regaloVerificadoOrden &&
+      !itemsEnriquecidos.some(
+        (it) =>
+          Number(it.precio_unitario) === 0 &&
+          String(it.variante_sku || "").toUpperCase() ===
+            regaloVerificadoOrden!.sku.toUpperCase()
+      )
+    ) {
+      itemsEnriquecidos.push({
+        producto_id:
+          regaloVerificadoOrden.productoId || "obsequio-registro-primera-compra",
+        descripcion: `${regaloVerificadoOrden.nombre} (Extra por registro y primera compra)`,
+        producto_nombre: regaloVerificadoOrden.nombre,
+        variante_sku: regaloVerificadoOrden.sku,
+        variante_nombre: "Extra por registro y primera compra",
+        cantidad: 1,
+        precio_unitario: 0,
+        impuesto: "IVA_0",
+        total_linea: 0,
+        dedicatoria: null,
+        entrega_individual: null,
+      });
+    }
+  }
+
   const payloadCompleto = {
     tipo_origen: "PEDIDO_TIENDA",
     estado: estadoInicial,
@@ -1092,13 +1155,15 @@ export async function registrarPedidoTiendaAction(
     ...payloadCompleto,
     tipo_comprador: esUsuarioRegistradoNegocio ? "USUARIO_REGISTRADO" : "USUARIO_NO_AUTORIZADO",
     usuario_autorizado: esUsuarioRegistradoNegocio,
-    ...(esUsuarioRegistradoNegocio && entrada.regaloPrimeraCompra
+    ...(regaloVerificadoOrden
       ? {
           regalo_primera_compra: {
-            sku: entrada.regaloPrimeraCompra.sku,
-            nombre: entrada.regaloPrimeraCompra.nombre,
-            valor_referencia: entrada.regaloPrimeraCompra.valorReferencia,
+            sku: regaloVerificadoOrden.sku,
+            nombre: regaloVerificadoOrden.nombre,
+            valor_referencia: regaloVerificadoOrden.valorReferencia,
+            imagen_url: regaloVerificadoOrden.imagenUrl,
             precio_cobrado: 0,
+            motivo: "REGISTRO_Y_PRIMERA_COMPRA",
           },
         }
       : {}),
@@ -3725,6 +3790,9 @@ export async function obtenerMisProformasEventoAction(
   return { ok: true, proformas };
 }
 
+const URL_IMAGEN_REGALO_BIENVENIDA_TINKAY =
+  "https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/tinkay/portadas/1793008388305-bouquet_rojo_recostado_esferas_ferrero.jpg";
+
 export interface EstadoRegaloPrimeraCompra {
   autenticado: boolean;
   aplicaRegalo: boolean;
@@ -3732,26 +3800,63 @@ export interface EstadoRegaloPrimeraCompra {
     sku: string;
     nombre: string;
     valorReferencia: number;
+    imagenUrl: string;
+    productoId?: string;
   };
 }
 
 /**
- * Verifica si el usuario actual está registrado y califica para recibir el regalo
- * de primera compra (Bombón Ferrero x1 en Esfera Acrílica sin costo adicional).
+ * Verifica si el usuario actual está registrado en el negocio y califica para recibir el obsequio
+ * de primera compra (Bombón Ferrero x1 en Esfera Acrílica sin costo adicional, resuelto desde catálogo).
  */
 export async function obtenerEstadoRegaloPrimeraCompraAction(
   negocio = "tinkay"
 ): Promise<EstadoRegaloPrimeraCompra> {
   const negNorm = (negocio || "tinkay").trim().toLowerCase();
-  const regaloPorDefecto = {
-    sku: "TIN-VAR-6",
+  const regaloPorDefecto: EstadoRegaloPrimeraCompra["regalo"] = {
+    sku: "TIN-VAR-4",
     nombre: "Bombón Ferrero x1 en Esfera Acrílica",
     valorReferencia: 1.5,
+    imagenUrl: URL_IMAGEN_REGALO_BIENVENIDA_TINKAY,
   };
 
   try {
     const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
     const supabase = await crearClienteServidor();
+    const db: any = crearClienteAdmin() ?? supabase;
+
+    // 1. Resolver metadatos e imagen real del producto de promoción desde comun_comercio.com_variante
+    let regaloResuelto: EstadoRegaloPrimeraCompra["regalo"] = { ...regaloPorDefecto };
+    try {
+      const { data: varGift } = await db
+        .schema("comun_comercio")
+        .from("com_variante")
+        .select("var_id, var_producto_id, var_sku, var_nombre, var_precio, var_detalle_variante")
+        .eq("var_negocio", negNorm)
+        .eq("var_activo", true)
+        .is("var_eliminado_en", null)
+        .or("var_sku.eq.TIN-VAR-4,var_nombre.ilike.%esfera%")
+        .limit(1)
+        .maybeSingle();
+
+      if (varGift) {
+        const detVar = (varGift.var_detalle_variante ?? {}) as Record<string, unknown>;
+        const portadaVar =
+          typeof detVar.portada_url === "string" && detVar.portada_url.trim().length > 0
+            ? detVar.portada_url.trim()
+            : regaloPorDefecto.imagenUrl;
+        regaloResuelto = {
+          sku: String(varGift.var_sku || regaloPorDefecto.sku),
+          nombre: String(varGift.var_nombre || regaloPorDefecto.nombre),
+          valorReferencia: Number(varGift.var_precio ?? regaloPorDefecto.valorReferencia),
+          imagenUrl: portadaVar,
+          productoId: varGift.var_producto_id ? String(varGift.var_producto_id) : undefined,
+        };
+      }
+    } catch {
+      // Mantener valores por defecto si la consulta de variante falla
+    }
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -3760,7 +3865,49 @@ export async function obtenerEstadoRegaloPrimeraCompraAction(
       return {
         autenticado: false,
         aplicaRegalo: false,
-        regalo: regaloPorDefecto,
+        regalo: regaloResuelto,
+      };
+    }
+
+    // Verificar membresía activa en el negocio específico (aislamiento multinegocio)
+    const aliasNeg =
+      negNorm === "tinkay"
+        ? ["TNK", "TINKAY", "tinkay", "tnk"]
+        : negNorm === "margaritas"
+        ? ["MRG", "MARGARITAS", "margaritas", "mrg"]
+        : negNorm === "fastfix"
+        ? ["FFH", "FASTFIX", "fastfix", "ffh"]
+        : ["TRQ", "TRANQ", "TRANQI", "LEGAL", "tranqi"];
+
+    let tieneMembresiaNegocio = false;
+    try {
+      const [{ data: mem }, { data: usu }] = await Promise.all([
+        db
+          .schema("comun_seguridad")
+          .from("seg_membresia")
+          .select("mem_id")
+          .eq("mem_usuario_id", user.id)
+          .in("mem_negocio", aliasNeg)
+          .eq("mem_estado", "ACTIVO")
+          .limit(1)
+          .maybeSingle(),
+        db
+          .schema("comun_seguridad")
+          .from("seg_usuario")
+          .select("usu_superadmin_plataforma")
+          .eq("usu_id", user.id)
+          .maybeSingle(),
+      ]);
+      tieneMembresiaNegocio = Boolean(mem?.mem_id || usu?.usu_superadmin_plataforma);
+    } catch {
+      tieneMembresiaNegocio = true;
+    }
+
+    if (!tieneMembresiaNegocio) {
+      return {
+        autenticado: false,
+        aplicaRegalo: false,
+        regalo: regaloResuelto,
       };
     }
 
@@ -3769,19 +3916,29 @@ export async function obtenerEstadoRegaloPrimeraCompraAction(
       .rpc("com_fn_verificar_primera_compra_usuario", { p_negocio: negNorm });
 
     if (!error && data && typeof data.aplica_regalo === "boolean") {
+      const skuRpc = String(data.regalo?.sku || "");
+      const skuFinal =
+        skuRpc && skuRpc !== "TIN-VAR-6" ? skuRpc : regaloResuelto.sku;
+      const imgRpc =
+        typeof data.regalo?.imagen_url === "string" && data.regalo.imagen_url.trim().length > 0
+          ? data.regalo.imagen_url.trim()
+          : regaloResuelto.imagenUrl;
       return {
-        autenticado: Boolean(data.autenticado),
+        autenticado: true,
         aplicaRegalo: Boolean(data.aplica_regalo),
         regalo: {
-          sku: String(data.regalo?.sku || regaloPorDefecto.sku),
-          nombre: String(data.regalo?.nombre || regaloPorDefecto.nombre),
-          valorReferencia: Number(data.regalo?.valor_referencia ?? regaloPorDefecto.valorReferencia),
+          sku: skuFinal,
+          nombre: String(data.regalo?.nombre || regaloResuelto.nombre),
+          valorReferencia: Number(
+            data.regalo?.valor_referencia ?? regaloResuelto.valorReferencia
+          ),
+          imagenUrl: imgRpc,
+          productoId: regaloResuelto.productoId,
         },
       };
     }
 
     // Respaldo si el RPC aún no está en caché
-    const db: any = crearClienteAdmin() ?? supabase;
     const { count } = await db
       .schema("comun_comercio")
       .from("com_proforma")
@@ -3794,7 +3951,7 @@ export async function obtenerEstadoRegaloPrimeraCompraAction(
     return {
       autenticado: true,
       aplicaRegalo: (count ?? 0) === 0,
-      regalo: regaloPorDefecto,
+      regalo: regaloResuelto,
     };
   } catch {
     return {

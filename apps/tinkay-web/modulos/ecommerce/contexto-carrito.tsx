@@ -431,9 +431,13 @@ export function ProveedorCarrito({
   useEffect(() => {
     try {
       const guardado = localStorage.getItem(CLAVE_LOCALSTORAGE);
+      let tieneItemsGuardados = false;
       if (guardado) {
         const parsed = JSON.parse(guardado);
-        if (Array.isArray(parsed.items)) setItems(parsed.items);
+        if (Array.isArray(parsed.items)) {
+          setItems(parsed.items);
+          tieneItemsGuardados = parsed.items.length > 0;
+        }
         if (parsed.modalidadEntrega) setModalidadEntrega(parsed.modalidadEntrega);
         if (parsed.entregaUnificada) setEntregaUnificada(parsed.entregaUnificada);
       }
@@ -450,9 +454,26 @@ export function ProveedorCarrito({
       }
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
+        let cambioUrl = false;
         if (params.get('proforma') === 'abierta') {
           setDrawerProformaAbierto(true);
           params.delete('proforma');
+          cambioUrl = true;
+        }
+        if (params.get('obsequio') === '1') {
+          localStorage.setItem('tinkay_obsequio_bienvenida_aceptado', '1');
+          params.delete('obsequio');
+          cambioUrl = true;
+        }
+        if (params.get('checkout') === '1' || params.get('checkout') === 'abierto') {
+          if (tieneItemsGuardados) {
+            setDrawerAbiertoInterno(false);
+            setCheckoutAbierto(true);
+          }
+          params.delete('checkout');
+          cambioUrl = true;
+        }
+        if (cambioUrl) {
           const nuevaQuery = params.toString();
           const limpia = `${window.location.pathname}${nuevaQuery ? `?${nuevaQuery}` : ''}${window.location.hash}`;
           window.history.replaceState(null, '', limpia);

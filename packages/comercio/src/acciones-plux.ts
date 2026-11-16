@@ -1381,7 +1381,10 @@ export async function confirmarPagoPluxAction(entrada: {
             "",
         },
         p_monto_confirmado: montoConfirmado,
-        p_incluye_regalo: Boolean(detPrevio.regalo_primera_compra),
+        p_incluye_regalo: Boolean(
+          detPrevio.regalo_primera_compra ||
+            ordenFirmada?.itm?.some((i) => Number(i.pun) === 0)
+        ),
       });
     } catch {
       // Continuar si la migración com_cliente aún no fue aplicada en remoto

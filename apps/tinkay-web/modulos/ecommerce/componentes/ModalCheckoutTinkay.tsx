@@ -151,6 +151,9 @@ export function ModalCheckoutTinkay() {
   } | null>(null);
   const [estadoRegalo, setEstadoRegalo] = useState<EstadoRegaloPrimeraCompra | null>(null);
   const [usuarioRegistradoTinkay, setUsuarioRegistradoTinkay] = useState<boolean>(false);
+  const [verificandoEstadoCuenta, setVerificandoEstadoCuenta] = useState<boolean>(true);
+  const [omitirInvitacionRegistro, setOmitirInvitacionRegistro] = useState<boolean>(false);
+  const [aceptoObsequioBienvenida, setAceptoObsequioBienvenida] = useState<boolean>(true);
   const [deseaFacturaConDatos, setDeseaFacturaConDatos] = useState<boolean>(false);
   const [mostrarMapaEntrega, setMostrarMapaEntrega] = useState<boolean>(false);
   const [datoCopiado, setDatoCopiado] = useState<string | null>(null);
@@ -164,6 +167,8 @@ export function ModalCheckoutTinkay() {
     totalPagado: number;
     entregaTexto: string;
     esTransferencia?: boolean;
+    incluyoObsequio?: boolean;
+    nombreObsequio?: string;
     autorizacionPlux?: string | null;
     facturaElectronica?: FacturaElectronicaResumen | null;
     emisorFactura?: ConfiguracionEmisorSri | null;
@@ -188,6 +193,13 @@ export function ModalCheckoutTinkay() {
   useEffect(() => {
     if (!checkoutAbierto) return;
     let cancelado = false;
+    setVerificandoEstadoCuenta(true);
+    setOmitirInvitacionRegistro(false);
+
+    if (typeof window !== 'undefined') {
+      const prefGuardada = window.localStorage.getItem('tinkay_obsequio_bienvenida_aceptado');
+      setAceptoObsequioBienvenida(prefGuardada !== '0');
+    }
 
     obtenerConfiguracionTiendaCheckoutAction('tinkay')
       .then((cfg) => {
@@ -209,21 +221,25 @@ export function ModalCheckoutTinkay() {
       })
       .catch(() => {});
 
-    obtenerEstadoRegaloPrimeraCompraAction('tinkay')
-      .then((res) => {
-        if (!cancelado) setEstadoRegalo(res);
-      })
-      .catch(() => {});
-
-    // Verificar si el cliente está registrado con membresía activa en Tinkay
+    // Verificar estado de registro en Tinkay + elegibilidad e imagen real del obsequio de bienvenida
     (async () => {
       try {
         const supabase = crearClienteNavegador();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+        const [resRegalo, authRes] = await Promise.all([
+          obtenerEstadoRegaloPrimeraCompraAction('tinkay').catch(() => null),
+          supabase.auth.getUser(),
+        ]);
+
+        if (!cancelado && resRegalo) {
+          setEstadoRegalo(resRegalo);
+        }
+
+        const user = authRes.data?.user;
         if (!user || cancelado) {
-          if (!cancelado) setUsuarioRegistradoTinkay(false);
+          if (!cancelado) {
+            setUsuarioRegistradoTinkay(false);
+            setVerificandoEstadoCuenta(false);
+          }
           return;
         }
         const codigos = codigosNegocio('tinkay');
@@ -248,7 +264,7 @@ export function ModalCheckoutTinkay() {
         ]);
 
         if (cancelado) return;
-        const tieneMembresia = Boolean(memTinkay);
+        const tieneMembresia = Boolean(memTinkay || perfilRaw?.usu_superadmin_plataforma);
         setUsuarioRegistradoTinkay(tieneMembresia);
 
         if (tieneMembresia && perfilRaw) {
@@ -278,6 +294,8 @@ export function ModalCheckoutTinkay() {
         }
       } catch {
         if (!cancelado) setUsuarioRegistradoTinkay(false);
+      } finally {
+        if (!cancelado) setVerificandoEstadoCuenta(false);
       }
     })();
 
@@ -343,6 +361,24 @@ export function ModalCheckoutTinkay() {
       (entregaUnificada.direccion && entregaUnificada.direccion.trim().length >= 5)
   );
 
+  const datosObsequio = useMemo(
+    () =>
+      estadoRegalo?.regalo ?? {
+        sku: 'TIN-VAR-4',
+        nombre: 'Bombón Ferrero x1 en Esfera Acrílica',
+        valorReferencia: 1.5,
+        imagenUrl:
+          'https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/tinkay/portadas/1793008388305-bouquet_rojo_recostado_esferas_ferrero.jpg',
+      },
+    [estadoRegalo]
+  );
+
+  const incluyeExtraObsequio = Boolean(
+    usuarioRegistradoTinkay && estadoRegalo?.aplicaRegalo && aceptoObsequioBienvenida
+  );
+  const mostrarInvitacionObsequio =
+    !verificandoEstadoCuenta && !usuarioRegistradoTinkay && !omitirInvitacionRegistro;
+
   const huellaActual = useMemo(
     () =>
       JSON.stringify({
@@ -353,8 +389,16 @@ export function ModalCheckoutTinkay() {
         retiro: esRetiroEnTienda,
         total: Math.round(totalPagar * 100),
         itemsLen: items.length,
+        obsequio: incluyeExtraObsequio,
       }),
-    [datosFactura, telefonoNormalizado, esRetiroEnTienda, totalPagar, items.length]
+    [
+      datosFactura,
+      telefonoNormalizado,
+      esRetiroEnTienda,
+      totalPagar,
+      items.length,
+      incluyeExtraObsequio,
+    ]
   );
 
   useEffect(() => {
@@ -476,8 +520,7 @@ export function ModalCheckoutTinkay() {
       totalFlete,
       totalRecargoHorarioExacto,
       totalPagar,
-      regaloPrimeraCompra:
-        estadoRegalo?.autenticado && estadoRegalo.aplicaRegalo ? estadoRegalo.regalo : null,
+      regaloPrimeraCompra: incluyeExtraObsequio ? datosObsequio : null,
       conversacionWebId:
         typeof window !== 'undefined'
           ? window.localStorage.getItem('eco_chat_conv_tinkay') || undefined
@@ -632,11 +675,14 @@ export function ModalCheckoutTinkay() {
       totalPagado: totalPagar,
       entregaTexto: entregaTextoConfirmado,
       esTransferencia: true,
+      incluyoObsequio: incluyeExtraObsequio,
+      nombreObsequio: incluyeExtraObsequio ? datosObsequio.nombre : undefined,
     });
     setCodigoOrdenGenerado(resultado.codigoOrden);
     setPaso('exito');
     vaciarCarrito();
     if (typeof window !== 'undefined') {
+      window.localStorage.removeItem('tinkay_obsequio_bienvenida_aceptado');
       window.dispatchEvent(new CustomEvent('eco:refrescar-notificaciones'));
     }
   };
@@ -733,6 +779,14 @@ export function ModalCheckoutTinkay() {
                 <span>Modalidad:</span>
                 <span>{resumenExito?.entregaTexto || 'Registrada'}</span>
               </div>
+              {resumenExito?.incluyoObsequio && (
+                <div className="fila-resumen-c">
+                  <span>Obsequio de bienvenida:</span>
+                  <strong style={{ color: '#059669' }}>
+                    1x {resumenExito.nombreObsequio || datosObsequio.nombre} ($0.00)
+                  </strong>
+                </div>
+              )}
             </div>
 
             {resumenExito?.esTransferencia && (
@@ -932,7 +986,247 @@ export function ModalCheckoutTinkay() {
           </div>
         )}
 
-        {paso === 'formulario' && (
+        {paso === 'formulario' && verificandoEstadoCuenta && (
+          <div className="pantalla-procesando-pago">
+            <div className="spinner-botanico" />
+            <h3>Preparando tu caja de pago...</h3>
+            <p>Verificando beneficios de tu cuenta en Tinkay Floristería.</p>
+          </div>
+        )}
+
+        {paso === 'formulario' && mostrarInvitacionObsequio && (
+          <div
+            style={{
+              padding: '32px 26px',
+              maxWidth: '540px',
+              margin: '0 auto',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              gap: '16px',
+            }}
+          >
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '5px 13px',
+                borderRadius: '999px',
+                background: '#FEF3C7',
+                border: '1px solid #FCD34D',
+                color: '#92400E',
+                fontSize: '0.75rem',
+                fontWeight: 800,
+              }}
+            >
+              <AlertTriangle size={14} />
+              <span>Aún no estás registrado en Tinkay</span>
+            </div>
+
+            <div>
+              <h2
+                style={{
+                  margin: '0 0 6px 0',
+                  fontSize: '1.38rem',
+                  lineHeight: 1.25,
+                  color: '#1F2937',
+                }}
+              >
+                ¡Recibe un Obsequio de Bienvenida en tu compra!
+              </h2>
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: '0.88rem',
+                  lineHeight: 1.5,
+                  color: '#4B5563',
+                }}
+              >
+                Regístrate ahora para completar tu primera compra y agregaremos{' '}
+                <strong>sin costo ($0.00)</strong> este extra promocional a tu pedido:
+              </p>
+            </div>
+
+            <div
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '16px',
+                padding: '14px',
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, #FDF2F8 0%, #FFFBEB 100%)',
+                border: '1.5px solid #FBCFE8',
+                textAlign: 'left',
+                boxShadow: '0 8px 20px -8px rgba(157, 23, 77, 0.18)',
+              }}
+            >
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <img
+                  src={datosObsequio.imagenUrl}
+                  alt={datosObsequio.nombre}
+                  style={{
+                    width: '104px',
+                    height: '104px',
+                    borderRadius: '12px',
+                    objectFit: 'cover',
+                    display: 'block',
+                    border: '2px solid #FFFFFF',
+                    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
+                  }}
+                />
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: '-6px',
+                    left: '-6px',
+                    padding: '2px 8px',
+                    borderRadius: '999px',
+                    background: '#BE185D',
+                    color: '#FFFFFF',
+                    fontSize: '0.66rem',
+                    fontWeight: 800,
+                    letterSpacing: '0.03em',
+                  }}
+                >
+                  PROMOCIÓN
+                </span>
+              </div>
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    color: '#9D174D',
+                    marginBottom: '3px',
+                  }}
+                >
+                  <Gift size={13} />
+                  <span>Extra por registro y 1ra compra</span>
+                </div>
+                <strong
+                  style={{
+                    display: 'block',
+                    fontSize: '1rem',
+                    color: '#111827',
+                    lineHeight: 1.3,
+                    marginBottom: '6px',
+                  }}
+                >
+                  {datosObsequio.nombre}
+                </strong>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap' }}>
+                  <span
+                    style={{
+                      fontSize: '0.8rem',
+                      color: '#9CA3AF',
+                      textDecoration: 'line-through',
+                    }}
+                  >
+                    ${datosObsequio.valorReferencia.toFixed(2)} USD
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '1.05rem',
+                      fontWeight: 800,
+                      color: '#059669',
+                    }}
+                  >
+                    $0.00 GRATIS
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div
+              style={{
+                width: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                marginTop: '4px',
+              }}
+            >
+              <Link
+                href="/registro?destino=%2F%3Fcheckout%3D1%26obsequio%3D1&obsequio=1"
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.localStorage.setItem('tinkay_obsequio_bienvenida_aceptado', '1');
+                    document.cookie = `tranqi_destino=${encodeURIComponent(
+                      '/?checkout=1&obsequio=1'
+                    )}; path=/; max-age=86400`;
+                  }
+                }}
+                title="Aceptar promoción, registrarme y agregar el obsequio con valor $0.00 a mi pedido"
+                aria-label="Aceptar Obsequio"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  width: '100%',
+                  padding: '13px 18px',
+                  borderRadius: '999px',
+                  background: 'linear-gradient(90deg, #9D174D 0%, #BE185D 100%)',
+                  color: '#FFFFFF',
+                  fontSize: '0.92rem',
+                  fontWeight: 800,
+                  textDecoration: 'none',
+                  boxShadow: '0 6px 16px -4px rgba(190, 24, 93, 0.4)',
+                }}
+              >
+                <Gift size={17} />
+                <span>Aceptar Obsequio</span>
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => setOmitirInvitacionRegistro(true)}
+                title="Continuar al pago como invitado sin registrarme ni agregar el obsequio"
+                aria-label="Pagar sin Registro"
+                style={{
+                  width: '100%',
+                  padding: '11px 16px',
+                  borderRadius: '999px',
+                  border: '1px solid #CBD5E1',
+                  background: '#FFFFFF',
+                  color: '#334155',
+                  fontSize: '0.84rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Pagar sin Registro
+              </button>
+
+              <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '2px' }}>
+                ¿Ya tienes cuenta en Tinkay?{' '}
+                <Link
+                  href="/ingresar?destino=%2F%3Fcheckout%3D1%26obsequio%3D1"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      window.localStorage.setItem('tinkay_obsequio_bienvenida_aceptado', '1');
+                      document.cookie = `tranqi_destino=${encodeURIComponent(
+                        '/?checkout=1&obsequio=1'
+                      )}; path=/; max-age=86400`;
+                    }
+                  }}
+                  style={{ color: '#2D4734', fontWeight: 700, textDecoration: 'underline' }}
+                >
+                  Ingresar aquí
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {paso === 'formulario' && !verificandoEstadoCuenta && !mostrarInvitacionObsequio && (
           <div className="grid-checkout-pasos">
             {/* Columna Izquierda: Entrega, Contacto/Factura y Pago */}
             <div className="columna-formulario-pago">
@@ -1523,6 +1817,8 @@ export function ModalCheckoutTinkay() {
                               totalPagado: totalPagar,
                               entregaTexto: entregaTextoConfirmado,
                               esTransferencia: false,
+                              incluyoObsequio: incluyeExtraObsequio,
+                              nombreObsequio: incluyeExtraObsequio ? datosObsequio.nombre : undefined,
                               autorizacionPlux: pago.autorizacion,
                               facturaElectronica: pago.facturaElectronica || null,
                               emisorFactura: pago.emisorFactura || emisorNegocio,
@@ -1531,6 +1827,7 @@ export function ModalCheckoutTinkay() {
                             setPaso('exito');
                             vaciarCarrito();
                             if (typeof window !== 'undefined') {
+                              window.localStorage.removeItem('tinkay_obsequio_bienvenida_aceptado');
                               window.dispatchEvent(new CustomEvent('eco:refrescar-notificaciones'));
                             }
                           }}
@@ -1882,6 +2179,47 @@ export function ModalCheckoutTinkay() {
                     </span>
                   </div>
                 ))}
+
+                {incluyeExtraObsequio && (
+                  <div
+                    className="item-mini-resumen"
+                    style={{
+                      background: '#ECFDF5',
+                      border: '1px solid #A7F3D0',
+                      borderRadius: '10px',
+                      padding: '8px',
+                    }}
+                  >
+                    <img
+                      src={datosObsequio.imagenUrl}
+                      alt={datosObsequio.nombre}
+                      className="foto-mini-resumen"
+                    />
+                    <div className="info-mini-resumen">
+                      <strong style={{ color: '#065F46' }}>{datosObsequio.nombre}</strong>
+                      <span style={{ color: '#047857', fontWeight: 700, fontSize: '0.73rem' }}>
+                        1x Extra por registro y primera compra
+                      </span>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                      <div
+                        style={{
+                          fontSize: '0.68rem',
+                          color: '#94A3B8',
+                          textDecoration: 'line-through',
+                        }}
+                      >
+                        ${datosObsequio.valorReferencia.toFixed(2)}
+                      </div>
+                      <span
+                        className="precio-mini-resumen"
+                        style={{ color: '#059669', fontWeight: 800 }}
+                      >
+                        $0.00
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div
@@ -1946,43 +2284,98 @@ export function ModalCheckoutTinkay() {
                 <strong>${totalPagar.toFixed(2)} USD</strong>
               </div>
 
-              {estadoRegalo && (!estadoRegalo.autenticado || estadoRegalo.aplicaRegalo) && (
+              {!usuarioRegistradoTinkay && omitirInvitacionRegistro && (
+                <div
+                  style={{
+                    marginTop: '10px',
+                    textAlign: 'center',
+                    fontSize: '0.75rem',
+                    color: '#64748B',
+                  }}
+                >
+                  Comprando como invitado.{' '}
+                  <button
+                    type="button"
+                    onClick={() => setOmitirInvitacionRegistro(false)}
+                    title="Ver promoción de obsequio por registrarme"
+                    aria-label="Ver Obsequio"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      color: '#9D174D',
+                      fontWeight: 700,
+                      textDecoration: 'underline',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem',
+                    }}
+                  >
+                    Ver obsequio de bienvenida
+                  </button>
+                </div>
+              )}
+
+              {usuarioRegistradoTinkay && estadoRegalo?.aplicaRegalo && (
                 <div
                   style={{
                     marginTop: '12px',
                     padding: '10px 12px',
                     borderRadius: '10px',
-                    background: estadoRegalo.autenticado ? '#ECFDF5' : '#FDF2F8',
-                    border: estadoRegalo.autenticado ? '1px solid #A7F3D0' : '1px solid #FBCFE8',
-                    color: estadoRegalo.autenticado ? '#065F46' : '#831843',
-                    fontSize: '0.76rem',
+                    background: incluyeExtraObsequio ? '#ECFDF5' : '#F8FAFC',
+                    border: incluyeExtraObsequio ? '1px solid #A7F3D0' : '1px solid #E2E8F0',
+                    color: incluyeExtraObsequio ? '#065F46' : '#475569',
+                    fontSize: '0.75rem',
                     lineHeight: 1.45,
                     display: 'flex',
-                    alignItems: 'flex-start',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                     gap: '8px',
                   }}
                 >
-                  <Gift size={15} style={{ flexShrink: 0, marginTop: '2px' }} />
-                  <div>
-                    {estadoRegalo.autenticado ? (
-                      <>
-                        <strong>Regalo 1ra Compra incluido:</strong> 1x Bombón de Chocolate Ferrero
-                        en Esfera Acrílica (<strong>GRATIS $0.00</strong>).
-                      </>
-                    ) : (
-                      <>
-                        <strong>¡Regalo de 1ra Compra!</strong>{' '}
-                        <Link
-                          href="/registro?destino=/"
-                          style={{ color: '#9D174D', fontWeight: 700, textDecoration: 'underline' }}
-                        >
-                          Regístrate
-                        </Link>{' '}
-                        y recibe <strong>1 Bombón de Chocolate en Esfera GRATIS</strong>. (No es
-                        obligatorio registrarse para comprar).
-                      </>
-                    )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
+                    <Gift size={15} style={{ flexShrink: 0 }} />
+                    <span>
+                      {incluyeExtraObsequio ? (
+                        <>
+                          <strong>Obsequio agregado ($0.00):</strong> 1x {datosObsequio.nombre}
+                        </>
+                      ) : (
+                        <>Obsequio de bienvenida disponible sin costo</>
+                      )}
+                    </span>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const siguiente = !aceptoObsequioBienvenida;
+                      setAceptoObsequioBienvenida(siguiente);
+                      if (typeof window !== 'undefined') {
+                        window.localStorage.setItem(
+                          'tinkay_obsequio_bienvenida_aceptado',
+                          siguiente ? '1' : '0'
+                        );
+                      }
+                    }}
+                    title={
+                      incluyeExtraObsequio
+                        ? 'Quitar el obsequio gratuito del pedido'
+                        : 'Agregar el obsequio gratuito ($0.00) al pedido'
+                    }
+                    aria-label={incluyeExtraObsequio ? 'Quitar Obsequio' : 'Agregar Obsequio'}
+                    style={{
+                      border: '1px solid currentColor',
+                      background: '#FFFFFF',
+                      color: 'inherit',
+                      borderRadius: '999px',
+                      padding: '3px 9px',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {incluyeExtraObsequio ? 'Quitar' : 'Agregar'}
+                  </button>
                 </div>
               )}
             </div>
