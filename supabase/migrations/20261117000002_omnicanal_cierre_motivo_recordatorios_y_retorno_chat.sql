@@ -239,7 +239,6 @@ begin
   end if;
 
   v_es_admin_etiquetas := comun_seguridad.seg_fn_es_admin_u_operador_etiquetas(v_negocio);
-  perform comun_comercio.com_fn_omnicanal_asegurar_semilla(v_negocio);
 
   select coalesce(jsonb_agg(
     jsonb_build_object(
