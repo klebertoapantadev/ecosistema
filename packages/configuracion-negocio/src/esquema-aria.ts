@@ -18,6 +18,16 @@ export interface ConfiguracionAriaVista {
   tieneTenantKey: boolean;
   tieneGateKey: boolean;
   actualizadoEn: string | null;
+  // Configuración Canal WhatsApp Business (YCloud)
+  ycloudHabilitado?: boolean;
+  ycloudNumeroEmisor?: string;
+  ycloudNumerosPermitidos?: string;
+  whatsappAgenteId?: string;
+  ycloudWebhookToken?: string;
+  respaldoWebhookAriaPrevio?: string;
+  tieneYcloudApiKey?: boolean;
+  tieneYcloudWebhookSecret?: boolean;
+  tieneWhatsappAgenteKey?: boolean;
 }
 
 export const esquemaAria = z.object({

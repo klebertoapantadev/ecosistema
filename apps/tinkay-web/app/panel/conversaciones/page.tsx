@@ -4,7 +4,7 @@ import { ConsolaVentasOmnicanal, obtenerTableroOmnicanalAction } from "@eco/come
 import { obtenerContextoAccesoTinkay } from "../acceso-tinkay";
 
 export const metadata: Metadata = {
-  title: "Ventas y Monitoreo de Chat Web — Tinkay Floristería",
+  title: "Ventas Omnicanal — WhatsApp (YCloud) y Chat Web — Tinkay",
 };
 export const dynamic = "force-dynamic";
 
@@ -42,12 +42,12 @@ export default async function PaginaConversacionesOmnicanalTinkay() {
     >
       <div>
         <h1 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 4px 0", color: "#111827" }}>
-          Centro de Ventas y Monitoreo de Chat Web
+          Centro de Ventas en Vivo — WhatsApp (YCloud) y Chat Web
         </h1>
         <p style={{ margin: 0, fontSize: "13.5px", color: "#6B7280", lineHeight: 1.5 }}>
-          Monitorea en vivo las conversaciones del Chat Web de la tienda, interviene como asesor
-          humano o delega a Mía (ARIA), aplica etiquetas y mensajes predeterminados (<code>/atajos</code>),
-          y vincula cada cliente con sus compras y proformas web (registrados e invitados).
+          Monitorea en tiempo real las conversaciones de <strong>WhatsApp</strong> y <strong>Chat Web</strong>,
+          usa <strong>Tomar Control</strong> para intervenir como asesora humana o delegar a Mía (ARIA),
+          aplica etiquetas y respuestas rápidas (<code>/atajos</code>), e importa el historial previo de ARIA.
         </p>
       </div>
 

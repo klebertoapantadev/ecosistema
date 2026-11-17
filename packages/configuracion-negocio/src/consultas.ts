@@ -8,6 +8,10 @@ interface FilaCfgAria {
   ari_secreto_id: string | null;
   ari_tenant_secreto_id: string | null;
   ari_gate_secreto_id: string | null;
+  ari_ycloud_api_secreto_id?: string | null;
+  ari_ycloud_webhook_secreto_id?: string | null;
+  ari_whatsapp_agente_secreto_id?: string | null;
+  ari_detalle_aria?: Record<string, unknown> | null;
   ari_activo: boolean;
   ari_actualizado_en: string | null;
 }
@@ -52,15 +56,16 @@ export async function obtenerAriaNegocio(negocio: string): Promise<Configuracion
   const { crearClienteServidor } = await import("@eco/supabase/servidor");
   const supabase = await crearClienteServidor();
   const esquemaCfg = supabase.schema("comun_configuracion") as unknown as ConsultaCfgAria;
+  const negNorm = negocio.trim().toLowerCase();
   const { data } = await esquemaCfg
     .from("cfg_aria")
-    .select(
-      "ari_negocio, ari_base_url, ari_agente_id, ari_nombre_agente, ari_secreto_id, ari_tenant_secreto_id, ari_gate_secreto_id, ari_activo, ari_actualizado_en",
-    )
-    .eq("ari_negocio", negocio.trim().toLowerCase())
+    .select("*")
+    .eq("ari_negocio", negNorm)
     .maybeSingle();
 
   if (!data) return null;
+
+  const det = (data.ari_detalle_aria ?? {}) as Record<string, unknown>;
 
   return {
     negocio: data.ari_negocio,
@@ -72,5 +77,31 @@ export async function obtenerAriaNegocio(negocio: string): Promise<Configuracion
     tieneTenantKey: data.ari_tenant_secreto_id != null,
     tieneGateKey: data.ari_gate_secreto_id != null,
     actualizadoEn: data.ari_actualizado_en,
+    ycloudHabilitado: Boolean(det.ycloud_habilitado),
+    ycloudNumeroEmisor:
+      typeof det.ycloud_numero_emisor === "string"
+        ? det.ycloud_numero_emisor
+        : negNorm === "tinkay"
+          ? "+593996438873"
+          : "",
+    ycloudNumerosPermitidos:
+      typeof det.ycloud_numeros_permitidos === "string"
+        ? det.ycloud_numeros_permitidos
+        : negNorm === "tinkay"
+          ? "+593 99 972 7844"
+          : "",
+    whatsappAgenteId:
+      typeof det.whatsapp_agente_id === "string" ? det.whatsapp_agente_id : "",
+    ycloudWebhookToken:
+      typeof det.ycloud_webhook_token === "string" ? det.ycloud_webhook_token : "",
+    respaldoWebhookAriaPrevio:
+      typeof det.respaldo_webhook_aria_previo === "string"
+        ? det.respaldo_webhook_aria_previo
+        : negNorm === "tinkay"
+          ? "https://aria.midomo.site/v1/channels/whatsapp/webhook/c023d946ca1549a5899c6d6faf883ebf"
+          : "",
+    tieneYcloudApiKey: data.ari_ycloud_api_secreto_id != null,
+    tieneYcloudWebhookSecret: data.ari_ycloud_webhook_secreto_id != null,
+    tieneWhatsappAgenteKey: data.ari_whatsapp_agente_secreto_id != null,
   };
 }

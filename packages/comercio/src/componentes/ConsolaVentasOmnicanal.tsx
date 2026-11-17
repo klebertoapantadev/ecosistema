@@ -55,6 +55,7 @@ import {
   guardarRespuestaRapidaOmnicanalAction,
   obtenerMensajesConversacionAction,
   obtenerTableroOmnicanalAction,
+  sincronizarHistorialAriaOmnicanalAction,
   type DatosTableroOmnicanal,
   type PedidoWebConTipoCliente,
 } from "../acciones-omnicanal";
@@ -202,10 +203,13 @@ export function ConsolaVentasOmnicanal({
     }
   );
   const [cargando, setCargando] = useState<boolean>(!datosIniciales);
+  const [importandoHistorialAria, setImportandoHistorialAria] = useState<boolean>(false);
+  const [mensajeInfo, setMensajeInfo] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(errorInicial ?? null);
 
-  // Estado de la Bandeja estilo ManyChat
+  // Estado de la Bandeja estilo ManyChat (WhatsApp YCloud + Chat Web)
   const [filtroIzquierdo, setFiltroIzquierdo] = useState<FiltroBandejaIzquierda>("todos");
+  const [canalFiltro, setCanalFiltro] = useState<"todos" | "whatsapp" | "web">("todos");
   const [etiquetaFiltroId, setEtiquetaFiltroId] = useState<string | null>(null);
   const [vendedorFiltroId, setVendedorFiltroId] = useState<string | null>(null);
   const [soloNoLeidos, setSoloNoLeidos] = useState<boolean>(false);
@@ -471,12 +475,18 @@ export function ConsolaVentasOmnicanal({
           }
           huellasBroadcastVistasRef.current.set(huella, ahoraMs);
 
+          const canalPayload: CanalOmnicanal =
+            payload.canal ||
+            (payload.claveHilo?.startsWith("wa:") ? "whatsapp" : "web");
+
           const origenMsg: MensajeOmnicanal["origen"] =
             payload.fase === "RESPUESTA_ARIA"
               ? "BOT_ARIA"
-              : payload.fase === "EVENTO_ORDEN"
-                ? "SISTEMA"
-                : "CLIENTE";
+              : payload.fase === "INTERVENCION_HUMANA"
+                ? "ASESORA_HUMANA"
+                : payload.fase === "EVENTO_ORDEN"
+                  ? "SISTEMA"
+                  : "CLIENTE";
 
           const nuevoMsg: MensajeOmnicanal = {
             id: payload.eventoId || `rtm-${ahoraMs}`,
@@ -484,10 +494,13 @@ export function ConsolaVentasOmnicanal({
             autorNombre:
               payload.autorNombre ||
               (origenMsg === "BOT_ARIA"
-                ? "ARIA IA"
-                : origenMsg === "SISTEMA"
-                  ? "E-Commerce Web"
-                  : payload.remitenteNombre || "Visitante Web"),
+                ? "Mía · ARIA"
+                : origenMsg === "ASESORA_HUMANA"
+                  ? "Asesor Ventas"
+                  : origenMsg === "SISTEMA"
+                    ? "E-Commerce Web"
+                    : payload.remitenteNombre ||
+                      (canalPayload === "whatsapp" ? "Cliente WhatsApp" : "Visitante Web")),
             contenido: payload.contenido,
             tipoContenido: payload.fase === "EVENTO_ORDEN" ? "ORDEN_WEB" : "TEXTO",
             estadoEntrega: "ENVIADO",
@@ -549,12 +562,14 @@ export function ConsolaVentasOmnicanal({
             const nuevaConv: ConversacionOmnicanal = {
               id: idEfectivo,
               negocio: negNorm,
-              canal: "web",
+              canal: canalPayload,
               claveHilo: payload.claveHilo,
-              remitenteId: payload.claveHilo,
+              remitenteId: payload.remitenteTelefono || payload.claveHilo,
               remitenteNombre:
                 payload.remitenteNombre ||
-                `Visitante Web #${payload.claveHilo.replace(/[^a-zA-Z0-9]/g, "").slice(-4).toUpperCase()}`,
+                (canalPayload === "whatsapp"
+                  ? `WhatsApp ${payload.remitenteTelefono || ""}`.trim()
+                  : `Visitante Web #${payload.claveHilo.replace(/[^a-zA-Z0-9]/g, "").slice(-4).toUpperCase()}`),
               remitenteCorreo: payload.remitenteCorreo ?? null,
               remitenteTelefono: payload.remitenteTelefono ?? null,
               estadoAtencion: payload.estadoAtencion || "BOT_ACTIVO",
@@ -724,7 +739,7 @@ export function ConsolaVentasOmnicanal({
       if (etiquetaFiltroId && !(c.etiquetasIds ?? []).includes(etiquetaFiltroId)) return false;
       if (vendedorFiltroId && c.asesoraAsignadaId !== vendedorFiltroId) return false;
       if (soloNoLeidos && (c.noLeidosAsesora || 0) === 0) return false;
-      if ((c.canal || "web") !== "web") return false;
+      if (canalFiltro !== "todos" && (c.canal || "web") !== canalFiltro) return false;
 
       if (q) {
         const textoBusqueda = [
@@ -750,6 +765,7 @@ export function ConsolaVentasOmnicanal({
     etiquetaFiltroId,
     vendedorFiltroId,
     soloNoLeidos,
+    canalFiltro,
     busquedaInbox,
   ]);
 
@@ -817,6 +833,10 @@ export function ConsolaVentasOmnicanal({
     if (!res.ok) {
       setErrorMsg(res.error);
       return;
+    }
+
+    if (res.avisoWhatsApp) {
+      setErrorMsg(`Aviso de envío WhatsApp: ${res.avisoWhatsApp}`);
     }
 
     setTextoRespuesta("");
@@ -1340,6 +1360,27 @@ export function ConsolaVentasOmnicanal({
     [mapaEtiquetas, negNorm]
   );
 
+  const handleImportarHistorialAria = async () => {
+    setImportandoHistorialAria(true);
+    setErrorMsg(null);
+    setMensajeInfo(null);
+    const res = await sincronizarHistorialAriaOmnicanalAction(negNorm, 100);
+    setImportandoHistorialAria(false);
+
+    if (!res.ok) {
+      setErrorMsg(res.error);
+      return;
+    }
+
+    await recargarTablero(false);
+    setCanalFiltro("todos");
+    setMensajeInfo(
+      res.interaccionesImportadas > 0
+        ? `✅ Se importaron ${res.interaccionesImportadas} mensaje(s) previos desde ARIA (${res.totalConversacionesWhatsApp} chat(s) de WhatsApp en total).`
+        : `Sincronización completada (${res.totalConversacionesWhatsApp} chat(s) de WhatsApp al día).`
+    );
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       {/* Barra Superior de KPIs Rápidos y Conmutador de Módulos */}
@@ -1490,6 +1531,33 @@ export function ConsolaVentasOmnicanal({
           <button
             type="button"
             className="btn-responsive-accion"
+            onClick={() => void handleImportarHistorialAria()}
+            disabled={importandoHistorialAria}
+            title="Importar conversaciones previas de WhatsApp registradas en la consola de ARIA"
+            aria-label="Importar ARIA"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "8px 12px",
+              borderRadius: "9px",
+              border: "1px solid #86EFAC",
+              background: "#F0FDF4",
+              color: "#15803D",
+              fontSize: "0.8rem",
+              fontWeight: 700,
+              cursor: importandoHistorialAria ? "wait" : "pointer",
+            }}
+          >
+            {importandoHistorialAria ? <Loader2 size={14} /> : <Bot size={14} />}
+            <span className="btn-texto-responsive">
+              {importandoHistorialAria ? "Importando…" : "Importar ARIA"}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className="btn-responsive-accion"
             onClick={() => void recargarTablero(false)}
             title="Sincronizar conversaciones, usuarios y compras en tiempo real"
             aria-label="Actualizar"
@@ -1537,6 +1605,39 @@ export function ConsolaVentasOmnicanal({
             Editor de Supabase
             {tablero.avisoMigracionSql ? ` (${tablero.avisoMigracionSql})` : ""}.
           </span>
+        </div>
+      )}
+
+      {mensajeInfo && (
+        <div
+          style={{
+            padding: "10px 14px",
+            borderRadius: "10px",
+            background: "#ECFDF5",
+            border: "1px solid #A7F3D0",
+            color: "#065F46",
+            fontSize: "0.82rem",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <span>{mensajeInfo}</span>
+          <button
+            type="button"
+            onClick={() => setMensajeInfo(null)}
+            title="Cerrar aviso"
+            aria-label="Cerrar aviso"
+            style={{
+              border: "none",
+              background: "transparent",
+              color: "#065F46",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            ✕
+          </button>
         </div>
       )}
 
@@ -2009,24 +2110,49 @@ export function ConsolaVentasOmnicanal({
                   No Leído
                 </button>
 
-                <span
-                  title="Canal activo Fase 1: Chat en vivo desde el portal web"
+                <div
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: "5px",
-                    padding: "4px 9px",
-                    borderRadius: "7px",
-                    border: "1px solid #CCFBF1",
-                    background: "#F0FDFA",
-                    color: "#0F766E",
-                    fontSize: "0.73rem",
-                    fontWeight: 700,
+                    gap: "3px",
                     marginLeft: "auto",
+                    background: "#F1F5F9",
+                    padding: "2px",
+                    borderRadius: "8px",
                   }}
                 >
-                  🌐 Chat Web
-                </span>
+                  {(
+                    [
+                      { id: "todos" as const, texto: "Todos" },
+                      { id: "whatsapp" as const, texto: "📱 WA" },
+                      { id: "web" as const, texto: "🌐 Web" },
+                    ] as const
+                  ).map((op) => {
+                    const act = canalFiltro === op.id;
+                    return (
+                      <button
+                        key={op.id}
+                        type="button"
+                        onClick={() => setCanalFiltro(op.id)}
+                        title={`Filtrar canal: ${op.texto}`}
+                        aria-label={`Canal ${op.texto}`}
+                        style={{
+                          padding: "3px 7px",
+                          borderRadius: "6px",
+                          border: "none",
+                          background: act ? "#FFFFFF" : "transparent",
+                          color: act ? "#0F172A" : "#64748B",
+                          fontSize: "0.71rem",
+                          fontWeight: act ? 800 : 600,
+                          boxShadow: act ? "0 1px 2px rgba(15,23,42,0.08)" : "none",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {op.texto}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 

@@ -201,3 +201,75 @@ export async function probarConexionAria(
   }
 }
 
+export async function guardarWhatsappYcloudAction(
+  datos: {
+    habilitado: boolean;
+    numeroEmisor: string;
+    numerosPermitidos: string;
+    whatsappAgenteId?: string;
+    ycloudApiKey?: string;
+    ycloudWebhookSecret?: string;
+    whatsappAgenteKey?: string;
+    regenerarTokenUrl?: boolean;
+  },
+  negocio: string
+): Promise<
+  Resultado<{
+    webhookToken: string;
+    tieneYcloudApiKey: boolean;
+    tieneWebhookSecret: boolean;
+    tieneWhatsappAgenteKey: boolean;
+  }>
+> {
+  try {
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaCfg = supabase.schema("comun_configuracion") as any;
+    const codigoNegocio = negocio.trim().toLowerCase();
+
+    const { data, error } = await esquemaCfg.rpc("cfg_fn_guardar_whatsapp_ycloud", {
+      p_negocio: codigoNegocio,
+      p_habilitado: Boolean(datos.habilitado),
+      p_numero_emisor: datos.numeroEmisor.trim(),
+      p_numeros_permitidos: datos.numerosPermitidos.trim(),
+      p_whatsapp_agente_id: datos.whatsappAgenteId?.trim() || null,
+      p_ycloud_api_key: datos.ycloudApiKey?.trim() || null,
+      p_ycloud_webhook_secret: datos.ycloudWebhookSecret?.trim() || null,
+      p_whatsapp_agente_key: datos.whatsappAgenteKey?.trim() || null,
+      p_regenerar_token_url: Boolean(datos.regenerarTokenUrl),
+    });
+
+    if (error) {
+      return {
+        ok: false,
+        error: error.message.includes("cfg_fn_guardar_whatsapp_ycloud")
+          ? "Ejecuta primero la migración 20261116000003_omnicanal_whatsapp_ycloud_orquestacion_e_historial.sql en el SQL Editor de Supabase."
+          : error.message,
+      };
+    }
+
+    if (!data?.ok) {
+      return { ok: false, error: String(data?.error || "No se pudo guardar la configuración de YCloud") };
+    }
+
+    revalidatePath("/panel/aria");
+    revalidatePath("/panel/configuracion");
+    revalidatePath("/panel/conversaciones");
+
+    return {
+      ok: true,
+      data: {
+        webhookToken: String(data.webhookToken || ""),
+        tieneYcloudApiKey: Boolean(data.tieneYcloudApiKey),
+        tieneWebhookSecret: Boolean(data.tieneWebhookSecret),
+        tieneWhatsappAgenteKey: Boolean(data.tieneWhatsappAgenteKey),
+      },
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error inesperado guardando canal WhatsApp YCloud",
+    };
+  }
+}
+

@@ -22,7 +22,7 @@ responsable: Kleber Toapanta
 | **`TNK-001`** | **Catálogo y Portafolio Multidimensional de Arreglos** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TNK-002`** | **E-Commerce Web, Separación Vertical (Flores / Renta / Eventos), Proformas Multi-Variación + PDF, Pasarela PLUX y Facturación Electrónica SRI** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TNK-003`** | **Vendedoras, Enlaces Ref y Comisiones Netas** | 🟡 En Desarrollo | **60%** | Kleber Toapanta |
-| **`TNK-004`** | **Agente ARIA WhatsApp (YCloud), Web Chat y Consola (HITL)** | 🟡 En Desarrollo | **98%** | Kleber Toapanta |
+| **`TNK-004`** | **Agente ARIA WhatsApp (YCloud), Web Chat y Consola (HITL)** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TNK-005`** | **Taller de Armado Floral, Inventario IA de Bonches, Galería Entrega Inmediata (1–2h) y Entregas GPS Offline + Informes IESS** | ✅ Implementado | **100%** | Kleber Toapanta |
 
 ---
@@ -85,7 +85,7 @@ Tinkay se apoya plenamente en la arquitectura de Plataforma común:
 - **Agente "Mía":** Asesora floral botánica con prompt especializado, tono refinado, manejo solemne de condolencias, consulta de catálogo vía MCP tool `consultar_catalogo`, generación de enlaces directos a categorías y productos de la tienda vía `obtener_enlaces_tienda` (`url_tienda_categoria`, `url_tienda_producto`, `url_tienda_variante` con apertura interactiva inmediata en el Chat Web y vista previa fotográfica OpenGraph en WhatsApp), cotización exacta de transporte a domicilio vía MCP tool `cotizar_envio_domicilio` (`/api/mcp/catalogo` reutilizable tanto en Web Chat como en WhatsApp YCloud con links de Google/Apple/Waze o pines GPS) y consulta de existencias en vivo de rosas y papel decorativo.
 - **Suministro de Catálogo Conversacional (RPC):** Implementada la función `tinkay_floristeria.tnk_fn_buscar_catalogo_conversacional()` con filtrado multidimensional por ocasión, formato, presupuesto en USD y términos de búsqueda, retornando variantes con PVP y links de Google Photos.
 - **Almacenamiento de Chats:** Persistencia en `comun_agentes.agc_conversacion` y `comun_agentes.agc_mensaje` con Supabase Realtime para la consola de monitoreo.
-- **Consola de Supervisión Humana (HITL):** Widget donde las vendedoras monitorean los chats en vivo, conmutan a modo manual con el botón **[ Tomar Control ]** (silenciando a ARIA) y pueden **[ Reactivar Bot ]** tras resolver la consulta puntual.
+- **Consola de Supervisión Humana (HITL):** Widget donde las vendedoras monitorean los chats en vivo (`Todos / 📱 WhatsApp / 🌐 Chat Web`), conmutan a modo manual con el botón **[ Tomar Control ]** (silenciando a ARIA tanto desde la web como automáticamente si responden desde la app móvil de WhatsApp Business vía `whatsapp.smb.message.echoes`), despachan mensajes salientes a WhatsApp vía `POST https://api.ycloud.com/v2/whatsapp/messages/sendDirectly` con clave cifrada en Supabase Vault (`/panel/aria`), cortan bucles de despedida bot-a-bot, e importan el historial previo desde `/v1/runs` de ARIA (`Importar ARIA`). Respaldo de rollback conservado hacia `https://aria.midomo.site/v1/channels/whatsapp/webhook/c023d946ca1549a5899c6d6faf883ebf`.
 
 ### TNK-005 — Taller de Armado Floral, Inventario de Bonches, Entregas Georreferenciadas (PWA Offline) e Informes IESS
 - **Tablero de Disponibilidad Diaria en 30 Segundos (`TableroDisponibilidadOperativa.tsx`) e Inventario IA (`ConsolaInventarioRosas.tsx`):**

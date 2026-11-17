@@ -1,8 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bot, CheckCircle2, ChevronDown, ChevronUp, KeyRound, Save, Sparkles, Trash2 } from "lucide-react";
-import { borrarClaveAria, guardarAria, probarConexionAria } from "../acciones-aria";
+import {
+  Bot,
+  Check,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Copy,
+  KeyRound,
+  MessageCircle,
+  RotateCcw,
+  Save,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
+import {
+  borrarClaveAria,
+  guardarAria,
+  guardarWhatsappYcloudAction,
+  probarConexionAria,
+} from "../acciones-aria";
 import { URL_ARIA_DEFECTO, type ConfiguracionAriaVista } from "../esquema-aria";
 import {
   estiloAlertaMensaje,
@@ -78,6 +96,48 @@ export function FormularioAria({
   const [tieneApiKey, setTieneApiKey] = useState(inicial?.tieneApiKey ?? false);
   const [tieneTenantKey, setTieneTenantKey] = useState(inicial?.tieneTenantKey ?? false);
   const [tieneGateKey, setTieneGateKey] = useState(inicial?.tieneGateKey ?? false);
+
+  // Estado Canal WhatsApp Business (YCloud)
+  const [ycloudHabilitado, setYcloudHabilitado] = useState<boolean>(
+    inicial?.ycloudHabilitado ?? false
+  );
+  const [ycloudNumeroEmisor, setYcloudNumeroEmisor] = useState<string>(
+    inicial?.ycloudNumeroEmisor || (codigoNegocio === "tinkay" ? "+593996438873" : "")
+  );
+  const [ycloudNumerosPermitidos, setYcloudNumerosPermitidos] = useState<string>(
+    inicial?.ycloudNumerosPermitidos ?? (codigoNegocio === "tinkay" ? "+593 99 972 7844" : "")
+  );
+  const [whatsappAgenteId, setWhatsappAgenteId] = useState<string>(
+    inicial?.whatsappAgenteId ?? ""
+  );
+  const [ycloudApiKey, setYcloudApiKey] = useState<string>("");
+  const [ycloudWebhookSecret, setYcloudWebhookSecret] = useState<string>("");
+  const [whatsappAgenteKey, setWhatsappAgenteKey] = useState<string>("");
+  const [webhookToken, setWebhookToken] = useState<string>(inicial?.ycloudWebhookToken ?? "");
+  const [tieneYcloudApiKey, setTieneYcloudApiKey] = useState<boolean>(
+    inicial?.tieneYcloudApiKey ?? false
+  );
+  const [tieneWebhookSecret, setTieneWebhookSecret] = useState<boolean>(
+    inicial?.tieneYcloudWebhookSecret ?? false
+  );
+  const [tieneWhatsappAgenteKey, setTieneWhatsappAgenteKey] = useState<boolean>(
+    inicial?.tieneWhatsappAgenteKey ?? false
+  );
+  const [mostrarAvanzadasYcloud, setMostrarAvanzadasYcloud] = useState<boolean>(false);
+  const [guardandoYcloud, setGuardandoYcloud] = useState<boolean>(false);
+  const [mensajeYcloud, setMensajeYcloud] = useState<{ tipo: "ok" | "error"; texto: string } | null>(
+    null
+  );
+  const [copiadoTipo, setCopiadoTipo] = useState<"nuevo" | "anterior" | null>(null);
+  const [origenActual, setOrigenActual] = useState<string>(
+    codigoNegocio === "tinkay" ? "https://tinkay-web.vercel.app" : ""
+  );
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location?.origin) {
+      setOrigenActual(window.location.origin.replace(/\/+$/, ""));
+    }
+  }, []);
 
   const [guardando, setGuardando] = useState(false);
   const [probando, setProbando] = useState(false);
@@ -198,7 +258,64 @@ export function FormularioAria({
   const ocupado = guardando || probando || borrando;
   const tonoEstado = tieneApiKey && activo ? "activo" : tieneApiKey ? "guardado" : "pendiente";
 
+  const urlWebhookTinkay = webhookToken
+    ? `${origenActual || "https://tinkay-web.vercel.app"}/api/webhooks/ycloud/${webhookToken}`
+    : "";
+  const urlRespaldoAriaPrevio =
+    inicial?.respaldoWebhookAriaPrevio ||
+    "https://aria.midomo.site/v1/channels/whatsapp/webhook/c023d946ca1549a5899c6d6faf883ebf";
+
+  async function copiarAlPortapapeles(texto: string, tipo: "nuevo" | "anterior") {
+    try {
+      await navigator.clipboard.writeText(texto);
+      setCopiadoTipo(tipo);
+      setTimeout(() => setCopiadoTipo(null), 2200);
+    } catch {
+      // Ignorar
+    }
+  }
+
+  async function alGuardarYcloud(e: React.FormEvent) {
+    e.preventDefault();
+    setMensajeYcloud(null);
+    setGuardandoYcloud(true);
+
+    const res = await guardarWhatsappYcloudAction(
+      {
+        habilitado: ycloudHabilitado,
+        numeroEmisor: ycloudNumeroEmisor,
+        numerosPermitidos: ycloudNumerosPermitidos,
+        whatsappAgenteId,
+        ycloudApiKey,
+        ycloudWebhookSecret,
+        whatsappAgenteKey,
+      },
+      codigoNegocio
+    );
+    setGuardandoYcloud(false);
+
+    if (!res.ok) {
+      setMensajeYcloud({ tipo: "error", texto: res.error });
+      return;
+    }
+
+    if (res.data.webhookToken) setWebhookToken(res.data.webhookToken);
+    setTieneYcloudApiKey(res.data.tieneYcloudApiKey);
+    setTieneWebhookSecret(res.data.tieneWebhookSecret);
+    setTieneWhatsappAgenteKey(res.data.tieneWhatsappAgenteKey);
+    setYcloudApiKey("");
+    setYcloudWebhookSecret("");
+    setWhatsappAgenteKey("");
+    setMensajeYcloud({
+      tipo: "ok",
+      texto: ycloudHabilitado
+        ? "Canal WhatsApp YCloud guardado y habilitado. Copia el Endpoint URL de abajo y pégalo en YCloud."
+        : "Parámetros de WhatsApp YCloud guardados (modo monitoreo pasivo: sin auto-respuesta IA).",
+    });
+  }
+
   return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
     <form onSubmit={alEnviar} style={estiloTarjetaConfig}>
       {/* Cabecera sobria con estado de Vault */}
       <div style={estiloCabeceraTarjeta}>
@@ -532,5 +649,387 @@ export function FormularioAria({
         </button>
       </div>
     </form>
+
+    {/* ========================================================================
+        TARJETA 2: CANAL WHATSAPP BUSINESS (YCLOUD) — ORQUESTACIÓN HITL + ROLLBACK
+    ======================================================================== */}
+    <form onSubmit={alGuardarYcloud} style={estiloTarjetaConfig}>
+      <div style={estiloCabeceraTarjeta}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div
+            style={{
+              ...estiloCajaIconoCabecera,
+              background: "#ECFDF5",
+              color: "#059669",
+              borderColor: "#A7F3D0",
+            }}
+          >
+            <MessageCircle size={19} />
+          </div>
+          <div>
+            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "#111827" }}>
+              Canal WhatsApp Business (YCloud) — Ventas en Vivo & Tomar Control
+            </div>
+            <div style={{ fontSize: "0.82rem", color: "#6B7280", marginTop: "2px" }}>
+              Recibe mensajes de WhatsApp en <code>/panel/conversaciones</code>, responde con Mía (ARIA) y permite intervención humana directa.
+            </div>
+          </div>
+        </div>
+
+        <span
+          style={estiloPastillaEstado(
+            tieneYcloudApiKey && ycloudHabilitado
+              ? "activo"
+              : tieneYcloudApiKey
+                ? "guardado"
+                : "pendiente"
+          )}
+        >
+          <KeyRound size={13} />
+          {tieneYcloudApiKey && ycloudHabilitado
+            ? "WhatsApp Activo"
+            : tieneYcloudApiKey
+              ? "API Key en Vault"
+              : "Pendiente YCloud Key"}
+        </span>
+      </div>
+
+      <div style={estiloCuerpoTarjeta}>
+        {/* URL DEL WEBHOOK A PEGAR EN YCLOUD */}
+        <div
+          style={{
+            padding: "14px 16px",
+            borderRadius: "10px",
+            background: "#F0FDF4",
+            border: "1px solid #86EFAC",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "8px",
+              flexWrap: "wrap",
+            }}
+          >
+            <strong style={{ fontSize: "0.84rem", color: "#14532D" }}>
+              1. Endpoint URL para pegar en YCloud → Developers → Webhooks
+            </strong>
+            {urlWebhookTinkay && (
+              <button
+                type="button"
+                onClick={() => void copiarAlPortapapeles(urlWebhookTinkay, "nuevo")}
+                title="Copiar URL del Webhook de Tinkay"
+                aria-label="Copiar URL"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  padding: "5px 11px",
+                  borderRadius: "8px",
+                  border: "1px solid #16A34A",
+                  background: "#FFFFFF",
+                  color: "#15803D",
+                  fontSize: "0.76rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                {copiadoTipo === "nuevo" ? <Check size={13} /> : <Copy size={13} />}
+                <span>{copiadoTipo === "nuevo" ? "Copiado" : "Copiar URL"}</span>
+              </button>
+            )}
+          </div>
+          <code
+            style={{
+              display: "block",
+              padding: "8px 10px",
+              borderRadius: "7px",
+              background: "#FFFFFF",
+              border: "1px solid #BBF7D0",
+              fontSize: "0.79rem",
+              color: "#0F172A",
+              wordBreak: "break-all",
+            }}
+          >
+            {urlWebhookTinkay ||
+              "Pulsa «Guardar WhatsApp» una vez tras ejecutar la migración SQL para generar tu URL única con token."}
+          </code>
+          <span style={{ fontSize: "0.76rem", color: "#166534" }}>
+            Importante: al activar este webhook en YCloud, apaga el switch <strong>«Habilitado»</strong> del canal <code>Tinkay-YCloud</code> en <code>consola.aria.midomo.site → Canales</code> (no lo borres, solo desactívalo) para que Mía no responda duplicado.
+          </span>
+        </div>
+
+        <div style={estiloGrillaDosColumnas}>
+          <div style={estiloGrupoCampo}>
+            <label style={estiloEtiquetaCampo}>
+              <span>API Key (YCloud)</span>
+              <span style={estiloCodigoBadge}>Vault</span>
+            </label>
+            <input
+              style={estiloInputCampo}
+              type="password"
+              autoComplete="new-password"
+              value={ycloudApiKey}
+              onChange={(e) => setYcloudApiKey(e.target.value)}
+              placeholder={
+                tieneYcloudApiKey
+                  ? "Guardada en Vault — escribe solo para reemplazarla"
+                  : "Pega tu API Key de YCloud (Developers → API key)"
+              }
+            />
+            <span style={estiloTextoAyuda}>
+              Necesaria para enviar respuestas de Mía y de las asesoras al WhatsApp del cliente.
+            </span>
+          </div>
+
+          <div style={estiloGrupoCampo}>
+            <label style={estiloEtiquetaCampo}>
+              <span>Número emisor WhatsApp (E.164)</span>
+            </label>
+            <input
+              style={estiloInputMonoespaciado}
+              type="text"
+              value={ycloudNumeroEmisor}
+              onChange={(e) => setYcloudNumeroEmisor(e.target.value)}
+              placeholder="+593996438873"
+            />
+            <span style={estiloTextoAyuda}>
+              Número oficial conectado en tu cuenta YCloud (ej. +593996438873).
+            </span>
+          </div>
+        </div>
+
+        <div style={estiloGrupoCampo}>
+          <label style={estiloEtiquetaCampo}>
+            <span>Responder automáticamente con Mía (IA) solo a estos números</span>
+          </label>
+          <textarea
+            style={{ ...estiloInputMonoespaciado, minHeight: "64px", resize: "vertical" }}
+            value={ycloudNumerosPermitidos}
+            onChange={(e) => setYcloudNumerosPermitidos(e.target.value)}
+            placeholder="Vacío = responde a todos los clientes. Ej. de prueba: +593 99 972 7844"
+          />
+          <span style={estiloTextoAyuda}>
+            Idéntico al filtro de ARIA: uno por línea o separados por coma. <strong>Vacío = Mía responde a todos.</strong> Los demás números igual aparecerán en vivo en <code>/panel/conversaciones</code> para atención humana sin que la IA dispare respuestas por accidente.
+          </span>
+        </div>
+
+        {/* Acordeón opcional: Agente específico de WhatsApp y Signing Secret */}
+        <div
+          style={{
+            border: "1px solid #E5E7EB",
+            borderRadius: "10px",
+            background: "#FFFFFF",
+            overflow: "hidden",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setMostrarAvanzadasYcloud((v) => !v)}
+            style={{
+              width: "100%",
+              padding: "11px 16px",
+              background: "#FAFAFA",
+              border: "none",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              fontSize: "0.83rem",
+              fontWeight: 600,
+              color: "#374151",
+            }}
+          >
+            <span>
+              Opcional: Agente ARIA separado para WhatsApp (`Mía · Tinkay WhatsApp`) y Endpoint Secret
+            </span>
+            {mostrarAvanzadasYcloud ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+
+          {mostrarAvanzadasYcloud && (
+            <div
+              style={{
+                padding: "16px",
+                borderTop: "1px solid #E5E7EB",
+                display: "flex",
+                flexDirection: "column",
+                gap: "12px",
+              }}
+            >
+              <span style={{ fontSize: "0.78rem", color: "#4B5563" }}>
+                Si en ARIA usas un agente distinto para WhatsApp que para la Web, pega aquí su UUID y su Token; si lo dejas vacío, reutiliza automáticamente el agente principal configurado arriba.
+              </span>
+              <div style={estiloGrillaDosColumnas}>
+                <div style={estiloGrupoCampo}>
+                  <label style={estiloEtiquetaCampo}>
+                    <span>ID Agente ARIA WhatsApp (opcional)</span>
+                  </label>
+                  <input
+                    style={estiloInputMonoespaciado}
+                    value={whatsappAgenteId}
+                    onChange={(e) => setWhatsappAgenteId(e.target.value)}
+                    placeholder="Vacío = usar ARIA_AGENT_ID principal"
+                  />
+                </div>
+
+                <div style={estiloGrupoCampo}>
+                  <label style={estiloEtiquetaCampo}>
+                    <span>Token Agente ARIA WhatsApp (opcional)</span>
+                  </label>
+                  <input
+                    style={estiloInputCampo}
+                    type="password"
+                    autoComplete="new-password"
+                    value={whatsappAgenteKey}
+                    onChange={(e) => setWhatsappAgenteKey(e.target.value)}
+                    placeholder={
+                      tieneWhatsappAgenteKey
+                        ? "Guardado en Vault — escribe para reemplazar"
+                        : "Vacío = usar ARIA_AGENT_KEY principal"
+                    }
+                  />
+                </div>
+              </div>
+
+              <div style={estiloGrupoCampo}>
+                <label style={estiloEtiquetaCampo}>
+                  <span>Endpoint Signing Secret de YCloud (opcional)</span>
+                </label>
+                <input
+                  style={estiloInputCampo}
+                  type="password"
+                  autoComplete="new-password"
+                  value={ycloudWebhookSecret}
+                  onChange={(e) => setYcloudWebhookSecret(e.target.value)}
+                  placeholder={
+                    tieneWebhookSecret
+                      ? "Guardado en Vault — escribe para reemplazar"
+                      : "Opcional (cabecera YCloud-Signature)"
+                  }
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        <label
+          style={{
+            ...estiloCajaToggle,
+            background: ycloudHabilitado ? "#F0FDF4" : "#F9FAFB",
+            borderColor: ycloudHabilitado ? "#BBF7D0" : "#E5E7EB",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={ycloudHabilitado}
+            onChange={(e) => setYcloudHabilitado(e.target.checked)}
+            style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
+          />
+          <div>
+            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#111827" }}>
+              Habilitar respuesta automática de Mía (ARIA) en WhatsApp vía Tinkay
+            </div>
+            <div style={{ fontSize: "0.78rem", color: "#6B7280", marginTop: "2px" }}>
+              Cuando una asesora pulsa «Tomar Control» en una conversación o responde desde el celular, Mía se silencia automáticamente en ese chat.
+            </div>
+          </div>
+        </label>
+
+        {/* CAJA DE RESPALDO / ROLLBACK INMEDIATO */}
+        {codigoNegocio === "tinkay" && (
+          <div
+            style={{
+              padding: "12px 14px",
+              borderRadius: "10px",
+              background: "#FFFBEB",
+              border: "1px solid #FDE68A",
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "8px",
+                flexWrap: "wrap",
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontSize: "0.8rem",
+                  fontWeight: 700,
+                  color: "#92400E",
+                }}
+              >
+                <RotateCcw size={14} />
+                Respaldo de Configuración Previa (Rollback en 10s si necesitas volver atrás)
+              </span>
+              <button
+                type="button"
+                onClick={() => void copiarAlPortapapeles(urlRespaldoAriaPrevio, "anterior")}
+                title="Copiar el Webhook anterior directo de ARIA"
+                aria-label="Copiar Anterior"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  padding: "4px 9px",
+                  borderRadius: "7px",
+                  border: "1px solid #F59E0B",
+                  background: "#FFFFFF",
+                  color: "#92400E",
+                  fontSize: "0.74rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                {copiadoTipo === "anterior" ? <Check size={12} /> : <Copy size={12} />}
+                <span>{copiadoTipo === "anterior" ? "Copiado" : "Copiar Anterior"}</span>
+              </button>
+            </div>
+            <code style={{ fontSize: "0.75rem", color: "#78350F", wordBreak: "break-all" }}>
+              {urlRespaldoAriaPrevio}
+            </code>
+            <span style={{ fontSize: "0.74rem", color: "#92400E" }}>
+              Canal previo en <code>consola.aria.midomo.site → Canales</code>: <strong>Tinkay-YCloud</strong> · Emisor <code>+593 996438873</code> · Filtro prueba <code>+593 99 972 7844</code>. Para revertir: vuelve a pegar ese URL en YCloud y enciende «Habilitado» en ARIA.
+            </span>
+          </div>
+        )}
+
+        {mensajeYcloud && (
+          <div style={estiloAlertaMensaje(mensajeYcloud.tipo)}>{mensajeYcloud.texto}</div>
+        )}
+      </div>
+
+      <div style={estiloPieTarjeta}>
+        <div />
+        <button
+          type="submit"
+          className="btn-responsive-accion"
+          disabled={guardandoYcloud}
+          title="Guardar credenciales y configuración de WhatsApp YCloud"
+          aria-label="Guardar WhatsApp"
+          style={{ ...estiloBotonPrimario, opacity: guardandoYcloud ? 0.65 : 1 }}
+        >
+          <Save size={15} />
+          <span className="btn-texto-responsive">
+            {guardandoYcloud ? "Guardando…" : "Guardar WhatsApp"}
+          </span>
+        </button>
+      </div>
+    </form>
+    </div>
   );
 }

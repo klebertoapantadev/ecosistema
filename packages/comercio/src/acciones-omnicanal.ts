@@ -1009,6 +1009,7 @@ export async function enviarMensajeAsesorOmnicanalAction(entrada: {
       estadoAtencion: EstadoAtencionOmnicanal;
       asesoraAsignadaId?: string | null;
       mensajesHumanoConteo: number;
+      avisoWhatsApp?: string | null;
     }
   | { ok: false; error: string }
 > {
@@ -1042,6 +1043,7 @@ export async function enviarMensajeAsesorOmnicanalAction(entrada: {
           estadoAtencion: (data.estadoAtencion as EstadoAtencionOmnicanal) || "EN_ATENCION_ASESORA",
           asesoraAsignadaId: data.asesoraAsignadaId ? String(data.asesoraAsignadaId) : null,
           mensajesHumanoConteo: Number(data.mensajesHumanoConteo) || 1,
+          avisoWhatsApp: data.avisoWhatsApp ? String(data.avisoWhatsApp) : null,
         };
       }
       if (error && !esFuncionRpcPendienteMigracion(error.message)) {
@@ -1424,4 +1426,260 @@ export async function abrirSeguimientoContactoOmnicanalAction(entrada: {
   }
 
   return { ok: true, conversacionId: conv.id };
+}
+
+/**
+ * Importa las conversaciones previas ejecutadas directamente en la consola de ARIA (/v1/runs)
+ * hacia comun_agentes.agc_conversacion y agc_mensaje.
+ */
+export async function sincronizarHistorialAriaOmnicanalAction(
+  negocio: string,
+  limite = 80
+): Promise<
+  | {
+      ok: true;
+      interaccionesImportadas: number;
+      totalConversacionesWhatsApp: number;
+    }
+  | { ok: false; error: string; requiereTenantKey?: boolean }
+> {
+  try {
+    const neg = normalizarNegocioComercio(negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+    const { data, error } = await esquemaComercio.rpc(
+      "com_fn_omnicanal_sincronizar_historial_aria",
+      {
+        p_negocio: neg,
+        p_limite: Math.max(10, Math.min(150, Number(limite) || 80)),
+      }
+    );
+
+    if (error) {
+      return {
+        ok: false,
+        error: esFuncionRpcPendienteMigracion(error.message)
+          ? "Ejecuta primero la migración 20261116000003_omnicanal_whatsapp_ycloud_orquestacion_e_historial.sql en el SQL Editor de Supabase."
+          : error.message,
+      };
+    }
+
+    if (!data?.ok) {
+      return {
+        ok: false,
+        error: String(data?.error || "No se pudo sincronizar el historial desde ARIA."),
+        requiereTenantKey: Boolean(data?.requiereTenantKey),
+      };
+    }
+
+    return {
+      ok: true,
+      interaccionesImportadas: Number(data.interaccionesImportadas) || 0,
+      totalConversacionesWhatsApp: Number(data.totalConversacionesWhatsApp) || 0,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error inesperado al importar historial de ARIA.",
+    };
+  }
+}
+
+/**
+ * Procesa un evento de Webhook entrante desde YCloud (WhatsApp Business API v2),
+ * emite broadcast en tiempo real hacia `/panel/conversaciones`, enriquece el contexto
+ * logístico/catálogo cuando aplica y delega la respuesta a Mía (ARIA) salvo cuando
+ * una asesora humana haya pulsado `Tomar Control`.
+ */
+export async function procesarWebhookYcloudOmnicanalAction(entrada: {
+  token: string;
+  firmaHeader?: string | null;
+  cuerpoRaw: string;
+  payload: Record<string, unknown>;
+  origenTiendaUrl?: string;
+}): Promise<{ ok: boolean; status: number; accion?: string; error?: string }> {
+  try {
+    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase: any = crearClienteAdmin() ?? (await crearClienteServidor());
+    const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+    const { data: rec, error: errRec } = await esquemaComercio.rpc(
+      "com_fn_omnicanal_procesar_webhook_ycloud",
+      {
+        p_token: entrada.token,
+        p_firma: entrada.firmaHeader ?? null,
+        p_cuerpo_raw: entrada.cuerpoRaw,
+        p_payload: entrada.payload,
+      }
+    );
+
+    if (errRec) {
+      return { ok: false, status: 500, error: errRec.message };
+    }
+    if (!rec?.ok) {
+      return {
+        ok: false,
+        status: Number(rec?.status) || 401,
+        error: String(rec?.error || "Webhook no autorizado"),
+      };
+    }
+
+    const accion = String(rec.accion || "OK");
+    const negocio = String(rec.negocio || "tinkay");
+
+    // Emitir actualización instantánea (<50ms) a la Consola de Ventas en Vivo
+    if (
+      rec.conversacionId &&
+      [
+        "INVOCAR_ARIA",
+        "SILENCIADO_HUMANO",
+        "CANAL_SOLO_MONITOREO",
+        "FUERA_LISTA_BLANCA",
+        "CORTE_BUCLE_DESPEDIDA",
+        "ECO_MOVIL_REGISTRADO",
+      ].includes(accion)
+    ) {
+      const eventoEntrada: EventoBroadcastChatWeb = {
+        eventoId: String(rec.mensajeId || `wa-in-${Date.now()}`),
+        claveHilo: String(rec.claveHilo || ""),
+        conversacionId: String(rec.conversacionId),
+        canal: "whatsapp",
+        fase: accion === "ECO_MOVIL_REGISTRADO" ? "INTERVENCION_HUMANA" : "ENTRADA_CLIENTE",
+        contenido: String(rec.contenido || ""),
+        autorNombre:
+          accion === "ECO_MOVIL_REGISTRADO"
+            ? "WhatsApp Móvil Tienda"
+            : String(rec.remitenteNombre || "Cliente WhatsApp"),
+        remitenteNombre: String(rec.remitenteNombre || "Cliente WhatsApp"),
+        remitenteTelefono: rec.remitenteTelefono ? String(rec.remitenteTelefono) : null,
+        estadoAtencion: (rec.estadoAtencion as EstadoAtencionOmnicanal) || "BOT_ACTIVO",
+        creadoEn: new Date().toISOString(),
+      };
+      await emitirBroadcastServidorOmnicanal(
+        supabase,
+        negocio,
+        "actividad_chat_web",
+        eventoEntrada as unknown as Record<string, unknown>
+      );
+    }
+
+    if (accion !== "INVOCAR_ARIA") {
+      return { ok: true, status: 200, accion };
+    }
+
+    // Construir prompt para Mía (ARIA) con el formato exacto de WhatsApp + Entrega Inmediata + Cotización GPS
+    const tel = String(rec.remitenteTelefono || "");
+    const nombreCorto = String(rec.remitenteNombre || "Cliente").slice(0, 48);
+    const textoCliente = String(rec.contenido || "");
+    const origenTienda = (entrada.origenTiendaUrl || "https://tinkay-web.vercel.app").replace(
+      /\/+$/,
+      ""
+    );
+
+    const encabezadoUsuario = `[USUARIO ACTUAL: chat_id=${tel} | canal=whatsapp | nombre_corto=${nombreCorto}]`;
+
+    let bloqueInmediata = "";
+    try {
+      const { listarEntregaInmediataAction } = await import("./acciones-operaciones-taller");
+      const resInm = await listarEntregaInmediataAction(negocio, false);
+      if (resInm.ok && resInm.items.length > 0) {
+        const lista = resInm.items
+          .slice(0, 6)
+          .map(
+            (i) =>
+              `"${i.nombre}" a $${Number(i.precio).toFixed(2)} USD (${i.tiempoEntregaTexto}, ver foto: ${origenTienda}/producto/${i.slug})`
+          )
+          .join("; ");
+        bloqueInmediata = `\n[ARREGLOS LISTOS EN TIENDA PARA ENTREGA INMEDIATA 1-2h: ${lista}. Catálogo inmediato: ${origenTienda}/categoria/entrega-inmediata]`;
+      }
+    } catch {
+      // Ignorar
+    }
+
+    let bloqueCotizacionGps = "";
+    try {
+      const { cotizarEnvioDesdeEntradaAction } = await import("./acciones-logistica");
+      const { extraerCoordenadasDeTextoOUrl, extraerPrimeraUrlDeTexto } = await import(
+        "./logistica"
+      );
+      const latPin = rec.latitud != null ? Number(rec.latitud) : null;
+      const lngPin = rec.longitud != null ? Number(rec.longitud) : null;
+      const urlMapa = extraerPrimeraUrlDeTexto(textoCliente);
+      const tieneMapa =
+        (latPin != null && lngPin != null && !Number.isNaN(latPin) && !Number.isNaN(lngPin)) ||
+        Boolean(
+          urlMapa &&
+            /(maps\.app\.goo\.gl|goo\.gl\/maps|google\.[a-z.]+\/maps|maps\.google|waze\.com)/i.test(
+              urlMapa
+            )
+        ) ||
+        Boolean(extraerCoordenadasDeTextoOUrl(textoCliente));
+
+      if (tieneMapa) {
+        const entradaUbicacion =
+          latPin != null && lngPin != null && !Number.isNaN(latPin) && !Number.isNaN(lngPin)
+            ? `${latPin},${lngPin}`
+            : urlMapa ?? textoCliente;
+        const cot = await cotizarEnvioDesdeEntradaAction({
+          negocio,
+          enlaceOTexto: entradaUbicacion,
+        });
+        if (cot.ok) {
+          const c = cot.cotizacion;
+          const dirRef = c.detalleDireccion?.resumenDireccion || cot.direccionDetectada || "Pin GPS verificado";
+          bloqueCotizacionGps = `\n[COTIZACIÓN OFICIAL DE ENVÍO CALCULADA POR SISTEMA: ${c.etiquetaResumen}. Costo final de envío: $${c.costoTotalEnvio.toFixed(2)} USD. Dirección referencial: ${dirRef}. Usa exactamente este costo final al responder al cliente.]`;
+        }
+      }
+    } catch {
+      // Ignorar si la cotización tarda
+    }
+
+    const promptCompleto =
+      `${encabezadoUsuario}\n${textoCliente}\n\n` +
+      `[ENLACES DIRECTOS E-COMMERCE TINKAY: Categorías ${origenTienda}/categoria/{slug}, Entrega Inmediata ${origenTienda}/categoria/entrega-inmediata, Producto ${origenTienda}/producto/{slug}]` +
+      bloqueInmediata +
+      bloqueCotizacionGps;
+
+    const { data: resAria } = await esquemaComercio.rpc(
+      "com_fn_omnicanal_responder_whatsapp_con_aria",
+      {
+        p_token: entrada.token,
+        p_conversacion_id: rec.conversacionId,
+        p_prompt: promptCompleto,
+        p_imagen_url: rec.imagenUrl ? String(rec.imagenUrl) : null,
+      }
+    );
+
+    if (resAria?.ok && !resAria?.silenciado && resAria?.respuestaAria) {
+      const eventoBot: EventoBroadcastChatWeb = {
+        eventoId: String(resAria.mensajeId || `wa-bot-${Date.now()}`),
+        claveHilo: String(resAria.claveHilo || rec.claveHilo || ""),
+        conversacionId: String(resAria.conversacionId || rec.conversacionId),
+        canal: "whatsapp",
+        fase: "RESPUESTA_ARIA",
+        contenido: String(resAria.respuestaAria),
+        autorNombre: String(resAria.autorNombre || "Mía · ARIA"),
+        remitenteNombre: String(rec.remitenteNombre || "Cliente WhatsApp"),
+        remitenteTelefono: tel || null,
+        estadoAtencion: (resAria.estadoAtencion as EstadoAtencionOmnicanal) || "BOT_ACTIVO",
+        creadoEn: new Date().toISOString(),
+      };
+      await emitirBroadcastServidorOmnicanal(
+        supabase,
+        negocio,
+        "actividad_chat_web",
+        eventoBot as unknown as Record<string, unknown>
+      );
+    }
+
+    return { ok: true, status: 200, accion: "RESPONDIDO_ARIA" };
+  } catch (err) {
+    return {
+      ok: false,
+      status: 500,
+      error: err instanceof Error ? err.message : "Error interno en webhook YCloud",
+    };
+  }
 }

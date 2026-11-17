@@ -136,6 +136,7 @@ export const ETIQUETAS_OMNICANAL_POR_DEFECTO: EtiquetaOmnicanal[] = [
   { id: "etq-condolencias", slug: "condolencias", nombre: "Condolencias", color: "#64748B", icono: "🕊️", orden: 6 },
   { id: "etq-vip", slug: "vip", nombre: "Cliente VIP", color: "#7C3AED", icono: "⭐", orden: 7 },
   { id: "etq-web", slug: "origen-web", nombre: "Chat Web", color: "#0D9488", icono: "🌐", orden: 8 },
+  { id: "etq-whatsapp", slug: "origen-whatsapp", nombre: "WhatsApp", color: "#16A34A", icono: "📱", orden: 9 },
 ];
 
 export const RESPUESTAS_RAPIDAS_POR_DEFECTO: RespuestaRapidaOmnicanal[] = [
@@ -284,7 +285,8 @@ export interface EventoBroadcastChatWeb {
   eventoId: string;
   claveHilo: string;
   conversacionId?: string | null;
-  fase: "ENTRADA_CLIENTE" | "RESPUESTA_ARIA" | "EVENTO_ORDEN";
+  canal?: CanalOmnicanal;
+  fase: "ENTRADA_CLIENTE" | "RESPUESTA_ARIA" | "EVENTO_ORDEN" | "INTERVENCION_HUMANA";
   contenido: string;
   autorNombre?: string | null;
   remitenteNombre?: string | null;
