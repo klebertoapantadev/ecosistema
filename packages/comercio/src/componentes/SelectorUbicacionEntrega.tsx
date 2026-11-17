@@ -76,9 +76,6 @@ export function SelectorUbicacionEntrega({
   const [mapaAbierto, setMapaAbierto] = useState<boolean>(mostrarMapaPorDefecto);
   const [mapaAmpliadoAbierto, setMapaAmpliadoAbierto] = useState<boolean>(false);
   const [secuenciaCentrarDestino, setSecuenciaCentrarDestino] = useState<number>(0);
-  const [seleccionandoOtraUbicacion, setSeleccionandoOtraUbicacion] = useState<boolean>(
-    Boolean(enlaceMapaInicial || coordenadasIniciales || cotizacionInicial || mostrarMapaPorDefecto)
-  );
 
   const [consultaMapa, setConsultaMapa] = useState<string>("");
   const [sugerencias, setSugerencias] = useState<SugerenciaDireccionMapa[]>([]);
@@ -263,7 +260,6 @@ export function SelectorUbicacionEntrega({
           lat: Number(pos.coords.latitude.toFixed(6)),
           lng: Number(pos.coords.longitude.toFixed(6)),
         };
-        setMapaAbierto(true);
         setCoordenadas(punto);
         setSecuenciaCentrarDestino((n) => n + 1);
         void ejecutarCotizacionPorCoordenadas(punto);
@@ -393,51 +389,142 @@ export function SelectorUbicacionEntrega({
         </div>
       ) : (
         <>
-          {/* Estado por defecto: entrega gratuita en zona de cobertura */}
-          {!cotizacion && (
-            <div
-              style={{
-                background: "#F0FDF4",
-                border: "1px solid #BBF7D0",
-                borderRadius: "10px",
-                padding: "9px 11px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "8px",
-              }}
-            >
+          {/* Indicador de Zona de Cobertura Gratuita */}
+          <div
+            style={{
+              background: "#F0FDF4",
+              border: "1px solid #BBF7D0",
+              borderRadius: "10px",
+              padding: "9px 12px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "8px",
+            }}
+          >
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
               <span
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
-                  fontSize: "0.8rem",
+                  fontSize: "0.78rem",
                   fontWeight: 700,
                   color: "#166534",
                 }}
               >
                 <CheckCircle2 size={15} color="#16A34A" style={{ flexShrink: 0 }} />
-                <span>Entrega gratuita en zona de cobertura ({config.zonaGratisNombre})</span>
+                <span>Zona de cobertura gratuita: {config.zonaGratisNombre || "Quito Centro-Norte"}</span>
               </span>
-              <strong style={{ fontSize: "0.84rem", color: "#15803D", whiteSpace: "nowrap" }}>
-                GRATIS ($0.00)
-              </strong>
+              <span style={{ fontSize: "0.71rem", color: "#15803D", paddingLeft: "21px" }}>
+                Envío sin costo dentro del perímetro. Fuera de esta zona se calcula recargo adicional según la distancia.
+              </span>
             </div>
-          )}
+            <strong
+              style={{
+                fontSize: "0.8rem",
+                color: "#15803D",
+                whiteSpace: "nowrap",
+                background: "#DCFCE7",
+                padding: "3px 8px",
+                borderRadius: "999px",
+              }}
+            >
+              GRATIS ($0.00)
+            </strong>
+          </div>
 
-          {/* Botones: Ver zona gratuita en mapa ampliado & Seleccionar otra ubicación */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+          {/* Campo de link Google Maps / Apple Maps / Waze */}
+          <div style={{ display: "flex", gap: "6px", alignItems: "stretch" }}>
+            <div style={{ position: "relative", flex: 1 }}>
+              <Link2
+                size={14}
+                style={{
+                  position: "absolute",
+                  left: "10px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  color: "#71717A",
+                  pointerEvents: "none",
+                }}
+              />
+              <input
+                type="text"
+                value={enlaceTexto}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setEnlaceTexto(val);
+                  if (
+                    /^https?:\/\/(?:maps\.app\.goo\.gl|goo\.gl\/maps|www\.google\.[^/]+\/maps|maps\.google\.|waze\.com\/ul|ul\.waze\.com|maps\.apple\.com)/i.test(
+                      val.trim()
+                    )
+                  ) {
+                    void manejarResolverEnlace(val);
+                  }
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void manejarResolverEnlace();
+                  }
+                }}
+                placeholder="Pega link de Google Maps, Waze o Apple Maps..."
+                style={{
+                  width: "100%",
+                  padding: "8px 10px 8px 30px",
+                  borderRadius: "8px",
+                  border: "1px solid #D4D4D8",
+                  fontSize: "0.8rem",
+                  color: "#18181B",
+                  boxSizing: "border-box",
+                  background: "#FAFAFA",
+                }}
+              />
+            </div>
+
             <button
               type="button"
-              onClick={() => setMapaAmpliadoAbierto(true)}
-              title="Ver zona de cobertura gratuita en el mapa ampliado"
-              aria-label="Ver zona gratuita en mapa"
+              disabled={calculando}
+              onClick={() => void manejarResolverEnlace()}
+              title="Calcular valor adicional de envío según la ubicación ingresada"
+              aria-label="Calcular envío"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "5px",
-                padding: "6px 11px",
+                padding: "0 12px",
+                borderRadius: "8px",
+                border: "1px solid #18181B",
+                background: "#18181B",
+                color: "#FFFFFF",
+                fontSize: "0.76rem",
+                fontWeight: 700,
+                cursor: calculando ? "wait" : "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {calculando ? <Loader2 size={14} /> : <MapPin size={14} />}
+              <span className="btn-texto-responsive">Calcular</span>
+            </button>
+          </div>
+
+          {/* Acciones rápidas: Seleccionar en Mapa ampliado o GPS */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+            <button
+              type="button"
+              onClick={() => {
+                if (coordenadas) {
+                  setSecuenciaCentrarDestino((n) => n + 1);
+                }
+                setMapaAmpliadoAbierto(true);
+              }}
+              title="Abrir mapa ampliado para buscar tu calle o marcar el punto exacto"
+              aria-label="Seleccionar en Mapa"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                padding: "6px 12px",
                 borderRadius: "999px",
                 border: "1px solid #16A34A",
                 background: "#F0FDF4",
@@ -447,170 +534,36 @@ export function SelectorUbicacionEntrega({
                 cursor: "pointer",
               }}
             >
-              <Maximize2 size={13} />
-              <span>Ver zona gratuita en mapa</span>
+              <MapIcon size={13} />
+              <span>Seleccionar en Mapa</span>
             </button>
 
             <button
               type="button"
-              onClick={() => {
-                setSeleccionandoOtraUbicacion((prev) => !prev);
-                setErrorMsg(null);
-              }}
-              title="Seleccionar otra ubicación de entrega para calcular valor adicional"
-              aria-label="Seleccionar otra ubicación"
+              onClick={usarMiUbicacionGps}
+              title="Usar ubicación GPS actual de mi dispositivo"
+              aria-label="Usar mi GPS"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "5px",
-                padding: "6px 11px",
+                padding: "6px 12px",
                 borderRadius: "999px",
                 border: "1px solid #D4D4D8",
-                background: seleccionandoOtraUbicacion ? "#18181B" : "#FFFFFF",
-                color: seleccionandoOtraUbicacion ? "#FFFFFF" : "#27272A",
+                background: "#FFFFFF",
+                color: "#27272A",
                 fontSize: "0.74rem",
-                fontWeight: 700,
+                fontWeight: 600,
                 cursor: "pointer",
               }}
             >
-              <MapPin size={13} />
-              <span>
-                {seleccionandoOtraUbicacion
-                  ? "Ocultar selector de ubicación"
-                  : "Seleccionar otra ubicación"}
-              </span>
+              <LocateFixed size={13} />
+              <span>Mi GPS</span>
             </button>
           </div>
 
-          {seleccionandoOtraUbicacion && (
-            <>
-              {/* Campo de link Google Maps / Apple Maps / Waze */}
-              <div style={{ display: "flex", gap: "6px", alignItems: "stretch" }}>
-                <div style={{ position: "relative", flex: 1 }}>
-                  <Link2
-                    size={14}
-                    style={{
-                      position: "absolute",
-                      left: "10px",
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      color: "#71717A",
-                      pointerEvents: "none",
-                    }}
-                  />
-                  <input
-                    type="text"
-                    value={enlaceTexto}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setEnlaceTexto(val);
-                      if (
-                        /^https?:\/\/(?:maps\.app\.goo\.gl|goo\.gl\/maps|www\.google\.[^/]+\/maps|maps\.google\.|waze\.com\/ul|ul\.waze\.com|maps\.apple\.com)/i.test(
-                          val.trim()
-                        )
-                      ) {
-                        void manejarResolverEnlace(val);
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        void manejarResolverEnlace();
-                      }
-                    }}
-                    placeholder="Pega link de Google Maps, Waze o Apple Maps..."
-                    style={{
-                      width: "100%",
-                      padding: "8px 10px 8px 30px",
-                      borderRadius: "8px",
-                      border: "1px solid #D4D4D8",
-                      fontSize: "0.8rem",
-                      color: "#18181B",
-                      boxSizing: "border-box",
-                      background: "#FAFAFA",
-                    }}
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  disabled={calculando}
-                  onClick={() => void manejarResolverEnlace()}
-                  title="Calcular valor adicional de envío según la ubicación ingresada"
-                  aria-label="Calcular envío"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    padding: "0 12px",
-                    borderRadius: "8px",
-                    border: "1px solid #18181B",
-                    background: "#18181B",
-                    color: "#FFFFFF",
-                    fontSize: "0.76rem",
-                    fontWeight: 700,
-                    cursor: calculando ? "wait" : "pointer",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {calculando ? <Loader2 size={14} /> : <MapPin size={14} />}
-                  <span className="btn-texto-responsive">Calcular</span>
-                </button>
-              </div>
-
-              {/* Acciones rápidas: Seleccionar en Mapa o GPS */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                <button
-                  type="button"
-                  onClick={() => setMapaAbierto((prev) => !prev)}
-                  title={mapaAbierto ? "Ocultar mapa interactivo" : "Buscar dirección o mover el pin en el mapa"}
-                  aria-label={mapaAbierto ? "Ocultar mapa" : "Buscar en mapa"}
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    padding: "5px 10px",
-                    borderRadius: "999px",
-                    border: "1px solid #D4D4D8",
-                    background: mapaAbierto ? "#F4F4F5" : "#FFFFFF",
-                    color: "#27272A",
-                    fontSize: "0.74rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  <MapIcon size={13} />
-                  <span>{mapaAbierto ? "Ocultar Mapa" : "Buscar en Mapa"}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={usarMiUbicacionGps}
-                  title="Usar ubicación GPS actual de mi dispositivo"
-                  aria-label="Usar mi GPS"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    padding: "5px 10px",
-                    borderRadius: "999px",
-                    border: "1px solid #D4D4D8",
-                    background: "#FFFFFF",
-                    color: "#27272A",
-                    fontSize: "0.74rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  <LocateFixed size={13} />
-                  <span>Mi GPS</span>
-                </button>
-              </div>
-            </>
-          )}
-
-          {/* Buscador + Mapa Interactivo OpenStreetMap */}
-          {mapaAbierto && (
+          {/* Buscador + Mapa Interactivo OpenStreetMap (solo si explícitamente se solicita mostrar por defecto inline) */}
+          {mostrarMapaPorDefecto && mapaAbierto && (
             <div
               style={{
                 display: "flex",
@@ -878,165 +831,197 @@ export function SelectorUbicacionEntrega({
         </>
       )}
 
-      {/* Modal de mapa ampliado para ver zona de cobertura gratuita y elegir otra ubicación */}
+      {/* Modal de mapa a toda la pantalla para seleccionar ubicación */}
       {mapaAmpliadoAbierto && (
         <div
           role="dialog"
           aria-modal="true"
-          aria-label="Mapa ampliado de zona de cobertura gratuita"
-          onClick={() => setMapaAmpliadoAbierto(false)}
+          aria-label="Mapa en pantalla completa de selección de ubicación"
           style={{
             position: "fixed",
             inset: 0,
-            zIndex: 1200,
-            backgroundColor: "rgba(15, 23, 42, 0.65)",
+            zIndex: 9999,
+            backgroundColor: "#FFFFFF",
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "16px",
+            flexDirection: "column",
+            width: "100vw",
+            height: "100dvh",
+            maxHeight: "100dvh",
+            overflow: "hidden",
           }}
         >
+          {/* Cabecera superior compacta */}
           <div
-            onClick={(e) => e.stopPropagation()}
             style={{
-              width: "100%",
-              maxWidth: "840px",
-              backgroundColor: "#FFFFFF",
-              borderRadius: "16px",
-              padding: "18px",
-              boxShadow: "0 20px 50px rgba(0,0,0,0.25)",
               display: "flex",
-              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "10px 16px",
+              background: "#F8FAFC",
+              borderBottom: "1px solid #E2E8F0",
+              flexShrink: 0,
               gap: "12px",
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "12px",
-              }}
-            >
-              <div>
-                <h4 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#0F172A" }}>
-                  Zona de Cobertura Gratuita ({config.zonaGratisNombre})
-                </h4>
-                <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "#475569" }}>
-                  El área verde tiene entrega gratuita ($0.00). Acerca el mapa a tu calle y haz clic en el punto exacto o arrastra el pin rojo.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setMapaAmpliadoAbierto(false)}
-                aria-label="Cerrar mapa ampliado"
-                style={{
-                  border: "1px solid #E2E8F0",
-                  background: "#F8FAFC",
-                  borderRadius: "999px",
-                  width: "32px",
-                  height: "32px",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  cursor: "pointer",
-                  color: "#334155",
-                }}
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            {/* Buscador de dirección + Usar ubicación actual dentro del mapa ampliado */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center" }}>
-              <div style={{ display: "flex", gap: "6px", flex: "1 1 280px" }}>
-                <input
-                  type="text"
-                  value={consultaMapa}
-                  onChange={(e) => setConsultaMapa(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      void manejarBuscarEnMapa();
-                    }
-                  }}
-                  placeholder="Buscar dirección, barrio o edificio (ej. La Carolina, Cumbayá, USFQ)..."
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+              <MapPin size={18} color="#166534" style={{ flexShrink: 0 }} />
+              <div style={{ minWidth: 0 }}>
+                <h3
                   style={{
-                    flex: 1,
-                    padding: "8px 12px",
-                    borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.82rem",
-                    boxSizing: "border-box",
-                  }}
-                />
-                <button
-                  type="button"
-                  disabled={buscandoSugerencias}
-                  onClick={() => void manejarBuscarEnMapa()}
-                  title="Buscar dirección en el mapa"
-                  aria-label="Buscar dirección"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    padding: "0 12px",
-                    borderRadius: "8px",
-                    border: "1px solid #18181B",
-                    background: "#18181B",
-                    color: "#FFFFFF",
-                    fontSize: "0.78rem",
-                    fontWeight: 700,
-                    cursor: buscandoSugerencias ? "wait" : "pointer",
+                    margin: 0,
+                    fontSize: "0.95rem",
+                    fontWeight: 800,
+                    color: "#0F172A",
                     whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
                   }}
                 >
-                  {buscandoSugerencias ? <Loader2 size={14} /> : <Search size={14} />}
-                  <span>Buscar</span>
-                </button>
+                  Seleccionar Ubicación de Entrega
+                </h3>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: "0.72rem",
+                    color: "#64748B",
+                    whiteSpace: "nowrap",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  Área verde: <strong>{config.zonaGratisNombre}</strong> ($0.00) · Toca tu calle exacta o arrastra el pin rojo
+                </p>
               </div>
+            </div>
 
+            <button
+              type="button"
+              onClick={() => setMapaAmpliadoAbierto(false)}
+              title="Cerrar mapa"
+              aria-label="Cerrar mapa"
+              style={{
+                border: "1px solid #CBD5E1",
+                background: "#FFFFFF",
+                borderRadius: "999px",
+                width: "34px",
+                height: "34px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                color: "#334155",
+                flexShrink: 0,
+              }}
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          {/* Buscador de dirección + Botón GPS en barra de herramientas superior */}
+          <div
+            style={{
+              padding: "8px 16px",
+              background: "#FFFFFF",
+              borderBottom: "1px solid #E2E8F0",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "8px",
+              alignItems: "center",
+              flexShrink: 0,
+              position: "relative",
+            }}
+          >
+            <div style={{ display: "flex", gap: "6px", flex: "1 1 280px" }}>
+              <input
+                type="text"
+                value={consultaMapa}
+                onChange={(e) => setConsultaMapa(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void manejarBuscarEnMapa();
+                  }
+                }}
+                placeholder="Buscar calle, avenida, barrio o edificio (ej. La Carolina, Eloy Alfaro, USFQ)..."
+                style={{
+                  flex: 1,
+                  padding: "8px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid #CBD5E1",
+                  fontSize: "0.82rem",
+                  boxSizing: "border-box",
+                }}
+              />
               <button
                 type="button"
-                disabled={calculando}
-                onClick={() => {
-                  setSeleccionandoOtraUbicacion(true);
-                  usarMiUbicacionGps();
-                }}
-                title="Detectar mi ubicación GPS actual y calcular envío"
-                aria-label="Usar ubicación actual"
+                disabled={buscandoSugerencias}
+                onClick={() => void manejarBuscarEnMapa()}
+                title="Buscar dirección en el mapa"
+                aria-label="Buscar dirección"
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: "6px",
-                  padding: "8px 12px",
+                  gap: "5px",
+                  padding: "0 14px",
                   borderRadius: "8px",
-                  border: "1px solid #0284C7",
-                  background: "#F0F9FF",
-                  color: "#0369A1",
+                  border: "1px solid #18181B",
+                  background: "#18181B",
+                  color: "#FFFFFF",
                   fontSize: "0.78rem",
                   fontWeight: 700,
-                  cursor: calculando ? "wait" : "pointer",
+                  cursor: buscandoSugerencias ? "wait" : "pointer",
                   whiteSpace: "nowrap",
                 }}
               >
-                {calculando ? <Loader2 size={14} /> : <LocateFixed size={14} />}
-                <span>Usar ubicación actual</span>
+                {buscandoSugerencias ? <Loader2 size={14} /> : <Search size={14} />}
+                <span>Buscar</span>
               </button>
             </div>
+
+            <button
+              type="button"
+              disabled={calculando}
+              onClick={usarMiUbicacionGps}
+              title="Detectar mi ubicación GPS actual"
+              aria-label="Usar mi GPS"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 14px",
+                borderRadius: "8px",
+                border: "1px solid #0284C7",
+                background: "#F0F9FF",
+                color: "#0369A1",
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                cursor: calculando ? "wait" : "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {calculando ? <Loader2 size={14} /> : <LocateFixed size={14} />}
+              <span>Mi GPS</span>
+            </button>
 
             {sugerencias.length > 0 && (
               <div
                 style={{
+                  position: "absolute",
+                  top: "100%",
+                  left: "16px",
+                  right: "16px",
+                  maxWidth: "520px",
+                  zIndex: 2000,
                   display: "flex",
                   flexDirection: "column",
                   gap: "3px",
-                  maxHeight: "130px",
+                  maxHeight: "180px",
                   overflowY: "auto",
-                  border: "1px solid #E2E8F0",
+                  border: "1px solid #CBD5E1",
                   borderRadius: "8px",
                   padding: "4px",
-                  background: "#F8FAFC",
+                  background: "#FFFFFF",
+                  boxShadow: "0 12px 28px rgba(0,0,0,0.18)",
                 }}
               >
                 {sugerencias.map((sug, i) => (
@@ -1047,7 +1032,6 @@ export function SelectorUbicacionEntrega({
                       const pt = { lat: sug.lat, lng: sug.lng };
                       setSugerencias([]);
                       setConsultaMapa(sug.nombreCorto);
-                      setSeleccionandoOtraUbicacion(true);
                       setCoordenadas(pt);
                       setSecuenciaCentrarDestino((n) => n + 1);
                       void ejecutarCotizacionPorCoordenadas(
@@ -1058,7 +1042,7 @@ export function SelectorUbicacionEntrega({
                     }}
                     style={{
                       textAlign: "left",
-                      padding: "6px 10px",
+                      padding: "7px 10px",
                       borderRadius: "6px",
                       border: "none",
                       background: "#FFFFFF",
@@ -1083,22 +1067,25 @@ export function SelectorUbicacionEntrega({
                 ))}
               </div>
             )}
+          </div>
 
-            {errorMsg && (
-              <div
-                style={{
-                  background: "#FEF2F2",
-                  border: "1px solid #FECACA",
-                  borderRadius: "8px",
-                  padding: "7px 10px",
-                  fontSize: "0.76rem",
-                  color: "#B91C1C",
-                }}
-              >
-                {errorMsg}
-              </div>
-            )}
+          {errorMsg && (
+            <div
+              style={{
+                background: "#FEF2F2",
+                borderBottom: "1px solid #FECACA",
+                padding: "7px 16px",
+                fontSize: "0.76rem",
+                color: "#B91C1C",
+                flexShrink: 0,
+              }}
+            >
+              {errorMsg}
+            </div>
+          )}
 
+          {/* Área del mapa interactivo a pantalla completa */}
+          <div style={{ flex: 1, minHeight: 0, width: "100%", position: "relative" }}>
             <MapaCoberturaPichincha
               origen={{ lat: config.origenLat, lng: config.origenLng }}
               origenNombre={config.origenNombre}
@@ -1111,124 +1098,126 @@ export function SelectorUbicacionEntrega({
               }
               rutaGeometria={cotizacion?.rutaGeometria}
               secuenciaCentrarDestino={secuenciaCentrarDestino}
-              alturaPx={410}
+              alturaPx={600}
+              alturaCss="100%"
               onSeleccionarPunto={(pt) => {
-                setSeleccionandoOtraUbicacion(true);
                 void ejecutarCotizacionPorCoordenadas(pt);
               }}
             />
+          </div>
 
-            {(coordenadas || cotizacion?.detalleDireccion) && (
-              <div
-                style={{
-                  background: "#F8FAFC",
-                  border: "1px solid #E2E8F0",
-                  borderRadius: "10px",
-                  padding: "8px 12px",
-                  fontSize: "0.76rem",
-                  color: "#334155",
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: "6px 14px",
-                  alignItems: "center",
-                }}
-              >
+          {/* Barra inferior de resumen, detalles y confirmación */}
+          <div
+            style={{
+              padding: "10px 16px",
+              background: "#FFFFFF",
+              borderTop: "1px solid #E2E8F0",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              flexWrap: "wrap",
+              gap: "10px",
+              flexShrink: 0,
+              boxShadow: "0 -4px 12px rgba(0,0,0,0.06)",
+            }}
+          >
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px", minWidth: 0, flex: "1 1 260px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                <span
+                  style={{
+                    fontSize: "0.84rem",
+                    fontWeight: 800,
+                    color:
+                      cotizacion?.costoTotalEnvio === 0 && cotizacion.dentroCobertura
+                        ? "#166534"
+                        : cotizacion?.dentroCobertura
+                        ? "#0F172A"
+                        : "#92400E",
+                  }}
+                >
+                  {calculando
+                    ? "Calculando costo de entrega..."
+                    : cotizacion
+                    ? cotizacion.costoTotalEnvio === 0 && cotizacion.dentroCobertura
+                      ? "✅ Entrega Gratuita ($0.00)"
+                      : cotizacion.dentroCobertura
+                      ? `Valor adicional de envío: +$${cotizacion.costoTotalEnvio.toFixed(2)}`
+                      : "Ubicación fuera de cobertura automática"
+                    : "✅ Zona gratuita activa ($0.00)"}
+                </span>
+
                 {cotizacion?.detalleDireccion?.parroquia && (
-                  <span>
-                    <strong>Parroquia:</strong> {cotizacion.detalleDireccion.parroquia}
-                  </span>
-                )}
-                {cotizacion?.detalleDireccion?.sectorBarrio && (
-                  <span>
-                    <strong>Barrio:</strong> {cotizacion.detalleDireccion.sectorBarrio}
-                  </span>
-                )}
-                {cotizacion?.detalleDireccion?.callePrincipal && (
-                  <span>
-                    <strong>Calles / Intersección:</strong> {cotizacion.detalleDireccion.callePrincipal}
-                  </span>
-                )}
-                {!cotizacion?.detalleDireccion?.callePrincipal &&
-                  cotizacion?.detalleDireccion?.resumenDireccion && (
-                    <span>
-                      <strong>Dirección:</strong> {cotizacion.detalleDireccion.resumenDireccion}
-                    </span>
-                  )}
-                {coordenadas && (
-                  <span>
-                    <strong>Lat / Lng:</strong> {coordenadas.lat.toFixed(6)}, {coordenadas.lng.toFixed(6)}
-                  </span>
-                )}
-                {calculando && (
-                  <span style={{ color: "#0284C7", fontWeight: 700 }}>
-                    Recalculando envío...
+                  <span style={{ fontSize: "0.74rem", color: "#64748B" }}>
+                    · {cotizacion.detalleDireccion.parroquia}
+                    {cotizacion.detalleDireccion.sectorBarrio ? `, ${cotizacion.detalleDireccion.sectorBarrio}` : ""}
                   </span>
                 )}
               </div>
-            )}
 
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                flexWrap: "wrap",
-                gap: "8px",
-              }}
-            >
-              <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#0F172A" }}>
-                {calculando
-                  ? "Calculando costo de entrega..."
-                  : cotizacion
-                  ? cotizacion.costoTotalEnvio === 0 && cotizacion.dentroCobertura
-                    ? "✅ Entrega gratuita en zona de cobertura ($0.00)"
-                    : cotizacion.dentroCobertura
-                    ? `Valor adicional de envío: +$${cotizacion.costoTotalEnvio.toFixed(2)}`
-                    : "Ubicación fuera de cobertura automática (por coordinar)"
-                  : "✅ Zona gratuita activa ($0.00)"}
-              </span>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                {coordenadas && (
-                  <button
-                    type="button"
-                    onClick={() => setSecuenciaCentrarDestino((n) => n + 1)}
-                    title="Centrar y acercar el mapa en la ubicación seleccionada"
-                    aria-label="Centrar en ubicación"
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "5px",
-                      padding: "8px 12px",
-                      borderRadius: "10px",
-                      border: "1px solid #CBD5E1",
-                      background: "#FFFFFF",
-                      color: "#0F172A",
-                      fontWeight: 700,
-                      fontSize: "0.78rem",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <LocateFixed size={14} />
-                    <span>Centrar en ubicación</span>
-                  </button>
-                )}
+              {cotizacion?.detalleDireccion?.callePrincipal ? (
+                <span style={{ fontSize: "0.72rem", color: "#475569", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  📍 {cotizacion.detalleDireccion.callePrincipal}
+                </span>
+              ) : cotizacion?.detalleDireccion?.resumenDireccion ? (
+                <span style={{ fontSize: "0.72rem", color: "#475569", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                  📍 {cotizacion.detalleDireccion.resumenDireccion}
+                </span>
+              ) : coordenadas ? (
+                <span style={{ fontSize: "0.72rem", color: "#475569" }}>
+                  GPS: {coordenadas.lat.toFixed(6)}, {coordenadas.lng.toFixed(6)}
+                </span>
+              ) : null}
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+              {coordenadas && (
                 <button
                   type="button"
-                  onClick={() => setMapaAmpliadoAbierto(false)}
+                  onClick={() => setSecuenciaCentrarDestino((n) => n + 1)}
+                  title="Centrar y acercar el mapa en la ubicación seleccionada"
+                  aria-label="Centrar en ubicación"
                   style={{
-                    padding: "8px 16px",
-                    borderRadius: "10px",
-                    border: "none",
-                    background: "#065F46",
-                    color: "#FFFFFF",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid #CBD5E1",
+                    background: "#F8FAFC",
+                    color: "#0F172A",
                     fontWeight: 700,
-                    fontSize: "0.8rem",
+                    fontSize: "0.78rem",
                     cursor: "pointer",
                   }}
                 >
-                  Confirmar y volver
+                  <LocateFixed size={14} />
+                  <span>Centrar</span>
                 </button>
-              </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setMapaAmpliadoAbierto(false)}
+                title="Confirmar ubicación seleccionada y volver a la caja de pago"
+                aria-label="Confirmar Ubicación"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "9px 18px",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: "#065F46",
+                  color: "#FFFFFF",
+                  fontWeight: 800,
+                  fontSize: "0.82rem",
+                  cursor: "pointer",
+                  boxShadow: "0 2px 6px rgba(6, 95, 70, 0.3)",
+                }}
+              >
+                <CheckCircle2 size={16} />
+                <span>Confirmar Ubicación</span>
+              </button>
             </div>
           </div>
         </div>

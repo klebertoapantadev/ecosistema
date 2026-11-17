@@ -641,14 +641,14 @@ export function MapaCoberturaPichincha({
   }
 
   return (
-    <div style={{ position: "relative", width: "100%" }}>
+    <div style={{ position: "relative", width: "100%", height: altoFinal }}>
       <div
         ref={contenedorRef}
         className={esSeleccionable ? "eco-mapa-seleccionable" : undefined}
         style={{
           width: "100%",
-          height: altoFinal,
-          borderRadius: "10px",
+          height: "100%",
+          borderRadius: altoFinal === "100%" ? 0 : "10px",
           border: modoDibujoPoligono ? "2px solid #DC2626" : "1px solid #E4E4E7",
           overflow: "hidden",
           background: "#F4F4F5",
