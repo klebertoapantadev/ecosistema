@@ -1,0 +1,288 @@
+/*
+ * Landing de la membresía (TRQ-024). Sale de la maqueta aprobada
+ * gobernanza/productos/tranqi/maquetas/landing-membresia-v2.html.
+ *
+ * TODO va bajo `.landing`: globals.css define `section`, `.wrap` y `.btn` para
+ * la landing anterior y el panel los hereda; aquí se pisan solo dentro de esta
+ * página. Los tokens (--violeta, --menta…) son los globales.
+ */
+.landing {
+  --gris: #5F5F66; --linea: #E7E5EE; --papel: #F6F5FA;
+  font-family: inherit; color: var(--negro); background: var(--blanco);
+  -webkit-font-smoothing: antialiased;
+}
+html:has(.landing) { scroll-behavior: smooth; scroll-padding-top: 72px; scroll-snap-type: none; }
+.landing *, .landing *::before, .landing *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* Neutraliza el `section` global (una página completa con anclaje de scroll). */
+.landing section { min-height: 0; display: block; justify-content: normal; scroll-snap-align: none; scroll-snap-stop: normal; }
+
+  .landing img { display: block; max-width: 100%; }
+  .landing a { color: inherit; }
+  .landing .wrap { max-width: 1160px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 48px); position: relative; z-index: 2; }
+  .landing section { position: relative; overflow: hidden; padding: clamp(72px, 10vw, 120px) 0; }
+  .landing h1, .landing h2, .landing h3 { letter-spacing: -0.03em; line-height: 1.05; }
+  .landing h2 { font-size: clamp(2rem, 4vw, 3.1rem); font-weight: 800; }
+  .landing p { line-height: 1.55; }
+  .landing .etiqueta { display: inline-block; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 7px 14px; border-radius: 999px; background: var(--menta); color: var(--violeta); }
+  .landing .sub { margin-top: 14px; font-size: 1.1rem; color: var(--gris); max-width: 620px; }
+  .landing .ico { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+  /* Botones: amarillo = acción principal en toda la página (pedido del recorrido) */
+  .landing .btn { display: inline-flex; align-items: center; gap: 10px; font: inherit; font-weight: 700; font-size: 1rem; text-decoration: none; border: 0; cursor: pointer; padding: 15px 28px; border-radius: 999px; transition: transform .15s ease, box-shadow .15s ease; }
+  .landing .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(17,17,17,.14); }
+  .landing .btn-amarillo { background: var(--amarillo); color: var(--negro); }
+  .landing .btn-borde { background: transparent; color: inherit; box-shadow: inset 0 0 0 2px currentColor; }
+  .landing .btn .ico { width: 18px; height: 18px; stroke-width: 2.4; }
+
+  /* Cuadro de precio (PVP): menta #B1FBE3 según el recorrido */
+  .landing .pvp { display: inline-flex; flex-direction: column; background: var(--menta); color: var(--negro); border-radius: 18px; padding: 14px 22px 13px; }
+  .landing .pvp small { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--violeta); }
+  .landing .pvp b { font-size: 2.1rem; font-weight: 900; letter-spacing: -0.03em; line-height: 1.1; }
+  .landing .pvp b span { font-size: 1rem; font-weight: 700; letter-spacing: 0; }
+  .landing .pvp em { font-style: normal; font-size: 0.8rem; color: #2F4A42; }
+  .landing .oferta { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; margin-top: 40px; }
+
+  /* La cinta («churo»): UN hilo continuo. Cada tramo sale por y=900 y el
+     siguiente entra por y=0 en la misma x con tangente vertical, así el
+     empalme no se ve. En el collage pasa por detrás de las fotos.
+     Se dibuja al bajar (stroke-dashoffset), como en la landing actual. */
+  .landing .churo { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+  .landing .churo svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .landing .churo path { fill: none; stroke-linecap: round; vector-effect: non-scaling-stroke; stroke-width: clamp(30px, 7vw, 100px);
+    stroke-dasharray: 1 2; stroke-dashoffset: 1.05; transition: stroke-dashoffset 1.6s cubic-bezier(0.32, 0.72, 0.3, 1); }
+  .landing .churo path.trazado { stroke-dashoffset: 0; }
+
+  /* ---------- NAV ---------- */
+  .landing .barra { position: sticky; top: 0; z-index: 50; background: var(--violeta); color: var(--blanco); }
+  .landing .barra .wrap { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+  .landing .barra .logo img { height: 30px; width: auto; }
+  .landing .menu { display: flex; align-items: center; gap: 26px; list-style: none; }
+  .landing .menu > li > a, .landing .menu > li > button { color: var(--blanco); text-decoration: none; font: inherit; font-size: 0.93rem; font-weight: 500; background: none; border: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+  .landing .menu > li > a:hover, .landing .menu > li > button:hover { color: var(--menta); }
+  .landing .menu .ingresar { background: var(--amarillo); color: var(--negro); font-weight: 700; padding: 10px 22px; border-radius: 999px; }
+  .landing .menu .ingresar:hover { color: var(--negro); }
+  .landing .desplegable { position: relative; }
+  .landing .desplegable .ico { width: 16px; height: 16px; stroke-width: 2.4; transition: transform .2s; }
+  .landing .submenu { position: absolute; top: calc(100% + 14px); left: -16px; min-width: 230px; background: var(--blanco); color: var(--negro); border-radius: 16px; padding: 8px; list-style: none; box-shadow: 0 18px 40px rgba(30,0,70,.25); opacity: 0; visibility: hidden; transform: translateY(-6px); transition: .18s; }
+  .landing .submenu a { display: flex; gap: 12px; align-items: center; padding: 11px 12px; border-radius: 10px; text-decoration: none; }
+  .landing .submenu a:hover { background: var(--papel); }
+  .landing .submenu a b { display: block; font-size: 0.95rem; }
+  .landing .submenu a span { font-size: 0.8rem; color: var(--gris); }
+  .landing .submenu .ico { color: var(--violeta); }
+  .landing .desplegable:hover .submenu, .landing .desplegable:focus-within .submenu, .landing .desplegable.abierto .submenu { opacity: 1; visibility: visible; transform: none; }
+  .landing .desplegable.abierto > button .ico { transform: rotate(180deg); }
+  .landing .hamburguesa { display: none; background: none; border: 0; color: var(--blanco); cursor: pointer; }
+  .landing .hamburguesa .ico { width: 28px; height: 28px; }
+
+  /* ---------- 01 HERO ---------- */
+  .landing #hero { background: var(--violeta); color: var(--blanco); padding-top: clamp(56px, 7vw, 88px); }
+  .landing #hero .logo-grande { height: clamp(70px, 11vw, 132px); width: auto; }
+  .landing #hero h1 { margin-top: 34px; font-size: clamp(2rem, 4.2vw, 3.3rem); font-weight: 800; max-width: 760px; }
+  .landing #hero h1 i { font-style: normal; color: var(--menta); }
+  .landing #hero .bajada { margin-top: 18px; font-size: clamp(1.05rem, 1.6vw, 1.25rem); max-width: 640px; color: rgba(255,255,255,.88); }
+  .landing #hero .sello { margin-top: 34px; display: inline-block; font-weight: 700; font-size: 0.95rem; padding: 8px 16px; border-radius: 999px; background: rgba(255,255,255,.12); }
+  .landing #hero ul { list-style: none; margin-top: 18px; display: grid; gap: 10px; max-width: 560px; }
+  .landing #hero li { display: flex; gap: 12px; align-items: flex-start; font-size: 1.05rem; }
+  .landing #hero li .ico { color: var(--menta); width: 22px; height: 22px; margin-top: 1px; }
+
+  /* ---------- 02 CÓMO FUNCIONA (blanco, sin curva, botón amarillo) ---------- */
+  .landing #como { background: var(--blanco); }
+  .landing #como h2, .landing #beneficios h2, .landing #red h2 { font-size: clamp(2.2rem, 4.4vw, 3.4rem); font-weight: 800; }
+  .landing .pasos { margin-top: 44px; display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: start; gap: 8px; background: #EDF8F4; border-radius: 28px; padding: 40px 28px 36px; }
+  .landing .paso { text-align: center; padding: 0 8px; }
+  .landing .paso .ico { width: 70px; height: 70px; color: var(--violeta); stroke-width: 1.2; margin: 0 auto; }
+  .landing .paso h3 { margin-top: 18px; font-size: 1.3rem; font-weight: 700; }
+  .landing .paso p { margin-top: 8px; color: #33333A; }
+  .landing .chevron { align-self: center; color: var(--amarillo); }
+  .landing .chevron .ico { width: 56px; height: 56px; stroke-width: 3; }
+  .landing .comienza { margin-top: 30px; display: flex; flex-wrap: wrap; align-items: center; gap: 14px 26px; }
+  .landing .comienza .rotulo { color: var(--violeta); font-size: 1.45rem; font-weight: 700; line-height: 1; text-align: center; }
+  .landing .comienza .rotulo b { display: block; font-weight: 900; letter-spacing: .03em; }
+  .landing .comienza p { font-weight: 500; }
+
+  /* ---------- 03 BENEFICIOS (blanco, íconos #5000BA, letras negras) ---------- */
+  .landing #beneficios { background: var(--blanco); }
+  .landing #beneficios .sub2 { margin-top: 14px; font-size: 1.15rem; font-weight: 600; }
+  .landing .beneficios { margin-top: 56px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 44px 40px; }
+  .landing .beneficio .ico { color: var(--violeta); width: 34px; height: 34px; stroke-width: 1.5; }
+  .landing .beneficio h3 { margin-top: 16px; font-size: 1.15rem; font-weight: 800; }
+  .landing .beneficio p { margin-top: 6px; }
+  /* Media dona de fotos arriba a la derecha (la forma del churo, como en la referencia) */
+  .landing .dona { position: absolute; z-index: 2; top: -200px; right: 7%; width: 400px; height: 400px; border-radius: 50%; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 5px; background: var(--blanco); }
+  .landing .dona img { width: 100%; height: 100%; object-fit: cover; }
+  .landing .dona::after { content: ""; position: absolute; inset: 26%; border-radius: 50%; background: var(--blanco); }
+
+  /* ---------- 04 SOLUCIONES LEGALES (degradado lavanda → rosa, collage) ---------- */
+  .landing #soluciones { background: linear-gradient(115deg, #6E5AD8 0%, #9479D6 40%, #D99AD8 76%, #F3B0D6 100%); color: var(--blanco); }
+  .landing #soluciones h2 { font-size: clamp(2.4rem, 5vw, 3.8rem); font-weight: 900; }
+  .landing #soluciones h2 span { display: block; font-size: .72em; font-weight: 800; margin-top: 4px; }
+  .landing .bento { margin-top: 48px; display: grid; grid-template-columns: .9fr 1fr .7fr .85fr .85fr; grid-template-rows: 240px 200px; gap: 10px; }
+  .landing .bento img { width: 100%; height: 100%; object-fit: cover; border-radius: 18px; }
+  .landing .bento .b1 { grid-row: span 2; }
+  .landing .bento .b3 { grid-column: span 3; }
+  .landing .bento .b4 { grid-column: span 2; }
+
+  /* ---------- 05 PLANES (amarillo; tarjetas con foto a la derecha) ---------- */
+  .landing #planes { background: var(--amarillo); }
+  .landing #planes h2 { font-size: clamp(2.2rem, 4.6vw, 3.5rem); font-weight: 900; }
+  .landing #planes h2 span { display: block; font-size: .8em; }
+  .landing .tarjetas { margin: 46px auto 0; max-width: 1000px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 12px; border-radius: 34px; background: var(--violeta); }
+  .landing .tarjeta { background: linear-gradient(140deg, #E3FFF5 0%, #FFFFFF 70%); border-radius: 24px; overflow: hidden; display: grid; grid-template-columns: 1.2fr .8fr; min-height: 470px; }
+  .landing .tarjeta.empresa { background: linear-gradient(140deg, #F1EDFF 0%, #FFFFFF 70%); }
+  .landing .tarjeta .cuerpo { padding: 28px 8px 28px 26px; display: flex; flex-direction: column; }
+  .landing .tarjeta .foto { background-size: cover; background-position: center top; }
+  .landing .tarjeta h3 { font-size: 2.3rem; font-weight: 900; color: var(--violeta); }
+  .landing .tarjeta h3::after { content: ""; display: block; width: 70px; height: 5px; border-radius: 9px; background: var(--esmeralda); margin-top: 8px; }
+  .landing .tarjeta .precio { margin-top: 18px; display: flex; align-items: flex-end; gap: 10px; }
+  .landing .tarjeta .precio small { display: block; font-weight: 700; font-size: 1.05rem; color: var(--violeta); }
+  .landing .tarjeta .precio b { font-size: 3.6rem; font-weight: 900; color: var(--violeta); line-height: .9; letter-spacing: -0.04em; }
+  .landing .tarjeta .precio span { font-weight: 700; line-height: 1.15; padding-bottom: 4px; }
+  .landing .tarjeta .para { margin-top: 8px; font-weight: 600; }
+  .landing .tarjeta .lema { margin-top: 18px; font-size: 1.3rem; font-weight: 800; color: var(--violeta); line-height: 1.2; }
+  .landing .tarjeta ul { list-style: none; margin: 22px 0 26px; display: grid; gap: 14px; }
+  .landing .tarjeta li { display: flex; gap: 12px; align-items: center; font-size: .93rem; font-weight: 500; }
+  .landing .cuadroico { width: 42px; height: 42px; border-radius: 50%; background: var(--menta); color: var(--violeta); display: grid; place-items: center; flex: none; }
+  .landing .tarjeta .btn { margin-top: auto; align-self: flex-start; }
+  /* «Iconos de todas las tarjetas»: los logos de las tarjetas de pago */
+  .landing .medios { margin: 30px auto 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 20px; }
+  .landing .medios img { height: 70px; width: auto; background: var(--blanco); border-radius: 14px; padding: 6px 12px; }
+  .landing .medios span { font-weight: 700; font-size: 1.05rem; }
+
+  /* ---------- 06 ¿TIENES UNA DUDA LEGAL? (rosa + curva naranja) ---------- */
+  .landing #duda { background: var(--rosa); }
+  .landing #duda h2 { font-size: clamp(2.2rem, 4.6vw, 3.6rem); font-weight: 900; max-width: 780px; }
+  .landing #duda h2 span { display: block; font-size: .8em; margin-top: 4px; }
+  .landing .tira { margin-top: 26px; display: grid; grid-template-columns: 1fr 1fr 1fr 1.5fr; gap: 8px; max-width: 900px; }
+  .landing .tira img { width: 100%; height: 280px; object-fit: cover; border-radius: 16px; }
+  /* Naranja oscurecido: el #FE5800 sobre rosa no se lee (contraste 2:1) */
+  .landing #duda .remate { margin-top: 22px; max-width: 660px; font-size: 1.3rem; font-weight: 700; color: #B83D00; line-height: 1.35; }
+
+  /* ---------- 07 RED DE EXPERTOS (blanco) ---------- */
+  .landing #red { background: var(--blanco); }
+  .landing #red .cabecera { display: grid; grid-template-columns: .9fr 1.1fr; gap: 48px; align-items: center; }
+  .landing #red .foto { aspect-ratio: 4 / 3; border-radius: 24px 50% 24px 24px / 24px 45% 24px 24px; overflow: hidden; }
+  .landing #red .foto img, .landing #abogado .arco img { width: 100%; height: 100%; object-fit: cover; }
+  .landing #red .sub { color: var(--negro); }
+  .landing .respaldo { margin-top: 64px; display: grid; grid-template-columns: 1fr 1fr; gap: 44px 56px; }
+  .landing .respaldo > div { display: flex; gap: 20px; }
+  .landing .respaldo .ico { width: 52px; height: 52px; color: var(--violeta); stroke-width: 1.3; }
+  .landing .respaldo b { display: block; font-size: 1.4rem; font-weight: 600; letter-spacing: -0.01em; }
+  .landing .respaldo p { margin-top: 10px; font-size: 1.05rem; }
+  .landing #red .centro { margin-top: 56px; text-align: center; }
+
+  /* ---------- 08 ¿ERES ABOGADO? (blanco) ---------- */
+  .landing #abogado { background: var(--blanco); padding-top: 0; }
+  .landing #abogado .rejilla { display: grid; grid-template-columns: .95fr 1.05fr; gap: 56px; align-items: center; }
+  .landing #abogado .arco { aspect-ratio: 4 / 3.2; border-radius: 50% 50% 0 0 / 62% 62% 0 0; overflow: hidden; }
+  .landing #abogado .lema { margin-top: 24px; font-size: clamp(1.5rem, 2.4vw, 1.9rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; }
+  .landing #abogado h2 { font-size: clamp(2rem, 3.3vw, 2.6rem); font-weight: 900; }
+  .landing #abogado .texto > p { margin-top: 18px; font-size: 1.12rem; }
+  .landing #abogado ul { list-style: none; margin-top: 18px; display: grid; gap: 10px; font-weight: 600; }
+  .landing #abogado li { display: flex; gap: 10px; align-items: center; }
+  .landing #abogado li .ico { color: var(--violeta); }
+  .landing #abogado .acciones { margin-top: 30px; display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+  .landing .logo-violeta { width: 150px; height: 48px; background: var(--violeta); -webkit-mask: url("/assets/tranqi-black.svg") no-repeat left center / contain; mask: url("/assets/tranqi-black.svg") no-repeat left center / contain; }
+
+  /* ---------- 09 CONTACTO (rosa + curva naranja; nunca fondo negro) ---------- */
+  .landing #contacto { background: var(--rosa); }
+  .landing #contacto h2 { font-size: clamp(2.4rem, 5vw, 4rem); font-weight: 600; letter-spacing: -0.03em; }
+  .landing #contacto .rejilla { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  .landing #contacto .datos { margin-top: 28px; border: 1.5px solid var(--naranja); border-radius: 22px; padding: 24px 26px; display: grid; gap: 14px; max-width: 420px; background: rgba(255,255,255,.35); }
+  .landing #contacto .datos h3 { font-size: 1.5rem; font-weight: 800; }
+  .landing #contacto .datos div { display: flex; gap: 12px; align-items: center; font-weight: 600; }
+  .landing #contacto .datos .cuadroico { width: 36px; height: 36px; }
+  .landing #contacto .izquierda > .btn { margin-top: 28px; }
+  .landing .formulario { background: var(--blanco); border-radius: 30px; padding: 30px; box-shadow: 0 24px 50px rgba(80,0,186,.14); }
+  .landing .formulario h3 { font-size: 2rem; font-weight: 900; }
+  .landing .formulario .tipo { margin-top: 18px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: var(--papel); border-radius: 999px; padding: 5px; }
+  .landing .formulario .tipo label { text-align: center; padding: 9px 4px; border-radius: 999px; font-weight: 700; font-size: 0.86rem; cursor: pointer; }
+  .landing .formulario .tipo label:has(input:checked) { background: var(--violeta); color: var(--blanco); }
+  .landing .formulario .campos { margin-top: 16px; display: grid; gap: 12px; }
+  .landing .formulario input[type=text], .landing .formulario input[type=email], .landing .formulario input[type=tel], .landing .formulario textarea { width: 100%; font: inherit; border: 1.5px solid var(--linea); background: #FBF4FB; border-radius: 999px; padding: 14px 18px; outline: none; }
+  .landing .formulario textarea { border-radius: 20px; min-height: 120px; resize: vertical; }
+  .landing .formulario input:focus, .landing .formulario textarea:focus { border-color: var(--lavanda); background: var(--blanco); }
+  .landing .formulario .btn { margin-top: 16px; width: 100%; justify-content: center; font-size: 1.1rem; }
+
+  /* ---------- 10 FAQ (menta + curva negra) ---------- */
+  .landing #faq { background: var(--menta); }
+  .landing #faq .rejilla { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 48px; }
+  .landing #faq h2 { font-size: clamp(3.4rem, 9vw, 7rem); font-weight: 600; letter-spacing: -0.04em; }
+  .landing #faq .lado p { margin-top: 14px; font-size: 1.1rem; max-width: 320px; }
+  .landing .preguntas { display: grid; gap: 10px; }
+  .landing details { background: var(--blanco); border-radius: 16px; padding: 0 22px; }
+  .landing summary { list-style: none; cursor: pointer; padding: 19px 0; font-weight: 700; font-size: 1.04rem; display: flex; justify-content: space-between; gap: 16px; }
+  .landing summary::-webkit-details-marker { display: none; }
+  .landing summary .ico { color: var(--violeta); transition: transform .2s; }
+  .landing details[open] summary .ico { transform: rotate(45deg); }
+  .landing details p { padding: 0 0 20px; color: #33333A; }
+
+  /* ---------- NOSOTROS (al final, tras FAQ; lila + curva negra) ---------- */
+  .landing #nosotros { background: var(--lila); }
+  .landing #nosotros .rejilla { display: grid; grid-template-columns: 1.15fr 1fr; gap: 48px; }
+  .landing #nosotros .carta { background: var(--blanco); border-radius: 24px; padding: 34px; }
+  .landing #nosotros .carta h3 { font-size: 1.5rem; font-weight: 800; }
+  .landing #nosotros .carta p { margin-top: 14px; }
+  .landing #nosotros .firma { margin-top: 22px; display: flex; gap: 14px; align-items: center; }
+  .landing #nosotros .firma .avatar { width: 52px; height: 52px; border-radius: 50%; background: var(--violeta); color: var(--blanco); display: grid; place-items: center; font-weight: 800; }
+  .landing #nosotros .firma small { display: block; color: var(--gris); }
+  .landing .pilares { display: grid; gap: 12px; align-content: start; }
+  .landing .pilares h3 { font-size: 1.3rem; font-weight: 800; margin-bottom: 4px; }
+  .landing .pilar { background: var(--blanco); border-radius: 18px; padding: 16px 18px; display: flex; gap: 14px; }
+  .landing .pilar .cuadroico { background: var(--violeta); color: var(--blanco); border-radius: 12px; }
+  .landing .pilar b { display: block; }
+  .landing .pilar span { font-size: 0.92rem; color: #33333A; }
+
+  .landing .pie-landing { background: var(--violeta); color: rgba(255,255,255,.75); padding: 36px 0; font-size: 0.86rem; }
+  .landing .pie-landing .wrap { display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: center; }
+  .landing .pie-landing img { height: 26px; width: auto; }
+
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 980px){
+    .landing .menu { position: fixed; inset: 68px 0 auto 0; flex-direction: column; align-items: stretch; gap: 0; background: var(--violeta); padding: 8px 20px 20px; display: none; max-height: calc(100svh - 68px); overflow: auto; }
+    .landing .barra.abierta .menu { display: flex; }
+    .landing .menu > li > a, .landing .menu > li > button { padding: 14px 0; width: 100%; font-size: 1.05rem; border-bottom: 1px solid rgba(255,255,255,.12); }
+    .landing .menu .ingresar { margin-top: 14px; justify-content: center; }
+    .landing .submenu { position: static; opacity: 1; visibility: visible; transform: none; box-shadow: none; display: none; margin: 4px 0 8px; }
+    .landing .desplegable.abierto .submenu { display: block; }
+    .landing .hamburguesa { display: block; }
+    .landing .pasos { grid-template-columns: 1fr; gap: 18px; }
+    .landing .chevron { justify-self: center; transform: rotate(90deg); }
+    .landing .chevron .ico { width: 40px; height: 40px; }
+    .landing .beneficios { grid-template-columns: 1fr 1fr; }
+    .landing .dona { width: 260px; height: 260px; top: -130px; right: -40px; }
+    .landing .bento { grid-template-columns: 1fr 1fr; grid-template-rows: 200px 200px 170px 170px; }
+    .landing .bento .b1 { grid-row: span 2; } .landing .bento .b3, .landing .bento .b4 { grid-column: span 2; }
+    .landing .tarjetas, .landing #red .cabecera, .landing .respaldo, .landing #abogado .rejilla, .landing #nosotros .rejilla, .landing #faq .rejilla, .landing #contacto .rejilla { grid-template-columns: 1fr; }
+    .landing .tira { grid-template-columns: 1fr 1fr; }
+    .landing .tira img { height: 200px; }
+  }
+  @media (max-width: 620px){
+    .landing .beneficios { grid-template-columns: 1fr; }
+    .landing .dona { display: none; }
+    .landing .bento { grid-template-rows: 170px 170px 150px 150px; gap: 8px; }
+    .landing .tarjetas { padding: 8px; border-radius: 26px; }
+    .landing .tarjeta { grid-template-columns: 1fr; min-height: 0; }
+    .landing .tarjeta .foto { order: -1; height: 240px; }
+    .landing .tira img { height: 150px; }
+    .landing .respaldo > div { gap: 14px; }
+    .landing .respaldo .ico { width: 40px; height: 40px; }
+    .landing .formulario { padding: 22px; }
+    .landing .formulario .tipo { grid-template-columns: 1fr; border-radius: 20px; }
+    .landing .medios img { height: 56px; }
+    .landing .oferta { gap: 14px; }
+    /* La cinta corre por el borde derecho: que no roce el texto */
+    .landing #como .wrap, .landing #beneficios .wrap, .landing #red .wrap, .landing #abogado .wrap { padding-right: 46px; }
+  }
+  @media (prefers-reduced-motion: reduce) { html:has(.landing) { scroll-behavior: auto; } .landing .btn, .landing .churo path { transition: none; } .landing .churo path { stroke-dashoffset: 0; } }
+
+/* ---------- Formulario: estados reales (la maqueta solo simulaba el envío) ---------- */
+.landing .formulario .tipo input { position: absolute; opacity: 0; pointer-events: none; }
+.landing .formulario .gracias { margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: var(--menta); font-weight: 600; }
+.landing .formulario .error { margin-top: 12px; padding: 10px 14px; border-radius: 12px; background: #FFE9DE; color: #A33A00; font-weight: 600; font-size: 0.92rem; }
+.landing .formulario .btn:disabled { opacity: 0.6; cursor: wait; transform: none; box-shadow: none; }
+.landing .formulario .trampa { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.landing #nosotros .etiqueta { background: var(--violeta); color: var(--blanco); }
+.landing #nosotros .carta h3 { margin-top: 16px; }
+.landing .pie-landing .enlaces a { color: inherit; }
+.landing .pie-landing .enlaces a:hover { color: var(--menta); }

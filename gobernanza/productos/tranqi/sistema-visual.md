@@ -44,7 +44,7 @@ oscura de GitHub en estilos inline).
 | `--negro` | `#111111` | Texto y rail del panel administrativo |
 | `--blanco` | `#FFFFFF` | Superficies |
 
-Tipografía: **Archivo** (grotesca), pesos 400–800. Cifras con
+Tipografía: **Inter**, la del brandbook (antes Archivo; cambio de TRQ-023, 16-nov-2026), pesos 400–900. Cifras con
 `font-variant-numeric: tabular-nums` en tablas y métricas.
 
 ## 3. Las tres reglas del color
@@ -200,9 +200,9 @@ El color de cada tramo es un token a **opacidad plena**. La lima al 55 % sobre
 la tinta verde de «Nuestro equipo» daba un salvia `#7A9F73` que no está en la
 paleta y dejaba el titular blanco a 3:1; ahora ese tramo es `--esmeralda`.
 
-El anclaje de scroll (una sección = una página) es **solo de la landing**:
-`html:has(.nav-landing)`. En `html` a secas lo heredaba todo el sitio, y en
-`/vacantes` el único `<section>` atrapaba el scroll.
+Ya no hay anclaje de scroll (una sección = una página): la landing de la
+membresía (TRQ-024) tiene bloques de alto variable y scroll normal. Su estilo
+vive en `modulos/landing/componentes/landing.css`, todo bajo `.landing`.
 
 ## 8. Accesibilidad
 
@@ -237,7 +237,10 @@ reescribe siguiendo la estructura de módulo obligatoria.
 - `maqueta-abogado.html` — escritorio del abogado.
 - `maqueta-equipo.html` — sección "Nuestro equipo" de la landing pública (TRQ-002), con acento
   esmeralda/lima del lado abogado. A diferencia de las dos anteriores, esta sí es la landing web
-  actual (`apps/tranqi-web/app/page.tsx`), no una futura app nativa.
+  pública de entonces, no una futura app nativa.
+- `landing-membresia-v2.html` — landing de la membresía (TRQ-024, 16-nov-2026) en 10 bloques,
+  a partir del «Recorrido gráfico de la landing membresía», revisión 1. Es la landing web actual
+  (`apps/tranqi-web/modulos/landing`).
 
 Las dos primeras maquetas son de las futuras apps nativas Cliente/Abogado — más ricas
 (buscador, notificaciones, mensajes, agenda) que el panel web de hoy, que no

@@ -1,0 +1,704 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>tranqi — Landing membresía (maqueta v2)</title>
+<!-- Maqueta para decidir, no para desplegar. Fuente: brandbook (Inter) y el
+     «Recorrido gráfico de la landing membresía», revisión 1 (14-nov-2026), con
+     la lámina 9 («¿Eres abogado?») en la posición 8, delante del contacto. Inventario
+     de pedidos en ../correcciones-landing-y-planes-2026-11-14.md -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --violeta: #5000BA;
+    --lavanda: #7866FF;
+    --menta: #B1FBE3;
+    --esmeralda: #05876E;
+    --lima: #D8FFB3;
+    --amarillo: #FEE300;
+    --rosa: #FEB9FF;
+    --naranja: #FE5800;
+    --lila: #D0BBE2;
+    --negro: #111111;
+    --blanco: #FFFFFF;
+    --gris: #5F5F66;
+    --linea: #E7E5EE;
+    --papel: #F6F5FA;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+  body { font-family: "Inter", system-ui, sans-serif; color: var(--negro); background: var(--blanco); -webkit-font-smoothing: antialiased; }
+  img { display: block; max-width: 100%; }
+  a { color: inherit; }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 48px); position: relative; z-index: 2; }
+  section { position: relative; overflow: hidden; padding: clamp(72px, 10vw, 120px) 0; }
+  h1, h2, h3 { letter-spacing: -0.03em; line-height: 1.05; }
+  h2 { font-size: clamp(2rem, 4vw, 3.1rem); font-weight: 800; }
+  p { line-height: 1.55; }
+  .etiqueta { display: inline-block; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 7px 14px; border-radius: 999px; background: var(--menta); color: var(--violeta); }
+  .sub { margin-top: 14px; font-size: 1.1rem; color: var(--gris); max-width: 620px; }
+  .ico { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+  /* Botones: amarillo = acción principal en toda la página (pedido del recorrido) */
+  .btn { display: inline-flex; align-items: center; gap: 10px; font: inherit; font-weight: 700; font-size: 1rem; text-decoration: none; border: 0; cursor: pointer; padding: 15px 28px; border-radius: 999px; transition: transform .15s ease, box-shadow .15s ease; }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(17,17,17,.14); }
+  .btn-amarillo { background: var(--amarillo); color: var(--negro); }
+  .btn-borde { background: transparent; color: inherit; box-shadow: inset 0 0 0 2px currentColor; }
+  .btn .ico { width: 18px; height: 18px; stroke-width: 2.4; }
+
+  /* Cuadro de precio (PVP): menta #B1FBE3 según el recorrido */
+  .pvp { display: inline-flex; flex-direction: column; background: var(--menta); color: var(--negro); border-radius: 18px; padding: 14px 22px 13px; }
+  .pvp small { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--violeta); }
+  .pvp b { font-size: 2.1rem; font-weight: 900; letter-spacing: -0.03em; line-height: 1.1; }
+  .pvp b span { font-size: 1rem; font-weight: 700; letter-spacing: 0; }
+  .pvp em { font-style: normal; font-size: 0.8rem; color: #2F4A42; }
+  .oferta { display: flex; flex-wrap: wrap; align-items: center; gap: 18px; margin-top: 40px; }
+
+  /* La cinta («churo»): UN hilo continuo. Cada tramo sale por y=900 y el
+     siguiente entra por y=0 en la misma x con tangente vertical, así el
+     empalme no se ve. En el collage pasa por detrás de las fotos.
+     Se dibuja al bajar (stroke-dashoffset), como en la landing actual. */
+  .churo { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+  .churo svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .churo path { fill: none; stroke-linecap: round; vector-effect: non-scaling-stroke; stroke-width: clamp(30px, 7vw, 100px);
+    stroke-dasharray: 1 2; stroke-dashoffset: 1.05; transition: stroke-dashoffset 1.6s cubic-bezier(0.32, 0.72, 0.3, 1); }
+  .churo path.trazado { stroke-dashoffset: 0; }
+
+  /* ---------- NAV ---------- */
+  nav.barra { position: sticky; top: 0; z-index: 50; background: var(--violeta); color: var(--blanco); }
+  nav.barra .wrap { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+  nav.barra .logo img { height: 30px; width: auto; }
+  .menu { display: flex; align-items: center; gap: 26px; list-style: none; }
+  .menu > li > a, .menu > li > button { color: var(--blanco); text-decoration: none; font: inherit; font-size: 0.93rem; font-weight: 500; background: none; border: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+  .menu > li > a:hover, .menu > li > button:hover { color: var(--menta); }
+  .menu .ingresar { background: var(--amarillo); color: var(--negro); font-weight: 700; padding: 10px 22px; border-radius: 999px; }
+  .menu .ingresar:hover { color: var(--negro); }
+  .desplegable { position: relative; }
+  .desplegable .ico { width: 16px; height: 16px; stroke-width: 2.4; transition: transform .2s; }
+  .submenu { position: absolute; top: calc(100% + 14px); left: -16px; min-width: 230px; background: var(--blanco); color: var(--negro); border-radius: 16px; padding: 8px; list-style: none; box-shadow: 0 18px 40px rgba(30,0,70,.25); opacity: 0; visibility: hidden; transform: translateY(-6px); transition: .18s; }
+  .submenu a { display: flex; gap: 12px; align-items: center; padding: 11px 12px; border-radius: 10px; text-decoration: none; }
+  .submenu a:hover { background: var(--papel); }
+  .submenu a b { display: block; font-size: 0.95rem; }
+  .submenu a span { font-size: 0.8rem; color: var(--gris); }
+  .submenu .ico { color: var(--violeta); }
+  .desplegable:hover .submenu, .desplegable:focus-within .submenu, .desplegable.abierto .submenu { opacity: 1; visibility: visible; transform: none; }
+  .desplegable.abierto > button .ico { transform: rotate(180deg); }
+  .hamburguesa { display: none; background: none; border: 0; color: var(--blanco); cursor: pointer; }
+  .hamburguesa .ico { width: 28px; height: 28px; }
+
+  /* ---------- 01 HERO ---------- */
+  #hero { background: var(--violeta); color: var(--blanco); padding-top: clamp(56px, 7vw, 88px); }
+  #hero .logo-grande { height: clamp(70px, 11vw, 132px); width: auto; }
+  #hero h1 { margin-top: 34px; font-size: clamp(2rem, 4.2vw, 3.3rem); font-weight: 800; max-width: 760px; }
+  #hero h1 i { font-style: normal; color: var(--menta); }
+  #hero .bajada { margin-top: 18px; font-size: clamp(1.05rem, 1.6vw, 1.25rem); max-width: 640px; color: rgba(255,255,255,.88); }
+  #hero .sello { margin-top: 34px; display: inline-block; font-weight: 700; font-size: 0.95rem; padding: 8px 16px; border-radius: 999px; background: rgba(255,255,255,.12); }
+  #hero ul { list-style: none; margin-top: 18px; display: grid; gap: 10px; max-width: 560px; }
+  #hero li { display: flex; gap: 12px; align-items: flex-start; font-size: 1.05rem; }
+  #hero li .ico { color: var(--menta); width: 22px; height: 22px; margin-top: 1px; }
+
+  /* ---------- 02 CÓMO FUNCIONA (blanco, sin curva, botón amarillo) ---------- */
+  #como { background: var(--blanco); }
+  #como h2, #beneficios h2, #red h2 { font-size: clamp(2.2rem, 4.4vw, 3.4rem); font-weight: 800; }
+  .pasos { margin-top: 44px; display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: start; gap: 8px; background: #EDF8F4; border-radius: 28px; padding: 40px 28px 36px; }
+  .paso { text-align: center; padding: 0 8px; }
+  .paso .ico { width: 70px; height: 70px; color: var(--violeta); stroke-width: 1.2; margin: 0 auto; }
+  .paso h3 { margin-top: 18px; font-size: 1.3rem; font-weight: 700; }
+  .paso p { margin-top: 8px; color: #33333A; }
+  .chevron { align-self: center; color: var(--amarillo); }
+  .chevron .ico { width: 56px; height: 56px; stroke-width: 3; }
+  .comienza { margin-top: 30px; display: flex; flex-wrap: wrap; align-items: center; gap: 14px 26px; }
+  .comienza .rotulo { color: var(--violeta); font-size: 1.45rem; font-weight: 700; line-height: 1; text-align: center; }
+  .comienza .rotulo b { display: block; font-weight: 900; letter-spacing: .03em; }
+  .comienza p { font-weight: 500; }
+
+  /* ---------- 03 BENEFICIOS (blanco, íconos #5000BA, letras negras) ---------- */
+  #beneficios { background: var(--blanco); }
+  #beneficios .sub2 { margin-top: 14px; font-size: 1.15rem; font-weight: 600; }
+  .beneficios { margin-top: 56px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 44px 40px; }
+  .beneficio .ico { color: var(--violeta); width: 34px; height: 34px; stroke-width: 1.5; }
+  .beneficio h3 { margin-top: 16px; font-size: 1.15rem; font-weight: 800; }
+  .beneficio p { margin-top: 6px; }
+  /* Media dona de fotos arriba a la derecha (la forma del churo, como en la referencia) */
+  .dona { position: absolute; z-index: 2; top: -200px; right: 7%; width: 400px; height: 400px; border-radius: 50%; overflow: hidden; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 5px; background: var(--blanco); }
+  .dona img { width: 100%; height: 100%; object-fit: cover; }
+  .dona::after { content: ""; position: absolute; inset: 26%; border-radius: 50%; background: var(--blanco); }
+
+  /* ---------- 04 SOLUCIONES LEGALES (degradado lavanda → rosa, collage) ---------- */
+  #soluciones { background: linear-gradient(115deg, #6E5AD8 0%, #9479D6 40%, #D99AD8 76%, #F3B0D6 100%); color: var(--blanco); }
+  #soluciones h2 { font-size: clamp(2.4rem, 5vw, 3.8rem); font-weight: 900; }
+  #soluciones h2 span { display: block; font-size: .72em; font-weight: 800; margin-top: 4px; }
+  .bento { margin-top: 48px; display: grid; grid-template-columns: .9fr 1fr .7fr .85fr .85fr; grid-template-rows: 240px 200px; gap: 10px; }
+  .bento img { width: 100%; height: 100%; object-fit: cover; border-radius: 18px; }
+  .bento .b1 { grid-row: span 2; }
+  .bento .b3 { grid-column: span 3; }
+  .bento .b4 { grid-column: span 2; }
+
+  /* ---------- 05 PLANES (amarillo; tarjetas con foto a la derecha) ---------- */
+  #planes { background: var(--amarillo); }
+  #planes h2 { font-size: clamp(2.2rem, 4.6vw, 3.5rem); font-weight: 900; }
+  #planes h2 span { display: block; font-size: .8em; }
+  .tarjetas { margin: 46px auto 0; max-width: 1000px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 12px; border-radius: 34px; background: var(--violeta); }
+  .tarjeta { background: linear-gradient(140deg, #E3FFF5 0%, #FFFFFF 70%); border-radius: 24px; overflow: hidden; display: grid; grid-template-columns: 1.2fr .8fr; min-height: 470px; }
+  .tarjeta.empresa { background: linear-gradient(140deg, #F1EDFF 0%, #FFFFFF 70%); }
+  .tarjeta .cuerpo { padding: 28px 8px 28px 26px; display: flex; flex-direction: column; }
+  .tarjeta .foto { background-size: cover; background-position: center top; }
+  .tarjeta h3 { font-size: 2.3rem; font-weight: 900; color: var(--violeta); }
+  .tarjeta h3::after { content: ""; display: block; width: 70px; height: 5px; border-radius: 9px; background: var(--esmeralda); margin-top: 8px; }
+  .tarjeta .precio { margin-top: 18px; display: flex; align-items: flex-end; gap: 10px; }
+  .tarjeta .precio small { display: block; font-weight: 700; font-size: 1.05rem; color: var(--violeta); }
+  .tarjeta .precio b { font-size: 3.6rem; font-weight: 900; color: var(--violeta); line-height: .9; letter-spacing: -0.04em; }
+  .tarjeta .precio span { font-weight: 700; line-height: 1.15; padding-bottom: 4px; }
+  .tarjeta .para { margin-top: 8px; font-weight: 600; }
+  .tarjeta .lema { margin-top: 18px; font-size: 1.3rem; font-weight: 800; color: var(--violeta); line-height: 1.2; }
+  .tarjeta ul { list-style: none; margin: 22px 0 26px; display: grid; gap: 14px; }
+  .tarjeta li { display: flex; gap: 12px; align-items: center; font-size: .93rem; font-weight: 500; }
+  .cuadroico { width: 42px; height: 42px; border-radius: 50%; background: var(--menta); color: var(--violeta); display: grid; place-items: center; flex: none; }
+  .tarjeta .btn { margin-top: auto; align-self: flex-start; }
+  /* «Iconos de todas las tarjetas»: los logos de las tarjetas de pago */
+  .medios { margin: 30px auto 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 20px; }
+  .medios img { height: 70px; width: auto; background: var(--blanco); border-radius: 14px; padding: 6px 12px; }
+  .medios span { font-weight: 700; font-size: 1.05rem; }
+
+  /* ---------- 06 ¿TIENES UNA DUDA LEGAL? (rosa + curva naranja) ---------- */
+  #duda { background: var(--rosa); }
+  #duda h2 { font-size: clamp(2.2rem, 4.6vw, 3.6rem); font-weight: 900; max-width: 780px; }
+  #duda h2 span { display: block; font-size: .8em; margin-top: 4px; }
+  .tira { margin-top: 26px; display: grid; grid-template-columns: 1fr 1fr 1fr 1.5fr; gap: 8px; max-width: 900px; }
+  .tira img { width: 100%; height: 280px; object-fit: cover; border-radius: 16px; }
+  /* Naranja oscurecido: el #FE5800 sobre rosa no se lee (contraste 2:1) */
+  #duda .remate { margin-top: 22px; max-width: 660px; font-size: 1.3rem; font-weight: 700; color: #B83D00; line-height: 1.35; }
+
+  /* ---------- 07 RED DE EXPERTOS (blanco) ---------- */
+  #red { background: var(--blanco); }
+  #red .cabecera { display: grid; grid-template-columns: .9fr 1.1fr; gap: 48px; align-items: center; }
+  #red .foto { aspect-ratio: 4 / 3; border-radius: 24px 50% 24px 24px / 24px 45% 24px 24px; overflow: hidden; }
+  #red .foto img, #abogado .arco img { width: 100%; height: 100%; object-fit: cover; }
+  #red .sub { color: var(--negro); }
+  .respaldo { margin-top: 64px; display: grid; grid-template-columns: 1fr 1fr; gap: 44px 56px; }
+  .respaldo > div { display: flex; gap: 20px; }
+  .respaldo .ico { width: 52px; height: 52px; color: var(--violeta); stroke-width: 1.3; }
+  .respaldo b { display: block; font-size: 1.4rem; font-weight: 600; letter-spacing: -0.01em; }
+  .respaldo p { margin-top: 10px; font-size: 1.05rem; }
+  #red .centro { margin-top: 56px; text-align: center; }
+
+  /* ---------- 08 ¿ERES ABOGADO? (blanco) ---------- */
+  #abogado { background: var(--blanco); padding-top: 0; }
+  #abogado .rejilla { display: grid; grid-template-columns: .95fr 1.05fr; gap: 56px; align-items: center; }
+  #abogado .arco { aspect-ratio: 4 / 3.2; border-radius: 50% 50% 0 0 / 62% 62% 0 0; overflow: hidden; }
+  #abogado .lema { margin-top: 24px; font-size: clamp(1.5rem, 2.4vw, 1.9rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1.2; }
+  #abogado h2 { font-size: clamp(2rem, 3.3vw, 2.6rem); font-weight: 900; }
+  #abogado .texto > p { margin-top: 18px; font-size: 1.12rem; }
+  #abogado ul { list-style: none; margin-top: 18px; display: grid; gap: 10px; font-weight: 600; }
+  #abogado li { display: flex; gap: 10px; align-items: center; }
+  #abogado li .ico { color: var(--violeta); }
+  #abogado .acciones { margin-top: 30px; display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
+  .logo-violeta { width: 150px; height: 48px; background: var(--violeta); -webkit-mask: url("/assets/tranqi-black.svg") no-repeat left center / contain; mask: url("/assets/tranqi-black.svg") no-repeat left center / contain; }
+
+  /* ---------- 09 CONTACTO (rosa + curva naranja; nunca fondo negro) ---------- */
+  #contacto { background: var(--rosa); }
+  #contacto h2 { font-size: clamp(2.4rem, 5vw, 4rem); font-weight: 600; letter-spacing: -0.03em; }
+  #contacto .rejilla { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  #contacto .datos { margin-top: 28px; border: 1.5px solid var(--naranja); border-radius: 22px; padding: 24px 26px; display: grid; gap: 14px; max-width: 420px; background: rgba(255,255,255,.35); }
+  #contacto .datos h3 { font-size: 1.5rem; font-weight: 800; }
+  #contacto .datos div { display: flex; gap: 12px; align-items: center; font-weight: 600; }
+  #contacto .datos .cuadroico { width: 36px; height: 36px; }
+  #contacto .izquierda > .btn { margin-top: 28px; }
+  .formulario { background: var(--blanco); border-radius: 30px; padding: 30px; box-shadow: 0 24px 50px rgba(80,0,186,.14); }
+  .formulario h3 { font-size: 2rem; font-weight: 900; }
+  .formulario .tipo { margin-top: 18px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: var(--papel); border-radius: 999px; padding: 5px; }
+  .formulario .tipo label { text-align: center; padding: 9px 4px; border-radius: 999px; font-weight: 700; font-size: 0.86rem; cursor: pointer; }
+  .formulario .tipo input { position: absolute; opacity: 0; pointer-events: none; }
+  .formulario .tipo label:has(input:checked) { background: var(--violeta); color: var(--blanco); }
+  .formulario .campos { margin-top: 16px; display: grid; gap: 12px; }
+  .formulario input[type=text], .formulario input[type=email], .formulario input[type=tel], .formulario textarea { width: 100%; font: inherit; border: 1.5px solid var(--linea); background: #FBF4FB; border-radius: 999px; padding: 14px 18px; outline: none; }
+  .formulario textarea { border-radius: 20px; min-height: 120px; resize: vertical; }
+  .formulario input:focus, .formulario textarea:focus { border-color: var(--lavanda); background: var(--blanco); }
+  .formulario .empresa, .formulario .abogado { display: none; }
+  .formulario.es-empresa .empresa, .formulario.es-abogado .abogado { display: block; }
+  .formulario .btn { margin-top: 16px; width: 100%; justify-content: center; font-size: 1.1rem; }
+  .formulario .gracias { display: none; margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: var(--menta); font-weight: 600; }
+
+  /* ---------- 10 FAQ (menta + curva negra) ---------- */
+  #faq { background: var(--menta); }
+  #faq .rejilla { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 48px; }
+  #faq h2 { font-size: clamp(3.4rem, 9vw, 7rem); font-weight: 600; letter-spacing: -0.04em; }
+  #faq .lado p { margin-top: 14px; font-size: 1.1rem; max-width: 320px; }
+  .preguntas { display: grid; gap: 10px; }
+  details { background: var(--blanco); border-radius: 16px; padding: 0 22px; }
+  summary { list-style: none; cursor: pointer; padding: 19px 0; font-weight: 700; font-size: 1.04rem; display: flex; justify-content: space-between; gap: 16px; }
+  summary::-webkit-details-marker { display: none; }
+  summary .ico { color: var(--violeta); transition: transform .2s; }
+  details[open] summary .ico { transform: rotate(45deg); }
+  details p { padding: 0 0 20px; color: #33333A; }
+
+  /* ---------- NOSOTROS (al final, tras FAQ; lila + curva negra) ---------- */
+  #nosotros { background: var(--lila); }
+  #nosotros .rejilla { display: grid; grid-template-columns: 1.15fr 1fr; gap: 48px; }
+  #nosotros .carta { background: var(--blanco); border-radius: 24px; padding: 34px; }
+  #nosotros .carta h3 { font-size: 1.5rem; font-weight: 800; }
+  #nosotros .carta p { margin-top: 14px; }
+  #nosotros .firma { margin-top: 22px; display: flex; gap: 14px; align-items: center; }
+  #nosotros .firma .avatar { width: 52px; height: 52px; border-radius: 50%; background: var(--violeta); color: var(--blanco); display: grid; place-items: center; font-weight: 800; }
+  #nosotros .firma small { display: block; color: var(--gris); }
+  .pilares { display: grid; gap: 12px; align-content: start; }
+  .pilares h3 { font-size: 1.3rem; font-weight: 800; margin-bottom: 4px; }
+  .pilar { background: var(--blanco); border-radius: 18px; padding: 16px 18px; display: flex; gap: 14px; }
+  .pilar .cuadroico { background: var(--violeta); color: var(--blanco); border-radius: 12px; }
+  .pilar b { display: block; }
+  .pilar span { font-size: 0.92rem; color: #33333A; }
+
+  footer { background: var(--violeta); color: rgba(255,255,255,.75); padding: 36px 0; font-size: 0.86rem; }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: center; }
+  footer img { height: 26px; width: auto; }
+
+  /* ---------- Etiquetas de revisión (botón «Ver bloques») ---------- */
+  .revisar { position: fixed; right: 16px; bottom: 16px; z-index: 60; background: var(--negro); color: var(--blanco); border: 0; border-radius: 999px; padding: 10px 16px; font: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,.25); }
+  [data-bloque]::before { content: attr(data-bloque); display: none; position: absolute; top: 12px; left: 12px; z-index: 40; background: var(--naranja); color: var(--blanco); font-size: 0.75rem; font-weight: 800; padding: 6px 10px; border-radius: 8px; max-width: calc(100% - 24px); }
+  body.ver-bloques [data-bloque]::before { display: block; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 980px) {
+    .menu { position: fixed; inset: 68px 0 auto 0; flex-direction: column; align-items: stretch; gap: 0; background: var(--violeta); padding: 8px 20px 20px; display: none; max-height: calc(100svh - 68px); overflow: auto; }
+    nav.barra.abierta .menu { display: flex; }
+    .menu > li > a, .menu > li > button { padding: 14px 0; width: 100%; font-size: 1.05rem; border-bottom: 1px solid rgba(255,255,255,.12); }
+    .menu .ingresar { margin-top: 14px; justify-content: center; }
+    .submenu { position: static; opacity: 1; visibility: visible; transform: none; box-shadow: none; display: none; margin: 4px 0 8px; }
+    .desplegable.abierto .submenu { display: block; }
+    .hamburguesa { display: block; }
+    .pasos { grid-template-columns: 1fr; gap: 18px; }
+    .chevron { justify-self: center; transform: rotate(90deg); }
+    .chevron .ico { width: 40px; height: 40px; }
+    .beneficios { grid-template-columns: 1fr 1fr; }
+    .dona { width: 260px; height: 260px; top: -130px; right: -40px; }
+    .bento { grid-template-columns: 1fr 1fr; grid-template-rows: 200px 200px 170px 170px; }
+    .bento .b1 { grid-row: span 2; } .bento .b3, .bento .b4 { grid-column: span 2; }
+    .tarjetas, #red .cabecera, .respaldo, #abogado .rejilla, #nosotros .rejilla, #faq .rejilla, #contacto .rejilla { grid-template-columns: 1fr; }
+    .tira { grid-template-columns: 1fr 1fr; }
+    .tira img { height: 200px; }
+  }
+  @media (max-width: 620px) {
+    .beneficios { grid-template-columns: 1fr; }
+    .dona { display: none; }
+    .bento { grid-template-rows: 170px 170px 150px 150px; gap: 8px; }
+    .tarjetas { padding: 8px; border-radius: 26px; }
+    .tarjeta { grid-template-columns: 1fr; min-height: 0; }
+    .tarjeta .foto { order: -1; height: 240px; }
+    .tira img { height: 150px; }
+    .respaldo > div { gap: 14px; }
+    .respaldo .ico { width: 40px; height: 40px; }
+    .formulario { padding: 22px; }
+    .formulario .tipo { grid-template-columns: 1fr; border-radius: 20px; }
+    .medios img { height: 56px; }
+    .oferta { gap: 14px; }
+    /* La cinta corre por el borde derecho: que no roce el texto */
+    #como .wrap, #beneficios .wrap, #red .wrap, #abogado .wrap { padding-right: 46px; }
+  }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .btn, .churo path { transition: none; } .churo path { stroke-dashoffset: 0; } }
+</style>
+</head>
+<body>
+
+<!-- Íconos de línea (estilo lámina 30 del brandbook) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-flecha" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-abajo" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-mas" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-usuario" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-familia" viewBox="0 0 24 24"><circle cx="9" cy="7" r="3.2"/><circle cx="17" cy="9" r="2.4"/><path d="M3 20a6 6 0 0 1 12 0M14.5 15.2A4.5 4.5 0 0 1 21 19"/></symbol>
+  <symbol id="i-edificio" viewBox="0 0 24 24"><path d="M4 21V5l8-2v18M12 9h8v12M4 21h17M8 8h0M8 12h0M8 16h0M16 13h0M16 17h0"/></symbol>
+  <symbol id="i-tarjeta" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 10h18M7 15h4"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1.2-4.4A8 8 0 1 1 21 12Z"/><path d="M8.5 11h7M8.5 14.5h4"/></symbol>
+  <symbol id="i-balanza" viewBox="0 0 24 24"><path d="M12 3v18M7 21h10M5 7h14M5 7l-3 7a3.5 3.5 0 0 0 6 0L5 7ZM19 7l-3 7a3.5 3.5 0 0 0 6 0l-3-7Z"/></symbol>
+  <symbol id="i-porcentaje" viewBox="0 0 24 24"><path d="M19 5 5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/></symbol>
+  <symbol id="i-pantalla" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></symbol>
+  <symbol id="i-billetera" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h12v4"/><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M16 13.5h2"/></symbol>
+  <symbol id="i-reloj" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-escudo" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6l-8-3Z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></symbol>
+  <symbol id="i-candado" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-historia" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/></symbol>
+  <symbol id="i-red" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.5"/><circle cx="5" cy="18" r="2.5"/><circle cx="19" cy="18" r="2.5"/><path d="M10.8 7.2 6.2 15.8M13.2 7.2l4.6 8.6M7.5 18h9"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></symbol>
+  <symbol id="i-casa" viewBox="0 0 24 24"><path d="M3 11 12 4l9 7M5 10v10h14V10"/><path d="M10 20v-5h4v5"/></symbol>
+  <symbol id="i-maletin" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 13h18"/></symbol>
+  <symbol id="i-auto" viewBox="0 0 24 24"><path d="M5 16V11l2-5h10l2 5v5M3 16h18v3H3zM5 11h14"/><circle cx="7.5" cy="16" r="0.5"/><circle cx="16.5" cy="16" r="0.5"/></symbol>
+  <symbol id="i-avion" viewBox="0 0 24 24"><path d="M10.5 13.5 3 11l1.5-1.5 8 1 4-4.5a2 2 0 0 1 3 3l-4.5 4 1 8L15.5 22 13 14.5"/></symbol>
+  <symbol id="i-moneda" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.5 9.2c-.5-.8-1.4-1.2-2.5-1.2-1.5 0-2.6.8-2.6 2s1.1 1.6 2.6 2 2.7.9 2.7 2.1-1.2 2-2.7 2c-1.2 0-2.2-.5-2.7-1.4M12 6.5V8M12 16v1.5"/></symbol>
+  <symbol id="i-corazon" viewBox="0 0 24 24"><path d="M12 20s-8-4.6-8-10.5A4.5 4.5 0 0 1 12 7a4.5 4.5 0 0 1 8 2.5C20 15.4 12 20 12 20Z"/></symbol>
+  <symbol id="i-gestor" viewBox="0 0 24 24"><circle cx="12" cy="7" r="3.5"/><path d="M5 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2M9.5 14l2.5 4 2.5-4"/></symbol>
+  <symbol id="i-bombilla" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3Z"/></symbol>
+  <symbol id="i-enlace" viewBox="0 0 24 24"><path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1"/></symbol>
+  <symbol id="i-telefono" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/></symbol>
+  <symbol id="i-correo" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3 7 9 6 9-6"/></symbol>
+  <symbol id="i-ubicacion" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+  <symbol id="i-movil" viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></symbol>
+  <symbol id="i-chats" viewBox="0 0 24 24"><path d="M3 4h12v8H7.5L3 15.5V4Z"/><path d="M15 8h6v11.5L16.5 16H9v-4"/></symbol>
+  <symbol id="i-mundo" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></symbol>
+  <symbol id="i-grafico" viewBox="0 0 24 24"><path d="M4 20h16M6 20v-5M10 20v-8M14 20v-6M18 20V9M5 11l5-4 4 3 5-5M16 5h3v3"/></symbol>
+  <symbol id="i-apreton" viewBox="0 0 24 24"><path d="M2 9.5 5.5 6l4 2 2.5-1.5L15 6l3.5 1.5L22 10M2 9.5l4 5M22 10l-4 4.5M8 12.5l2.5 2.5M10 11l3.5 3.5a1.4 1.4 0 0 1-2 2L9 14M12.5 10.5l3.5 3.5a1.4 1.4 0 0 1-2 2"/></symbol>
+  <symbol id="i-institucion" viewBox="0 0 24 24"><path d="M3 21h18M4 18h16M12 3 3 8h18L12 3ZM6 9v8M10 9v8M14 9v8M18 9v8"/></symbol>
+  <symbol id="i-escudo-estrella" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6l-8-3Z"/><path d="m12 8 1.2 2.5 2.7.3-2 1.9.5 2.7-2.4-1.3-2.4 1.3.5-2.7-2-1.9 2.7-.3Z"/></symbol>
+  <symbol id="i-tarjeta-escudo" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6l-8-3Z"/><rect x="7.5" y="9" width="9" height="6" rx="1"/><path d="M7.5 11.2h9"/></symbol>
+  <symbol id="silueta" viewBox="0 0 100 120"><circle cx="50" cy="34" r="24"/><path d="M6 120c0-30 20-50 44-50s44 20 44 50Z"/></symbol>
+</svg>
+
+<nav class="barra" id="barra">
+  <div class="wrap">
+    <a class="logo" href="#hero"><img src="/assets/tranqi-white.svg" alt="tranqi" /></a>
+    <button class="hamburguesa" id="hamburguesa" aria-label="Abrir menú" aria-expanded="false"><svg class="ico"><use href="#i-menu"/></svg></button>
+    <ul class="menu" id="menu">
+      <li class="desplegable" id="desplegablePlanes">
+        <button type="button" aria-expanded="false" aria-haspopup="true">Planes <svg class="ico"><use href="#i-abajo"/></svg></button>
+        <ul class="submenu">
+          <li><a href="#planes"><svg class="ico"><use href="#i-familia"/></svg><div><b>Personas</b><span>Individual y familiar, desde $23 al año</span></div></a></li>
+          <li><a href="#contacto" data-tipo="empresa"><svg class="ico"><use href="#i-edificio"/></svg><div><b>Empresas</b><span>Protección jurídica para tu equipo</span></div></a></li>
+        </ul>
+      </li>
+      <li><a href="#como">Cómo funciona</a></li>
+      <li><a href="#beneficios">Beneficios</a></li>
+      <li><a href="#red">Red profesional</a></li>
+      <li><a href="#nosotros">Nosotros</a></li>
+      <li><a href="#contacto">Contacto</a></li>
+      <li><a class="ingresar" href="#">Ingresar</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- 01 · HERO — Entender y actuar · fondo #5000BA, curva #7866FF, botón amarillo, PVP menta -->
+<section id="hero" data-bloque="Lámina 1 · Hero — entender y actuar (conversión inmediata)">
+  <div class="churo"><svg viewBox="0 0 1440 900" preserveAspectRatio="none"><path stroke="#7866FF" d="M 1500 140 C 1260 140 1100 300 1150 470 C 1200 640 1420 600 1400 430 C 1380 270 1150 300 1110 520 C 1080 690 1370 760 1370 900"/></svg></div>
+  <div class="wrap">
+    <img class="logo-grande" src="/assets/tranqi-white.svg" alt="tranqi®" />
+    <h1>Tu tranquilidad también necesita <i>respaldo legal</i>.</h1>
+    <p class="bajada">Accede a orientación jurídica profesional para ti y tu familia, y a servicios financieros, en un solo lugar.</p>
+    <span class="sello">LegalTech + FinTech</span>
+    <ul>
+      <li><svg class="ico"><use href="#i-check"/></svg>Una membresía anual</li>
+      <li><svg class="ico"><use href="#i-check"/></svg>Acceso a una red de abogados especializados</li>
+      <li><svg class="ico"><use href="#i-check"/></svg>Opciones de financiamiento y planes de pago para honorarios y servicios</li>
+      <li><svg class="ico"><use href="#i-check"/></svg>Plataforma disponible 24/7</li>
+    </ul>
+    <div class="oferta">
+      <div class="pvp"><small>Tu membresía anual</small><b>Desde $23</b><em>Valor incluye IVA</em></div>
+      <a class="btn btn-amarillo" href="#planes">Quiero estar tranqi <svg class="ico"><use href="#i-flecha"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<!-- 02 · CÓMO FUNCIONA — lámina 2: blanco, sin curva (la cinta solo roza el borde), botón amarillo -->
+<section id="como" data-bloque="Lámina 2 · Estar tranqi es así de fácil — 3 pasos (sin curva)">
+  <div class="churo"><svg viewBox="0 0 1440 900" preserveAspectRatio="none"><path stroke="#7866FF" d="M 1370 0 C 1370 250 1410 450 1395 620 C 1385 760 1370 800 1370 900"/></svg></div>
+  <div class="wrap">
+    <h2>Estar tranqi<br />es así de fácil.</h2>
+    <p class="sub">En solo 3 pasos accedes a protección jurídica y soluciones financieras.</p>
+    <div class="pasos">
+      <div class="paso"><svg class="ico"><use href="#i-tarjeta"/></svg><h3>1. Afíliate</h3><p>Elige tu membresía y realiza tu pago seguro.</p></div>
+      <div class="chevron" aria-hidden="true"><svg class="ico"><use href="#i-chevron"/></svg></div>
+      <div class="paso"><svg class="ico"><use href="#i-movil"/></svg><h3>2. Accede</h3><p>Ingresa a tranqi desde tu dispositivo.</p></div>
+      <div class="chevron" aria-hidden="true"><svg class="ico"><use href="#i-chevron"/></svg></div>
+      <div class="paso"><svg class="ico"><use href="#i-chats"/></svg><h3>3. Consulta</h3><p>Conecta con un abogado de la especialidad que necesitas.</p></div>
+    </div>
+    <div class="comienza">
+      <div class="rotulo">Comienza<b>AHORA</b></div>
+      <a class="btn btn-amarillo" href="#planes">Quiero estar tranqi <svg class="ico"><use href="#i-flecha"/></svg></a>
+      <p>Acceder a respaldo legal es más fácil de lo que imaginas.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 03 · QUÉ INCLUYE — lámina 3: blanco, sin curva, íconos #5000BA, letras negras, media dona de fotos -->
+<section id="beneficios" data-bloque="Lámina 3 · El derecho a estar tranqi — qué incluye (íconos violeta, letras negras)">
+  <div class="churo"><svg viewBox="0 0 1440 900" preserveAspectRatio="none"><path stroke="#7866FF" d="M 1370 0 C 1370 200 1340 500 1380 700 C 1395 800 1370 840 1370 900"/></svg></div>
+  <div class="dona" aria-hidden="true">
+    <img src="/assets/landing/app-hola.jpg" alt="" />
+    <img src="/assets/landing/asesoria.jpg" alt="" />
+    <img src="/assets/landing/tarjeta-tranqi.jpg" alt="" />
+    <img src="/assets/landing/app-icono.jpg" alt="" />
+  </div>
+  <div class="wrap">
+    <h2>El derecho a<br />estar tranqi.</h2>
+    <p class="sub2">Qué incluye tu membresía</p>
+    <div class="beneficios">
+      <div class="beneficio"><svg class="ico"><use href="#i-familia"/></svg><h3>Respaldo para tu familia</h3><p>Protección individual y familiar según tu cobertura.</p></div>
+      <div class="beneficio"><svg class="ico"><use href="#i-tarjeta"/></svg><h3>Facilidades de pago</h3><p>Pago con todas las tarjetas de crédito. Opciones de financiamiento directo o bancario para determinados servicios legales (sujeto a aprobación).</p></div>
+      <div class="beneficio"><svg class="ico"><use href="#i-mundo"/></svg><h3>Acceso digital</h3><p>Gestiona tus solicitudes y consulta información desde cualquier dispositivo.</p></div>
+      <div class="beneficio"><svg class="ico"><use href="#i-porcentaje"/></svg><h3>Ahorro en servicios legales</h3><p>Descuentos de hasta el 20 % en honorarios profesionales y 10 % en trámites y gestiones.</p></div>
+      <div class="beneficio"><svg class="ico"><use href="#i-chats"/></svg><h3>Consultas jurídicas</h3><p>Consultas con abogados de la red durante la vigencia de tu membresía.</p></div>
+      <div class="beneficio"><svg class="ico"><use href="#i-reloj"/></svg><h3>Disponibilidad digital 24/7</h3><p>Plataforma operativa disponible 24/7 para gestionar solicitudes, según el servicio.</p></div>
+    </div>
+    <div class="oferta">
+      <a class="btn btn-amarillo" href="#planes">Quiero estar tranqi <svg class="ico"><use href="#i-flecha"/></svg></a>
+    </div>
+  </div>
+</section>
+
+<!-- 04 · SOLUCIONES LEGALES — lámina 4: degradado y collage (incluye la foto de gestores) -->
+<section id="soluciones" data-bloque="Lámina 4 · Soluciones legales al alcance de todos — collage">
+  <div class="churo"><svg viewBox="0 0 1440 900" preserveAspectRatio="none"><path stroke="#7866FF" d="M 1370 0 C 1370 180 1420 330 1400 520 C 1380 700 1220 760 1220 900"/></svg></div>
+  <div class="wrap">
+    <h2>Soluciones legales<span>al alcance de todos.</span></h2>
+    <div class="bento">
+      <img class="b1" src="/assets/landing/manos.jpg" alt="Manos unidas en círculo" />
+      <img class="b2" src="/assets/landing/familia.jpg" alt="Madre con su bebé y un adulto mayor usando el celular" />
+      <img class="b3" src="/assets/landing/usuarios.jpg" alt="Dos mujeres usando tranqi en el celular" />
+      <img class="b4" src="/assets/landing/gestores.jpg" alt="Gestora de tranqi atendiendo a una familia" />
+      <img class="b5" src="/assets/landing/joven-celular.jpg" alt="Joven revisando su celular" />
+      <img class="b6" src="/assets/landing/adulto-mayor.jpg" alt="Adulto mayor frente a su computadora" />
+    </div>
+  </div>
+</section>
+
+<!-- 05 · PLANES — lámina 5: amarillo, Personas + Empresas, logos de todas las tarjetas -->
+<section id="planes" data-bloque="Lámina 5 · Planes — Personas y Empresas + logos de tarjetas">
+  <div class="churo"><svg viewBox="0 0 1440 900" preserveAspectRatio="none"><path stroke="#7866FF" d="M 1220 0 C 1220 140 1420 200 1400 420 C 1380 640 330 640 330 900"/></svg></div>
+  <div class="wrap">
+    <h2>Planes para<span>protección jurídica continua</span></h2>
+    <div class="tarjetas">
+      <article class="tarjeta">
+        <div class="cuerpo">
+          <h3>Personas</h3>
+          <div class="precio"><div><small>Planes desde</small><b>$23</b></div><span>incluido<br />IVA</span></div>
+          <p class="para">Para personas naturales.</p>
+          <ul>
+            <li><span class="cuadroico"><svg class="ico"><use href="#i-escudo"/></svg></span>Asistencia jurídica confiable</li>
+            <li><span class="cuadroico"><svg class="ico"><use href="#i-familia"/></svg></span>Red de profesionales</li>
+            <li><span class="cuadroico"><svg class="ico"><use href="#i-billetera"/></svg></span>Opciones de pago y financiamiento</li>
+          </ul>
+          <a class="btn btn-amarillo" href="#">Contrata aquí <svg class="ico"><use href="#i-flecha"/></svg></a>
+        </div>
+        <div class="foto" style="background-image:url('/assets/landing/personas.jpg')" role="img" aria-label="Niño abrazando a su perro"></div>
+      </article>
+      <article class="tarjeta empresa">
+        <div class="cuerpo">
+          <h3>Empresas</h3>
+          <p class="lema">Soluciones de protección jurídica para tu empresa.</p>
+          <ul>
+            <li><span class="cuadroico"><svg class="ico"><use href="#i-escudo"/></svg></span>Protección y tranquilidad para tu equipo</li>
+            <li><span class="cuadroico"><svg class="ico"><use href="#i-grafico"/></svg></span>Gestión eficiente y segura</li>
+            <li><span class="cuadroico"><svg class="ico"><use href="#i-apreton"/></svg></span>Respaldo de una red profesional</li>
+          </ul>
+          <a class="btn btn-amarillo" href="#contacto" data-tipo="empresa">Más información <svg class="ico"><use href="#i-flecha"/></svg></a>
+        </div>
+        <div class="foto" style="background-image:url('/assets/landing/empresas.jpg')" role="img" aria-label="Ejecutiva sonriendo"></div>
+      </article>
+    </div>
+    <div class="medios">
+      <span>Paga con todas las tarjetas</span>
+      <img src="/assets/landing/tarjetas.png" alt="Visa, Mastercard, American Express, Alia, Discover y Diners Club" />
+    </div>
+  </div>
+</section>
+
+<!-- 06 · ¿TIENES UNA DUDA LEGAL? — lámina 6: rosa + curva naranja -->
+<section id="duda" data-bloque="Lámina 6 · ¿Tienes una duda legal? — rosa + curva naranja">
+  <div class="churo"><svg viewBox="0 0 1440 900" preserveAspectRatio="none"><path stroke="#FE5800" d="M 330 0 C 330 200 600 230 900 270 C 1250 320 1340 450 1310 610 C 1290 760 1370 800 1370 900"/></svg></div>
+  <div class="wrap">
+    <h2>¿Tienes una duda legal?<span>No tienes que resolverla solo.</span></h2>
+    <div class="tira">
+      <img src="/assets/landing/manos.jpg" alt="" />
+      <img src="/assets/landing/consulta-video.jpg" alt="Mujer en una videoconsulta" />
+      <img src="/assets/landing/app-cafe.jpg" alt="Persona usando la app de tranqi" />
+      <img src="/assets/landing/familia.jpg" alt="" />
+    </div>
+    <p class="remate">Desde una consulta cotidiana hasta una situación legal más compleja, tranqi te conecta con profesionales que pueden orientarte.</p>
+  </div>
+</section>
+
+<!-- 07 · RED DE EXPERTOS — lámina 7: blanco, foto, 4 garantías, botón -->
+<section id="red" data-bloque="Lámina 7 · Una red de expertos a tu servicio — confianza y respaldo">
+  <div class="churo"><svg viewBox="0 0 1440 900" preserveAspectRatio="none"><path stroke="#5000BA" d="M 1370 0 C 1370 200 1340 500 1380 700 C 1395 800 1370 840 1370 900"/></svg></div>
+  <div class="wrap">
+    <div class="cabecera">
+      <div class="foto"><img src="/assets/landing/abogados-firma.jpg" alt="Abogados revisando un contrato" /></div>
+      <div>
+        <h2>Una red de expertos<br />a tu servicio.</h2>
+        <p class="sub">Contamos con la mejor red de abogados en todo el Ecuador para brindarte respaldo y confianza.</p>
+      </div>
+    </div>
+    <div class="respaldo">
+      <div><svg class="ico"><use href="#i-institucion"/></svg><div><b>Trayectoria empresarial</b><p>El respaldo de un grupo empresarial con casi 100 años de trayectoria en el mercado legal y otras áreas de servicio.</p></div></div>
+      <div><svg class="ico"><use href="#i-escudo-estrella"/></svg><div><b>Protección de información</b><p>Tratamiento responsable de datos personales y confidencialidad de las consultas.</p></div></div>
+      <div><svg class="ico"><use href="#i-balanza"/></svg><div><b>Red de profesionales</b><p>Abogados registrados y organizados por especialidad. Gestores jurídico-tecnológicos con presencia territorial.</p></div></div>
+      <div><svg class="ico"><use href="#i-tarjeta-escudo"/></svg><div><b>Pagos confiables</b><p>Procesamiento de pagos mediante una pasarela segura y confirmación de la transacción.</p></div></div>
+    </div>
+    <div class="centro"><a class="btn btn-amarillo" href="#contacto">Hablar con tranqi ahora <svg class="ico"><use href="#i-flecha"/></svg></a></div>
+  </div>
+</section>
+
+<!-- 08 · ¿ERES ABOGADO? — lámina 9 del PDF, que va en la posición 8 (pedido del 14-nov) -->
+<section id="abogado" data-bloque="Lámina 9 → posición 8 · ¿Eres abogado? La red también es para ti">
+  <div class="churo"><svg viewBox="0 0 1440 900" preserveAspectRatio="none"><path stroke="#5000BA" d="M 1370 0 C 1370 250 1410 450 1395 620 C 1385 760 1370 800 1370 900"/></svg></div>
+  <div class="wrap rejilla">
+    <div>
+      <div class="arco"><img src="/assets/landing/abogados-red.jpg" alt="Abogados trabajando juntos" /></div>
+      <p class="lema">Tu experiencia jurídica<br />merece llegar más lejos.</p>
+    </div>
+    <div class="texto">
+      <h2>¿Eres abogado?<br />La red también es para ti.</h2>
+      <p>Forma parte de una red de abogados que conecta a profesionales del derecho con personas, familias y empresas que necesitan orientación y servicios legales.</p>
+      <ul>
+        <li><svg class="ico"><use href="#i-check"/></svg>Amplía tu alcance profesional.</li>
+        <li><svg class="ico"><use href="#i-check"/></svg>Accede a nuevas oportunidades de atención.</li>
+        <li><svg class="ico"><use href="#i-check"/></svg>Forma parte de una comunidad jurídica.</li>
+      </ul>
+      <div class="acciones">
+        <a class="btn btn-amarillo" href="#contacto" data-tipo="abogado">Más información <svg class="ico"><use href="#i-flecha"/></svg></a>
+        <span class="logo-violeta" role="img" aria-label="tranqi"></span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 09 · CONTACTO — lámina 8 del PDF, que pasa a la posición 9: rosa + curva naranja -->
+<section id="contacto" data-bloque="Lámina 8 → posición 9 · Estamos aquí para ayudarte — contacto">
+  <div class="churo"><svg viewBox="0 0 1440 900" preserveAspectRatio="none"><path stroke="#FE5800" d="M 1370 0 C 1370 300 800 380 760 600 C 730 780 900 820 900 900"/></svg></div>
+  <div class="wrap rejilla">
+    <div class="izquierda">
+      <h2>Estamos aquí<br />para ayudarte.</h2>
+      <div class="datos">
+        <h3>Info de contacto</h3>
+        <div><span class="cuadroico"><svg class="ico"><use href="#i-telefono"/></svg></span>1800 TRANQI (872674)</div>
+        <div><span class="cuadroico"><svg class="ico"><use href="#i-correo"/></svg></span>hola@tranqi24.com</div>
+        <div><span class="cuadroico"><svg class="ico"><use href="#i-ubicacion"/></svg></span>Quito, Ecuador</div>
+      </div>
+      <a class="btn btn-amarillo" href="#planes">Quiero estar tranqi <svg class="ico"><use href="#i-flecha"/></svg></a>
+    </div>
+    <form class="formulario" id="formulario" novalidate>
+      <h3>Escríbenos</h3>
+      <div class="tipo" role="radiogroup" aria-label="Escribo como">
+        <label><input type="radio" name="tipo" value="persona" checked /> Para mí</label>
+        <label><input type="radio" name="tipo" value="empresa" /> Mi empresa</label>
+        <label><input type="radio" name="tipo" value="abogado" /> Soy abogado</label>
+      </div>
+      <div class="campos">
+        <input type="text" placeholder="Nombre completo" aria-label="Nombre completo" />
+        <input class="empresa" type="text" placeholder="Empresa y número de colaboradores" aria-label="Empresa" />
+        <input class="abogado" type="text" placeholder="Especialidad y ciudad" aria-label="Especialidad y ciudad" />
+        <input type="email" placeholder="Correo electrónico" aria-label="Correo electrónico" />
+        <textarea placeholder="Tu mensaje" aria-label="Mensaje"></textarea>
+      </div>
+      <button class="btn btn-amarillo" type="submit">Enviar mensaje <svg class="ico"><use href="#i-flecha"/></svg></button>
+      <p class="gracias" id="gracias">Maqueta: aquí se confirmaría el envío.</p>
+    </form>
+  </div>
+</section>
+
+<!-- 10 · FAQ — lámina 10: menta + curva negra. Respuestas propuestas con los datos del docx -->
+<section id="faq" data-bloque="Lámina 10 · FAQ — menta + curva negra (respuestas propuestas)">
+  <div class="churo"><svg viewBox="0 0 1440 900" preserveAspectRatio="none"><path stroke="#111111" d="M 900 0 C 900 200 1420 220 1400 500 C 1380 760 1250 780 1250 900"/></svg></div>
+  <div class="wrap rejilla">
+    <div class="lado"><h2>FAQ</h2><p>Lo que más nos preguntan antes de estar tranqi.</p></div>
+    <div class="preguntas">
+      <details open><summary>¿Qué es la membresía tranqi? <svg class="ico"><use href="#i-mas"/></svg></summary><p>Un plan anual de protección jurídica: incluye consultas con abogados, acceso a la plataforma y descuentos en honorarios y trámites. Empieza el día que la compras y dura un año.</p></details>
+      <details><summary>¿Cuánto cuesta y cómo pago? <svg class="ico"><use href="#i-mas"/></svg></summary><p>Desde $23 al año con IVA incluido (unos $1,92 al mes). Pagas una vez, en línea, con cualquier tarjeta de crédito o débito.</p></details>
+      <details><summary>¿Puedo incluir a mi familia? <svg class="ico"><use href="#i-mas"/></svg></summary><p>Sí. TRANQI +3 Familiar cubre a cuatro personas por $28,75 al año, y TRANQI +5 Familiar a seis personas por $34,99 al año.</p></details>
+      <details><summary>¿Cómo son las consultas? <svg class="ico"><use href="#i-mas"/></svg></summary><p>Son telemáticas, de hasta 30 minutos, con un abogado asignado según la materia de tu caso. Tu plan incluye de 2 a 4 consultas al año.</p></details>
+      <details><summary>¿Y si necesito más consultas? <svg class="ico"><use href="#i-mas"/></svg></summary><p>Como afiliado puedes contratar una consulta telemática adicional por $10 + IVA, o una consulta presencial por $25 + IVA la hora.</p></details>
+      <details><summary>¿La membresía cubre el juicio o el trámite completo? <svg class="ico"><use href="#i-mas"/></svg></summary><p>La membresía incluye la orientación. Si tu caso necesita un abogado o un gestor que lo lleve, lo contratas con descuento por ser afiliado y con opciones de financiamiento.</p></details>
+      <details><summary>¿Mis datos están seguros? <svg class="ico"><use href="#i-mas"/></svg></summary><p>Sí. Tratamos tus datos conforme a la Ley Orgánica de Protección de Datos Personales y tus consultas son confidenciales.</p></details>
+    </div>
+  </div>
+</section>
+
+<!-- NOSOTROS — no aparece en la revisión 1; sigue en el menú y va al final (decidido el 14-nov) -->
+<section id="nosotros" data-bloque="Nosotros — al final, después de FAQ (fuera de la revisión 1)">
+  <div class="churo"><svg viewBox="0 0 1440 900" preserveAspectRatio="none"><path stroke="#111111" d="M 1250 0 C 1250 300 700 260 640 560 C 600 760 900 780 900 960"/></svg></div>
+  <div class="wrap rejilla">
+    <div class="carta">
+      <span class="etiqueta" style="background:var(--violeta);color:#fff">Nosotros</span>
+      <h3 style="margin-top:16px">El momento de transformar el mundo legal ha llegado.</h3>
+      <p>tranqi nace de una tradición jurídica de cuatro generaciones y de una convicción: frente a la corrupción, la inseguridad y la desconfianza, necesitamos elevar la calidad del servicio legal.</p>
+      <p>Impulsamos la corporativización del derecho: integrar abogados, tecnología y financiamiento mediante LegalTech y FinTech, con estándares de responsabilidad y transparencia. Nuestro propósito es que las personas encuentren soluciones y puedan ejercer sus derechos.</p>
+      <div class="firma"><span class="avatar">GC</span><div><b>Galo F. Chiriboga Pérez</b><small>Fundador y CEO de tranqi</small></div></div>
+    </div>
+    <div class="pilares">
+      <h3>Nuestros pilares institucionales</h3>
+      <div class="pilar"><span class="cuadroico"><svg class="ico"><use href="#i-bombilla"/></svg></span><div><b>Innovación</b><span>Transformamos los servicios tradicionales mediante tecnología y soluciones digitales.</span></div></div>
+      <div class="pilar"><span class="cuadroico"><svg class="ico"><use href="#i-usuario"/></svg></span><div><b>Accesibilidad</b><span>Acercamos la asistencia jurídica y profesional a todas las personas y empresas.</span></div></div>
+      <div class="pilar"><span class="cuadroico"><svg class="ico"><use href="#i-enlace"/></svg></span><div><b>Conectividad</b><span>Integramos usuarios, abogados, profesionales, empresas y aliados estratégicos.</span></div></div>
+      <div class="pilar"><span class="cuadroico"><svg class="ico"><use href="#i-escudo"/></svg></span><div><b>Confianza</b><span>Construimos relaciones basadas en transparencia, responsabilidad y seguridad.</span></div></div>
+      <div class="pilar"><span class="cuadroico"><svg class="ico"><use href="#i-corazon"/></svg></span><div><b>Impacto social</b><span>Trabajamos para reducir las barreras de acceso a servicios y oportunidades.</span></div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <img src="/assets/tranqi-white.svg" alt="tranqi" />
+    <span>© 2026 tranqi® · Todos los derechos reservados</span>
+    <span>Términos · Privacidad · Bolsa de empleo</span>
+  </div>
+</footer>
+
+<button class="revisar" id="revisar" type="button">Ver bloques</button>
+
+<script>
+  // Menú móvil
+  const barra = document.getElementById("barra");
+  const hamb = document.getElementById("hamburguesa");
+  hamb.addEventListener("click", () => {
+    const abierta = barra.classList.toggle("abierta");
+    hamb.setAttribute("aria-expanded", abierta);
+  });
+  // Desplegable Planes (clic en móvil; hover/foco en escritorio)
+  const desp = document.getElementById("desplegablePlanes");
+  const despBtn = desp.querySelector("button");
+  despBtn.addEventListener("click", () => {
+    const abierto = desp.classList.toggle("abierto");
+    despBtn.setAttribute("aria-expanded", abierto);
+  });
+  document.addEventListener("click", (e) => { if (!desp.contains(e.target)) desp.classList.remove("abierto"); });
+  document.querySelectorAll(".menu a").forEach((a) => a.addEventListener("click", () => {
+    barra.classList.remove("abierta"); desp.classList.remove("abierto");
+  }));
+
+  // Formulario: Personas / Empresas
+  const form = document.getElementById("formulario");
+  const marcarTipo = (tipo) => {
+    form.classList.toggle("es-empresa", tipo === "empresa");
+    form.classList.toggle("es-abogado", tipo === "abogado");
+    form.querySelector(`input[value="${tipo}"]`).checked = true;
+  };
+  form.querySelectorAll('input[name="tipo"]').forEach((r) => r.addEventListener("change", () => marcarTipo(r.value)));
+  document.querySelectorAll("[data-tipo]").forEach((a) => a.addEventListener("click", () => marcarTipo(a.dataset.tipo)));
+  form.addEventListener("submit", (e) => { e.preventDefault(); document.getElementById("gracias").style.display = "block"; });
+
+  // Cinta: pathLength calibrado al largo real en pantalla (si no, el guion
+  // «1» no cubre todo el trazo estirado) y dibujo al entrar la sección.
+  function calibrarCinta(svg, ancho, alto) {
+    const vb = svg.viewBox.baseVal;
+    if (!ancho || !alto) return;
+    const sx = ancho / vb.width, sy = alto / vb.height;
+    svg.querySelectorAll("path").forEach((p) => {
+      const largo = p.getTotalLength();
+      let enPantalla = 0, previo = p.getPointAtLength(0);
+      for (let i = 1; i <= 200; i++) {
+        const q = p.getPointAtLength((largo * i) / 200);
+        enPantalla += Math.hypot((q.x - previo.x) * sx, (q.y - previo.y) * sy);
+        previo = q;
+      }
+      if (enPantalla > 0) p.setAttribute("pathLength", String(largo / enPantalla));
+    });
+  }
+  const medidor = new ResizeObserver((es) => { for (const e of es) calibrarCinta(e.target, e.contentRect.width, e.contentRect.height); });
+  document.querySelectorAll(".churo svg").forEach((svg) => medidor.observe(svg));
+  const trazo = new IntersectionObserver((es) => {
+    for (const e of es) e.target.querySelectorAll(".churo path").forEach((p) => p.classList.toggle("trazado", e.isIntersecting));
+  }, { threshold: 0.12 });
+  document.querySelectorAll("section").forEach((sec) => trazo.observe(sec));
+
+  // Etiquetas de bloque para revisar con el cliente
+  const rev = document.getElementById("revisar");
+  rev.addEventListener("click", () => {
+    const on = document.body.classList.toggle("ver-bloques");
+    rev.textContent = on ? "Ocultar bloques" : "Ver bloques";
+  });
+</script>
+</body>
+</html>
