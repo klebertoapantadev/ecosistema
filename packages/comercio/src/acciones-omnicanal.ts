@@ -12,6 +12,7 @@ import {
   type ContextoReenvioChatEquipo,
   type ConversacionOmnicanal,
   type ConversacionWhatsappResumen,
+  type DatosVentaConversacion,
   type EstadoAtencionOmnicanal,
   type EtiquetaOmnicanal,
   type EventoBroadcastChatEquipo,
@@ -58,6 +59,7 @@ export interface PedidoWebConTipoCliente extends PedidoTiendaRegistrado {
 export interface DatosTableroOmnicanal {
   usuarioActualId: string | null;
   usuarioActualNombre: string;
+  esAdminEtiquetas?: boolean;
   conversaciones: ConversacionOmnicanal[];
   etiquetas: EtiquetaOmnicanal[];
   respuestasRapidas: RespuestaRapidaOmnicanal[];
@@ -547,7 +549,7 @@ export async function obtenerTableroOmnicanalAction(
       supabase
         .schema("comun_seguridad")
         .from("seg_usuario")
-        .select("usu_nombres, usu_apellidos, usu_correo")
+        .select("usu_nombres, usu_apellidos, usu_correo, usu_superadmin_plataforma")
         .eq("usu_id", user.id)
         .maybeSingle(),
     ]);
@@ -582,6 +584,10 @@ export async function obtenerTableroOmnicanalAction(
         ? rpcTablero.conversaciones.map((c: any) => ({
             ...c,
             etiquetasIds: Array.isArray(c?.etiquetasIds) ? c.etiquetasIds : [],
+            datosVenta:
+              c?.datosVenta && typeof c.datosVenta === "object"
+                ? (c.datosVenta as DatosVentaConversacion)
+                : {},
           }))
         : [];
 
@@ -591,17 +597,33 @@ export async function obtenerTableroOmnicanalAction(
       }));
 
       const contactosEnriquecidos = enriquecerContactosConPedidos(contactos, pedidosWeb);
+      const miembroActual = Array.isArray(rpcTablero.equipo)
+        ? rpcTablero.equipo.find((m: any) => m?.usuarioId === user.id)
+        : null;
+      const esAdminEtiquetasInferido =
+        typeof rpcTablero.esAdminEtiquetas === "boolean"
+          ? rpcTablero.esAdminEtiquetas
+          : Boolean(resPerfilActual.data?.usu_superadmin_plataforma) ||
+            ["SUPERADMIN", "ADMINISTRADOR", "ADMIN", "OPERADOR"].includes(
+              String(miembroActual?.rol || "").toUpperCase()
+            );
+
+      const etiquetasFiltradas = (
+        Array.isArray(rpcTablero.etiquetas) && rpcTablero.etiquetas.length > 0
+          ? rpcTablero.etiquetas
+          : ETIQUETAS_OMNICANAL_POR_DEFECTO
+      ).filter(
+        (e: any) => e?.slug !== "origen-whatsapp" && e?.slug !== "origen-web"
+      );
 
       return {
         ok: true,
         datos: {
           usuarioActualId: user.id,
           usuarioActualNombre,
+          esAdminEtiquetas: esAdminEtiquetasInferido,
           conversaciones: conversacionesNormalizadas,
-          etiquetas:
-            Array.isArray(rpcTablero.etiquetas) && rpcTablero.etiquetas.length > 0
-              ? rpcTablero.etiquetas
-              : ETIQUETAS_OMNICANAL_POR_DEFECTO,
+          etiquetas: etiquetasFiltradas,
           respuestasRapidas:
             Array.isArray(rpcTablero.respuestasRapidas) && rpcTablero.respuestasRapidas.length > 0
               ? rpcTablero.respuestasRapidas
@@ -772,38 +794,45 @@ export async function obtenerTableroOmnicanalAction(
 
     const conversacionesFinales: ConversacionOmnicanal[] =
       convsTabla !== null
-        ? convsTabla.map((c: any) => ({
-            id: String(c.cnv_id),
-            secuencial: Number(c.cnv_secuencial) || undefined,
-            negocio: String(c.cnv_negocio || neg),
-            canal: (c.cnv_canal as ConversacionOmnicanal["canal"]) || "web",
-            claveHilo: String(c.cnv_clave_hilo || ""),
-            remitenteId: String(c.cnv_remitente_id || ""),
-            remitenteNombre: String(c.cnv_remitente_nombre || "Visitante Web"),
-            remitenteCorreo: c.cnv_remitente_correo ?? null,
-            remitenteTelefono: c.cnv_remitente_telefono ?? null,
-            usuarioId: c.cnv_usuario_id ?? null,
-            clienteId: c.cnv_cliente_id ?? null,
-            estadoAtencion:
-              (c.cnv_estado_atencion as EstadoAtencionOmnicanal) || "BOT_ACTIVO",
-            asesoraAsignadaId: c.cnv_asesora_asignada_id ?? null,
-            asesoraNombre: c.cnv_asesora_asignada_id
-              ? nombresUsuariosMap.get(String(c.cnv_asesora_asignada_id)) ?? null
-              : null,
-            ultimoMensajeTexto: c.cnv_ultimo_mensaje_texto ?? null,
-            ultimoMensajeOrigen: c.cnv_ultimo_mensaje_origen ?? null,
-            ultimoMensajeEn: c.cnv_ultimo_mensaje_en || c.cnv_creado_en || new Date().toISOString(),
-            noLeidosAsesora: Number(c.cnv_no_leidos_asesora) || 0,
-            mensajesClienteConteo: Number(c.cnv_mensajes_cliente_conteo) || 0,
-            mensajesIaConteo: Number(c.cnv_mensajes_ia_conteo) || 0,
-            mensajesHumanoConteo: Number(c.cnv_mensajes_humano_conteo) || 0,
-            motivoEscalamiento: c.cnv_motivo_escalamiento ?? null,
-            recordatorioEn: c.cnv_recordatorio_en ?? null,
-            recordatorioNota: c.cnv_recordatorio_nota ?? null,
-            ventana24hExpiraEn: c.cnv_ventana_24h_expira_en ?? null,
-            creadoEn: c.cnv_creado_en || new Date().toISOString(),
-            etiquetasIds: mapaEtqPorConv.get(String(c.cnv_id)) ?? [],
-          }))
+        ? convsTabla
+            .filter((c: any) => c.cnv_canal !== "interno")
+            .map((c: any) => ({
+              id: String(c.cnv_id),
+              secuencial: Number(c.cnv_secuencial) || undefined,
+              negocio: String(c.cnv_negocio || neg),
+              canal: (c.cnv_canal as ConversacionOmnicanal["canal"]) || "web",
+              claveHilo: String(c.cnv_clave_hilo || ""),
+              remitenteId: String(c.cnv_remitente_id || ""),
+              remitenteNombre: String(c.cnv_remitente_nombre || "Visitante Web"),
+              remitenteCorreo: c.cnv_remitente_correo ?? null,
+              remitenteTelefono: c.cnv_remitente_telefono ?? null,
+              usuarioId: c.cnv_usuario_id ?? null,
+              clienteId: c.cnv_cliente_id ?? null,
+              estadoAtencion:
+                (c.cnv_estado_atencion as EstadoAtencionOmnicanal) || "BOT_ACTIVO",
+              asesoraAsignadaId: c.cnv_asesora_asignada_id ?? null,
+              asesoraNombre: c.cnv_asesora_asignada_id
+                ? nombresUsuariosMap.get(String(c.cnv_asesora_asignada_id)) ?? null
+                : null,
+              ultimoMensajeTexto: c.cnv_ultimo_mensaje_texto ?? null,
+              ultimoMensajeOrigen: c.cnv_ultimo_mensaje_origen ?? null,
+              ultimoMensajeEn: c.cnv_ultimo_mensaje_en || c.cnv_creado_en || new Date().toISOString(),
+              noLeidosAsesora: Number(c.cnv_no_leidos_asesora) || 0,
+              mensajesClienteConteo: Number(c.cnv_mensajes_cliente_conteo) || 0,
+              mensajesIaConteo: Number(c.cnv_mensajes_ia_conteo) || 0,
+              mensajesHumanoConteo: Number(c.cnv_mensajes_humano_conteo) || 0,
+              motivoEscalamiento: c.cnv_motivo_escalamiento ?? null,
+              recordatorioEn: c.cnv_recordatorio_en ?? null,
+              recordatorioNota: c.cnv_recordatorio_nota ?? null,
+              ventana24hExpiraEn: c.cnv_ventana_24h_expira_en ?? null,
+              creadoEn: c.cnv_creado_en || new Date().toISOString(),
+              etiquetasIds: mapaEtqPorConv.get(String(c.cnv_id)) ?? [],
+              datosVenta:
+                c.cnv_detalle_conversacion?.datos_venta &&
+                typeof c.cnv_detalle_conversacion.datos_venta === "object"
+                  ? (c.cnv_detalle_conversacion.datos_venta as DatosVentaConversacion)
+                  : {},
+            }))
         : almacen.conversaciones;
 
     for (const miembro of equipo) {
@@ -812,7 +841,7 @@ export async function obtenerTableroOmnicanalAction(
       ).length;
     }
 
-    const etiquetasFinales: EtiquetaOmnicanal[] =
+    const etiquetasFinales: EtiquetaOmnicanal[] = (
       etiquetasTabla && etiquetasTabla.length > 0
         ? etiquetasTabla.map((e: any) => ({
             id: String(e.etq_id),
@@ -822,7 +851,8 @@ export async function obtenerTableroOmnicanalAction(
             icono: String(e.etq_icono || "🏷️"),
             orden: Number(e.etq_orden) || 0,
           }))
-        : almacen.etiquetas;
+        : almacen.etiquetas
+    ).filter((e: EtiquetaOmnicanal) => e.slug !== "origen-whatsapp" && e.slug !== "origen-web");
 
     const respuestasFinales: RespuestaRapidaOmnicanal[] =
       respuestasTabla && respuestasTabla.length > 0
@@ -877,11 +907,19 @@ export async function obtenerTableroOmnicanalAction(
       esUsuarioRegistrado: esPedidoUsuarioRegistrado(p, contactosBase),
     }));
 
+    const rolUsuarioActualFallback = equipo.find((m) => m.usuarioId === user.id)?.rol || "";
+    const esAdminEtiquetasFallback =
+      Boolean(resPerfilActual.data?.usu_superadmin_plataforma) ||
+      ["SUPERADMIN", "ADMINISTRADOR", "ADMIN", "OPERADOR"].includes(
+        rolUsuarioActualFallback.toUpperCase()
+      );
+
     return {
       ok: true,
       datos: {
         usuarioActualId: user.id,
         usuarioActualNombre,
+        esAdminEtiquetas: esAdminEtiquetasFallback,
         conversaciones: conversacionesFinales,
         etiquetas: etiquetasFinales,
         respuestasRapidas: respuestasFinales,
@@ -1124,7 +1162,11 @@ export async function actualizarConversacionOmnicanalAction(entrada: {
   recordatorioEn?: string | null;
   recordatorioNota?: string | null;
   limpiarRecordatorio?: boolean;
-}): Promise<{ ok: true; estadoAtencion: EstadoAtencionOmnicanal } | { ok: false; error: string }> {
+  marcarNoLeido?: boolean;
+}): Promise<
+  | { ok: true; estadoAtencion: EstadoAtencionOmnicanal; noLeidosAsesora?: number }
+  | { ok: false; error: string }
+> {
   try {
     const neg = normalizarNegocioComercio(entrada.negocio);
     const { crearClienteServidor } = await import("@eco/supabase/servidor");
@@ -1141,12 +1183,15 @@ export async function actualizarConversacionOmnicanalAction(entrada: {
         p_recordatorio_en: entrada.recordatorioEn ?? null,
         p_recordatorio_nota: entrada.recordatorioNota ?? null,
         p_limpiar_recordatorio: Boolean(entrada.limpiarRecordatorio),
+        p_marcar_no_leido: Boolean(entrada.marcarNoLeido),
       });
 
       if (!error && data?.ok) {
         return {
           ok: true,
           estadoAtencion: (data.estadoAtencion as EstadoAtencionOmnicanal) || "BOT_ACTIVO",
+          noLeidosAsesora:
+            typeof data.noLeidosAsesora === "number" ? data.noLeidosAsesora : undefined,
         };
       }
       if (error && !esFuncionRpcPendienteMigracion(error.message)) {
@@ -1175,11 +1220,18 @@ export async function actualizarConversacionOmnicanalAction(entrada: {
       conv.recordatorioEn = entrada.recordatorioEn;
       conv.recordatorioNota = entrada.recordatorioNota ?? null;
     }
+    if (entrada.marcarNoLeido) {
+      conv.noLeidosAsesora = Math.max(conv.noLeidosAsesora || 0, 1);
+    }
 
     const resEsc = await escribirAlmacenRespaldoCfg(neg, almacen);
     if (!resEsc.ok) return { ok: false, error: resEsc.error || "Error al actualizar conversación" };
 
-    return { ok: true, estadoAtencion: conv.estadoAtencion };
+    return {
+      ok: true,
+      estadoAtencion: conv.estadoAtencion,
+      noLeidosAsesora: conv.noLeidosAsesora,
+    };
   } catch (err) {
     return {
       ok: false,
@@ -1190,6 +1242,7 @@ export async function actualizarConversacionOmnicanalAction(entrada: {
 
 export async function guardarEtiquetaOmnicanalAction(entrada: {
   negocio: string;
+  id?: string | null;
   nombre: string;
   color: string;
   icono: string;
@@ -1204,10 +1257,14 @@ export async function guardarEtiquetaOmnicanalAction(entrada: {
     p_nombre: entrada.nombre,
     p_color: entrada.color,
     p_icono: entrada.icono,
+    p_etiqueta_id: entrada.id && /^[0-9a-f-]{36}$/i.test(entrada.id) ? entrada.id : null,
   });
 
   if (!error && data?.ok) {
     return { ok: true, etiqueta: data.etiqueta as EtiquetaOmnicanal };
+  }
+  if (data && data.ok === false) {
+    return { ok: false, error: String(data.error) };
   }
   if (error && !esFuncionRpcPendienteMigracion(error.message)) {
     return { ok: false, error: error.message };
@@ -1218,17 +1275,102 @@ export async function guardarEtiquetaOmnicanalAction(entrada: {
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-");
+  const existenteIdx = entrada.id
+    ? almacen.etiquetas.findIndex((e) => e.id === entrada.id)
+    : -1;
   const nueva: EtiquetaOmnicanal = {
-    id: `etq-${slug}-${Date.now()}`,
+    id: entrada.id || `etq-${slug}-${Date.now()}`,
     slug,
     nombre: entrada.nombre.trim(),
     color: entrada.color || "#2563EB",
     icono: entrada.icono || "🏷️",
-    orden: almacen.etiquetas.length + 1,
+    orden: existenteIdx >= 0 ? almacen.etiquetas[existenteIdx]!.orden : almacen.etiquetas.length + 1,
   };
-  almacen.etiquetas.push(nueva);
+  if (existenteIdx >= 0) almacen.etiquetas[existenteIdx] = nueva;
+  else almacen.etiquetas.push(nueva);
   await escribirAlmacenRespaldoCfg(neg, almacen);
   return { ok: true, etiqueta: nueva };
+}
+
+export async function eliminarEtiquetaOmnicanalAction(
+  negocio: string,
+  etiquetaId: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const neg = normalizarNegocioComercio(negocio);
+  const { crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+  if (/^[0-9a-f-]{36}$/i.test(etiquetaId)) {
+    const { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_eliminar_etiqueta", {
+      p_negocio: neg,
+      p_etiqueta_id: etiquetaId,
+    });
+    if (!error && data?.ok) {
+      return { ok: true };
+    }
+    if (data && data.ok === false) {
+      return { ok: false, error: String(data.error) };
+    }
+    if (error && !esFuncionRpcPendienteMigracion(error.message)) {
+      return { ok: false, error: error.message };
+    }
+  }
+
+  const almacen = await leerAlmacenRespaldoCfg(neg);
+  almacen.etiquetas = almacen.etiquetas.filter((e) => e.id !== etiquetaId);
+  await escribirAlmacenRespaldoCfg(neg, almacen);
+  return { ok: true };
+}
+
+export async function guardarDatosVentaOmnicanalAction(entrada: {
+  negocio: string;
+  conversacionId: string;
+  datosVenta: DatosVentaConversacion;
+}): Promise<
+  | { ok: true; datosVenta: DatosVentaConversacion; remitenteNombre?: string }
+  | { ok: false; error: string }
+> {
+  try {
+    const neg = normalizarNegocioComercio(entrada.negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+    if (/^[0-9a-f-]{36}$/i.test(entrada.conversacionId)) {
+      const { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_guardar_datos_venta", {
+        p_negocio: neg,
+        p_conversacion_id: entrada.conversacionId,
+        p_datos_venta: entrada.datosVenta,
+      });
+      if (!error && data?.ok) {
+        return {
+          ok: true,
+          datosVenta: (data.datosVenta as DatosVentaConversacion) || entrada.datosVenta,
+          remitenteNombre: data.remitenteNombre ? String(data.remitenteNombre) : undefined,
+        };
+      }
+      if (data && data.ok === false) {
+        return { ok: false, error: String(data.error) };
+      }
+      if (error && !esFuncionRpcPendienteMigracion(error.message)) {
+        return { ok: false, error: error.message };
+      }
+    }
+
+    const almacen = await leerAlmacenRespaldoCfg(neg);
+    const conv = almacen.conversaciones.find((c) => c.id === entrada.conversacionId);
+    if (conv) {
+      conv.datosVenta = entrada.datosVenta;
+      await escribirAlmacenRespaldoCfg(neg, almacen);
+    }
+    return { ok: true, datosVenta: entrada.datosVenta };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "No se pudieron guardar los campos de venta.",
+    };
+  }
 }
 
 export async function alternarEtiquetaOmnicanalAction(entrada: {
@@ -1684,6 +1826,25 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
           const c = cot.cotizacion;
           const dirRef = c.detalleDireccion?.resumenDireccion || cot.direccionDetectada || "Pin GPS verificado";
           bloqueCotizacionGps = `\n[COTIZACIÓN OFICIAL DE ENVÍO CALCULADA POR SISTEMA: ${c.etiquetaResumen}. Costo final de envío: $${c.costoTotalEnvio.toFixed(2)} USD. Dirección referencial: ${dirRef}. Usa exactamente este costo final al responder al cliente.]`;
+
+          // Auto-poblar los Campos de Venta de la conversación con la ubicación y envío detectados
+          const linkGuardar =
+            urlMapa ||
+            (latPin != null && lngPin != null
+              ? `https://www.google.com/maps?q=${latPin},${lngPin}`
+              : null);
+          await esquemaComercio
+            .rpc("com_fn_omnicanal_fusionar_datos_venta_webhook", {
+              p_token: entrada.token,
+              p_conversacion_id: rec.conversacionId,
+              p_parcial: {
+                ubicacionUrl: linkGuardar,
+                costoEnvio: c.costoTotalEnvio,
+                sector: c.zonaDetectada?.nombre || c.detalleDireccion?.parroquia || c.etiquetaResumen,
+                direccionReferencia: dirRef,
+              },
+            })
+            .catch(() => {});
         }
       }
     } catch {

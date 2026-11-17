@@ -257,10 +257,11 @@ export function MarcoPanelLateral({
             )}
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
             {!appInstalada && (
               <button
                 type="button"
+                className="btn-responsive-accion"
                 onClick={() => void handleInstalarAplicacion()}
                 title="Instalar aplicación en el teléfono para acceso rápido y uso sin internet"
                 aria-label="Instalar App"
@@ -268,7 +269,7 @@ export function MarcoPanelLateral({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "5px",
-                  padding: "6px 10px",
+                  padding: "7px 10px",
                   borderRadius: "999px",
                   border: "1px solid rgba(52, 211, 153, 0.45)",
                   background: "rgba(6, 95, 70, 0.85)",
@@ -277,22 +278,23 @@ export function MarcoPanelLateral({
                   fontWeight: 700,
                   cursor: "pointer",
                   fontFamily: "inherit",
+                  whiteSpace: "nowrap",
                 }}
               >
-                <Download size={13} />
-                <span>Instalar</span>
+                <Download size={14} />
+                <span className="btn-texto-responsive">Instalar</span>
               </button>
             )}
 
             {urlTienda && (
               <Link
                 href={urlTienda}
-                className="panel-link-tienda-movil"
+                className="panel-link-tienda-movil btn-responsive-accion"
                 title={`Ir a ${etiquetaTienda}`}
                 aria-label={`Ir a ${etiquetaTienda}`}
               >
                 <ShoppingBag size={15} />
-                <span>{etiquetaTienda}</span>
+                <span className="btn-texto-responsive">{etiquetaTienda}</span>
               </Link>
             )}
           </div>

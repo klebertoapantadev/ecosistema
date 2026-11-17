@@ -458,6 +458,12 @@ h1, h2, h3, .fuente-display { font-family: var(--font-fraunces), Georgia, serif;
   .datagrid-exportar { width: 100%; }
   .datagrid-exportar .btn-mini { flex: 1; text-align: center; }
   .datagrid-tabla td { padding: 10px 12px; font-size: 0.81rem; }
+  .btn-texto-responsive { display: none !important; }
+  .btn-responsive-accion { gap: 0 !important; justify-content: center; }
+  .panel-rol-movil { display: none !important; }
+  .ocultar-en-movil { display: none !important; }
+  .panel-contenido { padding: 8px 10px; }
+  .panel-contenido h1 { font-size: 1.05rem; margin-bottom: 8px; }
 }
 
 .zona-peligro {

@@ -49,6 +49,38 @@ export interface MiembroEquipoOmnicanal {
   chatsActivos: number;
 }
 
+export type EstadoCobroChatVenta = "COTIZANDO" | "PAGO_SOLICITADO" | "PAGADO";
+
+/**
+ * Campos personalizados de venta depurados (reemplazo limpio de los 36 campos de ManyChat,
+ * eliminando 19 variables auxiliares `🔍`/`💤` de control de flujo y dejando los 15 datos comerciales reales).
+ */
+export interface DatosVentaConversacion {
+  // 🛒 1. Producto y Valores
+  producto?: string;
+  preferenciasDetalle?: string; // Unifica Colores, NumGirasoles/tallos y NOTAS de elaboración
+  precioProducto?: number | null;
+  extras?: string;
+  precioExtras?: number | null;
+  costoEnvio?: number | null;
+  totalManual?: number | null;
+  estadoCobro?: EstadoCobroChatVenta;
+  codigoPedido?: string;
+
+  // 📍 2. Ubicación y Entrega
+  fechaEntrega?: string; // YYYY-MM-DD (antes `-ℹ️ Cuando`)
+  franjaHora?: string; // Ej. `A) 09:00 - 13:00` o hora específica (antes `-🕙 Hora`)
+  sector?: string; // Ej. Centro-Norte, Cumbayá, Sur (antes `.📍Sector`)
+  direccionReferencia?: string; // Dirección escrita / sala funeraria (antes `-❓ Donde`)
+  ubicacionUrl?: string; // Link Google Maps / Waze / GPS (antes `.📍Ubicacion`)
+
+  // ✍🏼 3. Cliente, Destinatario y Tarjeta
+  nombreCliente?: string; // Quién compra (antes `🤵🏻NombreCliente`)
+  quienRecibe?: string; // Nombre + celular de quien recibe (antes `✍🏼QuienRecibe`)
+  dedicatoriaTarjeta?: string; // Mensaje para la tarjeta (antes `✍🏼Tarjeta`)
+  firmaTarjeta?: string; // Firma al pie de la tarjeta (antes `✍🏼FirmaTarjeta`)
+}
+
 export interface ConversacionOmnicanal {
   id: string;
   secuencial?: number;
@@ -77,6 +109,7 @@ export interface ConversacionOmnicanal {
   ventana24hExpiraEn?: string | null;
   creadoEn: string;
   etiquetasIds: string[];
+  datosVenta?: DatosVentaConversacion;
 }
 
 export interface MensajeOmnicanal {
@@ -135,9 +168,61 @@ export const ETIQUETAS_OMNICANAL_POR_DEFECTO: EtiquetaOmnicanal[] = [
   { id: "etq-sur", slug: "sur", nombre: "SUR", color: "#D97706", icono: "🚚", orden: 5 },
   { id: "etq-condolencias", slug: "condolencias", nombre: "Condolencias", color: "#64748B", icono: "🕊️", orden: 6 },
   { id: "etq-vip", slug: "vip", nombre: "Cliente VIP", color: "#7C3AED", icono: "⭐", orden: 7 },
-  { id: "etq-web", slug: "origen-web", nombre: "Chat Web", color: "#0D9488", icono: "🌐", orden: 8 },
-  { id: "etq-whatsapp", slug: "origen-whatsapp", nombre: "WhatsApp", color: "#16A34A", icono: "📱", orden: 9 },
 ];
+
+export function calcularTotalDatosVenta(datos?: DatosVentaConversacion | null): number {
+  if (!datos) return 0;
+  if (datos.totalManual != null && !Number.isNaN(Number(datos.totalManual)) && Number(datos.totalManual) > 0) {
+    return Math.round(Number(datos.totalManual) * 100) / 100;
+  }
+  const prod = Number(datos.precioProducto) || 0;
+  const ext = Number(datos.precioExtras) || 0;
+  const env = Number(datos.costoEnvio) || 0;
+  return Math.round((prod + ext + env) * 100) / 100;
+}
+
+/**
+ * Sugiere valores iniciales no destructivos en los Campos de Venta a partir de lo ya conversado
+ * en el hilo (ej. enlaces de Google Maps/Waze enviados por el cliente, orden web o nombre real).
+ */
+export function autoCompletarDatosVentaDesdeMensajes(
+  actual: DatosVentaConversacion | undefined | null,
+  mensajes: MensajeOmnicanal[],
+  conversacion?: Pick<ConversacionOmnicanal, "remitenteNombre"> | null
+): DatosVentaConversacion {
+  const base: DatosVentaConversacion = {
+    estadoCobro: "COTIZANDO",
+    ...(actual ?? {}),
+  };
+
+  if (
+    !base.nombreCliente &&
+    conversacion?.remitenteNombre &&
+    !/^(Visitante Web|WhatsApp\s*\+)/i.test(conversacion.remitenteNombre)
+  ) {
+    base.nombreCliente = conversacion.remitenteNombre;
+  }
+
+  for (const m of mensajes) {
+    const txt = String(m.contenido || "");
+    if (!base.ubicacionUrl) {
+      const matchMapa = txt.match(
+        /https?:\/\/(?:maps\.app\.goo\.gl|goo\.gl\/maps|(?:www\.)?google\.[a-z.]+\/maps|maps\.google\.[a-z.]+|(?:www\.)?waze\.com)[^\s)]*/i
+      );
+      if (matchMapa?.[0]) {
+        base.ubicacionUrl = matchMapa[0];
+      }
+    }
+    if (!base.codigoPedido) {
+      const matchOrd = txt.match(/\b(TNK-(?:ORD|PRF|OT)-\d+|OT-[A-Z0-9-]+)\b/i);
+      if (matchOrd?.[1]) {
+        base.codigoPedido = matchOrd[1].toUpperCase();
+      }
+    }
+  }
+
+  return base;
+}
 
 export const RESPUESTAS_RAPIDAS_POR_DEFECTO: RespuestaRapidaOmnicanal[] = [
   {

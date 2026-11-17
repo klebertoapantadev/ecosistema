@@ -70,3 +70,6 @@ export * from "./componentes/ConsolaEnvioPedidosTaller";
 export * from "./componentes/ConsolaTallerFloral";
 export * from "./componentes/VisorMultimediaChatModal";
 export * from "./componentes/ChatEquipoInterno";
+export * from "./componentes/IconoCanalOmnicanal";
+export * from "./componentes/ModalAdministrarEtiquetas";
+export * from "./componentes/PanelCamposVentaChat";

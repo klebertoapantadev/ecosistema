@@ -7,38 +7,32 @@ import {
   AlertTriangle,
   ArrowLeft,
   BarChart3,
-  Bell,
   Bot,
-  Check,
   CheckCircle2,
+  ClipboardList,
   Clock,
   Download,
-  ExternalLink,
   Filter,
   Forward,
-  Globe,
-  Hand,
   ImagePlus,
   Inbox,
   Loader2,
+  MailWarning,
   MessageCircle,
   MessageSquare,
-  PanelLeftClose,
-  PanelLeftOpen,
   PanelRightClose,
   PanelRightOpen,
-  Plus,
+  Pause,
+  Play,
   RefreshCw,
   Search,
   Send,
+  Settings2,
+  Share2,
   ShoppingBag,
   Sparkles,
-  StickyNote,
   Tag,
   Trash2,
-  User,
-  UserCheck,
-  UserPlus,
   Users,
   X,
   Zap,
@@ -60,7 +54,6 @@ import {
   alternarEtiquetaOmnicanalAction,
   eliminarRespuestaRapidaOmnicanalAction,
   enviarMensajeAsesorOmnicanalAction,
-  guardarEtiquetaOmnicanalAction,
   guardarRespuestaRapidaOmnicanalAction,
   obtenerMensajesConversacionAction,
   obtenerTableroOmnicanalAction,
@@ -89,6 +82,13 @@ import {
 } from "../omnicanal";
 import { ChatEquipoInterno } from "./ChatEquipoInterno";
 import {
+  AvatarConCanalOmnicanal,
+  CANALES_OMNICANAL_DISPONIBLES,
+  IconoVectorCanal,
+} from "./IconoCanalOmnicanal";
+import { ModalAdministrarEtiquetas } from "./ModalAdministrarEtiquetas";
+import { PanelCamposVentaChat } from "./PanelCamposVentaChat";
+import {
   construirUrlProxyMediaOmnicanal,
   descargarImagenChatOmnicanal,
   ModalReenviarMensajeChat,
@@ -112,17 +112,6 @@ type FiltroBandejaIzquierda =
   | "ia_activa"
   | "recordatorios"
   | "cerrados";
-
-const COLORES_ETIQUETA_PRESET = [
-  "#DB2777",
-  "#16A34A",
-  "#EA580C",
-  "#2563EB",
-  "#7C3AED",
-  "#0D9488",
-  "#D97706",
-  "#64748B",
-];
 
 function formatearTiempoCorto(iso?: string | null): string {
   if (!iso) return "";
@@ -350,26 +339,6 @@ function renderContenidoMensajeOmnicanal(
   );
 }
 
-function etiquetaCanal(canal: CanalOmnicanal | string): {
-  texto: string;
-  icono: string;
-  fondo: string;
-  color: string;
-} {
-  switch (canal) {
-    case "whatsapp":
-      return { texto: "WhatsApp", icono: "📱", fondo: "#DCFCE7", color: "#15803D" };
-    case "instagram":
-      return { texto: "Instagram", icono: "📸", fondo: "#FCE7F3", color: "#BE185D" };
-    case "facebook":
-      return { texto: "Messenger", icono: "📘", fondo: "#DBEAFE", color: "#1D4ED8" };
-    case "tiktok":
-      return { texto: "TikTok", icono: "🎵", fondo: "#F3E8FF", color: "#6B21A8" };
-    default:
-      return { texto: "Chat Web", icono: "🌐", fondo: "#CCFBF1", color: "#0F766E" };
-  }
-}
-
 function badgeEstadoAtencion(estado: EstadoAtencionOmnicanal): {
   etiqueta: string;
   fondo: string;
@@ -441,9 +410,9 @@ export function ConsolaVentasOmnicanal({
   const [mensajeInfo, setMensajeInfo] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(errorInicial ?? null);
 
-  // Estado de la Bandeja estilo ManyChat (WhatsApp YCloud + Chat Web)
+  // Estado de la Bandeja estilo ManyChat (WhatsApp YCloud, Web, Facebook, Instagram, Telegram, TikTok)
   const [filtroIzquierdo, setFiltroIzquierdo] = useState<FiltroBandejaIzquierda>("todos");
-  const [canalFiltro, setCanalFiltro] = useState<"todos" | "whatsapp" | "web">("todos");
+  const [canalFiltro, setCanalFiltro] = useState<"todos" | CanalOmnicanal>("todos");
   const [etiquetaFiltroId, setEtiquetaFiltroId] = useState<string | null>(null);
   const [vendedorFiltroId, setVendedorFiltroId] = useState<string | null>(null);
   const [soloNoLeidos, setSoloNoLeidos] = useState<boolean>(false);
@@ -451,6 +420,7 @@ export function ConsolaVentasOmnicanal({
     "abiertos"
   );
   const [busquedaInbox, setBusquedaInbox] = useState<string>("");
+  const [modalEtiquetasAbierto, setModalEtiquetasAbierto] = useState<boolean>(false);
 
   const [conversacionActivaId, setConversacionActivaId] = useState<string | null>(
     datosIniciales?.conversaciones[0]?.id ?? null
@@ -475,12 +445,7 @@ export function ConsolaVentasOmnicanal({
     payload: DatosReenvioMensajeModal;
   } | null>(null);
 
-  // Modales ligeros inline: crear etiqueta, recordatorio y crear respuesta rápida
-  const [creandoEtiqueta, setCreandoEtiqueta] = useState<boolean>(false);
-  const [nuevaEtqNombre, setNuevaEtqNombre] = useState<string>("");
-  const [nuevaEtqColor, setNuevaEtqColor] = useState<string>(COLORES_ETIQUETA_PRESET[0]!);
-  const [nuevaEtqIcono, setNuevaEtqIcono] = useState<string>("🏷️");
-
+  // Modales ligeros inline: recordatorio y crear respuesta rápida
   const [editandoRecordatorio, setEditandoRecordatorio] = useState<boolean>(false);
   const [recordatorioFecha, setRecordatorioFecha] = useState<string>("");
   const [recordatorioNota, setRecordatorioNota] = useState<string>("");
@@ -507,7 +472,6 @@ export function ConsolaVentasOmnicanal({
   const [vistaMovilInbox, setVistaMovilInbox] = useState<"lista" | "chat" | "ficha">("lista");
   const [mostrarFiltrosInbox, setMostrarFiltrosInbox] = useState<boolean>(false);
   const [mostrarFichaTablet, setMostrarFichaTablet] = useState<boolean>(false);
-  const [columnaVistasDesktop, setColumnaVistasDesktop] = useState<boolean>(true);
   const [fichaDerechaDesktop, setFichaDerechaDesktop] = useState<boolean>(true);
   const [selectorEtiquetasAbierto, setSelectorEtiquetasAbierto] = useState<boolean>(false);
 
@@ -967,11 +931,19 @@ export function ConsolaVentasOmnicanal({
     [tablero.conversaciones, tablero.pedidosWeb, tablero.usuariosYClientes]
   );
 
+  const etiquetasClasificacion = useMemo(
+    () =>
+      tablero.etiquetas.filter(
+        (e) => e.slug !== "origen-whatsapp" && e.slug !== "origen-web"
+      ),
+    [tablero.etiquetas]
+  );
+
   const mapaEtiquetas = useMemo(() => {
     const m = new Map<string, EtiquetaOmnicanal>();
-    for (const e of tablero.etiquetas) m.set(e.id, e);
+    for (const e of etiquetasClasificacion) m.set(e.id, e);
     return m;
-  }, [tablero.etiquetas]);
+  }, [etiquetasClasificacion]);
 
   const conversacionesFiltradas = useMemo(() => {
     const q = busquedaInbox.trim().toLowerCase();
@@ -1299,25 +1271,60 @@ export function ConsolaVentasOmnicanal({
     }));
   };
 
-  const handleCrearEtiqueta = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!nuevaEtqNombre.trim()) return;
-    const res = await guardarEtiquetaOmnicanalAction({
-      negocio: negNorm,
-      nombre: nuevaEtqNombre.trim(),
-      color: nuevaEtqColor,
-      icono: nuevaEtqIcono || "🏷️",
-    });
-    if (!res.ok) {
-      setErrorMsg(res.error);
-      return;
+  const handleMarcarComoNoLeido = async () => {
+    if (!conversacionActiva) return;
+    if (!conversacionActiva.id.startsWith("rt-")) {
+      const res = await actualizarConversacionOmnicanalAction({
+        negocio: negNorm,
+        conversacionId: conversacionActiva.id,
+        marcarNoLeido: true,
+      });
+      if (!res.ok) {
+        setErrorMsg(res.error);
+        return;
+      }
     }
     setTablero((prev) => ({
       ...prev,
-      etiquetas: [...prev.etiquetas.filter((x) => x.id !== res.etiqueta.id), res.etiqueta],
+      conversaciones: prev.conversaciones.map((c) =>
+        c.id === conversacionActiva.id
+          ? { ...c, noLeidosAsesora: Math.max(1, c.noLeidosAsesora || 0) }
+          : c
+      ),
     }));
-    setNuevaEtqNombre("");
-    setCreandoEtiqueta(false);
+    setMensajeInfo(`📌 Chat con ${conversacionActiva.remitenteNombre} marcado como no leído.`);
+    if (modoLayoutInbox === "movil") {
+      setVistaMovilInbox("lista");
+    }
+  };
+
+  const handleCompartirChatAlEquipo = () => {
+    if (!conversacionActiva) return;
+    const ultimoMsg = mensajesActivos[mensajesActivos.length - 1] ?? null;
+    const imgReciente =
+      (ultimoMsg ? extraerTodasLasImagenesMensaje(ultimoMsg)[0]?.url : null) ?? null;
+    const resumenTexto = ultimoMsg
+      ? ultimoMsg.contenido.replace(/!\s*\[[^\]]*\]\s*\([^)]+\)/g, "").trim()
+      : conversacionActiva.ultimoMensajeTexto || "";
+
+    setReenvioModalDatos({
+      destino: "equipo",
+      payload: {
+        imagenUrl: imgReciente,
+        tituloImagen: conversacionActiva.remitenteNombre,
+        textoOriginal:
+          resumenTexto || `Seguimiento de chat con ${conversacionActiva.remitenteNombre}`,
+        contextoCliente: {
+          conversacionId: conversacionActiva.id,
+          canal: conversacionActiva.canal,
+          clienteNombre: conversacionActiva.remitenteNombre,
+          clienteTelefono: conversacionActiva.remitenteTelefono ?? null,
+          autorOriginal: ultimoMsg?.autorNombre || conversacionActiva.remitenteNombre,
+          textoOriginal: resumenTexto,
+          imagenUrl: imgReciente,
+        },
+      },
+    });
   };
 
   const handleIniciarSeguimiento = async (entrada: {
@@ -1706,20 +1713,24 @@ export function ConsolaVentasOmnicanal({
     );
   };
 
+  const ocultarCabeceraModulosEnMovil =
+    pestana === "inbox" && modoLayoutInbox === "movil" && vistaMovilInbox !== "lista";
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "11px" }}>
-      {/* Barra Superior Compacta de Módulos y Estado en Vivo */}
+    <div style={{ display: "flex", flexDirection: "column", gap: "9px" }}>
+      {/* Barra Superior Compacta de Módulos y Estado en Vivo (oculta en móvil al entrar a un chat) */}
+      {!ocultarCabeceraModulosEnMovil && (
       <div
         style={{
           background: "#FFFFFF",
           border: "1px solid rgba(34, 29, 26, 0.1)",
           borderRadius: "14px",
-          padding: "9px 14px",
+          padding: modoLayoutInbox === "movil" ? "7px 10px" : "8px 12px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           flexWrap: "wrap",
-          gap: "10px",
+          gap: "8px",
           boxShadow: "0 2px 10px rgba(34, 29, 26, 0.04)",
         }}
       >
@@ -1799,16 +1810,17 @@ export function ConsolaVentasOmnicanal({
           })}
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
           <div
+            className="ocultar-en-movil"
             style={{
               display: "inline-flex",
               alignItems: "center",
               flexWrap: "wrap",
               gap: "8px",
-              fontSize: "0.75rem",
-              padding: "6px 12px",
-              borderRadius: "12px",
+              fontSize: "0.74rem",
+              padding: "5px 10px",
+              borderRadius: "10px",
               background: "#F8FAFC",
               border: "1px solid #E2E8F0",
               color: "#334155",
@@ -1910,6 +1922,7 @@ export function ConsolaVentasOmnicanal({
           </button>
         </div>
       </div>
+      )}
 
       {tablero.usandoRespaldoHibrido && (
         <div
@@ -2010,402 +2023,61 @@ export function ConsolaVentasOmnicanal({
       {pestana === "chat_equipo" && <ChatEquipoInterno negocio={negNorm} embebido />}
 
       {/* =====================================================================
-          PESTAÑA 1: BANDEJA UNIFICADA ESTILO MANYCHAT (4 COLUMNAS RESPONSIVE)
+          PESTAÑA 1: BANDEJA UNIFICADA ESTILO MANYCHAT (FILTROS ARRIBA + 3 COLUMNAS AMPLIAS)
       ===================================================================== */}
       {pestana === "inbox" && (
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns:
-              modoLayoutInbox === "desktop"
-                ? [
-                    columnaVistasDesktop ? "192px" : null,
-                    "285px",
-                    "minmax(340px, 1fr)",
-                    fichaDerechaDesktop ? "272px" : null,
-                  ]
-                    .filter(Boolean)
-                    .join(" ")
-                : modoLayoutInbox === "tablet"
-                  ? "270px minmax(0, 1fr)"
-                  : "minmax(0, 1fr)",
-            height: modoLayoutInbox === "movil" ? "calc(100dvh - 170px)" : "calc(100vh - 142px)",
-            minHeight: modoLayoutInbox === "movil" ? "520px" : "580px",
+            display: "flex",
+            flexDirection: "column",
+            height:
+              modoLayoutInbox === "movil"
+                ? vistaMovilInbox === "lista"
+                  ? "calc(100dvh - 122px)"
+                  : "calc(100dvh - 68px)"
+                : "calc(100vh - 132px)",
+            minHeight: modoLayoutInbox === "movil" ? "480px" : "580px",
             background: "#FFFFFF",
             border: "1px solid rgba(34, 29, 26, 0.11)",
-            borderRadius: "16px",
+            borderRadius: modoLayoutInbox === "movil" ? "12px" : "16px",
             overflow: "hidden",
             boxShadow: "0 8px 26px rgba(34, 29, 26, 0.06)",
           }}
         >
-          {/* COLUMNA 1: VISTAS DE BANDEJA, ETIQUETAS Y EQUIPO (PLEGABLE EN ESCRITORIO) */}
-          <div
-            style={{
-              background: "#FAF8F5",
-              borderRight: modoLayoutInbox === "desktop" ? "1px solid #ECE8E1" : "none",
-              borderBottom: modoLayoutInbox !== "desktop" ? "1px solid #ECE8E1" : "none",
-              gridColumn: modoLayoutInbox === "tablet" ? "1 / -1" : undefined,
-              padding: "12px 9px",
-              display:
-                (modoLayoutInbox === "desktop" && columnaVistasDesktop) ||
-                (mostrarFiltrosInbox && (modoLayoutInbox === "tablet" || vistaMovilInbox === "lista"))
-                  ? "flex"
-                  : "none",
-              flexDirection: "column",
-              gap: "14px",
-              minHeight: 0,
-              overflowY: "auto",
-            }}
-          >
-            <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-              {(
-                [
-                  { id: "todos", texto: "Todos los chats", conteo: metricas.conversacionesAbiertas },
-                  { id: "no_asignado", texto: "No asignado", conteo: metricas.sinAsignar },
-                  {
-                    id: "mios",
-                    texto: "Asignado a mí",
-                    conteo: tablero.conversaciones.filter(
-                      (c) =>
-                        c.estadoAtencion !== "CERRADO" &&
-                        tablero.usuarioActualId &&
-                        c.asesoraAsignadaId === tablero.usuarioActualId
-                    ).length,
-                  },
-                  { id: "escalados", texto: "🚨 Requiere humano", conteo: metricas.escaladasHumano },
-                  { id: "ia_activa", texto: "🤖 IA ARIA activa", conteo: metricas.atendidasPorIa },
-                  { id: "recordatorios", texto: "⏰ Recordatorios", conteo: metricas.conRecordatorio },
-                  {
-                    id: "cerrados",
-                    texto: "✅ Cerrados",
-                    conteo:
-                      metricas.totalConversaciones - metricas.conversacionesAbiertas,
-                  },
-                ] as const
-              ).map((item) => {
-                const activo = filtroIzquierdo === item.id && !etiquetaFiltroId && !vendedorFiltroId;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      setFiltroIzquierdo(item.id);
-                      setEtiquetaFiltroId(null);
-                      setVendedorFiltroId(null);
-                    }}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      padding: "7px 10px",
-                      borderRadius: "8px",
-                      border: "none",
-                      background: activo ? "#E2E8F0" : "transparent",
-                      color: activo ? "#0F172A" : "#334155",
-                      fontSize: "0.81rem",
-                      fontWeight: activo ? 700 : 500,
-                      cursor: "pointer",
-                      textAlign: "left",
-                    }}
-                  >
-                    <span>{item.texto}</span>
-                    <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#64748B" }}>
-                      {item.conteo}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* SECCIÓN ETIQUETAS (IDÉNTICA A MANYCHAT) */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "0 8px",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "0.7rem",
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    color: "#64748B",
-                  }}
-                >
-                  Etiquetas
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setCreandoEtiqueta((v) => !v)}
-                  title="Crear nueva etiqueta de clientes"
-                  aria-label="Nueva etiqueta"
-                  style={{
-                    border: "none",
-                    background: "transparent",
-                    color: "#334155",
-                    cursor: "pointer",
-                    padding: "2px",
-                  }}
-                >
-                  <Plus size={14} />
-                </button>
-              </div>
-
-              {creandoEtiqueta && (
-                <form
-                  onSubmit={handleCrearEtiqueta}
-                  style={{
-                    background: "#FFFFFF",
-                    border: "1px solid #CBD5E1",
-                    borderRadius: "9px",
-                    padding: "8px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "6px",
-                    marginBottom: "4px",
-                  }}
-                >
-                  <input
-                    type="text"
-                    value={nuevaEtqNombre}
-                    onChange={(e) => setNuevaEtqNombre(e.target.value)}
-                    placeholder="Nombre etiqueta…"
-                    style={{
-                      width: "100%",
-                      padding: "5px 8px",
-                      borderRadius: "6px",
-                      border: "1px solid #CBD5E1",
-                      fontSize: "0.78rem",
-                    }}
-                  />
-                  <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-                    {COLORES_ETIQUETA_PRESET.map((col) => (
-                      <button
-                        key={col}
-                        type="button"
-                        onClick={() => setNuevaEtqColor(col)}
-                        title={`Color ${col}`}
-                        aria-label={`Color ${col}`}
-                        style={{
-                          width: "16px",
-                          height: "16px",
-                          borderRadius: "999px",
-                          background: col,
-                          border: nuevaEtqColor === col ? "2px solid #0F172A" : "none",
-                          cursor: "pointer",
-                        }}
-                      />
-                    ))}
-                  </div>
-                  <div style={{ display: "flex", gap: "4px" }}>
-                    <input
-                      type="text"
-                      value={nuevaEtqIcono}
-                      onChange={(e) => setNuevaEtqIcono(e.target.value)}
-                      maxLength={3}
-                      style={{
-                        width: "38px",
-                        padding: "4px",
-                        textAlign: "center",
-                        borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
-                        fontSize: "0.78rem",
-                      }}
-                    />
-                    <button
-                      type="submit"
-                      title="Guardar etiqueta"
-                      aria-label="Guardar"
-                      style={{
-                        flex: 1,
-                        padding: "5px 8px",
-                        borderRadius: "6px",
-                        border: "none",
-                        background: "#0F172A",
-                        color: "#FFFFFF",
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Guardar
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {tablero.etiquetas.map((etq) => {
-                const activa = etiquetaFiltroId === etq.id;
-                const conteo = tablero.conversaciones.filter((c) =>
-                  (c.etiquetasIds ?? []).includes(etq.id)
-                ).length;
-                return (
-                  <button
-                    key={etq.id}
-                    type="button"
-                    onClick={() =>
-                      setEtiquetaFiltroId((prev) => (prev === etq.id ? null : etq.id))
-                    }
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      padding: "6px 10px",
-                      borderRadius: "8px",
-                      border: "none",
-                      background: activa ? "#E2E8F0" : "transparent",
-                      color: "#1E293B",
-                      fontSize: "0.8rem",
-                      fontWeight: activa ? 700 : 500,
-                      cursor: "pointer",
-                      textAlign: "left",
-                    }}
-                  >
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: "7px" }}>
-                      <span
-                        style={{
-                          width: "9px",
-                          height: "9px",
-                          borderRadius: "999px",
-                          background: etq.color,
-                        }}
-                      />
-                      <span>
-                        {etq.icono} {etq.nombre}
-                      </span>
-                    </span>
-                    {conteo > 0 && (
-                      <span style={{ fontSize: "0.72rem", color: "#64748B" }}>{conteo}</span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* SECCIÓN EQUIPO DE VENTAS (MULTI-VENDEDOR EN TIEMPO REAL) */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <span
-                style={{
-                  fontSize: "0.7rem",
-                  fontWeight: 700,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  color: "#64748B",
-                  padding: "0 8px",
-                }}
-              >
-                Equipo ({tablero.equipo.length})
-              </span>
-              {tablero.equipo.map((miembro) => {
-                const activo = vendedorFiltroId === miembro.usuarioId;
-                const esYo = miembro.usuarioId === tablero.usuarioActualId;
-                return (
-                  <button
-                    key={miembro.usuarioId}
-                    type="button"
-                    onClick={() =>
-                      setVendedorFiltroId((prev) =>
-                        prev === miembro.usuarioId ? null : miembro.usuarioId
-                      )
-                    }
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      padding: "6px 10px",
-                      borderRadius: "8px",
-                      border: "none",
-                      background: activo ? "#E2E8F0" : "transparent",
-                      color: "#1E293B",
-                      fontSize: "0.79rem",
-                      fontWeight: activo ? 700 : 500,
-                      cursor: "pointer",
-                      textAlign: "left",
-                    }}
-                  >
-                    <span
-                      style={{
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                        maxWidth: "150px",
-                      }}
-                    >
-                      👤 {esYo ? `Tú (${miembro.nombre.split(" ")[0]})` : miembro.nombre}
-                    </span>
-                    <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B" }}>
-                      {miembro.chatsActivos}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* COLUMNA 2: LISTA DE HILOS CON FILTROS RÁPIDOS ESTILO MANYCHAT */}
-          <div
-            style={{
-              borderRight: modoLayoutInbox !== "movil" ? "1px solid #ECE8E1" : "none",
-              display:
-                modoLayoutInbox !== "movil" || vistaMovilInbox === "lista" ? "flex" : "none",
-              flexDirection: "column",
-              background: "#FFFFFF",
-              minWidth: 0,
-              minHeight: 0,
-            }}
-          >
+          {/* BARRA SUPERIOR UNIFICADA DE CANALES, BÚSQUEDA, VISTAS, ETIQUETAS Y EQUIPO */}
+          {(modoLayoutInbox !== "movil" || vistaMovilInbox === "lista") && (
             <div
               style={{
-                padding: "10px 11px",
+                background: "#FAF8F5",
                 borderBottom: "1px solid #ECE8E1",
+                padding: modoLayoutInbox === "movil" ? "8px 10px" : "8px 12px",
                 display: "flex",
                 flexDirection: "column",
                 gap: "7px",
+                flexShrink: 0,
               }}
             >
-              <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                {modoLayoutInbox === "desktop" && (
-                  <button
-                    type="button"
-                    onClick={() => setColumnaVistasDesktop((v) => !v)}
-                    title={
-                      columnaVistasDesktop
-                        ? "Plegar columna de vistas y etiquetas para ganar espacio"
-                        : "Mostrar columna de vistas, etiquetas y equipo"
-                    }
-                    aria-label={columnaVistasDesktop ? "Ocultar vistas" : "Mostrar vistas"}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      width: "32px",
-                      height: "32px",
-                      borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
-                      background: columnaVistasDesktop ? "#F8FAFC" : "#0F172A",
-                      color: columnaVistasDesktop ? "#334155" : "#FFFFFF",
-                      cursor: "pointer",
-                      flexShrink: 0,
-                    }}
-                  >
-                    {columnaVistasDesktop ? (
-                      <PanelLeftClose size={14} />
-                    ) : (
-                      <PanelLeftOpen size={14} />
-                    )}
-                  </button>
-                )}
-
-                <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "7px",
+                  flexWrap: "wrap",
+                }}
+              >
+                {/* Buscador rápido */}
+                <div
+                  style={{
+                    position: "relative",
+                    flex: modoLayoutInbox === "movil" ? "1 1 160px" : "0 1 215px",
+                    minWidth: "140px",
+                  }}
+                >
                   <Search
                     size={14}
                     style={{
                       position: "absolute",
-                      left: "10px",
+                      left: "9px",
                       top: "50%",
                       transform: "translateY(-50%)",
                       color: "#94A3B8",
@@ -2415,31 +2087,114 @@ export function ConsolaVentasOmnicanal({
                     type="search"
                     value={busquedaInbox}
                     onChange={(e) => setBusquedaInbox(e.target.value)}
-                    placeholder="Buscar chat…"
+                    placeholder="Buscar chat o teléfono…"
                     style={{
                       width: "100%",
-                      padding: "6px 10px 6px 30px",
+                      padding: "6px 9px 6px 29px",
                       borderRadius: "8px",
                       border: "1px solid #CBD5E1",
-                      fontSize: modoLayoutInbox === "movil" ? "16px" : "0.79rem",
+                      background: "#FFFFFF",
+                      fontSize: modoLayoutInbox === "movil" ? "16px" : "0.78rem",
                     }}
                   />
                 </div>
-              </div>
 
-              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
-                {modoLayoutInbox !== "desktop" && (
+                {/* Selector Multi-Canal por Ícono (WhatsApp, Web, Facebook, Instagram, Telegram, TikTok) */}
+                <div
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "3px",
+                    background: "#EFECE6",
+                    padding: "3px",
+                    borderRadius: "9px",
+                    overflowX: "auto",
+                    maxWidth: "100%",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setCanalFiltro("todos")}
+                    title="Mostrar todos los canales conectados"
+                    aria-label="Todos los canales"
+                    style={{
+                      padding: "4px 9px",
+                      borderRadius: "7px",
+                      border: "none",
+                      background: canalFiltro === "todos" ? "#FFFFFF" : "transparent",
+                      color: canalFiltro === "todos" ? "#0F172A" : "#475569",
+                      fontSize: "0.72rem",
+                      fontWeight: canalFiltro === "todos" ? 800 : 600,
+                      boxShadow:
+                        canalFiltro === "todos" ? "0 1px 2px rgba(15,23,42,0.1)" : "none",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Todos
+                  </button>
+                  {CANALES_OMNICANAL_DISPONIBLES.map((c) => {
+                    const activo = canalFiltro === c.id;
+                    const conteoCanal = tablero.conversaciones.filter(
+                      (conv) =>
+                        conv.estadoAtencion !== "CERRADO" && (conv.canal || "web") === c.id
+                    ).length;
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() =>
+                          setCanalFiltro((prev) => (prev === c.id ? "todos" : c.id))
+                        }
+                        title={`Filtrar por ${c.nombre}${conteoCanal > 0 ? ` (${conteoCanal} abiertos)` : ""}`}
+                        aria-label={`Canal ${c.nombre}`}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          padding: "4px 7px",
+                          borderRadius: "7px",
+                          border: "none",
+                          background: activo ? "#FFFFFF" : "transparent",
+                          color: activo ? "#0F172A" : "#475569",
+                          fontSize: "0.71rem",
+                          fontWeight: activo ? 800 : 600,
+                          boxShadow: activo ? "0 1px 2px rgba(15,23,42,0.12)" : "none",
+                          cursor: "pointer",
+                          whiteSpace: "nowrap",
+                          opacity: conteoCanal === 0 && !activo && c.id !== "whatsapp" && c.id !== "web" ? 0.65 : 1,
+                        }}
+                      >
+                        <IconoVectorCanal canal={c.id} size={15} />
+                        {modoLayoutInbox !== "movil" && <span>{c.corto}</span>}
+                        {conteoCanal > 0 && (
+                          <span
+                            style={{
+                              fontSize: "0.66rem",
+                              fontWeight: 800,
+                              color: activo ? c.color : "#64748B",
+                            }}
+                          >
+                            {conteoCanal}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {modoLayoutInbox === "movil" && (
                   <button
                     type="button"
                     onClick={() => setMostrarFiltrosInbox((v) => !v)}
-                    title="Mostrar u ocultar vistas de bandeja, etiquetas y asesores"
-                    aria-label="Filtros de bandeja"
+                    title="Mostrar filtros de estado, etiquetas y asesores"
+                    aria-label="Filtros"
                     style={{
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "4px",
-                      padding: "4px 8px",
-                      borderRadius: "7px",
+                      padding: "6px 9px",
+                      borderRadius: "8px",
                       border: mostrarFiltrosInbox ? "1px solid #0F172A" : "1px solid #CBD5E1",
                       background: mostrarFiltrosInbox ? "#0F172A" : "#FFFFFF",
                       color: mostrarFiltrosInbox ? "#FFFFFF" : "#334155",
@@ -2448,288 +2203,422 @@ export function ConsolaVentasOmnicanal({
                       cursor: "pointer",
                     }}
                   >
-                    <Filter size={12} />
+                    <Filter size={13} />
                     <span>Filtros</span>
                   </button>
                 )}
 
-                <select
-                  value={estadoAperturaFiltro}
-                  onChange={(e) => setEstadoAperturaFiltro(e.target.value as any)}
-                  aria-label="Filtrar chats abiertos o cerrados"
-                  style={{
-                    padding: "4px 7px",
-                    borderRadius: "7px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.74rem",
-                    background: "#FFFFFF",
-                  }}
-                >
-                  <option value="abiertos">Abiertos</option>
-                  <option value="cerrados">Cerrados</option>
-                  <option value="todos">Todos</option>
-                </select>
+                {/* Controles de Bandeja, No Leído, Etiquetas y Equipo (visibles siempre en desktop/tablet, desplegables en móvil) */}
+                {(modoLayoutInbox !== "movil" || mostrarFiltrosInbox) && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      flexWrap: "wrap",
+                      flex: modoLayoutInbox === "movil" ? "1 1 100%" : "1 1 auto",
+                    }}
+                  >
+                    {/* Vista / Cola de atención */}
+                    <select
+                      value={
+                        filtroIzquierdo === "todos" && estadoAperturaFiltro === "todos"
+                          ? "todos_historial"
+                          : filtroIzquierdo
+                      }
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === "todos_historial") {
+                          setFiltroIzquierdo("todos");
+                          setEstadoAperturaFiltro("todos");
+                        } else if (val === "cerrados") {
+                          setFiltroIzquierdo("cerrados");
+                          setEstadoAperturaFiltro("cerrados");
+                        } else {
+                          setFiltroIzquierdo(val as FiltroBandejaIzquierda);
+                          setEstadoAperturaFiltro("abiertos");
+                        }
+                      }}
+                      aria-label="Vista de bandeja"
+                      style={{
+                        padding: "5px 8px",
+                        borderRadius: "8px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.75rem",
+                        fontWeight: 600,
+                        background: "#FFFFFF",
+                        color: "#0F172A",
+                      }}
+                    >
+                      <option value="todos">📂 Abiertos ({metricas.conversacionesAbiertas})</option>
+                      <option value="no_asignado">📥 Sin asignar ({metricas.sinAsignar})</option>
+                      <option value="mios">🙋 Asignado a mí</option>
+                      <option value="escalados">
+                        🚨 Requiere humano ({metricas.escaladasHumano})
+                      </option>
+                      <option value="ia_activa">🤖 IA ARIA ({metricas.atendidasPorIa})</option>
+                      <option value="recordatorios">
+                        ⏰ Recordatorios ({metricas.conRecordatorio})
+                      </option>
+                      <option value="cerrados">
+                        ✅ Cerrados ({metricas.totalConversaciones - metricas.conversacionesAbiertas})
+                      </option>
+                      <option value="todos_historial">
+                        📋 Todos ({metricas.totalConversaciones})
+                      </option>
+                    </select>
 
-                <button
-                  type="button"
-                  onClick={() => setSoloNoLeidos((v) => !v)}
-                  title="Mostrar únicamente conversaciones con mensajes no leídos"
-                  aria-label="No leído"
-                  style={{
-                    padding: "4px 8px",
-                    borderRadius: "7px",
-                    border: soloNoLeidos ? "1px solid #2563EB" : "1px solid #CBD5E1",
-                    background: soloNoLeidos ? "#EFF6FF" : "#FFFFFF",
-                    color: soloNoLeidos ? "#1D4ED8" : "#475569",
-                    fontSize: "0.74rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  No Leído
-                </button>
+                    {/* Toggle No Leído */}
+                    <button
+                      type="button"
+                      onClick={() => setSoloNoLeidos((v) => !v)}
+                      title="Filtrar únicamente conversaciones con mensajes no leídos"
+                      aria-label="No leído"
+                      style={{
+                        padding: "5px 9px",
+                        borderRadius: "8px",
+                        border: soloNoLeidos ? "1px solid #2563EB" : "1px solid #CBD5E1",
+                        background: soloNoLeidos ? "#EFF6FF" : "#FFFFFF",
+                        color: soloNoLeidos ? "#1D4ED8" : "#475569",
+                        fontSize: "0.74rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      No leído
+                    </button>
 
-                <div
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "3px",
-                    marginLeft: "auto",
-                    background: "#F1F5F9",
-                    padding: "2px",
-                    borderRadius: "8px",
-                  }}
-                >
-                  {(
-                    [
-                      { id: "todos" as const, texto: "Todos" },
-                      { id: "whatsapp" as const, texto: "📱 WA" },
-                      { id: "web" as const, texto: "🌐 Web" },
-                    ] as const
-                  ).map((op) => {
-                    const act = canalFiltro === op.id;
-                    return (
+                    {/* Filtro por Etiqueta de Clasificación */}
+                    <select
+                      value={etiquetaFiltroId || ""}
+                      onChange={(e) => setEtiquetaFiltroId(e.target.value || null)}
+                      aria-label="Filtrar por etiqueta"
+                      style={{
+                        padding: "5px 8px",
+                        borderRadius: "8px",
+                        border: etiquetaFiltroId ? "1px solid #DB2777" : "1px solid #CBD5E1",
+                        fontSize: "0.75rem",
+                        fontWeight: etiquetaFiltroId ? 700 : 500,
+                        background: etiquetaFiltroId ? "#FDF2F8" : "#FFFFFF",
+                        color: "#0F172A",
+                        maxWidth: "175px",
+                      }}
+                    >
+                      <option value="">🏷️ Etiquetas (Todas)</option>
+                      {etiquetasClasificacion.map((etq) => (
+                        <option key={etq.id} value={etq.id}>
+                          {etq.icono} {etq.nombre}
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Filtro por Asesor / Operador */}
+                    <select
+                      value={vendedorFiltroId || ""}
+                      onChange={(e) => setVendedorFiltroId(e.target.value || null)}
+                      aria-label="Filtrar por asesor"
+                      style={{
+                        padding: "5px 8px",
+                        borderRadius: "8px",
+                        border: vendedorFiltroId ? "1px solid #2563EB" : "1px solid #CBD5E1",
+                        fontSize: "0.75rem",
+                        fontWeight: vendedorFiltroId ? 700 : 500,
+                        background: vendedorFiltroId ? "#EFF6FF" : "#FFFFFF",
+                        color: "#0F172A",
+                        maxWidth: "165px",
+                      }}
+                    >
+                      <option value="">👤 Equipo ({tablero.equipo.length})</option>
+                      {tablero.equipo.map((m) => (
+                        <option key={m.usuarioId} value={m.usuarioId}>
+                          {m.usuarioId === tablero.usuarioActualId
+                            ? `Tú (${m.nombre.split(" ")[0]})`
+                            : m.nombre}{" "}
+                          ({m.chatsActivos})
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Botón Administrar Etiquetas — Exclusivo para Administrador y Operador */}
+                    {Boolean(tablero.esAdminEtiquetas) && (
                       <button
-                        key={op.id}
                         type="button"
-                        onClick={() => setCanalFiltro(op.id)}
-                        title={`Filtrar canal: ${op.texto}`}
-                        aria-label={`Canal ${op.texto}`}
+                        className="btn-responsive-accion"
+                        onClick={() => setModalEtiquetasAbierto(true)}
+                        title="Administrar etiquetas de clasificación de chats y clientes (Crear, editar, eliminar)"
+                        aria-label="Etiquetas"
                         style={{
-                          padding: "3px 7px",
-                          borderRadius: "6px",
-                          border: "none",
-                          background: act ? "#FFFFFF" : "transparent",
-                          color: act ? "#0F172A" : "#64748B",
-                          fontSize: "0.71rem",
-                          fontWeight: act ? 800 : 600,
-                          boxShadow: act ? "0 1px 2px rgba(15,23,42,0.08)" : "none",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          padding: "5px 10px",
+                          borderRadius: "8px",
+                          border: "1px solid #CBD5E1",
+                          background: "#FFFFFF",
+                          color: "#0F172A",
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
                           cursor: "pointer",
+                          marginLeft: modoLayoutInbox === "desktop" ? "auto" : undefined,
                         }}
                       >
-                        {op.texto}
+                        <Settings2 size={13} />
+                        <span className="btn-texto-responsive">Etiquetas</span>
                       </button>
-                    );
-                  })}
-                </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
+          )}
 
-            <div style={{ flex: 1, overflowY: "auto" }}>
-              {conversacionesFiltradas.length === 0 ? (
-                <div
-                  style={{
-                    padding: "32px 18px",
-                    textAlign: "center",
-                    color: "#64748B",
-                    fontSize: "0.82rem",
-                    lineHeight: 1.5,
-                  }}
-                >
-                  <MessageSquare
-                    size={28}
-                    style={{ margin: "0 auto 8px", opacity: 0.45, display: "block" }}
-                  />
-                  <strong>Sin conversaciones en este filtro</strong>
-                  <p style={{ margin: "6px 0 0", fontSize: "0.76rem" }}>
-                    Cuando un visitante o cliente registrado escriba en el Chat Web de la tienda,
-                    aparecerá aquí en tiempo real.
-                  </p>
-                </div>
-              ) : (
-                conversacionesFiltradas.map((conv) => {
-                  const seleccionada = conv.id === conversacionActivaId;
-                  const infoCanal = etiquetaCanal(conv.canal);
-                  return (
-                    <div
-                      key={conv.id}
-                      onClick={() => {
-                        setConversacionActivaId(conv.id);
-                        setMostrarFichaTablet(false);
-                        setVistaMovilInbox("chat");
-                      }}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
+          {/* ÁREA PRINCIPAL DE 3 COLUMNAS (LISTA DE CHATS | TIMELINE EN VIVO | CAMPOS DE VENTA & FICHA) */}
+          <div
+            style={{
+              flex: 1,
+              minHeight: 0,
+              display: "grid",
+              gridTemplateColumns:
+                modoLayoutInbox === "desktop"
+                  ? [
+                      "286px",
+                      "minmax(350px, 1fr)",
+                      fichaDerechaDesktop ? "324px" : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" ")
+                  : modoLayoutInbox === "tablet"
+                    ? "262px minmax(0, 1fr)"
+                    : "minmax(0, 1fr)",
+            }}
+          >
+            {/* COLUMNA 1: LISTA DE CONVERSACIONES CON ÍCONO DE CANAL (SIN TEXTO DE CANAL) */}
+            <div
+              style={{
+                borderRight: modoLayoutInbox !== "movil" ? "1px solid #ECE8E1" : "none",
+                display:
+                  modoLayoutInbox !== "movil" || vistaMovilInbox === "lista" ? "flex" : "none",
+                flexDirection: "column",
+                background: "#FFFFFF",
+                minWidth: 0,
+                minHeight: 0,
+              }}
+            >
+              <div style={{ flex: 1, overflowY: "auto" }}>
+                {conversacionesFiltradas.length === 0 ? (
+                  <div
+                    style={{
+                      padding: "32px 18px",
+                      textAlign: "center",
+                      color: "#64748B",
+                      fontSize: "0.82rem",
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    <MessageSquare
+                      size={28}
+                      style={{ margin: "0 auto 8px", opacity: 0.45, display: "block" }}
+                    />
+                    <strong>Sin conversaciones en este filtro</strong>
+                    <p style={{ margin: "6px 0 0", fontSize: "0.76rem" }}>
+                      Prueba cambiando el canal o el filtro superior para ver más chats.
+                    </p>
+                  </div>
+                ) : (
+                  conversacionesFiltradas.map((conv) => {
+                    const seleccionada = conv.id === conversacionActivaId;
+                    const tieneNoLeidos = (conv.noLeidosAsesora || 0) > 0;
+                    const etiquetasVisibles = (conv.etiquetasIds ?? [])
+                      .map((etqId) => mapaEtiquetas.get(etqId))
+                      .filter((etq): etq is EtiquetaOmnicanal => Boolean(etq))
+                      .slice(0, 2);
+
+                    return (
+                      <div
+                        key={conv.id}
+                        onClick={() => {
                           setConversacionActivaId(conv.id);
                           setMostrarFichaTablet(false);
                           setVistaMovilInbox("chat");
-                        }
-                      }}
-                      style={{
-                        padding: "12px 14px",
-                        borderBottom: "1px solid #F1F5F9",
-                        background: seleccionada ? "#F0F9FF" : "#FFFFFF",
-                        borderLeft: seleccionada ? "3px solid #0284C7" : "3px solid transparent",
-                        cursor: "pointer",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "5px",
-                      }}
-                    >
-                      <div
+                        }}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            setConversacionActivaId(conv.id);
+                            setMostrarFichaTablet(false);
+                            setVistaMovilInbox("chat");
+                          }
+                        }}
                         style={{
+                          padding: "10px 12px",
+                          borderBottom: "1px solid #F1F5F9",
+                          background: seleccionada
+                            ? "#F0F9FF"
+                            : tieneNoLeidos
+                              ? "#F8FAFC"
+                              : "#FFFFFF",
+                          borderLeft: seleccionada
+                            ? "3px solid #0284C7"
+                            : tieneNoLeidos
+                              ? "3px solid #2563EB"
+                              : "3px solid transparent",
+                          cursor: "pointer",
                           display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          gap: "6px",
+                          alignItems: "flex-start",
+                          gap: "10px",
                         }}
                       >
-                        <strong
+                        <AvatarConCanalOmnicanal
+                          nombre={conv.remitenteNombre}
+                          canal={conv.canal}
+                          size={38}
+                        />
+
+                        <div
                           style={{
-                            fontSize: "0.84rem",
-                            color: "#0F172A",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
+                            flex: 1,
+                            minWidth: 0,
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "3px",
                           }}
                         >
-                          {conv.remitenteNombre}
-                        </strong>
-                        <div style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
-                          {conv.noLeidosAsesora > 0 && (
-                            <span
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              gap: "6px",
+                            }}
+                          >
+                            <strong
                               style={{
-                                minWidth: "18px",
-                                height: "18px",
-                                padding: "0 5px",
-                                borderRadius: "999px",
-                                background: "#2563EB",
-                                color: "#FFFFFF",
-                                fontSize: "0.68rem",
-                                fontWeight: 700,
+                                fontSize: "0.83rem",
+                                fontWeight: tieneNoLeidos ? 800 : 600,
+                                color: "#0F172A",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {conv.remitenteNombre}
+                            </strong>
+                            <div
+                              style={{
                                 display: "inline-flex",
                                 alignItems: "center",
-                                justifyContent: "center",
+                                gap: "5px",
+                                flexShrink: 0,
                               }}
                             >
-                              {conv.noLeidosAsesora}
-                            </span>
+                              {tieneNoLeidos && (
+                                <span
+                                  style={{
+                                    minWidth: "18px",
+                                    height: "18px",
+                                    padding: "0 5px",
+                                    borderRadius: "999px",
+                                    background: "#2563EB",
+                                    color: "#FFFFFF",
+                                    fontSize: "0.67rem",
+                                    fontWeight: 800,
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  {conv.noLeidosAsesora}
+                                </span>
+                              )}
+                              <span style={{ fontSize: "0.69rem", color: "#64748B" }}>
+                                {formatearTiempoCorto(conv.ultimoMensajeEn)}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div
+                            style={{
+                              fontSize: "0.75rem",
+                              color: tieneNoLeidos ? "#1E293B" : "#475569",
+                              fontWeight: tieneNoLeidos ? 600 : 400,
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {conv.ultimoMensajeOrigen === "BOT_ARIA" && "🤖 "}
+                            {conv.ultimoMensajeOrigen === "ASESORA_HUMANA" && "👩‍💼 "}
+                            {limpiarVistaPreviaMensajeOmnicanal(conv.ultimoMensajeTexto)}
+                          </div>
+
+                          {(conv.estadoAtencion === "ESCALADO_HUMANO" ||
+                            conv.estadoAtencion === "EN_ATENCION_ASESORA" ||
+                            etiquetasVisibles.length > 0) && (
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                flexWrap: "wrap",
+                                marginTop: "1px",
+                              }}
+                            >
+                              {conv.estadoAtencion === "ESCALADO_HUMANO" && (
+                                <span
+                                  style={{
+                                    fontSize: "0.64rem",
+                                    fontWeight: 700,
+                                    padding: "1px 6px",
+                                    borderRadius: "999px",
+                                    background: "#FEE2E2",
+                                    color: "#B91C1C",
+                                  }}
+                                >
+                                  🚨 Humano
+                                </span>
+                              )}
+
+                              {conv.estadoAtencion === "EN_ATENCION_ASESORA" && (
+                                <span
+                                  style={{
+                                    fontSize: "0.64rem",
+                                    fontWeight: 700,
+                                    padding: "1px 6px",
+                                    borderRadius: "999px",
+                                    background: "#DBEAFE",
+                                    color: "#1D4ED8",
+                                  }}
+                                >
+                                  👩‍💼 {conv.asesoraNombre?.split(" ")[0] || "Humano"}
+                                </span>
+                              )}
+
+                              {etiquetasVisibles.map((etq) => (
+                                <span
+                                  key={etq.id}
+                                  style={{
+                                    fontSize: "0.64rem",
+                                    fontWeight: 600,
+                                    padding: "1px 6px",
+                                    borderRadius: "999px",
+                                    background: `${etq.color}18`,
+                                    color: etq.color,
+                                  }}
+                                >
+                                  {etq.icono} {etq.nombre}
+                                </span>
+                              ))}
+                            </div>
                           )}
-                          <span style={{ fontSize: "0.7rem", color: "#64748B" }}>
-                            {formatearTiempoCorto(conv.ultimoMensajeEn)}
-                          </span>
                         </div>
                       </div>
-
-                      <div
-                        style={{
-                          fontSize: "0.77rem",
-                          color: "#475569",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {conv.ultimoMensajeOrigen === "BOT_ARIA" && "🤖 "}
-                        {conv.ultimoMensajeOrigen === "ASESORA_HUMANA" && "👩‍💼 "}
-                        {limpiarVistaPreviaMensajeOmnicanal(conv.ultimoMensajeTexto)}
-                      </div>
-
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "5px",
-                          flexWrap: "wrap",
-                          marginTop: "2px",
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontSize: "0.66rem",
-                            fontWeight: 700,
-                            padding: "1px 6px",
-                            borderRadius: "999px",
-                            background: infoCanal.fondo,
-                            color: infoCanal.color,
-                          }}
-                        >
-                          {infoCanal.icono} {infoCanal.texto}
-                        </span>
-
-                        {conv.estadoAtencion === "ESCALADO_HUMANO" && (
-                          <span
-                            style={{
-                              fontSize: "0.66rem",
-                              fontWeight: 700,
-                              padding: "1px 6px",
-                              borderRadius: "999px",
-                              background: "#FEE2E2",
-                              color: "#B91C1C",
-                            }}
-                          >
-                            🚨 Escalado
-                          </span>
-                        )}
-
-                        {conv.estadoAtencion === "EN_ATENCION_ASESORA" && (
-                          <span
-                            style={{
-                              fontSize: "0.66rem",
-                              fontWeight: 700,
-                              padding: "1px 6px",
-                              borderRadius: "999px",
-                              background: "#DBEAFE",
-                              color: "#1D4ED8",
-                            }}
-                          >
-                            👩‍💼 {conv.asesoraNombre?.split(" ")[0] || "Humano"}
-                          </span>
-                        )}
-
-                        {(conv.etiquetasIds ?? [])
-                          .map((etqId) => mapaEtiquetas.get(etqId))
-                          .filter(
-                            (etq): etq is EtiquetaOmnicanal =>
-                              Boolean(etq) &&
-                              etq!.slug !== "origen-whatsapp" &&
-                              etq!.slug !== "origen-web"
-                          )
-                          .slice(0, 2)
-                          .map((etq) => (
-                            <span
-                              key={etq.id}
-                              style={{
-                                fontSize: "0.65rem",
-                                fontWeight: 600,
-                                padding: "1px 6px",
-                                borderRadius: "999px",
-                                background: `${etq.color}18`,
-                                color: etq.color,
-                              }}
-                            >
-                              {etq.icono} {etq.nombre}
-                            </span>
-                          ))}
-                      </div>
-                    </div>
-                  );
-                })
-              )}
+                    );
+                  })
+                )}
+              </div>
             </div>
-          </div>
 
           {/* COLUMNA 3: VISOR DE CONVERSACIÓN EN VIVO Y COMPOSITOR DE RESPUESTA HUMANA */}
           <div
@@ -2800,15 +2689,15 @@ export function ConsolaVentasOmnicanal({
               </div>
             ) : (
               <>
-                {/* Cabecera de Control HITL */}
+                {/* Cabecera Estilo ManyChat: Pausar IA, Asignar, Compartir al Equipo, No Leído y Etiquetas */}
                 <div
                   style={{
                     background: "#FFFFFF",
-                    padding: "12px 14px",
+                    padding: modoLayoutInbox === "movil" ? "8px 10px" : "10px 14px",
                     borderBottom: "1px solid #E2E8F0",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "10px",
+                    gap: "7px",
                   }}
                 >
                   <div
@@ -2817,107 +2706,207 @@ export function ConsolaVentasOmnicanal({
                       justifyContent: "space-between",
                       alignItems: "center",
                       flexWrap: "wrap",
-                      gap: "8px",
+                      gap: "6px",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        minWidth: 0,
+                      }}
+                    >
                       {modoLayoutInbox === "movil" && (
                         <button
                           type="button"
                           onClick={() => setVistaMovilInbox("lista")}
                           title="Volver a la lista de conversaciones"
-                          aria-label="Volver a hilos"
+                          aria-label="Volver a lista"
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: "4px",
-                            padding: "5px 9px",
+                            justifyContent: "center",
+                            width: "32px",
+                            height: "32px",
                             borderRadius: "8px",
                             border: "1px solid #CBD5E1",
                             background: "#F8FAFC",
                             color: "#0F172A",
-                            fontSize: "0.75rem",
-                            fontWeight: 700,
                             cursor: "pointer",
+                            flexShrink: 0,
                           }}
                         >
-                          <ArrowLeft size={14} />
-                          <span>Hilos</span>
+                          <ArrowLeft size={15} />
                         </button>
                       )}
-                      <strong style={{ fontSize: "0.95rem", color: "#0F172A" }}>
-                        {conversacionActiva.remitenteNombre}
-                      </strong>
-                      {(() => {
-                        const b = badgeEstadoAtencion(conversacionActiva.estadoAtencion);
-                        return (
-                          <span
-                            style={{
-                              padding: "3px 9px",
-                              borderRadius: "999px",
-                              fontSize: "0.72rem",
-                              fontWeight: 700,
-                              background: b.fondo,
-                              color: b.texto,
-                              border: `1px solid ${b.borde}`,
-                            }}
-                          >
-                            {b.etiqueta}
-                          </span>
-                        );
-                      })()}
+
+                      <AvatarConCanalOmnicanal
+                        nombre={conversacionActiva.remitenteNombre}
+                        canal={conversacionActiva.canal}
+                        size={32}
+                      />
+
+                      <div style={{ minWidth: 0, display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                        <strong
+                          style={{
+                            fontSize: "0.9rem",
+                            color: "#0F172A",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            maxWidth: modoLayoutInbox === "movil" ? "155px" : "240px",
+                          }}
+                        >
+                          {conversacionActiva.remitenteNombre}
+                        </strong>
+                        {(() => {
+                          const b = badgeEstadoAtencion(conversacionActiva.estadoAtencion);
+                          return (
+                            <span
+                              style={{
+                                padding: "2px 7px",
+                                borderRadius: "999px",
+                                fontSize: "0.68rem",
+                                fontWeight: 700,
+                                background: b.fondo,
+                                color: b.texto,
+                                border: `1px solid ${b.borde}`,
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {b.etiqueta}
+                            </span>
+                          );
+                        })()}
+                      </div>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
                       {conversacionActiva.estadoAtencion !== "EN_ATENCION_ASESORA" ? (
                         <button
                           type="button"
                           className="btn-responsive-accion"
                           onClick={() => void handleCambiarEstado("EN_ATENCION_ASESORA")}
-                          title="Pausar a ARIA y tomar el control humano de este chat"
-                          aria-label="Tomar Control"
+                          title="Pausar respuestas automáticas de Mía (ARIA) y atender manualmente"
+                          aria-label="Pausar IA"
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "5px",
-                            padding: "6px 11px",
+                            padding: "5px 9px",
                             borderRadius: "8px",
                             border: "none",
                             background: "#1D4ED8",
                             color: "#FFFFFF",
-                            fontSize: "0.76rem",
+                            fontSize: "0.73rem",
                             fontWeight: 700,
                             cursor: "pointer",
                           }}
                         >
-                          <Hand size={13} />
-                          <span className="btn-texto-responsive">Tomar Control</span>
+                          <Pause size={13} />
+                          <span className="btn-texto-responsive">Pausar IA</span>
                         </button>
                       ) : (
                         <button
                           type="button"
                           className="btn-responsive-accion"
                           onClick={() => void handleCambiarEstado("BOT_ACTIVO")}
-                          title="Devolver la conversación al agente automático IA ARIA"
-                          aria-label="Reactivar ARIA"
+                          title="Reactivar respuestas automáticas de Mía (ARIA)"
+                          aria-label="Activar IA"
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "5px",
-                            padding: "6px 11px",
+                            padding: "5px 9px",
                             borderRadius: "8px",
                             border: "1px solid #10B981",
                             background: "#ECFDF5",
                             color: "#047857",
-                            fontSize: "0.76rem",
+                            fontSize: "0.73rem",
                             fontWeight: 700,
                             cursor: "pointer",
                           }}
                         >
-                          <Bot size={13} />
-                          <span className="btn-texto-responsive">Reactivar ARIA</span>
+                          <Play size={13} />
+                          <span className="btn-texto-responsive">Activar IA</span>
                         </button>
                       )}
+
+                      <select
+                        value={conversacionActiva.asesoraAsignadaId || ""}
+                        onChange={(e) => void handleAsignarVendedor(e.target.value)}
+                        title="Asignar conversación a un miembro del equipo"
+                        aria-label="Asignar conversación"
+                        style={{
+                          padding: "5px 7px",
+                          borderRadius: "8px",
+                          border: conversacionActiva.asesoraAsignadaId
+                            ? "1px solid #93C5FD"
+                            : "1px solid #CBD5E1",
+                          background: conversacionActiva.asesoraAsignadaId ? "#EFF6FF" : "#FFFFFF",
+                          color: "#0F172A",
+                          fontSize: "0.73rem",
+                          fontWeight: 600,
+                          maxWidth: modoLayoutInbox === "movil" ? "112px" : "148px",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <option value="">👤 Sin asignar</option>
+                        {tablero.equipo.map((m) => (
+                          <option key={m.usuarioId} value={m.usuarioId}>
+                            👤 {m.nombre.split(" ")[0]} ({m.rol})
+                          </option>
+                        ))}
+                      </select>
+
+                      <button
+                        type="button"
+                        className="btn-responsive-accion"
+                        onClick={handleCompartirChatAlEquipo}
+                        title="Compartir esta conversación en el Chat Grupal del Equipo (@kleber, @taller, @delivery)"
+                        aria-label="Compartir en chat grupal"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          padding: "5px 9px",
+                          borderRadius: "8px",
+                          border: "1px solid #DDD6FE",
+                          background: "#F5F3FF",
+                          color: "#5B21B6",
+                          fontSize: "0.73rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Share2 size={13} />
+                        <span className="btn-texto-responsive">Compartir</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn-responsive-accion"
+                        onClick={() => void handleMarcarComoNoLeido()}
+                        title="Marcar conversación como no leída para atenderla después"
+                        aria-label="Marcar no leído"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          padding: "5px 9px",
+                          borderRadius: "8px",
+                          border: "1px solid #CBD5E1",
+                          background: "#FFFFFF",
+                          color: "#334155",
+                          fontSize: "0.73rem",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <MailWarning size={13} />
+                        <span className="btn-texto-responsive">No leído</span>
+                      </button>
 
                       <button
                         type="button"
@@ -2929,18 +2918,18 @@ export function ConsolaVentasOmnicanal({
                           display: "inline-flex",
                           alignItems: "center",
                           gap: "5px",
-                          padding: "6px 10px",
+                          padding: "5px 8px",
                           borderRadius: "8px",
                           border: "1px solid #CBD5E1",
                           background: conversacionActiva.recordatorioEn ? "#FEF3C7" : "#FFFFFF",
                           color: "#334155",
-                          fontSize: "0.75rem",
+                          fontSize: "0.73rem",
                           fontWeight: 600,
                           cursor: "pointer",
                         }}
                       >
                         <Clock size={13} />
-                        <span className="btn-texto-responsive">Recordatorio</span>
+                        <span className="btn-texto-responsive">Recordar</span>
                       </button>
 
                       {conversacionActiva.estadoAtencion !== "CERRADO" ? (
@@ -2949,23 +2938,23 @@ export function ConsolaVentasOmnicanal({
                           className="btn-responsive-accion"
                           onClick={() => void handleCambiarEstado("CERRADO")}
                           title="Marcar conversación como resuelta y cerrada"
-                          aria-label="Cerrar Chat"
+                          aria-label="Cerrar chat"
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "5px",
-                            padding: "6px 10px",
+                            padding: "5px 9px",
                             borderRadius: "8px",
                             border: "1px solid #CBD5E1",
                             background: "#FFFFFF",
                             color: "#334155",
-                            fontSize: "0.75rem",
+                            fontSize: "0.73rem",
                             fontWeight: 600,
                             cursor: "pointer",
                           }}
                         >
                           <CheckCircle2 size={13} />
-                          <span className="btn-texto-responsive">Cerrar Chat</span>
+                          <span className="btn-texto-responsive">Cerrar</span>
                         </button>
                       ) : (
                         <button
@@ -2975,11 +2964,11 @@ export function ConsolaVentasOmnicanal({
                           title="Reabrir conversación"
                           aria-label="Reabrir"
                           style={{
-                            padding: "6px 10px",
+                            padding: "5px 9px",
                             borderRadius: "8px",
                             border: "1px solid #CBD5E1",
                             background: "#FFFFFF",
-                            fontSize: "0.75rem",
+                            fontSize: "0.73rem",
                             fontWeight: 600,
                             cursor: "pointer",
                           }}
@@ -2995,20 +2984,20 @@ export function ConsolaVentasOmnicanal({
                           onClick={() => setFichaDerechaDesktop((v) => !v)}
                           title={
                             fichaDerechaDesktop
-                              ? "Plegar Ficha 360° derecha para ampliar el chat"
-                              : "Mostrar Ficha 360° del cliente"
+                              ? "Plegar panel derecho de Campos de Venta para ampliar el chat"
+                              : "Mostrar Campos de Venta y Ficha 360°"
                           }
-                          aria-label={fichaDerechaDesktop ? "Ocultar Ficha" : "Ficha 360°"}
+                          aria-label={fichaDerechaDesktop ? "Ocultar Datos" : "Campos de Venta"}
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "5px",
-                            padding: "6px 9px",
+                            padding: "5px 9px",
                             borderRadius: "8px",
                             border: "1px solid #CBD5E1",
                             background: fichaDerechaDesktop ? "#FFFFFF" : "#0F172A",
                             color: fichaDerechaDesktop ? "#334155" : "#FFFFFF",
-                            fontSize: "0.74rem",
+                            fontSize: "0.73rem",
                             fontWeight: 700,
                             cursor: "pointer",
                           }}
@@ -3018,7 +3007,7 @@ export function ConsolaVentasOmnicanal({
                           ) : (
                             <PanelRightOpen size={13} />
                           )}
-                          <span className="btn-texto-responsive">Ficha</span>
+                          <span className="btn-texto-responsive">Datos</span>
                         </button>
                       ) : (
                         <button
@@ -3030,39 +3019,37 @@ export function ConsolaVentasOmnicanal({
                               setMostrarFichaTablet(true);
                             }
                           }}
-                          title="Ver Ficha 360° del cliente, compras y asignación"
-                          aria-label="Ficha 360°"
+                          title="Abrir Campos de Venta (Pedido, Entrega, Tarjeta) y Ficha del Cliente"
+                          aria-label="Campos de Venta"
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: "5px",
-                            padding: "6px 10px",
+                            gap: "4px",
+                            padding: "5px 9px",
                             borderRadius: "8px",
-                            border: "1px solid #CBD5E1",
-                            background: "#F8FAFC",
-                            color: "#0F172A",
-                            fontSize: "0.75rem",
+                            border: "1px solid #0F172A",
+                            background: "#0F172A",
+                            color: "#FFFFFF",
+                            fontSize: "0.73rem",
                             fontWeight: 700,
                             cursor: "pointer",
                           }}
                         >
-                          <User size={13} />
-                          <span>Ficha 360°</span>
+                          <ClipboardList size={13} />
+                          <span>Datos</span>
                         </button>
                       )}
                     </div>
                   </div>
 
-                  {/* Barra compacta de etiquetas activas + desplegable "+ Etiquetas" */}
+                  {/* Barra compacta de selección de etiquetas de clasificación */}
                   <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
                     <Tag size={12} style={{ color: "#64748B" }} />
-                    {tablero.etiquetas
+                    {etiquetasClasificacion
                       .filter((etq) =>
                         selectorEtiquetasAbierto
                           ? true
-                          : (conversacionActiva.etiquetasIds ?? []).includes(etq.id) &&
-                            etq.slug !== "origen-whatsapp" &&
-                            etq.slug !== "origen-web"
+                          : (conversacionActiva.etiquetasIds ?? []).includes(etq.id)
                       )
                       .map((etq) => {
                         const puesta = (conversacionActiva.etiquetasIds ?? []).includes(etq.id);
@@ -3076,7 +3063,7 @@ export function ConsolaVentasOmnicanal({
                             style={{
                               padding: "2px 8px",
                               borderRadius: "999px",
-                              fontSize: "0.69rem",
+                              fontSize: "0.68rem",
                               fontWeight: 600,
                               border: puesta ? `1px solid ${etq.color}` : "1px solid #E2E8F0",
                               background: puesta ? `${etq.color}20` : "#F8FAFC",
@@ -3094,13 +3081,13 @@ export function ConsolaVentasOmnicanal({
                       title={
                         selectorEtiquetasAbierto
                           ? "Contraer catálogo de etiquetas"
-                          : "Agregar o quitar etiquetas a esta conversación"
+                          : "Seleccionar o quitar etiquetas en este chat"
                       }
-                      aria-label="Gestionar etiquetas"
+                      aria-label="Seleccionar etiquetas"
                       style={{
                         padding: "2px 8px",
                         borderRadius: "999px",
-                        fontSize: "0.69rem",
+                        fontSize: "0.68rem",
                         fontWeight: 700,
                         border: "1px dashed #CBD5E1",
                         background: selectorEtiquetasAbierto ? "#0F172A" : "#FFFFFF",
@@ -3110,6 +3097,31 @@ export function ConsolaVentasOmnicanal({
                     >
                       {selectorEtiquetasAbierto ? "Listo" : "+ Etiqueta"}
                     </button>
+
+                    {selectorEtiquetasAbierto && Boolean(tablero.esAdminEtiquetas) && (
+                      <button
+                        type="button"
+                        onClick={() => setModalEtiquetasAbierto(true)}
+                        title="Crear, editar o eliminar etiquetas maestras"
+                        aria-label="Administrar etiquetas"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "3px",
+                          padding: "2px 8px",
+                          borderRadius: "999px",
+                          fontSize: "0.68rem",
+                          fontWeight: 700,
+                          border: "1px solid #CBD5E1",
+                          background: "#F8FAFC",
+                          color: "#0F172A",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Settings2 size={11} />
+                        <span>Administrar</span>
+                      </button>
+                    )}
                   </div>
 
                   {editandoRecordatorio && (
@@ -3348,6 +3360,7 @@ export function ConsolaVentasOmnicanal({
                             >
                               <button
                                 type="button"
+                                className="btn-responsive-accion"
                                 onClick={() => {
                                   const imgPrincipal =
                                     extraerTodasLasImagenesMensaje(m)[0]?.url ?? null;
@@ -3375,13 +3388,13 @@ export function ConsolaVentasOmnicanal({
                                     },
                                   });
                                 }}
-                                title="Reenviar este mensaje o foto al Chat Grupal del Equipo (@kleber, @taller)"
-                                aria-label="Enviar al equipo"
+                                title="Compartir este mensaje o foto en el Chat Grupal del Equipo (@kleber, @taller)"
+                                aria-label="Compartir con equipo"
                                 style={{
                                   display: "inline-flex",
                                   alignItems: "center",
                                   gap: "4px",
-                                  padding: "2px 7px",
+                                  padding: "2px 6px",
                                   borderRadius: "6px",
                                   border: "none",
                                   background:
@@ -3390,13 +3403,13 @@ export function ConsolaVentasOmnicanal({
                                       : "rgba(109, 40, 217, 0.08)",
                                   color:
                                     m.origen === "ASESORA_HUMANA" ? "#E9D5FF" : "#5B21B6",
-                                  fontSize: "0.69rem",
+                                  fontSize: "0.68rem",
                                   fontWeight: 700,
                                   cursor: "pointer",
                                 }}
                               >
-                                <Users size={11} />
-                                <span>Al Equipo</span>
+                                <Share2 size={11} />
+                                <span className="btn-texto-responsive">Equipo</span>
                               </button>
                             </div>
                           </div>
@@ -3406,16 +3419,16 @@ export function ConsolaVentasOmnicanal({
                   )}
                 </div>
 
-                {/* Compositor con Mensajes Predeterminados (/atajo) y Modo Nota Interna */}
+                {/* Compositor Compacto y Responsive con /Atajos y Modo Nota Interna */}
                 <form
                   onSubmit={handleEnviarMensaje}
                   style={{
                     background: "#FFFFFF",
                     borderTop: "1px solid #E2E8F0",
-                    padding: "12px 14px",
+                    padding: modoLayoutInbox === "movil" ? "8px 10px" : "10px 14px",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "8px",
+                    gap: "6px",
                     position: "relative",
                   }}
                 >
@@ -3424,8 +3437,8 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         position: "absolute",
                         bottom: "100%",
-                        left: "14px",
-                        right: "14px",
+                        left: "12px",
+                        right: "12px",
                         marginBottom: "6px",
                         background: "#FFFFFF",
                         border: "1px solid #CBD5E1",
@@ -3478,39 +3491,48 @@ export function ConsolaVentasOmnicanal({
                     </div>
                   )}
 
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "6px" }}>
-                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    <div style={{ display: "inline-flex", gap: "4px" }}>
                       <button
                         type="button"
                         onClick={() => setModoNotaInterna(false)}
                         style={{
-                          padding: "4px 9px",
+                          padding: "3px 8px",
                           borderRadius: "6px",
                           border: "none",
                           background: !modoNotaInterna ? "#DBEAFE" : "transparent",
                           color: !modoNotaInterna ? "#1E40AF" : "#64748B",
-                          fontSize: "0.74rem",
+                          fontSize: "0.72rem",
                           fontWeight: 700,
                           cursor: "pointer",
+                          whiteSpace: "nowrap",
                         }}
                       >
-                        💬 Responder Cliente
+                        💬 Cliente
                       </button>
                       <button
                         type="button"
                         onClick={() => setModoNotaInterna(true)}
                         style={{
-                          padding: "4px 9px",
+                          padding: "3px 8px",
                           borderRadius: "6px",
                           border: "none",
                           background: modoNotaInterna ? "#FEF3C7" : "transparent",
                           color: modoNotaInterna ? "#92400E" : "#64748B",
-                          fontSize: "0.74rem",
+                          fontSize: "0.72rem",
                           fontWeight: 700,
                           cursor: "pointer",
+                          whiteSpace: "nowrap",
                         }}
                       >
-                        📝 Nota Interna
+                        📝 Nota
                       </button>
                     </div>
 
@@ -3518,23 +3540,24 @@ export function ConsolaVentasOmnicanal({
                       type="button"
                       onClick={() => setMostrarMenuRespuestas((v) => !v)}
                       title="Insertar mensaje predeterminado (o escribe / en el cuadro)"
-                      aria-label="Respuestas rápidas"
+                      aria-label="Atajos de respuesta"
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
-                        gap: "5px",
-                        padding: "4px 9px",
+                        gap: "4px",
+                        padding: "3px 8px",
                         borderRadius: "6px",
                         border: "1px solid #CBD5E1",
                         background: "#F8FAFC",
                         color: "#334155",
-                        fontSize: "0.74rem",
+                        fontSize: "0.72rem",
                         fontWeight: 600,
                         cursor: "pointer",
+                        whiteSpace: "nowrap",
                       }}
                     >
-                      <Zap size={13} />
-                      <span>Respuestas (/)</span>
+                      <Zap size={12} />
+                      <span>/Atajos</span>
                     </button>
                   </div>
 
@@ -3554,14 +3577,14 @@ export function ConsolaVentasOmnicanal({
                         src={imagenAdjuntaAsesorUrl}
                         alt="Fotografía adjunta"
                         style={{
-                          width: "48px",
-                          height: "48px",
+                          width: "44px",
+                          height: "44px",
                           objectFit: "cover",
                           borderRadius: "7px",
                         }}
                       />
-                      <span style={{ fontSize: "0.76rem", color: "#334155", flex: 1 }}>
-                        📷 Imagen adjunta lista para enviar al cliente
+                      <span style={{ fontSize: "0.75rem", color: "#334155", flex: 1 }}>
+                        📷 Foto lista para enviar
                       </span>
                       <button
                         type="button"
@@ -3575,7 +3598,7 @@ export function ConsolaVentasOmnicanal({
                     </div>
                   )}
 
-                  <div style={{ display: "flex", gap: "8px", alignItems: "flex-end" }}>
+                  <div style={{ display: "flex", gap: "6px", alignItems: "flex-end" }}>
                     <input
                       ref={inputFotoAsesorRef}
                       type="file"
@@ -3597,8 +3620,9 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
+                        justifyContent: "center",
                         gap: "5px",
-                        padding: "9px 11px",
+                        padding: modoLayoutInbox === "movil" ? "9px 10px" : "9px 11px",
                         borderRadius: "10px",
                         border: "1px solid #CBD5E1",
                         background: "#F8FAFC",
@@ -3606,6 +3630,7 @@ export function ConsolaVentasOmnicanal({
                         fontSize: "0.78rem",
                         fontWeight: 700,
                         cursor: subiendoImagenAsesor ? "wait" : "pointer",
+                        flexShrink: 0,
                       }}
                     >
                       {subiendoImagenAsesor ? <Loader2 size={15} /> : <ImagePlus size={15} />}
@@ -3622,25 +3647,31 @@ export function ConsolaVentasOmnicanal({
                           void handleEnviarMensaje();
                         }
                       }}
-                      rows={2}
+                      rows={modoLayoutInbox === "movil" ? 1 : 2}
                       placeholder={
                         modoNotaInterna
-                          ? "Escribe una nota interna solo visible para el equipo de ventas…"
-                          : "Escribe al cliente, pega una foto (Ctrl+V) o usa /saludo, /transferencia…"
+                          ? "Escribe una nota interna para el equipo…"
+                          : modoLayoutInbox === "movil"
+                            ? "Escribe un mensaje o /atajo…"
+                            : "Escribe al cliente, pega una foto (Ctrl+V) o usa /saludo, /transferencia…"
                       }
                       style={{
                         flex: 1,
-                        padding: "9px 11px",
+                        minWidth: 0,
+                        minHeight: modoLayoutInbox === "movil" ? "38px" : "46px",
+                        maxHeight: "110px",
+                        padding: "8px 11px",
                         borderRadius: "10px",
                         border: modoNotaInterna ? "1px solid #F59E0B" : "1px solid #CBD5E1",
                         background: modoNotaInterna ? "#FFFBEB" : "#FFFFFF",
-                        fontSize: "0.83rem",
+                        fontSize: modoLayoutInbox === "movil" ? "16px" : "0.83rem",
                         fontFamily: "inherit",
                         resize: "none",
                       }}
                     />
                     <button
                       type="submit"
+                      className="btn-responsive-accion"
                       disabled={
                         enviandoMensaje || (!textoRespuesta.trim() && !imagenAdjuntaAsesorUrl)
                       }
@@ -3649,8 +3680,9 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
+                        justifyContent: "center",
                         gap: "6px",
-                        padding: "10px 15px",
+                        padding: modoLayoutInbox === "movil" ? "10px 12px" : "10px 14px",
                         borderRadius: "10px",
                         border: "none",
                         background: modoNotaInterna ? "#D97706" : "#0F172A",
@@ -3659,6 +3691,7 @@ export function ConsolaVentasOmnicanal({
                         fontWeight: 700,
                         cursor: enviandoMensaje ? "wait" : "pointer",
                         opacity: !textoRespuesta.trim() && !imagenAdjuntaAsesorUrl ? 0.55 : 1,
+                        flexShrink: 0,
                       }}
                     >
                       {enviandoMensaje ? <Loader2 size={15} /> : <Send size={15} />}
@@ -3672,420 +3705,363 @@ export function ConsolaVentasOmnicanal({
             )}
           </div>
 
-          {/* COLUMNA 4: FICHA 360° DEL CONTACTO, ASIGNACIÓN, MÉTRICAS IA VS HUMANO Y COMPRAS WEB */}
-          <div
-            style={{
-              background: "#FAF8F5",
-              padding: "14px",
-              display:
-                (modoLayoutInbox === "desktop" && fichaDerechaDesktop) ||
-                (modoLayoutInbox === "tablet" && mostrarFichaTablet) ||
-                (modoLayoutInbox === "movil" && vistaMovilInbox === "ficha")
-                  ? "flex"
-                  : "none",
-              flexDirection: "column",
-              gap: "13px",
-              minHeight: 0,
-              overflowY: "auto",
-              minWidth: 0,
-            }}
-          >
-            {modoLayoutInbox !== "desktop" && (
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  paddingBottom: "10px",
-                  borderBottom: "1px solid #E2E8F0",
-                }}
-              >
-                <strong style={{ fontSize: "0.86rem", color: "#0F172A" }}>
-                  Ficha 360° del Contacto
-                </strong>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (modoLayoutInbox === "movil") {
-                      setVistaMovilInbox("chat");
-                    } else {
-                      setMostrarFichaTablet(false);
-                    }
-                  }}
-                  title="Volver al visor de conversación"
-                  aria-label="Volver al chat"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    padding: "5px 10px",
-                    borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    background: "#F8FAFC",
-                    color: "#0F172A",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                  }}
-                >
-                  <ArrowLeft size={13} />
-                  <span>Volver al Chat</span>
-                </button>
-              </div>
-            )}
-            {!conversacionActiva ? (
-              <div style={{ fontSize: "0.8rem", color: "#64748B" }}>
-                <strong>Resumen Rápido del Portal</strong>
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "10px" }}>
-                  <div
-                    style={{
-                      padding: "10px",
-                      borderRadius: "10px",
-                      background: "#F8FAFC",
-                      border: "1px solid #E2E8F0",
-                    }}
-                  >
-                    <div style={{ fontSize: "0.72rem", color: "#64748B" }}>Usuarios Registrados Web</div>
-                    <strong style={{ fontSize: "1.1rem", color: "#0F172A" }}>
-                      {metricas.totalUsuariosRegistradosWeb}
-                    </strong>
-                  </div>
-                  <div
-                    style={{
-                      padding: "10px",
-                      borderRadius: "10px",
-                      background: "#F8FAFC",
-                      border: "1px solid #E2E8F0",
-                    }}
-                  >
-                    <div style={{ fontSize: "0.72rem", color: "#64748B" }}>
-                      Compras Web (Reg. / Invitados)
-                    </div>
-                    <strong style={{ fontSize: "1.05rem", color: "#0F172A" }}>
-                      {metricas.comprasUsuariosRegistrados} reg. ·{" "}
-                      {metricas.comprasInvitadosNoRegistrados} inv.
-                    </strong>
-                  </div>
-                  <div
-                    style={{
-                      padding: "10px",
-                      borderRadius: "10px",
-                      background: "#ECFDF5",
-                      border: "1px solid #A7F3D0",
-                    }}
-                  >
-                    <div style={{ fontSize: "0.72rem", color: "#065F46" }}>
-                      Resolución Autónoma IA ARIA
-                    </div>
-                    <strong style={{ fontSize: "1.1rem", color: "#047857" }}>
-                      {metricas.porcentajeResolucionIa}%
-                    </strong>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <>
-                {/* Perfil y Estado de Registro Web */}
+            {/* COLUMNA 3: CAMPOS DE VENTA (PEDIDO / ENTREGA / TARJETA) Y FICHA 360° */}
+            <div
+              style={{
+                background: "#FAF8F5",
+                padding: "12px",
+                display:
+                  (modoLayoutInbox === "desktop" && fichaDerechaDesktop) ||
+                  (modoLayoutInbox === "tablet" && mostrarFichaTablet) ||
+                  (modoLayoutInbox === "movil" && vistaMovilInbox === "ficha")
+                    ? "flex"
+                    : "none",
+                flexDirection: "column",
+                gap: "11px",
+                minHeight: 0,
+                overflowY: "auto",
+                minWidth: 0,
+              }}
+            >
+              {modoLayoutInbox !== "desktop" && (
                 <div
                   style={{
-                    padding: "12px",
-                    borderRadius: "12px",
-                    background: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
                     display: "flex",
-                    flexDirection: "column",
-                    gap: "6px",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    paddingBottom: "8px",
+                    borderBottom: "1px solid #E2E8F0",
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span
-                      style={{
-                        fontSize: "0.69rem",
-                        fontWeight: 700,
-                        padding: "2px 8px",
-                        borderRadius: "999px",
-                        background:
-                          contactoVinculadoActivo?.tipoCuenta === "USUARIO_REGISTRADO" ||
-                          conversacionActiva.usuarioId
-                            ? "#DBEAFE"
-                            : comprasDeConversacionActiva.length > 0
-                              ? "#FEF3C7"
-                              : conversacionActiva.canal === "whatsapp"
-                                ? "#DCFCE7"
-                                : "#E2E8F0",
-                        color:
-                          contactoVinculadoActivo?.tipoCuenta === "USUARIO_REGISTRADO" ||
-                          conversacionActiva.usuarioId
-                            ? "#1E40AF"
-                            : comprasDeConversacionActiva.length > 0
-                              ? "#92400E"
-                              : conversacionActiva.canal === "whatsapp"
-                                ? "#15803D"
-                                : "#334155",
-                      }}
-                    >
-                      {contactoVinculadoActivo?.tipoCuenta === "USUARIO_REGISTRADO" ||
-                      conversacionActiva.usuarioId
-                        ? "✅ Usuario Registrado Web"
-                        : comprasDeConversacionActiva.length > 0
-                          ? "🛒 Comprador Invitado"
-                          : conversacionActiva.canal === "whatsapp"
-                            ? "📱 Contacto WhatsApp"
-                            : "💬 Visitante Web"}
-                    </span>
-                  </div>
-                  <strong style={{ fontSize: "0.9rem", color: "#0F172A" }}>
-                    {conversacionActiva.remitenteNombre}
+                  <strong style={{ fontSize: "0.86rem", color: "#0F172A" }}>
+                    Campos de Venta y Datos 360°
                   </strong>
-                  {conversacionActiva.remitenteCorreo && (
-                    <span style={{ fontSize: "0.76rem", color: "#475569", wordBreak: "break-all" }}>
-                      ✉️ {conversacionActiva.remitenteCorreo}
-                    </span>
-                  )}
-                  {conversacionActiva.remitenteTelefono && (
-                    <span style={{ fontSize: "0.76rem", color: "#475569" }}>
-                      📱 {conversacionActiva.remitenteTelefono}
-                    </span>
-                  )}
-                </div>
-
-                {/* Asignación de Vendedor */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-                  <label style={{ fontSize: "0.73rem", fontWeight: 700, color: "#475569" }}>
-                    Vendedor Responsable
-                  </label>
-                  <select
-                    value={conversacionActiva.asesoraAsignadaId || ""}
-                    onChange={(e) => void handleAsignarVendedor(e.target.value)}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (modoLayoutInbox === "movil") {
+                        setVistaMovilInbox("chat");
+                      } else {
+                        setMostrarFichaTablet(false);
+                      }
+                    }}
+                    title="Volver al visor de conversación"
+                    aria-label="Volver al chat"
                     style={{
-                      width: "100%",
-                      padding: "7px 9px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                      padding: "5px 10px",
                       borderRadius: "8px",
                       border: "1px solid #CBD5E1",
-                      fontSize: "0.8rem",
                       background: "#FFFFFF",
+                      color: "#0F172A",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
                     }}
                   >
-                    <option value="">— Sin asignar (Cola general) —</option>
-                    {tablero.equipo.map((m) => (
-                      <option key={m.usuarioId} value={m.usuarioId}>
-                        {m.nombre} ({m.rol})
-                      </option>
-                    ))}
-                  </select>
+                    <ArrowLeft size={13} />
+                    <span>Chat</span>
+                  </button>
                 </div>
+              )}
 
-                {/* Telemetría IA ARIA vs Intervención Humana de este hilo */}
-                <div
-                  style={{
-                    padding: "10px 12px",
-                    borderRadius: "10px",
-                    background: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "6px",
-                  }}
-                >
-                  <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#475569" }}>
-                    Registro IA vs. Intervención Humana
-                  </span>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                    <div
-                      style={{
-                        padding: "7px",
-                        borderRadius: "8px",
-                        background: "#ECFDF5",
-                        textAlign: "center",
-                      }}
-                    >
-                      <div style={{ fontSize: "0.68rem", color: "#065F46" }}>🤖 ARIA (IA)</div>
-                      <strong style={{ fontSize: "0.95rem", color: "#047857" }}>
-                        {conversacionActiva.mensajesIaConteo}
-                      </strong>
-                    </div>
-                    <div
-                      style={{
-                        padding: "7px",
-                        borderRadius: "8px",
-                        background: "#EFF6FF",
-                        textAlign: "center",
-                      }}
-                    >
-                      <div style={{ fontSize: "0.68rem", color: "#1E40AF" }}>👩‍💼 Humano</div>
-                      <strong style={{ fontSize: "0.95rem", color: "#1D4ED8" }}>
-                        {conversacionActiva.mensajesHumanoConteo}
-                      </strong>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Historial de Compras y Proformas Web de este contacto */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "#475569" }}>
-                    Compras y Proformas Web ({comprasDeConversacionActiva.length})
-                  </span>
-                  {comprasDeConversacionActiva.length === 0 ? (
+              {!conversacionActiva ? (
+                <div style={{ fontSize: "0.8rem", color: "#64748B" }}>
+                  <strong>Resumen Rápido del Portal</strong>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "10px" }}>
                     <div
                       style={{
                         padding: "10px",
-                        borderRadius: "9px",
-                        border: "1px dashed #CBD5E1",
-                        fontSize: "0.75rem",
-                        color: "#64748B",
+                        borderRadius: "10px",
+                        background: "#F8FAFC",
+                        border: "1px solid #E2E8F0",
                       }}
                     >
-                      Sin órdenes asociadas aún a este correo o teléfono.
+                      <div style={{ fontSize: "0.72rem", color: "#64748B" }}>Usuarios Registrados Web</div>
+                      <strong style={{ fontSize: "1.1rem", color: "#0F172A" }}>
+                        {metricas.totalUsuariosRegistradosWeb}
+                      </strong>
                     </div>
-                  ) : (
-                    comprasDeConversacionActiva.map((ord) => (
-                      <div
-                        key={ord.id}
-                        style={{
-                          padding: "9px 10px",
-                          borderRadius: "9px",
-                          border: "1px solid #E2E8F0",
-                          background: "#FFFFFF",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "3px",
-                        }}
-                      >
-                        <div style={{ display: "flex", justifyContent: "space-between" }}>
-                          <strong style={{ fontSize: "0.78rem", color: "#0F172A" }}>
-                            {ord.codigoOrden}
-                          </strong>
-                          <strong style={{ fontSize: "0.78rem", color: "#047857" }}>
-                            ${Number(ord.total).toFixed(2)}
-                          </strong>
-                        </div>
-                        <span style={{ fontSize: "0.7rem", color: "#64748B" }}>
-                          {ord.estado} ·{" "}
-                          {new Date(ord.creadoEn).toLocaleDateString("es-EC", {
-                            day: "2-digit",
-                            month: "short",
-                          })}
-                        </span>
+                    <div
+                      style={{
+                        padding: "10px",
+                        borderRadius: "10px",
+                        background: "#F8FAFC",
+                        border: "1px solid #E2E8F0",
+                      }}
+                    >
+                      <div style={{ fontSize: "0.72rem", color: "#64748B" }}>
+                        Compras Web (Reg. / Invitados)
                       </div>
-                    ))
-                  )}
+                      <strong style={{ fontSize: "1.05rem", color: "#0F172A" }}>
+                        {metricas.comprasUsuariosRegistrados} reg. ·{" "}
+                        {metricas.comprasInvitadosNoRegistrados} inv.
+                      </strong>
+                    </div>
+                    <div
+                      style={{
+                        padding: "10px",
+                        borderRadius: "10px",
+                        background: "#ECFDF5",
+                        border: "1px solid #A7F3D0",
+                      }}
+                    >
+                      <div style={{ fontSize: "0.72rem", color: "#065F46" }}>
+                        Resolución Autónoma IA ARIA
+                      </div>
+                      <strong style={{ fontSize: "1.1rem", color: "#047857" }}>
+                        {metricas.porcentajeResolucionIa}%
+                      </strong>
+                    </div>
+                  </div>
                 </div>
+              ) : (
+                <>
+                  {/* SECCIÓN PRINCIPAL: CAMPOS DE VENTA DEPURADOS (PEDIDO / ENTREGA / TARJETA + ENVÍO A TALLER) */}
+                  <PanelCamposVentaChat
+                    negocio={negNorm}
+                    conversacion={conversacionActiva}
+                    mensajes={mensajesActivos}
+                    onGuardado={(datosActualizados, nuevoNombreCliente) => {
+                      setTablero((prev) => ({
+                        ...prev,
+                        conversaciones: prev.conversaciones.map((c) =>
+                          c.id === conversacionActiva.id
+                            ? {
+                                ...c,
+                                remitenteNombre:
+                                  nuevoNombreCliente && nuevoNombreCliente.trim()
+                                    ? nuevoNombreCliente.trim()
+                                    : c.remitenteNombre,
+                                datosVenta: datosActualizados,
+                              }
+                            : c
+                        ),
+                      }));
+                    }}
+                    onNotificar={(aviso) => {
+                      setMensajeInfo(aviso);
+                    }}
+                  />
 
-                {/* APOYO DE TALLER PARA VENDEDORAS: DISPONIBLES 1-2H E INVENTARIO DE ROSAS */}
-                {disponiblesHoy.length > 0 && (
+                  {/* Perfil compacto del contacto */}
                   <div
                     style={{
+                      padding: "10px 11px",
+                      borderRadius: "11px",
+                      background: "#FFFFFF",
+                      border: "1px solid #E2E8F0",
                       display: "flex",
                       flexDirection: "column",
-                      gap: "6px",
-                      paddingTop: "10px",
-                      borderTop: "1px solid #F1F5F9",
+                      gap: "4px",
                     }}
                   >
-                    <span
-                      style={{
-                        fontSize: "0.72rem",
-                        fontWeight: 700,
-                        color: "#B45309",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      ⚡ Entrega Inmediata 1–2h ({disponiblesHoy.length})
-                    </span>
-                    {disponiblesHoy.slice(0, 4).map((disp) => (
-                      <div
-                        key={disp.productoId}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "6px" }}>
+                      <span
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          padding: "7px 8px",
-                          borderRadius: "9px",
-                          border: "1px solid #FDE68A",
-                          background: "#FFFBEB",
+                          fontSize: "0.66rem",
+                          fontWeight: 700,
+                          padding: "2px 7px",
+                          borderRadius: "999px",
+                          background:
+                            contactoVinculadoActivo?.tipoCuenta === "USUARIO_REGISTRADO" ||
+                            conversacionActiva.usuarioId
+                              ? "#DBEAFE"
+                              : comprasDeConversacionActiva.length > 0
+                                ? "#FEF3C7"
+                                : "#F1F5F9",
+                          color:
+                            contactoVinculadoActivo?.tipoCuenta === "USUARIO_REGISTRADO" ||
+                            conversacionActiva.usuarioId
+                              ? "#1E40AF"
+                              : comprasDeConversacionActiva.length > 0
+                                ? "#92400E"
+                                : "#334155",
                         }}
                       >
-                        {disp.imagenUrl && (
-                          <img
-                            src={disp.imagenUrl}
-                            alt={disp.nombre}
-                            style={{
-                              width: "36px",
-                              height: "36px",
-                              borderRadius: "6px",
-                              objectFit: "cover",
-                            }}
-                          />
-                        )}
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <strong
-                            style={{
-                              display: "block",
-                              fontSize: "0.75rem",
-                              color: "#0F172A",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            {disp.nombre}
-                          </strong>
-                          <span style={{ fontSize: "0.72rem", color: "#059669", fontWeight: 700 }}>
-                            ${Number(disp.precio).toFixed(2)}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const orig =
-                              typeof window !== "undefined" ? window.location.origin : "";
-                            const bloqueFoto =
-                              disp.imagenUrl && /^https?:\/\//i.test(disp.imagenUrl)
-                                ? `\n![${disp.nombre}](${disp.imagenUrl})\n`
-                                : " ";
-                            setTextoRespuesta(
-                              `¡Tenemos disponible para entrega inmediata (1 a 2 horas) *${disp.nombre}* por $${Number(disp.precio).toFixed(2)} USD! 🌸${bloqueFoto}Puedes pedirlo directo aquí: ${orig}/producto/${disp.slug}`
-                            );
-                          }}
-                          title="Insertar oferta de entrega inmediata en el mensaje"
-                          aria-label="Ofrecer arreglo"
+                        {contactoVinculadoActivo?.tipoCuenta === "USUARIO_REGISTRADO" ||
+                        conversacionActiva.usuarioId
+                          ? "✅ Registrado Web"
+                          : comprasDeConversacionActiva.length > 0
+                            ? "🛒 Comprador Invitado"
+                            : "👤 Contacto Directo"}
+                      </span>
+                      <span style={{ fontSize: "0.68rem", color: "#64748B", fontWeight: 600 }}>
+                        🤖 {conversacionActiva.mensajesIaConteo} · 👩‍💼 {conversacionActiva.mensajesHumanoConteo}
+                      </span>
+                    </div>
+                    <strong style={{ fontSize: "0.84rem", color: "#0F172A" }}>
+                      {conversacionActiva.remitenteNombre}
+                    </strong>
+                    {conversacionActiva.remitenteTelefono && (
+                      <span style={{ fontSize: "0.74rem", color: "#475569" }}>
+                        📱 {conversacionActiva.remitenteTelefono}
+                      </span>
+                    )}
+                    {conversacionActiva.remitenteCorreo && (
+                      <span style={{ fontSize: "0.74rem", color: "#475569", wordBreak: "break-all" }}>
+                        ✉️ {conversacionActiva.remitenteCorreo}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Historial de Compras y Proformas Web de este contacto */}
+                  {comprasDeConversacionActiva.length > 0 && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#475569" }}>
+                        Compras Web Vinculadas ({comprasDeConversacionActiva.length})
+                      </span>
+                      {comprasDeConversacionActiva.map((ord) => (
+                        <div
+                          key={ord.id}
                           style={{
-                            padding: "4px 8px",
-                            borderRadius: "7px",
-                            border: "none",
-                            background: "#D97706",
-                            color: "#FFFFFF",
-                            fontSize: "0.7rem",
-                            fontWeight: 700,
-                            cursor: "pointer",
+                            padding: "8px 10px",
+                            borderRadius: "9px",
+                            border: "1px solid #E2E8F0",
+                            background: "#FFFFFF",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "2px",
                           }}
                         >
-                          Ofrecer
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                          <div style={{ display: "flex", justifyContent: "space-between" }}>
+                            <strong style={{ fontSize: "0.76rem", color: "#0F172A" }}>
+                              {ord.codigoOrden}
+                            </strong>
+                            <strong style={{ fontSize: "0.76rem", color: "#047857" }}>
+                              ${Number(ord.total).toFixed(2)}
+                            </strong>
+                          </div>
+                          <span style={{ fontSize: "0.69rem", color: "#64748B" }}>
+                            {ord.estado} ·{" "}
+                            {new Date(ord.creadoEn).toLocaleDateString("es-EC", {
+                              day: "2-digit",
+                              month: "short",
+                            })}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
-                {ultimoInvRosas && (
-                  <div
-                    style={{
-                      padding: "9px 10px",
-                      borderRadius: "9px",
-                      background: "#F8FAFC",
-                      border: "1px solid #E2E8F0",
-                      fontSize: "0.73rem",
-                      color: "#334155",
-                    }}
-                  >
-                    <strong style={{ display: "block", color: "#0F172A", marginBottom: "2px" }}>
-                      🌹 Rosas ({formatearFechaCorteInventario(ultimoInvRosas.fechaCorte)})
-                    </strong>
-                    <span>{formatearResumenInventarioTexto(ultimoInvRosas.resumenColores)}</span>
-                  </div>
-                )}
-              </>
-            )}
+                  {/* APOYO DE TALLER PARA VENDEDORAS: DISPONIBLES 1-2H E INVENTARIO DE ROSAS */}
+                  {disponiblesHoy.length > 0 && (
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "6px",
+                        paddingTop: "8px",
+                        borderTop: "1px solid #ECE8E1",
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: "0.7rem",
+                          fontWeight: 700,
+                          color: "#B45309",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        ⚡ Entrega Inmediata 1–2h ({disponiblesHoy.length})
+                      </span>
+                      {disponiblesHoy.slice(0, 4).map((disp) => (
+                        <div
+                          key={disp.productoId}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            padding: "7px 8px",
+                            borderRadius: "9px",
+                            border: "1px solid #FDE68A",
+                            background: "#FFFBEB",
+                          }}
+                        >
+                          {disp.imagenUrl && (
+                            <img
+                              src={disp.imagenUrl}
+                              alt={disp.nombre}
+                              style={{
+                                width: "34px",
+                                height: "34px",
+                                borderRadius: "6px",
+                                objectFit: "cover",
+                              }}
+                            />
+                          )}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <strong
+                              style={{
+                                display: "block",
+                                fontSize: "0.74rem",
+                                color: "#0F172A",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {disp.nombre}
+                            </strong>
+                            <span style={{ fontSize: "0.71rem", color: "#059669", fontWeight: 700 }}>
+                              ${Number(disp.precio).toFixed(2)}
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const orig =
+                                typeof window !== "undefined" ? window.location.origin : "";
+                              const bloqueFoto =
+                                disp.imagenUrl && /^https?:\/\//i.test(disp.imagenUrl)
+                                  ? `\n![${disp.nombre}](${disp.imagenUrl})\n`
+                                  : " ";
+                              setTextoRespuesta(
+                                `¡Tenemos disponible para entrega inmediata (1 a 2 horas) *${disp.nombre}* por $${Number(disp.precio).toFixed(2)} USD! 🌸${bloqueFoto}Puedes pedirlo directo aquí: ${orig}/producto/${disp.slug}`
+                              );
+                            }}
+                            title="Insertar oferta de entrega inmediata en el mensaje"
+                            aria-label="Ofrecer arreglo"
+                            style={{
+                              padding: "4px 8px",
+                              borderRadius: "7px",
+                              border: "none",
+                              background: "#D97706",
+                              color: "#FFFFFF",
+                              fontSize: "0.7rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                          >
+                            Ofrecer
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {ultimoInvRosas && (
+                    <div
+                      style={{
+                        padding: "8px 10px",
+                        borderRadius: "9px",
+                        background: "#FFFFFF",
+                        border: "1px solid #E2E8F0",
+                        fontSize: "0.72rem",
+                        color: "#334155",
+                      }}
+                    >
+                      <strong style={{ display: "block", color: "#0F172A", marginBottom: "2px" }}>
+                        🌹 Rosas ({formatearFechaCorteInventario(ultimoInvRosas.fechaCorte)})
+                      </strong>
+                      <span>{formatearResumenInventarioTexto(ultimoInvRosas.resumenColores)}</span>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -4549,6 +4525,19 @@ export function ConsolaVentasOmnicanal({
           void recargarTablero(true);
         }}
       />
+
+      {/* Modal de administración de etiquetas (restringido a Admin y Operador de la tienda) */}
+      {Boolean(tablero.esAdminEtiquetas) && (
+        <ModalAdministrarEtiquetas
+          abierto={modalEtiquetasAbierto}
+          negocio={negNorm}
+          etiquetas={etiquetasClasificacion}
+          onCerrar={() => setModalEtiquetasAbierto(false)}
+          onActualizado={() => {
+            void recargarTablero(true);
+          }}
+        />
+      )}
     </div>
   );
 }

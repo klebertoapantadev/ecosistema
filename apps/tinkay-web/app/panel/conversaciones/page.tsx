@@ -40,6 +40,7 @@ export default async function PaginaConversacionesOmnicanalTinkay() {
       }}
     >
       <div
+        className="ocultar-en-movil"
         style={{
           display: "flex",
           alignItems: "baseline",

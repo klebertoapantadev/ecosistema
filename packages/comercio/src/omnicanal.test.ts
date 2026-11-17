@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
+  autoCompletarDatosVentaDesdeMensajes,
   calcularMetricasOmnicanal,
+  calcularTotalDatosVenta,
   emparejarComprasConConversacion,
   extraerSegmentosMultimediaMensaje,
   extraerTodasLasImagenesMensaje,
@@ -222,5 +224,36 @@ describe("omnicanal — normalización, plantillas y cruce cliente-compras", () 
     expect(previa).toContain("📷 Abanico XL");
     expect(previa).toContain("📷 Abanico L");
     expect(segmentos.some((s) => s.tipo === "imagen")).toBe(true);
+  });
+
+  it("calcula el total de campos de venta y autocompleta links GPS y orden desde mensajes", () => {
+    expect(
+      calcularTotalDatosVenta({
+        precioProducto: 38,
+        precioExtras: 7.5,
+        costoEnvio: 3.5,
+      })
+    ).toBe(49);
+
+    const autocompletado = autoCompletarDatosVentaDesdeMensajes(
+      null,
+      [
+        {
+          id: "m1",
+          origen: "CLIENTE",
+          contenido:
+            "Mi pedido es TNK-ORD-0042 y esta es la ubicación https://maps.app.goo.gl/FX4qzrVRdJSLck5c9",
+          tipoContenido: "TEXTO",
+          estadoEntrega: "ENVIADO",
+          creadoEn: new Date().toISOString(),
+        },
+      ],
+      { remitenteNombre: "Martín Toapanta" }
+    );
+
+    expect(autocompletado.nombreCliente).toBe("Martín Toapanta");
+    expect(autocompletado.ubicacionUrl).toBe("https://maps.app.goo.gl/FX4qzrVRdJSLck5c9");
+    expect(autocompletado.codigoPedido).toBe("TNK-ORD-0042");
+    expect(autocompletado.estadoCobro).toBe("COTIZANDO");
   });
 });
