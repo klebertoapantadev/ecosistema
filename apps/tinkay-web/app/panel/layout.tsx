@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { LogOut } from "lucide-react";
 import { SelloCompilacion } from "@eco/primitivas";
 import {
   cerrarSesion,
@@ -261,13 +262,14 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
           <div
             className="panel-marca"
             style={{
-              padding: "0 8px",
+              padding: "0 6px",
               display: "flex",
               flexDirection: "column",
               gap: "2px",
             }}
           >
             <div
+              className="panel-marca-fila"
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -277,15 +279,19 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
             >
               <Link
                 href="/panel"
+                title="Ir al inicio del panel Tinkay"
                 style={{
                   color: "#FFFFFF",
                   textDecoration: "none",
                   fontSize: "1.35rem",
                   fontWeight: 600,
                   letterSpacing: "-0.01em",
+                  display: "inline-flex",
+                  alignItems: "center",
                 }}
               >
-                tinkay
+                <span className="panel-marca-completo">tinkay</span>
+                <span className="panel-marca-monograma">t</span>
               </Link>
               <CampanaNotificaciones negocio={NEGOCIO} usuarioId={perfil.usu_id} />
             </div>
@@ -295,34 +301,81 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
           <div
             className="panel-usuario"
             style={{
-              padding: "12px",
-              borderRadius: "10px",
-              background: "rgba(255, 255, 255, 0.04)",
+              padding: "10px 11px",
+              borderRadius: "11px",
+              background: "rgba(255, 255, 255, 0.045)",
               border: "1px solid rgba(255, 255, 255, 0.08)",
-              gap: "6px",
+              gap: "7px",
               opacity: 1,
             }}
           >
-            <span className="nombre-usuario-activo" style={{ fontSize: "0.86rem", color: "#FFFFFF" }}>
-              {[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ") || etiquetaRol}
-            </span>
-            <span
-              className="correo-usuario-activo"
+            <div
               style={{
-                fontSize: "0.74rem",
-                color: "rgba(255, 255, 255, 0.65)",
-                wordBreak: "break-all",
+                display: "flex",
+                alignItems: "center",
+                gap: "9px",
+                minWidth: 0,
               }}
             >
-              {perfil.usu_correo}
-            </span>
+              <div
+                title={`${[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ") || etiquetaRol} (${etiquetaRol})`}
+                style={{
+                  width: "34px",
+                  height: "34px",
+                  borderRadius: "999px",
+                  background: estiloBadge.bg,
+                  color: estiloBadge.color,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "0.78rem",
+                  fontWeight: 800,
+                  letterSpacing: "0.02em",
+                  flexShrink: 0,
+                  boxShadow: "0 2px 6px rgba(0, 0, 0, 0.25)",
+                }}
+              >
+                {([perfil.usu_nombres?.[0], perfil.usu_apellidos?.[0]]
+                  .filter(Boolean)
+                  .join("") || etiquetaRol[0] || "T"
+                ).toUpperCase()}
+              </div>
+              <div className="panel-usuario-textos" style={{ minWidth: 0, flex: 1 }}>
+                <span
+                  className="nombre-usuario-activo"
+                  style={{
+                    fontSize: "0.83rem",
+                    color: "#FFFFFF",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {[perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ") || etiquetaRol}
+                </span>
+                <span
+                  className="correo-usuario-activo"
+                  style={{
+                    fontSize: "0.71rem",
+                    color: "rgba(255, 255, 255, 0.6)",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {perfil.usu_correo}
+                </span>
+              </div>
+            </div>
+
             <div
+              className="panel-usuario-acciones"
               style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
                 gap: "8px",
-                marginTop: "6px",
+                marginTop: "2px",
                 flexWrap: "wrap",
               }}
             >
@@ -341,18 +394,23 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
                   title="Cerrar sesión activa"
                   aria-label="Cerrar sesión activa"
                   style={{
-                    padding: "5px 11px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "5px",
+                    padding: "5px 10px",
                     borderRadius: "7px",
-                    border: "1px solid rgba(255, 255, 255, 0.18)",
+                    border: "1px solid rgba(255, 255, 255, 0.16)",
                     background: "rgba(255, 255, 255, 0.06)",
                     color: "#FFFFFF",
                     fontFamily: "inherit",
-                    fontSize: "0.74rem",
+                    fontSize: "0.73rem",
                     fontWeight: 600,
                     cursor: "pointer",
                   }}
                 >
-                  Salir
+                  <LogOut size={13} />
+                  <span className="panel-btn-salir-texto">Salir</span>
                 </button>
               </form>
             </div>

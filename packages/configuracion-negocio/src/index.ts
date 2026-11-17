@@ -26,8 +26,11 @@ export type {
   ItemNavegacionPanel,
   IconoNavegacionPanel,
 } from "./componentes/NavegacionPanelLateral";
-export { MarcoPanelLateral } from "./componentes/MarcoPanelLateral";
-export type { PropsMarcoPanelLateral } from "./componentes/MarcoPanelLateral";
+export { MarcoPanelLateral, useBarraLateralPanel } from "./componentes/MarcoPanelLateral";
+export type {
+  PropsMarcoPanelLateral,
+  ValorContextoBarraLateral,
+} from "./componentes/MarcoPanelLateral";
 export {
   listarTokensMcpAction,
   generarTokenMcpAction,

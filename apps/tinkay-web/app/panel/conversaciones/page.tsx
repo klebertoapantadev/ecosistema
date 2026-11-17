@@ -33,22 +33,35 @@ export default async function PaginaConversacionesOmnicanalTinkay() {
   return (
     <div
       style={{
-        maxWidth: "1440px",
-        margin: "0 auto",
+        width: "100%",
         display: "flex",
         flexDirection: "column",
-        gap: "16px",
+        gap: "10px",
       }}
     >
-      <div>
-        <h1 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 4px 0", color: "#111827" }}>
-          Centro de Ventas en Vivo — WhatsApp (YCloud) y Chat Web
+      <div
+        style={{
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          gap: "12px",
+          flexWrap: "wrap",
+        }}
+      >
+        <h1
+          style={{
+            fontSize: "1.18rem",
+            fontWeight: 700,
+            margin: 0,
+            color: "#221D1A",
+            letterSpacing: "-0.01em",
+          }}
+        >
+          Ventas y Chats en Vivo
         </h1>
-        <p style={{ margin: 0, fontSize: "13.5px", color: "#6B7280", lineHeight: 1.5 }}>
-          Monitorea en tiempo real las conversaciones de <strong>WhatsApp</strong> y <strong>Chat Web</strong>,
-          usa <strong>Tomar Control</strong> para intervenir como asesora humana o delegar a Mía (ARIA),
-          aplica etiquetas y respuestas rápidas (<code>/atajos</code>), e importa el historial previo de ARIA.
-        </p>
+        <span style={{ fontSize: "0.78rem", color: "rgba(34, 29, 26, 0.58)" }}>
+          WhatsApp (YCloud) · Chat Web · Chat del Equipo · Supervisión Mía (ARIA)
+        </span>
       </div>
 
       <ConsolaVentasOmnicanal

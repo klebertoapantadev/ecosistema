@@ -30,6 +30,7 @@ import {
   Zap,
   type LucideIcon,
 } from "lucide-react";
+import { useBarraLateralPanel } from "./MarcoPanelLateral";
 
 export type IconoNavegacionPanel =
   | "resumen"
@@ -88,6 +89,8 @@ const MAPA_ICONOS: Record<IconoNavegacionPanel, LucideIcon> = {
 
 export function NavegacionPanelLateral({ items }: { items: ItemNavegacionPanel[] }) {
   const pathname = usePathname() || "/panel";
+  const { plegada } = useBarraLateralPanel();
+
   const enRutaConfiguracion =
     pathname.startsWith("/panel/configuracion") ||
     pathname.startsWith("/panel/facturacion-sri") ||
@@ -97,7 +100,7 @@ export function NavegacionPanelLateral({ items }: { items: ItemNavegacionPanel[]
     pathname.startsWith("/panel/correo") ||
     pathname.startsWith("/panel/tokens-mcp");
 
-  const [configAbierta, setConfigAbierta] = useState(true);
+  const [configAbierta, setConfigAbierta] = useState(enRutaConfiguracion);
 
   const itemsOperacion = items.filter((i) => i.grupo === "operacion");
   const itemsConfiguracion = items.filter((i) => i.grupo === "configuracion");
@@ -114,104 +117,147 @@ export function NavegacionPanelLateral({ items }: { items: ItemNavegacionPanel[]
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: "18px",
+        gap: plegada ? "10px" : "16px",
         flex: 1,
       }}
     >
       {/* Bloque 1: Operación */}
       {itemsOperacion.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-          <div
-            style={{
-              fontSize: "0.68rem",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-              color: "rgba(255, 255, 255, 0.45)",
-              padding: "0 10px 4px",
-            }}
-          >
-            Operación
-          </div>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: plegada ? "4px" : "2px",
+            alignItems: plegada ? "center" : "stretch",
+          }}
+        >
+          {!plegada && (
+            <div
+              style={{
+                fontSize: "0.66rem",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.09em",
+                color: "rgba(255, 255, 255, 0.42)",
+                padding: "0 10px 5px",
+              }}
+            >
+              Operación
+            </div>
+          )}
           {itemsOperacion.map((item) => (
-            <EnlaceMenuLateral key={item.clave} item={item} activo={esRutaActiva(item.ruta)} />
+            <EnlaceMenuLateral
+              key={item.clave}
+              item={item}
+              activo={esRutaActiva(item.ruta)}
+              plegada={plegada}
+            />
           ))}
         </div>
       )}
 
       {/* Bloque 2: Sección Agrupada de Configuración */}
-      {itemsConfiguracion.length > 0 && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "4px",
-            background: enRutaConfiguracion ? "rgba(255, 255, 255, 0.05)" : "rgba(255, 255, 255, 0.025)",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
-            borderRadius: "11px",
-            padding: "8px 6px",
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => setConfigAbierta((prev) => !prev)}
-            title="Mostrar u ocultar opciones de configuración"
-            aria-label="Mostrar u ocultar opciones de configuración"
-            aria-expanded={configAbierta}
+      {itemsConfiguracion.length > 0 &&
+        (plegada ? (
+          <div
             style={{
               display: "flex",
+              flexDirection: "column",
               alignItems: "center",
-              justifyContent: "space-between",
-              width: "100%",
-              padding: "6px 8px",
-              background: "transparent",
-              border: "none",
-              borderRadius: "7px",
-              color: enRutaConfiguracion ? "#FFFFFF" : "rgba(255, 255, 255, 0.72)",
-              fontFamily: "inherit",
-              fontSize: "0.73rem",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.07em",
-              cursor: "pointer",
+              gap: "4px",
+              paddingTop: "8px",
+              borderTop: "1px solid rgba(255, 255, 255, 0.08)",
             }}
           >
-            <span style={{ display: "inline-flex", alignItems: "center", gap: "7px" }}>
-              <Settings size={14} />
-              Configuración
-            </span>
-            {configAbierta ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-          </button>
+            {itemsConfiguracion.map((item) => (
+              <EnlaceMenuLateral
+                key={item.clave}
+                item={item}
+                activo={esRutaActiva(item.ruta)}
+                plegada
+              />
+            ))}
+          </div>
+        ) : (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px",
+              background: enRutaConfiguracion
+                ? "rgba(255, 255, 255, 0.055)"
+                : "rgba(255, 255, 255, 0.025)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              borderRadius: "11px",
+              padding: "7px 6px",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setConfigAbierta((prev) => !prev)}
+              title="Mostrar u ocultar opciones de configuración"
+              aria-label="Mostrar u ocultar opciones de configuración"
+              aria-expanded={configAbierta}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "100%",
+                padding: "6px 8px",
+                background: "transparent",
+                border: "none",
+                borderRadius: "7px",
+                color: enRutaConfiguracion ? "#FFFFFF" : "rgba(255, 255, 255, 0.72)",
+                fontFamily: "inherit",
+                fontSize: "0.71rem",
+                fontWeight: 700,
+                textTransform: "uppercase",
+                letterSpacing: "0.07em",
+                cursor: "pointer",
+              }}
+            >
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "7px" }}>
+                <Settings size={14} />
+                Configuración
+              </span>
+              {configAbierta ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            </button>
 
-          {configAbierta && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginTop: "2px" }}>
-              {itemsConfiguracion.map((item) => (
-                <EnlaceMenuLateral
-                  key={item.clave}
-                  item={item}
-                  activo={esRutaActiva(item.ruta)}
-                  compacto
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+            {configAbierta && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px", marginTop: "2px" }}>
+                {itemsConfiguracion.map((item) => (
+                  <EnlaceMenuLateral
+                    key={item.clave}
+                    item={item}
+                    activo={esRutaActiva(item.ruta)}
+                    compacto
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
 
       {/* Bloque 3: Mi Cuenta (anclado abajo) */}
       {itemsCuenta.length > 0 && (
         <div
           style={{
             marginTop: "auto",
-            paddingTop: "12px",
+            paddingTop: "10px",
             borderTop: "1px solid rgba(255, 255, 255, 0.08)",
             display: "flex",
             flexDirection: "column",
+            alignItems: plegada ? "center" : "stretch",
             gap: "3px",
           }}
         >
           {itemsCuenta.map((item) => (
-            <EnlaceMenuLateral key={item.clave} item={item} activo={esRutaActiva(item.ruta)} />
+            <EnlaceMenuLateral
+              key={item.clave}
+              item={item}
+              activo={esRutaActiva(item.ruta)}
+              plegada={plegada}
+            />
           ))}
         </div>
       )}
@@ -223,12 +269,44 @@ function EnlaceMenuLateral({
   item,
   activo,
   compacto = false,
+  plegada = false,
 }: {
   item: ItemNavegacionPanel;
   activo: boolean;
   compacto?: boolean;
+  plegada?: boolean;
 }) {
   const Icono = MAPA_ICONOS[item.icono];
+
+  if (plegada) {
+    return (
+      <Link
+        href={item.ruta}
+        aria-current={activo ? "page" : undefined}
+        title={item.nombre}
+        aria-label={item.nombre}
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "42px",
+          height: "40px",
+          borderRadius: "10px",
+          textDecoration: "none",
+          color: activo ? "#FFFFFF" : "rgba(255, 255, 255, 0.72)",
+          background: activo
+            ? "linear-gradient(135deg, rgba(236, 127, 167, 0.24), rgba(184, 146, 63, 0.22))"
+            : "transparent",
+          border: activo ? "1px solid rgba(236, 127, 167, 0.45)" : "1px solid transparent",
+          boxShadow: activo ? "0 4px 12px rgba(0, 0, 0, 0.22)" : "none",
+          transition: "background 0.15s ease, color 0.15s ease, border-color 0.15s ease",
+        }}
+      >
+        <Icono size={18} style={{ flexShrink: 0, opacity: activo ? 1 : 0.85 }} />
+      </Link>
+    );
+  }
+
   return (
     <Link
       href={item.ruta}
@@ -237,20 +315,19 @@ function EnlaceMenuLateral({
         display: "flex",
         alignItems: "center",
         gap: "9px",
-        padding: compacto ? "8px 10px" : "9px 11px",
-        borderRadius: "8px",
+        padding: compacto ? "7px 10px" : "8px 11px",
+        borderRadius: "9px",
         textDecoration: "none",
-        fontSize: compacto ? "0.84rem" : "0.88rem",
+        fontSize: compacto ? "0.82rem" : "0.85rem",
         fontWeight: activo ? 600 : 400,
         color: activo ? "#FFFFFF" : "rgba(255, 255, 255, 0.78)",
-        background: activo ? "rgba(255, 255, 255, 0.13)" : "transparent",
-        boxShadow: activo ? "inset 2px 0 0 #FFFFFF" : "none",
+        background: activo ? "rgba(255, 255, 255, 0.12)" : "transparent",
+        boxShadow: activo ? "inset 2.5px 0 0 #EC7FA7" : "none",
         transition: "background 0.15s ease, color 0.15s ease",
       }}
     >
       <Icono size={compacto ? 15 : 16} style={{ flexShrink: 0, opacity: activo ? 1 : 0.78 }} />
-      <span style={{ lineHeight: 1.3 }}>{item.nombre}</span>
+      <span style={{ lineHeight: 1.28 }}>{item.nombre}</span>
     </Link>
   );
 }
-

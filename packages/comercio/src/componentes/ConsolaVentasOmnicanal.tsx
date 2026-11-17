@@ -23,6 +23,10 @@ import {
   Loader2,
   MessageCircle,
   MessageSquare,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
   Plus,
   RefreshCw,
   Search,
@@ -498,11 +502,14 @@ export function ConsolaVentasOmnicanal({
     "todos" | "registrados" | "invitados"
   >("todos");
 
-  // Adaptación responsive de la bandeja de 4 columnas (móvil / tablet / desktop)
+  // Adaptación responsive y paneles laterales plegables (móvil / tablet / desktop)
   const [modoLayoutInbox, setModoLayoutInbox] = useState<"desktop" | "tablet" | "movil">("desktop");
   const [vistaMovilInbox, setVistaMovilInbox] = useState<"lista" | "chat" | "ficha">("lista");
   const [mostrarFiltrosInbox, setMostrarFiltrosInbox] = useState<boolean>(false);
   const [mostrarFichaTablet, setMostrarFichaTablet] = useState<boolean>(false);
+  const [columnaVistasDesktop, setColumnaVistasDesktop] = useState<boolean>(true);
+  const [fichaDerechaDesktop, setFichaDerechaDesktop] = useState<boolean>(true);
+  const [selectorEtiquetasAbierto, setSelectorEtiquetasAbierto] = useState<boolean>(false);
 
   useEffect(() => {
     const actualizarModo = () => {
@@ -1700,20 +1707,20 @@ export function ConsolaVentasOmnicanal({
   };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-      {/* Barra Superior de KPIs Rápidos y Conmutador de Módulos */}
+    <div style={{ display: "flex", flexDirection: "column", gap: "11px" }}>
+      {/* Barra Superior Compacta de Módulos y Estado en Vivo */}
       <div
         style={{
           background: "#FFFFFF",
-          border: "1px solid #E2E8F0",
+          border: "1px solid rgba(34, 29, 26, 0.1)",
           borderRadius: "14px",
-          padding: "14px 18px",
+          padding: "9px 14px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
           flexWrap: "wrap",
-          gap: "12px",
-          boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)",
+          gap: "10px",
+          boxShadow: "0 2px 10px rgba(34, 29, 26, 0.04)",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
@@ -2011,33 +2018,42 @@ export function ConsolaVentasOmnicanal({
             display: "grid",
             gridTemplateColumns:
               modoLayoutInbox === "desktop"
-                ? "210px 290px minmax(320px, 1fr) 280px"
+                ? [
+                    columnaVistasDesktop ? "192px" : null,
+                    "285px",
+                    "minmax(340px, 1fr)",
+                    fichaDerechaDesktop ? "272px" : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" ")
                 : modoLayoutInbox === "tablet"
-                  ? "275px minmax(0, 1fr)"
+                  ? "270px minmax(0, 1fr)"
                   : "minmax(0, 1fr)",
-            minHeight: modoLayoutInbox === "movil" ? "540px" : "650px",
+            height: modoLayoutInbox === "movil" ? "calc(100dvh - 170px)" : "calc(100vh - 142px)",
+            minHeight: modoLayoutInbox === "movil" ? "520px" : "580px",
             background: "#FFFFFF",
-            border: "1px solid #E2E8F0",
+            border: "1px solid rgba(34, 29, 26, 0.11)",
             borderRadius: "16px",
             overflow: "hidden",
-            boxShadow: "0 4px 16px rgba(15, 23, 42, 0.04)",
+            boxShadow: "0 8px 26px rgba(34, 29, 26, 0.06)",
           }}
         >
-          {/* COLUMNA 1: VISTAS DE BANDEJA, ETIQUETAS Y EQUIPO (ESTILO MANYCHAT) */}
+          {/* COLUMNA 1: VISTAS DE BANDEJA, ETIQUETAS Y EQUIPO (PLEGABLE EN ESCRITORIO) */}
           <div
             style={{
-              background: "#F8FAFC",
-              borderRight: modoLayoutInbox === "desktop" ? "1px solid #E2E8F0" : "none",
-              borderBottom: modoLayoutInbox !== "desktop" ? "1px solid #E2E8F0" : "none",
+              background: "#FAF8F5",
+              borderRight: modoLayoutInbox === "desktop" ? "1px solid #ECE8E1" : "none",
+              borderBottom: modoLayoutInbox !== "desktop" ? "1px solid #ECE8E1" : "none",
               gridColumn: modoLayoutInbox === "tablet" ? "1 / -1" : undefined,
-              padding: "14px 10px",
+              padding: "12px 9px",
               display:
-                modoLayoutInbox === "desktop" ||
+                (modoLayoutInbox === "desktop" && columnaVistasDesktop) ||
                 (mostrarFiltrosInbox && (modoLayoutInbox === "tablet" || vistaMovilInbox === "lista"))
                   ? "flex"
                   : "none",
               flexDirection: "column",
-              gap: "16px",
+              gap: "14px",
+              minHeight: 0,
               overflowY: "auto",
             }}
           >
@@ -2333,47 +2349,82 @@ export function ConsolaVentasOmnicanal({
           {/* COLUMNA 2: LISTA DE HILOS CON FILTROS RÁPIDOS ESTILO MANYCHAT */}
           <div
             style={{
-              borderRight: modoLayoutInbox !== "movil" ? "1px solid #E2E8F0" : "none",
+              borderRight: modoLayoutInbox !== "movil" ? "1px solid #ECE8E1" : "none",
               display:
                 modoLayoutInbox !== "movil" || vistaMovilInbox === "lista" ? "flex" : "none",
               flexDirection: "column",
               background: "#FFFFFF",
               minWidth: 0,
+              minHeight: 0,
             }}
           >
             <div
               style={{
-                padding: "12px",
-                borderBottom: "1px solid #E2E8F0",
+                padding: "10px 11px",
+                borderBottom: "1px solid #ECE8E1",
                 display: "flex",
                 flexDirection: "column",
-                gap: "8px",
+                gap: "7px",
               }}
             >
-              <div style={{ position: "relative" }}>
-                <Search
-                  size={14}
-                  style={{
-                    position: "absolute",
-                    left: "10px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "#94A3B8",
-                  }}
-                />
-                <input
-                  type="search"
-                  value={busquedaInbox}
-                  onChange={(e) => setBusquedaInbox(e.target.value)}
-                  placeholder="Buscar en conversaciones…"
-                  style={{
-                    width: "100%",
-                    padding: "7px 10px 7px 30px",
-                    borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: modoLayoutInbox === "movil" ? "16px" : "0.8rem",
-                  }}
-                />
+              <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                {modoLayoutInbox === "desktop" && (
+                  <button
+                    type="button"
+                    onClick={() => setColumnaVistasDesktop((v) => !v)}
+                    title={
+                      columnaVistasDesktop
+                        ? "Plegar columna de vistas y etiquetas para ganar espacio"
+                        : "Mostrar columna de vistas, etiquetas y equipo"
+                    }
+                    aria-label={columnaVistasDesktop ? "Ocultar vistas" : "Mostrar vistas"}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "32px",
+                      height: "32px",
+                      borderRadius: "8px",
+                      border: "1px solid #CBD5E1",
+                      background: columnaVistasDesktop ? "#F8FAFC" : "#0F172A",
+                      color: columnaVistasDesktop ? "#334155" : "#FFFFFF",
+                      cursor: "pointer",
+                      flexShrink: 0,
+                    }}
+                  >
+                    {columnaVistasDesktop ? (
+                      <PanelLeftClose size={14} />
+                    ) : (
+                      <PanelLeftOpen size={14} />
+                    )}
+                  </button>
+                )}
+
+                <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
+                  <Search
+                    size={14}
+                    style={{
+                      position: "absolute",
+                      left: "10px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      color: "#94A3B8",
+                    }}
+                  />
+                  <input
+                    type="search"
+                    value={busquedaInbox}
+                    onChange={(e) => setBusquedaInbox(e.target.value)}
+                    placeholder="Buscar chat…"
+                    style={{
+                      width: "100%",
+                      padding: "6px 10px 6px 30px",
+                      borderRadius: "8px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: modoLayoutInbox === "movil" ? "16px" : "0.79rem",
+                    }}
+                  />
+                </div>
               </div>
 
               <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
@@ -2648,14 +2699,20 @@ export function ConsolaVentasOmnicanal({
                           </span>
                         )}
 
-                        {(conv.etiquetasIds ?? []).slice(0, 3).map((etqId) => {
-                          const etq = mapaEtiquetas.get(etqId);
-                          if (!etq) return null;
-                          return (
+                        {(conv.etiquetasIds ?? [])
+                          .map((etqId) => mapaEtiquetas.get(etqId))
+                          .filter(
+                            (etq): etq is EtiquetaOmnicanal =>
+                              Boolean(etq) &&
+                              etq!.slug !== "origen-whatsapp" &&
+                              etq!.slug !== "origen-web"
+                          )
+                          .slice(0, 2)
+                          .map((etq) => (
                             <span
-                              key={etqId}
+                              key={etq.id}
                               style={{
-                                fontSize: "0.66rem",
+                                fontSize: "0.65rem",
                                 fontWeight: 600,
                                 padding: "1px 6px",
                                 borderRadius: "999px",
@@ -2665,8 +2722,7 @@ export function ConsolaVentasOmnicanal({
                             >
                               {etq.icono} {etq.nombre}
                             </span>
-                          );
-                        })}
+                          ))}
                       </div>
                     </div>
                   );
@@ -2678,7 +2734,10 @@ export function ConsolaVentasOmnicanal({
           {/* COLUMNA 3: VISOR DE CONVERSACIÓN EN VIVO Y COMPOSITOR DE RESPUESTA HUMANA */}
           <div
             style={{
-              borderRight: modoLayoutInbox === "desktop" ? "1px solid #E2E8F0" : "none",
+              borderRight:
+                modoLayoutInbox === "desktop" && fichaDerechaDesktop
+                  ? "1px solid #ECE8E1"
+                  : "none",
               display:
                 modoLayoutInbox === "desktop" ||
                 (modoLayoutInbox === "tablet" && !mostrarFichaTablet) ||
@@ -2686,8 +2745,9 @@ export function ConsolaVentasOmnicanal({
                   ? "flex"
                   : "none",
               flexDirection: "column",
-              background: "#F8FAFC",
+              background: "#F6F4EF",
               minWidth: 0,
+              minHeight: 0,
             }}
           >
             {!conversacionActiva ? (
@@ -2928,7 +2988,39 @@ export function ConsolaVentasOmnicanal({
                         </button>
                       )}
 
-                      {modoLayoutInbox !== "desktop" && (
+                      {modoLayoutInbox === "desktop" ? (
+                        <button
+                          type="button"
+                          className="btn-responsive-accion"
+                          onClick={() => setFichaDerechaDesktop((v) => !v)}
+                          title={
+                            fichaDerechaDesktop
+                              ? "Plegar Ficha 360° derecha para ampliar el chat"
+                              : "Mostrar Ficha 360° del cliente"
+                          }
+                          aria-label={fichaDerechaDesktop ? "Ocultar Ficha" : "Ficha 360°"}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            padding: "6px 9px",
+                            borderRadius: "8px",
+                            border: "1px solid #CBD5E1",
+                            background: fichaDerechaDesktop ? "#FFFFFF" : "#0F172A",
+                            color: fichaDerechaDesktop ? "#334155" : "#FFFFFF",
+                            fontSize: "0.74rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          {fichaDerechaDesktop ? (
+                            <PanelRightClose size={13} />
+                          ) : (
+                            <PanelRightOpen size={13} />
+                          )}
+                          <span className="btn-texto-responsive">Ficha</span>
+                        </button>
+                      ) : (
                         <button
                           type="button"
                           onClick={() => {
@@ -2961,33 +3053,63 @@ export function ConsolaVentasOmnicanal({
                     </div>
                   </div>
 
-                  {/* Barra rápida de etiquetas en 1 clic */}
+                  {/* Barra compacta de etiquetas activas + desplegable "+ Etiquetas" */}
                   <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
-                    <Tag size={13} style={{ color: "#64748B" }} />
-                    {tablero.etiquetas.map((etq) => {
-                      const puesta = (conversacionActiva.etiquetasIds ?? []).includes(etq.id);
-                      return (
-                        <button
-                          key={etq.id}
-                          type="button"
-                          onClick={() => void handleAlternarEtiqueta(etq.id)}
-                          title={puesta ? `Quitar etiqueta ${etq.nombre}` : `Asignar ${etq.nombre}`}
-                          aria-label={`Etiqueta ${etq.nombre}`}
-                          style={{
-                            padding: "2px 8px",
-                            borderRadius: "999px",
-                            fontSize: "0.7rem",
-                            fontWeight: 600,
-                            border: puesta ? `1px solid ${etq.color}` : "1px solid #E2E8F0",
-                            background: puesta ? `${etq.color}20` : "#F8FAFC",
-                            color: puesta ? etq.color : "#64748B",
-                            cursor: "pointer",
-                          }}
-                        >
-                          {etq.icono} {etq.nombre}
-                        </button>
-                      );
-                    })}
+                    <Tag size={12} style={{ color: "#64748B" }} />
+                    {tablero.etiquetas
+                      .filter((etq) =>
+                        selectorEtiquetasAbierto
+                          ? true
+                          : (conversacionActiva.etiquetasIds ?? []).includes(etq.id) &&
+                            etq.slug !== "origen-whatsapp" &&
+                            etq.slug !== "origen-web"
+                      )
+                      .map((etq) => {
+                        const puesta = (conversacionActiva.etiquetasIds ?? []).includes(etq.id);
+                        return (
+                          <button
+                            key={etq.id}
+                            type="button"
+                            onClick={() => void handleAlternarEtiqueta(etq.id)}
+                            title={puesta ? `Quitar etiqueta ${etq.nombre}` : `Asignar ${etq.nombre}`}
+                            aria-label={`Etiqueta ${etq.nombre}`}
+                            style={{
+                              padding: "2px 8px",
+                              borderRadius: "999px",
+                              fontSize: "0.69rem",
+                              fontWeight: 600,
+                              border: puesta ? `1px solid ${etq.color}` : "1px solid #E2E8F0",
+                              background: puesta ? `${etq.color}20` : "#F8FAFC",
+                              color: puesta ? etq.color : "#64748B",
+                              cursor: "pointer",
+                            }}
+                          >
+                            {etq.icono} {etq.nombre}
+                          </button>
+                        );
+                      })}
+                    <button
+                      type="button"
+                      onClick={() => setSelectorEtiquetasAbierto((v) => !v)}
+                      title={
+                        selectorEtiquetasAbierto
+                          ? "Contraer catálogo de etiquetas"
+                          : "Agregar o quitar etiquetas a esta conversación"
+                      }
+                      aria-label="Gestionar etiquetas"
+                      style={{
+                        padding: "2px 8px",
+                        borderRadius: "999px",
+                        fontSize: "0.69rem",
+                        fontWeight: 700,
+                        border: "1px dashed #CBD5E1",
+                        background: selectorEtiquetasAbierto ? "#0F172A" : "#FFFFFF",
+                        color: selectorEtiquetasAbierto ? "#FFFFFF" : "#475569",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {selectorEtiquetasAbierto ? "Listo" : "+ Etiqueta"}
+                    </button>
                   </div>
 
                   {editandoRecordatorio && (
@@ -3553,16 +3675,17 @@ export function ConsolaVentasOmnicanal({
           {/* COLUMNA 4: FICHA 360° DEL CONTACTO, ASIGNACIÓN, MÉTRICAS IA VS HUMANO Y COMPRAS WEB */}
           <div
             style={{
-              background: "#FFFFFF",
+              background: "#FAF8F5",
               padding: "14px",
               display:
-                modoLayoutInbox === "desktop" ||
+                (modoLayoutInbox === "desktop" && fichaDerechaDesktop) ||
                 (modoLayoutInbox === "tablet" && mostrarFichaTablet) ||
                 (modoLayoutInbox === "movil" && vistaMovilInbox === "ficha")
                   ? "flex"
                   : "none",
               flexDirection: "column",
-              gap: "14px",
+              gap: "13px",
+              minHeight: 0,
               overflowY: "auto",
               minWidth: 0,
             }}
