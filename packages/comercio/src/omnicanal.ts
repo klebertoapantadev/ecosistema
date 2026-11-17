@@ -426,76 +426,224 @@ export type SegmentoMensajeMultimedia =
   | { tipo: "texto"; texto: string }
   | { tipo: "imagen"; alt: string; url: string };
 
+interface TokenMarkdownEscaneado {
+  inicio: number;
+  fin: number;
+  esImagen: boolean;
+  alt: string;
+  url: string;
+  truncadoSinCerrar?: boolean;
+}
+
+const REGEX_EXT_IMAGEN = /\.(?:jpg|jpeg|png|webp|gif|heic)(?:\?.*)?$/i;
+
+/**
+ * Escáner determinista O(N) de un solo paso para etiquetas `![alt](https://...)` y `[texto](https://...)`
+ * (soporta paréntesis balanceados `foto_(2).jpg`, espacios, saltos entre `]` y `(`, y cadenas truncadas
+ * a 280 caracteres sin riesgo alguno de backtracking exponencial ReDoS en el navegador o servidor).
+ */
+function escanearEnlacesMarkdownLineal(texto: string): TokenMarkdownEscaneado[] {
+  const tokens: TokenMarkdownEscaneado[] = [];
+  const n = texto.length;
+  let i = 0;
+
+  while (i < n) {
+    let inicioToken = i;
+    let esImg = false;
+
+    if (texto[i] === "!") {
+      let j = i + 1;
+      while (j < n && (texto[j] === " " || texto[j] === "\t" || texto[j] === "\r" || texto[j] === "\n")) {
+        j += 1;
+      }
+      if (j < n && texto[j] === "[") {
+        esImg = true;
+        i = j;
+      } else {
+        i += 1;
+        continue;
+      }
+    } else if (texto[i] !== "[") {
+      i += 1;
+      continue;
+    }
+
+    const cierreCorchete = texto.indexOf("]", i + 1);
+    if (cierreCorchete === -1 || cierreCorchete - i > 300) {
+      i += 1;
+      continue;
+    }
+
+    const alt = texto.slice(i + 1, cierreCorchete).trim();
+    if (alt.includes("\n")) {
+      i += 1;
+      continue;
+    }
+
+    let p = cierreCorchete + 1;
+    while (p < n && (texto[p] === " " || texto[p] === "\t" || texto[p] === "\r" || texto[p] === "\n")) {
+      p += 1;
+    }
+    if (p >= n || texto[p] !== "(") {
+      i = cierreCorchete + 1;
+      continue;
+    }
+
+    let q = p + 1;
+    while (q < n && (texto[q] === " " || texto[q] === "\t")) {
+      q += 1;
+    }
+
+    const prefijoHttp = texto.slice(q, q + 8).toLowerCase();
+    if (!prefijoHttp.startsWith("https://") && !prefijoHttp.startsWith("http://")) {
+      i = p + 1;
+      continue;
+    }
+
+    let k = q;
+    let nivelParentesis = 0;
+    let finParentesis = -1;
+
+    while (k < n) {
+      const ch = texto[k];
+      if (ch === "\r" || ch === "\n") {
+        break;
+      }
+      if (ch === "(") {
+        nivelParentesis += 1;
+      } else if (ch === ")") {
+        if (nivelParentesis > 0) {
+          nivelParentesis -= 1;
+        } else {
+          finParentesis = k;
+          break;
+        }
+      }
+      k += 1;
+    }
+
+    if (finParentesis === -1) {
+      if (esImg && k === n) {
+        tokens.push({
+          inicio: inicioToken,
+          fin: n,
+          esImagen: true,
+          alt,
+          url: "",
+          truncadoSinCerrar: true,
+        });
+        break;
+      }
+      i = q + 7;
+      continue;
+    }
+
+    const urlCruda = texto.slice(q, finParentesis).trim();
+    const urlNormalizada = urlCruda.replace(/\s+/g, "%20");
+    const esUrlDeImagen = esImg || REGEX_EXT_IMAGEN.test(urlNormalizada);
+
+    tokens.push({
+      inicio: inicioToken,
+      fin: finParentesis + 1,
+      esImagen: esUrlDeImagen,
+      alt,
+      url: urlNormalizada,
+    });
+
+    i = finParentesis + 1;
+  }
+
+  return tokens;
+}
+
 /**
  * Extrae bloques ordenados de texto e imágenes desde mensajes con formato Markdown
  * (`![Abanico Canasta XL](https://.../abanico.jpg)`, saltos de línea entre `]` y `(`,
  * URLs con paréntesis `foto_(2).jpg` o espacios, enlaces directos a imágenes `.jpg/.png/.webp`
- * y metadatos `detalle.imagen_url` / `detalle.imagenes_urls`).
+ * y metadatos `detalle.imagen_url` / `detalle.imagenes_urls`) en tiempo estrictamente lineal O(N).
  */
 export function extraerSegmentosMultimediaMensaje(
   contenido: string,
   detalle?: Record<string, unknown> | null
 ): SegmentoMensajeMultimedia[] {
-  const textoBase = String(contenido || "");
+  let textoBase = String(contenido || "");
   const urlsVistas = new Set<string>();
-
   const normalizarUrlImg = (u: string): string => u.trim().replace(/\s+/g, "%20");
 
-  // 1. Unificar ![alt] \n (https://...) y enlaces [alt](https://...jpg) a ![alt](url)
-  let preprocesado = textoBase
-    .replace(
-      /!\s*\[([^\]]*)\]\s*\(\s*(https?:\/\/(?:[^()\r\n]+|\([^()\r\n]*\))+)\s*\)/gi,
-      (_m, alt: string, url: string) => `![${alt.trim()}](${normalizarUrlImg(url)})`
-    )
-    .replace(
-      /(?<!!)\[([^\]]*)\]\s*\(\s*(https?:\/\/(?:[^()\s]+|\([^()\s]*\))+\.(?:jpg|jpeg|png|webp|gif|heic)(?:\?[^()\s]*)?)\s*\)/gi,
-      (_m, alt: string, url: string) => `![${alt.trim()}](${normalizarUrlImg(url)})`
-    );
-
-  // 2. Detectar también URLs directas de imagen sueltas fuera de paréntesis Markdown
-  preprocesado = preprocesado.replace(
-    /(?<![(\]])(https?:\/\/[^\s<>")]+\.(?:jpg|jpeg|png|webp|gif|heic)(?:\?[^\s<>")]*)?)/gi,
-    (_m, url: string) => `\n![](${normalizarUrlImg(url)})\n`
-  );
-
-  // 3. Si el mensaje vino como "📷 Imagen adjunta por el cliente: https://..." (historial previo sin extensión .jpg)
-  preprocesado = preprocesado.replace(
+  // Si el mensaje vino como "📷 Imagen adjunta por el cliente: https://..." (historial previo sin extensión .jpg)
+  textoBase = textoBase.replace(
     /📷\s*Imagen adjunta por el cliente:\s*(https?:\/\/[^\s<>"]+)/gi,
     (_m, url: string) => `![Foto enviada por el cliente](${normalizarUrlImg(url)})`
   );
 
-  const regexImg = /!\[([^\]]*)\]\((https?:\/\/(?:[^()\s]+|\([^()\s]*\))+)\)/g;
-  const segmentos: SegmentoMensajeMultimedia[] = [];
+  const tokens = escanearEnlacesMarkdownLineal(textoBase);
+  const segmentosPreliminares: SegmentoMensajeMultimedia[] = [];
   let cursor = 0;
-  let match: RegExpExecArray | null;
 
-  const limpiarBloqueTexto = (raw: string): string =>
+  const limpiarNegritasYSaltos = (raw: string): string =>
     raw
-      .replace(/\[([^\]]+)\]\((https?:\/\/(?:[^()\s]+|\([^()\s]*\))+)\)/g, "$1: $2")
       .replace(/\*\*([^*]+)\*\*/g, "$1")
       .replace(/\n{3,}/g, "\n\n")
       .trim();
 
-  while ((match = regexImg.exec(preprocesado)) !== null) {
-    const antes = limpiarBloqueTexto(preprocesado.slice(cursor, match.index));
-    if (antes) {
-      segmentos.push({ tipo: "texto", texto: antes });
+  let acumuladorTexto = "";
+
+  for (const tk of tokens) {
+    if (tk.inicio > cursor) {
+      acumuladorTexto += textoBase.slice(cursor, tk.inicio);
     }
-    const alt = (match[1] || "").trim();
-    const url = normalizarUrlImg(match[2] || "");
-    if (url) {
-      urlsVistas.add(url);
-      segmentos.push({ tipo: "imagen", alt, url });
+
+    if (tk.truncadoSinCerrar) {
+      if (tk.alt) {
+        acumuladorTexto += `📷 ${tk.alt}`;
+      }
+    } else if (tk.esImagen && tk.url) {
+      const bloquePrevio = limpiarNegritasYSaltos(acumuladorTexto);
+      if (bloquePrevio) {
+        segmentosPreliminares.push({ tipo: "texto", texto: bloquePrevio });
+      }
+      acumuladorTexto = "";
+      urlsVistas.add(tk.url);
+      segmentosPreliminares.push({ tipo: "imagen", alt: tk.alt, url: tk.url });
+    } else {
+      acumuladorTexto += tk.alt ? `${tk.alt}: ${tk.url}` : tk.url;
     }
-    cursor = match.index + match[0].length;
+
+    cursor = tk.fin;
   }
 
-  const cola = limpiarBloqueTexto(preprocesado.slice(cursor));
-  if (cola) {
-    segmentos.push({ tipo: "texto", texto: cola });
+  if (cursor < textoBase.length) {
+    acumuladorTexto += textoBase.slice(cursor);
+  }
+  const colaTexto = limpiarNegritasYSaltos(acumuladorTexto);
+  if (colaTexto) {
+    segmentosPreliminares.push({ tipo: "texto", texto: colaTexto });
   }
 
-  // 4. Anexar imágenes de `detalle.imagen_url` o `detalle.imagenes_urls` si no estaban ya en el texto
+  // Detectar URLs de imagen sueltas dentro de bloques de texto (ej. https://.../foto.jpg sin corchetes)
+  const segmentos: SegmentoMensajeMultimedia[] = [];
+  const regexImgSuelta = /(https?:\/\/[^\s<>")]+\.(?:jpg|jpeg|png|webp|gif|heic)(?:\?[^\s<>")]*)?)/gi;
+
+  for (const seg of segmentosPreliminares) {
+    if (seg.tipo === "imagen") {
+      segmentos.push(seg);
+      continue;
+    }
+    const partes = seg.texto.split(regexImgSuelta);
+    for (const parte of partes) {
+      const p = parte.trim();
+      if (!p) continue;
+      if (/^https?:\/\//i.test(p) && REGEX_EXT_IMAGEN.test(p)) {
+        const limpia = normalizarUrlImg(p);
+        urlsVistas.add(limpia);
+        segmentos.push({ tipo: "imagen", alt: "", url: limpia });
+      } else {
+        segmentos.push({ tipo: "texto", texto: p });
+      }
+    }
+  }
+
+  // Anexar imágenes de `detalle.imagen_url` o `detalle.imagenes_urls` si no estaban ya en el texto
   if (detalle && typeof detalle === "object") {
     const urlUnica =
       typeof detalle.imagen_url === "string" && /^https?:\/\//i.test(detalle.imagen_url.trim())
@@ -524,7 +672,7 @@ export function extraerSegmentosMultimediaMensaje(
 export function extraerTodasLasImagenesMensaje(mensaje: {
   contenido?: string | null;
   detalle?: Record<string, unknown> | null;
-}): Array<{ alt: string; url: string }> {
+}): Array<{ tipo: "imagen"; alt: string; url: string }> {
   return extraerSegmentosMultimediaMensaje(mensaje.contenido || "", mensaje.detalle).filter(
     (s): s is { tipo: "imagen"; alt: string; url: string } => s.tipo === "imagen"
   );
@@ -540,20 +688,34 @@ export function normalizarHandleMencion(texto?: string | null): string {
 
 /**
  * Convierte sintaxis Markdown cruda (`![Título](https://...)`) en una vista previa limpia
- * de una sola línea para la lista izquierda de conversaciones.
+ * de una sola línea para la lista izquierda de conversaciones en tiempo O(N) lineal.
  */
 export function limpiarVistaPreviaMensajeOmnicanal(texto?: string | null): string {
   if (!texto) return "Conversación iniciada";
-  const limpio = texto
+  const tokens = escanearEnlacesMarkdownLineal(texto);
+  let reconstruido = "";
+  let cursor = 0;
+
+  for (const tk of tokens) {
+    if (tk.inicio > cursor) {
+      reconstruido += texto.slice(cursor, tk.inicio);
+    }
+    if (tk.esImagen) {
+      reconstruido += tk.alt ? ` 📷 ${tk.alt} ` : " 📷 Foto ";
+    } else {
+      reconstruido += tk.alt || tk.url;
+    }
+    cursor = tk.fin;
+  }
+  if (cursor < texto.length) {
+    reconstruido += texto.slice(cursor);
+  }
+
+  const limpio = reconstruido
     .replace(
-      /!\s*\[([^\]]*)\]\s*\(\s*(https?:\/\/(?:[^()\r\n]+|\([^()\r\n]*\))+)\s*\)/gi,
-      (_m, alt: string) => (alt?.trim() ? `📷 ${alt.trim()}` : "📷 Foto")
-    )
-    .replace(
-      /https?:\/\/[^\s<>")]+\.(?:jpg|jpeg|png|webp|gif)(?:\?[^\s<>")]*)?/gi,
+      /https?:\/\/[^\s<>")]+\.(?:jpg|jpeg|png|webp|gif|heic)(?:\?[^\s<>")]*)?/gi,
       "📷 Foto"
     )
-    .replace(/\[([^\]]+)\]\((https?:\/\/(?:[^()\s]+|\([^()\s]*\))+)\)/g, "$1")
     .replace(/\*\*([^*]+)\*\*/g, "$1")
     .replace(/\s+/g, " ")
     .trim();

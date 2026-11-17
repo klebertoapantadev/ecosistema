@@ -205,4 +205,22 @@ describe("omnicanal — normalización, plantillas y cruce cliente-compras", () 
 
     expect(normalizarHandleMencion("Kléber")).toBe("kleber");
   });
+
+  it("no bloquea ni hace backtracking catastrófico ante URLs truncadas a 280 caracteres sin paréntesis de cierre", () => {
+    const truncado280 =
+      "Para condolencias tengo estos arreglos:\n" +
+      "1. Abanico XL ![Abanico XL](https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/abanico_ok.jpg)\n" +
+      "2. Abanico L ![Abanico L](https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/" +
+      "x".repeat(600);
+
+    const t0 = Date.now();
+    const previa = limpiarVistaPreviaMensajeOmnicanal(truncado280);
+    const segmentos = extraerSegmentosMultimediaMensaje(truncado280);
+    const duracionMs = Date.now() - t0;
+
+    expect(duracionMs).toBeLessThan(35);
+    expect(previa).toContain("📷 Abanico XL");
+    expect(previa).toContain("📷 Abanico L");
+    expect(segmentos.some((s) => s.tipo === "imagen")).toBe(true);
+  });
 });

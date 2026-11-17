@@ -494,24 +494,24 @@ begin
   perform extensions.http_set_curlopt('CURLOPT_CONNECTTIMEOUT', '8');
 
   v_restante := btrim(coalesce(p_texto, ''));
-  -- Normalizar ![Alt] \n (https://...) quitando espacios/saltos entre ] y (
+  -- Normalizar ![Alt] \n (https://...) quitando espacios/saltos entre ] y ( (O(N) lineal sin cuantificadores anidados)
   v_restante := regexp_replace(
     v_restante,
-    '!\s*\[([^\]]*)\]\s*\(\s*(https?://(?:[^()\r\n]+|\([^()\r\n]*\))+)\s*\)',
+    '!\s*\[([^\]]*)\]\s*\(\s*(https?://(?:[^()\r\n]|\([^()\r\n]*\))+)\s*\)',
     '![\1](\2)',
     'gi'
   );
   -- Convertir enlaces directos a archivos de imagen [Alt](https://...jpg) a ![Alt](https://...jpg)
   v_restante := regexp_replace(
     v_restante,
-    '(?<!!)\[([^\]]*)\]\s*\(\s*(https?://(?:[^()\s]+|\([^()\s]*\))+\.(?:jpg|jpeg|png|webp|gif)(?:\?[^()\s]*)?)\s*\)',
+    '(?<!!)\[([^\]]*)\]\s*\(\s*(https?://(?:[^()\s]|\([^()\s]*\))+\.(?:jpg|jpeg|png|webp|gif)(?:\?[^()\s]*)?)\s*\)',
     '![\1](\2)',
     'gi'
   );
   -- Convertir enlaces normales [Texto](https://url) a "Texto: https://url"
   v_restante := regexp_replace(
     v_restante,
-    '(?<!!)\[([^\]]+)\]\((https?://(?:[^()\s]+|\([^()\s]*\))+)\)',
+    '(?<!!)\[([^\]]+)\]\((https?://(?:[^()\s]|\([^()\s]*\))+)\)',
     '\1: \2',
     'gi'
   );
@@ -521,7 +521,7 @@ begin
     v_iter := v_iter + 1;
     exit when v_iter > 8;
 
-    v_match := regexp_match(v_restante, '(!\[([^\]]*)\]\((https?://(?:[^()\r\n]+|\([^()\r\n]*\))+)\))');
+    v_match := regexp_match(v_restante, '(!\[([^\]]*)\]\((https?://(?:[^()\r\n]|\([^()\r\n]*\))+)\))');
     exit when v_match is null;
 
     v_full_tag := v_match[1];

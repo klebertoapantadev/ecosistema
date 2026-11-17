@@ -86,13 +86,13 @@ begin
   v_restante := btrim(coalesce(p_texto, ''));
   v_restante := regexp_replace(
     v_restante,
-    '(?<!!)\[([^\]]*)\]\((https?://(?:[^()\s]+|\([^()\s]*\))+\.(?:jpg|jpeg|png|webp)(?:\?[^()\s]*)?)\)',
+    '(?<!!)\[([^\]]*)\]\((https?://(?:[^()\s]|\([^()\s]*\))+\.(?:jpg|jpeg|png|webp)(?:\?[^()\s]*)?)\)',
     '![\1](\2)',
     'gi'
   );
   v_restante := regexp_replace(
     v_restante,
-    '(?<!!)\[([^\]]+)\]\((https?://(?:[^()\s]+|\([^()\s]*\))+)\)',
+    '(?<!!)\[([^\]]+)\]\((https?://(?:[^()\s]|\([^()\s]*\))+)\)',
     '\1: \2',
     'gi'
   );
@@ -103,7 +103,7 @@ begin
     v_iter := v_iter + 1;
     exit when v_iter > 8; -- Límite sano por turno
 
-    v_match := regexp_match(v_restante, '!\[([^\]]*)\]\((https?://(?:[^()\s]+|\([^()\s]*\))+)\)');
+    v_match := regexp_match(v_restante, '!\[([^\]]*)\]\((https?://(?:[^()\s]|\([^()\s]*\))+)\)');
     exit when v_match is null;
 
     v_alt := btrim(coalesce(v_match[1], ''));
