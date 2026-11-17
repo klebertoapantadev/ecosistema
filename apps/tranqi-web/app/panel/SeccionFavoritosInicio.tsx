@@ -273,6 +273,14 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
     href: "/panel/envio-pedidos",
     origen: "Administrar"
   },
+  chat_equipo: {
+    id: "chat_equipo",
+    titulo: "Chat del Equipo",
+    subtitulo: "Sala grupal interna con @menciones, fotografías y reenvío de consultas",
+    icono: MessageSquare,
+    href: "/panel/chat-equipo",
+    origen: "Administrar"
+  },
   taller_floral: {
     id: "taller_floral",
     titulo: "Taller — Producción",

@@ -59,6 +59,16 @@ const MODULOS_TINKAY: Record<string, WidgetInfo> = {
     grupo: "operacion",
     etiqueta: "Inbox / HITL",
   },
+  chat_equipo: {
+    clave: "chat_equipo",
+    nombre: "Chat Grupal del Equipo",
+    descripcion:
+      "Conversación interna de trabajo entre Ventas, Taller, Delivery y Administración con @menciones, fotos y reenvío de consultas.",
+    ruta: "/panel/chat-equipo",
+    icono: Users,
+    grupo: "operacion",
+    etiqueta: "@Menciones Live",
+  },
   envio_pedidos_taller: {
     clave: "envio_pedidos_taller",
     nombre: "Enviar Pedidos a Taller & Exequiales",

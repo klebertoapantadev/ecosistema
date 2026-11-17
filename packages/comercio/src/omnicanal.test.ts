@@ -3,8 +3,10 @@ import {
   calcularMetricasOmnicanal,
   emparejarComprasConConversacion,
   extraerSegmentosMultimediaMensaje,
+  extraerTodasLasImagenesMensaje,
   interpolarRespuestaRapida,
   limpiarVistaPreviaMensajeOmnicanal,
+  normalizarHandleMencion,
   normalizarTelefonoOmnicanal,
   type ContactoUnificadoOmnicanal,
   type ConversacionOmnicanal,
@@ -162,5 +164,45 @@ describe("omnicanal — normalización, plantillas y cruce cliente-compras", () 
       "![Abanico Canasta XL](https://oaybbpdxhlxjbpwnoymy.supabase.co/abanico.jpg)"
     );
     expect(previa).toBe("📷 Abanico Canasta XL");
+  });
+
+  it("extrae fotos enviadas por el cliente (detalle.imagen_url o formato histórico) y fotos de Mía con salto entre ] y (", () => {
+    const clienteMsg = extraerSegmentosMultimediaMensaje(
+      "Quiero uno parecido a este",
+      { imagen_url: "https://cdn.ycloud.com/whatsapp/media/inbound-abc123" }
+    );
+    expect(clienteMsg).toEqual([
+      { tipo: "texto", texto: "Quiero uno parecido a este" },
+      {
+        tipo: "imagen",
+        alt: "",
+        url: "https://cdn.ycloud.com/whatsapp/media/inbound-abc123",
+      },
+    ]);
+
+    const historicoCliente = extraerSegmentosMultimediaMensaje(
+      "📷 Imagen adjunta por el cliente: https://api.ycloud.com/v2/media/xyz999"
+    );
+    expect(historicoCliente).toEqual([
+      {
+        tipo: "imagen",
+        alt: "Foto enviada por el cliente",
+        url: "https://api.ycloud.com/v2/media/xyz999",
+      },
+    ]);
+
+    const miaConSaltoYEspacio = extraerTodasLasImagenesMensaje({
+      contenido:
+        "![Abanico Blanco]\n(https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/abanico m (2).jpg)",
+    });
+    expect(miaConSaltoYEspacio).toEqual([
+      {
+        tipo: "imagen",
+        alt: "Abanico Blanco",
+        url: "https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/abanico%20m%20(2).jpg",
+      },
+    ]);
+
+    expect(normalizarHandleMencion("Kléber")).toBe("kleber");
   });
 });

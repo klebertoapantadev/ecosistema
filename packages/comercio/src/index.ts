@@ -68,3 +68,5 @@ export * from "./componentes/ConsolaConfirmacionEntregas";
 export * from "./componentes/CalendarioPedidosTaller";
 export * from "./componentes/ConsolaEnvioPedidosTaller";
 export * from "./componentes/ConsolaTallerFloral";
+export * from "./componentes/VisorMultimediaChatModal";
+export * from "./componentes/ChatEquipoInterno";

@@ -52,6 +52,7 @@ import {
   ConsolaConfirmacionEntregas,
   ConsolaEnvioPedidosTaller,
   ConsolaTallerFloral,
+  ChatEquipoInterno,
 } from "@eco/comercio";
 import { SociosWidget } from "../administrar/PanelAdministrarModular";
 import { ConfiguracionContratoAbogadoWidget } from "@/modulos/socios/componentes/ConfiguracionContratoAbogadoWidget";
@@ -292,6 +293,13 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     subtitulo: "Validación de ventas, calendario Hoy/Semana/Mes, llamadas Exequiales y despacho diario",
     icono: ClipboardList,
     colorIcono: "#0F172A",
+    categoria: "Comercio & Catálogo"
+  },
+  chat_equipo: {
+    titulo: "Chat Grupal del Equipo",
+    subtitulo: "Conversación interna de trabajo con @menciones, fotografías y reenvío de consultas",
+    icono: Users,
+    colorIcono: "#6D28D9",
     categoria: "Comercio & Catálogo"
   },
   taller_floral: {
@@ -1042,6 +1050,9 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       case "envio_pedidos_taller":
       case "envio-pedidos":
         return <ConsolaEnvioPedidosTaller negocio={negocio} />;
+      case "chat_equipo":
+      case "chat-equipo":
+        return <ChatEquipoInterno negocio={negocio} />;
       case "taller_floral":
       case "taller":
         return <ConsolaTallerFloral negocio={negocio} />;

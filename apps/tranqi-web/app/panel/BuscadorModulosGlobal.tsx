@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Search, X, UserCog, UserCheck, Settings, Mail, Bell, Shield, ShieldCheck,
+  Search, X, Users, UserCog, UserCheck, Settings, Mail, Bell, Shield, ShieldCheck,
   CircleUser, ChevronRight, Sliders, Briefcase, FileText, BarChart2, FileCheck, Folder,
   CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard, Building2, Scale, KeyRound, Sparkles, Bot, MapPin, ClipboardList, MessageSquare, MessageSquareHeart
 } from "lucide-react";
@@ -211,6 +211,16 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     minNivel: 20,
     icono: ClipboardList,
     colorIcono: "#0F172A"
+  },
+  {
+    clave: "chat_equipo",
+    nombre: "Chat Grupal del Equipo",
+    detalle: "Conversación interna de trabajo con @menciones, fotografías y reenvío de consultas entre áreas",
+    ruta: "/panel/chat-equipo",
+    categoria: "Comercio & Pagos",
+    minNivel: 12,
+    icono: Users,
+    colorIcono: "#6D28D9"
   },
   {
     clave: "taller_floral",

@@ -281,6 +281,10 @@ export function nombreCanalRealtimeOmnicanal(negocio: string): string {
   return `eco-omnicanal-live-${(negocio || "tinkay").trim().toLowerCase()}`;
 }
 
+export function nombreCanalRealtimeChatEquipo(negocio: string): string {
+  return `eco-chat-equipo-${(negocio || "tinkay").trim().toLowerCase()}`;
+}
+
 export interface EventoBroadcastChatWeb {
   eventoId: string;
   claveHilo: string;
@@ -288,6 +292,8 @@ export interface EventoBroadcastChatWeb {
   canal?: CanalOmnicanal;
   fase: "ENTRADA_CLIENTE" | "RESPUESTA_ARIA" | "EVENTO_ORDEN" | "INTERVENCION_HUMANA";
   contenido: string;
+  imagenUrl?: string | null;
+  imagenesUrls?: string[];
   autorNombre?: string | null;
   remitenteNombre?: string | null;
   remitenteCorreo?: string | null;
@@ -305,6 +311,57 @@ export interface EventoBroadcastIntervencionAsesor {
   asesoraNombre?: string | null;
   esNotaInterna?: boolean;
   mensaje?: MensajeOmnicanal | null;
+}
+
+export interface MiembroChatEquipo {
+  usuarioId: string;
+  nombre: string;
+  correo: string;
+  avatarUrl?: string | null;
+  rol: string;
+  handle: string;
+}
+
+export interface CitaRespuestaChatEquipo {
+  id: string;
+  autorNombre: string;
+  extracto: string;
+  imagenUrl?: string | null;
+}
+
+export interface ContextoReenvioChatEquipo {
+  conversacionId?: string | null;
+  canal?: string;
+  clienteNombre: string;
+  clienteTelefono?: string | null;
+  autorOriginal?: string | null;
+  textoOriginal?: string | null;
+  imagenUrl?: string | null;
+}
+
+export interface MensajeChatEquipo {
+  id: string;
+  autorUsuarioId?: string | null;
+  autorNombre: string;
+  contenido: string;
+  tipoContenido: string;
+  detalle?: Record<string, unknown>;
+  creadoEn: string;
+}
+
+export interface ConversacionWhatsappResumen {
+  id: string;
+  nombre: string;
+  telefono?: string | null;
+  ultimoMensajeEn: string;
+}
+
+export interface EventoBroadcastChatEquipo {
+  eventoId: string;
+  sala: string;
+  mensaje: MensajeChatEquipo;
+  mencionadosUsuariosIds?: string[];
+  handlesMencionados?: string[];
 }
 
 export function calcularMetricasOmnicanal(
@@ -371,16 +428,40 @@ export type SegmentoMensajeMultimedia =
 
 /**
  * Extrae bloques ordenados de texto e imágenes desde mensajes con formato Markdown
- * (por ejemplo `![Abanico Canasta XL](https://.../abanico.jpg)` o URLs con paréntesis `foto_(2).jpg`),
- * limpiando negritas Markdown `**...**` y enlaces `[texto](url)`.
+ * (`![Abanico Canasta XL](https://.../abanico.jpg)`, saltos de línea entre `]` y `(`,
+ * URLs con paréntesis `foto_(2).jpg` o espacios, enlaces directos a imágenes `.jpg/.png/.webp`
+ * y metadatos `detalle.imagen_url` / `detalle.imagenes_urls`).
  */
-export function extraerSegmentosMultimediaMensaje(contenido: string): SegmentoMensajeMultimedia[] {
-  if (!contenido) return [];
+export function extraerSegmentosMultimediaMensaje(
+  contenido: string,
+  detalle?: Record<string, unknown> | null
+): SegmentoMensajeMultimedia[] {
+  const textoBase = String(contenido || "");
+  const urlsVistas = new Set<string>();
 
-  // Convertir enlaces markdown que apunten directamente a archivos de imagen en sintaxis ![alt](url)
-  const preprocesado = contenido.replace(
-    /(?<!!)\[([^\]]*)\]\((https?:\/\/(?:[^()\s]+|\([^()\s]*\))+\.(?:jpg|jpeg|png|webp)(?:\?[^()\s]*)?)\)/gi,
-    "![$1]($2)"
+  const normalizarUrlImg = (u: string): string => u.trim().replace(/\s+/g, "%20");
+
+  // 1. Unificar ![alt] \n (https://...) y enlaces [alt](https://...jpg) a ![alt](url)
+  let preprocesado = textoBase
+    .replace(
+      /!\s*\[([^\]]*)\]\s*\(\s*(https?:\/\/(?:[^()\r\n]+|\([^()\r\n]*\))+)\s*\)/gi,
+      (_m, alt: string, url: string) => `![${alt.trim()}](${normalizarUrlImg(url)})`
+    )
+    .replace(
+      /(?<!!)\[([^\]]*)\]\s*\(\s*(https?:\/\/(?:[^()\s]+|\([^()\s]*\))+\.(?:jpg|jpeg|png|webp|gif|heic)(?:\?[^()\s]*)?)\s*\)/gi,
+      (_m, alt: string, url: string) => `![${alt.trim()}](${normalizarUrlImg(url)})`
+    );
+
+  // 2. Detectar también URLs directas de imagen sueltas fuera de paréntesis Markdown
+  preprocesado = preprocesado.replace(
+    /(?<![(\]])(https?:\/\/[^\s<>")]+\.(?:jpg|jpeg|png|webp|gif|heic)(?:\?[^\s<>")]*)?)/gi,
+    (_m, url: string) => `\n![](${normalizarUrlImg(url)})\n`
+  );
+
+  // 3. Si el mensaje vino como "📷 Imagen adjunta por el cliente: https://..." (historial previo sin extensión .jpg)
+  preprocesado = preprocesado.replace(
+    /📷\s*Imagen adjunta por el cliente:\s*(https?:\/\/[^\s<>"]+)/gi,
+    (_m, url: string) => `![Foto enviada por el cliente](${normalizarUrlImg(url)})`
   );
 
   const regexImg = /!\[([^\]]*)\]\((https?:\/\/(?:[^()\s]+|\([^()\s]*\))+)\)/g;
@@ -401,8 +482,9 @@ export function extraerSegmentosMultimediaMensaje(contenido: string): SegmentoMe
       segmentos.push({ tipo: "texto", texto: antes });
     }
     const alt = (match[1] || "").trim();
-    const url = (match[2] || "").trim();
+    const url = normalizarUrlImg(match[2] || "");
     if (url) {
+      urlsVistas.add(url);
       segmentos.push({ tipo: "imagen", alt, url });
     }
     cursor = match.index + match[0].length;
@@ -413,7 +495,47 @@ export function extraerSegmentosMultimediaMensaje(contenido: string): SegmentoMe
     segmentos.push({ tipo: "texto", texto: cola });
   }
 
+  // 4. Anexar imágenes de `detalle.imagen_url` o `detalle.imagenes_urls` si no estaban ya en el texto
+  if (detalle && typeof detalle === "object") {
+    const urlUnica =
+      typeof detalle.imagen_url === "string" && /^https?:\/\//i.test(detalle.imagen_url.trim())
+        ? normalizarUrlImg(detalle.imagen_url)
+        : null;
+    if (urlUnica && !urlsVistas.has(urlUnica)) {
+      urlsVistas.add(urlUnica);
+      segmentos.push({ tipo: "imagen", alt: "", url: urlUnica });
+    }
+    if (Array.isArray(detalle.imagenes_urls)) {
+      for (const item of detalle.imagenes_urls) {
+        if (typeof item === "string" && /^https?:\/\//i.test(item.trim())) {
+          const limpia = normalizarUrlImg(item);
+          if (!urlsVistas.has(limpia)) {
+            urlsVistas.add(limpia);
+            segmentos.push({ tipo: "imagen", alt: "", url: limpia });
+          }
+        }
+      }
+    }
+  }
+
   return segmentos;
+}
+
+export function extraerTodasLasImagenesMensaje(mensaje: {
+  contenido?: string | null;
+  detalle?: Record<string, unknown> | null;
+}): Array<{ alt: string; url: string }> {
+  return extraerSegmentosMultimediaMensaje(mensaje.contenido || "", mensaje.detalle).filter(
+    (s): s is { tipo: "imagen"; alt: string; url: string } => s.tipo === "imagen"
+  );
+}
+
+export function normalizarHandleMencion(texto?: string | null): string {
+  return String(texto || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, "");
 }
 
 /**
@@ -424,8 +546,12 @@ export function limpiarVistaPreviaMensajeOmnicanal(texto?: string | null): strin
   if (!texto) return "Conversación iniciada";
   const limpio = texto
     .replace(
-      /!\[([^\]]*)\]\((https?:\/\/(?:[^()\s]+|\([^()\s]*\))+)\)/g,
+      /!\s*\[([^\]]*)\]\s*\(\s*(https?:\/\/(?:[^()\r\n]+|\([^()\r\n]*\))+)\s*\)/gi,
       (_m, alt: string) => (alt?.trim() ? `📷 ${alt.trim()}` : "📷 Foto")
+    )
+    .replace(
+      /https?:\/\/[^\s<>")]+\.(?:jpg|jpeg|png|webp|gif)(?:\?[^\s<>")]*)?/gi,
+      "📷 Foto"
     )
     .replace(/\[([^\]]+)\]\((https?:\/\/(?:[^()\s]+|\([^()\s]*\))+)\)/g, "$1")
     .replace(/\*\*([^*]+)\*\*/g, "$1")

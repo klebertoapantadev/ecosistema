@@ -262,8 +262,8 @@ export function NavegacionSidebar({
           const listaAdm = widgetsPorPanel["panel_administrar"] || [];
           const baseNuevos =
             rolKey === "DELIVERY"
-              ? ["taller_floral", "confirmacion_entregas"]
-              : ["consola_chat", "envio_pedidos_taller", "taller_floral", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas"];
+              ? ["taller_floral", "confirmacion_entregas", "chat_equipo"]
+              : ["consola_chat", "chat_equipo", "envio_pedidos_taller", "taller_floral", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas"];
           const faltantes = baseNuevos.filter((w) => !listaAdm.includes(w));
           if (faltantes.length > 0) {
             widgetsPorPanel["panel_administrar"] = [...faltantes, ...listaAdm];

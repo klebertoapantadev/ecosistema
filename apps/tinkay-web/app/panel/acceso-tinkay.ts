@@ -56,6 +56,7 @@ const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
   SUPERADMIN: [
     "resumen",
     "consola_chat",
+    "chat_equipo",
     "envio_pedidos_taller",
     "taller_floral",
     "confirmacion_entregas",
@@ -78,6 +79,7 @@ const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
   ADMINISTRADOR: [
     "resumen",
     "consola_chat",
+    "chat_equipo",
     "envio_pedidos_taller",
     "taller_floral",
     "confirmacion_entregas",
@@ -100,6 +102,7 @@ const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
   OPERADOR: [
     "resumen",
     "consola_chat",
+    "chat_equipo",
     "envio_pedidos_taller",
     "taller_floral",
     "confirmacion_entregas",
@@ -112,20 +115,21 @@ const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
     "configuracion_logistica",
     "cuenta",
   ],
-  // Ventas: concentrado en chats, envío de órdenes de trabajo, proformas/pedidos, entrega inmediata e inventario
+  // Ventas: concentrado en chats, chat del equipo, envío de órdenes de trabajo, proformas/pedidos, entrega inmediata e inventario
   VENTAS: [
     "consola_chat",
+    "chat_equipo",
     "envio_pedidos_taller",
     "pedidos_tienda",
     "galeria_inmediata",
     "inventario_rosas",
     "cuenta",
   ],
-  // Taller: producción floral sin precios + inventario de rosas + entrega inmediata
-  TALLER: ["taller_floral", "inventario_rosas", "galeria_inmediata", "cuenta"],
-  // Delivery Interno y Subcontratado: únicamente confirmación de entregas + GPS en ruta
-  DELIVERY: ["confirmacion_entregas", "cuenta"],
-  DELIVERY_EXTERNO: ["confirmacion_entregas", "cuenta"],
+  // Taller: producción floral sin precios + chat del equipo + inventario de rosas + entrega inmediata
+  TALLER: ["taller_floral", "chat_equipo", "inventario_rosas", "galeria_inmediata", "cuenta"],
+  // Delivery Interno y Subcontratado: confirmación de entregas + GPS en ruta + chat del equipo
+  DELIVERY: ["confirmacion_entregas", "chat_equipo", "cuenta"],
+  DELIVERY_EXTERNO: ["confirmacion_entregas", "chat_equipo", "cuenta"],
   CLIENTE: ["resumen", "mis_compras", "mis_proformas", "cuenta"],
 };
 

@@ -22,8 +22,9 @@ responsable: Kleber Toapanta
 | **`TNK-001`** | **Catálogo y Portafolio Multidimensional de Arreglos** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TNK-002`** | **E-Commerce Web, Separación Vertical (Flores / Renta / Eventos), Proformas Multi-Variación + PDF, Pasarela PLUX y Facturación Electrónica SRI** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TNK-003`** | **Vendedoras, Enlaces Ref y Comisiones Netas** | 🟡 En Desarrollo | **60%** | Kleber Toapanta |
-| **`TNK-004`** | **Agente ARIA WhatsApp (YCloud), Web Chat y Consola (HITL)** | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`TNK-004`** | **Agente ARIA WhatsApp (YCloud), Web Chat, Visor Multimedia Bidireccional y Consola (HITL)** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`TNK-005`** | **Taller de Armado Floral, Inventario IA de Bonches, Galería Entrega Inmediata (1–2h) y Entregas GPS Offline + Informes IESS** | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`TNK-006`** | **Chat Grupal de Trabajo del Equipo (`@menciones`, Fotografías, Respuestas Citadas y Reenvío Bidireccional WhatsApp ↔ Equipo)** | ✅ Implementado | **100%** | Kleber Toapanta |
 
 ---
 
@@ -110,3 +111,13 @@ Tinkay se apoya plenamente en la arquitectura de Plataforma común:
       4. **`DELIVERY` (Interno)** → Directo a **Entregas GPS** (`/panel/entregas`): ve pedidos listos sin asignar + pedidos asignados a su cuenta (sin informes quincenales ni precios).
       5. **`DELIVERY_EXTERNO` (Subcontratado)** → Directo a **Entregas GPS** (`/panel/entregas`): aislamiento estricto en SQL (`com_fn_obtener_tablero_entregas`) para ver **únicamente** las entregas asignadas explícitamente a su cuenta.
     - **Compartir Ubicación GPS en Vivo en Ruta (`Iniciar Ruta` / `Detener Ruta`):** Cuando el repartidor sale con el pedido activa `Iniciar Ruta`, transmitiendo su ubicación en vivo (`watchPosition` + Supabase Realtime `ubicacion_delivery_ruta` + persistencia cada 15s) visible en `/panel/envio-pedidos`, y deteniéndose automáticamente en el instante en que pulsa `Confirmar Entrega`.
+
+### TNK-006 — Visor Multimedia Bidireccional en Vivo y Chat Grupal de Trabajo del Equipo (`@menciones`)
+- **Visualización, Ampliación, Descarga y Reenvío de Imágenes en `/panel/conversaciones` (`ConsolaVentasOmnicanal.tsx` + `VisorMultimediaChatModal.tsx`):**
+  - Renderizado automático de fotografías tanto **entrantes del cliente por WhatsApp** (`whatsappInboundMessage.image`/`sticker` y ecos móviles SMB con espejado permanente en `comun-publico/omnicanal-media/` y proxy autenticado `/api/omnicanal/media`) como **salientes enviadas por Mía (ARIA) o asesoras humanas** (`![Alt](url)`, URLs con saltos/espacios, enlaces directos `.jpg/.png/.webp` y metadatos `imagenes_urls`).
+  - Cada fotografía incluye acciones directas **`Ampliar`** (visor Lightbox a pantalla completa con zoom `2x`), **`Descargar`** (descarga directa del archivo con `Content-Disposition: attachment`), y **`Reenviar`** (**1) al Chat Grupal del Equipo con `@mención`** o **2) a otro cliente por WhatsApp vía YCloud / Web Share API**).
+  - El compositor de `/panel/conversaciones` permite además adjuntar o pegar (`Ctrl+V`) fotografías directamente para enviarlas al cliente.
+- **Chat Grupal de Trabajo del Equipo (`/panel/chat-equipo` — `ChatEquipoInterno.tsx`, widget `chat_equipo` + pestaña `Chat Equipo` en `/panel/conversaciones`):**
+  - Sala interna persistida en `comun_agentes.agc_conversacion` (`cnv_canal = 'interno'`) y `agc_mensaje` con RLS estricto para todo el personal activo de la floristería (`SUPERADMIN`, `ADMINISTRADOR`, `OPERADOR`, `VENTAS`, `TALLER`, `DELIVERY`, `DELIVERY_EXTERNO`), aislada de la bandeja y métricas de clientes.
+  - **`@menciones` en vivo (`@kleber`, `@martin`, `@taller`, `@ventas`, `@delivery`, `@todos`):** Autocompletado flotante al escribir `@`, resaltado visual cuando mencionan al usuario conectado y despacho inmediato de alerta en `CampanaNotificaciones` (`IN_APP` + `PUSH`).
+  - **Respuestas citadas (`Responder`) y Reenvío Bidireccional (`Al Equipo` ↔ `A WhatsApp`):** Permite citar cualquier mensaje para responder una pregunta puntual, subir/pegar fotos desde cámara o portapapeles, reenviar mensajes/imágenes de un cliente hacia el equipo conservando nombre y teléfono del cliente, o reenviar la foto de un arreglo terminado desde el Taller hacia el WhatsApp del cliente.

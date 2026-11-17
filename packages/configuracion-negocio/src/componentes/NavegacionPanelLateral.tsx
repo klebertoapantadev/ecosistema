@@ -18,6 +18,7 @@ import {
   Mail,
   MapPinCheck,
   MessageSquare,
+  MessagesSquare,
   Receipt,
   Send,
   Settings,
@@ -33,6 +34,7 @@ import {
 export type IconoNavegacionPanel =
   | "resumen"
   | "conversaciones"
+  | "chat_equipo"
   | "inventario"
   | "entrega_inmediata"
   | "entregas_gps"
@@ -63,6 +65,7 @@ export interface ItemNavegacionPanel {
 const MAPA_ICONOS: Record<IconoNavegacionPanel, LucideIcon> = {
   resumen: LayoutDashboard,
   conversaciones: MessageSquare,
+  chat_equipo: MessagesSquare,
   inventario: Flower2,
   entrega_inmediata: Zap,
   entregas_gps: MapPinCheck,

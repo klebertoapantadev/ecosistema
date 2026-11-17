@@ -12,10 +12,13 @@ import {
   Check,
   CheckCircle2,
   Clock,
+  Download,
   ExternalLink,
   Filter,
+  Forward,
   Globe,
   Hand,
+  ImagePlus,
   Inbox,
   Loader2,
   MessageCircle,
@@ -33,7 +36,9 @@ import {
   UserCheck,
   UserPlus,
   Users,
+  X,
   Zap,
+  ZoomIn,
 } from "lucide-react";
 import {
   listarEntregaInmediataAction,
@@ -63,12 +68,14 @@ import {
   calcularMetricasOmnicanal,
   emparejarComprasConConversacion,
   extraerSegmentosMultimediaMensaje,
+  extraerTodasLasImagenesMensaje,
   interpolarRespuestaRapida,
   limpiarVistaPreviaMensajeOmnicanal,
   nombreCanalRealtimeOmnicanal,
   type CanalOmnicanal,
   type ContactoUnificadoOmnicanal,
   type ConversacionOmnicanal,
+  type ConversacionWhatsappResumen,
   type EstadoAtencionOmnicanal,
   type EtiquetaOmnicanal,
   type EventoBroadcastChatWeb,
@@ -76,6 +83,15 @@ import {
   type MensajeOmnicanal,
   type RespuestaRapidaOmnicanal,
 } from "../omnicanal";
+import { ChatEquipoInterno } from "./ChatEquipoInterno";
+import {
+  construirUrlProxyMediaOmnicanal,
+  descargarImagenChatOmnicanal,
+  ModalReenviarMensajeChat,
+  ModalVisorImagenChat,
+  type DatosImagenAmpliadaChat,
+  type DatosReenvioMensajeModal,
+} from "./VisorMultimediaChatModal";
 
 export interface PropsConsolaVentasOmnicanal {
   negocio: string;
@@ -83,7 +99,7 @@ export interface PropsConsolaVentasOmnicanal {
   errorInicial?: string | null;
 }
 
-type PestanaPrincipal = "inbox" | "compras" | "usuarios" | "ia_config";
+type PestanaPrincipal = "inbox" | "chat_equipo" | "compras" | "usuarios" | "ia_config";
 type FiltroBandejaIzquierda =
   | "todos"
   | "no_asignado"
@@ -142,95 +158,182 @@ function renderTextoConEnlaces(texto: string, esFondoOscuro: boolean): React.Rea
   });
 }
 
+function TarjetaImagenBurbujaOmnicanal({
+  url,
+  alt,
+  esFondoOscuro,
+  onAmpliar,
+  onReenviar,
+}: {
+  url: string;
+  alt?: string;
+  esFondoOscuro: boolean;
+  onAmpliar: () => void;
+  onReenviar: () => void;
+}) {
+  const [usarProxy, setUsarProxy] = useState(false);
+  const srcEfectivo = usarProxy ? construirUrlProxyMediaOmnicanal(url, false) : url;
+
+  return (
+    <div
+      style={{
+        display: "inline-flex",
+        flexDirection: "column",
+        gap: "5px",
+        maxWidth: "245px",
+      }}
+    >
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onAmpliar}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") onAmpliar();
+        }}
+        title={alt ? `Ampliar imagen: ${alt}` : "Clic para ampliar imagen"}
+        aria-label="Ampliar imagen"
+        style={{
+          cursor: "zoom-in",
+          borderRadius: "10px",
+          overflow: "hidden",
+          border: esFondoOscuro
+            ? "1px solid rgba(255,255,255,0.28)"
+            : "1px solid rgba(15,23,42,0.12)",
+          background: "#FFFFFF",
+        }}
+      >
+        <img
+          src={srcEfectivo}
+          alt={alt || "Fotografía en chat"}
+          loading="lazy"
+          onError={() => {
+            if (!usarProxy) setUsarProxy(true);
+          }}
+          style={{
+            display: "block",
+            width: "100%",
+            maxHeight: "265px",
+            objectFit: "cover",
+          }}
+        />
+      </div>
+
+      {alt && (
+        <span
+          style={{
+            fontSize: "0.72rem",
+            fontWeight: 600,
+            color: esFondoOscuro ? "#E2E8F0" : "#475569",
+          }}
+        >
+          📷 {alt}
+        </span>
+      )}
+
+      {/* Acciones directas: Ampliar, Descargar, Reenviar */}
+      <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+        <button
+          type="button"
+          className="btn-responsive-accion"
+          onClick={onAmpliar}
+          title="Ampliar fotografía en pantalla completa"
+          aria-label="Ampliar"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "4px",
+            padding: "3px 7px",
+            borderRadius: "6px",
+            border: esFondoOscuro ? "1px solid rgba(255,255,255,0.28)" : "1px solid #CBD5E1",
+            background: esFondoOscuro ? "rgba(255,255,255,0.14)" : "#F8FAFC",
+            color: esFondoOscuro ? "#FFFFFF" : "#0F172A",
+            fontSize: "0.7rem",
+            fontWeight: 700,
+            cursor: "pointer",
+          }}
+        >
+          <ZoomIn size={11} />
+          <span className="btn-texto-responsive">Ampliar</span>
+        </button>
+
+        <button
+          type="button"
+          className="btn-responsive-accion"
+          onClick={() => void descargarImagenChatOmnicanal(url, alt || "imagen-chat")}
+          title="Descargar fotografía"
+          aria-label="Descargar"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "4px",
+            padding: "3px 7px",
+            borderRadius: "6px",
+            border: esFondoOscuro ? "1px solid rgba(255,255,255,0.28)" : "1px solid #BAE6FD",
+            background: esFondoOscuro ? "rgba(255,255,255,0.14)" : "#F0F9FF",
+            color: esFondoOscuro ? "#E0F2FE" : "#0369A1",
+            fontSize: "0.7rem",
+            fontWeight: 700,
+            cursor: "pointer",
+          }}
+        >
+          <Download size={11} />
+          <span className="btn-texto-responsive">Descargar</span>
+        </button>
+
+        <button
+          type="button"
+          className="btn-responsive-accion"
+          onClick={onReenviar}
+          title="Reenviar fotografía por WhatsApp o al Chat Grupal del Equipo"
+          aria-label="Reenviar"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "4px",
+            padding: "3px 7px",
+            borderRadius: "6px",
+            border: esFondoOscuro ? "1px solid rgba(255,255,255,0.28)" : "1px solid #86EFAC",
+            background: esFondoOscuro ? "rgba(255,255,255,0.14)" : "#F0FDF4",
+            color: esFondoOscuro ? "#BBF7D0" : "#15803D",
+            fontSize: "0.7rem",
+            fontWeight: 700,
+            cursor: "pointer",
+          }}
+        >
+          <Forward size={11} />
+          <span className="btn-texto-responsive">Reenviar</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function renderContenidoMensajeOmnicanal(
   mensaje: MensajeOmnicanal,
-  esFondoOscuro: boolean
+  esFondoOscuro: boolean,
+  acciones?: {
+    onAmpliarImagen?: (url: string, alt?: string) => void;
+    onReenviarImagen?: (url: string, alt?: string) => void;
+  }
 ): React.ReactNode {
-  const segmentos = extraerSegmentosMultimediaMensaje(mensaje.contenido || "");
-  const urlAdjuntaDetalle =
-    typeof mensaje.detalle?.imagen_url === "string" &&
-    /^https?:\/\//i.test(mensaje.detalle.imagen_url)
-      ? mensaje.detalle.imagen_url
-      : null;
-
-  const yaIncluyeAdjunta =
-    urlAdjuntaDetalle != null &&
-    segmentos.some((s) => s.tipo === "imagen" && s.url === urlAdjuntaDetalle);
+  const segmentos = extraerSegmentosMultimediaMensaje(
+    mensaje.contenido || "",
+    mensaje.detalle
+  );
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-      {urlAdjuntaDetalle && !yaIncluyeAdjunta && (
-        <a
-          href={urlAdjuntaDetalle}
-          target="_blank"
-          rel="noreferrer"
-          title="Abrir fotografía en tamaño completo"
-          style={{ display: "inline-block", textDecoration: "none" }}
-        >
-          <img
-            src={urlAdjuntaDetalle}
-            alt="Imagen adjunta"
-            loading="lazy"
-            style={{
-              display: "block",
-              maxWidth: "230px",
-              width: "100%",
-              maxHeight: "260px",
-              objectFit: "cover",
-              borderRadius: "10px",
-              border: esFondoOscuro
-                ? "1px solid rgba(255,255,255,0.25)"
-                : "1px solid rgba(15,23,42,0.1)",
-            }}
-          />
-        </a>
-      )}
-
       {segmentos.map((seg, idx) => {
         if (seg.tipo === "imagen") {
           return (
-            <a
+            <TarjetaImagenBurbujaOmnicanal
               key={`img-${idx}`}
-              href={seg.url}
-              target="_blank"
-              rel="noreferrer"
-              title={seg.alt || "Abrir imagen en tamaño completo"}
-              style={{
-                display: "inline-flex",
-                flexDirection: "column",
-                gap: "4px",
-                textDecoration: "none",
-                maxWidth: "235px",
-              }}
-            >
-              <img
-                src={seg.url}
-                alt={seg.alt || "Arreglo floral"}
-                loading="lazy"
-                style={{
-                  display: "block",
-                  width: "100%",
-                  maxHeight: "260px",
-                  objectFit: "cover",
-                  borderRadius: "10px",
-                  border: esFondoOscuro
-                    ? "1px solid rgba(255,255,255,0.25)"
-                    : "1px solid rgba(15,23,42,0.1)",
-                  background: "#FFFFFF",
-                }}
-              />
-              {seg.alt && (
-                <span
-                  style={{
-                    fontSize: "0.72rem",
-                    fontWeight: 600,
-                    color: esFondoOscuro ? "#E2E8F0" : "#475569",
-                  }}
-                >
-                  📷 {seg.alt}
-                </span>
-              )}
-            </a>
+              url={seg.url}
+              alt={seg.alt}
+              esFondoOscuro={esFondoOscuro}
+              onAmpliar={() => acciones?.onAmpliarImagen?.(seg.url, seg.alt)}
+              onReenviar={() => acciones?.onReenviarImagen?.(seg.url, seg.alt)}
+            />
           );
         }
         return (
@@ -351,12 +454,22 @@ export function ConsolaVentasOmnicanal({
   const [mensajesActivos, setMensajesActivos] = useState<MensajeOmnicanal[]>([]);
   const [cargandoMensajes, setCargandoMensajes] = useState<boolean>(false);
 
-  // Compositor de respuesta humana / nota interna
+  // Compositor de respuesta humana / nota interna / adjunto de imagen
   const [textoRespuesta, setTextoRespuesta] = useState<string>("");
   const [modoNotaInterna, setModoNotaInterna] = useState<boolean>(false);
   const [enviandoMensaje, setEnviandoMensaje] = useState<boolean>(false);
   const [mostrarMenuRespuestas, setMostrarMenuRespuestas] = useState<boolean>(false);
   const [respuestaSeleccionadaId, setRespuestaSeleccionadaId] = useState<string | null>(null);
+  const [imagenAdjuntaAsesorUrl, setImagenAdjuntaAsesorUrl] = useState<string | null>(null);
+  const [subiendoImagenAsesor, setSubiendoImagenAsesor] = useState<boolean>(false);
+  const inputFotoAsesorRef = useRef<HTMLInputElement>(null);
+
+  // Visor lightbox de imagen ampliada y modal de reenvío (a WhatsApp o Chat Grupal del Equipo)
+  const [visorImagenDatos, setVisorImagenDatos] = useState<DatosImagenAmpliadaChat | null>(null);
+  const [reenvioModalDatos, setReenvioModalDatos] = useState<{
+    destino: "equipo" | "whatsapp";
+    payload: DatosReenvioMensajeModal;
+  } | null>(null);
 
   // Modales ligeros inline: crear etiqueta, recordatorio y crear respuesta rápida
   const [creandoEtiqueta, setCreandoEtiqueta] = useState<boolean>(false);
@@ -629,8 +742,20 @@ export function ConsolaVentasOmnicanal({
                     : payload.remitenteNombre ||
                       (canalPayload === "whatsapp" ? "Cliente WhatsApp" : "Visitante Web")),
             contenido: payload.contenido,
-            tipoContenido: payload.fase === "EVENTO_ORDEN" ? "ORDEN_WEB" : "TEXTO",
+            tipoContenido:
+              payload.fase === "EVENTO_ORDEN"
+                ? "ORDEN_WEB"
+                : payload.imagenUrl || (payload.imagenesUrls && payload.imagenesUrls.length > 0)
+                  ? "IMAGEN"
+                  : "TEXTO",
             estadoEntrega: "ENVIADO",
+            detalle:
+              payload.imagenUrl || (payload.imagenesUrls && payload.imagenesUrls.length > 0)
+                ? {
+                    imagen_url: payload.imagenUrl ?? undefined,
+                    imagenes_urls: payload.imagenesUrls ?? undefined,
+                  }
+                : undefined,
             creadoEn: payload.creadoEn || new Date().toISOString(),
           };
 
@@ -943,15 +1068,80 @@ export function ConsolaVentasOmnicanal({
     setMostrarMenuRespuestas(false);
   };
 
+  const chatsWhatsappResumen = useMemo<ConversacionWhatsappResumen[]>(
+    () =>
+      tablero.conversaciones
+        .filter((c) => c.canal === "whatsapp" && c.estadoAtencion !== "CERRADO")
+        .map((c) => ({
+          id: c.id,
+          nombre: c.remitenteNombre,
+          telefono: c.remitenteTelefono ?? null,
+          ultimoMensajeEn: c.ultimoMensajeEn,
+        })),
+    [tablero.conversaciones]
+  );
+
+  const subirImagenAsesorOmnicanal = async (archivo: File) => {
+    if (!archivo.type.startsWith("image/")) {
+      setErrorMsg("Selecciona una imagen válida (JPG, PNG o WEBP).");
+      return;
+    }
+    setSubiendoImagenAsesor(true);
+    setErrorMsg(null);
+    try {
+      const supabase = crearClienteNavegador();
+      const ext = archivo.name.split(".").pop()?.toLowerCase() || "jpg";
+      const ruta = `omnicanal-media/${negNorm}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
+      const { error: errUp } = await supabase.storage
+        .from("comun-publico")
+        .upload(ruta, archivo, { contentType: archivo.type, upsert: false });
+      if (errUp) {
+        setErrorMsg(`No se pudo subir la imagen: ${errUp.message}`);
+        return;
+      }
+      const { data: pub } = supabase.storage.from("comun-publico").getPublicUrl(ruta);
+      if (pub?.publicUrl) {
+        setImagenAdjuntaAsesorUrl(pub.publicUrl);
+      }
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Error subiendo imagen.");
+    } finally {
+      setSubiendoImagenAsesor(false);
+    }
+  };
+
+  const handlePegarImagenCompositor = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i += 1) {
+      const it = items[i];
+      if (it && it.type.startsWith("image/")) {
+        const file = it.getAsFile();
+        if (file) {
+          e.preventDefault();
+          void subirImagenAsesorOmnicanal(file);
+          break;
+        }
+      }
+    }
+  };
+
   const handleEnviarMensaje = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!conversacionActiva || !textoRespuesta.trim() || enviandoMensaje) return;
+    if (!conversacionActiva || (!textoRespuesta.trim() && !imagenAdjuntaAsesorUrl) || enviandoMensaje) {
+      return;
+    }
+
+    const textoLimpio = textoRespuesta.trim();
+    const cuerpoFinal = imagenAdjuntaAsesorUrl
+      ? `${textoLimpio ? `${textoLimpio}\n\n` : ""}![Fotografía adjunta](${imagenAdjuntaAsesorUrl})`
+      : textoLimpio;
 
     setEnviandoMensaje(true);
     const res = await enviarMensajeAsesorOmnicanalAction({
       negocio: negNorm,
       conversacionId: conversacionActiva.id,
-      contenido: textoRespuesta.trim(),
+      contenido: cuerpoFinal,
       esNotaInterna: modoNotaInterna,
       respuestaRapidaId: respuestaSeleccionadaId,
     });
@@ -967,6 +1157,7 @@ export function ConsolaVentasOmnicanal({
     }
 
     setTextoRespuesta("");
+    setImagenAdjuntaAsesorUrl(null);
     setRespuestaSeleccionadaId(null);
     setMensajesActivos((prev) => [...prev, res.mensaje]);
     if (conversacionActiva.claveHilo) {
@@ -1535,6 +1726,11 @@ export function ConsolaVentasOmnicanal({
                 contador: metricas.conversacionesAbiertas,
               },
               {
+                id: "chat_equipo" as const,
+                etiqueta: "Chat Equipo",
+                icono: MessageCircle,
+              },
+              {
                 id: "compras" as const,
                 etiqueta: "Compras Web",
                 icono: ShoppingBag,
@@ -1800,6 +1996,11 @@ export function ConsolaVentasOmnicanal({
           </button>
         </div>
       )}
+
+      {/* =====================================================================
+          PESTAÑA CHAT GRUPAL DEL EQUIPO (MENCIONES @KLEBER, FOTOS Y REENVÍO)
+      ===================================================================== */}
+      {pestana === "chat_equipo" && <ChatEquipoInterno negocio={negNorm} embebido />}
 
       {/* =====================================================================
           PESTAÑA 1: BANDEJA UNIFICADA ESTILO MANYCHAT (4 COLUMNAS RESPONSIVE)
@@ -2956,12 +3157,126 @@ export function ConsolaVentasOmnicanal({
                               fontSize: "0.83rem",
                               lineHeight: 1.48,
                               boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "8px",
                             }}
                           >
                             {renderContenidoMensajeOmnicanal(
                               m,
-                              m.origen === "ASESORA_HUMANA"
+                              m.origen === "ASESORA_HUMANA",
+                              {
+                                onAmpliarImagen: (url, alt) =>
+                                  setVisorImagenDatos({
+                                    url,
+                                    titulo:
+                                      alt ||
+                                      `Conversación con ${conversacionActiva.remitenteNombre}`,
+                                    autorNombre:
+                                      m.autorNombre || conversacionActiva.remitenteNombre,
+                                    creadoEn: m.creadoEn,
+                                    contextoReenvio: {
+                                      conversacionId: conversacionActiva.id,
+                                      canal: conversacionActiva.canal,
+                                      clienteNombre: conversacionActiva.remitenteNombre,
+                                      clienteTelefono:
+                                        conversacionActiva.remitenteTelefono ?? null,
+                                      autorOriginal:
+                                        m.autorNombre || conversacionActiva.remitenteNombre,
+                                      textoOriginal: m.contenido
+                                        .replace(/!\s*\[[^\]]*\]\s*\([^)]+\)/g, "")
+                                        .trim(),
+                                      imagenUrl: url,
+                                    },
+                                  }),
+                                onReenviarImagen: (url, alt) =>
+                                  setReenvioModalDatos({
+                                    destino: "whatsapp",
+                                    payload: {
+                                      imagenUrl: url,
+                                      tituloImagen: alt || "Arreglo Tinkay",
+                                      textoOriginal: m.contenido
+                                        .replace(/!\s*\[[^\]]*\]\s*\([^)]+\)/g, "")
+                                        .trim(),
+                                      contextoCliente: {
+                                        conversacionId: conversacionActiva.id,
+                                        canal: conversacionActiva.canal,
+                                        clienteNombre: conversacionActiva.remitenteNombre,
+                                        clienteTelefono:
+                                          conversacionActiva.remitenteTelefono ?? null,
+                                        autorOriginal:
+                                          m.autorNombre || conversacionActiva.remitenteNombre,
+                                        textoOriginal: m.contenido
+                                          .replace(/!\s*\[[^\]]*\]\s*\([^)]+\)/g, "")
+                                          .trim(),
+                                        imagenUrl: url,
+                                      },
+                                    },
+                                  }),
+                              }
                             )}
+
+                            {/* Botón rápido para enviar cualquier consulta/mensaje al Chat Grupal del Equipo con @menciones */}
+                            <div
+                              style={{
+                                display: "flex",
+                                justifyContent: "flex-end",
+                                gap: "6px",
+                              }}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const imgPrincipal =
+                                    extraerTodasLasImagenesMensaje(m)[0]?.url ?? null;
+                                  setReenvioModalDatos({
+                                    destino: "equipo",
+                                    payload: {
+                                      imagenUrl: imgPrincipal,
+                                      tituloImagen: conversacionActiva.remitenteNombre,
+                                      textoOriginal: m.contenido
+                                        .replace(/!\s*\[[^\]]*\]\s*\([^)]+\)/g, "")
+                                        .trim(),
+                                      contextoCliente: {
+                                        conversacionId: conversacionActiva.id,
+                                        canal: conversacionActiva.canal,
+                                        clienteNombre: conversacionActiva.remitenteNombre,
+                                        clienteTelefono:
+                                          conversacionActiva.remitenteTelefono ?? null,
+                                        autorOriginal:
+                                          m.autorNombre || conversacionActiva.remitenteNombre,
+                                        textoOriginal: m.contenido
+                                          .replace(/!\s*\[[^\]]*\]\s*\([^)]+\)/g, "")
+                                          .trim(),
+                                        imagenUrl: imgPrincipal,
+                                      },
+                                    },
+                                  });
+                                }}
+                                title="Reenviar este mensaje o foto al Chat Grupal del Equipo (@kleber, @taller)"
+                                aria-label="Enviar al equipo"
+                                style={{
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  padding: "2px 7px",
+                                  borderRadius: "6px",
+                                  border: "none",
+                                  background:
+                                    m.origen === "ASESORA_HUMANA"
+                                      ? "rgba(255,255,255,0.16)"
+                                      : "rgba(109, 40, 217, 0.08)",
+                                  color:
+                                    m.origen === "ASESORA_HUMANA" ? "#E9D5FF" : "#5B21B6",
+                                  fontSize: "0.69rem",
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                }}
+                              >
+                                <Users size={11} />
+                                <span>Al Equipo</span>
+                              </button>
+                            </div>
                           </div>
                         </div>
                       );
@@ -3101,10 +3416,84 @@ export function ConsolaVentasOmnicanal({
                     </button>
                   </div>
 
+                  {imagenAdjuntaAsesorUrl && (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                        padding: "6px 10px",
+                        borderRadius: "9px",
+                        background: "#F8FAFC",
+                        border: "1px solid #CBD5E1",
+                      }}
+                    >
+                      <img
+                        src={imagenAdjuntaAsesorUrl}
+                        alt="Fotografía adjunta"
+                        style={{
+                          width: "48px",
+                          height: "48px",
+                          objectFit: "cover",
+                          borderRadius: "7px",
+                        }}
+                      />
+                      <span style={{ fontSize: "0.76rem", color: "#334155", flex: 1 }}>
+                        📷 Imagen adjunta lista para enviar al cliente
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setImagenAdjuntaAsesorUrl(null)}
+                        title="Quitar imagen adjunta"
+                        aria-label="Quitar imagen"
+                        style={{ border: "none", background: "transparent", cursor: "pointer" }}
+                      >
+                        <X size={15} />
+                      </button>
+                    </div>
+                  )}
+
                   <div style={{ display: "flex", gap: "8px", alignItems: "flex-end" }}>
+                    <input
+                      ref={inputFotoAsesorRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const archivo = e.target.files?.[0];
+                        if (archivo) void subirImagenAsesorOmnicanal(archivo);
+                        e.target.value = "";
+                      }}
+                      style={{ display: "none" }}
+                    />
+                    <button
+                      type="button"
+                      className="btn-responsive-accion"
+                      disabled={subiendoImagenAsesor}
+                      onClick={() => inputFotoAsesorRef.current?.click()}
+                      title="Adjuntar fotografía para el cliente"
+                      aria-label="Adjuntar foto"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        padding: "9px 11px",
+                        borderRadius: "10px",
+                        border: "1px solid #CBD5E1",
+                        background: "#F8FAFC",
+                        color: "#334155",
+                        fontSize: "0.78rem",
+                        fontWeight: 700,
+                        cursor: subiendoImagenAsesor ? "wait" : "pointer",
+                      }}
+                    >
+                      {subiendoImagenAsesor ? <Loader2 size={15} /> : <ImagePlus size={15} />}
+                      <span className="btn-texto-responsive">Foto</span>
+                    </button>
+
                     <textarea
                       value={textoRespuesta}
                       onChange={(e) => setTextoRespuesta(e.target.value)}
+                      onPaste={handlePegarImagenCompositor}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !e.shiftKey) {
                           e.preventDefault();
@@ -3115,7 +3504,7 @@ export function ConsolaVentasOmnicanal({
                       placeholder={
                         modoNotaInterna
                           ? "Escribe una nota interna solo visible para el equipo de ventas…"
-                          : "Escribe al cliente (o usa /saludo, /transferencia, /ubicacion)… Al enviar tomas el control humano."
+                          : "Escribe al cliente, pega una foto (Ctrl+V) o usa /saludo, /transferencia…"
                       }
                       style={{
                         flex: 1,
@@ -3130,7 +3519,9 @@ export function ConsolaVentasOmnicanal({
                     />
                     <button
                       type="submit"
-                      disabled={enviandoMensaje || !textoRespuesta.trim()}
+                      disabled={
+                        enviandoMensaje || (!textoRespuesta.trim() && !imagenAdjuntaAsesorUrl)
+                      }
                       title={modoNotaInterna ? "Guardar nota interna" : "Enviar respuesta al cliente"}
                       aria-label="Enviar"
                       style={{
@@ -3145,7 +3536,7 @@ export function ConsolaVentasOmnicanal({
                         fontSize: "0.82rem",
                         fontWeight: 700,
                         cursor: enviandoMensaje ? "wait" : "pointer",
-                        opacity: !textoRespuesta.trim() ? 0.55 : 1,
+                        opacity: !textoRespuesta.trim() && !imagenAdjuntaAsesorUrl ? 0.55 : 1,
                       }}
                     >
                       {enviandoMensaje ? <Loader2 size={15} /> : <Send size={15} />}
@@ -4000,6 +4391,41 @@ export function ConsolaVentasOmnicanal({
           </div>
         </div>
       )}
+
+      {/* Visor de imagen a pantalla completa (Ampliar, Descargar, Reenviar WA o Al Equipo) */}
+      <ModalVisorImagenChat
+        abierto={Boolean(visorImagenDatos)}
+        datos={visorImagenDatos}
+        onCerrar={() => setVisorImagenDatos(null)}
+        onAbrirReenvio={(destinoInicial) => {
+          if (!visorImagenDatos) return;
+          const actual = visorImagenDatos;
+          setVisorImagenDatos(null);
+          setReenvioModalDatos({
+            destino: destinoInicial,
+            payload: {
+              imagenUrl: actual.url,
+              tituloImagen: actual.titulo,
+              textoOriginal: actual.contextoReenvio?.textoOriginal ?? "",
+              contextoCliente: actual.contextoReenvio,
+            },
+          });
+        }}
+      />
+
+      {/* Modal de reenvío rápido (a Chat Grupal del Equipo con @mención o a otro WhatsApp) */}
+      <ModalReenviarMensajeChat
+        abierto={Boolean(reenvioModalDatos)}
+        negocio={negNorm}
+        destinoInicial={reenvioModalDatos?.destino ?? "equipo"}
+        datos={reenvioModalDatos?.payload ?? null}
+        conversacionesWhatsapp={chatsWhatsappResumen}
+        onCerrar={() => setReenvioModalDatos(null)}
+        onExito={(confirmacion) => {
+          setMensajeInfo(confirmacion);
+          void recargarTablero(true);
+        }}
+      />
     </div>
   );
 }

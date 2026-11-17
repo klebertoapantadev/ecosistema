@@ -4,14 +4,21 @@ import {
   ETIQUETAS_OMNICANAL_POR_DEFECTO,
   RESPUESTAS_RAPIDAS_POR_DEFECTO,
   esPedidoUsuarioRegistrado,
+  nombreCanalRealtimeChatEquipo,
   nombreCanalRealtimeOmnicanal,
   normalizarTelefonoOmnicanal,
+  type CitaRespuestaChatEquipo,
   type ContactoUnificadoOmnicanal,
+  type ContextoReenvioChatEquipo,
   type ConversacionOmnicanal,
+  type ConversacionWhatsappResumen,
   type EstadoAtencionOmnicanal,
   type EtiquetaOmnicanal,
+  type EventoBroadcastChatEquipo,
   type EventoBroadcastChatWeb,
+  type MensajeChatEquipo,
   type MensajeOmnicanal,
+  type MiembroChatEquipo,
   type MiembroEquipoOmnicanal,
   type RespuestaRapidaOmnicanal,
 } from "./omnicanal";
@@ -1528,6 +1535,48 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
 
     const accion = String(rec.accion || "OK");
     const negocio = String(rec.negocio || "tinkay");
+    let imagenUrlCliente: string | null = rec.imagenUrl ? String(rec.imagenUrl) : null;
+    let contenidoCliente = String(rec.contenido || "");
+
+    // Si hay cliente admin disponible, espejar copia permanente de la imagen entrante en comun-publico
+    if (imagenUrlCliente && rec.mensajeId) {
+      try {
+        const { crearClienteAdmin } = await import("@eco/supabase/servidor");
+        const adminClient: any = crearClienteAdmin();
+        if (adminClient) {
+          const respImg = await fetch(imagenUrlCliente, {
+            headers: { Accept: "image/*,*/*;q=0.8" },
+          });
+          if (respImg.ok) {
+            const mime = (respImg.headers.get("content-type") || "image/jpeg").split(";")[0]!.trim();
+            if (mime.startsWith("image/")) {
+              const ext = mime.includes("png") ? "png" : mime.includes("webp") ? "webp" : "jpg";
+              const rutaStorage = `omnicanal-media/${negocio}/${rec.mensajeId}.${ext}`;
+              const bytes = Buffer.from(await respImg.arrayBuffer());
+              const { error: errUp } = await adminClient.storage
+                .from("comun-publico")
+                .upload(rutaStorage, bytes, { contentType: mime, upsert: true });
+              if (!errUp) {
+                const { data: pub } = adminClient.storage
+                  .from("comun-publico")
+                  .getPublicUrl(rutaStorage);
+                if (pub?.publicUrl) {
+                  await esquemaComercio.rpc("com_fn_omnicanal_actualizar_imagen_mensaje", {
+                    p_token: entrada.token,
+                    p_mensaje_id: rec.mensajeId,
+                    p_imagen_publica_url: pub.publicUrl,
+                  });
+                  contenidoCliente = contenidoCliente.split(imagenUrlCliente).join(pub.publicUrl);
+                  imagenUrlCliente = pub.publicUrl;
+                }
+              }
+            }
+          }
+        }
+      } catch {
+        // Mantener URL directa de YCloud si el espejado opcional no aplica
+      }
+    }
 
     // Emitir actualización instantánea (<50ms) a la Consola de Ventas en Vivo
     if (
@@ -1547,7 +1596,8 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
         conversacionId: String(rec.conversacionId),
         canal: "whatsapp",
         fase: accion === "ECO_MOVIL_REGISTRADO" ? "INTERVENCION_HUMANA" : "ENTRADA_CLIENTE",
-        contenido: String(rec.contenido || ""),
+        contenido: contenidoCliente,
+        imagenUrl: imagenUrlCliente,
         autorNombre:
           accion === "ECO_MOVIL_REGISTRADO"
             ? "WhatsApp Móvil Tienda"
@@ -1572,7 +1622,7 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
     // Construir prompt para Mía (ARIA) con el formato exacto de WhatsApp + Entrega Inmediata + Cotización GPS
     const tel = String(rec.remitenteTelefono || "");
     const nombreCorto = String(rec.remitenteNombre || "Cliente").slice(0, 48);
-    const textoCliente = String(rec.contenido || "");
+    const textoCliente = String(rec.caption || contenidoCliente || "");
     const origenTienda = (entrada.origenTiendaUrl || "https://tinkay-web.vercel.app").replace(
       /\/+$/,
       ""
@@ -1652,7 +1702,7 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
         p_token: entrada.token,
         p_conversacion_id: rec.conversacionId,
         p_prompt: promptCompleto,
-        p_imagen_url: rec.imagenUrl ? String(rec.imagenUrl) : null,
+        p_imagen_url: imagenUrlCliente,
       }
     );
 
@@ -1664,6 +1714,9 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
         canal: "whatsapp",
         fase: "RESPUESTA_ARIA",
         contenido: String(resAria.respuestaAria),
+        imagenesUrls: Array.isArray(resAria.imagenesUrls)
+          ? resAria.imagenesUrls.map((u: unknown) => String(u))
+          : undefined,
         autorNombre: String(resAria.autorNombre || "Mía · ARIA"),
         remitenteNombre: String(rec.remitenteNombre || "Cliente WhatsApp"),
         remitenteTelefono: tel || null,
@@ -1686,4 +1739,240 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
       error: err instanceof Error ? err.message : "Error interno en webhook YCloud",
     };
   }
+}
+
+export interface DatosSalaChatEquipo {
+  conversacionId: string;
+  sala: string;
+  nombreSala: string;
+  usuarioActual: {
+    usuarioId: string;
+    nombre: string;
+    handle: string;
+    rol: string;
+  };
+  miembros: MiembroChatEquipo[];
+  mensajes: MensajeChatEquipo[];
+  conversacionesWhatsapp: ConversacionWhatsappResumen[];
+  migracionPendiente?: boolean;
+}
+
+export async function obtenerSalaChatEquipoAction(
+  negocio: string,
+  sala = "equipo-general"
+): Promise<{ ok: true; datos: DatosSalaChatEquipo } | { ok: false; error: string }> {
+  try {
+    const neg = normalizarNegocioComercio(negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+    const { data, error } = await esquemaComercio.rpc("com_fn_chat_equipo_obtener_sala", {
+      p_negocio: neg,
+      p_sala: sala,
+    });
+
+    if (error) {
+      if (esFuncionRpcPendienteMigracion(error.message) || error.message.includes("com_fn_chat_equipo_")) {
+        return {
+          ok: false,
+          error:
+            "Ejecuta la migración 20261116000005_omnicanal_visor_imagenes_y_chat_grupal_equipo.sql en el SQL Editor de Supabase para activar el Chat Grupal del Equipo.",
+        };
+      }
+      return { ok: false, error: error.message };
+    }
+
+    if (!data?.ok) {
+      return { ok: false, error: String(data?.error || "Sin acceso al chat del equipo.") };
+    }
+
+    return {
+      ok: true,
+      datos: {
+        conversacionId: String(data.conversacionId),
+        sala: String(data.sala || sala),
+        nombreSala: String(data.nombreSala || "Chat del Equipo"),
+        usuarioActual: {
+          usuarioId: String(data.usuarioActual?.usuarioId || ""),
+          nombre: String(data.usuarioActual?.nombre || "Equipo"),
+          handle: String(data.usuarioActual?.handle || "equipo"),
+          rol: String(data.usuarioActual?.rol || "OPERADOR"),
+        },
+        miembros: Array.isArray(data.miembros) ? (data.miembros as MiembroChatEquipo[]) : [],
+        mensajes: Array.isArray(data.mensajes) ? (data.mensajes as MensajeChatEquipo[]) : [],
+        conversacionesWhatsapp: Array.isArray(data.conversacionesWhatsapp)
+          ? (data.conversacionesWhatsapp as ConversacionWhatsappResumen[])
+          : [],
+      },
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error cargando el chat del equipo.",
+    };
+  }
+}
+
+export async function enviarMensajeChatEquipoAction(entrada: {
+  negocio: string;
+  contenido: string;
+  imagenUrl?: string | null;
+  respuestaA?: CitaRespuestaChatEquipo | null;
+  reenviadoDe?: ContextoReenvioChatEquipo | null;
+  sala?: string;
+}): Promise<
+  | {
+      ok: true;
+      mensaje: MensajeChatEquipo;
+      mencionadosUsuariosIds: string[];
+      handlesMencionados: string[];
+    }
+  | { ok: false; error: string }
+> {
+  try {
+    const neg = normalizarNegocioComercio(entrada.negocio);
+    const sala = entrada.sala || "equipo-general";
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+    const { data, error } = await esquemaComercio.rpc("com_fn_chat_equipo_enviar_mensaje", {
+      p_negocio: neg,
+      p_contenido: entrada.contenido,
+      p_imagen_url: entrada.imagenUrl ?? null,
+      p_respuesta_a: entrada.respuestaA ?? null,
+      p_reenviado_de: entrada.reenviadoDe ?? null,
+      p_sala: sala,
+    });
+
+    if (error) {
+      return {
+        ok: false,
+        error:
+          error.message.includes("com_fn_chat_equipo_") || esFuncionRpcPendienteMigracion(error.message)
+            ? "Ejecuta primero la migración 20261116000005_omnicanal_visor_imagenes_y_chat_grupal_equipo.sql en Supabase."
+            : error.message,
+      };
+    }
+
+    if (!data?.ok || !data?.mensaje) {
+      return { ok: false, error: String(data?.error || "No se pudo enviar el mensaje.") };
+    }
+
+    const mensaje = data.mensaje as MensajeChatEquipo;
+    const mencionadosIds: string[] = Array.isArray(data.mencionadosUsuariosIds)
+      ? data.mencionadosUsuariosIds.map((u: unknown) => String(u)).filter(Boolean)
+      : [];
+    const handles: string[] = Array.isArray(data.handlesMencionados)
+      ? data.handlesMencionados.map((h: unknown) => String(h)).filter(Boolean)
+      : [];
+
+    // 1. Emitir broadcast en tiempo real (<50ms) a toda la sala del equipo
+    try {
+      const canalEq = (supabase as any).channel(nombreCanalRealtimeChatEquipo(neg));
+      const payloadEq: EventoBroadcastChatEquipo = {
+        eventoId: mensaje.id,
+        sala,
+        mensaje,
+        mencionadosUsuariosIds: mencionadosIds,
+        handlesMencionados: handles,
+      };
+      await Promise.race([
+        canalEq.send({
+          type: "broadcast",
+          event: "mensaje_equipo",
+          payload: payloadEq,
+        }),
+        new Promise((resolve) => setTimeout(resolve, 1200)),
+      ]);
+      void (supabase as any).removeChannel?.(canalEq);
+    } catch {
+      // El cliente también publica en el canal activo
+    }
+
+    // 2. Si hay @menciones (@kleber, @taller, @ventas, @delivery, @todos), alertar en CampanaNotificaciones + Push
+    if (mencionadosIds.length > 0) {
+      try {
+        const { persistirNotificacionesInternasResiliente } = await import(
+          "@eco/notificaciones/notificar-usuario"
+        );
+        const extracto = String(entrada.contenido || "📷 Imagen compartida")
+          .replace(/!\s*\[[^\]]*\]\s*\([^)]+\)/g, "📷 Foto")
+          .slice(0, 180);
+        const itemsNotif = mencionadosIds.flatMap((uid) => [
+          {
+            usuarioId: uid,
+            negocioCode: neg.toUpperCase(),
+            canal: "IN_APP" as const,
+            titulo: `💬 ${mensaje.autorNombre} te mencionó en el Chat del Equipo`,
+            contenidoHtml: `<p><strong>${mensaje.autorNombre}:</strong> ${extracto}</p>${
+              entrada.reenviadoDe?.clienteNombre
+                ? `<p style="font-size:12px;color:#475569;">Reenviado del cliente: ${entrada.reenviadoDe.clienteNombre}</p>`
+                : ""
+            }`,
+            urlAccion: "/panel/chat-equipo",
+            claveReferencia: `mencion-equipo-${mensaje.id}-${uid}`,
+          },
+          {
+            usuarioId: uid,
+            negocioCode: neg.toUpperCase(),
+            canal: "PUSH" as const,
+            titulo: `💬 @mención de ${mensaje.autorNombre}`,
+            contenidoHtml: extracto,
+            urlAccion: "/panel/chat-equipo",
+            claveReferencia: `push-mencion-${mensaje.id}-${uid}`,
+          },
+        ]);
+        await persistirNotificacionesInternasResiliente(neg, itemsNotif);
+      } catch {
+        // No bloquear el mensaje si falla el despacho secundario de notificación
+      }
+    }
+
+    return {
+      ok: true,
+      mensaje,
+      mencionadosUsuariosIds: mencionadosIds,
+      handlesMencionados: handles,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error enviando mensaje al equipo.",
+    };
+  }
+}
+
+export async function reenviarMensajeAClienteWhatsappAction(entrada: {
+  negocio: string;
+  conversacionDestinoId: string;
+  texto?: string;
+  imagenUrl?: string | null;
+  tituloImagen?: string | null;
+}): Promise<{ ok: true; avisoWhatsApp?: string | null } | { ok: false; error: string }> {
+  const comentario = (entrada.texto || "").trim();
+  const img = (entrada.imagenUrl || "").trim();
+  const alt = (entrada.tituloImagen || "Imagen").trim().replace(/[\[\]]/g, "");
+
+  if (!comentario && !img) {
+    return { ok: false, error: "Selecciona una imagen o escribe un mensaje para reenviar." };
+  }
+
+  const cuerpoFinal = img
+    ? `${comentario ? `${comentario}\n\n` : ""}![${alt}](${img})`
+    : comentario;
+
+  const res = await enviarMensajeAsesorOmnicanalAction({
+    negocio: entrada.negocio,
+    conversacionId: entrada.conversacionDestinoId,
+    contenido: cuerpoFinal,
+    esNotaInterna: false,
+  });
+
+  if (!res.ok) {
+    return { ok: false, error: res.error };
+  }
+
+  return { ok: true, avisoWhatsApp: res.avisoWhatsApp };
 }

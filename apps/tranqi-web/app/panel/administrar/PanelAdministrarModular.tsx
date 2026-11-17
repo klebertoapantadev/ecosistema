@@ -13,7 +13,7 @@ import { GestionRedProfesionalWidget } from "../../../modulos/socios/componentes
 import { ConfiguracionHorariosAtencionWidget } from "../../../modulos/agenda/componentes/ConfiguracionHorariosAtencionWidget";
 import { WidgetAsignacionesAgendaInline } from "../../../modulos/agenda/componentes/WidgetsAgendaInline";
 import { BandejaClientesCRM } from "../../../modulos/crm-clientes/componentes/BandejaClientesCRM";
-import { WidgetFacturacionElectronica, GestionConveniosCorporativos, ConsolaGestionInformativosWidget, ComplianceScoreEmpresarial, LegalHRLaboral, ConsolaVentasOmnicanal, BandejaPedidosTienda, ConsolaTestimoniosClientes, ConsolaEnvioPedidosTaller, ConsolaTallerFloral } from "@eco/comercio";
+import { WidgetFacturacionElectronica, GestionConveniosCorporativos, ConsolaGestionInformativosWidget, ComplianceScoreEmpresarial, LegalHRLaboral, ConsolaVentasOmnicanal, BandejaPedidosTienda, ConsolaTestimoniosClientes, ConsolaEnvioPedidosTaller, ConsolaTallerFloral, ChatEquipoInterno } from "@eco/comercio";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
 import { useCustomWidgets } from "../gestorTitulosWidgets";
 import { ModalEditarWidget } from "../ModalEditarWidget";
@@ -59,6 +59,15 @@ const MODULOS_ADMIN: ModuloAdminDef[] = [
     ruta: "/panel/administrar?widget=envio_pedidos_taller",
     icono: ClipboardList,
     colorIcono: "#0F172A",
+    categoria: "Comercio y Pagos"
+  },
+  {
+    id: "chat_equipo",
+    titulo: "Chat Grupal del Equipo",
+    subtitulo: "Conversación interna de trabajo con @menciones, fotografías y reenvío de consultas",
+    ruta: "/panel/administrar?widget=chat_equipo",
+    icono: Users,
+    colorIcono: "#6D28D9",
     categoria: "Comercio y Pagos"
   },
   {
@@ -976,6 +985,11 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
             {widgetActivo === "envio_pedidos_taller" && (
               <div style={{ width: "100%" }}>
                 <ConsolaEnvioPedidosTaller negocio={negocio} />
+              </div>
+            )}
+            {widgetActivo === "chat_equipo" && (
+              <div style={{ width: "100%" }}>
+                <ChatEquipoInterno negocio={negocio} />
               </div>
             )}
             {widgetActivo === "taller_floral" && (

@@ -32,6 +32,13 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel> = [
     grupo: "operacion",
   },
   {
+    clave: "chat_equipo",
+    nombre: "Chat del Equipo",
+    ruta: "/panel/chat-equipo",
+    icono: "chat_equipo",
+    grupo: "operacion",
+  },
+  {
     clave: "envio_pedidos_taller",
     nombre: "Enviar Pedidos",
     ruta: "/panel/envio-pedidos",

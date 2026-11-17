@@ -130,6 +130,8 @@ const MAPA_RUTAS_FISICAS_WIDGETS: Record<string, string> = {
   "inventario_rosas": "packages/comercio/src/componentes/ConsolaInventarioRosas.tsx",
   "envio_pedidos_taller": "packages/comercio/src/componentes/ConsolaEnvioPedidosTaller.tsx",
   "envio-pedidos": "packages/comercio/src/componentes/ConsolaEnvioPedidosTaller.tsx",
+  "chat_equipo": "packages/comercio/src/componentes/ChatEquipoInterno.tsx",
+  "chat-equipo": "packages/comercio/src/componentes/ChatEquipoInterno.tsx",
   "taller_floral": "packages/comercio/src/componentes/ConsolaTallerFloral.tsx",
   "taller": "packages/comercio/src/componentes/ConsolaTallerFloral.tsx",
   "confirmacion_entregas": "packages/comercio/src/componentes/ConsolaConfirmacionEntregas.tsx",

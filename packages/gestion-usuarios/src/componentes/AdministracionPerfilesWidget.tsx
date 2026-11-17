@@ -344,10 +344,10 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nombre: "Delivery Subcontratado",
     nivel: 12,
     ambito: "Empresa",
-    descripcion: "Repartidor externo subcontratado: ve únicamente los pedidos asignados explícitamente a su cuenta, comparte GPS en ruta y confirma entrega.",
+    descripcion: "Repartidor externo subcontratado: ve únicamente los pedidos asignados explícitamente a su cuenta, comparte GPS en ruta, confirma entrega y participa en el Chat del Equipo.",
     panelesAsignados: ["panel_administrar", "panel_cuenta"],
     widgetsAsignadosPorPanel: {
-      panel_administrar: ["confirmacion_entregas"],
+      panel_administrar: ["confirmacion_entregas", "chat_equipo"],
       panel_cuenta: ["mi_cuenta", "mfa_seguridad", "historial_accesos"]
     },
     activo: true
@@ -357,10 +357,10 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nombre: "Delivery Interno",
     nivel: 15,
     ambito: "Empresa",
-    descripcion: "Repartidor interno: ve pedidos listos y asignados, comparte GPS en ruta y confirma entrega con fotografía georreferenciada.",
+    descripcion: "Repartidor interno: ve pedidos listos y asignados, comparte GPS en ruta, confirma entrega con fotografía georreferenciada y participa en el Chat del Equipo.",
     panelesAsignados: ["panel_administrar", "panel_cuenta"],
     widgetsAsignadosPorPanel: {
-      panel_administrar: ["confirmacion_entregas"],
+      panel_administrar: ["confirmacion_entregas", "chat_equipo"],
       panel_cuenta: ["mi_cuenta", "mfa_seguridad", "historial_accesos"]
     },
     activo: true
@@ -370,10 +370,10 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nombre: "Taller Floral",
     nivel: 18,
     ambito: "Empresa",
-    descripcion: "Producción floral enfocada: cola de elaboración sin precios, cambio de estado (En Preparación / Listo Entrega), Inventario de Rosas y Entrega Inmediata.",
+    descripcion: "Producción floral enfocada: cola de elaboración sin precios, cambio de estado (En Preparación / Listo Entrega), Chat del Equipo, Inventario de Rosas y Entrega Inmediata.",
     panelesAsignados: ["panel_administrar", "panel_cuenta"],
     widgetsAsignadosPorPanel: {
-      panel_administrar: ["taller_floral", "inventario_rosas", "galeria_inmediata"],
+      panel_administrar: ["taller_floral", "chat_equipo", "inventario_rosas", "galeria_inmediata"],
       panel_cuenta: ["mi_cuenta", "mfa_seguridad", "historial_accesos"]
     },
     activo: true
@@ -383,12 +383,12 @@ const PERFILES_INICIALES: PerfilDef[] = [
     nombre: "Ventas / Asesor Comercial",
     nivel: 20,
     ambito: "Empresa",
-    descripcion: "Atención comercial enfocada en Ventas y Chats en Vivo, Enviar Pedidos a Taller, Proformas (V2/V3), Entrega Inmediata e Inventario de Rosas.",
+    descripcion: "Atención comercial enfocada en Ventas y Chats en Vivo, Chat del Equipo, Enviar Pedidos a Taller, Proformas (V2/V3), Entrega Inmediata e Inventario de Rosas.",
     panelesAsignados: ["panel_inicio", "panel_clientes", "panel_administrar", "panel_cuenta"],
     widgetsAsignadosPorPanel: {
       panel_inicio: ["favoritos"],
       panel_clientes: ["vitrina_comercial_personas", "crm_clientes"],
-      panel_administrar: ["consola_chat", "envio_pedidos_taller", "pedidos_tienda", "galeria_inmediata", "inventario_rosas"],
+      panel_administrar: ["consola_chat", "chat_equipo", "envio_pedidos_taller", "pedidos_tienda", "galeria_inmediata", "inventario_rosas"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "mfa_seguridad", "historial_accesos"]
     },
     activo: true
@@ -408,7 +408,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_red_profesional: ["gestion_red_abogados", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["consola_chat", "envio_pedidos_taller", "taller_floral", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
+      panel_administrar: ["consola_chat", "chat_equipo", "envio_pedidos_taller", "taller_floral", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["notificaciones", "agentes_ia"]
@@ -445,7 +445,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_red_profesional: ["gestion_red_abogados", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["consola_chat", "envio_pedidos_taller", "taller_floral", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
+      panel_administrar: ["consola_chat", "chat_equipo", "envio_pedidos_taller", "taller_floral", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_facturacion_sri", "configuracion_logistica", "configuracion_correo", "configuracion_aria", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
@@ -467,7 +467,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_red_profesional: ["gestion_red_abogados", "mi_perfil_abogado", "socios", "paquete_beneficios_abogados", "solicitud_socio"],
       panel_terminos: ["gestion_terminos_consentimientos", "configuracion_contrato_abogado"],
       panel_agendamiento: ["horarios_atencion_agenda", "mi_perfil_abogado", "disponibilidad_abogados", "asignaciones_agenda"],
-      panel_administrar: ["consola_chat", "envio_pedidos_taller", "taller_floral", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
+      panel_administrar: ["consola_chat", "chat_equipo", "envio_pedidos_taller", "taller_floral", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
       panel_configuracion: ["configuracion_negocio", "configuracion_facturacion_sri", "configuracion_logistica", "configuracion_correo", "configuracion_aria", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
@@ -719,6 +719,17 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     categoria: "Comercio y Pagos",
     ruta: "/panel/envio-pedidos",
     rutaFisica: "/comercio/componentes/ConsolaEnvioPedidosTaller.tsx",
+    panelId: "panel_administrar",
+    activo: true,
+    creadoEn: "2026-11-16"
+  },
+  {
+    clave: "chat_equipo",
+    nombre: "Chat del Equipo",
+    descripcion: "Sala grupal interna de trabajo (Ventas, Taller, Delivery y Administración) con @menciones, fotos y reenvío de consultas.",
+    categoria: "Comercio y Pagos",
+    ruta: "/panel/chat-equipo",
+    rutaFisica: "/comercio/componentes/ChatEquipoInterno.tsx",
     panelId: "panel_administrar",
     activo: true,
     creadoEn: "2026-11-16"
@@ -1270,6 +1281,7 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
     case "galeria_inmediata":
     case "inventario_rosas":
     case "envio_pedidos_taller":
+    case "chat_equipo":
     case "taller_floral":
     case "confirmacion_entregas":
       return (
