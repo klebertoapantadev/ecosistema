@@ -81,6 +81,147 @@ export interface DatosVentaConversacion {
   firmaTarjeta?: string; // Firma al pie de la tarjeta (antes `✍🏼FirmaTarjeta`)
 }
 
+export type CodigoMotivoCierreOmnicanal =
+  | "VENTA_COMPLETADA"
+  | "COTIZACION_ENVIADA"
+  | "CONSULTA_RESUELTA"
+  | "SIN_DISPONIBILIDAD_COBERTURA"
+  | "NO_RESPONDE"
+  | "NO_DESEA_CONTINUAR"
+  | "SPAM_EQUIVOCADO";
+
+export interface DefinicionMotivoCierreOmnicanal {
+  codigo: CodigoMotivoCierreOmnicanal;
+  etiqueta: string;
+  icono: string;
+  descripcion: string;
+  color: string;
+  fondo: string;
+}
+
+export const MOTIVOS_CIERRE_OMNICANAL: DefinicionMotivoCierreOmnicanal[] = [
+  {
+    codigo: "VENTA_COMPLETADA",
+    etiqueta: "Venta completada",
+    icono: "✅",
+    descripcion: "Pedido confirmado o pagado por el cliente",
+    color: "#15803D",
+    fondo: "#DCFCE7",
+  },
+  {
+    codigo: "COTIZACION_ENVIADA",
+    etiqueta: "Cotización / Proforma enviada",
+    icono: "📄",
+    descripcion: "Propuesta de evento o corporativo enviada para revisión",
+    color: "#1D4ED8",
+    fondo: "#DBEAFE",
+  },
+  {
+    codigo: "CONSULTA_RESUELTA",
+    etiqueta: "Consulta informativa resuelta",
+    icono: "ℹ️",
+    descripcion: "Duda sobre horarios, catálogo o estado de entrega atendida",
+    color: "#0F766E",
+    fondo: "#CCFBF1",
+  },
+  {
+    codigo: "NO_RESPONDE",
+    etiqueta: "No responde",
+    icono: "⏳",
+    descripcion: "Cliente dejó de responder tras el seguimiento",
+    color: "#B45309",
+    fondo: "#FEF3C7",
+  },
+  {
+    codigo: "NO_DESEA_CONTINUAR",
+    etiqueta: "No desea continuar",
+    icono: "❌",
+    descripcion: "Desistió por presupuesto, horario u otra alternativa",
+    color: "#B91C1C",
+    fondo: "#FEE2E2",
+  },
+  {
+    codigo: "SIN_DISPONIBILIDAD_COBERTURA",
+    etiqueta: "Sin stock o fuera de cobertura",
+    icono: "🚫",
+    descripcion: "Producto no disponible para esa hora o fuera de zona",
+    color: "#7C2D12",
+    fondo: "#FFEDD5",
+  },
+  {
+    codigo: "SPAM_EQUIVOCADO",
+    etiqueta: "Spam / Número equivocado",
+    icono: "🗑️",
+    descripcion: "Mensaje automático, proveedor externo o prueba",
+    color: "#475569",
+    fondo: "#F1F5F9",
+  },
+];
+
+export interface DatosCierreConversacion {
+  motivoCodigo: CodigoMotivoCierreOmnicanal | string;
+  motivoEtiqueta: string;
+  nota?: string | null;
+  cerradoEn?: string | null;
+  cerradoPor?: string | null;
+}
+
+export function obtenerDefinicionMotivoCierre(
+  codigo?: string | null
+): DefinicionMotivoCierreOmnicanal {
+  const norm = String(codigo || "").trim().toUpperCase();
+  return (
+    MOTIVOS_CIERRE_OMNICANAL.find((m) => m.codigo === norm) ?? {
+      codigo: "CONSULTA_RESUELTA",
+      etiqueta: codigo?.trim() || "Cerrado",
+      icono: "✅",
+      descripcion: "",
+      color: "#475569",
+      fondo: "#F1F5F9",
+    }
+  );
+}
+
+export type ClaveRecordatorioRapido = "20m" | "1h" | "3h" | "6h" | "12h" | "manana_9am";
+
+export interface OpcionRecordatorioRapidoOmnicanal {
+  clave: ClaveRecordatorioRapido;
+  etiqueta: string;
+}
+
+export const OPCIONES_RECORDATORIO_RAPIDO_OMNICANAL: OpcionRecordatorioRapidoOmnicanal[] = [
+  { clave: "20m", etiqueta: "20 minutos" },
+  { clave: "1h", etiqueta: "1 hora" },
+  { clave: "3h", etiqueta: "3 horas" },
+  { clave: "6h", etiqueta: "6 horas" },
+  { clave: "12h", etiqueta: "12 horas" },
+  { clave: "manana_9am", etiqueta: "Mañana 09:00" },
+];
+
+export function calcularFechaRecordatorioRapido(
+  clave: ClaveRecordatorioRapido,
+  ahoraBase: Date = new Date()
+): string {
+  const baseMs = ahoraBase.getTime();
+  switch (clave) {
+    case "20m":
+      return new Date(baseMs + 20 * 60 * 1000).toISOString();
+    case "1h":
+      return new Date(baseMs + 60 * 60 * 1000).toISOString();
+    case "3h":
+      return new Date(baseMs + 3 * 60 * 60 * 1000).toISOString();
+    case "6h":
+      return new Date(baseMs + 6 * 60 * 60 * 1000).toISOString();
+    case "12h":
+      return new Date(baseMs + 12 * 60 * 60 * 1000).toISOString();
+    case "manana_9am": {
+      const manana = new Date(baseMs + 24 * 60 * 60 * 1000);
+      manana.setHours(9, 0, 0, 0);
+      return manana.toISOString();
+    }
+  }
+}
+
 export interface ConversacionOmnicanal {
   id: string;
   secuencial?: number;
@@ -110,6 +251,7 @@ export interface ConversacionOmnicanal {
   creadoEn: string;
   etiquetasIds: string[];
   datosVenta?: DatosVentaConversacion;
+  cierre?: DatosCierreConversacion | null;
 }
 
 export interface MensajeOmnicanal {
@@ -416,12 +558,52 @@ export interface CitaRespuestaChatEquipo {
 
 export interface ContextoReenvioChatEquipo {
   conversacionId?: string | null;
+  mensajeId?: string | null;
   canal?: string;
   clienteNombre: string;
   clienteTelefono?: string | null;
   autorOriginal?: string | null;
   textoOriginal?: string | null;
   imagenUrl?: string | null;
+}
+
+export function construirHrefRetornoChatCliente(
+  ctx: ContextoReenvioChatEquipo,
+  rutaBase = "/panel/conversaciones"
+): string {
+  const params = new URLSearchParams();
+  if (ctx.conversacionId) params.set("chat", ctx.conversacionId);
+  if (ctx.mensajeId) params.set("msg", ctx.mensajeId);
+  if (ctx.clienteTelefono) params.set("tel", ctx.clienteTelefono);
+  if (ctx.clienteNombre) params.set("cliente", ctx.clienteNombre);
+  if (ctx.textoOriginal) params.set("cita", ctx.textoOriginal.slice(0, 80));
+  const qs = params.toString();
+  return qs ? `${rutaBase}?${qs}` : rutaBase;
+}
+
+export function resolverConversacionPorContextoReenvio(
+  conversaciones: ConversacionOmnicanal[],
+  ctx: Pick<ContextoReenvioChatEquipo, "conversacionId" | "clienteTelefono" | "clienteNombre">
+): ConversacionOmnicanal | null {
+  if (ctx.conversacionId) {
+    const exacta = conversaciones.find((c) => c.id === ctx.conversacionId);
+    if (exacta) return exacta;
+  }
+  const telNorm = normalizarTelefonoOmnicanal(ctx.clienteTelefono);
+  if (telNorm.length >= 9) {
+    const porTel = conversaciones.find(
+      (c) => normalizarTelefonoOmnicanal(c.remitenteTelefono) === telNorm
+    );
+    if (porTel) return porTel;
+  }
+  const nom = (ctx.clienteNombre || "").trim().toLowerCase();
+  if (nom) {
+    const porNom = conversaciones.find(
+      (c) => (c.remitenteNombre || "").trim().toLowerCase() === nom
+    );
+    if (porNom) return porNom;
+  }
+  return null;
 }
 
 export interface MensajeChatEquipo {

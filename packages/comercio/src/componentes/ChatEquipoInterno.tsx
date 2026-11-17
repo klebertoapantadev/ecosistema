@@ -7,6 +7,7 @@ import {
   BellRing,
   Camera,
   Download,
+  ExternalLink,
   Forward,
   ImagePlus,
   Loader2,
@@ -23,6 +24,7 @@ import {
   type DatosSalaChatEquipo,
 } from "../acciones-omnicanal";
 import {
+  construirHrefRetornoChatCliente,
   extraerSegmentosMultimediaMensaje,
   extraerTodasLasImagenesMensaje,
   nombreCanalRealtimeChatEquipo,
@@ -46,6 +48,8 @@ export interface PropsChatEquipoInterno {
   negocio: string;
   embebido?: boolean;
   datosIniciales?: DatosSalaChatEquipo | null;
+  rutaConversaciones?: string;
+  onAbrirConversacionCliente?: (reenvio: ContextoReenvioChatEquipo) => void;
 }
 
 const COLORES_ROL_EQUIPO: Record<string, { bg: string; color: string; etiqueta: string }> = {
@@ -258,6 +262,8 @@ export function ChatEquipoInterno({
   negocio,
   embebido = false,
   datosIniciales,
+  rutaConversaciones = "/panel/conversaciones",
+  onAbrirConversacionCliente,
 }: PropsChatEquipoInterno) {
   const negNorm = negocio.trim().toLowerCase();
   const cacheKey = `eco_chat_equipo_sala_${negNorm}`;
@@ -959,30 +965,76 @@ export function ChatEquipoInterno({
                       </div>
                     )}
 
-                    {/* Contexto de mensaje/foto reenviado desde chat de un cliente */}
-                    {reenvio && (
-                      <div
-                        style={{
-                          padding: "7px 10px",
-                          borderRadius: "8px",
-                          borderLeft: "3px solid #10B981",
-                          background: esMio ? "rgba(255,255,255,0.13)" : "#ECFDF5",
-                          color: esMio ? "#F8FAFC" : "#064E3B",
-                          fontSize: "0.75rem",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "2px",
-                        }}
-                      >
-                        <strong>
-                          ↪ Reenviado del cliente: {reenvio.clienteNombre}
-                          {reenvio.clienteTelefono ? ` (${reenvio.clienteTelefono})` : ""}
-                        </strong>
-                        {reenvio.textoOriginal && (
-                          <span style={{ opacity: 0.9 }}>“{reenvio.textoOriginal}”</span>
-                        )}
-                      </div>
-                    )}
+                    {/* Contexto de mensaje/foto reenviado desde chat de un cliente con enlace directo de retorno */}
+                    {reenvio && (() => {
+                      const hrefRetorno = construirHrefRetornoChatCliente(
+                        reenvio,
+                        rutaConversaciones
+                      );
+                      return (
+                        <div
+                          style={{
+                            padding: "7px 10px",
+                            borderRadius: "8px",
+                            borderLeft: "3px solid #10B981",
+                            background: esMio ? "rgba(255,255,255,0.14)" : "#ECFDF5",
+                            color: esMio ? "#F8FAFC" : "#064E3B",
+                            fontSize: "0.75rem",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "4px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              gap: "8px",
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <strong>
+                              ↪ Reenviado del cliente: {reenvio.clienteNombre}
+                              {reenvio.clienteTelefono ? ` (${reenvio.clienteTelefono})` : ""}
+                            </strong>
+
+                            <a
+                              href={hrefRetorno}
+                              onClick={(ev) => {
+                                if (onAbrirConversacionCliente) {
+                                  ev.preventDefault();
+                                  onAbrirConversacionCliente(reenvio);
+                                }
+                              }}
+                              title={`Ir directamente al chat con ${reenvio.clienteNombre} en la Bandeja de Chats`}
+                              aria-label={`Ir al chat de ${reenvio.clienteNombre}`}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                padding: "2px 8px",
+                                borderRadius: "999px",
+                                background: esMio ? "#10B981" : "#059669",
+                                color: "#FFFFFF",
+                                fontSize: "0.69rem",
+                                fontWeight: 800,
+                                textDecoration: "none",
+                                whiteSpace: "nowrap",
+                                boxShadow: "0 1px 2px rgba(0,0,0,0.12)",
+                              }}
+                            >
+                              <ExternalLink size={11} />
+                              <span>Ir al chat</span>
+                            </a>
+                          </div>
+
+                          {reenvio.textoOriginal && (
+                            <span style={{ opacity: 0.92 }}>“{reenvio.textoOriginal}”</span>
+                          )}
+                        </div>
+                      );
+                    })()}
 
                     {/* Segmentos de texto + imágenes */}
                     {segmentos.map((seg, idx) => {
@@ -1025,15 +1077,45 @@ export function ChatEquipoInterno({
                       );
                     })}
 
-                    {/* Barra rápida de respuesta y reenvío por burbuja */}
+                    {/* Barra rápida de respuesta, retorno al chat y reenvío por burbuja */}
                     <div
                       style={{
                         display: "flex",
                         justifyContent: "flex-end",
-                        gap: "8px",
+                        gap: "6px",
+                        flexWrap: "wrap",
                         paddingTop: "2px",
                       }}
                     >
+                      {reenvio && (
+                        <a
+                          href={construirHrefRetornoChatCliente(reenvio, rutaConversaciones)}
+                          onClick={(ev) => {
+                            if (onAbrirConversacionCliente) {
+                              ev.preventDefault();
+                              onAbrirConversacionCliente(reenvio);
+                            }
+                          }}
+                          title={`Volver al mensaje compartido del cliente ${reenvio.clienteNombre}`}
+                          aria-label="Ir al chat del cliente"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                            padding: "2px 7px",
+                            borderRadius: "6px",
+                            background: esMio ? "rgba(16, 185, 129, 0.28)" : "#ECFDF5",
+                            color: esMio ? "#A7F3D0" : "#047857",
+                            fontSize: "0.7rem",
+                            fontWeight: 700,
+                            textDecoration: "none",
+                          }}
+                        >
+                          <ExternalLink size={11} />
+                          <span>Ir al chat</span>
+                        </a>
+                      )}
+
                       <button
                         type="button"
                         onClick={() => {

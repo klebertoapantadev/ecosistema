@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   autoCompletarDatosVentaDesdeMensajes,
+  calcularFechaRecordatorioRapido,
   calcularMetricasOmnicanal,
   calcularTotalDatosVenta,
+  construirHrefRetornoChatCliente,
   emparejarComprasConConversacion,
   extraerSegmentosMultimediaMensaje,
   extraerTodasLasImagenesMensaje,
@@ -10,6 +12,8 @@ import {
   limpiarVistaPreviaMensajeOmnicanal,
   normalizarHandleMencion,
   normalizarTelefonoOmnicanal,
+  obtenerDefinicionMotivoCierre,
+  resolverConversacionPorContextoReenvio,
   type ContactoUnificadoOmnicanal,
   type ConversacionOmnicanal,
 } from "./omnicanal";
@@ -255,5 +259,39 @@ describe("omnicanal — normalización, plantillas y cruce cliente-compras", () 
     expect(autocompletado.ubicacionUrl).toBe("https://maps.app.goo.gl/FX4qzrVRdJSLck5c9");
     expect(autocompletado.codigoPedido).toBe("TNK-ORD-0042");
     expect(autocompletado.estadoCobro).toBe("COTIZANDO");
+  });
+
+  it("programa recordatorios rápidos, tipifica motivos de cierre y resuelve el enlace de retorno desde Chat Grupal", () => {
+    const base = new Date("2026-11-17T10:00:00.000Z");
+    expect(calcularFechaRecordatorioRapido("20m", base)).toBe("2026-11-17T10:20:00.000Z");
+    expect(calcularFechaRecordatorioRapido("6h", base)).toBe("2026-11-17T16:00:00.000Z");
+
+    const defVenta = obtenerDefinicionMotivoCierre("VENTA_COMPLETADA");
+    expect(defVenta.etiqueta).toBe("Venta completada");
+
+    const href = construirHrefRetornoChatCliente({
+      conversacionId: "cnv-123",
+      mensajeId: "msg-999",
+      clienteNombre: "Tinkay",
+      clienteTelefono: "+593984583280",
+      textoOriginal: "Si tengo la copia",
+    });
+    expect(href).toContain("/panel/conversaciones?");
+    expect(href).toContain("chat=cnv-123");
+    expect(href).toContain("msg=msg-999");
+
+    const convSimulada = {
+      id: "cnv-real-1",
+      remitenteNombre: "Tinkay",
+      remitenteTelefono: "0984583280",
+    } as ConversacionOmnicanal;
+
+    // Incluso si un mensaje previo no tenía conversacionId, lo encuentra por teléfono normalizado
+    const resuelta = resolverConversacionPorContextoReenvio([convSimulada], {
+      conversacionId: null,
+      clienteNombre: "Otro",
+      clienteTelefono: "+593984583280",
+    });
+    expect(resuelta?.id).toBe("cnv-real-1");
   });
 });

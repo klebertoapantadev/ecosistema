@@ -18,3 +18,8 @@
    - Compositor móvil compacto con modo solo ícono en botones de acción.
 5. **Depuración e Implementación de Campos de Venta (`PanelCamposVentaChat.tsx`):**
    - De 36 campos de ManyChat se descartaron 19 variables auxiliares de flujo y se estructuraron 15 campos de negocio en `🛒 Pedido`, `📍 Entrega` y `✍🏼 Tarjeta` (`cnv_detalle_conversacion.datos_venta`), con autocompletado GPS desde el webhook y despacho en 1 clic **`A Taller`**.
+6. **Barra de Íconos Flotantes Estilo ManyChat + Motivos de Cierre + Retorno desde Chat Grupal (`20261117000002`):**
+   - Popover **`Gestionar etiquetas`** con casillas de verificación instantánea.
+   - Popover **`Recuérdamelo en`** (`20 minutos`, `1 hora`, `3 horas`, `6 horas`, `12 horas`, `Mañana 09:00` o fecha/hora exacta, con resaltado en vivo `🔔 Seguimiento pendiente`).
+   - Popover **`Marcar como Cerrado`** con selección obligatoria de motivo (`Venta completada`, `Cotización / Proforma enviada`, `Consulta informativa resuelta`, `No responde`, `No desea continuar`, `Sin stock o fuera de cobertura`, `Spam / Número equivocado`), botón **`Enviar y cerrar`** y reapertura en 1 clic a **`Conversación Abierta`**.
+   - Botón y enlace directo **`↗ Ir al chat`** en cada burbuja reenviada dentro del **Chat Grupal del Equipo**, que retorna directamente a la conversación del cliente y resalta el mensaje compartido (`📌 Mensaje compartido`).

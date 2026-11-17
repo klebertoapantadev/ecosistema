@@ -7,11 +7,13 @@ import {
   nombreCanalRealtimeChatEquipo,
   nombreCanalRealtimeOmnicanal,
   normalizarTelefonoOmnicanal,
+  obtenerDefinicionMotivoCierre,
   type CitaRespuestaChatEquipo,
   type ContactoUnificadoOmnicanal,
   type ContextoReenvioChatEquipo,
   type ConversacionOmnicanal,
   type ConversacionWhatsappResumen,
+  type DatosCierreConversacion,
   type DatosVentaConversacion,
   type EstadoAtencionOmnicanal,
   type EtiquetaOmnicanal,
@@ -588,6 +590,10 @@ export async function obtenerTableroOmnicanalAction(
               c?.datosVenta && typeof c.datosVenta === "object"
                 ? (c.datosVenta as DatosVentaConversacion)
                 : {},
+            cierre:
+              c?.cierre && typeof c.cierre === "object"
+                ? (c.cierre as DatosCierreConversacion)
+                : null,
           }))
         : [];
 
@@ -832,6 +838,11 @@ export async function obtenerTableroOmnicanalAction(
                 typeof c.cnv_detalle_conversacion.datos_venta === "object"
                   ? (c.cnv_detalle_conversacion.datos_venta as DatosVentaConversacion)
                   : {},
+              cierre:
+                c.cnv_detalle_conversacion?.cierre &&
+                typeof c.cnv_detalle_conversacion.cierre === "object"
+                  ? (c.cnv_detalle_conversacion.cierre as DatosCierreConversacion)
+                  : null,
             }))
         : almacen.conversaciones;
 
@@ -1163,8 +1174,15 @@ export async function actualizarConversacionOmnicanalAction(entrada: {
   recordatorioNota?: string | null;
   limpiarRecordatorio?: boolean;
   marcarNoLeido?: boolean;
+  motivoCierre?: string | null;
+  notaCierre?: string | null;
 }): Promise<
-  | { ok: true; estadoAtencion: EstadoAtencionOmnicanal; noLeidosAsesora?: number }
+  | {
+      ok: true;
+      estadoAtencion: EstadoAtencionOmnicanal;
+      noLeidosAsesora?: number;
+      cierre?: DatosCierreConversacion | null;
+    }
   | { ok: false; error: string }
 > {
   try {
@@ -1174,7 +1192,7 @@ export async function actualizarConversacionOmnicanalAction(entrada: {
     const esquemaComercio = supabase.schema("comun_comercio") as any;
 
     if (/^[0-9a-f-]{36}$/i.test(entrada.conversacionId)) {
-      const { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_actualizar_conversacion", {
+      const argsBase9 = {
         p_negocio: neg,
         p_conversacion_id: entrada.conversacionId,
         p_nuevo_estado: entrada.nuevoEstado ?? null,
@@ -1184,14 +1202,45 @@ export async function actualizarConversacionOmnicanalAction(entrada: {
         p_recordatorio_nota: entrada.recordatorioNota ?? null,
         p_limpiar_recordatorio: Boolean(entrada.limpiarRecordatorio),
         p_marcar_no_leido: Boolean(entrada.marcarNoLeido),
+      };
+
+      let { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_actualizar_conversacion", {
+        ...argsBase9,
+        p_motivo_cierre: entrada.motivoCierre ?? null,
+        p_nota_cierre: entrada.notaCierre ?? null,
       });
 
+      if (error && esFuncionRpcPendienteMigracion(error.message)) {
+        const intento9 = await esquemaComercio.rpc(
+          "com_fn_omnicanal_actualizar_conversacion",
+          argsBase9
+        );
+        data = intento9.data;
+        error = intento9.error;
+      }
+
       if (!error && data?.ok) {
+        const defMotivo = entrada.motivoCierre
+          ? obtenerDefinicionMotivoCierre(entrada.motivoCierre)
+          : null;
+        const cierreResuelto: DatosCierreConversacion | null =
+          data.cierre && typeof data.cierre === "object"
+            ? (data.cierre as DatosCierreConversacion)
+            : entrada.nuevoEstado === "CERRADO" && defMotivo
+              ? {
+                  motivoCodigo: defMotivo.codigo,
+                  motivoEtiqueta: `${defMotivo.icono} ${defMotivo.etiqueta}`,
+                  nota: entrada.notaCierre?.trim() || null,
+                  cerradoEn: new Date().toISOString(),
+                }
+              : null;
+
         return {
           ok: true,
           estadoAtencion: (data.estadoAtencion as EstadoAtencionOmnicanal) || "BOT_ACTIVO",
           noLeidosAsesora:
             typeof data.noLeidosAsesora === "number" ? data.noLeidosAsesora : undefined,
+          cierre: cierreResuelto,
         };
       }
       if (error && !esFuncionRpcPendienteMigracion(error.message)) {
@@ -1206,7 +1255,23 @@ export async function actualizarConversacionOmnicanalAction(entrada: {
     const conv = almacen.conversaciones.find((c) => c.id === entrada.conversacionId);
     if (!conv) return { ok: false, error: "Conversación no encontrada." };
 
-    if (entrada.nuevoEstado) conv.estadoAtencion = entrada.nuevoEstado;
+    if (entrada.nuevoEstado) {
+      conv.estadoAtencion = entrada.nuevoEstado;
+      if (entrada.nuevoEstado === "CERRADO") {
+        const def = obtenerDefinicionMotivoCierre(entrada.motivoCierre);
+        conv.cierre = {
+          motivoCodigo: def.codigo,
+          motivoEtiqueta: `${def.icono} ${def.etiqueta}`,
+          nota: entrada.notaCierre?.trim() || null,
+          cerradoEn: new Date().toISOString(),
+        };
+        conv.noLeidosAsesora = 0;
+        conv.recordatorioEn = null;
+        conv.recordatorioNota = null;
+      } else {
+        conv.cierre = null;
+      }
+    }
     if (entrada.desasignar) {
       conv.asesoraAsignadaId = null;
       conv.asesoraNombre = null;
@@ -1231,6 +1296,7 @@ export async function actualizarConversacionOmnicanalAction(entrada: {
       ok: true,
       estadoAtencion: conv.estadoAtencion,
       noLeidosAsesora: conv.noLeidosAsesora,
+      cierre: conv.cierre ?? null,
     };
   } catch (err) {
     return {

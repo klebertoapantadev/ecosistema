@@ -8,6 +8,8 @@ import {
   ArrowLeft,
   BarChart3,
   Bot,
+  Calendar,
+  Check,
   CheckCircle2,
   ClipboardList,
   Clock,
@@ -25,6 +27,7 @@ import {
   Pause,
   Play,
   RefreshCw,
+  RotateCcw,
   Search,
   Send,
   Settings2,
@@ -62,15 +65,22 @@ import {
   type PedidoWebConTipoCliente,
 } from "../acciones-omnicanal";
 import {
+  calcularFechaRecordatorioRapido,
   calcularMetricasOmnicanal,
   emparejarComprasConConversacion,
   extraerSegmentosMultimediaMensaje,
   extraerTodasLasImagenesMensaje,
   interpolarRespuestaRapida,
   limpiarVistaPreviaMensajeOmnicanal,
+  MOTIVOS_CIERRE_OMNICANAL,
   nombreCanalRealtimeOmnicanal,
+  OPCIONES_RECORDATORIO_RAPIDO_OMNICANAL,
+  resolverConversacionPorContextoReenvio,
   type CanalOmnicanal,
+  type ClaveRecordatorioRapido,
+  type CodigoMotivoCierreOmnicanal,
   type ContactoUnificadoOmnicanal,
+  type ContextoReenvioChatEquipo,
   type ConversacionOmnicanal,
   type ConversacionWhatsappResumen,
   type EstadoAtencionOmnicanal,
@@ -445,10 +455,20 @@ export function ConsolaVentasOmnicanal({
     payload: DatosReenvioMensajeModal;
   } | null>(null);
 
-  // Modales ligeros inline: recordatorio y crear respuesta rápida
-  const [editandoRecordatorio, setEditandoRecordatorio] = useState<boolean>(false);
+  // Popovers flotantes estilo ManyChat en cabecera (Etiquetas, Recuérdamelo en, Motivo de cierre)
+  const [menuCabeceraAbierto, setMenuCabeceraAbierto] = useState<
+    "etiquetas" | "recordatorio" | "cierre" | null
+  >(null);
+  const [mostrarSelectorFechaCustom, setMostrarSelectorFechaCustom] = useState<boolean>(false);
   const [recordatorioFecha, setRecordatorioFecha] = useState<string>("");
   const [recordatorioNota, setRecordatorioNota] = useState<string>("");
+  const [notaCierreInput, setNotaCierreInput] = useState<string>("");
+  const [ahoraMsTick, setAhoraMsTick] = useState<number>(() => Date.now());
+
+  // Retorno desde Chat Grupal del Equipo hacia una conversación/mensaje compartido
+  const [mensajeResaltadoId, setMensajeResaltadoId] = useState<string | null>(null);
+  const [citaResaltadaTexto, setCitaResaltadaTexto] = useState<string | null>(null);
+  const deepLinkProcesadoRef = useRef<boolean>(false);
 
   const [formRespuesta, setFormRespuesta] = useState<{
     id?: string | null;
@@ -473,7 +493,6 @@ export function ConsolaVentasOmnicanal({
   const [mostrarFiltrosInbox, setMostrarFiltrosInbox] = useState<boolean>(false);
   const [mostrarFichaTablet, setMostrarFichaTablet] = useState<boolean>(false);
   const [fichaDerechaDesktop, setFichaDerechaDesktop] = useState<boolean>(true);
-  const [selectorEtiquetasAbierto, setSelectorEtiquetasAbierto] = useState<boolean>(false);
 
   useEffect(() => {
     const actualizarModo = () => {
@@ -625,6 +644,9 @@ export function ConsolaVentasOmnicanal({
   );
 
   useEffect(() => {
+    setMenuCabeceraAbierto(null);
+    setMostrarSelectorFechaCustom(false);
+    setNotaCierreInput("");
     if (!conversacionActivaId) {
       setMensajesActivos([]);
       return;
@@ -633,10 +655,89 @@ export function ConsolaVentasOmnicanal({
   }, [conversacionActivaId, cargarMensajesConversacion]);
 
   useEffect(() => {
-    if (scrollMensajesRef.current) {
-      scrollMensajesRef.current.scrollTop = scrollMensajesRef.current.scrollHeight;
+    const t = setInterval(() => {
+      setAhoraMsTick(Date.now());
+    }, 30000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    if (!menuCabeceraAbierto) return;
+    const alEsc = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") {
+        setMenuCabeceraAbierto(null);
+        setMostrarSelectorFechaCustom(false);
+      }
+    };
+    window.addEventListener("keydown", alEsc);
+    return () => window.removeEventListener("keydown", alEsc);
+  }, [menuCabeceraAbierto]);
+
+  // Navegación de retorno desde ?chat=...&msg=...&tel=...&cliente=...&cita=... (cuando vienen desde /panel/chat-equipo)
+  useEffect(() => {
+    if (deepLinkProcesadoRef.current || tablero.conversaciones.length === 0) return;
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const chatParam = params.get("chat");
+    const telParam = params.get("tel");
+    const cliParam = params.get("cliente");
+    const msgParam = params.get("msg");
+    const citaParam = params.get("cita");
+
+    if (!chatParam && !telParam && !cliParam) return;
+    deepLinkProcesadoRef.current = true;
+
+    const encontrada = resolverConversacionPorContextoReenvio(tablero.conversaciones, {
+      conversacionId: chatParam,
+      clienteTelefono: telParam,
+      clienteNombre: cliParam || "",
+    });
+
+    if (encontrada) {
+      setPestana("inbox");
+      setEstadoAperturaFiltro("todos");
+      setFiltroIzquierdo("todos");
+      setCanalFiltro("todos");
+      setSoloNoLeidos(false);
+      setConversacionActivaId(encontrada.id);
+      setVistaMovilInbox("chat");
+      if (msgParam) setMensajeResaltadoId(msgParam);
+      if (citaParam) setCitaResaltadaTexto(citaParam);
     }
-  }, [mensajesActivos.length, conversacionActivaId]);
+  }, [tablero.conversaciones]);
+
+  // Auto-scroll al último mensaje o al mensaje compartido resaltado al volver del Chat Grupal
+  useEffect(() => {
+    const contenedor = scrollMensajesRef.current;
+    if (!contenedor) return;
+
+    if ((mensajeResaltadoId || citaResaltadaTexto) && mensajesActivos.length > 0) {
+      let idObjetivo = mensajeResaltadoId;
+      if (!idObjetivo && citaResaltadaTexto) {
+        const frag = citaResaltadaTexto.trim().toLowerCase();
+        const coincidencia = mensajesActivos.find((m) =>
+          (m.contenido || "").toLowerCase().includes(frag)
+        );
+        if (coincidencia) {
+          idObjetivo = coincidencia.id;
+          setMensajeResaltadoId(coincidencia.id);
+        }
+      }
+      if (idObjetivo) {
+        const nodo = contenedor.querySelector(`[data-msg-id="${idObjetivo}"]`) as HTMLElement | null;
+        if (nodo) {
+          nodo.scrollIntoView({ behavior: "smooth", block: "center" });
+          const timerLimpiar = setTimeout(() => {
+            setMensajeResaltadoId(null);
+            setCitaResaltadaTexto(null);
+          }, 6500);
+          return () => clearTimeout(timerLimpiar);
+        }
+      }
+    }
+
+    contenedor.scrollTop = contenedor.scrollHeight;
+  }, [mensajesActivos, conversacionActivaId, mensajeResaltadoId, citaResaltadaTexto]);
 
   // Canal WebSocket Instantáneo (<50ms Broadcast) + Postgres Changes + respaldo periódico suave
   useEffect(() => {
@@ -1226,23 +1327,182 @@ export function ConsolaVentasOmnicanal({
     void recargarTablero(true);
   };
 
-  const handleGuardarRecordatorio = async () => {
-    if (!conversacionActiva || !recordatorioFecha) return;
-    const res = await actualizarConversacionOmnicanalAction({
-      negocio: negNorm,
-      conversacionId: conversacionActiva.id,
-      recordatorioEn: new Date(recordatorioFecha).toISOString(),
-      recordatorioNota: recordatorioNota.trim() || "Seguimiento comercial",
-    });
-    if (!res.ok) {
-      setErrorMsg(res.error);
-      return;
+  const handleProgramarRecordatorioEnIso = async (
+    isoObjetivo: string,
+    notaTexto: string
+  ) => {
+    if (!conversacionActiva) return;
+    if (!conversacionActiva.id.startsWith("rt-")) {
+      const res = await actualizarConversacionOmnicanalAction({
+        negocio: negNorm,
+        conversacionId: conversacionActiva.id,
+        recordatorioEn: isoObjetivo,
+        recordatorioNota: notaTexto.trim() || "Seguimiento comercial",
+      });
+      if (!res.ok) {
+        setErrorMsg(res.error);
+        return;
+      }
     }
-    setEditandoRecordatorio(false);
+
+    setTablero((prev) => ({
+      ...prev,
+      conversaciones: prev.conversaciones.map((c) =>
+        c.id === conversacionActiva.id
+          ? {
+              ...c,
+              recordatorioEn: isoObjetivo,
+              recordatorioNota: notaTexto.trim() || "Seguimiento comercial",
+            }
+          : c
+      ),
+    }));
+    setMenuCabeceraAbierto(null);
+    setMostrarSelectorFechaCustom(false);
     setRecordatorioFecha("");
     setRecordatorioNota("");
+    setMensajeInfo(
+      `⏰ Recordatorio programado para ${new Date(isoObjetivo).toLocaleString("es-EC", {
+        dateStyle: "short",
+        timeStyle: "short",
+      })}.`
+    );
     void recargarTablero(true);
   };
+
+  const handleGuardarRecordatorio = async () => {
+    if (!conversacionActiva || !recordatorioFecha) return;
+    await handleProgramarRecordatorioEnIso(
+      new Date(recordatorioFecha).toISOString(),
+      recordatorioNota
+    );
+  };
+
+  const handleProgramarRecordatorioRapido = async (clave: ClaveRecordatorioRapido) => {
+    const iso = calcularFechaRecordatorioRapido(clave);
+    await handleProgramarRecordatorioEnIso(iso, recordatorioNota || "Seguimiento comercial");
+  };
+
+  const handleLimpiarRecordatorio = async () => {
+    if (!conversacionActiva) return;
+    if (!conversacionActiva.id.startsWith("rt-")) {
+      const res = await actualizarConversacionOmnicanalAction({
+        negocio: negNorm,
+        conversacionId: conversacionActiva.id,
+        limpiarRecordatorio: true,
+      });
+      if (!res.ok) {
+        setErrorMsg(res.error);
+        return;
+      }
+    }
+    setTablero((prev) => ({
+      ...prev,
+      conversaciones: prev.conversaciones.map((c) =>
+        c.id === conversacionActiva.id
+          ? { ...c, recordatorioEn: null, recordatorioNota: null }
+          : c
+      ),
+    }));
+    setMenuCabeceraAbierto(null);
+    setMensajeInfo("⏰ Recordatorio eliminado.");
+    void recargarTablero(true);
+  };
+
+  const handleCerrarConversacionConMotivo = async (
+    motivoCodigo: CodigoMotivoCierreOmnicanal
+  ) => {
+    if (!conversacionActiva) return;
+    const defMotivo = MOTIVOS_CIERRE_OMNICANAL.find((m) => m.codigo === motivoCodigo);
+    const notaLimpia = notaCierreInput.trim() || null;
+
+    if (!conversacionActiva.id.startsWith("rt-")) {
+      const res = await actualizarConversacionOmnicanalAction({
+        negocio: negNorm,
+        conversacionId: conversacionActiva.id,
+        nuevoEstado: "CERRADO",
+        motivoCierre: motivoCodigo,
+        notaCierre: notaLimpia,
+      });
+      if (!res.ok) {
+        setErrorMsg(res.error);
+        return;
+      }
+    }
+
+    const etiquetaCierre = defMotivo
+      ? `${defMotivo.icono} ${defMotivo.etiqueta}`
+      : "Cerrado";
+
+    setTablero((prev) => ({
+      ...prev,
+      conversaciones: prev.conversaciones.map((c) =>
+        c.id === conversacionActiva.id
+          ? {
+              ...c,
+              estadoAtencion: "CERRADO",
+              noLeidosAsesora: 0,
+              recordatorioEn: null,
+              recordatorioNota: null,
+              cierre: {
+                motivoCodigo,
+                motivoEtiqueta: etiquetaCierre,
+                nota: notaLimpia,
+                cerradoEn: new Date().toISOString(),
+                cerradoPor: tablero.usuarioActualNombre,
+              },
+            }
+          : c
+      ),
+    }));
+
+    emitirBroadcastAsesor({
+      eventoId: `cierre-${Date.now()}`,
+      claveHilo: conversacionActiva.claveHilo,
+      conversacionId: conversacionActiva.id,
+      estadoAtencion: "CERRADO",
+      asesoraAsignadaId: conversacionActiva.asesoraAsignadaId ?? tablero.usuarioActualId,
+      asesoraNombre: conversacionActiva.asesoraNombre ?? tablero.usuarioActualNombre,
+    });
+
+    setMenuCabeceraAbierto(null);
+    setNotaCierreInput("");
+    setMensajeInfo(`✅ Conversación cerrada (${etiquetaCierre}).`);
+
+    if (!conversacionActiva.id.startsWith("rt-")) {
+      void recargarTablero(true);
+      void cargarMensajesConversacion(conversacionActiva.id, true);
+    }
+  };
+
+  const handleAbrirConversacionDesdeEquipo = useCallback(
+    (reenvio: ContextoReenvioChatEquipo) => {
+      const encontrada = resolverConversacionPorContextoReenvio(
+        tablero.conversaciones,
+        reenvio
+      );
+      setPestana("inbox");
+      setEstadoAperturaFiltro("todos");
+      setFiltroIzquierdo("todos");
+      setCanalFiltro("todos");
+      setSoloNoLeidos(false);
+      setEtiquetaFiltroId(null);
+      setVendedorFiltroId(null);
+
+      if (encontrada) {
+        setConversacionActivaId(encontrada.id);
+        setVistaMovilInbox("chat");
+        setMensajeResaltadoId(reenvio.mensajeId ?? null);
+        setCitaResaltadaTexto(reenvio.textoOriginal ?? null);
+      } else if (reenvio.clienteTelefono || reenvio.clienteNombre) {
+        setBusquedaInbox(reenvio.clienteTelefono || reenvio.clienteNombre);
+        setMensajeInfo(
+          `Buscando conversación de ${reenvio.clienteNombre}${reenvio.clienteTelefono ? ` (${reenvio.clienteTelefono})` : ""}…`
+        );
+      }
+    },
+    [tablero.conversaciones]
+  );
 
   const handleAlternarEtiqueta = async (etiquetaId: string) => {
     if (!conversacionActiva) return;
@@ -1316,6 +1576,7 @@ export function ConsolaVentasOmnicanal({
           resumenTexto || `Seguimiento de chat con ${conversacionActiva.remitenteNombre}`,
         contextoCliente: {
           conversacionId: conversacionActiva.id,
+          mensajeId: ultimoMsg?.id ?? null,
           canal: conversacionActiva.canal,
           clienteNombre: conversacionActiva.remitenteNombre,
           clienteTelefono: conversacionActiva.remitenteTelefono ?? null,
@@ -2020,7 +2281,13 @@ export function ConsolaVentasOmnicanal({
       {/* =====================================================================
           PESTAÑA CHAT GRUPAL DEL EQUIPO (MENCIONES @KLEBER, FOTOS Y REENVÍO)
       ===================================================================== */}
-      {pestana === "chat_equipo" && <ChatEquipoInterno negocio={negNorm} embebido />}
+      {pestana === "chat_equipo" && (
+        <ChatEquipoInterno
+          negocio={negNorm}
+          embebido
+          onAbrirConversacionCliente={handleAbrirConversacionDesdeEquipo}
+        />
+      )}
 
       {/* =====================================================================
           PESTAÑA 1: BANDEJA UNIFICADA ESTILO MANYCHAT (FILTROS ARRIBA + 3 COLUMNAS AMPLIAS)
@@ -2555,6 +2822,8 @@ export function ConsolaVentasOmnicanal({
 
                           {(conv.estadoAtencion === "ESCALADO_HUMANO" ||
                             conv.estadoAtencion === "EN_ATENCION_ASESORA" ||
+                            (conv.estadoAtencion === "CERRADO" && conv.cierre?.motivoEtiqueta) ||
+                            Boolean(conv.recordatorioEn) ||
                             etiquetasVisibles.length > 0) && (
                             <div
                               style={{
@@ -2565,6 +2834,52 @@ export function ConsolaVentasOmnicanal({
                                 marginTop: "1px",
                               }}
                             >
+                              {conv.recordatorioEn && (() => {
+                                const vencido =
+                                  new Date(conv.recordatorioEn).getTime() <= ahoraMsTick;
+                                return (
+                                  <span
+                                    title={`Recordatorio: ${new Date(
+                                      conv.recordatorioEn
+                                    ).toLocaleString("es-EC", {
+                                      dateStyle: "short",
+                                      timeStyle: "short",
+                                    })}${conv.recordatorioNota ? ` · ${conv.recordatorioNota}` : ""}`}
+                                    style={{
+                                      fontSize: "0.64rem",
+                                      fontWeight: 700,
+                                      padding: "1px 6px",
+                                      borderRadius: "999px",
+                                      background: vencido ? "#FEF3C7" : "#F1F5F9",
+                                      color: vencido ? "#B45309" : "#475569",
+                                      border: vencido ? "1px solid #F59E0B" : "none",
+                                    }}
+                                  >
+                                    {vencido
+                                      ? "🔔 Seguimiento"
+                                      : `⏰ ${new Date(conv.recordatorioEn).toLocaleTimeString(
+                                          "es-EC",
+                                          { hour: "2-digit", minute: "2-digit" }
+                                        )}`}
+                                  </span>
+                                );
+                              })()}
+
+                              {conv.estadoAtencion === "CERRADO" && conv.cierre?.motivoEtiqueta && (
+                                <span
+                                  style={{
+                                    fontSize: "0.64rem",
+                                    fontWeight: 700,
+                                    padding: "1px 6px",
+                                    borderRadius: "999px",
+                                    background: "#F1F5F9",
+                                    color: "#334155",
+                                  }}
+                                >
+                                  {conv.cierre.motivoEtiqueta}
+                                </span>
+                              )}
+
                               {conv.estadoAtencion === "ESCALADO_HUMANO" && (
                                 <span
                                   style={{
@@ -2689,15 +3004,17 @@ export function ConsolaVentasOmnicanal({
               </div>
             ) : (
               <>
-                {/* Cabecera Estilo ManyChat: Pausar IA, Asignar, Compartir al Equipo, No Leído y Etiquetas */}
+                {/* Cabecera Compacta Estilo ManyChat: Barra de Íconos + Popovers Flotantes */}
                 <div
                   style={{
                     background: "#FFFFFF",
-                    padding: modoLayoutInbox === "movil" ? "8px 10px" : "10px 14px",
+                    padding: modoLayoutInbox === "movil" ? "8px 10px" : "9px 14px",
                     borderBottom: "1px solid #E2E8F0",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "7px",
+                    gap: "6px",
+                    position: "relative",
+                    zIndex: 15,
                   }}
                 >
                   <div
@@ -2709,6 +3026,7 @@ export function ConsolaVentasOmnicanal({
                       gap: "6px",
                     }}
                   >
+                    {/* Izquierda: Avatar + Nombre + Selector rápido de asesor + Estado */}
                     <div
                       style={{
                         display: "flex",
@@ -2744,45 +3062,631 @@ export function ConsolaVentasOmnicanal({
                       <AvatarConCanalOmnicanal
                         nombre={conversacionActiva.remitenteNombre}
                         canal={conversacionActiva.canal}
-                        size={32}
+                        size={34}
                       />
 
-                      <div style={{ minWidth: 0, display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                        <strong
-                          style={{
-                            fontSize: "0.9rem",
-                            color: "#0F172A",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                            maxWidth: modoLayoutInbox === "movil" ? "155px" : "240px",
-                          }}
-                        >
-                          {conversacionActiva.remitenteNombre}
-                        </strong>
-                        {(() => {
-                          const b = badgeEstadoAtencion(conversacionActiva.estadoAtencion);
-                          return (
-                            <span
-                              style={{
-                                padding: "2px 7px",
-                                borderRadius: "999px",
-                                fontSize: "0.68rem",
-                                fontWeight: 700,
-                                background: b.fondo,
-                                color: b.texto,
-                                border: `1px solid ${b.borde}`,
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              {b.etiqueta}
-                            </span>
-                          );
-                        })()}
+                      <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: "2px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                          <strong
+                            style={{
+                              fontSize: "0.88rem",
+                              color: "#0F172A",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                              maxWidth: modoLayoutInbox === "movil" ? "145px" : "220px",
+                            }}
+                          >
+                            {conversacionActiva.remitenteNombre}
+                          </strong>
+                          {(() => {
+                            const b = badgeEstadoAtencion(conversacionActiva.estadoAtencion);
+                            return (
+                              <span
+                                style={{
+                                  padding: "1px 7px",
+                                  borderRadius: "999px",
+                                  fontSize: "0.66rem",
+                                  fontWeight: 700,
+                                  background: b.fondo,
+                                  color: b.texto,
+                                  border: `1px solid ${b.borde}`,
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {conversacionActiva.estadoAtencion === "CERRADO" &&
+                                conversacionActiva.cierre?.motivoEtiqueta
+                                  ? conversacionActiva.cierre.motivoEtiqueta
+                                  : b.etiqueta}
+                              </span>
+                            );
+                          })()}
+                        </div>
+
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                          <select
+                            value={conversacionActiva.asesoraAsignadaId || ""}
+                            onChange={(e) => void handleAsignarVendedor(e.target.value)}
+                            title="Asignar conversación a un miembro del equipo"
+                            aria-label="Asignar conversación"
+                            style={{
+                              padding: "1px 4px",
+                              borderRadius: "6px",
+                              border: "1px solid transparent",
+                              background: conversacionActiva.asesoraAsignadaId
+                                ? "#EFF6FF"
+                                : "#F8FAFC",
+                              color: conversacionActiva.asesoraAsignadaId ? "#1D4ED8" : "#64748B",
+                              fontSize: "0.7rem",
+                              fontWeight: 600,
+                              maxWidth: "155px",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <option value="">Sin asignar ▾</option>
+                            {tablero.equipo.map((m) => (
+                              <option key={m.usuarioId} value={m.usuarioId}>
+                                {m.usuarioId === tablero.usuarioActualId
+                                  ? `Yo (${m.nombre.split(" ")[0]})`
+                                  : `${m.nombre.split(" ")[0]} (${m.rol})`}
+                              </option>
+                            ))}
+                          </select>
+
+                          {conversacionActiva.recordatorioEn && (() => {
+                            const vencido =
+                              new Date(conversacionActiva.recordatorioEn).getTime() <= ahoraMsTick;
+                            return (
+                              <span
+                                style={{
+                                  fontSize: "0.66rem",
+                                  fontWeight: 700,
+                                  padding: "1px 6px",
+                                  borderRadius: "999px",
+                                  background: vencido ? "#FEF3C7" : "#F1F5F9",
+                                  color: vencido ? "#B45309" : "#475569",
+                                  border: vencido ? "1px solid #F59E0B" : "none",
+                                }}
+                              >
+                                {vencido
+                                  ? "🔔 Seguimiento pendiente"
+                                  : `⏰ ${new Date(
+                                      conversacionActiva.recordatorioEn
+                                    ).toLocaleString("es-EC", {
+                                      dateStyle: "short",
+                                      timeStyle: "short",
+                                    })}`}
+                              </span>
+                            );
+                          })()}
+                        </div>
                       </div>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
+                    {/* Derecha: Barra de Acciones Estilo ManyChat (Etiquetas, Recordatorio, Cerrar/Abrir, No leído, Pausar IA, Compartir, Datos) */}
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        flexWrap: "wrap",
+                        position: "relative",
+                      }}
+                    >
+                      {/* 1. GESTIONAR ETIQUETAS (Popover con casillas estilo ManyChat) */}
+                      <div style={{ position: "relative" }}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setMenuCabeceraAbierto((prev) =>
+                              prev === "etiquetas" ? null : "etiquetas"
+                            )
+                          }
+                          title="Gestionar etiquetas de esta conversación"
+                          aria-label="Etiquetas"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: "32px",
+                            height: "32px",
+                            borderRadius: "8px",
+                            border:
+                              menuCabeceraAbierto === "etiquetas"
+                                ? "1px solid #0F172A"
+                                : "1px solid #E2E8F0",
+                            background:
+                              menuCabeceraAbierto === "etiquetas" ? "#F1F5F9" : "#FFFFFF",
+                            color: "#334155",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <Tag size={15} />
+                        </button>
+
+                        {menuCabeceraAbierto === "etiquetas" && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: "calc(100% + 6px)",
+                              right: 0,
+                              width: "225px",
+                              background: "#FFFFFF",
+                              border: "1px solid #CBD5E1",
+                              borderRadius: "12px",
+                              boxShadow: "0 12px 28px rgba(15, 23, 42, 0.14)",
+                              padding: "8px 0",
+                              zIndex: 40,
+                            }}
+                          >
+                            <div
+                              style={{
+                                padding: "4px 12px 6px",
+                                fontSize: "0.73rem",
+                                fontWeight: 700,
+                                color: "#64748B",
+                                borderBottom: "1px solid #F1F5F9",
+                              }}
+                            >
+                              Gestionar etiquetas
+                            </div>
+                            <div style={{ maxHeight: "230px", overflowY: "auto", padding: "4px 0" }}>
+                              {etiquetasClasificacion.map((etq) => {
+                                const puesta = (conversacionActiva.etiquetasIds ?? []).includes(
+                                  etq.id
+                                );
+                                return (
+                                  <button
+                                    key={etq.id}
+                                    type="button"
+                                    onClick={() => void handleAlternarEtiqueta(etq.id)}
+                                    style={{
+                                      width: "100%",
+                                      padding: "7px 12px",
+                                      border: "none",
+                                      background: puesta ? "#F8FAFC" : "#FFFFFF",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "9px",
+                                      cursor: "pointer",
+                                      textAlign: "left",
+                                      fontSize: "0.8rem",
+                                      color: "#0F172A",
+                                      fontWeight: puesta ? 700 : 500,
+                                    }}
+                                  >
+                                    <span
+                                      style={{
+                                        width: "16px",
+                                        height: "16px",
+                                        borderRadius: "4px",
+                                        border: puesta
+                                          ? "1.5px solid #2563EB"
+                                          : "1.5px solid #CBD5E1",
+                                        background: puesta ? "#2563EB" : "#FFFFFF",
+                                        color: "#FFFFFF",
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        flexShrink: 0,
+                                      }}
+                                    >
+                                      {puesta && <Check size={11} />}
+                                    </span>
+                                    <span
+                                      style={{
+                                        width: "8px",
+                                        height: "8px",
+                                        borderRadius: "999px",
+                                        background: etq.color,
+                                        flexShrink: 0,
+                                      }}
+                                    />
+                                    <span style={{ flex: 1 }}>
+                                      {etq.icono} {etq.nombre}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                            {Boolean(tablero.esAdminEtiquetas) && (
+                              <div
+                                style={{
+                                  borderTop: "1px solid #F1F5F9",
+                                  padding: "6px 10px 2px",
+                                }}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setMenuCabeceraAbierto(null);
+                                    setModalEtiquetasAbierto(true);
+                                  }}
+                                  style={{
+                                    width: "100%",
+                                    padding: "6px 8px",
+                                    borderRadius: "7px",
+                                    border: "none",
+                                    background: "#F8FAFC",
+                                    color: "#0F172A",
+                                    fontSize: "0.75rem",
+                                    fontWeight: 700,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    gap: "6px",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  <Settings2 size={13} />
+                                  <span>+ Nueva / Administrar</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 2. RECUÉRDAMELO EN (20 min, 1h, 3h, 6h, 12h, Mañana 09:00 o Fecha exacta) */}
+                      <div style={{ position: "relative" }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setMenuCabeceraAbierto((prev) =>
+                              prev === "recordatorio" ? null : "recordatorio"
+                            );
+                            setMostrarSelectorFechaCustom(false);
+                          }}
+                          title="Recuérdamelo en… (programar seguimiento del cliente)"
+                          aria-label="Recuérdamelo en"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            width: "32px",
+                            height: "32px",
+                            borderRadius: "8px",
+                            border: conversacionActiva.recordatorioEn
+                              ? "1px solid #F59E0B"
+                              : menuCabeceraAbierto === "recordatorio"
+                                ? "1px solid #0F172A"
+                                : "1px solid #E2E8F0",
+                            background: conversacionActiva.recordatorioEn
+                              ? "#FEF3C7"
+                              : menuCabeceraAbierto === "recordatorio"
+                                ? "#F1F5F9"
+                                : "#FFFFFF",
+                            color: conversacionActiva.recordatorioEn ? "#B45309" : "#334155",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <Clock size={15} />
+                        </button>
+
+                        {menuCabeceraAbierto === "recordatorio" && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: "calc(100% + 6px)",
+                              right: 0,
+                              width: "235px",
+                              background: "#FFFFFF",
+                              border: "1px solid #CBD5E1",
+                              borderRadius: "12px",
+                              boxShadow: "0 12px 28px rgba(15, 23, 42, 0.14)",
+                              padding: "8px 0",
+                              zIndex: 40,
+                            }}
+                          >
+                            <div
+                              style={{
+                                padding: "4px 12px 6px",
+                                fontSize: "0.73rem",
+                                fontWeight: 700,
+                                color: "#64748B",
+                                borderBottom: "1px solid #F1F5F9",
+                              }}
+                            >
+                              Recuérdamelo en
+                            </div>
+
+                            {OPCIONES_RECORDATORIO_RAPIDO_OMNICANAL.map((op) => (
+                              <button
+                                key={op.clave}
+                                type="button"
+                                onClick={() => void handleProgramarRecordatorioRapido(op.clave)}
+                                style={{
+                                  width: "100%",
+                                  padding: "7px 12px",
+                                  border: "none",
+                                  background: "#FFFFFF",
+                                  textAlign: "left",
+                                  fontSize: "0.8rem",
+                                  color: "#0F172A",
+                                  fontWeight: 500,
+                                  cursor: "pointer",
+                                }}
+                              >
+                                {op.etiqueta}
+                              </button>
+                            ))}
+
+                            <div
+                              style={{
+                                borderTop: "1px solid #F1F5F9",
+                                marginTop: "4px",
+                                paddingTop: "4px",
+                              }}
+                            >
+                              <button
+                                type="button"
+                                onClick={() => setMostrarSelectorFechaCustom((v) => !v)}
+                                style={{
+                                  width: "100%",
+                                  padding: "7px 12px",
+                                  border: "none",
+                                  background: mostrarSelectorFechaCustom ? "#F8FAFC" : "#FFFFFF",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: "7px",
+                                  fontSize: "0.79rem",
+                                  fontWeight: 700,
+                                  color: "#0F172A",
+                                  cursor: "pointer",
+                                }}
+                              >
+                                <Calendar size={13} />
+                                <span>Elegir fecha y hora</span>
+                              </button>
+
+                              {mostrarSelectorFechaCustom && (
+                                <div
+                                  style={{
+                                    padding: "8px 12px",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "6px",
+                                    background: "#F8FAFC",
+                                  }}
+                                >
+                                  <input
+                                    type="datetime-local"
+                                    value={recordatorioFecha}
+                                    onChange={(e) => setRecordatorioFecha(e.target.value)}
+                                    style={{
+                                      width: "100%",
+                                      padding: "5px 7px",
+                                      borderRadius: "6px",
+                                      border: "1px solid #CBD5E1",
+                                      fontSize: "0.75rem",
+                                    }}
+                                  />
+                                  <input
+                                    type="text"
+                                    value={recordatorioNota}
+                                    onChange={(e) => setRecordatorioNota(e.target.value)}
+                                    placeholder="Nota opcional (ej. confirmar pago)…"
+                                    style={{
+                                      width: "100%",
+                                      padding: "5px 7px",
+                                      borderRadius: "6px",
+                                      border: "1px solid #CBD5E1",
+                                      fontSize: "0.75rem",
+                                    }}
+                                  />
+                                  <button
+                                    type="button"
+                                    disabled={!recordatorioFecha}
+                                    onClick={() => void handleGuardarRecordatorio()}
+                                    style={{
+                                      padding: "6px 10px",
+                                      borderRadius: "6px",
+                                      border: "none",
+                                      background: "#0F172A",
+                                      color: "#FFFFFF",
+                                      fontSize: "0.75rem",
+                                      fontWeight: 700,
+                                      cursor: recordatorioFecha ? "pointer" : "not-allowed",
+                                      opacity: recordatorioFecha ? 1 : 0.5,
+                                    }}
+                                  >
+                                    Programar
+                                  </button>
+                                </div>
+                              )}
+
+                              {conversacionActiva.recordatorioEn && (
+                                <button
+                                  type="button"
+                                  onClick={() => void handleLimpiarRecordatorio()}
+                                  style={{
+                                    width: "100%",
+                                    padding: "7px 12px",
+                                    border: "none",
+                                    background: "#FFFFFF",
+                                    textAlign: "left",
+                                    fontSize: "0.76rem",
+                                    fontWeight: 700,
+                                    color: "#DC2626",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  ✕ Quitar recordatorio actual
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 3. MARCAR COMO CERRADO (CON MOTIVO) / REABRIR (CONVERSACIÓN ABIERTA) */}
+                      <div style={{ position: "relative" }}>
+                        {conversacionActiva.estadoAtencion !== "CERRADO" ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setMenuCabeceraAbierto((prev) =>
+                                prev === "cierre" ? null : "cierre"
+                              )
+                            }
+                            title="Marcar como Cerrado (seleccionar motivo de cierre)"
+                            aria-label="Marcar como Cerrado"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              width: "32px",
+                              height: "32px",
+                              borderRadius: "8px",
+                              border:
+                                menuCabeceraAbierto === "cierre"
+                                  ? "1px solid #0F172A"
+                                  : "1px solid #E2E8F0",
+                              background:
+                                menuCabeceraAbierto === "cierre" ? "#F1F5F9" : "#FFFFFF",
+                              color: "#334155",
+                              cursor: "pointer",
+                            }}
+                          >
+                            <CheckCircle2 size={15} />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn-responsive-accion"
+                            onClick={() => void handleCambiarEstado("EN_ATENCION_ASESORA")}
+                            title="Marcar como Conversación Abierta (reabrir chat)"
+                            aria-label="Conversación Abierta"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              padding: "6px 9px",
+                              borderRadius: "8px",
+                              border: "1px solid #16A34A",
+                              background: "#DCFCE7",
+                              color: "#15803D",
+                              fontSize: "0.73rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                          >
+                            <RotateCcw size={13} />
+                            <span className="btn-texto-responsive">Abrir chat</span>
+                          </button>
+                        )}
+
+                        {menuCabeceraAbierto === "cierre" && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: "calc(100% + 6px)",
+                              right: 0,
+                              width: "268px",
+                              background: "#FFFFFF",
+                              border: "1px solid #CBD5E1",
+                              borderRadius: "12px",
+                              boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
+                              padding: "8px 0",
+                              zIndex: 40,
+                            }}
+                          >
+                            <div
+                              style={{
+                                padding: "4px 12px 6px",
+                                fontSize: "0.73rem",
+                                fontWeight: 700,
+                                color: "#0F172A",
+                                borderBottom: "1px solid #F1F5F9",
+                              }}
+                            >
+                              Cerrar chat · Selecciona el motivo
+                            </div>
+
+                            <div style={{ padding: "6px 12px 4px" }}>
+                              <input
+                                type="text"
+                                value={notaCierreInput}
+                                onChange={(e) => setNotaCierreInput(e.target.value)}
+                                placeholder="Nota breve opcional (ej. TNK-ORD-0045)…"
+                                style={{
+                                  width: "100%",
+                                  padding: "5px 8px",
+                                  borderRadius: "6px",
+                                  border: "1px solid #CBD5E1",
+                                  fontSize: "0.75rem",
+                                }}
+                              />
+                            </div>
+
+                            <div style={{ maxHeight: "260px", overflowY: "auto", paddingTop: "2px" }}>
+                              {MOTIVOS_CIERRE_OMNICANAL.map((mot) => (
+                                <button
+                                  key={mot.codigo}
+                                  type="button"
+                                  onClick={() => void handleCerrarConversacionConMotivo(mot.codigo)}
+                                  style={{
+                                    width: "100%",
+                                    padding: "7px 12px",
+                                    border: "none",
+                                    background: "#FFFFFF",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    gap: "1px",
+                                    textAlign: "left",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      fontSize: "0.79rem",
+                                      fontWeight: 700,
+                                      color: mot.color,
+                                    }}
+                                  >
+                                    {mot.icono} {mot.etiqueta}
+                                  </span>
+                                  <span style={{ fontSize: "0.69rem", color: "#64748B" }}>
+                                    {mot.descripcion}
+                                  </span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 4. MARCAR COMO NO LEÍDO */}
+                      <button
+                        type="button"
+                        onClick={() => void handleMarcarComoNoLeido()}
+                        title="Marcar como No Leído"
+                        aria-label="Marcar como No Leído"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: "32px",
+                          height: "32px",
+                          borderRadius: "8px",
+                          border:
+                            (conversacionActiva.noLeidosAsesora || 0) > 0
+                              ? "1px solid #2563EB"
+                              : "1px solid #E2E8F0",
+                          background:
+                            (conversacionActiva.noLeidosAsesora || 0) > 0
+                              ? "#EFF6FF"
+                              : "#FFFFFF",
+                          color:
+                            (conversacionActiva.noLeidosAsesora || 0) > 0
+                              ? "#1D4ED8"
+                              : "#334155",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <MailWarning size={15} />
+                      </button>
+
+                      {/* 5. PAUSAR IA / ACTIVAR IA */}
                       {conversacionActiva.estadoAtencion !== "EN_ATENCION_ASESORA" ? (
                         <button
                           type="button"
@@ -2793,12 +3697,12 @@ export function ConsolaVentasOmnicanal({
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: "5px",
-                            padding: "5px 9px",
+                            gap: "4px",
+                            padding: "6px 9px",
                             borderRadius: "8px",
-                            border: "none",
-                            background: "#1D4ED8",
-                            color: "#FFFFFF",
+                            border: "1px solid #CBD5E1",
+                            background: "#FFFFFF",
+                            color: "#0F172A",
                             fontSize: "0.73rem",
                             fontWeight: 700,
                             cursor: "pointer",
@@ -2817,8 +3721,8 @@ export function ConsolaVentasOmnicanal({
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: "5px",
-                            padding: "5px 9px",
+                            gap: "4px",
+                            padding: "6px 9px",
                             borderRadius: "8px",
                             border: "1px solid #10B981",
                             background: "#ECFDF5",
@@ -2833,44 +3737,18 @@ export function ConsolaVentasOmnicanal({
                         </button>
                       )}
 
-                      <select
-                        value={conversacionActiva.asesoraAsignadaId || ""}
-                        onChange={(e) => void handleAsignarVendedor(e.target.value)}
-                        title="Asignar conversación a un miembro del equipo"
-                        aria-label="Asignar conversación"
-                        style={{
-                          padding: "5px 7px",
-                          borderRadius: "8px",
-                          border: conversacionActiva.asesoraAsignadaId
-                            ? "1px solid #93C5FD"
-                            : "1px solid #CBD5E1",
-                          background: conversacionActiva.asesoraAsignadaId ? "#EFF6FF" : "#FFFFFF",
-                          color: "#0F172A",
-                          fontSize: "0.73rem",
-                          fontWeight: 600,
-                          maxWidth: modoLayoutInbox === "movil" ? "112px" : "148px",
-                          cursor: "pointer",
-                        }}
-                      >
-                        <option value="">👤 Sin asignar</option>
-                        {tablero.equipo.map((m) => (
-                          <option key={m.usuarioId} value={m.usuarioId}>
-                            👤 {m.nombre.split(" ")[0]} ({m.rol})
-                          </option>
-                        ))}
-                      </select>
-
+                      {/* 6. COMPARTIR AL CHAT GRUPAL DEL EQUIPO */}
                       <button
                         type="button"
                         className="btn-responsive-accion"
                         onClick={handleCompartirChatAlEquipo}
-                        title="Compartir esta conversación en el Chat Grupal del Equipo (@kleber, @taller, @delivery)"
+                        title="Compartir esta conversación en el Chat Grupal del Equipo (@kleber, @taller)"
                         aria-label="Compartir en chat grupal"
                         style={{
                           display: "inline-flex",
                           alignItems: "center",
-                          gap: "5px",
-                          padding: "5px 9px",
+                          gap: "4px",
+                          padding: "6px 9px",
                           borderRadius: "8px",
                           border: "1px solid #DDD6FE",
                           background: "#F5F3FF",
@@ -2884,130 +3762,37 @@ export function ConsolaVentasOmnicanal({
                         <span className="btn-texto-responsive">Compartir</span>
                       </button>
 
-                      <button
-                        type="button"
-                        className="btn-responsive-accion"
-                        onClick={() => void handleMarcarComoNoLeido()}
-                        title="Marcar conversación como no leída para atenderla después"
-                        aria-label="Marcar no leído"
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "5px",
-                          padding: "5px 9px",
-                          borderRadius: "8px",
-                          border: "1px solid #CBD5E1",
-                          background: "#FFFFFF",
-                          color: "#334155",
-                          fontSize: "0.73rem",
-                          fontWeight: 600,
-                          cursor: "pointer",
-                        }}
-                      >
-                        <MailWarning size={13} />
-                        <span className="btn-texto-responsive">No leído</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        className="btn-responsive-accion"
-                        onClick={() => setEditandoRecordatorio((v) => !v)}
-                        title="Programar recordatorio de seguimiento comercial"
-                        aria-label="Recordatorio"
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "5px",
-                          padding: "5px 8px",
-                          borderRadius: "8px",
-                          border: "1px solid #CBD5E1",
-                          background: conversacionActiva.recordatorioEn ? "#FEF3C7" : "#FFFFFF",
-                          color: "#334155",
-                          fontSize: "0.73rem",
-                          fontWeight: 600,
-                          cursor: "pointer",
-                        }}
-                      >
-                        <Clock size={13} />
-                        <span className="btn-texto-responsive">Recordar</span>
-                      </button>
-
-                      {conversacionActiva.estadoAtencion !== "CERRADO" ? (
-                        <button
-                          type="button"
-                          className="btn-responsive-accion"
-                          onClick={() => void handleCambiarEstado("CERRADO")}
-                          title="Marcar conversación como resuelta y cerrada"
-                          aria-label="Cerrar chat"
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "5px",
-                            padding: "5px 9px",
-                            borderRadius: "8px",
-                            border: "1px solid #CBD5E1",
-                            background: "#FFFFFF",
-                            color: "#334155",
-                            fontSize: "0.73rem",
-                            fontWeight: 600,
-                            cursor: "pointer",
-                          }}
-                        >
-                          <CheckCircle2 size={13} />
-                          <span className="btn-texto-responsive">Cerrar</span>
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="btn-responsive-accion"
-                          onClick={() => void handleCambiarEstado("EN_ATENCION_ASESORA")}
-                          title="Reabrir conversación"
-                          aria-label="Reabrir"
-                          style={{
-                            padding: "5px 9px",
-                            borderRadius: "8px",
-                            border: "1px solid #CBD5E1",
-                            background: "#FFFFFF",
-                            fontSize: "0.73rem",
-                            fontWeight: 600,
-                            cursor: "pointer",
-                          }}
-                        >
-                          Reabrir
-                        </button>
-                      )}
-
+                      {/* 7. MOSTRAR / PLEGAR PANEL DERECHO (CAMPOS DE VENTA Y DATOS) */}
                       {modoLayoutInbox === "desktop" ? (
                         <button
                           type="button"
-                          className="btn-responsive-accion"
                           onClick={() => setFichaDerechaDesktop((v) => !v)}
                           title={
                             fichaDerechaDesktop
-                              ? "Plegar panel derecho de Campos de Venta para ampliar el chat"
+                              ? "Plegar panel derecho de Campos de Venta"
                               : "Mostrar Campos de Venta y Ficha 360°"
                           }
                           aria-label={fichaDerechaDesktop ? "Ocultar Datos" : "Campos de Venta"}
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
-                            gap: "5px",
-                            padding: "5px 9px",
+                            justifyContent: "center",
+                            width: "32px",
+                            height: "32px",
                             borderRadius: "8px",
-                            border: "1px solid #CBD5E1",
-                            background: fichaDerechaDesktop ? "#FFFFFF" : "#0F172A",
-                            color: fichaDerechaDesktop ? "#334155" : "#FFFFFF",
-                            fontSize: "0.73rem",
-                            fontWeight: 700,
+                            border: fichaDerechaDesktop
+                              ? "1px solid #93C5FD"
+                              : "1px solid #E2E8F0",
+                            background: fichaDerechaDesktop ? "#EFF6FF" : "#FFFFFF",
+                            color: fichaDerechaDesktop ? "#1D4ED8" : "#334155",
                             cursor: "pointer",
                           }}
                         >
                           {fichaDerechaDesktop ? (
-                            <PanelRightClose size={13} />
+                            <PanelRightClose size={15} />
                           ) : (
-                            <PanelRightOpen size={13} />
+                            <PanelRightOpen size={15} />
                           )}
-                          <span className="btn-texto-responsive">Datos</span>
                         </button>
                       ) : (
                         <button
@@ -3025,7 +3810,7 @@ export function ConsolaVentasOmnicanal({
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "4px",
-                            padding: "5px 9px",
+                            padding: "6px 9px",
                             borderRadius: "8px",
                             border: "1px solid #0F172A",
                             background: "#0F172A",
@@ -3042,144 +3827,33 @@ export function ConsolaVentasOmnicanal({
                     </div>
                   </div>
 
-                  {/* Barra compacta de selección de etiquetas de clasificación */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
-                    <Tag size={12} style={{ color: "#64748B" }} />
-                    {etiquetasClasificacion
-                      .filter((etq) =>
-                        selectorEtiquetasAbierto
-                          ? true
-                          : (conversacionActiva.etiquetasIds ?? []).includes(etq.id)
-                      )
-                      .map((etq) => {
-                        const puesta = (conversacionActiva.etiquetasIds ?? []).includes(etq.id);
-                        return (
+                  {/* Píldoras compactas de etiquetas asignadas actualmente al chat */}
+                  {(conversacionActiva.etiquetasIds ?? []).some((id) => mapaEtiquetas.has(id)) && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" }}>
+                      {(conversacionActiva.etiquetasIds ?? [])
+                        .map((id) => mapaEtiquetas.get(id))
+                        .filter((etq): etq is EtiquetaOmnicanal => Boolean(etq))
+                        .map((etq) => (
                           <button
                             key={etq.id}
                             type="button"
                             onClick={() => void handleAlternarEtiqueta(etq.id)}
-                            title={puesta ? `Quitar etiqueta ${etq.nombre}` : `Asignar ${etq.nombre}`}
-                            aria-label={`Etiqueta ${etq.nombre}`}
+                            title={`Clic para quitar etiqueta ${etq.nombre}`}
+                            aria-label={`Quitar etiqueta ${etq.nombre}`}
                             style={{
-                              padding: "2px 8px",
+                              padding: "1px 7px",
                               borderRadius: "999px",
-                              fontSize: "0.68rem",
-                              fontWeight: 600,
-                              border: puesta ? `1px solid ${etq.color}` : "1px solid #E2E8F0",
-                              background: puesta ? `${etq.color}20` : "#F8FAFC",
-                              color: puesta ? etq.color : "#64748B",
+                              fontSize: "0.67rem",
+                              fontWeight: 700,
+                              border: `1px solid ${etq.color}66`,
+                              background: `${etq.color}18`,
+                              color: etq.color,
                               cursor: "pointer",
                             }}
                           >
-                            {etq.icono} {etq.nombre}
+                            {etq.icono} {etq.nombre} ×
                           </button>
-                        );
-                      })}
-                    <button
-                      type="button"
-                      onClick={() => setSelectorEtiquetasAbierto((v) => !v)}
-                      title={
-                        selectorEtiquetasAbierto
-                          ? "Contraer catálogo de etiquetas"
-                          : "Seleccionar o quitar etiquetas en este chat"
-                      }
-                      aria-label="Seleccionar etiquetas"
-                      style={{
-                        padding: "2px 8px",
-                        borderRadius: "999px",
-                        fontSize: "0.68rem",
-                        fontWeight: 700,
-                        border: "1px dashed #CBD5E1",
-                        background: selectorEtiquetasAbierto ? "#0F172A" : "#FFFFFF",
-                        color: selectorEtiquetasAbierto ? "#FFFFFF" : "#475569",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {selectorEtiquetasAbierto ? "Listo" : "+ Etiqueta"}
-                    </button>
-
-                    {selectorEtiquetasAbierto && Boolean(tablero.esAdminEtiquetas) && (
-                      <button
-                        type="button"
-                        onClick={() => setModalEtiquetasAbierto(true)}
-                        title="Crear, editar o eliminar etiquetas maestras"
-                        aria-label="Administrar etiquetas"
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "3px",
-                          padding: "2px 8px",
-                          borderRadius: "999px",
-                          fontSize: "0.68rem",
-                          fontWeight: 700,
-                          border: "1px solid #CBD5E1",
-                          background: "#F8FAFC",
-                          color: "#0F172A",
-                          cursor: "pointer",
-                        }}
-                      >
-                        <Settings2 size={11} />
-                        <span>Administrar</span>
-                      </button>
-                    )}
-                  </div>
-
-                  {editandoRecordatorio && (
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "8px",
-                        alignItems: "center",
-                        flexWrap: "wrap",
-                        padding: "8px 10px",
-                        borderRadius: "9px",
-                        background: "#FFFBEB",
-                        border: "1px solid #FDE68A",
-                      }}
-                    >
-                      <input
-                        type="datetime-local"
-                        value={recordatorioFecha}
-                        onChange={(e) => setRecordatorioFecha(e.target.value)}
-                        style={{
-                          padding: "5px 8px",
-                          borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
-                          fontSize: "0.76rem",
-                        }}
-                      />
-                      <input
-                        type="text"
-                        value={recordatorioNota}
-                        onChange={(e) => setRecordatorioNota(e.target.value)}
-                        placeholder="Ej: Confirmar pago transferencia…"
-                        style={{
-                          flex: 1,
-                          minWidth: "160px",
-                          padding: "5px 8px",
-                          borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
-                          fontSize: "0.76rem",
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => void handleGuardarRecordatorio()}
-                        title="Guardar recordatorio"
-                        aria-label="Guardar"
-                        style={{
-                          padding: "5px 10px",
-                          borderRadius: "6px",
-                          border: "none",
-                          background: "#B45309",
-                          color: "#FFFFFF",
-                          fontSize: "0.75rem",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                        }}
-                      >
-                        Guardar
-                      </button>
+                        ))}
                     </div>
                   )}
                 </div>
@@ -3230,10 +3904,12 @@ export function ConsolaVentasOmnicanal({
                       const esCliente = m.origen === "CLIENTE";
                       const esAria = m.origen === "BOT_ARIA";
                       const esNota = m.origen === "NOTA_INTERNA";
+                      const esResaltado = Boolean(mensajeResaltadoId && m.id === mensajeResaltadoId);
 
                       return (
                         <div
                           key={m.id}
+                          data-msg-id={m.id}
                           style={{
                             alignSelf: esCliente ? "flex-start" : "flex-end",
                             maxWidth: "82%",
@@ -3256,6 +3932,23 @@ export function ConsolaVentasOmnicanal({
                               textAlign: esCliente ? "left" : "right",
                             }}
                           >
+                            {esResaltado && (
+                              <span
+                                style={{
+                                  display: "inline-block",
+                                  marginRight: "6px",
+                                  padding: "1px 6px",
+                                  borderRadius: "999px",
+                                  background: "#FEF3C7",
+                                  color: "#92400E",
+                                  border: "1px solid #F59E0B",
+                                  fontSize: "0.64rem",
+                                  fontWeight: 800,
+                                }}
+                              >
+                                📌 Mensaje compartido
+                              </span>
+                            )}
                             {esCliente && `👤 ${m.autorNombre || conversacionActiva.remitenteNombre}`}
                             {esAria && `🤖 IA ARIA (${m.autorNombre || "Automático"})`}
                             {esNota && `📝 Nota Interna · ${m.autorNombre || "Equipo"}`}
@@ -3281,19 +3974,24 @@ export function ConsolaVentasOmnicanal({
                                     : "#1E40AF",
                               color:
                                 m.origen === "ASESORA_HUMANA" ? "#FFFFFF" : "#0F172A",
-                              border: esCliente
-                                ? "1px solid #E2E8F0"
-                                : esAria
-                                  ? "1px solid #A7F3D0"
-                                  : esNota
-                                    ? "1px solid #FDE68A"
-                                    : "none",
+                              border: esResaltado
+                                ? "2px solid #F59E0B"
+                                : esCliente
+                                  ? "1px solid #E2E8F0"
+                                  : esAria
+                                    ? "1px solid #A7F3D0"
+                                    : esNota
+                                      ? "1px solid #FDE68A"
+                                      : "none",
                               fontSize: "0.83rem",
                               lineHeight: 1.48,
-                              boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
+                              boxShadow: esResaltado
+                                ? "0 0 0 4px rgba(245, 158, 11, 0.22)"
+                                : "0 1px 2px rgba(15, 23, 42, 0.04)",
                               display: "flex",
                               flexDirection: "column",
                               gap: "8px",
+                              transition: "box-shadow 0.25s ease, border-color 0.25s ease",
                             }}
                           >
                             {renderContenidoMensajeOmnicanal(
@@ -3311,6 +4009,7 @@ export function ConsolaVentasOmnicanal({
                                     creadoEn: m.creadoEn,
                                     contextoReenvio: {
                                       conversacionId: conversacionActiva.id,
+                                      mensajeId: m.id,
                                       canal: conversacionActiva.canal,
                                       clienteNombre: conversacionActiva.remitenteNombre,
                                       clienteTelefono:
@@ -3334,6 +4033,7 @@ export function ConsolaVentasOmnicanal({
                                         .trim(),
                                       contextoCliente: {
                                         conversacionId: conversacionActiva.id,
+                                        mensajeId: m.id,
                                         canal: conversacionActiva.canal,
                                         clienteNombre: conversacionActiva.remitenteNombre,
                                         clienteTelefono:
@@ -3374,6 +4074,7 @@ export function ConsolaVentasOmnicanal({
                                         .trim(),
                                       contextoCliente: {
                                         conversacionId: conversacionActiva.id,
+                                        mensajeId: m.id,
                                         canal: conversacionActiva.canal,
                                         clienteNombre: conversacionActiva.remitenteNombre,
                                         clienteTelefono:
@@ -3669,6 +4370,43 @@ export function ConsolaVentasOmnicanal({
                         resize: "none",
                       }}
                     />
+                    {!modoNotaInterna &&
+                      conversacionActiva.estadoAtencion !== "CERRADO" &&
+                      modoLayoutInbox !== "movil" && (
+                        <button
+                          type="button"
+                          disabled={
+                            enviandoMensaje || (!textoRespuesta.trim() && !imagenAdjuntaAsesorUrl)
+                          }
+                          onClick={async () => {
+                            await handleEnviarMensaje();
+                            setMenuCabeceraAbierto("cierre");
+                          }}
+                          title="Enviar mensaje al cliente y elegir el motivo para cerrar la conversación"
+                          aria-label="Enviar y cerrar"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "5px",
+                            padding: "10px 11px",
+                            borderRadius: "10px",
+                            border: "1px solid #CBD5E1",
+                            background: "#F8FAFC",
+                            color: "#0F172A",
+                            fontSize: "0.78rem",
+                            fontWeight: 700,
+                            cursor: enviandoMensaje ? "wait" : "pointer",
+                            opacity: !textoRespuesta.trim() && !imagenAdjuntaAsesorUrl ? 0.5 : 1,
+                            flexShrink: 0,
+                            whiteSpace: "nowrap",
+                          }}
+                        >
+                          <CheckCircle2 size={14} />
+                          <span>Enviar y cerrar</span>
+                        </button>
+                      )}
+
                     <button
                       type="submit"
                       className="btn-responsive-accion"
