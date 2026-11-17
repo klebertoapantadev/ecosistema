@@ -16,8 +16,8 @@ export default async function EmisionNotificacionesPage() {
   if (!esAutorizado) {
     return (
       <div className="contenedor-panel" style={{ maxWidth: "780px", margin: "40px auto", padding: "0 16px" }}>
-        <section className="tarjeta-seccion" style={{ borderLeft: "4px solid #ef4444", padding: "36px 28px", textAlign: "center", background: "#0d1117" }}>
-          <ShieldAlert style={{ width: 52, height: 52, color: "#ef4444", margin: "0 auto 16px" }} />
+        <section className="tarjeta-seccion" style={{ borderLeft: "4px solid var(--error)", padding: "36px 28px", textAlign: "center", background: "#0d1117" }}>
+          <ShieldAlert style={{ width: 52, height: 52, color: "var(--error)", margin: "0 auto 16px" }} />
           <h1 style={{ fontSize: "1.35rem", fontWeight: 700, color: "#f87171", marginBottom: "8px" }}>
             Acceso Restringido — Consola de Emisión
           </h1>

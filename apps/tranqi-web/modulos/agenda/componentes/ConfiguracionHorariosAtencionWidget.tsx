@@ -122,12 +122,12 @@ function normalizarConfiguracion(raw: Partial<DatosConfigNegocioAgenda>): DatosC
 
 const inputBaseStyle: React.CSSProperties = {
   borderRadius: "10px",
-  border: "1px solid #CBD5E1",
+  border: "1px solid var(--linea-fuerte)",
   background: "#FFFFFF",
   padding: "8px 12px",
   fontSize: "0.84rem",
   fontWeight: 600,
-  color: "#0F172A",
+  color: "var(--texto)",
   outline: "none",
 };
 
@@ -135,7 +135,7 @@ const labelBaseStyle: React.CSSProperties = {
   display: "block",
   fontSize: "0.75rem",
   fontWeight: 700,
-  color: "#475569",
+  color: "var(--texto-2)",
   marginBottom: "6px",
 };
 
@@ -520,14 +520,14 @@ export function ConfiguracionHorariosAtencionWidget({
       <div
         style={{
           borderRadius: "16px",
-          border: "1px solid #E2E8F0",
+          border: "1px solid var(--linea)",
           background: "#FFFFFF",
           padding: "24px",
           display: "flex",
           alignItems: "center",
           gap: "12px",
           fontSize: "0.9rem",
-          color: "#475569",
+          color: "var(--texto-2)",
         }}
       >
         <Loader2 size={20} color="#5000BA" />
@@ -541,7 +541,7 @@ export function ConfiguracionHorariosAtencionWidget({
       style={{
         background: "#FFFFFF",
         borderRadius: "20px",
-        border: "1px solid #E2E8F0",
+        border: "1px solid var(--linea)",
         padding: "24px",
         boxShadow: "0 4px 16px -4px rgba(15, 23, 42, 0.05)",
         display: "flex",
@@ -559,7 +559,7 @@ export function ConfiguracionHorariosAtencionWidget({
           justifyContent: "space-between",
           gap: "16px",
           paddingBottom: "18px",
-          borderBottom: "1px solid #F1F5F9",
+          borderBottom: "1px solid var(--fondo-hundido)",
         }}
       >
         <div style={{ display: "flex", alignItems: "flex-start", gap: "14px", maxWidth: "740px" }}>
@@ -568,13 +568,13 @@ export function ConfiguracionHorariosAtencionWidget({
               width: "46px",
               height: "46px",
               borderRadius: "12px",
-              background: "#F5F3FF",
+              background: "var(--acento-diluido)",
               color: "#5000BA",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               flexShrink: 0,
-              border: "1px solid #DDD6FE",
+              border: "1px solid var(--acento-linea)",
             }}
           >
             <CalendarClock size={24} />
@@ -586,8 +586,8 @@ export function ConfiguracionHorariosAtencionWidget({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
-                  background: "#F5F3FF",
-                  border: "1px solid #DDD6FE",
+                  background: "var(--acento-diluido)",
+                  border: "1px solid var(--acento-linea)",
                   color: "#5000BA",
                   padding: "3px 10px",
                   borderRadius: "999px",
@@ -604,13 +604,13 @@ export function ConfiguracionHorariosAtencionWidget({
                 margin: "0 0 4px 0",
                 fontSize: "1.25rem",
                 fontWeight: 800,
-                color: "#0F172A",
+                color: "var(--texto)",
                 letterSpacing: "-0.01em",
               }}
             >
               Horarios de Atención (Telemático y Oficina), Fechas Especiales y Cupo por Hora
             </h2>
-            <p style={{ margin: 0, fontSize: "0.85rem", color: "#64748B", lineHeight: 1.45 }}>
+            <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--texto-suave)", lineHeight: 1.45 }}>
               Configura el horario laborable normal por defecto, excepciones por fechas exactas (ej.
               Navidad) y el número máximo de citas permitidas en la misma fecha y hora.
             </p>
@@ -655,15 +655,15 @@ export function ConfiguracionHorariosAtencionWidget({
             alignItems: "center",
             gap: "10px",
             borderRadius: "12px",
-            border: "1px solid #86EFAC",
-            background: "#F0FDF4",
+            border: "1px solid var(--exito-linea)",
+            background: "var(--exito-diluido)",
             padding: "12px 16px",
             fontSize: "0.86rem",
             fontWeight: 600,
-            color: "#166534",
+            color: "var(--exito-texto)",
           }}
         >
-          <CheckCircle2 size={18} color="#16A34A" />
+          <CheckCircle2 size={18} color="var(--exito)" />
           <span>{mensajeOk}</span>
         </div>
       )}
@@ -675,15 +675,15 @@ export function ConfiguracionHorariosAtencionWidget({
             alignItems: "center",
             gap: "10px",
             borderRadius: "12px",
-            border: "1px solid #FCA5A5",
-            background: "#FEF2F2",
+            border: "1px solid var(--error-linea)",
+            background: "var(--error-diluido)",
             padding: "12px 16px",
             fontSize: "0.86rem",
             fontWeight: 600,
-            color: "#991B1B",
+            color: "var(--error-texto)",
           }}
         >
-          <AlertCircle size={18} color="#DC2626" />
+          <AlertCircle size={18} color="var(--error)" />
           <span>{error}</span>
         </div>
       )}
@@ -694,8 +694,8 @@ export function ConfiguracionHorariosAtencionWidget({
           display: "grid",
           gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
           gap: "16px",
-          background: "linear-gradient(135deg, #F5F3FF 0%, #F8FAFC 100%)",
-          border: "1.5px solid #DDD6FE",
+          background: "linear-gradient(135deg, var(--acento-diluido) 0%, var(--fondo-suave) 100%)",
+          border: "1.5px solid var(--acento-linea)",
           borderRadius: "16px",
           padding: "18px",
         }}
@@ -705,7 +705,7 @@ export function ConfiguracionHorariosAtencionWidget({
           style={{
             background: "#FFFFFF",
             borderRadius: "14px",
-            border: "1px solid #E9D5FF",
+            border: "1px solid var(--acento-linea)",
             padding: "16px",
             display: "flex",
             flexDirection: "column",
@@ -731,10 +731,10 @@ export function ConfiguracionHorariosAtencionWidget({
               <Users size={15} />
               <span>Control de Concurrencia por Turno</span>
             </div>
-            <h3 style={{ margin: "0 0 6px 0", fontSize: "1rem", fontWeight: 800, color: "#0F172A" }}>
+            <h3 style={{ margin: "0 0 6px 0", fontSize: "1rem", fontWeight: 800, color: "var(--texto)" }}>
               Máximo de citas en la misma fecha y hora
             </h3>
-            <p style={{ margin: 0, fontSize: "0.8rem", color: "#64748B", lineHeight: 1.45 }}>
+            <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--texto-suave)", lineHeight: 1.45 }}>
               Por defecto <strong>1 sola cita</strong> por bloque horario. Cuando se reserva ese
               cupo, la fecha/hora se bloquea automáticamente para otros clientes.
             </p>
@@ -748,7 +748,7 @@ export function ConfiguracionHorariosAtencionWidget({
               justifyContent: "space-between",
               gap: "12px",
               paddingTop: "12px",
-              borderTop: "1px solid #F1F5F9",
+              borderTop: "1px solid var(--fondo-hundido)",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -766,9 +766,9 @@ export function ConfiguracionHorariosAtencionWidget({
                   width: "34px",
                   height: "34px",
                   borderRadius: "10px",
-                  border: "1px solid #CBD5E1",
-                  background: "#F8FAFC",
-                  color: "#334155",
+                  border: "1px solid var(--linea-fuerte)",
+                  background: "var(--fondo-suave)",
+                  color: "var(--texto-2)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -795,7 +795,7 @@ export function ConfiguracionHorariosAtencionWidget({
                   height: "34px",
                   borderRadius: "10px",
                   border: "1.5px solid #5000BA",
-                  background: "#F5F3FF",
+                  background: "var(--acento-diluido)",
                   textAlign: "center",
                   fontSize: "1rem",
                   fontWeight: 800,
@@ -817,9 +817,9 @@ export function ConfiguracionHorariosAtencionWidget({
                   width: "34px",
                   height: "34px",
                   borderRadius: "10px",
-                  border: "1px solid #CBD5E1",
-                  background: "#F8FAFC",
-                  color: "#334155",
+                  border: "1px solid var(--linea-fuerte)",
+                  background: "var(--fondo-suave)",
+                  color: "var(--texto-2)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -829,7 +829,7 @@ export function ConfiguracionHorariosAtencionWidget({
                 <Plus size={15} />
               </button>
 
-              <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#475569" }}>
+              <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--texto-2)" }}>
                 {config.max_citas_simultaneas === 1
                   ? "cita por hora (Por defecto)"
                   : "citas simultáneas"}
@@ -847,9 +847,9 @@ export function ConfiguracionHorariosAtencionWidget({
                     style={{
                       padding: "6px 10px",
                       borderRadius: "8px",
-                      border: activo ? "1px solid #5000BA" : "1px solid #CBD5E1",
-                      background: activo ? "#5000BA" : "#F8FAFC",
-                      color: activo ? "#FFFFFF" : "#475569",
+                      border: activo ? "1px solid #5000BA" : "1px solid var(--linea-fuerte)",
+                      background: activo ? "#5000BA" : "var(--fondo-suave)",
+                      color: activo ? "#FFFFFF" : "var(--texto-2)",
                       fontSize: "0.74rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -868,7 +868,7 @@ export function ConfiguracionHorariosAtencionWidget({
           style={{
             background: "#FFFFFF",
             borderRadius: "14px",
-            border: "1px solid #E2E8F0",
+            border: "1px solid var(--linea)",
             padding: "16px",
             display: "flex",
             flexDirection: "column",
@@ -901,7 +901,7 @@ export function ConfiguracionHorariosAtencionWidget({
                     permitir_sin_profesional: val !== "solo_abogados",
                   }));
                 }}
-                style={{ ...inputBaseStyle, width: "100%", background: "#F8FAFC" }}
+                style={{ ...inputBaseStyle, width: "100%", background: "var(--fondo-suave)" }}
               >
                 <option value="fijo_negocio">
                   1. Horario Base Tranqi (Cupo fijo por hora, sin requerir horario de socios)
@@ -928,7 +928,7 @@ export function ConfiguracionHorariosAtencionWidget({
                 onChange={(e) =>
                   setConfig((prev) => ({ ...prev, materia_defecto_nombre: e.target.value }))
                 }
-                style={{ ...inputBaseStyle, width: "100%", background: "#F8FAFC" }}
+                style={{ ...inputBaseStyle, width: "100%", background: "var(--fondo-suave)" }}
               >
                 {materias.length > 0 ? (
                   materias.map((m) => (
@@ -951,12 +951,12 @@ export function ConfiguracionHorariosAtencionWidget({
 
           <div
             style={{
-              background: "#F8FAFC",
-              border: "1px solid #E2E8F0",
+              background: "var(--fondo-suave)",
+              border: "1px solid var(--linea)",
               borderRadius: "10px",
               padding: "10px 14px",
               fontSize: "0.78rem",
-              color: "#475569",
+              color: "var(--texto-2)",
               lineHeight: 1.5,
             }}
           >
@@ -989,10 +989,10 @@ export function ConfiguracionHorariosAtencionWidget({
       {/* 3. HORARIO LABORABLE NORMAL (POR DEFECTO — EDITABLE): TELEMÁTICO Y OFICINA */}
       <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
         <div>
-          <h3 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
+          <h3 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "var(--texto)" }}>
             1. Horario Laborable Normal (Por Defecto — Editable)
           </h3>
-          <p style={{ margin: 0, fontSize: "0.82rem", color: "#64748B" }}>
+          <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--texto-suave)" }}>
             Se aplica todos los días del año salvo en las fechas exactas que tengan un horario
             diferenciado configurado en la sección 2.
           </p>
@@ -1009,7 +1009,7 @@ export function ConfiguracionHorariosAtencionWidget({
           <section
             style={{
               borderRadius: "16px",
-              border: "1px solid #DDD6FE",
+              border: "1px solid var(--acento-linea)",
               background: "#FAF8FF",
               padding: "18px",
               display: "flex",
@@ -1043,10 +1043,10 @@ export function ConfiguracionHorariosAtencionWidget({
                   <Video size={18} />
                 </div>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 800, color: "#0F172A" }}>
+                  <h4 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 800, color: "var(--texto)" }}>
                     Horario Normal — Consultas Telemáticas
                   </h4>
-                  <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#64748B" }}>
+                  <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "var(--texto-suave)" }}>
                     Videollamada (Por defecto Lun–Vie 08:00 a 19:00, Sáb 09:00 a 14:00)
                   </p>
                 </div>
@@ -1064,12 +1064,12 @@ export function ConfiguracionHorariosAtencionWidget({
                     alignItems: "center",
                     gap: "5px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid var(--linea-fuerte)",
                     background: "#FFFFFF",
                     padding: "6px 10px",
                     fontSize: "0.75rem",
                     fontWeight: 700,
-                    color: "#334155",
+                    color: "var(--texto-2)",
                     cursor: "pointer",
                   }}
                 >
@@ -1113,7 +1113,7 @@ export function ConfiguracionHorariosAtencionWidget({
                     justifyContent: "space-between",
                     gap: "8px",
                     borderRadius: "12px",
-                    border: "1px solid #E2E8F0",
+                    border: "1px solid var(--linea)",
                     background: "#FFFFFF",
                     padding: "8px 12px",
                   }}
@@ -1128,7 +1128,7 @@ export function ConfiguracionHorariosAtencionWidget({
                       ...inputBaseStyle,
                       flex: "1 1 120px",
                       minWidth: "120px",
-                      background: "#F8FAFC",
+                      background: "var(--fondo-suave)",
                       padding: "6px 10px",
                     }}
                   >
@@ -1139,7 +1139,7 @@ export function ConfiguracionHorariosAtencionWidget({
                     ))}
                   </select>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", color: "#475569" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", color: "var(--texto-2)" }}>
                     <Clock size={14} color="#5000BA" />
                     <input
                       type="time"
@@ -1169,9 +1169,9 @@ export function ConfiguracionHorariosAtencionWidget({
                     title="Eliminar franja telemática"
                     aria-label="Eliminar franja telemática"
                     style={{
-                      border: "1px solid #FEE2E2",
-                      background: "#FFF1F2",
-                      color: "#E11D48",
+                      border: "1px solid var(--error-diluido)",
+                      background: "var(--error-diluido)",
+                      color: "var(--error)",
                       borderRadius: "8px",
                       width: "32px",
                       height: "32px",
@@ -1193,8 +1193,8 @@ export function ConfiguracionHorariosAtencionWidget({
           <section
             style={{
               borderRadius: "16px",
-              border: "1px solid #CBD5E1",
-              background: "#F8FAFC",
+              border: "1px solid var(--linea-fuerte)",
+              background: "var(--fondo-suave)",
               padding: "18px",
               display: "flex",
               flexDirection: "column",
@@ -1216,7 +1216,7 @@ export function ConfiguracionHorariosAtencionWidget({
                     width: "36px",
                     height: "36px",
                     borderRadius: "10px",
-                    background: "#0F172A",
+                    background: "var(--texto)",
                     color: "#FFFFFF",
                     display: "flex",
                     alignItems: "center",
@@ -1227,10 +1227,10 @@ export function ConfiguracionHorariosAtencionWidget({
                   <Building2 size={18} />
                 </div>
                 <div>
-                  <h4 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 800, color: "#0F172A" }}>
+                  <h4 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 800, color: "var(--texto)" }}>
                     Horario Normal — Consultas en Oficina
                   </h4>
-                  <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#64748B" }}>
+                  <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "var(--texto-suave)" }}>
                     Atención presencial en despacho (Por defecto Lun–Vie 09:00 a 17:30)
                   </p>
                 </div>
@@ -1248,12 +1248,12 @@ export function ConfiguracionHorariosAtencionWidget({
                     alignItems: "center",
                     gap: "5px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid var(--linea-fuerte)",
                     background: "#FFFFFF",
                     padding: "6px 10px",
                     fontSize: "0.75rem",
                     fontWeight: 700,
-                    color: "#334155",
+                    color: "var(--texto-2)",
                     cursor: "pointer",
                   }}
                 >
@@ -1272,7 +1272,7 @@ export function ConfiguracionHorariosAtencionWidget({
                     gap: "5px",
                     borderRadius: "8px",
                     border: "none",
-                    background: "#0F172A",
+                    background: "var(--texto)",
                     padding: "6px 12px",
                     fontSize: "0.75rem",
                     fontWeight: 700,
@@ -1297,7 +1297,7 @@ export function ConfiguracionHorariosAtencionWidget({
                     justifyContent: "space-between",
                     gap: "8px",
                     borderRadius: "12px",
-                    border: "1px solid #E2E8F0",
+                    border: "1px solid var(--linea)",
                     background: "#FFFFFF",
                     padding: "8px 12px",
                   }}
@@ -1312,7 +1312,7 @@ export function ConfiguracionHorariosAtencionWidget({
                       ...inputBaseStyle,
                       flex: "1 1 120px",
                       minWidth: "120px",
-                      background: "#F8FAFC",
+                      background: "var(--fondo-suave)",
                       padding: "6px 10px",
                     }}
                   >
@@ -1323,8 +1323,8 @@ export function ConfiguracionHorariosAtencionWidget({
                     ))}
                   </select>
 
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", color: "#475569" }}>
-                    <Clock size={14} color="#0F172A" />
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", color: "var(--texto-2)" }}>
+                    <Clock size={14} color="var(--texto)" />
                     <input
                       type="time"
                       aria-label="Hora inicio oficina"
@@ -1353,9 +1353,9 @@ export function ConfiguracionHorariosAtencionWidget({
                     title="Eliminar franja de oficina"
                     aria-label="Eliminar franja de oficina"
                     style={{
-                      border: "1px solid #FEE2E2",
-                      background: "#FFF1F2",
-                      color: "#E11D48",
+                      border: "1px solid var(--error-diluido)",
+                      background: "var(--error-diluido)",
+                      color: "var(--error)",
                       borderRadius: "8px",
                       width: "32px",
                       height: "32px",
@@ -1395,8 +1395,8 @@ export function ConfiguracionHorariosAtencionWidget({
       <section
         style={{
           borderRadius: "16px",
-          border: "1.5px solid #FDE68A",
-          background: "#FFFBEB",
+          border: "1.5px solid var(--aviso-linea)",
+          background: "var(--aviso-diluido)",
           padding: "20px",
           display: "flex",
           flexDirection: "column",
@@ -1422,17 +1422,17 @@ export function ConfiguracionHorariosAtencionWidget({
                 fontWeight: 800,
                 textTransform: "uppercase",
                 letterSpacing: "0.05em",
-                color: "#B45309",
+                color: "var(--aviso-texto)",
                 marginBottom: "4px",
               }}
             >
               <CalendarPlus size={15} />
               <span>Excepciones al Horario por Defecto</span>
             </div>
-            <h3 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
+            <h3 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "var(--texto)" }}>
               2. Horarios Diferenciados por Fechas Exactas (Navidad, Feriados, Jornadas Especiales)
             </h3>
-            <p style={{ margin: 0, fontSize: "0.82rem", color: "#78350F", lineHeight: 1.45 }}>
+            <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--aviso-texto)", lineHeight: 1.45 }}>
               Si ingresas una fecha exacta aquí, su configuración reemplaza al horario normal en ese
               día (por ejemplo: en Navidad <strong>2026-12-25</strong> habilitar solo teleconsultas
               de <strong>08:00 a 16:00</strong> y cerrar oficina).
@@ -1448,12 +1448,12 @@ export function ConfiguracionHorariosAtencionWidget({
               aria-label="Configurar Navidad 25 de Diciembre"
               style={{
                 borderRadius: "10px",
-                border: "1px solid #F59E0B",
+                border: "1px solid var(--aviso)",
                 background: "#FFFFFF",
                 padding: "7px 12px",
                 fontSize: "0.76rem",
                 fontWeight: 700,
-                color: "#92400E",
+                color: "var(--aviso-texto)",
                 cursor: "pointer",
               }}
             >
@@ -1466,12 +1466,12 @@ export function ConfiguracionHorariosAtencionWidget({
               aria-label="Configurar Nochebuena 24 de Diciembre"
               style={{
                 borderRadius: "10px",
-                border: "1px solid #F59E0B",
+                border: "1px solid var(--aviso)",
                 background: "#FFFFFF",
                 padding: "7px 12px",
                 fontSize: "0.76rem",
                 fontWeight: 700,
-                color: "#92400E",
+                color: "var(--aviso-texto)",
                 cursor: "pointer",
               }}
             >
@@ -1484,12 +1484,12 @@ export function ConfiguracionHorariosAtencionWidget({
               aria-label="Configurar Fin de Año 31 de Diciembre"
               style={{
                 borderRadius: "10px",
-                border: "1px solid #F59E0B",
+                border: "1px solid var(--aviso)",
                 background: "#FFFFFF",
                 padding: "7px 12px",
                 fontSize: "0.76rem",
                 fontWeight: 700,
-                color: "#92400E",
+                color: "var(--aviso-texto)",
                 cursor: "pointer",
               }}
             >
@@ -1502,12 +1502,12 @@ export function ConfiguracionHorariosAtencionWidget({
               aria-label="Configurar Año Nuevo Cerrado"
               style={{
                 borderRadius: "10px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid var(--linea-fuerte)",
                 background: "#FFFFFF",
                 padding: "7px 12px",
                 fontSize: "0.76rem",
                 fontWeight: 700,
-                color: "#334155",
+                color: "var(--texto-2)",
                 cursor: "pointer",
               }}
             >
@@ -1520,7 +1520,7 @@ export function ConfiguracionHorariosAtencionWidget({
         <div
           style={{
             borderRadius: "14px",
-            border: "1px solid #FCD34D",
+            border: "1px solid var(--aviso-linea)",
             background: "#FFFFFF",
             padding: "16px",
             display: "flex",
@@ -1528,7 +1528,7 @@ export function ConfiguracionHorariosAtencionWidget({
             gap: "12px",
           }}
         >
-          <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#0F172A" }}>
+          <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--texto)" }}>
             Agregar o actualizar horario diferenciado para una fecha exacta:
           </div>
 
@@ -1547,7 +1547,7 @@ export function ConfiguracionHorariosAtencionWidget({
                 aria-label="Fecha exacta especial"
                 value={nuevaFecha}
                 onChange={(e) => setNuevaFecha(e.target.value)}
-                style={{ ...inputBaseStyle, width: "100%", background: "#F8FAFC" }}
+                style={{ ...inputBaseStyle, width: "100%", background: "var(--fondo-suave)" }}
               />
             </div>
 
@@ -1559,7 +1559,7 @@ export function ConfiguracionHorariosAtencionWidget({
                 value={nuevoNombreFecha}
                 onChange={(e) => setNuevoNombreFecha(e.target.value)}
                 placeholder="Ej. Navidad — Solo Teleconsultas"
-                style={{ ...inputBaseStyle, width: "100%", background: "#F8FAFC" }}
+                style={{ ...inputBaseStyle, width: "100%", background: "var(--fondo-suave)" }}
               />
             </div>
 
@@ -1604,12 +1604,12 @@ export function ConfiguracionHorariosAtencionWidget({
                 <div
                   style={{
                     borderRadius: "10px",
-                    border: "1px solid #E2E8F0",
-                    background: "#F1F5F9",
+                    border: "1px solid var(--linea)",
+                    background: "var(--fondo-hundido)",
                     padding: "8px 12px",
                     fontSize: "0.78rem",
                     fontWeight: 600,
-                    color: "#64748B",
+                    color: "var(--texto-suave)",
                   }}
                 >
                   Sin teleconsulta
@@ -1624,7 +1624,7 @@ export function ConfiguracionHorariosAtencionWidget({
                   display: "flex",
                   alignItems: "center",
                   gap: "6px",
-                  color: "#0F172A",
+                  color: "var(--texto)",
                   cursor: "pointer",
                 }}
               >
@@ -1658,12 +1658,12 @@ export function ConfiguracionHorariosAtencionWidget({
                 <div
                   style={{
                     borderRadius: "10px",
-                    border: "1px solid #E2E8F0",
-                    background: "#F1F5F9",
+                    border: "1px solid var(--linea)",
+                    background: "var(--fondo-hundido)",
                     padding: "8px 12px",
                     fontSize: "0.78rem",
                     fontWeight: 600,
-                    color: "#64748B",
+                    color: "var(--texto-suave)",
                   }}
                 >
                   Oficina cerrada
@@ -1683,7 +1683,7 @@ export function ConfiguracionHorariosAtencionWidget({
                   aria-label="Cupo máximo por hora en esta fecha especial"
                   value={nuevoMaxCitasFecha}
                   onChange={(e) => setNuevoMaxCitasFecha(Math.max(1, Number(e.target.value) || 1))}
-                  style={{ ...inputBaseStyle, width: "100%", textAlign: "center", background: "#F8FAFC" }}
+                  style={{ ...inputBaseStyle, width: "100%", textAlign: "center", background: "var(--fondo-suave)" }}
                 />
               </div>
 
@@ -1698,7 +1698,7 @@ export function ConfiguracionHorariosAtencionWidget({
                   height: "38px",
                   borderRadius: "10px",
                   border: "none",
-                  background: "#D97706",
+                  background: "var(--aviso)",
                   color: "#FFFFFF",
                   fontSize: "0.82rem",
                   fontWeight: 700,
@@ -1723,7 +1723,7 @@ export function ConfiguracionHorariosAtencionWidget({
                 gap: "8px",
                 fontSize: "0.8rem",
                 fontWeight: 700,
-                color: "#475569",
+                color: "var(--texto-2)",
                 cursor: "pointer",
               }}
             >
@@ -1742,12 +1742,12 @@ export function ConfiguracionHorariosAtencionWidget({
           <div
             style={{
               borderRadius: "12px",
-              border: "1px dashed #F59E0B",
+              border: "1px dashed var(--aviso)",
               background: "#FFFFFF",
               padding: "16px",
               textAlign: "center",
               fontSize: "0.82rem",
-              color: "#64748B",
+              color: "var(--texto-suave)",
             }}
           >
             No hay fechas exactas diferenciadas configuradas. Todos los días usan el horario
@@ -1769,7 +1769,7 @@ export function ConfiguracionHorariosAtencionWidget({
                     justifyContent: "space-between",
                     gap: "12px",
                     borderRadius: "14px",
-                    border: "1px solid #FDE68A",
+                    border: "1px solid var(--aviso-linea)",
                     background: "#FFFFFF",
                     padding: "12px 16px",
                     boxShadow: "0 1px 4px rgba(0,0,0,0.03)",
@@ -1782,15 +1782,15 @@ export function ConfiguracionHorariosAtencionWidget({
                         alignItems: "center",
                         gap: "6px",
                         borderRadius: "10px",
-                        background: "#FEF3C7",
-                        border: "1px solid #FCD34D",
+                        background: "var(--aviso-diluido)",
+                        border: "1px solid var(--aviso-linea)",
                         padding: "5px 10px",
                         fontSize: "0.8rem",
                         fontWeight: 800,
-                        color: "#92400E",
+                        color: "var(--aviso-texto)",
                       }}
                     >
-                      <Calendar size={14} color="#D97706" />
+                      <Calendar size={14} color="var(--aviso)" />
                       {fe.fecha}
                     </span>
                     <input
@@ -1803,7 +1803,7 @@ export function ConfiguracionHorariosAtencionWidget({
                       style={{
                         ...inputBaseStyle,
                         minWidth: "220px",
-                        background: "#F8FAFC",
+                        background: "var(--fondo-suave)",
                         padding: "6px 10px",
                       }}
                     />
@@ -1818,7 +1818,7 @@ export function ConfiguracionHorariosAtencionWidget({
                         gap: "6px",
                         fontSize: "0.78rem",
                         fontWeight: 700,
-                        color: "#BE123C",
+                        color: "var(--error-texto)",
                         cursor: "pointer",
                       }}
                     >
@@ -1843,8 +1843,8 @@ export function ConfiguracionHorariosAtencionWidget({
                             alignItems: "center",
                             gap: "6px",
                             borderRadius: "10px",
-                            border: "1px solid #DDD6FE",
-                            background: "#F5F3FF",
+                            border: "1px solid var(--acento-linea)",
+                            background: "var(--acento-diluido)",
                             padding: "5px 10px",
                           }}
                         >
@@ -1901,7 +1901,7 @@ export function ConfiguracionHorariosAtencionWidget({
                               />
                             </div>
                           ) : (
-                            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94A3B8" }}>
+                            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--texto-tenue)" }}>
                               No
                             </span>
                           )}
@@ -1914,8 +1914,8 @@ export function ConfiguracionHorariosAtencionWidget({
                             alignItems: "center",
                             gap: "6px",
                             borderRadius: "10px",
-                            border: "1px solid #E2E8F0",
-                            background: "#F8FAFC",
+                            border: "1px solid var(--linea)",
+                            background: "var(--fondo-suave)",
                             padding: "5px 10px",
                           }}
                         >
@@ -1926,7 +1926,7 @@ export function ConfiguracionHorariosAtencionWidget({
                               gap: "5px",
                               fontSize: "0.78rem",
                               fontWeight: 800,
-                              color: "#1E293B",
+                              color: "var(--texto)",
                               cursor: "pointer",
                             }}
                           >
@@ -1973,14 +1973,14 @@ export function ConfiguracionHorariosAtencionWidget({
                               />
                             </div>
                           ) : (
-                            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#E11D48" }}>
+                            <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--error)" }}>
                               Cerrada
                             </span>
                           )}
                         </div>
 
                         {/* Cupo máximo en esa fecha */}
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.78rem", color: "#334155" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.78rem", color: "var(--texto-2)" }}>
                           <span style={{ fontWeight: 700 }}>Máx/hora:</span>
                           <input
                             type="number"
@@ -2011,14 +2011,14 @@ export function ConfiguracionHorariosAtencionWidget({
                       aria-label="Ver vista previa de turnos en esta fecha"
                       style={{
                         borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
-                        background: "#F8FAFC",
+                        border: "1px solid var(--linea-fuerte)",
+                        background: "var(--fondo-suave)",
                         width: "32px",
                         height: "32px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        color: "#475569",
+                        color: "var(--texto-2)",
                         cursor: "pointer",
                       }}
                     >
@@ -2032,14 +2032,14 @@ export function ConfiguracionHorariosAtencionWidget({
                       aria-label="Eliminar excepción de fecha"
                       style={{
                         borderRadius: "8px",
-                        border: "1px solid #FEE2E2",
-                        background: "#FFF1F2",
+                        border: "1px solid var(--error-diluido)",
+                        background: "var(--error-diluido)",
                         width: "32px",
                         height: "32px",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        color: "#E11D48",
+                        color: "var(--error)",
                         cursor: "pointer",
                       }}
                     >
@@ -2057,8 +2057,8 @@ export function ConfiguracionHorariosAtencionWidget({
       <section
         style={{
           borderRadius: "16px",
-          border: "1px solid #E2E8F0",
-          background: "#F8FAFC",
+          border: "1px solid var(--linea)",
+          background: "var(--fondo-suave)",
           padding: "18px",
           display: "flex",
           flexDirection: "column",
@@ -2076,13 +2076,13 @@ export function ConfiguracionHorariosAtencionWidget({
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <Eye size={18} color="#5000BA" />
-            <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "#0F172A" }}>
+            <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "var(--texto)" }}>
               3. Simulador de Horarios por Fecha (Comprobación en Vivo)
             </h3>
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <label htmlFor="sim-fecha" style={{ fontSize: "0.8rem", fontWeight: 700, color: "#475569" }}>
+            <label htmlFor="sim-fecha" style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--texto-2)" }}>
               Probar fecha:
             </label>
             <input
@@ -2106,7 +2106,7 @@ export function ConfiguracionHorariosAtencionWidget({
             <div
               style={{
                 borderRadius: "12px",
-                border: "1px solid #E2E8F0",
+                border: "1px solid var(--linea)",
                 background: "#FFFFFF",
                 padding: "14px",
                 display: "flex",
@@ -2119,21 +2119,21 @@ export function ConfiguracionHorariosAtencionWidget({
                   fontSize: "0.72rem",
                   fontWeight: 800,
                   textTransform: "uppercase",
-                  color: "#64748B",
+                  color: "var(--texto-suave)",
                 }}
               >
                 Regla Aplicada ({simulacionDia.nombreDia} {fechaSimulacion})
               </div>
               {simulacionDia.reglaEspecial ? (
-                <div style={{ fontSize: "0.86rem", fontWeight: 800, color: "#B45309" }}>
+                <div style={{ fontSize: "0.86rem", fontWeight: 800, color: "var(--aviso-texto)" }}>
                   ✨ Fecha Especial: {simulacionDia.reglaEspecial.nombre}
                 </div>
               ) : (
-                <div style={{ fontSize: "0.86rem", fontWeight: 800, color: "#0F172A" }}>
+                <div style={{ fontSize: "0.86rem", fontWeight: 800, color: "var(--texto)" }}>
                   📅 Horario Laborable Normal (Por defecto)
                 </div>
               )}
-              <div style={{ fontSize: "0.8rem", color: "#475569" }}>
+              <div style={{ fontSize: "0.8rem", color: "var(--texto-2)" }}>
                 Cupo máximo por bloque:{" "}
                 <strong style={{ color: "#5000BA" }}>
                   {simulacionDia.cupoEfectivo}{" "}
@@ -2145,7 +2145,7 @@ export function ConfiguracionHorariosAtencionWidget({
             <div
               style={{
                 borderRadius: "12px",
-                border: "1px solid #E2E8F0",
+                border: "1px solid var(--linea)",
                 background: "#FFFFFF",
                 padding: "14px",
                 display: "flex",
@@ -2157,7 +2157,7 @@ export function ConfiguracionHorariosAtencionWidget({
                 Turnos Telemáticos ({simulacionDia.turnosVirtual.length})
               </div>
               {simulacionDia.turnosVirtual.length === 0 ? (
-                <p style={{ margin: 0, fontSize: "0.78rem", color: "#94A3B8", fontWeight: 600 }}>
+                <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--texto-tenue)", fontWeight: 600 }}>
                   Sin atención telemática en esta fecha
                 </p>
               ) : (
@@ -2167,8 +2167,8 @@ export function ConfiguracionHorariosAtencionWidget({
                       key={t}
                       style={{
                         borderRadius: "6px",
-                        background: "#F5F3FF",
-                        border: "1px solid #DDD6FE",
+                        background: "var(--acento-diluido)",
+                        border: "1px solid var(--acento-linea)",
                         padding: "3px 8px",
                         fontSize: "0.72rem",
                         fontWeight: 700,
@@ -2185,7 +2185,7 @@ export function ConfiguracionHorariosAtencionWidget({
             <div
               style={{
                 borderRadius: "12px",
-                border: "1px solid #E2E8F0",
+                border: "1px solid var(--linea)",
                 background: "#FFFFFF",
                 padding: "14px",
                 display: "flex",
@@ -2193,11 +2193,11 @@ export function ConfiguracionHorariosAtencionWidget({
                 gap: "8px",
               }}
             >
-              <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "#0F172A" }}>
+              <div style={{ fontSize: "0.8rem", fontWeight: 800, color: "var(--texto)" }}>
                 Turnos en Oficina ({simulacionDia.turnosPresencial.length})
               </div>
               {simulacionDia.turnosPresencial.length === 0 ? (
-                <p style={{ margin: 0, fontSize: "0.78rem", color: "#E11D48", fontWeight: 700 }}>
+                <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--error)", fontWeight: 700 }}>
                   Oficina cerrada (Solo teleconsulta o feriado)
                 </p>
               ) : (
@@ -2207,12 +2207,12 @@ export function ConfiguracionHorariosAtencionWidget({
                       key={t}
                       style={{
                         borderRadius: "6px",
-                        background: "#F1F5F9",
-                        border: "1px solid #CBD5E1",
+                        background: "var(--fondo-hundido)",
+                        border: "1px solid var(--linea-fuerte)",
                         padding: "3px 8px",
                         fontSize: "0.72rem",
                         fontWeight: 700,
-                        color: "#1E293B",
+                        color: "var(--texto)",
                       }}
                     >
                       {t}
@@ -2232,7 +2232,7 @@ export function ConfiguracionHorariosAtencionWidget({
           gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
           gap: "12px",
           paddingTop: "14px",
-          borderTop: "1px solid #F1F5F9",
+          borderTop: "1px solid var(--fondo-hundido)",
         }}
       >
         <div>
@@ -2249,7 +2249,7 @@ export function ConfiguracionHorariosAtencionWidget({
             onChange={(e) =>
               setConfig((prev) => ({ ...prev, duracion_cita_min: Number(e.target.value) || 45 }))
             }
-            style={{ ...inputBaseStyle, width: "100%", background: "#F8FAFC" }}
+            style={{ ...inputBaseStyle, width: "100%", background: "var(--fondo-suave)" }}
           />
         </div>
         <div>
@@ -2266,7 +2266,7 @@ export function ConfiguracionHorariosAtencionWidget({
             onChange={(e) =>
               setConfig((prev) => ({ ...prev, holgura_min: Number(e.target.value) || 0 }))
             }
-            style={{ ...inputBaseStyle, width: "100%", background: "#F8FAFC" }}
+            style={{ ...inputBaseStyle, width: "100%", background: "var(--fondo-suave)" }}
           />
         </div>
         <div>
@@ -2285,7 +2285,7 @@ export function ConfiguracionHorariosAtencionWidget({
                 antelacion_minima_horas: Number(e.target.value) || 0,
               }))
             }
-            style={{ ...inputBaseStyle, width: "100%", background: "#F8FAFC" }}
+            style={{ ...inputBaseStyle, width: "100%", background: "var(--fondo-suave)" }}
           />
         </div>
         <div>
@@ -2301,7 +2301,7 @@ export function ConfiguracionHorariosAtencionWidget({
             onChange={(e) =>
               setConfig((prev) => ({ ...prev, horizonte_dias: Number(e.target.value) || 45 }))
             }
-            style={{ ...inputBaseStyle, width: "100%", background: "#F8FAFC" }}
+            style={{ ...inputBaseStyle, width: "100%", background: "var(--fondo-suave)" }}
           />
         </div>
       </div>

@@ -28,8 +28,8 @@ export default async function PaginaCatalogoProductos() {
           aria-label="Cerrar y volver al panel"
           style={{
             background: "#FFFFFF",
-            border: "1.5px solid #E2E8F0",
-            color: "#1E293B",
+            border: "1.5px solid var(--linea)",
+            color: "var(--texto)",
             borderRadius: "50%",
             width: "36px",
             height: "36px",

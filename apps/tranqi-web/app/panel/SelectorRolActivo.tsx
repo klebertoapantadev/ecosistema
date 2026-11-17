@@ -119,14 +119,14 @@ export function SelectorRolActivo({ modoInicial = "cliente", ocultarEtiqueta = f
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: esFavorito ? "#FEE300" : esActivo ? "rgba(255,255,255,0.6)" : "var(--panel-gris, #737373)",
+                  color: esFavorito ? "#FEE300" : esActivo ? "rgba(255,255,255,0.6)" : "var(--panel-gris, var(--texto-suave))",
                   zIndex: 2
                 }}
               >
                 <Star
                   size={14}
                   fill={esFavorito ? "#FEE300" : "none"}
-                  stroke={esFavorito ? "#D97706" : "currentColor"}
+                  stroke={esFavorito ? "var(--aviso)" : "currentColor"}
                   strokeWidth={2}
                 />
               </button>

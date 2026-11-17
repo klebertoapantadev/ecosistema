@@ -416,7 +416,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
         <section
           style={{
             background: "var(--blanco, #ffffff)",
-            border: "1px solid var(--panel-linea, #E4E4E4)",
+            border: "1px solid var(--panel-linea, var(--linea))",
             borderRadius: "16px",
             padding: "24px",
             boxShadow: "0 4px 20px rgba(0,0,0,0.04)"
@@ -428,7 +428,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
               display: "flex",
               justifyContent: "space-between",
               alignItems: "flex-start",
-              borderBottom: "1px solid var(--panel-linea, #E4E4E4)",
+              borderBottom: "1px solid var(--panel-linea, var(--linea))",
               paddingBottom: "16px",
               marginBottom: "20px"
             }}
@@ -439,12 +439,12 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                   width: "44px",
                   height: "44px",
                   borderRadius: "12px",
-                  background: widgetActualDef.esPeligro ? "rgba(176, 0, 32, 0.1)" : "var(--panel-linea-suave, #FAFAF9)",
+                  background: widgetActualDef.esPeligro ? "color-mix(in srgb, var(--error) 10%, transparent)" : "var(--panel-linea-suave, var(--fondo-suave))",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   color: widgetActualDef.esPeligro ? "#B00020" : widgetActualDef.colorIcono,
-                  border: "1px solid var(--panel-linea, #E4E4E4)"
+                  border: "1px solid var(--panel-linea, var(--linea))"
                 }}
               >
                 <IconoActualWidget size={22} />
@@ -465,7 +465,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                     </span>
                   )}
                 </div>
-                <span style={{ fontSize: "0.8rem", color: "var(--panel-gris, #737373)", marginTop: "2px", display: "block" }}>
+                <span style={{ fontSize: "0.8rem", color: "var(--panel-gris, var(--texto-suave))", marginTop: "2px", display: "block" }}>
                   {widgetInfoActual.subtitulo}
                 </span>
               </div>
@@ -553,7 +553,7 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                   <CheckCircle2 size={24} color="var(--esmeralda, #05876e)" />
                   <div>
                     <strong style={{ display: "block", color: "var(--negro, #111111)" }}>Sesión Activa Segura</strong>
-                    <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)" }}>
+                    <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, var(--texto-suave))" }}>
                       Tu cuenta está conectada de forma cifrada mediante autenticación unificada.
                     </span>
                   </div>
@@ -564,8 +564,8 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                     onClick={() => cerrarSesionYRedirigir()}
                     className="btn-mini"
                     style={{
-                      background: "rgba(176, 0, 32, 0.08)",
-                      border: "1px solid rgba(176, 0, 32, 0.3)",
+                      background: "color-mix(in srgb, var(--error) 8%, transparent)",
+                      border: "1px solid color-mix(in srgb, var(--error) 30%, transparent)",
                       color: "#B00020",
                       padding: "10px 20px",
                       fontWeight: 700
@@ -600,15 +600,14 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
   return (
     <div style={{ width: "100%" }}>
       {/* Header Hero Card del Panel Mi Cuenta */}
-      <section className="tarjeta-proteccion" style={{ marginBottom: "20px" }}>
+      <section className="tarjeta-proteccion tarjeta-admin" style={{ marginBottom: "20px" }}>
         <div className="tarjeta-proteccion-fila">
           <div>
-            <div className="eyebrow-cliente">Centro de Configuración de Cuenta</div>
             <div className="tarjeta-proteccion-plan">
-              Mi Cuenta — <i>Identidad & Preferencias</i>
+              Mi cuenta
             </div>
             <div className="tarjeta-proteccion-meta">
-              Gestiona tu información personal, correo electrónico, WhatsApp, historial de accesos y seguridad de la cuenta.
+              Tus datos, correo, WhatsApp, accesos y seguridad.
             </div>
           </div>
         </div>
@@ -616,11 +615,11 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
 
       <div style={{ marginBottom: "24px" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
-          <h3 style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--panel-gris, #737373)", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
-            Widgets de Mi Cuenta
+          <h3 style={{ fontSize: "0.88rem", fontWeight: 800, color: "var(--panel-gris, var(--texto-suave))", textTransform: "uppercase", letterSpacing: "0.08em", margin: 0 }}>
+            Opciones
           </h3>
-          <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", fontWeight: 600 }}>
-            {favoritos.length} Favoritos
+          <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, var(--texto-suave))", fontWeight: 600 }}>
+            {favoritos.length} {favoritos.length === 1 ? "favorito" : "favoritos"}
           </span>
         </div>
 
@@ -637,8 +636,8 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                 onClick={() => handleIntentarAbrirWidget(w.id, w)}
                 className="tarjeta-acceso"
                 style={{
-                  border: w.esPeligro ? "1px solid rgba(176, 0, 32, 0.3)" : "1px solid var(--panel-linea, #E4E4E4)",
-                  background: w.esPeligro ? "rgba(176, 0, 32, 0.02)" : undefined,
+                  border: w.esPeligro ? "1px solid color-mix(in srgb, var(--error) 30%, transparent)" : "1px solid var(--panel-linea, var(--linea))",
+                  background: w.esPeligro ? "color-mix(in srgb, var(--error) 2%, transparent)" : undefined,
                   cursor: "pointer",
                   position: "relative",
                   textDecoration: "none",
@@ -674,11 +673,11 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                       }}
                       style={{
                         background: "rgba(255,255,255,0.9)",
-                        border: "1px solid var(--panel-linea, #E4E4E4)",
+                        border: "1px solid var(--panel-linea, var(--linea))",
                         borderRadius: "6px",
                         cursor: "pointer",
                         padding: "4px",
-                        color: "var(--panel-gris, #737373)",
+                        color: "var(--panel-gris, var(--texto-suave))",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -698,13 +697,13 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
                       border: "none",
                       cursor: "pointer",
                       padding: "3px",
-                      color: esFav ? "#D97706" : "var(--panel-gris, #737373)",
+                      color: esFav ? "var(--aviso)" : "var(--panel-gris, var(--texto-suave))",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center"
                     }}
                   >
-                    <Star size={16} fill={esFav ? "#FEE300" : "none"} stroke={esFav ? "#D97706" : "currentColor"} />
+                    <Star size={16} fill={esFav ? "#FEE300" : "none"} stroke={esFav ? "var(--aviso)" : "currentColor"} />
                   </button>
                 </div>
 
@@ -714,28 +713,13 @@ export function PanelCuentaModular({ perfil, historial, puedeConmutar = true, ro
 
                 <div style={{ minWidth: 0, marginTop: "6px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap", marginBottom: "4px" }}>
-                    {esFav && (
-                      <span
-                        style={{
-                          fontSize: "0.58rem",
-                          fontWeight: 800,
-                          color: "#92400E",
-                          background: "var(--amarillo, #FEE300)",
-                          padding: "1px 6px",
-                          borderRadius: "999px",
-                          letterSpacing: "0.04em"
-                        }}
-                      >
-                        FAVORITO
-                      </span>
-                    )}
                     {infoCustom.requiereMfa && (
                       <span
                         style={{
                           fontSize: "0.58rem",
                           fontWeight: 800,
                           color: "var(--violeta, #5000BA)",
-                          background: "var(--violeta-suave, #F3E8FF)",
+                          background: "var(--violeta-suave, var(--acento-diluido))",
                           padding: "1px 6px",
                           borderRadius: "999px",
                           display: "inline-flex",

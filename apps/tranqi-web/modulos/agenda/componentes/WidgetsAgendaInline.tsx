@@ -73,7 +73,7 @@ export function WidgetAgendarCitaInline() {
           alignItems: "center",
           justifyContent: "center",
           gap: "10px",
-          color: "#475569",
+          color: "var(--texto-2)",
         }}
       >
         <Loader2 size={28} color="#5000BA" style={{ animation: "spin 1s linear infinite" }} />
@@ -88,9 +88,9 @@ export function WidgetAgendarCitaInline() {
         style={{
           padding: "20px",
           borderRadius: "12px",
-          background: "#FEF2F2",
-          border: "1px solid #FECACA",
-          color: "#991B1B",
+          background: "var(--error-diluido)",
+          border: "1px solid var(--error-linea)",
+          color: "var(--error-texto)",
           fontSize: "0.88rem",
           fontWeight: 600,
         }}
@@ -153,7 +153,7 @@ export function WidgetMisCitasInline({ onIrAAgendar }: { onIrAAgendar?: () => vo
           alignItems: "center",
           justifyContent: "center",
           gap: "10px",
-          color: "#475569",
+          color: "var(--texto-2)",
         }}
       >
         <Loader2 size={28} color="#5000BA" style={{ animation: "spin 1s linear infinite" }} />
@@ -168,9 +168,9 @@ export function WidgetMisCitasInline({ onIrAAgendar }: { onIrAAgendar?: () => vo
         style={{
           padding: "20px",
           borderRadius: "12px",
-          background: "#FEF2F2",
-          border: "1px solid #FECACA",
-          color: "#991B1B",
+          background: "var(--error-diluido)",
+          border: "1px solid var(--error-linea)",
+          color: "var(--error-texto)",
           fontSize: "0.88rem",
           fontWeight: 600,
         }}
@@ -275,7 +275,7 @@ export function WidgetCitasProgramadasAbogadoInline({
           alignItems: "center",
           justifyContent: "center",
           gap: "10px",
-          color: "#475569",
+          color: "var(--texto-2)",
         }}
       >
         <Loader2 size={28} color="#05876E" style={{ animation: "spin 1s linear infinite" }} />
@@ -290,9 +290,9 @@ export function WidgetCitasProgramadasAbogadoInline({
         style={{
           padding: "20px",
           borderRadius: "12px",
-          background: "#FEF2F2",
-          border: "1px solid #FECACA",
-          color: "#991B1B",
+          background: "var(--error-diluido)",
+          border: "1px solid var(--error-linea)",
+          color: "var(--error-texto)",
           fontSize: "0.88rem",
           fontWeight: 600,
         }}
@@ -387,10 +387,10 @@ export function WidgetAsignacionesAgendaInline() {
           alignItems: "center",
           justifyContent: "center",
           gap: "10px",
-          color: "#475569",
+          color: "var(--texto-2)",
         }}
       >
-        <Loader2 size={28} color="#0284C7" style={{ animation: "spin 1s linear infinite" }} />
+        <Loader2 size={28} color="var(--acento)" style={{ animation: "spin 1s linear infinite" }} />
         <span style={{ fontSize: "0.9rem", fontWeight: 700 }}>
           Cargando calendario y citas de abogados…
         </span>
@@ -404,9 +404,9 @@ export function WidgetAsignacionesAgendaInline() {
         style={{
           padding: "20px",
           borderRadius: "12px",
-          background: "#FEF2F2",
-          border: "1px solid #FECACA",
-          color: "#991B1B",
+          background: "var(--error-diluido)",
+          border: "1px solid var(--error-linea)",
+          color: "var(--error-texto)",
           fontSize: "0.88rem",
           fontWeight: 600,
         }}

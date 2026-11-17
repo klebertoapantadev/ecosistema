@@ -22,12 +22,11 @@ export default async function PaginaPerfilAbogado() {
       <section className="tarjeta-proteccion tarjeta-admin" style={{ marginBottom: "24px" }}>
         <div className="tarjeta-proteccion-fila">
           <div>
-            <div className="eyebrow-cliente">Red de Abogados Verificados (PLT-002 / TRQ-001)</div>
             <div className="tarjeta-proteccion-plan">
-              Perfil Profesional & Acreditación Legal — <i>tranqi</i>
+              Perfil profesional
             </div>
             <div className="tarjeta-proteccion-meta">
-              Visualiza y actualiza tus datos de registro inicial, foto de perfil, universidad, título SENESCYT, matrícula del Foro de Abogados, especialidades y provincias.
+              Tu foto, formación, título SENESCYT, matrícula del Foro de Abogados, especialidades y provincias.
             </div>
           </div>
           <span className="badge-rol" style={{ background: "rgba(5, 135, 110, 0.12)", color: "var(--esmeralda, #05876e)" }}>
@@ -36,7 +35,7 @@ export default async function PaginaPerfilAbogado() {
         </div>
       </section>
 
-      <div style={{ background: "#FFF", borderRadius: "14px", padding: "24px", border: "1px solid #E4E4E4" }}>
+      <div style={{ background: "#FFF", borderRadius: "14px", padding: "24px", border: "1px solid var(--linea)" }}>
         <FormularioPerfilAbogado
           inicial={{
             nombres: perfil.usu_nombres || "",

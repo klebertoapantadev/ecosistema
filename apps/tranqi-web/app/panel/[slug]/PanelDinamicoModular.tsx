@@ -194,7 +194,7 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Agendar Consulta o Trámite",
     subtitulo: "Elige materia legal, fecha y modalidad presencial o videollamada",
     icono: Calendar,
-    colorIcono: "#0284C7",
+    colorIcono: "var(--acento)",
     categoria: "Operación & Citas"
   },
   mis_citas: {
@@ -222,7 +222,7 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Oferta para Personas Naturales & Familias",
     subtitulo: "Trámites notariales, videoconsultas individuales, defensa legal y planes familiares",
     icono: Sparkles,
-    colorIcono: "#0284C7",
+    colorIcono: "var(--acento)",
     categoria: "Comercio Personas"
   },
   vitrina_comercial_empresas: {
@@ -250,35 +250,35 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Catálogo Comercial & Honorarios",
     subtitulo: "Servicios jurídicos, tarifario de honorarios y suscripciones con IVA 15%",
     icono: ShoppingBag,
-    colorIcono: "#0284C7",
+    colorIcono: "var(--acento)",
     categoria: "Comercio y Pagos"
   },
   pasarela_payphone: {
     titulo: "Pasarela Payphone (Botón de Pago)",
     subtitulo: "Configuración del Botón de Pago Payphone, credenciales y simulador de cobro",
     icono: CreditCard,
-    colorIcono: "#D97706",
+    colorIcono: "var(--aviso)",
     categoria: "Comercio y Pagos"
   },
   configuracion_facturacion_sri: {
     titulo: "Parámetros de Facturación Electrónica SRI",
     subtitulo: "RUC, régimen RIMPE/General, serie 001-001, secuenciales y firma electrónica .p12 en Supabase Vault",
     icono: FileCheck,
-    colorIcono: "#059669",
+    colorIcono: "var(--exito)",
     categoria: "Comercio y Pagos"
   },
   testimonios_clientes: {
     titulo: "Testimonios y Reseñas de Clientes",
     subtitulo: "Gestión de capturas de WhatsApp, fotos de entregas reales y enlace a Google Photos",
     icono: MessageSquareHeart,
-    colorIcono: "#D97706",
+    colorIcono: "var(--aviso)",
     categoria: "Comercio & Catálogo"
   },
   galeria_inmediata: {
     titulo: "Galería de Entrega Inmediata (1–2h)",
     subtitulo: "Publicación de arreglos listos en tienda con precio especial y retiro automático al venderse",
     icono: Sparkles,
-    colorIcono: "#D97706",
+    colorIcono: "var(--aviso)",
     categoria: "Comercio & Catálogo"
   },
   inventario_rosas: {
@@ -292,7 +292,7 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Enviar Pedidos a Taller",
     subtitulo: "Validación de ventas, calendario Hoy/Semana/Mes, llamadas Exequiales y despacho diario",
     icono: ClipboardList,
-    colorIcono: "#0F172A",
+    colorIcono: "var(--texto)",
     categoria: "Comercio & Catálogo"
   },
   chat_equipo: {
@@ -306,14 +306,14 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Taller — Producción y Elaboración",
     subtitulo: "Consola de producción con notificaciones en vivo y cambio de estado (En preparación / Listo entrega)",
     icono: Sparkles,
-    colorIcono: "#059669",
+    colorIcono: "var(--exito)",
     categoria: "Comercio & Catálogo"
   },
   confirmacion_entregas: {
     titulo: "Confirmación de Entregas e Informes GPS",
     subtitulo: "PWA Offline-First para evidencias georreferenciadas, OTs Exequiales IESS e informes quincenales PDF",
     icono: MapPin,
-    colorIcono: "#059669",
+    colorIcono: "var(--exito)",
     categoria: "Comercio & Catálogo"
   },
   facturacion_electronica: {
@@ -404,28 +404,28 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Seguridad MFA & Autenticador",
     subtitulo: "Configuración TOTP, autenticador móvil y reseteo estándar vía correo",
     icono: KeyRound,
-    colorIcono: "#D97706",
+    colorIcono: "var(--aviso)",
     categoria: "Seguridad"
   },
   mfa: {
     titulo: "Seguridad MFA & Autenticador",
     subtitulo: "Configuración TOTP, autenticador móvil y reseteo estándar vía correo",
     icono: KeyRound,
-    colorIcono: "#D97706",
+    colorIcono: "var(--aviso)",
     categoria: "Seguridad"
   },
   configuracion_aria: {
     titulo: "Agente Conversacional ARIA",
     subtitulo: "Parámetros de conexión ARIA (ARIA_BASE, ARIA_AGENT_ID y claves en Vault) propios del negocio",
     icono: Bot,
-    colorIcono: "#059669",
+    colorIcono: "var(--exito)",
     categoria: "Seguridad & Integraciones"
   },
   configuracion_logistica: {
     titulo: "Envíos, Zonas y Cobertura GPS",
     subtitulo: "Polígonos de cobertura en Pichincha, sector de envío gratis por defecto y recargo por km vial",
     icono: MapPin,
-    colorIcono: "#16A34A",
+    colorIcono: "var(--exito)",
     categoria: "Comercio & Pagos"
   },
   consola_chat: {
@@ -439,7 +439,7 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Pedidos de Tienda y Despachos",
     subtitulo: "Órdenes registradas con ubicación GPS, dedicatorias y desglose logístico interno",
     icono: ClipboardList,
-    colorIcono: "#0284C7",
+    colorIcono: "var(--acento)",
     categoria: "Comercio & Pagos"
   },
   tokens_mcp: {
@@ -453,14 +453,14 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Seguridad MFA & Autenticador",
     subtitulo: "Configuración TOTP, autenticador móvil y reseteo estándar vía correo",
     icono: KeyRound,
-    colorIcono: "#D97706",
+    colorIcono: "var(--aviso)",
     categoria: "Seguridad"
   },
   emision_notificaciones: {
     titulo: "Emisión de Notificaciones Multicanal",
     subtitulo: "Despacho masivo multicanal (In-App, Push, Email y WhatsApp)",
     icono: Bell,
-    colorIcono: "#D97706",
+    colorIcono: "var(--aviso)",
     categoria: "Comunicación"
   },
   monitoreo_notificaciones_usuarios: {
@@ -474,7 +474,7 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Bitácora & Historial de Notificaciones",
     subtitulo: "Consulta auditada en tiempo real de notificaciones emitidas y destinatarios",
     icono: Bell,
-    colorIcono: "#2563EB",
+    colorIcono: "var(--acento)",
     categoria: "Comunicación"
   },
   gestion_convenios_corporativos: {
@@ -495,7 +495,7 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Legal HR: Contratos y Finiquitos",
     subtitulo: "Gestión laboral de colaboradores, contratos tipificados, firma .p12, avisos IESS y actas de finiquito SUT",
     icono: Briefcase,
-    colorIcono: "#2563EB",
+    colorIcono: "var(--acento)",
     categoria: "Comercio & B2B"
   },
   mis_beneficios_corporativos: {
@@ -579,7 +579,7 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Auditoría BDD & Telemetría",
     subtitulo: "Consulta de registros inmutables PostgreSQL y telemetría de APIs",
     icono: Shield,
-    colorIcono: "#111827",
+    colorIcono: "var(--texto)",
     categoria: "Seguridad & Auditoría"
   },
   gestion_terminos_consentimientos: {
@@ -607,14 +607,14 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Agenda, Citas Abogados",
     subtitulo: "Calendario de citas confirmadas (telemáticas vs presenciales), asignación de abogados e historial",
     icono: LayoutGrid,
-    colorIcono: "#0284C7",
+    colorIcono: "var(--acento)",
     categoria: "Agenda"
   },
   gestion_informativos: {
     titulo: "Gestión de Informativos & Beneficios",
     subtitulo: "Consola de administración de alertas institucionales, novedades tributarias y convenios de capacitación",
     icono: Bell,
-    colorIcono: "#D97706",
+    colorIcono: "var(--aviso)",
     categoria: "Comercio & Comunicación"
   },
   paquete_beneficios_abogados: {
@@ -628,14 +628,14 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     titulo: "Avisos & Alertas de la Comunidad",
     subtitulo: "Cartelera informativa ciudadana con alertas de la ANT, SRI y novedades de interés legal",
     icono: Bell,
-    colorIcono: "#0284C7",
+    colorIcono: "var(--acento)",
     categoria: "Información & Clientes"
   },
   notificaciones: {
     titulo: "Preferencias de Alertas & Notificaciones",
     subtitulo: "Configuración de canales de alerta, WhatsApp y avisos",
     icono: Bell,
-    colorIcono: "#D97706",
+    colorIcono: "var(--aviso)",
     categoria: "Preferencias"
   },
   configuracion_negocio: {
@@ -1211,8 +1211,8 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
   if (widgetActivo) {
     return (
       <div style={{ width: "100%", animation: "fadeIn 0.15s ease" }}>
-        <section className="tarjeta-seccion" style={{ background: "#ffffff", borderRadius: "16px", overflow: "hidden", width: "100%", border: "1px solid #E4E4E4" }}>
-          <header style={{ padding: "16px 20px", background: "#F7F6FA", borderBottom: "1px solid #E4E4E4", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
+        <section className="tarjeta-seccion" style={{ background: "#ffffff", borderRadius: "16px", overflow: "hidden", width: "100%", border: "1px solid var(--linea)" }}>
+          <header style={{ padding: "16px 20px", background: "var(--fondo-suave)", borderBottom: "1px solid var(--linea)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <BotonVolverWidget
                 onClick={handleCerrarWidget}
@@ -1235,9 +1235,9 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
                 onClick={() => handleCompartirModulo(widgetActivo)}
                 className="btn-responsive-accion"
                 style={{
-                  background: copiadoModulo ? "#ECFDF5" : "#ffffff",
-                  border: copiadoModulo ? "1px solid #10B981" : "1px solid #CBD5E1",
-                  color: copiadoModulo ? "#047857" : "#334155",
+                  background: copiadoModulo ? "var(--exito-diluido)" : "#ffffff",
+                  border: copiadoModulo ? "1px solid var(--exito)" : "1px solid var(--linea-fuerte)",
+                  color: copiadoModulo ? "var(--exito-texto)" : "var(--texto-2)",
                   padding: "7px 14px",
                   borderRadius: "20px",
                   fontSize: "0.78rem",
@@ -1251,7 +1251,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
                 title="Copiar enlace directo con los parámetros de este módulo"
                 aria-label="Compartir enlace directo a este módulo"
               >
-                {copiadoModulo ? <CheckCircle2 size={14} color="#10B981" /> : <Share2 size={14} />}
+                {copiadoModulo ? <CheckCircle2 size={14} color="var(--exito)" /> : <Share2 size={14} />}
                 <span className="btn-texto-responsive">{copiadoModulo ? "¡Copiado!" : "Compartir Módulo"}</span>
               </button>
             </div>
@@ -1283,7 +1283,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       >
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "8px" }}>
-            <LayoutGrid size={24} color="#F59E0B" />
+            <LayoutGrid size={24} color="var(--aviso)" />
             <span style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", background: "rgba(255,255,255,0.15)", padding: "4px 10px", borderRadius: "20px" }}>
               CONSOLA OPERATIVA DINÁMICA
             </span>
@@ -1302,7 +1302,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
             onClick={() => handleCompartirModulo(null)}
             className="btn-responsive-accion"
             style={{
-              background: copiadoModulo ? "#10B981" : "rgba(255,255,255,0.2)",
+              background: copiadoModulo ? "var(--exito)" : "rgba(255,255,255,0.2)",
               border: "1px solid rgba(255,255,255,0.3)",
               color: "#ffffff",
               padding: "8px 16px",
@@ -1328,21 +1328,21 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       {/* SECCIÓN WIDGETS ASIGNADOS AL PANEL */}
       <section>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
-          <h2 style={{ fontSize: "0.92rem", fontWeight: 800, color: "#737373", textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
+          <h2 style={{ fontSize: "0.92rem", fontWeight: 800, color: "var(--texto-suave)", textTransform: "uppercase", letterSpacing: "0.05em", margin: 0 }}>
             MÓDULOS DE {panelInfo.nombre.toUpperCase()} ASIGNADOS
           </h2>
-          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--violeta, #5000BA)", background: "#F3E8FF", padding: "4px 10px", borderRadius: "12px" }}>
+          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--violeta, #5000BA)", background: "var(--acento-diluido)", padding: "4px 10px", borderRadius: "12px" }}>
             {widgetsAsignados.length} Módulos Activos
           </span>
         </div>
 
         {widgetsAsignados.length === 0 ? (
-          <div style={{ padding: "40px", textAlign: "center", background: "#ffffff", borderRadius: "16px", border: "1.5px dashed #E4E4E4" }}>
-            <Wrench size={32} color="#9CA3AF" style={{ marginBottom: "12px" }} />
-            <h3 style={{ fontSize: "1rem", fontWeight: 800, color: "#374151", margin: "0 0 6px 0" }}>
+          <div style={{ padding: "40px", textAlign: "center", background: "#ffffff", borderRadius: "16px", border: "1.5px dashed var(--linea)" }}>
+            <Wrench size={32} color="var(--texto-tenue)" style={{ marginBottom: "12px" }} />
+            <h3 style={{ fontSize: "1rem", fontWeight: 800, color: "var(--texto-2)", margin: "0 0 6px 0" }}>
               No hay módulos asignados a este panel
             </h3>
-            <p style={{ fontSize: "0.84rem", color: "#6B7280", margin: 0 }}>
+            <p style={{ fontSize: "0.84rem", color: "var(--texto-suave)", margin: 0 }}>
               Asigna widgets a este panel desde la Matriz de Perfiles en la Consola de Administración.
             </p>
           </div>
@@ -1366,7 +1366,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
                   style={{
                     background: "#ffffff",
                     borderRadius: "16px",
-                    border: "1px solid #E4E4E4",
+                    border: "1px solid var(--linea)",
                     padding: "20px",
                     cursor: "pointer",
                     transition: "transform 0.15s ease, box-shadow 0.15s ease",
@@ -1378,7 +1378,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
                 >
                   <div>
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "14px" }}>
-                      <div style={{ width: "42px", height: "42px", borderRadius: "12px", background: "#F7F6FA", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <div style={{ width: "42px", height: "42px", borderRadius: "12px", background: "var(--fondo-suave)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                         <IconoComp size={22} color={def.colorIcono} />
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -1403,7 +1403,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
                               cursor: "pointer",
                               padding: "4px",
                               borderRadius: "6px",
-                              color: "#9CA3AF",
+                              color: "var(--texto-tenue)",
                               display: "flex",
                               alignItems: "center"
                             }}
@@ -1411,7 +1411,7 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
                             <Pencil size={15} />
                           </button>
                         )}
-                        <ChevronRight size={18} color="#9CA3AF" />
+                        <ChevronRight size={18} color="var(--texto-tenue)" />
                       </div>
                     </div>
                     <h3 style={{ fontSize: "0.98rem", fontWeight: 800, color: "#111", margin: "0 0 6px 0" }}>
@@ -1421,8 +1421,8 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
                       {infoCustom.subtitulo}
                     </p>
                   </div>
-                  <div style={{ marginTop: "16px", paddingTop: "12px", borderTop: "1px solid #F3F4F6", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#6B7280", textTransform: "uppercase" }}>
+                  <div style={{ marginTop: "16px", paddingTop: "12px", borderTop: "1px solid var(--fondo-hundido)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "var(--texto-suave)", textTransform: "uppercase" }}>
                       {def.categoria}
                     </span>
                     <span style={{ fontSize: "0.76rem", fontWeight: 800, color: "var(--violeta, #5000BA)" }}>

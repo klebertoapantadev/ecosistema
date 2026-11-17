@@ -118,7 +118,7 @@ export default function PaginaDocumentoCompartidoTTL() {
     <div
       style={{
         minHeight: "100vh",
-        background: "linear-gradient(180deg, #F8FAFC 0%, #EFF6FF 100%)",
+        background: "linear-gradient(180deg, var(--fondo-suave) 0%, var(--acento-diluido) 100%)",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -142,7 +142,7 @@ export default function PaginaDocumentoCompartidoTTL() {
           }}
         >
           <Shield size={18} color="#5000BA" />
-          <span style={{ fontSize: "0.86rem", fontWeight: 800, color: "#111827", letterSpacing: "-0.01em" }}>
+          <span style={{ fontSize: "0.86rem", fontWeight: 800, color: "var(--texto)", letterSpacing: "-0.01em" }}>
             tranqi • Bóveda Segura de Documentos
           </span>
         </div>
@@ -157,7 +157,7 @@ export default function PaginaDocumentoCompartidoTTL() {
           maxWidth: "760px",
           padding: "32px",
           boxShadow: "0 20px 45px rgba(0, 0, 0, 0.08)",
-          border: "1px solid #E2E8F0"
+          border: "1px solid var(--linea)"
         }}
       >
         {cargando ? (
@@ -165,19 +165,19 @@ export default function PaginaDocumentoCompartidoTTL() {
             <div style={{ fontSize: "1.2rem", fontWeight: 800, color: "#5000BA", marginBottom: "8px" }}>
               Verificando Enlace Seguro...
             </div>
-            <p style={{ fontSize: "0.85rem", color: "#64748B", margin: 0 }}>
+            <p style={{ fontSize: "0.85rem", color: "var(--texto-suave)", margin: 0 }}>
               Comprobando vigencia criptográfica y permisos de acceso.
             </p>
           </div>
         ) : errorEstado ? (
           <div style={{ textAlign: "center", padding: "20px" }}>
-            <div style={{ background: "#FEF2F2", width: "56px", height: "56px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px auto" }}>
-              <XCircle size={32} color="#DC2626" />
+            <div style={{ background: "var(--error-diluido)", width: "56px", height: "56px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px auto" }}>
+              <XCircle size={32} color="var(--error)" />
             </div>
-            <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: "#1E293B", margin: "0 0 8px 0" }}>
+            <h2 style={{ fontSize: "1.3rem", fontWeight: 800, color: "var(--texto)", margin: "0 0 8px 0" }}>
               Enlace no Disponible
             </h2>
-            <p style={{ fontSize: "0.88rem", color: "#64748B", margin: "0 0 24px 0", lineHeight: 1.5 }}>
+            <p style={{ fontSize: "0.88rem", color: "var(--texto-suave)", margin: "0 0 24px 0", lineHeight: 1.5 }}>
               {errorEstado}
             </p>
             <Link
@@ -200,24 +200,24 @@ export default function PaginaDocumentoCompartidoTTL() {
             {/* BADGES SUPERIORES */}
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px", marginBottom: "16px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                <span style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", background: "#EEF2FF", color: "#4F46E5", padding: "4px 12px", borderRadius: "14px" }}>
+                <span style={{ fontSize: "0.75rem", fontWeight: 800, textTransform: "uppercase", background: "var(--acento-diluido)", color: "var(--acento)", padding: "4px 12px", borderRadius: "14px" }}>
                   DOCUMENTO COMPARTIDO • {infoEnlace.categoria}
                 </span>
                 {infoEnlace.archivos_conteo > 1 && (
-                  <span style={{ fontSize: "0.75rem", fontWeight: 800, background: "#F3E8FF", color: "#6B21A8", padding: "4px 10px", borderRadius: "14px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 800, background: "var(--acento-diluido)", color: "#6B21A8", padding: "4px 10px", borderRadius: "14px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                     <Layers size={12} /> {infoEnlace.archivos_conteo} partes / archivos
                   </span>
                 )}
               </div>
 
               {tiempoRestanteSegundos !== null && tiempoRestanteSegundos > 0 && (
-                <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#D97706", background: "#FFFBEB", padding: "4px 12px", borderRadius: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
+                <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "var(--aviso)", background: "var(--aviso-diluido)", padding: "4px 12px", borderRadius: "14px", display: "flex", alignItems: "center", gap: "6px" }}>
                   <Clock size={14} /> Expira en: {formatearTiempo(tiempoRestanteSegundos)}
                 </span>
               )}
             </div>
 
-            <h1 style={{ fontSize: "1.5rem", fontWeight: 900, color: "#0F172A", margin: "0 0 6px 0" }}>
+            <h1 style={{ fontSize: "1.5rem", fontWeight: 900, color: "var(--texto)", margin: "0 0 6px 0" }}>
               {infoEnlace.titulo}
             </h1>
 
@@ -225,11 +225,11 @@ export default function PaginaDocumentoCompartidoTTL() {
             {!documentoDescargado && (
               <div style={{ marginBottom: "20px" }}>
                 {infoEnlace.archivos_resumen && infoEnlace.archivos_resumen.length > 1 ? (
-                  <div style={{ background: "#F8FAFC", padding: "12px", borderRadius: "12px", border: "1px solid #E2E8F0" }}>
-                    <div style={{ fontSize: "0.78rem", fontWeight: 800, color: "#475569", marginBottom: "6px" }}>
+                  <div style={{ background: "var(--fondo-suave)", padding: "12px", borderRadius: "12px", border: "1px solid var(--linea)" }}>
+                    <div style={{ fontSize: "0.78rem", fontWeight: 800, color: "var(--texto-2)", marginBottom: "6px" }}>
                       Archivos adjuntos en este documento ({infoEnlace.archivos_resumen.length}):
                     </div>
-                    <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "0.82rem", color: "#64748B" }}>
+                    <ul style={{ margin: 0, paddingLeft: "20px", fontSize: "0.82rem", color: "var(--texto-suave)" }}>
                       {infoEnlace.archivos_resumen.map((a: any, i: number) => (
                         <li key={a.id || i} style={{ marginBottom: "2px" }}>
                           <strong>{a.nombre}</strong> {a.tamano > 0 ? `(${(a.tamano / 1024).toFixed(0)} KB)` : ""}
@@ -238,7 +238,7 @@ export default function PaginaDocumentoCompartidoTTL() {
                     </ul>
                   </div>
                 ) : (
-                  <p style={{ fontSize: "0.86rem", color: "#64748B", margin: 0 }}>
+                  <p style={{ fontSize: "0.86rem", color: "var(--texto-suave)", margin: 0 }}>
                     Archivo: <strong>{infoEnlace.archivo_nombre}</strong>
                   </p>
                 )}
@@ -249,8 +249,8 @@ export default function PaginaDocumentoCompartidoTTL() {
             {infoEnlace.una_sola_vista && !documentoDescargado && (
               <div
                 style={{
-                  background: "#FEF2F2",
-                  border: "1px solid #FECACA",
+                  background: "var(--error-diluido)",
+                  border: "1px solid var(--error-linea)",
                   borderRadius: "14px",
                   padding: "14px",
                   marginBottom: "20px",
@@ -259,12 +259,12 @@ export default function PaginaDocumentoCompartidoTTL() {
                   gap: "10px"
                 }}
               >
-                <Flame size={20} color="#DC2626" style={{ flexShrink: 0, marginTop: "2px" }} />
+                <Flame size={20} color="var(--error)" style={{ flexShrink: 0, marginTop: "2px" }} />
                 <div>
-                  <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "#991B1B" }}>
+                  <div style={{ fontSize: "0.85rem", fontWeight: 800, color: "var(--error-texto)" }}>
                     Enlace de Una Sola Vista ("Burn on Read")
                   </div>
-                  <div style={{ fontSize: "0.78rem", color: "#7F1D1D" }}>
+                  <div style={{ fontSize: "0.78rem", color: "var(--error-texto)" }}>
                     Este documento se revocará permanentemente una vez que lo abras o descargues. Asegúrate de guardar tus archivos de inmediato.
                   </div>
                 </div>
@@ -273,16 +273,16 @@ export default function PaginaDocumentoCompartidoTTL() {
 
             {/* FORMULARIO DE PIN O BOTÓN DE DESCARGA */}
             {!documentoDescargado ? (
-              <div style={{ background: "#F8FAFC", borderRadius: "16px", padding: "20px", border: "1px solid #E2E8F0" }}>
+              <div style={{ background: "var(--fondo-suave)", borderRadius: "16px", padding: "20px", border: "1px solid var(--linea)" }}>
                 {infoEnlace.requiere_pin ? (
                   <div>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                      <KeyRound size={18} color="#4F46E5" />
-                      <h3 style={{ fontSize: "0.95rem", fontWeight: 800, color: "#1E293B", margin: 0 }}>
+                      <KeyRound size={18} color="var(--acento)" />
+                      <h3 style={{ fontSize: "0.95rem", fontWeight: 800, color: "var(--texto)", margin: 0 }}>
                         Documento Protegido por PIN
                       </h3>
                     </div>
-                    <p style={{ fontSize: "0.82rem", color: "#64748B", margin: "0 0 14px 0" }}>
+                    <p style={{ fontSize: "0.82rem", color: "var(--texto-suave)", margin: "0 0 14px 0" }}>
                       El emisor configuró un código PIN de seguridad para acceder a este archivo.
                     </p>
 
@@ -304,7 +304,7 @@ export default function PaginaDocumentoCompartidoTTL() {
                           flex: "1 1 180px",
                           padding: "10px 14px",
                           borderRadius: "10px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid var(--linea-fuerte)",
                           fontSize: "0.9rem",
                           letterSpacing: "3px"
                         }}
@@ -313,7 +313,7 @@ export default function PaginaDocumentoCompartidoTTL() {
                         type="submit"
                         disabled={validandoPin || !pin.trim()}
                         style={{
-                          background: "#4F46E5",
+                          background: "var(--acento)",
                           color: "#ffffff",
                           border: "none",
                           borderRadius: "10px",
@@ -328,14 +328,14 @@ export default function PaginaDocumentoCompartidoTTL() {
                     </form>
 
                     {errorPin && (
-                      <div style={{ color: "#DC2626", fontSize: "0.8rem", fontWeight: 700, marginTop: "8px" }}>
+                      <div style={{ color: "var(--error)", fontSize: "0.8rem", fontWeight: 700, marginTop: "8px" }}>
                         {errorPin}
                       </div>
                     )}
                   </div>
                 ) : (
                   <div style={{ textAlign: "center" }}>
-                    <p style={{ fontSize: "0.85rem", color: "#475569", marginBottom: "14px" }}>
+                    <p style={{ fontSize: "0.85rem", color: "var(--texto-2)", marginBottom: "14px" }}>
                       Presiona el botón para abrir y descargar tu copia segura.
                     </p>
                     <button
@@ -363,7 +363,7 @@ export default function PaginaDocumentoCompartidoTTL() {
               /* DOCUMENTO DESBLOQUEADO (MULTI-ARCHIVO) */
               <div>
                 {documentoDescargado.fue_destruido && (
-                  <div style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: "10px", padding: "10px 14px", color: "#991B1B", fontSize: "0.8rem", fontWeight: 700, marginBottom: "16px" }}>
+                  <div style={{ background: "var(--error-diluido)", border: "1px solid var(--error-linea)", borderRadius: "10px", padding: "10px 14px", color: "var(--error-texto)", fontSize: "0.8rem", fontWeight: 700, marginBottom: "16px" }}>
                     Este enlace ya ha sido revocado ("Burn on Read"). Guarda tus archivos locales de inmediato.
                   </div>
                 )}
@@ -371,7 +371,7 @@ export default function PaginaDocumentoCompartidoTTL() {
                 {/* SELECTOR DE PARTES / ARCHIVOS */}
                 {archivosDescargados.length > 1 && (
                   <div style={{ marginBottom: "16px" }}>
-                    <div style={{ fontSize: "0.78rem", fontWeight: 800, color: "#475569", marginBottom: "8px" }}>
+                    <div style={{ fontSize: "0.78rem", fontWeight: 800, color: "var(--texto-2)", marginBottom: "8px" }}>
                       Selecciona la parte del documento a previsualizar:
                     </div>
                     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -386,9 +386,9 @@ export default function PaginaDocumentoCompartidoTTL() {
                             style={{
                               padding: "8px 14px",
                               borderRadius: "10px",
-                              border: esActivo ? "2px solid #5000BA" : "1px solid #CBD5E1",
-                              background: esActivo ? "#F3E8FF" : "#F8FAFC",
-                              color: esActivo ? "#5000BA" : "#334155",
+                              border: esActivo ? "2px solid #5000BA" : "1px solid var(--linea-fuerte)",
+                              background: esActivo ? "var(--acento-diluido)" : "var(--fondo-suave)",
+                              color: esActivo ? "#5000BA" : "var(--texto-2)",
                               fontWeight: 800,
                               fontSize: "0.82rem",
                               display: "flex",
@@ -408,7 +408,7 @@ export default function PaginaDocumentoCompartidoTTL() {
                 )}
 
                 {/* PREVISUALIZADOR DEL ARCHIVO ACTIVO */}
-                <div style={{ background: "#F1F5F9", borderRadius: "14px", overflow: "hidden", marginBottom: "20px", minHeight: "360px", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid #E2E8F0" }}>
+                <div style={{ background: "var(--fondo-hundido)", borderRadius: "14px", overflow: "hidden", marginBottom: "20px", minHeight: "360px", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--linea)" }}>
                   {archivoActivo?.base64 || archivoActivo?.url ? (
                     (archivoActivo.mimetype?.includes("image") || ["png", "jpg", "jpeg", "webp"].some(ext => (archivoActivo.nombre || "").toLowerCase().endsWith(ext))) ? (
                       <img
@@ -424,35 +424,35 @@ export default function PaginaDocumentoCompartidoTTL() {
                       />
                     )
                   ) : (
-                    <div style={{ padding: "40px", textAlign: "center", color: "#64748B" }}>
-                      <FileText size={40} color="#94A3B8" style={{ margin: "0 auto 8px auto" }} />
+                    <div style={{ padding: "40px", textAlign: "center", color: "var(--texto-suave)" }}>
+                      <FileText size={40} color="var(--texto-tenue)" style={{ margin: "0 auto 8px auto" }} />
                       <div style={{ fontWeight: 700 }}>{archivoActivo?.nombre || "Documento"}</div>
-                      <div style={{ fontSize: "0.8rem", color: "#94A3B8" }}>Listo para descarga segura</div>
+                      <div style={{ fontSize: "0.8rem", color: "var(--texto-tenue)" }}>Listo para descarga segura</div>
                     </div>
                   )}
                 </div>
 
                 {/* METADATOS TÉCNICOS Y DINÁMICOS */}
-                <div style={{ background: "#F8FAFC", padding: "16px", borderRadius: "14px", fontSize: "0.82rem", marginBottom: "20px", border: "1px solid #E2E8F0" }}>
-                  <div style={{ fontWeight: 800, color: "#1E293B", marginBottom: "10px", fontSize: "0.85rem" }}>
+                <div style={{ background: "var(--fondo-suave)", padding: "16px", borderRadius: "14px", fontSize: "0.82rem", marginBottom: "20px", border: "1px solid var(--linea)" }}>
+                  <div style={{ fontWeight: 800, color: "var(--texto)", marginBottom: "10px", fontSize: "0.85rem" }}>
                     Información del Documento:
                   </div>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "10px" }}>
                     {documentoDescargado.titular_nombre && (
-                      <div><strong style={{ color: "#64748B" }}>Titular:</strong> <span style={{ fontWeight: 700, color: "#1E293B" }}>{documentoDescargado.titular_nombre}</span></div>
+                      <div><strong style={{ color: "var(--texto-suave)" }}>Titular:</strong> <span style={{ fontWeight: 700, color: "var(--texto)" }}>{documentoDescargado.titular_nombre}</span></div>
                     )}
                     {documentoDescargado.titular_identificacion && (
-                      <div><strong style={{ color: "#64748B" }}>Identificación:</strong> <span style={{ fontWeight: 700, color: "#1E293B" }}>{documentoDescargado.titular_identificacion}</span></div>
+                      <div><strong style={{ color: "var(--texto-suave)" }}>Identificación:</strong> <span style={{ fontWeight: 700, color: "var(--texto)" }}>{documentoDescargado.titular_identificacion}</span></div>
                     )}
                     {documentoDescargado.entidad_emisora && (
-                      <div><strong style={{ color: "#64748B" }}>Emisor:</strong> <span style={{ fontWeight: 700, color: "#1E293B" }}>{documentoDescargado.entidad_emisora}</span></div>
+                      <div><strong style={{ color: "var(--texto-suave)" }}>Emisor:</strong> <span style={{ fontWeight: 700, color: "var(--texto)" }}>{documentoDescargado.entidad_emisora}</span></div>
                     )}
                     {documentoDescargado.fecha_caducidad && (
-                      <div><strong style={{ color: "#64748B" }}>Fecha Caducidad:</strong> <span style={{ fontWeight: 700, color: "#1E293B" }}>{new Date(documentoDescargado.fecha_caducidad).toLocaleDateString()}</span></div>
+                      <div><strong style={{ color: "var(--texto-suave)" }}>Fecha Caducidad:</strong> <span style={{ fontWeight: 700, color: "var(--texto)" }}>{new Date(documentoDescargado.fecha_caducidad).toLocaleDateString()}</span></div>
                     )}
                     {Array.isArray(documentoDescargado.metadatos_dinamicos) && documentoDescargado.metadatos_dinamicos.map((m: any, idx: number) => (
                       <div key={m.id || idx}>
-                        <strong style={{ color: "#64748B" }}>{m.clave}:</strong> <span style={{ fontWeight: 700, color: "#1E293B" }}>{m.valor}</span>
+                        <strong style={{ color: "var(--texto-suave)" }}>{m.clave}:</strong> <span style={{ fontWeight: 700, color: "var(--texto)" }}>{m.valor}</span>
                       </div>
                     ))}
                   </div>
@@ -485,8 +485,8 @@ export default function PaginaDocumentoCompartidoTTL() {
 
                   {/* DESCARGA INDIVIDUAL DE LAS DEMÁS PARTES */}
                   {archivosDescargados.length > 1 && (
-                    <div style={{ background: "#F1F5F9", padding: "12px", borderRadius: "12px", border: "1px solid #E2E8F0" }}>
-                      <div style={{ fontSize: "0.78rem", fontWeight: 800, color: "#475569", marginBottom: "8px" }}>
+                    <div style={{ background: "var(--fondo-hundido)", padding: "12px", borderRadius: "12px", border: "1px solid var(--linea)" }}>
+                      <div style={{ fontSize: "0.78rem", fontWeight: 800, color: "var(--texto-2)", marginBottom: "8px" }}>
                         Descargar partes individuales:
                       </div>
                       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -500,8 +500,8 @@ export default function PaginaDocumentoCompartidoTTL() {
                               alignItems: "center",
                               gap: "6px",
                               background: "#ffffff",
-                              border: "1px solid #CBD5E1",
-                              color: "#334155",
+                              border: "1px solid var(--linea-fuerte)",
+                              color: "var(--texto-2)",
                               padding: "6px 12px",
                               borderRadius: "8px",
                               fontSize: "0.78rem",
@@ -522,7 +522,7 @@ export default function PaginaDocumentoCompartidoTTL() {
         )}
       </div>
 
-      <div style={{ marginTop: "20px", fontSize: "0.75rem", color: "#94A3B8" }}>
+      <div style={{ marginTop: "20px", fontSize: "0.75rem", color: "var(--texto-tenue)" }}>
         Custodiado bajo el protocolo Zero-Custody de Tranqi • LOPDP &amp; Ley de Comercio Electrónico
       </div>
     </div>

@@ -63,9 +63,9 @@ export function BotonReenviarNotificacionAceptacion({ solicitudId, correo }: Pro
       {exito && (
         <div
           style={{
-            background: "#ECFDF5",
-            border: "1px solid #10B981",
-            color: "#065F46",
+            background: "var(--exito-diluido)",
+            border: "1px solid var(--exito)",
+            color: "var(--exito-texto)",
             padding: "10px 14px",
             borderRadius: "8px",
             marginTop: "10px",
@@ -76,16 +76,16 @@ export function BotonReenviarNotificacionAceptacion({ solicitudId, correo }: Pro
             gap: "8px",
           }}
         >
-          <CheckCircle2 size={18} color="#059669" /> {exito}
+          <CheckCircle2 size={18} color="var(--exito)" /> {exito}
         </div>
       )}
 
       {error && (
         <div
           style={{
-            background: "#FEF2F2",
-            border: "1px solid #EF4444",
-            color: "#991B1B",
+            background: "var(--error-diluido)",
+            border: "1px solid var(--error)",
+            color: "var(--error-texto)",
             padding: "10px 14px",
             borderRadius: "8px",
             marginTop: "10px",
@@ -96,7 +96,7 @@ export function BotonReenviarNotificacionAceptacion({ solicitudId, correo }: Pro
             gap: "8px",
           }}
         >
-          <AlertCircle size={18} color="#DC2626" /> {error}
+          <AlertCircle size={18} color="var(--error)" /> {error}
         </div>
       )}
     </div>

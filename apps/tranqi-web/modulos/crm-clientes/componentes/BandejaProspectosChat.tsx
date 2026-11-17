@@ -101,37 +101,37 @@ export function BandejaProspectosChat() {
     switch (estado) {
       case "NUEVO":
         return {
-          bg: "#E0F2FE",
-          color: "#0369A1",
-          border: "#BAE6FD",
+          bg: "var(--acento-diluido)",
+          color: "var(--acento-hondo)",
+          border: "var(--acento-linea)",
           label: "Nuevo",
         };
       case "CONTACTADO":
         return {
-          bg: "#FEF3C7",
-          color: "#B45309",
-          border: "#FDE68A",
+          bg: "var(--aviso-diluido)",
+          color: "var(--aviso-texto)",
+          border: "var(--aviso-linea)",
           label: "Contactado",
         };
       case "CONVERTIDO":
         return {
-          bg: "#DCFCE7",
-          color: "#15803D",
-          border: "#BBF7D0",
+          bg: "var(--exito-diluido)",
+          color: "var(--exito-texto)",
+          border: "var(--exito-linea)",
           label: "Convertido",
         };
       case "DESCARTADO":
         return {
-          bg: "#FEE2E2",
-          color: "#B91C1C",
-          border: "#FECACA",
+          bg: "var(--error-diluido)",
+          color: "var(--error)",
+          border: "var(--error-linea)",
           label: "Descartado",
         };
       default:
         return {
-          bg: "#F3F4F6",
-          color: "#374151",
-          border: "#E5E7EB",
+          bg: "var(--fondo-hundido)",
+          color: "var(--texto-2)",
+          border: "var(--linea)",
           label: estado,
         };
     }
@@ -163,7 +163,7 @@ export function BandejaProspectosChat() {
       {toastError && (
         <div
           style={{
-            background: "#DC2626",
+            background: "var(--error)",
             color: "#FFFFFF",
             padding: "12px 20px",
             borderRadius: "10px",
@@ -184,7 +184,7 @@ export function BandejaProspectosChat() {
       <div
         style={{
           background: "#FFFFFF",
-          border: "1px solid #E2E8F0",
+          border: "1px solid var(--linea)",
           borderRadius: "12px",
           padding: "14px 18px",
           display: "flex",
@@ -210,9 +210,9 @@ export function BandejaProspectosChat() {
               style={{
                 padding: "6px 14px",
                 borderRadius: "20px",
-                border: filtroEstado === item.clave ? "1px solid #0284C7" : "1px solid #E2E8F0",
-                background: filtroEstado === item.clave ? "#F0F9FF" : "#FFFFFF",
-                color: filtroEstado === item.clave ? "#0284C7" : "#64748B",
+                border: filtroEstado === item.clave ? "1px solid var(--acento)" : "1px solid var(--linea)",
+                background: filtroEstado === item.clave ? "var(--acento-diluido)" : "#FFFFFF",
+                color: filtroEstado === item.clave ? "var(--acento)" : "var(--texto-suave)",
                 fontSize: "0.82rem",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -230,9 +230,9 @@ export function BandejaProspectosChat() {
           disabled={cargando}
           className="btn-responsive-accion"
           style={{
-            background: "#F8FAFC",
-            color: "#334155",
-            border: "1px solid #CBD5E1",
+            background: "var(--fondo-suave)",
+            color: "var(--texto-2)",
+            border: "1px solid var(--linea-fuerte)",
             padding: "8px 14px",
             borderRadius: "8px",
             fontSize: "0.85rem",
@@ -252,7 +252,7 @@ export function BandejaProspectosChat() {
 
       {/* Tabla de Prospectos */}
       {cargando ? (
-        <div style={{ textAlign: "center", padding: "40px", color: "#64748B", fontSize: "0.9rem" }}>
+        <div style={{ textAlign: "center", padding: "40px", color: "var(--texto-suave)", fontSize: "0.9rem" }}>
           <RefreshCw size={24} className="animate-spin" style={{ margin: "0 auto 10px" }} />
           Cargando contactos del chat...
         </div>
@@ -263,14 +263,14 @@ export function BandejaProspectosChat() {
             padding: "50px 20px",
             background: "#FFFFFF",
             borderRadius: "16px",
-            border: "1px dashed #CBD5E1",
+            border: "1px dashed var(--linea-fuerte)",
           }}
         >
-          <MessageSquare size={40} color="#94A3B8" style={{ marginBottom: "12px" }} />
-          <h3 style={{ margin: "0 0 6px 0", color: "#334155", fontSize: "1.1rem" }}>
+          <MessageSquare size={40} color="var(--texto-tenue)" style={{ marginBottom: "12px" }} />
+          <h3 style={{ margin: "0 0 6px 0", color: "var(--texto-2)", fontSize: "1.1rem" }}>
             Aún no hay contactos del chat.
           </h3>
-          <p style={{ margin: 0, fontSize: "0.85rem", color: "#64748B" }}>
+          <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--texto-suave)" }}>
             Los contactos captados por el buddie conversacional de la landing aparecerán en esta bandeja.
           </p>
         </div>
@@ -278,7 +278,7 @@ export function BandejaProspectosChat() {
         <div
           style={{
             background: "#FFFFFF",
-            border: "1px solid #E2E8F0",
+            border: "1px solid var(--linea)",
             borderRadius: "16px",
             overflowX: "auto",
             boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
@@ -286,7 +286,7 @@ export function BandejaProspectosChat() {
         >
           <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.85rem" }}>
             <thead>
-              <tr style={{ background: "#F8FAFC", borderBottom: "2px solid #E2E8F0", color: "#475569", fontWeight: 700 }}>
+              <tr style={{ background: "var(--fondo-suave)", borderBottom: "2px solid var(--linea)", color: "var(--texto-2)", fontWeight: 700 }}>
                 <th style={{ padding: "12px 14px" }}>Fecha</th>
                 <th style={{ padding: "12px 14px" }}>Nombre & Contacto</th>
                 <th style={{ padding: "12px 14px" }}>Ubicación</th>
@@ -302,10 +302,10 @@ export function BandejaProspectosChat() {
                 const waUrl = `https://wa.me/${digitsWa}`;
 
                 return (
-                  <tr key={p.psp_id} style={{ borderBottom: "1px solid #F1F5F9" }}>
+                  <tr key={p.psp_id} style={{ borderBottom: "1px solid var(--fondo-hundido)" }}>
                     {/* Fecha */}
-                    <td style={{ padding: "12px 14px", color: "#64748B", whiteSpace: "nowrap", fontSize: "0.8rem" }}>
-                      <div style={{ fontWeight: 600, color: "#334155" }}>
+                    <td style={{ padding: "12px 14px", color: "var(--texto-suave)", whiteSpace: "nowrap", fontSize: "0.8rem" }}>
+                      <div style={{ fontWeight: 600, color: "var(--texto-2)" }}>
                         {new Date(p.psp_creado_en).toLocaleDateString("es-EC", {
                           day: "2-digit",
                           month: "short",
@@ -322,7 +322,7 @@ export function BandejaProspectosChat() {
 
                     {/* Nombre & Contacto */}
                     <td style={{ padding: "12px 14px" }}>
-                      <div style={{ fontWeight: 700, color: "#0F172A", fontSize: "0.9rem" }}>
+                      <div style={{ fontWeight: 700, color: "var(--texto)", fontSize: "0.9rem" }}>
                         {p.psp_nombre}
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: "3px", marginTop: "4px" }}>
@@ -334,7 +334,7 @@ export function BandejaProspectosChat() {
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "5px",
-                            color: "#059669",
+                            color: "var(--exito)",
                             textDecoration: "none",
                             fontWeight: 600,
                             fontSize: "0.8rem",
@@ -345,7 +345,7 @@ export function BandejaProspectosChat() {
                           <ExternalLink size={11} />
                         </a>
                         {p.psp_correo && (
-                          <div style={{ display: "flex", alignItems: "center", gap: "5px", color: "#64748B", fontSize: "0.78rem" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "5px", color: "var(--texto-suave)", fontSize: "0.78rem" }}>
                             <Mail size={12} />
                             {p.psp_correo}
                           </div>
@@ -354,14 +354,14 @@ export function BandejaProspectosChat() {
                     </td>
 
                     {/* Ciudad */}
-                    <td style={{ padding: "12px 14px", color: "#475569" }}>
+                    <td style={{ padding: "12px 14px", color: "var(--texto-2)" }}>
                       {p.psp_ciudad ? (
                         <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                          <MapPin size={13} color="#64748B" />
+                          <MapPin size={13} color="var(--texto-suave)" />
                           <span>{p.psp_ciudad}</span>
                         </div>
                       ) : (
-                        <span style={{ color: "#94A3B8" }}>-</span>
+                        <span style={{ color: "var(--texto-tenue)" }}>-</span>
                       )}
                     </td>
 
@@ -371,8 +371,8 @@ export function BandejaProspectosChat() {
                         <div style={{ marginBottom: "4px" }}>
                           <span
                             style={{
-                              background: "#F1F5F9",
-                              color: "#0284C7",
+                              background: "var(--fondo-hundido)",
+                              color: "var(--acento)",
                               padding: "2px 6px",
                               borderRadius: "4px",
                               fontSize: "0.75rem",
@@ -384,11 +384,11 @@ export function BandejaProspectosChat() {
                           </span>
                         </div>
                       )}
-                      <div style={{ color: "#334155", fontSize: "0.82rem", lineHeight: 1.4 }}>
-                        {p.psp_interes || <span style={{ color: "#94A3B8" }}>Sin detalle de interés</span>}
+                      <div style={{ color: "var(--texto-2)", fontSize: "0.82rem", lineHeight: 1.4 }}>
+                        {p.psp_interes || <span style={{ color: "var(--texto-tenue)" }}>Sin detalle de interés</span>}
                       </div>
                       {p.psp_detalle_prospecto?.token_nombre && (
-                        <div style={{ fontSize: "0.72rem", color: "#94A3B8", marginTop: "4px" }}>
+                        <div style={{ fontSize: "0.72rem", color: "var(--texto-tenue)", marginTop: "4px" }}>
                           Origen: {p.psp_detalle_prospecto.token_nombre}
                         </div>
                       )}
@@ -423,9 +423,9 @@ export function BandejaProspectosChat() {
                             title="Marcar como contactado"
                             aria-label="Marcar como contactado"
                             style={{
-                              background: "#FEF3C7",
-                              color: "#B45309",
-                              border: "1px solid #FDE68A",
+                              background: "var(--aviso-diluido)",
+                              color: "var(--aviso-texto)",
+                              border: "1px solid var(--aviso-linea)",
                               padding: "6px 10px",
                               borderRadius: "6px",
                               fontSize: "0.78rem",
@@ -449,9 +449,9 @@ export function BandejaProspectosChat() {
                             title="Convertir a cliente"
                             aria-label="Convertir a cliente"
                             style={{
-                              background: "#DCFCE7",
-                              color: "#15803D",
-                              border: "1px solid #BBF7D0",
+                              background: "var(--exito-diluido)",
+                              color: "var(--exito-texto)",
+                              border: "1px solid var(--exito-linea)",
                               padding: "6px 10px",
                               borderRadius: "6px",
                               fontSize: "0.78rem",
@@ -475,9 +475,9 @@ export function BandejaProspectosChat() {
                             title="Descartar prospecto"
                             aria-label="Descartar prospecto"
                             style={{
-                              background: "#FEE2E2",
-                              color: "#B91C1C",
-                              border: "1px solid #FECACA",
+                              background: "var(--error-diluido)",
+                              color: "var(--error)",
+                              border: "1px solid var(--error-linea)",
                               padding: "6px 10px",
                               borderRadius: "6px",
                               fontSize: "0.78rem",
@@ -530,15 +530,15 @@ export function BandejaProspectosChat() {
               boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2)",
             }}
           >
-            <h3 style={{ margin: "0 0 8px 0", fontSize: "1.15rem", fontWeight: 800, color: "#0F172A" }}>
+            <h3 style={{ margin: "0 0 8px 0", fontSize: "1.15rem", fontWeight: 800, color: "var(--texto)" }}>
               Cambiar Estado a {modalNota.nuevoEstado}
             </h3>
-            <p style={{ margin: "0 0 16px 0", fontSize: "0.85rem", color: "#64748B" }}>
+            <p style={{ margin: "0 0 16px 0", fontSize: "0.85rem", color: "var(--texto-suave)" }}>
               Actualizando contacto de <strong>{modalNota.nombre}</strong>. Puedes añadir una nota opcional de seguimiento.
             </p>
 
             <div style={{ marginBottom: "18px" }}>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#334155", marginBottom: "6px" }}>
+              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "var(--texto-2)", marginBottom: "6px" }}>
                 Nota u observación (opcional):
               </label>
               <textarea
@@ -550,7 +550,7 @@ export function BandejaProspectosChat() {
                   width: "100%",
                   padding: "10px 12px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid var(--linea-fuerte)",
                   fontSize: "0.88rem",
                   boxSizing: "border-box",
                   fontFamily: "inherit",
@@ -566,9 +566,9 @@ export function BandejaProspectosChat() {
                 style={{
                   padding: "8px 16px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid var(--linea-fuerte)",
                   background: "#FFFFFF",
-                  color: "#475569",
+                  color: "var(--texto-2)",
                   fontWeight: 600,
                   fontSize: "0.85rem",
                   cursor: "pointer",
@@ -584,7 +584,7 @@ export function BandejaProspectosChat() {
                   padding: "8px 18px",
                   borderRadius: "8px",
                   border: "none",
-                  background: "#0284C7",
+                  background: "var(--acento)",
                   color: "#FFFFFF",
                   fontWeight: 700,
                   fontSize: "0.85rem",

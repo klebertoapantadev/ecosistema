@@ -77,10 +77,10 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <Scale size={20} aria-hidden="true" />
           <div>
-            <h1 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 800, color: "#111827" }}>
+            <h1 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 800, color: "var(--texto)" }}>
               Revisión y Gestión de Socio Abogado
             </h1>
-            <p style={{ margin: "2px 0 0 0", fontSize: "0.8rem", color: "#6B7280" }}>
+            <p style={{ margin: "2px 0 0 0", fontSize: "0.8rem", color: "var(--texto-suave)" }}>
               Expediente legal, acreditación documental y formalización de contrato
             </p>
           </div>
@@ -92,8 +92,8 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
           aria-label="Cerrar y volver a socios"
           style={{
             background: "#FFFFFF",
-            border: "1.5px solid #E2E8F0",
-            color: "#1E293B",
+            border: "1.5px solid var(--linea)",
+            color: "var(--texto)",
             borderRadius: "50%",
             width: "36px",
             height: "36px",
@@ -119,7 +119,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
             style={{ width: "80px", height: "80px", borderRadius: "50%", objectFit: "cover", border: "2px solid #5000BA" }}
           />
         ) : (
-          <div style={{ width: "80px", height: "80px", borderRadius: "50%", background: "#EEF2FF", color: "#4F46E5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.8rem", fontWeight: 700 }}>
+          <div style={{ width: "80px", height: "80px", borderRadius: "50%", background: "var(--acento-diluido)", color: "var(--acento)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.8rem", fontWeight: 700 }}>
             {usuario?.usu_nombres?.[0] || "?"}
           </div>
         )}
@@ -136,7 +136,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
           {esReingreso ? "Reingreso / Actualizada (Pendiente)" : (ETIQUETA_ESTADO[solicitud.ssc_estado] || solicitud.ssc_estado)}
         </span>
         {revisiones.length > 0 && (
-          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#6B7280", background: "#F3F4F6", padding: "4px 10px", borderRadius: "12px" }}>
+          <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--texto-suave)", background: "var(--fondo-hundido)", padding: "4px 10px", borderRadius: "12px" }}>
             {revisiones.length} {revisiones.length === 1 ? "revisión registrada" : "revisiones / actualizaciones"}
           </span>
         )}
@@ -176,7 +176,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
               </dl>
             ) : (
               <div>
-                <p style={{ margin: 0, fontSize: "0.88rem", color: "#4B5563" }}>
+                <p style={{ margin: 0, fontSize: "0.88rem", color: "var(--texto-2)" }}>
                   <strong>Aprobado (Paso 1).</strong> En espera de que el socio firme y suba el contrato de sociedad en PDF.
                 </p>
                 {documentos.some((d) => d.dcs_tipo === "contrato_socio") ? (
@@ -185,14 +185,14 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                     urlContratoPostulante={`/api/solicitud-socio/contrato/firmado?solicitudId=${solicitud.ssc_id}`}
                   />
                 ) : (
-                  <p style={{ marginTop: "8px", fontSize: "0.82rem", color: "#DC2626", fontWeight: 600 }}>
+                  <p style={{ marginTop: "8px", fontSize: "0.82rem", color: "var(--error)", fontWeight: 600 }}>
                     El postulante aún no ha cargado el contrato firmado.
                   </p>
                 )}
               </div>
             );
           })()}
-          <div style={{ marginTop: "16px", borderTop: "1px solid #E5E7EB", paddingTop: "14px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px" }}>
+          <div style={{ marginTop: "16px", borderTop: "1px solid var(--linea)", paddingTop: "14px", display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px" }}>
             {contratoFirmadoCargado && (
               <a
                 href={`/api/solicitud-socio/contrato/firmado?solicitudId=${solicitud.ssc_id}`}
@@ -242,20 +242,20 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
 
         return (
           <div style={{
-            border: "2px solid #F59E0B",
+            border: "2px solid var(--aviso)",
             borderRadius: "14px",
-            background: "#FFFBEB",
+            background: "var(--aviso-diluido)",
             padding: "18px 20px",
             marginBottom: "20px",
-            boxShadow: "0 4px 12px rgba(245, 158, 11, 0.12)",
+            boxShadow: "0 4px 12px color-mix(in srgb, var(--aviso) 12%, transparent)",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
               <PenLine size={20} aria-hidden="true" />
               <div>
-                <h2 style={{ margin: 0, fontSize: "1.05rem", color: "#92400E", fontWeight: 800 }}>
+                <h2 style={{ margin: 0, fontSize: "1.05rem", color: "var(--aviso-texto)", fontWeight: 800 }}>
                   Propuestas de Modificación al Contrato ({propuestasContrato.length})
                 </h2>
-                <p style={{ margin: "2px 0 0 0", fontSize: "0.82rem", color: "#B45309" }}>
+                <p style={{ margin: "2px 0 0 0", fontSize: "0.82rem", color: "var(--aviso-texto)" }}>
                   El solicitante ha enviado observaciones y modificaciones al contrato de servicios en formato Word (.docx).
                 </p>
               </div>
@@ -267,7 +267,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                   key={p.dcs_id}
                   style={{
                     background: "#FFFFFF",
-                    border: "1px solid #FDE68A",
+                    border: "1px solid var(--aviso-linea)",
                     borderRadius: "10px",
                     padding: "12px 16px",
                     display: "flex",
@@ -279,18 +279,18 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                 >
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                      <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#92400E", background: "#FEF3C7", padding: "2px 8px", borderRadius: "6px" }}>
+                      <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "var(--aviso-texto)", background: "var(--aviso-diluido)", padding: "2px 8px", borderRadius: "6px" }}>
                         Versión {propuestasContrato.length - idx}
                       </span>
-                      <strong style={{ fontSize: "0.88rem", color: "#1F2937" }}>
+                      <strong style={{ fontSize: "0.88rem", color: "var(--texto)" }}>
                         {p.dcs_nombre_archivo || "Propuesta_Contrato.docx"}
                       </strong>
-                      <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>
+                      <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>
                         {new Date(p.dcs_creado_en).toLocaleString("es-EC")}
                       </span>
                     </div>
                     {p.dcs_comentario && (
-                      <p style={{ margin: "6px 0 0 0", fontSize: "0.84rem", color: "#4B5563" }}>
+                      <p style={{ margin: "6px 0 0 0", fontSize: "0.84rem", color: "var(--texto-2)" }}>
                         <strong>Motivo / Observación del Solicitante:</strong> {p.dcs_comentario.replace("[PROPUESTA_MODIFICACION_CONTRATO] ", "")}
                       </p>
                     )}
@@ -328,11 +328,11 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
 
       {/* Historial de Revisiones, Acciones y Observaciones Previas */}
       {revisiones.length > 0 && (
-        <div className="tarjeta-panel detalle-solicitud" style={{ border: "1.5px solid #E5E7EB", borderRadius: "14px", background: "#FFFFFF", marginBottom: "20px" }}>
-          <h2 style={{ display: "flex", alignItems: "center", gap: "8px", color: "#111827", fontSize: "1.1rem", marginTop: 0 }}>
+        <div className="tarjeta-panel detalle-solicitud" style={{ border: "1.5px solid var(--linea)", borderRadius: "14px", background: "#FFFFFF", marginBottom: "20px" }}>
+          <h2 style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--texto)", fontSize: "1.1rem", marginTop: 0 }}>
             Historial de Revisiones, Acciones y Observaciones
           </h2>
-          <p style={{ fontSize: "0.82rem", color: "#6B7280", marginTop: "-4px", marginBottom: "16px" }}>
+          <p style={{ fontSize: "0.82rem", color: "var(--texto-suave)", marginTop: "-4px", marginBottom: "16px" }}>
             Bitácora cronológica de decisiones, observaciones de admisibilidad y reingresos del postulante.
           </p>
 
@@ -350,7 +350,7 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                     padding: "14px 16px",
                     borderRadius: "10px",
                     background: esReingresoItem ? "rgba(243, 232, 255, 0.4)" : esRechazo ? "rgba(254, 226, 226, 0.4)" : esAprobado ? "rgba(220, 252, 231, 0.4)" : "rgba(239, 246, 255, 0.4)",
-                    border: `1px solid ${esReingresoItem ? "#D8B4FE" : esRechazo ? "#FCA5A5" : esAprobado ? "#86EFAC" : "#BFDBFE"}`,
+                    border: `1px solid ${esReingresoItem ? "#D8B4FE" : esRechazo ? "var(--error-linea)" : esAprobado ? "var(--exito-linea)" : "var(--acento-linea)"}`,
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginBottom: "6px" }}>
@@ -362,23 +362,23 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                           fontSize: "0.76rem",
                           fontWeight: 800,
                           textTransform: "uppercase",
-                          background: esReingresoItem ? "#5000BA" : esRechazo ? "#DC2626" : esAprobado ? "#05876E" : "#2563EB",
+                          background: esReingresoItem ? "#5000BA" : esRechazo ? "var(--error)" : esAprobado ? "#05876E" : "var(--acento)",
                           color: "#FFFFFF",
                         }}
                       >
                         {esReingresoItem ? "Reingreso / Actualización" : esRechazo ? "No Aceptada / Observada" : esAprobado ? "Aprobada" : "En Revisión"}
                       </span>
-                      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#374151" }}>
+                      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "var(--texto-2)" }}>
                         {revisorTxt}
                       </span>
                     </div>
-                    <span style={{ fontSize: "0.78rem", color: "#6B7280" }}>
+                    <span style={{ fontSize: "0.78rem", color: "var(--texto-suave)" }}>
                       {new Date(r.rev_creado_en).toLocaleString("es-EC")}
                     </span>
                   </div>
 
                   {r.rev_comentario && (
-                    <div style={{ marginTop: "8px", padding: "8px 12px", background: "#FFFFFF", borderRadius: "6px", border: "1px solid rgba(0,0,0,0.06)", fontSize: "0.85rem", color: "#1F2937", lineHeight: 1.45 }}>
+                    <div style={{ marginTop: "8px", padding: "8px 12px", background: "#FFFFFF", borderRadius: "6px", border: "1px solid rgba(0,0,0,0.06)", fontSize: "0.85rem", color: "var(--texto)", lineHeight: 1.45 }}>
                       <strong>Observación / Detalle:</strong> {r.rev_comentario}
                     </div>
                   )}
@@ -476,23 +476,23 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                   justifyContent: "space-between",
                   alignItems: "center",
                   padding: "12px 16px",
-                  background: "#F9FAFB",
-                  border: "1px solid #E5E7EB",
+                  background: "var(--fondo-suave)",
+                  border: "1px solid var(--linea)",
                   borderRadius: "10px"
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                  <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: "#EDE9FE", color: "#5000BA", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: "var(--acento-diluido)", color: "#5000BA", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <FileText size={18} />
                   </div>
                   <div>
-                    <span style={{ fontWeight: 700, fontSize: "0.88rem", color: "#111827", display: "block" }}>
+                    <span style={{ fontWeight: 700, fontSize: "0.88rem", color: "var(--texto)", display: "block" }}>
                       {ETIQUETA_TIPO[d.dcs_tipo] || d.dcs_tipo}
                     </span>
-                    <span style={{ fontSize: "0.78rem", color: "#6B7280" }}>
+                    <span style={{ fontSize: "0.78rem", color: "var(--texto-suave)" }}>
                       {d.dcs_nombre_archivo || "Archivo adjunto"} · {new Date(d.dcs_creado_en).toLocaleString("es-EC")}
                     </span>
-                    {d.dcs_comentario && <p style={{ fontSize: "0.78rem", color: "#4B5563", margin: "4px 0 0 0" }}>{d.dcs_comentario}</p>}
+                    {d.dcs_comentario && <p style={{ fontSize: "0.78rem", color: "var(--texto-2)", margin: "4px 0 0 0" }}>{d.dcs_comentario}</p>}
                   </div>
                 </div>
                 {d.url ? (
@@ -508,8 +508,8 @@ export default async function PaginaDetalleSocio({ params }: { params: Promise<{
                         padding: "8px 14px",
                         borderRadius: "8px",
                         background: "#FFFFFF",
-                        border: "1px solid #D1D5DB",
-                        color: "#374151",
+                        border: "1px solid var(--linea-fuerte)",
+                        color: "var(--texto-2)",
                         fontSize: "0.82rem",
                         fontWeight: 600,
                         textDecoration: "none"

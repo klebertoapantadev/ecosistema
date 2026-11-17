@@ -34,8 +34,8 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   },
   catalogo_productos: {
     id: "catalogo_productos",
-    titulo: "Catálogo & Honorarios",
-    subtitulo: "Servicios legales, liquidación de honorarios y planes con Payphone",
+    titulo: "Catálogo y honorarios",
+    subtitulo: "Servicios, honorarios y suscripciones con IVA",
     icono: ShoppingBag,
     href: "/panel/catalogo-productos",
     origen: "Configurar"
@@ -114,8 +114,8 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   },
   perfil: {
     id: "perfil",
-    titulo: "Perfil & Datos de Contacto",
-    subtitulo: "Nombres, apellidos, correo verificado, correos adicionales y WhatsApp",
+    titulo: "Perfil y contacto",
+    subtitulo: "Nombres, correo verificado y WhatsApp",
     icono: User,
     href: "/panel/cuenta?widget=mi_cuenta",
     origen: "Mi cuenta"
@@ -138,40 +138,40 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   },
   facturacion: {
     id: "facturacion",
-    titulo: "Datos de Facturación & Comprobantes",
-    subtitulo: "Razón social, RUC/Cédula, dirección fiscal y correo electrónico de facturación",
+    titulo: "Datos de facturación",
+    subtitulo: "Razón social, RUC o cédula y dirección fiscal",
     icono: Receipt,
     href: "/panel/cuenta?widget=datos_facturacion",
     origen: "Mi cuenta"
   },
   historial: {
     id: "historial",
-    titulo: "Historial de Accesos",
-    subtitulo: "Seguridad de inicio de sesión, IP y dispositivos",
+    titulo: "Historial de accesos",
+    subtitulo: "Inicios de sesión y dispositivos",
     icono: History,
     href: "/panel/cuenta?widget=historial_accesos",
     origen: "Mi cuenta"
   },
   sesion: {
     id: "sesion",
-    titulo: "Sesión & Claves de Seguridad",
-    subtitulo: "Gestión de sesión activa y cierre de sesión",
+    titulo: "Sesión",
+    subtitulo: "Gestión de sesión activa y seguridad",
     icono: KeyRound,
     href: "/panel/cuenta?widget=mfa_seguridad",
     origen: "Mi cuenta"
   },
   rol_activo: {
     id: "rol_activo",
-    titulo: "Ver Como",
-    subtitulo: "Alternar la vista previa del portal entre Cliente, Socio Abogado y Administrador",
+    titulo: "Ver como otro rol",
+    subtitulo: "Alterna la vista previa según los roles asignados",
     icono: ShieldCheck,
     href: "/panel/cuenta?widget=ver_como",
     origen: "Mi cuenta"
   },
   peligro: {
     id: "peligro",
-    titulo: "Baja de Cuenta",
-    subtitulo: "Eliminación permanente conforme a Ley LOPDP",
+    titulo: "Baja de cuenta",
+    subtitulo: "Eliminación permanente conforme a la ley LOPDP",
     icono: ShieldAlert,
     href: "/panel/cuenta?widget=baja_cuenta",
     origen: "Mi cuenta",
@@ -179,48 +179,48 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   },
   negocio: {
     id: "negocio",
-    titulo: "Configuración del Negocio",
-    subtitulo: "Identidad legal, términos, locales, WhatsApp y redes sociales",
+    titulo: "Configuración del negocio",
+    subtitulo: "Datos del negocio, términos y contacto",
     icono: Settings,
     href: "/panel/configuracion?widget=negocio",
     origen: "Configurar"
   },
   correo: {
     id: "correo",
-    titulo: "Servidor SMTP & Plantillas Vault",
-    subtitulo: "Credenciales cifradas, puerto TLS y plantilla HTML",
+    titulo: "Correo saliente (SMTP)",
+    subtitulo: "Servidor de correo saliente y credenciales",
     icono: Mail,
     href: "/panel/configuracion?widget=correo",
     origen: "Configurar"
   },
   notificaciones: {
     id: "notificaciones",
-    titulo: "Preferencias de Alertas",
-    subtitulo: "Canales de contacto, WhatsApp y avisos legales",
+    titulo: "Preferencias de avisos",
+    subtitulo: "Canales de notificación y avisos",
     icono: Bell,
     href: "/panel/configuracion?widget=notificaciones",
     origen: "Configurar"
   },
   perfiles: {
     id: "perfiles",
-    titulo: "Gestión de Usuarios & Membresías",
-    subtitulo: "Administración de miembros, asignación de perfiles y techo jerárquico",
+    titulo: "Perfiles y permisos",
+    subtitulo: "Catálogo de perfiles y permisos asignados",
     icono: Sliders,
     href: "/panel/configuracion?widget=perfiles",
     origen: "Configurar"
   },
   configuracion_contrato_abogado: {
     id: "configuracion_contrato_abogado",
-    titulo: "Configuración de Contrato de Socios",
-    subtitulo: "Administración de la plantilla del contrato de sociedad de abogados (.MD/HTML)",
+    titulo: "Contrato de socios",
+    subtitulo: "Plantilla del contrato de sociedad de abogados",
     icono: FileText,
     href: "/panel/administrar?widget=configuracion_contrato_abogado",
     origen: "Configurar"
   },
   gestion_terminos_consentimientos: {
     id: "gestion_terminos_consentimientos",
-    titulo: "Términos, Consentimientos & LOPDP",
-    subtitulo: "Configuración de cláusulas LOPDP, notificaciones, WhatsApp y protección de datos",
+    titulo: "Términos y consentimientos",
+    subtitulo: "Cláusulas LOPDP y avisos legales",
     icono: FileText,
     href: "/panel/administrar?widget=gestion_terminos_consentimientos",
     origen: "Configurar"
@@ -323,24 +323,24 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   },
   bitacora_notificaciones: {
     id: "bitacora_notificaciones",
-    titulo: "Bitácora & Historial de Notificaciones",
-    subtitulo: "Consulta auditada e historial en tiempo real de notificaciones emitidas",
+    titulo: "Historial de notificaciones",
+    subtitulo: "Registro de avisos enviados y destinatarios",
     icono: BarChart2,
     href: "/panel/administrar?widget=bitacora_notificaciones",
     origen: "Configurar"
   },
   firma_documentos_pdf: {
     id: "firma_documentos_pdf",
-    titulo: "Firma Electrónica de Documentos PDF",
-    subtitulo: "Firmado digital avanzado con certificado .p12 / .pfx y código QR oficial",
+    titulo: "Firma de documentos PDF",
+    subtitulo: "Firma digital con certificado .p12 y código QR",
     icono: FileCheck,
     href: "/panel/firma-documentos",
     origen: "Configurar"
   },
   billetera_documentos: {
     id: "billetera_documentos",
-    titulo: "Billetera Digital de Documentos",
-    subtitulo: "Bóveda segura de documentos personales, vehiculares y contratos con OCR y TTL",
+    titulo: "Billetera de documentos",
+    subtitulo: "Tus documentos, con aviso antes de que caduquen",
     icono: Folder,
     href: "/panel/billetera-documentos",
     origen: "Configurar"
@@ -348,7 +348,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   agendar_cita: {
     id: "agendar_cita",
     titulo: "Agendar una consulta",
-    subtitulo: "Elige materia y hora; te asignamos al abogado de turno de esa especialidad",
+    subtitulo: "Elige materia, servicio y horario disponible",
     icono: CalendarPlus,
     href: "/panel/agendar",
     origen: "Herramientas"
@@ -356,7 +356,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   mis_citas: {
     id: "mis_citas",
     titulo: "Mis citas",
-    subtitulo: "Tus próximas consultas, el enlace de la videollamada y la opción de cancelar",
+    subtitulo: "Próximas consultas, videollamada y cancelación",
     icono: CalendarCheck,
     href: "/panel/mis-citas",
     origen: "Herramientas"
@@ -364,7 +364,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   citas_programadas: {
     id: "citas_programadas",
     titulo: "Citas programadas",
-    subtitulo: "Las citas que te asignaron, para confirmarlas, moverlas o cerrarlas",
+    subtitulo: "Confirma, reagenda y cierra tus consultas",
     icono: CalendarClock,
     href: "/panel/agenda",
     origen: "Herramientas"
@@ -372,7 +372,7 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   disponibilidad: {
     id: "disponibilidad",
     titulo: "Mi disponibilidad",
-    subtitulo: "Tus días y horas de atención. Sin franjas activas no recibes citas ni turnos",
+    subtitulo: "Horarios de atención, duración y bloqueos",
     icono: CalendarClock,
     href: "/panel/agenda/disponibilidad",
     origen: "Herramientas"
@@ -380,15 +380,15 @@ const CATALOGO_FAVORITOS: Record<string, WidgetFavInfo> = {
   asignaciones_agenda: {
     id: "asignaciones_agenda",
     titulo: "Asignaciones y contingencia",
-    subtitulo: "Citas sin abogado porque el asignado canceló. Hay que reasignarlas antes de la hora",
+    subtitulo: "Reasignación de citas canceladas",
     icono: Shuffle,
     href: "/panel/agenda/asignaciones",
     origen: "Administrar"
   },
   crm_clientes: {
     id: "crm_clientes",
-    titulo: "CRM Jurídico & Clientes",
-    subtitulo: "Directorio 360°, KPIs, expedientes y conflict check en vivo",
+    titulo: "Clientes",
+    subtitulo: "Directorio de clientes y expedientes",
     icono: Users,
     href: "/panel/clientes",
     origen: "Configurar"

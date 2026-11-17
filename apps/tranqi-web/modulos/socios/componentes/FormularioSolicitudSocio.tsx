@@ -93,26 +93,26 @@ function renderizarMarkdownHTML(texto: string): string {
     }
 
     // Bold replacement
-    linea = linea.replace(/\*\*(.*?)\*\*/g, "<strong style='color: #111827; font-weight: 700;'>$1</strong>");
+    linea = linea.replace(/\*\*(.*?)\*\*/g, "<strong style='color: var(--texto); font-weight: 700;'>$1</strong>");
 
     if (linea.startsWith("### ")) {
       if (enLista) { htmlOut.push("</ul>"); enLista = false; }
       htmlOut.push(`<h4 style="font-size: 0.98rem; font-weight: 800; color: #5000BA; margin: 16px 0 8px 0;">${linea.replace(/^###\s+/, "")}</h4>`);
     } else if (linea.startsWith("## ")) {
       if (enLista) { htmlOut.push("</ul>"); enLista = false; }
-      htmlOut.push(`<h3 style="font-size: 1.08rem; font-weight: 800; color: #111827; margin: 18px 0 10px 0;">${linea.replace(/^##\s+/, "")}</h3>`);
+      htmlOut.push(`<h3 style="font-size: 1.08rem; font-weight: 800; color: var(--texto); margin: 18px 0 10px 0;">${linea.replace(/^##\s+/, "")}</h3>`);
     } else if (linea.startsWith("# ")) {
       if (enLista) { htmlOut.push("</ul>"); enLista = false; }
-      htmlOut.push(`<h2 style="font-size: 1.2rem; font-weight: 800; color: #111827; margin: 20px 0 12px 0;">${linea.replace(/^#\s+/, "")}</h2>`);
+      htmlOut.push(`<h2 style="font-size: 1.2rem; font-weight: 800; color: var(--texto); margin: 20px 0 12px 0;">${linea.replace(/^#\s+/, "")}</h2>`);
     } else if (linea.startsWith("- ") || linea.startsWith("* ")) {
       if (!enLista) {
         htmlOut.push("<ul style='padding-left: 20px; margin: 8px 0; display: flex; flex-direction: column; gap: 6px;'>");
         enLista = true;
       }
-      htmlOut.push(`<li style="color: #374151; line-height: 1.55; font-size: 0.88rem;">${linea.replace(/^[-*]\s+/, "")}</li>`);
+      htmlOut.push(`<li style="color: var(--texto-2); line-height: 1.55; font-size: 0.88rem;">${linea.replace(/^[-*]\s+/, "")}</li>`);
     } else {
       if (enLista) { htmlOut.push("</ul>"); enLista = false; }
-      htmlOut.push(`<p style="margin: 0 0 10px 0; color: #374151; line-height: 1.6; font-size: 0.88rem;">${linea}</p>`);
+      htmlOut.push(`<p style="margin: 0 0 10px 0; color: var(--texto-2); line-height: 1.6; font-size: 0.88rem;">${linea}</p>`);
     }
   }
 
@@ -171,13 +171,13 @@ async function subirDocumento(
 
 const btnPillStyle: React.CSSProperties = {
   background: "#ffffff",
-  border: "1px solid #E4E4E4",
+  border: "1px solid var(--linea)",
   borderRadius: "6px",
   padding: "4px 8px",
   fontSize: "0.75rem",
   fontWeight: 700,
   cursor: "pointer",
-  color: "#5000BA",
+  color: "var(--acento)",
 };
 
 // Componente Interactivo para Recortar, Mover y Centrar la Foto de Perfil Profesional
@@ -268,35 +268,31 @@ function RecortadorFotoPerfil({
   };
 
   return (
-    <div style={{ marginTop: "12px", padding: "16px", background: "#F7F6FA", borderRadius: "12px", border: "1px solid #5000BA" }}>
-      <strong style={{ fontSize: "0.88rem", color: "#5000BA", display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
-        <Sliders size={16} /> Ajuste y Recorte de Foto de Perfil Profesional
+    <div style={{ marginTop: "12px", padding: "16px", background: "var(--fondo-suave)", borderRadius: "12px", border: "1px solid var(--linea)" }}>
+      <strong style={{ fontSize: "0.88rem", color: "var(--acento)", display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+        <Sliders size={16} /> Recortar la foto
       </strong>
-      <p style={{ fontSize: "0.76rem", color: "#737373", marginBottom: "14px" }}>
-        Ajusta el zoom, movimiento o <strong>arrastra la foto con el mouse o dedo</strong> directamente sobre la silueta.
+      <p style={{ fontSize: "0.76rem", color: "var(--texto-suave)", marginBottom: "14px" }}>
+        Ajusta el zoom, la posición o arrastra la foto con el ratón o el dedo directamente sobre la silueta.
       </p>
 
       <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", alignItems: "center", justifyContent: "center" }}>
-        {/* Tarjeta de Perfil Profesional Verde (Estilo de la red) */}
+        {/* Vista previa de la foto */}
         <div
           style={{
             width: "210px",
-            background: "linear-gradient(145deg, #063B2E 0%, #03231B 100%)",
+            background: "#FFFFFF",
+            border: "1px solid var(--linea)",
             borderRadius: "16px",
             padding: "16px 14px",
-            color: "#ffffff",
-            boxShadow: "0 10px 25px rgba(3, 35, 27, 0.4)",
+            color: "var(--texto)",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             position: "relative",
           }}
         >
-          <div style={{ alignSelf: "flex-start", background: "#C7F9CC", color: "#063B2E", padding: "3px 8px", borderRadius: "12px", fontSize: "0.68rem", fontWeight: 800 }}>
-            Perfil Verificado
-          </div>
-
-          {/* Contenedor Avatar Circular Arrastrable */}
+          {/* Contenedor avatar circular arrastrable */}
           <div style={{ position: "relative", marginTop: "14px", marginBottom: "10px", display: "flex", flexDirection: "column", alignItems: "center" }}>
             <div
               onMouseDown={(e) => { e.preventDefault(); iniciarArrastre(e.clientX, e.clientY); }}
@@ -310,10 +306,10 @@ function RecortadorFotoPerfil({
                 width: "120px",
                 height: "120px",
                 borderRadius: "50%",
-                border: "3px solid #00D09C",
+                border: "2px solid var(--linea)",
                 overflow: "hidden",
                 position: "relative",
-                background: "#03231B",
+                background: "var(--fondo-suave)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -337,7 +333,7 @@ function RecortadorFotoPerfil({
                   }}
                 />
               ) : (
-                <div style={{ color: "#00D09C" }}>Silueta</div>
+                <div style={{ color: "var(--texto-suave)" }}>Silueta</div>
               )}
             </div>
             <div
@@ -345,35 +341,35 @@ function RecortadorFotoPerfil({
                 position: "absolute",
                 bottom: "2px",
                 right: "2px",
-                background: "#00D09C",
-                color: "#03231B",
+                background: "var(--acento)",
+                color: "#FFFFFF",
                 borderRadius: "50%",
                 width: "24px",
                 height: "24px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                border: "2px solid #063B2E",
+                border: "2px solid #FFFFFF",
               }}
             >
               <CheckCircle2 size={15} />
             </div>
           </div>
 
-          <span style={{ fontSize: "0.68rem", color: "#00D09C", fontWeight: 700, marginBottom: "4px" }}>
+          <span style={{ fontSize: "0.68rem", color: "var(--texto-suave)", fontWeight: 700, marginBottom: "4px" }}>
             Arrastrar para mover
           </span>
 
-          <strong style={{ fontSize: "0.92rem", fontWeight: 800, textAlign: "center", color: "#ffffff" }}>
-            Foto de Perfil
+          <strong style={{ fontSize: "0.92rem", fontWeight: 800, textAlign: "center", color: "var(--texto)" }}>
+            Foto de perfil
           </strong>
-          <span style={{ fontSize: "0.74rem", color: "#80EED3", marginTop: "2px" }}>Abogado(a) Verificado(a)</span>
+          <span style={{ fontSize: "0.74rem", color: "var(--texto-suave)", marginTop: "2px" }}>Vista previa</span>
         </div>
 
         {/* Panel de Controles Interactivos */}
         <div style={{ flex: 1, minWidth: "240px", display: "flex", flexDirection: "column", gap: "10px" }}>
           <div>
-            <label style={{ fontSize: "0.78rem", fontWeight: 700, display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
+            <label style={{ fontSize: "0.78rem", fontWeight: 700, display: "flex", justifyContent: "space-between", marginBottom: "4px", color: "var(--texto)" }}>
               <span>Zoom ({zoom.toFixed(2)}x)</span>
             </label>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -387,7 +383,7 @@ function RecortadorFotoPerfil({
                 step="0.05"
                 value={zoom}
                 onChange={(e) => setZoom(Number(e.target.value))}
-                style={{ flex: 1, accentColor: "#5000BA" }}
+                style={{ flex: 1, accentColor: "var(--acento)" }}
               />
               <button type="button" onClick={() => setZoom((z) => Math.min(3.0, z + 0.1))} style={btnPillStyle}>
                 <ZoomIn size={13} />
@@ -396,8 +392,8 @@ function RecortadorFotoPerfil({
           </div>
 
           <div>
-            <label style={{ fontSize: "0.78rem", fontWeight: 700, display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-              <span>↔Mover Horizontal (X: {offsetX}px)</span>
+            <label style={{ fontSize: "0.78rem", fontWeight: 700, display: "flex", justifyContent: "space-between", marginBottom: "4px", color: "var(--texto)" }}>
+              <span>Mover horizontal (X: {offsetX}px)</span>
             </label>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <button type="button" onClick={() => setOffsetX((x) => x - 5)} style={btnPillStyle}>
@@ -410,7 +406,7 @@ function RecortadorFotoPerfil({
                 step="1"
                 value={offsetX}
                 onChange={(e) => setOffsetX(Number(e.target.value))}
-                style={{ flex: 1, accentColor: "#5000BA" }}
+                style={{ flex: 1, accentColor: "var(--acento)" }}
               />
               <button type="button" onClick={() => setOffsetX((x) => x + 5)} style={btnPillStyle}>
                 ►
@@ -419,8 +415,8 @@ function RecortadorFotoPerfil({
           </div>
 
           <div>
-            <label style={{ fontSize: "0.78rem", fontWeight: 700, display: "flex", justifyContent: "space-between", marginBottom: "4px" }}>
-              <span>↕Mover Vertical (Y: {offsetY}px)</span>
+            <label style={{ fontSize: "0.78rem", fontWeight: 700, display: "flex", justifyContent: "space-between", marginBottom: "4px", color: "var(--texto)" }}>
+              <span>Mover vertical (Y: {offsetY}px)</span>
             </label>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <button type="button" onClick={() => setOffsetY((y) => y - 5)} style={btnPillStyle}>
@@ -433,7 +429,7 @@ function RecortadorFotoPerfil({
                 step="1"
                 value={offsetY}
                 onChange={(e) => setOffsetY(Number(e.target.value))}
-                style={{ flex: 1, accentColor: "#5000BA" }}
+                style={{ flex: 1, accentColor: "var(--acento)" }}
               />
               <button type="button" onClick={() => setOffsetY((y) => y + 5)} style={btnPillStyle}>
                 ▼
@@ -449,10 +445,11 @@ function RecortadorFotoPerfil({
                 flex: 1,
                 padding: "8px 10px",
                 background: "#ffffff",
-                border: "1px solid #E4E4E4",
+                border: "1px solid var(--linea-fuerte)",
                 borderRadius: "8px",
                 fontSize: "0.78rem",
                 fontWeight: 700,
+                color: "var(--texto)",
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",
@@ -460,7 +457,7 @@ function RecortadorFotoPerfil({
                 gap: "6px",
               }}
             >
-              <RotateCcw size={13} /> Resetear
+              <RotateCcw size={13} /> Restablecer
             </button>
             <button
               type="button"
@@ -468,7 +465,7 @@ function RecortadorFotoPerfil({
               style={{
                 flex: 1,
                 padding: "8px 10px",
-                background: "#5000BA",
+                background: "var(--acento)",
                 color: "#ffffff",
                 border: "none",
                 borderRadius: "8px",
@@ -479,10 +476,9 @@ function RecortadorFotoPerfil({
                 alignItems: "center",
                 justifyContent: "center",
                 gap: "6px",
-                boxShadow: "0 4px 10px rgba(80,0,186,0.3)",
               }}
             >
-              <Crop size={13} /> Aplicar Recorte
+              <Crop size={13} /> Aplicar recorte
             </button>
           </div>
         </div>
@@ -615,17 +611,17 @@ function ModalCamaraEnVivo({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            borderBottom: "1px solid #E5E7EB",
+            borderBottom: "1px solid var(--linea)",
           }}
         >
-          <strong style={{ fontSize: "0.95rem", color: "#111827", display: "flex", alignItems: "center", gap: "8px" }}>
+          <strong style={{ fontSize: "0.95rem", color: "var(--texto)", display: "flex", alignItems: "center", gap: "8px" }}>
             <Camera size={18} color="#5000BA" />
             {titulo}
           </strong>
           <button
             type="button"
             onClick={alCerrar}
-            style={{ background: "none", border: "none", cursor: "pointer", color: "#6B7280", padding: "4px" }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: "var(--texto-suave)", padding: "4px" }}
           >
             <X size={20} />
           </button>
@@ -646,9 +642,9 @@ function ModalCamaraEnVivo({
             <p style={{ color: "#ffffff", fontSize: "0.85rem" }}>Iniciando cámara en vivo...</p>
           )}
           {errorCamara ? (
-            <div style={{ padding: "24px", color: "#FCA5A5", textAlign: "center" }}>
+            <div style={{ padding: "24px", color: "var(--error-linea)", textAlign: "center" }}>
               <p style={{ fontSize: "0.88rem", marginBottom: "8px" }}>{errorCamara}</p>
-              <p style={{ fontSize: "0.78rem", color: "#D1D5DB" }}>
+              <p style={{ fontSize: "0.78rem", color: "var(--linea-fuerte)" }}>
                 Puedes usar la opción de cargar archivo para seleccionar una imagen desde tu dispositivo.
               </p>
             </div>
@@ -669,8 +665,8 @@ function ModalCamaraEnVivo({
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "#F9FAFB",
-            borderTop: "1px solid #E5E7EB",
+            background: "var(--fondo-suave)",
+            borderTop: "1px solid var(--linea)",
           }}
         >
           <button
@@ -679,7 +675,7 @@ function ModalCamaraEnVivo({
             style={{
               padding: "8px 16px",
               borderRadius: "8px",
-              border: "1px solid #D1D5DB",
+              border: "1px solid var(--linea-fuerte)",
               background: "#ffffff",
               fontSize: "0.85rem",
               fontWeight: 600,
@@ -735,9 +731,9 @@ function EstadoCampo({
           display: "inline-flex",
           alignItems: "center",
           gap: "4px",
-          background: "#ECFDF5",
-          color: "#047857",
-          border: "1px solid #A7F3D0",
+          background: "var(--exito-diluido)",
+          color: "var(--exito-texto)",
+          border: "1px solid var(--exito-linea)",
           borderRadius: "999px",
           padding: "2px 8px",
           fontSize: "0.72rem",
@@ -757,9 +753,9 @@ function EstadoCampo({
           display: "inline-flex",
           alignItems: "center",
           gap: "4px",
-          background: "#FEE2E2",
-          color: "#B91C1C",
-          border: "1px solid #FECACA",
+          background: "var(--error-diluido)",
+          color: "var(--error)",
+          border: "1px solid var(--error-linea)",
           borderRadius: "999px",
           padding: "2px 8px",
           fontSize: "0.72rem",
@@ -778,9 +774,9 @@ function EstadoCampo({
         display: "inline-flex",
         alignItems: "center",
         gap: "4px",
-        background: "#FFFBEB",
-        color: "#B45309",
-        border: "1px solid #FDE68A",
+        background: "var(--aviso-diluido)",
+        color: "var(--aviso-texto)",
+        border: "1px solid var(--aviso-linea)",
         borderRadius: "999px",
         padding: "2px 8px",
         fontSize: "0.72rem",
@@ -893,7 +889,7 @@ function CampoSubidaArchivo({
           etiquetaVacio={obligatorio ? "Único obligatorio pendiente" : "Sin archivo (opcional)"}
         />
       </div>
-      <span style={{ fontSize: "0.76rem", color: "var(--panel-gris, #737373)" }}>{subtitulo}</span>
+      <span style={{ fontSize: "0.76rem", color: "var(--panel-gris, var(--texto-suave))" }}>{subtitulo}</span>
 
       {/* Inputs ocultos para selector estándar y cámara nativa */}
       <input
@@ -935,15 +931,15 @@ function CampoSubidaArchivo({
           <UploadCloud size={22} />
         </div>
         <div>
-          <span style={{ fontSize: "0.84rem", fontWeight: 800, color: "var(--violeta, #5000BA)" }}>
+          <span style={{ fontSize: "0.84rem", fontWeight: 700, color: "var(--acento)" }}>
             {archivos.length > 0
-              ? (esFotoPerfil ? "Añadir / Cambiar imagen" : "Añadir / Cambiar archivos")
-              : (esFotoPerfil ? "Seleccionar o arrastrar fotografía de perfil" : "Seleccionar o arrastrar archivos")}
+              ? (esFotoPerfil ? "Cambiar foto" : "Cambiar archivos")
+              : (esFotoPerfil ? "Selecciona o arrastra la foto" : (multiple ? "Selecciona o arrastra los archivos" : "Selecciona o arrastra el archivo"))}
           </span>
-          <span style={{ display: "block", fontSize: "0.72rem", color: "var(--panel-gris, #737373)", marginTop: "2px" }}>
+          <span style={{ display: "block", fontSize: "0.72rem", color: "var(--texto-suave)", marginTop: "2px" }}>
             {esFotoPerfil
-              ? `Formatos admitidos: JPG, PNG, WEBP • Solo imágenes • Máx ${TAMANO_MAXIMO_MB} MB`
-              : `Formatos admitidos: PDF, Word, JPG, PNG • Máx ${TAMANO_MAXIMO_MB} MB c/u`}
+              ? `Formatos: JPG, PNG o WEBP. Hasta ${TAMANO_MAXIMO_MB} MB.`
+              : `Formatos: PDF, Word, JPG o PNG. Hasta ${TAMANO_MAXIMO_MB} MB.`}
           </span>
         </div>
 
@@ -1006,7 +1002,7 @@ function CampoSubidaArchivo({
         />
       )}
 
-      {errorLocal && <p style={{ fontSize: "0.78rem", color: "#DC2626", fontWeight: 700, margin: 0 }}>{errorLocal}</p>}
+      {errorLocal && <p style={{ fontSize: "0.78rem", color: "var(--error)", fontWeight: 700, margin: 0 }}>{errorLocal}</p>}
 
       {/* Lista de archivos adjuntados con vista previa */}
       {archivos.length > 0 && (
@@ -1025,7 +1021,7 @@ function CampoSubidaArchivo({
                   padding: "8px 12px",
                   background: "#ffffff",
                   borderRadius: "8px",
-                  border: "1px solid var(--panel-linea, #E4E4E4)",
+                  border: "1px solid var(--linea)",
                   fontSize: "0.82rem",
                 }}
               >
@@ -1034,22 +1030,22 @@ function CampoSubidaArchivo({
                     <img
                       src={previewUrl}
                       alt="Vista previa"
-                      style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover", border: "2px solid #5000BA" }}
+                      style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover", border: "2px solid var(--linea)" }}
                     />
                   ) : (
-                    <Paperclip size={16} color="var(--violeta, #5000BA)" style={{ flexShrink: 0 }} />
+                    <Paperclip size={16} color="var(--acento)" style={{ flexShrink: 0 }} />
                   )}
                   <div style={{ overflow: "hidden", flex: 1 }}>
-                    <strong style={{ display: "block", color: "#111111", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
+                    <strong style={{ display: "block", color: "var(--texto)", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
                       {file.name}
                     </strong>
-                    <span style={{ display: "block", fontSize: "0.72rem", color: "var(--panel-gris, #737373)" }}>
+                    <span style={{ display: "block", fontSize: "0.72rem", color: "var(--texto-suave)" }}>
                       {formatoTamanoArchivo(file.size)}
                     </span>
                     {comentarios && onCambiarComentario && (
                       <input
                         type="text"
-                        placeholder="Ej. Certificado de Capacitación / Hoja de Vida"
+                        placeholder="Ej. Certificado o descripción"
                         value={comentarios[idx] || ""}
                         onChange={(e) => onCambiarComentario(idx, e.target.value)}
                         style={{
@@ -1058,7 +1054,7 @@ function CampoSubidaArchivo({
                           padding: "4px 8px",
                           fontSize: "0.75rem",
                           borderRadius: "4px",
-                          border: "1px solid #D1D5DB",
+                          border: "1px solid var(--linea-fuerte)",
                           outline: "none"
                         }}
                       />
@@ -1070,8 +1066,8 @@ function CampoSubidaArchivo({
                   type="button"
                   onClick={() => eliminarArchivo(idx)}
                   style={{
-                    background: "rgba(220, 38, 38, 0.08)",
-                    color: "#DC2626",
+                    background: "var(--error-diluido)",
+                    color: "var(--error)",
                     border: "none",
                     borderRadius: "6px",
                     padding: "6px",
@@ -1159,15 +1155,15 @@ function SelectorMultiSeleccion({
           gap: "6px",
           minHeight: "42px",
           padding: "8px 10px",
-          background: "var(--panel-papel, #F7F6FA)",
+          background: "var(--fondo-suave)",
           borderRadius: "10px",
-          border: "1px solid var(--panel-linea, #E4E4E4)",
+          border: "1px solid var(--linea)",
           alignItems: "center",
         }}
       >
         {seleccionados.length === 0 ? (
-          <span style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", fontStyle: "italic" }}>
-            Ninguno seleccionado. Haz clic abajo para desplegar opciones...
+          <span style={{ fontSize: "0.82rem", color: "var(--texto-suave)", fontStyle: "italic" }}>
+            Ninguna opción seleccionada.
           </span>
         ) : (
           seleccionados.map((item) => (
@@ -1179,18 +1175,18 @@ function SelectorMultiSeleccion({
                 gap: "5px",
                 padding: "4px 10px",
                 borderRadius: "999px",
-                background: "var(--violeta-suave, #F3E8FF)",
-                color: "var(--violeta, #5000BA)",
+                background: "var(--acento-diluido)",
+                color: "var(--acento)",
                 fontSize: "0.8rem",
                 fontWeight: 700,
-                border: "1px solid rgba(80, 0, 186, 0.2)",
+                border: "1px solid var(--acento-linea)",
               }}
             >
               {obtenerNombreLegible(item)}
               <button
                 type="button"
                 onClick={() => eliminarSeleccionado(item)}
-                style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--violeta, #5000BA)", display: "flex", padding: 0 }}
+                style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--acento)", display: "flex", padding: 0 }}
                 title="Eliminar"
               >
                 <X size={13} />
@@ -1209,20 +1205,20 @@ function SelectorMultiSeleccion({
             width: "100%",
             padding: "10px 14px",
             borderRadius: "10px",
-            border: "1px solid var(--panel-linea, #E4E4E4)",
+            border: "1px solid var(--linea)",
             background: "#ffffff",
             fontSize: "0.86rem",
             fontWeight: 700,
-            color: "var(--negro, #111111)",
+            color: "var(--texto)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
             cursor: "pointer",
           }}
         >
-          <span>Seleccionar ({seleccionados.length} seleccionados)</span>
-          <span style={{ fontSize: "0.75rem", color: "var(--violeta, #5000BA)", fontWeight: 800 }}>
-            {abierto ? "▲ Cerrar Opciones" : "▼ Desplegar Opciones"}
+          <span>{seleccionados.length > 0 ? `${seleccionados.length} seleccionados` : "Seleccionar"}</span>
+          <span style={{ fontSize: "0.75rem", color: "var(--acento)", fontWeight: 700 }}>
+            {abierto ? "▲ Cerrar" : "▼ Desplegar"}
           </span>
         </button>
 
@@ -1236,8 +1232,8 @@ function SelectorMultiSeleccion({
               right: 0,
               background: "#ffffff",
               borderRadius: "12px",
-              border: "1px solid var(--panel-linea, #E4E4E4)",
-              boxShadow: "0 10px 25px rgba(0,0,0,0.12)",
+              border: "1px solid var(--linea)",
+              boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
               zIndex: 100,
               padding: "12px",
               display: "flex",
@@ -1247,8 +1243,8 @@ function SelectorMultiSeleccion({
             }}
           >
             {/* Buscador */}
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "var(--panel-papel, #F7F6FA)", padding: "6px 10px", borderRadius: "8px", border: "1px solid #E4E4E4" }}>
-              <Search size={15} color="var(--panel-gris, #737373)" />
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "var(--fondo-suave)", padding: "6px 10px", borderRadius: "8px", border: "1px solid var(--linea)" }}>
+              <Search size={15} color="var(--texto-suave)" />
               <input
                 type="text"
                 value={busqueda}
@@ -1277,12 +1273,12 @@ function SelectorMultiSeleccion({
                       gap: "10px",
                       padding: "8px 12px",
                       borderRadius: "8px",
-                      background: checked ? "#F3E8FF" : "#FFFFFF",
-                      border: checked ? "1px solid #5000BA" : "1px solid #E4E4E4",
+                      background: checked ? "var(--acento-diluido)" : "#FFFFFF",
+                      border: checked ? "1px solid var(--acento)" : "1px solid var(--linea)",
                       cursor: "pointer",
                       fontSize: "0.86rem",
                       fontWeight: checked ? 700 : 500,
-                      color: checked ? "#5000BA" : "#111111",
+                      color: checked ? "var(--acento)" : "var(--texto)",
                       textAlign: "left",
                       margin: 0,
                       width: "100%",
@@ -1294,8 +1290,8 @@ function SelectorMultiSeleccion({
                         width: "18px",
                         height: "18px",
                         borderRadius: "4px",
-                        border: checked ? "2px solid #5000BA" : "1.5px solid #A0A0A0",
-                        background: checked ? "#5000BA" : "#FFFFFF",
+                        border: checked ? "2px solid var(--acento)" : "1.5px solid var(--linea-fuerte)",
+                        background: checked ? "var(--acento)" : "#FFFFFF",
                         color: "#FFFFFF",
                         display: "flex",
                         alignItems: "center",
@@ -1312,18 +1308,18 @@ function SelectorMultiSeleccion({
             </div>
 
             {/* Opción Otros (editable) */}
-            <div style={{ borderTop: "1px solid #E4E4E4", paddingTop: "8px", marginTop: "4px" }}>
+            <div style={{ borderTop: "1px solid var(--linea)", paddingTop: "8px", marginTop: "4px" }}>
               <button
                 type="button"
                 onClick={() => setModoOtros(!modoOtros)}
                 style={{
-                  background: "rgba(80, 0, 186, 0.08)",
-                  color: "var(--violeta, #5000BA)",
-                  border: "1px dashed var(--violeta, #5000BA)",
+                  background: "var(--fondo-suave)",
+                  color: "var(--acento)",
+                  border: "1px dashed var(--acento)",
                   borderRadius: "8px",
                   padding: "6px 10px",
                   fontSize: "0.78rem",
-                  fontWeight: 800,
+                  fontWeight: 700,
                   cursor: "pointer",
                   width: "100%",
                   display: "flex",
@@ -1341,12 +1337,12 @@ function SelectorMultiSeleccion({
                     type="text"
                     value={textoOtros}
                     onChange={(e) => setTextoOtros(e.target.value)}
-                    placeholder="Escribe la opción personalizada..."
+                    placeholder="Escribe una opción..."
                     style={{
                       flex: 1,
                       padding: "6px 10px",
                       borderRadius: "6px",
-                      border: "1px solid #E4E4E4",
+                      border: "1px solid var(--linea)",
                       fontSize: "0.82rem",
                       outline: "none",
                     }}
@@ -1355,7 +1351,7 @@ function SelectorMultiSeleccion({
                     type="button"
                     onClick={agregarPersonalizado}
                     style={{
-                      background: "var(--violeta, #5000BA)",
+                      background: "var(--acento)",
                       color: "#ffffff",
                       border: "none",
                       borderRadius: "6px",
@@ -1404,15 +1400,15 @@ export function FormularioSolicitudSocio({
   const cvYCertificadosExistentes = documentosExistentes.filter((d) => (d.dcs_tipo === "cv" || d.dcs_tipo === "otro" || d.dcs_comentario?.includes("[tipo:cv]") || d.dcs_url?.includes("/cv-")) && d !== fotoExistente && d !== identificacionExistente && d !== tituloExistente && d !== carnetExistente);
 
   // Estado del texto preliminar de beneficios (editable)
-  const [textoBeneficios, setTextoBeneficios] = useState<string>(`### Únete a la Red Jurídica Oficial de tranqi
+  const [textoBeneficios, setTextoBeneficios] = useState<string>(`### Únete a la red de abogados de tranqi
 
-Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendrás:
+Como socio acreditado tendrás:
 
-- **Red Nacional de Clientes:** Acceso a usuarios y empresas que requieren asesoría legal en todo el Ecuador.
-- **Cuenta Digital y Expedientes Cifrados:** Gestión autónoma de trámites, consultas y documentos protegidos con cifrado de alta seguridad (pgcrypto).
-- **Cobros y Pagos Seguros:** Liquidación puntual y transparente de tus honorarios profesionales.
-- **Acompañamiento y Tecnología:** Respaldo de nuestra plataforma tecnológica, firma electrónica y soporte operativo continuo.
-- **Capacitación Continua:** Acceso a actualizaciones normativas, jurisprudencia y talleres especializados.`);
+- **Clientes en todo el Ecuador:** personas y empresas que buscan asesoría legal.
+- **Tu despacho en línea:** trámites, consultas y documentos en un solo lugar, protegidos.
+- **Cobros puntuales:** liquidación clara de tus honorarios.
+- **Soporte:** firma electrónica y un equipo que te acompaña.
+- **Formación:** novedades normativas, jurisprudencia y talleres.`);
   const [editandoBeneficios, setEditandoBeneficios] = useState(false);
   const [textoBeneficiosTemp, setTextoBeneficiosTemp] = useState("");
 
@@ -1920,69 +1916,54 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
   if (pasoActual === "beneficios") {
     return (
       <div style={{ maxWidth: "780px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "20px" }}>
-        {/* Banner Hero de Bienvenida al Proceso */}
-        <div
-          style={{
-            background: "linear-gradient(135deg, #2D006B 0%, #5000BA 50%, #03231B 100%)",
-            borderRadius: "18px",
-            padding: "32px 28px",
-            color: "#ffffff",
-            boxShadow: "0 12px 30px rgba(80, 0, 186, 0.25)",
-            position: "relative",
-            overflow: "hidden",
-          }}
-        >
-          <div style={{ position: "relative", zIndex: 2 }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(255,255,255,0.18)", padding: "4px 12px", borderRadius: "999px", fontSize: "0.78rem", fontWeight: 800, marginBottom: "12px", backdropFilter: "blur(4px)" }}>
-              <Sparkles size={14} color="#C7F9CC" /> Convocatoria de Incorporación Profesional
-            </div>
-            <h1 style={{ fontSize: "1.8rem", fontWeight: 900, margin: "0 0 10px 0", lineHeight: 1.25, color: "#ffffff" }}>
-              Forma parte del Equipo Jurídico de tranqi
-            </h1>
-            <p style={{ fontSize: "0.95rem", lineHeight: 1.55, opacity: 0.92, margin: 0, maxWidth: "620px" }}>
-              Impulsa tu ejercicio profesional con el respaldo de nuestra infraestructura legal digital, red nacional de clientes y herramientas seguras para abogados acreditados.
-            </p>
-          </div>
+        {/* Cabecera informativa */}
+        <div style={{ padding: "8px 0 16px 0" }}>
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 800, margin: "0 0 6px 0", color: "var(--texto)" }}>
+            Forma parte del equipo de tranqi
+          </h1>
+          <p style={{ fontSize: "0.875rem", color: "var(--texto-suave)", margin: 0 }}>
+            Convocatoria para abogados acreditados en Ecuador.
+          </p>
         </div>
 
         {/* Tarjetas de Beneficios Clave */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px" }}>
-          <div style={{ background: "#ffffff", border: "1px solid #E4E4E4", borderRadius: "14px", padding: "18px", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
-            <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "rgba(80, 0, 186, 0.08)", color: "#5000BA", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px" }}>
+          <div style={{ background: "#ffffff", border: "1px solid var(--linea)", borderRadius: "14px", padding: "18px" }}>
+            <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "var(--acento-diluido)", color: "var(--acento)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px" }}>
               <Scale size={20} />
             </div>
-            <strong style={{ display: "block", fontSize: "0.92rem", color: "#111111", marginBottom: "4px" }}>Red Nacional Activa</strong>
-            <p style={{ margin: 0, fontSize: "0.8rem", color: "#666666", lineHeight: 1.45 }}>
-              Casos y consultas jurídicas en las 24 provincias del Ecuador, litiga y asesora de forma local o remota.
+            <strong style={{ display: "block", fontSize: "0.92rem", color: "var(--texto)", marginBottom: "4px" }}>Red nacional activa</strong>
+            <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--texto-suave)", lineHeight: 1.45 }}>
+              Casos y consultas jurídicas en las 24 provincias del Ecuador, con asesoría presencial o remota.
             </p>
           </div>
 
-          <div style={{ background: "#ffffff", border: "1px solid #E4E4E4", borderRadius: "14px", padding: "18px", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
-            <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "rgba(5, 135, 110, 0.08)", color: "#05876E", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px" }}>
+          <div style={{ background: "#ffffff", border: "1px solid var(--linea)", borderRadius: "14px", padding: "18px" }}>
+            <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "var(--fondo-suave)", color: "var(--acento)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px" }}>
               <Lock size={20} />
             </div>
-            <strong style={{ display: "block", fontSize: "0.92rem", color: "#111111", marginBottom: "4px" }}>Expedientes Cifrados</strong>
-            <p style={{ margin: 0, fontSize: "0.8rem", color: "#666666", lineHeight: 1.45 }}>
-              Tus documentos y expedientes están protegidos con cifrado a nivel de columna (pgcrypto) y repositorio privado.
+            <strong style={{ display: "block", fontSize: "0.92rem", color: "var(--texto)", marginBottom: "4px" }}>Expedientes seguros</strong>
+            <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--texto-suave)", lineHeight: 1.45 }}>
+              Tus documentos y expedientes están protegidos en un repositorio privado seguro.
             </p>
           </div>
 
-          <div style={{ background: "#ffffff", border: "1px solid #E4E4E4", borderRadius: "14px", padding: "18px", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" }}>
-            <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "rgba(217, 119, 6, 0.08)", color: "#D97706", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px" }}>
+          <div style={{ background: "#ffffff", border: "1px solid var(--linea)", borderRadius: "14px", padding: "18px" }}>
+            <div style={{ width: "38px", height: "38px", borderRadius: "10px", background: "var(--fondo-suave)", color: "var(--acento)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: "10px" }}>
               <Award size={20} />
             </div>
-            <strong style={{ display: "block", fontSize: "0.92rem", color: "#111111", marginBottom: "4px" }}>Honorarios Claros</strong>
-            <p style={{ margin: 0, fontSize: "0.8rem", color: "#666666", lineHeight: 1.45 }}>
-              Liquidación puntual, comprobantes electrónicos autorizados por el SRI y total transparencia de ingresos.
+            <strong style={{ display: "block", fontSize: "0.92rem", color: "var(--texto)", marginBottom: "4px" }}>Honorarios claros</strong>
+            <p style={{ margin: 0, fontSize: "0.8rem", color: "var(--texto-suave)", lineHeight: 1.45 }}>
+              Liquidación puntual, comprobantes autorizados por el SRI y total transparencia de ingresos.
             </p>
           </div>
         </div>
 
         {/* Sección de Texto Preliminar Editable */}
-        <div style={{ background: "#ffffff", border: "1px solid #E4E4E4", borderRadius: "16px", padding: "22px", boxShadow: "0 2px 10px rgba(0,0,0,0.04)" }}>
+        <div style={{ background: "#ffffff", border: "1px solid var(--linea)", borderRadius: "16px", padding: "22px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "14px", flexWrap: "wrap", gap: "8px" }}>
-            <span style={{ fontSize: "0.86rem", fontWeight: 800, color: "#5000BA", display: "flex", alignItems: "center", gap: "6px" }}>
-              <Briefcase size={16} /> Condiciones de Participación y Beneficios del Equipo
+            <span style={{ fontSize: "0.86rem", fontWeight: 700, color: "var(--texto)", display: "flex", alignItems: "center", gap: "6px" }}>
+              <Briefcase size={16} /> Condiciones de participación y beneficios
             </span>
             {esAdmin && (
               <button
@@ -1996,20 +1977,20 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                   }
                 }}
                 style={{
-                  background: "rgba(80, 0, 186, 0.06)",
-                  border: "1px solid rgba(80, 0, 186, 0.2)",
+                  background: "var(--fondo-suave)",
+                  border: "1px solid var(--linea)",
                   borderRadius: "8px",
                   padding: "4px 10px",
                   fontSize: "0.76rem",
                   fontWeight: 700,
-                  color: "#5000BA",
+                  color: "var(--acento)",
                   cursor: "pointer",
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "4px",
                 }}
               >
-                <Edit3 size={13} /> {editandoBeneficios ? "Cancelar Edición" : "Editar Texto"}
+                <Edit3 size={13} /> {editandoBeneficios ? "Cancelar edición" : "Editar texto"}
               </button>
             )}
           </div>
@@ -2027,7 +2008,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                   width: "100%",
                   padding: "12px",
                   borderRadius: "10px",
-                  border: "1px solid #5000BA",
+                  border: "1px solid var(--linea)",
                   fontFamily: "inherit",
                   fontSize: "0.86rem",
                   lineHeight: 1.55,
@@ -2039,7 +2020,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                   type="button"
                   onClick={guardarEdicionBeneficios}
                   style={{
-                    background: "#5000BA",
+                    background: "var(--acento)",
                     color: "#ffffff",
                     border: "none",
                     borderRadius: "8px",
@@ -2052,7 +2033,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                     gap: "6px",
                   }}
                 >
-                  <Save size={14} /> Guardar Cambios
+                  <Save size={14} /> Guardar cambios
                 </button>
               </div>
             </div>
@@ -2061,11 +2042,11 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
               style={{
                 fontSize: "0.88rem",
                 lineHeight: 1.6,
-                color: "#222222",
-                background: "var(--panel-papel, #F7F6FA)",
+                color: "var(--texto-2)",
+                background: "var(--fondo-suave)",
                 padding: "18px 20px",
                 borderRadius: "12px",
-                border: "1px solid #EAEAEA",
+                border: "1px solid var(--linea)",
               }}
               dangerouslySetInnerHTML={{ __html: renderizarMarkdownHTML(textoBeneficios) }}
             />
@@ -2086,11 +2067,10 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
               display: "inline-flex",
               alignItems: "center",
               gap: "10px",
-              boxShadow: "0 6px 20px rgba(80,0,186,0.3)",
               cursor: "pointer",
             }}
           >
-            Continuar con el Registro de Socio <ArrowRight size={18} />
+            Continuar con la solicitud <ArrowRight size={18} />
           </button>
         </div>
       </div>
@@ -2107,9 +2087,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           style={{
             background: "#ffffff",
             borderRadius: "18px",
-            border: "1px solid #E4E4E4",
+            border: "1px solid var(--linea)",
             padding: "28px",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
             textAlign: "center",
           }}
         >
@@ -2118,13 +2097,13 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
               width: "64px",
               height: "64px",
               borderRadius: "50%",
-              background: "rgba(5, 135, 110, 0.1)",
-              color: "#05876E",
+              background: "var(--exito-diluido)",
+              color: "var(--exito)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               margin: "0 auto 16px auto",
-              border: "2px solid #05876E",
+              border: "2px solid var(--exito)",
             }}
           >
             <CheckCircle2 size={36} />
@@ -2133,60 +2112,60 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           <span
             style={{
               display: "inline-block",
-              background: "rgba(217, 119, 6, 0.12)",
-              color: "#D97706",
-              border: "1px solid rgba(217, 119, 6, 0.3)",
+              background: "var(--aviso-diluido)",
+              color: "var(--aviso-texto)",
+              border: "1px solid var(--aviso)",
               borderRadius: "999px",
               padding: "4px 14px",
               fontSize: "0.8rem",
-              fontWeight: 800,
+              fontWeight: 700,
               marginBottom: "12px",
             }}
           >
-            Solicitud Recibida — En Proceso de Acreditación
+            Solicitud enviada — en revisión
           </span>
 
-          <h2 style={{ fontSize: "1.5rem", fontWeight: 900, color: "#111111", margin: "0 0 10px 0" }}>
-            ¡Bienvenido(a) a la Red de tranqi!
+          <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--texto)", margin: "0 0 10px 0" }}>
+            ¡Bienvenido a la red de tranqi!
           </h2>
-          <p style={{ fontSize: "0.92rem", color: "#555555", lineHeight: 1.55, maxWidth: "560px", margin: "0 auto 24px auto" }}>
-            Hemos recibido tu solicitud de incorporación como Socio Abogado. Tus documentos han sido clasificados y resguardados en nuestro repositorio institucional seguro.
+          <p style={{ fontSize: "0.92rem", color: "var(--texto-suave)", lineHeight: 1.55, maxWidth: "560px", margin: "0 auto 24px auto" }}>
+            Hemos recibido tu solicitud. Tus documentos han sido guardados en el repositorio seguro.
           </p>
 
           {/* Rastreador de Estado del Proceso */}
-          <div style={{ background: "#F7F6FA", borderRadius: "14px", padding: "18px", textAlign: "left", marginBottom: "24px", border: "1px solid #EAEAEA" }}>
-            <strong style={{ fontSize: "0.86rem", color: "#5000BA", display: "flex", alignItems: "center", gap: "6px", marginBottom: "14px" }}>
-              <FolderTree size={16} /> Etapas de tu Acreditación Profesional:
+          <div style={{ background: "var(--fondo-suave)", borderRadius: "14px", padding: "18px", textAlign: "left", marginBottom: "24px", border: "1px solid var(--linea)" }}>
+            <strong style={{ fontSize: "0.86rem", color: "var(--texto)", display: "flex", alignItems: "center", gap: "6px", marginBottom: "14px" }}>
+              <FolderTree size={16} /> Etapas de la solicitud:
             </strong>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
               <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
-                <span style={{ background: "#05876E", color: "#fff", borderRadius: "50%", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 800, flexShrink: 0 }}>
-                  ✓
+                <span style={{ background: "var(--exito)", color: "#fff", borderRadius: "50%", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 800, flexShrink: 0 }}>
+                  <Check size={14} strokeWidth={2.5} />
                 </span>
                 <div>
-                  <strong style={{ fontSize: "0.84rem", color: "#111111", display: "block" }}>1. Registro y Carga de Expediente</strong>
-                  <span style={{ fontSize: "0.76rem", color: "#666" }}>Datos personales, título, fotos y Hoja de Vida indexados en el repositorio de la empresa.</span>
+                  <strong style={{ fontSize: "0.84rem", color: "var(--texto)", display: "block" }}>1. Registro y documentos</strong>
+                  <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>Datos personales, título, foto y hoja de vida guardados en el sistema.</span>
                 </div>
               </div>
 
               <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
-                <span style={{ background: "#D97706", color: "#fff", borderRadius: "50%", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 800, flexShrink: 0 }}>
+                <span style={{ background: "var(--aviso)", color: "#fff", borderRadius: "50%", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 800, flexShrink: 0 }}>
                   2
                 </span>
                 <div>
-                  <strong style={{ fontSize: "0.84rem", color: "#D97706", display: "block" }}>2. Verificación Asistida (SENESCYT & Foro)</strong>
-                  <span style={{ fontSize: "0.76rem", color: "#666" }}>Validación de autenticidad en el Consejo de la Judicatura y acreditación de matrícula profesional.</span>
+                  <strong style={{ fontSize: "0.84rem", color: "var(--aviso-texto)", display: "block" }}>2. Verificación de título y matrícula</strong>
+                  <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>Validación en la SENESCYT y en el Foro de Abogados.</span>
                 </div>
               </div>
 
               <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
-                <span style={{ background: "#9CA3AF", color: "#fff", borderRadius: "50%", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 800, flexShrink: 0 }}>
+                <span style={{ background: "var(--texto-tenue)", color: "#fff", borderRadius: "50%", width: "22px", height: "22px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.72rem", fontWeight: 800, flexShrink: 0 }}>
                   3
                 </span>
                 <div>
-                  <strong style={{ fontSize: "0.84rem", color: "#6B7280", display: "block" }}>3. Activación de Rol y Cuenta Digital</strong>
-                  <span style={{ fontSize: "0.76rem", color: "#666" }}>Te notificaremos por correo y notificación Push al momento de la aprobación para firmar tu contrato digital.</span>
+                  <strong style={{ fontSize: "0.84rem", color: "var(--texto-suave)", display: "block" }}>3. Activación de la cuenta</strong>
+                  <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>Te notificaremos por correo y aviso push cuando tu solicitud sea aprobada.</span>
                 </div>
               </div>
             </div>
@@ -2212,7 +2191,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                 cursor: "pointer",
               }}
             >
-              Ingresar al Menú Principal <ArrowRight size={16} />
+              Ir al panel principal <ArrowRight size={16} />
             </button>
 
             <button
@@ -2220,8 +2199,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
               onClick={() => setPasoActual("formulario")}
               style={{
                 background: "#ffffff",
-                border: "1px solid #D1D5DB",
-                color: "#374151",
+                border: "1px solid var(--linea-fuerte)",
+                color: "var(--texto)",
                 padding: "12px 20px",
                 fontSize: "0.88rem",
                 fontWeight: 700,
@@ -2232,7 +2211,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                 gap: "6px",
               }}
             >
-              <Edit3 size={15} /> Ver / Editar Datos Enviados
+              <Edit3 size={15} /> Ver datos enviados
             </button>
 
             <button
@@ -2240,8 +2219,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
               onClick={() => setModalConfirmarAccion("reiniciar")}
               style={{
                 background: "#ffffff",
-                border: "1px solid #5000BA",
-                color: "#5000BA",
+                border: "1px solid var(--linea-fuerte)",
+                color: "var(--texto)",
                 padding: "12px 18px",
                 fontSize: "0.88rem",
                 fontWeight: 700,
@@ -2252,7 +2231,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                 gap: "6px",
               }}
             >
-              <RotateCcw size={15} /> Reiniciar Solicitud
+              <RotateCcw size={15} /> Reiniciar solicitud
             </button>
 
             <button
@@ -2260,8 +2239,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
               onClick={() => setModalConfirmarAccion("eliminar")}
               style={{
                 background: "#ffffff",
-                border: "1px solid #DC2626",
-                color: "#DC2626",
+                border: "1px solid var(--linea-fuerte)",
+                color: "var(--error)",
                 padding: "12px 18px",
                 fontSize: "0.88rem",
                 fontWeight: 700,
@@ -2272,7 +2251,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                 gap: "6px",
               }}
             >
-              <Trash2 size={15} /> Eliminar Solicitud
+              <Trash2 size={15} /> Eliminar solicitud
             </button>
           </div>
         </div>
@@ -2301,7 +2280,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                 padding: "24px",
                 maxWidth: "460px",
                 width: "100%",
-                boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
+                boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
                 textAlign: "center",
               }}
             >
@@ -2310,8 +2289,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                   width: "48px",
                   height: "48px",
                   borderRadius: "50%",
-                  background: modalConfirmarAccion === "eliminar" ? "#FEE2E2" : "#EDE9FE",
-                  color: modalConfirmarAccion === "eliminar" ? "#DC2626" : "#5000BA",
+                  background: modalConfirmarAccion === "eliminar" ? "var(--error-diluido)" : "var(--fondo-suave)",
+                  color: modalConfirmarAccion === "eliminar" ? "var(--error)" : "var(--acento)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -2321,14 +2300,14 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                 {modalConfirmarAccion === "eliminar" ? <AlertTriangle size={26} /> : <RotateCcw size={26} />}
               </div>
 
-              <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#111", margin: "0 0 8px" }}>
-                {modalConfirmarAccion === "eliminar" ? "¿Eliminar solicitud de socio abogado?" : "¿Reiniciar solicitud desde cero?"}
+              <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "var(--texto)", margin: "0 0 8px" }}>
+                {modalConfirmarAccion === "eliminar" ? "¿Eliminar solicitud?" : "¿Reiniciar solicitud?"}
               </h3>
 
-              <p style={{ fontSize: "0.88rem", color: "#555", lineHeight: "1.5", margin: "0 0 20px" }}>
+              <p style={{ fontSize: "0.88rem", color: "var(--texto-suave)", lineHeight: "1.5", margin: "0 0 20px" }}>
                 {modalConfirmarAccion === "eliminar"
-                  ? "Esta acción cancelará tu postulación y eliminará los documentos y materias asociadas. Podrás volver a iniciar una nueva solicitud cuando lo desees."
-                  : "Se limpiarán los datos y archivos cargados previamente para que puedas comenzar el formulario completamente limpio."}
+                  ? "Esta acción cancelará tu postulación y eliminará los documentos cargados. Podrás volver a iniciar una nueva solicitud cuando lo desees."
+                  : "Se limpiarán los datos y archivos cargados para que puedas comenzar el formulario desde cero."}
               </p>
 
               <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
@@ -2339,9 +2318,9 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                   style={{
                     flex: 1,
                     padding: "10px 16px",
-                    background: "#F3F4F6",
-                    color: "#374151",
-                    border: "none",
+                    background: "#ffffff",
+                    border: "1px solid var(--linea-fuerte)",
+                    color: "var(--texto)",
                     borderRadius: "8px",
                     fontSize: "0.88rem",
                     fontWeight: 700,
@@ -2358,7 +2337,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                   style={{
                     flex: 1,
                     padding: "10px 16px",
-                    background: modalConfirmarAccion === "eliminar" ? "#DC2626" : "#5000BA",
+                    background: modalConfirmarAccion === "eliminar" ? "var(--error)" : "var(--acento)",
                     color: "#FFF",
                     border: "none",
                     borderRadius: "8px",
@@ -2367,7 +2346,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                     cursor: "pointer",
                   }}
                 >
-                  {procesandoAccion ? "Procesando..." : modalConfirmarAccion === "eliminar" ? "Sí, Eliminar" : "Sí, Reiniciar"}
+                  {procesandoAccion ? "Procesando…" : modalConfirmarAccion === "eliminar" ? "Sí, eliminar" : "Sí, reiniciar"}
                 </button>
               </div>
             </div>
@@ -2388,23 +2367,23 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           <button
             type="button"
             onClick={() => setPasoActual("beneficios")}
-            style={{ background: "transparent", border: "none", color: "#5000BA", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
+            style={{ background: "transparent", border: "none", color: "var(--acento)", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
           >
-            ← Ver Beneficios
+            ← Ver beneficios
           </button>
           <button
             type="button"
             onClick={() => setModalConfirmarAccion("reiniciar")}
-            style={{ background: "rgba(80,0,186,0.06)", border: "1px solid rgba(80,0,186,0.2)", borderRadius: "8px", padding: "4px 8px", color: "#5000BA", fontSize: "0.76rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
+            style={{ background: "var(--fondo-suave)", border: "1px solid var(--linea)", borderRadius: "8px", padding: "4px 8px", color: "var(--acento)", fontSize: "0.76rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
           >
-            <RotateCcw size={12} /> Reiniciar Formulario
+            <RotateCcw size={12} /> Reiniciar solicitud
           </button>
           <button
             type="button"
             onClick={() => setModalConfirmarAccion("eliminar")}
-            style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)", borderRadius: "8px", padding: "4px 8px", color: "#DC2626", fontSize: "0.76rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
+            style={{ background: "var(--error-diluido)", border: "1px solid var(--error)", borderRadius: "8px", padding: "4px 8px", color: "var(--error)", fontSize: "0.76rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
           >
-            <Trash2 size={12} /> Eliminar Solicitud
+            <Trash2 size={12} /> Eliminar solicitud
           </button>
         </div>
       </div>
@@ -2412,8 +2391,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
       {/* Resumen de Requisitos y Estado de Afiliación */}
       <div
         style={{
-          background: "#F9FAFB",
-          border: "1px solid #E5E7EB",
+          background: "var(--fondo-suave)",
+          border: "1px solid var(--linea)",
           borderRadius: "14px",
           padding: "14px 18px",
           marginBottom: "16px",
@@ -2425,21 +2404,21 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <Scale size={18} color="#5000BA" />
-            <strong style={{ fontSize: "0.92rem", color: "#111827" }}>
+            <strong style={{ fontSize: "0.92rem", color: "var(--texto)" }}>
               Requisito de Afiliación a la Red:
             </strong>
           </div>
           {carnetArchivos.length > 0 || carnetExistente ? (
-            <span style={{ background: "#ECFDF5", color: "#047857", border: "1px solid #A7F3D0", padding: "3px 10px", borderRadius: "999px", fontSize: "0.76rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+            <span style={{ background: "var(--exito-diluido)", color: "var(--exito-texto)", border: "1px solid var(--exito-linea)", padding: "3px 10px", borderRadius: "999px", fontSize: "0.76rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: "4px" }}>
               <Check size={13} strokeWidth={2.5} /> Matrícula Profesional cargada (Único obligatorio cumplido)
             </span>
           ) : (
-            <span style={{ background: "#FEE2E2", color: "#B91C1C", border: "1px solid #FECACA", padding: "3px 10px", borderRadius: "999px", fontSize: "0.76rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: "4px" }}>
+            <span style={{ background: "var(--error-diluido)", color: "var(--error)", border: "1px solid var(--error-linea)", padding: "3px 10px", borderRadius: "999px", fontSize: "0.76rem", fontWeight: 800, display: "inline-flex", alignItems: "center", gap: "4px" }}>
               <AlertCircle size={13} strokeWidth={2.5} /> Matrícula Profesional pendiente (Único obligatorio)
             </span>
           )}
         </div>
-        <p style={{ margin: 0, fontSize: "0.78rem", color: "#4B5563", lineHeight: "1.45" }}>
+        <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--texto-2)", lineHeight: "1.45" }}>
           La <strong>Matrícula Profesional / Carnet</strong> es el <strong>único requisito obligatorio</strong>. Puedes cargar una imagen o tomar una foto directamente con la cámara de tu dispositivo. Los demás campos son opcionales y se van marcando con un check verde conforme los completes.
         </p>
       </div>
@@ -2458,16 +2437,16 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         archivoExistente={!!fotoExistente}
       />
       {fotoExistente && fotoPerfilArchivos.length === 0 && (
-        <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(80, 0, 186, 0.04)", border: "1px solid rgba(80, 0, 186, 0.15)", borderRadius: "8px", marginTop: "8px", fontSize: "0.84rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "var(--fondo-suave)", border: "1px solid var(--linea)", borderRadius: "8px", marginTop: "8px", fontSize: "0.84rem" }}>
           {fotoExistente.url && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={fotoExistente.url} alt="Foto actual" style={{ width: "38px", height: "38px", borderRadius: "50%", objectFit: "cover", border: "1.5px solid #5000BA" }} />
+            <img src={fotoExistente.url} alt="Foto actual" style={{ width: "38px", height: "38px", borderRadius: "50%", objectFit: "cover", border: "1.5px solid var(--linea)" }} />
           )}
           <div>
-            <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Foto de Perfil actual cargada</span>
-            <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{fotoExistente.dcs_nombre_archivo}</span>
+            <span style={{ display: "block", fontWeight: 700, color: "var(--texto)" }}>Foto actual cargada</span>
+            <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>{fotoExistente.dcs_nombre_archivo}</span>
           </div>
-          <a href={fotoExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#5000BA", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+          <a href={fotoExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "var(--acento)", fontWeight: 700, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
             <ExternalLink size={14} /> Ver archivo
           </a>
         </div>
@@ -2491,13 +2470,13 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         {analizandoCarnetAria && (
           <div style={{ padding: "12px 16px", background: "rgba(80, 0, 186, 0.06)", border: "1.5px dashed #5000BA", borderRadius: "10px", marginTop: "10px", display: "flex", alignItems: "center", gap: "10px", fontSize: "0.84rem", color: "#5000BA", fontWeight: 700 }}>
             <Sparkles size={18} color="#5000BA" />
-            <span>✨ Tranqi está procesando y leyendo tu Carnet Profesional para autocompletar tus datos oficiales...</span>
+            <span>Tranqi está procesando y leyendo tu Carnet Profesional para autocompletar tus datos oficiales...</span>
           </div>
         )}
 
         {/* Banner de Datos Oficiales Extraídos por ARIA desde el Carnet */}
         {dictamenAriaCarnet && (
-          <div style={{ padding: "14px 18px", background: "rgba(5, 135, 110, 0.05)", border: "1.5px solid #05876E", borderRadius: "12px", marginTop: "10px", fontSize: "0.84rem", color: "#065F46" }}>
+          <div style={{ padding: "14px 18px", background: "rgba(5, 135, 110, 0.05)", border: "1.5px solid #05876E", borderRadius: "12px", marginTop: "10px", fontSize: "0.84rem", color: "var(--exito-texto)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, color: "#05876E", marginBottom: "8px" }}>
               <CheckCircle2 size={18} /> Datos Extraídos por Tranqi desde tu Carnet Profesional
             </div>
@@ -2605,8 +2584,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                   style={{
                     fontSize: "0.72rem",
                     fontWeight: 800,
-                    color: "#065F46",
-                    background: "#D1FAE5",
+                    color: "var(--exito-texto)",
+                    background: "var(--exito-diluido)",
                     padding: "2px 8px",
                     borderRadius: "999px",
                   }}
@@ -2614,10 +2593,10 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                   ✓ Único Requisito Obligatorio Cumplido
                 </span>
               </div>
-              <h3 style={{ margin: "4px 0 2px 0", fontSize: "1.05rem", fontWeight: 800, color: "#111827" }}>
+              <h3 style={{ margin: "4px 0 2px 0", fontSize: "1.05rem", fontWeight: 800, color: "var(--texto)" }}>
                 {nombres || apellidos ? `${nombres} ${apellidos}`.trim() : (dictamenAriaCarnet?.titular || "Abogado Colegiado")}
               </h3>
-              <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "0.82rem", color: "#4B5563", flexWrap: "wrap" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px", fontSize: "0.82rem", color: "var(--texto-2)", flexWrap: "wrap" }}>
                 <span><strong>Matrícula:</strong> {matriculaProfesional || dictamenAriaCarnet?.matricula_profesional || "Registrada"}</span>
                 {cedula && <span><strong>Cédula:</strong> {cedula}</span>}
                 <span style={{ color: "#05876E", fontWeight: 700 }}>Foro de Abogados / Judicatura</span>
@@ -2627,7 +2606,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         )}
 
         {/* Checklist de Criterios de Calidad y Legibilidad del Carnet */}
-        <div style={{ background: "rgba(5, 135, 110, 0.04)", border: "1px solid rgba(5, 135, 110, 0.2)", borderRadius: "10px", padding: "10px 14px", marginTop: "8px", fontSize: "0.78rem", color: "#065F46" }}>
+        <div style={{ background: "rgba(5, 135, 110, 0.04)", border: "1px solid rgba(5, 135, 110, 0.2)", borderRadius: "10px", padding: "10px 14px", marginTop: "8px", fontSize: "0.78rem", color: "var(--exito-texto)" }}>
           <strong style={{ display: "block", marginBottom: "4px", color: "#05876E" }}>Requisitos de Legibilidad del Carnet Profesional:</strong>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "6px" }}>
             <span>Fotografía clara y frontal del carnet sin esquinas recortadas.</span>
@@ -2637,26 +2616,26 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         </div>
 
         {avisoLegibilidadCarnet && (
-          <div style={{ marginTop: "8px", padding: "8px 12px", background: "#FFFBEB", border: "1px solid #F59E0B", borderRadius: "8px", fontSize: "0.78rem", color: "#B45309" }}>
+          <div style={{ marginTop: "8px", padding: "8px 12px", background: "var(--aviso-diluido)", border: "1px solid var(--aviso)", borderRadius: "8px", fontSize: "0.78rem", color: "var(--aviso-texto)" }}>
             {avisoLegibilidadCarnet}
           </div>
         )}
 
         {/* Previsualizador Rápido con Botón de Inspección Zoom del Carnet */}
         {carnetPreviewUrl && (
-          <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "12px", background: "#FFFFFF", padding: "10px 14px", border: "1px solid #E4E4E4", borderRadius: "10px", boxShadow: "0 2px 6px rgba(0,0,0,0.03)" }}>
+          <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "12px", background: "#FFFFFF", padding: "10px 14px", border: "1px solid var(--linea)", borderRadius: "10px", boxShadow: "0 2px 6px rgba(0,0,0,0.03)" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={carnetPreviewUrl} alt="Vista previa carnet profesional" style={{ width: "60px", height: "45px", objectFit: "cover", borderRadius: "6px", border: "1px solid #D8B4FE" }} />
             <div>
               <span style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#111111" }}>Carnet Profesional listo para subir</span>
-              <span style={{ fontSize: "0.74rem", color: "#6B7280" }}>{carnetArchivos[0]?.name} ({formatoTamanoArchivo(carnetArchivos[0]?.size || 0)})</span>
+              <span style={{ fontSize: "0.74rem", color: "var(--texto-suave)" }}>{carnetArchivos[0]?.name} ({formatoTamanoArchivo(carnetArchivos[0]?.size || 0)})</span>
             </div>
             <button
               type="button"
               onClick={() => setModalInspeccionDoc({ url: carnetPreviewUrl, titulo: "Inspección de Legibilidad — Carnet Profesional" })}
-              style={{ marginLeft: "auto", background: "#FAF5FF", border: "1px solid #D8B4FE", color: "#6B21A8", padding: "6px 12px", borderRadius: "8px", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
+              style={{ marginLeft: "auto", background: "var(--acento-diluido)", border: "1px solid #D8B4FE", color: "#6B21A8", padding: "6px 12px", borderRadius: "8px", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
             >
-              <ZoomIn size={14} /> Inspeccionar Legibilidad
+              <ZoomIn size={14} /> Inspeccionar legibilidad
             </button>
           </div>
         )}
@@ -2666,7 +2645,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             <Scale size={18} color="#05876E" />
             <div>
               <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Carnet Profesional actual registrado</span>
-              <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{carnetExistente.dcs_nombre_archivo}</span>
+              <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>{carnetExistente.dcs_nombre_archivo}</span>
             </div>
             <a href={carnetExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#05876E", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
               <ExternalLink size={14} /> Ver archivo
@@ -2747,11 +2726,11 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           </label>
           {correoInicial && (
             <label>
-              Cuenta de Usuario (Google / Correo)
+              Correo electrónico
               <input
                 value={correoInicial}
                 disabled
-                style={{ background: "#F3F4F6", color: "#6B7280", cursor: "not-allowed" }}
+                style={{ background: "var(--fondo-hundido)", color: "var(--texto-suave)", cursor: "not-allowed" }}
               />
             </label>
           )}
@@ -2763,15 +2742,15 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           if (!cedula) return null;
           if (!val.esValida && val.advertencia) {
             return (
-              <div style={{ marginTop: "10px", padding: "6px 12px", background: "rgba(245, 158, 11, 0.08)", border: "1px solid #F59E0B", borderRadius: "8px", fontSize: "0.76rem", color: "#B45309", display: "flex", alignItems: "center", gap: "6px" }}>
+              <div style={{ marginTop: "10px", padding: "6px 12px", background: "var(--aviso-diluido)", border: "1px solid var(--aviso)", borderRadius: "8px", fontSize: "0.76rem", color: "var(--aviso-texto)", display: "flex", alignItems: "center", gap: "6px" }}>
                 <AlertTriangle size={14} /> {val.advertencia}
               </div>
             );
           }
           if (val.esValida && cedula.length === 10) {
             return (
-              <div style={{ marginTop: "10px", padding: "6px 12px", background: "rgba(5, 135, 110, 0.08)", border: "1px solid #05876E", borderRadius: "8px", fontSize: "0.76rem", color: "#05876E", display: "flex", alignItems: "center", gap: "6px" }}>
-                <CheckCircle2 size={14} /> Cédula válida (Módulo 10 del Registro Civil verificado)
+              <div style={{ marginTop: "10px", padding: "6px 12px", background: "var(--exito-diluido)", border: "1px solid var(--exito)", borderRadius: "8px", fontSize: "0.76rem", color: "var(--exito-texto)", display: "flex", alignItems: "center", gap: "6px" }}>
+                <CheckCircle2 size={14} /> Cédula válida (Registro Civil verificado)
               </div>
             );
           }
@@ -2818,17 +2797,17 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         />
 
         {identificacionPreviewUrl && (
-          <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "12px", background: "#FFFFFF", padding: "10px 14px", border: "1px solid #E4E4E4", borderRadius: "10px", boxShadow: "0 2px 6px rgba(0,0,0,0.03)" }}>
+          <div style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "12px", background: "#FFFFFF", padding: "10px 14px", border: "1px solid var(--linea)", borderRadius: "10px", boxShadow: "0 2px 6px rgba(0,0,0,0.03)" }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={identificacionPreviewUrl} alt="Vista previa de cédula" style={{ width: "60px", height: "45px", objectFit: "cover", borderRadius: "6px", border: "1px solid #D8B4FE" }} />
             <div>
               <span style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#111111" }}>Cédula/Pasaporte adjunto</span>
-              <span style={{ fontSize: "0.74rem", color: "#6B7280" }}>{identificacionArchivos[0]?.name}</span>
+              <span style={{ fontSize: "0.74rem", color: "var(--texto-suave)" }}>{identificacionArchivos[0]?.name}</span>
             </div>
             <button
               type="button"
               onClick={() => setModalInspeccionDoc({ url: identificacionPreviewUrl, titulo: "Inspección de Legibilidad — Cédula / Pasaporte" })}
-              style={{ marginLeft: "auto", background: "#FAF5FF", border: "1px solid #D8B4FE", color: "#6B21A8", padding: "6px 12px", borderRadius: "8px", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
+              style={{ marginLeft: "auto", background: "var(--acento-diluido)", border: "1px solid #D8B4FE", color: "#6B21A8", padding: "6px 12px", borderRadius: "8px", fontSize: "0.78rem", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "4px" }}
             >
               <ZoomIn size={14} /> Inspeccionar
             </button>
@@ -2840,7 +2819,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             <FileText size={18} color="#05876E" />
             <div>
               <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Documento de Identificación actual cargado</span>
-              <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{identificacionExistente.dcs_nombre_archivo}</span>
+              <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>{identificacionExistente.dcs_nombre_archivo}</span>
             </div>
             <a href={identificacionExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#05876E", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
               <ExternalLink size={14} /> Ver archivo
@@ -2862,7 +2841,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         seleccionados={materiaIds}
         onCambiar={setMateriaIds}
         placeholderBusqueda="Buscar especialidades..."
-        labelOtros="Añadir otra especialidad (Personalizado)"
+        labelOtros="Añadir otra especialidad"
       />
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px", marginTop: "24px" }}>
@@ -2873,7 +2852,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           etiquetaVacio="Sin cobertura seleccionada (opcional)"
         />
       </div>
-      <p style={{ fontSize: "0.82rem", color: "var(--panel-gris, #737373)", marginTop: "4px", marginBottom: "12px" }}>
+      <p style={{ fontSize: "0.82rem", color: "var(--panel-gris, var(--texto-suave))", marginTop: "4px", marginBottom: "12px" }}>
         ¿En qué ubicaciones puedes prestar tus servicios profesionales? Selecciona las provincias donde tienes presencia o litigas, o marca &quot;Todo el Ecuador&quot;.
       </p>
       <SelectorMultiSeleccion
@@ -2890,15 +2869,15 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             setProvinciaIds(nuevasProvincias);
           }
         }}
-        placeholderBusqueda="Buscar provincias o cobertura..."
-        labelOtros="Añadir otra provincia o ubicación..."
+        placeholderBusqueda="Buscar provincias..."
+        labelOtros="Añadir otra ubicación..."
       />
 
       {/* PANEL COLAPSABLE INDIVIDUAL 1: ESTUDIOS Y FORMACIÓN ACADÉMICA (OPCIONAL) */}
       <div
         style={{
           marginTop: "20px",
-          border: "1px solid var(--panel-linea, #E4E4E4)",
+          border: "1px solid var(--panel-linea, var(--linea))",
           borderRadius: "14px",
           overflow: "hidden",
           background: "#ffffff",
@@ -2913,7 +2892,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             padding: "16px 18px",
             background: panelEstudiosAbierto ? "rgba(80, 0, 186, 0.04)" : "#ffffff",
             border: "none",
-            borderBottom: panelEstudiosAbierto ? "1px solid var(--panel-linea, #E4E4E4)" : "none",
+            borderBottom: panelEstudiosAbierto ? "1px solid var(--panel-linea, var(--linea))" : "none",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
@@ -2949,7 +2928,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                   etiquetaVacio="Vacío (opcional)"
                 />
               </div>
-              <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "#6B7280" }}>
+              <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "var(--texto-suave)" }}>
                 Universidad de graduación, año y título profesional registrado en SENESCYT
               </p>
             </div>
@@ -3007,7 +2986,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                 <FileText size={18} color="#5000BA" />
                 <div>
                   <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>Título Universitario actual cargado</span>
-                  <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{tituloExistente.dcs_nombre_archivo}</span>
+                  <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>{tituloExistente.dcs_nombre_archivo}</span>
                 </div>
                 <a href={tituloExistente.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#5000BA", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                   <ExternalLink size={14} /> Ver archivo
@@ -3022,7 +3001,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
       <div
         style={{
           marginTop: "16px",
-          border: "1px solid var(--panel-linea, #E4E4E4)",
+          border: "1px solid var(--panel-linea, var(--linea))",
           borderRadius: "14px",
           overflow: "hidden",
           background: "#ffffff",
@@ -3037,7 +3016,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             padding: "16px 18px",
             background: panelExperienciaAbierto ? "rgba(80, 0, 186, 0.04)" : "#ffffff",
             border: "none",
-            borderBottom: panelExperienciaAbierto ? "1px solid var(--panel-linea, #E4E4E4)" : "none",
+            borderBottom: panelExperienciaAbierto ? "1px solid var(--panel-linea, var(--linea))" : "none",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
@@ -3073,7 +3052,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                   etiquetaVacio="Vacío (opcional)"
                 />
               </div>
-              <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "#6B7280" }}>
+              <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "var(--texto-suave)" }}>
                 Años de ejercicio, trayectoria laboral, currículum vitae (CV) y certificaciones
               </p>
             </div>
@@ -3185,7 +3164,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             />
             {cvYCertificadosExistentes.length > 0 && (
               <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "4px" }}>
-                <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--panel-gris, #737373)", display: "block" }}>Archivos existentes cargados en repositorio:</span>
+                <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "var(--panel-gris, var(--texto-suave))", display: "block" }}>Archivos existentes cargados en repositorio:</span>
                 {cvYCertificadosExistentes.map((d) => (
                   <div key={d.dcs_id} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "10px 14px", background: "rgba(80, 0, 186, 0.04)", border: "1px solid rgba(80, 0, 186, 0.15)", borderRadius: "8px", fontSize: "0.84rem" }}>
                     <FileText size={18} color="#5000BA" />
@@ -3193,7 +3172,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                       <span style={{ display: "block", fontWeight: 700, color: "#111111" }}>
                         {d.dcs_tipo === "cv" ? "Hoja de Vida (CV)" : (d.dcs_comentario || "Certificado")}
                       </span>
-                      <span style={{ fontSize: "0.76rem", color: "#6B7280" }}>{d.dcs_nombre_archivo}</span>
+                      <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)" }}>{d.dcs_nombre_archivo}</span>
                     </div>
                     <a href={d.url} target="_blank" rel="noopener noreferrer" style={{ marginLeft: "auto", color: "#5000BA", fontWeight: 800, textDecoration: "none", fontSize: "0.8rem", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                       <ExternalLink size={14} /> Ver archivo
@@ -3207,17 +3186,17 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
       </div>
 
       {/* Sección de Términos de Servicio y Autorización de Verificación LOPDP */}
-      <div style={{ background: "rgba(80, 0, 186, 0.05)", border: "1px solid rgba(80, 0, 186, 0.2)", borderRadius: "12px", padding: "16px", marginTop: "24px" }}>
+      <div style={{ background: "var(--fondo-suave)", border: "1px solid var(--linea)", borderRadius: "12px", padding: "16px", marginTop: "24px" }}>
         <label className="campo-check" style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer" }}>
           <input
             type="checkbox"
             checked={declaracion}
             onChange={(e) => setDeclaracion(e.target.checked)}
-            style={{ marginTop: "3px", width: "18px", height: "18px", accentColor: "var(--violeta, #5000BA)" }}
+            style={{ marginTop: "3px", width: "18px", height: "18px", accentColor: "var(--acento)" }}
           />
-          <span style={{ fontSize: "0.86rem", color: "#111111", lineHeight: "1.45" }}>
-            <strong style={{ display: "inline-flex", alignItems: "center", gap: "5px", color: "var(--violeta, #5000BA)", marginBottom: "4px" }}>
-              <ShieldCheck size={16} /> Términos de Servicio & Autorización de Verificación (LOPDP):
+          <span style={{ fontSize: "0.86rem", color: "var(--texto)", lineHeight: "1.45" }}>
+            <strong style={{ display: "inline-flex", alignItems: "center", gap: "5px", color: "var(--texto)", marginBottom: "4px" }}>
+              <ShieldCheck size={16} /> Términos de servicio y autorización de verificación (LOPDP):
             </strong>
             <br />
             {textoTerminos}
@@ -3246,12 +3225,12 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
           }}
         >
           {enviando
-            ? "Guardando..."
+            ? "Guardando…"
             : !declaracion
-            ? "Acepta los Términos LOPDP para Enviar Solicitud"
+            ? "Acepta los términos para enviar la solicitud"
             : solicitudExistente
-            ? "Guardar Cambios y Enviar Actualización"
-            : "Enviar Solicitud de Socio Abogado"}
+            ? "Guardar cambios"
+            : "Enviar solicitud"}
         </button>
       )}
 
@@ -3260,7 +3239,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
         tipo={modalNotificacion.tipo}
         titulo={modalNotificacion.titulo}
         mensaje={modalNotificacion.mensaje}
-        textoBoton="Continuar al Portal"
+        textoBoton="Continuar al portal"
         alAceptar={() => {
           setModalNotificacion((prev) => ({ ...prev, abierto: false }));
           router.push("/panel");
@@ -3292,7 +3271,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
               padding: "24px",
               maxWidth: "460px",
               width: "100%",
-              boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
+              boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
               textAlign: "center",
             }}
           >
@@ -3301,8 +3280,8 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                 width: "48px",
                 height: "48px",
                 borderRadius: "50%",
-                background: modalConfirmarAccion === "eliminar" ? "#FEE2E2" : "#EDE9FE",
-                color: modalConfirmarAccion === "eliminar" ? "#DC2626" : "#5000BA",
+                background: modalConfirmarAccion === "eliminar" ? "var(--error-diluido)" : "var(--fondo-suave)",
+                color: modalConfirmarAccion === "eliminar" ? "var(--error)" : "var(--acento)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -3312,14 +3291,14 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
               {modalConfirmarAccion === "eliminar" ? <AlertTriangle size={26} /> : <RotateCcw size={26} />}
             </div>
 
-            <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#111", margin: "0 0 8px" }}>
-              {modalConfirmarAccion === "eliminar" ? "¿Eliminar solicitud de socio abogado?" : "¿Reiniciar solicitud desde cero?"}
+            <h3 style={{ fontSize: "1.15rem", fontWeight: 800, color: "var(--texto)", margin: "0 0 8px" }}>
+              {modalConfirmarAccion === "eliminar" ? "¿Eliminar solicitud?" : "¿Reiniciar solicitud?"}
             </h3>
 
-            <p style={{ fontSize: "0.88rem", color: "#555", lineHeight: "1.5", margin: "0 0 20px" }}>
+            <p style={{ fontSize: "0.88rem", color: "var(--texto-suave)", lineHeight: "1.5", margin: "0 0 20px" }}>
               {modalConfirmarAccion === "eliminar"
-                ? "Esta acción cancelará tu postulación y eliminará los documentos y materias asociadas. Podrás volver a iniciar una nueva solicitud cuando lo desees."
-                : "Se limpiarán los datos y archivos cargados previamente para que puedas comenzar el formulario completamente limpio."}
+                ? "Esta acción cancelará tu postulación y eliminará los documentos cargados. Podrás volver a iniciar una nueva solicitud cuando lo desees."
+                : "Se limpiarán los datos y archivos cargados para que puedas comenzar el formulario desde cero."}
             </p>
 
             <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
@@ -3330,9 +3309,9 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                 style={{
                   flex: 1,
                   padding: "10px 16px",
-                  background: "#F3F4F6",
-                  color: "#374151",
-                  border: "none",
+                  background: "#ffffff",
+                  border: "1px solid var(--linea-fuerte)",
+                  color: "var(--texto)",
                   borderRadius: "8px",
                   fontSize: "0.88rem",
                   fontWeight: 700,
@@ -3349,7 +3328,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                 style={{
                   flex: 1,
                   padding: "10px 16px",
-                  background: modalConfirmarAccion === "eliminar" ? "#DC2626" : "#5000BA",
+                  background: modalConfirmarAccion === "eliminar" ? "var(--error)" : "var(--acento)",
                   color: "#FFF",
                   border: "none",
                   borderRadius: "8px",
@@ -3358,7 +3337,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                   cursor: "pointer",
                 }}
               >
-                {procesandoAccion ? "Procesando..." : modalConfirmarAccion === "eliminar" ? "Sí, Eliminar" : "Sí, Reiniciar"}
+                {procesandoAccion ? "Procesando…" : modalConfirmarAccion === "eliminar" ? "Sí, eliminar" : "Sí, reiniciar"}
               </button>
             </div>
           </div>
@@ -3398,17 +3377,17 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px", borderBottom: "1px solid #E5E7EB" }}>
-              <strong style={{ fontSize: "0.95rem", color: "#111111" }}>{modalInspeccionDoc.titulo}</strong>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "14px 20px", borderBottom: "1px solid var(--linea)" }}>
+              <strong style={{ fontSize: "0.95rem", color: "var(--texto)" }}>{modalInspeccionDoc.titulo}</strong>
               <button
                 type="button"
                 onClick={() => setModalInspeccionDoc(null)}
-                style={{ background: "transparent", border: "none", cursor: "pointer", color: "#6B7280", padding: "4px" }}
+                style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--texto-suave)", padding: "4px" }}
               >
                 <X size={20} />
               </button>
             </div>
-            <div style={{ padding: "20px", overflow: "auto", textAlign: "center", background: "#1F2937", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ padding: "20px", overflow: "auto", textAlign: "center", background: "var(--texto)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={modalInspeccionDoc.url}
@@ -3416,15 +3395,15 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                 style={{ maxWidth: "100%", maxHeight: "68vh", objectFit: "contain", borderRadius: "8px" }}
               />
             </div>
-            <div style={{ padding: "12px 20px", borderTop: "1px solid #E5E7EB", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#F9FAFB" }}>
-              <span style={{ fontSize: "0.8rem", color: "#4B5563" }}>
+            <div style={{ padding: "12px 20px", borderTop: "1px solid var(--linea)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--fondo-suave)" }}>
+              <span style={{ fontSize: "0.8rem", color: "var(--texto-2)" }}>
                 Verifica que los nombres, fotografía y número de cédula sean completamente legibles y nítidos.
               </span>
               <button
                 type="button"
                 onClick={() => setModalInspeccionDoc(null)}
                 style={{
-                  background: "#5000BA",
+                  background: "var(--acento)",
                   color: "#ffffff",
                   border: "none",
                   borderRadius: "8px",
@@ -3434,7 +3413,7 @@ Al formar parte de nuestro equipo de profesionales y socios acreditados, obtendr
                   cursor: "pointer",
                 }}
               >
-                Confirmar Legibilidad y Cerrar
+                Confirmar legibilidad y cerrar
               </button>
             </div>
           </div>

@@ -34,28 +34,28 @@ export function AccionesSolicitud({ solicitudId, estadoActual }: { solicitudId: 
   }
 
   return (
-    <div style={{ background: "#FFFFFF", padding: "20px", borderRadius: "12px", border: "1.5px solid #E5E7EB", marginTop: "16px" }}>
-      <h3 style={{ margin: "0 0 10px 0", fontSize: "1.05rem", color: "#111827" }}>
+    <div style={{ background: "#FFFFFF", padding: "20px", borderRadius: "12px", border: "1.5px solid var(--linea)", marginTop: "16px" }}>
+      <h3 style={{ margin: "0 0 10px 0", fontSize: "1.05rem", color: "var(--texto)" }}>
         Emitir Decisión de Acreditación {estadoActual && estadoActual === "rechazada" ? "(Re-evaluación)" : ""}
       </h3>
-      <p style={{ margin: "0 0 14px 0", fontSize: "0.84rem", color: "#6B7280" }}>
+      <p style={{ margin: "0 0 14px 0", fontSize: "0.84rem", color: "var(--texto-suave)" }}>
         Selecciona la resolución formal para este expediente. Si rechazas o solicitas corrección, agrega una observación clara para el postulante.
       </p>
 
       {error && (
-        <div style={{ background: "#FEF2F2", border: "1px solid #F87171", color: "#B91C1C", padding: "10px 14px", borderRadius: "8px", marginBottom: "14px", fontSize: "0.85rem", fontWeight: 600 }}>
+        <div style={{ background: "var(--error-diluido)", border: "1px solid #F87171", color: "var(--error)", padding: "10px 14px", borderRadius: "8px", marginBottom: "14px", fontSize: "0.85rem", fontWeight: 600 }}>
           {error}
         </div>
       )}
 
       {exito && (
-        <div style={{ background: "#ECFDF5", border: "1px solid #10B981", color: "#065F46", padding: "10px 14px", borderRadius: "8px", marginBottom: "14px", fontSize: "0.85rem", fontWeight: 600 }}>
+        <div style={{ background: "var(--exito-diluido)", border: "1px solid var(--exito)", color: "var(--exito-texto)", padding: "10px 14px", borderRadius: "8px", marginBottom: "14px", fontSize: "0.85rem", fontWeight: 600 }}>
           {exito}
         </div>
       )}
 
       <label style={{ display: "block", marginBottom: "14px" }}>
-        <span style={{ display: "block", fontWeight: 700, fontSize: "0.85rem", color: "#374151", marginBottom: "6px" }}>
+        <span style={{ display: "block", fontWeight: 700, fontSize: "0.85rem", color: "var(--texto-2)", marginBottom: "6px" }}>
           Observación / Comentario Institucional (Obligatorio si se rechaza):
         </span>
         <textarea
@@ -67,9 +67,9 @@ export function AccionesSolicitud({ solicitudId, estadoActual }: { solicitudId: 
             width: "100%",
             padding: "10px 14px",
             borderRadius: "8px",
-            border: "1px solid #D1D5DB",
+            border: "1px solid var(--linea-fuerte)",
             fontSize: "0.88rem",
-            color: "#111827",
+            color: "var(--texto)",
             boxSizing: "border-box",
             outline: "none",
           }}
@@ -111,13 +111,13 @@ export function AccionesSolicitud({ solicitudId, estadoActual }: { solicitudId: 
             gap: "8px",
             padding: "10px 20px",
             borderRadius: "8px",
-            background: "#DC2626",
+            background: "var(--error)",
             color: "#FFFFFF",
             border: "none",
             fontSize: "0.9rem",
             fontWeight: 800,
             cursor: enviando ? "wait" : "pointer",
-            boxShadow: "0 2px 6px rgba(220, 38, 38, 0.25)",
+            boxShadow: "0 2px 6px color-mix(in srgb, var(--error) 25%, transparent)",
             transition: "all 0.2s ease",
           }}
         >

@@ -216,7 +216,7 @@ export function ModalEditarWidget({
           maxHeight: "90vh",
           display: "flex",
           flexDirection: "column",
-          border: "1px solid var(--panel-linea, #E4E4E4)",
+          border: "1px solid var(--panel-linea, var(--linea))",
           boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
           overflow: "hidden",
         }}
@@ -226,8 +226,8 @@ export function ModalEditarWidget({
         <div
           style={{
             padding: "16px 20px",
-            background: "var(--panel-papel, #F7F6FA)",
-            borderBottom: "1px solid var(--panel-linea, #E4E4E4)",
+            background: "var(--panel-papel, var(--fondo-suave))",
+            borderBottom: "1px solid var(--panel-linea, var(--linea))",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -238,7 +238,7 @@ export function ModalEditarWidget({
               style={{
                 padding: "6px",
                 borderRadius: "8px",
-                background: "var(--violeta-suave, #F3E8FF)",
+                background: "var(--violeta-suave, var(--acento-diluido))",
                 color: "var(--violeta, #5000BA)",
                 display: "flex",
               }}
@@ -249,7 +249,7 @@ export function ModalEditarWidget({
               <h3 style={{ fontSize: "1rem", fontWeight: 800, margin: 0, color: "var(--negro, #111111)" }}>
                 Editar Configuración del Widget
               </h3>
-              <span style={{ fontSize: "0.75rem", color: "var(--panel-gris, #737373)" }}>
+              <span style={{ fontSize: "0.75rem", color: "var(--panel-gris, var(--texto-suave))" }}>
                 Personaliza título, ícono y seguridad MFA para todos los perfiles
               </span>
             </div>
@@ -263,7 +263,7 @@ export function ModalEditarWidget({
               border: "none",
               cursor: "pointer",
               padding: "4px",
-              color: "var(--panel-gris, #737373)",
+              color: "var(--panel-gris, var(--texto-suave))",
               display: "flex",
               borderRadius: "50%",
             }}
@@ -278,9 +278,9 @@ export function ModalEditarWidget({
           <div
             style={{
               padding: "10px 14px",
-              background: "var(--panel-papel, #F7F6FA)",
+              background: "var(--panel-papel, var(--fondo-suave))",
               borderRadius: "10px",
-              border: "1px solid var(--panel-linea, #E4E4E4)",
+              border: "1px solid var(--panel-linea, var(--linea))",
               display: "flex",
               flexDirection: "column",
               gap: "4px",
@@ -293,7 +293,7 @@ export function ModalEditarWidget({
                 gap: "6px",
                 fontSize: "0.76rem",
                 fontWeight: 800,
-                color: "var(--panel-gris, #737373)",
+                color: "var(--panel-gris, var(--texto-suave))",
                 textTransform: "uppercase",
                 letterSpacing: "0.04em",
               }}
@@ -344,7 +344,7 @@ export function ModalEditarWidget({
                 width: "100%",
                 padding: "10px 12px",
                 borderRadius: "8px",
-                border: "1px solid var(--panel-linea, #E4E4E4)",
+                border: "1px solid var(--panel-linea, var(--linea))",
                 fontSize: "0.9rem",
                 outline: "none",
               }}
@@ -376,7 +376,7 @@ export function ModalEditarWidget({
                 width: "100%",
                 padding: "10px 12px",
                 borderRadius: "8px",
-                border: "1px solid var(--panel-linea, #E4E4E4)",
+                border: "1px solid var(--panel-linea, var(--linea))",
                 fontSize: "0.88rem",
                 outline: "none",
                 resize: "vertical",
@@ -407,9 +407,9 @@ export function ModalEditarWidget({
                 gridTemplateColumns: "repeat(auto-fill, minmax(44px, 1fr))",
                 gap: "8px",
                 padding: "10px",
-                background: "var(--panel-papel, #F7F6FA)",
+                background: "var(--panel-papel, var(--fondo-suave))",
                 borderRadius: "10px",
-                border: "1px solid var(--panel-linea, #E4E4E4)",
+                border: "1px solid var(--panel-linea, var(--linea))",
                 maxHeight: "140px",
                 overflowY: "auto",
               }}
@@ -427,8 +427,8 @@ export function ModalEditarWidget({
                       width: "40px",
                       height: "40px",
                       borderRadius: "8px",
-                      border: seleccionado ? "2px solid var(--violeta, #5000BA)" : "1px solid var(--panel-linea, #E4E4E4)",
-                      background: seleccionado ? "var(--violeta-suave, #F3E8FF)" : "var(--blanco, #ffffff)",
+                      border: seleccionado ? "2px solid var(--violeta, #5000BA)" : "1px solid var(--panel-linea, var(--linea))",
+                      background: seleccionado ? "var(--violeta-suave, var(--acento-diluido))" : "var(--blanco, #ffffff)",
                       color: seleccionado ? "var(--violeta, #5000BA)" : "var(--negro, #111111)",
                       cursor: "pointer",
                       display: "flex",
@@ -448,9 +448,9 @@ export function ModalEditarWidget({
           <div
             style={{
               padding: "14px",
-              background: requiereMfa ? "rgba(80, 0, 186, 0.04)" : "var(--panel-papel, #F7F6FA)",
+              background: requiereMfa ? "rgba(80, 0, 186, 0.04)" : "var(--panel-papel, var(--fondo-suave))",
               borderRadius: "12px",
-              border: requiereMfa ? "1px solid var(--violeta-suave, #F3E8FF)" : "1px solid var(--panel-linea, #E4E4E4)",
+              border: requiereMfa ? "1px solid var(--violeta-suave, var(--acento-diluido))" : "1px solid var(--panel-linea, var(--linea))",
               display: "flex",
               flexDirection: "column",
               gap: "10px",
@@ -467,7 +467,7 @@ export function ModalEditarWidget({
                 <strong style={{ fontSize: "0.86rem", color: "var(--negro, #111111)", display: "flex", alignItems: "center", gap: "6px" }}>
                   <Shield size={16} color="var(--violeta, #5000BA)" /> Requerir Autenticación MFA (Doble Factor)
                 </strong>
-                <span style={{ fontSize: "0.78rem", color: "var(--panel-gris, #737373)", display: "block", marginTop: "2px" }}>
+                <span style={{ fontSize: "0.78rem", color: "var(--panel-gris, var(--texto-suave))", display: "block", marginTop: "2px" }}>
                   Exige verificar un código de 6 dígitos antes de desplegar el contenido sensible de este widget.
                 </span>
               </div>
@@ -495,7 +495,7 @@ export function ModalEditarWidget({
                     width: "100%",
                     padding: "8px 10px",
                     borderRadius: "6px",
-                    border: "1px solid var(--panel-linea, #E4E4E4)",
+                    border: "1px solid var(--panel-linea, var(--linea))",
                     fontSize: "0.84rem",
                     fontWeight: 600,
                   }}
@@ -506,7 +506,7 @@ export function ModalEditarWidget({
                     </option>
                   ))}
                 </select>
-                <span style={{ fontSize: "0.74rem", color: "var(--panel-gris, #737373)", marginTop: "4px", display: "block" }}>
+                <span style={{ fontSize: "0.74rem", color: "var(--panel-gris, var(--texto-suave))", marginTop: "4px", display: "block" }}>
                   Tras este periodo de inactividad, se volverá a solicitar el código MFA obligatoriamente.
                 </span>
               </div>
@@ -520,8 +520,8 @@ export function ModalEditarWidget({
               onClick={onCerrar}
               className="btn-mini"
               style={{
-                background: "var(--panel-papel, #F7F6FA)",
-                border: "1px solid var(--panel-linea, #E4E4E4)",
+                background: "var(--panel-papel, var(--fondo-suave))",
+                border: "1px solid var(--panel-linea, var(--linea))",
                 color: "var(--negro, #111111)",
                 padding: "8px 16px",
               }}

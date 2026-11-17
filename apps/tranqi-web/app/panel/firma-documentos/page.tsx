@@ -5,7 +5,7 @@ import Link from "next/link";
 import { X } from "lucide-react";
 
 export const metadata = {
-  title: "Firma Electrónica de Documentos PDF · Tranqi",
+  title: "Firma de documentos PDF — tranqi",
   description: "Herramienta de firmado digital avanzado con certificado .p12 y código QR oficial",
 };
 
@@ -25,8 +25,8 @@ export default async function PaginaFirmaDocumentos() {
           aria-label="Cerrar y volver al panel"
           style={{
             background: "#FFFFFF",
-            border: "1.5px solid #E2E8F0",
-            color: "#1E293B",
+            border: "1.5px solid var(--linea)",
+            color: "var(--texto)",
             borderRadius: "50%",
             width: "36px",
             height: "36px",

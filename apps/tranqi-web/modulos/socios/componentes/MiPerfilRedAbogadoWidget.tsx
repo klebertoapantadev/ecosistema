@@ -115,12 +115,12 @@ const PROVINCIAS_ECUADOR_INICIALES: ProvinciaItem[] = [
 
 const inputBaseStyle: React.CSSProperties = {
   borderRadius: "10px",
-  border: "1px solid #CBD5E1",
+  border: "1px solid var(--linea-fuerte)",
   background: "#FFFFFF",
   padding: "8px 12px",
   fontSize: "0.84rem",
   fontWeight: 600,
-  color: "#0F172A",
+  color: "var(--texto)",
   outline: "none",
 };
 
@@ -128,7 +128,7 @@ const labelBaseStyle: React.CSSProperties = {
   display: "block",
   fontSize: "0.75rem",
   fontWeight: 700,
-  color: "#475569",
+  color: "var(--texto-2)",
   marginBottom: "6px",
 };
 
@@ -517,7 +517,7 @@ export function MiPerfilRedAbogadoWidget({
 
   if (cargando) {
     return (
-      <div style={{ padding: "24px", textAlign: "center", color: "#6B7280", fontWeight: 600 }}>
+      <div style={{ padding: "24px", textAlign: "center", color: "var(--texto-suave)", fontWeight: 600 }}>
         Cargando tu ficha profesional, especialidades y disponibilidad...
       </div>
     );
@@ -531,7 +531,7 @@ export function MiPerfilRedAbogadoWidget({
           display: "flex",
           gap: "10px",
           flexWrap: "wrap",
-          borderBottom: "1px solid #E5E7EB",
+          borderBottom: "1px solid var(--linea)",
           paddingBottom: "12px",
         }}
       >
@@ -541,9 +541,9 @@ export function MiPerfilRedAbogadoWidget({
           style={{
             padding: "10px 18px",
             borderRadius: "10px",
-            border: tab === "especialidades" ? "2px solid #05876E" : "1px solid #D1D5DB",
-            background: tab === "especialidades" ? "#ECFDF5" : "#ffffff",
-            color: tab === "especialidades" ? "#065F46" : "#374151",
+            border: tab === "especialidades" ? "2px solid #05876E" : "1px solid var(--linea-fuerte)",
+            background: tab === "especialidades" ? "var(--exito-diluido)" : "#ffffff",
+            color: tab === "especialidades" ? "var(--exito-texto)" : "var(--texto-2)",
             fontWeight: 800,
             fontSize: "0.85rem",
             cursor: "pointer",
@@ -562,9 +562,9 @@ export function MiPerfilRedAbogadoWidget({
           style={{
             padding: "10px 18px",
             borderRadius: "10px",
-            border: tab === "disponibilidad" ? "2px solid #5000BA" : "1px solid #D1D5DB",
-            background: tab === "disponibilidad" ? "#F5F3FF" : "#ffffff",
-            color: tab === "disponibilidad" ? "#5000BA" : "#374151",
+            border: tab === "disponibilidad" ? "2px solid #5000BA" : "1px solid var(--linea-fuerte)",
+            background: tab === "disponibilidad" ? "var(--acento-diluido)" : "#ffffff",
+            color: tab === "disponibilidad" ? "#5000BA" : "var(--texto-2)",
             fontWeight: 800,
             fontSize: "0.85rem",
             cursor: "pointer",
@@ -588,15 +588,15 @@ export function MiPerfilRedAbogadoWidget({
             borderRadius: "12px",
             fontSize: "0.86rem",
             fontWeight: 700,
-            background: mensaje.tipo === "ok" ? "#F0FDF4" : "#FEF2F2",
-            color: mensaje.tipo === "ok" ? "#166534" : "#991B1B",
-            border: mensaje.tipo === "ok" ? "1px solid #86EFAC" : "1px solid #FCA5A5",
+            background: mensaje.tipo === "ok" ? "var(--exito-diluido)" : "var(--error-diluido)",
+            color: mensaje.tipo === "ok" ? "var(--exito-texto)" : "var(--error-texto)",
+            border: mensaje.tipo === "ok" ? "1px solid var(--exito-linea)" : "1px solid var(--error-linea)",
           }}
         >
           {mensaje.tipo === "ok" ? (
-            <CheckCircle2 size={18} color="#16A34A" />
+            <CheckCircle2 size={18} color="var(--exito)" />
           ) : (
-            <AlertCircle size={18} color="#DC2626" />
+            <AlertCircle size={18} color="var(--error)" />
           )}
           <span>{mensaje.texto}</span>
         </div>
@@ -610,7 +610,7 @@ export function MiPerfilRedAbogadoWidget({
           <div
             style={{
               background: "#ffffff",
-              border: "1px solid #E5E7EB",
+              border: "1px solid var(--linea)",
               borderRadius: "14px",
               padding: "18px",
             }}
@@ -620,7 +620,7 @@ export function MiPerfilRedAbogadoWidget({
                 margin: "0 0 12px 0",
                 fontSize: "0.95rem",
                 fontWeight: 800,
-                color: "#111827",
+                color: "var(--texto)",
                 display: "flex",
                 alignItems: "center",
                 gap: "8px",
@@ -655,7 +655,7 @@ export function MiPerfilRedAbogadoWidget({
                   style={{
                     padding: "9px 11px",
                     borderRadius: "8px",
-                    border: "1px solid #D1D5DB",
+                    border: "1px solid var(--linea-fuerte)",
                   }}
                 />
               </label>
@@ -678,7 +678,7 @@ export function MiPerfilRedAbogadoWidget({
                   style={{
                     padding: "9px 11px",
                     borderRadius: "8px",
-                    border: "1px solid #D1D5DB",
+                    border: "1px solid var(--linea-fuerte)",
                   }}
                 />
               </label>
@@ -700,7 +700,7 @@ export function MiPerfilRedAbogadoWidget({
                   style={{
                     padding: "9px 11px",
                     borderRadius: "8px",
-                    border: "1px solid #D1D5DB",
+                    border: "1px solid var(--linea-fuerte)",
                   }}
                 />
               </label>
@@ -723,7 +723,7 @@ export function MiPerfilRedAbogadoWidget({
                   style={{
                     padding: "9px 11px",
                     borderRadius: "8px",
-                    border: "1px solid #D1D5DB",
+                    border: "1px solid var(--linea-fuerte)",
                   }}
                 />
               </label>
@@ -747,7 +747,7 @@ export function MiPerfilRedAbogadoWidget({
                 style={{
                   padding: "9px 11px",
                   borderRadius: "8px",
-                  border: "1px solid #D1D5DB",
+                  border: "1px solid var(--linea-fuerte)",
                   resize: "vertical",
                 }}
               />
@@ -758,7 +758,7 @@ export function MiPerfilRedAbogadoWidget({
           <div
             style={{
               background: "#ffffff",
-              border: "1px solid #E5E7EB",
+              border: "1px solid var(--linea)",
               borderRadius: "14px",
               padding: "18px",
             }}
@@ -777,7 +777,7 @@ export function MiPerfilRedAbogadoWidget({
                     margin: 0,
                     fontSize: "0.95rem",
                     fontWeight: 800,
-                    color: "#111827",
+                    color: "var(--texto)",
                     display: "flex",
                     alignItems: "center",
                     gap: "8px",
@@ -786,7 +786,7 @@ export function MiPerfilRedAbogadoWidget({
                   <Scale size={17} color="#5000BA" />
                   Mis Especialidades Legales ({materiasIds.length} activas)
                 </h4>
-                <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "#6B7280" }}>
+                <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "var(--texto-suave)" }}>
                   Recibirás citas y casos de clientes en las materias que tengas seleccionadas.
                 </p>
               </div>
@@ -827,9 +827,9 @@ export function MiPerfilRedAbogadoWidget({
                       fontSize: "0.8rem",
                       fontWeight: 700,
                       cursor: "pointer",
-                      border: activa ? "2px solid #5000BA" : "1px solid #D1D5DB",
-                      background: activa ? "#5000BA" : "#F9FAFB",
-                      color: activa ? "#ffffff" : "#374151",
+                      border: activa ? "2px solid #5000BA" : "1px solid var(--linea-fuerte)",
+                      background: activa ? "#5000BA" : "var(--fondo-suave)",
+                      color: activa ? "#ffffff" : "var(--texto-2)",
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "6px",
@@ -847,7 +847,7 @@ export function MiPerfilRedAbogadoWidget({
           <div
             style={{
               background: "#ffffff",
-              border: "1px solid #E5E7EB",
+              border: "1px solid var(--linea)",
               borderRadius: "14px",
               padding: "18px",
             }}
@@ -866,7 +866,7 @@ export function MiPerfilRedAbogadoWidget({
                     margin: 0,
                     fontSize: "0.95rem",
                     fontWeight: 800,
-                    color: "#111827",
+                    color: "var(--texto)",
                     display: "flex",
                     alignItems: "center",
                     gap: "8px",
@@ -875,7 +875,7 @@ export function MiPerfilRedAbogadoWidget({
                   <MapPin size={17} color="#05876E" />
                   Mis Zonas de Cobertura — Provincias ({provinciasIds.length} seleccionadas)
                 </h4>
-                <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "#6B7280" }}>
+                <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "var(--texto-suave)" }}>
                   Define las provincias en las que atiendes patrocinios y consultas.
                 </p>
               </div>
@@ -916,9 +916,9 @@ export function MiPerfilRedAbogadoWidget({
                       fontSize: "0.78rem",
                       fontWeight: 700,
                       cursor: "pointer",
-                      border: activa ? "2px solid #05876E" : "1px solid #D1D5DB",
-                      background: activa ? "#05876E" : "#F9FAFB",
-                      color: activa ? "#ffffff" : "#374151",
+                      border: activa ? "2px solid #05876E" : "1px solid var(--linea-fuerte)",
+                      background: activa ? "#05876E" : "var(--fondo-suave)",
+                      color: activa ? "#ffffff" : "var(--texto-2)",
                     }}
                   >
                     {p.cat_nombre}
@@ -961,7 +961,7 @@ export function MiPerfilRedAbogadoWidget({
           style={{
             background: "#FFFFFF",
             borderRadius: "18px",
-            border: "1px solid #E2E8F0",
+            border: "1px solid var(--linea)",
             padding: "22px",
             display: "flex",
             flexDirection: "column",
@@ -978,7 +978,7 @@ export function MiPerfilRedAbogadoWidget({
               justifyContent: "space-between",
               gap: "14px",
               paddingBottom: "16px",
-              borderBottom: "1px solid #F1F5F9",
+              borderBottom: "1px solid var(--fondo-hundido)",
             }}
           >
             <div>
@@ -989,7 +989,7 @@ export function MiPerfilRedAbogadoWidget({
                   gap: "6px",
                   padding: "4px 10px",
                   borderRadius: "999px",
-                  background: "#F3E8FF",
+                  background: "var(--acento-diluido)",
                   color: "#5000BA",
                   fontSize: "0.72rem",
                   fontWeight: 800,
@@ -1001,10 +1001,10 @@ export function MiPerfilRedAbogadoWidget({
                 <Clock size={13} />
                 <span>Mi Disponibilidad de Atención ({huecosSemanales} citas/semana)</span>
               </div>
-              <h3 style={{ margin: "0 0 4px 0", fontSize: "1.15rem", fontWeight: 800, color: "#0F172A" }}>
+              <h3 style={{ margin: "0 0 4px 0", fontSize: "1.15rem", fontWeight: 800, color: "var(--texto)" }}>
                 Horarios de Atención (Telemático y Oficina) y Fechas Especiales
               </h3>
-              <p style={{ margin: 0, fontSize: "0.84rem", color: "#64748B", lineHeight: 1.45 }}>
+              <p style={{ margin: 0, fontSize: "0.84rem", color: "var(--texto-suave)", lineHeight: 1.45 }}>
                 Configura tu horario laborable normal por defecto en consultas telemáticas y en
                 oficina, así como excepciones o ausencias por fechas exactas.
               </p>
@@ -1043,10 +1043,10 @@ export function MiPerfilRedAbogadoWidget({
           {/* 1. HORARIO LABORABLE NORMAL (POR DEFECTO — EDITABLE): TELEMÁTICO Y OFICINA */}
           <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
             <div>
-              <h3 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
+              <h3 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "var(--texto)" }}>
                 1. Horario Laborable Normal (Por Defecto — Editable)
               </h3>
-              <p style={{ margin: 0, fontSize: "0.82rem", color: "#64748B" }}>
+              <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--texto-suave)" }}>
                 Se aplica todos los días del año salvo en las fechas exactas que tengan un horario
                 diferenciado configurado en la sección 2.
               </p>
@@ -1063,7 +1063,7 @@ export function MiPerfilRedAbogadoWidget({
               <section
                 style={{
                   borderRadius: "16px",
-                  border: "1px solid #DDD6FE",
+                  border: "1px solid var(--acento-linea)",
                   background: "#FAF8FF",
                   padding: "18px",
                   display: "flex",
@@ -1097,10 +1097,10 @@ export function MiPerfilRedAbogadoWidget({
                       <Video size={18} />
                     </div>
                     <div>
-                      <h4 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 800, color: "#0F172A" }}>
+                      <h4 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 800, color: "var(--texto)" }}>
                         Horario Normal — Consultas Telemáticas
                       </h4>
-                      <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#64748B" }}>
+                      <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "var(--texto-suave)" }}>
                         Videollamada (Por defecto Lun–Vie 08:00 a 19:00, Sáb 09:00 a 14:00)
                       </p>
                     </div>
@@ -1118,12 +1118,12 @@ export function MiPerfilRedAbogadoWidget({
                         alignItems: "center",
                         gap: "5px",
                         borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid var(--linea-fuerte)",
                         background: "#FFFFFF",
                         padding: "6px 10px",
                         fontSize: "0.75rem",
                         fontWeight: 700,
-                        color: "#334155",
+                        color: "var(--texto-2)",
                         cursor: "pointer",
                       }}
                     >
@@ -1167,7 +1167,7 @@ export function MiPerfilRedAbogadoWidget({
                         justifyContent: "space-between",
                         gap: "8px",
                         borderRadius: "12px",
-                        border: "1px solid #E2E8F0",
+                        border: "1px solid var(--linea)",
                         background: "#FFFFFF",
                         padding: "8px 12px",
                       }}
@@ -1182,7 +1182,7 @@ export function MiPerfilRedAbogadoWidget({
                           ...inputBaseStyle,
                           flex: "1 1 120px",
                           minWidth: "120px",
-                          background: "#F8FAFC",
+                          background: "var(--fondo-suave)",
                           padding: "6px 10px",
                         }}
                       >
@@ -1199,7 +1199,7 @@ export function MiPerfilRedAbogadoWidget({
                           alignItems: "center",
                           gap: "6px",
                           fontSize: "0.8rem",
-                          color: "#475569",
+                          color: "var(--texto-2)",
                         }}
                       >
                         <Clock size={14} color="#5000BA" />
@@ -1230,9 +1230,9 @@ export function MiPerfilRedAbogadoWidget({
                         title="Eliminar franja telemática"
                         aria-label="Eliminar franja telemática"
                         style={{
-                          border: "1px solid #FEE2E2",
-                          background: "#FFF1F2",
-                          color: "#E11D48",
+                          border: "1px solid var(--error-diluido)",
+                          background: "var(--error-diluido)",
+                          color: "var(--error)",
                           borderRadius: "8px",
                           width: "32px",
                           height: "32px",
@@ -1252,9 +1252,9 @@ export function MiPerfilRedAbogadoWidget({
                         padding: "12px",
                         borderRadius: "10px",
                         background: "#FFFFFF",
-                        border: "1px dashed #CBD5E1",
+                        border: "1px dashed var(--linea-fuerte)",
                         fontSize: "0.8rem",
-                        color: "#64748B",
+                        color: "var(--texto-suave)",
                         textAlign: "center",
                       }}
                     >
@@ -1269,8 +1269,8 @@ export function MiPerfilRedAbogadoWidget({
               <section
                 style={{
                   borderRadius: "16px",
-                  border: "1px solid #CBD5E1",
-                  background: "#F8FAFC",
+                  border: "1px solid var(--linea-fuerte)",
+                  background: "var(--fondo-suave)",
                   padding: "18px",
                   display: "flex",
                   flexDirection: "column",
@@ -1292,7 +1292,7 @@ export function MiPerfilRedAbogadoWidget({
                         width: "36px",
                         height: "36px",
                         borderRadius: "10px",
-                        background: "#0F172A",
+                        background: "var(--texto)",
                         color: "#FFFFFF",
                         display: "flex",
                         alignItems: "center",
@@ -1303,10 +1303,10 @@ export function MiPerfilRedAbogadoWidget({
                       <Building2 size={18} />
                     </div>
                     <div>
-                      <h4 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 800, color: "#0F172A" }}>
+                      <h4 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 800, color: "var(--texto)" }}>
                         Horario Normal — Consultas en Oficina
                       </h4>
-                      <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#64748B" }}>
+                      <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "var(--texto-suave)" }}>
                         Atención presencial en despacho (Por defecto Lun–Vie 09:00 a 17:30)
                       </p>
                     </div>
@@ -1324,12 +1324,12 @@ export function MiPerfilRedAbogadoWidget({
                         alignItems: "center",
                         gap: "5px",
                         borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid var(--linea-fuerte)",
                         background: "#FFFFFF",
                         padding: "6px 10px",
                         fontSize: "0.75rem",
                         fontWeight: 700,
-                        color: "#334155",
+                        color: "var(--texto-2)",
                         cursor: "pointer",
                       }}
                     >
@@ -1348,7 +1348,7 @@ export function MiPerfilRedAbogadoWidget({
                         gap: "5px",
                         borderRadius: "8px",
                         border: "none",
-                        background: "#0F172A",
+                        background: "var(--texto)",
                         padding: "6px 12px",
                         fontSize: "0.75rem",
                         fontWeight: 700,
@@ -1373,7 +1373,7 @@ export function MiPerfilRedAbogadoWidget({
                         justifyContent: "space-between",
                         gap: "8px",
                         borderRadius: "12px",
-                        border: "1px solid #E2E8F0",
+                        border: "1px solid var(--linea)",
                         background: "#FFFFFF",
                         padding: "8px 12px",
                       }}
@@ -1388,7 +1388,7 @@ export function MiPerfilRedAbogadoWidget({
                           ...inputBaseStyle,
                           flex: "1 1 120px",
                           minWidth: "120px",
-                          background: "#F8FAFC",
+                          background: "var(--fondo-suave)",
                           padding: "6px 10px",
                         }}
                       >
@@ -1405,10 +1405,10 @@ export function MiPerfilRedAbogadoWidget({
                           alignItems: "center",
                           gap: "6px",
                           fontSize: "0.8rem",
-                          color: "#475569",
+                          color: "var(--texto-2)",
                         }}
                       >
-                        <Clock size={14} color="#0F172A" />
+                        <Clock size={14} color="var(--texto)" />
                         <input
                           type="time"
                           aria-label="Hora inicio oficina"
@@ -1436,9 +1436,9 @@ export function MiPerfilRedAbogadoWidget({
                         title="Eliminar franja de oficina"
                         aria-label="Eliminar franja de oficina"
                         style={{
-                          border: "1px solid #FEE2E2",
-                          background: "#FFF1F2",
-                          color: "#E11D48",
+                          border: "1px solid var(--error-diluido)",
+                          background: "var(--error-diluido)",
+                          color: "var(--error)",
                           borderRadius: "8px",
                           width: "32px",
                           height: "32px",
@@ -1458,9 +1458,9 @@ export function MiPerfilRedAbogadoWidget({
                         padding: "12px",
                         borderRadius: "10px",
                         background: "#FFFFFF",
-                        border: "1px dashed #CBD5E1",
+                        border: "1px dashed var(--linea-fuerte)",
                         fontSize: "0.8rem",
-                        color: "#64748B",
+                        color: "var(--texto-suave)",
                         textAlign: "center",
                       }}
                     >
@@ -1493,8 +1493,8 @@ export function MiPerfilRedAbogadoWidget({
           <section
             style={{
               borderRadius: "16px",
-              border: "1.5px solid #FDE68A",
-              background: "#FFFBEB",
+              border: "1.5px solid var(--aviso-linea)",
+              background: "var(--aviso-diluido)",
               padding: "20px",
               display: "flex",
               flexDirection: "column",
@@ -1520,17 +1520,17 @@ export function MiPerfilRedAbogadoWidget({
                     fontWeight: 800,
                     textTransform: "uppercase",
                     letterSpacing: "0.05em",
-                    color: "#B45309",
+                    color: "var(--aviso-texto)",
                     marginBottom: "4px",
                   }}
                 >
                   <CalendarPlus size={15} />
                   <span>Excepciones al Horario por Defecto</span>
                 </div>
-                <h3 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
+                <h3 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "var(--texto)" }}>
                   2. Horarios Diferenciados por Fechas Exactas (Navidad, Feriados, Audiencias)
                 </h3>
-                <p style={{ margin: 0, fontSize: "0.82rem", color: "#78350F", lineHeight: 1.45 }}>
+                <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--aviso-texto)", lineHeight: 1.45 }}>
                   Si ingresas una fecha exacta aquí, su configuración reemplaza tu horario normal en
                   ese día (por ejemplo: atender solo por teleconsulta o marcar el día cerrado por
                   feriado o audiencia).
@@ -1543,12 +1543,12 @@ export function MiPerfilRedAbogadoWidget({
                   onClick={() => aplicarPlantillaFechaEspecial("navidad")}
                   style={{
                     borderRadius: "10px",
-                    border: "1px solid #F59E0B",
+                    border: "1px solid var(--aviso)",
                     background: "#FFFFFF",
                     padding: "7px 12px",
                     fontSize: "0.76rem",
                     fontWeight: 700,
-                    color: "#92400E",
+                    color: "var(--aviso-texto)",
                     cursor: "pointer",
                   }}
                 >
@@ -1559,12 +1559,12 @@ export function MiPerfilRedAbogadoWidget({
                   onClick={() => aplicarPlantillaFechaEspecial("nochebuena")}
                   style={{
                     borderRadius: "10px",
-                    border: "1px solid #F59E0B",
+                    border: "1px solid var(--aviso)",
                     background: "#FFFFFF",
                     padding: "7px 12px",
                     fontSize: "0.76rem",
                     fontWeight: 700,
-                    color: "#92400E",
+                    color: "var(--aviso-texto)",
                     cursor: "pointer",
                   }}
                 >
@@ -1575,12 +1575,12 @@ export function MiPerfilRedAbogadoWidget({
                   onClick={() => aplicarPlantillaFechaEspecial("fin_anio")}
                   style={{
                     borderRadius: "10px",
-                    border: "1px solid #F59E0B",
+                    border: "1px solid var(--aviso)",
                     background: "#FFFFFF",
                     padding: "7px 12px",
                     fontSize: "0.76rem",
                     fontWeight: 700,
-                    color: "#92400E",
+                    color: "var(--aviso-texto)",
                     cursor: "pointer",
                   }}
                 >
@@ -1591,12 +1591,12 @@ export function MiPerfilRedAbogadoWidget({
                   onClick={() => aplicarPlantillaFechaEspecial("anio_nuevo")}
                   style={{
                     borderRadius: "10px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid var(--linea-fuerte)",
                     background: "#FFFFFF",
                     padding: "7px 12px",
                     fontSize: "0.76rem",
                     fontWeight: 700,
-                    color: "#334155",
+                    color: "var(--texto-2)",
                     cursor: "pointer",
                   }}
                 >
@@ -1609,7 +1609,7 @@ export function MiPerfilRedAbogadoWidget({
             <div
               style={{
                 borderRadius: "14px",
-                border: "1px solid #FCD34D",
+                border: "1px solid var(--aviso-linea)",
                 background: "#FFFFFF",
                 padding: "16px",
                 display: "flex",
@@ -1617,7 +1617,7 @@ export function MiPerfilRedAbogadoWidget({
                 gap: "12px",
               }}
             >
-              <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#0F172A" }}>
+              <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "var(--texto)" }}>
                 Agregar o actualizar horario diferenciado para una fecha exacta:
               </div>
 
@@ -1635,7 +1635,7 @@ export function MiPerfilRedAbogadoWidget({
                     type="date"
                     value={nuevaFecha}
                     onChange={(e) => setNuevaFecha(e.target.value)}
-                    style={{ ...inputBaseStyle, width: "100%", background: "#F8FAFC" }}
+                    style={{ ...inputBaseStyle, width: "100%", background: "var(--fondo-suave)" }}
                   />
                 </div>
 
@@ -1646,7 +1646,7 @@ export function MiPerfilRedAbogadoWidget({
                     value={nuevoNombreFecha}
                     onChange={(e) => setNuevoNombreFecha(e.target.value)}
                     placeholder="Ej. Audiencia / Navidad"
-                    style={{ ...inputBaseStyle, width: "100%", background: "#F8FAFC" }}
+                    style={{ ...inputBaseStyle, width: "100%", background: "var(--fondo-suave)" }}
                   />
                 </div>
 
@@ -1689,12 +1689,12 @@ export function MiPerfilRedAbogadoWidget({
                     <div
                       style={{
                         borderRadius: "10px",
-                        border: "1px solid #E2E8F0",
-                        background: "#F1F5F9",
+                        border: "1px solid var(--linea)",
+                        background: "var(--fondo-hundido)",
                         padding: "8px 12px",
                         fontSize: "0.78rem",
                         fontWeight: 600,
-                        color: "#64748B",
+                        color: "var(--texto-suave)",
                       }}
                     >
                       Sin teleconsulta
@@ -1709,7 +1709,7 @@ export function MiPerfilRedAbogadoWidget({
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
-                      color: "#0F172A",
+                      color: "var(--texto)",
                       cursor: "pointer",
                     }}
                   >
@@ -1741,12 +1741,12 @@ export function MiPerfilRedAbogadoWidget({
                     <div
                       style={{
                         borderRadius: "10px",
-                        border: "1px solid #E2E8F0",
-                        background: "#F1F5F9",
+                        border: "1px solid var(--linea)",
+                        background: "var(--fondo-hundido)",
                         padding: "8px 12px",
                         fontSize: "0.78rem",
                         fontWeight: 600,
-                        color: "#64748B",
+                        color: "var(--texto-suave)",
                       }}
                     >
                       Oficina cerrada
@@ -1763,7 +1763,7 @@ export function MiPerfilRedAbogadoWidget({
                   justifyContent: "space-between",
                   gap: "12px",
                   paddingTop: "8px",
-                  borderTop: "1px solid #F1F5F9",
+                  borderTop: "1px solid var(--fondo-hundido)",
                 }}
               >
                 <label
@@ -1773,7 +1773,7 @@ export function MiPerfilRedAbogadoWidget({
                     gap: "8px",
                     fontSize: "0.8rem",
                     fontWeight: 700,
-                    color: "#B91C1C",
+                    color: "var(--error)",
                     cursor: "pointer",
                   }}
                 >
@@ -1794,7 +1794,7 @@ export function MiPerfilRedAbogadoWidget({
                     gap: "6px",
                     borderRadius: "10px",
                     border: "none",
-                    background: "#D97706",
+                    background: "var(--aviso)",
                     color: "#FFFFFF",
                     padding: "8px 16px",
                     fontSize: "0.8rem",
@@ -1821,7 +1821,7 @@ export function MiPerfilRedAbogadoWidget({
                       justifyContent: "space-between",
                       gap: "10px",
                       borderRadius: "12px",
-                      border: "1px solid #FDE68A",
+                      border: "1px solid var(--aviso-linea)",
                       background: "#FFFFFF",
                       padding: "10px 14px",
                     }}
@@ -1831,22 +1831,22 @@ export function MiPerfilRedAbogadoWidget({
                         style={{
                           padding: "4px 10px",
                           borderRadius: "8px",
-                          background: "#FEF3C7",
-                          color: "#92400E",
+                          background: "var(--aviso-diluido)",
+                          color: "var(--aviso-texto)",
                           fontSize: "0.8rem",
                           fontWeight: 800,
                         }}
                       >
                         {fe.fecha}
                       </span>
-                      <strong style={{ fontSize: "0.86rem", color: "#0F172A" }}>{fe.nombre}</strong>
+                      <strong style={{ fontSize: "0.86rem", color: "var(--texto)" }}>{fe.nombre}</strong>
                       {fe.cerrado_total ? (
                         <span
                           style={{
                             padding: "3px 8px",
                             borderRadius: "999px",
-                            background: "#FEE2E2",
-                            color: "#991B1B",
+                            background: "var(--error-diluido)",
+                            color: "var(--error-texto)",
                             fontSize: "0.74rem",
                             fontWeight: 700,
                           }}
@@ -1860,7 +1860,7 @@ export function MiPerfilRedAbogadoWidget({
                               style={{
                                 padding: "3px 8px",
                                 borderRadius: "999px",
-                                background: "#F3E8FF",
+                                background: "var(--acento-diluido)",
                                 color: "#5000BA",
                                 fontSize: "0.74rem",
                                 fontWeight: 700,
@@ -1875,8 +1875,8 @@ export function MiPerfilRedAbogadoWidget({
                               style={{
                                 padding: "3px 8px",
                                 borderRadius: "999px",
-                                background: "#E2E8F0",
-                                color: "#0F172A",
+                                background: "var(--linea)",
+                                color: "var(--texto)",
                                 fontSize: "0.74rem",
                                 fontWeight: 700,
                               }}
@@ -1889,8 +1889,8 @@ export function MiPerfilRedAbogadoWidget({
                               style={{
                                 padding: "3px 8px",
                                 borderRadius: "999px",
-                                background: "#F1F5F9",
-                                color: "#64748B",
+                                background: "var(--fondo-hundido)",
+                                color: "var(--texto-suave)",
                                 fontSize: "0.74rem",
                                 fontWeight: 700,
                               }}
@@ -1907,9 +1907,9 @@ export function MiPerfilRedAbogadoWidget({
                       onClick={() => eliminarFechaEspecial(fe.fecha)}
                       title="Eliminar fecha especial"
                       style={{
-                        border: "1px solid #FEE2E2",
-                        background: "#FFF1F2",
-                        color: "#E11D48",
+                        border: "1px solid var(--error-diluido)",
+                        background: "var(--error-diluido)",
+                        color: "var(--error)",
                         borderRadius: "8px",
                         width: "30px",
                         height: "30px",
@@ -1930,8 +1930,8 @@ export function MiPerfilRedAbogadoWidget({
           {/* 3. PARÁMETROS DE DURACIÓN, DESCANSO Y ANTELACIÓN */}
           <div
             style={{
-              background: "#F8FAFC",
-              border: "1px solid #E2E8F0",
+              background: "var(--fondo-suave)",
+              border: "1px solid var(--linea)",
               borderRadius: "14px",
               padding: "16px",
               display: "grid",

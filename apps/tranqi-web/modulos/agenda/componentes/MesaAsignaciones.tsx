@@ -247,9 +247,9 @@ export default function MesaAsignaciones({
           style={{
             padding: "14px 18px",
             borderRadius: "12px",
-            background: "#FEF2F2",
-            border: "1px solid #FCA5A5",
-            color: "#991B1B",
+            background: "var(--error-diluido)",
+            border: "1px solid var(--error-linea)",
+            color: "var(--error-texto)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
@@ -258,7 +258,7 @@ export default function MesaAsignaciones({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <AlertTriangle size={20} color="#DC2626" />
+            <AlertTriangle size={20} color="var(--error)" />
             <div>
               <strong style={{ fontSize: "0.92rem", display: "block" }}>
                 🚨 Atención urgente hoy: {kpis.urgentesHoySinAbogado}{" "}
@@ -266,7 +266,7 @@ export default function MesaAsignaciones({
                   ? "cita programada para hoy sigue sin abogado asignado"
                   : "citas programadas para hoy siguen sin abogado asignado"}
               </strong>
-              <span style={{ fontSize: "0.8rem", color: "#B91C1C" }}>
+              <span style={{ fontSize: "0.8rem", color: "var(--error)" }}>
                 Asigna un abogado de inmediato para que el cliente y el profesional reciban su notificación.
               </span>
             </div>
@@ -281,7 +281,7 @@ export default function MesaAsignaciones({
             style={{
               padding: "8px 14px",
               borderRadius: "8px",
-              background: "#DC2626",
+              background: "var(--error)",
               color: "#FFFFFF",
               border: "none",
               fontWeight: 800,
@@ -307,14 +307,14 @@ export default function MesaAsignaciones({
             padding: "14px 16px",
             borderRadius: "12px",
             background: "#FFFFFF",
-            border: "1px solid #E2E8F0",
+            border: "1px solid var(--linea)",
           }}
         >
-          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748B", display: "block" }}>
+          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--texto-suave)", display: "block" }}>
             CITAS EN AGENDA
           </span>
-          <strong style={{ fontSize: "1.45rem", fontWeight: 900, color: "#0F172A" }}>{kpis.total}</strong>
-          <span style={{ fontSize: "0.76rem", color: "#475569", display: "block" }}>
+          <strong style={{ fontSize: "1.45rem", fontWeight: 900, color: "var(--texto)" }}>{kpis.total}</strong>
+          <span style={{ fontSize: "0.76rem", color: "var(--texto-2)", display: "block" }}>
             Confirmadas y programadas
           </span>
         </div>
@@ -323,17 +323,17 @@ export default function MesaAsignaciones({
           style={{
             padding: "14px 16px",
             borderRadius: "12px",
-            background: kpis.sinAbogado > 0 ? "#FFFBEB" : "#F8FAFC",
-            border: `1px solid ${kpis.sinAbogado > 0 ? "#FDE68A" : "#E2E8F0"}`,
+            background: kpis.sinAbogado > 0 ? "var(--aviso-diluido)" : "var(--fondo-suave)",
+            border: `1px solid ${kpis.sinAbogado > 0 ? "var(--aviso-linea)" : "var(--linea)"}`,
           }}
         >
-          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#B45309", display: "block" }}>
+          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--aviso-texto)", display: "block" }}>
             ⚠️ SIN ABOGADO ASIGNADO
           </span>
-          <strong style={{ fontSize: "1.45rem", fontWeight: 900, color: "#D97706" }}>
+          <strong style={{ fontSize: "1.45rem", fontWeight: 900, color: "var(--aviso)" }}>
             {kpis.sinAbogado}
           </strong>
-          <span style={{ fontSize: "0.76rem", color: "#92400E", display: "block" }}>
+          <span style={{ fontSize: "0.76rem", color: "var(--aviso-texto)", display: "block" }}>
             Pendientes de asignación
           </span>
         </div>
@@ -342,17 +342,17 @@ export default function MesaAsignaciones({
           style={{
             padding: "14px 16px",
             borderRadius: "12px",
-            background: "#ECFDF5",
-            border: "1px solid #A7F3D0",
+            background: "var(--exito-diluido)",
+            border: "1px solid var(--exito-linea)",
           }}
         >
-          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#047857", display: "block" }}>
+          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--exito-texto)", display: "block" }}>
             ✅ CON ABOGADO ASIGNADO
           </span>
-          <strong style={{ fontSize: "1.45rem", fontWeight: 900, color: "#059669" }}>
+          <strong style={{ fontSize: "1.45rem", fontWeight: 900, color: "var(--exito)" }}>
             {kpis.conAbogado}
           </strong>
-          <span style={{ fontSize: "0.76rem", color: "#065F46", display: "block" }}>
+          <span style={{ fontSize: "0.76rem", color: "var(--exito-texto)", display: "block" }}>
             Profesional asignado
           </span>
         </div>
@@ -361,8 +361,8 @@ export default function MesaAsignaciones({
           style={{
             padding: "14px 16px",
             borderRadius: "12px",
-            background: "#F5F3FF",
-            border: "1px solid #DDD6FE",
+            background: "var(--acento-diluido)",
+            border: "1px solid var(--acento-linea)",
           }}
         >
           <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#5000BA", display: "block" }}>
@@ -371,7 +371,7 @@ export default function MesaAsignaciones({
           <strong style={{ fontSize: "1.25rem", fontWeight: 900, color: "#5000BA" }}>
             {kpis.telematicas} video · {kpis.presenciales} ofic.
           </strong>
-          <span style={{ fontSize: "0.76rem", color: "#6D28D9", display: "block" }}>
+          <span style={{ fontSize: "0.76rem", color: "var(--acento)", display: "block" }}>
             Modalidad de atención
           </span>
         </div>
@@ -385,7 +385,7 @@ export default function MesaAsignaciones({
           justifyContent: "space-between",
           flexWrap: "wrap",
           gap: "10px",
-          borderBottom: "1px solid #E2E8F0",
+          borderBottom: "1px solid var(--linea)",
           paddingBottom: "12px",
         }}
       >
@@ -399,9 +399,9 @@ export default function MesaAsignaciones({
               gap: "8px",
               padding: "9px 16px",
               borderRadius: "10px",
-              border: vistaActiva === "calendario" ? "2px solid #5000BA" : "1px solid #CBD5E1",
-              background: vistaActiva === "calendario" ? "#F5F3FF" : "#FFFFFF",
-              color: vistaActiva === "calendario" ? "#5000BA" : "#334155",
+              border: vistaActiva === "calendario" ? "2px solid #5000BA" : "1px solid var(--linea-fuerte)",
+              background: vistaActiva === "calendario" ? "var(--acento-diluido)" : "#FFFFFF",
+              color: vistaActiva === "calendario" ? "#5000BA" : "var(--texto-2)",
               fontWeight: 800,
               fontSize: "0.86rem",
               cursor: "pointer",
@@ -419,9 +419,9 @@ export default function MesaAsignaciones({
               gap: "8px",
               padding: "9px 16px",
               borderRadius: "10px",
-              border: vistaActiva === "historial" ? "2px solid #5000BA" : "1px solid #CBD5E1",
-              background: vistaActiva === "historial" ? "#F5F3FF" : "#FFFFFF",
-              color: vistaActiva === "historial" ? "#5000BA" : "#334155",
+              border: vistaActiva === "historial" ? "2px solid #5000BA" : "1px solid var(--linea-fuerte)",
+              background: vistaActiva === "historial" ? "var(--acento-diluido)" : "#FFFFFF",
+              color: vistaActiva === "historial" ? "#5000BA" : "var(--texto-2)",
               fontWeight: 800,
               fontSize: "0.86rem",
               cursor: "pointer",
@@ -437,13 +437,13 @@ export default function MesaAsignaciones({
           <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#5000BA", fontWeight: 700 }}>
             🎥 Telemática
           </span>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#0369A1", fontWeight: 700 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "var(--acento-hondo)", fontWeight: 700 }}>
             🏢 Presencial
           </span>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#059669", fontWeight: 700 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "var(--exito)", fontWeight: 700 }}>
             ✅ Con Abogado
           </span>
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "#D97706", fontWeight: 700 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", color: "var(--aviso)", fontWeight: 700 }}>
             ⚠️ Sin Abogado
           </span>
         </div>
@@ -454,9 +454,9 @@ export default function MesaAsignaciones({
           style={{
             padding: "12px 16px",
             borderRadius: "10px",
-            background: "#FEF2F2",
-            border: "1px solid #FECACA",
-            color: "#991B1B",
+            background: "var(--error-diluido)",
+            border: "1px solid var(--error-linea)",
+            color: "var(--error-texto)",
             fontSize: "0.86rem",
             fontWeight: 700,
           }}
@@ -470,9 +470,9 @@ export default function MesaAsignaciones({
           style={{
             padding: "12px 16px",
             borderRadius: "10px",
-            background: "#ECFDF5",
-            border: "1px solid #A7F3D0",
-            color: "#065F46",
+            background: "var(--exito-diluido)",
+            border: "1px solid var(--exito-linea)",
+            color: "var(--exito-texto)",
             fontSize: "0.86rem",
             fontWeight: 700,
           }}
@@ -487,7 +487,7 @@ export default function MesaAsignaciones({
           <div
             style={{
               background: "#FFFFFF",
-              border: "1px solid #E2E8F0",
+              border: "1px solid var(--linea)",
               borderRadius: "14px",
               padding: "16px",
             }}
@@ -511,14 +511,14 @@ export default function MesaAsignaciones({
                   style={{
                     padding: "6px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    background: "#F8FAFC",
+                    border: "1px solid var(--linea-fuerte)",
+                    background: "var(--fondo-suave)",
                     cursor: "pointer",
                   }}
                 >
                   <ChevronLeft size={16} />
                 </button>
-                <strong style={{ fontSize: "1.05rem", fontWeight: 800, color: "#0F172A", minWidth: "160px", textAlign: "center" }}>
+                <strong style={{ fontSize: "1.05rem", fontWeight: 800, color: "var(--texto)", minWidth: "160px", textAlign: "center" }}>
                   {MESES_ANIO[anioMes.mes]} {anioMes.anio}
                 </strong>
                 <button
@@ -529,8 +529,8 @@ export default function MesaAsignaciones({
                   style={{
                     padding: "6px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    background: "#F8FAFC",
+                    border: "1px solid var(--linea-fuerte)",
+                    background: "var(--fondo-suave)",
                     cursor: "pointer",
                   }}
                 >
@@ -545,9 +545,9 @@ export default function MesaAsignaciones({
                   style={{
                     padding: "6px 12px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    background: "#F1F5F9",
-                    color: "#334155",
+                    border: "1px solid var(--linea-fuerte)",
+                    background: "var(--fondo-hundido)",
+                    color: "var(--texto-2)",
                     fontSize: "0.8rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -572,7 +572,7 @@ export default function MesaAsignaciones({
                     textAlign: "center",
                     fontSize: "0.75rem",
                     fontWeight: 800,
-                    color: "#64748B",
+                    color: "var(--texto-suave)",
                     padding: "4px 0",
                   }}
                 >
@@ -588,8 +588,8 @@ export default function MesaAsignaciones({
                       style={{
                         minHeight: "76px",
                         borderRadius: "8px",
-                        background: "#F8FAFC",
-                        border: "1px dashed #F1F5F9",
+                        background: "var(--fondo-suave)",
+                        border: "1px dashed var(--fondo-hundido)",
                       }}
                     />
                   );
@@ -613,15 +613,15 @@ export default function MesaAsignaciones({
                       border: esSeleccionado
                         ? "2px solid #5000BA"
                         : tieneSinAbogado
-                        ? "1.5px solid #F59E0B"
+                        ? "1.5px solid var(--aviso)"
                         : esHoy
-                        ? "1.5px solid #0284C7"
-                        : "1px solid #E2E8F0",
+                        ? "1.5px solid var(--acento)"
+                        : "1px solid var(--linea)",
                       background: esSeleccionado
-                        ? "#F5F3FF"
+                        ? "var(--acento-diluido)"
                         : citasDia.length > 0
                         ? "#FFFFFF"
-                        : "#FAFAFA",
+                        : "var(--fondo-suave)",
                       cursor: "pointer",
                       display: "flex",
                       flexDirection: "column",
@@ -639,7 +639,7 @@ export default function MesaAsignaciones({
                         style={{
                           fontSize: "0.78rem",
                           fontWeight: esHoy || esSeleccionado ? 900 : 700,
-                          color: esHoy ? "#0284C7" : "#1E293B",
+                          color: esHoy ? "var(--acento)" : "var(--texto)",
                         }}
                       >
                         {celda.numero} {esHoy ? "· Hoy" : ""}
@@ -651,8 +651,8 @@ export default function MesaAsignaciones({
                             fontWeight: 800,
                             padding: "1px 6px",
                             borderRadius: "999px",
-                            background: tieneSinAbogado ? "#FEF3C7" : "#DCFCE7",
-                            color: tieneSinAbogado ? "#B45309" : "#15803D",
+                            background: tieneSinAbogado ? "var(--aviso-diluido)" : "var(--exito-diluido)",
+                            color: tieneSinAbogado ? "var(--aviso-texto)" : "var(--exito-texto)",
                           }}
                         >
                           {citasDia.length}
@@ -681,22 +681,22 @@ export default function MesaAsignaciones({
                               borderRadius: "5px",
                               opacity: esRealizadaCelda ? 0.68 : 1,
                               background: esRealizadaCelda
-                                ? "#E2E8F0"
+                                ? "var(--linea)"
                                 : !c.tiene_abogado
-                                ? "#FFFBEB"
+                                ? "var(--aviso-diluido)"
                                 : esPres
-                                ? "#E0F2FE"
-                                : "#F3E8FF",
+                                ? "var(--acento-diluido)"
+                                : "var(--acento-diluido)",
                               borderLeft: `3px solid ${
                                 esRealizadaCelda
-                                  ? "#64748B"
+                                  ? "var(--texto-suave)"
                                   : !c.tiene_abogado
-                                  ? "#F59E0B"
+                                  ? "var(--aviso)"
                                   : esPres
-                                  ? "#0284C7"
-                                  : "#7C3AED"
+                                  ? "var(--acento)"
+                                  : "var(--acento)"
                               }`,
-                              color: esRealizadaCelda ? "#475569" : "#0F172A",
+                              color: esRealizadaCelda ? "var(--texto-2)" : "var(--texto)",
                               whiteSpace: "nowrap",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
@@ -708,7 +708,7 @@ export default function MesaAsignaciones({
                         );
                       })}
                       {citasDia.length > 3 && (
-                        <span style={{ fontSize: "0.66rem", color: "#64748B", fontWeight: 700 }}>
+                        <span style={{ fontSize: "0.66rem", color: "var(--texto-suave)", fontWeight: 700 }}>
                           +{citasDia.length - 3} más…
                         </span>
                       )}
@@ -737,9 +737,9 @@ export default function MesaAsignaciones({
                   style={{
                     padding: "7px 13px",
                     borderRadius: "999px",
-                    border: activo ? "1.5px solid #5000BA" : "1px solid #CBD5E1",
+                    border: activo ? "1.5px solid #5000BA" : "1px solid var(--linea-fuerte)",
                     background: activo ? "#5000BA" : "#FFFFFF",
-                    color: activo ? "#FFFFFF" : "#334155",
+                    color: activo ? "#FFFFFF" : "var(--texto-2)",
                     fontSize: "0.8rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -757,10 +757,10 @@ export default function MesaAsignaciones({
               style={{
                 padding: "32px 20px",
                 textAlign: "center",
-                background: "#F8FAFC",
+                background: "var(--fondo-suave)",
                 borderRadius: "12px",
-                border: "1px dashed #CBD5E1",
-                color: "#64748B",
+                border: "1px dashed var(--linea-fuerte)",
+                color: "var(--texto-suave)",
                 fontSize: "0.9rem",
               }}
             >
@@ -782,9 +782,9 @@ export default function MesaAsignaciones({
                     <div
                       key={c.cit_id}
                       style={{
-                        background: "#F1F5F9",
+                        background: "var(--fondo-hundido)",
                         borderRadius: "12px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid var(--linea-fuerte)",
                         padding: "12px 16px",
                         opacity: 0.78,
                         display: "flex",
@@ -812,7 +812,7 @@ export default function MesaAsignaciones({
                           <strong
                             style={{
                               fontSize: "0.92rem",
-                              color: "#475569",
+                              color: "var(--texto-2)",
                               textTransform: "capitalize",
                             }}
                           >
@@ -827,8 +827,8 @@ export default function MesaAsignaciones({
                               borderRadius: "999px",
                               fontSize: "0.72rem",
                               fontWeight: 700,
-                              background: "#E2E8F0",
-                              color: "#475569",
+                              background: "var(--linea)",
+                              color: "var(--texto-2)",
                             }}
                           >
                             {esPresencial ? <Building2 size={12} /> : <Video size={12} />}
@@ -840,17 +840,17 @@ export default function MesaAsignaciones({
                               borderRadius: "999px",
                               fontSize: "0.72rem",
                               fontWeight: 700,
-                              background: "#E2E8F0",
-                              color: "#475569",
+                              background: "var(--linea)",
+                              color: "var(--texto-2)",
                             }}
                           >
                             ⚖️ {c.materia_nombre}
                           </span>
-                          <span style={{ fontSize: "0.82rem", color: "#475569" }}>
+                          <span style={{ fontSize: "0.82rem", color: "var(--texto-2)" }}>
                             · <strong>👤 Cliente:</strong> {c.cliente_nombre}
                           </span>
                           {c.abogado_nombre && (
-                            <span style={{ fontSize: "0.8rem", color: "#475569" }}>
+                            <span style={{ fontSize: "0.8rem", color: "var(--texto-2)" }}>
                               · <strong>👨‍⚖️ Abogado:</strong> Dr(a). {c.abogado_nombre}
                             </span>
                           )}
@@ -870,9 +870,9 @@ export default function MesaAsignaciones({
                               borderRadius: "999px",
                               fontSize: "0.73rem",
                               fontWeight: 800,
-                              background: "#E2E8F0",
-                              color: "#334155",
-                              border: "1px solid #CBD5E1",
+                              background: "var(--linea)",
+                              color: "var(--texto-2)",
+                              border: "1px solid var(--linea-fuerte)",
                             }}
                           >
                             ✅ Consulta Realizada
@@ -889,9 +889,9 @@ export default function MesaAsignaciones({
                               gap: "5px",
                               padding: "5px 10px",
                               borderRadius: "8px",
-                              border: "1px solid #94A3B8",
-                              background: verLog ? "#334155" : "#FFFFFF",
-                              color: verLog ? "#FFFFFF" : "#334155",
+                              border: "1px solid var(--texto-tenue)",
+                              background: verLog ? "var(--texto-2)" : "#FFFFFF",
+                              color: verLog ? "#FFFFFF" : "var(--texto-2)",
                               fontWeight: 800,
                               fontSize: "0.75rem",
                               cursor: "pointer",
@@ -925,7 +925,7 @@ export default function MesaAsignaciones({
                     style={{
                       background: "#FFFFFF",
                       borderRadius: "14px",
-                      border: !c.tiene_abogado ? "1.5px solid #F59E0B" : "1px solid #E2E8F0",
+                      border: !c.tiene_abogado ? "1.5px solid var(--aviso)" : "1px solid var(--linea)",
                       padding: "18px",
                       display: "flex",
                       flexDirection: "column",
@@ -943,7 +943,7 @@ export default function MesaAsignaciones({
                     >
                       <div>
                         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                          <strong style={{ fontSize: "1rem", color: "#0F172A", textTransform: "capitalize" }}>
+                          <strong style={{ fontSize: "1rem", color: "var(--texto)", textTransform: "capitalize" }}>
                             {FORMATO_FECHA_LARGA.format(inicio)}
                           </strong>
                           <span
@@ -955,8 +955,8 @@ export default function MesaAsignaciones({
                               borderRadius: "999px",
                               fontSize: "0.75rem",
                               fontWeight: 800,
-                              background: esPresencial ? "#E0F2FE" : "#F3E8FF",
-                              color: esPresencial ? "#0369A1" : "#6D28D9",
+                              background: esPresencial ? "var(--acento-diluido)" : "var(--acento-diluido)",
+                              color: esPresencial ? "var(--acento-hondo)" : "var(--acento)",
                             }}
                           >
                             {esPresencial ? <Building2 size={13} /> : <Video size={13} />}
@@ -968,8 +968,8 @@ export default function MesaAsignaciones({
                               borderRadius: "999px",
                               fontSize: "0.75rem",
                               fontWeight: 800,
-                              background: "#F1F5F9",
-                              color: "#334155",
+                              background: "var(--fondo-hundido)",
+                              color: "var(--texto-2)",
                             }}
                           >
                             ⚖️ {c.materia_nombre}
@@ -983,7 +983,7 @@ export default function MesaAsignaciones({
                             gap: "8px",
                             flexWrap: "wrap",
                             fontSize: "0.84rem",
-                            color: "#475569",
+                            color: "var(--texto-2)",
                             marginTop: "6px",
                           }}
                         >
@@ -1000,9 +1000,9 @@ export default function MesaAsignaciones({
                                   gap: "4px",
                                   padding: "2px 8px",
                                   borderRadius: "999px",
-                                  background: "#ECFDF5",
-                                  border: "1px solid #A7F3D0",
-                                  color: "#065F46",
+                                  background: "var(--exito-diluido)",
+                                  border: "1px solid var(--exito-linea)",
+                                  color: "var(--exito-texto)",
                                   fontSize: "0.75rem",
                                   fontWeight: 800,
                                 }}
@@ -1030,7 +1030,7 @@ export default function MesaAsignaciones({
                                       gap: "4px",
                                       padding: "2px 9px",
                                       borderRadius: "999px",
-                                      background: "#16A34A",
+                                      background: "var(--exito)",
                                       color: "#FFFFFF",
                                       fontSize: "0.73rem",
                                       fontWeight: 800,
@@ -1059,8 +1059,8 @@ export default function MesaAsignaciones({
                               borderRadius: "999px",
                               fontSize: "0.78rem",
                               fontWeight: 800,
-                              background: "#DCFCE7",
-                              color: "#166534",
+                              background: "var(--exito-diluido)",
+                              color: "var(--exito-texto)",
                             }}
                           >
                             <UserCheck size={14} />
@@ -1076,8 +1076,8 @@ export default function MesaAsignaciones({
                               borderRadius: "999px",
                               fontSize: "0.78rem",
                               fontWeight: 800,
-                              background: "#FEF3C7",
-                              color: "#92400E",
+                              background: "var(--aviso-diluido)",
+                              color: "var(--aviso-texto)",
                             }}
                           >
                             <UserX size={14} />
@@ -1086,7 +1086,7 @@ export default function MesaAsignaciones({
                         )}
 
                         {c.tiene_abogado && (
-                          <span style={{ fontSize: "0.74rem", color: "#64748B", fontWeight: 700 }}>
+                          <span style={{ fontSize: "0.74rem", color: "var(--texto-suave)", fontWeight: 700 }}>
                             {estadoAceptacion === "aceptada"
                               ? "✅ Confirmada por el abogado"
                               : "⏳ Pendiente confirmación del abogado"}
@@ -1100,10 +1100,10 @@ export default function MesaAsignaciones({
                         style={{
                           padding: "10px 12px",
                           borderRadius: "10px",
-                          background: "#F8FAFC",
-                          border: "1px solid #E2E8F0",
+                          background: "var(--fondo-suave)",
+                          border: "1px solid var(--linea)",
                           fontSize: "0.85rem",
-                          color: "#1E293B",
+                          color: "var(--texto)",
                         }}
                       >
                         <strong>Motivo de consulta:</strong> {c.cit_motivo}
@@ -1125,7 +1125,7 @@ export default function MesaAsignaciones({
                         gap: "10px",
                         alignItems: "end",
                         paddingTop: "6px",
-                        borderTop: "1px solid #F1F5F9",
+                        borderTop: "1px solid var(--fondo-hundido)",
                       }}
                     >
                       <div>
@@ -1135,7 +1135,7 @@ export default function MesaAsignaciones({
                             display: "block",
                             fontSize: "0.76rem",
                             fontWeight: 800,
-                            color: "#334155",
+                            color: "var(--texto-2)",
                             marginBottom: "4px",
                           }}
                         >
@@ -1150,7 +1150,7 @@ export default function MesaAsignaciones({
                             width: "100%",
                             padding: "9px 12px",
                             borderRadius: "8px",
-                            border: "1px solid #CBD5E1",
+                            border: "1px solid var(--linea-fuerte)",
                             fontSize: "0.85rem",
                             background: "#FFFFFF",
                           }}
@@ -1173,7 +1173,7 @@ export default function MesaAsignaciones({
                             display: "block",
                             fontSize: "0.76rem",
                             fontWeight: 800,
-                            color: "#334155",
+                            color: "var(--texto-2)",
                             marginBottom: "4px",
                           }}
                         >
@@ -1189,7 +1189,7 @@ export default function MesaAsignaciones({
                             width: "100%",
                             padding: "9px 12px",
                             borderRadius: "8px",
-                            border: "1px solid #CBD5E1",
+                            border: "1px solid var(--linea-fuerte)",
                             fontSize: "0.85rem",
                           }}
                         />
@@ -1229,9 +1229,9 @@ export default function MesaAsignaciones({
                             gap: "5px",
                             padding: "9px 12px",
                             borderRadius: "8px",
-                            border: "1px solid #CBD5E1",
-                            background: verLog ? "#0F172A" : "#FFFFFF",
-                            color: verLog ? "#FFFFFF" : "#334155",
+                            border: "1px solid var(--linea-fuerte)",
+                            background: verLog ? "var(--texto)" : "#FFFFFF",
+                            color: verLog ? "#FFFFFF" : "var(--texto-2)",
                             fontSize: "0.78rem",
                             fontWeight: 800,
                             cursor: "pointer",
@@ -1268,21 +1268,21 @@ export default function MesaAsignaciones({
           style={{
             background: "#FFFFFF",
             borderRadius: "14px",
-            border: "1px solid #E2E8F0",
+            border: "1px solid var(--linea)",
             padding: "18px",
           }}
         >
           <div style={{ marginBottom: "14px" }}>
-            <h3 style={{ margin: "0 0 4px 0", fontSize: "1rem", fontWeight: 800, color: "#0F172A" }}>
+            <h3 style={{ margin: "0 0 4px 0", fontSize: "1rem", fontWeight: 800, color: "var(--texto)" }}>
               Historial de Asignaciones de Abogados (Log de Auditoría)
             </h3>
-            <p style={{ margin: 0, fontSize: "0.82rem", color: "#64748B" }}>
+            <p style={{ margin: 0, fontSize: "0.82rem", color: "var(--texto-suave)" }}>
               Trazabilidad cronológica de todas las asignaciones y reasignaciones realizadas por los operadores, incluyendo notificaciones enviadas al cliente y al abogado.
             </p>
           </div>
 
           {historialGlobal.length === 0 ? (
-            <p style={{ margin: 0, padding: "24px 0", textAlign: "center", color: "#64748B", fontSize: "0.88rem" }}>
+            <p style={{ margin: 0, padding: "24px 0", textAlign: "center", color: "var(--texto-suave)", fontSize: "0.88rem" }}>
               Aún no se han registrado asignaciones manuales en la bitácora.
             </p>
           ) : (
@@ -1293,8 +1293,8 @@ export default function MesaAsignaciones({
                   style={{
                     padding: "12px 14px",
                     borderRadius: "10px",
-                    background: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
+                    background: "var(--fondo-suave)",
+                    border: "1px solid var(--linea)",
                     display: "flex",
                     flexDirection: "column",
                     gap: "4px",
@@ -1309,30 +1309,30 @@ export default function MesaAsignaciones({
                       gap: "8px",
                     }}
                   >
-                    <strong style={{ fontSize: "0.88rem", color: "#0F172A" }}>
+                    <strong style={{ fontSize: "0.88rem", color: "var(--texto)" }}>
                       {item.abogado_anterior_nombre
                         ? `🔄 Reasignación: Dr(a). ${item.abogado_anterior_nombre} → Dr(a). ${item.abogado_nuevo_nombre}`
                         : `✅ Asignación: Dr(a). ${item.abogado_nuevo_nombre}`}
                     </strong>
-                    <span style={{ fontSize: "0.76rem", color: "#64748B", fontWeight: 700 }}>
+                    <span style={{ fontSize: "0.76rem", color: "var(--texto-suave)", fontWeight: 700 }}>
                       <Clock size={12} style={{ display: "inline", marginRight: "4px" }} />
                       {FORMATO_FECHA_LOG.format(new Date(item.fecha_asignacion))}
                     </span>
                   </div>
 
-                  <div style={{ fontSize: "0.82rem", color: "#334155" }}>
+                  <div style={{ fontSize: "0.82rem", color: "var(--texto-2)" }}>
                     <strong>Cliente:</strong> {item.cliente_nombre} ·{" "}
                     <strong>Cita:</strong> {FORMATO_FECHA_LOG.format(new Date(item.cita_inicio_en))} (
                     {item.cita_modalidad === "presencial" ? "🏢 Presencial" : "🎥 Telemática"}) ·{" "}
                     <strong>Especialidad:</strong> {item.materia_nombre ?? "General"}
                   </div>
 
-                  <div style={{ fontSize: "0.78rem", color: "#475569" }}>
+                  <div style={{ fontSize: "0.78rem", color: "var(--texto-2)" }}>
                     <strong>Operador responsable:</strong> {item.operador_nombre}
                     {item.motivo ? ` · 📌 Mensaje de asignación: "${item.motivo}"` : ""}
                   </div>
 
-                  <div style={{ display: "flex", gap: "10px", marginTop: "2px", fontSize: "0.74rem", color: "#059669", fontWeight: 700 }}>
+                  <div style={{ display: "flex", gap: "10px", marginTop: "2px", fontSize: "0.74rem", color: "var(--exito)", fontWeight: 700 }}>
                     <span>
                       <CheckCircle2 size={12} style={{ display: "inline", marginRight: "3px" }} />
                       Cliente notificado
