@@ -477,18 +477,29 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
         );
         const usosNormTexto = usos.map((u) => normalizarTextoEcommerce(u)).join(' ');
 
+        const slugsSemillaComplemento = new Set([
+          'tinkay-choc-ferrero',
+          'tinkay-globo-burbuja',
+          'globo-burbuja-helio-personalizado',
+          'tinkay-mariposas-3d',
+          'tinkay-servicios-logisticos',
+        ]);
+        const tieneCategoriaNoComplemento = Boolean(
+          catEncontrada &&
+            !catNombre.toLowerCase().includes('extra') &&
+            !catSlug.toLowerCase().includes('extra') &&
+            catSlug.toLowerCase() !== 'cat-detalles' &&
+            catTipo !== 'COMPLEMENTO'
+        );
         const esExtra =
           detalle.es_complemento === true ||
           catNombre.toLowerCase().includes('extra') ||
           catSlug.toLowerCase().includes('extra') ||
+          catSlug.toLowerCase() === 'cat-detalles' ||
           catTipo === 'COMPLEMENTO' ||
           p.pro_tipo === 'COMPLEMENTO' ||
-          p.pro_slug?.includes('ferrero') ||
-          p.pro_slug?.includes('choc') ||
-          p.pro_slug?.includes('globo') ||
-          p.pro_slug?.includes('mariposa') ||
-          p.pro_slug?.includes('servicios-logisticos') ||
-          p.pro_slug?.includes('cinta');
+          (!tieneCategoriaNoComplemento &&
+            slugsSemillaComplemento.has((p.pro_slug || '').toLowerCase()));
 
         const esRentaProd = esCodigoOfertaRenta(p.pro_tipo, detalle);
         const esCatEventos =
@@ -588,6 +599,8 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
             fallbackMatch?.descripcionCorta ||
             (esRentaProd
               ? 'Mobiliario exclusivo en calidad de renta temporal para eventos.'
+              : esEventoProd
+              ? 'Montaje y decoración personalizada para eventos y celebraciones.'
               : 'Arreglo floral exclusivo de exportación.'),
           descripcionMasterCorta: descripcionMasterCorta || undefined,
           descripcionLarga: descripcionFinal,
