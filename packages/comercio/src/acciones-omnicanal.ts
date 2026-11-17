@@ -1589,10 +1589,14 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
           .slice(0, 6)
           .map(
             (i) =>
-              `"${i.nombre}" a $${Number(i.precio).toFixed(2)} USD (${i.tiempoEntregaTexto}, ver foto: ${origenTienda}/producto/${i.slug})`
+              `"${i.nombre}" a $${Number(i.precio).toFixed(2)} USD (${i.tiempoEntregaTexto}${
+                i.imagenUrl && /^https?:\/\//i.test(i.imagenUrl)
+                  ? `, foto markdown para adjuntar: ![${i.nombre}](${i.imagenUrl})`
+                  : ""
+              }, link tienda: ${origenTienda}/producto/${i.slug})`
           )
           .join("; ");
-        bloqueInmediata = `\n[ARREGLOS LISTOS EN TIENDA PARA ENTREGA INMEDIATA 1-2h: ${lista}. Catálogo inmediato: ${origenTienda}/categoria/entrega-inmediata]`;
+        bloqueInmediata = `\n[ARREGLOS LISTOS EN TIENDA PARA ENTREGA INMEDIATA 1-2h: ${lista}. Cuando recomiendes uno en WhatsApp incluye su foto markdown ![Nombre](url) para que el cliente vea la fotografía real. Catálogo inmediato: ${origenTienda}/categoria/entrega-inmediata]`;
       }
     } catch {
       // Ignorar

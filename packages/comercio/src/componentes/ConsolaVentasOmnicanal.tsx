@@ -62,7 +62,9 @@ import {
 import {
   calcularMetricasOmnicanal,
   emparejarComprasConConversacion,
+  extraerSegmentosMultimediaMensaje,
   interpolarRespuestaRapida,
+  limpiarVistaPreviaMensajeOmnicanal,
   nombreCanalRealtimeOmnicanal,
   type CanalOmnicanal,
   type ContactoUnificadoOmnicanal,
@@ -114,6 +116,131 @@ function formatearTiempoCorto(iso?: string | null): string {
   const diffDias = Math.floor(diffHoras / 24);
   if (diffDias < 7) return `${diffDias}d`;
   return fecha.toLocaleDateString("es-EC", { day: "2-digit", month: "short" });
+}
+
+function renderTextoConEnlaces(texto: string, esFondoOscuro: boolean): React.ReactNode {
+  const partes = texto.split(/(https?:\/\/[^\s]+)/g);
+  return partes.map((parte, idx) => {
+    if (/^https?:\/\//i.test(parte)) {
+      return (
+        <a
+          key={idx}
+          href={parte}
+          target="_blank"
+          rel="noreferrer"
+          style={{
+            color: esFondoOscuro ? "#BAE6FD" : "#0284C7",
+            textDecoration: "underline",
+            wordBreak: "break-all",
+          }}
+        >
+          {parte}
+        </a>
+      );
+    }
+    return <React.Fragment key={idx}>{parte}</React.Fragment>;
+  });
+}
+
+function renderContenidoMensajeOmnicanal(
+  mensaje: MensajeOmnicanal,
+  esFondoOscuro: boolean
+): React.ReactNode {
+  const segmentos = extraerSegmentosMultimediaMensaje(mensaje.contenido || "");
+  const urlAdjuntaDetalle =
+    typeof mensaje.detalle?.imagen_url === "string" &&
+    /^https?:\/\//i.test(mensaje.detalle.imagen_url)
+      ? mensaje.detalle.imagen_url
+      : null;
+
+  const yaIncluyeAdjunta =
+    urlAdjuntaDetalle != null &&
+    segmentos.some((s) => s.tipo === "imagen" && s.url === urlAdjuntaDetalle);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      {urlAdjuntaDetalle && !yaIncluyeAdjunta && (
+        <a
+          href={urlAdjuntaDetalle}
+          target="_blank"
+          rel="noreferrer"
+          title="Abrir fotografía en tamaño completo"
+          style={{ display: "inline-block", textDecoration: "none" }}
+        >
+          <img
+            src={urlAdjuntaDetalle}
+            alt="Imagen adjunta"
+            loading="lazy"
+            style={{
+              display: "block",
+              maxWidth: "230px",
+              width: "100%",
+              maxHeight: "260px",
+              objectFit: "cover",
+              borderRadius: "10px",
+              border: esFondoOscuro
+                ? "1px solid rgba(255,255,255,0.25)"
+                : "1px solid rgba(15,23,42,0.1)",
+            }}
+          />
+        </a>
+      )}
+
+      {segmentos.map((seg, idx) => {
+        if (seg.tipo === "imagen") {
+          return (
+            <a
+              key={`img-${idx}`}
+              href={seg.url}
+              target="_blank"
+              rel="noreferrer"
+              title={seg.alt || "Abrir imagen en tamaño completo"}
+              style={{
+                display: "inline-flex",
+                flexDirection: "column",
+                gap: "4px",
+                textDecoration: "none",
+                maxWidth: "235px",
+              }}
+            >
+              <img
+                src={seg.url}
+                alt={seg.alt || "Arreglo floral"}
+                loading="lazy"
+                style={{
+                  display: "block",
+                  width: "100%",
+                  maxHeight: "260px",
+                  objectFit: "cover",
+                  borderRadius: "10px",
+                  border: esFondoOscuro
+                    ? "1px solid rgba(255,255,255,0.25)"
+                    : "1px solid rgba(15,23,42,0.1)",
+                  background: "#FFFFFF",
+                }}
+              />
+              {seg.alt && (
+                <span
+                  style={{
+                    fontSize: "0.72rem",
+                    fontWeight: 600,
+                    color: esFondoOscuro ? "#E2E8F0" : "#475569",
+                  }}
+                >
+                  📷 {seg.alt}
+                </span>
+              )}
+            </a>
+          );
+        }
+        return (
+          <div key={`txt-${idx}`} style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+            {renderTextoConEnlaces(seg.texto, esFondoOscuro)}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function etiquetaCanal(canal: CanalOmnicanal | string): {
@@ -2265,7 +2392,7 @@ export function ConsolaVentasOmnicanal({
                       >
                         {conv.ultimoMensajeOrigen === "BOT_ARIA" && "🤖 "}
                         {conv.ultimoMensajeOrigen === "ASESORA_HUMANA" && "👩‍💼 "}
-                        {conv.ultimoMensajeTexto || "Conversación iniciada"}
+                        {limpiarVistaPreviaMensajeOmnicanal(conv.ultimoMensajeTexto)}
                       </div>
 
                       <div
@@ -2828,11 +2955,13 @@ export function ConsolaVentasOmnicanal({
                                     : "none",
                               fontSize: "0.83rem",
                               lineHeight: 1.48,
-                              whiteSpace: "pre-wrap",
                               boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
                             }}
                           >
-                            {m.contenido}
+                            {renderContenidoMensajeOmnicanal(
+                              m,
+                              m.origen === "ASESORA_HUMANA"
+                            )}
                           </div>
                         </div>
                       );
@@ -3167,14 +3296,18 @@ export function ConsolaVentasOmnicanal({
                             ? "#DBEAFE"
                             : comprasDeConversacionActiva.length > 0
                               ? "#FEF3C7"
-                              : "#E2E8F0",
+                              : conversacionActiva.canal === "whatsapp"
+                                ? "#DCFCE7"
+                                : "#E2E8F0",
                         color:
                           contactoVinculadoActivo?.tipoCuenta === "USUARIO_REGISTRADO" ||
                           conversacionActiva.usuarioId
                             ? "#1E40AF"
                             : comprasDeConversacionActiva.length > 0
                               ? "#92400E"
-                              : "#334155",
+                              : conversacionActiva.canal === "whatsapp"
+                                ? "#15803D"
+                                : "#334155",
                       }}
                     >
                       {contactoVinculadoActivo?.tipoCuenta === "USUARIO_REGISTRADO" ||
@@ -3182,7 +3315,9 @@ export function ConsolaVentasOmnicanal({
                         ? "✅ Usuario Registrado Web"
                         : comprasDeConversacionActiva.length > 0
                           ? "🛒 Comprador Invitado"
-                          : "💬 Visitante Web"}
+                          : conversacionActiva.canal === "whatsapp"
+                            ? "📱 Contacto WhatsApp"
+                            : "💬 Visitante Web"}
                     </span>
                   </div>
                   <strong style={{ fontSize: "0.9rem", color: "#0F172A" }}>
@@ -3390,8 +3525,12 @@ export function ConsolaVentasOmnicanal({
                           onClick={() => {
                             const orig =
                               typeof window !== "undefined" ? window.location.origin : "";
+                            const bloqueFoto =
+                              disp.imagenUrl && /^https?:\/\//i.test(disp.imagenUrl)
+                                ? `\n![${disp.nombre}](${disp.imagenUrl})\n`
+                                : " ";
                             setTextoRespuesta(
-                              `¡Tenemos disponible para entrega inmediata (1 a 2 horas) "${disp.nombre}" por $${Number(disp.precio).toFixed(2)} USD! 🌸 Puedes ver la foto real y pedirlo aquí: ${orig}/producto/${disp.slug}`
+                              `¡Tenemos disponible para entrega inmediata (1 a 2 horas) *${disp.nombre}* por $${Number(disp.precio).toFixed(2)} USD! 🌸${bloqueFoto}Puedes pedirlo directo aquí: ${orig}/producto/${disp.slug}`
                             );
                           }}
                           title="Insertar oferta de entrega inmediata en el mensaje"

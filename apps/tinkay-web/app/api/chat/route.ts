@@ -138,7 +138,11 @@ export async function POST(req: NextRequest) {
         .slice(0, 6)
         .map(
           (i) =>
-            `"${i.nombre}" a $${Number(i.precio).toFixed(2)} USD (${i.tiempoEntregaTexto}, link: ${origenTienda}/producto/${i.slug})`
+            `"${i.nombre}" a $${Number(i.precio).toFixed(2)} USD (${i.tiempoEntregaTexto}${
+              i.imagenUrl && /^https?:\/\//i.test(i.imagenUrl)
+                ? `, foto: ![${i.nombre}](${i.imagenUrl})`
+                : ""
+            }, link: ${origenTienda}/producto/${i.slug})`
         )
         .join("; ");
       bloqueEntregaInmediata =

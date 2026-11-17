@@ -364,3 +364,72 @@ export function calcularMetricasOmnicanal(
     totalUsuariosRegistradosWeb,
   };
 }
+
+export type SegmentoMensajeMultimedia =
+  | { tipo: "texto"; texto: string }
+  | { tipo: "imagen"; alt: string; url: string };
+
+/**
+ * Extrae bloques ordenados de texto e imágenes desde mensajes con formato Markdown
+ * (por ejemplo `![Abanico Canasta XL](https://.../abanico.jpg)` o URLs con paréntesis `foto_(2).jpg`),
+ * limpiando negritas Markdown `**...**` y enlaces `[texto](url)`.
+ */
+export function extraerSegmentosMultimediaMensaje(contenido: string): SegmentoMensajeMultimedia[] {
+  if (!contenido) return [];
+
+  // Convertir enlaces markdown que apunten directamente a archivos de imagen en sintaxis ![alt](url)
+  const preprocesado = contenido.replace(
+    /(?<!!)\[([^\]]*)\]\((https?:\/\/(?:[^()\s]+|\([^()\s]*\))+\.(?:jpg|jpeg|png|webp)(?:\?[^()\s]*)?)\)/gi,
+    "![$1]($2)"
+  );
+
+  const regexImg = /!\[([^\]]*)\]\((https?:\/\/(?:[^()\s]+|\([^()\s]*\))+)\)/g;
+  const segmentos: SegmentoMensajeMultimedia[] = [];
+  let cursor = 0;
+  let match: RegExpExecArray | null;
+
+  const limpiarBloqueTexto = (raw: string): string =>
+    raw
+      .replace(/\[([^\]]+)\]\((https?:\/\/(?:[^()\s]+|\([^()\s]*\))+)\)/g, "$1: $2")
+      .replace(/\*\*([^*]+)\*\*/g, "$1")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+
+  while ((match = regexImg.exec(preprocesado)) !== null) {
+    const antes = limpiarBloqueTexto(preprocesado.slice(cursor, match.index));
+    if (antes) {
+      segmentos.push({ tipo: "texto", texto: antes });
+    }
+    const alt = (match[1] || "").trim();
+    const url = (match[2] || "").trim();
+    if (url) {
+      segmentos.push({ tipo: "imagen", alt, url });
+    }
+    cursor = match.index + match[0].length;
+  }
+
+  const cola = limpiarBloqueTexto(preprocesado.slice(cursor));
+  if (cola) {
+    segmentos.push({ tipo: "texto", texto: cola });
+  }
+
+  return segmentos;
+}
+
+/**
+ * Convierte sintaxis Markdown cruda (`![Título](https://...)`) en una vista previa limpia
+ * de una sola línea para la lista izquierda de conversaciones.
+ */
+export function limpiarVistaPreviaMensajeOmnicanal(texto?: string | null): string {
+  if (!texto) return "Conversación iniciada";
+  const limpio = texto
+    .replace(
+      /!\[([^\]]*)\]\((https?:\/\/(?:[^()\s]+|\([^()\s]*\))+)\)/g,
+      (_m, alt: string) => (alt?.trim() ? `📷 ${alt.trim()}` : "📷 Foto")
+    )
+    .replace(/\[([^\]]+)\]\((https?:\/\/(?:[^()\s]+|\([^()\s]*\))+)\)/g, "$1")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\s+/g, " ")
+    .trim();
+  return limpio || "📷 Imagen";
+}

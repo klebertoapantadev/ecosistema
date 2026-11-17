@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   calcularMetricasOmnicanal,
   emparejarComprasConConversacion,
+  extraerSegmentosMultimediaMensaje,
   interpolarRespuestaRapida,
+  limpiarVistaPreviaMensajeOmnicanal,
   normalizarTelefonoOmnicanal,
   type ContactoUnificadoOmnicanal,
   type ConversacionOmnicanal,
@@ -132,5 +134,33 @@ describe("omnicanal — normalización, plantillas y cruce cliente-compras", () 
     expect(m.comprasInvitadosNoRegistrados).toBe(1);
     expect(m.montoTotalVentasUsd).toBe(135);
     expect(m.totalUsuariosRegistradosWeb).toBe(1);
+  });
+
+  it("extrae imágenes Markdown (incluyendo URLs con paréntesis) y limpia vistas previas", () => {
+    const respuestaMia =
+      "Para condolencias tengo estos arreglos solemnes:\n\n" +
+      "1. Abanico/Canasta XL $45.00\n" +
+      "![Abanico Canasta XL](https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/abanico_blanco_ok.jpg)\n\n" +
+      "2. Abanico/Canasta L $38.00\n" +
+      "![Abanico Canasta L](https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/abanico_m_(2).jpg)\n\n" +
+      "¿Prefieres que reservemos alguno?";
+
+    const segmentos = extraerSegmentosMultimediaMensaje(respuestaMia);
+    expect(segmentos).toHaveLength(5);
+    expect(segmentos[1]).toEqual({
+      tipo: "imagen",
+      alt: "Abanico Canasta XL",
+      url: "https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/abanico_blanco_ok.jpg",
+    });
+    expect(segmentos[3]).toEqual({
+      tipo: "imagen",
+      alt: "Abanico Canasta L",
+      url: "https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/catalogo/abanico_m_(2).jpg",
+    });
+
+    const previa = limpiarVistaPreviaMensajeOmnicanal(
+      "![Abanico Canasta XL](https://oaybbpdxhlxjbpwnoymy.supabase.co/abanico.jpg)"
+    );
+    expect(previa).toBe("📷 Abanico Canasta XL");
   });
 });
