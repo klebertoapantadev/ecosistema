@@ -9,6 +9,7 @@ export * from "./componentes/ConfiguracionPasarelaPayphone";
 export * from "./componentes/HistorialTransaccionesPago";
 export * from "./componentes/WidgetFacturacionElectronica";
 export * from "./componentes/ModalCrearProducto";
+export * from "./componentes/BarraPasosWizardProducto";
 export * from "./componentes/ModalCrearCategoria";
 export * from "./componentes/ModalEditarProducto";
 export * from "./componentes/ManualConfiguracionCatalogoModal";

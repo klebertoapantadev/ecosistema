@@ -3500,6 +3500,9 @@ export async function crearProductoAction(datos: {
   sku?: string;
   icono?: "Scale" | "ShieldCheck" | "FileCheck" | "CreditCard" | string;
   imagenUrl?: string;
+  fotoPosicion?: string;
+  fotoAjuste?: "cover" | "contain";
+  fotoZoom?: number;
   galeriaUrls?: string[];
   albumFotosUrl?: string;
   videoUrl?: string;
@@ -3507,6 +3510,13 @@ export async function crearProductoAction(datos: {
   tiempoEntrega?: string;
   requisitos?: string[];
   modalidadPago?: string;
+  logistica?: {
+    delivery_incluido: boolean;
+    modalidad_transporte: string;
+    etiqueta_transporte: string;
+    cobertura_texto: string;
+    recargo_transporte_usd?: number;
+  };
   usos?: string[];
   etiquetas?: string[];
   canales_visibilidad?: CanalVisibilidad[];
@@ -3631,6 +3641,9 @@ export async function crearProductoAction(datos: {
       pro_detalle_producto: {
         icono: datos.icono || "Scale",
         imagen_url: resolvedImg,
+        foto_posicion: datos.fotoPosicion || "center center",
+        foto_ajuste: datos.fotoAjuste || "cover",
+        foto_zoom: datos.fotoZoom || 100,
         galeria_urls: resolvedGaleria,
         album_fotos_url: datos.albumFotosUrl?.trim() || null,
         video_url: datos.videoUrl?.trim() || null,
@@ -3638,6 +3651,8 @@ export async function crearProductoAction(datos: {
         tiempo_entrega: datos.tiempoEntrega?.trim() || null,
         requisitos: datos.requisitos || [],
         modalidad_pago: datos.modalidadPago || "Botón Payphone / Tarjeta / Saldo",
+        tarifa_iva_predeterminada: tarifaIva,
+        logistica: datos.logistica || undefined,
         usos: datos.usos || [],
         etiquetas: datos.etiquetas || [],
         canales_visibilidad: canalesFinales,

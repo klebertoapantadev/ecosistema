@@ -11,9 +11,7 @@ import {
   CheckCircle2,
   AlertCircle,
   Image as ImageIcon,
-  Video,
   Clock,
-  BookOpen,
   Loader2,
   Wand2,
   FolderPlus,
@@ -25,11 +23,14 @@ import {
   Calendar,
   Power,
   Settings2,
+  ArrowLeft,
+  ArrowRight,
+  Truck,
+  FileText,
 } from "lucide-react";
 import {
   crearProductoAction,
   resolverUrlImagenDirectaAction,
-  subirImagenCatalogoAction,
   verificarUsoEnCatalogoAction,
   CategoriaCatalogo,
   ProductoCatalogo,
@@ -45,6 +46,11 @@ import { TipoVigenciaTemporal } from "../utils/vigencia";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
 import { ModalGaleriaMedios } from "./ModalGaleriaMedios";
 import { detectarTipoNegocio } from "../utils/negocio";
+import { obtenerConfiguracionLogisticaAction } from "../acciones-logistica";
+import {
+  crearConfiguracionLogisticaPorDefecto,
+  type ConfiguracionLogisticaNegocio,
+} from "../logistica";
 import {
   obtenerPresetsPorNegocio,
   obtenerUsosEliminadosStorage,
@@ -80,7 +86,12 @@ import {
   ModalGestionTiposOferta,
   PanelCondicionesRentaProducto,
 } from "./ModalGestionTiposOferta";
-
+import {
+  BarraPasosWizardProducto,
+  PASOS_WIZARD_PRODUCTO,
+  SelectorEncuadreFoto,
+  type PasoWizardProducto,
+} from "./BarraPasosWizardProducto";
 
 interface Props {
   abierto: boolean;
@@ -104,6 +115,9 @@ export function ModalCrearProducto({
   negocio = "tranqi",
 }: Props) {
   const { esFloristeria, esLegal, esMantenimiento } = detectarTipoNegocio(negocio);
+  const colorTema = esFloristeria ? "#E11D48" : "#0284C7";
+
+  const [pasoActivo, setPasoActivo] = useState<PasoWizardProducto>("identidad_precio");
 
   const [categoriasLocales, setCategoriasLocales] = useState<CategoriaCatalogo[]>(categorias || []);
   const [modalCatAbierto, setModalCatAbierto] = useState(false);
@@ -112,11 +126,15 @@ export function ModalCrearProducto({
   useEffect(() => {
     if (categorias && categorias.length > 0) {
       setCategoriasLocales(categorias);
+      if (!categoriaId && categorias[0]) {
+        setCategoriaId(categorias[0].ctg_id);
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categorias]);
 
+  // Paso 1: Identidad, Categoría, Oferta y Precio
   const [nombre, setNombre] = useState("");
-  const [descripcion, setDescripcion] = useState("");
   const [categoriaId, setCategoriaId] = useState(categorias[0]?.ctg_id || "");
   const [tipo, setTipo] = useState<string>(esFloristeria ? "FISICO" : "SERVICIO");
   const [tiposOfertaLocales, setTiposOfertaLocales] = useState<TipoOfertaComercial[]>(() =>
@@ -127,14 +145,132 @@ export function ModalCrearProducto({
   const [rentaConfig, setRentaConfig] = useState<ConfiguracionRentaProducto>(() =>
     normalizarConfiguracionRenta()
   );
+  const [precioBase, setPrecioBase] = useState<number | "">("");
+  const [precioComparacion, setPrecioComparacion] = useState<number | "">("");
+  const [tarifaIva, setTarifaIva] = useState<number>(esFloristeria ? 0 : 15);
+  const [sku, setSku] = useState("");
+  const [esComboCrear, setEsComboCrear] = useState<boolean>(false);
+  const [comboComponentesCrear, setComboComponentesCrear] = useState<ComponenteComboConfig[]>([]);
+  const [escalasVolumenCrear, setEscalasVolumenCrear] = useState<EscalaVolumenVariante[]>([]);
+  const [icono] = useState<string>(esFloristeria ? "Sparkles" : "Scale");
+  const [modalidadPago] = useState("Botón Payphone / Tarjeta / Saldo");
 
+  // Paso 2: Características (SIN valores forzados por defecto: inician vacíos para cada producto)
+  const [descripcion, setDescripcion] = useState("");
+  const [beneficiosTexto, setBeneficiosTexto] = useState("");
+  const [requisitosTexto, setRequisitosTexto] = useState("");
+  const [tiempoEntrega, setTiempoEntrega] = useState(
+    esFloristeria ? "🌸 Pide hoy, recibe hoy (Mismo Día)" : "24 a 48 horas hábiles"
+  );
+
+  // Paso 3: Imágenes, Encuadre y Multimedia
+  const [imagenUrl, setImagenUrl] = useState("");
+  const [fotoPosicion, setFotoPosicion] = useState("center center");
+  const [fotoAjuste, setFotoAjuste] = useState<"cover" | "contain">("cover");
+  const [fotoZoom, setFotoZoom] = useState<number>(100);
+  const [galeriaTexto, setGaleriaTexto] = useState("");
+  const [albumFotosUrl, setAlbumFotosUrl] = useState("");
+  const [videoUrl, setVideoUrl] = useState("");
+  const [contextoMedios, setContextoMedios] = useState<"portada" | "galeria">("portada");
+  const [subiendoGaleria, setSubiendoGaleria] = useState(false);
+  const [resolviendoImagen, setResolviendoImagen] = useState(false);
+  const [subiendoImagen, setSubiendoImagen] = useState(false);
+  const [modalGaleriaAbierto, setModalGaleriaAbierto] = useState(false);
+  const [exitoAutoConvertir, setExitoAutoConvertir] = useState<string | null>(null);
+
+  // Paso 4: Logística, Estado y Vigencia Estacional
+  const [proActivo, setProActivo] = useState(true);
+  const [destacado, setDestacado] = useState(false);
+  const [vigenciaTipo, setVigenciaTipo] = useState<TipoVigenciaTemporal>("SIEMPRE");
+  const [fechaInicio, setFechaInicio] = useState("");
+  const [fechaFin, setFechaFin] = useState("");
+  const [mensajeFueraTemporada, setMensajeFueraTemporada] = useState("");
+  const [etiquetaTemporada, setEtiquetaTemporada] = useState("");
+
+  const [configLogisticaNegocio, setConfigLogisticaNegocio] =
+    useState<ConfiguracionLogisticaNegocio>(() => crearConfiguracionLogisticaPorDefecto(negocio));
+  const [deliveryIncluido, setDeliveryIncluido] = useState<boolean>(esLegal ? false : true);
+  const [modalidadTransporte, setModalidadTransporte] = useState<string>(
+    esLegal ? "TELEMATICO_DIGITAL" : "INCLUIDO_GRATIS"
+  );
+  const [etiquetaTransporte, setEtiquetaTransporte] = useState<string>(
+    esLegal
+      ? "🌐 Modalidad 100% Telemática"
+      : esFloristeria
+        ? "🌸 Envío Gratis en Centro-Norte de Quito"
+        : "🚚 Visita Técnica Incluida"
+  );
+  const [coberturaTransporte, setCoberturaTransporte] = useState<string>(
+    esLegal ? "Nacional (Ecuador)" : "Centro-Norte de Quito"
+  );
+  const [recargoTransporteUsd, setRecargoTransporteUsd] = useState<number>(0);
+
+  // Paso 5: Canales, Usos y Etiquetas IA
+  const [canalesSeleccionados, setCanalesSeleccionados] = useState<CanalVisibilidad[]>([
+    ...CANALES_POR_DEFECTO,
+  ]);
+  const [usosSeleccionados, setUsosSeleccionados] = useState<string[]>([]);
+  const [nuevoUsoTexto, setNuevoUsoTexto] = useState("");
+  const [etiquetasSeleccionadas, setEtiquetasSeleccionadas] = useState<string[]>([]);
+  const [nuevaEtiquetaTexto, setNuevaEtiquetaTexto] = useState("");
+
+  const [usosEliminados, setUsosEliminados] = useState<string[]>([]);
+  const [usosPersonalizados, setUsosPersonalizados] = useState<{ clave: string; label: string }[]>(
+    []
+  );
+  const [modalBloqueoUso, setModalBloqueoUso] = useState<{
+    clave: string;
+    label: string;
+    productos: string[];
+  } | null>(null);
+  const [modalConfirmarEliminarUso, setModalConfirmarEliminarUso] = useState<{
+    clave: string;
+    label: string;
+  } | null>(null);
+  const [verificandoUsoClave, setVerificandoUsoClave] = useState<string | null>(null);
+  const [mensajeExitoUso, setMensajeExitoUso] = useState<string | null>(null);
+
+  const [guardando, setGuardando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Al abrir el modal para crear un producto nuevo, reiniciar a un formulario limpio en Paso 1
   useEffect(() => {
     if (!abierto) return;
+    setPasoActivo("identidad_precio");
+    setNombre("");
+    setSku("");
+    setPrecioBase("");
+    setPrecioComparacion("");
+    setTarifaIva(esFloristeria ? 0 : 15);
+    setDescripcion("");
+    setBeneficiosTexto("");
+    setRequisitosTexto("");
+    setImagenUrl("");
+    setFotoPosicion("center center");
+    setFotoAjuste("cover");
+    setFotoZoom(100);
+    setGaleriaTexto("");
+    setAlbumFotosUrl("");
+    setVideoUrl("");
+    setEsComboCrear(false);
+    setComboComponentesCrear([]);
+    setEscalasVolumenCrear([]);
+    setProActivo(true);
+    setDestacado(false);
+    setVigenciaTipo("SIEMPRE");
+    setFechaInicio("");
+    setFechaFin("");
+    setUsosSeleccionados([]);
+    setEtiquetasSeleccionadas([]);
+    setError(null);
+    setExitoAutoConvertir(null);
+
+    setUsosEliminados(obtenerUsosEliminadosStorage(negocio));
+    setUsosPersonalizados(obtenerUsosPersonalizadosStorage(negocio));
+
     let vivo = true;
     const cache = leerTiposOfertaCacheLocal(negocio);
-    if (cache.length > 0) {
-      setTiposOfertaLocales(cache);
-    }
+    if (cache.length > 0) setTiposOfertaLocales(cache);
     obtenerTiposOfertaConUsoAction(negocio)
       .then((remotos) => {
         if (!vivo || !Array.isArray(remotos) || remotos.length === 0) return;
@@ -145,83 +281,29 @@ export function ModalCrearProducto({
         guardarTiposOfertaCacheLocal(negocio, finalLista);
       })
       .catch(() => {});
+
+    obtenerConfiguracionLogisticaAction(negocio)
+      .then((cfg) => {
+        if (!vivo || !cfg) return;
+        setConfigLogisticaNegocio(cfg);
+        if (!esLegal) {
+          setCoberturaTransporte(cfg.zonaGratisNombre || "Centro-Norte de Quito");
+          if (esFloristeria && cfg.etiquetaEnvioGratis) {
+            setEtiquetaTransporte(cfg.etiquetaEnvioGratis);
+          }
+        }
+      })
+      .catch(() => {});
+
     return () => {
       vivo = false;
     };
-  }, [abierto, negocio]);
+  }, [abierto, negocio, esFloristeria, esLegal]);
 
   const esOfertaRentaActiva = useMemo(
     () => esCodigoOfertaRenta(tipo, undefined, tiposOfertaLocales),
     [tipo, tiposOfertaLocales]
   );
-  const [precioBase, setPrecioBase] = useState<number | "">("");
-  const [precioComparacion, setPrecioComparacion] = useState<number | "">("");
-  const [tarifaIva, setTarifaIva] = useState<number>(15);
-  const [sku, setSku] = useState("");
-  const [esComboCrear, setEsComboCrear] = useState<boolean>(false);
-  const [comboComponentesCrear, setComboComponentesCrear] = useState<ComponenteComboConfig[]>([]);
-  const [escalasVolumenCrear, setEscalasVolumenCrear] = useState<EscalaVolumenVariante[]>([]);
-  const [destacado, setDestacado] = useState(false);
-  const [icono, setIcono] = useState<string>(esFloristeria ? "Sparkles" : "Scale");
-  const [modalidadPago, setModalidadPago] = useState("Botón Payphone / Tarjeta / Saldo");
-
-  // Recursos Digitales y Multimedia
-  const [imagenUrl, setImagenUrl] = useState("");
-  const [galeriaTexto, setGaleriaTexto] = useState("");
-  const [albumFotosUrl, setAlbumFotosUrl] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
-  const [contextoMedios, setContextoMedios] = useState<"portada" | "galeria">("portada");
-  const [subiendoGaleria, setSubiendoGaleria] = useState(false);
-  const [tiempoEntrega, setTiempoEntrega] = useState(
-    esFloristeria ? "🌸 Pide hoy, recibe hoy (Mismo Día)" : "24 a 48 horas hábiles"
-  );
-  const [beneficiosTexto, setBeneficiosTexto] = useState(
-    esFloristeria
-      ? "Rosas de exportación seleccionadas de tallo largo\nEnvoltura en fino papel coreano plisado\nTarjeta dedicatoria y preservante floral gratis"
-      : esLegal
-      ? "Asignación de abogado especialista acreditado\nRevisión jurídica previa y asesoría continua\nConstancia digital con validez legal"
-      : "Diagnóstico técnico en sitio\nGarantía de servicio por 90 días"
-  );
-  const [requisitosTexto, setRequisitosTexto] = useState(
-    esFloristeria
-      ? "Dirección exacta y número de contacto del destinatario\nMensaje para la tarjeta dedicatoria"
-      : "Cédula de ciudadanía o pasaporte vigente\nDocumentación básica de soporte"
-  );
-
-  // Estado Activo y Temporalidad / Vigencia Estacional
-  const [proActivo, setProActivo] = useState(true);
-  const [vigenciaTipo, setVigenciaTipo] = useState<TipoVigenciaTemporal>("SIEMPRE");
-  const [fechaInicio, setFechaInicio] = useState("");
-  const [fechaFin, setFechaFin] = useState("");
-  const [mensajeFueraTemporada, setMensajeFueraTemporada] = useState("");
-  const [etiquetaTemporada, setEtiquetaTemporada] = useState("");
-
-  const [resolviendoImagen, setResolviendoImagen] = useState(false);
-  const [subiendoImagen, setSubiendoImagen] = useState(false);
-  const [modalGaleriaAbierto, setModalGaleriaAbierto] = useState(false);
-  const [exitoAutoConvertir, setExitoAutoConvertir] = useState<string | null>(null);
-  const [canalesSeleccionados, setCanalesSeleccionados] = useState<CanalVisibilidad[]>([...CANALES_POR_DEFECTO]);
-
-  // Estado de Usos y Etiquetas Semánticas
-  const [usosSeleccionados, setUsosSeleccionados] = useState<string[]>([]);
-  const [nuevoUsoTexto, setNuevoUsoTexto] = useState("");
-  const [etiquetasSeleccionadas, setEtiquetasSeleccionadas] = useState<string[]>([]);
-  const [nuevaEtiquetaTexto, setNuevaEtiquetaTexto] = useState("");
-
-  // Usos eliminados y personalizados persistidos por negocio
-  const [usosEliminados, setUsosEliminados] = useState<string[]>([]);
-  const [usosPersonalizados, setUsosPersonalizados] = useState<{ clave: string; label: string }[]>([]);
-  const [modalBloqueoUso, setModalBloqueoUso] = useState<{ clave: string; label: string; productos: string[] } | null>(null);
-  const [modalConfirmarEliminarUso, setModalConfirmarEliminarUso] = useState<{ clave: string; label: string } | null>(null);
-  const [verificandoUsoClave, setVerificandoUsoClave] = useState<string | null>(null);
-  const [mensajeExitoUso, setMensajeExitoUso] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (abierto) {
-      setUsosEliminados(obtenerUsosEliminadosStorage(negocio));
-      setUsosPersonalizados(obtenerUsosPersonalizadosStorage(negocio));
-    }
-  }, [abierto, negocio]);
 
   const presetsBase = useMemo(() => obtenerPresetsPorNegocio(negocio), [negocio]);
   const presetsUsosActivos = useMemo(
@@ -231,17 +313,14 @@ export function ModalCrearProducto({
 
   const todosUsosDisponibles = useMemo(() => {
     const mapa = new Map<string, { clave: string; label: string; esPreset: boolean }>();
-
     for (const p of presetsUsosActivos) {
       mapa.set(p.clave, { clave: p.clave, label: p.label, esPreset: true });
     }
-
     for (const u of usosPersonalizados) {
       if (!usosEliminados.includes(u.clave) && !mapa.has(u.clave)) {
         mapa.set(u.clave, { clave: u.clave, label: u.label, esPreset: false });
       }
     }
-
     for (const u of usosSeleccionados) {
       if (!usosEliminados.includes(u) && !mapa.has(u)) {
         mapa.set(u, {
@@ -251,16 +330,110 @@ export function ModalCrearProducto({
         });
       }
     }
-
     return Array.from(mapa.values());
   }, [presetsUsosActivos, usosPersonalizados, usosSeleccionados, usosEliminados]);
+
+  const tieneAlMenosUnaImagen = useMemo(() => {
+    if (imagenUrl && imagenUrl.trim().length > 0) return true;
+    if (galeriaTexto && galeriaTexto.trim().length > 0) return true;
+    if (albumFotosUrl && albumFotosUrl.trim().length > 0) return true;
+    return false;
+  }, [imagenUrl, galeriaTexto, albumFotosUrl]);
+
+  const fotosCrear = useMemo(() => {
+    const list: string[] = [];
+    if (imagenUrl && imagenUrl.trim()) list.push(imagenUrl.trim());
+    if (galeriaTexto && galeriaTexto.trim()) {
+      galeriaTexto.split("\n").forEach((u) => {
+        const trimmed = u.trim();
+        if (trimmed && !list.includes(trimmed)) list.push(trimmed);
+      });
+    }
+    return list;
+  }, [imagenUrl, galeriaTexto]);
+
+  const listaViñetasPreview = useMemo(
+    () =>
+      beneficiosTexto
+        .split("\n")
+        .map((b) => b.trim())
+        .filter((b) => b.length > 0),
+    [beneficiosTexto]
+  );
+
+  const baseNum = typeof precioBase === "number" ? precioBase : 0;
+  const montoIvaCalc = Number(((baseNum * tarifaIva) / 100).toFixed(2));
+  const totalCalc = Number((baseNum + montoIvaCalc).toFixed(2));
+
+  const completadosPorPaso = useMemo<Partial<Record<PasoWizardProducto, boolean>>>(
+    () => ({
+      identidad_precio: Boolean(nombre.trim() && baseNum > 0),
+      caracteristicas: Boolean(descripcion.trim() || listaViñetasPreview.length > 0),
+      imagenes: tieneAlMenosUnaImagen,
+      logistica: Boolean(proActivo || vigenciaTipo !== "SIEMPRE"),
+      canales_ia: canalesSeleccionados.length > 0,
+    }),
+    [
+      nombre,
+      baseNum,
+      descripcion,
+      listaViñetasPreview.length,
+      tieneAlMenosUnaImagen,
+      proActivo,
+      vigenciaTipo,
+      canalesSeleccionados.length,
+    ]
+  );
+
+  const presetsEntrega = esFloristeria
+    ? [
+        { label: "⚡ Entrega Inmediata (45-90 min)", val: "⚡ Entrega Inmediata Express (45 - 90 min)" },
+        { label: "🌸 Pide hoy, recibe hoy (Mismo Día)", val: "🌸 Pide hoy, recibe hoy (Mismo Día)" },
+        { label: "✨ Elaboración Especial (24h)", val: "✨ Elaboración Especial en Taller (24 horas)" },
+        { label: "📅 Entrega Programada / Evento", val: "📅 Entrega Programada / Fecha Especial" },
+      ]
+    : esLegal
+      ? [
+          { label: "⚡ Agendamiento Mismo Día", val: "Agendamiento inmediato / Mismo día" },
+          { label: "📄 Menos de 24 horas", val: "Menos de 24 horas" },
+          { label: "⚖️ 24 a 48 horas hábiles", val: "24 a 48 horas hábiles" },
+        ]
+      : [
+          { label: "⚡ Emergencia Técnica (45-60 min)", val: "⚡ Emergencia Técnica (45 - 60 min)" },
+          { label: "🔧 Turno Mismo Día", val: "🔧 Mismo Día / Turno Tarde" },
+          { label: "📅 Visita Programada", val: "📅 Visita Programada" },
+        ];
+
+  if (!abierto) return null;
+
+  const indicePaso = PASOS_WIZARD_PRODUCTO.findIndex((p) => p.id === pasoActivo);
+
+  const irPasoSiguiente = () => {
+    setError(null);
+    if (pasoActivo === "identidad_precio") {
+      if (!nombre.trim()) {
+        setError("Ingresa el nombre del producto antes de continuar.");
+        return;
+      }
+      if (!precioBase || Number(precioBase) <= 0) {
+        setError("Ingresa un precio base mayor a $0.00 para continuar.");
+        return;
+      }
+    }
+    const sig = PASOS_WIZARD_PRODUCTO[indicePaso + 1];
+    if (sig) setPasoActivo(sig.id);
+  };
+
+  const irPasoAnterior = () => {
+    setError(null);
+    const ant = PASOS_WIZARD_PRODUCTO[indicePaso - 1];
+    if (ant) setPasoActivo(ant.id);
+  };
 
   const toggleUso = (clave: string) => {
     const normalizada = clave.toLowerCase().trim();
     setUsosSeleccionados((prev) =>
-      prev.includes(normalizada)
-        ? prev.filter((u) => u !== normalizada)
-        : [...prev, normalizada]
+      prev.includes(normalizada) ? prev.filter((u) => u !== normalizada) : [...prev, normalizada]
     );
   };
 
@@ -274,13 +447,11 @@ export function ModalCrearProducto({
       setUsosEliminados(restantes);
       guardarUsosEliminadosStorage(negocio, restantes);
     }
-
     if (!usosPersonalizados.some((u) => u.clave === limpio)) {
       const nuevosPers = [...usosPersonalizados, { clave: limpio, label }];
       setUsosPersonalizados(nuevosPers);
       guardarUsosPersonalizadosStorage(negocio, nuevosPers);
     }
-
     if (!usosSeleccionados.includes(limpio)) {
       setUsosSeleccionados((prev) => [...prev, limpio]);
     }
@@ -296,33 +467,17 @@ export function ModalCrearProducto({
         undefined,
         usosSeleccionados
       );
-
       if (prodsQueUsanLocal.length > 0) {
-        setModalBloqueoUso({
-          clave,
-          label,
-          productos: prodsQueUsanLocal,
-        });
+        setModalBloqueoUso({ clave, label, productos: prodsQueUsanLocal });
         return;
       }
-
-      const resServer = await verificarUsoEnCatalogoAction({
-        negocio,
-        claveUso: clave,
-      });
-
+      const resServer = await verificarUsoEnCatalogoAction({ negocio, claveUso: clave });
       if (resServer.enUso && resServer.nombresProductos.length > 0) {
-        setModalBloqueoUso({
-          clave,
-          label,
-          productos: resServer.nombresProductos,
-        });
+        setModalBloqueoUso({ clave, label, productos: resServer.nombresProductos });
         return;
       }
-
       setModalConfirmarEliminarUso({ clave, label });
-    } catch (err) {
-      console.error("Error validando uso:", err);
+    } catch {
       setModalConfirmarEliminarUso({ clave, label });
     } finally {
       setVerificandoUsoClave(null);
@@ -333,13 +488,10 @@ export function ModalCrearProducto({
     const actualizados = Array.from(new Set([...usosEliminados, clave]));
     setUsosEliminados(actualizados);
     guardarUsosEliminadosStorage(negocio, actualizados);
-
     const persActualizados = usosPersonalizados.filter((u) => u.clave !== clave);
     setUsosPersonalizados(persActualizados);
     guardarUsosPersonalizadosStorage(negocio, persActualizados);
-
     setUsosSeleccionados((prev) => prev.filter((u) => u !== clave));
-
     setModalConfirmarEliminarUso(null);
     setMensajeExitoUso(`Uso «${label}» eliminado correctamente del catálogo.`);
     setTimeout(() => setMensajeExitoUso(null), 3500);
@@ -360,41 +512,15 @@ export function ModalCrearProducto({
     }
   };
 
-  const handleEliminarEtiqueta = (tagAEliminar: string) => {
-    setEtiquetasSeleccionadas((prev) => prev.filter((t) => t !== tagAEliminar));
-  };
-
-  const [guardando, setGuardando] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Verificación reactiva de al menos una imagen
-  const tieneAlMenosUnaImagen = useMemo(() => {
-    if (imagenUrl && imagenUrl.trim().length > 0) return true;
-    if (galeriaTexto && galeriaTexto.trim().length > 0) return true;
-    if (albumFotosUrl && albumFotosUrl.trim().length > 0) return true;
-    return false;
-  }, [imagenUrl, galeriaTexto, albumFotosUrl]);
-
-  // Galería de fotos unificada al crear producto (Hook de nivel superior)
-  const fotosCrear = useMemo(() => {
-    const list: string[] = [];
-    if (imagenUrl && imagenUrl.trim()) {
-      list.push(imagenUrl.trim());
-    }
-    if (galeriaTexto && galeriaTexto.trim()) {
-      galeriaTexto.split("\n").forEach((u) => {
-        const trimmed = u.trim();
-        if (trimmed && !list.includes(trimmed)) {
-          list.push(trimmed);
-        }
-      });
-    }
-    return list;
-  }, [imagenUrl, galeriaTexto]);
-
   const toggleCanal = (clave: CanalVisibilidad) => {
-    if (CANALES_REQUIEREN_IMAGEN.includes(clave) && !canalesSeleccionados.includes(clave) && !tieneAlMenosUnaImagen) {
-      setError("Para activar la visibilidad en E-Commerce Web o App Clientes, es obligatorio configurar al menos una imagen de portada.");
+    if (
+      CANALES_REQUIEREN_IMAGEN.includes(clave) &&
+      !canalesSeleccionados.includes(clave) &&
+      !tieneAlMenosUnaImagen
+    ) {
+      setError(
+        "Para activar E-Commerce Web o App Clientes, configura primero al menos 1 imagen en el Paso 3 (Imágenes y Galería)."
+      );
       return;
     }
     setError(null);
@@ -402,34 +528,6 @@ export function ModalCrearProducto({
       prev.includes(clave) ? prev.filter((c) => c !== clave) : [...prev, clave]
     );
   };
-
-  const presetsEntrega = esFloristeria
-    ? [
-        { label: "⚡ Entrega Inmediata (45-90 min)", val: "⚡ Entrega Inmediata Express (45 - 90 min)" },
-        { label: "🌸 Pide hoy, recibe hoy (Mismo Día)", val: "🌸 Pide hoy, recibe hoy (Mismo Día)" },
-        { label: "✨ Elaboración Especial (24h)", val: "✨ Elaboración Especial en Taller (24 horas)" },
-        { label: "📅 Entrega Programada / Fecha Especial", val: "📅 Entrega Programada / Fecha Especial" },
-      ]
-    : esLegal
-    ? [
-        { label: "⚡ Agendamiento Inmediato / Mismo Día", val: "Agendamiento inmediato / Mismo día" },
-        { label: "📄 Menos de 24 horas (Dictamen Express)", val: "Menos de 24 horas" },
-        { label: "⚖️ 24 a 48 horas hábiles", val: "24 a 48 horas hábiles" },
-        { label: "🏛️ 7 a 15 días hábiles (Procesal / Notarial)", val: "7 a 15 días hábiles" },
-      ]
-    : [
-        { label: "⚡ Emergencia Técnica (45-60 min)", val: "⚡ Emergencia Técnica (45 - 60 min)" },
-        { label: "🔧 Turno Mismo Día", val: "🔧 Mismo Día / Turno Tarde" },
-        { label: "📅 Visita Programada", val: "📅 Visita Programada" },
-      ];
-
-
-  if (!abierto) return null;
-
-  // Cálculos en vivo
-  const baseNum = typeof precioBase === "number" ? precioBase : 0;
-  const montoIvaCalc = Number(((baseNum * tarifaIva) / 100).toFixed(2));
-  const totalCalc = Number((baseNum + montoIvaCalc).toFixed(2));
 
   const handleNombreChange = (val: string) => {
     setNombre(val);
@@ -464,7 +562,7 @@ export function ModalCrearProducto({
     }
   };
 
-  const LIMITE_MAX_IMAGEN_BYTES = 5 * 1024 * 1024; // 5 MB
+  const LIMITE_MAX_IMAGEN_BYTES = 5 * 1024 * 1024;
 
   const handleSubirArchivoLocal = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -476,7 +574,7 @@ export function ModalCrearProducto({
     for (const f of listaArchivos) {
       if (f.size > LIMITE_MAX_IMAGEN_BYTES) {
         const tamanoMb = (f.size / (1024 * 1024)).toFixed(2);
-        setError(`⚠️ La imagen "${f.name}" supera el tamaño máximo permitido de 5 MB (${tamanoMb} MB).`);
+        setError(`⚠️ La imagen "${f.name}" supera el límite de 5 MB (${tamanoMb} MB).`);
         e.target.value = "";
         return;
       }
@@ -487,11 +585,8 @@ export function ModalCrearProducto({
       const nuevasUrls: string[] = [];
       for (const file of listaArchivos) {
         const res = await subirImagenClienteOAccion(file, negocio || "comun", "portadas");
-        if (res.ok && res.urlPublica) {
-          nuevasUrls.push(res.urlPublica);
-        }
+        if (res.ok && res.urlPublica) nuevasUrls.push(res.urlPublica);
       }
-
       if (nuevasUrls.length > 0) {
         if (!imagenUrl.trim()) {
           const [primera, ...resto] = nuevasUrls;
@@ -500,9 +595,11 @@ export function ModalCrearProducto({
             setGaleriaTexto((prev) => (prev ? `${prev}\n${resto.join("\n")}` : resto.join("\n")));
           }
         } else {
-          setGaleriaTexto((prev) => (prev ? `${prev}\n${nuevasUrls.join("\n")}` : nuevasUrls.join("\n")));
+          setGaleriaTexto((prev) =>
+            prev ? `${prev}\n${nuevasUrls.join("\n")}` : nuevasUrls.join("\n")
+          );
         }
-        setExitoAutoConvertir(`¡${nuevasUrls.length} imagen(es) cargada(s) con éxito desde tu equipo!`);
+        setExitoAutoConvertir(`¡${nuevasUrls.length} imagen(es) cargada(s) desde tu equipo!`);
       }
     } catch (err: any) {
       setError(`Error al cargar la imagen: ${err.message || err}`);
@@ -521,7 +618,7 @@ export function ModalCrearProducto({
     for (const f of listaArchivos) {
       if (f.size > LIMITE_MAX_IMAGEN_BYTES) {
         const tamanoMb = (f.size / (1024 * 1024)).toFixed(2);
-        setError(`⚠️ El archivo "${f.name}" supera el tamaño máximo permitido de 5 MB (${tamanoMb} MB).`);
+        setError(`⚠️ El archivo "${f.name}" supera el límite de 5 MB (${tamanoMb} MB).`);
         e.target.value = "";
         return;
       }
@@ -532,12 +629,20 @@ export function ModalCrearProducto({
       const nuevasUrls: string[] = [];
       for (const file of listaArchivos) {
         const res = await subirImagenClienteOAccion(file, negocio || "comun", "galeria");
-        if (res.ok && res.urlPublica) {
-          nuevasUrls.push(res.urlPublica);
-        }
+        if (res.ok && res.urlPublica) nuevasUrls.push(res.urlPublica);
       }
       if (nuevasUrls.length > 0) {
-        setGaleriaTexto((prev) => (prev ? `${prev}\n${nuevasUrls.join("\n")}` : nuevasUrls.join("\n")));
+        if (!imagenUrl.trim()) {
+          const [primera, ...resto] = nuevasUrls;
+          setImagenUrl(primera || "");
+          if (resto.length > 0) {
+            setGaleriaTexto((prev) => (prev ? `${prev}\n${resto.join("\n")}` : resto.join("\n")));
+          }
+        } else {
+          setGaleriaTexto((prev) =>
+            prev ? `${prev}\n${nuevasUrls.join("\n")}` : nuevasUrls.join("\n")
+          );
+        }
       }
     } catch (err: any) {
       setError(`Error al subir la imagen: ${err.message || err}`);
@@ -571,17 +676,18 @@ export function ModalCrearProducto({
     setError(null);
 
     if (!nombre.trim()) {
+      setPasoActivo("identidad_precio");
       setError("Ingresa el nombre del producto.");
       return;
     }
     if (!precioBase || Number(precioBase) <= 0) {
-      setError("El precio base debe ser mayor a 0.");
+      setPasoActivo("identidad_precio");
+      setError("El precio base debe ser mayor a $0.00.");
       return;
     }
 
     setGuardando(true);
 
-    // Validación y auto-conversión de portada si es de Google Fotos
     let imagenUrlFinal = imagenUrl.trim();
     if (
       imagenUrlFinal.includes("photos.google.com") ||
@@ -593,8 +699,9 @@ export function ModalCrearProducto({
         setImagenUrl(imagenUrlFinal);
       } else {
         setGuardando(false);
+        setPasoActivo("imagenes");
         setError(
-          `⚠️ Advertencia de Imagen: La URL de portada es un visor web de Google Fotos que no pudo resolverse automáticamente (${resImg.error}). Asegúrate de que el álbum sea público o haz clic derecho en la foto para 'Copiar dirección de la imagen' (lh3.googleusercontent.com).`
+          `⚠️ La URL de portada de Google Fotos no pudo convertirse automáticamente (${resImg.error}). Sube la foto desde tu PC o pega el enlace directo.`
         );
         return;
       }
@@ -625,12 +732,18 @@ export function ModalCrearProducto({
         tipoOfertaEtiqueta: obtenerEtiquetaCortaTipoOferta(tipo, undefined, tiposOfertaLocales),
         rentaConfig: esOfertaRentaActiva ? rentaConfig : undefined,
         precioBase: Number(precioBase),
-        precioComparacion: typeof precioComparacion === "number" && precioComparacion > 0 ? precioComparacion : undefined,
+        precioComparacion:
+          typeof precioComparacion === "number" && precioComparacion > 0
+            ? precioComparacion
+            : undefined,
         tarifaIva,
         sku: sku.trim() || undefined,
         destacado,
         icono: icono as any,
         imagenUrl: imagenUrlFinal || undefined,
+        fotoPosicion,
+        fotoAjuste,
+        fotoZoom,
         galeriaUrls: galeriaUrls.length > 0 ? galeriaUrls : undefined,
         albumFotosUrl: albumFotosUrl.trim() || undefined,
         videoUrl: videoUrl.trim() || undefined,
@@ -638,6 +751,13 @@ export function ModalCrearProducto({
         tiempoEntrega: tiempoEntrega.trim() || undefined,
         requisitos,
         modalidadPago,
+        logistica: {
+          delivery_incluido: deliveryIncluido,
+          modalidad_transporte: modalidadTransporte,
+          etiqueta_transporte: etiquetaTransporte,
+          cobertura_texto: coberturaTransporte,
+          recargo_transporte_usd: recargoTransporteUsd > 0 ? recargoTransporteUsd : 0,
+        },
         pro_activo: proActivo,
         vigencia_tipo: vigenciaTipo,
         fecha_inicio: fechaInicio.trim() || undefined,
@@ -685,7 +805,7 @@ export function ModalCrearProducto({
           background: "#FFFFFF",
           borderRadius: "16px",
           width: "100%",
-          maxWidth: "680px",
+          maxWidth: "740px",
           maxHeight: "92vh",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
           display: "flex",
@@ -696,12 +816,13 @@ export function ModalCrearProducto({
         {/* Cabecera */}
         <div
           style={{
-            padding: "16px 20px",
+            padding: "14px 20px",
             borderBottom: "1px solid #E2E8F0",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: esFloristeria ? "#FFFDF8" : "#F8FAFC",
+            background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+            color: "#FFFFFF",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -710,25 +831,32 @@ export function ModalCrearProducto({
                 width: "36px",
                 height: "36px",
                 borderRadius: "10px",
-                background: esFloristeria ? "#FEF2F2" : "#E0F2FE",
-                color: esFloristeria ? "#E11D48" : "#0284C7",
+                background: "rgba(255,255,255,0.12)",
+                color: esFloristeria ? "#FB7185" : "#38BDF8",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
               }}
             >
-              {esFloristeria ? <Flower2 size={20} /> : esMantenimiento ? <Wrench size={20} /> : <PackagePlus size={20} />}
+              {esFloristeria ? (
+                <Flower2 size={20} />
+              ) : esMantenimiento ? (
+                <Wrench size={20} />
+              ) : (
+                <PackagePlus size={20} />
+              )}
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 800, color: "#0F172A" }}>
+              <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#FFFFFF" }}>
                 {esFloristeria
-                  ? "Nuevo Arreglo / Producto Floral"
+                  ? "Asistente de Nuevo Producto / Arreglo"
                   : esMantenimiento
-                  ? "Nuevo Servicio de Mantenimiento"
-                  : "Nuevo Servicio / Honorario Profesional"}
+                    ? "Asistente de Nuevo Servicio Técnico"
+                    : "Asistente de Nuevo Producto / Servicio"}
               </h2>
-              <span style={{ fontSize: "0.75rem", color: "#64748B" }}>
-                Registra tarifas, fotos de muestra, promesa de entrega y botón Payphone
+              <span style={{ fontSize: "0.74rem", color: "#94A3B8" }}>
+                Paso {indicePaso + 1} de {PASOS_WIZARD_PRODUCTO.length} ·{" "}
+                {nombre.trim() ? `${nombre} ($${totalCalc.toFixed(2)})` : "Configuración guiada"}
               </span>
             </div>
           </div>
@@ -736,11 +864,13 @@ export function ModalCrearProducto({
           <button
             type="button"
             onClick={onCerrar}
+            title="Cerrar asistente"
+            aria-label="Cerrar"
             style={{
               background: "transparent",
               border: "none",
               cursor: "pointer",
-              color: "#64748B",
+              color: "#94A3B8",
               padding: "6px",
             }}
           >
@@ -748,1564 +878,2017 @@ export function ModalCrearProducto({
           </button>
         </div>
 
-        {/* Formulario */}
-        <form onSubmit={handleGuardar} style={{ padding: "18px 22px", overflowY: "auto", flex: 1 }}>
-          {error && (
-            <div
-              style={{
-                background: "#FEF2F2",
-                border: "1px solid #FCA5A5",
-                color: "#991B1B",
-                padding: "10px 14px",
-                borderRadius: "8px",
-                marginBottom: "14px",
-                fontSize: "0.82rem",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-              }}
-            >
-              <AlertCircle size={16} />
-              <span>{error}</span>
-            </div>
-          )}
+        {/* Barra de 5 Pasos del Wizard */}
+        <BarraPasosWizardProducto
+          pasoActivo={pasoActivo}
+          onCambiarPaso={(nuevo) => {
+            setError(null);
+            setPasoActivo(nuevo);
+          }}
+          completados={completadosPorPaso}
+          colorPrimario={colorTema}
+        />
 
-          {/* Nombre */}
-          <div style={{ marginBottom: "14px" }}>
-            <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#1E293B", marginBottom: "4px" }}>
-              Nombre del {esFloristeria ? "Arreglo / Producto Floral" : "Servicio"} *
-            </label>
-            <input
-              type="text"
-              required
-              placeholder={esFloristeria ? "Ej. Bouquet Diseño Estilo Coreano" : "Ej. Elaboración de Minuta"}
-              value={nombre}
-              onChange={(e) => handleNombreChange(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "9px 12px",
-                borderRadius: "8px",
-                border: "1px solid #CBD5E1",
-                fontSize: "0.9rem",
-                boxSizing: "border-box",
-                fontWeight: 600,
-              }}
-            />
-          </div>
-
-          {/* Categoría y Tipo */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(210px, 100%), 1fr))", gap: "12px", marginBottom: "14px" }}>
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
-                  Categoría / Colección *
-                </label>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCatModalTab("crear");
-                      setModalCatAbierto(true);
-                    }}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: esFloristeria ? "#E11D48" : "#0284C7",
-                      fontSize: "0.74rem",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      padding: "2px 6px",
-                      borderRadius: "4px",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                    }}
-                    title={esFloristeria ? "Crear nueva colección floral" : "Crear nueva categoría"}
-                  >
-                    <FolderPlus size={13} />
-                    <span>+ Nueva</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setCatModalTab("gestionar");
-                      setModalCatAbierto(true);
-                    }}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "#64748B",
-                      fontSize: "0.74rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      padding: "2px 6px",
-                      borderRadius: "4px",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                    }}
-                    title="Administrar y eliminar categorías existentes"
-                  >
-                    <Settings2 size={13} />
-                    <span>Gestionar</span>
-                  </button>
-                </div>
-              </div>
-              <select
-                value={categoriaId}
-                onChange={(e) => setCategoriaId(e.target.value)}
-                style={{
-                  width: "100%",
-                  padding: "9px 12px",
-                  borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
-                  fontSize: "0.85rem",
-                  boxSizing: "border-box",
-                  background: "#FFFFFF",
-                }}
-              >
-                {categoriasLocales.map((c) => (
-                  <option key={c.ctg_id} value={c.ctg_id}>
-                    {c.ctg_nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px", gap: "6px", flexWrap: "wrap" }}>
-                <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
-                  Tipo de Oferta Comercial
-                </label>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTiposOfertaTab("crear");
-                      setModalTiposOfertaAbierto(true);
-                    }}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: esFloristeria ? "#E11D48" : "#0284C7",
-                      fontSize: "0.74rem",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      padding: "2px 6px",
-                      borderRadius: "4px",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                    }}
-                    title="Crear nuevo tipo de oferta comercial (ej. Renta de Mobiliario)"
-                  >
-                    <span>+ Nueva</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTiposOfertaTab("gestionar");
-                      setModalTiposOfertaAbierto(true);
-                    }}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      color: "#64748B",
-                      fontSize: "0.74rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      padding: "2px 6px",
-                      borderRadius: "4px",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                    }}
-                    title="Administrar, editar y eliminar tipos de oferta comercial"
-                  >
-                    <Settings2 size={13} />
-                    <span>Gestionar</span>
-                  </button>
-                </div>
-              </div>
-              <select
-                value={tipo}
-                onChange={(e) => {
-                  const nextTipo = e.target.value;
-                  setTipo(nextTipo);
-                  const objOferta = tiposOfertaLocales.find(
-                    (o) => o.tof_codigo.toUpperCase() === nextTipo.toUpperCase()
-                  );
-                  const detOferta = objOferta?.tof_detalle_tipo_oferta;
-                  if (detOferta?.es_renta) {
-                    setRentaConfig((prev) => ({
-                      ...prev,
-                      periodo: detOferta.periodo_defecto || prev.periodo || "Por evento (24h)",
-                      incluye_retiro:
-                        detOferta.incluye_retiro_defecto !== undefined
-                          ? detOferta.incluye_retiro_defecto
-                          : prev.incluye_retiro,
-                      nota_condiciones:
-                        detOferta.nota_condiciones_defecto || prev.nota_condiciones,
-                    }));
-                  }
-                }}
-                style={{
-                  width: "100%",
-                  padding: "9px 12px",
-                  borderRadius: "8px",
-                  border: esOfertaRentaActiva ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
-                  fontSize: "0.85rem",
-                  boxSizing: "border-box",
-                  background: esOfertaRentaActiva ? "#FFFDF5" : "#FFFFFF",
-                  fontWeight: esOfertaRentaActiva ? 700 : 500,
-                }}
-              >
-                {tiposOfertaLocales.map((op) => (
-                  <option key={op.tof_codigo} value={op.tof_codigo}>
-                    {op.tof_nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {esOfertaRentaActiva && (
-            <PanelCondicionesRentaProducto
-              config={rentaConfig}
-              onChange={setRentaConfig}
-            />
-          )}
-
-          {/* CONTROL DE ESTADO ACTIVO & TEMPORALIDAD ESTACIONAL */}
-          <div
-            style={{
-              background: !proActivo ? "#FEF2F2" : vigenciaTipo !== "SIEMPRE" ? "#FFFBEB" : "#F8FAFC",
-              border: !proActivo
-                ? "1.5px solid #FCA5A5"
-                : vigenciaTipo !== "SIEMPRE"
-                ? "1.5px solid #FDE68A"
-                : "1px solid #E2E8F0",
-              borderRadius: "10px",
-              padding: "14px",
-              marginBottom: "14px",
-              transition: "all 0.2s ease",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px", flexWrap: "wrap", gap: "8px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <Calendar size={16} color={!proActivo ? "#DC2626" : vigenciaTipo !== "SIEMPRE" ? "#D97706" : "#0284C7"} />
-                <span style={{ fontSize: "0.8rem", fontWeight: 800, color: !proActivo ? "#991B1B" : "#1E293B", textTransform: "uppercase" }}>
-                  Disponibilidad & Temporalidad Estacional
-                </span>
-              </div>
-
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
-                {/* Switch Principal Activar / Desactivar Producto */}
-                <button
-                  type="button"
-                  onClick={() => setProActivo(!proActivo)}
-                  style={{
-                    background: proActivo ? "#ECFDF5" : "#FEF2F2",
-                    border: proActivo ? "1.5px solid #10B981" : "1.5px solid #EF4444",
-                    color: proActivo ? "#065F46" : "#991B1B",
-                    padding: "5px 12px",
-                    borderRadius: "8px",
-                    fontSize: "0.75rem",
-                    fontWeight: 800,
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-                  }}
-                >
-                  <Power size={13} color={proActivo ? "#10B981" : "#EF4444"} />
-                  <span>{proActivo ? "🟢 Activo en Catálogo" : "⚪ Desactivado (Oculto)"}</span>
-                </button>
-
-                {/* Switch Insignia Destacado (Web & Landing) */}
-                <button
-                  type="button"
-                  onClick={() => setDestacado(!destacado)}
-                  style={{
-                    background: destacado ? "linear-gradient(135deg, #FEF3C7, #FDE68A)" : "#F1F5F9",
-                    border: destacado ? "1.5px solid #F59E0B" : "1.5px solid #CBD5E1",
-                    color: destacado ? "#B45309" : "#64748B",
-                    padding: "5px 12px",
-                    borderRadius: "8px",
-                    fontSize: "0.75rem",
-                    fontWeight: 800,
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-                    transition: "all 0.15s ease",
-                  }}
-                  title="Marca este producto con la insignia DESTACADO para priorizarlo en la sección de planes de la landing y en el catálogo"
-                >
-                  <Sparkles size={13} color={destacado ? "#D97706" : "#94A3B8"} />
-                  <span>{destacado ? "⭐ Insignia Destacado: SÍ" : "☆ Destacado: NO"}</span>
-                </button>
-              </div>
-            </div>
-
-            <p style={{ fontSize: "0.73rem", color: "#64748B", margin: "0 0 10px 0" }}>
-              Configura si el producto se ofrece todo el año o en una temporada especial (ej. "Bouquet San Valentín" del 10 al 15 de febrero):
-            </p>
-
-            {/* 3 Modos de Vigencia */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(140px, 100%), 1fr))", gap: "6px", marginBottom: "10px" }}>
-              <button
-                type="button"
-                onClick={() => setVigenciaTipo("SIEMPRE")}
-                style={{
-                  padding: "8px 10px",
-                  borderRadius: "6px",
-                  fontSize: "0.72rem",
-                  fontWeight: 700,
-                  border: vigenciaTipo === "SIEMPRE" ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
-                  background: vigenciaTipo === "SIEMPRE" ? "#E0F2FE" : "#FFFFFF",
-                  color: vigenciaTipo === "SIEMPRE" ? "#0369A1" : "#475569",
-                  cursor: "pointer",
-                  textAlign: "center",
-                }}
-              >
-                🌐 Todo el Año
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setVigenciaTipo("RANGO_FECHAS")}
-                style={{
-                  padding: "8px 10px",
-                  borderRadius: "6px",
-                  fontSize: "0.72rem",
-                  fontWeight: 700,
-                  border: vigenciaTipo === "RANGO_FECHAS" ? "1.5px solid #8B5CF6" : "1px solid #CBD5E1",
-                  background: vigenciaTipo === "RANGO_FECHAS" ? "#F5F3FF" : "#FFFFFF",
-                  color: vigenciaTipo === "RANGO_FECHAS" ? "#5B21B6" : "#475569",
-                  cursor: "pointer",
-                  textAlign: "center",
-                }}
-              >
-                📅 Rango Fechas
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setVigenciaTipo("ESTACIONAL_ANUAL");
-                  if (!fechaInicio) setFechaInicio("02-10");
-                  if (!fechaFin) setFechaFin("02-15");
-                  if (!etiquetaTemporada) setEtiquetaTemporada(esFloristeria ? "San Valentín" : "Temporada Anual");
-                  if (!mensajeFueraTemporada) setMensajeFueraTemporada("Disponible únicamente del 10 al 15 de febrero de cada año.");
-                }}
-                style={{
-                  padding: "8px 10px",
-                  borderRadius: "6px",
-                  fontSize: "0.72rem",
-                  fontWeight: 700,
-                  border: vigenciaTipo === "ESTACIONAL_ANUAL" ? "1.5px solid #E11D48" : "1px solid #CBD5E1",
-                  background: vigenciaTipo === "ESTACIONAL_ANUAL" ? "#FFF1F2" : "#FFFFFF",
-                  color: vigenciaTipo === "ESTACIONAL_ANUAL" ? "#9F1239" : "#475569",
-                  cursor: "pointer",
-                  textAlign: "center",
-                }}
-              >
-                <Clock size={13} style={{ display: "inline-block", verticalAlign: "middle", marginRight: "4px" }} />
-                Estacional Anual
-              </button>
-            </div>
-
-            {/* Campos contextuales para Rango de Fechas o Estacional Anual */}
-            {vigenciaTipo === "RANGO_FECHAS" && (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(170px, 100%), 1fr))", gap: "10px", marginTop: "8px" }}>
-                <div>
-                  <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                    Fecha de Inicio (YYYY-MM-DD)
-                  </label>
-                  <input
-                    type="date"
-                    value={fechaInicio}
-                    onChange={(e) => setFechaInicio(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "6px 10px",
-                      borderRadius: "6px",
-                      border: "1px solid #CBD5E1",
-                      fontSize: "0.8rem",
-                      boxSizing: "border-box",
-                      background: "#FFFFFF",
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                    Fecha de Fin (YYYY-MM-DD)
-                  </label>
-                  <input
-                    type="date"
-                    value={fechaFin}
-                    onChange={(e) => setFechaFin(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "6px 10px",
-                      borderRadius: "6px",
-                      border: "1px solid #CBD5E1",
-                      fontSize: "0.8rem",
-                      boxSizing: "border-box",
-                      background: "#FFFFFF",
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {vigenciaTipo === "ESTACIONAL_ANUAL" && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(170px, 100%), 1fr))", gap: "10px" }}>
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                      Fecha Inicio Anual (MM-DD, ej. 02-10)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="MM-DD (ej. 02-10)"
-                      value={fechaInicio}
-                      onChange={(e) => setFechaInicio(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
-                        fontSize: "0.8rem",
-                        boxSizing: "border-box",
-                        background: "#FFFFFF",
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                      Fecha Fin Anual (MM-DD, ej. 02-15)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="MM-DD (ej. 02-15)"
-                      value={fechaFin}
-                      onChange={(e) => setFechaFin(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
-                        fontSize: "0.8rem",
-                        boxSizing: "border-box",
-                        background: "#FFFFFF",
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(180px, 100%), 1fr))", gap: "10px" }}>
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                      Etiqueta de Temporada
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ej. San Valentín"
-                      value={etiquetaTemporada}
-                      onChange={(e) => setEtiquetaTemporada(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
-                        fontSize: "0.78rem",
-                        boxSizing: "border-box",
-                        background: "#FFFFFF",
-                      }}
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                      Mensaje fuera de temporada
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Ej. Disponible únicamente del 10 al 15 de febrero."
-                      value={mensajeFueraTemporada}
-                      onChange={(e) => setMensajeFueraTemporada(e.target.value)}
-                      style={{
-                        width: "100%",
-                        padding: "6px 10px",
-                        borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
-                        fontSize: "0.78rem",
-                        boxSizing: "border-box",
-                        background: "#FFFFFF",
-                      }}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Tarifa Base e IVA */}
-          <div
-            style={{
-              background: "#F8FAFC",
-              border: "1px solid #E2E8F0",
-              borderRadius: "10px",
-              padding: "14px",
-              marginBottom: "14px",
-            }}
-          >
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(165px, 100%), 1fr))", gap: "12px" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
-                  Precio Base Imponible ($ USD) *
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  required
-                  placeholder="0.00"
-                  value={precioBase}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === "") {
-                      setPrecioBase("");
-                      return;
-                    }
-                    const num = parseFloat(val);
-                    if (!isNaN(num)) {
-                      setPrecioBase(Math.round(num * 100) / 100);
-                    }
-                  }}
-                  onBlur={() => {
-                    if (typeof precioBase === "number" && !isNaN(precioBase)) {
-                      setPrecioBase(parseFloat(precioBase.toFixed(2)));
-                    }
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.95rem",
-                    fontWeight: 800,
-                    boxSizing: "border-box",
-                    color: "#0F172A",
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#D97706", marginBottom: "4px" }}>
-                  Precio Oferta / Comparación ($)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  placeholder="0.00 (Opcional tachado)"
-                  value={precioComparacion}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === "") {
-                      setPrecioComparacion("");
-                      return;
-                    }
-                    const num = parseFloat(val);
-                    if (!isNaN(num)) {
-                      setPrecioComparacion(Math.round(num * 100) / 100);
-                    }
-                  }}
-                  onBlur={() => {
-                    if (typeof precioComparacion === "number" && !isNaN(precioComparacion)) {
-                      setPrecioComparacion(parseFloat(precioComparacion.toFixed(2)));
-                    }
-                  }}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.95rem",
-                    fontWeight: 800,
-                    boxSizing: "border-box",
-                    color: "#D97706",
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
-                  Tarifa IVA SRI (Ecuador)
-                </label>
-                <select
-                  value={tarifaIva}
-                  onChange={(e) => setTarifaIva(Number(e.target.value))}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.85rem",
-                    boxSizing: "border-box",
-                    background: "#FFFFFF",
-                  }}
-                >
-                  <option value={15}>IVA 15% (Estándar SRI)</option>
-                  <option value={0}>IVA 0% (Exento SRI)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Resumen en vivo */}
-            <div
-              style={{
-                marginTop: "10px",
-                padding: "8px 12px",
-                background: "#FFFFFF",
-                border: "1px dashed #CBD5E1",
-                borderRadius: "6px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                fontSize: "0.8rem",
-              }}
-            >
-              <div>
-                <span style={{ color: "#64748B" }}>Base: </span>
-                <strong style={{ color: "#0F172A" }}>${baseNum.toFixed(2)}</strong>
-                <span style={{ margin: "0 6px", color: "#CBD5E1" }}>|</span>
-                <span style={{ color: "#64748B" }}>IVA ({tarifaIva}%): </span>
-                <strong style={{ color: "#0F172A" }}>${montoIvaCalc.toFixed(2)}</strong>
-              </div>
-              <div>
-                <span style={{ color: "#64748B", marginRight: "6px" }}>Total Payphone:</span>
-                <strong style={{ color: "#059669", fontSize: "1.05rem", fontWeight: 800 }}>
-                  ${totalCalc.toFixed(2)}
-                </strong>
-              </div>
-            </div>
-
-            {/* Escalas de descuento por cantidad / volumen */}
-            <EditorEscalasVolumenVariante
-              escalas={escalasVolumenCrear}
-              pvpUnitarioNominal={totalCalc}
-              onChange={setEscalasVolumenCrear}
-            />
-          </div>
-
-          {/* Constructor de Set / Combo Compuesto */}
-          <EditorSetComboConfigurable
-            esCombo={esComboCrear}
-            onCambiarEsCombo={setEsComboCrear}
-            componentes={comboComponentesCrear}
-            onCambiarComponentes={(nuevos) => {
-              setComboComponentesCrear(nuevos);
-              const suma = nuevos.reduce((acc, comp) => {
-                const p = (productos || []).find(
-                  (item) =>
-                    item.pro_id === comp.producto_id ||
-                    (comp.producto_slug && item.pro_slug === comp.producto_slug)
-                );
-                const v =
-                  p?.variantes.find(
-                    (vi) =>
-                      (comp.variante_id && vi.var_id === comp.variante_id) ||
-                      (comp.variante_sku && vi.var_sku === comp.variante_sku)
-                  ) || p?.variantes[0];
-                const pvpV = v
-                  ? typeof v.precio_total === "number" && v.precio_total > 0
-                    ? v.precio_total
-                    : Number((Number(v.var_precio || 0) * (1 + Number(v.var_tarifa_iva_porcentaje || 0) / 100)).toFixed(2))
-                  : 0;
-                return acc + pvpV * comp.cantidad_base;
-              }, 0);
-              if (suma > totalCalc) {
-                setPrecioComparacion(Number(suma.toFixed(2)));
-              }
-            }}
-            catalogoProductos={productos}
-            pvpSetCompleto={totalCalc}
-            tarifaIvaSet={tarifaIva}
-            onCambiarPrecioSetBase={(nuevoBase) => setPrecioBase(nuevoBase)}
-            onSincronizarPrecioComparacion={(sumaNominal) =>
-              setPrecioComparacion(Number(sumaNominal.toFixed(2)))
-            }
-          />
-
-          {/* Recursos Digitales */}
-          <div
-            style={{
-              background: "#F0FDF4",
-              border: "1px solid #BBF7D0",
-              borderRadius: "10px",
-              padding: "14px",
-              marginBottom: "14px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
-              <ImageIcon size={16} color="#15803D" />
-              <span style={{ fontSize: "0.78rem", fontWeight: 800, color: "#15803D", textTransform: "uppercase" }}>
-                Recursos Digitales (Fotos Reales, Álbum y Video/GIF)
-              </span>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: "10px", marginBottom: "10px" }}>
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px", flexWrap: "wrap", gap: "4px" }}>
-                  <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
-                    URL Imagen de Portada Principal *
-                  </label>
-                  {(imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) && (
-                    <span style={{ fontSize: "0.68rem", color: "#D97706", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
-                      <AlertCircle size={12} /> Requiere Extracción
-                    </span>
-                  )}
-                  {imagenUrl.includes("lh3.googleusercontent.com") && (
-                    <span style={{ fontSize: "0.68rem", color: "#16A34A", fontWeight: 700, display: "flex", alignItems: "center", gap: "3px" }}>
-                      <CheckCircle2 size={12} /> Imagen Directa
-                    </span>
-                  )}
-                </div>
-                <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
-                  <input
-                    type="url"
-                    placeholder="https://... o sube una imagen desde tu PC ➔"
-                    value={imagenUrl}
-                    onChange={(e) => {
-                      const raw = e.target.value;
-                      const driveMatch = raw.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) || raw.match(/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/);
-                      if (driveMatch && driveMatch[1]) {
-                        setImagenUrl(`https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1200`);
-                      } else {
-                        setImagenUrl(raw);
-                      }
-                      setExitoAutoConvertir(null);
-                    }}
-                    style={{
-                      flex: "1 1 160px",
-                      minWidth: 0,
-                      padding: "7px 10px",
-                      borderRadius: "6px",
-                      border: (imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl")) ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
-                      fontSize: "0.8rem",
-                      boxSizing: "border-box",
-                    }}
-                  />
-
-                  <label
-                    style={{
-                      background: subiendoImagen ? "#94A3B8" : "#15803D",
-                      color: "#FFFFFF",
-                      padding: "7px 11px",
-                      borderRadius: "6px",
-                      fontSize: "0.74rem",
-                      fontWeight: 700,
-                      cursor: subiendoImagen ? "wait" : "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "5px",
-                      whiteSpace: "nowrap",
-                      flexShrink: 0,
-                      boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                    }}
-                    title="Seleccionar foto desde tu disco local o Google Drive en PC"
-                  >
-                    {subiendoImagen ? (
-                      <>
-                        <Loader2 size={13} className="animate-spin" />
-                        <span>Subiendo...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Upload size={13} />
-                        <span>📁 Subir PC</span>
-                      </>
-                    )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      disabled={subiendoImagen}
-                      onChange={handleSubirArchivoLocal}
-                      style={{ display: "none" }}
-                    />
-                  </label>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setContextoMedios("portada");
-                      setModalGaleriaAbierto(true);
-                    }}
-                    style={{
-                      background: "#0284C7",
-                      color: "#FFFFFF",
-                      border: "none",
-                      padding: "7px 11px",
-                      borderRadius: "6px",
-                      fontSize: "0.74rem",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      whiteSpace: "nowrap",
-                      flexShrink: 0,
-                      boxShadow: "0 1px 2px rgba(2, 132, 199, 0.2)",
-                    }}
-                    title="Abrir galería de imágenes del negocio"
-                  >
-                    <ImageIcon size={13} />
-                    <span>🖼️ Galería</span>
-                  </button>
-                </div>
-
-                {exitoAutoConvertir && (
-                  <div style={{ marginTop: "4px", fontSize: "0.7rem", color: "#15803D", background: "#DCFCE7", padding: "4px 8px", borderRadius: "4px", border: "1px solid #BBF7D0", display: "flex", alignItems: "center", gap: "4px" }}>
-                    <CheckCircle2 size={13} /> {exitoAutoConvertir}
-                  </div>
-                )}
-
-                {(imagenUrl.includes("photos.google.com") || imagenUrl.includes("photos.app.goo.gl") || imagenUrl.includes("drive.google.com/drive")) && (
-                  <div style={{ marginTop: "6px", fontSize: "0.7rem", color: "#92400E", background: "#FEF3C7", padding: "8px 10px", borderRadius: "6px", border: "1px solid #FDE68A", lineHeight: 1.4 }}>
-                    <div style={{ fontWeight: 800, marginBottom: "3px", display: "flex", alignItems: "center", gap: "4px" }}>
-                      <AlertCircle size={13} color="#D97706" /> Enlace de Álbum Web Detectado
-                    </div>
-                    <div>Este enlace abre el visor web de Google Fotos, no un archivo de imagen directo (.jpg).</div>
-                    <div style={{ marginTop: "6px", display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
-                      <button
-                        type="button"
-                        disabled={resolviendoImagen}
-                        onClick={() => handleConvertirImagenGlobal()}
-                        style={{
-                          background: "#0284C7",
-                          color: "#FFFFFF",
-                          border: "none",
-                          padding: "4px 9px",
-                          borderRadius: "4px",
-                          fontSize: "0.68rem",
-                          fontWeight: 700,
-                          cursor: resolviendoImagen ? "wait" : "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px",
-                        }}
-                      >
-                        {resolviendoImagen ? (
-                          <>
-                            <Loader2 size={12} className="animate-spin" /> Extrayendo Directa...
-                          </>
-                        ) : (
-                          <>
-                            <Wand2 size={12} /> 🪄 Auto-Convertir Foto
-                          </>
-                        )}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAlbumFotosUrl(imagenUrl);
-                          setImagenUrl("");
-                        }}
-                        style={{
-                          background: "#B45309",
-                          color: "#FFFFFF",
-                          border: "none",
-                          padding: "4px 8px",
-                          borderRadius: "4px",
-                          fontSize: "0.68rem",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                        }}
-                      >
-                        📁 Mover a "Álbum de Muestras"
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                  URL Álbum de Fotos / Muestras (Google Photos)
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://photos.app.goo.gl/... o drive"
-                  value={albumFotosUrl}
-                  onChange={(e) => setAlbumFotosUrl(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "7px 10px",
-                    borderRadius: "6px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.8rem",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: "10px", marginTop: "10px" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                  URL Video / GIF Demostrativo (YouTube / MP4)
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://www.youtube.com/watch?v=... o archivo .mp4 / .gif"
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "7px 10px",
-                    borderRadius: "6px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.8rem",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2px" }}>
-                  <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
-                    Galería Adicional (URLs por salto de línea)
-                  </label>
-                  <div style={{ display: "flex", gap: "6px" }}>
-                    <label
-                      style={{
-                        fontSize: "0.68rem",
-                        fontWeight: 700,
-                        color: "#15803D",
-                        cursor: subiendoGaleria ? "wait" : "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "3px",
-                      }}
-                    >
-                      {subiendoGaleria ? <Loader2 size={11} className="animate-spin" /> : <Upload size={11} />}
-                      <span>+ Subir PC</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        disabled={subiendoGaleria}
-                        onChange={handleSubirArchivoGaleria}
-                        style={{ display: "none" }}
-                      />
-                    </label>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setContextoMedios("galeria");
-                        setModalGaleriaAbierto(true);
-                      }}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "#0284C7",
-                        fontSize: "0.68rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "3px",
-                        padding: 0,
-                      }}
-                    >
-                      <ImageIcon size={11} />
-                      <span>+ De Galería</span>
-                    </button>
-                  </div>
-                </div>
-                <textarea
-                  rows={2}
-                  placeholder="https://...foto1.jpg&#10;https://...foto2.jpg"
-                  value={galeriaTexto}
-                  onChange={(e) => setGaleriaTexto(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "6px 10px",
-                    borderRadius: "6px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.78rem",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-            </div>
-
-            {/* Grid Visual de Fotos Seleccionadas */}
-            {fotosCrear.length > 0 && (
-              <div style={{ marginTop: "12px", borderTop: "1px dashed #BBF7D0", paddingTop: "10px" }}>
-                <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#15803D", marginBottom: "6px" }}>
-                  📷 Vista Previa de Fotos del Producto ({fotosCrear.length}):
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(85px, 1fr))", gap: "8px" }}>
-                  {fotosCrear.map((url, idx) => {
-                    const esPortada = idx === 0 || url === imagenUrl;
-                    return (
-                      <div
-                        key={`${url}-${idx}`}
-                        style={{
-                          position: "relative",
-                          borderRadius: "6px",
-                          overflow: "hidden",
-                          border: esPortada ? "2px solid #10B981" : "1px solid #CBD5E1",
-                          aspectRatio: "1 / 1",
-                          background: "#0F172A",
-                          cursor: esPortada ? "default" : "pointer",
-                        }}
-                        onClick={() => {
-                          if (!esPortada) handleEstablecerPortadaCrear(url);
-                        }}
-                        title={esPortada ? "Foto de Portada (#1)" : "Clic para hacer Portada"}
-                      >
-                        <img src={url} alt={`Foto ${idx + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        <div style={{ position: "absolute", top: 2, left: 2, right: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontSize: "0.6rem", fontWeight: 800, background: esPortada ? "#10B981" : "rgba(0,0,0,0.6)", color: "#FFFFFF", padding: "1px 4px", borderRadius: "3px" }}>
-                            {esPortada ? "★ #1" : `#${idx + 1}`}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleQuitarFotoCrear(url);
-                            }}
-                            style={{
-                              background: "rgba(220, 38, 38, 0.9)",
-                              color: "#FFFFFF",
-                              border: "none",
-                              borderRadius: "50%",
-                              width: "16px",
-                              height: "16px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              cursor: "pointer",
-                              padding: 0,
-                            }}
-                          >
-                            <X size={10} />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Tiempo de Entrega */}
-          <div style={{ marginBottom: "14px" }}>
-            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#1E293B", marginBottom: "4px" }}>
-              Promesa y Tiempo de Entrega al Cliente *
-            </label>
-            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "6px" }}>
-              {presetsEntrega.map((pr) => (
-                <button
-                  key={pr.val}
-                  type="button"
-                  onClick={() => setTiempoEntrega(pr.val)}
-                  style={{
-                    padding: "4px 8px",
-                    borderRadius: "6px",
-                    fontSize: "0.72rem",
-                    fontWeight: 700,
-                    border: tiempoEntrega === pr.val ? "1.5px solid #16A34A" : "1px solid #CBD5E1",
-                    background: tiempoEntrega === pr.val ? "#DCFCE7" : "#FFFFFF",
-                    color: tiempoEntrega === pr.val ? "#15803D" : "#475569",
-                    cursor: "pointer",
-                  }}
-                >
-                  {pr.label}
-                </button>
-              ))}
-            </div>
-            <input
-              type="text"
-              required
-              placeholder="Ej. 🌸 Pide hoy, recibe hoy (Mismo Día)"
-              value={tiempoEntrega}
-              onChange={(e) => setTiempoEntrega(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "8px 12px",
-                borderRadius: "8px",
-                border: "1px solid #CBD5E1",
-                fontSize: "0.85rem",
-                boxSizing: "border-box",
-              }}
-            />
-          </div>
-
-          {/* Canales de Visibilidad y Distribución */}
-          <div
-            style={{
-              background: "#F8FAFC",
-              border: "1.5px solid #E2E8F0",
-              borderRadius: "10px",
-              padding: "14px",
-              marginBottom: "14px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <Share2 size={16} color="#0284C7" />
-                <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "#1E293B", textTransform: "uppercase" }}>
-                  Canales de Visibilidad y Distribución
-                </span>
-              </div>
-              <span style={{ fontSize: "0.75rem", color: "#64748B", fontWeight: 600 }}>
-                {canalesSeleccionados.length} de {CANALES_CATALOGO_OFICIALES.length} activos
-              </span>
-            </div>
-            <p style={{ fontSize: "0.75rem", color: "#64748B", margin: "0 0 10px 0" }}>
-              Indica en qué plataformas, aplicaciones y agentes de IA estará disponible este producto:
-            </p>
-
-            {!tieneAlMenosUnaImagen && (
+        {/* Contenido del Paso Activo */}
+        <form
+          onSubmit={handleGuardar}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            flex: 1,
+            minHeight: 0,
+          }}
+        >
+          <div style={{ padding: "18px 22px", overflowY: "auto", flex: 1 }}>
+            {error && (
               <div
                 style={{
-                  background: "#FFFBEB",
-                  border: "1px solid #FDE68A",
+                  background: "#FEF2F2",
+                  border: "1px solid #FCA5A5",
+                  color: "#991B1B",
+                  padding: "10px 14px",
                   borderRadius: "8px",
-                  padding: "8px 12px",
-                  marginBottom: "10px",
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "8px",
-                  fontSize: "0.74rem",
-                  color: "#92400E",
-                  lineHeight: "1.35",
-                }}
-              >
-                <AlertCircle size={15} color="#D97706" style={{ flexShrink: 0, marginTop: "2px" }} />
-                <div>
-                  <strong style={{ fontWeight: 800 }}>Control de Calidad Visual:</strong> Los canales <strong>E-Commerce Web</strong> y <strong>App Clientes</strong> requieren al menos 1 imagen configurada para poder activarse y ser visibles al público.
-                </div>
-              </div>
-            )}
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "8px" }}>
-              {CANALES_CATALOGO_OFICIALES.map((c) => {
-                const activo = canalesSeleccionados.includes(c.clave);
-                const exigeImagenYFalta = CANALES_REQUIEREN_IMAGEN.includes(c.clave) && !tieneAlMenosUnaImagen;
-
-                return (
-                  <button
-                    key={c.clave}
-                    type="button"
-                    onClick={() => toggleCanal(c.clave)}
-                    title={
-                      exigeImagenYFalta
-                        ? `Requiere al menos 1 imagen configurada para activarse en ${c.nombre}`
-                        : undefined
-                    }
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      padding: "8px 10px",
-                      borderRadius: "8px",
-                      border: `1.5px solid ${activo ? c.color : exigeImagenYFalta ? "#CBD5E1" : "#E2E8F0"}`,
-                      background: activo ? `${c.color}12` : exigeImagenYFalta ? "#F1F5F9" : "#FFFFFF",
-                      color: activo ? "#0F172A" : exigeImagenYFalta ? "#94A3B8" : "#64748B",
-                      cursor: "pointer",
-                      fontSize: "0.78rem",
-                      fontWeight: activo ? 700 : 500,
-                      textAlign: "left",
-                      transition: "all 0.15s ease",
-                      opacity: exigeImagenYFalta && !activo ? 0.75 : 1,
-                    }}
-                  >
-                    <span
-                      style={{
-                        width: "8px",
-                        height: "8px",
-                        borderRadius: "50%",
-                        background: activo ? c.color : "#CBD5E1",
-                        flexShrink: 0,
-                      }}
-                    />
-                    <div style={{ flex: 1, minWidth: 0, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                      <div style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                        {c.nombre}
-                      </div>
-                      {exigeImagenYFalta && (
-                        <span style={{ fontSize: "0.65rem", background: "#FEF2F2", color: "#DC2626", border: "1px solid #FECACA", borderRadius: "4px", padding: "1px 4px", marginLeft: "4px", fontWeight: 700 }}>
-                          📷 Foto req.
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Usos y Aplicaciones Recomendadas */}
-          <div
-            style={{
-              background: "#F8FAFC",
-              border: "1.5px solid #E2E8F0",
-              borderRadius: "10px",
-              padding: "14px",
-              marginBottom: "14px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px", flexWrap: "wrap", gap: "6px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <Target size={16} color="#0284C7" />
-                <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "#1E293B", textTransform: "uppercase" }}>
-                  {esFloristeria ? "Usos y Ocasiones Recomendadas (IA & Filtros)" : "Usos y Casos de Aplicación (IA & Filtros)"}
-                </span>
-              </div>
-              <span style={{ fontSize: "0.74rem", color: "#0369A1", fontWeight: 700, background: "#E0F2FE", padding: "2px 8px", borderRadius: "12px" }}>
-                {usosSeleccionados.length} usos activos
-              </span>
-            </div>
-            <p style={{ fontSize: "0.73rem", color: "#64748B", margin: "0 0 10px 0", lineHeight: 1.4 }}>
-              Marca los escenarios donde los agentes de IA (como Tranqi) deben recomendar este ítem:
-            </p>
-
-            {/* Feedback tras eliminar uso */}
-            {mensajeExitoUso && (
-              <div
-                style={{
-                  background: "#ECFDF5",
-                  color: "#065F46",
-                  border: "1px solid #A7F3D0",
-                  padding: "8px 12px",
-                  borderRadius: "6px",
-                  fontSize: "0.78rem",
-                  marginBottom: "10px",
+                  marginBottom: "14px",
+                  fontSize: "0.82rem",
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
                 }}
               >
-                <CheckCircle2 size={16} color="#059669" />
-                <span>{mensajeExitoUso}</span>
+                <AlertCircle size={16} />
+                <span>{error}</span>
               </div>
             )}
 
-            {/* Grid Unificado de Usos (Presets + Personalizados) */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(165px, 1fr))", gap: "6px", marginBottom: "10px" }}>
-              {todosUsosDisponibles.map((u) => {
-                const activo = usosSeleccionados.includes(u.clave);
-                const estaVerificando = verificandoUsoClave === u.clave;
+            {/* ===============================================================
+                PASO 1: NOMBRE, CATEGORÍA, TIPO DE OFERTA Y PRECIO
+            =============================================================== */}
+            {pasoActivo === "identidad_precio" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                    gap: "12px",
+                  }}
+                >
+                  <div style={{ gridColumn: "1 / -1" }}>
+                    <label
+                      style={{
+                        display: "block",
+                        fontSize: "0.8rem",
+                        fontWeight: 700,
+                        color: "#1E293B",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      Nombre del Producto / Servicio *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={
+                        esFloristeria
+                          ? "Ej. Bouquet Coreano Rosado / Números de Luces / Aro Floral"
+                          : "Ej. Elaboración de Minuta"
+                      }
+                      value={nombre}
+                      onChange={(e) => handleNombreChange(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px",
+                        borderRadius: "8px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.92rem",
+                        boxSizing: "border-box",
+                        fontWeight: 700,
+                      }}
+                    />
+                  </div>
 
-                return (
-                  <button
-                    key={u.clave}
-                    type="button"
-                    onClick={() => toggleUso(u.clave)}
+                  <div>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      <label style={{ fontSize: "0.78rem", fontWeight: 700, color: "#334155" }}>
+                        Categoría / Colección *
+                      </label>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCatModalTab("crear");
+                            setModalCatAbierto(true);
+                          }}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: colorTema,
+                            fontSize: "0.73rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "3px",
+                          }}
+                        >
+                          <FolderPlus size={12} />
+                          <span>+ Nueva</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCatModalTab("gestionar");
+                            setModalCatAbierto(true);
+                          }}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: "#64748B",
+                            fontSize: "0.73rem",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "3px",
+                          }}
+                        >
+                          <Settings2 size={12} />
+                          <span>Gestionar</span>
+                        </button>
+                      </div>
+                    </div>
+                    <select
+                      value={categoriaId}
+                      onChange={(e) => setCategoriaId(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "9px 12px",
+                        borderRadius: "8px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.85rem",
+                        background: "#FFFFFF",
+                      }}
+                    >
+                      {categoriasLocales.map((c) => (
+                        <option key={c.ctg_id} value={c.ctg_id}>
+                          {c.ctg_nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: "4px",
+                      }}
+                    >
+                      <label style={{ fontSize: "0.78rem", fontWeight: 700, color: "#334155" }}>
+                        Tipo de Oferta Comercial
+                      </label>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTiposOfertaTab("crear");
+                            setModalTiposOfertaAbierto(true);
+                          }}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: colorTema,
+                            fontSize: "0.73rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          + Nueva
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setTiposOfertaTab("gestionar");
+                            setModalTiposOfertaAbierto(true);
+                          }}
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: "#64748B",
+                            fontSize: "0.73rem",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "3px",
+                          }}
+                        >
+                          <Settings2 size={12} />
+                          <span>Gestionar</span>
+                        </button>
+                      </div>
+                    </div>
+                    <select
+                      value={tipo}
+                      onChange={(e) => {
+                        const nextTipo = e.target.value;
+                        setTipo(nextTipo);
+                        const objOferta = tiposOfertaLocales.find(
+                          (o) => o.tof_codigo.toUpperCase() === nextTipo.toUpperCase()
+                        );
+                        const detOferta = objOferta?.tof_detalle_tipo_oferta;
+                        if (detOferta?.es_renta) {
+                          setRentaConfig((prev) => ({
+                            ...prev,
+                            periodo: detOferta.periodo_defecto || prev.periodo || "Por evento (24h)",
+                            incluye_retiro:
+                              detOferta.incluye_retiro_defecto !== undefined
+                                ? detOferta.incluye_retiro_defecto
+                                : prev.incluye_retiro,
+                            nota_condiciones:
+                              detOferta.nota_condiciones_defecto || prev.nota_condiciones,
+                          }));
+                        }
+                      }}
+                      style={{
+                        width: "100%",
+                        padding: "9px 12px",
+                        borderRadius: "8px",
+                        border: esOfertaRentaActiva ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
+                        fontSize: "0.85rem",
+                        background: esOfertaRentaActiva ? "#FFFDF5" : "#FFFFFF",
+                        fontWeight: esOfertaRentaActiva ? 700 : 500,
+                      }}
+                    >
+                      {tiposOfertaLocales.map((op) => (
+                        <option key={op.tof_codigo} value={op.tof_codigo}>
+                          {op.tof_nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {esOfertaRentaActiva && (
+                  <PanelCondicionesRentaProducto config={rentaConfig} onChange={setRentaConfig} />
+                )}
+
+                {/* Bloque de Precio, Oferta, SKU e IVA */}
+                <div
+                  style={{
+                    background: "#F8FAFC",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: "12px",
+                    padding: "14px",
+                  }}
+                >
+                  <div
                     style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      padding: "6px 10px",
-                      borderRadius: "6px",
-                      fontSize: "0.75rem",
-                      fontWeight: activo ? 700 : 500,
-                      border: activo ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
-                      background: activo ? "#F0F9FF" : "#FFFFFF",
-                      color: activo ? "#0369A1" : "#475569",
-                      cursor: "pointer",
-                      textAlign: "left",
-                      transition: "all 0.15s ease",
-                      gap: "4px",
-                      opacity: estaVerificando ? 0.6 : 1,
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+                      gap: "12px",
                     }}
                   >
-                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1 }}>
-                      {u.label}
-                    </span>
-                    <div style={{ display: "flex", alignItems: "center", gap: "5px", flexShrink: 0 }}>
-                      <span
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSolicitarEliminarUso(u.clave, u.label);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.stopPropagation();
-                            handleSolicitarEliminarUso(u.clave, u.label);
-                          }
-                        }}
-                        title="Eliminar este uso (solo permitido si ningún producto lo utiliza)"
+                    <div>
+                      <label
                         style={{
-                          color: "#94A3B8",
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          padding: "2px",
-                          borderRadius: "3px",
-                          transition: "all 0.15s ease",
+                          display: "block",
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                          color: "#334155",
+                          marginBottom: "4px",
                         }}
-                        onMouseEnter={(e) => (e.currentTarget.style.color = "#EF4444")}
-                        onMouseLeave={(e) => (e.currentTarget.style.color = "#94A3B8")}
                       >
-                        {estaVerificando ? (
-                          <Loader2 size={12} className="animate-spin" />
-                        ) : (
-                          <X size={12} />
-                        )}
-                      </span>
-                      <span
+                        Precio Base ($ USD) *
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        placeholder="0.00"
+                        value={precioBase}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "") {
+                            setPrecioBase("");
+                            return;
+                          }
+                          const num = parseFloat(val);
+                          if (!isNaN(num)) setPrecioBase(Math.round(num * 100) / 100);
+                        }}
                         style={{
-                          width: "8px",
-                          height: "8px",
-                          borderRadius: "50%",
-                          background: activo ? "#0284C7" : "#CBD5E1",
-                          flexShrink: 0,
+                          width: "100%",
+                          padding: "8px 11px",
+                          borderRadius: "8px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.95rem",
+                          fontWeight: 800,
+                          boxSizing: "border-box",
                         }}
                       />
                     </div>
-                  </button>
-                );
-              })}
-            </div>
 
-            {/* Input para agregar uso libre */}
-            <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-              <input
-                type="text"
-                placeholder="Escribir otro uso personalizado..."
-                value={nuevoUsoTexto}
-                onChange={(e) => setNuevoUsoTexto(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleAgregarUsoPersonalizado();
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                          color: "#D97706",
+                          marginBottom: "4px",
+                        }}
+                      >
+                        Precio Tachado / Oferta ($)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder="Opcional"
+                        value={precioComparacion}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "") {
+                            setPrecioComparacion("");
+                            return;
+                          }
+                          const num = parseFloat(val);
+                          if (!isNaN(num)) setPrecioComparacion(Math.round(num * 100) / 100);
+                        }}
+                        style={{
+                          width: "100%",
+                          padding: "8px 11px",
+                          borderRadius: "8px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.92rem",
+                          fontWeight: 700,
+                          color: "#D97706",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                          color: "#334155",
+                          marginBottom: "4px",
+                        }}
+                      >
+                        Tarifa IVA SRI
+                      </label>
+                      <select
+                        value={tarifaIva}
+                        onChange={(e) => setTarifaIva(Number(e.target.value))}
+                        style={{
+                          width: "100%",
+                          padding: "8px 11px",
+                          borderRadius: "8px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.84rem",
+                          background: "#FFFFFF",
+                          fontWeight: 700,
+                        }}
+                      >
+                        <option value={0}>IVA 0% (Flores / Exento)</option>
+                        <option value={15}>IVA 15% (Tarifa General)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                          color: "#334155",
+                          marginBottom: "4px",
+                        }}
+                      >
+                        Código SKU
+                      </label>
+                      <input
+                        type="text"
+                        value={sku}
+                        onChange={(e) => setSku(e.target.value)}
+                        placeholder="Auto-generado"
+                        style={{
+                          width: "100%",
+                          padding: "8px 11px",
+                          borderRadius: "8px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.83rem",
+                          fontWeight: 600,
+                          boxSizing: "border-box",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      marginTop: "10px",
+                      padding: "8px 12px",
+                      background: "#FFFFFF",
+                      border: "1px dashed #CBD5E1",
+                      borderRadius: "8px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      fontSize: "0.8rem",
+                      flexWrap: "wrap",
+                      gap: "8px",
+                    }}
+                  >
+                    <div>
+                      <span style={{ color: "#64748B" }}>Base: </span>
+                      <strong>${baseNum.toFixed(2)}</strong>
+                      <span style={{ margin: "0 6px", color: "#CBD5E1" }}>|</span>
+                      <span style={{ color: "#64748B" }}>IVA ({tarifaIva}%): </span>
+                      <strong>${montoIvaCalc.toFixed(2)}</strong>
+                    </div>
+                    <div>
+                      <span style={{ color: "#64748B", marginRight: "6px" }}>PVP Final:</span>
+                      <strong style={{ color: "#059669", fontSize: "1.05rem", fontWeight: 800 }}>
+                        ${totalCalc.toFixed(2)}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <EditorEscalasVolumenVariante
+                    escalas={escalasVolumenCrear}
+                    pvpUnitarioNominal={totalCalc}
+                    onChange={setEscalasVolumenCrear}
+                  />
+                </div>
+
+                <EditorSetComboConfigurable
+                  esCombo={esComboCrear}
+                  onCambiarEsCombo={setEsComboCrear}
+                  componentes={comboComponentesCrear}
+                  onCambiarComponentes={(nuevos) => {
+                    setComboComponentesCrear(nuevos);
+                    const suma = nuevos.reduce((acc, comp) => {
+                      const p = (productos || []).find(
+                        (item) =>
+                          item.pro_id === comp.producto_id ||
+                          (comp.producto_slug && item.pro_slug === comp.producto_slug)
+                      );
+                      const v =
+                        p?.variantes.find(
+                          (vi) =>
+                            (comp.variante_id && vi.var_id === comp.variante_id) ||
+                            (comp.variante_sku && vi.var_sku === comp.variante_sku)
+                        ) || p?.variantes[0];
+                      const pvpV = v
+                        ? typeof v.precio_total === "number" && v.precio_total > 0
+                          ? v.precio_total
+                          : Number(
+                              (
+                                Number(v.var_precio || 0) *
+                                (1 + Number(v.var_tarifa_iva_porcentaje || 0) / 100)
+                              ).toFixed(2)
+                            )
+                        : 0;
+                      return acc + pvpV * comp.cantidad_base;
+                    }, 0);
+                    if (suma > totalCalc) {
+                      setPrecioComparacion(Number(suma.toFixed(2)));
+                    }
+                  }}
+                  catalogoProductos={productos}
+                  pvpSetCompleto={totalCalc}
+                  tarifaIvaSet={tarifaIva}
+                  onCambiarPrecioSetBase={(nuevoBase) => setPrecioBase(nuevoBase)}
+                  onSincronizarPrecioComparacion={(sumaNominal) =>
+                    setPrecioComparacion(Number(sumaNominal.toFixed(2)))
                   }
-                }}
-                style={{
-                  flex: 1,
-                  padding: "6px 10px",
-                  borderRadius: "6px",
-                  border: "1px solid #CBD5E1",
-                  fontSize: "0.76rem",
-                  background: "#FFFFFF",
-                }}
-              />
-              <button
-                type="button"
-                onClick={handleAgregarUsoPersonalizado}
-                style={{
-                  background: "#0F172A",
-                  color: "#FFFFFF",
-                  border: "none",
-                  padding: "6px 12px",
-                  borderRadius: "6px",
-                  fontSize: "0.74rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                + Agregar Uso
-              </button>
-            </div>
+                />
+              </div>
+            )}
 
-            {/* Enlace para restaurar presets si existen eliminados */}
-            {usosEliminados.length > 0 && (
-              <div style={{ marginTop: "8px", display: "flex", justifyContent: "flex-end" }}>
-                <button
-                  type="button"
-                  onClick={handleRestaurarUsosPredeterminados}
+            {/* ===============================================================
+                PASO 2: CARACTERÍSTICAS (DESCRIPCIÓN, QUÉ INCLUYE Y ENTREGA)
+            =============================================================== */}
+            {pasoActivo === "caracteristicas" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div
                   style={{
-                    background: "transparent",
-                    border: "none",
-                    color: "#0284C7",
-                    fontSize: "0.72rem",
-                    cursor: "pointer",
-                    textDecoration: "underline",
-                    padding: 0,
-                    fontWeight: 600,
+                    padding: "12px 14px",
+                    borderRadius: "10px",
+                    background: "#F0F9FF",
+                    border: "1px solid #BAE6FD",
+                    fontSize: "0.78rem",
+                    color: "#0369A1",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
                   }}
                 >
-                  ↺ Restaurar usos predeterminados ({usosEliminados.length} eliminados)
-                </button>
+                  <FileText size={16} />
+                  <span>
+                    Escribe la <strong>Descripción</strong> y los <strong>Beneficios / ¿Qué incluye?</strong>{" "}
+                    reales de <strong>{nombre || "este producto"}</strong>. No se rellenan textos por
+                    defecto a menos que elijas una sugerencia rápida abajo.
+                  </span>
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.82rem",
+                      fontWeight: 800,
+                      color: "#0F172A",
+                      marginBottom: "5px",
+                    }}
+                  >
+                    Descripción Detallada del Producto
+                  </label>
+                  <textarea
+                    rows={4}
+                    placeholder={
+                      esOfertaRentaActiva
+                        ? "Ej. Números luminosos de gran formato ideales para recepción de eventos, cumpleaños y bodas..."
+                        : esFloristeria
+                          ? "Describe el diseño, estilo, tamaño aproximado o detalles especiales del producto..."
+                          : "Describe en detalle en qué consiste el producto o servicio..."
+                    }
+                    value={descripcion}
+                    onChange={(e) => setDescripcion(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "10px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.86rem",
+                      lineHeight: 1.45,
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: "8px",
+                      flexWrap: "wrap",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    <label style={{ fontSize: "0.82rem", fontWeight: 800, color: "#0F172A" }}>
+                      Beneficios / ¿Qué incluye? (una viñeta por línea)
+                    </label>
+                    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                      {esFloristeria && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setBeneficiosTexto(
+                                "Rosas de exportación frescas seleccionadas\nTarjeta dedicatoria impresa incluida\nHidratación y empaque de presentación"
+                              )
+                            }
+                            style={{
+                              padding: "3px 9px",
+                              borderRadius: "999px",
+                              border: "1px solid #CBD5E1",
+                              background: "#FFFFFF",
+                              fontSize: "0.71rem",
+                              fontWeight: 700,
+                              color: "#334155",
+                              cursor: "pointer",
+                            }}
+                          >
+                            + Sugerir Flores
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setBeneficiosTexto(
+                                "Estructura / mobiliario revisado y listo para evento\nInstalación y retiro coordinado\nAsesoría en montaje decorativo"
+                              )
+                            }
+                            style={{
+                              padding: "3px 9px",
+                              borderRadius: "999px",
+                              border: "1px solid #CBD5E1",
+                              background: "#FFFFFF",
+                              fontSize: "0.71rem",
+                              fontWeight: 700,
+                              color: "#334155",
+                              cursor: "pointer",
+                            }}
+                          >
+                            + Sugerir Renta / Evento
+                          </button>
+                        </>
+                      )}
+                      {beneficiosTexto.trim() && (
+                        <button
+                          type="button"
+                          onClick={() => setBeneficiosTexto("")}
+                          style={{
+                            padding: "3px 9px",
+                            borderRadius: "999px",
+                            border: "1px solid #FECACA",
+                            background: "#FEF2F2",
+                            fontSize: "0.71rem",
+                            fontWeight: 700,
+                            color: "#DC2626",
+                            cursor: "pointer",
+                          }}
+                        >
+                          Limpiar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <textarea
+                    rows={4}
+                    placeholder={
+                      "Escribe un beneficio o elemento incluido por cada línea.\nEj: Incluye iluminación cálida LED\nAltura de 1.20 m\nInstalación y retiro en el lugar del evento"
+                    }
+                    value={beneficiosTexto}
+                    onChange={(e) => setBeneficiosTexto(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "10px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.85rem",
+                      lineHeight: 1.45,
+                      boxSizing: "border-box",
+                    }}
+                  />
+
+                  {listaViñetasPreview.length > 0 && (
+                    <div
+                      style={{
+                        marginTop: "8px",
+                        padding: "10px 12px",
+                        borderRadius: "9px",
+                        background: "#F8FAFC",
+                        border: "1px solid #E2E8F0",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "4px",
+                      }}
+                    >
+                      <span style={{ fontSize: "0.71rem", fontWeight: 700, color: "#64748B" }}>
+                        Vista previa en tienda ({listaViñetasPreview.length} viñetas):
+                      </span>
+                      {listaViñetasPreview.map((item, idx) => (
+                        <div
+                          key={idx}
+                          style={{
+                            fontSize: "0.78rem",
+                            color: "#1E293B",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          <CheckCircle2 size={13} color="#059669" />
+                          <span>{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      color: "#334155",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    Promesa y Tiempo de Entrega
+                  </label>
+                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "6px" }}>
+                    {presetsEntrega.map((pr) => (
+                      <button
+                        key={pr.val}
+                        type="button"
+                        onClick={() => setTiempoEntrega(pr.val)}
+                        style={{
+                          padding: "5px 9px",
+                          borderRadius: "7px",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          border:
+                            tiempoEntrega === pr.val
+                              ? "1.5px solid #16A34A"
+                              : "1px solid #CBD5E1",
+                          background: tiempoEntrega === pr.val ? "#DCFCE7" : "#FFFFFF",
+                          color: tiempoEntrega === pr.val ? "#15803D" : "#475569",
+                          cursor: "pointer",
+                        }}
+                      >
+                        {pr.label}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="text"
+                    value={tiempoEntrega}
+                    onChange={(e) => setTiempoEntrega(e.target.value)}
+                    placeholder="Ej. 🌸 Pide hoy, recibe hoy (Mismo Día)"
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.84rem",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      color: "#334155",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    Requisitos o Condiciones para el Cliente (opcional, uno por línea)
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="Opcional: Ej. Punto eléctrico cercano a menos de 5 metros..."
+                    value={requisitosTexto}
+                    onChange={(e) => setRequisitosTexto(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "8px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.82rem",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* ===============================================================
+                PASO 3: IMÁGENES, GALERÍA, ENCUADRE 1:1 Y VIDEO
+            =============================================================== */}
+            {pasoActivo === "imagenes" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                <div
+                  style={{
+                    background: "#F0FDF4",
+                    border: "1px solid #BBF7D0",
+                    borderRadius: "12px",
+                    padding: "16px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: "8px",
+                      flexWrap: "wrap",
+                      marginBottom: "12px",
+                    }}
+                  >
+                    <div>
+                      <div
+                        style={{
+                          fontSize: "0.84rem",
+                          fontWeight: 800,
+                          color: "#15803D",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        📷 Galería de Fotos del Producto ({fotosCrear.length})
+                      </div>
+                      <span style={{ fontSize: "0.73rem", color: "#166534" }}>
+                        La foto marcada como ★ #1 será la portada principal en vitrina.
+                      </span>
+                    </div>
+
+                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                      <label
+                        style={{
+                          background: subiendoImagen ? "#94A3B8" : "#15803D",
+                          color: "#FFFFFF",
+                          padding: "7px 13px",
+                          borderRadius: "8px",
+                          fontSize: "0.76rem",
+                          fontWeight: 700,
+                          cursor: subiendoImagen ? "wait" : "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                        }}
+                      >
+                        {subiendoImagen ? <Loader2 size={14} /> : <Upload size={14} />}
+                        <span>{subiendoImagen ? "Subiendo..." : "Subir Fotos PC"}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          disabled={subiendoImagen}
+                          onChange={handleSubirArchivoLocal}
+                          style={{ display: "none" }}
+                        />
+                      </label>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setContextoMedios("portada");
+                          setModalGaleriaAbierto(true);
+                        }}
+                        style={{
+                          background: "#0284C7",
+                          color: "#FFFFFF",
+                          border: "none",
+                          padding: "7px 13px",
+                          borderRadius: "8px",
+                          fontSize: "0.76rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                        }}
+                      >
+                        <ImageIcon size={14} />
+                        <span>De Galería</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {exitoAutoConvertir && (
+                    <div
+                      style={{
+                        marginBottom: "10px",
+                        fontSize: "0.74rem",
+                        color: "#15803D",
+                        background: "#DCFCE7",
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid #86EFAC",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <CheckCircle2 size={14} /> {exitoAutoConvertir}
+                    </div>
+                  )}
+
+                  {/* Cuadrícula de miniaturas */}
+                  {fotosCrear.length === 0 ? (
+                    <div
+                      style={{
+                        border: "2px dashed #86EFAC",
+                        borderRadius: "10px",
+                        padding: "22px 16px",
+                        textAlign: "center",
+                        background: "#FFFFFF",
+                        color: "#475569",
+                        marginBottom: "12px",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      Sube una o varias fotos desde tu equipo o selecciónalas desde la biblioteca.
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fill, minmax(95px, 1fr))",
+                        gap: "10px",
+                        marginBottom: "12px",
+                      }}
+                    >
+                      {fotosCrear.map((url, idx) => {
+                        const esPortada = idx === 0 || url === imagenUrl;
+                        return (
+                          <div
+                            key={`${url}-${idx}`}
+                            onClick={() => {
+                              if (!esPortada) handleEstablecerPortadaCrear(url);
+                            }}
+                            title={esPortada ? "Foto de Portada (#1)" : "Clic para hacer Portada"}
+                            style={{
+                              position: "relative",
+                              borderRadius: "8px",
+                              overflow: "hidden",
+                              border: esPortada ? "2.5px solid #10B981" : "1px solid #CBD5E1",
+                              aspectRatio: "1 / 1",
+                              background: "#0F172A",
+                              cursor: esPortada ? "default" : "pointer",
+                            }}
+                          >
+                            <img
+                              src={url}
+                              alt={`Foto ${idx + 1}`}
+                              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                            />
+                            <div
+                              style={{
+                                position: "absolute",
+                                top: 3,
+                                left: 3,
+                                right: 3,
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  fontSize: "0.62rem",
+                                  fontWeight: 800,
+                                  background: esPortada ? "#10B981" : "rgba(0,0,0,0.65)",
+                                  color: "#FFFFFF",
+                                  padding: "2px 5px",
+                                  borderRadius: "4px",
+                                }}
+                              >
+                                {esPortada ? "★ Portada" : `#${idx + 1}`}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={(ev) => {
+                                  ev.stopPropagation();
+                                  handleQuitarFotoCrear(url);
+                                }}
+                                style={{
+                                  background: "rgba(220, 38, 38, 0.92)",
+                                  color: "#FFFFFF",
+                                  border: "none",
+                                  borderRadius: "50%",
+                                  width: "18px",
+                                  height: "18px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  cursor: "pointer",
+                                  padding: 0,
+                                }}
+                              >
+                                <X size={11} />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Selector de Encuadre 1:1 para la portada */}
+                  {imagenUrl && (
+                    <SelectorEncuadreFoto
+                      imagenUrl={imagenUrl}
+                      posicion={fotoPosicion}
+                      ajuste={fotoAjuste}
+                      zoom={fotoZoom}
+                      onCambiarPosicion={setFotoPosicion}
+                      onCambiarAjuste={setFotoAjuste}
+                      onCambiarZoom={setFotoZoom}
+                      colorTema="#15803D"
+                    />
+                  )}
+
+                  {/* Pegar URL directa o convertir desde Google Fotos */}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                      gap: "10px",
+                      marginTop: "12px",
+                    }}
+                  >
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          color: "#334155",
+                          marginBottom: "3px",
+                        }}
+                      >
+                        URL Imagen Portada (opcional)
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://..."
+                        value={imagenUrl}
+                        onChange={(e) => {
+                          const raw = e.target.value;
+                          const driveMatch =
+                            raw.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/) ||
+                            raw.match(/drive\.google\.com\/(?:open|uc)\?(?:.*&)?id=([a-zA-Z0-9_-]+)/);
+                          if (driveMatch && driveMatch[1]) {
+                            setImagenUrl(`https://lh3.googleusercontent.com/d/${driveMatch[1]}=w1200`);
+                          } else {
+                            setImagenUrl(raw);
+                          }
+                        }}
+                        style={{
+                          width: "100%",
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.78rem",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                      {(imagenUrl.includes("photos.google.com") ||
+                        imagenUrl.includes("photos.app.goo.gl")) && (
+                        <button
+                          type="button"
+                          disabled={resolviendoImagen}
+                          onClick={() => void handleConvertirImagenGlobal()}
+                          style={{
+                            marginTop: "6px",
+                            background: "#0284C7",
+                            color: "#FFFFFF",
+                            border: "none",
+                            padding: "5px 10px",
+                            borderRadius: "6px",
+                            fontSize: "0.7rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "4px",
+                          }}
+                        >
+                          <Wand2 size={12} />
+                          <span>Auto-Convertir Google Fotos</span>
+                        </button>
+                      )}
+                    </div>
+
+                    <div>
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          marginBottom: "3px",
+                        }}
+                      >
+                        <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
+                          URLs adicionales de galería (1 por línea)
+                        </label>
+                        <label
+                          style={{
+                            fontSize: "0.68rem",
+                            fontWeight: 700,
+                            color: "#15803D",
+                            cursor: "pointer",
+                          }}
+                        >
+                          + Subir más
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            disabled={subiendoGaleria}
+                            onChange={handleSubirArchivoGaleria}
+                            style={{ display: "none" }}
+                          />
+                        </label>
+                      </div>
+                      <textarea
+                        rows={2}
+                        placeholder="https://...foto2.jpg"
+                        value={galeriaTexto}
+                        onChange={(e) => setGaleriaTexto(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "6px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.76rem",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+                      gap: "10px",
+                      marginTop: "10px",
+                    }}
+                  >
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          color: "#334155",
+                          marginBottom: "3px",
+                        }}
+                      >
+                        URL Álbum Muestras (Google Photos)
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://photos.app.goo.gl/..."
+                        value={albumFotosUrl}
+                        onChange={(e) => setAlbumFotosUrl(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.78rem",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        style={{
+                          display: "block",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          color: "#334155",
+                          marginBottom: "3px",
+                        }}
+                      >
+                        URL Video / GIF Demostrativo
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://youtube.com/... o .mp4"
+                        value={videoUrl}
+                        onChange={(e) => setVideoUrl(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.78rem",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ===============================================================
+                PASO 4: LOGÍSTICA, ENVÍO Y VIGENCIA ESTACIONAL
+            =============================================================== */}
+            {pasoActivo === "logistica" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                {/* Estado y Temporalidad */}
+                <div
+                  style={{
+                    background: "#F8FAFC",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: "12px",
+                    padding: "14px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      flexWrap: "wrap",
+                      gap: "8px",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <Calendar size={16} color="#0284C7" />
+                      <strong style={{ fontSize: "0.82rem", color: "#1E293B" }}>
+                        Estado en Catálogo y Vigencia Estacional
+                      </strong>
+                    </div>
+
+                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        onClick={() => setProActivo(!proActivo)}
+                        style={{
+                          background: proActivo ? "#ECFDF5" : "#FEF2F2",
+                          border: proActivo ? "1.5px solid #10B981" : "1.5px solid #EF4444",
+                          color: proActivo ? "#065F46" : "#991B1B",
+                          padding: "5px 12px",
+                          borderRadius: "8px",
+                          fontSize: "0.75rem",
+                          fontWeight: 800,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                        }}
+                      >
+                        <Power size={13} />
+                        <span>{proActivo ? "🟢 Activo" : "⚪ Oculto"}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setDestacado(!destacado)}
+                        style={{
+                          background: destacado ? "#FEF3C7" : "#FFFFFF",
+                          border: destacado ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
+                          color: destacado ? "#B45309" : "#475569",
+                          padding: "5px 12px",
+                          borderRadius: "8px",
+                          fontSize: "0.75rem",
+                          fontWeight: 800,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                        }}
+                      >
+                        <Sparkles size={13} />
+                        <span>{destacado ? "⭐ Destacado" : "☆ Normal"}</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+                      gap: "8px",
+                    }}
+                  >
+                    {(
+                      [
+                        { id: "SIEMPRE", label: "🌐 Todo el Año" },
+                        { id: "RANGO_FECHAS", label: "📅 Rango Fechas" },
+                        { id: "ESTACIONAL_ANUAL", label: "🌸 Estacional Anual" },
+                      ] as Array<{ id: TipoVigenciaTemporal; label: string }>
+                    ).map((v) => (
+                      <button
+                        key={v.id}
+                        type="button"
+                        onClick={() => {
+                          setVigenciaTipo(v.id);
+                          if (v.id === "ESTACIONAL_ANUAL" && !fechaInicio) {
+                            setFechaInicio("02-10");
+                            setFechaFin("02-15");
+                            setEtiquetaTemporada("San Valentín");
+                          }
+                        }}
+                        style={{
+                          padding: "8px 10px",
+                          borderRadius: "8px",
+                          border:
+                            vigenciaTipo === v.id ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
+                          background: vigenciaTipo === v.id ? "#E0F2FE" : "#FFFFFF",
+                          color: vigenciaTipo === v.id ? "#0369A1" : "#475569",
+                          fontSize: "0.76rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {v.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {vigenciaTipo !== "SIEMPRE" && (
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+                        gap: "10px",
+                        marginTop: "10px",
+                      }}
+                    >
+                      <input
+                        type={vigenciaTipo === "RANGO_FECHAS" ? "date" : "text"}
+                        placeholder="Inicio (MM-DD)"
+                        value={fechaInicio}
+                        onChange={(e) => setFechaInicio(e.target.value)}
+                        style={{
+                          padding: "7px 10px",
+                          borderRadius: "8px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.8rem",
+                        }}
+                      />
+                      <input
+                        type={vigenciaTipo === "RANGO_FECHAS" ? "date" : "text"}
+                        placeholder="Fin (MM-DD)"
+                        value={fechaFin}
+                        onChange={(e) => setFechaFin(e.target.value)}
+                        style={{
+                          padding: "7px 10px",
+                          borderRadius: "8px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.8rem",
+                        }}
+                      />
+                      {vigenciaTipo === "ESTACIONAL_ANUAL" && (
+                        <>
+                          <input
+                            type="text"
+                            placeholder="Etiqueta (ej. San Valentín)"
+                            value={etiquetaTemporada}
+                            onChange={(e) => setEtiquetaTemporada(e.target.value)}
+                            style={{
+                              padding: "7px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #CBD5E1",
+                              fontSize: "0.8rem",
+                            }}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Aviso fuera de temporada"
+                            value={mensajeFueraTemporada}
+                            onChange={(e) => setMensajeFueraTemporada(e.target.value)}
+                            style={{
+                              padding: "7px 10px",
+                              borderRadius: "8px",
+                              border: "1px solid #CBD5E1",
+                              fontSize: "0.8rem",
+                            }}
+                          />
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Logística y Transporte */}
+                <div
+                  style={{
+                    background: deliveryIncluido ? "#F0FDF4" : "#F8FAFC",
+                    border: deliveryIncluido ? "1.5px solid #86EFAC" : "1px solid #E2E8F0",
+                    borderRadius: "12px",
+                    padding: "14px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
+                    <Truck size={16} color="#16A34A" />
+                    <strong style={{ fontSize: "0.82rem", color: "#1E293B" }}>
+                      Logística, Envíos y Modalidad de Entrega
+                    </strong>
+                  </div>
+
+                  {!esLegal && (
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(155px, 1fr))",
+                        gap: "8px",
+                        marginBottom: "10px",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeliveryIncluido(true);
+                          setModalidadTransporte("INCLUIDO_GRATIS");
+                          setEtiquetaTransporte(
+                            configLogisticaNegocio.etiquetaEnvioGratis ||
+                              "🌸 Envío Gratis en Centro-Norte de Quito"
+                          );
+                        }}
+                        style={{
+                          padding: "8px 10px",
+                          borderRadius: "8px",
+                          border:
+                            deliveryIncluido && modalidadTransporte === "INCLUIDO_GRATIS"
+                              ? "1.5px solid #16A34A"
+                              : "1px solid #CBD5E1",
+                          background:
+                            deliveryIncluido && modalidadTransporte === "INCLUIDO_GRATIS"
+                              ? "#DCFCE7"
+                              : "#FFFFFF",
+                          color: "#166534",
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        🚚 Envío Gratis en Zona Base
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeliveryIncluido(false);
+                          setModalidadTransporte("COSTO_ADICIONAL");
+                          setEtiquetaTransporte("📦 Delivery Calculado por Ubicación");
+                        }}
+                        style={{
+                          padding: "8px 10px",
+                          borderRadius: "8px",
+                          border:
+                            !deliveryIncluido && modalidadTransporte === "COSTO_ADICIONAL"
+                              ? "1.5px solid #F59E0B"
+                              : "1px solid #CBD5E1",
+                          background:
+                            !deliveryIncluido && modalidadTransporte === "COSTO_ADICIONAL"
+                              ? "#FEF3C7"
+                              : "#FFFFFF",
+                          color: "#92400E",
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        📦 Costo Adicional en Checkout
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeliveryIncluido(false);
+                          setModalidadTransporte("SOLO_RETIRO");
+                          setEtiquetaTransporte("🏪 Solo Retiro en Local");
+                        }}
+                        style={{
+                          padding: "8px 10px",
+                          borderRadius: "8px",
+                          border:
+                            !deliveryIncluido && modalidadTransporte === "SOLO_RETIRO"
+                              ? "1.5px solid #475569"
+                              : "1px solid #CBD5E1",
+                          background:
+                            !deliveryIncluido && modalidadTransporte === "SOLO_RETIRO"
+                              ? "#F1F5F9"
+                              : "#FFFFFF",
+                          color: "#1E293B",
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        🏪 Solo Retiro en Local
+                      </button>
+                    </div>
+                  )}
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                      gap: "10px",
+                    }}
+                  >
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        Etiqueta Visible de Transporte
+                      </label>
+                      <input
+                        type="text"
+                        value={etiquetaTransporte}
+                        onChange={(e) => setEtiquetaTransporte(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.78rem",
+                          boxSizing: "border-box",
+                          background: "#FFFFFF",
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        Zona de Cobertura
+                      </label>
+                      <input
+                        type="text"
+                        value={coberturaTransporte}
+                        onChange={(e) => setCoberturaTransporte(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.78rem",
+                          boxSizing: "border-box",
+                          background: "#FFFFFF",
+                        }}
+                      />
+                    </div>
+
+                    {!esLegal && (
+                      <div>
+                        <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                          Recargo Especial (+USD)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.50"
+                          min="0"
+                          value={recargoTransporteUsd}
+                          onChange={(e) =>
+                            setRecargoTransporteUsd(Math.max(0, Number(e.target.value) || 0))
+                          }
+                          style={{
+                            width: "100%",
+                            padding: "7px 10px",
+                            borderRadius: "6px",
+                            border: "1px solid #CBD5E1",
+                            fontSize: "0.78rem",
+                            boxSizing: "border-box",
+                            background: "#FFFFFF",
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ===============================================================
+                PASO 5: CANALES DE VISIBILIDAD, OCASIONES Y ETIQUETAS IA
+            =============================================================== */}
+            {pasoActivo === "canales_ia" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+                {/* Canales */}
+                <div
+                  style={{
+                    background: "#F8FAFC",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: "12px",
+                    padding: "14px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <Share2 size={16} color="#0284C7" />
+                      <strong style={{ fontSize: "0.82rem", color: "#1E293B" }}>
+                        Canales de Visibilidad y Venta
+                      </strong>
+                    </div>
+                    <span style={{ fontSize: "0.74rem", color: "#64748B", fontWeight: 600 }}>
+                      {canalesSeleccionados.length} activos
+                    </span>
+                  </div>
+
+                  {!tieneAlMenosUnaImagen && (
+                    <div
+                      style={{
+                        background: "#FFFBEB",
+                        border: "1px solid #FDE68A",
+                        borderRadius: "8px",
+                        padding: "8px 10px",
+                        marginBottom: "10px",
+                        fontSize: "0.74rem",
+                        color: "#92400E",
+                      }}
+                    >
+                      📷 Los canales <strong>E-Commerce Web</strong> y <strong>App Clientes</strong>{" "}
+                      requieren subir al menos 1 foto en el <strong>Paso 3</strong>.
+                    </div>
+                  )}
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(175px, 1fr))",
+                      gap: "8px",
+                    }}
+                  >
+                    {CANALES_CATALOGO_OFICIALES.map((c) => {
+                      const activo = canalesSeleccionados.includes(c.clave);
+                      const exigeFoto =
+                        CANALES_REQUIEREN_IMAGEN.includes(c.clave) && !tieneAlMenosUnaImagen;
+                      return (
+                        <button
+                          key={c.clave}
+                          type="button"
+                          onClick={() => toggleCanal(c.clave)}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "8px",
+                            padding: "8px 10px",
+                            borderRadius: "8px",
+                            border: `1.5px solid ${activo ? c.color : "#E2E8F0"}`,
+                            background: activo ? `${c.color}12` : "#FFFFFF",
+                            color: activo ? "#0F172A" : "#64748B",
+                            cursor: "pointer",
+                            fontSize: "0.77rem",
+                            fontWeight: activo ? 700 : 500,
+                            textAlign: "left",
+                            opacity: exigeFoto && !activo ? 0.65 : 1,
+                          }}
+                        >
+                          <span
+                            style={{
+                              width: "8px",
+                              height: "8px",
+                              borderRadius: "50%",
+                              background: activo ? c.color : "#CBD5E1",
+                            }}
+                          />
+                          <span style={{ flex: 1 }}>{c.nombre}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Usos y Ocasiones */}
+                <div
+                  style={{
+                    background: "#F8FAFC",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: "12px",
+                    padding: "14px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <Target size={16} color="#0284C7" />
+                      <strong style={{ fontSize: "0.82rem", color: "#1E293B" }}>
+                        Usos y Ocasiones Recomendadas (IA y Buscador)
+                      </strong>
+                    </div>
+                    <span style={{ fontSize: "0.73rem", color: "#0369A1", fontWeight: 700 }}>
+                      {usosSeleccionados.length} seleccionados
+                    </span>
+                  </div>
+
+                  {mensajeExitoUso && (
+                    <div
+                      style={{
+                        background: "#ECFDF5",
+                        color: "#065F46",
+                        border: "1px solid #A7F3D0",
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        fontSize: "0.75rem",
+                        marginBottom: "8px",
+                      }}
+                    >
+                      {mensajeExitoUso}
+                    </div>
+                  )}
+
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+                      gap: "6px",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    {todosUsosDisponibles.map((u) => {
+                      const activo = usosSeleccionados.includes(u.clave);
+                      const estaVerif = verificandoUsoClave === u.clave;
+                      return (
+                        <button
+                          key={u.clave}
+                          type="button"
+                          onClick={() => toggleUso(u.clave)}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            padding: "6px 9px",
+                            borderRadius: "6px",
+                            fontSize: "0.74rem",
+                            fontWeight: activo ? 700 : 500,
+                            border: activo ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
+                            background: activo ? "#F0F9FF" : "#FFFFFF",
+                            color: activo ? "#0369A1" : "#475569",
+                            cursor: "pointer",
+                            textAlign: "left",
+                            gap: "4px",
+                          }}
+                        >
+                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {u.label}
+                          </span>
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            onClick={(ev) => {
+                              ev.stopPropagation();
+                              void handleSolicitarEliminarUso(u.clave, u.label);
+                            }}
+                            style={{ color: "#94A3B8", display: "inline-flex" }}
+                          >
+                            {estaVerif ? <Loader2 size={11} /> : <X size={11} />}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <input
+                      type="text"
+                      placeholder="Agregar otro uso u ocasión..."
+                      value={nuevoUsoTexto}
+                      onChange={(e) => setNuevoUsoTexto(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAgregarUsoPersonalizado();
+                        }
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.76rem",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAgregarUsoPersonalizado}
+                      style={{
+                        background: "#0F172A",
+                        color: "#FFFFFF",
+                        border: "none",
+                        padding: "6px 12px",
+                        borderRadius: "6px",
+                        fontSize: "0.74rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      + Uso
+                    </button>
+                  </div>
+
+                  {usosEliminados.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleRestaurarUsosPredeterminados}
+                      style={{
+                        marginTop: "6px",
+                        background: "transparent",
+                        border: "none",
+                        color: "#0284C7",
+                        fontSize: "0.72rem",
+                        cursor: "pointer",
+                        textDecoration: "underline",
+                      }}
+                    >
+                      ↺ Restaurar usos predeterminados
+                    </button>
+                  )}
+                </div>
+
+                {/* Etiquetas Semánticas */}
+                <div
+                  style={{
+                    background: "#F8FAFC",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: "12px",
+                    padding: "14px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+                    <Tag size={15} color="#0284C7" />
+                    <strong style={{ fontSize: "0.8rem", color: "#1E293B" }}>
+                      Etiquetas de Búsqueda (Keywords)
+                    </strong>
+                  </div>
+
+                  <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "8px" }}>
+                    {etiquetasSeleccionadas.map((tag) => (
+                      <span
+                        key={tag}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          background: "#FFFFFF",
+                          border: "1px solid #CBD5E1",
+                          borderRadius: "6px",
+                          padding: "3px 8px",
+                          fontSize: "0.74rem",
+                          fontWeight: 600,
+                        }}
+                      >
+                        <Hash size={11} />
+                        <span>{tag}</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setEtiquetasSeleccionadas((prev) => prev.filter((t) => t !== tag))
+                          }
+                          style={{ background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                        >
+                          <X size={11} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+
+                  <div style={{ display: "flex", gap: "6px" }}>
+                    <input
+                      type="text"
+                      placeholder="Escribir palabra clave y Enter..."
+                      value={nuevaEtiquetaTexto}
+                      onChange={(e) => setNuevaEtiquetaTexto(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          handleAgregarEtiqueta();
+                        }
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: "6px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.76rem",
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAgregarEtiqueta}
+                      style={{
+                        background: "#0284C7",
+                        color: "#FFFFFF",
+                        border: "none",
+                        padding: "6px 12px",
+                        borderRadius: "6px",
+                        fontSize: "0.74rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      + Tag
+                    </button>
+                  </div>
+                </div>
               </div>
             )}
           </div>
 
-          {/* Etiquetas Semánticas */}
+          {/* Barra Inferior Fija de Navegación del Wizard */}
           <div
             style={{
+              padding: "12px 20px",
+              borderTop: "1px solid #E2E8F0",
               background: "#F8FAFC",
-              border: "1.5px solid #E2E8F0",
-              borderRadius: "10px",
-              padding: "14px",
-              marginBottom: "14px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              gap: "10px",
+              flexWrap: "wrap",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <Tag size={16} color="#0284C7" />
-                <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "#1E293B", textTransform: "uppercase" }}>
-                  Etiquetas Semánticas de Búsqueda (Keywords IA)
-                </span>
-              </div>
-              <span style={{ fontSize: "0.74rem", color: "#64748B", fontWeight: 600 }}>
-                {etiquetasSeleccionadas.length} etiquetas
-              </span>
-            </div>
-            <p style={{ fontSize: "0.73rem", color: "#64748B", margin: "0 0 10px 0" }}>
-              Palabras clave adicionales para búsqueda por texto y lenguaje natural (ej. <em>coreano</em>, <em>rosas rojas</em>):
-            </p>
-
-            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "10px", minHeight: "26px", alignItems: "center" }}>
-              {etiquetasSeleccionadas.length === 0 ? (
-                <span style={{ fontSize: "0.72rem", color: "#94A3B8", fontStyle: "italic" }}>
-                  Sin etiquetas asignadas.
-                </span>
+            <div>
+              {indicePaso > 0 ? (
+                <button
+                  type="button"
+                  onClick={irPasoAnterior}
+                  title="Volver al paso anterior"
+                  aria-label="Anterior"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "8px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid #CBD5E1",
+                    background: "#FFFFFF",
+                    color: "#334155",
+                    fontSize: "0.82rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  <ArrowLeft size={15} />
+                  <span>Anterior</span>
+                </button>
               ) : (
-                etiquetasSeleccionadas.map((tag) => (
-                  <span
-                    key={tag}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      background: "#F1F5F9",
-                      color: "#334155",
-                      border: "1px solid #CBD5E1",
-                      borderRadius: "6px",
-                      padding: "3px 8px",
-                      fontSize: "0.74rem",
-                      fontWeight: 600,
-                    }}
-                  >
-                    <Hash size={12} color="#64748B" />
-                    <span>{tag}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleEliminarEtiqueta(tag)}
-                      style={{ background: "none", border: "none", color: "#94A3B8", cursor: "pointer", padding: 0 }}
-                    >
-                      <X size={12} />
-                    </button>
-                  </span>
-                ))
+                <button
+                  type="button"
+                  onClick={onCerrar}
+                  style={{
+                    padding: "8px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid #CBD5E1",
+                    background: "#FFFFFF",
+                    color: "#475569",
+                    fontSize: "0.82rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancelar
+                </button>
               )}
             </div>
 
-            <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-              <input
-                type="text"
-                placeholder="Escribir etiqueta y presionar Enter..."
-                value={nuevaEtiquetaTexto}
-                onChange={(e) => setNuevaEtiquetaTexto(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleAgregarEtiqueta();
-                  }
-                }}
-                style={{
-                  flex: 1,
-                  padding: "6px 10px",
-                  borderRadius: "6px",
-                  border: "1px solid #CBD5E1",
-                  fontSize: "0.76rem",
-                  background: "#FFFFFF",
-                }}
-              />
-              <button
-                type="button"
-                onClick={handleAgregarEtiqueta}
-                style={{
-                  background: "#0284C7",
-                  color: "#FFFFFF",
-                  border: "none",
-                  padding: "6px 12px",
-                  borderRadius: "6px",
-                  fontSize: "0.74rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                + Añadir Tag
-              </button>
+            <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+              {indicePaso < PASOS_WIZARD_PRODUCTO.length - 1 && (
+                <button
+                  type="button"
+                  onClick={irPasoSiguiente}
+                  title="Avanzar al siguiente paso del asistente"
+                  aria-label="Siguiente"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "9px 16px",
+                    borderRadius: "8px",
+                    border: "none",
+                    background: "#0F172A",
+                    color: "#FFFFFF",
+                    fontSize: "0.84rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  <span>Siguiente</span>
+                  <ArrowRight size={15} />
+                </button>
+              )}
+
+              {(indicePaso === PASOS_WIZARD_PRODUCTO.length - 1 ||
+                Boolean(nombre.trim() && baseNum > 0)) && (
+                <button
+                  type="submit"
+                  disabled={guardando}
+                  title="Registrar y publicar producto en catálogo"
+                  aria-label="Crear Producto"
+                  style={{
+                    background: colorTema,
+                    color: "#FFFFFF",
+                    border: "none",
+                    padding: "9px 18px",
+                    borderRadius: "8px",
+                    fontSize: "0.85rem",
+                    fontWeight: 800,
+                    cursor: guardando ? "wait" : "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  {guardando ? <Loader2 size={16} /> : <CheckCircle2 size={16} />}
+                  <span>{guardando ? "Guardando..." : "Crear Producto"}</span>
+                </button>
+              )}
             </div>
-          </div>
-
-          {/* Botones de Acción */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "flex-end",
-              gap: "8px",
-              paddingTop: "14px",
-              borderTop: "1px solid #E2E8F0",
-            }}
-          >
-            <button
-              type="button"
-              onClick={onCerrar}
-              style={{
-                background: "#F1F5F9",
-                color: "#475569",
-                border: "none",
-                padding: "9px 16px",
-                borderRadius: "8px",
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                cursor: "pointer",
-              }}
-            >
-              Cancelar
-            </button>
-
-            <button
-              type="submit"
-              disabled={guardando}
-              style={{
-                background: esFloristeria ? "#E11D48" : "#0284C7",
-                color: "#FFFFFF",
-                border: "none",
-                padding: "9px 20px",
-                borderRadius: "8px",
-                fontSize: "0.85rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-              }}
-            >
-              <CheckCircle2 size={16} />
-              <span>{guardando ? "Registrando..." : "Crear Producto"}</span>
-            </button>
           </div>
         </form>
       </div>
 
-      {/* Modal para Crear y Administrar / Eliminar Categorías */}
       <ModalCrearCategoria
         abierto={modalCatAbierto}
         tabInicial={catModalTab}
@@ -2313,26 +2896,21 @@ export function ModalCrearProducto({
         onCategoriaCreada={(nueva) => {
           setCategoriasLocales((prev) => [...prev, nueva]);
           setCategoriaId(nueva.ctg_id);
-          if (onCategoriaCreada) {
-            onCategoriaCreada(nueva);
-          }
+          if (onCategoriaCreada) onCategoriaCreada(nueva);
         }}
         onCategoriaEliminada={(catIdEliminada) => {
           setCategoriasLocales((prev) => {
-            const rest = prev.filter((c) => c.ctg_id !== catIdEliminada && c.ctg_slug !== catIdEliminada);
-            if (categoriaId === catIdEliminada && rest[0]) {
-              setCategoriaId(rest[0].ctg_id);
-            }
+            const rest = prev.filter(
+              (c) => c.ctg_id !== catIdEliminada && c.ctg_slug !== catIdEliminada
+            );
+            if (categoriaId === catIdEliminada && rest[0]) setCategoriaId(rest[0].ctg_id);
             return rest;
           });
-          if (onCategoriaEliminada) {
-            onCategoriaEliminada(catIdEliminada);
-          }
+          if (onCategoriaEliminada) onCategoriaEliminada(catIdEliminada);
         }}
         negocio={negocio}
       />
 
-      {/* Modal Galería y Biblioteca Multimedia por Negocio */}
       <ModalGaleriaMedios
         abierto={modalGaleriaAbierto}
         onCerrar={() => setModalGaleriaAbierto(false)}
@@ -2343,7 +2921,7 @@ export function ModalCrearProducto({
             setGaleriaTexto((prev) => (prev ? `${prev}\n${url}` : url));
           } else {
             setImagenUrl(url);
-            setExitoAutoConvertir("¡Imagen seleccionada desde la galería del negocio!");
+            setExitoAutoConvertir("¡Imagen seleccionada desde la galería!");
           }
         }}
         onSeleccionarMultiples={(urls) => {
@@ -2354,18 +2932,21 @@ export function ModalCrearProducto({
               const [primera, ...resto] = urls;
               if (primera) setImagenUrl(primera);
               if (resto.length > 0) {
-                setGaleriaTexto((prev) => (prev ? `${prev}\n${resto.join("\n")}` : resto.join("\n")));
+                setGaleriaTexto((prev) =>
+                  prev ? `${prev}\n${resto.join("\n")}` : resto.join("\n")
+                );
               }
             } else {
-              setGaleriaTexto((prev) => (prev ? `${prev}\n${urls.join("\n")}` : urls.join("\n")));
+              setGaleriaTexto((prev) =>
+                prev ? `${prev}\n${urls.join("\n")}` : urls.join("\n")
+              );
             }
-            setExitoAutoConvertir(`¡${urls.length} imagen(es) seleccionada(s) desde la galería!`);
+            setExitoAutoConvertir(`¡${urls.length} imagen(es) seleccionadas desde la galería!`);
           }
         }}
         titulo={`Biblioteca de Medios (${negocio.toUpperCase()})`}
       />
 
-      {/* Modales de Validación y Confirmación de Eliminación de Usos */}
       <ModalBloqueoUso
         abierto={Boolean(modalBloqueoUso)}
         usoLabel={modalBloqueoUso?.label || ""}

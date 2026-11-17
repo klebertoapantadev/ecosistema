@@ -101,6 +101,11 @@ import {
   ModalGestionTiposOferta,
   PanelCondicionesRentaProducto,
 } from "./ModalGestionTiposOferta";
+import {
+  BarraPasosWizardProducto,
+  PASOS_WIZARD_PRODUCTO,
+  type PasoWizardProducto,
+} from "./BarraPasosWizardProducto";
 
 
 export const COLOR_PRODUCTO_MASTER = {
@@ -914,8 +919,12 @@ export function ModalEditarProducto({
     }, 3500);
   };
 
+  const [pasoMaster, setPasoMaster] = useState<PasoWizardProducto>("identidad_precio");
+  const [verTodoMaster, setVerTodoMaster] = useState<boolean>(false);
+
   useEffect(() => {
     if (producto) {
+      setPasoMaster("identidad_precio");
       setNombre(producto.pro_nombre || "");
       setDescripcion(producto.pro_descripcion || "");
       setCategoriaId(producto.pro_categoria_principal_id || categorias[0]?.ctg_id || "");
@@ -1066,6 +1075,34 @@ export function ModalEditarProducto({
   const varianteActual = variantesLocales[varianteActivaIndex] || variantesLocales[0];
   const colVariante = PALETA_COLORES_VARIANTES[varianteActivaIndex % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
   const colActiva = esModoMaster ? COLOR_PRODUCTO_MASTER : colVariante;
+
+  const indicePasoMaster = PASOS_WIZARD_PRODUCTO.findIndex((p) => p.id === pasoMaster);
+  const beneficiosLineasMaster = beneficiosTexto
+    .split("\n")
+    .map((b) => b.trim())
+    .filter(Boolean);
+  const fotosMasterCount = Array.from(
+    new Set(
+      [
+        imagenUrl.trim(),
+        ...galeriaTexto
+          .split("\n")
+          .map((g) => g.trim())
+          .filter(Boolean),
+      ].filter(Boolean)
+    )
+  ).length;
+  const completadosMaster: Partial<Record<PasoWizardProducto, boolean>> = {
+    identidad_precio:
+      nombre.trim().length > 0 &&
+      variantesLocales.length > 0 &&
+      variantesLocales.every((v) => v.var_precio > 0),
+    caracteristicas:
+      descripcion.trim().length > 0 || beneficiosLineasMaster.length > 0,
+    imagenes: fotosMasterCount > 0,
+    logistica: true,
+    canales_ia: canalesSeleccionados.length > 0,
+  };
 
   const actualizarVariantePorIndex = (index: number, campo: keyof VarianteCatalogo, valor: any) => {
     setVariantesLocales((prev) => {
@@ -1565,11 +1602,15 @@ export function ModalEditarProducto({
     setError(null);
 
     if (!nombre.trim()) {
+      setModoEdicion("master");
+      setPasoMaster("identidad_precio");
       setError("Ingresa el nombre del producto.");
       return;
     }
 
     if (variantesLocales.length === 0) {
+      setModoEdicion("master");
+      setPasoMaster("identidad_precio");
       setError("Debes definir al menos una variante de precio.");
       return;
     }
@@ -1580,6 +1621,10 @@ export function ModalEditarProducto({
         return;
       }
       if (v.var_precio <= 0) {
+        if (variantesLocales.length === 1) {
+          setModoEdicion("master");
+          setPasoMaster("identidad_precio");
+        }
         setError(`El precio de "${v.var_nombre}" debe ser mayor a cero.`);
         return;
       }
@@ -2072,7 +2117,7 @@ export function ModalEditarProducto({
 
           <div style={{ fontSize: "0.72rem", color: "#64748B" }}>
             {esModoMaster ? (
-              <span>Modificando portada y atributos base globales</span>
+              <span>Configuración guiada por pasos del producto</span>
             ) : (
               <span>
                 Editando variante: <strong style={{ color: colVariante.text }}>{varianteActual?.var_nombre}</strong>
@@ -2080,6 +2125,22 @@ export function ModalEditarProducto({
             )}
           </div>
         </div>
+
+        {/* BARRA WIZARD DE PASOS EN MODO MASTER */}
+        {esModoMaster && (
+          <BarraPasosWizardProducto
+            pasoActivo={pasoMaster}
+            onCambiarPaso={(nuevoPaso) => {
+              setError(null);
+              setPasoMaster(nuevoPaso);
+            }}
+            completados={completadosMaster}
+            colorPrimario={esFloristeria ? "#E11D48" : "#0284C7"}
+            permitirModoTodo={true}
+            verTodo={verTodoMaster}
+            onAlternarVerTodo={() => setVerTodoMaster((prev) => !prev)}
+          />
+        )}
 
         {/* Formulario */}
         <form onSubmit={handleGuardar} style={{ padding: "18px 22px", overflowY: "auto", flex: 1 }}>
@@ -2108,6 +2169,8 @@ export function ModalEditarProducto({
           {/* ========================================================================= */}
           {esModoMaster && (
             <div>
+              {(verTodoMaster || pasoMaster === "identidad_precio") && (
+                <div>
               {/* 1. DATOS PRINCIPALES DEL PRODUCTO MASTER */}
               <div style={{ marginBottom: "14px" }}>
                 <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#1E293B", marginBottom: "4px" }}>
@@ -2313,7 +2376,416 @@ export function ModalEditarProducto({
                 />
               )}
 
+              {/* BLOQUE DE PRECIO Y FACTURACIÓN DIRECTA (PRODUCTO SIMPLE) */}
+              {variantesLocales.length === 1 ? (
+                <div
+                  style={{
+                    background: "#F8FAFC",
+                    border: "1.5px solid #0284C7",
+                    borderRadius: "12px",
+                    padding: "16px",
+                    marginBottom: "14px",
+                    boxShadow: "0 2px 8px rgba(2, 132, 199, 0.08)",
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ fontSize: "1.1rem" }}>📦</span>
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: "0.88rem", fontWeight: 800, color: "#0F172A" }}>
+                          Precio y Facturación (Producto Simple)
+                        </h4>
+                        <span style={{ fontSize: "0.72rem", color: "#64748B" }}>
+                          Define aquí el precio base, oferta tachada, código SKU y stock disponible.
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        agregarNuevaVariante();
+                        setModoEdicion("variante");
+                      }}
+                      title="Agregar múltiples tamaños o variantes"
+                      aria-label="Agregar múltiples tamaños o variantes"
+                      style={{
+                        background: "#0F172A",
+                        color: "#FFFFFF",
+                        border: "none",
+                        borderRadius: "8px",
+                        padding: "6px 12px",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+                      }}
+                    >
+                      <Plus size={13} />
+                      <span>Usar Tamaños / Variantes</span>
+                    </button>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(165px, 100%), 1fr))", gap: "10px", marginBottom: "12px" }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        Código SKU / Referencia *
+                      </label>
+                      <input
+                        type="text"
+                        value={variantesLocales[0]?.var_sku || ""}
+                        onChange={(e) => actualizarVariantePorIndex(0, "var_sku", e.target.value)}
+                        placeholder="Ej. TNK-001"
+                        style={{
+                          width: "100%",
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.82rem",
+                          boxSizing: "border-box",
+                          fontWeight: 600,
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        Precio Base Imponible ($ USD) *
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        value={variantesLocales[0]?.var_precio ?? ""}
+                        onChange={(e) => actualizarVariantePorIndex(0, "var_precio", Math.max(0, Number(e.target.value) || 0))}
+                        placeholder="0.00"
+                        style={{
+                          width: "100%",
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.85rem",
+                          boxSizing: "border-box",
+                          fontWeight: 700,
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#D97706", marginBottom: "2px" }}>
+                        Precio Oferta / Comparación ($ USD)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={variantesLocales[0]?.var_precio_comparacion ?? ""}
+                        onChange={(e) => actualizarVariantePorIndex(0, "var_precio_comparacion", e.target.value === "" ? null : Math.max(0, Number(e.target.value) || 0))}
+                        placeholder="0.00 (Opcional tachado)"
+                        style={{
+                          width: "100%",
+                          padding: "7px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.85rem",
+                          boxSizing: "border-box",
+                          fontWeight: 700,
+                          color: "#D97706",
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(190px, 100%), 1fr))", gap: "10px" }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        Stock Disponible (Unidades)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={variantesLocales[0]?.var_detalle_variante?.stock ?? 999}
+                        onChange={(e) =>
+                          actualizarVariantePorIndex(0, "var_detalle_variante", {
+                            ...(variantesLocales[0]?.var_detalle_variante || {}),
+                            stock: Math.max(0, Number(e.target.value) || 0),
+                          })
+                        }
+                        style={{
+                          width: "100%",
+                          padding: "6px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.8rem",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                    </div>
+
+                    <div
+                      style={{
+                        background: "#FFFFFF",
+                        border: "1px solid #E2E8F0",
+                        borderRadius: "8px",
+                        padding: "8px 12px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div>
+                        <span style={{ fontSize: "0.72rem", color: "#64748B" }}>Tarifa IVA: </span>
+                        <strong style={{ fontSize: "0.8rem", color: "#0F172A" }}>
+                          {variantesLocales[0]?.var_tarifa_iva_porcentaje ?? tarifaIvaMaster}%
+                        </strong>
+                      </div>
+                      <div>
+                        <span style={{ fontSize: "0.72rem", color: "#64748B" }}>PVP Final al Público: </span>
+                        <strong style={{ fontSize: "0.95rem", color: "#059669" }}>
+                          $
+                          {(
+                            Number(variantesLocales[0]?.var_precio || 0) *
+                            (1 + (variantesLocales[0]?.var_tarifa_iva_porcentaje ?? tarifaIvaMaster) / 100)
+                          ).toFixed(2)}
+                        </strong>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Escalas de descuento por volumen para Producto Simple */}
+                  <EditorEscalasVolumenVariante
+                    escalas={normalizarEscalasVolumen(variantesLocales[0]?.var_detalle_variante?.escalas_volumen)}
+                    pvpUnitarioNominal={
+                      Number(variantesLocales[0]?.var_precio || 0) *
+                      (1 + (variantesLocales[0]?.var_tarifa_iva_porcentaje ?? tarifaIvaMaster) / 100)
+                    }
+                    onChange={(nuevasEscalas) =>
+                      actualizarVariantePorIndex(0, "var_detalle_variante", {
+                        ...(variantesLocales[0]?.var_detalle_variante || {}),
+                        escalas_volumen: nuevasEscalas,
+                      })
+                    }
+                  />
+                </div>
+              ) : (
+                <div
+                  style={{
+                    background: "#F0F9FF",
+                    border: "1.5px dashed #38BDF8",
+                    borderRadius: "10px",
+                    padding: "12px 16px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: "14px",
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#0369A1" }}>
+                      🏷️ Variantes / Tamaños configurados: {variantesLocales.length}
+                    </div>
+                    <div style={{ fontSize: "0.72rem", color: "#0284C7" }}>
+                      Personaliza fotos individuales y precios para cada tamaño en la pestaña de variantes.
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModoEdicion("variante");
+                      setVarianteActivaIndex(0);
+                    }}
+                    title="Abrir editor de tamaños y variantes"
+                    aria-label="Abrir editor de tamaños y variantes"
+                    style={{
+                      background: "#0284C7",
+                      color: "#FFFFFF",
+                      border: "none",
+                      padding: "6px 12px",
+                      borderRadius: "6px",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Configurar Tamaños
+                  </button>
+                </div>
+              )}
+
+              {/* CONFIGURACIÓN GLOBAL DE IVA SRI (ECUADOR) */}
+              <div
+                style={{
+                  background: "#F8FAFC",
+                  border: "1px solid #E2E8F0",
+                  borderRadius: "10px",
+                  padding: "12px 14px",
+                  marginBottom: "14px",
+                }}
+              >
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "6px" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                    <Percent size={16} color="#0284C7" />
+                    <label style={{ fontSize: "0.8rem", fontWeight: 800, color: "#1E293B" }}>
+                      Tarifa IVA SRI Predeterminada (Global para este Producto)
+                    </label>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => aplicarIvaMasterATodos(tarifaIvaMaster)}
+                    style={{
+                      background: "#E0F2FE",
+                      border: "1px solid #7DD3FC",
+                      color: "#0369A1",
+                      padding: "4px 10px",
+                      borderRadius: "6px",
+                      fontSize: "0.72rem",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      boxShadow: "0 1px 2px rgba(2, 132, 199, 0.1)",
+                    }}
+                    title="Aplica esta tarifa a todas las variantes existentes"
+                    aria-label="Aplicar tarifa IVA a todas las variantes"
+                  >
+                    <span>⚡ Aplicar a todos ({variantesLocales.length})</span>
+                  </button>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))", gap: "8px" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (autoAplicarIvaVariantes) {
+                        aplicarIvaMasterATodos(15);
+                      } else {
+                        setTarifaIvaMaster(15);
+                      }
+                    }}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: "8px",
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      border: tarifaIvaMaster === 15 ? "2px solid #0284C7" : "1px solid #CBD5E1",
+                      background: tarifaIvaMaster === 15 ? "#F0F9FF" : "#FFFFFF",
+                      color: tarifaIvaMaster === 15 ? "#0284C7" : "#475569",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      display: "flex",
+                      flexDirection: "column",
+                      boxShadow: tarifaIvaMaster === 15 ? "0 2px 4px rgba(2, 132, 199, 0.15)" : "none",
+                    }}
+                  >
+                    <span>🇪🇨 IVA 15% (Tarifa General SRI)</span>
+                    <span style={{ fontSize: "0.68rem", fontWeight: 500, color: "#64748B" }}>
+                      Calcula IVA 15% sobre la base imponible
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (autoAplicarIvaVariantes) {
+                        aplicarIvaMasterATodos(0);
+                      } else {
+                        setTarifaIvaMaster(0);
+                      }
+                    }}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: "8px",
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      border: tarifaIvaMaster === 0 ? "2px solid #10B981" : "1px solid #CBD5E1",
+                      background: tarifaIvaMaster === 0 ? "#ECFDF5" : "#FFFFFF",
+                      color: tarifaIvaMaster === 0 ? "#059669" : "#475569",
+                      cursor: "pointer",
+                      textAlign: "left",
+                      display: "flex",
+                      flexDirection: "column",
+                      boxShadow: tarifaIvaMaster === 0 ? "0 2px 4px rgba(16, 185, 129, 0.15)" : "none",
+                    }}
+                  >
+                    <span>🌿 IVA 0% (Exento SRI / Tarifa Cero)</span>
+                    <span style={{ fontSize: "0.68rem", fontWeight: 500, color: "#64748B" }}>
+                      Flores naturales, servicios médicos o exentos
+                    </span>
+                  </button>
+                </div>
+
+                <div style={{ marginTop: "10px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "6px" }}>
+                  <label style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.74rem", color: "#334155", cursor: "pointer", fontWeight: 700 }}>
+                    <input
+                      type="checkbox"
+                      checked={autoAplicarIvaVariantes}
+                      onChange={(e) => setAutoAplicarIvaVariantes(e.target.checked)}
+                      style={{ accentColor: "#0284C7", width: "14px", height: "14px", cursor: "pointer" }}
+                    />
+                    <span>Sincronizar automáticamente con todas las variantes ({variantesLocales.length})</span>
+                  </label>
+                  {mensajeFeedbackIva && (
+                    <span style={{ fontSize: "0.72rem", color: "#047857", fontWeight: 800, background: "#ECFDF5", border: "1px solid #10B981", borderRadius: "6px", padding: "3px 8px" }}>
+                      {mensajeFeedbackIva}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* CONSTRUCTOR DE SET / COMBO DE EVENTOS (COMPUESTO POR PRODUCTOS INDIVIDUALES) */}
+              <EditorSetComboConfigurable
+                esCombo={esCombo}
+                onCambiarEsCombo={setEsCombo}
+                componentes={comboComponentes}
+                onCambiarComponentes={(nuevos) => {
+                  setComboComponentes(nuevos);
+                  const suma = nuevos.reduce((acc, comp) => {
+                    const p = (productos || []).find(
+                      (item) =>
+                        item.pro_id === comp.producto_id ||
+                        (comp.producto_slug && item.pro_slug === comp.producto_slug)
+                    );
+                    const v =
+                      p?.variantes.find(
+                        (vi) =>
+                          (comp.variante_id && vi.var_id === comp.variante_id) ||
+                          (comp.variante_sku && vi.var_sku === comp.variante_sku)
+                      ) || p?.variantes[0];
+                    const pvpV = v
+                      ? typeof v.precio_total === "number" && v.precio_total > 0
+                        ? v.precio_total
+                        : Number((Number(v.var_precio || 0) * (1 + Number(v.var_tarifa_iva_porcentaje || 0) / 100)).toFixed(2))
+                      : 0;
+                    return acc + pvpV * comp.cantidad_base;
+                  }, 0);
+                  const pvpActualSet =
+                    Number(variantesLocales[0]?.var_precio || 0) *
+                    (1 + (variantesLocales[0]?.var_tarifa_iva_porcentaje ?? tarifaIvaMaster) / 100);
+                  if (suma > pvpActualSet) {
+                    actualizarVariantePorIndex(0, "var_precio_comparacion", Number(suma.toFixed(2)));
+                  }
+                }}
+                catalogoProductos={productos}
+                productoActualId={producto.pro_id}
+                pvpSetCompleto={
+                  Number(variantesLocales[0]?.var_precio || 0) *
+                  (1 + (variantesLocales[0]?.var_tarifa_iva_porcentaje ?? tarifaIvaMaster) / 100)
+                }
+                tarifaIvaSet={variantesLocales[0]?.var_tarifa_iva_porcentaje ?? tarifaIvaMaster}
+                onCambiarPrecioSetBase={(nuevoBase) => actualizarVariantePorIndex(0, "var_precio", nuevoBase)}
+                onSincronizarPrecioComparacion={(sumaNominal) =>
+                  actualizarVariantePorIndex(0, "var_precio_comparacion", Number(sumaNominal.toFixed(2)))
+                }
+              />
+                </div>
+              )}
+
               {/* 2. CONTROL DE ESTADO ACTIVO & TEMPORALIDAD ESTACIONAL */}
+              {(verTodoMaster || pasoMaster === "logistica") && (
+                <div>
               <div
                 style={{
                   background: !proActivo ? "#FEF2F2" : vigenciaTipo !== "SIEMPRE" ? "#FFFBEB" : "#F8FAFC",
@@ -2592,8 +3064,12 @@ export function ModalEditarProducto({
                   </div>
                 )}
               </div>
+                </div>
+              )}
 
               {/* 3. RECURSOS DIGITALES Y GALERÍA DE FOTOS (PRODUCTO / MASTER) */}
+              {(verTodoMaster || pasoMaster === "imagenes") && (
+                <div>
               <div
                 style={{
                   background: "#F8FAFC",
@@ -2942,221 +3418,256 @@ export function ModalEditarProducto({
                   </div>
                 </details>
               </div>
-
-              {/* 3. TIEMPO DE ENTREGA GLOBAL & DESCRIPCIÓN BASE */}
-              <div style={{ marginBottom: "14px" }}>
-                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#1E293B", marginBottom: "4px" }}>
-                  Promesa y Tiempo de Entrega Global * (Heredado por defecto)
-                </label>
-                <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "6px" }}>
-                  {presetsEntrega.map((pr) => {
-                    const sel = tiempoEntrega === pr.val;
-                    return (
-                      <button
-                        key={pr.val}
-                        type="button"
-                        onClick={() => setTiempoEntrega(pr.val)}
-                        style={{
-                          padding: "4px 8px",
-                          borderRadius: "6px",
-                          fontSize: "0.72rem",
-                          fontWeight: 700,
-                          border: sel ? "1.5px solid #0F172A" : "1px solid #CBD5E1",
-                          background: sel ? "#0F172A" : "#FFFFFF",
-                          color: sel ? "#FFFFFF" : "#475569",
-                          cursor: "pointer",
-                        }}
-                      >
-                        {pr.label}
-                      </button>
-                    );
-                  })}
                 </div>
-                <input
-                  type="text"
-                  required
-                  placeholder="Ej. 🌸 Pide hoy, recibe hoy (Mismo Día)"
-                  value={tiempoEntrega}
-                  onChange={(e) => setTiempoEntrega(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px",
-                    borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.85rem",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
+              )}
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(210px, 100%), 1fr))", gap: "12px", marginBottom: "16px" }}>
+              {/* PASO 2: CARACTERÍSTICAS, DESCRIPCIÓN, BENEFICIOS Y PROMESA DE ENTREGA */}
+              {(verTodoMaster || pasoMaster === "caracteristicas") && (
                 <div>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                    Descripción Detallada Base (Global)
-                  </label>
-                  <textarea
-                    rows={3}
-                    placeholder={esFloristeria ? "Arreglo exclusivo de vanguardia envuelto en finos papeles coreanos..." : "Alcance del servicio..."}
-                    value={descripcion}
-                    onChange={(e) => setDescripcion(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
-                      fontSize: "0.82rem",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#334155", marginBottom: "4px" }}>
-                    Beneficios / ¿Qué incluye? Base (Una viñeta por línea)
-                  </label>
-                  <textarea
-                    rows={3}
-                    placeholder={
-                      esFloristeria
-                        ? "Rosas de exportación seleccionadas de tallo largo\nPapel coreano plisado y cintas de seda satinada\nTarjeta dedicatoria personalizada gratis"
-                        : "Asesoría jurídica continua\nRevisión y dictamen formal avalado"
-                    }
-                    value={beneficiosTexto}
-                    onChange={(e) => setBeneficiosTexto(e.target.value)}
-                    style={{
-                      width: "100%",
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
-                      fontSize: "0.82rem",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                </div>
-              </div>
-
-              {/* 4. CONFIGURACIÓN GLOBAL DE IVA SRI (ECUADOR) */}
-              <div
-                style={{
-                  background: "#F8FAFC",
-                  border: "1px solid #E2E8F0",
-                  borderRadius: "10px",
-                  padding: "12px 14px",
-                  marginBottom: "14px",
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "6px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <Percent size={16} color="#0284C7" />
-                    <label style={{ fontSize: "0.8rem", fontWeight: 800, color: "#1E293B" }}>
-                      Tarifa IVA SRI Predeterminada (Global para este Producto)
+                  <div style={{ marginBottom: "14px" }}>
+                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#1E293B", marginBottom: "4px" }}>
+                      Descripción Detallada del Producto
                     </label>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => aplicarIvaMasterATodos(tarifaIvaMaster)}
-                    style={{
-                      background: "#E0F2FE",
-                      border: "1px solid #7DD3FC",
-                      color: "#0369A1",
-                      padding: "4px 10px",
-                      borderRadius: "6px",
-                      fontSize: "0.72rem",
-                      fontWeight: 800,
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                      boxShadow: "0 1px 2px rgba(2, 132, 199, 0.1)",
-                    }}
-                    title="Aplica esta tarifa a todas las variantes existentes"
-                  >
-                    <span>⚡ Aplicar a todos los tamaños ({variantesLocales.length})</span>
-                  </button>
-                </div>
-
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))", gap: "8px" }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (autoAplicarIvaVariantes) {
-                        aplicarIvaMasterATodos(15);
-                      } else {
-                        setTarifaIvaMaster(15);
+                    <textarea
+                      rows={4}
+                      placeholder={
+                        esOfertaRentaActiva
+                          ? "Ej. Números luminosos LED de estructura firme en calidad de renta para eventos, graduaciones, cumpleaños y bodas..."
+                          : esFloristeria
+                          ? "Ej. Arreglo floral elaborado con flores frescas seleccionadas y acabados de autor..."
+                          : "Describe con claridad qué es el producto o servicio y su propuesta de valor..."
                       }
-                    }}
-                    style={{
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      fontSize: "0.78rem",
-                      fontWeight: 700,
-                      border: tarifaIvaMaster === 15 ? "2px solid #0284C7" : "1px solid #CBD5E1",
-                      background: tarifaIvaMaster === 15 ? "#F0F9FF" : "#FFFFFF",
-                      color: tarifaIvaMaster === 15 ? "#0284C7" : "#475569",
-                      cursor: "pointer",
-                      textAlign: "left",
-                      display: "flex",
-                      flexDirection: "column",
-                      boxShadow: tarifaIvaMaster === 15 ? "0 2px 4px rgba(2, 132, 199, 0.15)" : "none",
-                    }}
-                  >
-                    <span>🇪🇨 IVA 15% (Tarifa General SRI)</span>
-                    <span style={{ fontSize: "0.68rem", fontWeight: 500, color: "#64748B" }}>
-                      Calcula IVA 15% sobre la base imponible
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (autoAplicarIvaVariantes) {
-                        aplicarIvaMasterATodos(0);
-                      } else {
-                        setTarifaIvaMaster(0);
-                      }
-                    }}
-                    style={{
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      fontSize: "0.78rem",
-                      fontWeight: 700,
-                      border: tarifaIvaMaster === 0 ? "2px solid #10B981" : "1px solid #CBD5E1",
-                      background: tarifaIvaMaster === 0 ? "#ECFDF5" : "#FFFFFF",
-                      color: tarifaIvaMaster === 0 ? "#059669" : "#475569",
-                      cursor: "pointer",
-                      textAlign: "left",
-                      display: "flex",
-                      flexDirection: "column",
-                      boxShadow: tarifaIvaMaster === 0 ? "0 2px 4px rgba(16, 185, 129, 0.15)" : "none",
-                    }}
-                  >
-                    <span>🌿 IVA 0% (Exento SRI / Tarifa Cero)</span>
-                    <span style={{ fontSize: "0.68rem", fontWeight: 500, color: "#64748B" }}>
-                      Servicios médicos, canasta básica o exentos
-                    </span>
-                  </button>
-                </div>
-
-                {/* Opción de sincronización automática y feedback */}
-                <div style={{ marginTop: "10px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "6px" }}>
-                  <label style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.74rem", color: "#334155", cursor: "pointer", fontWeight: 700 }}>
-                    <input
-                      type="checkbox"
-                      checked={autoAplicarIvaVariantes}
-                      onChange={(e) => setAutoAplicarIvaVariantes(e.target.checked)}
-                      style={{ accentColor: "#0284C7", width: "14px", height: "14px", cursor: "pointer" }}
+                      value={descripcion}
+                      onChange={(e) => setDescripcion(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "10px 12px",
+                        borderRadius: "8px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.84rem",
+                        boxSizing: "border-box",
+                        lineHeight: 1.45,
+                      }}
                     />
-                    <span>Sincronizar y aplicar automáticamente a todas las variantes / tamaños ({variantesLocales.length}) al hacer clic</span>
-                  </label>
-                  {mensajeFeedbackIva && (
-                    <span style={{ fontSize: "0.72rem", color: "#047857", fontWeight: 800, background: "#ECFDF5", border: "1px solid #10B981", borderRadius: "6px", padding: "3px 8px" }}>
-                      {mensajeFeedbackIva}
-                    </span>
-                  )}
+                  </div>
+
+                  <div
+                    style={{
+                      background: "#F8FAFC",
+                      border: "1px solid #E2E8F0",
+                      borderRadius: "10px",
+                      padding: "12px 14px",
+                      marginBottom: "14px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                        gap: "6px",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      <label style={{ fontSize: "0.8rem", fontWeight: 800, color: "#1E293B" }}>
+                        Beneficios / ¿Qué incluye? (Una viñeta por línea)
+                      </label>
+                      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                        {esFloristeria && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setBeneficiosTexto(
+                                  "Rosas de exportación seleccionadas de tallo largo\nEnvoltura decorativa de diseño\nTarjeta dedicatoria personalizada incluida"
+                                )
+                              }
+                              title="Insertar sugerencia para arreglo floral"
+                              aria-label="Insertar sugerencia para arreglo floral"
+                              style={{
+                                padding: "3px 8px",
+                                borderRadius: "6px",
+                                border: "1px solid #CBD5E1",
+                                background: "#FFFFFF",
+                                color: "#334155",
+                                fontSize: "0.68rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                              }}
+                            >
+                              + Sugerir Flores
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setBeneficiosTexto(
+                                  "Mobiliario / elemento decorativo verificado y limpio\nEntrega y retiro coordinados para tu evento\nInstalación lista para fotografía y ambientación"
+                                )
+                              }
+                              title="Insertar sugerencia para mobiliario o renta de eventos"
+                              aria-label="Insertar sugerencia para mobiliario o renta de eventos"
+                              style={{
+                                padding: "3px 8px",
+                                borderRadius: "6px",
+                                border: "1px solid #C4B5FD",
+                                background: "#F5F3FF",
+                                color: "#5B21B6",
+                                fontSize: "0.68rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                              }}
+                            >
+                              + Sugerir Renta / Evento
+                            </button>
+                          </>
+                        )}
+                        {beneficiosTexto.trim().length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setBeneficiosTexto("")}
+                            title="Vaciar beneficios para dejar sin viñetas o escribir desde cero"
+                            aria-label="Limpiar beneficios"
+                            style={{
+                              padding: "3px 8px",
+                              borderRadius: "6px",
+                              border: "1px solid #FCA5A5",
+                              background: "#FEF2F2",
+                              color: "#B91C1C",
+                              fontSize: "0.68rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                          >
+                            Limpiar
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <textarea
+                      rows={4}
+                      placeholder={
+                        esOfertaRentaActiva
+                          ? "Ej.\nIluminación LED cálida lista para conectar\nInstalación y retiro en el lugar del evento\nReserva garantizada para la fecha seleccionada"
+                          : "Escribe un beneficio o elemento incluido por cada línea (déjalo vacío si no aplica)..."
+                      }
+                      value={beneficiosTexto}
+                      onChange={(e) => setBeneficiosTexto(e.target.value)}
+                      style={{
+                        width: "100%",
+                        padding: "9px 12px",
+                        borderRadius: "8px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.82rem",
+                        boxSizing: "border-box",
+                        background: "#FFFFFF",
+                      }}
+                    />
+
+                    {beneficiosLineasMaster.length > 0 ? (
+                      <div style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "3px" }}>
+                        <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "#64748B" }}>
+                          Vista previa ({beneficiosLineasMaster.length} {beneficiosLineasMaster.length === 1 ? "viñeta" : "viñetas"}):
+                        </span>
+                        {beneficiosLineasMaster.map((linea, idx) => (
+                          <div
+                            key={`${idx}-${linea}`}
+                            style={{
+                              fontSize: "0.74rem",
+                              color: "#0F172A",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                            }}
+                          >
+                            <span style={{ color: "#10B981", fontWeight: 800 }}>✓</span>
+                            <span>{linea}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span style={{ display: "block", marginTop: "4px", fontSize: "0.68rem", color: "#64748B" }}>
+                        Sin viñetas configuradas (no se mostrará texto genérico por defecto).
+                      </span>
+                    )}
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(220px, 100%), 1fr))", gap: "12px", marginBottom: "16px" }}>
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#1E293B", marginBottom: "4px" }}>
+                        Promesa y Tiempo de Entrega Global *
+                      </label>
+                      <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", marginBottom: "6px" }}>
+                        {presetsEntrega.map((pr) => {
+                          const sel = tiempoEntrega === pr.val;
+                          return (
+                            <button
+                              key={pr.val}
+                              type="button"
+                              onClick={() => setTiempoEntrega(pr.val)}
+                              style={{
+                                padding: "4px 8px",
+                                borderRadius: "6px",
+                                fontSize: "0.7rem",
+                                fontWeight: 700,
+                                border: sel ? "1.5px solid #0F172A" : "1px solid #CBD5E1",
+                                background: sel ? "#0F172A" : "#FFFFFF",
+                                color: sel ? "#FFFFFF" : "#475569",
+                                cursor: "pointer",
+                              }}
+                            >
+                              {pr.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Ej. 🌸 Pide hoy, recibe hoy (Mismo Día)"
+                        value={tiempoEntrega}
+                        onChange={(e) => setTiempoEntrega(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "8px 12px",
+                          borderRadius: "8px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.83rem",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                        Requisitos / Condiciones del Cliente (Opcional, una por línea)
+                      </label>
+                      <textarea
+                        rows={3}
+                        placeholder={
+                          esOfertaRentaActiva
+                            ? "Ej. Punto eléctrico cercano 110V\nConfirmar dirección y hora de montaje"
+                            : "Ej. Dirección exacta y teléfono de quien recibe (opcional)"
+                        }
+                        value={requisitosTexto}
+                        onChange={(e) => setRequisitosTexto(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "8px 12px",
+                          borderRadius: "8px",
+                          border: "1px solid #CBD5E1",
+                          fontSize: "0.8rem",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* 5. MODALIDAD DE ATENCIÓN / LOGÍSTICA & TRANSPORTE */}
+              {(verTodoMaster || pasoMaster === "logistica") && (
+                <div>
               <div
                 style={{
                   background: deliveryIncluido ? "#F0FDF4" : "#F8FAFC",
@@ -3465,9 +3976,12 @@ export function ModalEditarProducto({
                   </div>
                 )}
               </div>
-
+                </div>
+              )}
 
               {/* 6. CANALES DE VISIBILIDAD Y DISTRIBUCIÓN */}
+              {(verTodoMaster || pasoMaster === "canales_ia") && (
+                <div>
               <div
                 style={{
                   background: "#F8FAFC",
@@ -3876,291 +4390,8 @@ export function ModalEditarProducto({
                   </button>
                 </div>
               </div>
-
-              {/* ================================================================= */}
-              {/* BLOQUE DE PRECIO Y FACTURACIÓN DIRECTA (PRODUCTO SIMPLE)        */}
-              {/* ================================================================= */}
-              {variantesLocales.length === 1 ? (
-                <div
-                  style={{
-                    background: "#F8FAFC",
-                    border: "1.5px solid #0284C7",
-                    borderRadius: "12px",
-                    padding: "16px",
-                    marginBottom: "16px",
-                    boxShadow: "0 2px 8px rgba(2, 132, 199, 0.08)",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", flexWrap: "wrap", gap: "8px" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <span style={{ fontSize: "1.1rem" }}>📦</span>
-                      <div>
-                        <h4 style={{ margin: 0, fontSize: "0.88rem", fontWeight: 800, color: "#0F172A" }}>
-                          Precio y Facturación (Producto Simple)
-                        </h4>
-                        <span style={{ fontSize: "0.72rem", color: "#64748B" }}>
-                          Este producto no tiene variaciones. Edita su precio, oferta y stock directamente aquí.
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        agregarNuevaVariante();
-                        setModoEdicion("variante");
-                      }}
-                      style={{
-                        background: "#0F172A",
-                        color: "#FFFFFF",
-                        border: "none",
-                        borderRadius: "8px",
-                        padding: "6px 12px",
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                      }}
-                    >
-                      <Plus size={13} />
-                      <span>➕ Convertir a Producto con Variantes / Tamaños</span>
-                    </button>
-                  </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(165px, 100%), 1fr))", gap: "10px", marginBottom: "12px" }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                        Código SKU / Referencia *
-                      </label>
-                      <input
-                        type="text"
-                        required
-                        value={variantesLocales[0]?.var_sku || ""}
-                        onChange={(e) => actualizarVariantePorIndex(0, "var_sku", e.target.value)}
-                        placeholder="Ej. TNK-001"
-                        style={{
-                          width: "100%",
-                          padding: "7px 10px",
-                          borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
-                          fontSize: "0.82rem",
-                          boxSizing: "border-box",
-                          fontWeight: 600,
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                        Precio Base Imponible ($ USD) *
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0.01"
-                        required
-                        value={variantesLocales[0]?.var_precio ?? ""}
-                        onChange={(e) => actualizarVariantePorIndex(0, "var_precio", Math.max(0, Number(e.target.value) || 0))}
-                        placeholder="0.00"
-                        style={{
-                          width: "100%",
-                          padding: "7px 10px",
-                          borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
-                          fontSize: "0.85rem",
-                          boxSizing: "border-box",
-                          fontWeight: 700,
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#D97706", marginBottom: "2px" }}>
-                        Precio Oferta / Comparación ($ USD)
-                      </label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={variantesLocales[0]?.var_precio_comparacion ?? ""}
-                        onChange={(e) => actualizarVariantePorIndex(0, "var_precio_comparacion", e.target.value === "" ? null : Math.max(0, Number(e.target.value) || 0))}
-                        placeholder="0.00 (Opcional tachado)"
-                        style={{
-                          width: "100%",
-                          padding: "7px 10px",
-                          borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
-                          fontSize: "0.85rem",
-                          boxSizing: "border-box",
-                          fontWeight: 700,
-                          color: "#D97706",
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(190px, 100%), 1fr))", gap: "10px" }}>
-                    <div>
-                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
-                        Stock Disponible (Unidades)
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={variantesLocales[0]?.var_detalle_variante?.stock ?? 999}
-                        onChange={(e) =>
-                          actualizarVariantePorIndex(0, "var_detalle_variante", {
-                            ...(variantesLocales[0]?.var_detalle_variante || {}),
-                            stock: Math.max(0, Number(e.target.value) || 0),
-                          })
-                        }
-                        style={{
-                          width: "100%",
-                          padding: "6px 10px",
-                          borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
-                          fontSize: "0.8rem",
-                          boxSizing: "border-box",
-                        }}
-                      />
-                    </div>
-
-                    <div
-                      style={{
-                        background: "#FFFFFF",
-                        border: "1px solid #E2E8F0",
-                        borderRadius: "8px",
-                        padding: "8px 12px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                      }}
-                    >
-                      <div>
-                        <span style={{ fontSize: "0.72rem", color: "#64748B" }}>Tarifa IVA: </span>
-                        <strong style={{ fontSize: "0.8rem", color: "#0F172A" }}>
-                          {variantesLocales[0]?.var_tarifa_iva_porcentaje ?? tarifaIvaMaster}%
-                        </strong>
-                      </div>
-                      <div>
-                        <span style={{ fontSize: "0.72rem", color: "#64748B" }}>PVP Final al Público: </span>
-                        <strong style={{ fontSize: "0.95rem", color: "#059669" }}>
-                          $
-                          {(
-                            (Number(variantesLocales[0]?.var_precio || 0)) *
-                            (1 + (variantesLocales[0]?.var_tarifa_iva_porcentaje ?? tarifaIvaMaster) / 100)
-                          ).toFixed(2)}
-                        </strong>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Escalas de descuento por volumen para Producto Simple */}
-                  <EditorEscalasVolumenVariante
-                    escalas={normalizarEscalasVolumen(variantesLocales[0]?.var_detalle_variante?.escalas_volumen)}
-                    pvpUnitarioNominal={
-                      Number(variantesLocales[0]?.var_precio || 0) *
-                      (1 + (variantesLocales[0]?.var_tarifa_iva_porcentaje ?? tarifaIvaMaster) / 100)
-                    }
-                    onChange={(nuevasEscalas) =>
-                      actualizarVariantePorIndex(0, "var_detalle_variante", {
-                        ...(variantesLocales[0]?.var_detalle_variante || {}),
-                        escalas_volumen: nuevasEscalas,
-                      })
-                    }
-                  />
-                </div>
-              ) : (
-                /* Banner resumen que invita a configurar tamaños */
-                <div
-                  style={{
-                    background: "#F0F9FF",
-                    border: "1.5px dashed #38BDF8",
-                    borderRadius: "10px",
-                    padding: "12px 16px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    marginBottom: "14px",
-                  }}
-                >
-                  <div>
-                    <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#0369A1" }}>
-                      🏷️ Variantes / Tamaños configurados: {variantesLocales.length}
-                    </div>
-                    <div style={{ fontSize: "0.72rem", color: "#0284C7" }}>
-                      Puedes personalizar fotos individuales y precios para cada tamaño en la pestaña de variantes.
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setModoEdicion("variante");
-                      setVarianteActivaIndex(0);
-                    }}
-                    style={{
-                      background: "#0284C7",
-                      color: "#FFFFFF",
-                      border: "none",
-                      padding: "6px 12px",
-                      borderRadius: "6px",
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                    }}
-                  >
-                    Configurar Tamaños ➔
-                  </button>
                 </div>
               )}
-
-              {/* CONSTRUCTOR DE SET / COMBO DE EVENTOS (COMPUESTO POR PRODUCTOS INDIVIDUALES) */}
-              <EditorSetComboConfigurable
-                esCombo={esCombo}
-                onCambiarEsCombo={setEsCombo}
-                componentes={comboComponentes}
-                onCambiarComponentes={(nuevos) => {
-                  setComboComponentes(nuevos);
-                  const suma = nuevos.reduce((acc, comp) => {
-                    const p = (productos || []).find(
-                      (item) =>
-                        item.pro_id === comp.producto_id ||
-                        (comp.producto_slug && item.pro_slug === comp.producto_slug)
-                    );
-                    const v =
-                      p?.variantes.find(
-                        (vi) =>
-                          (comp.variante_id && vi.var_id === comp.variante_id) ||
-                          (comp.variante_sku && vi.var_sku === comp.variante_sku)
-                      ) || p?.variantes[0];
-                    const pvpV = v
-                      ? typeof v.precio_total === "number" && v.precio_total > 0
-                        ? v.precio_total
-                        : Number((Number(v.var_precio || 0) * (1 + Number(v.var_tarifa_iva_porcentaje || 0) / 100)).toFixed(2))
-                      : 0;
-                    return acc + pvpV * comp.cantidad_base;
-                  }, 0);
-                  const pvpActualSet =
-                    Number(variantesLocales[0]?.var_precio || 0) *
-                    (1 + (variantesLocales[0]?.var_tarifa_iva_porcentaje ?? tarifaIvaMaster) / 100);
-                  if (suma > pvpActualSet) {
-                    actualizarVariantePorIndex(0, "var_precio_comparacion", Number(suma.toFixed(2)));
-                  }
-                }}
-                catalogoProductos={productos}
-                productoActualId={producto.pro_id}
-                pvpSetCompleto={
-                  Number(variantesLocales[0]?.var_precio || 0) *
-                  (1 + (variantesLocales[0]?.var_tarifa_iva_porcentaje ?? tarifaIvaMaster) / 100)
-                }
-                tarifaIvaSet={variantesLocales[0]?.var_tarifa_iva_porcentaje ?? tarifaIvaMaster}
-                onCambiarPrecioSetBase={(nuevoBase) => actualizarVariantePorIndex(0, "var_precio", nuevoBase)}
-                onSincronizarPrecioComparacion={(sumaNominal) =>
-                  actualizarVariantePorIndex(0, "var_precio_comparacion", Number(sumaNominal.toFixed(2)))
-                }
-              />
             </div>
           )}
 
@@ -5707,6 +5938,8 @@ export function ModalEditarProducto({
               paddingTop: "14px",
               borderTop: "1px solid #E2E8F0",
               marginTop: "8px",
+              flexWrap: "wrap",
+              gap: "8px",
             }}
           >
             {esModoMaster ? (
@@ -5719,6 +5952,7 @@ export function ModalEditarProducto({
                     ? "Eliminar permanentemente este producto y todas sus variantes de la base de datos"
                     : "Eliminar producto master del catálogo"
                 }
+                aria-label="Eliminar producto"
                 style={{
                   background: confirmarEliminar ? "#DC2626" : "transparent",
                   color: confirmarEliminar ? "#FFFFFF" : "#EF4444",
@@ -5737,9 +5971,7 @@ export function ModalEditarProducto({
                 <Trash2 size={14} />
                 <span>
                   {confirmarEliminar
-                    ? "⚠️ ¿Confirmar Eliminación Definitiva?"
-                    : esFloristeria
-                    ? "Eliminar Arreglo Completo"
+                    ? "Confirmar Eliminar"
                     : "Eliminar Producto"}
                 </span>
               </button>
@@ -5753,6 +5985,7 @@ export function ModalEditarProducto({
                     ? (esFloristeria ? "Debe existir al menos un tamaño en el producto" : "Debe existir al menos una variante en el producto")
                     : (confirmarEliminarVariante ? "Confirmar eliminación definitiva de este tamaño" : "Quitar este tamaño / variante")
                 }
+                aria-label="Eliminar variante"
                 style={{
                   background: confirmarEliminarVariante ? "#DC2626" : "transparent",
                   color: variantesLocales.length <= 1 ? "#94A3B8" : confirmarEliminarVariante ? "#FFFFFF" : "#EF4444",
@@ -5774,23 +6007,25 @@ export function ModalEditarProducto({
                   {eliminandoVariante
                     ? "Eliminando..."
                     : confirmarEliminarVariante
-                    ? `⚠️ ¿Confirmar Eliminar "${varianteActual?.var_nombre}"?`
-                    : "Eliminar esta Variante"}
+                    ? "Confirmar Eliminar"
+                    : "Eliminar Variante"}
                 </span>
               </button>
             )}
 
-            <div style={{ display: "flex", gap: "8px" }}>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
               <button
                 type="button"
                 onClick={onCerrar}
+                title="Cerrar sin guardar"
+                aria-label="Cancelar"
                 style={{
                   background: "#F1F5F9",
                   color: "#475569",
                   border: "none",
-                  padding: "9px 16px",
+                  padding: "9px 14px",
                   borderRadius: "8px",
-                  fontSize: "0.85rem",
+                  fontSize: "0.83rem",
                   fontWeight: 600,
                   cursor: "pointer",
                 }}
@@ -5798,14 +6033,72 @@ export function ModalEditarProducto({
                 Cancelar
               </button>
 
+              {esModoMaster && !verTodoMaster && indicePasoMaster > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const prev = PASOS_WIZARD_PRODUCTO[indicePasoMaster - 1];
+                    if (prev) setPasoMaster(prev.id);
+                  }}
+                  title="Ir al paso anterior"
+                  aria-label="Paso anterior"
+                  style={{
+                    background: "#FFFFFF",
+                    color: "#334155",
+                    border: "1px solid #CBD5E1",
+                    padding: "9px 13px",
+                    borderRadius: "8px",
+                    fontSize: "0.83rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                  }}
+                >
+                  <ArrowLeft size={14} />
+                  <span>Anterior</span>
+                </button>
+              )}
+
+              {esModoMaster && !verTodoMaster && indicePasoMaster < PASOS_WIZARD_PRODUCTO.length - 1 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const sig = PASOS_WIZARD_PRODUCTO[indicePasoMaster + 1];
+                    if (sig) setPasoMaster(sig.id);
+                  }}
+                  title="Avanzar al siguiente paso"
+                  aria-label="Siguiente paso"
+                  style={{
+                    background: "#0F172A",
+                    color: "#FFFFFF",
+                    border: "none",
+                    padding: "9px 14px",
+                    borderRadius: "8px",
+                    fontSize: "0.83rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                  }}
+                >
+                  <span>Siguiente</span>
+                  <ArrowRight size={14} />
+                </button>
+              )}
+
               <button
                 type="submit"
                 disabled={guardando}
+                title="Guardar cambios del producto"
+                aria-label="Actualizar catálogo"
                 style={{
                   background: esFloristeria ? "#E11D48" : "#0284C7",
                   color: "#FFFFFF",
                   border: "none",
-                  padding: "9px 20px",
+                  padding: "9px 18px",
                   borderRadius: "8px",
                   fontSize: "0.85rem",
                   fontWeight: 700,
