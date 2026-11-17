@@ -186,6 +186,7 @@ export function SelectorUbicacionEntrega({
       }
 
       setCoordenadas(res.cotizacion.destino);
+      setSecuenciaCentrarDestino((n) => n + 1);
       setCotizacion(res.cotizacion);
       const urlFinal = /^https?:\/\//i.test(valor)
         ? valor
@@ -263,6 +264,8 @@ export function SelectorUbicacionEntrega({
           lng: Number(pos.coords.longitude.toFixed(6)),
         };
         setMapaAbierto(true);
+        setCoordenadas(punto);
+        setSecuenciaCentrarDestino((n) => n + 1);
         void ejecutarCotizacionPorCoordenadas(punto);
       },
       () => {
@@ -682,10 +685,13 @@ export function SelectorUbicacionEntrega({
                       key={`${sug.lat}-${sug.lng}-${i}`}
                       type="button"
                       onClick={() => {
+                        const pt = { lat: sug.lat, lng: sug.lng };
                         setSugerencias([]);
                         setConsultaMapa(sug.nombreCorto);
+                        setCoordenadas(pt);
+                        setSecuenciaCentrarDestino((n) => n + 1);
                         void ejecutarCotizacionPorCoordenadas(
-                          { lat: sug.lat, lng: sug.lng },
+                          pt,
                           undefined,
                           sug.direccionCompleta
                         );
@@ -724,7 +730,7 @@ export function SelectorUbicacionEntrega({
                 }}
               />
               <span style={{ fontSize: "0.7rem", color: "#71717A" }}>
-                Haz clic en el punto exacto de entrega o arrastra el marcador rojo <strong>📍 Entrega</strong>.
+                Toca la calle exacta en el mapa o arrastra el pin rojo de <strong>Punto de entrega</strong> (se mantiene tu nivel de zoom).
               </span>
             </div>
           )}
@@ -917,8 +923,7 @@ export function SelectorUbicacionEntrega({
                   Zona de Cobertura Gratuita ({config.zonaGratisNombre})
                 </h4>
                 <p style={{ margin: "2px 0 0 0", fontSize: "0.78rem", color: "#475569" }}>
-                  El área resaltada cuenta con entrega gratuita ($0.00). También puedes hacer clic
-                  en otra ubicación para calcular el valor adicional de envío.
+                  El área verde tiene entrega gratuita ($0.00). Acerca el mapa a tu calle y haz clic en el punto exacto o arrastra el pin rojo.
                 </p>
               </div>
               <button
@@ -1039,11 +1044,14 @@ export function SelectorUbicacionEntrega({
                     key={`modal-${sug.lat}-${sug.lng}-${i}`}
                     type="button"
                     onClick={() => {
+                      const pt = { lat: sug.lat, lng: sug.lng };
                       setSugerencias([]);
                       setConsultaMapa(sug.nombreCorto);
                       setSeleccionandoOtraUbicacion(true);
+                      setCoordenadas(pt);
+                      setSecuenciaCentrarDestino((n) => n + 1);
                       void ejecutarCotizacionPorCoordenadas(
-                        { lat: sug.lat, lng: sug.lng },
+                        pt,
                         undefined,
                         sug.direccionCompleta
                       );

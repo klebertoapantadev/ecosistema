@@ -108,6 +108,7 @@ export function FormularioLogisticaCobertura({
   const [verticesBorrador, setVerticesBorrador] = useState<[number, number][]>([]);
   const [secuenciaEnfoqueZona, setSecuenciaEnfoqueZona] = useState(0);
   const [secuenciaVerTodo, setSecuenciaVerTodo] = useState(0);
+  const [secuenciaCentrarSimulador, setSecuenciaCentrarSimulador] = useState(0);
 
   // Controles de ampliación del mapa (alto ampliado en página + modo pantalla completa)
   const [mapaAltoAmpliado, setMapaAltoAmpliado] = useState(false);
@@ -289,6 +290,9 @@ export function FormularioLogisticaCobertura({
   async function simularPuntoOEnlace(puntoDirecto?: CoordenadaGeo) {
     setSimulando(true);
     setMensajeError(null);
+    if (puntoDirecto) {
+      setPuntoSimulador(puntoDirecto);
+    }
     try {
       if (!puntoDirecto && !enlaceSimulador.trim()) {
         setMensajeError(
@@ -326,6 +330,9 @@ export function FormularioLogisticaCobertura({
         detalleDireccion: detalleDir,
       });
       setPuntoSimulador(destino);
+      if (!puntoDirecto) {
+        setSecuenciaCentrarSimulador((s) => s + 1);
+      }
 
       const cotLocal = cotizarEnvioDomicilio({
         config: form,
@@ -1314,6 +1321,7 @@ export function FormularioLogisticaCobertura({
             verticesDibujo={verticesBorrador}
             secuenciaEnfoqueZona={secuenciaEnfoqueZona}
             secuenciaVerTodo={secuenciaVerTodo}
+            secuenciaCentrarDestino={secuenciaCentrarSimulador}
             onSeleccionarPunto={(pt) => {
               void simularPuntoOEnlace(pt);
             }}
