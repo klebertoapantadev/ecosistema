@@ -57,8 +57,8 @@ export function normalizarIdentificadorNegocio(negocio?: string): { principal: s
   const norm = (negocio || "tranqi").toLowerCase().trim();
   const upper = (negocio || "TRANQ").toUpperCase().trim();
 
-  if (norm.startsWith("tranq") || norm.startsWith("legal")) {
-    return { principal: "tranqi", variantes: ["tranqi", "TRANQ", "TRANQI", "legal", "LEGAL", "tranqui"] };
+  if (norm.startsWith("tranq") || norm.startsWith("trq") || norm.startsWith("legal")) {
+    return { principal: "tranqi", variantes: ["tranqi", "TRQ", "TRANQ", "TRANQI", "legal", "LEGAL", "tranqui"] };
   }
   if (norm.startsWith("tinkay") || norm.startsWith("tnk")) {
     return { principal: "tinkay", variantes: ["tinkay", "TNK", "TINKAY"] };

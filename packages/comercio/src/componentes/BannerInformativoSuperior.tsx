@@ -16,6 +16,7 @@ import {
   CampanaInformativa,
   obtenerCampanasInformativasAction,
 } from "../acciones-informativos";
+import { normalizarNegocioCampana, perteneceCampanaANegocio } from "../utils/informativos";
 import { formatearFechaCorta } from "../utils/vigencia";
 
 interface Props {
@@ -34,15 +35,17 @@ export function BannerInformativoSuperior({
   const [cerrado, setCerrado] = useState(false);
   const [modalDetalle, setModalDetalle] = useState<CampanaInformativa | null>(null);
 
+  const negocioNorm = normalizarNegocioCampana(negocio);
+
   // Limpieza de claves de bloqueo antiguas
   useEffect(() => {
     try {
       if (typeof window !== "undefined") {
-        localStorage.removeItem(`eco_ocultar_banner_${negocio}`);
-        sessionStorage.removeItem(`eco_ocultar_banner_sesion_${negocio}`);
+        localStorage.removeItem(`eco_ocultar_banner_${negocioNorm}`);
+        sessionStorage.removeItem(`eco_ocultar_banner_sesion_${negocioNorm}`);
       }
     } catch {}
-  }, [negocio]);
+  }, [negocioNorm]);
 
   useEffect(() => {
     let cancelado = false;
@@ -51,13 +54,13 @@ export function BannerInformativoSuperior({
         let eliminados = new Set<string>();
         if (typeof window !== "undefined") {
           try {
-            const raw = localStorage.getItem(`eco_campanas_eliminadas_${negocio}`);
+            const raw = localStorage.getItem(`eco_campanas_eliminadas_${negocioNorm}`);
             if (raw) eliminados = new Set(JSON.parse(raw));
           } catch {}
         }
 
         const data = await obtenerCampanasInformativasAction({
-          negocio,
+          negocio: negocioNorm,
           ubicacion: ubicacion === "TODOS" ? undefined : ubicacion,
           audiencia: audiencia === "TODOS" ? undefined : (audiencia as any),
           incluirInactivos: false,
@@ -67,13 +70,14 @@ export function BannerInformativoSuperior({
           if (Array.isArray(data) && data.length > 0) {
             const limpios = data.filter(
               (c) =>
+                perteneceCampanaANegocio(c, negocioNorm) &&
                 !eliminados.has(c.inf_id) &&
                 !eliminados.has(c.inf_slug) &&
                 (!c.inf_titulo || !eliminados.has(c.inf_titulo))
             );
             setCampanas(limpios);
-            if (typeof window !== "undefined" && limpios.length > 0) {
-              localStorage.setItem(`eco_campanas_informativas_${negocio}`, JSON.stringify(limpios));
+            if (typeof window !== "undefined") {
+              localStorage.setItem(`eco_campanas_informativas_${negocioNorm}`, JSON.stringify(limpios));
             }
           } else {
             setCampanas([]);
@@ -87,7 +91,7 @@ export function BannerInformativoSuperior({
     return () => {
       cancelado = true;
     };
-  }, [negocio, ubicacion, audiencia]);
+  }, [negocioNorm, ubicacion, audiencia]);
 
   // Rotación automática si hay más de 1
   useEffect(() => {

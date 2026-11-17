@@ -27,6 +27,7 @@ import {
   AudienciaInformativo,
   obtenerCampanasInformativasAction,
 } from "../acciones-informativos";
+import { normalizarNegocioCampana, perteneceCampanaANegocio } from "../utils/informativos";
 import { formatearFechaCorta } from "../utils/vigencia";
 
 interface Props {
@@ -85,8 +86,9 @@ export function TableroBeneficiosAvisosWidget({
   const [busqueda, setBusqueda] = useState("");
   const [reproduciendoVideoUrl, setReproduciendoVideoUrl] = useState<string | null>(null);
 
-  const CACHE_KEY = `eco_campanas_informativas_${negocio}`;
-  const DELETED_KEY = `eco_campanas_eliminadas_${negocio}`;
+  const negocioNorm = normalizarNegocioCampana(negocio);
+  const CACHE_KEY = `eco_campanas_informativas_${negocioNorm}`;
+  const DELETED_KEY = `eco_campanas_eliminadas_${negocioNorm}`;
 
   const getEliminadosLocal = (): Set<string> => {
     if (typeof window === "undefined") return new Set();
@@ -101,7 +103,7 @@ export function TableroBeneficiosAvisosWidget({
     let cancelado = false;
     const eliminados = getEliminadosLocal();
 
-    // 1. Carga inmediata síncrona desde cache
+    // 1. Carga inmediata síncrona desde cache aislada por negocio
     if (typeof window !== "undefined") {
       try {
         const guardado = localStorage.getItem(CACHE_KEY);
@@ -111,6 +113,7 @@ export function TableroBeneficiosAvisosWidget({
             setCampanas(
               parsed.filter(
                 (c: any) =>
+                  perteneceCampanaANegocio(c, negocioNorm) &&
                   c.inf_activo !== false &&
                   !eliminados.has(c.inf_id) &&
                   !eliminados.has(c.inf_slug) &&
@@ -126,7 +129,7 @@ export function TableroBeneficiosAvisosWidget({
       setCargando(true);
       try {
         const data = await obtenerCampanasInformativasAction({
-          negocio,
+          negocio: negocioNorm,
           audiencia: audienciaActiva,
           tipo: soloBeneficios ? "BENEFICIO_CONVENIO" : undefined,
           incluirInactivos: false,
@@ -134,6 +137,7 @@ export function TableroBeneficiosAvisosWidget({
         if (!cancelado && Array.isArray(data)) {
           const limpios = data.filter(
             (c: any) =>
+              perteneceCampanaANegocio(c, negocioNorm) &&
               !eliminados.has(c.inf_id) &&
               !eliminados.has(c.inf_slug) &&
               (!c.inf_titulo || !eliminados.has(c.inf_titulo))
@@ -153,7 +157,7 @@ export function TableroBeneficiosAvisosWidget({
     return () => {
       cancelado = true;
     };
-  }, [negocio, audienciaActiva, soloBeneficios]);
+  }, [negocioNorm, audienciaActiva, soloBeneficios]);
 
   const filtrados = useMemo(() => {
     return campanas.filter((c) => {

@@ -9,6 +9,7 @@ import {
   descargarArchivoFacturaRideSri,
   eliminarVariacionesProformaClienteAction,
   imprimirFacturaRideSri,
+  perteneceCampanaANegocio,
   type ArregloEntregaInmediata,
   type CampanaInformativa,
   type ConfiguracionEmisorSri,
@@ -318,7 +319,9 @@ function ContenidoEspacioCliente({
     () =>
       campanasInformativas.filter(
         (c) =>
+          perteneceCampanaANegocio(c, 'tinkay') &&
           c.inf_activo &&
+          (c.inf_tipo === 'BENEFICIO_CONVENIO' || c.inf_tipo === 'COMUNICADO_GENERAL') &&
           Array.isArray(c.inf_audiencia) &&
           (c.inf_audiencia.includes('CLIENTES') || c.inf_audiencia.includes('TODOS'))
       ),

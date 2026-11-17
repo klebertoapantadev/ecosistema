@@ -1814,9 +1814,12 @@ export async function obtenerCategoriasAction(negocio = "tranqi"): Promise<Categ
     }
   }
 
-  const semillasPorNegocio = principal === "tinkay" || principal === "margaritas"
-    ? CATEGORIAS_SEMILLA_TINKAY
-    : CATEGORIAS_SEMILLA_TRANQI;
+  const semillasPorNegocio =
+    principal === "tinkay" || principal === "margaritas"
+      ? CATEGORIAS_SEMILLA_TINKAY
+      : principal === "tranqi"
+      ? CATEGORIAS_SEMILLA_TRANQI
+      : [];
 
   const base = categoriasDb.length > 0 ? categoriasDb : semillasPorNegocio;
   const customs = storeCustomCategorias.get(principal) || storeCustomCategorias.get(negocio) || [];
@@ -2097,10 +2100,13 @@ export async function obtenerCatalogoProductosAction(
       }),
     }));
   } else {
-    // Si no hay productos en la BD, cargamos las semillas preconfiguradas
-    listaFinal = principal === "tinkay" || principal === "margaritas"
-      ? [...PRODUCTOS_SEMILLA_TINKAY]
-      : [...PRODUCTOS_SEMILLA_TRANQI];
+    // Si no hay productos en la BD, cargamos únicamente las semillas propias del negocio
+    listaFinal =
+      principal === "tinkay" || principal === "margaritas"
+        ? [...PRODUCTOS_SEMILLA_TINKAY]
+        : principal === "tranqi"
+        ? [...PRODUCTOS_SEMILLA_TRANQI]
+        : [];
   }
 
   // Incorporar productos creados o editados dinámicamente en memoria
@@ -4711,13 +4717,19 @@ export async function restaurarCatalogoEjemploAction(
     const supabase: any = await crearClienteServidor();
     const clienteActivo = admin || supabase;
 
-    const categorias = negocioNorm === "tinkay" || negocioNorm === "margaritas"
-      ? CATEGORIAS_SEMILLA_TINKAY
-      : CATEGORIAS_SEMILLA_TRANQI;
+    const categorias =
+      negocioNorm === "tinkay" || negocioNorm === "margaritas"
+        ? CATEGORIAS_SEMILLA_TINKAY
+        : negocioNorm === "tranqi"
+        ? CATEGORIAS_SEMILLA_TRANQI
+        : [];
 
-    const productos = negocioNorm === "tinkay" || negocioNorm === "margaritas"
-      ? PRODUCTOS_SEMILLA_TINKAY
-      : PRODUCTOS_SEMILLA_TRANQI;
+    const productos =
+      negocioNorm === "tinkay" || negocioNorm === "margaritas"
+        ? PRODUCTOS_SEMILLA_TINKAY
+        : negocioNorm === "tranqi"
+        ? PRODUCTOS_SEMILLA_TRANQI
+        : [];
 
     if (clienteActivo) {
       // 1. Insertar o actualizar categorías

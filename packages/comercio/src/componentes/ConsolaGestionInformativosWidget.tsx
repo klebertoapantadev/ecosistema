@@ -40,6 +40,7 @@ import {
   eliminarCampanaInformativaAction,
   restaurarCampanasEjemploAction,
 } from "../acciones-informativos";
+import { normalizarNegocioCampana, perteneceCampanaANegocio } from "../utils/informativos";
 import { formatearFechaCorta } from "../utils/vigencia";
 import { ModalGaleriaMedios } from "./ModalGaleriaMedios";
 
@@ -112,8 +113,9 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
   // Galería de medios
   const [galeriaAbierta, setGaleriaAbierta] = useState(false);
 
-  const CACHE_KEY = `eco_campanas_informativas_${negocio}`;
-  const DELETED_KEY = `eco_campanas_eliminadas_${negocio}`;
+  const negocioNorm = normalizarNegocioCampana(negocio);
+  const CACHE_KEY = `eco_campanas_informativas_${negocioNorm}`;
+  const DELETED_KEY = `eco_campanas_eliminadas_${negocioNorm}`;
 
   const getEliminadosLocal = (): Set<string> => {
     if (typeof window === "undefined") return new Set();
@@ -138,7 +140,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
   const cargarDatos = async () => {
     const eliminados = getEliminadosLocal();
 
-    // 1. Carga inmediata síncrona desde cache local
+    // 1. Carga inmediata síncrona desde cache local aislada por negocio
     if (typeof window !== "undefined") {
       try {
         const guardado = localStorage.getItem(CACHE_KEY);
@@ -147,6 +149,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
           if (Array.isArray(parsed)) {
             const limpios = parsed.filter(
               (c: CampanaInformativa) =>
+                perteneceCampanaANegocio(c, negocioNorm) &&
                 !eliminados.has(c.inf_id) &&
                 !eliminados.has(c.inf_slug) &&
                 (!c.inf_titulo || !eliminados.has(c.inf_titulo))
@@ -160,12 +163,13 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
     setCargando(true);
     try {
       const data = await obtenerCampanasInformativasAction({
-        negocio,
+        negocio: negocioNorm,
         incluirInactivos: true,
       });
       if (Array.isArray(data)) {
         const limpios = data.filter(
           (c: CampanaInformativa) =>
+            perteneceCampanaANegocio(c, negocioNorm) &&
             !eliminados.has(c.inf_id) &&
             !eliminados.has(c.inf_slug) &&
             (!c.inf_titulo || !eliminados.has(c.inf_titulo))
@@ -184,7 +188,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
 
   useEffect(() => {
     cargarDatos();
-  }, [negocio]);
+  }, [negocioNorm]);
 
   const abrirModalCrear = () => {
     setCampanaEditar(null);
@@ -247,7 +251,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
     try {
       const payload: Partial<CampanaInformativa> = {
         inf_id: campanaEditar?.inf_id,
-        inf_negocio: negocio,
+        inf_negocio: negocioNorm,
         inf_titulo: titulo.trim(),
         inf_slug: slug.trim() || undefined,
         inf_subtitulo: subtitulo.trim() || null,
@@ -321,7 +325,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
       }
       return actualizados;
     });
-    await alternarActivoCampanaAction(negocio, id, !actual);
+    await alternarActivoCampanaAction(negocioNorm, id, !actual);
   };
 
   const handleEliminar = async (id: string, tit: string) => {
@@ -347,7 +351,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
       return actualizados;
     });
 
-    const res = await eliminarCampanaInformativaAction(negocio, id, targetSlug, targetTit);
+    const res = await eliminarCampanaInformativaAction(negocioNorm, id, targetSlug, targetTit);
     if (!res.ok) {
       console.warn("Aviso al eliminar en servidor:", res.error);
     }
@@ -360,7 +364,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
       localStorage.removeItem(CACHE_KEY);
       localStorage.removeItem(DELETED_KEY);
     }
-    await restaurarCampanasEjemploAction(negocio);
+    await restaurarCampanasEjemploAction(negocioNorm);
     await cargarDatos();
   };
 

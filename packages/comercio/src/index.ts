@@ -30,6 +30,7 @@ export * from "./acciones-informativos";
 export * from "./acciones-compliance";
 export * from "./acciones-legal-hr";
 export * from "./utils/negocio";
+export * from "./utils/informativos";
 export * from "./utils/vigencia";
 export * from "./utils/periodoDerecho";
 export * from "./utils/usosCatalogo";

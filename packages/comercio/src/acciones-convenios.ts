@@ -337,8 +337,8 @@ async function despacharCorreoInterno(params: {
 export async function obtenerConveniosEmpresaAction(
   negocio = "tranqi"
 ): Promise<ConvenioEmpresa[]> {
+  const { principal, variantes } = normalizarIdentificadorNegocio(negocio);
   try {
-    const { principal, variantes } = normalizarIdentificadorNegocio(negocio);
     let admin: any = null;
     let supabase: any = null;
     try { admin = crearClienteAdmin(); } catch {}
@@ -491,7 +491,10 @@ export async function obtenerConveniosEmpresaAction(
     return resultado;
   } catch (err) {
     console.error("Error al obtener convenios:", err);
-    return storeConveniosMemoria.get("tranqi") || [CONVENIO_SATCOM_BASE];
+    return (
+      storeConveniosMemoria.get(principal) ||
+      (principal === "tranqi" ? [CONVENIO_SATCOM_BASE] : [])
+    );
   }
 }
 
