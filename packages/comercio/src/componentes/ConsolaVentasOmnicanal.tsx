@@ -9,11 +9,14 @@ import {
   BarChart3,
   Bot,
   Calendar,
+  Camera,
   Check,
   CheckCircle2,
   ClipboardList,
   Clock,
   Download,
+  ExternalLink,
+  FileText,
   Filter,
   Forward,
   ImagePlus,
@@ -22,8 +25,10 @@ import {
   MailWarning,
   MessageCircle,
   MessageSquare,
+  Mic,
   PanelRightClose,
   PanelRightOpen,
+  Paperclip,
   Pause,
   Play,
   RefreshCw,
@@ -34,6 +39,8 @@ import {
   Share2,
   ShoppingBag,
   Sparkles,
+  StickyNote,
+  Store,
   Tag,
   Trash2,
   Users,
@@ -62,6 +69,7 @@ import {
   obtenerMensajesConversacionAction,
   obtenerTableroOmnicanalAction,
   sincronizarHistorialAriaOmnicanalAction,
+  transcribirYResponderNotaVozOmnicanalAction,
   type DatosTableroOmnicanal,
   type PedidoWebConTipoCliente,
 } from "../acciones-omnicanal";
@@ -99,6 +107,10 @@ import {
   IconoVectorCanal,
 } from "./IconoCanalOmnicanal";
 import { ModalAdministrarEtiquetas } from "./ModalAdministrarEtiquetas";
+import {
+  ModalSelectorCatalogoChat,
+  type SeleccionProductoCatalogoChat,
+} from "./ModalSelectorCatalogoChat";
 import { PanelCamposVentaChat } from "./PanelCamposVentaChat";
 import {
   construirUrlProxyMediaOmnicanal,
@@ -358,22 +370,378 @@ function TarjetaImagenBurbujaOmnicanal({
   );
 }
 
+function TarjetaAudioBurbujaOmnicanal({
+  url,
+  mimeType,
+  yaTranscrito,
+  procesando,
+  esFondoOscuro,
+  onTranscribir,
+  onResponderAria,
+}: {
+  url: string | null;
+  mimeType?: string;
+  yaTranscrito?: boolean;
+  procesando?: boolean;
+  esFondoOscuro: boolean;
+  onTranscribir?: () => void;
+  onResponderAria?: () => void;
+}) {
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [usarProxy, setUsarProxy] = useState(false);
+  const [falloAudio, setFalloAudio] = useState(false);
+  const [velocidad, setVelocidad] = useState<1 | 1.5 | 2>(1);
+
+  useEffect(() => {
+    setUsarProxy(false);
+    setFalloAudio(false);
+    setVelocidad(1);
+  }, [url]);
+
+  const srcEfectivo = url
+    ? usarProxy
+      ? construirUrlProxyMediaOmnicanal(url, false)
+      : url
+    : null;
+
+  const alternarVelocidad = () => {
+    const siguiente: 1 | 1.5 | 2 = velocidad === 1 ? 1.5 : velocidad === 1.5 ? 2 : 1;
+    setVelocidad(siguiente);
+    if (audioRef.current) {
+      audioRef.current.playbackRate = siguiente;
+    }
+  };
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px",
+        padding: "9px 11px",
+        borderRadius: "11px",
+        background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#F8FAFC",
+        border: esFondoOscuro ? "1px solid rgba(255,255,255,0.24)" : "1px solid #E2E8F0",
+        minWidth: "min(255px, 100%)",
+        maxWidth: "330px",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "8px",
+        }}
+      >
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "6px",
+            fontSize: "0.76rem",
+            fontWeight: 700,
+            color: esFondoOscuro ? "#FFFFFF" : "#0F172A",
+          }}
+        >
+          <Mic size={14} color={esFondoOscuro ? "#86EFAC" : "#16A34A"} />
+          <span>Nota de voz</span>
+        </span>
+
+        {srcEfectivo && !falloAudio && (
+          <button
+            type="button"
+            onClick={alternarVelocidad}
+            title="Cambiar velocidad de reproducción (1x / 1.5x / 2x)"
+            aria-label={`Velocidad ${velocidad}x`}
+            style={{
+              padding: "2px 8px",
+              borderRadius: "999px",
+              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.3)" : "1px solid #CBD5E1",
+              background: esFondoOscuro ? "rgba(255,255,255,0.16)" : "#FFFFFF",
+              color: esFondoOscuro ? "#FFFFFF" : "#334155",
+              fontSize: "0.69rem",
+              fontWeight: 800,
+              cursor: "pointer",
+            }}
+          >
+            {velocidad}x
+          </button>
+        )}
+      </div>
+
+      {srcEfectivo && !falloAudio ? (
+        <audio
+          ref={audioRef}
+          controls
+          preload="metadata"
+          src={srcEfectivo}
+          onPlay={() => {
+            if (audioRef.current) {
+              audioRef.current.playbackRate = velocidad;
+            }
+          }}
+          onError={() => {
+            if (!usarProxy) {
+              setUsarProxy(true);
+            } else {
+              setFalloAudio(true);
+            }
+          }}
+          style={{
+            width: "100%",
+            height: "36px",
+            borderRadius: "8px",
+          }}
+        >
+          {mimeType && <source src={srcEfectivo} type={mimeType} />}
+        </audio>
+      ) : (
+        <div
+          style={{
+            fontSize: "0.74rem",
+            color: esFondoOscuro ? "#E2E8F0" : "#64748B",
+            lineHeight: 1.38,
+          }}
+        >
+          {url
+            ? "⚠️ El enlace temporal del audio expiró en WhatsApp."
+            : "ℹ️ Nota de voz recibida antes de activar la captura de audio. Las nuevas notas incluirán reproductor y transcripción automática."}
+        </div>
+      )}
+
+      {url && !falloAudio && (onTranscribir || onResponderAria) && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+          {onTranscribir && (
+            <button
+              type="button"
+              disabled={procesando}
+              onClick={onTranscribir}
+              title="Escuchar nota de voz con IA y guardar transcripción como Nota Interna"
+              aria-label="Transcribir nota de voz"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                minHeight: "30px",
+                padding: "4px 9px",
+                borderRadius: "7px",
+                border: "1px solid #FDE68A",
+                background: "#FEF3C7",
+                color: "#92400E",
+                fontSize: "0.71rem",
+                fontWeight: 700,
+                cursor: procesando ? "wait" : "pointer",
+              }}
+            >
+              {procesando ? <Loader2 size={12} /> : <StickyNote size={12} />}
+              <span>{yaTranscrito ? "Ver Nota" : "Transcribir"}</span>
+            </button>
+          )}
+
+          {onResponderAria && (
+            <button
+              type="button"
+              disabled={procesando}
+              onClick={onResponderAria}
+              title="Transcribir nota de voz como Nota Interna y responder al cliente usando ARIA"
+              aria-label="Responder con ARIA"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                minHeight: "30px",
+                padding: "4px 9px",
+                borderRadius: "7px",
+                border: "1px solid #A7F3D0",
+                background: "#ECFDF5",
+                color: "#047857",
+                fontSize: "0.71rem",
+                fontWeight: 700,
+                cursor: procesando ? "wait" : "pointer",
+              }}
+            >
+              {procesando ? <Loader2 size={12} /> : <Bot size={12} />}
+              <span>Responder IA</span>
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TarjetaDocumentoBurbujaOmnicanal({
+  url,
+  nombre,
+  esFondoOscuro,
+}: {
+  url: string;
+  nombre: string;
+  esFondoOscuro: boolean;
+}) {
+  const urlDescarga = construirUrlProxyMediaOmnicanal(url, true);
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: "10px",
+        padding: "9px 11px",
+        borderRadius: "10px",
+        background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#F8FAFC",
+        border: esFondoOscuro ? "1px solid rgba(255,255,255,0.24)" : "1px solid #CBD5E1",
+        maxWidth: "320px",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+        <div
+          style={{
+            width: "32px",
+            height: "32px",
+            borderRadius: "8px",
+            background: esFondoOscuro ? "rgba(255,255,255,0.18)" : "#EDE9FE",
+            color: esFondoOscuro ? "#FFFFFF" : "#6D28D9",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <FileText size={16} />
+        </div>
+        <span
+          title={nombre}
+          style={{
+            fontSize: "0.77rem",
+            fontWeight: 700,
+            color: esFondoOscuro ? "#FFFFFF" : "#0F172A",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {nombre}
+        </span>
+      </div>
+
+      <div style={{ display: "inline-flex", gap: "5px", flexShrink: 0 }}>
+        <a
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          title="Abrir documento en nueva pestaña"
+          aria-label="Abrir documento"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "30px",
+            height: "30px",
+            borderRadius: "7px",
+            border: esFondoOscuro ? "1px solid rgba(255,255,255,0.28)" : "1px solid #CBD5E1",
+            background: esFondoOscuro ? "rgba(255,255,255,0.14)" : "#FFFFFF",
+            color: esFondoOscuro ? "#FFFFFF" : "#334155",
+            textDecoration: "none",
+          }}
+        >
+          <ExternalLink size={14} />
+        </a>
+        <a
+          href={urlDescarga}
+          download={nombre}
+          title="Descargar documento"
+          aria-label="Descargar documento"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "30px",
+            height: "30px",
+            borderRadius: "7px",
+            border: esFondoOscuro ? "1px solid rgba(255,255,255,0.28)" : "1px solid #BAE6FD",
+            background: esFondoOscuro ? "rgba(255,255,255,0.14)" : "#F0F9FF",
+            color: esFondoOscuro ? "#E0F2FE" : "#0369A1",
+            textDecoration: "none",
+          }}
+        >
+          <Download size={14} />
+        </a>
+      </div>
+    </div>
+  );
+}
+
 function renderContenidoMensajeOmnicanal(
   mensaje: MensajeOmnicanal,
   esFondoOscuro: boolean,
   acciones?: {
     onAmpliarImagen?: (url: string, alt?: string) => void;
     onReenviarImagen?: (url: string, alt?: string) => void;
+    onTranscribirAudio?: (url: string, mime?: string) => void;
+    onResponderAudioConAria?: (url: string, mime?: string) => void;
+    procesandoAudio?: boolean;
   }
 ): React.ReactNode {
   const segmentos = extraerSegmentosMultimediaMensaje(
     mensaje.contenido || "",
     mensaje.detalle
   );
+  const tieneSegmentoAudio = segmentos.some((s) => s.tipo === "audio");
+  const esMensajeVozSinUrl =
+    !tieneSegmentoAudio &&
+    (mensaje.tipoContenido === "AUDIO" ||
+      /🎤\s*Nota de voz recibida/i.test(mensaje.contenido || ""));
+  const yaTranscrito = Boolean(
+    mensaje.detalle &&
+      typeof mensaje.detalle === "object" &&
+      ((mensaje.detalle as Record<string, unknown>).transcripcion ||
+        (mensaje.detalle as Record<string, unknown>).nota_transcripcion_id)
+  );
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+      {esMensajeVozSinUrl && (
+        <TarjetaAudioBurbujaOmnicanal
+          url={null}
+          esFondoOscuro={esFondoOscuro}
+        />
+      )}
+
       {segmentos.map((seg, idx) => {
+        if (seg.tipo === "audio") {
+          return (
+            <TarjetaAudioBurbujaOmnicanal
+              key={`aud-${idx}`}
+              url={seg.url}
+              mimeType={seg.mime ?? undefined}
+              yaTranscrito={yaTranscrito}
+              procesando={acciones?.procesandoAudio}
+              esFondoOscuro={esFondoOscuro}
+              onTranscribir={
+                acciones?.onTranscribirAudio
+                  ? () => acciones.onTranscribirAudio!(seg.url, seg.mime ?? undefined)
+                  : undefined
+              }
+              onResponderAria={
+                acciones?.onResponderAudioConAria
+                  ? () => acciones.onResponderAudioConAria!(seg.url, seg.mime ?? undefined)
+                  : undefined
+              }
+            />
+          );
+        }
+        if (seg.tipo === "documento") {
+          return (
+            <TarjetaDocumentoBurbujaOmnicanal
+              key={`doc-${idx}`}
+              url={seg.url}
+              nombre={seg.nombre}
+              esFondoOscuro={esFondoOscuro}
+            />
+          );
+        }
         if (seg.tipo === "imagen") {
           return (
             <TarjetaImagenBurbujaOmnicanal
@@ -385,6 +753,9 @@ function renderContenidoMensajeOmnicanal(
               onReenviar={() => acciones?.onReenviarImagen?.(seg.url, seg.alt)}
             />
           );
+        }
+        if (esMensajeVozSinUrl && /^🎤\s*Nota de voz recibida por WhatsApp$/i.test(seg.texto.trim())) {
+          return null;
         }
         return (
           <div key={`txt-${idx}`} style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
@@ -485,15 +856,25 @@ export function ConsolaVentasOmnicanal({
   const [mensajesActivos, setMensajesActivos] = useState<MensajeOmnicanal[]>([]);
   const [cargandoMensajes, setCargandoMensajes] = useState<boolean>(false);
 
-  // Compositor de respuesta humana / nota interna / adjunto de imagen
+  // Compositor de respuesta humana / nota interna / menú Adjuntar estilo WhatsApp
   const [textoRespuesta, setTextoRespuesta] = useState<string>("");
   const [modoNotaInterna, setModoNotaInterna] = useState<boolean>(false);
   const [enviandoMensaje, setEnviandoMensaje] = useState<boolean>(false);
   const [mostrarMenuRespuestas, setMostrarMenuRespuestas] = useState<boolean>(false);
+  const [mostrarMenuAdjuntar, setMostrarMenuAdjuntar] = useState<boolean>(false);
+  const [modalCatalogoChatAbierto, setModalCatalogoChatAbierto] = useState<boolean>(false);
   const [respuestaSeleccionadaId, setRespuestaSeleccionadaId] = useState<string | null>(null);
   const [imagenAdjuntaAsesorUrl, setImagenAdjuntaAsesorUrl] = useState<string | null>(null);
+  const [documentoAdjuntoAsesor, setDocumentoAdjuntoAsesor] = useState<{
+    url: string;
+    nombre: string;
+  } | null>(null);
   const [subiendoImagenAsesor, setSubiendoImagenAsesor] = useState<boolean>(false);
+  const [procesandoAudioMsgId, setProcesandoAudioMsgId] = useState<string | null>(null);
   const inputFotoAsesorRef = useRef<HTMLInputElement>(null);
+  const inputCamaraAsesorRef = useRef<HTMLInputElement>(null);
+  const inputDocumentoAsesorRef = useRef<HTMLInputElement>(null);
+  const textareaCompositorRef = useRef<HTMLTextAreaElement>(null);
 
   // Visor lightbox de imagen ampliada y modal de reenvío (a WhatsApp o Chat Grupal del Equipo)
   const [visorImagenDatos, setVisorImagenDatos] = useState<DatosImagenAmpliadaChat | null>(null);
@@ -699,6 +1080,8 @@ export function ConsolaVentasOmnicanal({
   useEffect(() => {
     setMenuCabeceraAbierto(null);
     setMostrarSelectorFechaCustom(false);
+    setMostrarMenuAdjuntar(false);
+    setMostrarMenuRespuestas(false);
     setNotaCierreInput("");
     if (!conversacionActivaId) {
       setMensajesActivos([]);
@@ -847,11 +1230,20 @@ export function ConsolaVentasOmnicanal({
           const origenMsg: MensajeOmnicanal["origen"] =
             payload.fase === "RESPUESTA_ARIA"
               ? "BOT_ARIA"
-              : payload.fase === "INTERVENCION_HUMANA"
-                ? "ASESORA_HUMANA"
-                : payload.fase === "EVENTO_ORDEN"
-                  ? "SISTEMA"
-                  : "CLIENTE";
+              : payload.fase === "NOTA_INTERNA"
+                ? "NOTA_INTERNA"
+                : payload.fase === "INTERVENCION_HUMANA"
+                  ? "ASESORA_HUMANA"
+                  : payload.fase === "EVENTO_ORDEN"
+                    ? "SISTEMA"
+                    : "CLIENTE";
+
+          const tieneMediaPayload = Boolean(
+            payload.imagenUrl ||
+              (payload.imagenesUrls && payload.imagenesUrls.length > 0) ||
+              payload.audioUrl ||
+              payload.documentoUrl
+          );
 
           const nuevoMsg: MensajeOmnicanal = {
             id: payload.eventoId || `rtm-${ahoraMs}`,
@@ -860,27 +1252,36 @@ export function ConsolaVentasOmnicanal({
               payload.autorNombre ||
               (origenMsg === "BOT_ARIA"
                 ? "Mía · ARIA"
-                : origenMsg === "ASESORA_HUMANA"
-                  ? "Asesor Ventas"
-                  : origenMsg === "SISTEMA"
-                    ? "E-Commerce Web"
-                    : payload.remitenteNombre ||
-                      (canalPayload === "whatsapp" ? "Cliente WhatsApp" : "Visitante Web")),
+                : origenMsg === "NOTA_INTERNA"
+                  ? "ARIA · Transcripción de Voz"
+                  : origenMsg === "ASESORA_HUMANA"
+                    ? "Asesor Ventas"
+                    : origenMsg === "SISTEMA"
+                      ? "E-Commerce Web"
+                      : payload.remitenteNombre ||
+                        (canalPayload === "whatsapp" ? "Cliente WhatsApp" : "Visitante Web")),
             contenido: payload.contenido,
             tipoContenido:
               payload.fase === "EVENTO_ORDEN"
                 ? "ORDEN_WEB"
-                : payload.imagenUrl || (payload.imagenesUrls && payload.imagenesUrls.length > 0)
-                  ? "IMAGEN"
-                  : "TEXTO",
+                : payload.audioUrl
+                  ? "AUDIO"
+                  : payload.documentoUrl
+                    ? "DOCUMENTO"
+                    : payload.imagenUrl || (payload.imagenesUrls && payload.imagenesUrls.length > 0)
+                      ? "IMAGEN"
+                      : "TEXTO",
             estadoEntrega: "ENVIADO",
-            detalle:
-              payload.imagenUrl || (payload.imagenesUrls && payload.imagenesUrls.length > 0)
-                ? {
-                    imagen_url: payload.imagenUrl ?? undefined,
-                    imagenes_urls: payload.imagenesUrls ?? undefined,
-                  }
-                : undefined,
+            detalle: tieneMediaPayload
+              ? {
+                  imagen_url: payload.imagenUrl ?? undefined,
+                  imagenes_urls: payload.imagenesUrls ?? undefined,
+                  audio_url: payload.audioUrl ?? undefined,
+                  audio_mime: payload.audioMime ?? undefined,
+                  documento_url: payload.documentoUrl ?? undefined,
+                  documento_nombre: payload.documentoNombre ?? undefined,
+                }
+              : undefined,
             creadoEn: payload.creadoEn || new Date().toISOString(),
           };
 
@@ -911,8 +1312,12 @@ export function ConsolaVentasOmnicanal({
                 remitenteCorreo: payload.remitenteCorreo || existente.remitenteCorreo,
                 remitenteTelefono: payload.remitenteTelefono || existente.remitenteTelefono,
                 estadoAtencion: payload.estadoAtencion || existente.estadoAtencion,
-                ultimoMensajeTexto: payload.contenido.slice(0, 280),
-                ultimoMensajeOrigen: origenMsg,
+                ultimoMensajeTexto:
+                  origenMsg === "NOTA_INTERNA"
+                    ? existente.ultimoMensajeTexto
+                    : payload.contenido.slice(0, 280),
+                ultimoMensajeOrigen:
+                  origenMsg === "NOTA_INTERNA" ? existente.ultimoMensajeOrigen : origenMsg,
                 ultimoMensajeEn: nuevoMsg.creadoEn,
                 noLeidosAsesora:
                   origenMsg === "CLIENTE" && !estaAbierta
@@ -1250,10 +1655,50 @@ export function ConsolaVentasOmnicanal({
       }
       const { data: pub } = supabase.storage.from("comun-publico").getPublicUrl(ruta);
       if (pub?.publicUrl) {
+        setDocumentoAdjuntoAsesor(null);
         setImagenAdjuntaAsesorUrl(pub.publicUrl);
       }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Error subiendo imagen.");
+    } finally {
+      setSubiendoImagenAsesor(false);
+    }
+  };
+
+  const subirDocumentoAsesorOmnicanal = async (archivo: File) => {
+    if (archivo.size > 15 * 1024 * 1024) {
+      setErrorMsg("El documento supera el límite de 15 MB.");
+      return;
+    }
+    setSubiendoImagenAsesor(true);
+    setErrorMsg(null);
+    try {
+      const supabase = crearClienteNavegador();
+      const ext =
+        archivo.name
+          .split(".")
+          .pop()
+          ?.toLowerCase()
+          .replace(/[^a-z0-9]/g, "") || "pdf";
+      const ruta = `omnicanal-media/${negNorm}/${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
+      const { error: errUp } = await supabase.storage.from("comun-publico").upload(ruta, archivo, {
+        contentType: archivo.type || "application/octet-stream",
+        upsert: false,
+      });
+      if (errUp) {
+        setErrorMsg(`No se pudo subir el documento: ${errUp.message}`);
+        return;
+      }
+      const { data: pub } = supabase.storage.from("comun-publico").getPublicUrl(ruta);
+      if (pub?.publicUrl) {
+        setImagenAdjuntaAsesorUrl(null);
+        setDocumentoAdjuntoAsesor({
+          url: pub.publicUrl,
+          nombre: archivo.name || `documento.${ext}`,
+        });
+      }
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Error subiendo documento.");
     } finally {
       setSubiendoImagenAsesor(false);
     }
@@ -1277,14 +1722,20 @@ export function ConsolaVentasOmnicanal({
 
   const handleEnviarMensaje = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!conversacionActiva || (!textoRespuesta.trim() && !imagenAdjuntaAsesorUrl) || enviandoMensaje) {
+    if (
+      !conversacionActiva ||
+      (!textoRespuesta.trim() && !imagenAdjuntaAsesorUrl && !documentoAdjuntoAsesor) ||
+      enviandoMensaje
+    ) {
       return;
     }
 
     const textoLimpio = textoRespuesta.trim();
-    const cuerpoFinal = imagenAdjuntaAsesorUrl
-      ? `${textoLimpio ? `${textoLimpio}\n\n` : ""}![Fotografía adjunta](${imagenAdjuntaAsesorUrl})`
-      : textoLimpio;
+    const cuerpoFinal = documentoAdjuntoAsesor
+      ? `${textoLimpio ? `${textoLimpio}\n\n` : ""}📄 [${documentoAdjuntoAsesor.nombre}](${documentoAdjuntoAsesor.url})`
+      : imagenAdjuntaAsesorUrl
+        ? `${textoLimpio ? `${textoLimpio}\n\n` : ""}![Fotografía adjunta](${imagenAdjuntaAsesorUrl})`
+        : textoLimpio;
 
     setEnviandoMensaje(true);
     const res = await enviarMensajeAsesorOmnicanalAction({
@@ -1293,6 +1744,9 @@ export function ConsolaVentasOmnicanal({
       contenido: cuerpoFinal,
       esNotaInterna: modoNotaInterna,
       respuestaRapidaId: respuestaSeleccionadaId,
+      imagenUrl: imagenAdjuntaAsesorUrl,
+      documentoUrl: documentoAdjuntoAsesor?.url ?? null,
+      documentoNombre: documentoAdjuntoAsesor?.nombre ?? null,
     });
     setEnviandoMensaje(false);
 
@@ -1307,6 +1761,7 @@ export function ConsolaVentasOmnicanal({
 
     setTextoRespuesta("");
     setImagenAdjuntaAsesorUrl(null);
+    setDocumentoAdjuntoAsesor(null);
     setRespuestaSeleccionadaId(null);
     setMensajesActivos((prev) => [...prev, res.mensaje]);
     if (conversacionActiva.claveHilo) {
@@ -1343,6 +1798,141 @@ export function ConsolaVentasOmnicanal({
           : c
       ),
     }));
+  };
+
+  const handleInsertarProductoCatalogoEnCompositor = (sel: SeleccionProductoCatalogoChat) => {
+    setModoNotaInterna(false);
+    setDocumentoAdjuntoAsesor(null);
+    setImagenAdjuntaAsesorUrl(sel.imagenPrincipalUrl);
+    setTextoRespuesta((prev) =>
+      prev.trim() ? `${prev.trim()}\n\n${sel.textoMensaje}` : sel.textoMensaje
+    );
+    setModalCatalogoChatAbierto(false);
+    setTimeout(() => textareaCompositorRef.current?.focus(), 60);
+  };
+
+  const handleEnviarProductoCatalogoDirecto = async (sel: SeleccionProductoCatalogoChat) => {
+    if (!conversacionActiva || enviandoMensaje) return;
+    setEnviandoMensaje(true);
+    const res = await enviarMensajeAsesorOmnicanalAction({
+      negocio: negNorm,
+      conversacionId: conversacionActiva.id,
+      contenido: sel.cuerpoConMarkdown,
+      esNotaInterna: false,
+      imagenUrl: sel.imagenPrincipalUrl,
+    });
+    setEnviandoMensaje(false);
+
+    if (!res.ok) {
+      setErrorMsg(res.error);
+      return;
+    }
+    if (res.avisoWhatsApp) {
+      setErrorMsg(`Aviso de envío WhatsApp: ${res.avisoWhatsApp}`);
+    }
+
+    setModalCatalogoChatAbierto(false);
+    setMensajesActivos((prev) => [...prev, res.mensaje]);
+    if (conversacionActiva.claveHilo) {
+      const buf = mensajesBufferLiveRef.current[conversacionActiva.claveHilo] ?? [];
+      mensajesBufferLiveRef.current[conversacionActiva.claveHilo] = [...buf, res.mensaje];
+    }
+
+    emitirBroadcastAsesor({
+      eventoId: res.mensaje.id,
+      claveHilo: conversacionActiva.claveHilo,
+      conversacionId: conversacionActiva.id,
+      estadoAtencion: res.estadoAtencion,
+      asesoraAsignadaId: res.asesoraAsignadaId ?? conversacionActiva.asesoraAsignadaId,
+      asesoraNombre: conversacionActiva.asesoraNombre ?? tablero.usuarioActualNombre,
+      esNotaInterna: false,
+      mensaje: res.mensaje,
+    });
+
+    setTablero((prev) => ({
+      ...prev,
+      conversaciones: prev.conversaciones.map((c) =>
+        c.id === conversacionActiva.id
+          ? {
+              ...c,
+              estadoAtencion: res.estadoAtencion,
+              asesoraAsignadaId: res.asesoraAsignadaId ?? c.asesoraAsignadaId,
+              asesoraNombre: c.asesoraNombre ?? tablero.usuarioActualNombre,
+              ultimoMensajeTexto: res.mensaje.contenido,
+              ultimoMensajeOrigen: "ASESORA_HUMANA",
+              ultimoMensajeEn: res.mensaje.creadoEn,
+              mensajesHumanoConteo: res.mensajesHumanoConteo,
+            }
+          : c
+      ),
+    }));
+    setMensajeInfo(`🌸 Producto "${sel.nombreProducto}" enviado al cliente.`);
+  };
+
+  const handleProcesarNotaVozPanel = async (
+    mensajeAudio: MensajeOmnicanal,
+    audioUrl: string,
+    mimeType?: string,
+    responderConAria = false
+  ) => {
+    if (!conversacionActiva || procesandoAudioMsgId) return;
+    setProcesandoAudioMsgId(mensajeAudio.id);
+    setErrorMsg(null);
+    try {
+      const baseTienda =
+        typeof window !== "undefined" && window.location?.origin
+          ? window.location.origin
+          : undefined;
+      const res = await transcribirYResponderNotaVozOmnicanalAction({
+        negocio: negNorm,
+        conversacionId: conversacionActiva.id,
+        mensajeAudioId: mensajeAudio.id,
+        audioUrl,
+        mimeType: mimeType ?? null,
+        remitenteNombre: conversacionActiva.remitenteNombre,
+        remitenteTelefono: conversacionActiva.remitenteTelefono ?? null,
+        claveHilo: conversacionActiva.claveHilo,
+        responderConAria,
+        origenTiendaUrl: baseTienda,
+      });
+
+      if (!res.ok) {
+        setErrorMsg(res.error);
+        return;
+      }
+
+      setMensajesActivos((prev) => {
+        const idsExistentes = new Set(prev.map((m) => m.id));
+        const actualizados = prev.map((m) =>
+          m.id === mensajeAudio.id
+            ? {
+                ...m,
+                detalle: {
+                  ...(m.detalle ?? {}),
+                  transcripcion: res.transcripcion,
+                  nota_transcripcion_id: res.notaInterna.id,
+                },
+              }
+            : m
+        );
+        if (!idsExistentes.has(res.notaInterna.id)) {
+          actualizados.push(res.notaInterna);
+        }
+        if (res.mensajeAria && !idsExistentes.has(res.mensajeAria.id)) {
+          actualizados.push(res.mensajeAria);
+        }
+        return actualizados;
+      });
+
+      if (res.mensajeAria) {
+        setMensajeInfo("🎙️ Nota de voz transcrita en Nota Interna y respondida con ARIA.");
+        void recargarTablero(true);
+      } else {
+        setMensajeInfo("🎙️ Nota de voz transcrita y guardada como Nota Interna.");
+      }
+    } finally {
+      setProcesandoAudioMsgId(null);
+    }
   };
 
   const handleCambiarEstado = async (nuevoEstado: EstadoAtencionOmnicanal) => {
@@ -5033,6 +5623,11 @@ export function ConsolaVentasOmnicanal({
                                       },
                                     },
                                   }),
+                                onTranscribirAudio: (url, mime) =>
+                                  void handleProcesarNotaVozPanel(m, url, mime, false),
+                                onResponderAudioConAria: (url, mime) =>
+                                  void handleProcesarNotaVozPanel(m, url, mime, true),
+                                procesandoAudio: procesandoAudioMsgId === m.id,
                               }
                             )}
 
@@ -5246,7 +5841,11 @@ export function ConsolaVentasOmnicanal({
                       {modoLayoutInbox === "movil" &&
                         !modoNotaInterna &&
                         conversacionActiva.estadoAtencion !== "CERRADO" &&
-                        Boolean(textoRespuesta.trim() || imagenAdjuntaAsesorUrl) && (
+                        Boolean(
+                          textoRespuesta.trim() ||
+                            imagenAdjuntaAsesorUrl ||
+                            documentoAdjuntoAsesor
+                        ) && (
                           <button
                             type="button"
                             disabled={enviandoMensaje}
@@ -5279,7 +5878,10 @@ export function ConsolaVentasOmnicanal({
 
                       <button
                         type="button"
-                        onClick={() => setMostrarMenuRespuestas((v) => !v)}
+                        onClick={() => {
+                          setMostrarMenuAdjuntar(false);
+                          setMostrarMenuRespuestas((v) => !v);
+                        }}
                         title="Insertar mensaje predeterminado (o escribe / en el cuadro)"
                         aria-label="Atajos de respuesta"
                         style={{
@@ -5304,6 +5906,44 @@ export function ConsolaVentasOmnicanal({
                     </div>
                   </div>
 
+                  {modoNotaInterna && (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "8px",
+                        padding: "5px 10px",
+                        borderRadius: "8px",
+                        background: "#FEF3C7",
+                        border: "1px solid #FDE68A",
+                        color: "#92400E",
+                        fontSize: "0.73rem",
+                        fontWeight: 700,
+                      }}
+                    >
+                      <span>📝 Modo Nota Interna activo (solo visible para el equipo)</span>
+                      <button
+                        type="button"
+                        onClick={() => setModoNotaInterna(false)}
+                        title="Cambiar a respuesta para el cliente"
+                        aria-label="Cambiar a cliente"
+                        style={{
+                          border: "1px solid #F59E0B",
+                          background: "#FFFFFF",
+                          color: "#92400E",
+                          borderRadius: "6px",
+                          padding: "2px 8px",
+                          fontSize: "0.7rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Cliente
+                      </button>
+                    </div>
+                  )}
+
                   {imagenAdjuntaAsesorUrl && (
                     <div
                       style={{
@@ -5327,7 +5967,7 @@ export function ConsolaVentasOmnicanal({
                         }}
                       />
                       <span style={{ fontSize: "0.75rem", color: "#334155", flex: 1 }}>
-                        📷 Foto lista para enviar
+                        🖼️ Imagen lista para enviar
                       </span>
                       <button
                         type="button"
@@ -5350,7 +5990,276 @@ export function ConsolaVentasOmnicanal({
                     </div>
                   )}
 
+                  {documentoAdjuntoAsesor && (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                        padding: "6px 10px",
+                        borderRadius: "9px",
+                        background: "#FAF5FF",
+                        border: "1px solid #DDD6FE",
+                      }}
+                    >
+                      <div
+                        style={{
+                          width: "36px",
+                          height: "36px",
+                          borderRadius: "8px",
+                          background: "#EDE9FE",
+                          color: "#6D28D9",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <FileText size={18} />
+                      </div>
+                      <span
+                        style={{
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                          color: "#4C1D95",
+                          flex: 1,
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        📄 {documentoAdjuntoAsesor.nombre}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setDocumentoAdjuntoAsesor(null)}
+                        title="Quitar documento adjunto"
+                        aria-label="Quitar documento"
+                        style={{
+                          width: "32px",
+                          height: "32px",
+                          border: "none",
+                          background: "transparent",
+                          color: "#4C1D95",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Menú "Adjuntar" estilo WhatsApp (Nota | Documento | Imagen | Foto | Respuesta rápida '/' | Catálogo) */}
+                  {mostrarMenuAdjuntar && (
+                    <div
+                      role="dialog"
+                      aria-label="Opciones para adjuntar"
+                      onClick={() => setMostrarMenuAdjuntar(false)}
+                      style={
+                        modoLayoutInbox === "movil"
+                          ? {
+                              position: "fixed",
+                              inset: 0,
+                              zIndex: 9940,
+                              background: "rgba(15, 23, 42, 0.52)",
+                              backdropFilter: "blur(2px)",
+                              display: "flex",
+                              alignItems: "flex-end",
+                              justifyContent: "center",
+                            }
+                          : {
+                              position: "fixed",
+                              inset: 0,
+                              zIndex: 35,
+                              background: "transparent",
+                            }
+                      }
+                    >
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={
+                          modoLayoutInbox === "movil"
+                            ? {
+                                width: "100%",
+                                background: "#111B21",
+                                color: "#E9EDEF",
+                                borderRadius: "22px 22px 0 0",
+                                padding:
+                                  "12px 18px calc(20px + env(safe-area-inset-bottom, 0px))",
+                                boxShadow: "0 -14px 36px rgba(0, 0, 0, 0.42)",
+                              }
+                            : {
+                                position: "absolute",
+                                bottom: "66px",
+                                left: "14px",
+                                width: "332px",
+                                background: "#111B21",
+                                color: "#E9EDEF",
+                                borderRadius: "18px",
+                                padding: "16px 16px 14px",
+                                boxShadow: "0 18px 42px rgba(15, 23, 42, 0.34)",
+                                border: "1px solid rgba(255, 255, 255, 0.08)",
+                              }
+                        }
+                      >
+                        {modoLayoutInbox === "movil" && (
+                          <div
+                            style={{
+                              width: "40px",
+                              height: "4px",
+                              borderRadius: "999px",
+                              background: "rgba(255,255,255,0.28)",
+                              margin: "0 auto 14px",
+                            }}
+                          />
+                        )}
+
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                            gap: "14px 10px",
+                          }}
+                        >
+                          {[
+                            {
+                              clave: "nota",
+                              etiqueta: "Nota",
+                              titulo: "Escribir Nota Interna para el equipo",
+                              fondo: "rgba(245, 158, 11, 0.18)",
+                              borde: "rgba(245, 158, 11, 0.42)",
+                              colorIcono: "#FBBF24",
+                              icono: <StickyNote size={22} />,
+                              onAccion: () => {
+                                setModoNotaInterna(true);
+                                setMostrarMenuAdjuntar(false);
+                                setTimeout(() => textareaCompositorRef.current?.focus(), 50);
+                              },
+                            },
+                            {
+                              clave: "documento",
+                              etiqueta: "Documento",
+                              titulo: "Adjuntar documento PDF, Word o Excel",
+                              fondo: "rgba(124, 58, 237, 0.2)",
+                              borde: "rgba(167, 139, 250, 0.42)",
+                              colorIcono: "#A78BFA",
+                              icono: <FileText size={22} />,
+                              onAccion: () => {
+                                setMostrarMenuAdjuntar(false);
+                                inputDocumentoAsesorRef.current?.click();
+                              },
+                            },
+                            {
+                              clave: "imagen",
+                              etiqueta: "Imagen",
+                              titulo: "Seleccionar imagen de la galería",
+                              fondo: "rgba(37, 99, 235, 0.2)",
+                              borde: "rgba(96, 165, 250, 0.42)",
+                              colorIcono: "#60A5FA",
+                              icono: <ImagePlus size={22} />,
+                              onAccion: () => {
+                                setMostrarMenuAdjuntar(false);
+                                inputFotoAsesorRef.current?.click();
+                              },
+                            },
+                            {
+                              clave: "foto",
+                              etiqueta: "Foto",
+                              titulo: "Tomar foto directa con la cámara",
+                              fondo: "rgba(236, 72, 153, 0.2)",
+                              borde: "rgba(244, 114, 182, 0.42)",
+                              colorIcono: "#F472B6",
+                              icono: <Camera size={22} />,
+                              onAccion: () => {
+                                setMostrarMenuAdjuntar(false);
+                                inputCamaraAsesorRef.current?.click();
+                              },
+                            },
+                            {
+                              clave: "rapida",
+                              etiqueta: "Respuesta '/'",
+                              titulo: "Abrir respuestas rápidas (/atajos)",
+                              fondo: "rgba(234, 179, 8, 0.2)",
+                              borde: "rgba(250, 204, 21, 0.42)",
+                              colorIcono: "#FACC15",
+                              icono: <Zap size={22} />,
+                              onAccion: () => {
+                                setMostrarMenuAdjuntar(false);
+                                setMostrarMenuRespuestas(true);
+                                setTimeout(() => textareaCompositorRef.current?.focus(), 50);
+                              },
+                            },
+                            {
+                              clave: "catalogo",
+                              etiqueta: "Catálogo",
+                              titulo:
+                                "Enviar producto del catálogo (foto principal + link web + álbum)",
+                              fondo: "rgba(22, 163, 74, 0.22)",
+                              borde: "rgba(74, 222, 128, 0.45)",
+                              colorIcono: "#4ADE80",
+                              icono: <Store size={22} />,
+                              onAccion: () => {
+                                setMostrarMenuAdjuntar(false);
+                                setModalCatalogoChatAbierto(true);
+                              },
+                            },
+                          ].map((item) => (
+                            <button
+                              key={item.clave}
+                              type="button"
+                              onClick={item.onAccion}
+                              title={item.titulo}
+                              aria-label={item.etiqueta}
+                              style={{
+                                border: "none",
+                                background: "transparent",
+                                color: "#E9EDEF",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                gap: "7px",
+                                padding: "4px 2px",
+                                cursor: "pointer",
+                              }}
+                            >
+                              <span
+                                style={{
+                                  width: "56px",
+                                  height: "52px",
+                                  borderRadius: "999px",
+                                  background: item.fondo,
+                                  border: `1px solid ${item.borde}`,
+                                  color: item.colorIcono,
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
+                              >
+                                {item.icono}
+                              </span>
+                              <span
+                                style={{
+                                  fontSize: "0.76rem",
+                                  fontWeight: 600,
+                                  color: "#D1D7DB",
+                                  lineHeight: 1.2,
+                                  textAlign: "center",
+                                }}
+                              >
+                                {item.etiqueta}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div style={{ display: "flex", gap: "6px", alignItems: "flex-end" }}>
+                    {/* Inputs ocultos para Imagen (galería), Foto (cámara) y Documento */}
                     <input
                       ref={inputFotoAsesorRef}
                       type="file"
@@ -5362,13 +6271,40 @@ export function ConsolaVentasOmnicanal({
                       }}
                       style={{ display: "none" }}
                     />
+                    <input
+                      ref={inputCamaraAsesorRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={(e) => {
+                        const archivo = e.target.files?.[0];
+                        if (archivo) void subirImagenAsesorOmnicanal(archivo);
+                        e.target.value = "";
+                      }}
+                      style={{ display: "none" }}
+                    />
+                    <input
+                      ref={inputDocumentoAsesorRef}
+                      type="file"
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,application/pdf"
+                      onChange={(e) => {
+                        const archivo = e.target.files?.[0];
+                        if (archivo) void subirDocumentoAsesorOmnicanal(archivo);
+                        e.target.value = "";
+                      }}
+                      style={{ display: "none" }}
+                    />
+
                     <button
                       type="button"
                       className="btn-responsive-accion"
                       disabled={subiendoImagenAsesor}
-                      onClick={() => inputFotoAsesorRef.current?.click()}
-                      title="Adjuntar fotografía para el cliente"
-                      aria-label="Adjuntar foto"
+                      onClick={() => {
+                        setMostrarMenuRespuestas(false);
+                        setMostrarMenuAdjuntar((prev) => !prev);
+                      }}
+                      title="Adjuntar (Nota, Documento, Imagen, Foto, Respuesta rápida '/', Catálogo)"
+                      aria-label="Adjuntar"
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
@@ -5378,20 +6314,23 @@ export function ConsolaVentasOmnicanal({
                         minHeight: modoLayoutInbox === "movil" ? "42px" : undefined,
                         padding: modoLayoutInbox === "movil" ? "0 10px" : "9px 11px",
                         borderRadius: "10px",
-                        border: "1px solid #CBD5E1",
-                        background: "#F8FAFC",
-                        color: "#334155",
+                        border: mostrarMenuAdjuntar
+                          ? "1px solid #0F172A"
+                          : "1px solid #CBD5E1",
+                        background: mostrarMenuAdjuntar ? "#0F172A" : "#F8FAFC",
+                        color: mostrarMenuAdjuntar ? "#FFFFFF" : "#334155",
                         fontSize: "0.78rem",
                         fontWeight: 700,
                         cursor: subiendoImagenAsesor ? "wait" : "pointer",
                         flexShrink: 0,
                       }}
                     >
-                      {subiendoImagenAsesor ? <Loader2 size={16} /> : <ImagePlus size={16} />}
-                      <span className="btn-texto-responsive">Foto</span>
+                      {subiendoImagenAsesor ? <Loader2 size={16} /> : <Paperclip size={16} />}
+                      <span className="btn-texto-responsive">Adjuntar</span>
                     </button>
 
                     <textarea
+                      ref={textareaCompositorRef}
                       value={textoRespuesta}
                       onChange={(e) => setTextoRespuesta(e.target.value)}
                       onPaste={handlePegarImagenCompositor}
@@ -5430,7 +6369,10 @@ export function ConsolaVentasOmnicanal({
                         <button
                           type="button"
                           disabled={
-                            enviandoMensaje || (!textoRespuesta.trim() && !imagenAdjuntaAsesorUrl)
+                            enviandoMensaje ||
+                            (!textoRespuesta.trim() &&
+                              !imagenAdjuntaAsesorUrl &&
+                              !documentoAdjuntoAsesor)
                           }
                           onClick={async () => {
                             await handleEnviarMensaje();
@@ -5451,7 +6393,12 @@ export function ConsolaVentasOmnicanal({
                             fontSize: "0.78rem",
                             fontWeight: 700,
                             cursor: enviandoMensaje ? "wait" : "pointer",
-                            opacity: !textoRespuesta.trim() && !imagenAdjuntaAsesorUrl ? 0.5 : 1,
+                            opacity:
+                              !textoRespuesta.trim() &&
+                              !imagenAdjuntaAsesorUrl &&
+                              !documentoAdjuntoAsesor
+                                ? 0.5
+                                : 1,
                             flexShrink: 0,
                             whiteSpace: "nowrap",
                           }}
@@ -5465,7 +6412,10 @@ export function ConsolaVentasOmnicanal({
                       type="submit"
                       className="btn-responsive-accion"
                       disabled={
-                        enviandoMensaje || (!textoRespuesta.trim() && !imagenAdjuntaAsesorUrl)
+                        enviandoMensaje ||
+                        (!textoRespuesta.trim() &&
+                          !imagenAdjuntaAsesorUrl &&
+                          !documentoAdjuntoAsesor)
                       }
                       title={modoNotaInterna ? "Guardar nota interna" : "Enviar respuesta al cliente"}
                       aria-label="Enviar"
@@ -5484,7 +6434,12 @@ export function ConsolaVentasOmnicanal({
                         fontSize: "0.82rem",
                         fontWeight: 700,
                         cursor: enviandoMensaje ? "wait" : "pointer",
-                        opacity: !textoRespuesta.trim() && !imagenAdjuntaAsesorUrl ? 0.55 : 1,
+                        opacity:
+                          !textoRespuesta.trim() &&
+                          !imagenAdjuntaAsesorUrl &&
+                          !documentoAdjuntoAsesor
+                            ? 0.55
+                            : 1,
                         flexShrink: 0,
                       }}
                     >
@@ -6318,6 +7273,17 @@ export function ConsolaVentasOmnicanal({
           setMensajeInfo(confirmacion);
           void recargarTablero(true);
         }}
+      />
+
+      {/* Modal selector de producto del Catálogo para enviar foto principal + link web + álbum */}
+      <ModalSelectorCatalogoChat
+        abierto={modalCatalogoChatAbierto}
+        negocio={negNorm}
+        esMovil={modoLayoutInbox === "movil"}
+        enviandoDirecto={enviandoMensaje}
+        onCerrar={() => setModalCatalogoChatAbierto(false)}
+        onInsertarEnCompositor={handleInsertarProductoCatalogoEnCompositor}
+        onEnviarDirecto={(sel) => void handleEnviarProductoCatalogoDirecto(sel)}
       />
 
       {/* Modal de administración de etiquetas (restringido a Admin y Operador de la tienda) */}

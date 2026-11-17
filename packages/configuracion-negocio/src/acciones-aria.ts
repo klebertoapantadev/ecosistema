@@ -210,6 +210,7 @@ export async function guardarWhatsappYcloudAction(
     ycloudApiKey?: string;
     ycloudWebhookSecret?: string;
     whatsappAgenteKey?: string;
+    sttApiKey?: string;
     regenerarTokenUrl?: boolean;
   },
   negocio: string
@@ -219,6 +220,7 @@ export async function guardarWhatsappYcloudAction(
     tieneYcloudApiKey: boolean;
     tieneWebhookSecret: boolean;
     tieneWhatsappAgenteKey: boolean;
+    tieneSttApiKey?: boolean;
   }>
 > {
   try {
@@ -227,7 +229,7 @@ export async function guardarWhatsappYcloudAction(
     const esquemaCfg = supabase.schema("comun_configuracion") as any;
     const codigoNegocio = negocio.trim().toLowerCase();
 
-    const { data, error } = await esquemaCfg.rpc("cfg_fn_guardar_whatsapp_ycloud", {
+    const payloadBase: Record<string, unknown> = {
       p_negocio: codigoNegocio,
       p_habilitado: Boolean(datos.habilitado),
       p_numero_emisor: datos.numeroEmisor.trim(),
@@ -237,7 +239,19 @@ export async function guardarWhatsappYcloudAction(
       p_ycloud_webhook_secret: datos.ycloudWebhookSecret?.trim() || null,
       p_whatsapp_agente_key: datos.whatsappAgenteKey?.trim() || null,
       p_regenerar_token_url: Boolean(datos.regenerarTokenUrl),
+    };
+
+    let { data, error } = await esquemaCfg.rpc("cfg_fn_guardar_whatsapp_ycloud", {
+      ...payloadBase,
+      p_stt_api_key: datos.sttApiKey?.trim() || null,
     });
+
+    // Compatibilidad retroactiva si la migración 20261117000005 aún no se ha corrido en Supabase
+    if (error && error.message.includes("p_stt_api_key")) {
+      const retry = await esquemaCfg.rpc("cfg_fn_guardar_whatsapp_ycloud", payloadBase);
+      data = retry.data;
+      error = retry.error;
+    }
 
     if (error) {
       return {
@@ -263,6 +277,7 @@ export async function guardarWhatsappYcloudAction(
         tieneYcloudApiKey: Boolean(data.tieneYcloudApiKey),
         tieneWebhookSecret: Boolean(data.tieneWebhookSecret),
         tieneWhatsappAgenteKey: Boolean(data.tieneWhatsappAgenteKey),
+        tieneSttApiKey: Boolean(data.tieneSttApiKey),
       },
     };
   } catch (err) {

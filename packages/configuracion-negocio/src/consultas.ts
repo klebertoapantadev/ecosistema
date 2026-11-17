@@ -11,6 +11,7 @@ interface FilaCfgAria {
   ari_ycloud_api_secreto_id?: string | null;
   ari_ycloud_webhook_secreto_id?: string | null;
   ari_whatsapp_agente_secreto_id?: string | null;
+  ari_stt_secreto_id?: string | null;
   ari_detalle_aria?: Record<string, unknown> | null;
   ari_activo: boolean;
   ari_actualizado_en: string | null;
@@ -103,5 +104,6 @@ export async function obtenerAriaNegocio(negocio: string): Promise<Configuracion
     tieneYcloudApiKey: data.ari_ycloud_api_secreto_id != null,
     tieneYcloudWebhookSecret: data.ari_ycloud_webhook_secreto_id != null,
     tieneWhatsappAgenteKey: data.ari_whatsapp_agente_secreto_id != null,
+    tieneSttApiKey: data.ari_stt_secreto_id != null,
   };
 }

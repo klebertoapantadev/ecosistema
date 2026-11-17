@@ -5,6 +5,7 @@ import {
   calcularMetricasOmnicanal,
   calcularTotalDatosVenta,
   construirHrefRetornoChatCliente,
+  construirMensajeProductoCatalogoOmnicanal,
   emparejarComprasConConversacion,
   extraerSegmentosMultimediaMensaje,
   extraerTodasLasImagenesMensaje,
@@ -330,5 +331,45 @@ describe("omnicanal — normalización, plantillas y cruce cliente-compras", () 
     expect(enlaceCompacto.sufijo).toBe(")");
     expect(enlaceCompacto.href.endsWith("3m5")).toBe(true);
     expect(enlaceCompacto.etiqueta).toContain("🔗 google.com/");
+  });
+
+  it("extrae segmentos de nota de voz / documento y formatea el envío de productos del catálogo (foto + link web + álbum)", () => {
+    const segsAudio = extraerSegmentosMultimediaMensaje(
+      "🎤 Nota de voz recibida por WhatsApp",
+      {
+        audio_url: "https://oaybbpdxhlxjbpwnoymy.supabase.co/storage/v1/object/public/comun-publico/omnicanal-media/tinkay/voz-1.ogg",
+        audio_mime: "audio/ogg",
+        transcripcion: "Hola, cuánto cuesta el ramo coreano",
+      }
+    );
+    expect(segsAudio.some((s) => s.tipo === "audio")).toBe(true);
+    expect(segsAudio.some((s) => s.tipo === "imagen")).toBe(false);
+
+    const ficha = construirMensajeProductoCatalogoOmnicanal({
+      negocio: "tinkay",
+      nombreProducto: "Bouquet Coreano Real",
+      slugProducto: "bouquet-coreano-real",
+      nombreVariante: "24 Rosas",
+      skuVariante: "TNK-COR-24",
+      precioUsd: 45,
+      imagenUrl: "/imagenes/catalogo/coreano.jpg",
+      albumFotosUrl: "https://photos.app.goo.gl/RhTxny2frDaV1XTv5",
+      incluirFotoPrincipal: true,
+      incluirLinkWeb: true,
+      incluirLinkAlbum: true,
+    });
+
+    expect(ficha.imagenPrincipalUrl).toBe(
+      "https://tinkay-web.vercel.app/imagenes/catalogo/coreano.jpg"
+    );
+    expect(ficha.textoMensaje).toContain(
+      "🌐 Revisar en la web: https://tinkay-web.vercel.app/producto/bouquet-coreano-real?variante=TNK-COR-24"
+    );
+    expect(ficha.textoMensaje).toContain(
+      "📸 Álbum del producto: https://photos.app.goo.gl/RhTxny2frDaV1XTv5"
+    );
+    expect(ficha.cuerpoConMarkdown).toContain(
+      "![Bouquet Coreano Real (24 Rosas)](https://tinkay-web.vercel.app/imagenes/catalogo/coreano.jpg)"
+    );
   });
 });

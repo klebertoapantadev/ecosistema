@@ -75,3 +75,4 @@ export * from "./componentes/ChatEquipoInterno";
 export * from "./componentes/IconoCanalOmnicanal";
 export * from "./componentes/ModalAdministrarEtiquetas";
 export * from "./componentes/PanelCamposVentaChat";
+export * from "./componentes/ModalSelectorCatalogoChat";

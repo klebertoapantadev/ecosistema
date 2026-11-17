@@ -113,6 +113,7 @@ export function FormularioAria({
   const [ycloudApiKey, setYcloudApiKey] = useState<string>("");
   const [ycloudWebhookSecret, setYcloudWebhookSecret] = useState<string>("");
   const [whatsappAgenteKey, setWhatsappAgenteKey] = useState<string>("");
+  const [sttApiKey, setSttApiKey] = useState<string>("");
   const [webhookToken, setWebhookToken] = useState<string>(inicial?.ycloudWebhookToken ?? "");
   const [tieneYcloudApiKey, setTieneYcloudApiKey] = useState<boolean>(
     inicial?.tieneYcloudApiKey ?? false
@@ -122,6 +123,9 @@ export function FormularioAria({
   );
   const [tieneWhatsappAgenteKey, setTieneWhatsappAgenteKey] = useState<boolean>(
     inicial?.tieneWhatsappAgenteKey ?? false
+  );
+  const [tieneSttApiKey, setTieneSttApiKey] = useState<boolean>(
+    inicial?.tieneSttApiKey ?? false
   );
   const [mostrarAvanzadasYcloud, setMostrarAvanzadasYcloud] = useState<boolean>(false);
   const [guardandoYcloud, setGuardandoYcloud] = useState<boolean>(false);
@@ -289,6 +293,7 @@ export function FormularioAria({
         ycloudApiKey,
         ycloudWebhookSecret,
         whatsappAgenteKey,
+        sttApiKey,
       },
       codigoNegocio
     );
@@ -303,9 +308,11 @@ export function FormularioAria({
     setTieneYcloudApiKey(res.data.tieneYcloudApiKey);
     setTieneWebhookSecret(res.data.tieneWebhookSecret);
     setTieneWhatsappAgenteKey(res.data.tieneWhatsappAgenteKey);
+    if (res.data.tieneSttApiKey !== undefined) setTieneSttApiKey(res.data.tieneSttApiKey);
     setYcloudApiKey("");
     setYcloudWebhookSecret("");
     setWhatsappAgenteKey("");
+    setSttApiKey("");
     setMensajeYcloud({
       tipo: "ok",
       texto: ycloudHabilitado
@@ -816,6 +823,28 @@ export function FormularioAria({
           />
           <span style={estiloTextoAyuda}>
             Idéntico al filtro de ARIA: uno por línea o separados por coma. <strong>Vacío = Mía responde a todos.</strong> Los demás números igual aparecerán en vivo en <code>/panel/conversaciones</code> para atención humana sin que la IA dispare respuestas por accidente.
+          </span>
+        </div>
+
+        <div style={estiloGrupoCampo}>
+          <label style={estiloEtiquetaCampo}>
+            <span>🎙️ Clave IA para Escuchar y Transcribir Notas de Voz (Gemini / OpenRouter)</span>
+            <span style={estiloCodigoBadge}>Vault</span>
+          </label>
+          <input
+            style={estiloInputCampo}
+            type="password"
+            autoComplete="new-password"
+            value={sttApiKey}
+            onChange={(e) => setSttApiKey(e.target.value)}
+            placeholder={
+              tieneSttApiKey
+                ? "Guardada en Vault — escribe solo para reemplazarla"
+                : "Pega tu API Key de Google AI Studio (AIza...) u OpenRouter (sk-or-...)"
+            }
+          />
+          <span style={estiloTextoAyuda}>
+            Permite que al llegar una <strong>Nota de Voz</strong> por WhatsApp, el sistema la escuche automáticamente, registre la transcripción como <strong>Nota Interna</strong> en el panel y le pase el texto a Mía (ARIA) para responder al cliente.
           </span>
         </div>
 

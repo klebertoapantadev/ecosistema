@@ -517,10 +517,19 @@ export interface EventoBroadcastChatWeb {
   claveHilo: string;
   conversacionId?: string | null;
   canal?: CanalOmnicanal;
-  fase: "ENTRADA_CLIENTE" | "RESPUESTA_ARIA" | "EVENTO_ORDEN" | "INTERVENCION_HUMANA";
+  fase:
+    | "ENTRADA_CLIENTE"
+    | "RESPUESTA_ARIA"
+    | "EVENTO_ORDEN"
+    | "INTERVENCION_HUMANA"
+    | "NOTA_INTERNA";
   contenido: string;
   imagenUrl?: string | null;
   imagenesUrls?: string[];
+  audioUrl?: string | null;
+  audioMime?: string | null;
+  documentoUrl?: string | null;
+  documentoNombre?: string | null;
   autorNombre?: string | null;
   remitenteNombre?: string | null;
   remitenteCorreo?: string | null;
@@ -692,7 +701,18 @@ export function calcularMetricasOmnicanal(
 
 export type SegmentoMensajeMultimedia =
   | { tipo: "texto"; texto: string }
-  | { tipo: "imagen"; alt: string; url: string };
+  | { tipo: "imagen"; alt: string; url: string }
+  | {
+      tipo: "audio";
+      url: string;
+      mime?: string | null;
+      transcripcion?: string | null;
+    }
+  | {
+      tipo: "documento";
+      url: string;
+      nombre: string;
+    };
 
 interface TokenMarkdownEscaneado {
   inicio: number;
@@ -704,6 +724,8 @@ interface TokenMarkdownEscaneado {
 }
 
 const REGEX_EXT_IMAGEN = /\.(?:jpg|jpeg|png|webp|gif|heic)(?:\?.*)?$/i;
+const REGEX_EXT_NO_IMAGEN =
+  /\.(?:ogg|oga|opus|mp3|m4a|wav|webm|pdf|doc|docx|xls|xlsx|csv|txt)(?:\?.*)?$/i;
 const REGEX_RUTA_MEDIA_CONOCIDA =
   /\/omnicanal-media\/|\/whatsapp_business\/attachments|lookaside\.fbsbx\.com|mmg\.whatsapp\.net|\/v2\/whatsapp\/media|\/storage\/v1\/object\/(?:public|sign)\//i;
 const REGEX_QUERY_MEDIA_FIRMADA = /[?&](?:token|jwt|sig|signature)=eyJ[a-zA-Z0-9_-]{12,}/;
@@ -717,6 +739,7 @@ export function esUrlMultimediaChat(
 ): boolean {
   const limpia = url.trim();
   if (!/^https?:\/\//i.test(limpia)) return false;
+  if (REGEX_EXT_NO_IMAGEN.test(limpia)) return false;
   if (urlsDetalle?.has(limpia)) return true;
   if (REGEX_EXT_IMAGEN.test(limpia)) return true;
   if (REGEX_RUTA_MEDIA_CONOCIDA.test(limpia)) return true;
@@ -1018,7 +1041,7 @@ export function extraerSegmentosMultimediaMensaje(
   const regexUrlCandidata = /(\(?https?:\/\/[^\s<>"]+)/gi;
 
   for (const seg of segmentosPreliminares) {
-    if (seg.tipo === "imagen") {
+    if (seg.tipo !== "texto") {
       segmentos.push(seg);
       continue;
     }
@@ -1076,7 +1099,155 @@ export function extraerSegmentosMultimediaMensaje(
     }
   }
 
+  // Anexar audio (nota de voz) o documento si vienen en `detalle`
+  if (detalle && typeof detalle === "object") {
+    const audioUrl =
+      typeof detalle.audio_url === "string" && /^https?:\/\//i.test(detalle.audio_url.trim())
+        ? normalizarUrlImg(detalle.audio_url)
+        : null;
+    if (audioUrl) {
+      segmentos.push({
+        tipo: "audio",
+        url: audioUrl,
+        mime: typeof detalle.audio_mime === "string" ? detalle.audio_mime : null,
+        transcripcion:
+          typeof detalle.transcripcion === "string" && detalle.transcripcion.trim()
+            ? detalle.transcripcion.trim()
+            : null,
+      });
+    }
+
+    const docUrl =
+      typeof detalle.documento_url === "string" &&
+      /^https?:\/\//i.test(detalle.documento_url.trim())
+        ? normalizarUrlImg(detalle.documento_url)
+        : null;
+    if (docUrl) {
+      segmentos.push({
+        tipo: "documento",
+        url: docUrl,
+        nombre:
+          typeof detalle.documento_nombre === "string" && detalle.documento_nombre.trim()
+            ? detalle.documento_nombre.trim()
+            : "Documento adjunto",
+      });
+    }
+  }
+
   return segmentos;
+}
+
+export interface EntradaCompartirProductoCatalogo {
+  negocio: string;
+  nombreProducto: string;
+  slugProducto: string;
+  nombreVariante?: string | null;
+  skuVariante?: string | null;
+  precioUsd?: number | null;
+  imagenUrl?: string | null;
+  albumFotosUrl?: string | null;
+  baseUrlTienda?: string;
+  incluirFotoPrincipal?: boolean;
+  incluirLinkWeb?: boolean;
+  incluirLinkAlbum?: boolean;
+  notaPersonalizada?: string;
+}
+
+export interface SalidaCompartirProductoCatalogo {
+  imagenPrincipalUrl: string | null;
+  urlWebProducto: string;
+  urlAlbumProducto: string | null;
+  textoMensaje: string;
+  cuerpoConMarkdown: string;
+}
+
+const BASE_TIENDA_OMNICANAL: Record<string, string> = {
+  tinkay: "https://tinkay-web.vercel.app",
+  margaritas: "https://margaritas-web.vercel.app",
+  tranqi: "https://tranqi-web.vercel.app",
+  fastfix: "https://fastfix-web.vercel.app",
+};
+
+/**
+ * Construye el mensaje comercial listo para enviar a WhatsApp o Chat Web desde un producto
+ * del catálogo unificado: Foto principal + Link para revisar en la web + Link del álbum del producto.
+ */
+export function construirMensajeProductoCatalogoOmnicanal(
+  entrada: EntradaCompartirProductoCatalogo
+): SalidaCompartirProductoCatalogo {
+  const neg = (entrada.negocio || "tinkay").trim().toLowerCase();
+  const baseTienda = (
+    entrada.baseUrlTienda?.trim() ||
+    BASE_TIENDA_OMNICANAL[neg] ||
+    BASE_TIENDA_OMNICANAL.tinkay!
+  ).replace(/\/+$/, "");
+
+  const slugLimpio = String(entrada.slugProducto || "")
+    .trim()
+    .replace(/^\/+|\/+$/g, "");
+  const sku = entrada.skuVariante?.trim() || "";
+  const urlWebProducto = slugLimpio
+    ? `${baseTienda}/producto/${encodeURIComponent(slugLimpio)}${
+        sku ? `?variante=${encodeURIComponent(sku)}` : ""
+      }`
+    : `${baseTienda}/#catalogo`;
+
+  let imgAbsoluta: string | null = null;
+  const imgCruda = entrada.imagenUrl?.trim() || "";
+  if (imgCruda) {
+    if (/^https?:\/\//i.test(imgCruda)) {
+      imgAbsoluta = imgCruda;
+    } else if (imgCruda.startsWith("/")) {
+      imgAbsoluta = `${baseTienda}${imgCruda}`;
+    }
+  }
+
+  const urlAlbumProducto =
+    entrada.albumFotosUrl && /^https?:\/\//i.test(entrada.albumFotosUrl.trim())
+      ? entrada.albumFotosUrl.trim()
+      : null;
+
+  const incluirFoto = entrada.incluirFotoPrincipal !== false && Boolean(imgAbsoluta);
+  const incluirWeb = entrada.incluirLinkWeb !== false;
+  const incluirAlbum = entrada.incluirLinkAlbum !== false && Boolean(urlAlbumProducto);
+
+  const lineas: string[] = [];
+  if (entrada.notaPersonalizada?.trim()) {
+    lineas.push(entrada.notaPersonalizada.trim());
+    lineas.push("");
+  }
+
+  const tituloCompleto = entrada.nombreVariante?.trim()
+    ? `${entrada.nombreProducto.trim()} (${entrada.nombreVariante.trim()})`
+    : entrada.nombreProducto.trim();
+
+  const precioTxt =
+    entrada.precioUsd != null && Number(entrada.precioUsd) > 0
+      ? ` — $${Number(entrada.precioUsd).toFixed(2)} USD`
+      : "";
+
+  lineas.push(`🌸 *${tituloCompleto}*${precioTxt}`);
+
+  if (incluirWeb) {
+    lineas.push(`🌐 Revisar en la web: ${urlWebProducto}`);
+  }
+  if (incluirAlbum && urlAlbumProducto) {
+    lineas.push(`📸 Álbum del producto: ${urlAlbumProducto}`);
+  }
+
+  const textoMensaje = lineas.join("\n").trim();
+  const imagenPrincipalUrl = incluirFoto ? imgAbsoluta : null;
+  const cuerpoConMarkdown = imagenPrincipalUrl
+    ? `${textoMensaje}\n\n![${tituloCompleto}](${imagenPrincipalUrl})`
+    : textoMensaje;
+
+  return {
+    imagenPrincipalUrl,
+    urlWebProducto,
+    urlAlbumProducto,
+    textoMensaje,
+    cuerpoConMarkdown,
+  };
 }
 
 export function extraerTodasLasImagenesMensaje(mensaje: {

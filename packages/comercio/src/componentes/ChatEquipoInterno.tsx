@@ -1075,6 +1075,9 @@ export function ChatEquipoInterno({
                           />
                         );
                       }
+                      if (seg.tipo !== "texto") {
+                        return null;
+                      }
                       return (
                         <div
                           key={`eq-txt-${idx}`}

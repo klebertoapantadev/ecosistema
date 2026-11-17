@@ -28,6 +28,7 @@ export interface ConfiguracionAriaVista {
   tieneYcloudApiKey?: boolean;
   tieneYcloudWebhookSecret?: boolean;
   tieneWhatsappAgenteKey?: boolean;
+  tieneSttApiKey?: boolean;
 }
 
 export const esquemaAria = z.object({

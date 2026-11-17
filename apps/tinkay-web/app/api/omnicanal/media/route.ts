@@ -50,23 +50,45 @@ export async function GET(request: Request) {
   }
 
   try {
+    const headersUpstream: Record<string, string> = {
+      Accept: "image/*,audio/*,application/pdf,*/*;q=0.8",
+    };
+    const rangeReq = request.headers.get("range");
+    if (rangeReq) {
+      headersUpstream.Range = rangeReq;
+    }
+
     const res = await fetch(destino.toString(), {
-      headers: {
-        Accept: "image/*,*/*;q=0.8",
-      },
+      headers: headersUpstream,
       cache: "force-cache",
     });
 
-    if (!res.ok) {
+    if (!res.ok && res.status !== 206) {
       return NextResponse.json(
-        { ok: false, error: `No se pudo obtener la imagen (${res.status})` },
+        { ok: false, error: `No se pudo obtener el archivo multimedia (${res.status})` },
         { status: 502 }
       );
     }
 
-    const tipo = (res.headers.get("content-type") || "image/jpeg").split(";")[0]!.trim();
-    if (!tipo.startsWith("image/") && tipo !== "application/octet-stream") {
-      return NextResponse.json({ ok: false, error: "Contenido no es imagen" }, { status: 415 });
+    const tipo = (res.headers.get("content-type") || "application/octet-stream")
+      .split(";")[0]!
+      .trim()
+      .toLowerCase();
+
+    const esPermitido =
+      tipo.startsWith("image/") ||
+      tipo.startsWith("audio/") ||
+      tipo === "video/ogg" ||
+      tipo === "application/ogg" ||
+      tipo === "application/pdf" ||
+      tipo.includes("officedocument") ||
+      tipo === "application/msword" ||
+      tipo === "text/plain" ||
+      tipo === "text/csv" ||
+      tipo === "application/octet-stream";
+
+    if (!esPermitido) {
+      return NextResponse.json({ ok: false, error: "Tipo de archivo no permitido" }, { status: 415 });
     }
 
     const ext =
@@ -76,20 +98,43 @@ export async function GET(request: Request) {
           ? "webp"
           : tipo.includes("gif")
             ? "gif"
-            : "jpg";
+            : tipo.includes("ogg")
+              ? "ogg"
+              : tipo.includes("mpeg") || tipo.includes("mp3")
+                ? "mp3"
+                : tipo.includes("mp4") || tipo.includes("m4a")
+                  ? "m4a"
+                  : tipo.includes("wav")
+                    ? "wav"
+                    : tipo.includes("pdf")
+                      ? "pdf"
+                      : "jpg";
+
     const nombreFinal =
-      nombreSugerido && /\.(jpg|jpeg|png|webp|gif)$/i.test(nombreSugerido)
+      nombreSugerido && /\.[a-z0-9]{2,5}$/i.test(nombreSugerido)
         ? nombreSugerido
-        : `${nombreSugerido || `tinkay-imagen-${Date.now()}`}.${ext}`;
+        : `${nombreSugerido || `tinkay-media-${Date.now()}`}.${ext}`;
+
+    const contentTypeEfectivo =
+      tipo === "video/ogg" || tipo === "application/ogg"
+        ? "audio/ogg"
+        : tipo;
 
     const bytes = await res.arrayBuffer();
+    const headersResp: Record<string, string> = {
+      "Content-Type": contentTypeEfectivo,
+      "Cache-Control": "private, max-age=86400",
+      "Accept-Ranges": "bytes",
+      "Content-Disposition": `${descargar ? "attachment" : "inline"}; filename="${nombreFinal}"`,
+    };
+    const contentRange = res.headers.get("content-range");
+    if (contentRange) {
+      headersResp["Content-Range"] = contentRange;
+    }
+
     return new NextResponse(bytes, {
-      status: 200,
-      headers: {
-        "Content-Type": tipo.startsWith("image/") ? tipo : "image/jpeg",
-        "Cache-Control": "private, max-age=86400",
-        "Content-Disposition": `${descargar ? "attachment" : "inline"}; filename="${nombreFinal}"`,
-      },
+      status: res.status === 206 ? 206 : 200,
+      headers: headersResp,
     });
   } catch {
     return NextResponse.json(

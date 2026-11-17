@@ -1081,6 +1081,9 @@ export async function enviarMensajeAsesorOmnicanalAction(entrada: {
   contenido: string;
   esNotaInterna?: boolean;
   respuestaRapidaId?: string | null;
+  imagenUrl?: string | null;
+  documentoUrl?: string | null;
+  documentoNombre?: string | null;
 }): Promise<
   | {
       ok: true;
@@ -1094,9 +1097,21 @@ export async function enviarMensajeAsesorOmnicanalAction(entrada: {
 > {
   try {
     const neg = normalizarNegocioComercio(entrada.negocio);
-    const texto = (entrada.contenido || "").trim();
+    const imgUrl = (entrada.imagenUrl || "").trim() || null;
+    const docUrl = (entrada.documentoUrl || "").trim() || null;
+    const docNombre = (entrada.documentoNombre || "").trim() || null;
+    let texto = (entrada.contenido || "").trim();
+
+    if (!texto && !imgUrl && !docUrl) {
+      return { ok: false, error: "Escribe un mensaje o selecciona un adjunto antes de enviar." };
+    }
+
     if (!texto) {
-      return { ok: false, error: "Escribe un mensaje antes de enviar." };
+      if (docUrl) {
+        texto = `📄 [${docNombre || "Documento adjunto"}](${docUrl})`;
+      } else if (imgUrl) {
+        texto = `![Fotografía adjunta](${imgUrl})`;
+      }
     }
 
     const { crearClienteServidor } = await import("@eco/supabase/servidor");
@@ -1104,7 +1119,7 @@ export async function enviarMensajeAsesorOmnicanalAction(entrada: {
     const esquemaComercio = supabase.schema("comun_comercio") as any;
 
     if (/^[0-9a-f-]{36}$/i.test(entrada.conversacionId)) {
-      const { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_enviar_mensaje_asesor", {
+      const argsBase5 = {
         p_negocio: neg,
         p_conversacion_id: entrada.conversacionId,
         p_contenido: texto,
@@ -1113,7 +1128,23 @@ export async function enviarMensajeAsesorOmnicanalAction(entrada: {
           entrada.respuestaRapidaId && /^[0-9a-f-]{36}$/i.test(entrada.respuestaRapidaId)
             ? entrada.respuestaRapidaId
             : null,
+      };
+
+      let { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_enviar_mensaje_asesor", {
+        ...argsBase5,
+        p_imagen_url: imgUrl,
+        p_documento_url: docUrl,
+        p_documento_nombre: docNombre,
       });
+
+      if (error && esFuncionRpcPendienteMigracion(error.message)) {
+        const intento5 = await esquemaComercio.rpc(
+          "com_fn_omnicanal_enviar_mensaje_asesor",
+          argsBase5
+        );
+        data = intento5.data;
+        error = intento5.error;
+      }
 
       if (!error && data?.ok) {
         return {
@@ -1150,8 +1181,12 @@ export async function enviarMensajeAsesorOmnicanalAction(entrada: {
       autorUsuarioId: user.id,
       autorNombre: user.email?.split("@")[0] || "Asesor",
       contenido: texto,
-      tipoContenido: "TEXTO",
+      tipoContenido: docUrl ? "DOCUMENTO" : imgUrl ? "IMAGEN" : "TEXTO",
       estadoEntrega: "ENVIADO",
+      detalle: {
+        ...(imgUrl ? { imagen_url: imgUrl } : {}),
+        ...(docUrl ? { documento_url: docUrl, documento_nombre: docNombre || "documento" } : {}),
+      },
       creadoEn: ahora,
     };
 
@@ -1927,11 +1962,142 @@ export async function sincronizarHistorialAriaOmnicanalAction(
   }
 }
 
+const PROMPT_STT_OMNICANAL =
+  "Transcribe exactamente en español lo que dice el cliente en esta nota de voz para nuestra tienda. Devuelve ÚNICAMENTE el texto transcrito literal sin comillas ni explicaciones adicionales.";
+
+function extensionDesdeMimeMultimedia(mime: string, respaldo = "bin"): string {
+  const m = (mime || "").toLowerCase();
+  if (m.includes("ogg") || m.includes("opus")) return "ogg";
+  if (m.includes("mpeg") || m.includes("mp3")) return "mp3";
+  if (m.includes("mp4") || m.includes("m4a") || m.includes("aac")) return "m4a";
+  if (m.includes("wav")) return "wav";
+  if (m.includes("webm")) return "webm";
+  if (m.includes("pdf")) return "pdf";
+  if (m.includes("wordprocessingml")) return "docx";
+  if (m.includes("msword")) return "doc";
+  if (m.includes("spreadsheetml")) return "xlsx";
+  if (m.includes("ms-excel")) return "xls";
+  if (m.includes("csv")) return "csv";
+  if (m.includes("plain")) return "txt";
+  if (m.includes("png")) return "png";
+  if (m.includes("webp")) return "webp";
+  if (m.includes("jpeg") || m.includes("jpg")) return "jpg";
+  return respaldo;
+}
+
+/**
+ * Transcribe audio usando variables de entorno del servidor si están configuradas
+ * (GEMINI_API_KEY, GOOGLE_GENERATIVE_AI_API_KEY, GROQ_API_KEY, OPENAI_API_KEY).
+ * Si no están configuradas, devuelve `null` para que PostgreSQL use la clave cifrada en Vault.
+ */
+async function transcribirAudioConEnvOpcional(
+  bytes: Buffer,
+  mimeType: string
+): Promise<string | null> {
+  const mimeLimpio = (mimeType || "audio/ogg").split(";")[0]!.trim().toLowerCase() || "audio/ogg";
+
+  const geminiKey = (
+    process.env.GEMINI_API_KEY ||
+    process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
+    ""
+  ).trim();
+  if (geminiKey) {
+    try {
+      const b64 = bytes.toString("base64");
+      for (const modelo of ["gemini-2.5-flash", "gemini-2.0-flash"]) {
+        const resp = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${encodeURIComponent(geminiKey)}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    { text: PROMPT_STT_OMNICANAL },
+                    { inline_data: { mime_type: mimeLimpio, data: b64 } },
+                  ],
+                },
+              ],
+            }),
+            signal: AbortSignal.timeout(35000),
+          }
+        );
+        if (resp.ok) {
+          const j: any = await resp.json().catch(() => null);
+          const txt = String(j?.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
+          if (txt) return txt;
+        }
+      }
+    } catch {
+      // Continuar al siguiente proveedor si falla
+    }
+  }
+
+  const groqKey = (process.env.GROQ_API_KEY || "").trim();
+  if (groqKey) {
+    try {
+      const ext = extensionDesdeMimeMultimedia(mimeLimpio, "ogg");
+      const fd = new FormData();
+      fd.append(
+        "file",
+        new Blob([new Uint8Array(bytes)], { type: mimeLimpio }),
+        `nota-voz.${ext}`
+      );
+      fd.append("model", "whisper-large-v3-turbo");
+      fd.append("language", "es");
+      const resp = await fetch("https://api.groq.com/openai/v1/audio/transcriptions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${groqKey}` },
+        body: fd,
+        signal: AbortSignal.timeout(35000),
+      });
+      if (resp.ok) {
+        const j: any = await resp.json().catch(() => null);
+        const txt = String(j?.text || "").trim();
+        if (txt) return txt;
+      }
+    } catch {
+      // Continuar
+    }
+  }
+
+  const openaiKey = (process.env.OPENAI_API_KEY || "").trim();
+  if (openaiKey) {
+    try {
+      const ext = extensionDesdeMimeMultimedia(mimeLimpio, "ogg");
+      const fd = new FormData();
+      fd.append(
+        "file",
+        new Blob([new Uint8Array(bytes)], { type: mimeLimpio }),
+        `nota-voz.${ext}`
+      );
+      fd.append("model", "whisper-1");
+      fd.append("language", "es");
+      const resp = await fetch("https://api.openai.com/v1/audio/transcriptions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${openaiKey}` },
+        body: fd,
+        signal: AbortSignal.timeout(35000),
+      });
+      if (resp.ok) {
+        const j: any = await resp.json().catch(() => null);
+        const txt = String(j?.text || "").trim();
+        if (txt) return txt;
+      }
+    } catch {
+      // Continuar
+    }
+  }
+
+  return null;
+}
+
 /**
  * Procesa un evento de Webhook entrante desde YCloud (WhatsApp Business API v2),
- * emite broadcast en tiempo real hacia `/panel/conversaciones`, enriquece el contexto
- * logístico/catálogo cuando aplica y delega la respuesta a Mía (ARIA) salvo cuando
- * una asesora humana haya pulsado `Tomar Control`.
+ * espeja multimedia (imágenes, audios/notas de voz, documentos), transcribe notas de voz
+ * como `NOTA_INTERNA`, emite broadcast en tiempo real hacia `/panel/conversaciones`
+ * y delega la respuesta a Mía (ARIA) salvo cuando una asesora humana haya pulsado `Tomar Control`.
  */
 export async function procesarWebhookYcloudOmnicanalAction(entrada: {
   token: string;
@@ -1968,50 +2134,156 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
 
     const accion = String(rec.accion || "OK");
     const negocio = String(rec.negocio || "tinkay");
+    const inboundWa: any =
+      (entrada.payload as any)?.whatsappInboundMessage ??
+      (entrada.payload as any)?.whatsappMessage ??
+      null;
+
     let imagenUrlCliente: string | null = rec.imagenUrl ? String(rec.imagenUrl) : null;
+    let audioUrlCliente: string | null = rec.audioUrl
+      ? String(rec.audioUrl)
+      : inboundWa?.audio?.link || inboundWa?.voice?.link || null;
+    let audioMimeCliente: string | null = rec.audioMime
+      ? String(rec.audioMime)
+      : inboundWa?.audio?.mime_type || inboundWa?.voice?.mime_type || null;
+    let documentoUrlCliente: string | null = rec.documentoUrl
+      ? String(rec.documentoUrl)
+      : inboundWa?.document?.link || null;
+    const documentoNombreCliente: string | null = rec.documentoNombre
+      ? String(rec.documentoNombre)
+      : inboundWa?.document?.filename || null;
     let contenidoCliente = String(rec.contenido || "");
 
-    // Si hay cliente admin disponible, espejar copia permanente de la imagen entrante en comun-publico
-    if (imagenUrlCliente && rec.mensajeId) {
+    let bytesAudioDescargados: Buffer | null = null;
+    const adminClient: any = crearClienteAdmin();
+
+    // 1. Espejado permanente de imagen entrante en comun-publico si adminClient está disponible
+    if (imagenUrlCliente && rec.mensajeId && adminClient) {
       try {
-        const { crearClienteAdmin } = await import("@eco/supabase/servidor");
-        const adminClient: any = crearClienteAdmin();
-        if (adminClient) {
-          const respImg = await fetch(imagenUrlCliente, {
-            headers: { Accept: "image/*,*/*;q=0.8" },
-          });
-          if (respImg.ok) {
-            const mime = (respImg.headers.get("content-type") || "image/jpeg").split(";")[0]!.trim();
-            if (mime.startsWith("image/")) {
-              const ext = mime.includes("png") ? "png" : mime.includes("webp") ? "webp" : "jpg";
-              const rutaStorage = `omnicanal-media/${negocio}/${rec.mensajeId}.${ext}`;
-              const bytes = Buffer.from(await respImg.arrayBuffer());
-              const { error: errUp } = await adminClient.storage
+        const respImg = await fetch(imagenUrlCliente, {
+          headers: { Accept: "image/*,*/*;q=0.8" },
+          signal: AbortSignal.timeout(15000),
+        });
+        if (respImg.ok) {
+          const mime = (respImg.headers.get("content-type") || "image/jpeg")
+            .split(";")[0]!
+            .trim();
+          if (mime.startsWith("image/")) {
+            const ext = extensionDesdeMimeMultimedia(mime, "jpg");
+            const rutaStorage = `omnicanal-media/${negocio}/${rec.mensajeId}.${ext}`;
+            const bytes = Buffer.from(await respImg.arrayBuffer());
+            const { error: errUp } = await adminClient.storage
+              .from("comun-publico")
+              .upload(rutaStorage, bytes, { contentType: mime, upsert: true });
+            if (!errUp) {
+              const { data: pub } = adminClient.storage
                 .from("comun-publico")
-                .upload(rutaStorage, bytes, { contentType: mime, upsert: true });
-              if (!errUp) {
-                const { data: pub } = adminClient.storage
+                .getPublicUrl(rutaStorage);
+              if (pub?.publicUrl) {
+                await esquemaComercio.rpc("com_fn_omnicanal_actualizar_imagen_mensaje", {
+                  p_token: entrada.token,
+                  p_mensaje_id: rec.mensajeId,
+                  p_imagen_publica_url: pub.publicUrl,
+                });
+                contenidoCliente = contenidoCliente.split(imagenUrlCliente).join(pub.publicUrl);
+                imagenUrlCliente = pub.publicUrl;
+              }
+            }
+          }
+        }
+      } catch {
+        // Mantener URL original de YCloud
+      }
+    }
+
+    // 2. Descargar audio entrante (para transcripción + espejado permanente en comun-publico)
+    if (audioUrlCliente) {
+      try {
+        const respAud = await fetch(audioUrlCliente, {
+          headers: { Accept: "audio/*,video/ogg,application/ogg,*/*;q=0.8" },
+          signal: AbortSignal.timeout(20000),
+        });
+        if (respAud.ok) {
+          const mimeResp = (
+            respAud.headers.get("content-type") ||
+            audioMimeCliente ||
+            "audio/ogg"
+          )
+            .split(";")[0]!
+            .trim();
+          const buf = Buffer.from(await respAud.arrayBuffer());
+          if (buf.byteLength > 0 && buf.byteLength <= 10 * 1024 * 1024) {
+            bytesAudioDescargados = buf;
+            audioMimeCliente = mimeResp;
+            if (adminClient && rec.mensajeId) {
+              const ext = extensionDesdeMimeMultimedia(mimeResp, "ogg");
+              const rutaStorage = `omnicanal-media/${negocio}/${rec.mensajeId}.${ext}`;
+              const { error: errUpAud } = await adminClient.storage
+                .from("comun-publico")
+                .upload(rutaStorage, buf, { contentType: mimeResp, upsert: true });
+              if (!errUpAud) {
+                const { data: pubAud } = adminClient.storage
                   .from("comun-publico")
                   .getPublicUrl(rutaStorage);
-                if (pub?.publicUrl) {
-                  await esquemaComercio.rpc("com_fn_omnicanal_actualizar_imagen_mensaje", {
-                    p_token: entrada.token,
-                    p_mensaje_id: rec.mensajeId,
-                    p_imagen_publica_url: pub.publicUrl,
-                  });
-                  contenidoCliente = contenidoCliente.split(imagenUrlCliente).join(pub.publicUrl);
-                  imagenUrlCliente = pub.publicUrl;
+                if (pubAud?.publicUrl) {
+                  await esquemaComercio
+                    .rpc("com_fn_omnicanal_actualizar_media_mensaje", {
+                      p_token: entrada.token,
+                      p_mensaje_id: rec.mensajeId,
+                      p_audio_url: pubAud.publicUrl,
+                    })
+                    .catch(() => {});
+                  audioUrlCliente = pubAud.publicUrl;
                 }
               }
             }
           }
         }
       } catch {
-        // Mantener URL directa de YCloud si el espejado opcional no aplica
+        // Mantener URL original de YCloud
       }
     }
 
-    // Emitir actualización instantánea (<50ms) a la Consola de Ventas en Vivo
+    // 3. Espejado permanente de documento entrante en comun-publico si adminClient está disponible
+    if (documentoUrlCliente && rec.mensajeId && adminClient) {
+      try {
+        const respDoc = await fetch(documentoUrlCliente, {
+          signal: AbortSignal.timeout(20000),
+        });
+        if (respDoc.ok) {
+          const mimeDoc = (respDoc.headers.get("content-type") || "application/pdf")
+            .split(";")[0]!
+            .trim();
+          const bufDoc = Buffer.from(await respDoc.arrayBuffer());
+          if (bufDoc.byteLength > 0 && bufDoc.byteLength <= 15 * 1024 * 1024) {
+            const extDoc = extensionDesdeMimeMultimedia(mimeDoc, "pdf");
+            const rutaStorage = `omnicanal-media/${negocio}/${rec.mensajeId}.${extDoc}`;
+            const { error: errUpDoc } = await adminClient.storage
+              .from("comun-publico")
+              .upload(rutaStorage, bufDoc, { contentType: mimeDoc, upsert: true });
+            if (!errUpDoc) {
+              const { data: pubDoc } = adminClient.storage
+                .from("comun-publico")
+                .getPublicUrl(rutaStorage);
+              if (pubDoc?.publicUrl) {
+                await esquemaComercio
+                  .rpc("com_fn_omnicanal_actualizar_media_mensaje", {
+                    p_token: entrada.token,
+                    p_mensaje_id: rec.mensajeId,
+                    p_documento_url: pubDoc.publicUrl,
+                  })
+                  .catch(() => {});
+                documentoUrlCliente = pubDoc.publicUrl;
+              }
+            }
+          }
+        }
+      } catch {
+        // Mantener URL original de YCloud
+      }
+    }
+
+    // 4. Emitir actualización instantánea (<50ms) a la Consola de Ventas en Vivo
     if (
       rec.conversacionId &&
       [
@@ -2031,6 +2303,10 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
         fase: accion === "ECO_MOVIL_REGISTRADO" ? "INTERVENCION_HUMANA" : "ENTRADA_CLIENTE",
         contenido: contenidoCliente,
         imagenUrl: imagenUrlCliente,
+        audioUrl: audioUrlCliente,
+        audioMime: audioMimeCliente,
+        documentoUrl: documentoUrlCliente,
+        documentoNombre: documentoNombreCliente,
         autorNombre:
           accion === "ECO_MOVIL_REGISTRADO"
             ? "WhatsApp Móvil Tienda"
@@ -2048,6 +2324,64 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
       );
     }
 
+    // 5. Si el cliente envió una NOTA DE VOZ / AUDIO, escucharla y guardar su transcripción como "NOTA_INTERNA"
+    let transcripcionNotaVoz: string | null = null;
+    if (
+      audioUrlCliente &&
+      rec.conversacionId &&
+      accion !== "ECO_MOVIL_REGISTRADO" &&
+      bytesAudioDescargados &&
+      bytesAudioDescargados.byteLength <= 8 * 1024 * 1024
+    ) {
+      try {
+        const textoEnv = await transcribirAudioConEnvOpcional(
+          bytesAudioDescargados,
+          audioMimeCliente || "audio/ogg"
+        );
+        const audioBase64 = textoEnv ? null : bytesAudioDescargados.toString("base64");
+        const { data: resStt } = await esquemaComercio.rpc(
+          "com_fn_omnicanal_transcribir_y_guardar_nota_voz",
+          {
+            p_negocio: negocio,
+            p_conversacion_id: rec.conversacionId,
+            p_mensaje_audio_id: rec.mensajeId ?? null,
+            p_audio_base64: audioBase64,
+            p_mime_type: audioMimeCliente || "audio/ogg",
+            p_transcripcion_precalculada: textoEnv,
+            p_token_webhook: entrada.token,
+          }
+        );
+
+        if (resStt?.ok && resStt.transcripcion) {
+          transcripcionNotaVoz = String(resStt.transcripcion).trim();
+          const notaInternaMsg = resStt.notaInterna as MensajeOmnicanal | undefined;
+          const eventoNotaVoz: EventoBroadcastChatWeb = {
+            eventoId: String(notaInternaMsg?.id || `stt-${Date.now()}`),
+            claveHilo: String(rec.claveHilo || ""),
+            conversacionId: String(rec.conversacionId),
+            canal: "whatsapp",
+            fase: "NOTA_INTERNA",
+            contenido:
+              notaInternaMsg?.contenido ||
+              `🎙️ Transcripción de nota de voz: «${transcripcionNotaVoz}»`,
+            autorNombre: notaInternaMsg?.autorNombre || "ARIA · Transcripción de Voz",
+            remitenteNombre: String(rec.remitenteNombre || "Cliente WhatsApp"),
+            remitenteTelefono: rec.remitenteTelefono ? String(rec.remitenteTelefono) : null,
+            estadoAtencion: (rec.estadoAtencion as EstadoAtencionOmnicanal) || "BOT_ACTIVO",
+            creadoEn: notaInternaMsg?.creadoEn || new Date().toISOString(),
+          };
+          await emitirBroadcastServidorOmnicanal(
+            supabase,
+            negocio,
+            "actividad_chat_web",
+            eventoNotaVoz as unknown as Record<string, unknown>
+          );
+        }
+      } catch {
+        // Si aún no se configuró clave STT o migración 20261117000005, continuar sin bloquear webhook
+      }
+    }
+
     if (accion !== "INVOCAR_ARIA") {
       return { ok: true, status: 200, accion };
     }
@@ -2055,7 +2389,11 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
     // Construir prompt para Mía (ARIA) con el formato exacto de WhatsApp + Entrega Inmediata + Cotización GPS
     const tel = String(rec.remitenteTelefono || "");
     const nombreCorto = String(rec.remitenteNombre || "Cliente").slice(0, 48);
-    const textoCliente = String(rec.caption || contenidoCliente || "");
+    const textoCliente = transcripcionNotaVoz
+      ? `[NOTA DE VOZ ENVIADA POR EL CLIENTE — TRANSCRIPCIÓN]: ${transcripcionNotaVoz}`
+      : audioUrlCliente
+        ? `[SISTEMA: El cliente acaba de enviar una nota de voz de audio por WhatsApp pero la transcripción automática aún no pudo ejecutarse. Pídele con mucha calidez en 1 línea si te puede escribir brevemente su consulta o indícale que una asesora escuchará su audio enseguida.]`
+        : String(rec.caption || contenidoCliente || "");
     const origenTienda = (entrada.origenTiendaUrl || "https://tinkay-web.vercel.app").replace(
       /\/+$/,
       ""
@@ -2189,6 +2527,204 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
       ok: false,
       status: 500,
       error: err instanceof Error ? err.message : "Error interno en webhook YCloud",
+    };
+  }
+}
+
+/**
+ * Permite que cualquier operador desde `/panel/conversaciones` escuche/transcriba bajo demanda
+ * una nota de voz en una `NOTA_INTERNA` y, si lo solicita, haga que Mía (ARIA) responda al cliente.
+ */
+export async function transcribirYResponderNotaVozOmnicanalAction(entrada: {
+  negocio: string;
+  conversacionId: string;
+  mensajeAudioId?: string | null;
+  audioUrl: string;
+  mimeType?: string | null;
+  remitenteNombre?: string | null;
+  remitenteTelefono?: string | null;
+  claveHilo?: string | null;
+  responderConAria?: boolean;
+  origenTiendaUrl?: string | null;
+}): Promise<
+  | {
+      ok: true;
+      transcripcion: string;
+      notaInterna: MensajeOmnicanal;
+      mensajeAria?: MensajeOmnicanal | null;
+    }
+  | { ok: false; error: string; requiereClaveStt?: boolean }
+> {
+  try {
+    const neg = normalizarNegocioComercio(entrada.negocio);
+    const urlAudio = (entrada.audioUrl || "").trim();
+    if (!urlAudio || !/^https?:\/\//i.test(urlAudio)) {
+      return { ok: false, error: "Este mensaje de voz no tiene una URL de audio descargable." };
+    }
+
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaComercio = supabase.schema("comun_comercio") as any;
+
+    const respAudio = await fetch(urlAudio, {
+      headers: { Accept: "audio/*,video/ogg,application/ogg,*/*;q=0.8" },
+      signal: AbortSignal.timeout(25000),
+    });
+    if (!respAudio.ok) {
+      return {
+        ok: false,
+        error: `No se pudo descargar la nota de voz (HTTP ${respAudio.status}). Es posible que el enlace temporal haya expirado.`,
+      };
+    }
+
+    const mimeEfectivo = (
+      respAudio.headers.get("content-type") ||
+      entrada.mimeType ||
+      "audio/ogg"
+    )
+      .split(";")[0]!
+      .trim();
+    const bytes = Buffer.from(await respAudio.arrayBuffer());
+    if (bytes.byteLength === 0 || bytes.byteLength > 8 * 1024 * 1024) {
+      return { ok: false, error: "El archivo de audio está vacío o supera los 8 MB permitidos." };
+    }
+
+    const textoEnv = await transcribirAudioConEnvOpcional(bytes, mimeEfectivo);
+    const audioBase64 = textoEnv ? null : bytes.toString("base64");
+
+    const { data: resStt, error: errStt } = await esquemaComercio.rpc(
+      "com_fn_omnicanal_transcribir_y_guardar_nota_voz",
+      {
+        p_negocio: neg,
+        p_conversacion_id: entrada.conversacionId,
+        p_mensaje_audio_id:
+          entrada.mensajeAudioId && /^[0-9a-f-]{36}$/i.test(entrada.mensajeAudioId)
+            ? entrada.mensajeAudioId
+            : null,
+        p_audio_base64: audioBase64,
+        p_mime_type: mimeEfectivo,
+        p_transcripcion_precalculada: textoEnv,
+        p_token_webhook: null,
+      }
+    );
+
+    let transcripcionFinal = "";
+    let notaInternaFinal: MensajeOmnicanal | null = null;
+
+    if (!errStt && resStt?.ok) {
+      transcripcionFinal = String(resStt.transcripcion || "").trim();
+      notaInternaFinal = resStt.notaInterna as MensajeOmnicanal;
+    } else if (errStt && esFuncionRpcPendienteMigracion(errStt.message) && textoEnv) {
+      // Si la migración 20261117000005 aún no se ha corrido pero el servidor ya transcribió con env
+      const resNotaFallback = await enviarMensajeAsesorOmnicanalAction({
+        negocio: neg,
+        conversacionId: entrada.conversacionId,
+        contenido: `🎙️ Transcripción de nota de voz: «${textoEnv}»`,
+        esNotaInterna: true,
+      });
+      if (!resNotaFallback.ok) {
+        return { ok: false, error: resNotaFallback.error };
+      }
+      transcripcionFinal = textoEnv;
+      notaInternaFinal = resNotaFallback.mensaje;
+    } else {
+      const msgErr = errStt
+        ? esFuncionRpcPendienteMigracion(errStt.message)
+          ? "Ejecuta primero la migración 20261117000005_omnicanal_audio_transcripcion_adjuntos_y_catalogo.sql en el SQL Editor de Supabase y guarda tu clave IA de voz en /panel/aria."
+          : errStt.message
+        : String(resStt?.error || "No se pudo transcribir la nota de voz.");
+      return {
+        ok: false,
+        error: msgErr,
+        requiereClaveStt: Boolean(resStt?.requiereClaveStt),
+      };
+    }
+
+    if (!notaInternaFinal || !transcripcionFinal) {
+      return { ok: false, error: "No se obtuvo transcripción válida del audio." };
+    }
+
+    await emitirBroadcastServidorOmnicanal(supabase, neg, "actividad_chat_web", {
+      eventoId: notaInternaFinal.id,
+      claveHilo: entrada.claveHilo || "",
+      conversacionId: entrada.conversacionId,
+      fase: "NOTA_INTERNA",
+      contenido: notaInternaFinal.contenido,
+      autorNombre: notaInternaFinal.autorNombre || "ARIA · Transcripción de Voz",
+      creadoEn: notaInternaFinal.creadoEn,
+    });
+
+    let mensajeAria: MensajeOmnicanal | null = null;
+
+    if (entrada.responderConAria) {
+      const tel = String(entrada.remitenteTelefono || "");
+      const nombreCorto = String(entrada.remitenteNombre || "Cliente").slice(0, 48);
+      const origenTienda = (entrada.origenTiendaUrl || "https://tinkay-web.vercel.app").replace(
+        /\/+$/,
+        ""
+      );
+      const promptPanel =
+        `[USUARIO ACTUAL: chat_id=${tel || entrada.conversacionId} | canal=whatsapp | nombre_corto=${nombreCorto}]\n` +
+        `[NOTA DE VOZ ENVIADA POR EL CLIENTE — TRANSCRIPCIÓN]: ${transcripcionFinal}\n\n` +
+        `[ENLACES DIRECTOS E-COMMERCE TINKAY: Categorías ${origenTienda}/categoria/{slug}, Entrega Inmediata ${origenTienda}/categoria/entrega-inmediata, Producto ${origenTienda}/producto/{slug}]`;
+
+      const { data: resAriaPanel, error: errAriaPanel } = await esquemaComercio.rpc(
+        "com_fn_omnicanal_responder_con_aria_panel",
+        {
+          p_negocio: neg,
+          p_conversacion_id: entrada.conversacionId,
+          p_prompt: promptPanel,
+        }
+      );
+
+      if (!errAriaPanel && resAriaPanel?.ok && resAriaPanel.mensaje) {
+        mensajeAria = resAriaPanel.mensaje as MensajeOmnicanal;
+        await emitirBroadcastServidorOmnicanal(supabase, neg, "actividad_chat_web", {
+          eventoId: mensajeAria.id,
+          claveHilo: entrada.claveHilo || "",
+          conversacionId: entrada.conversacionId,
+          fase: "RESPUESTA_ARIA",
+          contenido: mensajeAria.contenido,
+          autorNombre: mensajeAria.autorNombre || "Mía · ARIA",
+          creadoEn: mensajeAria.creadoEn,
+        });
+      } else if (errAriaPanel && esFuncionRpcPendienteMigracion(errAriaPanel.message)) {
+        const { invocarAgentePorNegocio } = await import("@eco/agentes-ia");
+        const inv = await invocarAgentePorNegocio(neg, promptPanel, {
+          conversationId: `wa-${(tel || entrada.conversacionId).replace(/[^A-Za-z0-9_-]/g, "")}`,
+          tiempoMaximoMs: 45000,
+        });
+        if (inv.response?.trim()) {
+          const envioFallback = await enviarMensajeAsesorOmnicanalAction({
+            negocio: neg,
+            conversacionId: entrada.conversacionId,
+            contenido: inv.response.trim(),
+            esNotaInterna: false,
+          });
+          if (envioFallback.ok) {
+            mensajeAria = envioFallback.mensaje;
+          }
+        }
+      } else if (errAriaPanel || resAriaPanel?.ok === false) {
+        return {
+          ok: false,
+          error: String(
+            errAriaPanel?.message || resAriaPanel?.error || "ARIA no pudo enviar la respuesta."
+          ),
+        };
+      }
+    }
+
+    return {
+      ok: true,
+      transcripcion: transcripcionFinal,
+      notaInterna: notaInternaFinal,
+      mensajeAria,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error inesperado al procesar la nota de voz.",
     };
   }
 }
