@@ -32,7 +32,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-011`** | Sistema de Widgets por Rol & DataGrids 2 Capas | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-012`** | **Baja de Cuenta y Derecho al Olvido** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-013`** | Notificaciones Multicanal (Push/Email/In-App) | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`PLT-014`** | Motor de Cupones y Promociones | 🟡 En Desarrollo | **60%** | **Jesus Navarrete** |
+| **`PLT-014`** | Motor de Cupones, Promociones (Registrados vs. Generales) y Beneficio de Cobertura Gratuita por Registro | 🟡 En Desarrollo | **75%** | **Kleber Toapanta / Jesus Navarrete** |
 | **`PLT-015`** | Calificaciones, Reseñas y Reputación | ⏳ Pendiente | **0%** | **Jesus Navarrete** |
 | **`PLT-016`** | Storage Standard (Buckets Privado/Público) | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-017`** | Gestión de Sesiones y Revocación Remota | 🟡 Parcial | **40%** | Kleber Toapanta |

@@ -10,7 +10,19 @@ import { CampanaNotificaciones } from '@eco/notificaciones';
 import { useCarrito } from '../contexto-carrito';
 import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from '../datos-catalogo';
 import { expandirProductosVitrina, obtenerCategoriasVisibles } from '../filtrado-catalogo';
-import { ShoppingBag, Feather, FileText, Menu, X, User, MapPin } from 'lucide-react';
+import {
+  ShoppingBag,
+  Feather,
+  FileText,
+  Menu,
+  X,
+  User,
+  MapPin,
+  Package,
+  Gift,
+  ChevronDown,
+  ShoppingCart,
+} from 'lucide-react';
 
 export function EncabezadoEcommerce() {
   const {
@@ -22,10 +34,12 @@ export function EncabezadoEcommerce() {
     categorias,
     categoriaActiva,
     navegarACategoria,
+    configLogistica,
   } = useCarrito();
 
   const [estadoRegalo, setEstadoRegalo] = useState<EstadoRegaloPrimeraCompra | null>(null);
   const [menuMovilAbierto, setMenuMovilAbierto] = useState<boolean>(false);
+  const [menuClienteAbierto, setMenuClienteAbierto] = useState<boolean>(false);
 
   useEffect(() => {
     if (!menuMovilAbierto) return;
@@ -79,9 +93,13 @@ export function EncabezadoEcommerce() {
     <header className="cabecera-ecommerce-tinkay">
       <div className="barra-superior-anuncio">
         <div className="anuncio-flex-contenido">
-          <span>🌸 Entrega puntual hoy en Quito &amp; Valles • Rosas de exportación frescas cada mañana</span>
+          <span>
+            {estadoRegalo?.autenticado
+              ? `🌸 Beneficio Cliente Registrado Activo: Envío Gratis en ${configLogistica.zonaGratisNombre || 'Centro-Norte de Quito'} ($0.00)`
+              : `🌸 Regístrate gratis y activa Zona de Envío Gratis en ${configLogistica.zonaGratisNombre || 'Centro-Norte de Quito'} + Obsequio en 1ra compra`}
+          </span>
           <a
-            href="https://maps.app.goo.gl/D56gQohzuwha4sLf8"
+            href={configLogistica.origenMapaUrl || 'https://maps.app.goo.gl/D56gQohzuwha4sLf8'}
             target="_blank"
             rel="noopener noreferrer"
             className="enlace-tienda-maps-top"
@@ -149,16 +167,168 @@ export function EncabezadoEcommerce() {
           {estadoRegalo?.autenticado ? (
             <>
               <CampanaNotificaciones negocio="tinkay" variante="clara" />
-              <Link
-                href="/panel"
-                className="enlace-ingresar-discreto btn-responsive-accion"
-                title="Abrir mi panel de cuenta y pedidos"
-                aria-label="Mi Panel"
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-              >
-                <User size={17} />
-                <span className="btn-texto-responsive">Mi Panel</span>
-              </Link>
+              <div style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  onClick={() => setMenuClienteAbierto((v) => !v)}
+                  className="enlace-ingresar-discreto btn-responsive-accion"
+                  title="Ver mis pedidos, carrito, proformas, promociones y cuenta"
+                  aria-label="Mi Espacio"
+                  aria-expanded={menuClienteAbierto}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    border: '1px solid rgba(61, 90, 69, 0.28)',
+                    background: 'rgba(61, 90, 69, 0.08)',
+                    color: '#2D4734',
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}
+                >
+                  <User size={17} />
+                  <span className="btn-texto-responsive">Mi Espacio</span>
+                  <ChevronDown size={14} />
+                </button>
+
+                {menuClienteAbierto && (
+                  <>
+                    <div
+                      onClick={() => setMenuClienteAbierto(false)}
+                      style={{ position: 'fixed', inset: 0, zIndex: 70 }}
+                    />
+                    <div
+                      role="menu"
+                      aria-label="Opciones de cliente Tinkay"
+                      style={{
+                        position: 'absolute',
+                        right: 0,
+                        top: 'calc(100% + 8px)',
+                        zIndex: 80,
+                        width: '250px',
+                        background: '#FFFFFF',
+                        borderRadius: '16px',
+                        border: '1px solid var(--linea)',
+                        boxShadow: '0 16px 36px rgba(34, 29, 26, 0.14)',
+                        padding: '8px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '3px',
+                      }}
+                    >
+                      <Link
+                        href="/panel?vista=pedidos"
+                        onClick={() => setMenuClienteAbierto(false)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '9px',
+                          padding: '9px 11px',
+                          borderRadius: '10px',
+                          textDecoration: 'none',
+                          color: 'var(--tinta)',
+                          fontSize: '0.85rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <Package size={16} color="#3D5A45" />
+                        <span>Mis Pedidos y Facturas</span>
+                      </Link>
+                      <Link
+                        href="/panel?vista=carrito"
+                        onClick={() => setMenuClienteAbierto(false)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '9px',
+                          padding: '9px 11px',
+                          borderRadius: '10px',
+                          textDecoration: 'none',
+                          color: 'var(--tinta)',
+                          fontSize: '0.85rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '9px' }}>
+                          <ShoppingCart size={16} color="#3D5A45" />
+                          <span>Ver / Editar Carrito</span>
+                        </span>
+                        {cantidadTotal > 0 && (
+                          <span
+                            style={{
+                              padding: '1px 7px',
+                              borderRadius: '999px',
+                              background: '#EC7FA7',
+                              color: '#FFFFFF',
+                              fontSize: '0.72rem',
+                              fontWeight: 800,
+                            }}
+                          >
+                            {cantidadTotal}
+                          </span>
+                        )}
+                      </Link>
+                      <Link
+                        href="/panel?vista=proformas"
+                        onClick={() => setMenuClienteAbierto(false)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '9px',
+                          padding: '9px 11px',
+                          borderRadius: '10px',
+                          textDecoration: 'none',
+                          color: 'var(--tinta)',
+                          fontSize: '0.85rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <FileText size={16} color="#3D5A45" />
+                        <span>Mis Proformas</span>
+                      </Link>
+                      <Link
+                        href="/panel?vista=promociones"
+                        onClick={() => setMenuClienteAbierto(false)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '9px',
+                          padding: '9px 11px',
+                          borderRadius: '10px',
+                          textDecoration: 'none',
+                          background: 'rgba(236, 127, 167, 0.12)',
+                          color: '#9D174D',
+                          fontSize: '0.85rem',
+                          fontWeight: 700,
+                        }}
+                      >
+                        <Gift size={16} color="#BE185D" />
+                        <span>Promociones Exclusivas</span>
+                      </Link>
+                      <div style={{ height: '1px', background: 'var(--linea)', margin: '4px 0' }} />
+                      <Link
+                        href="/panel/cuenta"
+                        onClick={() => setMenuClienteAbierto(false)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '9px',
+                          padding: '9px 11px',
+                          borderRadius: '10px',
+                          textDecoration: 'none',
+                          color: 'var(--tinta)',
+                          fontSize: '0.84rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        <User size={16} color="#6B7280" />
+                        <span>Mi Cuenta y Datos SRI</span>
+                      </Link>
+                    </div>
+                  </>
+                )}
+              </div>
             </>
           ) : (
             <Link
@@ -381,29 +551,137 @@ export function EncabezadoEcommerce() {
                 <span>Cotizar Evento</span>
               </button>
 
-              <Link
-                href={estadoRegalo?.autenticado ? '/panel' : '/ingresar'}
-                onClick={() => setMenuMovilAbierto(false)}
-                title={estadoRegalo?.autenticado ? 'Ir a mi panel de cuenta' : 'Iniciar sesión o registrarme'}
-                aria-label={estadoRegalo?.autenticado ? 'Mi Panel' : 'Ingresar'}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  padding: '11px 14px',
-                  borderRadius: '12px',
-                  border: '1px solid var(--linea)',
-                  background: '#FFFFFF',
-                  color: 'var(--tinta)',
-                  fontSize: '0.86rem',
-                  fontWeight: 700,
-                  textDecoration: 'none',
-                }}
-              >
-                <User size={16} />
-                <span>{estadoRegalo?.autenticado ? 'Mi Panel y Pedidos' : 'Ingresar / Registrarme'}</span>
-              </Link>
+              {estadoRegalo?.autenticado ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <span
+                    style={{
+                      fontSize: '0.7rem',
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                      color: 'var(--gris)',
+                    }}
+                  >
+                    Mi Espacio Cliente
+                  </span>
+                  <Link
+                    href="/panel?vista=pedidos"
+                    onClick={() => setMenuMovilAbierto(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      textDecoration: 'none',
+                      fontSize: '0.86rem',
+                      fontWeight: 700,
+                      background: '#F5F9F6',
+                      color: '#2D4734',
+                    }}
+                  >
+                    <Package size={16} />
+                    <span>Mis Pedidos y Entregas</span>
+                  </Link>
+                  <Link
+                    href="/panel?vista=carrito"
+                    onClick={() => setMenuMovilAbierto(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      textDecoration: 'none',
+                      fontSize: '0.86rem',
+                      fontWeight: 600,
+                      color: 'var(--tinta)',
+                    }}
+                  >
+                    <ShoppingCart size={16} />
+                    <span>Ver / Editar Carrito ({cantidadTotal})</span>
+                  </Link>
+                  <Link
+                    href="/panel?vista=proformas"
+                    onClick={() => setMenuMovilAbierto(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      textDecoration: 'none',
+                      fontSize: '0.86rem',
+                      fontWeight: 600,
+                      color: 'var(--tinta)',
+                    }}
+                  >
+                    <FileText size={16} />
+                    <span>Mis Proformas</span>
+                  </Link>
+                  <Link
+                    href="/panel?vista=promociones"
+                    onClick={() => setMenuMovilAbierto(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      textDecoration: 'none',
+                      fontSize: '0.86rem',
+                      fontWeight: 700,
+                      background: 'rgba(236, 127, 167, 0.14)',
+                      color: '#9D174D',
+                    }}
+                  >
+                    <Gift size={16} />
+                    <span>Promociones Exclusivas</span>
+                  </Link>
+                  <Link
+                    href="/panel/cuenta"
+                    onClick={() => setMenuMovilAbierto(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      textDecoration: 'none',
+                      fontSize: '0.86rem',
+                      fontWeight: 600,
+                      color: 'var(--tinta)',
+                    }}
+                  >
+                    <User size={16} />
+                    <span>Mi Cuenta y Facturas</span>
+                  </Link>
+                </div>
+              ) : (
+                <Link
+                  href="/ingresar"
+                  onClick={() => setMenuMovilAbierto(false)}
+                  title="Iniciar sesión o registrarme para activar zona de envío gratis"
+                  aria-label="Ingresar"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    padding: '11px 14px',
+                    borderRadius: '12px',
+                    border: '1px solid var(--linea)',
+                    background: '#FFFFFF',
+                    color: 'var(--tinta)',
+                    fontSize: '0.86rem',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                  }}
+                >
+                  <User size={16} />
+                  <span>Ingresar / Registrarme</span>
+                </Link>
+              )}
 
               <a
                 href="https://maps.app.goo.gl/D56gQohzuwha4sLf8"

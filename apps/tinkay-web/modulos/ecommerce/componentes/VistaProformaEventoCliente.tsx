@@ -36,12 +36,14 @@ import {
   Loader2,
   MapPin,
   MessageCircle,
+  Pencil,
   Printer,
   ShieldCheck,
   Store,
   Trash2,
   Upload,
 } from 'lucide-react';
+import { ModalEditarProformaCliente } from './ModalEditarProformaCliente';
 
 interface PropsVistaProformaEventoCliente {
   proformaInicial: ProformaEventoPublica;
@@ -122,6 +124,7 @@ export function VistaProformaEventoCliente({
     autorizacion?: string | null;
   } | null>(null);
   const [proformasEliminadasTodas, setProformasEliminadasTodas] = useState(false);
+  const [editandoProforma, setEditandoProforma] = useState(false);
 
   const seleccionarVariacion = (v: ProformaEventoPublica) => {
     setIdSeleccionado(v.id);
@@ -683,9 +686,32 @@ export function VistaProformaEventoCliente({
               </div>
             </div>
 
-            {/* Acciones de Eliminación (habilitadas únicamente antes de confirmar pedido/pago) */}
+            {/* Acciones de Edición y Eliminación (habilitadas únicamente antes de confirmar pedido/pago) */}
             {!bloqueadaPorPagoGrupo && (
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  disabled={procesandoAccion}
+                  onClick={() => setEditandoProforma(true)}
+                  title="Editar cantidades, agregar arreglos o actualizar fecha y locación del evento"
+                  aria-label="Editar Proforma"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #2D4734',
+                    background: '#2D4734',
+                    color: '#FFFFFF',
+                    fontSize: '0.76rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Pencil size={13} />
+                  <span>Editar Proforma</span>
+                </button>
                 {variaciones.length > 1 && (
                   <>
                     <button
@@ -1803,6 +1829,40 @@ export function VistaProformaEventoCliente({
           </div>
         )}
       </div>
+
+      {editandoProforma && !bloqueadaPorPagoGrupo && (
+        <ModalEditarProformaCliente
+          proforma={{
+            id: proformaActiva.id,
+            codigo: proformaActiva.codigoProforma,
+            tokenAprobacion: proformaActiva.tokenAprobacion,
+            evento: proformaActiva.evento,
+            ubicacion: {
+              retiroEnLocal: proformaActiva.ubicacion.retiroEnLocal,
+              direccion: proformaActiva.ubicacion.direccion,
+              referencia: proformaActiva.ubicacion.referencia,
+              enlaceMapa: proformaActiva.ubicacion.enlaceMapa,
+              zonaDetectada: proformaActiva.ubicacion.zonaDetectada,
+              distanciaVialKm: proformaActiva.ubicacion.distanciaVialKm,
+              costoEnvio: proformaActiva.flete,
+            },
+            items: proformaActiva.items.map((it) => ({
+              descripcion: it.descripcion,
+              varianteNombre: it.varianteNombre,
+              cantidad: it.cantidad,
+              precioUnitario: it.precioUnitario,
+              tarifaIva: String(it.impuesto || '').includes('15') ? 15 : 0,
+              imagen: it.imagen,
+            })),
+          }}
+          clienteRegistrado={usuarioRegistrado}
+          onCerrar={() => setEditandoProforma(false)}
+          onGuardadoExitoso={() => {
+            setEditandoProforma(false);
+            window.location.reload();
+          }}
+        />
+      )}
     </div>
   );
 }

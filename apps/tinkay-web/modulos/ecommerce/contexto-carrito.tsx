@@ -23,13 +23,16 @@ import {
   calcularPrecioPorVolumen,
   construirEnlaceCategoriaTienda,
   construirEnlaceProductoTienda,
+  cotizarEnvioDesdeEntradaAction,
   crearConfiguracionLogisticaPorDefecto,
   crearConfiguracionTiendaCheckoutPorDefecto,
   interpretarEnlaceTienda,
   obtenerConfiguracionLogisticaAction,
   obtenerConfiguracionTiendaCheckoutAction,
+  obtenerEstadoRegaloPrimeraCompraAction,
   type ConfiguracionLogisticaNegocio,
   type ConfiguracionTiendaCheckout,
+  type EstadoRegaloPrimeraCompra,
 } from '@eco/comercio';
 
 interface ContextoCarritoValor {
@@ -47,6 +50,8 @@ interface ContextoCarritoValor {
   terminoBusqueda: string;
   configLogistica: ConfiguracionLogisticaNegocio;
   configTiendaCheckout: ConfiguracionTiendaCheckout;
+  usuarioRegistrado: boolean;
+  estadoRegalo: EstadoRegaloPrimeraCompra | null;
 
   // Acciones
   setDrawerAbierto: (abierto: boolean) => void;
@@ -152,6 +157,7 @@ export interface ProveedorCarritoProps {
   categoriaInicialUrl?: string;
   productoInicialUrl?: string;
   varianteInicialUrl?: string;
+  usuarioRegistradoInicial?: boolean;
 }
 
 export function ProveedorCarrito({
@@ -159,6 +165,7 @@ export function ProveedorCarrito({
   categoriaInicialUrl,
   productoInicialUrl,
   varianteInicialUrl,
+  usuarioRegistradoInicial,
 }: ProveedorCarritoProps) {
   const [items, setItems] = useState<ItemCarrito[]>([]);
   const [modalidadEntrega, setModalidadEntrega] = useState<ModalidadEntrega>('unificada');
@@ -169,6 +176,13 @@ export function ProveedorCarrito({
   const [checkoutAbierto, setCheckoutAbierto] = useState(false);
   const [ordenConfirmadaId, setOrdenConfirmadaId] = useState<string | null>(null);
   const [cargado, setCargado] = useState(false);
+  const [estadoRegalo, setEstadoRegalo] = useState<EstadoRegaloPrimeraCompra | null>(null);
+  const [usuarioRegistrado, setUsuarioRegistrado] = useState<boolean>(
+    Boolean(usuarioRegistradoInicial)
+  );
+  const [estadoCuentaVerificado, setEstadoCuentaVerificado] = useState<boolean>(
+    typeof usuarioRegistradoInicial === 'boolean'
+  );
 
   // Estado independiente de Proforma de Evento
   const [itemsProforma, setItemsProforma] = useState<ItemCarrito[]>([]);
@@ -426,6 +440,94 @@ export function ProveedorCarrito({
       })
       .catch(() => {});
   }, [categoriaInicialUrl, productoInicialUrl, varianteInicialUrl]);
+
+  // Verificar estado de cuenta registrada y obsequio de bienvenida
+  useEffect(() => {
+    let cancelado = false;
+    const sincronizarEstadoCuenta = () => {
+      obtenerEstadoRegaloPrimeraCompraAction('tinkay')
+        .then((res) => {
+          if (cancelado) return;
+          setEstadoRegalo(res);
+          setUsuarioRegistrado(Boolean(res.autenticado));
+          setEstadoCuentaVerificado(true);
+        })
+        .catch(() => {
+          if (!cancelado) setEstadoCuentaVerificado(true);
+        });
+    };
+    sincronizarEstadoCuenta();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('eco:refrescar-notificaciones', sincronizarEstadoCuenta);
+    }
+    return () => {
+      cancelado = true;
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('eco:refrescar-notificaciones', sincronizarEstadoCuenta);
+      }
+    };
+  }, []);
+
+  // Recalcular automáticamente la cotización de envío si cambia el estado de registro (ej. tras registrarse)
+  useEffect(() => {
+    if (!cargado || !estadoCuentaVerificado) return;
+    if (entregaUnificada.retiroEnLocal) return;
+    if (typeof entregaUnificada.lat !== 'number' || typeof entregaUnificada.lng !== 'number') {
+      return;
+    }
+
+    const itemsPrincipales = items.filter((it) => !it.producto.esComplemento && !it.producto.esExtra);
+    const listaBase = itemsPrincipales.length > 0 ? itemsPrincipales : items;
+    const algunoNoIncluye = listaBase.some(
+      (it) =>
+        it.producto.deliveryIncluido === false &&
+        it.producto.modalidadTransporte !== 'SOLO_RETIRO'
+    );
+    const recargoEspecialTotal = listaBase.reduce(
+      (acc, it) => acc + (it.producto.recargoLogisticoUsd || 0) * it.cantidad,
+      0
+    );
+
+    let cancelado = false;
+    cotizarEnvioDesdeEntradaAction({
+      negocio: 'tinkay',
+      lat: entregaUnificada.lat,
+      lng: entregaUnificada.lng,
+      deliveryIncluidoProducto: !algunoNoIncluye,
+      recargoLogisticoProducto: recargoEspecialTotal,
+      retiroEnLocal: false,
+      clienteRegistrado: usuarioRegistrado,
+    })
+      .then((res) => {
+        if (cancelado || !res.ok) return;
+        const cot = res.cotizacion;
+        setEntregaUnificada((prev) => {
+          if (
+            prev.costoEnvioCalculado === cot.costoTotalEnvio &&
+            prev.reglaLogisticaAplicada === cot.reglaAplicada &&
+            prev.etiquetaCotizacion === cot.etiquetaResumen
+          ) {
+            return prev;
+          }
+          return {
+            ...prev,
+            dentroCobertura: cot.dentroCobertura,
+            zonaDetectadaNombre: cot.zonaDetectada?.nombre,
+            reglaLogisticaAplicada: cot.reglaAplicada,
+            distanciaVialKm: cot.distanciaVialKm,
+            costoEnvioCalculado: cot.costoTotalEnvio,
+            etiquetaCotizacion: cot.etiquetaResumen,
+            formulaCalculoInterno: cot.formulaDetalle,
+          };
+        });
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelado = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [usuarioRegistrado, cargado, estadoCuentaVerificado]);
 
   // Cargar estado inicial desde LocalStorage para resiliencia
   useEffect(() => {
@@ -813,6 +915,11 @@ export function ProveedorCarrito({
           flete = 0;
         } else if (typeof entregaUnificada.costoEnvioCalculado === 'number') {
           flete = entregaUnificada.costoEnvioCalculado;
+        } else if (!usuarioRegistrado && configLogistica.envioGratisSoloRegistrados !== false) {
+          const baseInvitado = configLogistica.tarifaBaseNoRegistradoUsd ?? 1.0;
+          flete =
+            Math.max(baseInvitado, algunoNoIncluye ? configLogistica.tarifaBaseNoIncluido : 0) +
+            recargoEspecialTotal;
         } else {
           flete =
             (algunoNoIncluye ? configLogistica.tarifaBaseNoIncluido : 0) + recargoEspecialTotal;
@@ -850,7 +957,7 @@ export function ProveedorCarrito({
       totalRecargoHorarioExacto: Math.round(recargoHora * 100) / 100,
       totalPagar: Math.round(total * 100) / 100,
     };
-  }, [items, modalidadEntrega, entregaUnificada, configLogistica]);
+  }, [items, modalidadEntrega, entregaUnificada, configLogistica, usuarioRegistrado]);
 
   return (
     <ContextoCarrito.Provider
@@ -869,6 +976,8 @@ export function ProveedorCarrito({
         terminoBusqueda,
         configLogistica,
         configTiendaCheckout,
+        usuarioRegistrado,
+        estadoRegalo,
         setDrawerAbierto,
         setProductoSeleccionadoModal,
         setCheckoutAbierto,

@@ -12,7 +12,9 @@ import {
   type ItemNavegacionPanel,
 } from "@eco/configuracion-negocio";
 import { CampanaNotificaciones } from "@eco/notificaciones";
+import { obtenerMisProformasEventoAction } from "@eco/comercio";
 import { crearClienteServidor } from "@eco/supabase/servidor";
+import { MarcoEcommerceClienteTinkay } from "../../modulos/ecommerce/componentes/MarcoEcommerceClienteTinkay";
 import { obtenerContextoAccesoTinkay } from "./acceso-tinkay";
 
 const NEGOCIO = "tinkay";
@@ -167,37 +169,6 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel> = [
   },
 ];
 
-const CATALOGO_NAV_CLIENTE_TINKAY: Array<ItemNavegacionPanel> = [
-  {
-    clave: "resumen",
-    nombre: "Mis Compras y Proformas",
-    ruta: "/panel",
-    icono: "pedidos",
-    grupo: "operacion",
-  },
-  {
-    clave: "tienda_floral",
-    nombre: "Catálogo de la Tienda",
-    ruta: "/#catalogo",
-    icono: "catalogo",
-    grupo: "operacion",
-  },
-  {
-    clave: "cotizar_evento",
-    nombre: "Cotizar un Evento",
-    ruta: "/#eventos",
-    icono: "resumen",
-    grupo: "operacion",
-  },
-  {
-    clave: "cuenta",
-    nombre: "Mi Cuenta",
-    ruta: "/panel/cuenta",
-    icono: "cuenta",
-    grupo: "cuenta",
-  },
-];
-
 const COLOR_BADGE_ROL: Record<string, { bg: string; color: string }> = {
   SUPERADMIN: { bg: "#C27D5F", color: "#FFFFFF" },
   ADMINISTRADOR: { bg: "#3D5A45", color: "#FFFFFF" },
@@ -238,14 +209,61 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
     await asegurarMembresiaCliente(supabase, perfil.usu_id, NEGOCIO);
   }
 
-  const navItemsVisibles: ItemNavegacionPanel[] = esCliente
-    ? CATALOGO_NAV_CLIENTE_TINKAY
-    : CATALOGO_NAV_TINKAY.filter(
-        (m) =>
-          clavesAutorizadas.has(m.clave) ||
-          (esAdminTienda &&
-            (m.clave === "facturacion_electronica" || m.clave === "configuracion_facturacion_sri"))
-      );
+  // Si el usuario tiene rol CLIENTE, renderizar la experiencia 100% E-Commerce (sin menú lateral de gestión)
+  if (esCliente) {
+    const resMis = await obtenerMisProformasEventoAction(NEGOCIO).catch(() => ({
+      ok: true as const,
+      proformas: [],
+    }));
+    const lista = resMis.ok ? resMis.proformas : [];
+    const estadosCompra = new Set([
+      "PAGADO",
+      "ORDEN_CONFIRMADA",
+      "EN_PREPARACION",
+      "EN_RUTA",
+      "DESPACHADO",
+      "ENTREGADO",
+      "FACTURADA",
+      "RESERVADA_70",
+      "APROBADA",
+    ]);
+    const conteoPedidos = lista.filter(
+      (p) =>
+        p.tipoOrigen === "ORDEN_DIRECTA" ||
+        estadosCompra.has((p.estado || "").toUpperCase())
+    ).length;
+    const conteoProformas = lista.filter((p) => p.tipoOrigen === "PROFORMA_EVENTO").length;
+    const nombreComp =
+      [perfil.usu_nombres, perfil.usu_apellidos].filter(Boolean).join(" ").trim() ||
+      perfil.usu_correo ||
+      "Cliente";
+    const iniciales = (
+      [perfil.usu_nombres?.[0], perfil.usu_apellidos?.[0]].filter(Boolean).join("") ||
+      nombreComp[0] ||
+      "C"
+    ).toUpperCase();
+
+    return (
+      <MarcoEcommerceClienteTinkay
+        usuarioId={perfil.usu_id}
+        nombreCompleto={nombreComp}
+        correo={perfil.usu_correo || ""}
+        iniciales={iniciales}
+        conteoPedidosInicial={conteoPedidos}
+        conteoProformasInicial={conteoProformas}
+        cerrarSesionAction={cerrarSesionYRedirigir}
+      >
+        {children}
+      </MarcoEcommerceClienteTinkay>
+    );
+  }
+
+  const navItemsVisibles: ItemNavegacionPanel[] = CATALOGO_NAV_TINKAY.filter(
+    (m) =>
+      clavesAutorizadas.has(m.clave) ||
+      (esAdminTienda &&
+        (m.clave === "facturacion_electronica" || m.clave === "configuracion_facturacion_sri"))
+  );
 
   const estiloBadge = COLOR_BADGE_ROL[rolPrincipal] ?? COLOR_BADGE_ROL.CLIENTE!;
 

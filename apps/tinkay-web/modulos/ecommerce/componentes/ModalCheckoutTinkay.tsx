@@ -1143,6 +1143,45 @@ export function ModalCheckoutTinkay() {
               </div>
             </div>
 
+            {/* Beneficio 2: Zona de Cobertura con Entrega Gratuita */}
+            <div
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '12px 14px',
+                borderRadius: '14px',
+                background: '#F0FDF4',
+                border: '1px solid #BBF7D0',
+                textAlign: 'left',
+              }}
+            >
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
+                  background: '#DCFCE7',
+                  color: '#15803D',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <Truck size={20} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <strong style={{ display: 'block', fontSize: '0.88rem', color: '#14532D' }}>
+                  + Zona de Cobertura con Entrega Gratuita ($0.00)
+                </strong>
+                <span style={{ fontSize: '0.76rem', color: '#166534', lineHeight: 1.35 }}>
+                  Los clientes registrados cuentan con <strong>Envío Gratis en {configLogistica.zonaGratisNombre || 'Centro-Norte de Quito'}</strong>. Sin registro se cobra tarifa mínima de ${(configLogistica.tarifaBaseNoRegistradoUsd ?? 1).toFixed(2)} + ${(configLogistica.tarifaPorKmNoRegistradoUsd ?? 0.5).toFixed(2)}/km.
+                </span>
+              </div>
+            </div>
+
             <div
               style={{
                 width: '100%',
@@ -1432,6 +1471,7 @@ export function ModalCheckoutTinkay() {
                             <SelectorUbicacionEntrega
                               negocio="tinkay"
                               configuracionInicial={configLogistica}
+                              clienteRegistrado={usuarioRegistradoTinkay}
                               deliveryIncluidoProducto={!algunoNoIncluyeDelivery}
                               recargoLogisticoProducto={recargoEspecialTotal}
                               permitirModoRetiro={false}

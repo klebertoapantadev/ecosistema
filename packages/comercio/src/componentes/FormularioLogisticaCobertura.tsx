@@ -682,6 +682,84 @@ export function FormularioLogisticaCobertura({
           </div>
         </label>
 
+        {/* Beneficio Exclusivo para Clientes Registrados vs Visitantes sin Cuenta */}
+        <div
+          style={{
+            background: "#FFFBEB",
+            border: "1px solid #FDE68A",
+            borderRadius: "9px",
+            padding: "12px 14px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+          }}
+        >
+          <label
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "10px",
+              cursor: "pointer",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={form.envioGratisSoloRegistrados !== false}
+              onChange={(e) =>
+                setForm({ ...form, envioGratisSoloRegistrados: e.target.checked })
+              }
+              style={{ marginTop: "3px", width: "16px", height: "16px", accentColor: "#16A34A" }}
+            />
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+              <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#78350F" }}>
+                Zona de cobertura gratuita exclusiva para Clientes Registrados
+              </span>
+              <span style={{ fontSize: "0.74rem", color: "#92400E", lineHeight: 1.4 }}>
+                Cuando está activo, los compradores invitados sin cuenta no cuentan con cobertura
+                gratuita y pagan la tarifa mínima base + costo por kilómetro.
+              </span>
+            </div>
+          </label>
+
+          {form.envioGratisSoloRegistrados !== false && (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                gap: "10px",
+                paddingTop: "4px",
+              }}
+            >
+              <div>
+                <label style={estiloLabel}>Tarifa Mínima No Registrado (USD)</label>
+                <input
+                  type="number"
+                  step="0.25"
+                  min="0"
+                  value={form.tarifaBaseNoRegistradoUsd ?? 1.0}
+                  onChange={(e) =>
+                    setForm({ ...form, tarifaBaseNoRegistradoUsd: Number(e.target.value) })
+                  }
+                  style={estiloInput}
+                />
+              </div>
+              <div>
+                <label style={estiloLabel}>Costo por Km No Registrado (USD)</label>
+                <input
+                  type="number"
+                  step="0.05"
+                  min="0"
+                  value={form.tarifaPorKmNoRegistradoUsd ?? 0.5}
+                  onChange={(e) =>
+                    setForm({ ...form, tarifaPorKmNoRegistradoUsd: Number(e.target.value) })
+                  }
+                  style={estiloInput}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
         <div
           style={{
             background: "#F0FDF4",

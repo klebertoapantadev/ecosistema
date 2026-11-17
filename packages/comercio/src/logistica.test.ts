@@ -252,6 +252,52 @@ describe("Motor de logística y cobertura Tinkay", () => {
     expect(resConPromo4.zonaDetectada?.codigo).toBe("ruta_viva_promo");
     expect(resConPromo4.zonasCoincidentes?.length).toBe(3);
   });
+
+  it("para clientes NO registrados no aplica zona gratuita y cobra tarifa mínima $1.00 + $0.50 por km (calculando ahorro por registrarse)", () => {
+    const laCarolina = { lat: -0.184, lng: -78.4846 };
+
+    // 1. Mismo punto en Centro-Norte (2.0 km): Registrado = $0.00 vs No Registrado = $1.00 + 2.0 * $0.50 = $2.00
+    const cotRegistrado = cotizarEnvioDomicilio({
+      config,
+      destino: laCarolina,
+      distanciaVialKm: 2.0,
+      clienteRegistrado: true,
+    });
+    expect(cotRegistrado.costoTotalEnvio).toBe(0);
+    expect(cotRegistrado.reglaAplicada).toBe("ZONA_GRATIS");
+
+    const cotNoRegistrado = cotizarEnvioDomicilio({
+      config,
+      destino: laCarolina,
+      distanciaVialKm: 2.0,
+      clienteRegistrado: false,
+    });
+    expect(cotNoRegistrado.reglaAplicada).toBe("TARIFA_NO_REGISTRADO_KM");
+    expect(cotNoRegistrado.clienteRegistrado).toBe(false);
+    expect(cotNoRegistrado.costoTotalEnvio).toBe(2.0);
+    expect(cotNoRegistrado.costoSiFueraRegistradoUsd).toBe(0);
+    expect(cotNoRegistrado.ahorroPorRegistrarseUsd).toBe(2.0);
+    expect(cotNoRegistrado.etiquetaResumen).not.toContain("Gratis");
+
+    // 2. Distancia muy corta (0.2 km): $1.00 + $0.10 = $1.10 -> respeta tarifa mínima $1.00
+    const cotMinima = cotizarEnvioDomicilio({
+      config,
+      destino: laCarolina,
+      distanciaVialKm: 0.2,
+      clienteRegistrado: false,
+    });
+    expect(cotMinima.costoTotalEnvio).toBe(1.0);
+
+    // 3. Retiro en tienda sigue siendo $0.00 incluso para visitantes no registrados
+    const cotRetiroInvitado = cotizarEnvioDomicilio({
+      config,
+      destino: laCarolina,
+      retiroEnLocal: true,
+      clienteRegistrado: false,
+    });
+    expect(cotRetiroInvitado.costoTotalEnvio).toBe(0);
+    expect(cotRetiroInvitado.reglaAplicada).toBe("RETIRO_LOCAL");
+  });
 });
 
 function cotizarEnvicilioHelper(

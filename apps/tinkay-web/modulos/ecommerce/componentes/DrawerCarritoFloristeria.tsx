@@ -46,6 +46,7 @@ export function DrawerCarritoFloristeria() {
     setCheckoutAbierto,
     agregarItem,
     productos,
+    usuarioRegistrado,
   } = useCarrito();
 
   // Estados locales para edición de dedicatoria por ítem
@@ -442,6 +443,7 @@ export function DrawerCarritoFloristeria() {
                               <SelectorUbicacionEntrega
                                 negocio="tinkay"
                                 configuracionInicial={configLogistica}
+                                clienteRegistrado={usuarioRegistrado}
                                 deliveryIncluidoProducto={item.producto.deliveryIncluido !== false}
                                 recargoLogisticoProducto={
                                   (item.producto.recargoLogisticoUsd || 0) * item.cantidad
@@ -630,6 +632,7 @@ export function DrawerCarritoFloristeria() {
                   <SelectorUbicacionEntrega
                     negocio="tinkay"
                     configuracionInicial={configLogistica}
+                    clienteRegistrado={usuarioRegistrado}
                     deliveryIncluidoProducto={!algunoNoIncluye}
                     recargoLogisticoProducto={recargoEspecialTotal}
                     permitirModoRetiro={configLogistica.permitirRetiroLocal}

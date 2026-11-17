@@ -934,6 +934,7 @@ export function DrawerProformaEvento() {
                       <SelectorUbicacionEntrega
                         negocio="tinkay"
                         configuracionInicial={configLogistica}
+                        clienteRegistrado={Boolean(usuarioAutenticado)}
                         permitirModoRetiro={true}
                         retiroEnLocal={Boolean(ubicacionEventoProforma.retiroEnLocal)}
                         enlaceMapaInicial={ubicacionEventoProforma.enlaceMapa}

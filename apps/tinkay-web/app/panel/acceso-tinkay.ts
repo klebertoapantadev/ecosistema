@@ -130,7 +130,7 @@ const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
   // Delivery Interno y Subcontratado: confirmación de entregas + GPS en ruta + chat del equipo
   DELIVERY: ["confirmacion_entregas", "chat_equipo", "cuenta"],
   DELIVERY_EXTERNO: ["confirmacion_entregas", "chat_equipo", "cuenta"],
-  CLIENTE: ["resumen", "mis_compras", "mis_proformas", "cuenta"],
+  CLIENTE: ["resumen", "mis_compras", "mi_carrito", "mis_proformas", "promociones_cliente", "cuenta"],
 };
 
 export async function obtenerContextoAccesoTinkay(): Promise<ContextoAccesoTinkay> {

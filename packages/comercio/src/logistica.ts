@@ -45,6 +45,12 @@ export interface ConfiguracionLogisticaNegocio {
   permitirRetiroLocal: boolean;
   /** Si es true, la etiqueta visible al cliente incluye la distancia vial en km (nunca la fórmula interna) */
   mostrarKilometrosCliente: boolean;
+  /** Si es true, la zona de cobertura gratuita aplica exclusivamente a clientes registrados; visitantes sin cuenta pagan tarifa mínima + costo por km */
+  envioGratisSoloRegistrados?: boolean;
+  /** Tarifa mínima base en USD para compradores no registrados (default: $1.00) */
+  tarifaBaseNoRegistradoUsd?: number;
+  /** Costo por km en USD para compradores no registrados (default: $0.50) */
+  tarifaPorKmNoRegistradoUsd?: number;
   zonas: ZonaCoberturaLogistica[];
   actualizadoEn?: string | null;
 }
@@ -81,6 +87,8 @@ export interface OpcionesCotizacionEnvio {
   recargoLogisticoProducto?: number;
   /** Si el cliente eligió retirar directamente en el taller físico */
   retiroEnLocal?: boolean;
+  /** Indica si el comprador cuenta con registro/membresía activa en el negocio (default: true). Si es false y envioGratisSoloRegistrados está activo, se cobra tarifaBaseNoRegistradoUsd + tarifaPorKmNoRegistradoUsd * km */
+  clienteRegistrado?: boolean;
 }
 
 export interface ResultadoCotizacionEnvio {
@@ -92,7 +100,13 @@ export interface ResultadoCotizacionEnvio {
     | "TARIFA_BASE_PRODUCTO"
     | "ZONA_TARIFA_FIJA"
     | "CALCULO_POR_KM"
+    | "TARIFA_NO_REGISTRADO_KM"
     | "FUERA_DE_COBERTURA";
+  clienteRegistrado?: boolean;
+  /** Costo que pagaría un cliente registrado en este mismo destino (para mostrar el beneficio de registrarse) */
+  costoSiFueraRegistradoUsd?: number;
+  /** Ahorro directo en envío si el visitante crea su cuenta gratuita */
+  ahorroPorRegistrarseUsd?: number;
   origen: CoordenadaGeo;
   destino: CoordenadaGeo;
   zonaDetectada: {
@@ -314,6 +328,9 @@ export function crearConfiguracionLogisticaPorDefecto(
     factorVialRespaldo: 1.32,
     permitirRetiroLocal: true,
     mostrarKilometrosCliente: true,
+    envioGratisSoloRegistrados: true,
+    tarifaBaseNoRegistradoUsd: 1.0,
+    tarifaPorKmNoRegistradoUsd: 0.5,
     zonas: ZONAS_PICHINCHA_POR_DEFECTO.map((z) => ({
       ...z,
       sectoresReferencia: [...z.sectoresReferencia],
@@ -967,11 +984,15 @@ export async function geocodificarInversoCoordenadas(
  * Regla híbrida aprobada:
  *  1. Retiro en local -> $0.00.
  *  2. Fuera de radioMaximoKm -> bloquea cobro automático y solicita coordinación con asesora.
- *  3. Zona con modo GRATIS (ej. Centro-Norte de Quito) -> $0.00 si el producto incluye envío, o tarifaBaseNoIncluido si no lo incluye.
- *  4. Zona con modo TARIFA_FIJA (ej. Cumbayá, Tumbaco, Los Chillos) -> tarifaFija de la zona (+ subsidioBaseUsd si el producto no incluía envío base).
- *  5. Zona POR_KM o cualquier sector en Pichincha fuera de polígonos fijos ->
- *     Máx(recargoMinimoExtra, (distanciaVialKmDesdeTaller × tarifaPorKm) − subsidioBaseUsd),
- *     aplicando redondeo comercial (<25 ctv baja a entero, 25..50 ctv aproxima a .50, >50 ctv sube al siguiente entero).
+ *  3. Si el comprador NO está registrado (`clienteRegistrado === false` y `config.envioGratisSoloRegistrados !== false`):
+ *     No existe zona de cobertura gratuita. Se cobra tarifa mínima (`tarifaBaseNoRegistradoUsd`, default $1.00)
+ *     + (`distanciaVialKm × tarifaPorKmNoRegistradoUsd`, default $0.50/km), con redondeo comercial.
+ *  4. Para clientes registrados (`clienteRegistrado !== false`):
+ *     - Zona con modo GRATIS (ej. Centro-Norte de Quito) -> $0.00 si el producto incluye envío, o tarifaBaseNoIncluido si no lo incluye.
+ *     - Zona con modo TARIFA_FIJA (ej. Cumbayá, Tumbaco, Los Chillos) -> tarifaFija de la zona (+ subsidioBaseUsd si el producto no incluía envío base).
+ *     - Zona POR_KM o cualquier sector en Pichincha fuera de polígonos fijos ->
+ *       Máx(recargoMinimoExtra, (distanciaVialKmDesdeTaller × tarifaPorKm) − subsidioBaseUsd),
+ *       aplicando redondeo comercial (<25 ctv baja a entero, 25..50 ctv aproxima a .50, >50 ctv sube al siguiente entero).
  */
 export function cotizarEnvioDomicilio(
   opciones: OpcionesCotizacionEnvio
@@ -986,6 +1007,7 @@ export function cotizarEnvioDomicilio(
     deliveryIncluidoProducto = true,
     recargoLogisticoProducto = 0,
     retiroEnLocal = false,
+    clienteRegistrado = true,
   } = opciones;
 
   const origen: CoordenadaGeo = {
@@ -1174,10 +1196,11 @@ export function cotizarEnvioDomicilio(
             .join(" vs ")} → aplicada tarifa más baja]`
         : "";
 
-    return {
+    const resultadoRegistradoEnZona: ResultadoCotizacionEnvio = {
       ok: true,
       dentroCobertura: true,
       reglaAplicada: ganadora.reglaAplicada,
+      clienteRegistrado: true,
       origen,
       destino,
       zonaDetectada: {
@@ -1205,13 +1228,26 @@ export function cotizarEnvioDomicilio(
       urlGoogleMapsDestino,
       detalleDireccion,
     };
+
+    if (!clienteRegistrado && config.envioGratisSoloRegistrados !== false) {
+      return aplicarTarifaVisitanteNoRegistrado({
+        config,
+        vialKm,
+        sufijoKm,
+        recargoProd,
+        baseRegistrado: resultadoRegistradoEnZona,
+      });
+    }
+
+    return resultadoRegistradoEnZona;
   }
 
   // Fuera de polígonos zonificados (pero dentro del radio máximo en Pichincha): cálculo por km
-  return {
+  const resultadoRegistradoFueraPoligonos: ResultadoCotizacionEnvio = {
     ok: true,
     dentroCobertura: true,
     reglaAplicada: "CALCULO_POR_KM",
+    clienteRegistrado: true,
     origen,
     destino,
     zonaDetectada: null,
@@ -1227,6 +1263,70 @@ export function cotizarEnvioDomicilio(
     rutaGeometria,
     urlGoogleMapsDestino,
     detalleDireccion,
+  };
+
+  if (!clienteRegistrado && config.envioGratisSoloRegistrados !== false) {
+    return aplicarTarifaVisitanteNoRegistrado({
+      config,
+      vialKm,
+      sufijoKm,
+      recargoProd,
+      baseRegistrado: resultadoRegistradoFueraPoligonos,
+    });
+  }
+
+  return resultadoRegistradoFueraPoligonos;
+}
+
+function aplicarTarifaVisitanteNoRegistrado(params: {
+  config: ConfiguracionLogisticaNegocio;
+  vialKm: number;
+  sufijoKm: string;
+  recargoProd: number;
+  baseRegistrado: ResultadoCotizacionEnvio;
+}): ResultadoCotizacionEnvio {
+  const { config, vialKm, sufijoKm, recargoProd, baseRegistrado } = params;
+  const baseMinima = Number.isFinite(Number(config.tarifaBaseNoRegistradoUsd))
+    ? Math.max(0, Number(config.tarifaBaseNoRegistradoUsd))
+    : 1.0;
+  const costoKm = Number.isFinite(Number(config.tarifaPorKmNoRegistradoUsd))
+    ? Math.max(0, Number(config.tarifaPorKmNoRegistradoUsd))
+    : Number.isFinite(Number(config.tarifaPorKm))
+    ? Math.max(0, Number(config.tarifaPorKm))
+    : 0.5;
+
+  const variableKm = redondearMoneda(vialKm * costoKm);
+  const exactoSinRedondeo = redondearMoneda(baseMinima + variableKm);
+  const costoBaseInvitado = Math.max(
+    redondearMoneda(baseMinima),
+    redondearTarifaComercialEnvio(exactoSinRedondeo)
+  );
+  const totalInvitado = redondearTarifaComercialEnvio(costoBaseInvitado + recargoProd);
+  const costoReg = baseRegistrado.costoTotalEnvio;
+  const ahorro = Math.max(0, redondearMoneda(totalInvitado - costoReg));
+
+  const sufijoRedondeo =
+    Math.abs(costoBaseInvitado - exactoSinRedondeo) >= 0.01
+      ? ` → aproximado $${costoBaseInvitado.toFixed(2)}`
+      : "";
+  const nombreSector = baseRegistrado.zonaDetectada?.nombre || "Envío a domicilio";
+
+  return {
+    ...baseRegistrado,
+    reglaAplicada: "TARIFA_NO_REGISTRADO_KM",
+    clienteRegistrado: false,
+    costoBaseEnvio: costoBaseInvitado,
+    costoTotalEnvio: totalInvitado,
+    costoSiFueraRegistradoUsd: costoReg,
+    ahorroPorRegistrarseUsd: ahorro,
+    etiquetaResumen: `${nombreSector}${sufijoKm}`,
+    formulaDetalle: `Visitante no registrado (sin zona gratuita): $${baseMinima.toFixed(
+      2
+    )} base + (${vialKm.toFixed(1)} km × $${costoKm.toFixed(2)}/km = $${variableKm.toFixed(
+      2
+    )}) = $${exactoSinRedondeo.toFixed(2)}${sufijoRedondeo}${
+      recargoProd > 0 ? ` + $${recargoProd.toFixed(2)} transporte especial` : ""
+    } [Cliente registrado pagaría $${costoReg.toFixed(2)}].`,
   };
 }
 

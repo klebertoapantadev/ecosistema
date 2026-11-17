@@ -67,6 +67,8 @@ export interface ProductoEcommerce {
   esExtra?: boolean; // Pertenece a categoría "Extras"
   esCombo?: boolean; // Set / Combo compuesto por múltiples productos individuales
   comboComponentes?: ComponenteComboConfig[];
+  comboAhorroPorcentaje?: number;
+  comboSumaIndividualPvp?: number;
   tipoOferta?: string; // 'FISICO' | 'SERVICIO' | 'RENTA' | 'SUSCRIPCION' | 'DIGITAL' | custom
   esRenta?: boolean; // Modalidad de Renta de Mobiliario / Alquiler temporal
   esEvento?: boolean; // Producto o servicio de Eventos y Ceremonias (flujo de Proforma)

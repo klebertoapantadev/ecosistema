@@ -22,11 +22,17 @@ import {
   Truck,
   Users,
   MessageSquareHeart,
-  UserCheck,
   Zap,
   type LucideIcon,
 } from "lucide-react";
-import { obtenerMisProformasEventoAction } from "@eco/comercio";
+import {
+  listarEntregaInmediataAction,
+  obtenerCampanasInformativasAction,
+  obtenerEmisorDefectoPorNegocio,
+  obtenerExpedientePedidosClienteAction,
+  obtenerMisProformasEventoAction,
+} from "@eco/comercio";
+import { EspacioClienteEcommerceTinkay } from "../../modulos/ecommerce/componentes/EspacioClienteEcommerceTinkay";
 import { ListaMisProformasCliente } from "./AccionesProformaPanelCliente";
 import { obtenerSaludo } from "@eco/identidad";
 import {
@@ -268,129 +274,40 @@ export default async function PaginaPanel() {
     redirect(rutaDirecta);
   }
 
-  const resMisProformas = perfil
-    ? await obtenerMisProformasEventoAction(NEGOCIO)
-    : { ok: true as const, proformas: [] };
-  const misProformas = resMisProformas.ok ? resMisProformas.proformas : [];
-
   const nombre = perfil?.usu_nombres || perfil?.usu_correo || "";
   const saludo = perfil ? await obtenerSaludo(perfil.usu_id, nombre, NEGOCIO) : null;
   const infoBanner = DESCRIPCION_BANNER_POR_ROL[rolPrincipal] ?? DESCRIPCION_BANNER_POR_ROL.CLIENTE!;
 
-  // Si es CLIENTE, mostrar exclusivamente su portal de cliente (Historial de Compras + Mis Proformas + Mi Cuenta)
+  // Si es CLIENTE, mostrar su espacio nativo de E-Commerce (Pedidos + Entrega + Factura, Carrito, Proformas editables y Promociones)
   if (esCliente) {
-    return (
-      <div
-        style={{
-          maxWidth: "1120px",
-          margin: "0 auto",
-          display: "flex",
-          flexDirection: "column",
-          gap: "28px",
-        }}
-      >
-        <div
-          style={{
-            background: "linear-gradient(135deg, #2D4334 0%, #1F2E24 100%)",
-            borderRadius: "16px",
-            padding: "clamp(18px, 4vw, 28px) clamp(16px, 4.5vw, 32px)",
-            color: "#FFFFFF",
-            boxShadow: "0 8px 20px -6px rgba(31, 46, 36, 0.25)",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "flex-start",
-              flexWrap: "wrap",
-              gap: "16px",
-            }}
-          >
-            <div style={{ minWidth: 0 }}>
-              <div
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  background: "rgba(255,255,255,0.12)",
-                  padding: "4px 11px",
-                  borderRadius: "999px",
-                  fontSize: "11px",
-                  fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  marginBottom: "10px",
-                }}
-              >
-                <Sparkles size={13} />
-                {infoBanner.subtitulo}
-              </div>
-              <h1 style={{ fontSize: "clamp(1.25rem, 4vw, 1.55rem)", fontWeight: 700, margin: "0 0 6px 0", color: "#FFFFFF" }}>
-                {saludo ?? `Hola, ${nombre}`}
-              </h1>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: "13.5px",
-                  color: "rgba(255,255,255,0.84)",
-                  maxWidth: "620px",
-                  lineHeight: 1.5,
-                }}
-              >
-                {infoBanner.descripcion}
-              </p>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap", width: "100%", maxWidth: "fit-content" }}>
-              <Link
-                href="/#catalogo"
-                title="Explorar el catálogo floral de la tienda"
-                aria-label="Tienda Floral"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  padding: "10px 16px",
-                  borderRadius: "10px",
-                  background: "#C27D5F",
-                  color: "#FFFFFF",
-                  textDecoration: "none",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                }}
-              >
-                <ShoppingBag size={15} />
-                <span>Tienda Floral</span>
-              </Link>
-              <Link
-                href="/panel/cuenta"
-                title="Ver mis datos personales y perfil"
-                aria-label="Mi Cuenta"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  padding: "10px 16px",
-                  borderRadius: "10px",
-                  background: "rgba(255, 255, 255, 0.12)",
-                  border: "1px solid rgba(255, 255, 255, 0.22)",
-                  color: "#FFFFFF",
-                  textDecoration: "none",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                }}
-              >
-                <UserCheck size={15} />
-                <span>Mi Cuenta</span>
-              </Link>
-            </div>
-          </div>
-        </div>
+    const [resExpediente, resInmediata, campanas] = await Promise.all([
+      obtenerExpedientePedidosClienteAction(NEGOCIO),
+      listarEntregaInmediataAction(NEGOCIO).catch(() => ({ ok: true as const, items: [] })),
+      obtenerCampanasInformativasAction({ negocio: NEGOCIO, audiencia: "CLIENTES" }).catch(
+        () => []
+      ),
+    ]);
 
-        <ListaMisProformasCliente proformasIniciales={misProformas} mostrarSiempre={true} />
-      </div>
+    return (
+      <EspacioClienteEcommerceTinkay
+        saludo={saludo ?? `Qué bueno verte, ${nombre}`}
+        nombreCliente={nombre}
+        registrosIniciales={resExpediente.ok ? resExpediente.registros : []}
+        emisorSri={
+          resExpediente.ok
+            ? resExpediente.emisorSri
+            : obtenerEmisorDefectoPorNegocio(NEGOCIO)
+        }
+        entregaInmediataInicial={resInmediata.ok ? resInmediata.items : []}
+        campanasInformativas={campanas}
+      />
     );
   }
+
+  const resMisProformas = perfil
+    ? await obtenerMisProformasEventoAction(NEGOCIO)
+    : { ok: true as const, proformas: [] };
+  const misProformas = resMisProformas.ok ? resMisProformas.proformas : [];
 
   // Vista para Personal de Tienda (DELIVERY, VENTAS, OPERADOR, ADMINISTRADOR, SUPERADMIN)
   const modulosDisponibles = Object.values(MODULOS_TINKAY).filter(

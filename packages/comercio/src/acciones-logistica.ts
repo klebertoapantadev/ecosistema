@@ -58,6 +58,9 @@ const esquemaConfigLogistica = z.object({
   factorVialRespaldo: z.number().min(1).max(3),
   permitirRetiroLocal: z.boolean(),
   mostrarKilometrosCliente: z.boolean().default(true),
+  envioGratisSoloRegistrados: z.boolean().default(true),
+  tarifaBaseNoRegistradoUsd: z.number().min(0).max(100).default(1.0),
+  tarifaPorKmNoRegistradoUsd: z.number().min(0).max(50).default(0.5),
   zonas: z.array(esquemaZona).min(1, "Debe existir al menos una zona de cobertura"),
 });
 
@@ -160,6 +163,16 @@ function normalizarConfiguracionDesdeJson(
       : base.factorVialRespaldo,
     permitirRetiroLocal: raw.permitirRetiroLocal !== false,
     mostrarKilometrosCliente: raw.mostrarKilometrosCliente !== false,
+    envioGratisSoloRegistrados:
+      typeof raw.envioGratisSoloRegistrados === "boolean"
+        ? raw.envioGratisSoloRegistrados
+        : base.envioGratisSoloRegistrados ?? true,
+    tarifaBaseNoRegistradoUsd: Number.isFinite(Number(raw.tarifaBaseNoRegistradoUsd))
+      ? Number(raw.tarifaBaseNoRegistradoUsd)
+      : base.tarifaBaseNoRegistradoUsd ?? 1.0,
+    tarifaPorKmNoRegistradoUsd: Number.isFinite(Number(raw.tarifaPorKmNoRegistradoUsd))
+      ? Number(raw.tarifaPorKmNoRegistradoUsd)
+      : base.tarifaPorKmNoRegistradoUsd ?? base.tarifaPorKm ?? 0.5,
     zonas: zonasNormalizadas.length > 0 ? zonasNormalizadas : base.zonas,
     actualizadoEn: typeof raw.actualizadoEn === "string" ? raw.actualizadoEn : null,
   };
@@ -269,6 +282,24 @@ export async function obtenerConfiguracionLogisticaAction(
             typeof fila.log_detalle_logistica.mostrarKilometrosCliente === "boolean"
               ? fila.log_detalle_logistica.mostrarKilometrosCliente
               : true,
+          envioGratisSoloRegistrados:
+            fila.log_detalle_logistica &&
+            typeof fila.log_detalle_logistica === "object" &&
+            typeof fila.log_detalle_logistica.envioGratisSoloRegistrados === "boolean"
+              ? fila.log_detalle_logistica.envioGratisSoloRegistrados
+              : base.envioGratisSoloRegistrados ?? true,
+          tarifaBaseNoRegistradoUsd:
+            fila.log_detalle_logistica &&
+            typeof fila.log_detalle_logistica === "object" &&
+            Number.isFinite(Number(fila.log_detalle_logistica.tarifaBaseNoRegistradoUsd))
+              ? Number(fila.log_detalle_logistica.tarifaBaseNoRegistradoUsd)
+              : base.tarifaBaseNoRegistradoUsd ?? 1.0,
+          tarifaPorKmNoRegistradoUsd:
+            fila.log_detalle_logistica &&
+            typeof fila.log_detalle_logistica === "object" &&
+            Number.isFinite(Number(fila.log_detalle_logistica.tarifaPorKmNoRegistradoUsd))
+              ? Number(fila.log_detalle_logistica.tarifaPorKmNoRegistradoUsd)
+              : base.tarifaPorKmNoRegistradoUsd ?? Number(fila.log_tarifa_por_km ?? base.tarifaPorKm),
           zonas: zonasMapeadas.length > 0 ? zonasMapeadas : base.zonas,
           actualizadoEn: fila.log_actualizado_en ?? null,
         };
@@ -441,11 +472,56 @@ export interface EntradaCotizacionServidor {
   deliveryIncluidoProducto?: boolean;
   recargoLogisticoProducto?: number;
   retiroEnLocal?: boolean;
+  /** Si se omite, se resuelve automáticamente contra la sesión autenticada y membresía activa en el negocio */
+  clienteRegistrado?: boolean;
+}
+
+async function resolverEsUsuarioRegistradoNegocioServidor(negNorm: string): Promise<boolean> {
+  try {
+    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user?.id) return false;
+
+    const dbVerif: any = crearClienteAdmin() ?? supabase;
+    const aliasNeg =
+      negNorm === "tinkay"
+        ? ["TNK", "TINKAY", "tinkay", "tnk"]
+        : negNorm === "margaritas"
+        ? ["MRG", "MARGARITAS", "margaritas", "mrg"]
+        : negNorm === "fastfix"
+        ? ["FFH", "FASTFIX", "fastfix", "ffh"]
+        : ["TRQ", "TRANQ", "TRANQI", "LEGAL", "tranqi"];
+
+    const [{ data: mem }, { data: usu }] = await Promise.all([
+      dbVerif
+        .schema("comun_seguridad")
+        .from("seg_membresia")
+        .select("mem_id")
+        .eq("mem_usuario_id", user.id)
+        .in("mem_negocio", aliasNeg)
+        .eq("mem_estado", "ACTIVO")
+        .limit(1)
+        .maybeSingle(),
+      dbVerif
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_superadmin_plataforma")
+        .eq("usu_id", user.id)
+        .maybeSingle(),
+    ]);
+    return Boolean(mem?.mem_id || usu?.usu_superadmin_plataforma);
+  } catch {
+    return false;
+  }
 }
 
 /**
  * Acción / servicio integral: resuelve enlace o dirección, calcula ruta vial real OSRM
- * y retorna la cotización exacta según las zonas y tarifas activas del negocio.
+ * y retorna la cotización exacta según las zonas y tarifas activas del negocio
+ * (diferenciando entre clientes registrados con cobertura gratuita y visitantes sin registro).
  */
 export async function cotizarEnvioDesdeEntradaAction(
   entrada: EntradaCotizacionServidor
@@ -454,21 +530,34 @@ export async function cotizarEnvioDesdeEntradaAction(
       ok: true;
       cotizacion: ResultadoCotizacionEnvio;
       direccionDetectada?: string;
+      clienteRegistradoEfectivo: boolean;
     }
   | {
       ok: false;
       error: string;
     }
 > {
-  const config = await obtenerConfiguracionLogisticaAction(entrada.negocio);
+  const negNorm = (entrada.negocio || "tinkay").trim().toLowerCase();
+  const [config, registradoResuelto] = await Promise.all([
+    obtenerConfiguracionLogisticaAction(negNorm),
+    typeof entrada.clienteRegistrado === "boolean"
+      ? Promise.resolve(entrada.clienteRegistrado)
+      : resolverEsUsuarioRegistradoNegocioServidor(negNorm),
+  ]);
 
   if (entrada.retiroEnLocal) {
     const cot = cotizarEnvioDomicilio({
       config,
       destino: { lat: config.origenLat, lng: config.origenLng },
       retiroEnLocal: true,
+      clienteRegistrado: registradoResuelto,
     });
-    return { ok: true, cotizacion: cot, direccionDetectada: config.origenNombre };
+    return {
+      ok: true,
+      cotizacion: cot,
+      direccionDetectada: config.origenNombre,
+      clienteRegistradoEfectivo: registradoResuelto,
+    };
   }
 
   let lat = entrada.lat;
@@ -532,12 +621,14 @@ export async function cotizarEnvioDesdeEntradaAction(
     deliveryIncluidoProducto: entrada.deliveryIncluidoProducto ?? true,
     recargoLogisticoProducto: entrada.recargoLogisticoProducto ?? 0,
     retiroEnLocal: false,
+    clienteRegistrado: registradoResuelto,
   });
 
   return {
     ok: true,
     cotizacion,
     direccionDetectada: direccionFinal,
+    clienteRegistradoEfectivo: registradoResuelto,
   };
 }
 
@@ -744,7 +835,8 @@ function enriquecerDestinoConAuditoriaInterna(
   destino: DestinoEntregaPedidoInput | undefined,
   config: ConfiguracionLogisticaNegocio,
   deliveryIncluidoProducto: boolean,
-  recargoLogisticoProducto: number
+  recargoLogisticoProducto: number,
+  clienteRegistrado = true
 ) {
   if (!destino) {
     return {
@@ -770,6 +862,7 @@ function enriquecerDestinoConAuditoriaInterna(
       config,
       destino: { lat: config.origenLat, lng: config.origenLng },
       retiroEnLocal: true,
+      clienteRegistrado,
     });
     formulaInterna = cot.formulaDetalle;
     reglaAplicada = cot.reglaAplicada;
@@ -783,6 +876,7 @@ function enriquecerDestinoConAuditoriaInterna(
       deliveryIncluidoProducto,
       recargoLogisticoProducto,
       retiroEnLocal: false,
+      clienteRegistrado,
     });
     formulaInterna = cot.formulaDetalle;
     reglaAplicada = cot.reglaAplicada;
@@ -837,7 +931,10 @@ export async function registrarPedidoTiendaAction(
   }
 
   const negNorm = entrada.negocio.trim().toLowerCase();
-  const config = await obtenerConfiguracionLogisticaAction(negNorm);
+  const [config, esUsuarioRegistradoPreliminar] = await Promise.all([
+    obtenerConfiguracionLogisticaAction(negNorm),
+    resolverEsUsuarioRegistradoNegocioServidor(negNorm),
+  ]);
 
   const algunConDeliveryIncluido = entrada.items.some(
     (it) => it.deliveryIncluidoProducto !== false
@@ -855,7 +952,8 @@ export async function registrarPedidoTiendaAction(
             it.entregaIndividual,
             config,
             it.deliveryIncluidoProducto !== false,
-            (it.recargoLogisticoUsd || 0) * it.cantidad
+            (it.recargoLogisticoUsd || 0) * it.cantidad,
+            esUsuarioRegistradoPreliminar
           )
         : null;
 
@@ -904,7 +1002,8 @@ export async function registrarPedidoTiendaAction(
           entregaUnificadaConGeo,
           config,
           algunConDeliveryIncluido,
-          recargoProductosTotal
+          recargoProductosTotal,
+          esUsuarioRegistradoPreliminar
         )
       : {
           retiro_en_local: false,
@@ -3961,4 +4060,1038 @@ export async function obtenerEstadoRegaloPrimeraCompraAction(
     };
   }
 }
+
+// ============================================================================
+// EXPEDIENTE INTEGRAL DE PEDIDOS DEL CLIENTE (PEDIDO + ENTREGA GPS + FACTURA)
+// Y EDICIÓN EN AUTOSERVICIO DE PROFORMAS ANTES DEL PAGO
+// ============================================================================
+
+import type { FacturaElectronicaResumen } from "./acciones";
+import { obtenerEmisorRideNegocioAction } from "./acciones-facturacion-sri";
+import type { ConfiguracionEmisorSri, LineaFacturaSriResumen } from "./ride-sri";
+
+export interface ConfirmacionEntregaClienteResumen {
+  confirmada: boolean;
+  estadoEntrega: string;
+  fechaHoraConfirmacion?: string | null;
+  entregadorNombre?: string | null;
+  destinatarioRecibe?: string | null;
+  fotoEvidenciaUrl?: string | null;
+  direccionGps?: string | null;
+  mapaUrl?: string | null;
+  latitud?: number | null;
+  longitud?: number | null;
+  observaciones?: string | null;
+}
+
+export interface ItemExpedientePedidoCliente {
+  productoId?: string;
+  sku?: string;
+  nombre: string;
+  variante?: string;
+  cantidad: number;
+  precioUnitario: number;
+  tarifaIva: number;
+  subtotal: number;
+  imagen?: string;
+  dedicatoria?: {
+    para?: string;
+    de?: string;
+    mensaje?: string;
+  } | null;
+}
+
+export interface ExpedientePedidoClienteCompleto {
+  id: string;
+  secuencial: number;
+  codigo: string;
+  grupoProformaId: string;
+  versionNumero: number;
+  esOriginal: boolean;
+  etiquetaVersion?: string;
+  notaAsesor?: string;
+  asesorNombre?: string;
+  tipoOrigen: string;
+  estado: string;
+  estadoTaller?: string;
+  bloqueadaPorPagoGrupo: boolean;
+  creadoEn: string;
+  vigenciaDias: number;
+  tokenAprobacion: string;
+  metodoPago?: string;
+  subtotal: number;
+  baseIva0: number;
+  baseIvaGravada: number;
+  iva: number;
+  descuento: number;
+  costoEnvio: number;
+  recargoHorarioExacto: number;
+  total: number;
+  montoReserva70Usd: number;
+  montoAbonadoUsd: number;
+  saldoPendienteUsd: number;
+  comprador: {
+    nombreCompleto: string;
+    identificacion: string;
+    correo: string;
+    telefono: string;
+  };
+  entrega: {
+    modalidadEntrega: string;
+    retiroEnLocal: boolean;
+    destinatarioNombre: string;
+    destinatarioTelefono: string;
+    direccion: string;
+    referencia?: string;
+    zonaDetectada?: string;
+    distanciaVialKm?: number;
+    fechaEntrega?: string;
+    franjaHoraria?: string;
+    horaExacta?: string;
+    enlaceMapa?: string;
+  };
+  evento?: {
+    tipoEvento: string;
+    fechaEvento: string;
+    horaEvento?: string;
+    invitadosEstimados?: number;
+    paletaColores?: string;
+    notasEvento?: string;
+  } | null;
+  items: ItemExpedientePedidoCliente[];
+  regaloPrimeraCompra?: {
+    sku: string;
+    nombre: string;
+    valorReferencia: number;
+    imagenUrl?: string;
+  } | null;
+  comprobanteTransferencia?: {
+    url: string;
+    nombreArchivo: string;
+    mimeType?: string;
+    subidoEn?: string;
+  } | null;
+  ultimoPagoPlux?: {
+    identificador?: string;
+    autorizacion?: string;
+    marca?: string;
+    ultimosDigitos?: string;
+    montoUsd?: number;
+    confirmadoEn?: string;
+  } | null;
+  confirmacionEntrega: ConfirmacionEntregaClienteResumen;
+  facturaElectronica: FacturaElectronicaResumen | null;
+}
+
+/**
+ * Obtiene el expediente completo de pedidos y proformas del cliente autenticado:
+ * incluye todos los ítems, dedicatorias, datos logísticos, confirmación de entrega (con foto GPS)
+ * y Factura Electrónica SRI (lista para ver/descargar RIDE PDF).
+ */
+export async function obtenerExpedientePedidosClienteAction(
+  negocio: string
+): Promise<
+  | {
+      ok: true;
+      registros: ExpedientePedidoClienteCompleto[];
+      emisorSri: ConfiguracionEmisorSri;
+    }
+  | { ok: false; error: string }
+> {
+  const negNorm = (negocio || "tinkay").trim().toLowerCase();
+  const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const [
+    {
+      data: { user },
+    },
+    emisorSri,
+  ] = await Promise.all([
+    supabase.auth.getUser(),
+    obtenerEmisorRideNegocioAction(negNorm),
+  ]);
+
+  if (!user) {
+    return { ok: true, registros: [], emisorSri };
+  }
+
+  const prefijo =
+    negNorm === "tinkay"
+      ? "TNK"
+      : negNorm === "margaritas"
+      ? "MRG"
+      : negNorm === "fastfix"
+      ? "FFH"
+      : "TRQ";
+
+  const correoUsuario = (user.email || "").trim().toLowerCase();
+  const db: any = crearClienteAdmin() ?? supabase;
+
+  const { data: filasRaw, error } = await db
+    .schema("comun_comercio")
+    .from("com_proforma")
+    .select("*")
+    .eq("prf_negocio", negNorm)
+    .is("prf_eliminado_en", null)
+    .order("prf_creado_en", { ascending: false })
+    .limit(200);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  const filas = (filasRaw ?? []).filter((f: any) => {
+    if (f.prf_cliente_id && String(f.prf_cliente_id) === user.id) {
+      return true;
+    }
+    if (!correoUsuario) return false;
+    const det = (f.prf_detalle_proforma ?? {}) as Record<string, any>;
+    const contacto = (f.prf_cliente_contacto ?? {}) as Record<string, any>;
+    const correoContacto = String(contacto.correo || "").trim().toLowerCase();
+    const correoComprador = String(det.comprador?.correo || "").trim().toLowerCase();
+    return correoContacto === correoUsuario || correoComprador === correoUsuario;
+  });
+
+  if (filas.length === 0) {
+    return { ok: true, registros: [], emisorSri };
+  }
+
+  // Vincular automáticamente prf_cliente_id si estaba nulo pero coincidió por correo
+  const idsSinCliente = filas
+    .filter((f: any) => !f.prf_cliente_id)
+    .map((f: any) => String(f.prf_id));
+  if (idsSinCliente.length > 0) {
+    try {
+      await db
+        .schema("comun_comercio")
+        .from("com_proforma")
+        .update({ prf_cliente_id: user.id })
+        .in("prf_id", idsSinCliente);
+    } catch {
+      // Ignorar fallos de sincronización secundaria
+    }
+  }
+
+  const idsOrdenes = filas.map((f: any) => String(f.prf_id));
+
+  // Cargar ítems relacionales, confirmaciones de entrega (GPS + Foto) y pagos/facturas SRI en paralelo
+  const [resItems, resEntregas, resPagos, resComprobantesCliente] = await Promise.all([
+    db
+      .schema("comun_comercio")
+      .from("com_proforma_item")
+      .select("*")
+      .in("pfi_proforma_id", idsOrdenes)
+      .is("pfi_eliminado_en", null)
+      .order("pfi_secuencial", { ascending: true }),
+    db
+      .schema("comun_comercio")
+      .from("com_entrega_evidencia")
+      .select("*")
+      .eq("ent_negocio", negNorm)
+      .in("ent_proforma_id", idsOrdenes)
+      .is("ent_eliminado_en", null)
+      .neq("ent_estado", "ANULADA")
+      .order("ent_capturado_en", { ascending: false }),
+    db
+      .schema("comun_comercio")
+      .from("com_transaccion_pago")
+      .select("*")
+      .eq("pag_negocio", negNorm)
+      .is("pag_eliminado_en", null)
+      .order("pag_creado_en", { ascending: false })
+      .limit(300),
+    db
+      .schema("comun_facturacion")
+      .from("fac_comprobante")
+      .select("*, fac_comprobante_linea(*)")
+      .eq("cmp_negocio", negNorm)
+      .eq("cmp_tipo", "01")
+      .neq("cmp_estado", "BORRADOR")
+      .order("cmp_creado_en", { ascending: false })
+      .limit(300),
+  ]);
+
+  const mapaItemsPorProforma = new Map<string, any[]>();
+  for (const it of resItems?.data ?? []) {
+    const k = String(it.pfi_proforma_id);
+    const lista = mapaItemsPorProforma.get(k) ?? [];
+    lista.push(it);
+    mapaItemsPorProforma.set(k, lista);
+  }
+
+  const mapaEntregaPorProforma = new Map<string, any>();
+  for (const ent of resEntregas?.data ?? []) {
+    const k = String(ent.ent_proforma_id || "");
+    if (k && !mapaEntregaPorProforma.has(k)) {
+      mapaEntregaPorProforma.set(k, ent);
+    }
+  }
+
+  // Indexar comprobantes SRI por cmp_transaccion_pago_id y por referencia en cmp_detalle_comprobante
+  const mapaComprobantePorPagoId = new Map<string, any>();
+  const mapaComprobantePorProformaId = new Map<string, any>();
+  for (const cmp of resComprobantesCliente?.data ?? []) {
+    if (cmp.cmp_transaccion_pago_id) {
+      mapaComprobantePorPagoId.set(String(cmp.cmp_transaccion_pago_id), cmp);
+    }
+    const detCmp = (cmp.cmp_detalle_comprobante ?? {}) as Record<string, any>;
+    const prfRef = String(detCmp.proforma_id || detCmp.orden_id || "");
+    if (prfRef && !mapaComprobantePorProformaId.has(prfRef)) {
+      mapaComprobantePorProformaId.set(prfRef, cmp);
+    }
+  }
+
+  // Indexar pagos por proforma_id o código de orden
+  const mapaPagoPorProformaId = new Map<string, any>();
+  const mapaPagoPorCodigoOrden = new Map<string, any>();
+  for (const pag of resPagos?.data ?? []) {
+    const detPag = (pag.pag_detalle_transaccion ?? {}) as Record<string, any>;
+    const prfId = String(detPag.proforma_id || detPag.orden_id || "");
+    if (prfId && !mapaPagoPorProformaId.has(prfId)) {
+      mapaPagoPorProformaId.set(prfId, pag);
+    }
+    const codOrd = String(
+      detPag.codigo_orden || detPag.codigo_proforma || pag.pag_identificador_cliente || ""
+    ).trim();
+    if (codOrd && !mapaPagoPorCodigoOrden.has(codOrd)) {
+      mapaPagoPorCodigoOrden.set(codOrd, pag);
+    }
+  }
+
+  const construirFacturaResumenDesdeCmp = (
+    cmp: any,
+    fallbackRubro: string
+  ): FacturaElectronicaResumen | null => {
+    if (!cmp) return null;
+    const est = String(cmp.cmp_establecimiento || emisorSri.establecimiento || "001").padStart(3, "0");
+    const pto = String(cmp.cmp_punto_emision || emisorSri.puntoEmision || "001").padStart(3, "0");
+    const num = String(cmp.cmp_numero ?? 1).padStart(9, "0");
+    const numeroComprobante = `${est}-${pto}-${num}`;
+    const lineasRaw = Array.isArray(cmp.fac_comprobante_linea) ? cmp.fac_comprobante_linea : [];
+    let sub15 = 0;
+    let sub0 = 0;
+
+    const lineas: LineaFacturaSriResumen[] = lineasRaw
+      .slice()
+      .sort((a: any, b: any) => Number(a.lin_orden ?? 1) - Number(b.lin_orden ?? 1))
+      .map((l: any) => {
+        const base = Number(l.lin_base_imponible ?? 0);
+        const valIva = Number(l.lin_valor_iva ?? 0);
+        const codIva = String(l.lin_codigo_iva || "0");
+        const tarifa = codIva === "4" || valIva > 0 ? 15 : 0;
+        if (tarifa > 0) sub15 += base;
+        else sub0 += base;
+        return {
+          codigo: String(l.lin_codigo || "ITEM"),
+          descripcion: String(l.lin_descripcion || fallbackRubro),
+          cantidad: Number(l.lin_cantidad ?? 1),
+          precio_unitario: Number(l.lin_precio_unitario ?? base),
+          descuento: Number(l.lin_descuento ?? 0),
+          tarifa_iva: tarifa,
+          subtotal: base,
+          iva: valIva,
+        };
+      });
+
+    const totalSinImp = Number(cmp.cmp_total_sin_impuestos ?? sub15 + sub0);
+    const totalIva = Number(cmp.cmp_total_iva ?? 0);
+    const importeTotal = Number(cmp.cmp_importe_total ?? totalSinImp + totalIva);
+    const compJson = (cmp.cmp_comprador ?? {}) as Record<string, any>;
+
+    return {
+      comprobante_id: String(cmp.cmp_id),
+      numero_comprobante: numeroComprobante,
+      clave_acceso: String(cmp.cmp_clave_acceso || ""),
+      estado: (cmp.cmp_estado as FacturaElectronicaResumen["estado"]) || "AUTORIZADO",
+      ambiente: Number(cmp.cmp_ambiente) === 2 ? 2 : 1,
+      fecha_emision: String(cmp.cmp_fecha_emision || cmp.cmp_creado_en || new Date().toISOString()),
+      fecha_autorizacion: cmp.cmp_fecha_autorizacion ? String(cmp.cmp_fecha_autorizacion) : null,
+      rubro_facturado: lineas[0]?.descripcion || fallbackRubro,
+      subtotal: Math.round(totalSinImp * 100) / 100,
+      subtotal_15: Math.round(sub15 * 100) / 100,
+      subtotal_0: Math.round((lineas.length > 0 ? sub0 : Math.max(0, totalSinImp - sub15)) * 100) / 100,
+      iva: Math.round(totalIva * 100) / 100,
+      total: Math.round(importeTotal * 100) / 100,
+      lineas: lineas.length > 0 ? lineas : undefined,
+      comprador: {
+        tipo_identificacion: compJson.tipo_identificacion || compJson.tipoIdentificacion,
+        identificacion: compJson.identificacion || "9999999999999",
+        razon_social: compJson.razon_social || compJson.razonSocial || "CONSUMIDOR FINAL",
+        direccion: compJson.direccion || "Quito, Ecuador",
+        correo: compJson.correo || compJson.email || "",
+        telefono: compJson.telefono || "",
+      },
+    };
+  };
+
+  const gruposBloqueados = new Set<string>();
+  for (const f of filas) {
+    const det = (f.prf_detalle_proforma ?? {}) as Record<string, any>;
+    const gId = String(det.grupo_proforma_id || f.prf_id);
+    if (
+      ESTADOS_PROFORMA_CON_PEDIDO_O_PAGO.has(String(f.prf_estado || "")) ||
+      Number(det.monto_abonado_usd ?? 0) > 0
+    ) {
+      gruposBloqueados.add(gId);
+    }
+  }
+
+  const registros: ExpedientePedidoClienteCompleto[] = filas.map((f: any) => {
+    const idStr = String(f.prf_id);
+    const det = (f.prf_detalle_proforma ?? {}) as Record<string, any>;
+    const contacto = (f.prf_cliente_contacto ?? det.comprador ?? {}) as Record<string, any>;
+    const log = (det.logistica_entrega ?? {}) as Record<string, any>;
+    const primerDestino =
+      Array.isArray(log.destinos) && log.destinos.length > 0 ? log.destinos[0] : null;
+    const sec = Number(f.prf_secuencial ?? 1);
+    const tipoOrigen = String(det.tipo_origen || "PROFORMA_EVENTO");
+    const codigo = String(
+      det.codigo_proforma ||
+        det.codigo_orden ||
+        `${prefijo}-${tipoOrigen === "ORDEN_DIRECTA" ? "ORD" : "PRF"}-${String(sec).padStart(4, "0")}`
+    );
+    const grupoId = String(det.grupo_proforma_id || idStr);
+    const verNum = Number(det.version_numero ?? 1);
+    const total = Number(f.prf_total ?? det.total_pagar ?? 0);
+    const iva = Number(f.prf_iva ?? det.total_iva ?? 0);
+    const subtotal = Number(f.prf_subtotal ?? det.subtotal_base_imponible ?? 0);
+    const descuento = Number(f.prf_descuento ?? det.descuento_total ?? 0);
+    const costoEnvio = Number(det.total_flete ?? log.costo_envio_usd ?? 0);
+    const recargoHora = Number(det.total_recargo_horario_exacto ?? 0);
+
+    const baseTotal = Math.max(0, Math.round((total - iva) * 100) / 100);
+    const baseGravada =
+      det.base_iva_gravada_centavos !== undefined
+        ? Number(det.base_iva_gravada_centavos) / 100
+        : iva > 0
+        ? Math.min(baseTotal, Math.round((iva / 0.15) * 100) / 100)
+        : 0;
+    const base0 = Math.max(0, Math.round((baseTotal - baseGravada) * 100) / 100);
+
+    // Ítems completos (con dedicatoria, SKU, imagen e IVA)
+    const itemsRel = mapaItemsPorProforma.get(idStr) ?? [];
+    const itemsJson = Array.isArray(det.items) ? det.items : [];
+    const fuenteItems = itemsJson.length > 0 ? itemsJson : itemsRel;
+
+    const items: ItemExpedientePedidoCliente[] = fuenteItems.map((it: any) => {
+      const detIt = (it.pfi_detalle_item ?? it) as Record<string, any>;
+      const cantidad = Number(it.cantidad ?? it.pfi_cantidad ?? detIt.cantidad ?? 1);
+      const precioUnitario = Number(
+        it.pvp_unitario ??
+          it.precio_unitario ??
+          it.pfi_precio_unitario ??
+          detIt.precio_unitario ??
+          0
+      );
+      const subtotalItem = Number(
+        it.total_linea ??
+          it.pfi_total_linea ??
+          detIt.total_linea ??
+          Math.round(cantidad * precioUnitario * 100) / 100
+      );
+      const impStr = String(it.impuesto ?? it.pfi_impuesto ?? detIt.impuesto ?? "IVA_0");
+      const tarifaIva = impStr.includes("15") ? 15 : 0;
+      const dedRaw = detIt.dedicatoria ?? it.dedicatoria;
+      const dedicatoria =
+        dedRaw && (dedRaw.para || dedRaw.de || dedRaw.mensaje)
+          ? {
+              para: dedRaw.para ? String(dedRaw.para) : undefined,
+              de: dedRaw.de ? String(dedRaw.de) : undefined,
+              mensaje: dedRaw.mensaje ? String(dedRaw.mensaje) : undefined,
+            }
+          : null;
+
+      return {
+        productoId: detIt.producto_id ? String(detIt.producto_id) : undefined,
+        sku: detIt.variante_sku || detIt.sku ? String(detIt.variante_sku || detIt.sku) : undefined,
+        nombre: String(
+          detIt.producto_nombre ||
+            it.producto_nombre ||
+            it.pfi_descripcion ||
+            detIt.descripcion ||
+            "Arreglo floral"
+        ),
+        variante: detIt.variante_nombre ? String(detIt.variante_nombre) : undefined,
+        cantidad,
+        precioUnitario,
+        tarifaIva,
+        subtotal: subtotalItem,
+        imagen: detIt.imagen ? String(detIt.imagen) : undefined,
+        dedicatoria,
+      };
+    });
+
+    // Regalo de primera compra si fue incluido
+    const regRaw = det.regalo_primera_compra ?? det.regaloPrimeraCompra;
+    const regaloPrimeraCompra =
+      regRaw && typeof regRaw === "object" && regRaw.nombre
+        ? {
+            sku: String(regRaw.sku || "TIN-VAR-4"),
+            nombre: String(regRaw.nombre),
+            valorReferencia: Number(regRaw.valor_referencia ?? regRaw.valorReferencia ?? 1.5),
+            imagenUrl: regRaw.imagen_url || regRaw.imagenUrl ? String(regRaw.imagen_url || regRaw.imagenUrl) : undefined,
+          }
+        : null;
+
+    // Comprobante de transferencia bancaria si fue subido
+    const compTransfRaw = det.comprobante_transferencia ?? det.comprobanteTransferencia;
+    const comprobanteTransferencia =
+      compTransfRaw && typeof compTransfRaw === "object" && compTransfRaw.url
+        ? {
+            url: String(compTransfRaw.url),
+            nombreArchivo: String(
+              compTransfRaw.nombre_archivo || compTransfRaw.nombreArchivo || "comprobante"
+            ),
+            mimeType: compTransfRaw.mime_type || compTransfRaw.mimeType
+              ? String(compTransfRaw.mime_type || compTransfRaw.mimeType)
+              : undefined,
+            subidoEn: compTransfRaw.subido_en || compTransfRaw.subidoEn
+              ? String(compTransfRaw.subido_en || compTransfRaw.subidoEn)
+              : undefined,
+          }
+        : null;
+
+    // Último pago PLUX
+    const pluxRaw = det.ultimo_pago_plux;
+    const pagoVinculado =
+      mapaPagoPorProformaId.get(idStr) ?? mapaPagoPorCodigoOrden.get(codigo) ?? null;
+
+    const ultimoPagoPlux = pluxRaw
+      ? {
+          identificador: pluxRaw.identificador ? String(pluxRaw.identificador) : undefined,
+          autorizacion: pluxRaw.autorizacion ? String(pluxRaw.autorizacion) : undefined,
+          marca: pluxRaw.marca || pluxRaw.marca_tarjeta
+            ? String(pluxRaw.marca || pluxRaw.marca_tarjeta)
+            : undefined,
+          ultimosDigitos: pluxRaw.ultimos_digitos ? String(pluxRaw.ultimos_digitos) : undefined,
+          montoUsd: pluxRaw.monto_usd !== undefined ? Number(pluxRaw.monto_usd) : undefined,
+          confirmadoEn: pluxRaw.confirmado_en ? String(pluxRaw.confirmado_en) : undefined,
+        }
+      : pagoVinculado && pagoVinculado.pag_estado === "APROBADO"
+      ? {
+          identificador: String(pagoVinculado.pag_identificador_cliente || ""),
+          autorizacion: pagoVinculado.pag_autorizacion_codigo
+            ? String(pagoVinculado.pag_autorizacion_codigo)
+            : undefined,
+          marca: pagoVinculado.pag_tarjeta_marca
+            ? String(pagoVinculado.pag_tarjeta_marca)
+            : undefined,
+          ultimosDigitos: pagoVinculado.pag_tarjeta_ultimos_digitos
+            ? String(pagoVinculado.pag_tarjeta_ultimos_digitos)
+            : undefined,
+          montoUsd: Number(pagoVinculado.pag_monto_total ?? total),
+          confirmadoEn: pagoVinculado.pag_confirmado_en
+            ? String(pagoVinculado.pag_confirmado_en)
+            : undefined,
+        }
+      : null;
+
+    // Confirmación de Entrega (Tabla com_entrega_evidencia + estado del pedido)
+    const entRow = mapaEntregaPorProforma.get(idStr);
+    const estUpper = String(f.prf_estado || "ENVIADA").toUpperCase();
+    const estTaller = det.estado_taller ? String(det.estado_taller).toUpperCase() : undefined;
+    const yaEntregado =
+      Boolean(entRow && entRow.ent_estado !== "PROGRAMADA") ||
+      estUpper === "ENTREGADO" ||
+      estTaller === "ENTREGADO" ||
+      Boolean(det.entrega_confirmada);
+
+    const confirmacionEntrega: ConfirmacionEntregaClienteResumen = entRow
+      ? {
+          confirmada: entRow.ent_estado !== "PROGRAMADA",
+          estadoEntrega:
+            entRow.ent_estado !== "PROGRAMADA"
+              ? "ENTREGADO"
+              : estTaller || estUpper,
+          fechaHoraConfirmacion:
+            entRow.ent_estado !== "PROGRAMADA"
+              ? String(entRow.ent_capturado_en || entRow.ent_fecha_servicio || "")
+              : null,
+          entregadorNombre: entRow.ent_entregador_nombre
+            ? String(entRow.ent_entregador_nombre)
+            : null,
+          destinatarioRecibe: entRow.ent_fallecido_destinatario
+            ? String(entRow.ent_fallecido_destinatario)
+            : null,
+          fotoEvidenciaUrl: entRow.ent_foto_url ? String(entRow.ent_foto_url) : null,
+          direccionGps: entRow.ent_direccion_gps ? String(entRow.ent_direccion_gps) : null,
+          mapaUrl: entRow.ent_mapa_url ? String(entRow.ent_mapa_url) : null,
+          latitud: entRow.ent_latitud != null ? Number(entRow.ent_latitud) : null,
+          longitud: entRow.ent_longitud != null ? Number(entRow.ent_longitud) : null,
+          observaciones: entRow.ent_observaciones ? String(entRow.ent_observaciones) : null,
+        }
+      : {
+          confirmada: yaEntregado,
+          estadoEntrega: yaEntregado
+            ? "ENTREGADO"
+            : estTaller || estUpper,
+          fechaHoraConfirmacion: det.entregado_en ? String(det.entregado_en) : null,
+          fotoEvidenciaUrl: det.foto_entrega_url ? String(det.foto_entrega_url) : null,
+        };
+
+    // Factura Electrónica SRI vinculada
+    let facturaElectronica: FacturaElectronicaResumen | null = null;
+    const cmpDirecto =
+      (pagoVinculado?.pag_id
+        ? mapaComprobantePorPagoId.get(String(pagoVinculado.pag_id))
+        : null) ?? mapaComprobantePorProformaId.get(idStr);
+
+    if (cmpDirecto) {
+      facturaElectronica = construirFacturaResumenDesdeCmp(
+        cmpDirecto,
+        items[0]?.nombre || `Pedido ${codigo}`
+      );
+    } else if (det.factura_electronica && typeof det.factura_electronica === "object") {
+      facturaElectronica = det.factura_electronica as FacturaElectronicaResumen;
+    } else if (
+      pagoVinculado?.pag_detalle_transaccion?.factura_electronica &&
+      typeof pagoVinculado.pag_detalle_transaccion.factura_electronica === "object"
+    ) {
+      facturaElectronica = pagoVinculado.pag_detalle_transaccion
+        .factura_electronica as FacturaElectronicaResumen;
+    }
+
+    const evRaw = det.evento;
+    const evento =
+      evRaw && typeof evRaw === "object" && (evRaw.tipoEvento || tipoOrigen === "PROFORMA_EVENTO")
+        ? {
+            tipoEvento: String(evRaw.tipoEvento || "Evento Especial"),
+            fechaEvento: String(evRaw.fechaEvento || log.fecha_entrega || ""),
+            horaEvento: evRaw.horaEvento ? String(evRaw.horaEvento) : undefined,
+            invitadosEstimados:
+              evRaw.invitadosEstimados !== undefined && evRaw.invitadosEstimados !== null
+                ? Number(evRaw.invitadosEstimados)
+                : undefined,
+            paletaColores: evRaw.paletaColores ? String(evRaw.paletaColores) : undefined,
+            notasEvento: evRaw.notasEvento ? String(evRaw.notasEvento) : undefined,
+          }
+        : null;
+
+    return {
+      id: idStr,
+      secuencial: sec,
+      codigo,
+      grupoProformaId: grupoId,
+      versionNumero: verNum,
+      esOriginal: det.es_original !== undefined ? Boolean(det.es_original) : verNum === 1,
+      etiquetaVersion: det.etiqueta_version ? String(det.etiqueta_version) : undefined,
+      notaAsesor: det.nota_asesor ? String(det.nota_asesor) : undefined,
+      asesorNombre: det.asesor_nombre ? String(det.asesor_nombre) : undefined,
+      tipoOrigen,
+      estado: estUpper,
+      estadoTaller: estTaller,
+      bloqueadaPorPagoGrupo: gruposBloqueados.has(grupoId),
+      creadoEn: String(f.prf_creado_en),
+      vigenciaDias: Number(f.prf_vigencia_dias ?? 15),
+      tokenAprobacion: String(f.prf_token_aprobacion || ""),
+      metodoPago: det.metodo_pago
+        ? String(det.metodo_pago)
+        : pagoVinculado?.pag_pasarela
+        ? String(pagoVinculado.pag_pasarela)
+        : undefined,
+      subtotal,
+      baseIva0: base0,
+      baseIvaGravada: baseGravada,
+      iva,
+      descuento,
+      costoEnvio,
+      recargoHorarioExacto: recargoHora,
+      total,
+      montoReserva70Usd:
+        det.monto_reserva_70_usd !== undefined
+          ? Number(det.monto_reserva_70_usd)
+          : Math.round(total * 0.7 * 100) / 100,
+      montoAbonadoUsd: Number(det.monto_abonado_usd ?? 0),
+      saldoPendienteUsd:
+        det.saldo_pendiente_usd !== undefined ? Number(det.saldo_pendiente_usd) : total,
+      comprador: {
+        nombreCompleto: String(
+          f.prf_cliente_nombre || contacto.nombreCompleto || det.comprador?.nombreCompleto || "Cliente"
+        ),
+        identificacion: String(
+          contacto.identificacion || det.comprador?.identificacion || "9999999999999"
+        ),
+        correo: String(contacto.correo || det.comprador?.correo || user.email || ""),
+        telefono: String(
+          contacto.whatsapp || contacto.telefono || det.comprador?.telefono || ""
+        ),
+      },
+      entrega: {
+        modalidadEntrega: String(det.modalidad_entrega || "unificada"),
+        retiroEnLocal: Boolean(primerDestino?.retiro_en_local ?? log.retiro_en_local),
+        destinatarioNombre: String(
+          primerDestino?.destinatario_nombre ||
+            log.destinatario_nombre ||
+            f.prf_cliente_nombre ||
+            "Destinatario"
+        ),
+        destinatarioTelefono: String(
+          primerDestino?.destinatario_telefono || log.destinatario_telefono || ""
+        ),
+        direccion: String(
+          primerDestino?.direccion || log.direccion || "Retiro en Tienda / Por confirmar"
+        ),
+        referencia:
+          primerDestino?.referencia || log.referencia
+            ? String(primerDestino?.referencia || log.referencia)
+            : undefined,
+        zonaDetectada:
+          primerDestino?.zona_detectada || log.zona_detectada
+            ? String(primerDestino?.zona_detectada || log.zona_detectada)
+            : undefined,
+        distanciaVialKm:
+          typeof (primerDestino?.distancia_vial_km ?? log.distancia_vial_km) === "number"
+            ? Number(primerDestino?.distancia_vial_km ?? log.distancia_vial_km)
+            : undefined,
+        fechaEntrega:
+          primerDestino?.fecha_entrega || log.fecha_entrega || evento?.fechaEvento
+            ? String(primerDestino?.fecha_entrega || log.fecha_entrega || evento?.fechaEvento)
+            : undefined,
+        franjaHoraria:
+          primerDestino?.franja_horaria || log.franja_horaria
+            ? String(primerDestino?.franja_horaria || log.franja_horaria)
+            : undefined,
+        horaExacta:
+          primerDestino?.hora_exacta || log.hora_exacta || evento?.horaEvento
+            ? String(primerDestino?.hora_exacta || log.hora_exacta || evento?.horaEvento)
+            : undefined,
+        enlaceMapa:
+          primerDestino?.enlace_mapa || log.enlace_mapa
+            ? String(primerDestino?.enlace_mapa || log.enlace_mapa)
+            : undefined,
+      },
+      evento,
+      items,
+      regaloPrimeraCompra,
+      comprobanteTransferencia,
+      ultimoPagoPlux,
+      confirmacionEntrega,
+      facturaElectronica,
+    };
+  });
+
+  return { ok: true, registros, emisorSri };
+}
+
+export interface EntradaEdicionProformaCliente {
+  negocio: string;
+  proformaId: string;
+  tokenAprobacion?: string;
+  evento: {
+    tipoEvento: string;
+    fechaEvento: string;
+    horaEvento?: string;
+    invitadosEstimados?: number;
+    paletaColores?: string;
+    notasEvento?: string;
+  };
+  ubicacion: {
+    retiroEnLocal: boolean;
+    direccion: string;
+    referencia?: string;
+    enlaceMapa?: string;
+    lat?: number;
+    lng?: number;
+    zonaDetectada?: string;
+    distanciaVialKm?: number;
+    costoEnvio: number;
+  };
+  items: Array<{
+    productoId?: string;
+    sku?: string;
+    descripcion: string;
+    varianteNombre?: string;
+    cantidad: number;
+    precioUnitario: number;
+    tarifaIva: number;
+    imagen?: string;
+  }>;
+}
+
+/**
+ * Permite al cliente editar los ítems, cantidades, datos del evento y ubicación de su proforma
+ * mientras el grupo aún no haya registrado pago o confirmación de orden.
+ */
+export async function actualizarProformaEventoClienteAction(
+  entrada: EntradaEdicionProformaCliente
+): Promise<
+  | {
+      ok: true;
+      id: string;
+      codigoProforma: string;
+      tokenAprobacion: string;
+      total: number;
+      montoReserva70Usd: number;
+    }
+  | { ok: false; error: string }
+> {
+  if (!entrada.proformaId || !Array.isArray(entrada.items) || entrada.items.length === 0) {
+    return {
+      ok: false,
+      error: "La proforma debe conservar al menos un arreglo o montaje de evento.",
+    };
+  }
+  if (!entrada.evento?.fechaEvento) {
+    return { ok: false, error: "Selecciona la fecha estimada del evento." };
+  }
+
+  const negNorm = (entrada.negocio || "tinkay").trim().toLowerCase();
+  const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const db: any = crearClienteAdmin() ?? supabase;
+  const { data: filaActual, error: errLectura } = await db
+    .schema("comun_comercio")
+    .from("com_proforma")
+    .select("*")
+    .eq("prf_id", entrada.proformaId)
+    .eq("prf_negocio", negNorm)
+    .is("prf_eliminado_en", null)
+    .maybeSingle();
+
+  if (errLectura || !filaActual) {
+    return { ok: false, error: "No se encontró la proforma o ya fue eliminada." };
+  }
+
+  // Validar propiedad: dueño autenticado, correo verificado coincidente o portador del tokenAprobacion
+  const tokenFila = String(filaActual.prf_token_aprobacion || "").trim();
+  const tokenEnviado = String(entrada.tokenAprobacion || "").trim();
+  const correoUsr = (user?.email || "").trim().toLowerCase();
+  const detPrev = (filaActual.prf_detalle_proforma ?? {}) as Record<string, any>;
+  const contactoPrev = (filaActual.prf_cliente_contacto ?? {}) as Record<string, any>;
+  const correoFila = String(
+    contactoPrev.correo || detPrev.comprador?.correo || ""
+  )
+    .trim()
+    .toLowerCase();
+
+  const esPropietario =
+    (user?.id && filaActual.prf_cliente_id && String(filaActual.prf_cliente_id) === user.id) ||
+    (correoUsr && correoFila && correoUsr === correoFila) ||
+    (tokenFila.length >= 8 && tokenEnviado === tokenFila);
+
+  if (!esPropietario) {
+    return { ok: false, error: "No tienes permisos para modificar esta proforma." };
+  }
+
+  // Verificar que ninguna variación del grupo tenga pago o confirmación
+  const grupoId = String(detPrev.grupo_proforma_id || filaActual.prf_id);
+  const { data: filasGrupo } = await db
+    .schema("comun_comercio")
+    .from("com_proforma")
+    .select("prf_id, prf_estado, prf_detalle_proforma")
+    .eq("prf_negocio", negNorm)
+    .is("prf_eliminado_en", null);
+
+  const hermanas = (filasGrupo ?? [filaActual]).filter(
+    (h: any) => String(h.prf_detalle_proforma?.grupo_proforma_id || h.prf_id) === grupoId
+  );
+  const bloqueada = hermanas.some(
+    (h: any) =>
+      ESTADOS_PROFORMA_CON_PEDIDO_O_PAGO.has(String(h.prf_estado || "").toUpperCase()) ||
+      Number(h.prf_detalle_proforma?.monto_abonado_usd ?? 0) > 0
+  );
+  if (bloqueada) {
+    return {
+      ok: false,
+      error: "Esta proforma ya cuenta con una reserva o pago confirmado y no puede editarse.",
+    };
+  }
+
+  // Recalcular desglose tributario (IVA 0% flores vs IVA 15% complementos/servicios gravados)
+  let subtotalSinIva = 0;
+  let totalIva = 0;
+  let baseGravadaCentavos = 0;
+  let base0Centavos = 0;
+
+  const itemsNormalizados = entrada.items.map((it) => {
+    const cantidad = Math.max(1, Math.round(Number(it.cantidad) || 1));
+    const pvpUnit = Math.max(0, Number(it.precioUnitario) || 0);
+    const tarifa = Number(it.tarifaIva) > 0 ? Number(it.tarifaIva) : 0;
+    const totalLinea = Math.round(pvpUnit * cantidad * 100) / 100;
+    const baseLinea =
+      tarifa > 0 ? Math.round((totalLinea / (1 + tarifa / 100)) * 100) / 100 : totalLinea;
+    const ivaLinea = Math.max(0, Math.round((totalLinea - baseLinea) * 100) / 100);
+
+    subtotalSinIva += baseLinea;
+    totalIva += ivaLinea;
+    if (tarifa > 0) {
+      baseGravadaCentavos += Math.round(baseLinea * 100);
+    } else {
+      base0Centavos += Math.round(baseLinea * 100);
+    }
+
+    return {
+      producto_id: it.productoId || null,
+      variante_sku: it.sku || "",
+      sku: it.sku || "",
+      descripcion: it.descripcion.trim(),
+      producto_nombre: it.descripcion.trim(),
+      variante_nombre: it.varianteNombre?.trim() || "",
+      cantidad,
+      precio_unitario: pvpUnit,
+      pvp_unitario: pvpUnit,
+      impuesto: tarifa > 0 ? `IVA_${tarifa}` : "IVA_0",
+      total_linea: totalLinea,
+      imagen: it.imagen || null,
+    };
+  });
+
+  const descuentoExistente = Math.max(0, Number(filaActual.prf_descuento ?? 0));
+  const flete = entrada.ubicacion.retiroEnLocal
+    ? 0
+    : Math.max(0, Math.round((Number(entrada.ubicacion.costoEnvio) || 0) * 100) / 100);
+  base0Centavos = Math.max(
+    0,
+    base0Centavos + Math.round(flete * 100) - Math.round(descuentoExistente * 100)
+  );
+
+  const subtotalRedondeado = Math.round(subtotalSinIva * 100) / 100;
+  const ivaRedondeado = Math.round(totalIva * 100) / 100;
+  const totalPagar = Math.max(
+    0.01,
+    Math.round((subtotalRedondeado + ivaRedondeado + flete - descuentoExistente) * 100) / 100
+  );
+  const reserva70 = Math.round(totalPagar * 0.7 * 100) / 100;
+
+  const logPrev = (detPrev.logistica_entrega ?? {}) as Record<string, any>;
+  const nuevoDetalle: Record<string, any> = {
+    ...detPrev,
+    evento: {
+      ...(detPrev.evento ?? {}),
+      tipoEvento: entrada.evento.tipoEvento.trim() || "Evento Especial",
+      fechaEvento: entrada.evento.fechaEvento,
+      horaEvento: entrada.evento.horaEvento || undefined,
+      invitadosEstimados: entrada.evento.invitadosEstimados,
+      paletaColores: entrada.evento.paletaColores?.trim() || undefined,
+      notasEvento: entrada.evento.notasEvento?.trim() || undefined,
+    },
+    logistica_entrega: {
+      ...logPrev,
+      retiro_en_local: Boolean(entrada.ubicacion.retiroEnLocal),
+      direccion: entrada.ubicacion.retiroEnLocal
+        ? "Retiro en Tienda Física"
+        : entrada.ubicacion.direccion.trim() || "Locación por confirmar",
+      referencia: entrada.ubicacion.referencia?.trim() || "",
+      fecha_entrega: entrada.evento.fechaEvento,
+      hora_exacta: entrada.evento.horaEvento || logPrev.hora_exacta || null,
+      enlace_mapa: entrada.ubicacion.enlaceMapa || logPrev.enlace_mapa || null,
+      lat: entrada.ubicacion.lat ?? logPrev.lat ?? null,
+      lng: entrada.ubicacion.lng ?? logPrev.lng ?? null,
+      zona_detectada: entrada.ubicacion.zonaDetectada ?? logPrev.zona_detectada ?? null,
+      distancia_vial_km: entrada.ubicacion.distanciaVialKm ?? logPrev.distancia_vial_km ?? null,
+      costo_envio_usd: flete,
+    },
+    items: itemsNormalizados,
+    subtotal_base_imponible: subtotalRedondeado,
+    total_iva: ivaRedondeado,
+    total_flete: flete,
+    total_pagar: totalPagar,
+    base_iva_0_centavos: base0Centavos,
+    base_iva_gravada_centavos: baseGravadaCentavos,
+    monto_reserva_70_usd: reserva70,
+    saldo_pendiente_usd: totalPagar,
+    editada_por_cliente_en: new Date().toISOString(),
+  };
+
+  // 1. Intentar RPC transaccional en comun_comercio
+  try {
+    const esquemaComercio: any = supabase.schema("comun_comercio");
+    const { data: resRpc, error: errRpc } = await esquemaComercio.rpc(
+      "com_fn_actualizar_proforma_cliente",
+      {
+        p_proforma_id: entrada.proformaId,
+        p_token: tokenFila || null,
+        p_subtotal: subtotalRedondeado,
+        p_iva: ivaRedondeado,
+        p_total: totalPagar,
+        p_detalle: nuevoDetalle,
+        p_items: itemsNormalizados,
+      }
+    );
+    if (!errRpc && resRpc?.ok) {
+      revalidatePath("/panel");
+      if (tokenFila) revalidatePath(`/proforma/${tokenFila}`);
+      return {
+        ok: true,
+        id: String(filaActual.prf_id),
+        codigoProforma: String(
+          nuevoDetalle.codigo_proforma || nuevoDetalle.codigo_orden || "PRF"
+        ),
+        tokenAprobacion: tokenFila,
+        total: totalPagar,
+        montoReserva70Usd: reserva70,
+      };
+    }
+  } catch {
+    // Continuar al respaldo transaccional con service_role
+  }
+
+  // 2. Respaldo resiliente sobre com_proforma + com_proforma_item
+  const { error: errUpd } = await db
+    .schema("comun_comercio")
+    .from("com_proforma")
+    .update({
+      prf_subtotal: subtotalRedondeado,
+      prf_iva: ivaRedondeado,
+      prf_total: totalPagar,
+      prf_observaciones: `Evento: ${entrada.evento.tipoEvento} (${entrada.evento.fechaEvento})`,
+      prf_detalle_proforma: nuevoDetalle,
+      prf_actualizado_en: new Date().toISOString(),
+    })
+    .eq("prf_id", filaActual.prf_id);
+
+  if (errUpd) {
+    return { ok: false, error: errUpd.message };
+  }
+
+  // Marcar ítems anteriores como eliminados e insertar los actualizados
+  await db
+    .schema("comun_comercio")
+    .from("com_proforma_item")
+    .update({ pfi_eliminado_en: new Date().toISOString() })
+    .eq("pfi_proforma_id", filaActual.prf_id)
+    .is("pfi_eliminado_en", null);
+
+  const filasNuevasItems = itemsNormalizados.map((it) => ({
+    pfi_negocio: negNorm,
+    pfi_proforma_id: filaActual.prf_id,
+    pfi_variante_id: null,
+    pfi_es_item_libre: true,
+    pfi_descripcion: it.descripcion,
+    pfi_cantidad: it.cantidad,
+    pfi_precio_unitario: it.precio_unitario,
+    pfi_descuento: 0,
+    pfi_impuesto: it.impuesto,
+    pfi_total_linea: it.total_linea,
+    pfi_detalle_item: it,
+  }));
+
+  const { error: errInsItems } = await db
+    .schema("comun_comercio")
+    .from("com_proforma_item")
+    .insert(filasNuevasItems);
+
+  if (errInsItems) {
+    return { ok: false, error: errInsItems.message };
+  }
+
+  revalidatePath("/panel");
+  if (tokenFila) revalidatePath(`/proforma/${tokenFila}`);
+
+  return {
+    ok: true,
+    id: String(filaActual.prf_id),
+    codigoProforma: String(
+      nuevoDetalle.codigo_proforma || nuevoDetalle.codigo_orden || "PRF"
+    ),
+    tokenAprobacion: tokenFila,
+    total: totalPagar,
+    montoReserva70Usd: reserva70,
+  };
+}
+
 

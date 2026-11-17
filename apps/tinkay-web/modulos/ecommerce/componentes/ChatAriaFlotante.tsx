@@ -163,6 +163,7 @@ export function ChatAriaFlotante() {
     configLogistica,
     entregaUnificada,
     actualizarEntregaUnificada,
+    usuarioRegistrado,
   } = useCarrito();
 
   const catalogo = productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY;
@@ -1619,6 +1620,7 @@ export function ChatAriaFlotante() {
               <SelectorUbicacionEntrega
                 negocio="tinkay"
                 configuracionInicial={configLogistica}
+                clienteRegistrado={usuarioRegistrado}
                 permitirModoRetiro={configLogistica.permitirRetiroLocal}
                 retiroEnLocal={Boolean(entregaUnificada.retiroEnLocal)}
                 enlaceMapaInicial={entregaUnificada.enlaceMapa || ''}

@@ -28,6 +28,7 @@ import {
   buscarDireccionesMapaAction,
   cotizarEnvioDesdeEntradaAction,
   obtenerConfiguracionLogisticaAction,
+  obtenerEstadoRegaloPrimeraCompraAction,
 } from "../acciones-logistica";
 import { MapaCoberturaPichincha } from "./MapaCoberturaPichincha";
 
@@ -50,6 +51,8 @@ export interface PropsSelectorUbicacionEntrega {
   coordenadasIniciales?: CoordenadaGeo | null;
   cotizacionInicial?: ResultadoCotizacionEnvio | null;
   mostrarMapaPorDefecto?: boolean;
+  /** Si se indica explícitamente, define si el comprador tiene cuenta registrada activa en el negocio */
+  clienteRegistrado?: boolean;
   onCambioCotizacion: (evento: EventoCotizacionUbicacion) => void;
 }
 
@@ -64,10 +67,17 @@ export function SelectorUbicacionEntrega({
   coordenadasIniciales = null,
   cotizacionInicial = null,
   mostrarMapaPorDefecto = false,
+  clienteRegistrado,
   onCambioCotizacion,
 }: PropsSelectorUbicacionEntrega) {
   const [config, setConfig] = useState<ConfiguracionLogisticaNegocio>(
     () => configuracionInicial ?? crearConfiguracionLogisticaPorDefecto(negocio)
+  );
+  const [registradoDetectado, setRegistradoDetectado] = useState<boolean>(
+    typeof clienteRegistrado === "boolean" ? clienteRegistrado : false
+  );
+  const [verificandoRegistro, setVerificandoRegistro] = useState<boolean>(
+    typeof clienteRegistrado !== "boolean"
   );
   const [retiroLocal, setRetiroLocal] = useState<boolean>(retiroInicial);
   const [enlaceTexto, setEnlaceTexto] = useState<string>(enlaceMapaInicial);
@@ -100,14 +110,38 @@ export function SelectorUbicacionEntrega({
     };
   }, [negocio, configuracionInicial]);
 
-  // Recalcular si cambian condiciones de los ítems (ej. producto sin envío incluido o recargo especial)
   useEffect(() => {
-    if (retiroLocal) return;
+    if (typeof clienteRegistrado === "boolean") {
+      setRegistradoDetectado(clienteRegistrado);
+      setVerificandoRegistro(false);
+      return;
+    }
+    let activo = true;
+    setVerificandoRegistro(true);
+    obtenerEstadoRegaloPrimeraCompraAction(negocio)
+      .then((res) => {
+        if (activo) setRegistradoDetectado(Boolean(res.autenticado));
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (activo) setVerificandoRegistro(false);
+      });
+    return () => {
+      activo = false;
+    };
+  }, [negocio, clienteRegistrado]);
+
+  const esClienteRegistradoEfectivo =
+    typeof clienteRegistrado === "boolean" ? clienteRegistrado : registradoDetectado;
+
+  // Recalcular si cambian condiciones de los ítems o el estado de registro del cliente
+  useEffect(() => {
+    if (retiroLocal || verificandoRegistro) return;
     if (coordenadas) {
       void ejecutarCotizacionPorCoordenadas(coordenadas, enlaceTexto, undefined, true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deliveryIncluidoProducto, recargoLogisticoProducto]);
+  }, [deliveryIncluidoProducto, recargoLogisticoProducto, esClienteRegistradoEfectivo, verificandoRegistro]);
 
   async function ejecutarCotizacionPorCoordenadas(
     punto: CoordenadaGeo,
@@ -127,6 +161,7 @@ export function SelectorUbicacionEntrega({
         deliveryIncluidoProducto,
         recargoLogisticoProducto,
         retiroEnLocal: false,
+        clienteRegistrado: esClienteRegistradoEfectivo,
       });
 
       if (!res.ok) {
@@ -175,6 +210,7 @@ export function SelectorUbicacionEntrega({
         deliveryIncluidoProducto,
         recargoLogisticoProducto,
         retiroEnLocal: false,
+        clienteRegistrado: esClienteRegistradoEfectivo,
       });
 
       if (!res.ok) {
@@ -389,50 +425,172 @@ export function SelectorUbicacionEntrega({
         </div>
       ) : (
         <>
-          {/* Indicador de Zona de Cobertura Gratuita */}
-          <div
-            style={{
-              background: "#F0FDF4",
-              border: "1px solid #BBF7D0",
-              borderRadius: "10px",
-              padding: "9px 12px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: "8px",
-            }}
-          >
-            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  fontSize: "0.78rem",
-                  fontWeight: 700,
-                  color: "#166534",
-                }}
-              >
-                <CheckCircle2 size={15} color="#16A34A" style={{ flexShrink: 0 }} />
-                <span>Zona de cobertura gratuita: {config.zonaGratisNombre || "Quito Centro-Norte"}</span>
-              </span>
-              <span style={{ fontSize: "0.71rem", color: "#15803D", paddingLeft: "21px" }}>
-                Envío sin costo dentro del perímetro. Fuera de esta zona se calcula recargo adicional según la distancia.
-              </span>
-            </div>
-            <strong
+          {/* Indicador de Zona de Cobertura según Registro del Cliente */}
+          {esClienteRegistradoEfectivo || config.envioGratisSoloRegistrados === false ? (
+            <div
               style={{
-                fontSize: "0.8rem",
-                color: "#15803D",
-                whiteSpace: "nowrap",
-                background: "#DCFCE7",
-                padding: "3px 8px",
-                borderRadius: "999px",
+                background: "#F0FDF4",
+                border: "1px solid #BBF7D0",
+                borderRadius: "10px",
+                padding: "9px 12px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "8px",
               }}
             >
-              GRATIS ($0.00)
-            </strong>
-          </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "0.78rem",
+                    fontWeight: 700,
+                    color: "#166534",
+                  }}
+                >
+                  <CheckCircle2 size={15} color="#16A34A" style={{ flexShrink: 0 }} />
+                  <span>
+                    Beneficio Cliente Registrado · Zona gratuita:{" "}
+                    {config.zonaGratisNombre || "Quito Centro-Norte"}
+                  </span>
+                </span>
+                <span style={{ fontSize: "0.71rem", color: "#15803D", paddingLeft: "21px" }}>
+                  Envío sin costo dentro del perímetro. Fuera de esta zona se calcula recargo adicional según la distancia.
+                </span>
+              </div>
+              <strong
+                style={{
+                  fontSize: "0.8rem",
+                  color: "#15803D",
+                  whiteSpace: "nowrap",
+                  background: "#DCFCE7",
+                  padding: "3px 8px",
+                  borderRadius: "999px",
+                }}
+              >
+                GRATIS ($0.00)
+              </strong>
+            </div>
+          ) : (
+            <div
+              style={{
+                background: "linear-gradient(135deg, #FFFBEB 0%, #FDF2F8 100%)",
+                border: "1px solid #FDE68A",
+                borderRadius: "10px",
+                padding: "10px 12px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "6px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "6px",
+                }}
+              >
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "0.78rem",
+                    fontWeight: 800,
+                    color: "#92400E",
+                  }}
+                >
+                  <AlertTriangle size={14} color="#D97706" style={{ flexShrink: 0 }} />
+                  <span>
+                    Envío Gratis en {config.zonaGratisNombre || "Centro-Norte"} exclusivo para registrados
+                  </span>
+                </span>
+                <strong
+                  style={{
+                    fontSize: "0.73rem",
+                    color: "#92400E",
+                    background: "#FEF3C7",
+                    padding: "2px 8px",
+                    borderRadius: "999px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Invitado: ${(config.tarifaBaseNoRegistradoUsd ?? 1).toFixed(2)} + $
+                  {(config.tarifaPorKmNoRegistradoUsd ?? config.tarifaPorKm ?? 0.5).toFixed(2)}/km
+                </strong>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: "8px",
+                }}
+              >
+                <span style={{ fontSize: "0.71rem", color: "#78350F", lineHeight: 1.35 }}>
+                  Regístrate gratis o inicia sesión para activar tu zona de entrega gratuita ($0.00).
+                </span>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                  <a
+                    href="/registro?destino=%2F%3Fcheckout%3D1%26obsequio%3D1&obsequio=1"
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        document.cookie = `tranqi_destino=${encodeURIComponent(
+                          "/?checkout=1&obsequio=1"
+                        )}; path=/; max-age=86400`;
+                      }
+                    }}
+                    title="Crear cuenta gratis para activar zona de envío gratuito"
+                    aria-label="Registrarme"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      padding: "4px 10px",
+                      borderRadius: "999px",
+                      background: "#2D4734",
+                      color: "#FFFFFF",
+                      fontSize: "0.71rem",
+                      fontWeight: 700,
+                      textDecoration: "none",
+                    }}
+                  >
+                    Registrarme
+                  </a>
+                  <a
+                    href="/ingresar?destino=%2F%3Fcheckout%3D1%26obsequio%3D1"
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        document.cookie = `tranqi_destino=${encodeURIComponent(
+                          "/?checkout=1&obsequio=1"
+                        )}; path=/; max-age=86400`;
+                      }
+                    }}
+                    title="Iniciar sesión con mi cuenta para activar envío gratis"
+                    aria-label="Ingresar"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      padding: "4px 10px",
+                      borderRadius: "999px",
+                      border: "1px solid #D6D3D1",
+                      background: "#FFFFFF",
+                      color: "#1C1917",
+                      fontSize: "0.71rem",
+                      fontWeight: 700,
+                      textDecoration: "none",
+                    }}
+                  >
+                    Ingresar
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Campo de link Google Maps / Apple Maps / Waze */}
           <div style={{ display: "flex", gap: "6px", alignItems: "stretch" }}>
@@ -820,6 +978,49 @@ export function SelectorUbicacionEntrega({
                   </div>
                 </div>
               )}
+
+              {cotizacion.dentroCobertura &&
+                cotizacion.clienteRegistrado === false &&
+                (cotizacion.ahorroPorRegistrarseUsd ?? 0) > 0 && (
+                  <div
+                    style={{
+                      marginTop: "5px",
+                      padding: "6px 9px",
+                      borderRadius: "8px",
+                      background: "#ECFDF5",
+                      border: "1px solid #A7F3D0",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: "6px",
+                      fontSize: "0.72rem",
+                      color: "#065F46",
+                    }}
+                  >
+                    <span>
+                      ✨ <strong>Beneficio cliente registrado:</strong> ahorras{" "}
+                      <strong>${cotizacion.ahorroPorRegistrarseUsd!.toFixed(2)}</strong> en este envío (
+                      {cotizacion.costoSiFueraRegistradoUsd === 0
+                        ? "Envío GRATIS $0.00"
+                        : `$${cotizacion.costoSiFueraRegistradoUsd!.toFixed(2)}`}
+                      ).
+                    </span>
+                    <a
+                      href="/registro?destino=%2F%3Fcheckout%3D1%26obsequio%3D1&obsequio=1"
+                      title="Registrarme ahora y aplicar envío de cliente registrado"
+                      aria-label="Activar Envío Gratis"
+                      style={{
+                        color: "#047857",
+                        fontWeight: 800,
+                        textDecoration: "underline",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      Activar Gratis →
+                    </a>
+                  </div>
+                )}
 
               {!cotizacion.dentroCobertura && (
                 <span style={{ fontSize: "0.72rem", color: "#92400E", lineHeight: 1.35 }}>
