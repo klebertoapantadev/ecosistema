@@ -32,6 +32,16 @@ body {
   color: var(--tinta);
 }
 
+button,
+a,
+select,
+input,
+textarea,
+[role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 h1, h2, h3, .fuente-display { font-family: var(--font-fraunces), Georgia, serif; }
 
 /* ═══════════ Auth (registro / ingresar) ═══════════ */
@@ -452,17 +462,33 @@ h1, h2, h3, .fuente-display { font-family: var(--font-fraunces), Georgia, serif;
 @media (max-width: 640px) {
   .pagina-auth { padding: 24px 14px; }
   .tarjeta-auth { padding: 22px 16px; }
-  .form-auth input, .form-panel input, .form-busqueda input, .datagrid-busqueda { font-size: 16px; }
+  .form-auth input,
+  .form-panel input,
+  .form-busqueda input,
+  .datagrid-busqueda,
+  .panel-contenido input:not([type="checkbox"]):not([type="radio"]),
+  .panel-contenido select,
+  .panel-contenido textarea {
+    font-size: 16px;
+  }
   .historial-accesos li { flex-direction: column; align-items: flex-start; gap: 4px; }
   .datagrid-busqueda { max-width: 100%; }
   .datagrid-exportar { width: 100%; }
   .datagrid-exportar .btn-mini { flex: 1; text-align: center; }
   .datagrid-tabla td { padding: 10px 12px; font-size: 0.81rem; }
   .btn-texto-responsive { display: none !important; }
-  .btn-responsive-accion { gap: 0 !important; justify-content: center; }
+  .btn-responsive-accion {
+    gap: 0 !important;
+    justify-content: center;
+    align-items: center;
+    min-width: 38px;
+    min-height: 38px;
+  }
   .panel-rol-movil { display: none !important; }
   .ocultar-en-movil { display: none !important; }
-  .panel-contenido { padding: 8px 10px; }
+  .panel-contenido {
+    padding: 8px 10px calc(12px + env(safe-area-inset-bottom, 0px));
+  }
   .panel-contenido h1 { font-size: 1.05rem; margin-bottom: 8px; }
 }
 

@@ -8,6 +8,7 @@ import {
   emparejarComprasConConversacion,
   extraerSegmentosMultimediaMensaje,
   extraerTodasLasImagenesMensaje,
+  formatearEtiquetaEnlaceVisible,
   interpolarRespuestaRapida,
   limpiarVistaPreviaMensajeOmnicanal,
   normalizarHandleMencion,
@@ -293,5 +294,41 @@ describe("omnicanal — normalización, plantillas y cruce cliente-compras", () 
       clienteTelefono: "+593984583280",
     });
     expect(resuelta?.id).toBe("cnv-real-1");
+  });
+
+  it("evita fugas de URLs firmadas JWT crudas en burbujas móviles y compacta enlaces extensos", () => {
+    const urlJwt =
+      "https://api.ycloud.com/v2/whatsapp/media/6894d3b3d1947622cef?token=eyJpZCI6IjQ2OTQ4NzMzMXNjc0NjE1Iiwid2FtIjpbXSwiZmlsZSI6ImFwcGxpY2F0aW9uIn0.WNE9KRWhrWTQ3cmdQ";
+
+    // Caso 1: corchetes anidados o URL firmada envuelta en paréntesis + detalle.imagen_url duplicada
+    const segs = extraerSegmentosMultimediaMensaje(
+      `![Fotografía [WhatsApp]\nen chat](${urlJwt})`,
+      { imagen_url: urlJwt }
+    );
+    expect(segs).toHaveLength(1);
+    expect(segs[0]).toEqual({
+      tipo: "imagen",
+      alt: "Fotografía [WhatsApp] en chat",
+      url: urlJwt,
+    });
+
+    // Caso 2: URL firmada suelta entre paréntesis sin Markdown
+    const segsSuelta = extraerSegmentosMultimediaMensaje(
+      `Adjunto comprobante (${urlJwt})`,
+      { imagen_url: urlJwt }
+    );
+    expect(segsSuelta.filter((s) => s.tipo === "imagen")).toHaveLength(1);
+    expect(
+      segsSuelta.some((s) => s.tipo === "texto" && s.texto.includes("eyJpZCI6"))
+    ).toBe(false);
+
+    // Caso 3: Formateo compacto de enlaces extensos con paréntesis de cierre externo
+    const enlaceCompacto = formatearEtiquetaEnlaceVisible(
+      "(https://www.google.com/maps/place/Quito+Ecuador/@-0.1806532,-78.4678382,15z/data=!4m6!3m5)"
+        .slice(1)
+    );
+    expect(enlaceCompacto.sufijo).toBe(")");
+    expect(enlaceCompacto.href.endsWith("3m5")).toBe(true);
+    expect(enlaceCompacto.etiqueta).toContain("🔗 google.com/");
   });
 });

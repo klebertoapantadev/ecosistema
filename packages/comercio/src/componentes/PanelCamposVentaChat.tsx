@@ -300,12 +300,13 @@ export function PanelCamposVentaChat({
               type="button"
               onClick={() => setSeccion(tab.id)}
               style={{
-                padding: "5px 4px",
+                minHeight: "36px",
+                padding: "6px 4px",
                 borderRadius: "6px",
                 border: "none",
                 background: act ? "#0F172A" : "transparent",
                 color: act ? "#FFFFFF" : "#475569",
-                fontSize: "0.71rem",
+                fontSize: "0.73rem",
                 fontWeight: 700,
                 cursor: "pointer",
               }}
@@ -646,7 +647,7 @@ export function PanelCamposVentaChat({
       )}
 
       {/* Botonera inferior: Guardar Campos + Enviar directo a Taller */}
-      <div style={{ display: "flex", gap: "6px", paddingTop: "2px" }}>
+      <div style={{ display: "flex", gap: "8px", paddingTop: "2px" }}>
         <button
           type="button"
           disabled={guardando}
@@ -655,26 +656,27 @@ export function PanelCamposVentaChat({
           aria-label="Guardar campos"
           style={{
             flex: 1,
+            minHeight: "40px",
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
             gap: "5px",
-            padding: "7px 10px",
-            borderRadius: "8px",
+            padding: "8px 10px",
+            borderRadius: "9px",
             border: "1px solid #CBD5E1",
             background: guardadoReciente ? "#ECFDF5" : "#F8FAFC",
             color: guardadoReciente ? "#047857" : "#0F172A",
-            fontSize: "0.74rem",
+            fontSize: "0.78rem",
             fontWeight: 700,
             cursor: guardando ? "wait" : "pointer",
           }}
         >
           {guardando ? (
-            <Loader2 size={13} />
+            <Loader2 size={14} />
           ) : guardadoReciente ? (
-            <Check size={13} />
+            <Check size={14} />
           ) : (
-            <Save size={13} />
+            <Save size={14} />
           )}
           <span>{guardadoReciente ? "Guardado" : "Guardar"}</span>
         </button>
@@ -687,21 +689,22 @@ export function PanelCamposVentaChat({
           aria-label="Enviar a Taller"
           style={{
             flex: 1.2,
+            minHeight: "40px",
             display: "inline-flex",
             alignItems: "center",
             justifyContent: "center",
             gap: "5px",
-            padding: "7px 10px",
-            borderRadius: "8px",
+            padding: "8px 10px",
+            borderRadius: "9px",
             border: "none",
             background: "#15803D",
             color: "#FFFFFF",
-            fontSize: "0.74rem",
+            fontSize: "0.78rem",
             fontWeight: 700,
             cursor: enviandoTaller ? "wait" : "pointer",
           }}
         >
-          {enviandoTaller ? <Loader2 size={13} /> : <Hammer size={13} />}
+          {enviandoTaller ? <Loader2 size={14} /> : <Hammer size={14} />}
           <span>A Taller</span>
         </button>
       </div>

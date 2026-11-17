@@ -62,6 +62,7 @@ export interface DatosTableroOmnicanal {
   usuarioActualId: string | null;
   usuarioActualNombre: string;
   esAdminEtiquetas?: boolean;
+  esAdminAplicacion?: boolean;
   conversaciones: ConversacionOmnicanal[];
   etiquetas: EtiquetaOmnicanal[];
   respuestasRapidas: RespuestaRapidaOmnicanal[];
@@ -613,6 +614,17 @@ export async function obtenerTableroOmnicanalAction(
             ["SUPERADMIN", "ADMINISTRADOR", "ADMIN", "OPERADOR"].includes(
               String(miembroActual?.rol || "").toUpperCase()
             );
+      const esAdminAplicacionInferido =
+        typeof rpcTablero.esAdminAplicacion === "boolean"
+          ? rpcTablero.esAdminAplicacion
+          : Boolean(resPerfilActual.data?.usu_superadmin_plataforma) ||
+            (neg === "tinkay" &&
+              String(resPerfilActual.data?.usu_correo || user.email || "")
+                .trim()
+                .toLowerCase() === "tinkay.uio@gmail.com") ||
+            ["SUPERADMIN", "ADMINISTRADOR", "ADMIN"].includes(
+              String(miembroActual?.rol || "").toUpperCase()
+            );
 
       const etiquetasFiltradas = (
         Array.isArray(rpcTablero.etiquetas) && rpcTablero.etiquetas.length > 0
@@ -628,6 +640,7 @@ export async function obtenerTableroOmnicanalAction(
           usuarioActualId: user.id,
           usuarioActualNombre,
           esAdminEtiquetas: esAdminEtiquetasInferido,
+          esAdminAplicacion: esAdminAplicacionInferido,
           conversaciones: conversacionesNormalizadas,
           etiquetas: etiquetasFiltradas,
           respuestasRapidas:
@@ -924,6 +937,15 @@ export async function obtenerTableroOmnicanalAction(
       ["SUPERADMIN", "ADMINISTRADOR", "ADMIN", "OPERADOR"].includes(
         rolUsuarioActualFallback.toUpperCase()
       );
+    const esAdminAplicacionFallback =
+      Boolean(resPerfilActual.data?.usu_superadmin_plataforma) ||
+      (neg === "tinkay" &&
+        String(resPerfilActual.data?.usu_correo || user.email || "")
+          .trim()
+          .toLowerCase() === "tinkay.uio@gmail.com") ||
+      ["SUPERADMIN", "ADMINISTRADOR", "ADMIN"].includes(
+        rolUsuarioActualFallback.toUpperCase()
+      );
 
     return {
       ok: true,
@@ -931,6 +953,7 @@ export async function obtenerTableroOmnicanalAction(
         usuarioActualId: user.id,
         usuarioActualNombre,
         esAdminEtiquetas: esAdminEtiquetasFallback,
+        esAdminAplicacion: esAdminAplicacionFallback,
         conversaciones: conversacionesFinales,
         etiquetas: etiquetasFinales,
         respuestasRapidas: respuestasFinales,
@@ -1302,6 +1325,208 @@ export async function actualizarConversacionOmnicanalAction(entrada: {
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Error inesperado al actualizar conversación.",
+    };
+  }
+}
+
+/**
+ * Elimina de forma completa una conversación y todos sus mensajes de la Bandeja Omnicanal.
+ * Exclusivo para Administradores (`SUPERADMIN` / `ADMINISTRADOR`).
+ */
+export async function eliminarConversacionOmnicanalAction(entrada: {
+  negocio: string;
+  conversacionId: string;
+  claveHilo?: string | null;
+}): Promise<
+  | { ok: true; conversacionId: string; remitenteNombre?: string }
+  | { ok: false; error: string }
+> {
+  try {
+    const neg = normalizarNegocioComercio(entrada.negocio);
+    const convId = String(entrada.conversacionId || "").trim();
+    if (!convId) {
+      return { ok: false, error: "Conversación no especificada." };
+    }
+
+    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { ok: false, error: "Sesión expirada. Vuelve a iniciar sesión." };
+    }
+
+    // Si es un hilo efímero en memoria `rt-...`, validar permiso de Administrador y confirmar limpieza
+    const codigosNeg = variantesCodigoNegocio(neg);
+    const adminDb: any = crearClienteAdmin() ?? supabase;
+
+    const verificarPermisoAdminServidor = async (): Promise<{
+      permitido: boolean;
+      actorNombre: string;
+    }> => {
+      const [resUsu, resMem] = await Promise.all([
+        adminDb
+          .schema("comun_seguridad")
+          .from("seg_usuario")
+          .select("usu_nombres, usu_apellidos, usu_correo, usu_superadmin_plataforma")
+          .eq("usu_id", user.id)
+          .maybeSingle(),
+        adminDb
+          .schema("comun_seguridad")
+          .from("seg_membresia")
+          .select("mem_rol, seg_membresia_perfil(seg_perfil(per_clave))")
+          .eq("mem_usuario_id", user.id)
+          .eq("mem_estado", "ACTIVO")
+          .in("mem_negocio", codigosNeg),
+      ]);
+
+      const u = resUsu?.data;
+      const actorNombre =
+        [u?.usu_nombres, u?.usu_apellidos].filter(Boolean).join(" ").trim() ||
+        u?.usu_correo ||
+        user.email ||
+        "Administrador";
+
+      if (
+        Boolean(u?.usu_superadmin_plataforma) ||
+        (neg === "tinkay" &&
+          String(u?.usu_correo || user.email || "")
+            .trim()
+            .toLowerCase() === "tinkay.uio@gmail.com")
+      ) {
+        return { permitido: true, actorNombre };
+      }
+
+      const mems = Array.isArray(resMem?.data) ? resMem.data : [];
+      for (const m of mems) {
+        const rolBase = String(m?.mem_rol || "").toUpperCase();
+        if (["SUPERADMIN", "ADMINISTRADOR", "ADMIN"].includes(rolBase)) {
+          return { permitido: true, actorNombre };
+        }
+        const perfiles = Array.isArray(m?.seg_membresia_perfil) ? m.seg_membresia_perfil : [];
+        for (const mp of perfiles) {
+          const per = Array.isArray(mp?.seg_perfil) ? mp.seg_perfil[0] : mp?.seg_perfil;
+          const clave = String(per?.per_clave || "").toUpperCase();
+          if (["SUPERADMIN", "ADMINISTRADOR", "ADMIN"].includes(clave)) {
+            return { permitido: true, actorNombre };
+          }
+        }
+      }
+
+      return { permitido: false, actorNombre };
+    };
+
+    if (/^[0-9a-f-]{36}$/i.test(convId)) {
+      const esquemaComercio = supabase.schema("comun_comercio") as any;
+      const { data, error } = await esquemaComercio.rpc("com_fn_omnicanal_eliminar_conversacion", {
+        p_negocio: neg,
+        p_conversacion_id: convId,
+      });
+
+      if (!error && data?.ok) {
+        await emitirBroadcastServidorOmnicanal(supabase, neg, "intervencion_asesor", {
+          eventoId: `del-${Date.now()}`,
+          claveHilo: entrada.claveHilo || "",
+          conversacionId: convId,
+          estadoAtencion: "CERRADO",
+          eliminada: true,
+        });
+        return {
+          ok: true,
+          conversacionId: convId,
+          remitenteNombre: data.remitenteNombre ? String(data.remitenteNombre) : undefined,
+        };
+      }
+
+      if (data && data.ok === false) {
+        return { ok: false, error: String(data.error) };
+      }
+
+      if (error && !esFuncionRpcPendienteMigracion(error.message)) {
+        return { ok: false, error: error.message };
+      }
+
+      // Respaldo inmediato si la migración 20261117000004 aún no se ha ejecutado en Supabase SQL Editor
+      const checkAdmin = await verificarPermisoAdminServidor();
+      if (!checkAdmin.permitido) {
+        return {
+          ok: false,
+          error:
+            "Permiso denegado: solo un Administrador de la aplicación puede eliminar conversaciones.",
+        };
+      }
+
+      const ahoraIso = new Date().toISOString();
+      await Promise.all([
+        Promise.resolve(
+          adminDb
+            .schema("comun_agentes")
+            .from("agc_conversacion_etiqueta")
+            .update({ cet_eliminado_en: ahoraIso })
+            .eq("cet_conversacion_id", convId)
+            .is("cet_eliminado_en", null)
+        ).catch(() => null),
+        Promise.resolve(
+          adminDb
+            .schema("comun_agentes")
+            .from("agc_mensaje")
+            .update({ msg_eliminado_en: ahoraIso, msg_actualizado_en: ahoraIso })
+            .eq("msg_conversacion_id", convId)
+            .is("msg_eliminado_en", null)
+        ).catch(() => null),
+      ]);
+
+      const { error: errDelConv } = await adminDb
+        .schema("comun_agentes")
+        .from("agc_conversacion")
+        .update({
+          cnv_eliminado_en: ahoraIso,
+          cnv_actualizado_en: ahoraIso,
+          cnv_no_leidos_asesora: 0,
+          cnv_recordatorio_en: null,
+          cnv_recordatorio_nota: null,
+        })
+        .eq("cnv_id", convId)
+        .eq("cnv_negocio", neg)
+        .neq("cnv_canal", "interno");
+
+      if (errDelConv) {
+        return { ok: false, error: errDelConv.message };
+      }
+    } else {
+      const checkAdmin = await verificarPermisoAdminServidor();
+      if (!checkAdmin.permitido) {
+        return {
+          ok: false,
+          error:
+            "Permiso denegado: solo un Administrador de la aplicación puede eliminar conversaciones.",
+        };
+      }
+    }
+
+    // Limpiar también del almacén híbrido si existía copia allí
+    const almacen = await leerAlmacenRespaldoCfg(neg);
+    if (almacen.conversaciones.some((c) => c.id === convId)) {
+      almacen.conversaciones = almacen.conversaciones.filter((c) => c.id !== convId);
+      delete almacen.mensajesPorConversacion[convId];
+      await escribirAlmacenRespaldoCfg(neg, almacen);
+    }
+
+    await emitirBroadcastServidorOmnicanal(supabase, neg, "intervencion_asesor", {
+      eventoId: `del-${Date.now()}`,
+      claveHilo: entrada.claveHilo || "",
+      conversacionId: convId,
+      estadoAtencion: "CERRADO",
+      eliminada: true,
+    });
+
+    return { ok: true, conversacionId: convId };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error inesperado al eliminar conversación.",
     };
   }
 }

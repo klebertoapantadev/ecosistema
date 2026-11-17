@@ -27,6 +27,7 @@ import {
   construirHrefRetornoChatCliente,
   extraerSegmentosMultimediaMensaje,
   extraerTodasLasImagenesMensaje,
+  formatearEtiquetaEnlaceVisible,
   nombreCanalRealtimeChatEquipo,
   normalizarHandleMencion,
   type CitaRespuestaChatEquipo,
@@ -75,20 +76,25 @@ function renderTextoConMencionesYEnlaces(
 
   return partes.map((parte, idx) => {
     if (/^https?:\/\//i.test(parte)) {
+      const info = formatearEtiquetaEnlaceVisible(parte, 48);
       return (
-        <a
-          key={idx}
-          href={parte}
-          target="_blank"
-          rel="noreferrer"
-          style={{
-            color: esMio ? "#DDD6FE" : "#2563EB",
-            textDecoration: "underline",
-            wordBreak: "break-all",
-          }}
-        >
-          {parte}
-        </a>
+        <React.Fragment key={idx}>
+          <a
+            href={info.href}
+            target="_blank"
+            rel="noreferrer"
+            title={info.href}
+            style={{
+              color: esMio ? "#DDD6FE" : "#2563EB",
+              textDecoration: "underline",
+              wordBreak: "break-word",
+              fontWeight: 600,
+            }}
+          >
+            {info.etiqueta}
+          </a>
+          {info.sufijo}
+        </React.Fragment>
       );
     }
 
@@ -574,9 +580,11 @@ export function ChatEquipoInterno({
       style={{
         display: "flex",
         flexDirection: "column",
-        gap: "12px",
-        height: embebido ? "660px" : "calc(100vh - 140px)",
-        minHeight: "540px",
+        gap: "10px",
+        height: embebido
+          ? "clamp(480px, calc(100dvh - 140px), 680px)"
+          : "calc(100dvh - 125px)",
+        minHeight: "460px",
       }}
     >
       {/* Cabecera del Chat Grupal de Trabajo */}
@@ -1197,7 +1205,7 @@ export function ChatEquipoInterno({
             position: "relative",
             borderTop: "1px solid #E2E8F0",
             background: "#FFFFFF",
-            padding: "10px 14px",
+            padding: "10px 12px calc(10px + env(safe-area-inset-bottom, 0px))",
             display: "flex",
             flexDirection: "column",
             gap: "8px",
@@ -1399,7 +1407,7 @@ export function ChatEquipoInterno({
 
             <textarea
               ref={textareaRef}
-              rows={2}
+              rows={1}
               value={texto}
               onChange={(e) =>
                 actualizarTextoYDetectarMencion(e.target.value, e.target.selectionStart)
@@ -1411,13 +1419,17 @@ export function ChatEquipoInterno({
                   void handleEnviar(e);
                 }
               }}
-              placeholder="Escribe al equipo, pega una captura (Ctrl+V) o menciona con @kleber…"
+              placeholder="Mensaje al equipo o @kleber…"
               style={{
                 flex: 1,
-                padding: "8px 12px",
+                minWidth: 0,
+                minHeight: "42px",
+                maxHeight: "105px",
+                padding: "9px 12px",
+                lineHeight: 1.35,
                 borderRadius: "10px",
                 border: "1px solid #CBD5E1",
-                fontSize: "0.84rem",
+                fontSize: "16px",
                 fontFamily: "inherit",
                 resize: "none",
               }}

@@ -538,6 +538,7 @@ export interface EventoBroadcastIntervencionAsesor {
   asesoraNombre?: string | null;
   esNotaInterna?: boolean;
   mensaje?: MensajeOmnicanal | null;
+  eliminada?: boolean;
 }
 
 export interface MiembroChatEquipo {
@@ -703,19 +704,103 @@ interface TokenMarkdownEscaneado {
 }
 
 const REGEX_EXT_IMAGEN = /\.(?:jpg|jpeg|png|webp|gif|heic)(?:\?.*)?$/i;
+const REGEX_RUTA_MEDIA_CONOCIDA =
+  /\/omnicanal-media\/|\/whatsapp_business\/attachments|lookaside\.fbsbx\.com|mmg\.whatsapp\.net|\/v2\/whatsapp\/media|\/storage\/v1\/object\/(?:public|sign)\//i;
+const REGEX_QUERY_MEDIA_FIRMADA = /[?&](?:token|jwt|sig|signature)=eyJ[a-zA-Z0-9_-]{12,}/;
+const REGEX_ALT_DESCRIPTIVO_IMAGEN =
+  /\b(?:foto|fotograf[ií]a|imagen|captura|sticker|adjunt[ao]|comprobante)\b/i;
+
+export function esUrlMultimediaChat(
+  url: string,
+  alt?: string | null,
+  urlsDetalle?: Set<string>
+): boolean {
+  const limpia = url.trim();
+  if (!/^https?:\/\//i.test(limpia)) return false;
+  if (urlsDetalle?.has(limpia)) return true;
+  if (REGEX_EXT_IMAGEN.test(limpia)) return true;
+  if (REGEX_RUTA_MEDIA_CONOCIDA.test(limpia)) return true;
+  if (REGEX_QUERY_MEDIA_FIRMADA.test(limpia)) return true;
+  if (alt && REGEX_ALT_DESCRIPTIVO_IMAGEN.test(alt)) return true;
+  return false;
+}
+
+/**
+ * Separa puntuación de cierre pegada al final de una URL en texto libre (`(https://...token=abc)` -> sufijo `)`)
+ * y genera una etiqueta compacta legible para pantallas móviles cuando la URL es extensa.
+ */
+export function formatearEtiquetaEnlaceVisible(
+  urlCruda: string,
+  maxCaracteres = 48
+): {
+  href: string;
+  etiqueta: string;
+  sufijo: string;
+} {
+  let href = urlCruda;
+  let sufijo = "";
+
+  while (href.length > 10) {
+    const ultimo = href[href.length - 1]!;
+    if (ultimo === "." || ultimo === "," || ultimo === ";" || ultimo === ":") {
+      sufijo = ultimo + sufijo;
+      href = href.slice(0, -1);
+      continue;
+    }
+    if (ultimo === ")") {
+      let abiertos = 0;
+      let cerrados = 0;
+      for (let idx = 0; idx < href.length; idx += 1) {
+        if (href[idx] === "(") abiertos += 1;
+        else if (href[idx] === ")") cerrados += 1;
+      }
+      if (cerrados > abiertos) {
+        sufijo = ")" + sufijo;
+        href = href.slice(0, -1);
+        continue;
+      }
+    }
+    break;
+  }
+
+  if (href.length <= maxCaracteres) {
+    return { href, etiqueta: href, sufijo };
+  }
+
+  try {
+    const parsed = new URL(href);
+    const host = parsed.hostname.replace(/^www\./i, "");
+    const segs = parsed.pathname.split("/").filter(Boolean);
+    const colaRuta = segs.length > 0 ? `/${segs[0]!.slice(0, 14)}${segs.length > 1 || segs[0]!.length > 14 ? "…" : ""}` : "/…";
+    return {
+      href,
+      etiqueta: `🔗 ${host}${colaRuta}`,
+      sufijo,
+    };
+  } catch {
+    return {
+      href,
+      etiqueta: `${href.slice(0, maxCaracteres - 3)}…`,
+      sufijo,
+    };
+  }
+}
 
 /**
  * Escáner determinista O(N) de un solo paso para etiquetas `![alt](https://...)` y `[texto](https://...)`
- * (soporta paréntesis balanceados `foto_(2).jpg`, espacios, saltos entre `]` y `(`, y cadenas truncadas
- * a 280 caracteres sin riesgo alguno de backtracking exponencial ReDoS en el navegador o servidor).
+ * (soporta corchetes anidados en alt, paréntesis balanceados `foto_(2).jpg`, saltos cortos en alt o entre `]` y `(`,
+ * URLs firmadas JWT sin extensión `.jpg` y cadenas truncadas sin riesgo alguno de ReDoS).
  */
-function escanearEnlacesMarkdownLineal(texto: string): TokenMarkdownEscaneado[] {
+function escanearEnlacesMarkdownLineal(
+  texto: string,
+  urlsDetalle?: Set<string>
+): TokenMarkdownEscaneado[] {
   const tokens: TokenMarkdownEscaneado[] = [];
   const n = texto.length;
   let i = 0;
 
   while (i < n) {
-    let inicioToken = i;
+    const inicioToken = i;
     let esImg = false;
 
     if (texto[i] === "!") {
@@ -735,17 +820,36 @@ function escanearEnlacesMarkdownLineal(texto: string): TokenMarkdownEscaneado[] 
       continue;
     }
 
-    const cierreCorchete = texto.indexOf("]", i + 1);
-    if (cierreCorchete === -1 || cierreCorchete - i > 300) {
+    // Buscar `]` respetando posibles corchetes internos en alt (ej. `![Foto [WhatsApp]](https://...)`)
+    let cierreCorchete = -1;
+    let nivelCorchetes = 0;
+    const limiteAlt = Math.min(n, i + 260);
+    for (let c = i + 1; c < limiteAlt; c += 1) {
+      const ch = texto[c];
+      if (ch === "[") {
+        nivelCorchetes += 1;
+      } else if (ch === "]") {
+        if (nivelCorchetes > 0) {
+          nivelCorchetes -= 1;
+        } else {
+          cierreCorchete = c;
+          break;
+        }
+      }
+    }
+
+    if (cierreCorchete === -1) {
       i += 1;
       continue;
     }
 
-    const alt = texto.slice(i + 1, cierreCorchete).trim();
-    if (alt.includes("\n")) {
+    const altCrudo = texto.slice(i + 1, cierreCorchete);
+    // Permitir a lo sumo un salto accidental en etiquetas cortas (ej. wrap automático de móvil/webhook)
+    if ((altCrudo.match(/\n/g)?.length ?? 0) > 2) {
       i += 1;
       continue;
     }
+    const alt = altCrudo.replace(/\s+/g, " ").trim();
 
     let p = cierreCorchete + 1;
     while (p < n && (texto[p] === " " || texto[p] === "\t" || texto[p] === "\r" || texto[p] === "\n")) {
@@ -757,7 +861,7 @@ function escanearEnlacesMarkdownLineal(texto: string): TokenMarkdownEscaneado[] 
     }
 
     let q = p + 1;
-    while (q < n && (texto[q] === " " || texto[q] === "\t")) {
+    while (q < n && (texto[q] === " " || texto[q] === "\t" || texto[q] === "\r" || texto[q] === "\n")) {
       q += 1;
     }
 
@@ -807,7 +911,7 @@ function escanearEnlacesMarkdownLineal(texto: string): TokenMarkdownEscaneado[] 
 
     const urlCruda = texto.slice(q, finParentesis).trim();
     const urlNormalizada = urlCruda.replace(/\s+/g, "%20");
-    const esUrlDeImagen = esImg || REGEX_EXT_IMAGEN.test(urlNormalizada);
+    const esUrlDeImagen = esImg || esUrlMultimediaChat(urlNormalizada, alt, urlsDetalle);
 
     tokens.push({
       inicio: inicioToken,
@@ -825,9 +929,9 @@ function escanearEnlacesMarkdownLineal(texto: string): TokenMarkdownEscaneado[] 
 
 /**
  * Extrae bloques ordenados de texto e imágenes desde mensajes con formato Markdown
- * (`![Abanico Canasta XL](https://.../abanico.jpg)`, saltos de línea entre `]` y `(`,
- * URLs con paréntesis `foto_(2).jpg` o espacios, enlaces directos a imágenes `.jpg/.png/.webp`
- * y metadatos `detalle.imagen_url` / `detalle.imagenes_urls`) en tiempo estrictamente lineal O(N).
+ * (`![Abanico Canasta XL](https://.../abanico.jpg)`, enlaces firmados JWT de WhatsApp/YCloud/Supabase,
+ * URLs con paréntesis `foto_(2).jpg`, enlaces directos y metadatos `detalle.imagen_url` / `detalle.imagenes_urls`)
+ * evitando duplicar URLs firmadas como texto crudo sobre la tarjeta de imagen.
  */
 export function extraerSegmentosMultimediaMensaje(
   contenido: string,
@@ -835,15 +939,35 @@ export function extraerSegmentosMultimediaMensaje(
 ): SegmentoMensajeMultimedia[] {
   let textoBase = String(contenido || "");
   const urlsVistas = new Set<string>();
+  const urlsDetalle = new Set<string>();
   const normalizarUrlImg = (u: string): string => u.trim().replace(/\s+/g, "%20");
 
-  // Si el mensaje vino como "📷 Imagen adjunta por el cliente: https://..." (historial previo sin extensión .jpg)
+  if (detalle && typeof detalle === "object") {
+    if (typeof detalle.imagen_url === "string" && /^https?:\/\//i.test(detalle.imagen_url.trim())) {
+      urlsDetalle.add(normalizarUrlImg(detalle.imagen_url));
+    }
+    if (Array.isArray(detalle.imagenes_urls)) {
+      for (const item of detalle.imagenes_urls) {
+        if (typeof item === "string" && /^https?:\/\//i.test(item.trim())) {
+          urlsDetalle.add(normalizarUrlImg(item));
+        }
+      }
+    }
+  }
+
+  // Normalizar variantes previas de adjuntos ("📷 Imagen adjunta...: https://...")
   textoBase = textoBase.replace(
-    /📷\s*Imagen adjunta por el cliente:\s*(https?:\/\/[^\s<>"]+)/gi,
-    (_m, url: string) => `![Foto enviada por el cliente](${normalizarUrlImg(url)})`
+    /📷\s*(?:Imagen|Foto|Fotograf[ií]a)([^:\n]{0,45}):\s*(https?:\/\/[^\s<>"]+)/gi,
+    (_m, etiquetaExtra: string, url: string) => {
+      const { href, sufijo } = formatearEtiquetaEnlaceVisible(url);
+      const altBase = /cliente/i.test(etiquetaExtra)
+        ? "Foto enviada por el cliente"
+        : "Foto enviada";
+      return `![${altBase}](${normalizarUrlImg(href)})${sufijo}`;
+    }
   );
 
-  const tokens = escanearEnlacesMarkdownLineal(textoBase);
+  const tokens = escanearEnlacesMarkdownLineal(textoBase, urlsDetalle);
   const segmentosPreliminares: SegmentoMensajeMultimedia[] = [];
   let cursor = 0;
 
@@ -870,8 +994,10 @@ export function extraerSegmentosMultimediaMensaje(
         segmentosPreliminares.push({ tipo: "texto", texto: bloquePrevio });
       }
       acumuladorTexto = "";
-      urlsVistas.add(tk.url);
-      segmentosPreliminares.push({ tipo: "imagen", alt: tk.alt, url: tk.url });
+      if (!urlsVistas.has(tk.url)) {
+        urlsVistas.add(tk.url);
+        segmentosPreliminares.push({ tipo: "imagen", alt: tk.alt, url: tk.url });
+      }
     } else {
       acumuladorTexto += tk.alt ? `${tk.alt}: ${tk.url}` : tk.url;
     }
@@ -887,49 +1013,66 @@ export function extraerSegmentosMultimediaMensaje(
     segmentosPreliminares.push({ tipo: "texto", texto: colaTexto });
   }
 
-  // Detectar URLs de imagen sueltas dentro de bloques de texto (ej. https://.../foto.jpg sin corchetes)
+  // Detectar URLs multimedia sueltas en texto (con extensión o firmadas JWT / presentes en `detalle.imagen_url`)
   const segmentos: SegmentoMensajeMultimedia[] = [];
-  const regexImgSuelta = /(https?:\/\/[^\s<>")]+\.(?:jpg|jpeg|png|webp|gif|heic)(?:\?[^\s<>")]*)?)/gi;
+  const regexUrlCandidata = /(\(?https?:\/\/[^\s<>"]+)/gi;
 
   for (const seg of segmentosPreliminares) {
     if (seg.tipo === "imagen") {
       segmentos.push(seg);
       continue;
     }
-    const partes = seg.texto.split(regexImgSuelta);
-    for (const parte of partes) {
-      const p = parte.trim();
-      if (!p) continue;
-      if (/^https?:\/\//i.test(p) && REGEX_EXT_IMAGEN.test(p)) {
-        const limpia = normalizarUrlImg(p);
-        urlsVistas.add(limpia);
-        segmentos.push({ tipo: "imagen", alt: "", url: limpia });
-      } else {
-        segmentos.push({ tipo: "texto", texto: p });
+
+    let bufferTexto = "";
+    let ultimoFin = 0;
+    const txt = seg.texto;
+    regexUrlCandidata.lastIndex = 0;
+    let match: RegExpExecArray | null = regexUrlCandidata.exec(txt);
+
+    while (match !== null) {
+      const inicioMatch = match.index;
+      const bruto = match[0]!;
+      const tieneParenInicial = bruto.startsWith("(");
+      const sinParenInicial = tieneParenInicial ? bruto.slice(1) : bruto;
+      const { href, sufijo } = formatearEtiquetaEnlaceVisible(sinParenInicial);
+      const limpia = normalizarUrlImg(href);
+
+      if (esUrlMultimediaChat(limpia, null, urlsDetalle)) {
+        bufferTexto += txt.slice(ultimoFin, inicioMatch);
+        // Si estaba envuelta como `(https://...token=eyJ...)`, consumir también el `)` de cierre
+        const sufijoRestante =
+          tieneParenInicial && sufijo.startsWith(")") ? sufijo.slice(1) : sufijo;
+        const previoLimpio = bufferTexto
+          .replace(/!\s*\[[^\]]*\]\s*$/g, "")
+          .trim();
+        if (previoLimpio) {
+          segmentos.push({ tipo: "texto", texto: previoLimpio });
+        }
+        bufferTexto = sufijoRestante;
+        if (!urlsVistas.has(limpia)) {
+          urlsVistas.add(limpia);
+          segmentos.push({ tipo: "imagen", alt: "", url: limpia });
+        }
+        ultimoFin = inicioMatch + bruto.length;
       }
+
+      match = regexUrlCandidata.exec(txt);
+    }
+
+    if (ultimoFin < txt.length) {
+      bufferTexto += txt.slice(ultimoFin);
+    }
+    const restoLimpio = bufferTexto.trim();
+    if (restoLimpio) {
+      segmentos.push({ tipo: "texto", texto: restoLimpio });
     }
   }
 
   // Anexar imágenes de `detalle.imagen_url` o `detalle.imagenes_urls` si no estaban ya en el texto
-  if (detalle && typeof detalle === "object") {
-    const urlUnica =
-      typeof detalle.imagen_url === "string" && /^https?:\/\//i.test(detalle.imagen_url.trim())
-        ? normalizarUrlImg(detalle.imagen_url)
-        : null;
-    if (urlUnica && !urlsVistas.has(urlUnica)) {
-      urlsVistas.add(urlUnica);
-      segmentos.push({ tipo: "imagen", alt: "", url: urlUnica });
-    }
-    if (Array.isArray(detalle.imagenes_urls)) {
-      for (const item of detalle.imagenes_urls) {
-        if (typeof item === "string" && /^https?:\/\//i.test(item.trim())) {
-          const limpia = normalizarUrlImg(item);
-          if (!urlsVistas.has(limpia)) {
-            urlsVistas.add(limpia);
-            segmentos.push({ tipo: "imagen", alt: "", url: limpia });
-          }
-        }
-      }
+  for (const urlDet of urlsDetalle) {
+    if (!urlsVistas.has(urlDet)) {
+      urlsVistas.add(urlDet);
+      segmentos.push({ tipo: "imagen", alt: "", url: urlDet });
     }
   }
 
@@ -981,6 +1124,10 @@ export function limpiarVistaPreviaMensajeOmnicanal(texto?: string | null): strin
   const limpio = reconstruido
     .replace(
       /https?:\/\/[^\s<>")]+\.(?:jpg|jpeg|png|webp|gif|heic)(?:\?[^\s<>")]*)?/gi,
+      "📷 Foto"
+    )
+    .replace(
+      /\(?https?:\/\/[^\s<>")]*(?:[?&](?:token|jwt|sig|signature)=eyJ[^\s<>")]*|\/whatsapp_business\/attachments[^\s<>")]*|\/v2\/whatsapp\/media[^\s<>")]*)\)?/gi,
       "📷 Foto"
     )
     .replace(/\*\*([^*]+)\*\*/g, "$1")
