@@ -7,25 +7,36 @@ import {
   CheckCircle2,
   ClipboardList,
   Clock,
+  Edit3,
   ExternalLink,
   FilePlus2,
   Loader2,
   MapPin,
+  Music,
   PackageCheck,
+  Printer,
   RefreshCw,
+  Save,
   Truck,
+  X,
 } from "lucide-react";
 import {
   actualizarEstadoPedidoTiendaAction,
   obtenerPedidosTiendaAction,
   type PedidoTiendaRegistrado,
 } from "../acciones-logistica";
-import { actualizarClasificacionPedidoAction } from "../acciones-operaciones-taller";
+import {
+  actualizarClasificacionPedidoAction,
+  guardarEdicionPedidoYTarjetaAction,
+} from "../acciones-operaciones-taller";
 import {
   CLASIFICACIONES_OPERATIVAS_PEDIDO,
+  OPCIONES_SALA_EXEQUIALES,
+  RANGOS_HORARIO_ENTREGA_TIENDA,
   inferirClasificacionPedido,
   obtenerDefinicionClasificacionPedido,
   type ClasificacionOperativaPedido,
+  type OrdenTrabajoTaller,
 } from "../operaciones-taller";
 import {
   BarraFiltroClasificacionPedido,
@@ -34,6 +45,7 @@ import {
   type DatosVisorEvidenciaModal,
 } from "./InsigniaClasificacionPedido";
 import { ModalEditarVariacionProforma } from "./ModalEditarVariacionProforma";
+import { ModalImprimirTarjetaTaller } from "./ModalImprimirTarjetaTaller";
 
 interface PropsBandejaPedidosTienda {
   negocio: string;
@@ -89,6 +101,83 @@ function resolverClasificacionPedidoTienda(
   });
 }
 
+function convertirPedidoTiendaAOrdenTaller(p: PedidoTiendaRegistrado): OrdenTrabajoTaller {
+  const primerDed = p.items.find((it) => it.dedicatoria?.mensaje)?.dedicatoria;
+  const esExeq =
+    p.tipoOrigen === "EXEQUIALES_LLAMADA" ||
+    resolverClasificacionPedidoTienda(p) === "EXEQUIALES";
+  return {
+    id: p.ordenTallerId || p.id,
+    proformaId: p.ordenTallerId ? p.id : p.id,
+    entregaId: p.entregaId ?? p.evidenciaEntrega?.entregaId ?? null,
+    codigo: p.codigoOrden,
+    origenTipo: esExeq
+      ? "EXEQUIALES_LLAMADA"
+      : p.tipoOrigen === "PROFORMA_EVENTO"
+        ? "PROFORMA_EVENTO"
+        : p.tipoOrigen === "MANUAL_ADMIN"
+          ? "MANUAL_ADMIN"
+          : "VENTA_TIENDA",
+    estadoTaller:
+      p.estado === "ENTREGADO"
+        ? "ENTREGADO"
+        : p.estado === "EN_RUTA"
+          ? "LISTO_ENTREGA"
+          : p.estado === "EN_PREPARACION"
+            ? "EN_PREPARACION"
+            : "PENDIENTE_ENVIO",
+    estadoPago: p.estado,
+    metodoPago: p.metodoPago,
+    fechaPedido: p.creadoEn,
+    fechaEntrega: p.logistica.fechaEntrega,
+    franjaHoraria: p.logistica.franjaHoraria || null,
+    horaEspecifica: p.logistica.horaExacta || p.exequiales?.horaServicio || null,
+    productoResumen:
+      p.items.map((it) => `${it.cantidad}x ${it.descripcion}`).join(" + ") || "Arreglo floral",
+    items: p.items.map((it) => ({
+      descripcion: it.descripcion,
+      sku: it.varianteNombre || undefined,
+      cantidad: it.cantidad,
+      precioUnitario: it.precioUnitario,
+      dedicatoria: it.dedicatoria?.mensaje,
+    })),
+    clienteSolicita: p.tarjeta?.de || p.exequiales?.quienSolicita || p.compradorNombre,
+    clienteTelefono: p.compradorTelefono || p.logistica.destinatarioTelefono || undefined,
+    destinatarioFallecido:
+      p.tarjeta?.para || p.exequiales?.nombreFallecido || p.logistica.destinatarioNombre || "",
+    salaServicio: p.exequiales?.salaServicio ?? p.salaServicio ?? null,
+    ubicacionEntrega: p.logistica.direccion,
+    enlaceMapa: p.logistica.enlaceMapa || null,
+    retiroEnLocal: p.logistica.retiroEnLocal,
+    dedicatoria: p.tarjeta?.mensaje ?? primerDed?.mensaje ?? "",
+    tarjetaToken: p.tarjeta?.token || p.tokenAprobacion || p.id,
+    tarjetaTipo: p.tarjeta?.tipo || (esExeq ? "CONDOLENCIAS_PLANA" : "DIPTICO"),
+    tarjetaMusicaUrl: p.tarjeta?.musicaUrl ?? null,
+    tarjetaMusicaTitulo: p.tarjeta?.musicaTitulo ?? null,
+    tarjetaLyrics: p.tarjeta?.lyrics ?? [],
+    tarjetaMetadata: p.tarjeta?.metadata ?? {},
+    observaciones: p.logistica.referencia || undefined,
+    totalUsd: p.total,
+  };
+}
+
+interface FormularioEdicionPedido {
+  pedidoBase: PedidoTiendaRegistrado;
+  compradorNombre: string;
+  compradorTelefono: string;
+  destinatarioNombre: string;
+  direccionEntrega: string;
+  enlaceMapa: string;
+  retiroEnLocal: boolean;
+  salaServicio: string;
+  fechaEntrega: string;
+  franjaHoraria: string;
+  horaEspecifica: string;
+  productoResumen: string;
+  observaciones: string;
+  dedicatoria: string;
+}
+
 export function BandejaPedidosTienda({
   negocio,
   pedidosIniciales,
@@ -105,6 +194,67 @@ export function BandejaPedidosTienda({
   const [visorEvidencia, setVisorEvidencia] = useState<DatosVisorEvidenciaModal | null>(null);
   const [proformaEditandoVariacion, setProformaEditandoVariacion] =
     useState<PedidoTiendaRegistrado | null>(null);
+  const [pedidoParaTarjeta, setPedidoParaTarjeta] = useState<PedidoTiendaRegistrado | null>(null);
+  const [formEdicionPedido, setFormEdicionPedido] = useState<FormularioEdicionPedido | null>(null);
+  const [guardandoEdicionPedido, setGuardandoEdicionPedido] = useState<boolean>(false);
+
+  const abrirEdicionDatosPedido = useCallback((p: PedidoTiendaRegistrado) => {
+    const primerDed = p.items.find((it) => it.dedicatoria?.mensaje)?.dedicatoria;
+    setFormEdicionPedido({
+      pedidoBase: p,
+      compradorNombre: p.exequiales?.quienSolicita || p.compradorNombre || "",
+      compradorTelefono: p.compradorTelefono || p.logistica.destinatarioTelefono || "",
+      destinatarioNombre:
+        p.exequiales?.nombreFallecido || p.logistica.destinatarioNombre || "",
+      direccionEntrega: p.logistica.direccion || "",
+      enlaceMapa: p.logistica.enlaceMapa || "",
+      retiroEnLocal: Boolean(p.logistica.retiroEnLocal),
+      salaServicio: p.exequiales?.salaServicio ?? p.salaServicio ?? "",
+      fechaEntrega: (p.logistica.fechaEntrega || "").slice(0, 10),
+      franjaHoraria: p.logistica.franjaHoraria || "A) 09:00 - 13:00",
+      horaEspecifica: p.logistica.horaExacta || p.exequiales?.horaServicio || "",
+      productoResumen:
+        p.items.map((it) => it.descripcion).join(" + ") || "Arreglo floral",
+      observaciones: p.logistica.referencia || "",
+      dedicatoria: p.tarjeta?.mensaje ?? primerDed?.mensaje ?? "",
+    });
+  }, []);
+
+  const handleGuardarEdicionPedido = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formEdicionPedido) return;
+    setGuardandoEdicionPedido(true);
+    setErrorMsg(null);
+    const p = formEdicionPedido.pedidoBase;
+    const res = await guardarEdicionPedidoYTarjetaAction({
+      negocio,
+      pedidoId: p.id,
+      ordenTallerId: p.ordenTallerId ?? null,
+      entregaId: p.entregaId ?? p.evidenciaEntrega?.entregaId ?? null,
+      compradorNombre: formEdicionPedido.compradorNombre,
+      compradorTelefono: formEdicionPedido.compradorTelefono,
+      destinatarioNombre: formEdicionPedido.destinatarioNombre,
+      direccionEntrega: formEdicionPedido.retiroEnLocal
+        ? "Retiro en Tienda"
+        : formEdicionPedido.direccionEntrega,
+      enlaceMapa: formEdicionPedido.enlaceMapa,
+      retiroEnLocal: formEdicionPedido.retiroEnLocal,
+      salaServicio: formEdicionPedido.salaServicio || null,
+      fechaEntrega: formEdicionPedido.fechaEntrega,
+      franjaHoraria: formEdicionPedido.franjaHoraria,
+      horaEspecifica: formEdicionPedido.horaEspecifica || null,
+      productoResumen: formEdicionPedido.productoResumen,
+      observaciones: formEdicionPedido.observaciones,
+      dedicatoria: formEdicionPedido.dedicatoria,
+    });
+    setGuardandoEdicionPedido(false);
+    if (!res.ok) {
+      setErrorMsg(res.error || "No se pudieron guardar los cambios del pedido.");
+      return;
+    }
+    setFormEdicionPedido(null);
+    await cargarPedidos();
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -543,38 +693,103 @@ export function BandejaPedidosTienda({
       },
       {
         id: "estado",
-        encabezado: "Estado",
+        encabezado: "Estado y Acciones",
         valor: (p) => estiloEstado(p.estado).etiqueta,
         render: (p) => {
           const est = estiloEstado(p.estado);
+          const impresiones = Number(p.tarjeta?.metadata?.impresiones ?? 0);
+          const editadaCliente = Boolean(p.tarjeta?.metadata?.editado_por_cliente);
           return (
-            <SelectConBuscador
-              value={p.estado}
-              disabled={actualizandoId === p.id}
-              onChange={(e) => void cambiarEstado(p.id, e.target.value)}
-              aria-label={`Estado de ${p.codigoOrden}`}
-              style={{
-                padding: "4px 8px",
-                borderRadius: "999px",
-                border: "1px solid rgba(0,0,0,0.08)",
-                background: est.colorFondo,
-                color: est.colorTexto,
-                fontSize: "0.74rem",
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              {ESTADOS_PEDIDO.map((op) => (
-                <option key={op.valor} value={op.valor}>
-                  {op.etiqueta}
-                </option>
-              ))}
-            </SelectConBuscador>
+            <div style={{ display: "flex", flexDirection: "column", gap: "5px", alignItems: "flex-start" }}>
+              <SelectConBuscador
+                value={p.estado}
+                disabled={actualizandoId === p.id}
+                onChange={(e) => void cambiarEstado(p.id, e.target.value)}
+                aria-label={`Estado de ${p.codigoOrden}`}
+                style={{
+                  padding: "4px 8px",
+                  borderRadius: "999px",
+                  border: "1px solid rgba(0,0,0,0.08)",
+                  background: est.colorFondo,
+                  color: est.colorTexto,
+                  fontSize: "0.74rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                {ESTADOS_PEDIDO.map((op) => (
+                  <option key={op.valor} value={op.valor}>
+                    {op.etiqueta}
+                  </option>
+                ))}
+              </SelectConBuscador>
+
+              <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => abrirEdicionDatosPedido(p)}
+                  title="Editar destinatario, dirección, horario y dedicatoria del pedido"
+                  aria-label="Editar Pedido"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    padding: "4px 8px",
+                    borderRadius: "6px",
+                    border: "1px solid #CBD5E1",
+                    background: "#FFFFFF",
+                    color: "#334155",
+                    fontSize: "0.7rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  <Edit3 size={11} />
+                  <span>Editar</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPedidoParaTarjeta(p)}
+                  title="Ver, editar, descargar PDF o imprimir la tarjeta dedicatoria vinculada a este pedido"
+                  aria-label="Tarjeta Dedicatoria"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    padding: "4px 8px",
+                    borderRadius: "6px",
+                    border:
+                      impresiones > 0
+                        ? "1px solid #F59E0B"
+                        : editadaCliente
+                          ? "1px solid #16A34A"
+                          : "1px solid #0284C7",
+                    background:
+                      impresiones > 0 ? "#FEF3C7" : editadaCliente ? "#DCFCE7" : "#F0F9FF",
+                    color:
+                      impresiones > 0 ? "#92400E" : editadaCliente ? "#166534" : "#0369A1",
+                    fontSize: "0.7rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  <Printer size={11} />
+                  <span>
+                    {impresiones > 0
+                      ? `Tarjeta (x${impresiones})`
+                      : editadaCliente
+                        ? "Tarjeta ✨"
+                        : "Tarjeta"}
+                  </span>
+                </button>
+              </div>
+            </div>
           );
         },
       },
     ],
-    [actualizandoId, cambiarEstado, cambiarClasificacion, abrirModalEvidencia]
+    [actualizandoId, cambiarEstado, cambiarClasificacion, abrirModalEvidencia, abrirEdicionDatosPedido]
   );
 
   const totalVentas = pedidosFiltrados.reduce((acc, p) => acc + p.total, 0);
@@ -863,7 +1078,31 @@ export function BandejaPedidosTienda({
                         {esExeq ? "Detalle Permanente Exequiales" : "Detalle Logístico y Entrega"}
                       </strong>
                     </div>
-                    <InsigniaClasificacionPedido clasificacion={clasif} compacto />
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <button
+                        type="button"
+                        onClick={() => abrirEdicionDatosPedido(p)}
+                        title="Modificar destinatario, dirección, horario o notas del pedido"
+                        aria-label="Editar Pedido"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          padding: "4px 9px",
+                          borderRadius: "6px",
+                          border: "1px solid #0284C7",
+                          background: "#F0F9FF",
+                          color: "#0369A1",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Edit3 size={12} />
+                        <span>Editar Pedido</span>
+                      </button>
+                      <InsigniaClasificacionPedido clasificacion={clasif} compacto />
+                    </div>
                   </div>
 
                   <div style={{ fontSize: "0.78rem", color: "#334155", lineHeight: 1.48 }}>
@@ -1021,6 +1260,173 @@ export function BandejaPedidosTienda({
                       )}
                     </div>
                   ))}
+
+                  {/* TARJETA DEDICATORIA VINCULADA 1:1 AL PEDIDO */}
+                  {(() => {
+                    const tokenTarj = p.tarjeta?.token || p.tokenAprobacion || p.id;
+                    const msgTarj =
+                      p.tarjeta?.mensaje ||
+                      p.items.find((i) => i.dedicatoria?.mensaje)?.dedicatoria?.mensaje ||
+                      "";
+                    const impTarj = Number(p.tarjeta?.metadata?.impresiones ?? 0);
+                    const vistasTarj = Number(p.tarjeta?.metadata?.vistas_cliente ?? 0);
+                    const editCli = Boolean(p.tarjeta?.metadata?.editado_por_cliente);
+                    const editStaff = Boolean((p.tarjeta?.metadata as any)?.editado_por_staff);
+                    const tieneMusica = Boolean(p.tarjeta?.musicaUrl);
+
+                    return (
+                      <div
+                        style={{
+                          padding: "10px 11px",
+                          borderRadius: "8px",
+                          background: "#FFFBEB",
+                          border: "1px solid #FDE68A",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "7px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: "6px",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <strong style={{ fontSize: "0.77rem", color: "#92400E" }}>
+                            💌 Tarjeta Dedicatoria ({p.tarjeta?.tipo === "CONDOLENCIAS_PLANA" ? "Condolencias Plana" : "Díptico Plegable"})
+                          </strong>
+                          <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", fontSize: "0.68rem" }}>
+                            <span
+                              style={{
+                                padding: "1px 6px",
+                                borderRadius: "999px",
+                                background: editCli ? "#DCFCE7" : editStaff ? "#DBEAFE" : "#FEF3C7",
+                                color: editCli ? "#166534" : editStaff ? "#1E40AF" : "#92400E",
+                                fontWeight: 700,
+                              }}
+                            >
+                              {editCli
+                                ? "✨ Editada Cliente"
+                                : editStaff
+                                  ? "✏️ Editada Staff"
+                                  : "🤖 Automática"}
+                            </span>
+                            {vistasTarj > 0 && (
+                              <span
+                                style={{
+                                  padding: "1px 6px",
+                                  borderRadius: "999px",
+                                  background: "#E0F2FE",
+                                  color: "#0369A1",
+                                  fontWeight: 700,
+                                }}
+                              >
+                                👀 {vistasTarj}x
+                              </span>
+                            )}
+                            {impTarj > 0 && (
+                              <span
+                                style={{
+                                  padding: "1px 6px",
+                                  borderRadius: "999px",
+                                  background: "#FDE68A",
+                                  color: "#78350F",
+                                  fontWeight: 700,
+                                }}
+                              >
+                                🖨️ Impresa {impTarj}x
+                              </span>
+                            )}
+                            {tieneMusica && (
+                              <span
+                                style={{
+                                  padding: "1px 6px",
+                                  borderRadius: "999px",
+                                  background: "#F3E8FF",
+                                  color: "#6B21A8",
+                                  fontWeight: 700,
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "3px",
+                                }}
+                              >
+                                <Music size={10} /> Melodía
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div style={{ fontSize: "0.75rem", color: "#475569" }}>
+                          {msgTarj ? (
+                            <>
+                              &ldquo;{msgTarj}&rdquo;
+                              {p.tarjeta?.musicaTitulo ? (
+                                <span style={{ display: "block", fontSize: "0.7rem", color: "#6B21A8", marginTop: "2px" }}>
+                                  🎵 {p.tarjeta.musicaTitulo}
+                                </span>
+                              ) : null}
+                            </>
+                          ) : (
+                            <span style={{ fontStyle: "italic", color: "#94A3B8" }}>
+                              Sin mensaje escrito aún. Puedes redactarla aquí o compartir el link al comprador.
+                            </span>
+                          )}
+                        </div>
+
+                        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                          <button
+                            type="button"
+                            onClick={() => setPedidoParaTarjeta(p)}
+                            title="Abrir tarjeta para editar mensaje, canción, descargar PDF o mandar a imprimir en Canon G3110"
+                            aria-label="Editar e Imprimir Tarjeta"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              padding: "5px 10px",
+                              borderRadius: "6px",
+                              border: "none",
+                              background: "#0284C7",
+                              color: "#FFFFFF",
+                              fontSize: "0.73rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                          >
+                            <Printer size={12} />
+                            <span>Editar / Imprimir / PDF</span>
+                          </button>
+
+                          <a
+                            href={`/dedicatoria/${tokenTarj}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Abrir la experiencia de tarjeta digital con QR y música"
+                            aria-label="Ver Tarjeta Digital"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              padding: "5px 9px",
+                              borderRadius: "6px",
+                              border: "1px solid #CBD5E1",
+                              background: "#FFFFFF",
+                              color: "#0F172A",
+                              textDecoration: "none",
+                              fontSize: "0.73rem",
+                              fontWeight: 700,
+                            }}
+                          >
+                            <span>Tarjeta Digital</span>
+                            <ExternalLink size={11} />
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   <div
                     style={{
@@ -1427,6 +1833,339 @@ export function BandejaPedidosTienda({
         datos={visorEvidencia}
         onCerrar={() => setVisorEvidencia(null)}
       />
+
+      {pedidoParaTarjeta && (
+        <ModalImprimirTarjetaTaller
+          abierto={Boolean(pedidoParaTarjeta)}
+          onCerrar={() => setPedidoParaTarjeta(null)}
+          orden={convertirPedidoTiendaAOrdenTaller(pedidoParaTarjeta)}
+          negocio={negocio}
+          onActualizarOrden={() => {
+            void cargarPedidos();
+          }}
+        />
+      )}
+
+      {formEdicionPedido && (
+        <div
+          onClick={() => setFormEdicionPedido(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.62)",
+            backdropFilter: "blur(3px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+            zIndex: 99998,
+          }}
+        >
+          <form
+            onClick={(ev) => ev.stopPropagation()}
+            onSubmit={(e) => void handleGuardarEdicionPedido(e)}
+            style={{
+              background: "#FFFFFF",
+              borderRadius: "16px",
+              padding: "20px",
+              maxWidth: "560px",
+              width: "100%",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+              boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <strong style={{ fontSize: "1rem", color: "#0F172A" }}>
+                  ✏️ Editar Datos del Pedido ({formEdicionPedido.pedidoBase.codigoOrden})
+                </strong>
+                <div style={{ fontSize: "0.75rem", color: "#64748B" }}>
+                  Se sincroniza automáticamente con Envíos, Taller y Tarjeta Dedicatoria.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormEdicionPedido(null)}
+                title="Cerrar"
+                aria-label="Cerrar"
+                style={{
+                  border: "none",
+                  background: "#F1F5F9",
+                  borderRadius: "8px",
+                  width: "30px",
+                  height: "30px",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <X size={15} />
+              </button>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "3px" }}>
+                  Fecha de Entrega *
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={formEdicionPedido.fechaEntrega}
+                  onChange={(e) =>
+                    setFormEdicionPedido((prev) =>
+                      prev ? { ...prev, fechaEntrega: e.target.value } : null
+                    )
+                  }
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", boxSizing: "border-box" }}
+                />
+              </div>
+
+              {formEdicionPedido.pedidoBase.tipoOrigen === "EXEQUIALES_LLAMADA" ? (
+                <div>
+                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "3px" }}>
+                    Sala Exequiales
+                  </label>
+                  <SelectConBuscador
+                    value={formEdicionPedido.salaServicio}
+                    onChange={(e) =>
+                      setFormEdicionPedido((prev) =>
+                        prev ? { ...prev, salaServicio: e.target.value } : null
+                      )
+                    }
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem" }}
+                  >
+                    <option value="">Por confirmar</option>
+                    {OPCIONES_SALA_EXEQUIALES.map((s) => (
+                      <option key={s} value={s}>
+                        {s}
+                      </option>
+                    ))}
+                  </SelectConBuscador>
+                </div>
+              ) : (
+                <div>
+                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "3px" }}>
+                    Franja Horaria
+                  </label>
+                  <SelectConBuscador
+                    value={formEdicionPedido.franjaHoraria}
+                    onChange={(e) =>
+                      setFormEdicionPedido((prev) =>
+                        prev ? { ...prev, franjaHoraria: e.target.value } : null
+                      )
+                    }
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem" }}
+                  >
+                    {RANGOS_HORARIO_ENTREGA_TIENDA.map((r) => (
+                      <option key={r.codigo} value={r.valor}>
+                        {r.etiqueta}
+                      </option>
+                    ))}
+                  </SelectConBuscador>
+                </div>
+              )}
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+              <div>
+                <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "3px" }}>
+                  Comprador / De parte de
+                </label>
+                <input
+                  type="text"
+                  value={formEdicionPedido.compradorNombre}
+                  onChange={(e) =>
+                    setFormEdicionPedido((prev) =>
+                      prev ? { ...prev, compradorNombre: e.target.value } : null
+                    )
+                  }
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", boxSizing: "border-box" }}
+                />
+              </div>
+              <div>
+                <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "3px" }}>
+                  Teléfono / WhatsApp
+                </label>
+                <input
+                  type="text"
+                  value={formEdicionPedido.compradorTelefono}
+                  onChange={(e) =>
+                    setFormEdicionPedido((prev) =>
+                      prev ? { ...prev, compradorTelefono: e.target.value } : null
+                    )
+                  }
+                  style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", boxSizing: "border-box" }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "3px" }}>
+                Destinatario (quien recibe / nombre fallecido)
+              </label>
+              <input
+                type="text"
+                value={formEdicionPedido.destinatarioNombre}
+                onChange={(e) =>
+                  setFormEdicionPedido((prev) =>
+                    prev ? { ...prev, destinatarioNombre: e.target.value } : null
+                  )
+                }
+                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", boxSizing: "border-box" }}
+              />
+            </div>
+
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3px" }}>
+                <label style={{ fontSize: "0.76rem", fontWeight: 700, color: "#334155" }}>
+                  Dirección de Entrega
+                </label>
+                <label style={{ fontSize: "0.74rem", color: "#475569", display: "inline-flex", alignItems: "center", gap: "5px", cursor: "pointer" }}>
+                  <input
+                    type="checkbox"
+                    checked={formEdicionPedido.retiroEnLocal}
+                    onChange={(e) =>
+                      setFormEdicionPedido((prev) =>
+                        prev ? { ...prev, retiroEnLocal: e.target.checked } : null
+                      )
+                    }
+                  />
+                  <span>Retiro en Tienda</span>
+                </label>
+              </div>
+              <input
+                type="text"
+                disabled={formEdicionPedido.retiroEnLocal}
+                value={formEdicionPedido.direccionEntrega}
+                onChange={(e) =>
+                  setFormEdicionPedido((prev) =>
+                    prev ? { ...prev, direccionEntrega: e.target.value } : null
+                  )
+                }
+                placeholder="Sector, calles, edificio o funeraria"
+                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", boxSizing: "border-box" }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "3px" }}>
+                Enlace Google Maps (opcional)
+              </label>
+              <input
+                type="text"
+                value={formEdicionPedido.enlaceMapa}
+                onChange={(e) =>
+                  setFormEdicionPedido((prev) =>
+                    prev ? { ...prev, enlaceMapa: e.target.value } : null
+                  )
+                }
+                placeholder="https://maps.app.goo.gl/..."
+                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", boxSizing: "border-box" }}
+              />
+            </div>
+
+            <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3px" }}>
+                <label style={{ fontSize: "0.76rem", fontWeight: 700, color: "#334155" }}>
+                  Mensaje de la Tarjeta Dedicatoria
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const p = formEdicionPedido.pedidoBase;
+                    setFormEdicionPedido(null);
+                    setPedidoParaTarjeta(p);
+                  }}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    color: "#0284C7",
+                    fontSize: "0.72rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    padding: 0,
+                  }}
+                >
+                  Abrir vista de impresión / música →
+                </button>
+              </div>
+              <textarea
+                rows={3}
+                value={formEdicionPedido.dedicatoria}
+                onChange={(e) =>
+                  setFormEdicionPedido((prev) =>
+                    prev ? { ...prev, dedicatoria: e.target.value } : null
+                  )
+                }
+                placeholder="Mensaje para la tarjeta impresa y digital"
+                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", boxSizing: "border-box" }}
+              />
+            </div>
+
+            <div>
+              <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "3px" }}>
+                Notas / Indicaciones para Taller
+              </label>
+              <input
+                type="text"
+                value={formEdicionPedido.observaciones}
+                onChange={(e) =>
+                  setFormEdicionPedido((prev) =>
+                    prev ? { ...prev, observaciones: e.target.value } : null
+                  )
+                }
+                placeholder="Papel negro, tonos pastel, referencia de entrega..."
+                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", boxSizing: "border-box" }}
+              />
+            </div>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "4px" }}>
+              <button
+                type="button"
+                onClick={() => setFormEdicionPedido(null)}
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  border: "1px solid #CBD5E1",
+                  background: "#FFFFFF",
+                  color: "#475569",
+                  fontSize: "0.82rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={guardandoEdicionPedido}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: "#059669",
+                  color: "#FFFFFF",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                {guardandoEdicionPedido ? <Loader2 size={14} /> : <Save size={14} />}
+                <span>Guardar Pedido</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

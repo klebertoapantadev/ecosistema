@@ -3,21 +3,22 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Heart,
-  Music,
   Play,
   Pause,
   Volume2,
   VolumeX,
   Edit3,
-  Check,
-  Share2,
   Sparkles,
   Lock,
-  ChevronDown,
-  ExternalLink,
   MessageCircle,
+  Upload,
+  Loader2,
 } from "lucide-react";
-import { editarTarjetaClienteAction } from "../acciones-operaciones-taller";
+import {
+  buscarLyricsCancionAction,
+  editarTarjetaClienteAction,
+  subirAudioTarjetaAction,
+} from "../acciones-operaciones-taller";
 
 export interface PropsTarjetaDedicatoriaDigitalInteractiva {
   datosIniciales: {
@@ -39,7 +40,6 @@ export interface PropsTarjetaDedicatoriaDigitalInteractiva {
   token: string;
 }
 
-// Extraer ID de YouTube de cualquier formato habitual
 function extraerYouTubeId(url?: string | null): string | null {
   if (!url) return null;
   const match = url.match(
@@ -58,24 +58,30 @@ export function TarjetaDedicatoriaDigitalInteractiva({
   const [silenciado, setSilenciado] = useState<boolean>(false);
   const [tiempoActual, setTiempoActual] = useState<number>(0);
 
-  // Modo edición del cliente
   const [modoEdicion, setModoEdicion] = useState<boolean>(false);
   const [dedicatoriaEditada, setDedicatoriaEditada] = useState<string>(datos.dedicatoria);
   const [musicaUrlEditada, setMusicaUrlEditada] = useState<string>(datos.musicaUrl || "");
   const [musicaTituloEditada, setMusicaTituloEditada] = useState<string>(datos.musicaTitulo || "");
+  const [lyricsEditadas, setLyricsEditadas] = useState<Array<{ tiempo?: number; texto: string }>>(
+    Array.isArray(datos.lyrics) ? datos.lyrics : []
+  );
+  const [buscandoLyrics, setBuscandoLyrics] = useState<boolean>(false);
+  const [subiendoMp3, setSubiendoMp3] = useState<boolean>(false);
   const [guardandoEdicion, setGuardandoEdicion] = useState<boolean>(false);
   const [mensajeExitoEdicion, setMensajeExitoEdicion] = useState<string | null>(null);
   const [errorEdicion, setErrorEdicion] = useState<string | null>(null);
 
   const contenedorLyricsRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
+  const audioHtmlRef = useRef<HTMLAudioElement | null>(null);
+  const inputAudioRef = useRef<HTMLInputElement | null>(null);
 
   const negNorm = datos.negocio.trim().toLowerCase();
   const esMargaritas = negNorm.includes("margarita");
   const nombreMarca = esMargaritas ? "Margaritas Floristería" : "Tinkay Flores y Eventos";
   const youtubeId = useMemo(() => extraerYouTubeId(datos.musicaUrl), [datos.musicaUrl]);
+  const esAudioDirecto = Boolean(datos.musicaUrl && !youtubeId);
 
-  // Cargar API de YouTube IFrame para control de volumen sutil y tiempo
   useEffect(() => {
     if (!youtubeId || typeof window === "undefined") return;
 
@@ -97,7 +103,6 @@ export function TarjetaDedicatoriaDigitalInteractiva({
           },
           events: {
             onReady: (event: any) => {
-              // Volumen sutil por defecto (25%)
               event.target.setVolume(25);
             },
             onStateChange: (event: any) => {
@@ -134,23 +139,22 @@ export function TarjetaDedicatoriaDigitalInteractiva({
     };
   }, [youtubeId]);
 
-  // Rastrear el tiempo de reproducción para sincronizar lyrics
   useEffect(() => {
     if (!reproduciendo) return;
     const interval = setInterval(() => {
-      if (playerRef.current?.getCurrentTime) {
+      if (esAudioDirecto && audioHtmlRef.current) {
+        setTiempoActual(audioHtmlRef.current.currentTime);
+      } else if (playerRef.current?.getCurrentTime) {
         try {
-          const t = playerRef.current.getCurrentTime();
-          setTiempoActual(t);
+          setTiempoActual(playerRef.current.getCurrentTime());
         } catch {}
       } else {
-        setTiempoActual((prev) => prev + 0.5);
+        setTiempoActual((prev) => prev + 0.45);
       }
     }, 450);
     return () => clearInterval(interval);
-  }, [reproduciendo]);
+  }, [reproduciendo, esAudioDirecto]);
 
-  // Scroll automático de la letra
   const lyricsList = Array.isArray(datos.lyrics) ? datos.lyrics : [];
   const lineaActivaIndex = useMemo(() => {
     if (lyricsList.length === 0) return -1;
@@ -175,18 +179,34 @@ export function TarjetaDedicatoriaDigitalInteractiva({
 
   const handleAbrirDedicatoria = () => {
     setAbierta(true);
+    if (esAudioDirecto && audioHtmlRef.current) {
+      audioHtmlRef.current.volume = 0.25;
+      audioHtmlRef.current
+        .play()
+        .then(() => setReproduciendo(true))
+        .catch(() => {});
+      return;
+    }
     if (playerRef.current?.playVideo) {
       try {
         playerRef.current.playVideo();
         playerRef.current.setVolume(25);
         setReproduciendo(true);
-      } catch (err) {
-        console.warn("Autoplay bloqueado por el navegador", err);
-      }
+      } catch {}
     }
   };
 
   const handleToggleReproduccion = () => {
+    if (esAudioDirecto && audioHtmlRef.current) {
+      if (reproduciendo) {
+        audioHtmlRef.current.pause();
+        setReproduciendo(false);
+      } else {
+        void audioHtmlRef.current.play();
+        setReproduciendo(true);
+      }
+      return;
+    }
     if (!playerRef.current) return;
     if (reproduciendo) {
       playerRef.current.pauseVideo();
@@ -198,6 +218,11 @@ export function TarjetaDedicatoriaDigitalInteractiva({
   };
 
   const handleToggleSilencio = () => {
+    if (esAudioDirecto && audioHtmlRef.current) {
+      audioHtmlRef.current.muted = !silenciado;
+      setSilenciado(!silenciado);
+      return;
+    }
     if (!playerRef.current) return;
     if (silenciado) {
       playerRef.current.unMute();
@@ -206,6 +231,62 @@ export function TarjetaDedicatoriaDigitalInteractiva({
     } else {
       playerRef.current.mute();
       setSilenciado(true);
+    }
+  };
+
+  const handleSubirArchivoAudio = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 15 * 1024 * 1024) {
+      setErrorEdicion("El archivo MP3 no debe superar los 15 MB.");
+      return;
+    }
+    setSubiendoMp3(true);
+    setErrorEdicion(null);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const dataUrl = String(reader.result || "");
+      const res = await subirAudioTarjetaAction({
+        negocio: datos.negocio,
+        dataUrl,
+        nombreArchivo: file.name,
+      });
+      setSubiendoMp3(false);
+      if (!res.ok) {
+        setErrorEdicion(res.error);
+        return;
+      }
+      setMusicaUrlEditada(res.publicUrl);
+      if (!musicaTituloEditada.trim()) {
+        setMusicaTituloEditada(res.nombreLimpio);
+      }
+      setMensajeExitoEdicion("🎵 Archivo de audio cargado.");
+    };
+    reader.onerror = () => {
+      setSubiendoMp3(false);
+      setErrorEdicion("No se pudo leer el archivo seleccionado.");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleAutoBuscarLyrics = async () => {
+    setBuscandoLyrics(true);
+    setErrorEdicion(null);
+    const res = await buscarLyricsCancionAction({
+      musicaUrl: musicaUrlEditada,
+      musicaTitulo: musicaTituloEditada,
+    });
+    setBuscandoLyrics(false);
+    if (!res.ok) {
+      setErrorEdicion(res.error || "No se encontró letra automática.");
+      return;
+    }
+    if (res.tituloDetectado && !musicaTituloEditada.trim()) {
+      setMusicaTituloEditada(res.tituloDetectado);
+    }
+    if (res.lyrics) {
+      setLyricsEditadas(res.lyrics);
+      setMensajeExitoEdicion(`✨ Letra cargada (${res.lyrics.length} líneas).`);
     }
   };
 
@@ -220,11 +301,30 @@ export function TarjetaDedicatoriaDigitalInteractiva({
     setErrorEdicion(null);
     setMensajeExitoEdicion(null);
 
+    let lyricsParaGuardar = lyricsEditadas;
+    if (
+      musicaUrlEditada.trim() &&
+      musicaUrlEditada.trim() !== (datos.musicaUrl || "") &&
+      lyricsParaGuardar.length === 0
+    ) {
+      const autoLrc = await buscarLyricsCancionAction({
+        musicaUrl: musicaUrlEditada.trim(),
+        musicaTitulo: musicaTituloEditada.trim(),
+      });
+      if (autoLrc.ok && autoLrc.lyrics) {
+        lyricsParaGuardar = autoLrc.lyrics;
+        if (!musicaTituloEditada.trim() && autoLrc.tituloDetectado) {
+          setMusicaTituloEditada(autoLrc.tituloDetectado);
+        }
+      }
+    }
+
     const res = await editarTarjetaClienteAction({
       token,
       dedicatoria: dedicatoriaEditada.trim(),
       musicaUrl: musicaUrlEditada.trim() || null,
       musicaTitulo: musicaTituloEditada.trim() || null,
+      lyrics: lyricsParaGuardar,
     });
 
     setGuardandoEdicion(false);
@@ -238,12 +338,14 @@ export function TarjetaDedicatoriaDigitalInteractiva({
       dedicatoria: dedicatoriaEditada.trim(),
       musicaUrl: musicaUrlEditada.trim() || null,
       musicaTitulo: musicaTituloEditada.trim() || null,
+      lyrics: lyricsParaGuardar,
     }));
+    setLyricsEditadas(lyricsParaGuardar);
     setMensajeExitoEdicion("✅ Dedicatoria actualizada con éxito.");
     setTimeout(() => {
       setModoEdicion(false);
       setMensajeExitoEdicion(null);
-    }, 1800);
+    }, 1500);
   };
 
   return (
@@ -264,7 +366,6 @@ export function TarjetaDedicatoriaDigitalInteractiva({
         overflowX: "hidden",
       }}
     >
-      {/* Elemento oculto de YouTube Player para reproducir audio en segundo plano */}
       <div
         id="youtube-player-iframe"
         style={{
@@ -277,6 +378,18 @@ export function TarjetaDedicatoriaDigitalInteractiva({
           pointerEvents: "none",
         }}
       />
+
+      {esAudioDirecto && datos.musicaUrl && (
+        <audio
+          ref={audioHtmlRef}
+          src={datos.musicaUrl}
+          loop
+          preload="auto"
+          onPlay={() => setReproduciendo(true)}
+          onPause={() => setReproduciendo(false)}
+          style={{ display: "none" }}
+        />
+      )}
 
       {/* BARRA SUPERIOR DE AUTOSERVICIO DEL CLIENTE */}
       <div
@@ -321,7 +434,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
               padding: 0,
             }}
           >
-            <Edit3 size={12} /> {modoEdicion ? "Cerrar edición" : "Personalizar mi dedicatoria"}
+            <Edit3 size={12} /> {modoEdicion ? "Cerrar edición" : "Personalizar tarjeta"}
           </button>
         )}
       </div>
@@ -349,16 +462,18 @@ export function TarjetaDedicatoriaDigitalInteractiva({
               borderRadius: "16px",
               maxWidth: "500px",
               width: "100%",
+              maxHeight: "90vh",
+              overflowY: "auto",
               padding: "20px",
               boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ margin: "0 0 12px 0", fontSize: "1.05rem", fontWeight: 700, color: "#F8FAFC" }}>
-              ✏️ Personaliza tu Dedicatoria y Canción
+            <h3 style={{ margin: "0 0 8px 0", fontSize: "1.05rem", fontWeight: 700, color: "#F8FAFC" }}>
+              ✏️ Personaliza tu Dedicatoria y Melodía
             </h3>
-            <p style={{ margin: "0 0 14px 0", fontSize: "0.8rem", color: "#94A3B8" }}>
-              Puedes ajustar el mensaje y la melodía mientras el taller no haya comenzado la impresión física.
+            <p style={{ margin: "0 0 14px 0", fontSize: "0.78rem", color: "#94A3B8" }}>
+              Ajusta el mensaje, pega un link de YouTube o sube un MP3 antes de que el taller imprima tu tarjeta.
             </p>
 
             <form onSubmit={handleGuardarCambiosCliente} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -385,14 +500,44 @@ export function TarjetaDedicatoriaDigitalInteractiva({
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#CBD5E1", marginBottom: "4px" }}>
-                  Enlace de YouTube (Música de fondo):
-                </label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#CBD5E1" }}>
+                    Link de YouTube o Archivo MP3:
+                  </label>
+                  <button
+                    type="button"
+                    disabled={subiendoMp3}
+                    onClick={() => inputAudioRef.current?.click()}
+                    style={{
+                      border: "1px solid rgba(56, 189, 248, 0.4)",
+                      background: "rgba(2, 132, 199, 0.2)",
+                      color: "#7DD3FC",
+                      padding: "3px 8px",
+                      borderRadius: "6px",
+                      fontSize: "0.72rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                    }}
+                  >
+                    {subiendoMp3 ? <Loader2 size={12} /> : <Upload size={12} />}
+                    <span>{subiendoMp3 ? "Subiendo..." : "Subir MP3"}</span>
+                  </button>
+                  <input
+                    ref={inputAudioRef}
+                    type="file"
+                    accept="audio/*,.mp3,.m4a,.wav,.ogg"
+                    onChange={handleSubirArchivoAudio}
+                    style={{ display: "none" }}
+                  />
+                </div>
                 <input
                   type="text"
                   value={musicaUrlEditada}
                   onChange={(e) => setMusicaUrlEditada(e.target.value)}
-                  placeholder="https://www.youtube.com/watch?v=..."
+                  placeholder="https://www.youtube.com/watch?v=... o URL de audio"
                   style={{
                     width: "100%",
                     padding: "8px 10px",
@@ -407,9 +552,27 @@ export function TarjetaDedicatoriaDigitalInteractiva({
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#CBD5E1", marginBottom: "4px" }}>
-                  Nombre de la Canción (opcional):
-                </label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#CBD5E1" }}>
+                    Canción / Artista:
+                  </label>
+                  <button
+                    type="button"
+                    disabled={buscandoLyrics}
+                    onClick={() => void handleAutoBuscarLyrics()}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      color: "#FDE047",
+                      fontSize: "0.73rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      padding: 0,
+                    }}
+                  >
+                    {buscandoLyrics ? "Buscando letra..." : "✨ Cargar Letra"}
+                  </button>
+                </div>
                 <input
                   type="text"
                   value={musicaTituloEditada}
@@ -426,6 +589,11 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                     boxSizing: "border-box",
                   }}
                 />
+                {lyricsEditadas.length > 0 && (
+                  <span style={{ display: "block", marginTop: "4px", fontSize: "0.7rem", color: "#86EFAC" }}>
+                    ✓ {lyricsEditadas.length} líneas de letra sincronizada listas para deslizarse.
+                  </span>
+                )}
               </div>
 
               {errorEdicion && (
@@ -470,7 +638,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                     cursor: "pointer",
                   }}
                 >
-                  {guardandoEdicion ? "Guardando..." : "Guardar Dedicatoria"}
+                  {guardandoEdicion ? "Guardando..." : "Guardar Tarjeta"}
                 </button>
               </div>
             </form>
@@ -478,9 +646,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
         </div>
       )}
 
-      {/* CONTENEDOR PRINCIPAL DE LA EXPERIENCIA */}
       {!abierta ? (
-        // PANTALLA INICIAL: SOBRE O PORTADA CERRADA
         <div
           style={{
             maxWidth: "420px",
@@ -490,10 +656,8 @@ export function TarjetaDedicatoriaDigitalInteractiva({
             flexDirection: "column",
             alignItems: "center",
             gap: "20px",
-            animation: "fadeIn 0.6s ease-out",
           }}
         >
-          {/* TARJETA CERRADA INTERACTIVA */}
           <div
             onClick={handleAbrirDedicatoria}
             style={{
@@ -509,7 +673,6 @@ export function TarjetaDedicatoriaDigitalInteractiva({
               justifyContent: "center",
               padding: "24px",
               cursor: "pointer",
-              transition: "transform 0.25s ease, box-shadow 0.25s ease",
               position: "relative",
             }}
           >
@@ -532,14 +695,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
             <span style={{ fontSize: "0.8rem", color: "#94A3B8", letterSpacing: "1.5px", textTransform: "uppercase" }}>
               Tienes un detalle especial
             </span>
-            <h2
-              style={{
-                fontSize: "1.4rem",
-                fontWeight: 700,
-                color: "#1E293B",
-                margin: "4px 0 2px 0",
-              }}
-            >
+            <h2 style={{ fontSize: "1.4rem", fontWeight: 700, color: "#1E293B", margin: "4px 0 2px 0" }}>
               Para: {datos.destinatario}
             </h2>
             <span style={{ fontSize: "0.85rem", color: "#64748B" }}>
@@ -581,11 +737,10 @@ export function TarjetaDedicatoriaDigitalInteractiva({
               gap: "8px",
             }}
           >
-            <span>💌 Abrir Dedicatoria y Escuchar Música</span>
+            <span>💌 Abrir Dedicatoria</span>
           </button>
         </div>
       ) : (
-        // PANTALLA DE TARJETA ABIERTA CON DEDICATORIA, MÚSICA Y LYRICS
         <div
           style={{
             maxWidth: "520px",
@@ -594,10 +749,8 @@ export function TarjetaDedicatoriaDigitalInteractiva({
             flexDirection: "column",
             gap: "16px",
             marginTop: "36px",
-            animation: "fadeIn 0.7s ease-out",
           }}
         >
-          {/* TARJETA INTERNA ABIERTA */}
           <div
             style={{
               backgroundColor: "#FFFDF9",
@@ -627,7 +780,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                 wordBreak: "break-word",
               }}
             >
-              {datos.dedicatoria}
+              {datos.dedicatoria || "Con todo nuestro cariño"}
             </h1>
 
             <div
@@ -646,8 +799,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
               <span>Con cariño para</span> <strong>{datos.destinatario}</strong>
             </div>
 
-            {/* CONTROL DE MÚSICA SUTIL */}
-            {youtubeId && (
+            {(youtubeId || esAudioDirecto) && (
               <div
                 style={{
                   marginTop: "18px",
@@ -683,7 +835,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                     🎵 {datos.musicaTitulo || "Melodía de dedicatoria"}
                   </span>
                   <span style={{ fontSize: "0.65rem", color: "#64748B" }}>
-                    {reproduciendo ? "Reproduciendo al 25% de volumen" : "Pausado"}
+                    {reproduciendo ? "Sonando suave de fondo (25%)" : "Pausado"}
                   </span>
                 </div>
 
@@ -704,7 +856,6 @@ export function TarjetaDedicatoriaDigitalInteractiva({
             )}
           </div>
 
-          {/* VISOR DESLIZANTE DE LETRA (LYRICS) */}
           {lyricsList.length > 0 && (
             <div
               style={{
@@ -761,11 +912,10 @@ export function TarjetaDedicatoriaDigitalInteractiva({
             </div>
           )}
 
-          {/* BOTÓN DE INTERACCIÓN: AGRADECER POR WHATSAPP */}
           <div style={{ display: "flex", flexDirection: "column", gap: "10px", alignItems: "center", marginTop: "8px" }}>
             <a
               href={`https://wa.me/?text=${encodeURIComponent(
-                `¡Hola ${datos.remitente}! Acabo de recibir tus flores y escuchar la dedicatoria en ${urlPublicaOTexto(token)}. ¡Muchísimas gracias, me encantó el detalle! 🥰`
+                `¡Hola ${datos.remitente}! Acabo de recibir tus flores y abrir mi tarjeta en ${urlPublicaOTexto(token)}. ¡Muchísimas gracias, me encantó el detalle! 🥰`
               )}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -786,7 +936,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
               }}
             >
               <MessageCircle size={18} />
-              <span>Dar las gracias a {datos.remitente} por WhatsApp</span>
+              <span>Agradecer por WhatsApp</span>
             </a>
 
             <span style={{ fontSize: "0.72rem", color: "#64748B" }}>

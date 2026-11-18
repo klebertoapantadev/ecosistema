@@ -2444,6 +2444,42 @@ export function ConsolaEnvioPedidosTaller({
             </div>
 
             <div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                <label style={{ ...labelStyle, marginBottom: 0 }}>Tarjeta Dedicatoria</label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const ord = ordenEditando;
+                    setOrdenEditando(null);
+                    setOrdenParaImprimir(ord);
+                  }}
+                  style={{
+                    border: "none",
+                    background: "transparent",
+                    color: "#0284C7",
+                    fontSize: "0.73rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    padding: 0,
+                  }}
+                >
+                  Imprimir / PDF / Música →
+                </button>
+              </div>
+              <textarea
+                rows={3}
+                value={ordenEditando.dedicatoria ?? ""}
+                onChange={(e) =>
+                  setOrdenEditando((prev) =>
+                    prev ? { ...prev, dedicatoria: e.target.value } : null
+                  )
+                }
+                placeholder="Mensaje para la tarjeta impresa y digital"
+                style={inputStyle}
+              />
+            </div>
+
+            <div>
               <label style={labelStyle}>Notas / Observaciones</label>
               <input
                 type="text"

@@ -1,36 +1,16 @@
-# Cierre de Tarea — Módulo de Tarjetas Dedicatoria Híbridas (Física en Canon G3110 + Digital con QR, Música de YouTube y Lyrics)
+# Cierre de Tarea — Edición de Pedidos, Relación 1:1 Pedido-Tarjeta, Descarga PDF, Impresión Canon G3110 y Música YouTube/MP3 con Lyrics
 
 **Fecha:** 2026-11-18  
 **Requerimientos:** `PLT-009` / `TNK-005`  
 
-## Resumen de la Solución
-Se eliminó la dependencia manual de Google Slides y se modernizó el flujo de tarjetas de dedicatoria transformándolas en un producto híbrido físico-digital con trazabilidad completa.
-
-1. **Migración SQL Transaccional (`20261118000004_tarjetas_dedicatoria_hibridas_qr_musica_y_taller.sql`):**
-   - Columnas agregadas a `comun_comercio.com_orden_taller`:
-     - `ota_tarjeta_token`: token seguro de 18 caracteres para acceso público a la experiencia digital y QR.
-     - `ota_tarjeta_tipo`: `DIPTICO` (plegable normal) | `CONDOLENCIAS_PLANA` (esquina floral) | `SOLO_DIGITAL`.
-     - `ota_tarjeta_musica_url`: URL de YouTube o audio MP3.
-     - `ota_tarjeta_musica_titulo`: título de la canción.
-     - `ota_tarjeta_lyrics`: array de líneas sincronizadas con timestamp o texto.
-     - `ota_tarjeta_metadata`: JSONB de auditoría (`origen`, `historial_cambios`, `vistas_cliente`, `impresiones`, `ultimo_impreso_por`, `editado_por_cliente`).
-   - Funciones RPC:
-     - `com_fn_obtener_tarjeta_publica(token)`: acceso público para destinatarios sin sesión; incrementa discretamente contador de vistas.
-     - `com_fn_editar_tarjeta_cliente(token, ...)`: autoservicio para el comprador; se bloquea si el taller ya inició preparación.
-     - `com_fn_registrar_impresion_tarjeta(orden_id, tipo)`: auditoría de impresiones en taller.
-
-2. **Componente de Impresión para Taller (`ModalImprimirTarjetaTaller.tsx`):**
-   - Botón directo `[ 🖨️ Tarjeta ]` en `ConsolaTallerFloral` (`/panel/taller`) y `ConsolaEnvioPedidosTaller` (`/panel/envio-pedidos`).
-   - Soporte para **Díptico Tinkay** (imprime en la mitad interna para no tocar la portada exterior preimpresa) y **Condolencias Plana** (respeta el margen superior derecho preimpreso).
-   - Generación instantánea de **Código QR** embebido hacia la tarjeta digital con melodía.
-   - Calibración milimétrica para la bandeja trasera de la **Canon PIXMA G3110** (CSS `@page { size: 148mm 105mm; margin: 0; }` y offsets X/Y).
-   - Auto-escalado de fuente tipográfica (Cursiva fina, Serif o Formal).
-   - Badges de trazabilidad (editada por cliente, generada automática, contador de impresiones).
-
-3. **Experiencia Digital Multimedia (`TarjetaDedicatoriaDigitalInteractiva.tsx` y `/dedicatoria/[token]`):**
-   - Despliegue en `tinkay-web` y `margaritas-web`.
-   - Portada exterior interactiva con botón `[ 💌 Abrir Dedicatoria ]`.
-   - Al abrir, reproduce automáticamente la música de YouTube de fondo en **volumen sutil (25%)**.
-   - **Visor de Letras (Lyrics) sincronizado**: resalta frase a frase y realiza scroll suave vertical automático.
-   - Botón social directo: **`Dar las gracias por WhatsApp`** en 1 toque.
-   - Autoservicio de edición para el cliente comprador mientras el pedido no esté en preparación en taller.
+## Resumen de Cambios
+1. **Relación 1:1 Pedido ↔ Tarjeta y Sincronización Híbrida (`acciones-logistica.ts` + `acciones-operaciones-taller.ts`):**
+   - Cada pedido (`TNK-ORD-...`, `PED-...`, `OT-...`, `PRF-...`) cuenta automáticamente con su tarjeta dedicatoria vinculada 1:1 identificada por su token único (`ota_tarjeta_token` / `prf_token_aprobacion`).
+   - `guardarEdicionPedidoYTarjetaAction`, `obtenerTarjetaPublicaAction`, `editarTarjetaClienteAction` y `registrarImpresionTarjetaAction` operan de forma sincronizada sobre `com_orden_taller`, `com_proforma` y `com_entrega_evidencia`, funcionando incluso antes de ejecutar `com_orden_taller`.
+2. **Integración completa en Pedidos de Tienda (`/panel/pedidos` — `BandejaPedidosTienda.tsx`):**
+   - Botones directos **`Editar`** y **`Tarjeta`** en cada fila de la tabla principal y dentro del detalle expandido.
+   - Modal de **Editar Datos del Pedido** para actualizar destinatario, comprador, teléfono, dirección, enlace GPS, fecha, franja horaria/sala, notas de taller y mensaje de la tarjeta.
+3. **Estudio Integral de la Tarjeta (`ModalImprimirTarjetaTaller.tsx`):**
+   - Edición en vivo de `Para`, `De`, mensaje de dedicatoria, formato (`Díptico Tinkay` vs `Condolencias Plana`), tipografía y calibración milimétrica para **Canon PIXMA G3110**.
+   - **Descargar PDF (`pdf-lib`)**: genera al vuelo `Tarjeta-{codigo}.pdf` con medidas exactas en milímetros y código QR incrustado.
+   - **Música YouTube / MP3 + Lyrics (`LRCLIB`)**: subida de MP3 a `comun-publico/tarjetas-audio/` y extracción automática de letra sincronizada `.lrc` desde enlaces de YouTube o título de canción.

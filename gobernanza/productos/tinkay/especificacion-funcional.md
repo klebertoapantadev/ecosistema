@@ -133,20 +133,23 @@ Tinkay se apoya plenamente en la arquitectura de Plataforma común:
       4. **`DELIVERY` (Interno)** → Directo a **Entregas GPS** (`/panel/entregas`): ve pedidos listos sin asignar + pedidos asignados a su cuenta (sin informes quincenales ni precios).
       5. **`DELIVERY_EXTERNO` (Subcontratado)** → Directo a **Entregas GPS** (`/panel/entregas`): aislamiento estricto en SQL (`com_fn_obtener_tablero_entregas`) para ver **únicamente** las entregas asignadas explícitamente a su cuenta.
     - **Compartir Ubicación GPS en Vivo en Ruta (`Iniciar Ruta` / `Detener Ruta`):** Cuando el repartidor sale con el pedido activa `Iniciar Ruta`, transmitiendo su ubicación en vivo (`watchPosition` + Supabase Realtime `ubicacion_delivery_ruta` + persistencia cada 15s) visible en `/panel/envio-pedidos`, y deteniéndose automáticamente en el instante en que pulsa `Confirmar Entrega`.
-- **Módulo de Tarjetas Dedicatoria Híbridas (Física en Canon G3110 + Digital Interactiva con QR, Melodía YouTube y Letra Sincronizada) (`ModalImprimirTarjetaTaller.tsx`, `TarjetaDedicatoriaDigitalInteractiva.tsx`, `/dedicatoria/[token]`):**
-  - **Soporte Físico Automatizado a 1 Clic (Reemplazo Total de Google Slides):**
-    - **`Díptico Plegable (Dedicatoria Normal)`**: La cartulina se dobla a la mitad con el logotipo exterior preimpreso de Tinkay. El sistema calibra la impresión milimétrica en la mitad interna (derecha o inferior) para que el mensaje quede 100% privado y no manche las caras exteriores.
-    - **`Condolencias Plana`**: Cartulina simple horizontal que respeta el margen de seguridad de la esquina superior derecha (arte floral preimpreso) y admite tipografía formal y logotipos corporativos.
-    - **Calibración milimétrica para bandeja trasera de Canon PIXMA G3110**: CSS `@page` en milímetros exactos (`148mm × 105mm`, ajustable), auto-fit dinámico de tipografía (cursiva fina, serif o formal) y offsets X/Y.
-  - **Trazabilidad y Auditoría Estricta de la Tarjeta (`ota_tarjeta_metadata`):**
-    - Badges visibles en Consola de Taller y Envíos: *Generada automáticamente*, *Editada por el personal (con autor y fecha)*, *Editada por el cliente* y contador de impresiones (*Impresa x veces* con usuario responsable).
-    - **Bloqueo de seguridad de Taller**: Cuando el pedido entra a `EN_PREPARACION` o `LISTO_ENTREGA`, la edición para el cliente queda automáticamente bloqueada para evitar desfases o reimpresiones accidentales.
+- **Módulo de Tarjetas Dedicatoria Híbridas (Física en Canon G3110 + PDF + Digital Interactiva con QR, Melodía YouTube/MP3 y Letra Sincronizada) (`ModalImprimirTarjetaTaller.tsx`, `TarjetaDedicatoriaDigitalInteractiva.tsx`, `BandejaPedidosTienda.tsx`, `/dedicatoria/[token]`):**
+  - **Relación 1:1 Automática Pedido ↔ Tarjeta en Todas las Consolas (`/panel/pedidos`, `/panel/envio-pedidos` y `/panel/taller`):**
+    - Cada pedido (`TNK-ORD-...`, `PED-...`, `OT-...`, `PRF-...`) posee automáticamente su tarjeta dedicatoria vinculada 1:1 con token único (`ota_tarjeta_token` / `prf_token_aprobacion`), persistiendo de forma sincronizada entre `com_orden_taller`, `com_proforma` y `com_entrega_evidencia`.
+    - Desde **Pedidos de Tienda (`/panel/pedidos`)** y **Enviar Pedidos (`/panel/envio-pedidos`)**, los botones directos **`Editar`** y **`Tarjeta`** permiten corregir destinatario, dirección, horario, mensaje de la tarjeta, melodía y formato, además de descargar el PDF o mandar a imprimir en 1 clic.
+  - **Soporte Físico Automatizado a 1 Clic y Descarga PDF Vectorial (Reemplazo Total de Google Slides):**
+    - **`Díptico Plegable (Dedicatoria Normal)`**: La cartulina se dobla a la mitad con el logotipo exterior preimpreso de Tinkay. El sistema calibra la impresión milimétrica en la mitad interna derecha para que el mensaje quede 100% privado y no manche las caras exteriores.
+    - **`Condolencias Plana`**: Cartulina simple horizontal que respeta el margen de seguridad de la esquina superior derecha (arte floral preimpreso) y admite tipografía formal.
+    - **Impresión directa en Canon PIXMA G3110 + Descarga PDF (`pdf-lib`)**: CSS `@page` en milímetros exactos (`148mm × 105mm`, ajustable con offsets X/Y) y botón **`Descargar PDF`** que genera al vuelo el archivo `.pdf` con dimensiones exactas y QR incrustado para imprimir bajo demanda desde cualquier dispositivo.
+  - **Trazabilidad y Auditoría Estricta de la Tarjeta (`ota_tarjeta_metadata` / `prf_detalle_proforma.tarjeta.metadata`):**
+    - Badges visibles en Pedidos de Tienda, Envíos y Taller: *Generada automáticamente*, *Editada por Staff (con nombre, rol y fecha)*, *Editada por Cliente*, *Vistas del cliente* y contador de impresiones (*Impresa x veces* con usuario responsable).
+    - **Bloqueo de seguridad de Taller**: Cuando la tarjeta ya fue impresa o el pedido entra a preparación/ruta/entregado, la edición pública para el cliente queda bloqueada.
   - **Experiencia Digital Multimedia del Destinatario (Vía QR Impreso):**
     - El código QR impreso en la tarjeta física dirige a `tinkay.com.ec/dedicatoria/[token]`.
-    - Al abrir la dedicatoria, reproduce música de YouTube / audio en segundo plano a **volumen sutil (25%)**.
-    - **Visor de Letras (Lyrics) sincronizado**: Resalta y desplaza verticalmente la letra de la canción frase a frase con scroll automático fluido al compás de la música.
-    - Botón de retorno social: **`Dar las gracias por WhatsApp`** en 1 toque directo hacia el comprador.
-  - **Autoservicio para el Comprador**: El remitente puede personalizar su dedicatoria, cambiar la canción de YouTube o ajustar el texto antes de que taller la imprima.
+    - Al abrir la dedicatoria, reproduce música de **YouTube** o **archivo MP3** subido a Supabase Storage (`comun-publico/tarjetas-audio/`) en segundo plano a **volumen sutil (25%)**.
+    - **Generación y Visor de Letras (Lyrics) sincronizado (`LRCLIB` + `noembed`)**: Botón **`Cargar Letra`** que extrae el título del video de YouTube y descarga las marcas de tiempo `.lrc` para resaltar y deslizar verticalmente la letra frase a frase al compás de la música.
+    - Botón de retorno social: **`Agradecer por WhatsApp`** en 1 toque directo hacia el comprador.
+  - **Autoservicio para el Comprador**: El remitente puede personalizar su dedicatoria, pegar un link de YouTube, subir un MP3 y cargar la letra antes de que taller la imprima.
 
 ### TNK-006 — Visor Multimedia Bidireccional en Vivo y Chat Grupal de Trabajo del Equipo (`@menciones`)
 - **Visualización, Ampliación, Descarga y Reenvío de Imágenes en `/panel/conversaciones` (`ConsolaVentasOmnicanal.tsx` + `VisorMultimediaChatModal.tsx`):**
