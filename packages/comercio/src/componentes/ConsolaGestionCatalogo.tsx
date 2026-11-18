@@ -76,7 +76,7 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
     setCargando(true);
     try {
       const [prods, cats] = await Promise.all([
-        obtenerCatalogoProductosAction(negocio),
+        obtenerCatalogoProductosAction(negocio, undefined, true),
         obtenerCategoriasAction(negocio),
       ]);
       setProductos(prods);

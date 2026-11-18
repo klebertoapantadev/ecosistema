@@ -105,6 +105,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const [busqueda, setBusqueda] = useState("");
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string>("todas");
   const [canalSeleccionado, setCanalSeleccionado] = useState<string>("todos");
+  const [filtroEstadoAdmin, setFiltroEstadoAdmin] = useState<"todos" | "activos" | "inactivos">("todos");
   const [verTodosEnFiltroCanal, setVerTodosEnFiltroCanal] = useState<boolean>(false);
   const [guardandoCanalKey, setGuardandoCanalKey] = useState<string | null>(null);
   const [guardandoActivoKey, setGuardandoActivoKey] = useState<string | null>(null);
@@ -496,6 +497,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
     }
   };
 
+  const totalInactivos = (productos || []).filter((p) => p && p.pro_activo === false).length;
+  const totalActivos = (productos || []).filter((p) => p && p.pro_activo !== false).length;
+
   // Filtrado
   const productosFiltrados = (productos || []).filter((p) => {
     if (!p) return false;
@@ -505,6 +509,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
       if (p.pro_activo === false) return false;
       const vig = evaluarVigenciaProducto(p.pro_detalle_producto, p.pro_activo);
       if (!vig.estaVigente) return false;
+    } else {
+      if (filtroEstadoAdmin === "activos" && p.pro_activo === false) return false;
+      if (filtroEstadoAdmin === "inactivos" && p.pro_activo !== false) return false;
     }
 
     const cumpleBusqueda =
@@ -1122,6 +1129,81 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             </button>
           )}
         </div>
+
+        {/* Filtro rápido de Estado (Todos / Activos / Inactivos) en vista Administrador */}
+        {modoVista === "admin" && (
+          <div style={{ display: "inline-flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+            <button
+              type="button"
+              onClick={() => setFiltroEstadoAdmin("todos")}
+              title="Mostrar productos activos e inactivos"
+              aria-label="Todos los estados"
+              style={{
+                padding: "6px 11px",
+                borderRadius: "8px",
+                fontSize: "0.76rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                border: filtroEstadoAdmin === "todos" ? "1.5px solid #0F172A" : "1px solid #CBD5E1",
+                background: filtroEstadoAdmin === "todos" ? "#0F172A" : "#FFFFFF",
+                color: filtroEstadoAdmin === "todos" ? "#FFFFFF" : "#475569",
+              }}
+            >
+              Todos ({productos.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFiltroEstadoAdmin("activos")}
+              title="Mostrar solo productos activos en tienda"
+              aria-label="Productos activos"
+              style={{
+                padding: "6px 11px",
+                borderRadius: "8px",
+                fontSize: "0.76rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                border: filtroEstadoAdmin === "activos" ? "1.5px solid #059669" : "1px solid #A7F3D0",
+                background: filtroEstadoAdmin === "activos" ? "#059669" : "#ECFDF5",
+                color: filtroEstadoAdmin === "activos" ? "#FFFFFF" : "#065F46",
+              }}
+            >
+              Activos ({totalActivos})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFiltroEstadoAdmin("inactivos")}
+              title="Mostrar productos inactivos para volver a activarlos"
+              aria-label="Productos inactivos"
+              style={{
+                padding: "6px 11px",
+                borderRadius: "8px",
+                fontSize: "0.76rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                border:
+                  filtroEstadoAdmin === "inactivos"
+                    ? "1.5px solid #DC2626"
+                    : totalInactivos > 0
+                    ? "1.5px solid #F59E0B"
+                    : "1px solid #CBD5E1",
+                background:
+                  filtroEstadoAdmin === "inactivos"
+                    ? "#DC2626"
+                    : totalInactivos > 0
+                    ? "#FFFBEB"
+                    : "#F8FAFC",
+                color:
+                  filtroEstadoAdmin === "inactivos"
+                    ? "#FFFFFF"
+                    : totalInactivos > 0
+                    ? "#B45309"
+                    : "#64748B",
+              }}
+            >
+              Inactivos ({totalInactivos})
+            </button>
+          </div>
+        )}
 
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
           <button

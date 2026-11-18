@@ -1867,107 +1867,110 @@ export async function obtenerCatalogoProductosAction(
   let catsDb: any[] = [];
 
   if (clienteActivo) {
-    // 0. Intentar RPC com_fn_obtener_catalogo_productos
-    try {
-      const { data: prodsRpc, error: errRpc } = await clienteActivo.rpc(
-        "com_fn_obtener_catalogo_productos",
-        {
-          p_negocio: principal,
-          p_canal: canal && canal !== "TODOS" && canal !== "todos" ? canal.toUpperCase().trim() : null,
-        }
-      );
-
-      if (!errRpc && Array.isArray(prodsRpc) && prodsRpc.length > 0) {
-        const prodsList: ProductoCatalogo[] = prodsRpc.map((p: any) => ({
-          pro_id: p.pro_id || p.id,
-          pro_negocio: p.pro_negocio || principal,
-          pro_nombre: p.pro_nombre || p.nombre,
-          pro_slug: p.pro_slug || p.slug,
-          pro_descripcion: p.pro_descripcion || p.descripcion,
-          pro_tipo: p.pro_tipo || p.tipo || "FISICO",
-          pro_destacado: p.pro_destacado ?? false,
-          pro_activo: p.pro_activo !== false && p.pro_detalle_producto?.pro_activo !== false,
-          pro_categoria_principal_id: p.pro_categoria_principal_id || p.categoria?.ctg_id || null,
-          pro_detalle_producto: p.pro_detalle_producto || {},
-          canales_visibilidad: Array.isArray(p.canales_visibilidad)
-            ? p.canales_visibilidad
-            : Array.isArray(p.pro_detalle_producto?.canales_visibilidad)
-            ? p.pro_detalle_producto.canales_visibilidad
-            : [...CANALES_POR_DEFECTO],
-          categoria: p.categoria || null,
-          variantes: ((p.variantes || []) as any[])
-            .sort((a: any, b: any) => {
-              const ordA = typeof a.var_detalle_variante?.orden === "number" ? a.var_detalle_variante.orden : 999;
-              const ordB = typeof b.var_detalle_variante?.orden === "number" ? b.var_detalle_variante.orden : 999;
-              if (ordA !== ordB) return ordA - ordB;
-              return Number(a.var_precio ?? a.precio ?? 0) - Number(b.var_precio ?? b.precio ?? 0);
-            })
-            .map((v: any) => {
-            const base = Number(v.var_precio ?? v.precio ?? 0);
-            const tarifaIva = Number(v.var_tarifa_iva_porcentaje ?? v.tarifa_iva ?? 0);
-            const montoIva = Number(v.monto_iva ?? ((base * tarifaIva) / 100));
-            const precioTotal = Number(v.precio_total ?? (base + montoIva));
-            return {
-              var_id: v.var_id || v.id,
-              var_producto_id: v.var_producto_id || p.pro_id,
-              var_sku: v.var_sku || v.sku,
-              var_nombre: v.var_nombre || v.nombre,
-              var_precio: base,
-              var_precio_comparacion: v.var_precio_comparacion ? Number(v.var_precio_comparacion) : null,
-              var_codigo_impuesto_sri: v.var_codigo_impuesto_sri || (tarifaIva === 0 ? "IVA_0" : "IVA_15"),
-              var_tarifa_iva_porcentaje: tarifaIva,
-              var_tipo_oferta: v.var_tipo_oferta || "REGULAR",
-              var_frecuencia_recurrencia: v.var_frecuencia_recurrencia,
-              var_activo: v.var_activo !== false,
-              var_detalle_variante: v.var_detalle_variante || {},
-              monto_iva: Number(montoIva.toFixed(2)),
-              precio_total: Number(precioTotal.toFixed(2)),
-            };
-          }),
-        }));
-
-        const customs = storeCustomProductos.get(principal) || storeCustomProductos.get(negocio) || [];
-        customs.forEach((p) => {
-          const idx = prodsList.findIndex((item) => item.pro_id === p.pro_id || item.pro_slug === p.pro_slug);
-          if (idx >= 0) {
-            prodsList[idx] = p;
-          } else {
-            prodsList.unshift(p);
+    // 0. Intentar RPC com_fn_obtener_catalogo_productos (solo cuando NO se requieren productos inactivos,
+    //    ya que com_fn_obtener_catalogo_productos filtra estrictamente pro_activo = true para canales públicos)
+    if (!incluirInactivos) {
+      try {
+        const { data: prodsRpc, error: errRpc } = await clienteActivo.rpc(
+          "com_fn_obtener_catalogo_productos",
+          {
+            p_negocio: principal,
+            p_canal: canal && canal !== "TODOS" && canal !== "todos" ? canal.toUpperCase().trim() : null,
           }
-        });
+        );
 
-        // Filtrar productos inactivos salvo que se soliciten explícitamente
-        let prodsActivos = prodsList.filter((p: any) => p && (incluirInactivos || p.pro_activo !== false) && (p.pro_nombre || p.nombre));
-
-        // Normalizar estructura segura para cada producto
-        prodsActivos.forEach((p) => {
-          if (!Array.isArray(p.variantes)) {
-            p.variantes = [];
-          }
-          if (!Array.isArray(p.canales_visibilidad)) {
-            p.canales_visibilidad = Array.isArray(p.pro_detalle_producto?.canales_visibilidad)
+        if (!errRpc && Array.isArray(prodsRpc) && prodsRpc.length > 0) {
+          const prodsList: ProductoCatalogo[] = prodsRpc.map((p: any) => ({
+            pro_id: p.pro_id || p.id,
+            pro_negocio: p.pro_negocio || principal,
+            pro_nombre: p.pro_nombre || p.nombre,
+            pro_slug: p.pro_slug || p.slug,
+            pro_descripcion: p.pro_descripcion || p.descripcion,
+            pro_tipo: p.pro_tipo || p.tipo || "FISICO",
+            pro_destacado: p.pro_destacado ?? false,
+            pro_activo: p.pro_activo !== false && p.pro_detalle_producto?.pro_activo !== false,
+            pro_categoria_principal_id: p.pro_categoria_principal_id || p.categoria?.ctg_id || null,
+            pro_detalle_producto: p.pro_detalle_producto || {},
+            canales_visibilidad: Array.isArray(p.canales_visibilidad)
+              ? p.canales_visibilidad
+              : Array.isArray(p.pro_detalle_producto?.canales_visibilidad)
               ? p.pro_detalle_producto.canales_visibilidad
-              : [...CANALES_POR_DEFECTO];
-          }
-        });
+              : [...CANALES_POR_DEFECTO],
+            categoria: p.categoria || null,
+            variantes: ((p.variantes || []) as any[])
+              .sort((a: any, b: any) => {
+                const ordA = typeof a.var_detalle_variante?.orden === "number" ? a.var_detalle_variante.orden : 999;
+                const ordB = typeof b.var_detalle_variante?.orden === "number" ? b.var_detalle_variante.orden : 999;
+                if (ordA !== ordB) return ordA - ordB;
+                return Number(a.var_precio ?? a.precio ?? 0) - Number(b.var_precio ?? b.precio ?? 0);
+              })
+              .map((v: any) => {
+              const base = Number(v.var_precio ?? v.precio ?? 0);
+              const tarifaIva = Number(v.var_tarifa_iva_porcentaje ?? v.tarifa_iva ?? 0);
+              const montoIva = Number(v.monto_iva ?? ((base * tarifaIva) / 100));
+              const precioTotal = Number(v.precio_total ?? (base + montoIva));
+              return {
+                var_id: v.var_id || v.id,
+                var_producto_id: v.var_producto_id || p.pro_id,
+                var_sku: v.var_sku || v.sku,
+                var_nombre: v.var_nombre || v.nombre,
+                var_precio: base,
+                var_precio_comparacion: v.var_precio_comparacion ? Number(v.var_precio_comparacion) : null,
+                var_codigo_impuesto_sri: v.var_codigo_impuesto_sri || (tarifaIva === 0 ? "IVA_0" : "IVA_15"),
+                var_tarifa_iva_porcentaje: tarifaIva,
+                var_tipo_oferta: v.var_tipo_oferta || "REGULAR",
+                var_frecuencia_recurrencia: v.var_frecuencia_recurrencia,
+                var_activo: v.var_activo !== false,
+                var_detalle_variante: v.var_detalle_variante || {},
+                monto_iva: Number(montoIva.toFixed(2)),
+                precio_total: Number(precioTotal.toFixed(2)),
+              };
+            }),
+          }));
 
-        // Filtrar por canal si aplica
-        if (canal && typeof canal === "string" && canal.trim().length > 0 && canal !== "todos" && canal !== "TODOS") {
-          const canalUpper = canal.trim().toUpperCase() as CanalVisibilidad;
-          prodsActivos = prodsActivos.filter((p) => {
-            const tieneCanal = p.canales_visibilidad?.includes(canalUpper);
-            if (!tieneCanal) return false;
-            if (CANALES_REQUIEREN_IMAGEN.includes(canalUpper)) {
-              return productoTieneAlMenosUnaImagen(p);
+          const customs = storeCustomProductos.get(principal) || storeCustomProductos.get(negocio) || [];
+          customs.forEach((p) => {
+            const idx = prodsList.findIndex((item) => item.pro_id === p.pro_id || item.pro_slug === p.pro_slug);
+            if (idx >= 0) {
+              prodsList[idx] = p;
+            } else {
+              prodsList.unshift(p);
             }
-            return true;
           });
-        }
 
-        return prodsActivos;
+          // Filtrar productos inactivos salvo que se soliciten explícitamente
+          let prodsActivos = prodsList.filter((p: any) => p && !p.pro_eliminado_en && (incluirInactivos || p.pro_activo !== false) && (p.pro_nombre || p.nombre));
+
+          // Normalizar estructura segura para cada producto
+          prodsActivos.forEach((p) => {
+            if (!Array.isArray(p.variantes)) {
+              p.variantes = [];
+            }
+            if (!Array.isArray(p.canales_visibilidad)) {
+              p.canales_visibilidad = Array.isArray(p.pro_detalle_producto?.canales_visibilidad)
+                ? p.pro_detalle_producto.canales_visibilidad
+                : [...CANALES_POR_DEFECTO];
+            }
+          });
+
+          // Filtrar por canal si aplica
+          if (canal && typeof canal === "string" && canal.trim().length > 0 && canal !== "todos" && canal !== "TODOS") {
+            const canalUpper = canal.trim().toUpperCase() as CanalVisibilidad;
+            prodsActivos = prodsActivos.filter((p) => {
+              const tieneCanal = p.canales_visibilidad?.includes(canalUpper);
+              if (!tieneCanal) return false;
+              if (CANALES_REQUIEREN_IMAGEN.includes(canalUpper)) {
+                return productoTieneAlMenosUnaImagen(p);
+              }
+              return true;
+            });
+          }
+
+          return prodsActivos;
+        }
+      } catch {
+        // Fallback a consultas de tabla
       }
-    } catch {
-      // Fallback a consultas de tabla
     }
 
     try {
@@ -1989,12 +1992,13 @@ export async function obtenerCatalogoProductosAction(
       }
       catsDb = cData || [];
 
-      // 2. Productos
+      // 2. Productos (excluyendo siempre filas con borrado lógico pro_eliminado_en)
       let queryCom = clienteActivo
         .schema("comun_comercio")
         .from("com_producto")
         .select("*")
-        .in("pro_negocio", variantes);
+        .in("pro_negocio", variantes)
+        .is("pro_eliminado_en", null);
       if (!incluirInactivos) {
         queryCom = queryCom.eq("pro_activo", true);
       }
@@ -2004,7 +2008,8 @@ export async function obtenerCatalogoProductosAction(
         let queryPub = clienteActivo
           .from("com_producto")
           .select("*")
-          .in("pro_negocio", variantes);
+          .in("pro_negocio", variantes)
+          .is("pro_eliminado_en", null);
         if (!incluirInactivos) {
           queryPub = queryPub.eq("pro_activo", true);
         }
@@ -2013,25 +2018,31 @@ export async function obtenerCatalogoProductosAction(
       }
 
       if (pCom && pCom.length > 0) {
-        prodsDb = pCom;
-        let { data: vCom, error: errVCom } = await clienteActivo
+        prodsDb = pCom.filter((p: any) => !p.pro_eliminado_en);
+        let queryVCom = clienteActivo
           .schema("comun_comercio")
           .from("com_variante")
           .select("*")
           .in("var_negocio", variantes)
-          .eq("var_activo", true)
-          .order("var_precio", { ascending: true });
+          .is("var_eliminado_en", null);
+        if (!incluirInactivos) {
+          queryVCom = queryVCom.eq("var_activo", true);
+        }
+        let { data: vCom, error: errVCom } = await queryVCom.order("var_precio", { ascending: true });
 
         if (errVCom || !vCom || vCom.length === 0) {
-          const { data: vPub } = await clienteActivo
+          let queryVPub = clienteActivo
             .from("com_variante")
             .select("*")
             .in("var_negocio", variantes)
-            .eq("var_activo", true)
-            .order("var_precio", { ascending: true });
+            .is("var_eliminado_en", null);
+          if (!incluirInactivos) {
+            queryVPub = queryVPub.eq("var_activo", true);
+          }
+          const { data: vPub } = await queryVPub.order("var_precio", { ascending: true });
           vCom = vPub;
         }
-        varsDb = vCom || [];
+        varsDb = (vCom || []).filter((v: any) => !v.var_eliminado_en);
       }
     } catch {
       // Fallback silencioso a semillas
@@ -2191,25 +2202,30 @@ export async function alternarActivoProductoAction(params: {
     const clienteActivo = admin || supabase;
 
     if (clienteActivo) {
-      try {
-        await clienteActivo
-          .schema("comun_comercio")
+      const { error: errUpdSchema } = await clienteActivo
+        .schema("comun_comercio")
+        .from("com_producto")
+        .update({
+          pro_activo: nuevoEstado,
+          pro_detalle_producto: detalleActualizado,
+        })
+        .eq("pro_id", params.pro_id);
+
+      if (errUpdSchema) {
+        const { error: errUpdPub } = await clienteActivo
           .from("com_producto")
           .update({
             pro_activo: nuevoEstado,
             pro_detalle_producto: detalleActualizado,
           })
           .eq("pro_id", params.pro_id);
-      } catch {
-        try {
-          await clienteActivo
-            .from("com_producto")
-            .update({
-              pro_activo: nuevoEstado,
-              pro_detalle_producto: detalleActualizado,
-            })
-            .eq("pro_id", params.pro_id);
-        } catch {}
+        if (errUpdPub) {
+          return {
+            ok: false,
+            activo: estadoActual,
+            error: errUpdPub.message || errUpdSchema.message || "No se pudo actualizar el estado del producto en la base de datos.",
+          };
+        }
       }
     }
 
@@ -2223,6 +2239,7 @@ export async function alternarActivoProductoAction(params: {
     }
     storeCustomProductos.set(negocio, customs);
 
+    revalidatePath("/");
     revalidatePath("/panel/catalogo-productos");
     revalidatePath("/panel");
 
