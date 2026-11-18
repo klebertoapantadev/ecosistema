@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { ProveedorCarrito, useCarrito } from '../contexto-carrito';
+import type { CategoriaEcommerce, ProductoEcommerce } from '../tipos';
 import { EncabezadoEcommerce } from './EncabezadoEcommerce';
 import { CarruselHeroDestacados } from './CarruselHeroDestacados';
 import { CarruselProductosDestacados } from './CarruselProductosDestacados';
@@ -271,18 +272,24 @@ export interface LandingEcommerceTinkayProps {
   categoriaInicialUrl?: string;
   productoInicialUrl?: string;
   varianteInicialUrl?: string;
+  productosIniciales?: ProductoEcommerce[];
+  categoriasIniciales?: CategoriaEcommerce[];
 }
 
 export function LandingEcommerceTinkay({
   categoriaInicialUrl,
   productoInicialUrl,
   varianteInicialUrl,
+  productosIniciales,
+  categoriasIniciales,
 }: LandingEcommerceTinkayProps) {
   return (
     <ProveedorCarrito
       categoriaInicialUrl={categoriaInicialUrl}
       productoInicialUrl={productoInicialUrl}
       varianteInicialUrl={varianteInicialUrl}
+      productosIniciales={productosIniciales}
+      categoriasIniciales={categoriasIniciales}
     >
       <ContenidoPaginaEcommerceTinkay />
     </ProveedorCarrito>

@@ -158,6 +158,8 @@ export interface ProveedorCarritoProps {
   productoInicialUrl?: string;
   varianteInicialUrl?: string;
   usuarioRegistradoInicial?: boolean;
+  productosIniciales?: ProductoEcommerce[];
+  categoriasIniciales?: CategoriaEcommerce[];
 }
 
 export function ProveedorCarrito({
@@ -166,6 +168,8 @@ export function ProveedorCarrito({
   productoInicialUrl,
   varianteInicialUrl,
   usuarioRegistradoInicial,
+  productosIniciales,
+  categoriasIniciales,
 }: ProveedorCarritoProps) {
   const [items, setItems] = useState<ItemCarrito[]>([]);
   const [modalidadEntrega, setModalidadEntrega] = useState<ModalidadEntrega>('unificada');
@@ -211,8 +215,12 @@ export function ProveedorCarrito({
   }));
 
   // Catálogo dinámico sincronizado con Supabase en tiempo real
-  const [productos, setProductos] = useState<ProductoEcommerce[]>(PRODUCTOS_TINKAY);
-  const [categorias, setCategorias] = useState<CategoriaEcommerce[]>(CATEGORIAS_TINKAY);
+  const [productos, setProductos] = useState<ProductoEcommerce[]>(() =>
+    productosIniciales && productosIniciales.length > 0 ? productosIniciales : PRODUCTOS_TINKAY
+  );
+  const [categorias, setCategorias] = useState<CategoriaEcommerce[]>(() =>
+    categoriasIniciales && categoriasIniciales.length > 0 ? categoriasIniciales : CATEGORIAS_TINKAY
+  );
   const [categoriaActiva, setCategoriaActivaInterna] = useState<string>('cat-todos');
   const [terminoBusqueda, setTerminoBusqueda] = useState<string>('');
   const [configLogistica, setConfigLogistica] = useState<ConfiguracionLogisticaNegocio>(() =>
@@ -414,19 +422,41 @@ export function ProveedorCarrito({
       }
     };
 
-    resolverDesdeUrlOProps(PRODUCTOS_TINKAY, CATEGORIAS_TINKAY, false);
+    const baseInicialProds =
+      productosIniciales && productosIniciales.length > 0 ? productosIniciales : PRODUCTOS_TINKAY;
+    const baseInicialCats =
+      categoriasIniciales && categoriasIniciales.length > 0 ? categoriasIniciales : CATEGORIAS_TINKAY;
+    resolverDesdeUrlOProps(baseInicialProds, baseInicialCats, false);
 
-    cargarCatalogoDinamicoTinkay().then(({ productos: prodsLive, categorias: catsLive }) => {
-      const prodsFinales = prodsLive && prodsLive.length > 0 ? prodsLive : PRODUCTOS_TINKAY;
-      const catsFinales = catsLive && catsLive.length > 0 ? catsLive : CATEGORIAS_TINKAY;
-      if (prodsLive && prodsLive.length > 0) {
-        setProductos(prodsLive);
-      }
-      if (catsLive && catsLive.length > 0) {
-        setCategorias(catsLive);
-      }
-      resolverDesdeUrlOProps(prodsFinales, catsFinales, true);
-    });
+    let ultimaSincronizacionMs = 0;
+    const refrescarCatalogoEnVivo = (aplicarDeepLink: boolean) => {
+      ultimaSincronizacionMs = Date.now();
+      cargarCatalogoDinamicoTinkay().then(({ productos: prodsLive, categorias: catsLive }) => {
+        const prodsFinales = prodsLive && prodsLive.length > 0 ? prodsLive : baseInicialProds;
+        const catsFinales = catsLive && catsLive.length > 0 ? catsLive : baseInicialCats;
+        if (prodsLive && prodsLive.length > 0) {
+          setProductos(prodsLive);
+        }
+        if (catsLive && catsLive.length > 0) {
+          setCategorias(catsLive);
+        }
+        if (aplicarDeepLink) {
+          resolverDesdeUrlOProps(prodsFinales, catsFinales, true);
+        }
+      });
+    };
+
+    refrescarCatalogoEnVivo(true);
+
+    const alRecuperarFoco = () => {
+      if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+      if (Date.now() - ultimaSincronizacionMs < 4000) return;
+      refrescarCatalogoEnVivo(false);
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('focus', alRecuperarFoco);
+      document.addEventListener('visibilitychange', alRecuperarFoco);
+    }
 
     obtenerConfiguracionLogisticaAction('tinkay')
       .then((cfg) => {
@@ -439,6 +469,13 @@ export function ProveedorCarrito({
         if (cfgCheckout) setConfigTiendaCheckout(cfgCheckout);
       })
       .catch(() => {});
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('focus', alRecuperarFoco);
+        document.removeEventListener('visibilitychange', alRecuperarFoco);
+      }
+    };
   }, [categoriaInicialUrl, productoInicialUrl, varianteInicialUrl]);
 
   // Verificar estado de cuenta registrada y obsequio de bienvenida

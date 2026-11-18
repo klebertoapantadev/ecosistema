@@ -8,4 +8,5 @@ En `apps/tinkay-web/modulos/ecommerce/servicio-catalogo.ts`, el cálculo de `esE
 
 ## Solución Implementada
 - Se restringió `esExtra` a productos marcados explícitamente con `detalle.es_complemento === true`, tipo `COMPLEMENTO` o pertenecientes a categorías `Extras` / `Complemento` (`cat-detalles`), usando slugs exactos de semilla únicamente como respaldo cuando el producto no tiene asignada una categoría comercial regular.
+- Se inyectó el catálogo dinámico desde el servidor (`SSR force-dynamic`) en `/`, `/categoria/[slug]` y `/producto/[slug]`, se activó resincronización automática al recuperar foco de pestaña (`focus` / `visibilitychange`) en `ProveedorCarrito` y se renovó el Service Worker (`eco-portal-operaciones-v4`) eliminando la intercepción de `/_next/static/`.
 - Se verificó contra la base de datos en vivo que **`Decoración Globos I`** y **`Aro - Guirnalda de globos`** aparecen tanto en `Todo el Catálogo` como en `Eventos y Ceremonias`, manteniendo ocultos los verdaderos `Extras` (`Bombones Chocolates` y `Cinta Condolencias`).
