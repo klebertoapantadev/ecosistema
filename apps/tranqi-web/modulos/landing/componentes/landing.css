@@ -45,12 +45,12 @@ html:has(.landing) { scroll-behavior: smooth; scroll-padding-top: 72px; scroll-s
   /* La cinta («churo»): UN hilo continuo. Cada tramo sale por y=900 y el
      siguiente entra por y=0 en la misma x con tangente vertical, así el
      empalme no se ve. En el collage pasa por detrás de las fotos.
-     Se dibuja al bajar (stroke-dashoffset), como en la landing actual. */
+     La punta sigue al scroll (TRQ-026): LandingTranqi fija stroke-dashoffset
+     en cada fotograma, así que aquí no hay transición. */
   .landing .churo { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
   .landing .churo svg { position: absolute; inset: 0; width: 100%; height: 100%; }
   .landing .churo path { fill: none; stroke-linecap: round; vector-effect: non-scaling-stroke; stroke-width: clamp(30px, 7vw, 100px);
-    stroke-dasharray: 1 2; stroke-dashoffset: 1.05; transition: stroke-dashoffset 1.6s cubic-bezier(0.32, 0.72, 0.3, 1); }
-  .landing .churo path.trazado { stroke-dashoffset: 0; }
+    stroke-dasharray: 1 2; stroke-dashoffset: 1.05; }
 
   /* ---------- NAV ---------- */
   .landing .barra { position: sticky; top: 0; z-index: 50; background: var(--violeta); color: var(--blanco); }
