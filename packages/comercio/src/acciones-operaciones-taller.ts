@@ -39,6 +39,33 @@ function esErrorMigracionPendiente(msg?: string | null): boolean {
   );
 }
 
+async function invocarRpcComercio(
+  supabase: any,
+  fnNombre: string,
+  params: Record<string, any>
+): Promise<{ data: any; error: any }> {
+  try {
+    const esquema = supabase.schema("comun_comercio") as any;
+    const res = await esquema.rpc(fnNombre, params);
+    if (!res.error) {
+      return res;
+    }
+    // Fallback: llamada directa sin header de schema (por si PostgREST resuelve por search_path)
+    const resDirecto = await supabase.rpc(fnNombre, params);
+    if (!resDirecto.error) {
+      return resDirecto;
+    }
+    return res;
+  } catch (err: any) {
+    try {
+      const resDirecto = await supabase.rpc(fnNombre, params);
+      return resDirecto;
+    } catch {
+      return { data: null, error: err };
+    }
+  }
+}
+
 function revalidarRutasTienda(negocio: string) {
   try {
     revalidatePath("/");
@@ -73,11 +100,12 @@ export async function obtenerInventarioRosasAction(negocio: string): Promise<
     const neg = normalizarNegocio(negocio);
     const { crearClienteServidor } = await import("@eco/supabase/servidor");
     const supabase = await crearClienteServidor();
-    const esquema = supabase.schema("comun_comercio") as any;
 
-    const { data, error } = await esquema.rpc("com_fn_obtener_inventario_rosas", {
-      p_negocio: neg,
-    });
+    const { data, error } = await invocarRpcComercio(
+      supabase,
+      "com_fn_obtener_inventario_rosas",
+      { p_negocio: neg }
+    );
 
     if (!error && data?.ok) {
       return {
@@ -172,14 +200,17 @@ export async function guardarCorteInventarioRosasAction(entrada: {
     const neg = normalizarNegocio(entrada.negocio);
     const { crearClienteServidor } = await import("@eco/supabase/servidor");
     const supabase = await crearClienteServidor();
-    const esquema = supabase.schema("comun_comercio") as any;
 
-    const { data, error } = await esquema.rpc("com_fn_guardar_corte_inventario_rosas", {
-      p_negocio: neg,
-      p_resumen_colores: entrada.resumenColores,
-      p_fotos: entrada.fotos,
-      p_observaciones: entrada.observaciones ?? null,
-    });
+    const { data, error } = await invocarRpcComercio(
+      supabase,
+      "com_fn_guardar_corte_inventario_rosas",
+      {
+        p_negocio: neg,
+        p_resumen_colores: entrada.resumenColores,
+        p_fotos: entrada.fotos,
+        p_observaciones: entrada.observaciones ?? null,
+      }
+    );
 
     if (error) {
       return { ok: false, error: error.message };
@@ -213,12 +244,15 @@ export async function listarEntregaInmediataAction(
     const neg = normalizarNegocio(negocio);
     const { crearClienteServidor } = await import("@eco/supabase/servidor");
     const supabase = await crearClienteServidor();
-    const esquema = supabase.schema("comun_comercio") as any;
 
-    const { data, error } = await esquema.rpc("com_fn_listar_entrega_inmediata", {
-      p_negocio: neg,
-      p_incluir_inactivos: Boolean(incluirInactivos),
-    });
+    const { data, error } = await invocarRpcComercio(
+      supabase,
+      "com_fn_listar_entrega_inmediata",
+      {
+        p_negocio: neg,
+        p_incluir_inactivos: Boolean(incluirInactivos),
+      }
+    );
 
     if (!error && data?.ok) {
       const items = Array.isArray(data.items)
@@ -749,11 +783,12 @@ export async function obtenerConsolaTallerYDespachoAction(
     const neg = normalizarNegocio(negocio);
     const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
     const supabase = await crearClienteServidor();
-    const esquema = supabase.schema("comun_comercio") as any;
 
-    const { data, error } = await esquema.rpc("com_fn_obtener_consola_taller_y_despacho", {
-      p_negocio: neg,
-    });
+    const { data, error } = await invocarRpcComercio(
+      supabase,
+      "com_fn_obtener_consola_taller_y_despacho",
+      { p_negocio: neg }
+    );
 
     if (!error && data?.ok) {
       const ordenes: OrdenTrabajoTaller[] = Array.isArray(data.ordenes)
@@ -1026,17 +1061,20 @@ export async function crearOActualizarPedidoOperadorAction(entrada: {
     const neg = normalizarNegocio(entrada.negocio);
     const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
     const supabase = await crearClienteServidor();
-    const esquema = supabase.schema("comun_comercio") as any;
 
     const enviar = entrada.enviarATaller ?? entrada.origenTipo === "EXEQUIALES_LLAMADA";
 
-    const { data, error } = await esquema.rpc("com_fn_crear_o_actualizar_pedido_operador", {
-      p_negocio: neg,
-      p_payload: {
-        ...entrada,
-        enviarATaller: enviar,
-      },
-    });
+    const { data, error } = await invocarRpcComercio(
+      supabase,
+      "com_fn_crear_o_actualizar_pedido_operador",
+      {
+        p_negocio: neg,
+        p_payload: {
+          ...entrada,
+          enviarATaller: enviar,
+        },
+      }
+    );
 
     if (!error && data?.ok) {
       if (enviar) {
@@ -1207,12 +1245,15 @@ export async function enviarPedidosATallerAction(entrada: {
 
     const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
     const supabase = await crearClienteServidor();
-    const esquema = supabase.schema("comun_comercio") as any;
 
-    const { data, error } = await esquema.rpc("com_fn_enviar_pedidos_a_taller", {
-      p_negocio: neg,
-      p_ids: ids,
-    });
+    const { data, error } = await invocarRpcComercio(
+      supabase,
+      "com_fn_enviar_pedidos_a_taller",
+      {
+        p_negocio: neg,
+        p_ids: ids,
+      }
+    );
 
     if (!error && data?.ok) {
       const codigos: string[] = Array.isArray(data.codigos) ? data.codigos.map(String) : [];
@@ -1299,14 +1340,17 @@ export async function actualizarEstadoOrdenTallerAction(entrada: {
     const neg = normalizarNegocio(entrada.negocio);
     const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
     const supabase = await crearClienteServidor();
-    const esquema = supabase.schema("comun_comercio") as any;
 
-    const { data, error } = await esquema.rpc("com_fn_actualizar_estado_taller", {
-      p_negocio: neg,
-      p_orden_id: entrada.ordenId,
-      p_nuevo_estado: entrada.nuevoEstado,
-      p_notas_taller: entrada.notasTaller ?? null,
-    });
+    const { data, error } = await invocarRpcComercio(
+      supabase,
+      "com_fn_actualizar_estado_taller",
+      {
+        p_negocio: neg,
+        p_orden_id: entrada.ordenId,
+        p_nuevo_estado: entrada.nuevoEstado,
+        p_notas_taller: entrada.notasTaller ?? null,
+      }
+    );
 
     if (!error && data?.ok) {
       const { despacharPushCambioEstadoPedidoTodosLosRoles } = await import(
@@ -1414,16 +1458,19 @@ export async function asignarRepartidorEntregaAction(entrada: {
     const neg = normalizarNegocio(entrada.negocio);
     const { crearClienteServidor } = await import("@eco/supabase/servidor");
     const supabase = await crearClienteServidor();
-    const esquema = supabase.schema("comun_comercio") as any;
 
-    const { data, error } = await esquema.rpc("com_fn_asignar_repartidor_entrega", {
-      p_negocio: neg,
-      p_orden_taller_id: entrada.ordenTallerId ?? null,
-      p_entrega_id: entrada.entregaId ?? null,
-      p_repartidor_id: entrada.repartidorId ?? null,
-      p_repartidor_nombre: entrada.repartidorNombre ?? null,
-      p_repartidor_tipo: entrada.repartidorTipo ?? "INTERNO",
-    });
+    const { data, error } = await invocarRpcComercio(
+      supabase,
+      "com_fn_asignar_repartidor_entrega",
+      {
+        p_negocio: neg,
+        p_orden_taller_id: entrada.ordenTallerId ?? null,
+        p_entrega_id: entrada.entregaId ?? null,
+        p_repartidor_id: entrada.repartidorId ?? null,
+        p_repartidor_nombre: entrada.repartidorNombre ?? null,
+        p_repartidor_tipo: entrada.repartidorTipo ?? "INTERNO",
+      }
+    );
 
     if (!error && data?.ok) {
       if (entrada.repartidorId) {
@@ -1480,18 +1527,21 @@ export async function actualizarUbicacionRutaDeliveryAction(entrada: {
     const neg = normalizarNegocio(entrada.negocio);
     const { crearClienteServidor } = await import("@eco/supabase/servidor");
     const supabase = await crearClienteServidor();
-    const esquema = supabase.schema("comun_comercio") as any;
 
-    const { data, error } = await esquema.rpc("com_fn_actualizar_ubicacion_ruta_delivery", {
-      p_negocio: neg,
-      p_orden_taller_id: entrada.ordenTallerId ?? null,
-      p_entrega_id: entrada.entregaId ?? null,
-      p_proforma_id: entrada.proformaId ?? null,
-      p_en_ruta: entrada.enRuta,
-      p_latitud: entrada.latitud ?? null,
-      p_longitud: entrada.longitud ?? null,
-      p_precision: entrada.precision ?? null,
-    });
+    const { data, error } = await invocarRpcComercio(
+      supabase,
+      "com_fn_actualizar_ubicacion_ruta_delivery",
+      {
+        p_negocio: neg,
+        p_orden_taller_id: entrada.ordenTallerId ?? null,
+        p_entrega_id: entrada.entregaId ?? null,
+        p_proforma_id: entrada.proformaId ?? null,
+        p_en_ruta: entrada.enRuta,
+        p_latitud: entrada.latitud ?? null,
+        p_longitud: entrada.longitud ?? null,
+        p_precision: entrada.precision ?? null,
+      }
+    );
 
     if (!error && data?.ok) {
       return { ok: true, enRuta: Boolean(data.enRuta) };

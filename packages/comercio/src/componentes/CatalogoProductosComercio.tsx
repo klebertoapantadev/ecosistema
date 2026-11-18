@@ -86,6 +86,16 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const [pestanaActiva, setPestanaActiva] = useState<"catalogo" | "disponibilidad" | "convenios" | "empresas">("catalogo");
   const [modoVista, setModoVista] = useState<"admin" | "cliente">("admin");
   const [videoModalUrl, setVideoModalUrl] = useState<string | null>(null);
+  const [esModoMovil, setEsModoMovil] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    const mq = window.matchMedia("(max-width: 640px)");
+    const sincronizarMovil = () => setEsModoMovil(mq.matches);
+    sincronizarMovil();
+    mq.addEventListener("change", sincronizarMovil);
+    return () => mq.removeEventListener("change", sincronizarMovil);
+  }, []);
 
   const [productos, setProductos] = useState<ProductoCatalogo[]>([]);
   const [categoriasLista, setCategoriasLista] = useState<CategoriaCatalogo[]>([]);
@@ -540,6 +550,22 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
 
   return (
     <div style={{ padding: "8px 0" }}>
+      {/* Estilos responsivos: ocultar acciones secundarias en modo móvil (<= 640px), visibles en tablet y PC */}
+      <style>{`
+        @media (max-width: 640px) {
+          .catalogo-solo-pantalla-grande,
+          .catalogo-solo-escritorio {
+            display: none !important;
+          }
+        }
+        @keyframes ecoGiroCatalogo {
+          to { transform: rotate(360deg); }
+        }
+        .eco-icono-girando {
+          animation: ecoGiroCatalogo 0.9s linear infinite;
+        }
+      `}</style>
+
       {/* Cabecera del Catálogo y Barra de Acciones */}
       <div
         style={{
@@ -714,17 +740,141 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 </span>
               </button>
 
+              {!esModoMovil && (
+                <>
+                  {/* Botón unificado para Nueva Colección + Gestionar Colecciones (solo PC y Tablet) */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCatModalTab("gestionar");
+                      setModalCatAbierto(true);
+                    }}
+                    className="btn-responsive-accion catalogo-solo-pantalla-grande"
+                    title={
+                      esFloristeria
+                        ? "Crear y gestionar colecciones del catálogo"
+                        : "Crear y gestionar categorías del catálogo"
+                    }
+                    aria-label={esFloristeria ? "Colecciones" : "Categorías"}
+                    style={{
+                      background: "#FFFFFF",
+                      color: "#334155",
+                      border: "1px solid #CBD5E1",
+                      padding: "8px 14px",
+                      borderRadius: "8px",
+                      fontSize: "0.85rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <FolderPlus size={15} />
+                    <span className="btn-texto-responsive">
+                      {esFloristeria ? "Colecciones" : "Categorías"}
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setModalTiposOfertaAbierto(true)}
+                    className="btn-responsive-accion catalogo-solo-pantalla-grande"
+                    title="Administrar Tipos de Oferta Comercial (Venta, Decoración, Renta de Mobiliario, etc.)"
+                    aria-label="Tipos Oferta"
+                    style={{
+                      background: "#FFFBEB",
+                      color: "#92400E",
+                      border: "1px solid #FDE68A",
+                      padding: "8px 12px",
+                      borderRadius: "8px",
+                      fontSize: "0.85rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <Tag size={15} color="#D97706" />
+                    <span className="btn-texto-responsive">Tipos Oferta</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        window.location.href = "/panel/administrar?widget=gestion_convenios_corporativos";
+                      }
+                    }}
+                    className="btn-responsive-accion catalogo-solo-pantalla-grande"
+                    title="Ver y Gestionar Convenios Corporativos y Beneficios B2B (SATCOM)"
+                    aria-label="Convenios B2B"
+                    style={{
+                      background: "#ECFDF5",
+                      color: "#05876E",
+                      border: "1px solid #A7F3D0",
+                      padding: "8px 14px",
+                      borderRadius: "8px",
+                      fontSize: "0.85rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <Building2 size={15} />
+                    <span className="btn-texto-responsive">Convenios B2B</span>
+                  </button>
+                </>
+              )}
+            </>
+          )}
+
+          {!esModoMovil && (
+            <>
+              {/* Botón Compartir Parámetros de Consulta (solo PC y Tablet) */}
               <button
                 type="button"
-                onClick={() => {
-                  setCatModalTab("crear");
-                  setModalCatAbierto(true);
-                }}
-                className="btn-responsive-accion"
-                title="Crear Nueva Categoría"
-                aria-label="Crear Nueva Categoría"
+                onClick={handleCompartirConsulta}
+                className="btn-responsive-accion catalogo-solo-pantalla-grande"
+                title="Copiar enlace con los filtros y parámetros de consulta del catálogo"
+                aria-label="Compartir"
                 style={{
-                  background: "#FFFFFF",
+                  background: copiadoConsulta ? "#ECFDF5" : "#F8FAFC",
+                  color: copiadoConsulta ? "#047857" : "#334155",
+                  border: copiadoConsulta ? "1.5px solid #10B981" : "1.5px solid #CBD5E1",
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  fontSize: "0.85rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                {copiadoConsulta ? (
+                  <CheckCircle size={15} color="#10B981" />
+                ) : (
+                  <Share2 size={15} color="#0284C7" />
+                )}
+                <span className="btn-texto-responsive">
+                  {copiadoConsulta ? "¡Copiado!" : "Compartir"}
+                </span>
+              </button>
+
+              {/* Botón Actualizar Catálogo (solo PC y Tablet) */}
+              <button
+                type="button"
+                onClick={cargarDatos}
+                className="btn-responsive-accion catalogo-solo-pantalla-grande"
+                title="Actualizar Catálogo"
+                aria-label="Actualizar"
+                style={{
+                  background: "#F1F5F9",
                   color: "#334155",
                   border: "1px solid #CBD5E1",
                   padding: "8px 14px",
@@ -737,138 +887,11 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   gap: "6px",
                 }}
               >
-                <FolderPlus size={15} />
-                <span className="btn-texto-responsive">{esFloristeria ? "Nueva Colección" : "Nueva Categoría"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setCatModalTab("gestionar");
-                  setModalCatAbierto(true);
-                }}
-                className="btn-responsive-accion"
-                title="Administrar y Eliminar Categorías"
-                aria-label="Gestionar Categorías"
-                style={{
-                  background: "#FFFFFF",
-                  color: "#475569",
-                  border: "1px solid #CBD5E1",
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  fontSize: "0.85rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                }}
-              >
-                <Settings2 size={15} />
-                <span className="btn-texto-responsive">Gestionar</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setModalTiposOfertaAbierto(true)}
-                className="btn-responsive-accion"
-                title="Administrar Tipos de Oferta Comercial (Venta, Decoración, Renta de Mobiliario, etc.)"
-                aria-label="Administrar Tipos de Oferta"
-                style={{
-                  background: "#FFFBEB",
-                  color: "#92400E",
-                  border: "1px solid #FDE68A",
-                  padding: "8px 12px",
-                  borderRadius: "8px",
-                  fontSize: "0.85rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                }}
-              >
-                <Tag size={15} color="#D97706" />
-                <span className="btn-texto-responsive">Tipos Oferta</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (typeof window !== "undefined") {
-                    window.location.href = "/panel/administrar?widget=gestion_convenios_corporativos";
-                  }
-                }}
-                className="btn-responsive-accion"
-                title="Ver y Gestionar Convenios Corporativos y Beneficios B2B (SATCOM)"
-                aria-label="Convenios Corporativos"
-                style={{
-                  background: "#ECFDF5",
-                  color: "#05876E",
-                  border: "1px solid #A7F3D0",
-                  padding: "8px 14px",
-                  borderRadius: "8px",
-                  fontSize: "0.85rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                }}
-              >
-                <Building2 size={15} />
-                <span className="btn-texto-responsive">Convenios B2B</span>
+                <RefreshCw size={14} className={cargando ? "eco-icono-girando" : undefined} />
+                <span className="btn-texto-responsive">Actualizar</span>
               </button>
             </>
           )}
-
-          {/* Botón Compartir Parámetros de Consulta (URL) */}
-          <button
-            type="button"
-            onClick={handleCompartirConsulta}
-            className="btn-responsive-accion"
-            title="Copiar enlace con los filtros y parámetros de consulta del catálogo"
-            aria-label="Compartir parámetros de consulta"
-            style={{
-              background: copiadoConsulta ? "#ECFDF5" : "#F8FAFC",
-              color: copiadoConsulta ? "#047857" : "#334155",
-              border: copiadoConsulta ? "1.5px solid #10B981" : "1.5px solid #CBD5E1",
-              padding: "8px 14px",
-              borderRadius: "8px",
-              fontSize: "0.85rem",
-              fontWeight: 700,
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              transition: "all 0.2s ease",
-            }}
-          >
-            {copiadoConsulta ? <CheckCircle size={15} color="#10B981" /> : <Share2 size={15} color="#0284C7" />}
-            <span className="btn-texto-responsive">{copiadoConsulta ? "¡Copiado!" : "Compartir"}</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={cargarDatos}
-            className="btn-responsive-accion"
-            title="Actualizar Catálogo"
-            aria-label="Actualizar Catálogo"
-            style={{
-              background: "#F1F5F9",
-              color: "#334155",
-              border: "1px solid #CBD5E1",
-              padding: "8px 14px",
-              borderRadius: "8px",
-              fontSize: "0.85rem",
-              fontWeight: 600,
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-            }}
-          >
-            <RefreshCw size={14} className={cargando ? "animate-spin" : ""} />
-            <span className="btn-texto-responsive">Actualizar</span>
-          </button>
         </div>
       </div>
 
@@ -1136,56 +1159,37 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             </button>
           ))}
 
-          {modoVista === "admin" && (
-            <div style={{ display: "inline-flex", gap: "4px" }}>
-              <button
-                type="button"
-                onClick={() => {
-                  setCatModalTab("crear");
-                  setModalCatAbierto(true);
-                }}
-                style={{
-                  padding: "5px 12px",
-                  borderRadius: "8px",
-                  fontSize: "0.78rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  border: "1.5px dashed #CBD5E1",
-                  background: "#FFFFFF",
-                  color: esFloristeria ? "#E11D48" : "#0284C7",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-                title={esFloristeria ? "Crear nueva colección floral" : "Crear nueva categoría"}
-              >
-                <FolderPlus size={13} />
-                <span>{esFloristeria ? "+ Colección" : "+ Categoría"}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setCatModalTab("gestionar");
-                  setModalCatAbierto(true);
-                }}
-                style={{
-                  padding: "5px 8px",
-                  borderRadius: "8px",
-                  fontSize: "0.78rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  border: "1px solid #CBD5E1",
-                  background: "#F8FAFC",
-                  color: "#64748B",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-                title="Administrar y eliminar colecciones"
-              >
-                <Settings2 size={12} />
-              </button>
-            </div>
+          {modoVista === "admin" && !esModoMovil && (
+            <button
+              type="button"
+              onClick={() => {
+                setCatModalTab("gestionar");
+                setModalCatAbierto(true);
+              }}
+              className="catalogo-solo-pantalla-grande"
+              title={
+                esFloristeria
+                  ? "Crear y gestionar colecciones florales"
+                  : "Crear y gestionar categorías"
+              }
+              aria-label={esFloristeria ? "Colecciones" : "Categorías"}
+              style={{
+                padding: "5px 12px",
+                borderRadius: "8px",
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                border: "1.5px dashed #CBD5E1",
+                background: "#FFFFFF",
+                color: esFloristeria ? "#E11D48" : "#0284C7",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+              }}
+            >
+              <FolderPlus size={13} />
+              <span>{esFloristeria ? "Colecciones" : "Categorías"}</span>
+            </button>
           )}
         </div>
       </div>
