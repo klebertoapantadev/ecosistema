@@ -106,3 +106,36 @@ export function verificarOrdenRespaldoServidor(token: string): OrdenFirmadaServi
     return null;
   }
 }
+
+export function generarTokenEdicionTarjetaServidor(tokenVista: string): string {
+  const base = (tokenVista || "").trim().split("_")[0] || "";
+  if (!base) return "";
+  const firma = crypto
+    .createHmac("sha256", obtenerClaveHmacServidor())
+    .update(`tarjeta-edicion-v1:${base}`)
+    .digest("hex")
+    .slice(0, 14);
+  return `${base}_${firma}`;
+}
+
+export function verificarTokenEdicionTarjetaServidor(tokenEdicion: string): string | null {
+  const limpio = (tokenEdicion || "").trim();
+  const idx = limpio.lastIndexOf("_");
+  if (idx <= 0) return null;
+  const base = limpio.slice(0, idx);
+  const firmaRecibida = limpio.slice(idx + 1);
+  if (!base || firmaRecibida.length !== 14) return null;
+
+  const firmaEsperada = crypto
+    .createHmac("sha256", obtenerClaveHmacServidor())
+    .update(`tarjeta-edicion-v1:${base}`)
+    .digest("hex")
+    .slice(0, 14);
+
+  const bufA = Buffer.from(firmaRecibida);
+  const bufB = Buffer.from(firmaEsperada);
+  if (bufA.length !== bufB.length || !crypto.timingSafeEqual(bufA, bufB)) {
+    return null;
+  }
+  return base;
+}

@@ -352,11 +352,18 @@ export const RANGOS_HORARIO_ENTREGA_TIENDA = [
   { codigo: "C", valor: "C) 17:00 - 20:00", etiqueta: "C) 17:00 - 20:00", corto: "17:00–20:00" },
 ] as const;
 
+export type ModoSelectorHorarioEntrega =
+  | "A) 09:00 - 13:00"
+  | "B) 13:00 - 17:00"
+  | "C) 17:00 - 20:00"
+  | "HORA_EXACTA"
+  | "LO_ANTES_POSIBLE";
+
 export function normalizarFranjaHorariaTienda(valor?: string | null): string {
   const v = (valor || "").trim();
   if (!v) return "A) 09:00 - 13:00";
   const low = v.toLowerCase();
-  if (low === "manana" || low.startsWith("a)") || low.includes("09:00")) {
+  if (low === "manana" || low === "mañana" || low.startsWith("a)") || low.includes("09:00")) {
     return "A) 09:00 - 13:00";
   }
   if (
@@ -371,6 +378,153 @@ export function normalizarFranjaHorariaTienda(valor?: string | null): string {
     return "C) 17:00 - 20:00";
   }
   return v;
+}
+
+export function extraerHoraHhMm(valor?: string | null): string {
+  const txt = String(valor || "").trim();
+  const match = txt.match(/\b(\d{1,2}):(\d{2})\b/);
+  if (!match) return "";
+  const hh = Number(match[1]);
+  const mm = Number(match[2]);
+  if (Number.isNaN(hh) || Number.isNaN(mm) || hh < 0 || hh > 23 || mm < 0 || mm > 59) {
+    return "";
+  }
+  return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+}
+
+export function inferirFranjaDesdeHoraExacta(hora?: string | null): string {
+  const hhmm = extraerHoraHhMm(hora);
+  if (!hhmm) return "A) 09:00 - 13:00";
+  const hh = Number(hhmm.slice(0, 2));
+  if (hh < 13) return "A) 09:00 - 13:00";
+  if (hh < 17) return "B) 13:00 - 17:00";
+  return "C) 17:00 - 20:00";
+}
+
+export function resolverEstadoInicialHorario(entrada: {
+  franjaHoraria?: string | null;
+  horaEspecifica?: string | null;
+  esExequiales?: boolean;
+}): { modo: ModoSelectorHorarioEntrega; horaExacta: string } {
+  const hEsp = String(entrada.horaEspecifica || "").trim();
+  const franja = String(entrada.franjaHoraria || "").trim();
+
+  if (hEsp) {
+    const lowH = hEsp.toLowerCase();
+    if (lowH.includes("antes posible") || lowH === "urgente" || lowH === "inmediata") {
+      return { modo: "LO_ANTES_POSIBLE", horaExacta: "" };
+    }
+    if (
+      lowH.startsWith("a)") ||
+      lowH.startsWith("b)") ||
+      lowH.startsWith("c)") ||
+      lowH.includes("09:00 - 13:00") ||
+      lowH.includes("13:00 - 17:00") ||
+      lowH.includes("17:00 - 20:00")
+    ) {
+      return {
+        modo: normalizarFranjaHorariaTienda(hEsp) as ModoSelectorHorarioEntrega,
+        horaExacta: "",
+      };
+    }
+    const hhmm = extraerHoraHhMm(hEsp);
+    if (hhmm) {
+      return { modo: "HORA_EXACTA", horaExacta: hhmm };
+    }
+  }
+
+  if (franja) {
+    const lowF = franja.toLowerCase();
+    if (lowF.includes("antes posible") || lowF === "urgente") {
+      return { modo: "LO_ANTES_POSIBLE", horaExacta: "" };
+    }
+    if (lowF === "hora_exacta") {
+      return { modo: "HORA_EXACTA", horaExacta: extraerHoraHhMm(hEsp) || "10:30" };
+    }
+    const hhmmEnFranja =
+      !lowF.startsWith("a)") &&
+      !lowF.startsWith("b)") &&
+      !lowF.startsWith("c)") &&
+      !lowF.includes("-")
+        ? extraerHoraHhMm(franja)
+        : "";
+    if (hhmmEnFranja) {
+      return { modo: "HORA_EXACTA", horaExacta: hhmmEnFranja };
+    }
+    const norm = normalizarFranjaHorariaTienda(franja);
+    if (
+      norm === "A) 09:00 - 13:00" ||
+      norm === "B) 13:00 - 17:00" ||
+      norm === "C) 17:00 - 20:00"
+    ) {
+      return { modo: norm, horaExacta: "" };
+    }
+  }
+
+  return {
+    modo: entrada.esExequiales ? "LO_ANTES_POSIBLE" : "A) 09:00 - 13:00",
+    horaExacta: "",
+  };
+}
+
+export function construirValoresHorarioGuardar(
+  modo: ModoSelectorHorarioEntrega,
+  horaExacta: string
+): { franjaHoraria: string | null; horaEspecifica: string | null } {
+  if (modo === "LO_ANTES_POSIBLE") {
+    return {
+      franjaHoraria: null,
+      horaEspecifica: "Lo antes posible",
+    };
+  }
+  if (modo === "HORA_EXACTA") {
+    const limpia = extraerHoraHhMm(horaExacta) || horaExacta.trim();
+    return {
+      franjaHoraria: limpia ? inferirFranjaDesdeHoraExacta(limpia) : "A) 09:00 - 13:00",
+      horaEspecifica: limpia || null,
+    };
+  }
+  return {
+    franjaHoraria: normalizarFranjaHorariaTienda(modo),
+    horaEspecifica: null,
+  };
+}
+
+export function formatearHorarioEntregaOrden(entrada: {
+  franjaHoraria?: string | null;
+  horaEspecifica?: string | null;
+  esExequiales?: boolean;
+}): string {
+  const hEsp = String(entrada.horaEspecifica || "").trim();
+  const franja = String(entrada.franjaHoraria || "").trim();
+  if (hEsp) {
+    if (hEsp.toLowerCase().includes("antes posible")) {
+      return "Lo antes posible";
+    }
+    const hhmm = extraerHoraHhMm(hEsp);
+    if (hhmm) {
+      return `Hora exacta: ${hhmm}`;
+    }
+    return hEsp;
+  }
+  if (franja && franja.toLowerCase() !== "hora_exacta") {
+    return franja;
+  }
+  return entrada.esExequiales ? "Lo antes posible" : "A) 09:00 - 13:00";
+}
+
+export function esNombreFallecidoPendiente(valor?: string | null): boolean {
+  const v = String(valor || "")
+    .trim()
+    .toLowerCase();
+  if (!v) return true;
+  return (
+    v === "por coordinar" ||
+    v === "por confirmar" ||
+    v.startsWith("por confirmar (") ||
+    v.startsWith("por coordinar (") ||
+    v === "destinatario"
+  );
 }
 
 export type EstadoOrdenTaller =
@@ -388,11 +542,10 @@ export type OrigenOrdenTaller =
   | "EXEQUIALES_LLAMADA";
 
 export type ClasificacionOperativaPedido =
-  | "DOMICILIO"
-  | "LOCAL"
-  | "EXEQUIALES"
+  | "FLORISTERIA_OCASIONES"
+  | "CONDOLENCIAS"
   | "EVENTOS"
-  | "MOBILIARIO";
+  | "EXEQUIALES";
 
 export interface DefinicionClasificacionPedido {
   clave: ClasificacionOperativaPedido;
@@ -400,7 +553,7 @@ export interface DefinicionClasificacionPedido {
   etiquetaCorta: string;
   descripcion: string;
   /** Nombre semántico del ícono Lucide */
-  iconoClave: "Truck" | "Store" | "Ribbon" | "Sparkles" | "Armchair";
+  iconoClave: "Flower2" | "HeartHandshake" | "Sparkles" | "Ribbon";
   /** Paleta activa (pedido pendiente / en curso) */
   acentoHex: string;
   fondoHex: string;
@@ -415,11 +568,11 @@ export interface DefinicionClasificacionPedido {
 
 export const CLASIFICACIONES_OPERATIVAS_PEDIDO: readonly DefinicionClasificacionPedido[] = [
   {
-    clave: "DOMICILIO",
-    etiqueta: "Domicilio",
-    etiquetaCorta: "Domicilio",
-    descripcion: "Entrega floral a dirección o domicilio del destinatario",
-    iconoClave: "Truck",
+    clave: "FLORISTERIA_OCASIONES",
+    etiqueta: "Floristería / Ocasiones",
+    etiquetaCorta: "Floristería / Ocasiones",
+    descripcion: "Ramos, box florales, cumpleaños, aniversarios y ocasiones especiales (domicilio o retiro)",
+    iconoClave: "Flower2",
     acentoHex: "#0D9488",
     fondoHex: "#F0FDFA",
     bordeHex: "#99F6E4",
@@ -430,40 +583,25 @@ export const CLASIFICACIONES_OPERATIVAS_PEDIDO: readonly DefinicionClasificacion
     textoOpacoHex: "#475569",
   },
   {
-    clave: "LOCAL",
-    etiqueta: "Local",
-    etiquetaCorta: "Local",
-    descripcion: "Retiro o entrega directa en tienda física",
-    iconoClave: "Store",
-    acentoHex: "#2563EB",
-    fondoHex: "#EFF6FF",
-    bordeHex: "#BFDBFE",
-    textoHex: "#1E40AF",
+    clave: "CONDOLENCIAS",
+    etiqueta: "Condolencias",
+    etiquetaCorta: "Condolencias",
+    descripcion: "Coronas, pedestales y arreglos fúnebres particulares con tarjeta y dirección de entrega",
+    iconoClave: "HeartHandshake",
+    acentoHex: "#334155",
+    fondoHex: "#F8FAFC",
+    bordeHex: "#CBD5E1",
+    textoHex: "#1E293B",
     acentoOpacoHex: "#64748B",
     fondoOpacoHex: "#F1F5F9",
     bordeOpacoHex: "#CBD5E1",
     textoOpacoHex: "#475569",
   },
   {
-    clave: "EXEQUIALES",
-    etiqueta: "Exequiales",
-    etiquetaCorta: "Exequiales",
-    descripcion: "Servicios exequiales, salas de velación y condolencias",
-    iconoClave: "Ribbon",
-    acentoHex: "#6D28D9",
-    fondoHex: "#F5F3FF",
-    bordeHex: "#DDD6FE",
-    textoHex: "#4C1D95",
-    acentoOpacoHex: "#7C6F9B",
-    fondoOpacoHex: "#F3F1F7",
-    bordeOpacoHex: "#D4CFE0",
-    textoOpacoHex: "#575068",
-  },
-  {
     clave: "EVENTOS",
     etiqueta: "Eventos",
     etiquetaCorta: "Eventos",
-    descripcion: "Decoración floral, ceremonias y montajes especiales",
+    descripcion: "Decoración floral, ceremonias, bodas, montajes especiales y mobiliario",
     iconoClave: "Sparkles",
     acentoHex: "#BE185D",
     fondoHex: "#FDF2F8",
@@ -475,19 +613,19 @@ export const CLASIFICACIONES_OPERATIVAS_PEDIDO: readonly DefinicionClasificacion
     textoOpacoHex: "#5E4A53",
   },
   {
-    clave: "MOBILIARIO",
-    etiqueta: "Mobiliario",
-    etiquetaCorta: "Mobiliario",
-    descripcion: "Renta de estructuras, pedestales, arcos y mobiliario",
-    iconoClave: "Armchair",
-    acentoHex: "#B45309",
-    fondoHex: "#FFFBEB",
-    bordeHex: "#FDE68A",
-    textoHex: "#92400E",
-    acentoOpacoHex: "#8A7356",
-    fondoOpacoHex: "#F5F3EE",
-    bordeOpacoHex: "#DDD6C7",
-    textoOpacoHex: "#5C5243",
+    clave: "EXEQUIALES",
+    etiqueta: "Exequiales",
+    etiquetaCorta: "Exequiales",
+    descripcion: "Órdenes de convenio Exequiales por sala y persona fallecida (sin tarjeta ni dirección)",
+    iconoClave: "Ribbon",
+    acentoHex: "#6D28D9",
+    fondoHex: "#F5F3FF",
+    bordeHex: "#DDD6FE",
+    textoHex: "#4C1D95",
+    acentoOpacoHex: "#7C6F9B",
+    fondoOpacoHex: "#F3F1F7",
+    bordeOpacoHex: "#D4CFE0",
+    textoOpacoHex: "#575068",
   },
 ] as const;
 
@@ -495,6 +633,12 @@ export function obtenerDefinicionClasificacionPedido(
   clave?: string | null
 ): DefinicionClasificacionPedido {
   const norm = String(clave || "").trim().toUpperCase();
+  if (norm === "DOMICILIO" || norm === "LOCAL" || norm === "OCASIONES" || norm === "FLORISTERIA") {
+    return CLASIFICACIONES_OPERATIVAS_PEDIDO[0]!;
+  }
+  if (norm === "MOBILIARIO" || norm === "RENTA") {
+    return CLASIFICACIONES_OPERATIVAS_PEDIDO.find((c) => c.clave === "EVENTOS")!;
+  }
   return (
     CLASIFICACIONES_OPERATIVAS_PEDIDO.find((c) => c.clave === norm) ??
     CLASIFICACIONES_OPERATIVAS_PEDIDO[0]!
@@ -509,6 +653,7 @@ export function inferirClasificacionPedido(entrada: {
   productoResumen?: string | null;
   ubicacionEntrega?: string | null;
   metodoPago?: string | null;
+  tarjetaTipo?: string | null;
   tieneEvento?: boolean;
   items?: Array<{
     descripcion?: string;
@@ -520,19 +665,27 @@ export function inferirClasificacionPedido(entrada: {
   const exp = String(entrada.clasificacionExplicita || "")
     .trim()
     .toUpperCase();
+
   if (
-    exp === "DOMICILIO" ||
-    exp === "LOCAL" ||
-    exp === "EXEQUIALES" ||
+    exp === "FLORISTERIA_OCASIONES" ||
+    exp === "CONDOLENCIAS" ||
     exp === "EVENTOS" ||
-    exp === "MOBILIARIO"
+    exp === "EXEQUIALES"
   ) {
     return exp;
   }
-  if (exp === "EXEQUIAL" || exp === "CONDOLENCIAS" || exp === "FUNERARIO") return "EXEQUIALES";
-  if (exp === "EVENTO" || exp === "CEREMONIA") return "EVENTOS";
-  if (exp === "RENTA" || exp === "ALQUILER") return "MOBILIARIO";
-  if (exp === "TIENDA" || exp === "RETIRO" || exp === "RETIRO_LOCAL") return "LOCAL";
+  if (exp === "FLORISTERIA" || exp === "OCASIONES" || exp === "FLORISTERIA_OCACION" || exp === "FLORISTERIAOCACIONES") {
+    return "FLORISTERIA_OCASIONES";
+  }
+  if (exp === "CONDOLENCIA" || exp === "FUNERARIO" || exp === "FUNEBRE" || exp === "FÚNEBRE") {
+    return "CONDOLENCIAS";
+  }
+  if (exp === "EXEQUIAL") {
+    return "EXEQUIALES";
+  }
+  if (exp === "EVENTO" || exp === "CEREMONIA" || exp === "MOBILIARIO" || exp === "RENTA" || exp === "ALQUILER") {
+    return "EVENTOS";
+  }
 
   const orig = String(entrada.origenTipo || "")
     .trim()
@@ -541,6 +694,7 @@ export function inferirClasificacionPedido(entrada: {
   const prod = String(entrada.productoResumen || "").toLowerCase();
   const ubic = String(entrada.ubicacionEntrega || "").toLowerCase();
   const met = String(entrada.metodoPago || "").toLowerCase();
+  const tarTipo = String(entrada.tarjetaTipo || "").toUpperCase();
   const itemsTxt = (entrada.items ?? [])
     .map((it) => `${it.descripcion || ""} ${it.sku || ""} ${it.tipoOferta || ""}`)
     .join(" ")
@@ -549,25 +703,60 @@ export function inferirClasificacionPedido(entrada: {
     (it) => it.esRenta === true || String(it.tipoOferta || "").toUpperCase() === "RENTA"
   );
 
+  // 1. Exequiales (convenio Exequiales / llamada / sala Exequiales)
   if (
     orig === "EXEQUIALES_LLAMADA" ||
     orig === "ORDEN_TRABAJO_CONVENIO" ||
     Boolean(sala) ||
     met.includes("convenio") ||
     ubic.includes("exequial") ||
-    ubic.includes("camposanto") ||
-    ubic.includes("monteolivo") ||
-    ubic.includes("funeraria")
+    ubic.includes("iess")
   ) {
     return "EXEQUIALES";
   }
 
+  // 2. Condolencias particulares (coronas, pedestales fúnebres, funerarias, tarjeta condolencias)
   if (
+    tarTipo === "CONDOLENCIAS_PLANA" ||
+    prod.includes("condolencia") ||
+    prod.includes("corona") ||
+    prod.includes("fúnebre") ||
+    prod.includes("funebre") ||
+    prod.includes("cubre cofre") ||
+    prod.includes("cubrecofre") ||
+    prod.includes("trípode") ||
+    prod.includes("tripode") ||
+    prod.includes("luto") ||
+    prod.includes("sepelio") ||
+    itemsTxt.includes("condolencia") ||
+    itemsTxt.includes("corona") ||
+    itemsTxt.includes("fúnebre") ||
+    itemsTxt.includes("funebre") ||
+    ubic.includes("camposanto") ||
+    ubic.includes("monteolivo") ||
+    ubic.includes("funeraria") ||
+    ubic.includes("sala de velación") ||
+    ubic.includes("sala de velacion") ||
+    ubic.includes("tanatorio") ||
+    ubic.includes("cementerio") ||
+    ubic.includes("jardines del valle") ||
+    ubic.includes("memorial")
+  ) {
+    return "CONDOLENCIAS";
+  }
+
+  // 3. Eventos (proformas de evento, ceremonias, montajes y renta de mobiliario)
+  if (
+    orig === "PROFORMA_EVENTO" ||
+    entrada.tieneEvento === true ||
     itemsTieneRenta ||
     prod.includes("en renta") ||
     prod.includes("alquiler") ||
     prod.includes("mobiliario") ||
-    prod.includes("pedestal") ||
+    prod.includes("arco floral") ||
+    prod.includes("montaje de evento") ||
+    prod.includes("decoración de evento") ||
+    prod.includes("decoracion de evento") ||
     prod.includes("backing") ||
     prod.includes("mampara") ||
     prod.includes("cilindro") ||
@@ -575,31 +764,11 @@ export function inferirClasificacionPedido(entrada: {
     itemsTxt.includes("mobiliario") ||
     itemsTxt.includes("alquiler")
   ) {
-    return "MOBILIARIO";
-  }
-
-  if (
-    orig === "PROFORMA_EVENTO" ||
-    entrada.tieneEvento === true ||
-    prod.includes("arco floral") ||
-    prod.includes("montaje de evento") ||
-    prod.includes("decoración de evento") ||
-    prod.includes("decoracion de evento")
-  ) {
     return "EVENTOS";
   }
 
-  if (
-    entrada.retiroEnLocal === true ||
-    ubic.includes("retiro en tienda") ||
-    ubic.includes("retiro en local") ||
-    ubic === "local" ||
-    ubic === "tienda"
-  ) {
-    return "LOCAL";
-  }
-
-  return "DOMICILIO";
+  // 4. Floristería / Ocasiones (incluye valores heredados DOMICILIO / LOCAL)
+  return "FLORISTERIA_OCASIONES";
 }
 
 export function esEntregaConfirmadaOrden(
@@ -665,9 +834,15 @@ export interface OrdenTrabajoTaller {
   tarjetaMusicaUrl?: string | null;
   tarjetaMusicaTitulo?: string | null;
   tarjetaLyrics?: Array<{ tiempo?: number; texto: string }>;
+  /** Token exclusivo para editar la tarjeta (/tarjeta-editar/[token]), separado del token público de visualización (/dedicatoria/[token]) */
+  tarjetaTokenEdicion?: string;
+  /** Cuando es true (confidencialidad/discreción), en la cartulina física solo se imprime el QR sin mostrar el mensaje escrito */
+  tarjetaConfidencial?: boolean;
   tarjetaMetadata?: {
     origen?: string;
     creado_por?: string;
+    token_edicion?: string;
+    confidencial_solo_qr?: boolean;
     historial_cambios?: Array<{
       autor?: string;
       rol?: string;
@@ -681,6 +856,10 @@ export interface OrdenTrabajoTaller {
     ultima_vista_en?: string;
     editado_por_cliente?: boolean;
     ultima_edicion_cliente_en?: string;
+    editado_por_staff?: boolean;
+    ultimo_editor_nombre?: string;
+    ultimo_editor_rol?: string;
+    ultima_edicion_staff_en?: string;
     impresiones?: number;
     ultima_impresion_en?: string;
     ultimo_impreso_por?: string;
@@ -710,6 +889,10 @@ export interface OrdenTrabajoTaller {
   entregadoPorNombre?: string | null;
   estadoEvidencia?: EstadoEntregaEvidencia | string | null;
   numeroInforme?: string | null;
+  /** Auditoría de borrado lógico (solo visible en Papelera del Administrador) */
+  eliminadoEn?: string | null;
+  eliminadoPorNombre?: string | null;
+  eliminadoMotivo?: string | null;
 }
 
 export interface RepartidorDisponibleNegocio {

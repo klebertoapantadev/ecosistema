@@ -57,6 +57,7 @@ export type EstadoCobroChatVenta = "COTIZANDO" | "PAGO_SOLICITADO" | "PAGADO";
  */
 export interface DatosVentaConversacion {
   // 🛒 1. Producto y Valores
+  clasificacionPedido?: string; // 'FLORISTERIA_OCASIONES' | 'CONDOLENCIAS' | 'EVENTOS' | 'EXEQUIALES'
   producto?: string;
   preferenciasDetalle?: string; // Unifica Colores, NumGirasoles/tallos y NOTAS de elaboración
   precioProducto?: number | null;
@@ -69,7 +70,9 @@ export interface DatosVentaConversacion {
 
   // 📍 2. Ubicación y Entrega
   fechaEntrega?: string; // YYYY-MM-DD (antes `-ℹ️ Cuando`)
-  franjaHora?: string; // Ej. `A) 09:00 - 13:00` o hora específica (antes `-🕙 Hora`)
+  franjaHora?: string; // Ej. `A) 09:00 - 13:00` o `HORA_EXACTA` (antes `-🕙 Hora`)
+  horaExacta?: string; // Ej. `10:30` cuando aplica hora puntual
+  salaServicio?: string; // Sala Exequiales (Sala 1..4 / Capilla / Oficina)
   sector?: string; // Ej. Centro-Norte, Cumbayá, Sur (antes `.📍Sector`)
   direccionReferencia?: string; // Dirección escrita / sala funeraria (antes `-❓ Donde`)
   ubicacionUrl?: string; // Link Google Maps / Waze / GPS (antes `.📍Ubicacion`)

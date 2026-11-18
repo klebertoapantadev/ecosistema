@@ -4,6 +4,8 @@ import Link from "next/link";
 import { obtenerTarjetaPublicaAction } from "@eco/comercio";
 import { TarjetaDedicatoriaDigitalInteractiva } from "@eco/comercio";
 
+export const dynamic = "force-dynamic";
+
 interface PropsPage {
   params: Promise<{ token: string }>;
 }

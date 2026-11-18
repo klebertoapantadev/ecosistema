@@ -2,17 +2,16 @@
 
 import React from "react";
 import {
-  Armchair,
   Camera,
   CheckCircle2,
   Download,
   ExternalLink,
+  Flower2,
+  HeartHandshake,
   Layers,
   MapPin,
   Ribbon,
   Sparkles,
-  Store,
-  Truck,
   X,
 } from "lucide-react";
 import {
@@ -34,17 +33,15 @@ export function IconoClasificacionPedido({
   const c = color || def.textoHex;
 
   switch (def.iconoClave) {
-    case "Store":
-      return <Store size={size} color={c} strokeWidth={2.1} />;
+    case "HeartHandshake":
+      return <HeartHandshake size={size} color={c} strokeWidth={2.1} />;
     case "Ribbon":
       return <Ribbon size={size} color={c} strokeWidth={2.1} />;
     case "Sparkles":
       return <Sparkles size={size} color={c} strokeWidth={2.1} />;
-    case "Armchair":
-      return <Armchair size={size} color={c} strokeWidth={2.1} />;
-    case "Truck":
+    case "Flower2":
     default:
-      return <Truck size={size} color={c} strokeWidth={2.1} />;
+      return <Flower2 size={size} color={c} strokeWidth={2.1} />;
   }
 }
 
@@ -375,14 +372,14 @@ export function ModalVisorEvidenciaEntrega({
               {datos.quienSolicita || "—"}
             </div>
             <div>
-              <strong>{esExeq ? "Nombre del fallecido:" : "Destinatario:"}</strong>{" "}
+              <strong>{esExeq ? "Persona fallecida:" : "Destinatario:"}</strong>{" "}
               {datos.destinatarioFallecido || "—"}
             </div>
           </div>
 
           <div>
             <div>
-              <strong>Fecha / Hora programada:</strong> {datos.fechaEntrega || "—"}
+              <strong>Fecha / Hora de entrega:</strong> {datos.fechaEntrega || "—"}
               {datos.horaEntrega ? ` · ${datos.horaEntrega}` : ""}
             </div>
             {datos.entregadoEn && (
@@ -394,9 +391,11 @@ export function ModalVisorEvidenciaEntrega({
                 })}
               </div>
             )}
-            <div>
-              <strong>Dirección:</strong> {datos.direccionEntrega || "—"}
-            </div>
+            {!esExeq && (
+              <div>
+                <strong>Dirección:</strong> {datos.direccionEntrega || "—"}
+              </div>
+            )}
             {datos.entregadorNombre && (
               <div>
                 <strong>Entregado por:</strong> {datos.entregadorNombre}

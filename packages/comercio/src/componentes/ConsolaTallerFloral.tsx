@@ -30,6 +30,7 @@ import {
   esEntregaConfirmadaOrden,
   esPedidoDeElaboracionEnFecha,
   formatearFechaEntregaHumana,
+  formatearHorarioEntregaOrden,
   inferirClasificacionPedido,
   obtenerFechaHoyEcuadorYmd,
   type ClasificacionOperativaPedido,
@@ -338,6 +339,7 @@ export function ConsolaTallerFloral({
         productoResumen: o.productoResumen,
         ubicacionEntrega: o.ubicacionEntrega,
         metodoPago: o.metodoPago,
+        tarjetaTipo: o.tarjetaTipo,
         items: o.items,
       });
     },
@@ -424,9 +426,12 @@ export function ConsolaTallerFloral({
                 📅 {info.etiquetaPrincipal}
               </span>
               <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#334155" }}>
-                {o.origenTipo === "EXEQUIALES_LLAMADA"
-                  ? `⏰ ${o.horaEspecifica || "Hoy"}`
-                  : o.franjaHoraria || "A) 09:00 - 13:00"}
+                ⏰{" "}
+                {formatearHorarioEntregaOrden({
+                  franjaHoraria: o.franjaHoraria,
+                  horaEspecifica: o.horaEspecifica,
+                  esExequiales: resolverClasifTaller(o) === "EXEQUIALES",
+                })}
               </span>
             </div>
           );
@@ -454,7 +459,7 @@ export function ConsolaTallerFloral({
               <strong style={{ fontSize: "0.85rem", color: "#1E293B" }}>
                 {o.productoResumen}
               </strong>
-              {o.dedicatoria && (
+              {clasif !== "EXEQUIALES" && o.dedicatoria && (
                 <span style={{ fontSize: "0.73rem", color: "#92400E" }}>
                   Dedicatoria: {o.dedicatoria}
                 </span>
@@ -467,20 +472,25 @@ export function ConsolaTallerFloral({
         id: "destinatario",
         encabezado: "Solicita / Destinatario / Sala",
         valor: (o) => `${o.clienteSolicita} ${o.destinatarioFallecido} ${o.salaServicio || ""}`,
-        render: (o) => (
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <strong style={{ fontSize: "0.8rem", color: "#0F172A" }}>
-              {o.origenTipo === "EXEQUIALES_LLAMADA"
-                ? `Solicita: ${o.clienteSolicita}`
-                : o.destinatarioFallecido || o.clienteSolicita}
-            </strong>
-            <span style={{ fontSize: "0.74rem", color: "#475569" }}>
-              {o.origenTipo === "EXEQUIALES_LLAMADA"
-                ? `${o.salaServicio || "Sala por confirmar"} · Fallecido: ${o.destinatarioFallecido || "Por confirmar"}`
-                : o.ubicacionEntrega || "—"}
-            </span>
-          </div>
-        ),
+        render: (o) => {
+          const esExeq = resolverClasifTaller(o) === "EXEQUIALES";
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+              <strong style={{ fontSize: "0.8rem", color: "#0F172A" }}>
+                {esExeq
+                  ? `Solicita: ${o.clienteSolicita}`
+                  : o.destinatarioFallecido || o.clienteSolicita}
+              </strong>
+              <span style={{ fontSize: "0.74rem", color: "#475569" }}>
+                {esExeq
+                  ? `${o.salaServicio || "Sala por confirmar"} · Fallecido: ${o.destinatarioFallecido || "Pendiente"}`
+                  : o.retiroEnLocal
+                    ? "Retiro en Tienda"
+                    : o.ubicacionEntrega || "—"}
+              </span>
+            </div>
+          );
+        },
       },
       {
         id: "estado_taller",
@@ -488,6 +498,7 @@ export function ConsolaTallerFloral({
         valor: (o) => o.estadoTaller,
         render: (o) => {
           const proc = idProcesando === o.id;
+          const esExeq = resolverClasifTaller(o) === "EXEQUIALES";
           if (o.estadoTaller === "ENTREGADO") {
             return (
               <span
@@ -509,28 +520,30 @@ export function ConsolaTallerFloral({
 
           return (
             <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
-              <button
-                type="button"
-                onClick={() => setOrdenParaImprimir(o)}
-                title="Imprimir Tarjeta Dedicatoria en Canon G3110"
-                aria-label="Imprimir Tarjeta"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  padding: "7px 10px",
-                  borderRadius: "8px",
-                  border: impresiones > 0 ? "1px solid #F59E0B" : "1px solid #0284C7",
-                  background: impresiones > 0 ? "#FEF3C7" : "#F0F9FF",
-                  color: impresiones > 0 ? "#92400E" : "#0369A1",
-                  fontSize: "0.76rem",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                }}
-              >
-                <Printer size={13} />
-                <span>{impresiones > 0 ? `Tarjeta (x${impresiones})` : "Tarjeta"}</span>
-              </button>
+              {!esExeq && (
+                <button
+                  type="button"
+                  onClick={() => setOrdenParaImprimir(o)}
+                  title="Imprimir Tarjeta Dedicatoria en Canon G3110"
+                  aria-label="Imprimir Tarjeta"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    padding: "7px 10px",
+                    borderRadius: "8px",
+                    border: impresiones > 0 ? "1px solid #F59E0B" : "1px solid #0284C7",
+                    background: impresiones > 0 ? "#FEF3C7" : "#F0F9FF",
+                    color: impresiones > 0 ? "#92400E" : "#0369A1",
+                    fontSize: "0.76rem",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                  }}
+                >
+                  <Printer size={13} />
+                  <span>{impresiones > 0 ? `Tarjeta (x${impresiones})` : "Tarjeta"}</span>
+                </button>
+              )}
 
               <button
                 type="button"
@@ -1003,7 +1016,7 @@ export function ConsolaTallerFloral({
                     </li>
                   ))}
                 </ul>
-                {o.dedicatoria && (
+                {resolverClasifTaller(o) !== "EXEQUIALES" && o.dedicatoria && (
                   <div
                     style={{
                       marginTop: "8px",
@@ -1048,18 +1061,23 @@ export function ConsolaTallerFloral({
 
               <div>
                 <div>
-                  <strong>Fecha de Entrega:</strong> {o.fechaEntrega}{" "}
-                  {o.horaEspecifica
-                    ? `(${o.horaEspecifica})`
-                    : o.franjaHoraria
-                      ? `(${o.franjaHoraria})`
-                      : ""}
+                  <strong>Fecha y Hora de Entrega:</strong> {o.fechaEntrega} ·{" "}
+                  {formatearHorarioEntregaOrden({
+                    franjaHoraria: o.franjaHoraria,
+                    horaEspecifica: o.horaEspecifica,
+                    esExequiales: resolverClasifTaller(o) === "EXEQUIALES",
+                  })}
                 </div>
                 <div>
                   <strong>Solicita:</strong> {o.clienteSolicita}
                 </div>
                 <div>
-                  <strong>Destinatario / Fallecido:</strong> {o.destinatarioFallecido || "—"}
+                  <strong>
+                    {resolverClasifTaller(o) === "EXEQUIALES"
+                      ? "Persona Fallecida:"
+                      : "Destinatario:"}
+                  </strong>{" "}
+                  {o.destinatarioFallecido || "—"}
                 </div>
                 {o.salaServicio && (
                   <div>

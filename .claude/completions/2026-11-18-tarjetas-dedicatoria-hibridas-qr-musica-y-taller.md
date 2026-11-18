@@ -1,16 +1,17 @@
-# Cierre de Tarea — Edición de Pedidos, Relación 1:1 Pedido-Tarjeta, Descarga PDF, Impresión Canon G3110 y Música YouTube/MP3 con Lyrics
+# Cierre de Tarea — Calibración Física 16,8×11,3 cm (Vertical vs Horizontal), Modo Confidencial Solo QR y Enlaces Separados de Edición vs Visualización
 
 **Fecha:** 2026-11-18  
 **Requerimientos:** `PLT-009` / `TNK-005`  
 
 ## Resumen de Cambios
-1. **Relación 1:1 Pedido ↔ Tarjeta y Sincronización Híbrida (`acciones-logistica.ts` + `acciones-operaciones-taller.ts`):**
-   - Cada pedido (`TNK-ORD-...`, `PED-...`, `OT-...`, `PRF-...`) cuenta automáticamente con su tarjeta dedicatoria vinculada 1:1 identificada por su token único (`ota_tarjeta_token` / `prf_token_aprobacion`).
-   - `guardarEdicionPedidoYTarjetaAction`, `obtenerTarjetaPublicaAction`, `editarTarjetaClienteAction` y `registrarImpresionTarjetaAction` operan de forma sincronizada sobre `com_orden_taller`, `com_proforma` y `com_entrega_evidencia`, funcionando incluso antes de ejecutar `com_orden_taller`.
-2. **Integración completa en Pedidos de Tienda (`/panel/pedidos` — `BandejaPedidosTienda.tsx`):**
-   - Botones directos **`Editar`** y **`Tarjeta`** en cada fila de la tabla principal y dentro del detalle expandido.
-   - Modal de **Editar Datos del Pedido** para actualizar destinatario, comprador, teléfono, dirección, enlace GPS, fecha, franja horaria/sala, notas de taller y mensaje de la tarjeta.
-3. **Estudio Integral de la Tarjeta (`ModalImprimirTarjetaTaller.tsx`):**
-   - Edición en vivo de `Para`, `De`, mensaje de dedicatoria, formato (`Díptico Tinkay` vs `Condolencias Plana`), tipografía y calibración milimétrica para **Canon PIXMA G3110**.
-   - **Descargar PDF (`pdf-lib`)**: genera al vuelo `Tarjeta-{codigo}.pdf` con medidas exactas en milímetros y código QR incrustado.
-   - **Música YouTube / MP3 + Lyrics (`LRCLIB`)**: subida de MP3 a `comun-publico/tarjetas-audio/` y extracción automática de letra sincronizada `.lrc` desde enlaces de YouTube o título de canción.
+1. **Medidas Físicas Reales (`16,8 × 11,3 cm`) y Orientación Diferenciada (`ModalImprimirTarjetaTaller.tsx`):**
+   - **Dedicatoria (`DIPTICO`)**: Orientación **Vertical `113 × 168 mm` (`11,3 × 16,8 cm`)**, cara interior completa con pliegue horizontal central a `8,4 cm` (`84 mm`).
+   - **Condolencias (`CONDOLENCIAS_PLANA`)**: Orientación **Horizontal `168 × 113 mm` (`16,8 × 11,3 cm`)**, respetando las esquinas diagonales preimpresas (superior-izquierda e inferior-derecha) y ubicando el QR opcional abajo a la izquierda.
+   - Tanto el `@page` CSS para la **Canon PIXMA G3110** como el archivo generado por **`Descargar PDF` (`pdf-lib`)** adoptan automáticamente la orientación y dimensiones reales.
+2. **Música Exclusiva para Dedicatoria:**
+   - Los campos y la reproducción de canción (YouTube / MP3) y *lyric* inferior solo se muestran y ejecutan en pedidos de **Dedicatoria**, deshabilitándose en **Condolencias**.
+3. **Modo Confidencialidad / Discreción (`confidencial_solo_qr`):**
+   - Opción **`Confidencialidad / Discreción (imprimir solo el QR)`**: oculta el texto escrito en la cartulina física (impresión y PDF) e imprime únicamente el código QR hacia la vista digital.
+4. **Dos Enlaces Independientes (Solo Lectura en QR vs Edición Firmada):**
+   - **QR Impreso y Vista Pública (`/dedicatoria/[tokenVista]` — `TarjetaDedicatoriaDigitalInteractiva.tsx`)**: Contiene únicamente la URL de visualización digital limpia (muestra la tarjeta con el mensaje, reproduce la canción suave al 25% si aplica y desliza el *lyric* en la parte inferior, sin controles de edición).
+   - **Enlace Exclusivo de Edición (`/tarjeta-editar/[tokenEdicion]` — `EditorTarjetaPublicoCliente.tsx`)**: Protegido con firma HMAC-SHA256 de servidor (`token-orden-firmada.ts`) para que Operador, Ventas, Taller o el Cliente editen el mensaje creado automáticamente, el modo confidencial y la canción.

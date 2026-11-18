@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import {
   firmarOrdenRespaldoServidor,
+  generarTokenEdicionTarjetaServidor,
   verificarOrdenRespaldoServidor,
 } from "./token-orden-firmada";
 import { obtenerConfiguracionTiendaCheckoutAction } from "./acciones-tienda-checkout";
@@ -820,6 +821,8 @@ export interface PedidoTiendaRegistrado {
   salaServicio?: string | null;
   tarjeta?: {
     token: string;
+    tokenEdicion?: string;
+    confidencial?: boolean;
     tipo: "DIPTICO" | "CONDOLENCIAS_PLANA" | "SOLO_DIGITAL";
     mensaje: string;
     para: string;
@@ -830,6 +833,8 @@ export interface PedidoTiendaRegistrado {
     metadata?: {
       origen?: string;
       creado_por?: string;
+      token_edicion?: string;
+      confidencial_solo_qr?: boolean;
       historial_cambios?: Array<{
         autor?: string;
         rol?: string;
@@ -846,6 +851,10 @@ export interface PedidoTiendaRegistrado {
       ultimo_impreso_por?: string;
     };
   };
+  /** Auditoría de borrado lógico (solo poblado para Administrador / Superadmin) */
+  eliminadoEn?: string | null;
+  eliminadoPorNombre?: string | null;
+  eliminadoMotivo?: string | null;
 }
 
 const esquemaPedidoTienda = z.object({
@@ -1732,7 +1741,16 @@ export async function registrarPedidoTiendaAction(
  */
 export async function obtenerPedidosTiendaAction(
   negocio: string
-): Promise<{ ok: true; pedidos: PedidoTiendaRegistrado[] } | { ok: false; error: string }> {
+): Promise<
+  | {
+      ok: true;
+      pedidos: PedidoTiendaRegistrado[];
+      esAdminEstricto?: boolean;
+      puedeEliminarLogico?: boolean;
+      pedidosEliminados?: PedidoTiendaRegistrado[];
+    }
+  | { ok: false; error: string }
+> {
   const negNorm = (negocio || "tinkay").trim().toLowerCase();
   const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
   const supabase = await crearClienteServidor();
@@ -2014,6 +2032,10 @@ export async function obtenerPedidosTiendaAction(
     };
   });
 
+  let esAdminEstricto = false;
+  let puedeEliminarLogico = false;
+  const pedidosEliminados: PedidoTiendaRegistrado[] = [];
+
   // Unificar también Pedidos Manuales (PED-...) y Órdenes Exequiales (OT-...) registrados en com_orden_taller / com_entrega_evidencia
   try {
     const dbLectura: any = admin ?? supabase;
@@ -2028,6 +2050,80 @@ export async function obtenerPedidosTiendaAction(
 
     if (!resRpcTaller.error && resRpcTaller.data?.ok && Array.isArray(resRpcTaller.data.ordenes)) {
       ordenesTallerExtra = resRpcTaller.data.ordenes;
+      const rolRpc = String(resRpcTaller.data.rolOperativo || "").toUpperCase();
+      esAdminEstricto =
+        typeof resRpcTaller.data.esAdminEstricto === "boolean"
+          ? resRpcTaller.data.esAdminEstricto
+          : rolRpc === "SUPERADMIN" || rolRpc === "ADMINISTRADOR";
+      puedeEliminarLogico =
+        typeof resRpcTaller.data.puedeEliminarLogico === "boolean"
+          ? resRpcTaller.data.puedeEliminarLogico
+          : esAdminEstricto || rolRpc === "OPERADOR" || rolRpc === "VENTAS";
+
+      if (esAdminEstricto && Array.isArray(resRpcTaller.data.ordenesEliminadas)) {
+        for (const o of resRpcTaller.data.ordenesEliminadas as any[]) {
+          const itemsOta =
+            Array.isArray(o.items) && o.items.length > 0
+              ? o.items
+              : [{ descripcion: String(o.productoResumen || "Arreglo floral"), cantidad: 1 }];
+          const totalOta = Number(o.totalUsd ?? 0);
+          pedidosEliminados.push({
+            id: String(o.proformaId || o.id),
+            secuencial: 0,
+            codigoOrden: String(o.codigo || "PEDIDO"),
+            tipoOrigen: String(o.origenTipo || "MANUAL_ADMIN"),
+            clasificacionPedido: inferirClasificacionPedido({
+              clasificacionExplicita: o.clasificacionPedido ? String(o.clasificacionPedido) : null,
+              origenTipo: o.origenTipo ? String(o.origenTipo) : null,
+              retiroEnLocal: Boolean(o.retiroEnLocal),
+              salaServicio: o.salaServicio ? String(o.salaServicio) : null,
+              productoResumen: o.productoResumen ? String(o.productoResumen) : null,
+              ubicacionEntrega: o.ubicacionEntrega ? String(o.ubicacionEntrega) : null,
+              metodoPago: o.metodoPago ? String(o.metodoPago) : null,
+              items: itemsOta,
+            }),
+            negocio: negNorm,
+            estado: "CANCELADO",
+            metodoPago: String(o.metodoPago || "manual"),
+            compradorNombre: String(o.clienteSolicita || "Cliente"),
+            compradorIdentificacion: "",
+            compradorCorreo: "",
+            compradorTelefono: String(o.clienteTelefono || ""),
+            subtotal: totalOta,
+            iva: 0,
+            costoEnvio: 0,
+            recargoHorarioExacto: 0,
+            total: totalOta,
+            creadoEn: String(o.fechaPedido || o.eliminadoEn || new Date().toISOString()),
+            logistica: {
+              modalidadEntrega: "unificada",
+              retiroEnLocal: Boolean(o.retiroEnLocal),
+              destinatarioNombre: String(o.destinatarioFallecido || o.clienteSolicita || ""),
+              destinatarioTelefono: String(o.clienteTelefono || ""),
+              direccion: String(o.ubicacionEntrega || ""),
+              referencia: o.observaciones ? String(o.observaciones) : "",
+              fechaEntrega: String(o.fechaEntrega || ""),
+              franjaHoraria: String(o.franjaHoraria || ""),
+              horaExacta: o.horaEspecifica ? String(o.horaEspecifica) : undefined,
+              formulaCalculoInterno: "",
+              detalleDireccionGeo: null,
+            },
+            items: itemsOta.map((it: any) => ({
+              descripcion: String(it.descripcion || it.producto_nombre || o.productoResumen || "Arreglo"),
+              varianteNombre: it.sku ? String(it.sku) : "",
+              cantidad: Number(it.cantidad ?? 1),
+              precioUnitario: Number(it.precioUnitario ?? it.pvp_unitario ?? 0),
+              totalLinea: Number(it.precioUnitario ?? it.pvp_unitario ?? 0) * Number(it.cantidad ?? 1),
+            })),
+            ordenTallerId: String(o.id),
+            entregaId: o.entregaId ? String(o.entregaId) : null,
+            salaServicio: o.salaServicio ? String(o.salaServicio) : null,
+            eliminadoEn: o.eliminadoEn ? String(o.eliminadoEn) : null,
+            eliminadoPorNombre: o.eliminadoPorNombre ? String(o.eliminadoPorNombre) : null,
+            eliminadoMotivo: o.eliminadoMotivo ? String(o.eliminadoMotivo) : null,
+          });
+        }
+      }
     } else {
       const resOtaDir = await dbLectura
         .schema("comun_comercio")
@@ -2114,7 +2210,21 @@ export async function obtenerPedidosTiendaAction(
         if (oVinc.clasificacionPedido) {
           p.clasificacionPedido = inferirClasificacionPedido({
             clasificacionExplicita: String(oVinc.clasificacionPedido),
+            origenTipo: p.tipoOrigen,
+            retiroEnLocal: p.logistica.retiroEnLocal,
+            salaServicio: p.salaServicio,
+            productoResumen: p.items.map((it) => it.descripcion).join(" "),
+            ubicacionEntrega: p.logistica.direccion,
+            metodoPago: p.metodoPago,
+            tarjetaTipo: oVinc.tarjetaTipo ? String(oVinc.tarjetaTipo) : p.tarjeta?.tipo,
+            tieneEvento: Boolean(p.evento),
           });
+        }
+        if (oVinc.horaEspecifica && !p.logistica.horaExacta) {
+          p.logistica.horaExacta = String(oVinc.horaEspecifica);
+        }
+        if (oVinc.franjaHoraria && !p.logistica.franjaHoraria) {
+          p.logistica.franjaHoraria = String(oVinc.franjaHoraria);
         }
         if (
           oVinc.evidenciaFotoUrl ||
@@ -2329,7 +2439,7 @@ export async function obtenerPedidosTiendaAction(
           ),
           referencia: o.observaciones ? String(o.observaciones) : "",
           fechaEntrega: String(o.fechaEntrega || ""),
-          franjaHoraria: String(o.horaEspecifica || o.franjaHoraria || ""),
+          franjaHoraria: String(o.franjaHoraria || ""),
           horaExacta: o.horaEspecifica ? String(o.horaEspecifica) : undefined,
           enlaceMapa: o.enlaceMapa ? String(o.enlaceMapa) : undefined,
           zonaDetectada: esExeq
@@ -2498,7 +2608,18 @@ export async function obtenerPedidosTiendaAction(
             .join(" · "),
           referencia: String(e.ent_observaciones || ""),
           fechaEntrega: String(e.ent_fecha_servicio || "").slice(0, 10),
-          franjaHoraria: String(e.ent_hora_solicitada || detEnt.hora_solicitada || ""),
+          franjaHoraria: /^([abc]\)|\d{2}:\d{2}\s*-)/i.test(
+            String(e.ent_hora_solicitada || detEnt.hora_solicitada || "").trim()
+          )
+            ? String(e.ent_hora_solicitada || detEnt.hora_solicitada || "").trim()
+            : "",
+          horaExacta:
+            String(e.ent_hora_solicitada || detEnt.hora_solicitada || "").trim() &&
+            !/^([abc]\)|\d{2}:\d{2}\s*-)/i.test(
+              String(e.ent_hora_solicitada || detEnt.hora_solicitada || "").trim()
+            )
+              ? String(e.ent_hora_solicitada || detEnt.hora_solicitada || "").trim()
+              : undefined,
           zonaDetectada: String(sala || "Exequiales IESS"),
           formulaCalculoInterno: `🕯️ Convenio Exequiales${sala ? ` · ${sala}` : ""}${
             e.ent_fallecido_destinatario ? ` · Fallecido: ${e.ent_fallecido_destinatario}` : ""
@@ -2553,7 +2674,32 @@ export async function obtenerPedidosTiendaAction(
     // Si falla la unión opcional de órdenes de taller, conservar los pedidos de com_proforma
   }
 
-  return { ok: true, pedidos };
+  for (const p of pedidos) {
+    const tokVista = String(p.tarjeta?.token || p.tokenAprobacion || p.id);
+    const esCondol =
+      p.tarjeta?.tipo === "CONDOLENCIAS_PLANA" || p.tipoOrigen === "EXEQUIALES_LLAMADA";
+    if (p.tarjeta) {
+      p.tarjeta.token = tokVista;
+      p.tarjeta.tokenEdicion = generarTokenEdicionTarjetaServidor(tokVista);
+      p.tarjeta.confidencial = Boolean(
+        p.tarjeta.confidencial ?? p.tarjeta.metadata?.confidencial_solo_qr
+      );
+      if (esCondol) {
+        p.tarjeta.tipo = "CONDOLENCIAS_PLANA";
+        p.tarjeta.musicaUrl = null;
+        p.tarjeta.musicaTitulo = null;
+        p.tarjeta.lyrics = [];
+      }
+    }
+  }
+
+  return {
+    ok: true,
+    pedidos,
+    esAdminEstricto,
+    puedeEliminarLogico,
+    pedidosEliminados: esAdminEstricto ? pedidosEliminados : [],
+  };
 }
 
 export async function actualizarEstadoPedidoTiendaAction(

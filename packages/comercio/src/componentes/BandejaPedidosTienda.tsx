@@ -16,7 +16,9 @@ import {
   PackageCheck,
   Printer,
   RefreshCw,
+  RotateCcw,
   Save,
+  Trash2,
   Truck,
   X,
 } from "lucide-react";
@@ -27,15 +29,22 @@ import {
 } from "../acciones-logistica";
 import {
   actualizarClasificacionPedidoAction,
+  eliminarPedidoOperativoAction,
   guardarEdicionPedidoYTarjetaAction,
+  restaurarPedidoEliminadoAction,
 } from "../acciones-operaciones-taller";
 import {
   CLASIFICACIONES_OPERATIVAS_PEDIDO,
   OPCIONES_SALA_EXEQUIALES,
   RANGOS_HORARIO_ENTREGA_TIENDA,
+  construirValoresHorarioGuardar,
+  esNombreFallecidoPendiente,
+  formatearHorarioEntregaOrden,
   inferirClasificacionPedido,
   obtenerDefinicionClasificacionPedido,
+  resolverEstadoInicialHorario,
   type ClasificacionOperativaPedido,
+  type ModoSelectorHorarioEntrega,
   type OrdenTrabajoTaller,
 } from "../operaciones-taller";
 import {
@@ -93,6 +102,7 @@ function resolverClasificacionPedidoTienda(
     productoResumen: p.items.map((it) => it.descripcion).join(" "),
     ubicacionEntrega: p.logistica.direccion,
     metodoPago: p.metodoPago,
+    tarjetaTipo: p.tarjeta?.tipo ?? null,
     tieneEvento: Boolean(p.evento),
     items: p.items.map((it) => ({
       descripcion: it.descripcion,
@@ -151,6 +161,10 @@ function convertirPedidoTiendaAOrdenTaller(p: PedidoTiendaRegistrado): OrdenTrab
     retiroEnLocal: p.logistica.retiroEnLocal,
     dedicatoria: p.tarjeta?.mensaje ?? primerDed?.mensaje ?? "",
     tarjetaToken: p.tarjeta?.token || p.tokenAprobacion || p.id,
+    tarjetaTokenEdicion: p.tarjeta?.tokenEdicion,
+    tarjetaConfidencial: Boolean(
+      p.tarjeta?.confidencial ?? p.tarjeta?.metadata?.confidencial_solo_qr
+    ),
     tarjetaTipo: p.tarjeta?.tipo || (esExeq ? "CONDOLENCIAS_PLANA" : "DIPTICO"),
     tarjetaMusicaUrl: p.tarjeta?.musicaUrl ?? null,
     tarjetaMusicaTitulo: p.tarjeta?.musicaTitulo ?? null,
@@ -163,6 +177,7 @@ function convertirPedidoTiendaAOrdenTaller(p: PedidoTiendaRegistrado): OrdenTrab
 
 interface FormularioEdicionPedido {
   pedidoBase: PedidoTiendaRegistrado;
+  clasificacionPedido: ClasificacionOperativaPedido;
   compradorNombre: string;
   compradorTelefono: string;
   destinatarioNombre: string;
@@ -171,8 +186,8 @@ interface FormularioEdicionPedido {
   retiroEnLocal: boolean;
   salaServicio: string;
   fechaEntrega: string;
-  franjaHoraria: string;
-  horaEspecifica: string;
+  modoHorario: ModoSelectorHorarioEntrega;
+  horaExacta: string;
   productoResumen: string;
   observaciones: string;
   dedicatoria: string;
@@ -196,23 +211,43 @@ export function BandejaPedidosTienda({
     useState<PedidoTiendaRegistrado | null>(null);
   const [pedidoParaTarjeta, setPedidoParaTarjeta] = useState<PedidoTiendaRegistrado | null>(null);
   const [formEdicionPedido, setFormEdicionPedido] = useState<FormularioEdicionPedido | null>(null);
+  const [errorModalEdicion, setErrorModalEdicion] = useState<string | null>(null);
   const [guardandoEdicionPedido, setGuardandoEdicionPedido] = useState<boolean>(false);
+  const [esAdminEstricto, setEsAdminEstricto] = useState<boolean>(false);
+  const [puedeEliminarLogico, setPuedeEliminarLogico] = useState<boolean>(false);
+  const [pedidosEliminados, setPedidosEliminados] = useState<PedidoTiendaRegistrado[]>([]);
+  const [verPapelera, setVerPapelera] = useState<boolean>(false);
+  const [pedidoAEliminar, setPedidoAEliminar] = useState<PedidoTiendaRegistrado | null>(null);
+  const [motivoEliminacion, setMotivoEliminacion] = useState<string>("");
+  const [procesandoEliminacion, setProcesandoEliminacion] = useState<boolean>(false);
 
   const abrirEdicionDatosPedido = useCallback((p: PedidoTiendaRegistrado) => {
     const primerDed = p.items.find((it) => it.dedicatoria?.mensaje)?.dedicatoria;
+    const clasif = resolverClasificacionPedidoTienda(p);
+    const esExeq = clasif === "EXEQUIALES";
+    const destinatarioRaw =
+      p.exequiales?.nombreFallecido || p.logistica.destinatarioNombre || "";
+    const horarioIni = resolverEstadoInicialHorario({
+      franjaHoraria: p.logistica.franjaHoraria,
+      horaEspecifica: p.logistica.horaExacta || p.exequiales?.horaServicio || null,
+      esExequiales: esExeq,
+    });
+
+    setErrorModalEdicion(null);
     setFormEdicionPedido({
       pedidoBase: p,
+      clasificacionPedido: clasif,
       compradorNombre: p.exequiales?.quienSolicita || p.compradorNombre || "",
       compradorTelefono: p.compradorTelefono || p.logistica.destinatarioTelefono || "",
       destinatarioNombre:
-        p.exequiales?.nombreFallecido || p.logistica.destinatarioNombre || "",
+        esExeq && esNombreFallecidoPendiente(destinatarioRaw) ? "" : destinatarioRaw,
       direccionEntrega: p.logistica.direccion || "",
       enlaceMapa: p.logistica.enlaceMapa || "",
       retiroEnLocal: Boolean(p.logistica.retiroEnLocal),
       salaServicio: p.exequiales?.salaServicio ?? p.salaServicio ?? "",
       fechaEntrega: (p.logistica.fechaEntrega || "").slice(0, 10),
-      franjaHoraria: p.logistica.franjaHoraria || "A) 09:00 - 13:00",
-      horaEspecifica: p.logistica.horaExacta || p.exequiales?.horaServicio || "",
+      modoHorario: horarioIni.modo,
+      horaExacta: horarioIni.horaExacta,
       productoResumen:
         p.items.map((it) => it.descripcion).join(" + ") || "Arreglo floral",
       observaciones: p.logistica.referencia || "",
@@ -223,7 +258,26 @@ export function BandejaPedidosTienda({
   const handleGuardarEdicionPedido = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formEdicionPedido) return;
+
+    const esExeq = formEdicionPedido.clasificacionPedido === "EXEQUIALES";
+    if (esExeq && esNombreFallecidoPendiente(formEdicionPedido.destinatarioNombre)) {
+      setErrorModalEdicion(
+        "En pedidos de Exequiales, el nombre de la Persona Fallecida (Destinatario) es requerido."
+      );
+      return;
+    }
+    if (formEdicionPedido.modoHorario === "HORA_EXACTA" && !formEdicionPedido.horaExacta.trim()) {
+      setErrorModalEdicion("Selecciona la hora exacta de entrega.");
+      return;
+    }
+
+    const horarioFinal = construirValoresHorarioGuardar(
+      formEdicionPedido.modoHorario,
+      formEdicionPedido.horaExacta
+    );
+
     setGuardandoEdicionPedido(true);
+    setErrorModalEdicion(null);
     setErrorMsg(null);
     const p = formEdicionPedido.pedidoBase;
     const res = await guardarEdicionPedidoYTarjetaAction({
@@ -231,25 +285,32 @@ export function BandejaPedidosTienda({
       pedidoId: p.id,
       ordenTallerId: p.ordenTallerId ?? null,
       entregaId: p.entregaId ?? p.evidenciaEntrega?.entregaId ?? null,
+      clasificacionPedido: formEdicionPedido.clasificacionPedido,
       compradorNombre: formEdicionPedido.compradorNombre,
-      compradorTelefono: formEdicionPedido.compradorTelefono,
-      destinatarioNombre: formEdicionPedido.destinatarioNombre,
-      direccionEntrega: formEdicionPedido.retiroEnLocal
-        ? "Retiro en Tienda"
-        : formEdicionPedido.direccionEntrega,
-      enlaceMapa: formEdicionPedido.enlaceMapa,
-      retiroEnLocal: formEdicionPedido.retiroEnLocal,
-      salaServicio: formEdicionPedido.salaServicio || null,
+      compradorTelefono: esExeq ? "" : formEdicionPedido.compradorTelefono,
+      destinatarioNombre: formEdicionPedido.destinatarioNombre.trim(),
+      direccionEntrega: esExeq
+        ? ""
+        : formEdicionPedido.retiroEnLocal
+          ? "Retiro en Tienda"
+          : formEdicionPedido.direccionEntrega,
+      enlaceMapa: esExeq ? "" : formEdicionPedido.enlaceMapa,
+      retiroEnLocal: esExeq ? false : formEdicionPedido.retiroEnLocal,
+      salaServicio: esExeq ? formEdicionPedido.salaServicio || null : null,
       fechaEntrega: formEdicionPedido.fechaEntrega,
-      franjaHoraria: formEdicionPedido.franjaHoraria,
-      horaEspecifica: formEdicionPedido.horaEspecifica || null,
+      franjaHoraria: horarioFinal.franjaHoraria,
+      horaEspecifica: horarioFinal.horaEspecifica,
       productoResumen: formEdicionPedido.productoResumen,
       observaciones: formEdicionPedido.observaciones,
-      dedicatoria: formEdicionPedido.dedicatoria,
+      dedicatoria: esExeq ? "" : formEdicionPedido.dedicatoria,
+      tarjetaTipo:
+        formEdicionPedido.clasificacionPedido === "CONDOLENCIAS"
+          ? "CONDOLENCIAS_PLANA"
+          : undefined,
     });
     setGuardandoEdicionPedido(false);
     if (!res.ok) {
-      setErrorMsg(res.error || "No se pudieron guardar los cambios del pedido.");
+      setErrorModalEdicion(res.error || "No se pudieron guardar los cambios del pedido.");
       return;
     }
     setFormEdicionPedido(null);
@@ -285,6 +346,12 @@ export function BandejaPedidosTienda({
       return;
     }
     setPedidos(res.pedidos);
+    const adminFlag = Boolean(res.esAdminEstricto);
+    setEsAdminEstricto(adminFlag);
+    setPuedeEliminarLogico(Boolean(res.puedeEliminarLogico));
+    setPedidosEliminados(
+      adminFlag && Array.isArray(res.pedidosEliminados) ? res.pedidosEliminados : []
+    );
     try {
       localStorage.setItem(cacheKey, JSON.stringify(res.pedidos));
     } catch {
@@ -314,6 +381,7 @@ export function BandejaPedidosTienda({
       } catch {
         // Ignorar cuota
       }
+      void cargarPedidos();
     }
   }, [pedidosIniciales, cacheKey, cargarPedidos]);
 
@@ -373,11 +441,6 @@ export function BandejaPedidosTienda({
             ? {
                 ...p,
                 clasificacionPedido: res.clasificacionPedido,
-                logistica: {
-                  ...p.logistica,
-                  retiroEnLocal:
-                    res.clasificacionPedido === "LOCAL" ? true : p.logistica.retiroEnLocal,
-                },
               }
             : p
         );
@@ -402,9 +465,63 @@ export function BandejaPedidosTienda({
   }, [pedidos]);
 
   const pedidosFiltrados = useMemo(() => {
-    if (filtroClasificacion === "TODOS") return pedidos;
-    return pedidos.filter((p) => resolverClasificacionPedidoTienda(p) === filtroClasificacion);
-  }, [pedidos, filtroClasificacion]);
+    const base = verPapelera && esAdminEstricto ? pedidosEliminados : pedidos;
+    if (filtroClasificacion === "TODOS") return base;
+    return base.filter((p) => resolverClasificacionPedidoTienda(p) === filtroClasificacion);
+  }, [verPapelera, esAdminEstricto, pedidosEliminados, pedidos, filtroClasificacion]);
+
+  const handleConfirmarEliminacion = useCallback(
+    async (definitivo: boolean) => {
+      if (!pedidoAEliminar) return;
+      if (definitivo && !esAdminEstricto) {
+        setErrorMsg("Solo el administrador puede eliminar pedidos de forma definitiva.");
+        return;
+      }
+      setProcesandoEliminacion(true);
+      setErrorMsg(null);
+      const res = await eliminarPedidoOperativoAction({
+        negocio,
+        ordenTallerId: pedidoAEliminar.ordenTallerId ?? null,
+        proformaId:
+          pedidoAEliminar.id && pedidoAEliminar.id !== pedidoAEliminar.ordenTallerId
+            ? pedidoAEliminar.id
+            : null,
+        entregaId: pedidoAEliminar.entregaId ?? pedidoAEliminar.evidenciaEntrega?.entregaId ?? null,
+        motivo: motivoEliminacion,
+        definitivo,
+      });
+      setProcesandoEliminacion(false);
+      if (!res.ok) {
+        setErrorMsg(res.error);
+        return;
+      }
+      setPedidoAEliminar(null);
+      setMotivoEliminacion("");
+      await cargarPedidos();
+    },
+    [pedidoAEliminar, esAdminEstricto, negocio, motivoEliminacion, cargarPedidos]
+  );
+
+  const handleRestaurarPedido = useCallback(
+    async (p: PedidoTiendaRegistrado) => {
+      if (!esAdminEstricto) return;
+      setActualizandoId(p.id);
+      setErrorMsg(null);
+      const res = await restaurarPedidoEliminadoAction({
+        negocio,
+        ordenTallerId: p.ordenTallerId ?? null,
+        proformaId: p.id && p.id !== p.ordenTallerId ? p.id : null,
+        entregaId: p.entregaId ?? p.evidenciaEntrega?.entregaId ?? null,
+      });
+      setActualizandoId(null);
+      if (!res.ok) {
+        setErrorMsg(res.error);
+        return;
+      }
+      await cargarPedidos();
+    },
+    [esAdminEstricto, negocio, cargarPedidos]
+  );
 
   const idsExpandidosIniciales = useMemo(() => {
     if (!pedidoEnfocado) return undefined;
@@ -531,6 +648,7 @@ export function BandejaPedidosTienda({
         render: (p) => {
           const clasif = resolverClasificacionPedidoTienda(p);
           const esExeq = clasif === "EXEQUIALES";
+          const esCondol = clasif === "CONDOLENCIAS";
           const sala = p.exequiales?.salaServicio || p.salaServicio;
           const fallecido = p.exequiales?.nombreFallecido || p.logistica.destinatarioNombre;
           return (
@@ -541,7 +659,7 @@ export function BandejaPedidosTienda({
               {esExeq ? (
                 <>
                   <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#4C1D95" }}>
-                    Fallecido: {fallecido || "Por confirmar"}
+                    Fallecido: {fallecido || "Pendiente registrar"}
                   </span>
                   <span style={{ fontSize: "0.72rem", color: "#475569", fontWeight: 600 }}>
                     Sala: {sala || "Por confirmar"}
@@ -552,7 +670,8 @@ export function BandejaPedidosTienda({
                   {p.logistica.destinatarioNombre &&
                     p.logistica.destinatarioNombre !== p.compradorNombre && (
                       <span style={{ fontSize: "0.74rem", color: "#334155", fontWeight: 600 }}>
-                        Recibe: {p.logistica.destinatarioNombre}
+                        {esCondol ? "Destinatario / Difunto" : "Recibe"}:{" "}
+                        {p.logistica.destinatarioNombre}
                       </span>
                     )}
                   <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>
@@ -566,7 +685,7 @@ export function BandejaPedidosTienda({
       },
       {
         id: "entrega",
-        encabezado: "Fecha, Hora y Dirección de Entrega",
+        encabezado: "Fecha y Hora de Entrega",
         valor: (p) =>
           `${p.logistica.fechaEntrega} ${p.logistica.horaExacta || p.logistica.franjaHoraria} ${
             p.logistica.retiroEnLocal
@@ -574,6 +693,14 @@ export function BandejaPedidosTienda({
               : p.logistica.direccion || p.logistica.zonaDetectada || ""
           }`,
         render: (p) => {
+          const clasif = resolverClasificacionPedidoTienda(p);
+          const esExeq = clasif === "EXEQUIALES";
+          const sala = p.exequiales?.salaServicio || p.salaServicio;
+          const horarioTexto = formatearHorarioEntregaOrden({
+            franjaHoraria: p.logistica.franjaHoraria,
+            horaEspecifica: p.logistica.horaExacta || p.exequiales?.horaServicio || null,
+            esExequiales: esExeq,
+          });
           const tieneEvid = Boolean(p.evidenciaEntrega?.confirmada || p.evidenciaEntrega?.fotoUrl);
           const fotoUrl = p.evidenciaEntrega?.fotoUrl;
           return (
@@ -591,18 +718,18 @@ export function BandejaPedidosTienda({
                 <Clock size={12} color="#0D9488" />
                 <span>
                   {p.logistica.fechaEntrega || "Sin fecha"}
-                  {p.logistica.horaExacta
-                    ? ` · ${p.logistica.horaExacta}`
-                    : p.logistica.franjaHoraria
-                      ? ` · ${p.logistica.franjaHoraria}`
-                      : ""}
+                  {horarioTexto ? ` · ${horarioTexto}` : ""}
                 </span>
               </span>
 
               <span style={{ fontSize: "0.74rem", color: "#475569", lineHeight: 1.35 }}>
-                {p.logistica.retiroEnLocal
-                  ? "Retiro en Tienda"
-                  : p.logistica.direccion || p.logistica.zonaDetectada || "Por coordinar dirección"}
+                {esExeq
+                  ? sala
+                    ? `Sala Exequiales: ${sala}`
+                    : "Servicio Exequiales"
+                  : p.logistica.retiroEnLocal
+                    ? "Retiro en Tienda"
+                    : p.logistica.direccion || p.logistica.zonaDetectada || "Por coordinar dirección"}
               </span>
 
               {tieneEvid && (
@@ -696,7 +823,85 @@ export function BandejaPedidosTienda({
         encabezado: "Estado y Acciones",
         valor: (p) => estiloEstado(p.estado).etiqueta,
         render: (p) => {
+          if (p.eliminadoEn) {
+            if (!esAdminEstricto) return null;
+            return (
+              <div style={{ display: "flex", flexDirection: "column", gap: "6px", alignItems: "flex-start" }}>
+                <div
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: "7px",
+                    background: "#FEF2F2",
+                    border: "1px solid #FECACA",
+                    color: "#991B1B",
+                    fontSize: "0.7rem",
+                  }}
+                >
+                  <div>
+                    <strong>🗑️ Eliminado por:</strong> {p.eliminadoPorNombre || "Staff"}
+                  </div>
+                  <div>{new Date(p.eliminadoEn).toLocaleString("es-EC")}</div>
+                  {p.eliminadoMotivo ? (
+                    <div style={{ fontStyle: "italic" }}>Motivo: {p.eliminadoMotivo}</div>
+                  ) : null}
+                </div>
+                <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    disabled={actualizandoId === p.id}
+                    onClick={() => void handleRestaurarPedido(p)}
+                    title="Restaurar este pedido a la bandeja activa"
+                    aria-label="Restaurar Pedido"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      border: "1px solid #10B981",
+                      background: "#ECFDF5",
+                      color: "#065F46",
+                      fontSize: "0.7rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <RotateCcw size={11} />
+                    <span>Restaurar</span>
+                  </button>
+                  <button
+                    type="button"
+                    disabled={actualizandoId === p.id}
+                    onClick={() => {
+                      setMotivoEliminacion("");
+                      setPedidoAEliminar(p);
+                    }}
+                    title="Eliminar definitivamente de la base de datos"
+                    aria-label="Eliminar Definitivo"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      border: "none",
+                      background: "#DC2626",
+                      color: "#FFFFFF",
+                      fontSize: "0.7rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Trash2 size={11} />
+                    <span>Eliminar Definitivo</span>
+                  </button>
+                </div>
+              </div>
+            );
+          }
+
           const est = estiloEstado(p.estado);
+          const esExeq = resolverClasificacionPedidoTienda(p) === "EXEQUIALES";
           const impresiones = Number(p.tarjeta?.metadata?.impresiones ?? 0);
           const editadaCliente = Boolean(p.tarjeta?.metadata?.editado_por_cliente);
           return (
@@ -728,7 +933,7 @@ export function BandejaPedidosTienda({
                 <button
                   type="button"
                   onClick={() => abrirEdicionDatosPedido(p)}
-                  title="Editar destinatario, dirección, horario y dedicatoria del pedido"
+                  title="Editar tipo de pedido, destinatario, horario y detalles"
                   aria-label="Editar Pedido"
                   style={{
                     display: "inline-flex",
@@ -748,48 +953,91 @@ export function BandejaPedidosTienda({
                   <span>Editar</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={() => setPedidoParaTarjeta(p)}
-                  title="Ver, editar, descargar PDF o imprimir la tarjeta dedicatoria vinculada a este pedido"
-                  aria-label="Tarjeta Dedicatoria"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    padding: "4px 8px",
-                    borderRadius: "6px",
-                    border:
-                      impresiones > 0
-                        ? "1px solid #F59E0B"
+                {!esExeq && (
+                  <button
+                    type="button"
+                    onClick={() => setPedidoParaTarjeta(p)}
+                    title="Ver, editar, descargar PDF o imprimir la tarjeta dedicatoria vinculada a este pedido"
+                    aria-label="Tarjeta Dedicatoria"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      border:
+                        impresiones > 0
+                          ? "1px solid #F59E0B"
+                          : editadaCliente
+                            ? "1px solid #16A34A"
+                            : "1px solid #0284C7",
+                      background:
+                        impresiones > 0 ? "#FEF3C7" : editadaCliente ? "#DCFCE7" : "#F0F9FF",
+                      color:
+                        impresiones > 0 ? "#92400E" : editadaCliente ? "#166534" : "#0369A1",
+                      fontSize: "0.7rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Printer size={11} />
+                    <span>
+                      {impresiones > 0
+                        ? `Tarjeta (x${impresiones})`
                         : editadaCliente
-                          ? "1px solid #16A34A"
-                          : "1px solid #0284C7",
-                    background:
-                      impresiones > 0 ? "#FEF3C7" : editadaCliente ? "#DCFCE7" : "#F0F9FF",
-                    color:
-                      impresiones > 0 ? "#92400E" : editadaCliente ? "#166534" : "#0369A1",
-                    fontSize: "0.7rem",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                  }}
-                >
-                  <Printer size={11} />
-                  <span>
-                    {impresiones > 0
-                      ? `Tarjeta (x${impresiones})`
-                      : editadaCliente
-                        ? "Tarjeta ✨"
-                        : "Tarjeta"}
-                  </span>
-                </button>
+                          ? "Tarjeta ✨"
+                          : "Tarjeta"}
+                    </span>
+                  </button>
+                )}
+
+                {puedeEliminarLogico && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMotivoEliminacion("");
+                      setPedidoAEliminar(p);
+                    }}
+                    title={
+                      esAdminEstricto
+                        ? "Enviar a Papelera o eliminar definitivamente"
+                        : "Eliminar pedido (se enviará a Papelera)"
+                    }
+                    aria-label="Eliminar Pedido"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      border: "1px solid #FECACA",
+                      background: "#FEF2F2",
+                      color: "#B91C1C",
+                      fontSize: "0.7rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Trash2 size={11} />
+                    <span>Eliminar</span>
+                  </button>
+                )}
               </div>
             </div>
           );
         },
       },
     ],
-    [actualizandoId, cambiarEstado, cambiarClasificacion, abrirModalEvidencia, abrirEdicionDatosPedido]
+    [
+      actualizandoId,
+      cambiarEstado,
+      cambiarClasificacion,
+      abrirModalEvidencia,
+      abrirEdicionDatosPedido,
+      esAdminEstricto,
+      puedeEliminarLogico,
+      handleRestaurarPedido,
+    ]
   );
 
   const totalVentas = pedidosFiltrados.reduce((acc, p) => acc + p.total, 0);
@@ -949,6 +1197,35 @@ export function BandejaPedidosTienda({
           conteos={conteosClasificacion}
           totalGeneral={pedidos.length}
         />
+
+        {esAdminEstricto && (
+          <button
+            type="button"
+            onClick={() => setVerPapelera((prev) => !prev)}
+            title="Ver pedidos eliminados lógicamente por el equipo (solo Administrador)"
+            aria-label="Papelera de Pedidos"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "6px 12px",
+              borderRadius: "999px",
+              border: verPapelera ? "1px solid #DC2626" : "1px solid #FECACA",
+              background: verPapelera ? "#DC2626" : "#FEF2F2",
+              color: verPapelera ? "#FFFFFF" : "#991B1B",
+              fontSize: "0.76rem",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            <Trash2 size={13} />
+            <span>
+              {verPapelera
+                ? `Viendo Papelera (${pedidosEliminados.length}) · Volver`
+                : `Papelera (${pedidosEliminados.length})`}
+            </span>
+          </button>
+        )}
       </div>
 
       {errorMsg && (
@@ -1109,31 +1386,45 @@ export function BandejaPedidosTienda({
                     {esExeq ? (
                       <>
                         <div>
-                          <strong>Sala de entrega:</strong> {sala || "Por confirmar"}
+                          <strong>Sala Exequiales:</strong> {sala || "Por confirmar"}
                         </div>
                         <div>
                           <strong>Quién solicitó:</strong>{" "}
                           {p.exequiales?.quienSolicita || p.compradorNombre || "—"}
                         </div>
                         <div>
-                          <strong>Nombre del fallecido:</strong>{" "}
-                          {p.exequiales?.nombreFallecido || p.logistica.destinatarioNombre || "Por confirmar"}
+                          <strong>Persona fallecida (Destinatario):</strong>{" "}
+                          {p.exequiales?.nombreFallecido || p.logistica.destinatarioNombre || "Pendiente registrar"}
                         </div>
+                        {p.logistica.referencia ? (
+                          <div>
+                            <strong>Notas para Taller:</strong> {p.logistica.referencia}
+                          </div>
+                        ) : null}
                       </>
                     ) : (
-                      <div>
-                        <strong>Destinatario:</strong> {p.logistica.destinatarioNombre || "—"} (
-                        {p.logistica.destinatarioTelefono || p.compradorTelefono || "—"})
-                      </div>
+                      <>
+                        <div>
+                          <strong>Comprador:</strong> {p.compradorNombre || "—"}
+                          {p.compradorTelefono ? ` · Tel/WhatsApp: ${p.compradorTelefono}` : ""}
+                        </div>
+                        <div>
+                          <strong>Destinatario:</strong> {p.logistica.destinatarioNombre || "—"}
+                          {p.logistica.destinatarioTelefono
+                            ? ` (${p.logistica.destinatarioTelefono})`
+                            : ""}
+                        </div>
+                        <div>
+                          <strong>Dirección de entrega:</strong>{" "}
+                          {p.logistica.retiroEnLocal
+                            ? "Retiro en Tienda"
+                            : p.logistica.direccion || "—"}
+                          {p.logistica.referencia ? ` · Ref: ${p.logistica.referencia}` : ""}
+                        </div>
+                      </>
                     )}
 
-                    <div>
-                      <strong>Dirección de entrega:</strong>{" "}
-                      {p.logistica.retiroEnLocal ? "Retiro en Tienda" : p.logistica.direccion || "—"}
-                      {p.logistica.referencia ? ` · Ref: ${p.logistica.referencia}` : ""}
-                    </div>
-
-                    {p.logistica.detalleDireccionGeo && (
+                    {!esExeq && p.logistica.detalleDireccionGeo && (
                       <div style={{ fontSize: "0.74rem", color: "#0F766E" }}>
                         <strong>Mapa (Calle / Sector / Parroquia):</strong>{" "}
                         {[
@@ -1151,11 +1442,16 @@ export function BandejaPedidosTienda({
                     )}
 
                     <div>
-                      <strong>Fecha / Hora programada:</strong> {p.logistica.fechaEntrega || "—"} ·{" "}
-                      {p.logistica.horaExacta || p.logistica.franjaHoraria || "—"}
+                      <strong>Fecha y Hora de entrega:</strong> {p.logistica.fechaEntrega || "—"} ·{" "}
+                      {formatearHorarioEntregaOrden({
+                        franjaHoraria: p.logistica.franjaHoraria,
+                        horaEspecifica:
+                          p.logistica.horaExacta || p.exequiales?.horaServicio || null,
+                        esExequiales: esExeq,
+                      })}
                     </div>
 
-                    {typeof p.logistica.distanciaVialKm === "number" && (
+                    {!esExeq && typeof p.logistica.distanciaVialKm === "number" && (
                       <div>
                         <strong>Distancia vial calculada:</strong>{" "}
                         {p.logistica.distanciaVialKm.toFixed(2)} km
@@ -1177,7 +1473,7 @@ export function BandejaPedidosTienda({
                     </div>
                   </div>
 
-                  {p.logistica.enlaceMapa && (
+                  {!esExeq && p.logistica.enlaceMapa && (
                     <div style={{ marginTop: "4px" }}>
                       <a
                         href={p.logistica.enlaceMapa}
@@ -1221,7 +1517,9 @@ export function BandejaPedidosTienda({
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#0F172A" }}>
                     <PackageCheck size={15} color="#2563EB" />
                     <strong style={{ fontSize: "0.82rem" }}>
-                      Detalle del Producto y Dedicatorias ({p.items.length})
+                      {esExeq
+                        ? `Detalle del Servicio Exequial (${p.items.length})`
+                        : `Detalle del Producto y Dedicatorias (${p.items.length})`}
                     </strong>
                   </div>
 
@@ -1261,8 +1559,9 @@ export function BandejaPedidosTienda({
                     </div>
                   ))}
 
-                  {/* TARJETA DEDICATORIA VINCULADA 1:1 AL PEDIDO */}
-                  {(() => {
+                  {/* TARJETA DEDICATORIA VINCULADA 1:1 AL PEDIDO (EXCEPTO EXEQUIALES) */}
+                  {!esExeq &&
+                    (() => {
                     const tokenTarj = p.tarjeta?.token || p.tokenAprobacion || p.id;
                     const msgTarj =
                       p.tarjeta?.mensaje ||
@@ -1272,7 +1571,14 @@ export function BandejaPedidosTienda({
                     const vistasTarj = Number(p.tarjeta?.metadata?.vistas_cliente ?? 0);
                     const editCli = Boolean(p.tarjeta?.metadata?.editado_por_cliente);
                     const editStaff = Boolean((p.tarjeta?.metadata as any)?.editado_por_staff);
-                    const tieneMusica = Boolean(p.tarjeta?.musicaUrl);
+                    const esCondolTarj =
+                      p.tarjeta?.tipo === "CONDOLENCIAS_PLANA" ||
+                      p.tipoOrigen === "EXEQUIALES_LLAMADA";
+                    const tieneMusica = Boolean(!esCondolTarj && p.tarjeta?.musicaUrl);
+                    const esConfidencial = Boolean(
+                      p.tarjeta?.confidencial ?? p.tarjeta?.metadata?.confidencial_solo_qr
+                    );
+                    const tokenEdicionTarj = p.tarjeta?.tokenEdicion || "";
 
                     return (
                       <div
@@ -1296,9 +1602,24 @@ export function BandejaPedidosTienda({
                           }}
                         >
                           <strong style={{ fontSize: "0.77rem", color: "#92400E" }}>
-                            💌 Tarjeta Dedicatoria ({p.tarjeta?.tipo === "CONDOLENCIAS_PLANA" ? "Condolencias Plana" : "Díptico Plegable"})
+                            {esCondolTarj
+                              ? "🕊️ Condolencias (16,8 × 11,3 cm Horizontal)"
+                              : "💌 Dedicatoria (11,3 × 16,8 cm Vertical)"}
                           </strong>
                           <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", fontSize: "0.68rem" }}>
+                            {esConfidencial && (
+                              <span
+                                style={{
+                                  padding: "1px 6px",
+                                  borderRadius: "999px",
+                                  background: "#0F172A",
+                                  color: "#FFFFFF",
+                                  fontWeight: 700,
+                                }}
+                              >
+                                🔒 Solo QR
+                              </span>
+                            )}
                             <span
                               style={{
                                 padding: "1px 6px",
@@ -1363,7 +1684,7 @@ export function BandejaPedidosTienda({
                           {msgTarj ? (
                             <>
                               &ldquo;{msgTarj}&rdquo;
-                              {p.tarjeta?.musicaTitulo ? (
+                              {!esCondolTarj && p.tarjeta?.musicaTitulo ? (
                                 <span style={{ display: "block", fontSize: "0.7rem", color: "#6B21A8", marginTop: "2px" }}>
                                   🎵 {p.tarjeta.musicaTitulo}
                                 </span>
@@ -1371,7 +1692,7 @@ export function BandejaPedidosTienda({
                             </>
                           ) : (
                             <span style={{ fontStyle: "italic", color: "#94A3B8" }}>
-                              Sin mensaje escrito aún. Puedes redactarla aquí o compartir el link al comprador.
+                              Sin mensaje escrito aún. Puedes editarla aquí o enviar el enlace de edición al cliente.
                             </span>
                           )}
                         </div>
@@ -1380,7 +1701,7 @@ export function BandejaPedidosTienda({
                           <button
                             type="button"
                             onClick={() => setPedidoParaTarjeta(p)}
-                            title="Abrir tarjeta para editar mensaje, canción, descargar PDF o mandar a imprimir en Canon G3110"
+                            title="Editar tarjeta, descargar PDF o mandar a imprimir en Canon G3110"
                             aria-label="Editar e Imprimir Tarjeta"
                             style={{
                               display: "inline-flex",
@@ -1400,11 +1721,37 @@ export function BandejaPedidosTienda({
                             <span>Editar / Imprimir / PDF</span>
                           </button>
 
+                          {tokenEdicionTarj && (
+                            <a
+                              href={`/tarjeta-editar/${tokenEdicionTarj}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Enlace exclusivo para editar el mensaje de la tarjeta (Cliente / Ventas)"
+                              aria-label="Enlace Editar Tarjeta"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                padding: "5px 9px",
+                                borderRadius: "6px",
+                                border: "1px solid #99F6E4",
+                                background: "#F0FDFA",
+                                color: "#0F766E",
+                                textDecoration: "none",
+                                fontSize: "0.73rem",
+                                fontWeight: 700,
+                              }}
+                            >
+                              <Edit3 size={11} />
+                              <span>Link Editar</span>
+                            </a>
+                          )}
+
                           <a
                             href={`/dedicatoria/${tokenTarj}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            title="Abrir la experiencia de tarjeta digital con QR y música"
+                            title="Vista de solo lectura de la tarjeta digital (la misma URL impresa en el QR)"
                             aria-label="Ver Tarjeta Digital"
                             style={{
                               display: "inline-flex",
@@ -1420,7 +1767,7 @@ export function BandejaPedidosTienda({
                               fontWeight: 700,
                             }}
                           >
-                            <span>Tarjeta Digital</span>
+                            <span>Ver Digital</span>
                             <ExternalLink size={11} />
                           </a>
                         </div>
@@ -1884,7 +2231,9 @@ export function BandejaPedidosTienda({
                   ✏️ Editar Datos del Pedido ({formEdicionPedido.pedidoBase.codigoOrden})
                 </strong>
                 <div style={{ fontSize: "0.75rem", color: "#64748B" }}>
-                  Se sincroniza automáticamente con Envíos, Taller y Tarjeta Dedicatoria.
+                  {formEdicionPedido.clasificacionPedido === "EXEQUIALES"
+                    ? "Orden Exequiales · Se sincroniza con Envíos, Taller e Informe."
+                    : "Se sincroniza automáticamente con Envíos, Taller y Tarjeta Dedicatoria."}
                 </div>
               </div>
               <button
@@ -1908,6 +2257,61 @@ export function BandejaPedidosTienda({
               </button>
             </div>
 
+            {errorModalEdicion && (
+              <div
+                style={{
+                  background: "#FEF2F2",
+                  border: "1px solid #FECACA",
+                  borderRadius: "8px",
+                  padding: "8px 11px",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                  color: "#B91C1C",
+                }}
+              >
+                {errorModalEdicion}
+              </div>
+            )}
+
+            {/* 1. TIPO / CLASIFICACIÓN DE PEDIDO */}
+            <div>
+              <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                Tipo de Pedido *
+              </label>
+              <SelectConBuscador
+                value={formEdicionPedido.clasificacionPedido}
+                onChange={(e) => {
+                  const nuevaClasif = e.target.value as ClasificacionOperativaPedido;
+                  setErrorModalEdicion(null);
+                  setFormEdicionPedido((prev) => {
+                    if (!prev) return null;
+                    const pasaAExeq = nuevaClasif === "EXEQUIALES";
+                    const modoAjustado =
+                      !pasaAExeq && prev.modoHorario === "LO_ANTES_POSIBLE"
+                        ? "A) 09:00 - 13:00"
+                        : prev.modoHorario;
+                    return {
+                      ...prev,
+                      clasificacionPedido: nuevaClasif,
+                      modoHorario: modoAjustado,
+                      destinatarioNombre:
+                        pasaAExeq && esNombreFallecidoPendiente(prev.destinatarioNombre)
+                          ? ""
+                          : prev.destinatarioNombre,
+                    };
+                  });
+                }}
+                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem" }}
+              >
+                {CLASIFICACIONES_OPERATIVAS_PEDIDO.map((op) => (
+                  <option key={op.clave} value={op.clave}>
+                    {op.etiqueta}
+                  </option>
+                ))}
+              </SelectConBuscador>
+            </div>
+
+            {/* 2. FECHA DE ENTREGA Y SALA (CUANDO ES EXEQUIALES) O HORA DE ENTREGA */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
               <div>
                 <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "3px" }}>
@@ -1926,9 +2330,9 @@ export function BandejaPedidosTienda({
                 />
               </div>
 
-              {formEdicionPedido.pedidoBase.tipoOrigen === "EXEQUIALES_LLAMADA" ? (
+              {formEdicionPedido.clasificacionPedido === "EXEQUIALES" ? (
                 <div>
-                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "3px" }}>
+                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#4C1D95", marginBottom: "3px" }}>
                     Sala Exequiales
                   </label>
                   <SelectConBuscador
@@ -1951,15 +2355,25 @@ export function BandejaPedidosTienda({
               ) : (
                 <div>
                   <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "3px" }}>
-                    Franja Horaria
+                    Hora de Entrega *
                   </label>
                   <SelectConBuscador
-                    value={formEdicionPedido.franjaHoraria}
-                    onChange={(e) =>
+                    value={formEdicionPedido.modoHorario}
+                    onChange={(e) => {
+                      const nuevoModo = e.target.value as ModoSelectorHorarioEntrega;
                       setFormEdicionPedido((prev) =>
-                        prev ? { ...prev, franjaHoraria: e.target.value } : null
-                      )
-                    }
+                        prev
+                          ? {
+                              ...prev,
+                              modoHorario: nuevoModo,
+                              horaExacta:
+                                nuevoModo === "HORA_EXACTA" && !prev.horaExacta
+                                  ? "10:30"
+                                  : prev.horaExacta,
+                            }
+                          : null
+                      );
+                    }}
                     style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem" }}
                   >
                     {RANGOS_HORARIO_ENTREGA_TIENDA.map((r) => (
@@ -1967,15 +2381,100 @@ export function BandejaPedidosTienda({
                         {r.etiqueta}
                       </option>
                     ))}
+                    <option value="HORA_EXACTA">⏰ Hora exacta</option>
                   </SelectConBuscador>
                 </div>
               )}
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+            {/* 2B. HORA DE ENTREGA EN EXEQUIALES O CAMPO DE HORA EXACTA CUANDO APLIQUE */}
+            {formEdicionPedido.clasificacionPedido === "EXEQUIALES" ? (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns:
+                    formEdicionPedido.modoHorario === "HORA_EXACTA" ? "1fr 1fr" : "1fr",
+                  gap: "10px",
+                }}
+              >
+                <div>
+                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "3px" }}>
+                    Hora de Entrega *
+                  </label>
+                  <SelectConBuscador
+                    value={formEdicionPedido.modoHorario}
+                    onChange={(e) => {
+                      const nuevoModo = e.target.value as ModoSelectorHorarioEntrega;
+                      setFormEdicionPedido((prev) =>
+                        prev
+                          ? {
+                              ...prev,
+                              modoHorario: nuevoModo,
+                              horaExacta:
+                                nuevoModo === "HORA_EXACTA" && !prev.horaExacta
+                                  ? "10:30"
+                                  : prev.horaExacta,
+                            }
+                          : null
+                      );
+                    }}
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem" }}
+                  >
+                    <option value="LO_ANTES_POSIBLE">⚡ Lo antes posible</option>
+                    {RANGOS_HORARIO_ENTREGA_TIENDA.map((r) => (
+                      <option key={r.codigo} value={r.valor}>
+                        {r.etiqueta}
+                      </option>
+                    ))}
+                    <option value="HORA_EXACTA">⏰ Hora exacta</option>
+                  </SelectConBuscador>
+                </div>
+
+                {formEdicionPedido.modoHorario === "HORA_EXACTA" && (
+                  <div>
+                    <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#0F766E", marginBottom: "3px" }}>
+                      Indicar Hora Exacta *
+                    </label>
+                    <input
+                      type="time"
+                      required
+                      value={formEdicionPedido.horaExacta}
+                      onChange={(e) =>
+                        setFormEdicionPedido((prev) =>
+                          prev ? { ...prev, horaExacta: e.target.value } : null
+                        )
+                      }
+                      style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1.5px solid #0D9488", fontSize: "0.84rem", fontWeight: 700, boxSizing: "border-box" }}
+                    />
+                  </div>
+                )}
+              </div>
+            ) : (
+              formEdicionPedido.modoHorario === "HORA_EXACTA" && (
+                <div>
+                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#0F766E", marginBottom: "3px" }}>
+                    Indicar Hora Exacta de Entrega *
+                  </label>
+                  <input
+                    type="time"
+                    required
+                    value={formEdicionPedido.horaExacta}
+                    onChange={(e) =>
+                      setFormEdicionPedido((prev) =>
+                        prev ? { ...prev, horaExacta: e.target.value } : null
+                      )
+                    }
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1.5px solid #0D9488", fontSize: "0.84rem", fontWeight: 700, boxSizing: "border-box" }}
+                  />
+                </div>
+              )
+            )}
+
+            {/* 3. COMPRADOR / QUIÉN SOLICITA (+ TELÉFONO EXCEPTO EN EXEQUIALES) */}
+            {formEdicionPedido.clasificacionPedido === "EXEQUIALES" ? (
               <div>
                 <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "3px" }}>
-                  Comprador / De parte de
+                  Solicita / Coordinador
                 </label>
                 <input
                   type="text"
@@ -1985,128 +2484,190 @@ export function BandejaPedidosTienda({
                       prev ? { ...prev, compradorNombre: e.target.value } : null
                     )
                   }
+                  placeholder="Ej. Cristina, Cristian Montaluisa..."
                   style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", boxSizing: "border-box" }}
                 />
               </div>
-              <div>
-                <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "3px" }}>
-                  Teléfono / WhatsApp
-                </label>
-                <input
-                  type="text"
-                  value={formEdicionPedido.compradorTelefono}
-                  onChange={(e) =>
-                    setFormEdicionPedido((prev) =>
-                      prev ? { ...prev, compradorTelefono: e.target.value } : null
-                    )
-                  }
-                  style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", boxSizing: "border-box" }}
-                />
-              </div>
-            </div>
-
-            <div>
-              <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "3px" }}>
-                Destinatario (quien recibe / nombre fallecido)
-              </label>
-              <input
-                type="text"
-                value={formEdicionPedido.destinatarioNombre}
-                onChange={(e) =>
-                  setFormEdicionPedido((prev) =>
-                    prev ? { ...prev, destinatarioNombre: e.target.value } : null
-                  )
-                }
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", boxSizing: "border-box" }}
-              />
-            </div>
-
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3px" }}>
-                <label style={{ fontSize: "0.76rem", fontWeight: 700, color: "#334155" }}>
-                  Dirección de Entrega
-                </label>
-                <label style={{ fontSize: "0.74rem", color: "#475569", display: "inline-flex", alignItems: "center", gap: "5px", cursor: "pointer" }}>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "3px" }}>
+                    Comprador / De parte de
+                  </label>
                   <input
-                    type="checkbox"
-                    checked={formEdicionPedido.retiroEnLocal}
+                    type="text"
+                    value={formEdicionPedido.compradorNombre}
                     onChange={(e) =>
                       setFormEdicionPedido((prev) =>
-                        prev ? { ...prev, retiroEnLocal: e.target.checked } : null
+                        prev ? { ...prev, compradorNombre: e.target.value } : null
                       )
                     }
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", boxSizing: "border-box" }}
                   />
-                  <span>Retiro en Tienda</span>
-                </label>
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "3px" }}>
+                    Teléfono / WhatsApp
+                  </label>
+                  <input
+                    type="text"
+                    value={formEdicionPedido.compradorTelefono}
+                    onChange={(e) =>
+                      setFormEdicionPedido((prev) =>
+                        prev ? { ...prev, compradorTelefono: e.target.value } : null
+                      )
+                    }
+                    placeholder="099..."
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", boxSizing: "border-box" }}
+                  />
+                </div>
               </div>
-              <input
-                type="text"
-                disabled={formEdicionPedido.retiroEnLocal}
-                value={formEdicionPedido.direccionEntrega}
-                onChange={(e) =>
-                  setFormEdicionPedido((prev) =>
-                    prev ? { ...prev, direccionEntrega: e.target.value } : null
-                  )
-                }
-                placeholder="Sector, calles, edificio o funeraria"
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", boxSizing: "border-box" }}
-              />
-            </div>
+            )}
 
+            {/* 4. DESTINATARIO / PERSONA FALLECIDA (OBLIGATORIO EN EXEQUIALES) */}
             <div>
-              <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "3px" }}>
-                Enlace Google Maps (opcional)
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "0.76rem",
+                  fontWeight: 700,
+                  color:
+                    formEdicionPedido.clasificacionPedido === "EXEQUIALES"
+                      ? "#4C1D95"
+                      : "#334155",
+                  marginBottom: "3px",
+                }}
+              >
+                {formEdicionPedido.clasificacionPedido === "EXEQUIALES"
+                  ? "Persona Fallecida (Destinatario) *"
+                  : formEdicionPedido.clasificacionPedido === "CONDOLENCIAS"
+                    ? "Destinatario / Persona Fallecida"
+                    : formEdicionPedido.clasificacionPedido === "EVENTOS"
+                      ? "Destinatario / Contacto del Evento"
+                      : "Destinatario (quien recibe)"}
               </label>
               <input
                 type="text"
-                value={formEdicionPedido.enlaceMapa}
-                onChange={(e) =>
+                required={formEdicionPedido.clasificacionPedido === "EXEQUIALES"}
+                value={formEdicionPedido.destinatarioNombre}
+                onChange={(e) => {
+                  setErrorModalEdicion(null);
                   setFormEdicionPedido((prev) =>
-                    prev ? { ...prev, enlaceMapa: e.target.value } : null
-                  )
+                    prev ? { ...prev, destinatarioNombre: e.target.value } : null
+                  );
+                }}
+                placeholder={
+                  formEdicionPedido.clasificacionPedido === "EXEQUIALES"
+                    ? "Nombre completo de la persona fallecida (requerido)"
+                    : "Nombre de quien recibe"
                 }
-                placeholder="https://maps.app.goo.gl/..."
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", boxSizing: "border-box" }}
+                style={{
+                  width: "100%",
+                  padding: "8px 10px",
+                  borderRadius: "8px",
+                  border:
+                    formEdicionPedido.clasificacionPedido === "EXEQUIALES"
+                      ? "1.5px solid #8B5CF6"
+                      : "1px solid #CBD5E1",
+                  fontSize: "0.82rem",
+                  boxSizing: "border-box",
+                }}
               />
             </div>
 
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3px" }}>
-                <label style={{ fontSize: "0.76rem", fontWeight: 700, color: "#334155" }}>
-                  Mensaje de la Tarjeta Dedicatoria
-                </label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const p = formEdicionPedido.pedidoBase;
-                    setFormEdicionPedido(null);
-                    setPedidoParaTarjeta(p);
-                  }}
-                  style={{
-                    border: "none",
-                    background: "transparent",
-                    color: "#0284C7",
-                    fontSize: "0.72rem",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    padding: 0,
-                  }}
-                >
-                  Abrir vista de impresión / música →
-                </button>
-              </div>
-              <textarea
-                rows={3}
-                value={formEdicionPedido.dedicatoria}
-                onChange={(e) =>
-                  setFormEdicionPedido((prev) =>
-                    prev ? { ...prev, dedicatoria: e.target.value } : null
-                  )
-                }
-                placeholder="Mensaje para la tarjeta impresa y digital"
-                style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", boxSizing: "border-box" }}
-              />
-            </div>
+            {/* 5. DIRECCIÓN, RETIRO EN TIENDA, GOOGLE MAPS Y TARJETA (NO REQUERIDOS NI MOSTRADOS EN EXEQUIALES) */}
+            {formEdicionPedido.clasificacionPedido !== "EXEQUIALES" && (
+              <>
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3px" }}>
+                    <label style={{ fontSize: "0.76rem", fontWeight: 700, color: "#334155" }}>
+                      Dirección de Entrega
+                    </label>
+                    <label style={{ fontSize: "0.74rem", color: "#475569", display: "inline-flex", alignItems: "center", gap: "5px", cursor: "pointer" }}>
+                      <input
+                        type="checkbox"
+                        checked={formEdicionPedido.retiroEnLocal}
+                        onChange={(e) =>
+                          setFormEdicionPedido((prev) =>
+                            prev ? { ...prev, retiroEnLocal: e.target.checked } : null
+                          )
+                        }
+                      />
+                      <span>Retiro en Tienda</span>
+                    </label>
+                  </div>
+                  <input
+                    type="text"
+                    disabled={formEdicionPedido.retiroEnLocal}
+                    value={formEdicionPedido.direccionEntrega}
+                    onChange={(e) =>
+                      setFormEdicionPedido((prev) =>
+                        prev ? { ...prev, direccionEntrega: e.target.value } : null
+                      )
+                    }
+                    placeholder="Sector, calles, edificio o funeraria"
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", boxSizing: "border-box" }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "3px" }}>
+                    Enlace Google Maps (opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={formEdicionPedido.enlaceMapa}
+                    onChange={(e) =>
+                      setFormEdicionPedido((prev) =>
+                        prev ? { ...prev, enlaceMapa: e.target.value } : null
+                      )
+                    }
+                    placeholder="https://maps.app.goo.gl/..."
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", boxSizing: "border-box" }}
+                  />
+                </div>
+
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "3px" }}>
+                    <label style={{ fontSize: "0.76rem", fontWeight: 700, color: "#334155" }}>
+                      {formEdicionPedido.clasificacionPedido === "CONDOLENCIAS"
+                        ? "Mensaje de la Tarjeta de Condolencias"
+                        : "Mensaje de la Tarjeta Dedicatoria"}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const p = formEdicionPedido.pedidoBase;
+                        setFormEdicionPedido(null);
+                        setPedidoParaTarjeta(p);
+                      }}
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        color: "#0284C7",
+                        fontSize: "0.72rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        padding: 0,
+                      }}
+                    >
+                      Abrir vista de impresión / música →
+                    </button>
+                  </div>
+                  <textarea
+                    rows={3}
+                    value={formEdicionPedido.dedicatoria}
+                    onChange={(e) =>
+                      setFormEdicionPedido((prev) =>
+                        prev ? { ...prev, dedicatoria: e.target.value } : null
+                      )
+                    }
+                    placeholder="Mensaje para la tarjeta impresa y digital"
+                    style={{ width: "100%", padding: "8px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.82rem", boxSizing: "border-box" }}
+                  />
+                </div>
+              </>
+            )}
 
             <div>
               <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "3px" }}>
@@ -2164,6 +2725,183 @@ export function BandejaPedidosTienda({
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {pedidoAEliminar && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.58)",
+            zIndex: 70,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "460px",
+              background: "#FFFFFF",
+              borderRadius: "16px",
+              padding: "20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.28)",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, fontSize: "1rem", color: "#991B1B" }}>
+                {pedidoAEliminar.eliminadoEn
+                  ? `Eliminar definitivamente ${pedidoAEliminar.codigoOrden}`
+                  : `Eliminar pedido ${pedidoAEliminar.codigoOrden}`}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setPedidoAEliminar(null)}
+                aria-label="Cerrar"
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                  color: "#64748B",
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div
+              style={{
+                padding: "10px 12px",
+                borderRadius: "9px",
+                background: "#F8FAFC",
+                border: "1px solid #E2E8F0",
+                fontSize: "0.82rem",
+                color: "#334155",
+              }}
+            >
+              <strong>{pedidoAEliminar.compradorNombre}</strong>
+              <div style={{ fontSize: "0.75rem", color: "#64748B", marginTop: "3px" }}>
+                {pedidoAEliminar.items.map((it) => `${it.cantidad}x ${it.descripcion}`).join(", ")} · $
+                {pedidoAEliminar.total.toFixed(2)}
+              </div>
+            </div>
+
+            {pedidoAEliminar.eliminadoEn ? (
+              <p style={{ margin: 0, fontSize: "0.82rem", color: "#991B1B", lineHeight: 1.45 }}>
+                Esta acción eliminará el registro de forma <strong>permanente e irreversible</strong>{" "}
+                de la base de datos.
+              </p>
+            ) : (
+              <>
+                <p style={{ margin: 0, fontSize: "0.81rem", color: "#475569", lineHeight: 1.45 }}>
+                  {esAdminEstricto
+                    ? "Como Administrador puedes enviarlo a Papelera (borrado lógico reversible) o eliminarlo definitivamente."
+                    : "El pedido dejará de mostrarse en las bandejas operativas y quedará archivado en la Papelera (solo visible para el Administrador)."}
+                </p>
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.76rem",
+                      fontWeight: 700,
+                      color: "#334155",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    Motivo (opcional)
+                  </label>
+                  <input
+                    type="text"
+                    value={motivoEliminacion}
+                    onChange={(e) => setMotivoEliminacion(e.target.value)}
+                    placeholder="Ej. Pedido duplicado, cancelado por cliente..."
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      borderRadius: "8px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.82rem",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              </>
+            )}
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                disabled={procesandoEliminacion}
+                onClick={() => setPedidoAEliminar(null)}
+                style={{
+                  padding: "8px 13px",
+                  borderRadius: "8px",
+                  border: "1px solid #CBD5E1",
+                  background: "#FFFFFF",
+                  color: "#334155",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Cancelar
+              </button>
+
+              {!pedidoAEliminar.eliminadoEn && (
+                <button
+                  type="button"
+                  disabled={procesandoEliminacion}
+                  onClick={() => void handleConfirmarEliminacion(false)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "8px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid #FCA5A5",
+                    background: esAdminEstricto ? "#FEF2F2" : "#DC2626",
+                    color: esAdminEstricto ? "#991B1B" : "#FFFFFF",
+                    fontSize: "0.8rem",
+                    fontWeight: 700,
+                    cursor: procesandoEliminacion ? "wait" : "pointer",
+                  }}
+                >
+                  {procesandoEliminacion ? <Loader2 size={13} /> : <Trash2 size={13} />}
+                  <span>{esAdminEstricto ? "Enviar a Papelera" : "Confirmar"}</span>
+                </button>
+              )}
+
+              {esAdminEstricto && (
+                <button
+                  type="button"
+                  disabled={procesandoEliminacion}
+                  onClick={() => void handleConfirmarEliminacion(true)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "8px 14px",
+                    borderRadius: "8px",
+                    border: "none",
+                    background: "#DC2626",
+                    color: "#FFFFFF",
+                    fontSize: "0.8rem",
+                    fontWeight: 700,
+                    cursor: procesandoEliminacion ? "wait" : "pointer",
+                  }}
+                >
+                  {procesandoEliminacion ? <Loader2 size={13} /> : <Trash2 size={13} />}
+                  <span>Eliminar Definitivo</span>
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

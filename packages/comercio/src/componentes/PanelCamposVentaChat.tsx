@@ -16,6 +16,16 @@ import { cotizarEnvioDesdeEntradaAction } from "../acciones-logistica";
 import { guardarDatosVentaOmnicanalAction } from "../acciones-omnicanal";
 import { crearOActualizarPedidoOperadorAction } from "../acciones-operaciones-taller";
 import {
+  CLASIFICACIONES_OPERATIVAS_PEDIDO,
+  OPCIONES_SALA_EXEQUIALES,
+  RANGOS_HORARIO_ENTREGA_TIENDA,
+  construirValoresHorarioGuardar,
+  esNombreFallecidoPendiente,
+  inferirClasificacionPedido,
+  type ClasificacionOperativaPedido,
+  type ModoSelectorHorarioEntrega,
+} from "../operaciones-taller";
+import {
   autoCompletarDatosVentaDesdeMensajes,
   calcularTotalDatosVenta,
   type ConversacionOmnicanal,
@@ -31,15 +41,6 @@ export interface PropsPanelCamposVentaChat {
   onGuardado?: (datos: DatosVentaConversacion, remitenteNombre?: string) => void;
   onNotificar?: (mensaje: string) => void;
 }
-
-const FRANJAS_HORARIAS_SUGERIDAS = [
-  "",
-  "A) 09:00 - 13:00",
-  "B) 13:00 - 17:00",
-  "C) 17:00 - 20:00",
-  "Inmediata (1-2h)",
-  "Exequial Urgente",
-];
 
 function fechaIsoOffsetDias(dias: number): string {
   const f = new Date();
@@ -167,6 +168,40 @@ export function PanelCamposVentaChat({
       return;
     }
 
+    const clasifResuelta: ClasificacionOperativaPedido = inferirClasificacionPedido({
+      clasificacionExplicita: form.clasificacionPedido,
+      salaServicio: form.salaServicio,
+      productoResumen: resumenProd,
+      ubicacionEntrega: [form.sector, form.direccionReferencia].filter(Boolean).join(" "),
+    });
+    const esExeq = clasifResuelta === "EXEQUIALES";
+
+    if (esExeq && esNombreFallecidoPendiente(form.quienRecibe)) {
+      setSeccion("tarjeta");
+      setErrorLocal(
+        "En pedidos de Exequiales, indica el nombre de la Persona Fallecida antes de enviar a Taller."
+      );
+      return;
+    }
+
+    if (form.franjaHora === "HORA_EXACTA" && !(form.horaExacta || "").trim()) {
+      setSeccion("entrega");
+      setErrorLocal("Indica la hora exacta de entrega.");
+      return;
+    }
+
+    const modoChat: ModoSelectorHorarioEntrega =
+      form.franjaHora === "HORA_EXACTA" ||
+      form.franjaHora === "LO_ANTES_POSIBLE" ||
+      form.franjaHora === "A) 09:00 - 13:00" ||
+      form.franjaHora === "B) 13:00 - 17:00" ||
+      form.franjaHora === "C) 17:00 - 20:00"
+        ? form.franjaHora
+        : esExeq
+          ? "LO_ANTES_POSIBLE"
+          : "A) 09:00 - 13:00";
+
+    const horarioChat = construirValoresHorarioGuardar(modoChat, form.horaExacta || "");
     const fechaFinal = form.fechaEntrega || fechaIsoOffsetDias(0);
     setEnviandoTaller(true);
     setErrorLocal(null);
@@ -181,22 +216,27 @@ export function PanelCamposVentaChat({
 
       const res = await crearOActualizarPedidoOperadorAction({
         negocio,
-        origenTipo: "MANUAL_ADMIN",
+        origenTipo: esExeq ? "EXEQUIALES_LLAMADA" : "MANUAL_ADMIN",
+        clasificacionPedido: clasifResuelta,
         enviarATaller: true,
         fechaEntrega: fechaFinal,
-        franjaHoraria: form.franjaHora || "A) 09:00 - 13:00",
+        franjaHoraria: horarioChat.franjaHoraria ?? undefined,
+        horaEspecifica: horarioChat.horaEspecifica ?? undefined,
         productoResumen: resumenProd,
         clienteSolicita: form.nombreCliente?.trim() || conversacion.remitenteNombre,
-        clienteTelefono: conversacion.remitenteTelefono || undefined,
+        clienteTelefono: esExeq ? undefined : conversacion.remitenteTelefono || undefined,
         destinatarioFallecido: form.quienRecibe?.trim() || undefined,
-        ubicacionEntrega:
-          [form.sector?.trim(), form.direccionReferencia?.trim()].filter(Boolean).join(" · ") ||
-          undefined,
-        enlaceMapa: form.ubicacionUrl?.trim() || undefined,
-        dedicatoria: dedicatoriaCompleta || undefined,
+        salaServicio: esExeq ? form.salaServicio?.trim() || undefined : undefined,
+        ubicacionEntrega: esExeq
+          ? "Exequiales"
+          : [form.sector?.trim(), form.direccionReferencia?.trim()].filter(Boolean).join(" · ") ||
+            undefined,
+        enlaceMapa: esExeq ? undefined : form.ubicacionUrl?.trim() || undefined,
+        dedicatoria: esExeq ? undefined : dedicatoriaCompleta || undefined,
+        tarjetaTipo: clasifResuelta === "CONDOLENCIAS" ? "CONDOLENCIAS_PLANA" : undefined,
         observaciones: form.preferenciasDetalle?.trim() || undefined,
         totalUsd: totalCalculado > 0 ? totalCalculado : undefined,
-        estadoPago: form.estadoCobro === "PAGADO" ? "PAGADO" : "PENDIENTE",
+        estadoPago: esExeq ? "CONVENIO_IESS" : form.estadoCobro === "PAGADO" ? "PAGADO" : "PENDIENTE",
       });
 
       if (!res.ok) {
@@ -328,6 +368,21 @@ export function PanelCamposVentaChat({
       {/* SECCIÓN 1: PRODUCTO, EXTRAS Y VALORES */}
       {seccion === "pedido" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          <label style={estiloLabel}>
+            <span>Tipo de Pedido</span>
+            <SelectConBuscador
+              value={form.clasificacionPedido || "FLORISTERIA_OCASIONES"}
+              onChange={(e) => actualizarCampo("clasificacionPedido", e.target.value)}
+              style={estiloInput}
+            >
+              {CLASIFICACIONES_OPERATIVAS_PEDIDO.map((op) => (
+                <option key={op.clave} value={op.clave}>
+                  {op.etiqueta}
+                </option>
+              ))}
+            </SelectConBuscador>
+          </label>
+
           <label style={estiloLabel}>
             <span>Producto / Arreglo</span>
             <input
@@ -501,144 +556,222 @@ export function PanelCamposVentaChat({
           </div>
 
           <label style={estiloLabel}>
-            <span>Hora / Rango de entrega</span>
+            <span>Hora de entrega (Rango u Hora exacta)</span>
             <SelectConBuscador
-              value={form.franjaHora ?? ""}
-              onChange={(e) => actualizarCampo("franjaHora", e.target.value)}
+              value={form.franjaHora || "A) 09:00 - 13:00"}
+              onChange={(e) => {
+                const v = e.target.value;
+                actualizarCampo("franjaHora", v);
+                if (v === "HORA_EXACTA" && !form.horaExacta) {
+                  actualizarCampo("horaExacta", "10:30");
+                }
+              }}
               style={estiloInput}
             >
-              {FRANJAS_HORARIAS_SUGERIDAS.map((fr) => (
-                <option key={fr || "vacio"} value={fr}>
-                  {fr || "— Seleccionar horario —"}
+              {form.clasificacionPedido === "EXEQUIALES" && (
+                <option value="LO_ANTES_POSIBLE">⚡ Lo antes posible</option>
+              )}
+              {RANGOS_HORARIO_ENTREGA_TIENDA.map((r) => (
+                <option key={r.codigo} value={r.valor}>
+                  {r.etiqueta}
                 </option>
               ))}
+              <option value="HORA_EXACTA">⏰ Hora exacta</option>
             </SelectConBuscador>
           </label>
 
-          <label style={estiloLabel}>
-            <span>Sector</span>
-            <input
-              type="text"
-              value={form.sector ?? ""}
-              onChange={(e) => actualizarCampo("sector", e.target.value)}
-              placeholder="Ej: Centro-Norte, Cumbayá, Sur…"
-              style={estiloInput}
-            />
-          </label>
-
-          <label style={estiloLabel}>
-            <span>Dirección / Sala / Referencia</span>
-            <textarea
-              rows={2}
-              value={form.direccionReferencia ?? ""}
-              onChange={(e) => actualizarCampo("direccionReferencia", e.target.value)}
-              placeholder="Calle, edificio/casa o Sala funeraria…"
-              style={{ ...estiloInput, resize: "vertical" }}
-            />
-          </label>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "0.69rem", fontWeight: 700, color: "#475569" }}>
-                Enlace Ubicación GPS
-              </span>
-              {form.ubicacionUrl && /^https?:\/\//i.test(form.ubicacionUrl) && (
-                <a
-                  href={form.ubicacionUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  style={{
-                    fontSize: "0.68rem",
-                    color: "#27272A",
-                    textDecoration: "underline",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "3px",
-                  }}
-                >
-                  Abrir mapa <ExternalLink size={10} />
-                </a>
-              )}
-            </div>
-            <div style={{ display: "flex", gap: "5px" }}>
+          {form.franjaHora === "HORA_EXACTA" && (
+            <label style={{ ...estiloLabel, color: "#0F766E" }}>
+              <span>Indicar Hora Exacta *</span>
               <input
-                type="text"
-                value={form.ubicacionUrl ?? ""}
-                onChange={(e) => actualizarCampo("ubicacionUrl", e.target.value)}
-                placeholder="https://maps.app.goo.gl/..."
-                style={{ ...estiloInput, flex: 1 }}
+                type="time"
+                value={form.horaExacta ?? "10:30"}
+                onChange={(e) => actualizarCampo("horaExacta", e.target.value)}
+                style={{ ...estiloInput, border: "1.5px solid #0D9488", fontWeight: 700 }}
               />
-              <button
-                type="button"
-                disabled={cotizandoGps}
-                onClick={() => void handleCotizarGps()}
-                title="Calcular automáticamente Sector y Costo de Envío desde el link GPS"
-                aria-label="Cotizar GPS"
-                style={{
-                  padding: "6px 9px",
-                  borderRadius: "7px",
-                  border: "1px solid #D4D4D8",
-                  background: "#FAFAFA",
-                  color: "#18181B",
-                  fontSize: "0.7rem",
-                  fontWeight: 600,
-                  cursor: cotizandoGps ? "wait" : "pointer",
-                  whiteSpace: "nowrap",
-                }}
+            </label>
+          )}
+
+          {form.clasificacionPedido === "EXEQUIALES" ? (
+            <label style={{ ...estiloLabel, color: "#4C1D95" }}>
+              <span>Sala Exequiales</span>
+              <SelectConBuscador
+                value={form.salaServicio ?? ""}
+                onChange={(e) => actualizarCampo("salaServicio", e.target.value)}
+                style={estiloInput}
               >
-                {cotizandoGps ? "…" : "Cotizar"}
-              </button>
-            </div>
-          </div>
+                <option value="">Por confirmar</option>
+                {OPCIONES_SALA_EXEQUIALES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </SelectConBuscador>
+            </label>
+          ) : (
+            <>
+              <label style={estiloLabel}>
+                <span>Sector</span>
+                <input
+                  type="text"
+                  value={form.sector ?? ""}
+                  onChange={(e) => actualizarCampo("sector", e.target.value)}
+                  placeholder="Ej: Centro-Norte, Cumbayá, Sur…"
+                  style={estiloInput}
+                />
+              </label>
+
+              <label style={estiloLabel}>
+                <span>Dirección / Referencia</span>
+                <textarea
+                  rows={2}
+                  value={form.direccionReferencia ?? ""}
+                  onChange={(e) => actualizarCampo("direccionReferencia", e.target.value)}
+                  placeholder="Calle, edificio/casa o funeraria…"
+                  style={{ ...estiloInput, resize: "vertical" }}
+                />
+              </label>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: "0.69rem", fontWeight: 700, color: "#475569" }}>
+                    Enlace Ubicación GPS
+                  </span>
+                  {form.ubicacionUrl && /^https?:\/\//i.test(form.ubicacionUrl) && (
+                    <a
+                      href={form.ubicacionUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        fontSize: "0.68rem",
+                        color: "#27272A",
+                        textDecoration: "underline",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "3px",
+                      }}
+                    >
+                      Abrir mapa <ExternalLink size={10} />
+                    </a>
+                  )}
+                </div>
+                <div style={{ display: "flex", gap: "5px" }}>
+                  <input
+                    type="text"
+                    value={form.ubicacionUrl ?? ""}
+                    onChange={(e) => actualizarCampo("ubicacionUrl", e.target.value)}
+                    placeholder="https://maps.app.goo.gl/..."
+                    style={{ ...estiloInput, flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    disabled={cotizandoGps}
+                    onClick={() => void handleCotizarGps()}
+                    title="Calcular automáticamente Sector y Costo de Envío desde el link GPS"
+                    aria-label="Cotizar GPS"
+                    style={{
+                      padding: "6px 9px",
+                      borderRadius: "7px",
+                      border: "1px solid #D4D4D8",
+                      background: "#FAFAFA",
+                      color: "#18181B",
+                      fontSize: "0.7rem",
+                      fontWeight: 600,
+                      cursor: cotizandoGps ? "wait" : "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {cotizandoGps ? "…" : "Cotizar"}
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
 
-      {/* SECCIÓN 3: CLIENTE, QUIÉN RECIBE Y DEDICATORIA */}
+      {/* SECCIÓN 3: CLIENTE, QUIÉN RECIBE / PERSONA FALLECIDA Y DEDICATORIA */}
       {seccion === "tarjeta" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <label style={estiloLabel}>
-            <span>Nombre del Cliente (compra)</span>
+            <span>
+              {form.clasificacionPedido === "EXEQUIALES"
+                ? "Solicita / Coordinador"
+                : "Nombre del Cliente (compra)"}
+            </span>
             <input
               type="text"
               value={form.nombreCliente ?? ""}
               onChange={(e) => actualizarCampo("nombreCliente", e.target.value)}
-              placeholder="Nombre de quien realiza el pedido"
+              placeholder={
+                form.clasificacionPedido === "EXEQUIALES"
+                  ? "Ej: Cristina / Cristian Montaluisa"
+                  : "Nombre de quien realiza el pedido"
+              }
               style={estiloInput}
             />
           </label>
 
-          <label style={estiloLabel}>
-            <span>Quién Recibe (Nombre y Celular)</span>
+          <label
+            style={
+              form.clasificacionPedido === "EXEQUIALES"
+                ? { ...estiloLabel, color: "#4C1D95" }
+                : estiloLabel
+            }
+          >
+            <span>
+              {form.clasificacionPedido === "EXEQUIALES"
+                ? "Persona Fallecida (Destinatario) *"
+                : form.clasificacionPedido === "CONDOLENCIAS"
+                  ? "Destinatario / Persona Fallecida"
+                  : "Quién Recibe (Nombre y Celular)"}
+            </span>
             <input
               type="text"
               value={form.quienRecibe ?? ""}
               onChange={(e) => actualizarCampo("quienRecibe", e.target.value)}
-              placeholder="Ej: María Pérez · 099..."
-              style={estiloInput}
+              placeholder={
+                form.clasificacionPedido === "EXEQUIALES"
+                  ? "Nombre completo de la persona fallecida (requerido)"
+                  : "Ej: María Pérez · 099..."
+              }
+              style={
+                form.clasificacionPedido === "EXEQUIALES"
+                  ? { ...estiloInput, border: "1.5px solid #8B5CF6" }
+                  : estiloInput
+              }
             />
           </label>
 
-          <label style={estiloLabel}>
-            <span>Mensaje de Tarjeta / Cinta</span>
-            <textarea
-              rows={3}
-              value={form.dedicatoriaTarjeta ?? ""}
-              onChange={(e) => actualizarCampo("dedicatoriaTarjeta", e.target.value)}
-              placeholder="Texto exacto para imprimir en la tarjeta…"
-              style={{ ...estiloInput, resize: "vertical" }}
-            />
-          </label>
+          {form.clasificacionPedido !== "EXEQUIALES" && (
+            <>
+              <label style={estiloLabel}>
+                <span>
+                  {form.clasificacionPedido === "CONDOLENCIAS"
+                    ? "Mensaje de Tarjeta de Condolencias"
+                    : "Mensaje de Tarjeta / Cinta"}
+                </span>
+                <textarea
+                  rows={3}
+                  value={form.dedicatoriaTarjeta ?? ""}
+                  onChange={(e) => actualizarCampo("dedicatoriaTarjeta", e.target.value)}
+                  placeholder="Texto exacto para imprimir en la tarjeta…"
+                  style={{ ...estiloInput, resize: "vertical" }}
+                />
+              </label>
 
-          <label style={estiloLabel}>
-            <span>Firma de la Tarjeta</span>
-            <input
-              type="text"
-              value={form.firmaTarjeta ?? ""}
-              onChange={(e) => actualizarCampo("firmaTarjeta", e.target.value)}
-              placeholder="Ej: Con amor, Carlos / Anónimo"
-              style={estiloInput}
-            />
-          </label>
+              <label style={estiloLabel}>
+                <span>Firma de la Tarjeta</span>
+                <input
+                  type="text"
+                  value={form.firmaTarjeta ?? ""}
+                  onChange={(e) => actualizarCampo("firmaTarjeta", e.target.value)}
+                  placeholder="Ej: Con amor, Carlos / Anónimo"
+                  style={estiloInput}
+                />
+              </label>
+            </>
+          )}
         </div>
       )}
 

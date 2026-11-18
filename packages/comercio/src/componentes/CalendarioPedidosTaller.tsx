@@ -18,8 +18,10 @@ import {
   esEntregaConfirmadaOrden,
   esPedidoDeElaboracionEnFecha,
   formatearFechaEntregaHumana,
+  formatearHorarioEntregaOrden,
   generarCuadriculaMesCalendario,
   inferirClasificacionPedido,
+  inferirFranjaDesdeHoraExacta,
   normalizarFranjaHorariaTienda,
   obtenerDefinicionClasificacionPedido,
   obtenerFechaHoyEcuadorYmd,
@@ -126,6 +128,7 @@ function resolverClasificacionOrden(o: OrdenTrabajoTaller): ClasificacionOperati
     productoResumen: o.productoResumen,
     ubicacionEntrega: o.ubicacionEntrega,
     metodoPago: o.metodoPago,
+    tarjetaTipo: o.tarjetaTipo,
     items: o.items,
   });
 }
@@ -369,9 +372,11 @@ export function CalendarioPedidosTaller({
           >
             <Clock size={11} />
             <span>
-              {o.horaEspecifica
-                ? o.horaEspecifica
-                : o.franjaHoraria || "A) 09:00 - 13:00"}
+              {formatearHorarioEntregaOrden({
+                franjaHoraria: o.franjaHoraria,
+                horaEspecifica: o.horaEspecifica,
+                esExequiales: esExeq,
+              })}
             </span>
           </span>
         </div>
@@ -404,7 +409,7 @@ export function CalendarioPedidosTaller({
                 {o.salaServicio ? ` · Sala: ${o.salaServicio}` : ""}
               </div>
               <div>
-                <strong>Fallecido:</strong> {o.destinatarioFallecido || "Por confirmar"}
+                <strong>Fallecido:</strong> {o.destinatarioFallecido || "Pendiente registrar"}
               </div>
             </>
           ) : (
@@ -414,7 +419,7 @@ export function CalendarioPedidosTaller({
             </div>
           )}
 
-          {(o.retiroEnLocal || o.ubicacionEntrega) && (
+          {!esExeq && (o.retiroEnLocal || o.ubicacionEntrega) && (
             <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
               <MapPin size={11} style={{ flexShrink: 0 }} />
               <span>
@@ -602,7 +607,9 @@ export function CalendarioPedidosTaller({
         exequiales.push(o);
         continue;
       }
-      const norm = normalizarFranjaHorariaTienda(o.franjaHoraria);
+      const norm = o.horaEspecifica
+        ? inferirFranjaDesdeHoraExacta(o.horaEspecifica)
+        : normalizarFranjaHorariaTienda(o.franjaHoraria);
       if (norm.startsWith("A)")) franjaA.push(o);
       else if (norm.startsWith("B)")) franjaB.push(o);
       else franjaC.push(o);

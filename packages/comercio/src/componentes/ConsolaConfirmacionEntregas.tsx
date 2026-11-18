@@ -1189,6 +1189,10 @@ export function ConsolaConfirmacionEntregas({
       setErrorMsg("Selecciona la Sala para programar la Orden de Trabajo.");
       return;
     }
+    if (!otNuevaFallecido.trim()) {
+      setErrorMsg("Indica el nombre de la Persona Fallecida (requerido en Exequiales).");
+      return;
+    }
     setCreandoOt(true);
     setErrorMsg(null);
 
@@ -1209,9 +1213,8 @@ export function ConsolaConfirmacionEntregas({
       convenioId: convenioPrincipal?.id ?? null,
       soloProgramarOt: true,
       salaServicio: otNuevaSala.trim(),
-      fallecidoDestinatario:
-        otNuevaFallecido.trim() || `Por confirmar (${otNuevaSala.trim()})`,
-      ubicacionNombre: otNuevaUbicacion.trim(),
+      fallecidoDestinatario: otNuevaFallecido.trim(),
+      ubicacionNombre: "Exequiales",
       descripcionServicio: descProgramada,
       coordinadorNombre: otNuevaCoordinador.trim() || undefined,
     });
@@ -2921,26 +2924,14 @@ export function ConsolaConfirmacionEntregas({
 
               <input
                 type="text"
+                required
                 value={otNuevaFallecido}
                 onChange={(e) => setOtNuevaFallecido(e.target.value)}
-                placeholder="Nombre del Fallecido (opcional)"
+                placeholder="Persona Fallecida (requerido) *"
                 style={{
                   padding: "9px 11px",
                   borderRadius: "9px",
-                  border: "1px solid #CBD5E1",
-                  fontSize: "0.84rem",
-                }}
-              />
-
-              <input
-                type="text"
-                value={otNuevaUbicacion}
-                onChange={(e) => setOtNuevaUbicacion(e.target.value)}
-                placeholder="Funeraria / Edificio (opcional)"
-                style={{
-                  padding: "9px 11px",
-                  borderRadius: "9px",
-                  border: "1px solid #CBD5E1",
+                  border: "1.5px solid #8B5CF6",
                   fontSize: "0.84rem",
                 }}
               />

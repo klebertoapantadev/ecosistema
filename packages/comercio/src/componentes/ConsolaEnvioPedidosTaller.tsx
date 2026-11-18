@@ -13,6 +13,7 @@ import {
   PhoneCall,
   Plus,
   Printer,
+  RotateCcw,
   Save,
   Send,
   Trash2,
@@ -21,8 +22,10 @@ import {
 import {
   asignarRepartidorEntregaAction,
   crearOActualizarPedidoOperadorAction,
+  eliminarPedidoOperativoAction,
   enviarPedidosATallerAction,
   obtenerConsolaTallerYDespachoAction,
+  restaurarPedidoEliminadoAction,
   type DatosConsolaTallerYDespacho,
 } from "../acciones-operaciones-taller";
 import {
@@ -31,13 +34,18 @@ import {
   OPCIONES_SALA_EXEQUIALES,
   RANGOS_HORARIO_ENTREGA_TIENDA,
   SOLICITANTES_EXEQUIALES_FRECUENTES,
+  construirValoresHorarioGuardar,
   esEntregaConfirmadaOrden,
+  esNombreFallecidoPendiente,
   formatearFechaEntregaHumana,
+  formatearHorarioEntregaOrden,
   inferirClasificacionPedido,
   obtenerFechaHoyEcuadorYmd,
+  resolverEstadoInicialHorario,
   sumarDiasYmd,
   type ClasificacionOperativaPedido,
   type ItemOrdenTaller,
+  type ModoSelectorHorarioEntrega,
   type OrdenTrabajoTaller,
 } from "../operaciones-taller";
 import {
@@ -62,7 +70,8 @@ type FiltroBandeja =
   | "futuros"
   | "ya_en_taller"
   | "entregados"
-  | "todos";
+  | "todos"
+  | "eliminados";
 
 export function ConsolaEnvioPedidosTaller({
   negocio,
@@ -101,6 +110,8 @@ export function ConsolaEnvioPedidosTaller({
   >("Set condolencias (3 arreglos)");
   const [exeqProdLibre, setExeqProdLibre] = useState<string>("");
   const [exeqFechaEntrega, setExeqFechaEntrega] = useState<string>(hoyYmd);
+  const [exeqModoHorario, setExeqModoHorario] =
+    useState<ModoSelectorHorarioEntrega>("LO_ANTES_POSIBLE");
   const [exeqHora, setExeqHora] = useState<string>(() => {
     const d = new Date();
     return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
@@ -108,7 +119,6 @@ export function ConsolaEnvioPedidosTaller({
   const [exeqSolicita, setExeqSolicita] = useState<string>("Cristian Montaluisa");
   const [exeqSala, setExeqSala] = useState<string>("Sala 1");
   const [exeqFallecido, setExeqFallecido] = useState<string>("");
-  const [exeqUbicacion, setExeqUbicacion] = useState<string>("Exequiales del IESS");
   const [exeqNotas, setExeqNotas] = useState<string>("");
   const [guardandoExeq, setGuardandoExeq] = useState<boolean>(false);
 
@@ -116,10 +126,11 @@ export function ConsolaEnvioPedidosTaller({
   // FORMULARIO: CARGAR PEDIDO MANUAL (ADMIN / OPERADOR / VENTAS)
   // =========================================================================
   const [manClasificacion, setManClasificacion] =
-    useState<ClasificacionOperativaPedido>("DOMICILIO");
+    useState<ClasificacionOperativaPedido>("FLORISTERIA_OCASIONES");
   const [manFechaEntrega, setManFechaEntrega] = useState<string>(hoyYmd);
-  const [manFranja, setManFranja] = useState<string>("A) 09:00 - 13:00");
-  const [manHoraPuntual, setManHoraPuntual] = useState<string>("");
+  const [manModoHorario, setManModoHorario] =
+    useState<ModoSelectorHorarioEntrega>("A) 09:00 - 13:00");
+  const [manHoraPuntual, setManHoraPuntual] = useState<string>("10:30");
   const [manSalaServicio, setManSalaServicio] = useState<string>("");
   const [manSkuSeleccionado, setManSkuSeleccionado] = useState<string>("");
   const [manCantidadSel, setManCantidadSel] = useState<number>(1);
@@ -132,13 +143,42 @@ export function ConsolaEnvioPedidosTaller({
   const [manEnlaceMapa, setManEnlaceMapa] = useState<string>("");
   const [manRetiroLocal, setManRetiroLocal] = useState<boolean>(false);
   const [manDedicatoria, setManDedicatoria] = useState<string>("");
+  const [manTarjetaConfidencial, setManTarjetaConfidencial] = useState<boolean>(false);
   const [manObservaciones, setManObservaciones] = useState<string>("");
   const [manTotalUsd, setManTotalUsd] = useState<string>("");
   const [guardandoManual, setGuardandoManual] = useState<boolean>(false);
 
   // Modal de edición rápida de un pedido antes o después de enviarlo
   const [ordenEditando, setOrdenEditando] = useState<OrdenTrabajoTaller | null>(null);
+  const [editModoHorario, setEditModoHorario] =
+    useState<ModoSelectorHorarioEntrega>("A) 09:00 - 13:00");
+  const [editHoraExacta, setEditHoraExacta] = useState<string>("10:30");
+  const [errorModalOrden, setErrorModalOrden] = useState<string | null>(null);
   const [guardandoEdicion, setGuardandoEdicion] = useState<boolean>(false);
+
+  // Eliminación lógica (Staff) y definitiva (Solo Administrador)
+  const [ordenAEliminar, setOrdenAEliminar] = useState<OrdenTrabajoTaller | null>(null);
+  const [motivoEliminacion, setMotivoEliminacion] = useState<string>("");
+  const [procesandoEliminacion, setProcesandoEliminacion] = useState<boolean>(false);
+
+  const esAdminEstricto = useMemo(() => {
+    if (typeof datos.esAdminEstricto === "boolean") return datos.esAdminEstricto;
+    return datos.rolOperativo === "SUPERADMIN" || datos.rolOperativo === "ADMINISTRADOR";
+  }, [datos.esAdminEstricto, datos.rolOperativo]);
+
+  const puedeEliminarLogico = useMemo(() => {
+    if (typeof datos.puedeEliminarLogico === "boolean") return datos.puedeEliminarLogico;
+    return (
+      esAdminEstricto ||
+      datos.rolOperativo === "OPERADOR" ||
+      datos.rolOperativo === "VENTAS"
+    );
+  }, [datos.puedeEliminarLogico, datos.rolOperativo, esAdminEstricto]);
+
+  const ordenesEliminadas = useMemo(
+    () => (esAdminEstricto && Array.isArray(datos.ordenesEliminadas) ? datos.ordenesEliminadas : []),
+    [esAdminEstricto, datos.ordenesEliminadas]
+  );
 
   const emitirBroadcastTaller = useCallback(
     async (evento: { codigo: string; resumen: string; esExequiales?: boolean }) => {
@@ -298,9 +338,34 @@ export function ConsolaEnvioPedidosTaller({
       productoResumen: o.productoResumen,
       ubicacionEntrega: o.ubicacionEntrega,
       metodoPago: o.metodoPago,
+      tarjetaTipo: o.tarjetaTipo,
       items: o.items,
     });
   }, []);
+
+  const abrirModalEditarOrden = useCallback(
+    (o: OrdenTrabajoTaller) => {
+      const clasif = resolverClasif(o);
+      const esExeq = clasif === "EXEQUIALES";
+      const horarioIni = resolverEstadoInicialHorario({
+        franjaHoraria: o.franjaHoraria,
+        horaEspecifica: o.horaEspecifica,
+        esExequiales: esExeq,
+      });
+      setErrorModalOrden(null);
+      setEditModoHorario(horarioIni.modo);
+      setEditHoraExacta(horarioIni.horaExacta || "10:30");
+      setOrdenEditando({
+        ...o,
+        clasificacionPedido: clasif,
+        destinatarioFallecido:
+          esExeq && esNombreFallecidoPendiente(o.destinatarioFallecido)
+            ? ""
+            : o.destinatarioFallecido,
+      });
+    },
+    [resolverClasif]
+  );
 
   const conteosClasificacion = useMemo(() => {
     const m: Partial<Record<ClasificacionOperativaPedido, number>> = {};
@@ -312,6 +377,15 @@ export function ConsolaEnvioPedidosTaller({
   }, [ordenesActivas, resolverClasif]);
 
   const filasFiltradas = useMemo(() => {
+    if (filtroBandeja === "eliminados") {
+      if (!esAdminEstricto) return [];
+      return ordenesEliminadas.filter((o) => {
+        if (filtroClasificacion !== "TODOS" && resolverClasif(o) !== filtroClasificacion) {
+          return false;
+        }
+        return true;
+      });
+    }
     return ordenesActivas.filter((o) => {
       if (filtroClasificacion !== "TODOS" && resolverClasif(o) !== filtroClasificacion) {
         return false;
@@ -327,7 +401,76 @@ export function ConsolaEnvioPedidosTaller({
       if (filtroBandeja === "entregados") return entregada;
       return true;
     });
-  }, [ordenesActivas, filtroBandeja, filtroClasificacion, resolverClasif, hoyYmd]);
+  }, [
+    ordenesActivas,
+    ordenesEliminadas,
+    esAdminEstricto,
+    filtroBandeja,
+    filtroClasificacion,
+    resolverClasif,
+    hoyYmd,
+  ]);
+
+  const handleConfirmarEliminacion = useCallback(
+    async (definitivo: boolean) => {
+      if (!ordenAEliminar) return;
+      if (definitivo && !esAdminEstricto) {
+        setErrorMsg("Solo el administrador puede eliminar pedidos de forma definitiva.");
+        return;
+      }
+      setProcesandoEliminacion(true);
+      setErrorMsg(null);
+      setMensajeExito(null);
+
+      const res = await eliminarPedidoOperativoAction({
+        negocio: negNorm,
+        ordenTallerId: ordenAEliminar.id,
+        proformaId: ordenAEliminar.proformaId ?? null,
+        entregaId: ordenAEliminar.entregaId ?? null,
+        motivo: motivoEliminacion,
+        definitivo,
+      });
+
+      setProcesandoEliminacion(false);
+      if (!res.ok) {
+        setErrorMsg(res.error);
+        return;
+      }
+
+      setMensajeExito(
+        res.modo === "DEFINITIVO"
+          ? `🗑️ Pedido ${ordenAEliminar.codigo} eliminado definitivamente de la base de datos.`
+          : `🗑️ Pedido ${ordenAEliminar.codigo} enviado a Papelera (solo visible para Administrador).`
+      );
+      setOrdenAEliminar(null);
+      setMotivoEliminacion("");
+      await recargarDatos(true);
+    },
+    [ordenAEliminar, esAdminEstricto, negNorm, motivoEliminacion, recargarDatos]
+  );
+
+  const handleRestaurarOrden = useCallback(
+    async (o: OrdenTrabajoTaller) => {
+      if (!esAdminEstricto) return;
+      setIdProcesando(o.id);
+      setErrorMsg(null);
+      setMensajeExito(null);
+      const res = await restaurarPedidoEliminadoAction({
+        negocio: negNorm,
+        ordenTallerId: o.id,
+        proformaId: o.proformaId ?? null,
+        entregaId: o.entregaId ?? null,
+      });
+      setIdProcesando(null);
+      if (!res.ok) {
+        setErrorMsg(res.error);
+        return;
+      }
+      setMensajeExito(`♻️ Pedido ${o.codigo} restaurado correctamente a la bandeja activa.`);
+      await recargarDatos(true);
+    },
+    [esAdminEstricto, negNorm, recargarDatos]
+  );
 
   const handleEnviarIdsATaller = useCallback(
     async (ids: string[], resumenNotif?: string) => {
@@ -380,6 +523,16 @@ export function ConsolaEnvioPedidosTaller({
       setErrorMsg("Indica quién solicita el servicio (ej. Cristian Montaluisa o Cristina).");
       return;
     }
+    if (esNombreFallecidoPendiente(exeqFallecido)) {
+      setErrorMsg("Indica el nombre de la Persona Fallecida (Destinatario requerido en Exequiales).");
+      return;
+    }
+    if (exeqModoHorario === "HORA_EXACTA" && !exeqHora.trim()) {
+      setErrorMsg("Indica la hora exacta de entrega del servicio exequial.");
+      return;
+    }
+
+    const horarioExeq = construirValoresHorarioGuardar(exeqModoHorario, exeqHora);
 
     setGuardandoExeq(true);
     setErrorMsg(null);
@@ -388,16 +541,18 @@ export function ConsolaEnvioPedidosTaller({
     const res = await crearOActualizarPedidoOperadorAction({
       negocio: negNorm,
       origenTipo: "EXEQUIALES_LLAMADA",
+      clasificacionPedido: "EXEQUIALES",
       enviarATaller: true,
       fechaEntrega: exeqFechaEntrega || hoyYmd,
       fechaElaboracion: hoyYmd,
-      horaEspecifica: exeqHora.trim() || "Lo antes posible",
+      franjaHoraria: horarioExeq.franjaHoraria ?? undefined,
+      horaEspecifica: horarioExeq.horaEspecifica ?? undefined,
       productoResumen: resumenProd,
       items: [{ descripcion: resumenProd, cantidad: 1 }],
       clienteSolicita: exeqSolicita.trim(),
       destinatarioFallecido: exeqFallecido.trim(),
       salaServicio: exeqSala || undefined,
-      ubicacionEntrega: exeqUbicacion.trim() || "Exequiales del IESS",
+      ubicacionEntrega: "Exequiales",
       observaciones: exeqNotas.trim() || undefined,
     });
 
@@ -502,10 +657,23 @@ export function ConsolaEnvioPedidosTaller({
       setErrorMsg("Selecciona la Fecha de Entrega del pedido.");
       return;
     }
+    if (manClasificacion === "EXEQUIALES" && esNombreFallecidoPendiente(manDestinatario)) {
+      setErrorMsg(
+        "En pedidos de Exequiales, el nombre de la Persona Fallecida (Destinatario) es requerido."
+      );
+      return;
+    }
     if (!manCliente.trim() && !manDestinatario.trim()) {
       setErrorMsg("Ingresa el nombre del comprador o destinatario.");
       return;
     }
+    if (manModoHorario === "HORA_EXACTA" && !manHoraPuntual.trim()) {
+      setErrorMsg("Selecciona la hora exacta de entrega.");
+      return;
+    }
+
+    const horarioManual = construirValoresHorarioGuardar(manModoHorario, manHoraPuntual);
+    const esManExeq = manClasificacion === "EXEQUIALES";
 
     setGuardandoManual(true);
     setErrorMsg(null);
@@ -520,29 +688,31 @@ export function ConsolaEnvioPedidosTaller({
 
     const res = await crearOActualizarPedidoOperadorAction({
       negocio: negNorm,
-      origenTipo: "MANUAL_ADMIN",
-      clasificacionPedido: manRetiroLocal ? "LOCAL" : manClasificacion,
+      origenTipo: esManExeq ? "EXEQUIALES_LLAMADA" : "MANUAL_ADMIN",
+      clasificacionPedido: manClasificacion,
       enviarATaller: enviarAhora,
       fechaEntrega: manFechaEntrega,
       fechaElaboracion: enviarAhora ? hoyYmd : undefined,
-      franjaHoraria: manFranja,
-      horaEspecifica: manHoraPuntual.trim() || undefined,
+      franjaHoraria: horarioManual.franjaHoraria ?? undefined,
+      horaEspecifica: horarioManual.horaEspecifica ?? undefined,
       productoResumen: resumen,
       items: listaFinal,
       clienteSolicita: manCliente.trim() || manDestinatario.trim(),
-      clienteTelefono: manTelefono.trim() || undefined,
+      clienteTelefono: esManExeq ? undefined : manTelefono.trim() || undefined,
       destinatarioFallecido: manDestinatario.trim() || manCliente.trim(),
       salaServicio:
-        manClasificacion === "EXEQUIALES" && manSalaServicio.trim()
-          ? manSalaServicio.trim()
-          : undefined,
-      ubicacionEntrega:
-        manRetiroLocal || manClasificacion === "LOCAL"
+        esManExeq && manSalaServicio.trim() ? manSalaServicio.trim() : undefined,
+      ubicacionEntrega: esManExeq
+        ? "Exequiales"
+        : manRetiroLocal
           ? "Retiro en Tienda"
           : manDireccion.trim(),
-      enlaceMapa: manEnlaceMapa.trim() || undefined,
-      retiroEnLocal: manRetiroLocal || manClasificacion === "LOCAL",
-      dedicatoria: manDedicatoria.trim() || undefined,
+      enlaceMapa: esManExeq ? undefined : manEnlaceMapa.trim() || undefined,
+      retiroEnLocal: esManExeq ? false : manRetiroLocal,
+      dedicatoria: esManExeq ? undefined : manDedicatoria.trim() || undefined,
+      tarjetaTipo:
+        manClasificacion === "CONDOLENCIAS" || esManExeq ? "CONDOLENCIAS_PLANA" : "DIPTICO",
+      tarjetaConfidencial: manTarjetaConfidencial,
       observaciones: manObservaciones.trim() || undefined,
       totalUsd: totalCalculado,
     });
@@ -556,7 +726,12 @@ export function ConsolaEnvioPedidosTaller({
     if (enviarAhora) {
       void emitirBroadcastTaller({
         codigo: res.codigo,
-        resumen: `${resumen} · Entrega ${manFechaEntrega} (${manFranja})`,
+        resumen: `${resumen} · Entrega ${manFechaEntrega} (${formatearHorarioEntregaOrden({
+          franjaHoraria: horarioManual.franjaHoraria,
+          horaEspecifica: horarioManual.horaEspecifica,
+          esExequiales: esManExeq,
+        })})`,
+        esExequiales: esManExeq,
       });
     }
 
@@ -564,7 +739,7 @@ export function ConsolaEnvioPedidosTaller({
     setManSkuSeleccionado("");
     setManCantidadSel(1);
     setManDetalleLibre("");
-    setManHoraPuntual("");
+    setManHoraPuntual("10:30");
     setManSalaServicio("");
     setManCliente("");
     setManTelefono("");
@@ -587,35 +762,56 @@ export function ConsolaEnvioPedidosTaller({
   const handleGuardarEdicionModal = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!ordenEditando) return;
+
+    const clasifEdicion = resolverClasif(ordenEditando);
+    const esExeq = clasifEdicion === "EXEQUIALES";
+    if (esExeq && esNombreFallecidoPendiente(ordenEditando.destinatarioFallecido)) {
+      setErrorModalOrden(
+        "En pedidos de Exequiales, el nombre de la Persona Fallecida (Destinatario) es requerido."
+      );
+      return;
+    }
+    if (editModoHorario === "HORA_EXACTA" && !editHoraExacta.trim()) {
+      setErrorModalOrden("Selecciona la hora exacta de entrega.");
+      return;
+    }
+
+    const horarioFinal = construirValoresHorarioGuardar(editModoHorario, editHoraExacta);
+
     setGuardandoEdicion(true);
+    setErrorModalOrden(null);
     setErrorMsg(null);
 
     const res = await crearOActualizarPedidoOperadorAction({
       negocio: negNorm,
       ordenId: ordenEditando.id,
       origenTipo: ordenEditando.origenTipo,
-      clasificacionPedido: ordenEditando.clasificacionPedido,
+      clasificacionPedido: clasifEdicion,
       enviarATaller: ordenEditando.estadoTaller !== "PENDIENTE_ENVIO",
       fechaEntrega: ordenEditando.fechaEntrega,
-      franjaHoraria: ordenEditando.franjaHoraria ?? undefined,
-      horaEspecifica: ordenEditando.horaEspecifica ?? undefined,
+      franjaHoraria: horarioFinal.franjaHoraria ?? "",
+      horaEspecifica: horarioFinal.horaEspecifica ?? "",
       productoResumen: ordenEditando.productoResumen,
       items: ordenEditando.items,
       clienteSolicita: ordenEditando.clienteSolicita,
-      clienteTelefono: ordenEditando.clienteTelefono,
-      destinatarioFallecido: ordenEditando.destinatarioFallecido,
-      salaServicio: ordenEditando.salaServicio ?? undefined,
-      ubicacionEntrega: ordenEditando.ubicacionEntrega,
-      enlaceMapa: ordenEditando.enlaceMapa ?? undefined,
-      retiroEnLocal:
-        ordenEditando.clasificacionPedido === "LOCAL" ? true : ordenEditando.retiroEnLocal,
-      dedicatoria: ordenEditando.dedicatoria,
-      observaciones: ordenEditando.observaciones,
+      clienteTelefono: esExeq ? "" : ordenEditando.clienteTelefono,
+      destinatarioFallecido: ordenEditando.destinatarioFallecido.trim(),
+      salaServicio: esExeq ? ordenEditando.salaServicio ?? "" : "",
+      ubicacionEntrega: esExeq
+        ? "Exequiales"
+        : ordenEditando.retiroEnLocal
+          ? "Retiro en Tienda"
+          : ordenEditando.ubicacionEntrega,
+      enlaceMapa: esExeq ? "" : ordenEditando.enlaceMapa ?? "",
+      retiroEnLocal: esExeq ? false : ordenEditando.retiroEnLocal,
+      dedicatoria: esExeq ? "" : ordenEditando.dedicatoria ?? "",
+      tarjetaTipo: clasifEdicion === "CONDOLENCIAS" ? "CONDOLENCIAS_PLANA" : undefined,
+      observaciones: ordenEditando.observaciones ?? "",
     });
 
     setGuardandoEdicion(false);
     if (!res.ok) {
-      setErrorMsg(res.error);
+      setErrorModalOrden(res.error);
       return;
     }
 
@@ -715,9 +911,12 @@ export function ConsolaEnvioPedidosTaller({
                 📅 {infoFecha.etiquetaPrincipal}
               </span>
               <span style={{ fontSize: "0.74rem", fontWeight: 600, color: "#475569" }}>
-                {o.origenTipo === "EXEQUIALES_LLAMADA"
-                  ? `⏰ Hora: ${o.horaEspecifica || "Lo antes posible"}`
-                  : o.franjaHoraria || "A) 09:00 - 13:00"}
+                ⏰{" "}
+                {formatearHorarioEntregaOrden({
+                  franjaHoraria: o.franjaHoraria,
+                  horaEspecifica: o.horaEspecifica,
+                  esExequiales: resolverClasif(o) === "EXEQUIALES",
+                })}
               </span>
             </div>
           );
@@ -765,11 +964,10 @@ export function ConsolaEnvioPedidosTaller({
               {esExeq ? (
                 <>
                   <span style={{ fontSize: "0.74rem", color: "#4C1D95", fontWeight: 700 }}>
-                    Fallecido: {o.destinatarioFallecido || "Por confirmar"}
+                    Fallecido: {o.destinatarioFallecido || "Pendiente registrar"}
                   </span>
                   <span style={{ fontSize: "0.72rem", color: "#475569" }}>
-                    {[o.salaServicio, o.ubicacionEntrega].filter(Boolean).join(" · ") ||
-                      "Sala por confirmar"}
+                    Sala: {o.salaServicio || "Por confirmar"}
                   </span>
                 </>
               ) : (
@@ -827,7 +1025,30 @@ export function ConsolaEnvioPedidosTaller({
                       : "✅ Entregado"}
             </span>
 
-            {!o.retiroEnLocal &&
+            {o.eliminadoEn ? (
+              <div
+                style={{
+                  marginTop: "2px",
+                  padding: "4px 7px",
+                  borderRadius: "7px",
+                  background: "#FEF2F2",
+                  border: "1px solid #FECACA",
+                  color: "#991B1B",
+                  fontSize: "0.7rem",
+                }}
+              >
+                <div>
+                  <strong>🗑️ Eliminado por:</strong> {o.eliminadoPorNombre || "Staff"}
+                </div>
+                <div style={{ color: "#B91C1C" }}>
+                  {new Date(o.eliminadoEn).toLocaleString("es-EC")}
+                </div>
+                {o.eliminadoMotivo ? (
+                  <div style={{ fontStyle: "italic" }}>Motivo: {o.eliminadoMotivo}</div>
+                ) : null}
+              </div>
+            ) : (
+              !o.retiroEnLocal &&
               o.estadoTaller !== "ENTREGADO" &&
               (datos.repartidoresNegocio?.length ?? 0) > 0 && (
                 <SelectConBuscador
@@ -853,7 +1074,8 @@ export function ConsolaEnvioPedidosTaller({
                     </option>
                   ))}
                 </SelectConBuscador>
-              )}
+              )
+            )}
 
             {o.enRuta && o.rutaLatitud != null && o.rutaLongitud != null && (
               <a
@@ -887,6 +1109,63 @@ export function ConsolaEnvioPedidosTaller({
         valor: (o) => o.estadoTaller,
         render: (o) => {
           const proc = idProcesando === o.id;
+          if (o.eliminadoEn) {
+            if (!esAdminEstricto) return null;
+            return (
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  disabled={proc}
+                  onClick={() => void handleRestaurarOrden(o)}
+                  title="Restaurar este pedido a la bandeja activa"
+                  aria-label="Restaurar Pedido"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    padding: "6px 10px",
+                    borderRadius: "8px",
+                    border: "1px solid #10B981",
+                    background: "#ECFDF5",
+                    color: "#065F46",
+                    fontSize: "0.74rem",
+                    fontWeight: 700,
+                    cursor: proc ? "wait" : "pointer",
+                  }}
+                >
+                  {proc ? <Loader2 size={12} /> : <RotateCcw size={12} />}
+                  <span>Restaurar</span>
+                </button>
+                <button
+                  type="button"
+                  disabled={proc}
+                  onClick={() => {
+                    setMotivoEliminacion("");
+                    setOrdenAEliminar(o);
+                  }}
+                  title="Eliminar definitivamente este pedido de la base de datos"
+                  aria-label="Eliminar Definitivo"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    padding: "6px 10px",
+                    borderRadius: "8px",
+                    border: "none",
+                    background: "#DC2626",
+                    color: "#FFFFFF",
+                    fontSize: "0.74rem",
+                    fontWeight: 700,
+                    cursor: proc ? "wait" : "pointer",
+                  }}
+                >
+                  <Trash2 size={12} />
+                  <span>Eliminar Definitivo</span>
+                </button>
+              </div>
+            );
+          }
+
           return (
             <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
               {o.estadoTaller === "PENDIENTE_ENVIO" && (
@@ -915,42 +1194,44 @@ export function ConsolaEnvioPedidosTaller({
                 </button>
               )}
 
-              <button
-                type="button"
-                onClick={() => setOrdenParaImprimir(o)}
-                title="Imprimir o previsualizar tarjeta dedicatoria en Canon G3110"
-                aria-label="Imprimir Tarjeta"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  padding: "6px 9px",
-                  borderRadius: "8px",
-                  border:
-                    (o.tarjetaMetadata?.impresiones || 0) > 0
-                      ? "1px solid #F59E0B"
-                      : "1px solid #0284C7",
-                  background:
-                    (o.tarjetaMetadata?.impresiones || 0) > 0 ? "#FEF3C7" : "#F0F9FF",
-                  color:
-                    (o.tarjetaMetadata?.impresiones || 0) > 0 ? "#92400E" : "#0369A1",
-                  fontSize: "0.74rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                }}
-              >
-                <Printer size={12} />
-                <span>
-                  {(o.tarjetaMetadata?.impresiones || 0) > 0
-                    ? `Tarjeta (x${o.tarjetaMetadata?.impresiones})`
-                    : "Tarjeta"}
-                </span>
-              </button>
+              {resolverClasif(o) !== "EXEQUIALES" && (
+                <button
+                  type="button"
+                  onClick={() => setOrdenParaImprimir(o)}
+                  title="Imprimir o previsualizar tarjeta dedicatoria en Canon G3110"
+                  aria-label="Imprimir Tarjeta"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    padding: "6px 9px",
+                    borderRadius: "8px",
+                    border:
+                      (o.tarjetaMetadata?.impresiones || 0) > 0
+                        ? "1px solid #F59E0B"
+                        : "1px solid #0284C7",
+                    background:
+                      (o.tarjetaMetadata?.impresiones || 0) > 0 ? "#FEF3C7" : "#F0F9FF",
+                    color:
+                      (o.tarjetaMetadata?.impresiones || 0) > 0 ? "#92400E" : "#0369A1",
+                    fontSize: "0.74rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  <Printer size={12} />
+                  <span>
+                    {(o.tarjetaMetadata?.impresiones || 0) > 0
+                      ? `Tarjeta (x${o.tarjetaMetadata?.impresiones})`
+                      : "Tarjeta"}
+                  </span>
+                </button>
+              )}
 
               <button
                 type="button"
-                onClick={() => setOrdenEditando({ ...o })}
-                title="Modificar fecha de entrega, horario, sala o destinatario"
+                onClick={() => abrirModalEditarOrden(o)}
+                title="Modificar tipo de pedido, fecha, hora, sala o destinatario"
                 aria-label="Editar Pedido"
                 style={{
                   display: "inline-flex",
@@ -969,6 +1250,38 @@ export function ConsolaEnvioPedidosTaller({
                 <Edit3 size={12} />
                 <span>Editar</span>
               </button>
+
+              {puedeEliminarLogico && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMotivoEliminacion("");
+                    setOrdenAEliminar(o);
+                  }}
+                  title={
+                    esAdminEstricto
+                      ? "Enviar a Papelera o eliminar definitivamente"
+                      : "Eliminar pedido (se enviará a Papelera)"
+                  }
+                  aria-label="Eliminar Pedido"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    padding: "6px 9px",
+                    borderRadius: "8px",
+                    border: "1px solid #FECACA",
+                    background: "#FEF2F2",
+                    color: "#B91C1C",
+                    fontSize: "0.74rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  <Trash2 size={12} />
+                  <span>Eliminar</span>
+                </button>
+              )}
             </div>
           );
         },
@@ -980,9 +1293,13 @@ export function ConsolaEnvioPedidosTaller({
       seleccionadosIds,
       datos.repartidoresNegocio,
       resolverClasif,
+      abrirModalEditarOrden,
       toggleSeleccion,
       handleEnviarIdsATaller,
       handleAsignarRepartidor,
+      esAdminEstricto,
+      puedeEliminarLogico,
+      handleRestaurarOrden,
     ]
   );
 
@@ -1196,6 +1513,14 @@ export function ConsolaEnvioPedidosTaller({
                       label: `Historial Entregados (${entregadasHistoricas.length})`,
                     },
                     { id: "todos", label: `Todos (${ordenesActivas.length})` },
+                    ...(esAdminEstricto
+                      ? [
+                          {
+                            id: "eliminados" as FiltroBandeja,
+                            label: `🗑️ Papelera (${ordenesEliminadas.length})`,
+                          },
+                        ]
+                      : []),
                   ] as Array<{ id: FiltroBandeja; label: string }>
                 ).map((f) => (
                   <button
@@ -1307,7 +1632,7 @@ export function ConsolaEnvioPedidosTaller({
                         </li>
                       ))}
                     </ul>
-                    {o.dedicatoria && (
+                    {resolverClasif(o) !== "EXEQUIALES" && o.dedicatoria && (
                       <div style={{ marginTop: "6px", color: "#92400E" }}>
                         💌 <strong>Dedicatoria:</strong> {o.dedicatoria}
                       </div>
@@ -1315,11 +1640,19 @@ export function ConsolaEnvioPedidosTaller({
                   </div>
                   <div>
                     <div>
-                      <strong>Solicita / Comprador:</strong> {o.clienteSolicita}{" "}
-                      {o.clienteTelefono ? `(${o.clienteTelefono})` : ""}
+                      <strong>{resolverClasif(o) === "EXEQUIALES" ? "Solicita:" : "Comprador:"}</strong>{" "}
+                      {o.clienteSolicita}{" "}
+                      {resolverClasif(o) !== "EXEQUIALES" && o.clienteTelefono
+                        ? `(${o.clienteTelefono})`
+                        : ""}
                     </div>
                     <div>
-                      <strong>Destinatario / Fallecido:</strong> {o.destinatarioFallecido || "—"}
+                      <strong>
+                        {resolverClasif(o) === "EXEQUIALES"
+                          ? "Persona Fallecida:"
+                          : "Destinatario:"}
+                      </strong>{" "}
+                      {o.destinatarioFallecido || "—"}
                     </div>
                     {o.salaServicio && (
                       <div>
@@ -1327,8 +1660,19 @@ export function ConsolaEnvioPedidosTaller({
                       </div>
                     )}
                     <div>
-                      <strong>Dirección:</strong> {o.ubicacionEntrega || "—"}
+                      <strong>Hora de Entrega:</strong>{" "}
+                      {formatearHorarioEntregaOrden({
+                        franjaHoraria: o.franjaHoraria,
+                        horaEspecifica: o.horaEspecifica,
+                        esExequiales: resolverClasif(o) === "EXEQUIALES",
+                      })}
                     </div>
+                    {resolverClasif(o) !== "EXEQUIALES" && (
+                      <div>
+                        <strong>Dirección:</strong>{" "}
+                        {o.retiroEnLocal ? "Retiro en Tienda" : o.ubicacionEntrega || "—"}
+                      </div>
+                    )}
                     {o.observaciones && (
                       <div style={{ marginTop: "4px" }}>
                         <strong>Notas:</strong> {o.observaciones}
@@ -1534,51 +1878,29 @@ export function ConsolaEnvioPedidosTaller({
             </div>
 
             <div>
-              <label style={labelStyle}>Hora del Servicio</label>
-              <div style={{ display: "flex", gap: "6px", marginBottom: "6px" }}>
-                <button
-                  type="button"
-                  onClick={() => setExeqHora("Lo antes posible")}
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: "999px",
-                    border: "1px solid #CBD5E1",
-                    background: exeqHora === "Lo antes posible" ? "#581C87" : "#F8FAFC",
-                    color: exeqHora === "Lo antes posible" ? "#FFFFFF" : "#334155",
-                    fontSize: "0.74rem",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                  }}
-                >
-                  ⚡ Lo antes posible
-                </button>
-                {["09:00", "11:00", "14:00", "16:00"].map((h) => (
-                  <button
-                    key={h}
-                    type="button"
-                    onClick={() => setExeqHora(h)}
-                    style={{
-                      padding: "4px 8px",
-                      borderRadius: "999px",
-                      border: "1px solid #CBD5E1",
-                      background: exeqHora === h ? "#581C87" : "#F8FAFC",
-                      color: exeqHora === h ? "#FFFFFF" : "#334155",
-                      fontSize: "0.73rem",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {h}
-                  </button>
-                ))}
-              </div>
-              <input
-                type="text"
-                value={exeqHora}
-                onChange={(e) => setExeqHora(e.target.value)}
-                placeholder="Ej. 10:30 o Lo antes posible"
+              <label style={labelStyle}>Hora de Entrega *</label>
+              <SelectConBuscador
+                value={exeqModoHorario}
+                onChange={(e) => setExeqModoHorario(e.target.value as ModoSelectorHorarioEntrega)}
                 style={inputStyle}
-              />
+              >
+                <option value="LO_ANTES_POSIBLE">⚡ Lo antes posible</option>
+                {RANGOS_HORARIO_ENTREGA_TIENDA.map((r) => (
+                  <option key={r.codigo} value={r.valor}>
+                    {r.etiqueta}
+                  </option>
+                ))}
+                <option value="HORA_EXACTA">⏰ Hora exacta</option>
+              </SelectConBuscador>
+              {exeqModoHorario === "HORA_EXACTA" && (
+                <input
+                  type="time"
+                  required
+                  value={exeqHora}
+                  onChange={(e) => setExeqHora(e.target.value)}
+                  style={{ ...inputStyle, marginTop: "6px", border: "1.5px solid #581C87", fontWeight: 700 }}
+                />
+              )}
             </div>
           </div>
 
@@ -1654,33 +1976,25 @@ export function ConsolaEnvioPedidosTaller({
             </div>
           </div>
 
-          {/* Nombre del Fallecido, Dirección y Notas */}
+          {/* Persona Fallecida (Requerido) y Notas para Taller (sin teléfono, sin dirección y sin tarjeta) */}
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
               gap: "12px",
             }}
           >
             <div>
-              <label style={labelStyle}>Nombre del Fallecido (si ya lo informaron)</label>
+              <label style={{ ...labelStyle, color: "#4C1D95" }}>
+                Persona Fallecida (Destinatario) *
+              </label>
               <input
                 type="text"
+                required
                 value={exeqFallecido}
                 onChange={(e) => setExeqFallecido(e.target.value)}
-                placeholder="Ej. Rodríguez Navarrete Myrian Graciela (o completar al entregar)"
-                style={inputStyle}
-              />
-            </div>
-
-            <div>
-              <label style={labelStyle}>Dirección / Ubicación de Entrega</label>
-              <input
-                type="text"
-                value={exeqUbicacion}
-                onChange={(e) => setExeqUbicacion(e.target.value)}
-                placeholder="Ej. Exequiales del IESS, Monteolivo, Camposanto..."
-                style={inputStyle}
+                placeholder="Nombre completo de la persona fallecida (requerido)"
+                style={{ ...inputStyle, border: "1.5px solid #8B5CF6" }}
               />
             </div>
 
@@ -1753,7 +2067,7 @@ export function ConsolaEnvioPedidosTaller({
 
           {/* 0. CLASIFICACIÓN OPERATIVA DEL PEDIDO */}
           <div>
-            <label style={labelStyle}>Clasificación del Pedido *</label>
+            <label style={labelStyle}>Tipo de Pedido *</label>
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
               {CLASIFICACIONES_OPERATIVAS_PEDIDO.map((cat) => {
                 const activa = manClasificacion === cat.clave;
@@ -1763,7 +2077,11 @@ export function ConsolaEnvioPedidosTaller({
                     type="button"
                     onClick={() => {
                       setManClasificacion(cat.clave);
-                      setManRetiroLocal(cat.clave === "LOCAL");
+                      if (cat.clave === "EXEQUIALES") {
+                        setManRetiroLocal(false);
+                      } else if (manModoHorario === "LO_ANTES_POSIBLE") {
+                        setManModoHorario("A) 09:00 - 13:00");
+                      }
                     }}
                     title={cat.descripcion}
                     aria-label={cat.etiqueta}
@@ -1800,40 +2118,25 @@ export function ConsolaEnvioPedidosTaller({
                 borderRadius: "10px",
                 background: "#F5F3FF",
                 border: "1px solid #DDD6FE",
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-                gap: "12px",
               }}
             >
-              <div>
-                <label style={{ ...labelStyle, color: "#4C1D95" }}>Sala de Entrega</label>
-                <SelectConBuscador
-                  value={manSalaServicio}
-                  onChange={(e) => setManSalaServicio(e.target.value)}
-                  style={inputStyle}
-                >
-                  <option value="">-- Seleccionar Sala o dejar por confirmar --</option>
-                  {OPCIONES_SALA_EXEQUIALES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
-                </SelectConBuscador>
-              </div>
-              <div>
-                <label style={{ ...labelStyle, color: "#4C1D95" }}>Hora Puntual (opcional)</label>
-                <input
-                  type="text"
-                  value={manHoraPuntual}
-                  onChange={(e) => setManHoraPuntual(e.target.value)}
-                  placeholder="Ej. 10:30 o Lo antes posible"
-                  style={inputStyle}
-                />
-              </div>
+              <label style={{ ...labelStyle, color: "#4C1D95" }}>Sala Exequiales</label>
+              <SelectConBuscador
+                value={manSalaServicio}
+                onChange={(e) => setManSalaServicio(e.target.value)}
+                style={inputStyle}
+              >
+                <option value="">-- Seleccionar Sala o dejar por confirmar --</option>
+                {OPCIONES_SALA_EXEQUIALES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </SelectConBuscador>
             </div>
           )}
 
-          {/* 1. FECHA DE ENTREGA (PRINCIPAL) Y RANGO DE HORARIO A / B / C */}
+          {/* 1. FECHA DE ENTREGA Y HORA DE ENTREGA (RANGO A / B / C O HORA EXACTA) */}
           <div
             style={{
               padding: "14px",
@@ -1884,16 +2187,38 @@ export function ConsolaEnvioPedidosTaller({
 
             <div>
               <label style={{ ...labelStyle, color: "#065F46" }}>
-                ⏳ Rango de Horario de Entrega
+                ⏳ Hora de Entrega * (Rango u Hora exacta)
               </label>
               <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                {manClasificacion === "EXEQUIALES" && (
+                  <button
+                    type="button"
+                    onClick={() => setManModoHorario("LO_ANTES_POSIBLE")}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: "9px",
+                      border:
+                        manModoHorario === "LO_ANTES_POSIBLE"
+                          ? "2px solid #581C87"
+                          : "1px solid #CBD5E1",
+                      background: manModoHorario === "LO_ANTES_POSIBLE" ? "#581C87" : "#FFFFFF",
+                      color: manModoHorario === "LO_ANTES_POSIBLE" ? "#FFFFFF" : "#1E293B",
+                      fontSize: "0.82rem",
+                      fontWeight: 700,
+                      textAlign: "left",
+                      cursor: "pointer",
+                    }}
+                  >
+                    ⚡ Lo antes posible
+                  </button>
+                )}
                 {RANGOS_HORARIO_ENTREGA_TIENDA.map((r) => {
-                  const activo = manFranja === r.valor;
+                  const activo = manModoHorario === r.valor;
                   return (
                     <button
                       key={r.codigo}
                       type="button"
-                      onClick={() => setManFranja(r.valor)}
+                      onClick={() => setManModoHorario(r.valor)}
                       style={{
                         padding: "8px 12px",
                         borderRadius: "9px",
@@ -1910,6 +2235,35 @@ export function ConsolaEnvioPedidosTaller({
                     </button>
                   );
                 })}
+                <button
+                  type="button"
+                  onClick={() => setManModoHorario("HORA_EXACTA")}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "9px",
+                    border:
+                      manModoHorario === "HORA_EXACTA"
+                        ? "2px solid #0D9488"
+                        : "1px solid #CBD5E1",
+                    background: manModoHorario === "HORA_EXACTA" ? "#0D9488" : "#FFFFFF",
+                    color: manModoHorario === "HORA_EXACTA" ? "#FFFFFF" : "#1E293B",
+                    fontSize: "0.82rem",
+                    fontWeight: 700,
+                    textAlign: "left",
+                    cursor: "pointer",
+                  }}
+                >
+                  ⏰ Hora exacta
+                </button>
+                {manModoHorario === "HORA_EXACTA" && (
+                  <input
+                    type="time"
+                    required
+                    value={manHoraPuntual}
+                    onChange={(e) => setManHoraPuntual(e.target.value)}
+                    style={{ ...inputStyle, border: "1.5px solid #0D9488", fontWeight: 700 }}
+                  />
+                )}
               </div>
             </div>
           </div>
@@ -2048,7 +2402,7 @@ export function ConsolaEnvioPedidosTaller({
             />
           </div>
 
-          {/* 3. CLIENTE, DESTINATARIO Y DEDICATORIA */}
+          {/* 3. CLIENTE, DESTINATARIO / FALLECIDO Y NOTAS */}
           <div
             style={{
               display: "grid",
@@ -2057,49 +2411,81 @@ export function ConsolaEnvioPedidosTaller({
             }}
           >
             <div>
-              <label style={labelStyle}>Comprador / Quién pide *</label>
+              <label style={labelStyle}>
+                {manClasificacion === "EXEQUIALES"
+                  ? "Solicita / Coordinador *"
+                  : "Comprador / Quién pide *"}
+              </label>
               <input
                 type="text"
                 value={manCliente}
                 onChange={(e) => setManCliente(e.target.value)}
-                placeholder="Nombre del cliente"
+                placeholder={
+                  manClasificacion === "EXEQUIALES"
+                    ? "Ej. Cristina, Cristian Montaluisa..."
+                    : "Nombre del cliente"
+                }
                 style={inputStyle}
               />
             </div>
 
-            <div>
-              <label style={labelStyle}>WhatsApp / Teléfono</label>
-              <input
-                type="text"
-                value={manTelefono}
-                onChange={(e) => setManTelefono(e.target.value)}
-                placeholder="099..."
-                style={inputStyle}
-              />
-            </div>
+            {manClasificacion !== "EXEQUIALES" && (
+              <div>
+                <label style={labelStyle}>WhatsApp / Teléfono</label>
+                <input
+                  type="text"
+                  value={manTelefono}
+                  onChange={(e) => setManTelefono(e.target.value)}
+                  placeholder="099..."
+                  style={inputStyle}
+                />
+              </div>
+            )}
 
             <div>
-              <label style={labelStyle}>Destinatario (quien recibe)</label>
+              <label
+                style={
+                  manClasificacion === "EXEQUIALES"
+                    ? { ...labelStyle, color: "#4C1D95" }
+                    : labelStyle
+                }
+              >
+                {manClasificacion === "EXEQUIALES"
+                  ? "Persona Fallecida (Destinatario) *"
+                  : manClasificacion === "CONDOLENCIAS"
+                    ? "Destinatario / Persona Fallecida"
+                    : "Destinatario (quien recibe)"}
+              </label>
               <input
                 type="text"
                 value={manDestinatario}
                 onChange={(e) => setManDestinatario(e.target.value)}
-                placeholder="Nombre del destinatario"
-                style={inputStyle}
+                placeholder={
+                  manClasificacion === "EXEQUIALES"
+                    ? "Nombre completo de la persona fallecida (requerido)"
+                    : "Nombre del destinatario"
+                }
+                style={
+                  manClasificacion === "EXEQUIALES"
+                    ? { ...inputStyle, border: "1.5px solid #8B5CF6" }
+                    : inputStyle
+                }
               />
             </div>
 
-            <div>
-              <label style={labelStyle}>Valor Total USD (opcional)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={manTotalUsd}
-                onChange={(e) => setManTotalUsd(e.target.value)}
-                placeholder="0.00"
-                style={inputStyle}
-              />
-            </div>
+            {manClasificacion !== "EXEQUIALES" && (
+              <div>
+                <label style={labelStyle}>Valor Total USD (opcional)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={manTotalUsd}
+                  onChange={(e) => setManTotalUsd(e.target.value)}
+                  placeholder="0.00"
+                  style={inputStyle}
+                />
+              </div>
+            )}
           </div>
 
           <div
@@ -2109,45 +2495,71 @@ export function ConsolaEnvioPedidosTaller({
               gap: "12px",
             }}
           >
-            <div>
-              <label style={labelStyle}>Dirección de Entrega</label>
-              <input
-                type="text"
-                value={manDireccion}
-                onChange={(e) => setManDireccion(e.target.value)}
-                placeholder="Sector, calles y edificio"
-                disabled={manRetiroLocal}
-                style={inputStyle}
-              />
-              <label
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  fontSize: "0.76rem",
-                  marginTop: "6px",
-                  cursor: "pointer",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={manRetiroLocal}
-                  onChange={(e) => setManRetiroLocal(e.target.checked)}
-                />
-                <span>🏪 Retiro en Tienda</span>
-              </label>
-            </div>
+            {manClasificacion !== "EXEQUIALES" && (
+              <>
+                <div>
+                  <label style={labelStyle}>Dirección de Entrega</label>
+                  <input
+                    type="text"
+                    value={manDireccion}
+                    onChange={(e) => setManDireccion(e.target.value)}
+                    placeholder="Sector, calles y edificio"
+                    disabled={manRetiroLocal}
+                    style={inputStyle}
+                  />
+                  <label
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      fontSize: "0.76rem",
+                      marginTop: "6px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={manRetiroLocal}
+                      onChange={(e) => setManRetiroLocal(e.target.checked)}
+                    />
+                    <span>🏪 Retiro en Tienda</span>
+                  </label>
+                </div>
 
-            <div>
-              <label style={labelStyle}>Tarjeta Dedicatoria (opcional)</label>
-              <input
-                type="text"
-                value={manDedicatoria}
-                onChange={(e) => setManDedicatoria(e.target.value)}
-                placeholder="Mensaje para la tarjeta impresa"
-                style={inputStyle}
-              />
-            </div>
+                <div>
+                  <label style={labelStyle}>
+                    {manClasificacion === "CONDOLENCIAS"
+                      ? "Tarjeta de Condolencias — 16,8×11,3 cm Horizontal (opcional)"
+                      : "Tarjeta Dedicatoria — 11,3×16,8 cm Vertical (opcional)"}
+                  </label>
+                  <input
+                    type="text"
+                    value={manDedicatoria}
+                    onChange={(e) => setManDedicatoria(e.target.value)}
+                    placeholder="Mensaje para la tarjeta (se crea automáticamente)"
+                    style={inputStyle}
+                  />
+                  <label
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      fontSize: "0.75rem",
+                      marginTop: "6px",
+                      color: "#334155",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={manTarjetaConfidencial}
+                      onChange={(e) => setManTarjetaConfidencial(e.target.checked)}
+                    />
+                    <span>🔒 Confidencial / Discreción (imprimir solo el QR en la tarjeta)</span>
+                  </label>
+                </div>
+              </>
+            )}
 
             <div>
               <label style={labelStyle}>Indicaciones para Taller</label>
@@ -2231,7 +2643,7 @@ export function ConsolaEnvioPedidosTaller({
           modo="despacho"
           vistaInicial="mes"
           onEnviarATaller={(o) => void handleEnviarIdsATaller([o.id], o.productoResumen)}
-          onEditarOrden={(o) => setOrdenEditando({ ...o })}
+          onEditarOrden={(o) => abrirModalEditarOrden(o)}
           idProcesando={idProcesando}
         />
       )}
@@ -2289,22 +2701,48 @@ export function ConsolaEnvioPedidosTaller({
               </button>
             </div>
 
+            {errorModalOrden && (
+              <div
+                style={{
+                  background: "#FEF2F2",
+                  border: "1px solid #FECACA",
+                  borderRadius: "8px",
+                  padding: "8px 11px",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                  color: "#B91C1C",
+                }}
+              >
+                {errorModalOrden}
+              </div>
+            )}
+
             <div>
-              <label style={labelStyle}>Clasificación del Pedido</label>
+              <label style={labelStyle}>Tipo de Pedido *</label>
               <SelectConBuscador
                 value={resolverClasif(ordenEditando)}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const nuevaClasif = e.target.value as ClasificacionOperativaPedido;
+                  setErrorModalOrden(null);
+                  if (nuevaClasif !== "EXEQUIALES" && editModoHorario === "LO_ANTES_POSIBLE") {
+                    setEditModoHorario("A) 09:00 - 13:00");
+                  }
                   setOrdenEditando((prev) =>
                     prev
                       ? {
                           ...prev,
-                          clasificacionPedido: e.target.value as ClasificacionOperativaPedido,
+                          clasificacionPedido: nuevaClasif,
                           retiroEnLocal:
-                            e.target.value === "LOCAL" ? true : prev.retiroEnLocal,
+                            nuevaClasif === "EXEQUIALES" ? false : prev.retiroEnLocal,
+                          destinatarioFallecido:
+                            nuevaClasif === "EXEQUIALES" &&
+                            esNombreFallecidoPendiente(prev.destinatarioFallecido)
+                              ? ""
+                              : prev.destinatarioFallecido,
                         }
                       : null
-                  )
-                }
+                  );
+                }}
                 style={inputStyle}
               >
                 {CLASIFICACIONES_OPERATIVAS_PEDIDO.map((op) => (
@@ -2315,38 +2753,25 @@ export function ConsolaEnvioPedidosTaller({
               </SelectConBuscador>
             </div>
 
-            <div>
-              <label style={labelStyle}>Fecha de Entrega *</label>
-              <input
-                type="date"
-                value={(ordenEditando.fechaEntrega || hoyYmd).slice(0, 10)}
-                onChange={(e) =>
-                  setOrdenEditando((prev) =>
-                    prev ? { ...prev, fechaEntrega: e.target.value } : null
-                  )
-                }
-                style={inputStyle}
-              />
-            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+              <div>
+                <label style={labelStyle}>Fecha de Entrega *</label>
+                <input
+                  type="date"
+                  required
+                  value={(ordenEditando.fechaEntrega || hoyYmd).slice(0, 10)}
+                  onChange={(e) =>
+                    setOrdenEditando((prev) =>
+                      prev ? { ...prev, fechaEntrega: e.target.value } : null
+                    )
+                  }
+                  style={inputStyle}
+                />
+              </div>
 
-            {resolverClasif(ordenEditando) === "EXEQUIALES" ||
-            ordenEditando.origenTipo === "EXEQUIALES_LLAMADA" ? (
-              <>
+              {resolverClasif(ordenEditando) === "EXEQUIALES" ? (
                 <div>
-                  <label style={labelStyle}>Hora del Servicio</label>
-                  <input
-                    type="text"
-                    value={ordenEditando.horaEspecifica ?? ""}
-                    onChange={(e) =>
-                      setOrdenEditando((prev) =>
-                        prev ? { ...prev, horaEspecifica: e.target.value } : null
-                      )
-                    }
-                    style={inputStyle}
-                  />
-                </div>
-                <div>
-                  <label style={labelStyle}>Sala</label>
+                  <label style={{ ...labelStyle, color: "#4C1D95" }}>Sala Exequiales</label>
                   <SelectConBuscador
                     value={ordenEditando.salaServicio ?? ""}
                     onChange={(e) =>
@@ -2364,26 +2789,81 @@ export function ConsolaEnvioPedidosTaller({
                     ))}
                   </SelectConBuscador>
                 </div>
-              </>
-            ) : (
-              <div>
-                <label style={labelStyle}>Rango de Horario</label>
-                <SelectConBuscador
-                  value={ordenEditando.franjaHoraria || "A) 09:00 - 13:00"}
-                  onChange={(e) =>
-                    setOrdenEditando((prev) =>
-                      prev ? { ...prev, franjaHoraria: e.target.value } : null
-                    )
-                  }
-                  style={inputStyle}
-                >
-                  {RANGOS_HORARIO_ENTREGA_TIENDA.map((r) => (
-                    <option key={r.codigo} value={r.valor}>
-                      {r.etiqueta}
-                    </option>
-                  ))}
-                </SelectConBuscador>
+              ) : (
+                <div>
+                  <label style={labelStyle}>Hora de Entrega *</label>
+                  <SelectConBuscador
+                    value={editModoHorario}
+                    onChange={(e) =>
+                      setEditModoHorario(e.target.value as ModoSelectorHorarioEntrega)
+                    }
+                    style={inputStyle}
+                  >
+                    {RANGOS_HORARIO_ENTREGA_TIENDA.map((r) => (
+                      <option key={r.codigo} value={r.valor}>
+                        {r.etiqueta}
+                      </option>
+                    ))}
+                    <option value="HORA_EXACTA">⏰ Hora exacta</option>
+                  </SelectConBuscador>
+                </div>
+              )}
+            </div>
+
+            {resolverClasif(ordenEditando) === "EXEQUIALES" ? (
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: editModoHorario === "HORA_EXACTA" ? "1fr 1fr" : "1fr",
+                  gap: "10px",
+                }}
+              >
+                <div>
+                  <label style={labelStyle}>Hora de Entrega *</label>
+                  <SelectConBuscador
+                    value={editModoHorario}
+                    onChange={(e) =>
+                      setEditModoHorario(e.target.value as ModoSelectorHorarioEntrega)
+                    }
+                    style={inputStyle}
+                  >
+                    <option value="LO_ANTES_POSIBLE">⚡ Lo antes posible</option>
+                    {RANGOS_HORARIO_ENTREGA_TIENDA.map((r) => (
+                      <option key={r.codigo} value={r.valor}>
+                        {r.etiqueta}
+                      </option>
+                    ))}
+                    <option value="HORA_EXACTA">⏰ Hora exacta</option>
+                  </SelectConBuscador>
+                </div>
+                {editModoHorario === "HORA_EXACTA" && (
+                  <div>
+                    <label style={{ ...labelStyle, color: "#0F766E" }}>Hora Exacta *</label>
+                    <input
+                      type="time"
+                      required
+                      value={editHoraExacta}
+                      onChange={(e) => setEditHoraExacta(e.target.value)}
+                      style={{ ...inputStyle, border: "1.5px solid #0D9488", fontWeight: 700 }}
+                    />
+                  </div>
+                )}
               </div>
+            ) : (
+              editModoHorario === "HORA_EXACTA" && (
+                <div>
+                  <label style={{ ...labelStyle, color: "#0F766E" }}>
+                    Indicar Hora Exacta de Entrega *
+                  </label>
+                  <input
+                    type="time"
+                    required
+                    value={editHoraExacta}
+                    onChange={(e) => setEditHoraExacta(e.target.value)}
+                    style={{ ...inputStyle, border: "1.5px solid #0D9488", fontWeight: 700 }}
+                  />
+                </div>
+              )
             )}
 
             <div>
@@ -2400,84 +2880,164 @@ export function ConsolaEnvioPedidosTaller({
               />
             </div>
 
-            <div>
-              <label style={labelStyle}>Solicita / Comprador</label>
-              <input
-                type="text"
-                value={ordenEditando.clienteSolicita}
-                onChange={(e) =>
-                  setOrdenEditando((prev) =>
-                    prev ? { ...prev, clienteSolicita: e.target.value } : null
-                  )
-                }
-                style={inputStyle}
-              />
-            </div>
+            {resolverClasif(ordenEditando) === "EXEQUIALES" ? (
+              <div>
+                <label style={labelStyle}>Solicita / Coordinador</label>
+                <input
+                  type="text"
+                  value={ordenEditando.clienteSolicita}
+                  onChange={(e) =>
+                    setOrdenEditando((prev) =>
+                      prev ? { ...prev, clienteSolicita: e.target.value } : null
+                    )
+                  }
+                  style={inputStyle}
+                />
+              </div>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div>
+                  <label style={labelStyle}>Comprador / De parte de</label>
+                  <input
+                    type="text"
+                    value={ordenEditando.clienteSolicita}
+                    onChange={(e) =>
+                      setOrdenEditando((prev) =>
+                        prev ? { ...prev, clienteSolicita: e.target.value } : null
+                      )
+                    }
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Teléfono / WhatsApp</label>
+                  <input
+                    type="text"
+                    value={ordenEditando.clienteTelefono ?? ""}
+                    onChange={(e) =>
+                      setOrdenEditando((prev) =>
+                        prev ? { ...prev, clienteTelefono: e.target.value } : null
+                      )
+                    }
+                    placeholder="099..."
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+            )}
 
             <div>
-              <label style={labelStyle}>Destinatario / Nombre del Fallecido</label>
+              <label
+                style={
+                  resolverClasif(ordenEditando) === "EXEQUIALES"
+                    ? { ...labelStyle, color: "#4C1D95" }
+                    : labelStyle
+                }
+              >
+                {resolverClasif(ordenEditando) === "EXEQUIALES"
+                  ? "Persona Fallecida (Destinatario) *"
+                  : resolverClasif(ordenEditando) === "CONDOLENCIAS"
+                    ? "Destinatario / Persona Fallecida"
+                    : "Destinatario (quien recibe)"}
+              </label>
               <input
                 type="text"
+                required={resolverClasif(ordenEditando) === "EXEQUIALES"}
                 value={ordenEditando.destinatarioFallecido}
-                onChange={(e) =>
+                onChange={(e) => {
+                  setErrorModalOrden(null);
                   setOrdenEditando((prev) =>
                     prev ? { ...prev, destinatarioFallecido: e.target.value } : null
-                  )
+                  );
+                }}
+                placeholder={
+                  resolverClasif(ordenEditando) === "EXEQUIALES"
+                    ? "Nombre completo de la persona fallecida (requerido)"
+                    : "Nombre de quien recibe"
                 }
-                style={inputStyle}
+                style={
+                  resolverClasif(ordenEditando) === "EXEQUIALES"
+                    ? { ...inputStyle, border: "1.5px solid #8B5CF6" }
+                    : inputStyle
+                }
               />
             </div>
 
-            <div>
-              <label style={labelStyle}>Dirección / Ubicación de Entrega</label>
-              <input
-                type="text"
-                value={ordenEditando.ubicacionEntrega ?? ""}
-                onChange={(e) =>
-                  setOrdenEditando((prev) =>
-                    prev ? { ...prev, ubicacionEntrega: e.target.value } : null
-                  )
-                }
-                placeholder="Dirección exacta, sala o retiro en tienda"
-                style={inputStyle}
-              />
-            </div>
+            {resolverClasif(ordenEditando) !== "EXEQUIALES" && (
+              <>
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                    <label style={{ ...labelStyle, marginBottom: 0 }}>
+                      Dirección de Entrega
+                    </label>
+                    <label style={{ fontSize: "0.74rem", color: "#475569", display: "inline-flex", alignItems: "center", gap: "5px", cursor: "pointer" }}>
+                      <input
+                        type="checkbox"
+                        checked={Boolean(ordenEditando.retiroEnLocal)}
+                        onChange={(e) =>
+                          setOrdenEditando((prev) =>
+                            prev ? { ...prev, retiroEnLocal: e.target.checked } : null
+                          )
+                        }
+                      />
+                      <span>Retiro en Tienda</span>
+                    </label>
+                  </div>
+                  <input
+                    type="text"
+                    disabled={Boolean(ordenEditando.retiroEnLocal)}
+                    value={ordenEditando.ubicacionEntrega ?? ""}
+                    onChange={(e) =>
+                      setOrdenEditando((prev) =>
+                        prev ? { ...prev, ubicacionEntrega: e.target.value } : null
+                      )
+                    }
+                    placeholder="Dirección exacta, edificio o funeraria"
+                    style={inputStyle}
+                  />
+                </div>
 
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                <label style={{ ...labelStyle, marginBottom: 0 }}>Tarjeta Dedicatoria</label>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const ord = ordenEditando;
-                    setOrdenEditando(null);
-                    setOrdenParaImprimir(ord);
-                  }}
-                  style={{
-                    border: "none",
-                    background: "transparent",
-                    color: "#0284C7",
-                    fontSize: "0.73rem",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    padding: 0,
-                  }}
-                >
-                  Imprimir / PDF / Música →
-                </button>
-              </div>
-              <textarea
-                rows={3}
-                value={ordenEditando.dedicatoria ?? ""}
-                onChange={(e) =>
-                  setOrdenEditando((prev) =>
-                    prev ? { ...prev, dedicatoria: e.target.value } : null
-                  )
-                }
-                placeholder="Mensaje para la tarjeta impresa y digital"
-                style={inputStyle}
-              />
-            </div>
+                <div>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                    <label style={{ ...labelStyle, marginBottom: 0 }}>
+                      {resolverClasif(ordenEditando) === "CONDOLENCIAS"
+                        ? "Tarjeta de Condolencias"
+                        : "Tarjeta Dedicatoria"}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const ord = ordenEditando;
+                        setOrdenEditando(null);
+                        setOrdenParaImprimir(ord);
+                      }}
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        color: "#0284C7",
+                        fontSize: "0.73rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        padding: 0,
+                      }}
+                    >
+                      Imprimir / PDF / Música →
+                    </button>
+                  </div>
+                  <textarea
+                    rows={3}
+                    value={ordenEditando.dedicatoria ?? ""}
+                    onChange={(e) =>
+                      setOrdenEditando((prev) =>
+                        prev ? { ...prev, dedicatoria: e.target.value } : null
+                      )
+                    }
+                    placeholder="Mensaje para la tarjeta impresa y digital"
+                    style={inputStyle}
+                  />
+                </div>
+              </>
+            )}
 
             <div>
               <label style={labelStyle}>Notas / Observaciones</label>
@@ -2549,6 +3109,165 @@ export function ConsolaEnvioPedidosTaller({
             }));
           }}
         />
+      )}
+
+      {ordenAEliminar && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(15, 23, 42, 0.58)",
+            zIndex: 70,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "460px",
+              background: "#FFFFFF",
+              borderRadius: "16px",
+              padding: "20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+              boxShadow: "0 20px 50px rgba(0,0,0,0.28)",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, fontSize: "1rem", color: "#991B1B" }}>
+                {ordenAEliminar.eliminadoEn
+                  ? `Eliminar definitivamente ${ordenAEliminar.codigo}`
+                  : `Eliminar pedido ${ordenAEliminar.codigo}`}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setOrdenAEliminar(null)}
+                aria-label="Cerrar"
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                  color: "#64748B",
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div
+              style={{
+                padding: "10px 12px",
+                borderRadius: "9px",
+                background: "#F8FAFC",
+                border: "1px solid #E2E8F0",
+                fontSize: "0.82rem",
+                color: "#334155",
+              }}
+            >
+              <strong>{ordenAEliminar.productoResumen}</strong>
+              <div style={{ fontSize: "0.75rem", color: "#64748B", marginTop: "3px" }}>
+                Solicita: {ordenAEliminar.clienteSolicita} · Entrega: {ordenAEliminar.fechaEntrega}
+              </div>
+            </div>
+
+            {ordenAEliminar.eliminadoEn ? (
+              <p style={{ margin: 0, fontSize: "0.82rem", color: "#991B1B", lineHeight: 1.45 }}>
+                Esta acción eliminará el registro de forma <strong>permanente e irreversible</strong>{" "}
+                de la base de datos (taller, proforma y evidencia asociada).
+              </p>
+            ) : (
+              <>
+                <p style={{ margin: 0, fontSize: "0.81rem", color: "#475569", lineHeight: 1.45 }}>
+                  {esAdminEstricto
+                    ? "Como Administrador puedes enviarlo a Papelera (borrado lógico reversible) o eliminarlo definitivamente."
+                    : "El pedido dejará de mostrarse en las bandejas operativas y quedará archivado en la Papelera (solo visible para el Administrador)."}
+                </p>
+                <div>
+                  <label style={labelStyle}>Motivo (opcional)</label>
+                  <input
+                    type="text"
+                    value={motivoEliminacion}
+                    onChange={(e) => setMotivoEliminacion(e.target.value)}
+                    placeholder="Ej. Pedido duplicado, cancelado por cliente..."
+                    style={inputStyle}
+                  />
+                </div>
+              </>
+            )}
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                disabled={procesandoEliminacion}
+                onClick={() => setOrdenAEliminar(null)}
+                style={{
+                  padding: "8px 13px",
+                  borderRadius: "8px",
+                  border: "1px solid #CBD5E1",
+                  background: "#FFFFFF",
+                  color: "#334155",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Cancelar
+              </button>
+
+              {!ordenAEliminar.eliminadoEn && (
+                <button
+                  type="button"
+                  disabled={procesandoEliminacion}
+                  onClick={() => void handleConfirmarEliminacion(false)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "8px 14px",
+                    borderRadius: "8px",
+                    border: "1px solid #FCA5A5",
+                    background: esAdminEstricto ? "#FEF2F2" : "#DC2626",
+                    color: esAdminEstricto ? "#991B1B" : "#FFFFFF",
+                    fontSize: "0.8rem",
+                    fontWeight: 700,
+                    cursor: procesandoEliminacion ? "wait" : "pointer",
+                  }}
+                >
+                  {procesandoEliminacion ? <Loader2 size={13} /> : <Trash2 size={13} />}
+                  <span>{esAdminEstricto ? "Enviar a Papelera" : "Confirmar"}</span>
+                </button>
+              )}
+
+              {esAdminEstricto && (
+                <button
+                  type="button"
+                  disabled={procesandoEliminacion}
+                  onClick={() => void handleConfirmarEliminacion(true)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "8px 14px",
+                    borderRadius: "8px",
+                    border: "none",
+                    background: "#DC2626",
+                    color: "#FFFFFF",
+                    fontSize: "0.8rem",
+                    fontWeight: 700,
+                    cursor: procesandoEliminacion ? "wait" : "pointer",
+                  }}
+                >
+                  {procesandoEliminacion ? <Loader2 size={13} /> : <Trash2 size={13} />}
+                  <span>Eliminar Definitivo</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       )}
 
       <ModalVisorEvidenciaEntrega

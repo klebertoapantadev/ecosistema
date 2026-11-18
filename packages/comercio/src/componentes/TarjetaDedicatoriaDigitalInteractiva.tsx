@@ -1,24 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import {
-  Heart,
-  Play,
-  Pause,
-  Volume2,
-  VolumeX,
-  Edit3,
-  Sparkles,
-  Lock,
-  MessageCircle,
-  Upload,
-  Loader2,
-} from "lucide-react";
-import {
-  buscarLyricsCancionAction,
-  editarTarjetaClienteAction,
-  subirAudioTarjetaAction,
-} from "../acciones-operaciones-taller";
+import { Heart, Play, Pause, Volume2, VolumeX, Sparkles } from "lucide-react";
 
 export interface PropsTarjetaDedicatoriaDigitalInteractiva {
   datosIniciales: {
@@ -29,6 +12,7 @@ export interface PropsTarjetaDedicatoriaDigitalInteractiva {
     remitente: string;
     dedicatoria: string;
     tipo: "DIPTICO" | "CONDOLENCIAS_PLANA" | "SOLO_DIGITAL";
+    confidencial?: boolean;
     musicaUrl?: string | null;
     musicaTitulo?: string | null;
     lyrics?: Array<{ tiempo?: number; texto: string }>;
@@ -50,40 +34,29 @@ function extraerYouTubeId(url?: string | null): string | null {
 
 export function TarjetaDedicatoriaDigitalInteractiva({
   datosIniciales,
-  token,
 }: PropsTarjetaDedicatoriaDigitalInteractiva) {
-  const [datos, setDatos] = useState(datosIniciales);
-  const [abierta, setAbierta] = useState<boolean>(false);
+  const esCondolencias = datosIniciales.tipo === "CONDOLENCIAS_PLANA";
+  const musicaActivaUrl = esCondolencias ? null : datosIniciales.musicaUrl || null;
+  const youtubeId = useMemo(() => extraerYouTubeId(musicaActivaUrl), [musicaActivaUrl]);
+  const esAudioDirecto = Boolean(musicaActivaUrl && !youtubeId);
+  const tieneCancion = Boolean(!esCondolencias && (youtubeId || esAudioDirecto));
+
+  // Si no tiene canción (o es condolencias), mostrar la tarjeta abierta directamente
+  const [abierta, setAbierta] = useState<boolean>(!tieneCancion);
   const [reproduciendo, setReproduciendo] = useState<boolean>(false);
   const [silenciado, setSilenciado] = useState<boolean>(false);
   const [tiempoActual, setTiempoActual] = useState<number>(0);
 
-  const [modoEdicion, setModoEdicion] = useState<boolean>(false);
-  const [dedicatoriaEditada, setDedicatoriaEditada] = useState<string>(datos.dedicatoria);
-  const [musicaUrlEditada, setMusicaUrlEditada] = useState<string>(datos.musicaUrl || "");
-  const [musicaTituloEditada, setMusicaTituloEditada] = useState<string>(datos.musicaTitulo || "");
-  const [lyricsEditadas, setLyricsEditadas] = useState<Array<{ tiempo?: number; texto: string }>>(
-    Array.isArray(datos.lyrics) ? datos.lyrics : []
-  );
-  const [buscandoLyrics, setBuscandoLyrics] = useState<boolean>(false);
-  const [subiendoMp3, setSubiendoMp3] = useState<boolean>(false);
-  const [guardandoEdicion, setGuardandoEdicion] = useState<boolean>(false);
-  const [mensajeExitoEdicion, setMensajeExitoEdicion] = useState<string | null>(null);
-  const [errorEdicion, setErrorEdicion] = useState<string | null>(null);
-
   const contenedorLyricsRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const audioHtmlRef = useRef<HTMLAudioElement | null>(null);
-  const inputAudioRef = useRef<HTMLInputElement | null>(null);
 
-  const negNorm = datos.negocio.trim().toLowerCase();
+  const negNorm = datosIniciales.negocio.trim().toLowerCase();
   const esMargaritas = negNorm.includes("margarita");
   const nombreMarca = esMargaritas ? "Margaritas Floristería" : "Tinkay Flores y Eventos";
-  const youtubeId = useMemo(() => extraerYouTubeId(datos.musicaUrl), [datos.musicaUrl]);
-  const esAudioDirecto = Boolean(datos.musicaUrl && !youtubeId);
 
   useEffect(() => {
-    if (!youtubeId || typeof window === "undefined") return;
+    if (!youtubeId || esCondolencias || typeof window === "undefined") return;
 
     const inicializarPlayer = () => {
       if (!(window as any).YT || !(window as any).YT.Player) return;
@@ -117,9 +90,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
             },
           },
         });
-      } catch (err) {
-        console.warn("No se pudo instanciar YouTube Player", err);
-      }
+      } catch {}
     };
 
     if (!(window as any).YT) {
@@ -137,7 +108,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
         playerRef.current.destroy();
       }
     };
-  }, [youtubeId]);
+  }, [youtubeId, esCondolencias]);
 
   useEffect(() => {
     if (!reproduciendo) return;
@@ -155,7 +126,11 @@ export function TarjetaDedicatoriaDigitalInteractiva({
     return () => clearInterval(interval);
   }, [reproduciendo, esAudioDirecto]);
 
-  const lyricsList = Array.isArray(datos.lyrics) ? datos.lyrics : [];
+  const lyricsList = useMemo(
+    () => (!esCondolencias && Array.isArray(datosIniciales.lyrics) ? datosIniciales.lyrics : []),
+    [esCondolencias, datosIniciales.lyrics]
+  );
+
   const lineaActivaIndex = useMemo(() => {
     if (lyricsList.length === 0) return -1;
     let idx = -1;
@@ -177,8 +152,9 @@ export function TarjetaDedicatoriaDigitalInteractiva({
     }
   }, [lineaActivaIndex]);
 
-  const handleAbrirDedicatoria = () => {
+  const handleAbrirTarjeta = () => {
     setAbierta(true);
+    if (!tieneCancion) return;
     if (esAudioDirecto && audioHtmlRef.current) {
       audioHtmlRef.current.volume = 0.25;
       audioHtmlRef.current
@@ -234,155 +210,45 @@ export function TarjetaDedicatoriaDigitalInteractiva({
     }
   };
 
-  const handleSubirArchivoAudio = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 15 * 1024 * 1024) {
-      setErrorEdicion("El archivo MP3 no debe superar los 15 MB.");
-      return;
-    }
-    setSubiendoMp3(true);
-    setErrorEdicion(null);
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const dataUrl = String(reader.result || "");
-      const res = await subirAudioTarjetaAction({
-        negocio: datos.negocio,
-        dataUrl,
-        nombreArchivo: file.name,
-      });
-      setSubiendoMp3(false);
-      if (!res.ok) {
-        setErrorEdicion(res.error);
-        return;
-      }
-      setMusicaUrlEditada(res.publicUrl);
-      if (!musicaTituloEditada.trim()) {
-        setMusicaTituloEditada(res.nombreLimpio);
-      }
-      setMensajeExitoEdicion("🎵 Archivo de audio cargado.");
-    };
-    reader.onerror = () => {
-      setSubiendoMp3(false);
-      setErrorEdicion("No se pudo leer el archivo seleccionado.");
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleAutoBuscarLyrics = async () => {
-    setBuscandoLyrics(true);
-    setErrorEdicion(null);
-    const res = await buscarLyricsCancionAction({
-      musicaUrl: musicaUrlEditada,
-      musicaTitulo: musicaTituloEditada,
-    });
-    setBuscandoLyrics(false);
-    if (!res.ok) {
-      setErrorEdicion(res.error || "No se encontró letra automática.");
-      return;
-    }
-    if (res.tituloDetectado && !musicaTituloEditada.trim()) {
-      setMusicaTituloEditada(res.tituloDetectado);
-    }
-    if (res.lyrics) {
-      setLyricsEditadas(res.lyrics);
-      setMensajeExitoEdicion(`✨ Letra cargada (${res.lyrics.length} líneas).`);
-    }
-  };
-
-  const handleGuardarCambiosCliente = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!dedicatoriaEditada.trim()) {
-      setErrorEdicion("Escribe un mensaje para tu tarjeta.");
-      return;
-    }
-
-    setGuardandoEdicion(true);
-    setErrorEdicion(null);
-    setMensajeExitoEdicion(null);
-
-    let lyricsParaGuardar = lyricsEditadas;
-    if (
-      musicaUrlEditada.trim() &&
-      musicaUrlEditada.trim() !== (datos.musicaUrl || "") &&
-      lyricsParaGuardar.length === 0
-    ) {
-      const autoLrc = await buscarLyricsCancionAction({
-        musicaUrl: musicaUrlEditada.trim(),
-        musicaTitulo: musicaTituloEditada.trim(),
-      });
-      if (autoLrc.ok && autoLrc.lyrics) {
-        lyricsParaGuardar = autoLrc.lyrics;
-        if (!musicaTituloEditada.trim() && autoLrc.tituloDetectado) {
-          setMusicaTituloEditada(autoLrc.tituloDetectado);
-        }
-      }
-    }
-
-    const res = await editarTarjetaClienteAction({
-      token,
-      dedicatoria: dedicatoriaEditada.trim(),
-      musicaUrl: musicaUrlEditada.trim() || null,
-      musicaTitulo: musicaTituloEditada.trim() || null,
-      lyrics: lyricsParaGuardar,
-    });
-
-    setGuardandoEdicion(false);
-    if (!res.ok) {
-      setErrorEdicion(res.error || "No se pudo guardar la dedicatoria.");
-      return;
-    }
-
-    setDatos((prev) => ({
-      ...prev,
-      dedicatoria: dedicatoriaEditada.trim(),
-      musicaUrl: musicaUrlEditada.trim() || null,
-      musicaTitulo: musicaTituloEditada.trim() || null,
-      lyrics: lyricsParaGuardar,
-    }));
-    setLyricsEditadas(lyricsParaGuardar);
-    setMensajeExitoEdicion("✅ Dedicatoria actualizada con éxito.");
-    setTimeout(() => {
-      setModoEdicion(false);
-      setMensajeExitoEdicion(null);
-    }, 1500);
-  };
-
   return (
     <div
       style={{
         minHeight: "100vh",
-        backgroundColor: "#0F172A",
-        backgroundImage: "radial-gradient(ellipse at top, #1E293B, #0F172A 70%)",
+        backgroundColor: esCondolencias ? "#18181B" : "#0F172A",
+        backgroundImage: esCondolencias
+          ? "radial-gradient(ellipse at top, #27272A, #18181B 75%)"
+          : "radial-gradient(ellipse at top, #1E293B, #0F172A 75%)",
         color: "#FFFFFF",
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        padding: "16px",
+        padding: "20px 16px",
         boxSizing: "border-box",
         position: "relative",
         overflowX: "hidden",
       }}
     >
-      <div
-        id="youtube-player-iframe"
-        style={{
-          position: "fixed",
-          bottom: "-9999px",
-          left: "-9999px",
-          width: "1px",
-          height: "1px",
-          opacity: 0.01,
-          pointerEvents: "none",
-        }}
-      />
+      {tieneCancion && youtubeId && (
+        <div
+          id="youtube-player-iframe"
+          style={{
+            position: "fixed",
+            bottom: "-9999px",
+            left: "-9999px",
+            width: "1px",
+            height: "1px",
+            opacity: 0.01,
+            pointerEvents: "none",
+          }}
+        />
+      )}
 
-      {esAudioDirecto && datos.musicaUrl && (
+      {tieneCancion && esAudioDirecto && musicaActivaUrl && (
         <audio
           ref={audioHtmlRef}
-          src={datos.musicaUrl}
+          src={musicaActivaUrl}
           loop
           preload="auto"
           onPlay={() => setReproduciendo(true)}
@@ -391,502 +257,284 @@ export function TarjetaDedicatoriaDigitalInteractiva({
         />
       )}
 
-      {/* BARRA SUPERIOR DE AUTOSERVICIO DEL CLIENTE */}
-      <div
-        style={{
-          position: "fixed",
-          top: "12px",
-          left: "50%",
-          transform: "translateX(-50%)",
-          zIndex: 100,
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          background: "rgba(30, 41, 59, 0.85)",
-          backdropFilter: "blur(8px)",
-          padding: "6px 14px",
-          borderRadius: "999px",
-          border: "1px solid rgba(255, 255, 255, 0.12)",
-          fontSize: "0.78rem",
-          boxShadow: "0 4px 12px rgba(0, 0, 0, 0.25)",
-        }}
-      >
-        <span style={{ color: "#E2E8F0" }}>{nombreMarca}</span>
-        <span style={{ color: "rgba(255,255,255,0.3)" }}>•</span>
-
-        {datos.bloqueadoEdicion ? (
-          <span style={{ color: "#94A3B8", display: "flex", alignItems: "center", gap: "4px" }}>
-            <Lock size={12} /> Impresa en Taller
-          </span>
-        ) : (
-          <button
-            onClick={() => setModoEdicion(!modoEdicion)}
-            style={{
-              border: "none",
-              background: "transparent",
-              color: "#38BDF8",
-              cursor: "pointer",
-              fontWeight: 600,
-              fontSize: "0.78rem",
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              padding: 0,
-            }}
-          >
-            <Edit3 size={12} /> {modoEdicion ? "Cerrar edición" : "Personalizar tarjeta"}
-          </button>
-        )}
-      </div>
-
-      {/* MODAL DE EDICIÓN PARA EL COMPRADOR */}
-      {modoEdicion && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            backgroundColor: "rgba(15, 23, 42, 0.8)",
-            backdropFilter: "blur(6px)",
-            zIndex: 200,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "16px",
-          }}
-          onClick={() => setModoEdicion(false)}
-        >
-          <div
-            style={{
-              backgroundColor: "#1E293B",
-              border: "1px solid rgba(255, 255, 255, 0.15)",
-              borderRadius: "16px",
-              maxWidth: "500px",
-              width: "100%",
-              maxHeight: "90vh",
-              overflowY: "auto",
-              padding: "20px",
-              boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)",
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 style={{ margin: "0 0 8px 0", fontSize: "1.05rem", fontWeight: 700, color: "#F8FAFC" }}>
-              ✏️ Personaliza tu Dedicatoria y Melodía
-            </h3>
-            <p style={{ margin: "0 0 14px 0", fontSize: "0.78rem", color: "#94A3B8" }}>
-              Ajusta el mensaje, pega un link de YouTube o sube un MP3 antes de que el taller imprima tu tarjeta.
-            </p>
-
-            <form onSubmit={handleGuardarCambiosCliente} style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 600, color: "#CBD5E1", marginBottom: "4px" }}>
-                  Mensaje de la Tarjeta:
-                </label>
-                <textarea
-                  rows={4}
-                  value={dedicatoriaEditada}
-                  onChange={(e) => setDedicatoriaEditada(e.target.value)}
-                  placeholder="Escribe tu mensaje emotivo..."
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    borderRadius: "8px",
-                    backgroundColor: "#0F172A",
-                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                    color: "#FFFFFF",
-                    fontSize: "0.85rem",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                  <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#CBD5E1" }}>
-                    Link de YouTube o Archivo MP3:
-                  </label>
-                  <button
-                    type="button"
-                    disabled={subiendoMp3}
-                    onClick={() => inputAudioRef.current?.click()}
-                    style={{
-                      border: "1px solid rgba(56, 189, 248, 0.4)",
-                      background: "rgba(2, 132, 199, 0.2)",
-                      color: "#7DD3FC",
-                      padding: "3px 8px",
-                      borderRadius: "6px",
-                      fontSize: "0.72rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                    }}
-                  >
-                    {subiendoMp3 ? <Loader2 size={12} /> : <Upload size={12} />}
-                    <span>{subiendoMp3 ? "Subiendo..." : "Subir MP3"}</span>
-                  </button>
-                  <input
-                    ref={inputAudioRef}
-                    type="file"
-                    accept="audio/*,.mp3,.m4a,.wav,.ogg"
-                    onChange={handleSubirArchivoAudio}
-                    style={{ display: "none" }}
-                  />
-                </div>
-                <input
-                  type="text"
-                  value={musicaUrlEditada}
-                  onChange={(e) => setMusicaUrlEditada(e.target.value)}
-                  placeholder="https://www.youtube.com/watch?v=... o URL de audio"
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "8px",
-                    backgroundColor: "#0F172A",
-                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                    color: "#FFFFFF",
-                    fontSize: "0.82rem",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-
-              <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                  <label style={{ fontSize: "0.78rem", fontWeight: 600, color: "#CBD5E1" }}>
-                    Canción / Artista:
-                  </label>
-                  <button
-                    type="button"
-                    disabled={buscandoLyrics}
-                    onClick={() => void handleAutoBuscarLyrics()}
-                    style={{
-                      border: "none",
-                      background: "transparent",
-                      color: "#FDE047",
-                      fontSize: "0.73rem",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      padding: 0,
-                    }}
-                  >
-                    {buscandoLyrics ? "Buscando letra..." : "✨ Cargar Letra"}
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  value={musicaTituloEditada}
-                  onChange={(e) => setMusicaTituloEditada(e.target.value)}
-                  placeholder="Ej: Ed Sheeran - Perfect"
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "8px",
-                    backgroundColor: "#0F172A",
-                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                    color: "#FFFFFF",
-                    fontSize: "0.82rem",
-                    boxSizing: "border-box",
-                  }}
-                />
-                {lyricsEditadas.length > 0 && (
-                  <span style={{ display: "block", marginTop: "4px", fontSize: "0.7rem", color: "#86EFAC" }}>
-                    ✓ {lyricsEditadas.length} líneas de letra sincronizada listas para deslizarse.
-                  </span>
-                )}
-              </div>
-
-              {errorEdicion && (
-                <div style={{ padding: "8px", borderRadius: "6px", backgroundColor: "rgba(239, 68, 68, 0.2)", color: "#FCA5A5", fontSize: "0.75rem" }}>
-                  {errorEdicion}
-                </div>
-              )}
-
-              {mensajeExitoEdicion && (
-                <div style={{ padding: "8px", borderRadius: "6px", backgroundColor: "rgba(34, 197, 94, 0.2)", color: "#86EFAC", fontSize: "0.75rem" }}>
-                  {mensajeExitoEdicion}
-                </div>
-              )}
-
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "6px" }}>
-                <button
-                  type="button"
-                  onClick={() => setModoEdicion(false)}
-                  style={{
-                    padding: "8px 14px",
-                    borderRadius: "8px",
-                    border: "1px solid rgba(255, 255, 255, 0.2)",
-                    background: "transparent",
-                    color: "#CBD5E1",
-                    fontSize: "0.8rem",
-                    cursor: "pointer",
-                  }}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={guardandoEdicion}
-                  style={{
-                    padding: "8px 18px",
-                    borderRadius: "8px",
-                    border: "none",
-                    background: "#0284C7",
-                    color: "#FFFFFF",
-                    fontWeight: 600,
-                    fontSize: "0.8rem",
-                    cursor: "pointer",
-                  }}
-                >
-                  {guardandoEdicion ? "Guardando..." : "Guardar Tarjeta"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
       {!abierta ? (
+        // PORTADA CERRADA (SOLO CUANDO HAY CANCIÓN PARA DESBLOQUEAR AUDIO MÓVIL EN 1 TOQUE)
         <div
           style={{
-            maxWidth: "420px",
+            maxWidth: "380px",
             width: "100%",
             textAlign: "center",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: "20px",
+            gap: "18px",
           }}
         >
           <div
-            onClick={handleAbrirDedicatoria}
+            onClick={handleAbrirTarjeta}
             style={{
               width: "100%",
-              aspectRatio: "1.4 / 1",
-              backgroundColor: "#FFFDF9",
-              borderRadius: "16px",
-              boxShadow: "0 20px 40px -10px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255,255,255,0.8)",
-              border: "1px solid rgba(255, 255, 255, 0.3)",
+              aspectRatio: "16.8 / 11.3",
+              backgroundColor: "#F6F3EC",
+              borderRadius: "14px",
+              boxShadow: "0 22px 45px -12px rgba(0, 0, 0, 0.55)",
+              border: "1px solid rgba(255, 255, 255, 0.35)",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
               justifyContent: "center",
               padding: "24px",
               cursor: "pointer",
-              position: "relative",
             }}
           >
             <div
               style={{
-                width: "48px",
-                height: "48px",
+                width: "44px",
+                height: "44px",
                 borderRadius: "50%",
                 background: "linear-gradient(135deg, #FDE68A, #D97706)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                marginBottom: "12px",
-                boxShadow: "0 4px 10px rgba(217, 119, 6, 0.3)",
+                marginBottom: "10px",
               }}
             >
-              <Heart size={24} color="#FFFFFF" fill="#FFFFFF" />
+              <Heart size={22} color="#FFFFFF" fill="#FFFFFF" />
             </div>
 
-            <span style={{ fontSize: "0.8rem", color: "#94A3B8", letterSpacing: "1.5px", textTransform: "uppercase" }}>
-              Tienes un detalle especial
+            <span
+              style={{
+                fontSize: "0.74rem",
+                color: "#78716C",
+                letterSpacing: "1.6px",
+                textTransform: "uppercase",
+              }}
+            >
+              {nombreMarca}
             </span>
-            <h2 style={{ fontSize: "1.4rem", fontWeight: 700, color: "#1E293B", margin: "4px 0 2px 0" }}>
-              Para: {datos.destinatario}
-            </h2>
-            <span style={{ fontSize: "0.85rem", color: "#64748B" }}>
-              De parte de: <strong>{datos.remitente}</strong>
-            </span>
+            {datosIniciales.destinatario && datosIniciales.destinatario !== "Pendiente" && (
+              <h2
+                style={{
+                  fontSize: "1.25rem",
+                  fontWeight: 700,
+                  color: "#1C1917",
+                  margin: "6px 0 2px 0",
+                }}
+              >
+                {datosIniciales.destinatario}
+              </h2>
+            )}
 
             <div
               style={{
-                marginTop: "16px",
-                padding: "6px 14px",
+                marginTop: "14px",
+                padding: "7px 16px",
                 borderRadius: "999px",
-                backgroundColor: "#F1F5F9",
-                color: "#0369A1",
-                fontSize: "0.75rem",
+                backgroundColor: "#E7E5E4",
+                color: "#292524",
+                fontSize: "0.76rem",
                 fontWeight: 600,
-                display: "flex",
+                display: "inline-flex",
                 alignItems: "center",
-                gap: "5px",
+                gap: "6px",
               }}
             >
-              <Sparkles size={13} /> Toca para abrir tu dedicatoria
+              <Sparkles size={13} /> Toca para abrir tu tarjeta
             </div>
           </div>
-
-          <button
-            onClick={handleAbrirDedicatoria}
-            style={{
-              padding: "14px 28px",
-              borderRadius: "999px",
-              border: "none",
-              background: "linear-gradient(135deg, #0284C7, #0369A1)",
-              color: "#FFFFFF",
-              fontWeight: 700,
-              fontSize: "0.95rem",
-              cursor: "pointer",
-              boxShadow: "0 10px 25px rgba(2, 132, 199, 0.4)",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-            }}
-          >
-            <span>💌 Abrir Dedicatoria</span>
-          </button>
         </div>
       ) : (
+        // VISTA PURA DE LA TARJETA DIGITAL + CANCIÓN (SI APLICA) + LYRIC ABAJO
         <div
           style={{
-            maxWidth: "520px",
+            maxWidth: esCondolencias ? "560px" : "400px",
             width: "100%",
             display: "flex",
             flexDirection: "column",
+            alignItems: "center",
             gap: "16px",
-            marginTop: "36px",
           }}
         >
+          {/* LA TARJETA FÍSICA EN PROPORCIÓN REAL (16.8x11.3 HORIZONTAL O 11.3x16.8 VERTICAL) */}
           <div
             style={{
-              backgroundColor: "#FFFDF9",
-              borderRadius: "18px",
-              padding: "32px 24px 24px 24px",
-              color: "#1E293B",
-              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.6)",
+              width: "100%",
+              minHeight: esCondolencias ? "310px" : "460px",
+              aspectRatio: esCondolencias ? "16.8 / 11.3" : "11.3 / 16.8",
+              backgroundColor: "#F6F4EE",
+              borderRadius: "14px",
+              padding: esCondolencias ? "36px 40px" : "38px 28px 28px 28px",
+              color: "#1C1917",
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.65)",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
+              justifyContent: "center",
               textAlign: "center",
               position: "relative",
+              boxSizing: "border-box",
+              overflow: "hidden",
             }}
           >
-            <div style={{ fontSize: "0.75rem", color: "#94A3B8", letterSpacing: "1.5px", textTransform: "uppercase", marginBottom: "4px" }}>
-              {nombreMarca}
-            </div>
-
-            <h1
-              style={{
-                fontFamily: "'Dancing Script', 'Brush Script MT', 'Great Vibes', cursive",
-                fontSize: "2.1rem",
-                lineHeight: 1.25,
-                color: "#0F172A",
-                margin: "12px 0 20px 0",
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-              }}
-            >
-              {datos.dedicatoria || "Con todo nuestro cariño"}
-            </h1>
+            {/* Decoración botánica sutil en esquinas diagonales solo para Condolencias Horizontal */}
+            {esCondolencias && (
+              <>
+                <div
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    top: "10px",
+                    left: "12px",
+                    fontSize: "1.8rem",
+                    opacity: 0.32,
+                    filter: "grayscale(100%)",
+                    pointerEvents: "none",
+                  }}
+                >
+                  🌿
+                </div>
+                <div
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    bottom: "10px",
+                    right: "12px",
+                    fontSize: "1.8rem",
+                    opacity: 0.32,
+                    filter: "grayscale(100%)",
+                    transform: "rotate(180deg)",
+                    pointerEvents: "none",
+                  }}
+                >
+                  🌿
+                </div>
+              </>
+            )}
 
             <div
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px",
-                fontSize: "0.85rem",
-                color: "#64748B",
-                borderTop: "1px dashed #E2E8F0",
-                paddingTop: "14px",
-                width: "80%",
+                fontFamily: esCondolencias
+                  ? "'Playfair Display', Georgia, 'Times New Roman', serif"
+                  : "'Dancing Script', 'Brush Script MT', 'Great Vibes', cursive",
+                fontSize: esCondolencias ? "1.35rem" : "1.95rem",
+                lineHeight: 1.4,
+                color: "#18181B",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+                maxWidth: "92%",
               }}
             >
-              <span>Con cariño para</span> <strong>{datos.destinatario}</strong>
+              {datosIniciales.dedicatoria ||
+                (esCondolencias
+                  ? "Expresamos nuestras más sentidas condolencias."
+                  : "Con todo mi cariño.")}
             </div>
 
-            {(youtubeId || esAudioDirecto) && (
+            {datosIniciales.remitente &&
+              datosIniciales.remitente !== "Pendiente" &&
+              datosIniciales.remitente !== "Cliente" && (
+                <div
+                  style={{
+                    marginTop: "18px",
+                    paddingTop: "10px",
+                    borderTop: "1px dashed rgba(120, 113, 108, 0.3)",
+                    fontSize: "0.8rem",
+                    color: "#57534E",
+                  }}
+                >
+                  {datosIniciales.remitente}
+                </div>
+              )}
+
+            {/* CONTROL SUTIL DE AUDIO SOLO EN DEDICATORIA CON CANCIÓN */}
+            {tieneCancion && (
               <div
                 style={{
-                  marginTop: "18px",
-                  display: "flex",
+                  marginTop: "20px",
+                  display: "inline-flex",
                   alignItems: "center",
                   gap: "10px",
-                  backgroundColor: "#F1F5F9",
-                  padding: "6px 12px",
+                  backgroundColor: "rgba(28, 25, 23, 0.06)",
+                  padding: "5px 12px",
                   borderRadius: "999px",
                 }}
               >
                 <button
+                  type="button"
                   onClick={handleToggleReproduccion}
+                  title={reproduciendo ? "Pausar melodía" : "Reproducir melodía"}
+                  aria-label={reproduciendo ? "Pausar" : "Reproducir"}
                   style={{
                     border: "none",
-                    background: "#0284C7",
+                    background: "#1C1917",
                     color: "#FFFFFF",
-                    width: "28px",
-                    height: "28px",
+                    width: "26px",
+                    height: "26px",
                     borderRadius: "50%",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     cursor: "pointer",
                   }}
-                  title={reproduciendo ? "Pausar música" : "Reanudar música"}
                 >
-                  {reproduciendo ? <Pause size={14} /> : <Play size={14} />}
+                  {reproduciendo ? <Pause size={12} /> : <Play size={12} />}
                 </button>
 
-                <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", textAlign: "left" }}>
-                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#1E293B", maxWidth: "180px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    🎵 {datos.musicaTitulo || "Melodía de dedicatoria"}
-                  </span>
-                  <span style={{ fontSize: "0.65rem", color: "#64748B" }}>
-                    {reproduciendo ? "Sonando suave de fondo (25%)" : "Pausado"}
-                  </span>
-                </div>
+                <span
+                  style={{
+                    fontSize: "0.73rem",
+                    fontWeight: 600,
+                    color: "#292524",
+                    maxWidth: "180px",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  🎵 {datosIniciales.musicaTitulo || "Melodía"}
+                </span>
 
                 <button
+                  type="button"
                   onClick={handleToggleSilencio}
+                  title={silenciado ? "Activar sonido" : "Silenciar"}
+                  aria-label={silenciado ? "Activar sonido" : "Silenciar"}
                   style={{
                     border: "none",
                     background: "transparent",
-                    color: "#64748B",
+                    color: "#57534E",
                     cursor: "pointer",
-                    padding: "4px",
+                    padding: "2px",
                   }}
-                  title={silenciado ? "Reactivar sonido" : "Silenciar"}
                 >
-                  {silenciado ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                  {silenciado ? <VolumeX size={15} /> : <Volume2 size={15} />}
                 </button>
               </div>
             )}
           </div>
 
-          {lyricsList.length > 0 && (
+          {/* PARTE INFERIOR: LYRIC DESLIZÁNDOSE (SOLO DEDICATORIA CON LETRA) */}
+          {tieneCancion && lyricsList.length > 0 && (
             <div
               style={{
-                backgroundColor: "rgba(30, 41, 59, 0.7)",
+                width: "100%",
+                backgroundColor: "rgba(30, 41, 59, 0.65)",
                 backdropFilter: "blur(10px)",
                 border: "1px solid rgba(255, 255, 255, 0.1)",
-                borderRadius: "16px",
-                padding: "16px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "10px",
+                borderRadius: "14px",
+                padding: "14px 16px",
+                boxSizing: "border-box",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#94A3B8", letterSpacing: "1px", textTransform: "uppercase" }}>
-                  Letra de la Canción
-                </span>
-                <span style={{ fontSize: "0.7rem", color: "#38BDF8" }}>
-                  {lineaActivaIndex >= 0 ? `Línea ${lineaActivaIndex + 1} de ${lyricsList.length}` : "🎵"}
-                </span>
-              </div>
-
               <div
                 ref={contenedorLyricsRef}
                 style={{
-                  maxHeight: "180px",
+                  maxHeight: "150px",
                   overflowY: "auto",
                   display: "flex",
                   flexDirection: "column",
-                  gap: "12px",
-                  padding: "10px 0",
+                  gap: "10px",
+                  padding: "6px 0",
                   scrollBehavior: "smooth",
                 }}
               >
@@ -897,10 +545,10 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                       key={idx}
                       style={{
                         margin: 0,
-                        fontSize: esActiva ? "1.05rem" : "0.85rem",
+                        fontSize: esActiva ? "0.98rem" : "0.82rem",
                         fontWeight: esActiva ? 700 : 400,
-                        color: esActiva ? "#FDE047" : "rgba(255, 255, 255, 0.4)",
-                        transition: "all 0.3s ease",
+                        color: esActiva ? "#FDE047" : "rgba(255, 255, 255, 0.42)",
+                        transition: "all 0.28s ease",
                         textAlign: "center",
                       }}
                     >
@@ -912,46 +560,11 @@ export function TarjetaDedicatoriaDigitalInteractiva({
             </div>
           )}
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px", alignItems: "center", marginTop: "8px" }}>
-            <a
-              href={`https://wa.me/?text=${encodeURIComponent(
-                `¡Hola ${datos.remitente}! Acabo de recibir tus flores y abrir mi tarjeta en ${urlPublicaOTexto(token)}. ¡Muchísimas gracias, me encantó el detalle! 🥰`
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                width: "100%",
-                padding: "14px",
-                borderRadius: "12px",
-                backgroundColor: "#22C55E",
-                color: "#FFFFFF",
-                fontWeight: 700,
-                fontSize: "0.9rem",
-                textDecoration: "none",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-                boxShadow: "0 10px 20px rgba(34, 197, 94, 0.3)",
-              }}
-            >
-              <MessageCircle size={18} />
-              <span>Agradecer por WhatsApp</span>
-            </a>
-
-            <span style={{ fontSize: "0.72rem", color: "#64748B" }}>
-              Flores entregadas con amor por <strong>{nombreMarca}</strong>
-            </span>
-          </div>
+          <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.38)", letterSpacing: "0.5px" }}>
+            {nombreMarca}
+          </span>
         </div>
       )}
     </div>
   );
-}
-
-function urlPublicaOTexto(token: string) {
-  if (typeof window !== "undefined") {
-    return `${window.location.origin}/dedicatoria/${token}`;
-  }
-  return `la tarjeta digital`;
 }
