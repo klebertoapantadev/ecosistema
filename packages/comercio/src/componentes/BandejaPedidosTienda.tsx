@@ -123,6 +123,7 @@ export function BandejaPedidosTienda({
       }
       void cargarPedidos();
     } else {
+      setPedidos(pedidosIniciales);
       try {
         localStorage.setItem(cacheKey, JSON.stringify(pedidosIniciales));
       } catch {
@@ -130,6 +131,17 @@ export function BandejaPedidosTienda({
       }
     }
   }, [pedidosIniciales, cacheKey, cargarPedidos]);
+
+  useEffect(() => {
+    if (!pedidoEnfocado) return;
+    const upper = pedidoEnfocado.toUpperCase();
+    const existe = pedidos.some(
+      (p) => p.codigoOrden.toUpperCase().includes(upper) || p.id === pedidoEnfocado
+    );
+    if (!existe) {
+      void cargarPedidos();
+    }
+  }, [pedidoEnfocado, pedidos, cargarPedidos]);
 
   const cambiarEstado = useCallback(
     async (pedidoId: string, nuevoEstado: string) => {
@@ -164,6 +176,36 @@ export function BandejaPedidosTienda({
         valor: (p) => `${p.codigoOrden} ${p.tipoOrigen || ""}`,
         render: (p) => {
           const esProforma = p.tipoOrigen === "PROFORMA_EVENTO";
+          const esExequiales = p.tipoOrigen === "EXEQUIALES_LLAMADA";
+          const esManual = p.tipoOrigen === "MANUAL_ADMIN";
+          const bgBadge = esExequiales
+            ? "#FEF3C7"
+            : esManual
+              ? "#ECFDF5"
+              : esProforma
+                ? "#FAF5FF"
+                : "#F1F5F9";
+          const colorBadge = esExequiales
+            ? "#92400E"
+            : esManual
+              ? "#065F46"
+              : esProforma
+                ? "#7E22CE"
+                : "#475569";
+          const borderBadge = esExequiales
+            ? "#FDE68A"
+            : esManual
+              ? "#A7F3D0"
+              : esProforma
+                ? "#E9D5FF"
+                : "#E2E8F0";
+          const textoBadge = esExequiales
+            ? "🕯️ Exequiales"
+            : esManual
+              ? "📝 Pedido Manual"
+              : esProforma
+                ? "✨ Evento"
+                : "🛍️ Tienda";
           return (
             <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
@@ -174,12 +216,12 @@ export function BandejaPedidosTienda({
                     fontWeight: 700,
                     padding: "2px 6px",
                     borderRadius: "999px",
-                    background: esProforma ? "#FAF5FF" : "#F1F5F9",
-                    color: esProforma ? "#7E22CE" : "#475569",
-                    border: `1px solid ${esProforma ? "#E9D5FF" : "#E2E8F0"}`,
+                    background: bgBadge,
+                    color: colorBadge,
+                    border: `1px solid ${borderBadge}`,
                   }}
                 >
-                  {esProforma ? "✨ Evento" : "🛍️ Tienda"}
+                  {textoBadge}
                 </span>
               </div>
               <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>

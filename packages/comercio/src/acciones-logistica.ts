@@ -1861,6 +1861,255 @@ export async function obtenerPedidosTiendaAction(
     };
   });
 
+  // Unificar también Pedidos Manuales (PED-...) y Órdenes Exequiales (OT-...) registrados en com_orden_taller / com_entrega_evidencia
+  try {
+    const dbLectura: any = admin ?? supabase;
+    const idsProformaPresentes = new Set(pedidos.map((p) => p.id));
+    const codigosPresentes = new Set(pedidos.map((p) => p.codigoOrden.toUpperCase()));
+    const idsEntregaCubiertos = new Set<string>();
+
+    let ordenesTallerExtra: any[] = [];
+    const resRpcTaller = await (supabase as any)
+      .schema("comun_comercio")
+      .rpc("com_fn_obtener_consola_taller_y_despacho", { p_negocio: negNorm });
+
+    if (!resRpcTaller.error && resRpcTaller.data?.ok && Array.isArray(resRpcTaller.data.ordenes)) {
+      ordenesTallerExtra = resRpcTaller.data.ordenes;
+    } else {
+      const resOtaDir = await dbLectura
+        .schema("comun_comercio")
+        .from("com_orden_taller")
+        .select("*")
+        .eq("ota_negocio", negNorm)
+        .is("ota_eliminado_en", null)
+        .order("ota_creado_en", { ascending: false })
+        .limit(250);
+      if (Array.isArray(resOtaDir.data)) {
+        ordenesTallerExtra = resOtaDir.data.map((o: any) => ({
+          id: String(o.ota_id),
+          codigo: String(o.ota_codigo || "PEDIDO"),
+          origenTipo: String(o.ota_origen_tipo || "MANUAL_ADMIN"),
+          proformaId: o.ota_proforma_id ? String(o.ota_proforma_id) : null,
+          entregaId: o.ota_entrega_id ? String(o.ota_entrega_id) : null,
+          estadoTaller: String(o.ota_estado_taller || "PENDIENTE_ENVIO"),
+          estadoPago: String(o.ota_estado_pago || "PENDIENTE_PAGO"),
+          metodoPago: o.ota_metodo_pago ? String(o.ota_metodo_pago) : null,
+          fechaPedido: String(o.ota_fecha_pedido || o.ota_creado_en),
+          fechaEntrega: String(o.ota_fecha_entrega || "").slice(0, 10),
+          franjaHoraria: o.ota_franja_horaria ? String(o.ota_franja_horaria) : "",
+          horaEspecifica: o.ota_hora_especifica ? String(o.ota_hora_especifica) : "",
+          productoResumen: String(o.ota_producto_resumen || "Arreglo floral"),
+          items: Array.isArray(o.ota_items) ? o.ota_items : [],
+          clienteSolicita: String(o.ota_cliente_solicita || "Cliente"),
+          clienteTelefono: o.ota_cliente_telefono ? String(o.ota_cliente_telefono) : "",
+          destinatarioFallecido: String(o.ota_destinatario_fallecido || ""),
+          salaServicio: o.ota_sala_servicio ? String(o.ota_sala_servicio) : null,
+          ubicacionEntrega: String(o.ota_ubicacion_entrega || ""),
+          enlaceMapa: o.ota_enlace_mapa ? String(o.ota_enlace_mapa) : null,
+          retiroEnLocal: Boolean(o.ota_retiro_en_local),
+          dedicatoria: o.ota_dedicatoria ? String(o.ota_dedicatoria) : null,
+          observaciones: o.ota_observaciones ? String(o.ota_observaciones) : null,
+          totalUsd: Number(o.ota_total_usd ?? 0),
+        }));
+      }
+    }
+
+    for (const o of ordenesTallerExtra) {
+      if (o.proformaId && idsProformaPresentes.has(String(o.proformaId))) {
+        continue;
+      }
+      if (o.entregaId) {
+        idsEntregaCubiertos.add(String(o.entregaId));
+      }
+      const codUpper = String(o.codigo || "").toUpperCase();
+      if (codUpper && codigosPresentes.has(codUpper)) {
+        continue;
+      }
+
+      const esExeq = String(o.origenTipo || "").toUpperCase() === "EXEQUIALES_LLAMADA";
+      const estTaller = String(o.estadoTaller || "").toUpperCase();
+      const estadoMapeado =
+        estTaller === "ENTREGADO"
+          ? "ENTREGADO"
+          : estTaller === "LISTO_ENTREGA"
+            ? "EN_RUTA"
+            : estTaller === "EN_PREPARACION" || estTaller === "ENVIADO_TALLER"
+              ? "EN_PREPARACION"
+              : estTaller === "ANULADO"
+                ? "CANCELADO"
+                : "ORDEN_CONFIRMADA";
+
+      const itemsOta = Array.isArray(o.items) && o.items.length > 0
+        ? o.items
+        : [{ descripcion: String(o.productoResumen || "Arreglo floral"), cantidad: 1 }];
+
+      const totalOta = Number(o.totalUsd ?? 0);
+      const codigoOta = String(o.codigo || "PEDIDO");
+      codigosPresentes.add(codigoOta.toUpperCase());
+
+      pedidos.push({
+        id: String(o.id),
+        secuencial: 0,
+        codigoOrden: codigoOta,
+        tipoOrigen: esExeq ? "EXEQUIALES_LLAMADA" : String(o.origenTipo || "MANUAL_ADMIN"),
+        grupoProformaId: String(o.id),
+        versionNumero: 1,
+        esOriginal: true,
+        vigenciaDias: 15,
+        descuento: 0,
+        montoAbonadoUsd: 0,
+        saldoPendienteUsd: esExeq ? 0 : totalOta,
+        autorizaWhatsapp: false,
+        negocio: negNorm,
+        estado: estadoMapeado,
+        metodoPago: esExeq ? "convenio iess" : String(o.metodoPago || "manual"),
+        compradorNombre: String(o.clienteSolicita || "Cliente"),
+        compradorIdentificacion: "",
+        compradorCorreo: "",
+        compradorTelefono: String(o.clienteTelefono || ""),
+        subtotal: totalOta,
+        iva: 0,
+        costoEnvio: 0,
+        recargoHorarioExacto: 0,
+        total: totalOta,
+        creadoEn: String(o.fechaPedido || new Date().toISOString()),
+        logistica: {
+          modalidadEntrega: "unificada",
+          retiroEnLocal: Boolean(o.retiroEnLocal),
+          destinatarioNombre: String(o.destinatarioFallecido || o.clienteSolicita || ""),
+          destinatarioTelefono: String(o.clienteTelefono || ""),
+          direccion: String(
+            esExeq
+              ? [o.ubicacionEntrega || "Exequiales del IESS", o.salaServicio]
+                  .filter(Boolean)
+                  .join(" · ")
+              : o.ubicacionEntrega || ""
+          ),
+          referencia: o.observaciones ? String(o.observaciones) : "",
+          fechaEntrega: String(o.fechaEntrega || ""),
+          franjaHoraria: String(o.horaEspecifica || o.franjaHoraria || ""),
+          horaExacta: o.horaEspecifica ? String(o.horaEspecifica) : undefined,
+          enlaceMapa: o.enlaceMapa ? String(o.enlaceMapa) : undefined,
+          zonaDetectada: esExeq
+            ? String(o.salaServicio || "Exequiales IESS")
+            : String(o.ubicacionEntrega || "Pedido Manual"),
+          formulaCalculoInterno: esExeq
+            ? `🕯️ Convenio Exequiales${o.salaServicio ? ` · ${o.salaServicio}` : ""}${
+                o.destinatarioFallecido ? ` · Fallecido: ${o.destinatarioFallecido}` : ""
+              }`
+            : `📝 Pedido manual${o.observaciones ? ` · ${o.observaciones}` : ""}`,
+          detalleDireccionGeo: null,
+        },
+        items: itemsOta.map((it: any, idx: number) => ({
+          descripcion: String(it.descripcion || it.producto_nombre || o.productoResumen || "Arreglo"),
+          varianteNombre: it.sku ? String(it.sku) : "",
+          cantidad: Number(it.cantidad ?? 1),
+          precioUnitario: Number(it.precioUnitario ?? it.pvp_unitario ?? (idx === 0 ? totalOta : 0)),
+          impuesto: "IVA_0",
+          totalLinea:
+            Number(it.precioUnitario ?? it.pvp_unitario ?? (idx === 0 ? totalOta : 0)) *
+            Number(it.cantidad ?? 1),
+          dedicatoria:
+            idx === 0 && o.dedicatoria
+              ? {
+                  para: String(o.destinatarioFallecido || ""),
+                  de: String(o.clienteSolicita || ""),
+                  mensaje: String(o.dedicatoria),
+                }
+              : undefined,
+        })),
+        comprobanteTransferencia: null,
+      });
+    }
+
+    // Respaldo adicional: OTs Exequiales en com_entrega_evidencia que aún no tengan fila en com_orden_taller
+    const resEntExtra = await dbLectura
+      .schema("comun_comercio")
+      .from("com_entrega_evidencia")
+      .select("*")
+      .eq("ent_negocio", negNorm)
+      .eq("ent_tipo_origen", "ORDEN_TRABAJO_CONVENIO")
+      .is("ent_eliminado_en", null)
+      .order("ent_creado_en", { ascending: false })
+      .limit(100);
+
+    for (const e of resEntExtra.data ?? []) {
+      const entId = String(e.ent_id);
+      if (idsEntregaCubiertos.has(entId) || e.ent_estado === "ANULADA") continue;
+      const codOt = String(
+        e.ent_codigo_ot || `OT-${String(e.ent_secuencial ?? 1).padStart(4, "0")}`
+      );
+      if (codigosPresentes.has(codOt.toUpperCase())) continue;
+      codigosPresentes.add(codOt.toUpperCase());
+      const detEnt = (e.ent_detalle_entrega ?? {}) as Record<string, any>;
+      const sala = e.ent_sala_servicio || detEnt.sala_servicio || "";
+
+      pedidos.push({
+        id: entId,
+        secuencial: Number(e.ent_secuencial ?? 0),
+        codigoOrden: codOt,
+        tipoOrigen: "EXEQUIALES_LLAMADA",
+        grupoProformaId: entId,
+        versionNumero: 1,
+        esOriginal: true,
+        vigenciaDias: 15,
+        descuento: 0,
+        montoAbonadoUsd: 0,
+        saldoPendienteUsd: 0,
+        autorizaWhatsapp: false,
+        negocio: negNorm,
+        estado: e.ent_estado === "PROGRAMADA" ? "EN_PREPARACION" : "ENTREGADO",
+        metodoPago: "convenio iess",
+        compradorNombre: String(
+          e.ent_coordinador_nombre || detEnt.quien_solicita || "Exequiales IESS"
+        ),
+        compradorIdentificacion: "",
+        compradorCorreo: "",
+        compradorTelefono: "",
+        subtotal: 0,
+        iva: 0,
+        costoEnvio: 0,
+        recargoHorarioExacto: 0,
+        total: 0,
+        creadoEn: String(e.ent_creado_en),
+        logistica: {
+          modalidadEntrega: "unificada",
+          retiroEnLocal: false,
+          destinatarioNombre: String(e.ent_fallecido_destinatario || ""),
+          destinatarioTelefono: "",
+          direccion: [e.ent_ubicacion_nombre || "Exequiales del IESS", sala]
+            .filter(Boolean)
+            .join(" · "),
+          referencia: String(e.ent_observaciones || ""),
+          fechaEntrega: String(e.ent_fecha_servicio || "").slice(0, 10),
+          franjaHoraria: String(e.ent_hora_solicitada || detEnt.hora_solicitada || ""),
+          zonaDetectada: String(sala || "Exequiales IESS"),
+          formulaCalculoInterno: `🕯️ Convenio Exequiales${sala ? ` · ${sala}` : ""}${
+            e.ent_fallecido_destinatario ? ` · Fallecido: ${e.ent_fallecido_destinatario}` : ""
+          }`,
+          detalleDireccionGeo: null,
+        },
+        items: [
+          {
+            descripcion: String(e.ent_descripcion_servicio || "Set condolencias (3 arreglos)"),
+            varianteNombre: "",
+            cantidad: 1,
+            precioUnitario: 0,
+            impuesto: "IVA_0",
+            totalLinea: 0,
+          },
+        ],
+        comprobanteTransferencia: null,
+      });
+    }
+
+    pedidos.sort(
+      (a, b) => new Date(b.creadoEn).getTime() - new Date(a.creadoEn).getTime()
+    );
+  } catch {
+    // Si falla la unión opcional de órdenes de taller, conservar los pedidos de com_proforma
+  }
+
   return { ok: true, pedidos };
 }
 
@@ -1910,56 +2159,81 @@ export async function actualizarEstadoPedidoTiendaAction(
       p_nuevo_estado: nuevoEstado,
     });
 
-  if (!rpcErr && rpcUpd) {
-    if (!rpcUpd.ok) {
-      return { ok: false, error: String(rpcUpd.error || "No se pudo actualizar el estado del pedido") };
-    }
+  if (!rpcErr && rpcUpd && rpcUpd.ok) {
     codigoOrden = String(rpcUpd.codigoOrden || "");
     compradorNombre = String(rpcUpd.compradorNombre || "");
     clienteUsuarioId = rpcUpd.clienteUsuarioId ? String(rpcUpd.clienteUsuarioId) : null;
     repartidorAsignadoId = rpcUpd.repartidorAsignadoId ? String(rpcUpd.repartidorAsignadoId) : null;
   } else {
-    // 2. Respaldo compatible sobre com_proforma verificando fila afectada
-    const { data: filasUpd, error } = await db
+    // 2. Verificar si es una orden directa de Taller / Manual / Exequiales en com_orden_taller
+    const estadoTallerEquiv =
+      nuevoEstado === "ENTREGADO"
+        ? "ENTREGADO"
+        : nuevoEstado === "EN_RUTA"
+          ? "LISTO_ENTREGA"
+          : nuevoEstado === "EN_PREPARACION"
+            ? "EN_PREPARACION"
+            : nuevoEstado === "CANCELADO" || nuevoEstado === "NO_ACEPTADA"
+              ? "ANULADO"
+              : "PENDIENTE_ENVIO";
+
+    const { data: rpcTallerUpd, error: rpcTallerErr } = await (supabase as any)
       .schema("comun_comercio")
-      .from("com_proforma")
-      .update({
-        prf_estado: nuevoEstado,
-        prf_actualizado_en: new Date().toISOString(),
-      })
-      .eq("prf_id", pedidoId)
-      .eq("prf_negocio", negNorm)
-      .select("prf_id, prf_secuencial, prf_cliente_id, prf_cliente_nombre, prf_detalle_proforma");
+      .rpc("com_fn_actualizar_estado_taller", {
+        p_negocio: negNorm,
+        p_orden_id: pedidoId,
+        p_nuevo_estado: estadoTallerEquiv,
+        p_notas_taller: null,
+      });
 
-    if (error) {
-      return { ok: false, error: error.message };
-    }
-    if (!Array.isArray(filasUpd) || filasUpd.length === 0) {
-      return {
-        ok: false,
-        error: "No se pudo actualizar el pedido en la base de datos (ejecuta la migración SQL de pedidos en Supabase).",
-      };
-    }
+    if (!rpcTallerErr && rpcTallerUpd?.ok) {
+      codigoOrden = String(rpcTallerUpd.codigo || "PEDIDO");
+      compradorNombre = String(rpcTallerUpd.productoResumen || "Cliente");
+    } else if (!rpcErr && rpcUpd && rpcUpd.ok === false && !String(rpcUpd.error || "").includes("no encontrado")) {
+      return { ok: false, error: String(rpcUpd.error || "No se pudo actualizar el estado del pedido") };
+    } else {
+      // 3. Respaldo compatible sobre com_proforma verificando fila afectada
+      const { data: filasUpd, error } = await db
+        .schema("comun_comercio")
+        .from("com_proforma")
+        .update({
+          prf_estado: nuevoEstado,
+          prf_actualizado_en: new Date().toISOString(),
+        })
+        .eq("prf_id", pedidoId)
+        .eq("prf_negocio", negNorm)
+        .select("prf_id, prf_secuencial, prf_cliente_id, prf_cliente_nombre, prf_detalle_proforma");
 
-    const fila = filasUpd[0];
-    const det = (fila?.prf_detalle_proforma ?? {}) as Record<string, any>;
-    const prefijo =
-      negNorm === "tinkay"
-        ? "TNK"
-        : negNorm === "margaritas"
-        ? "MRG"
-        : negNorm === "fastfix"
-        ? "FFH"
-        : "TRQ";
-    codigoOrden = String(
-      det.codigo_proforma ||
-        det.codigo_orden ||
-        `${prefijo}-ORD-${String(fila?.prf_secuencial || 1).padStart(4, "0")}`
-    );
-    compradorNombre = String(
-      fila?.prf_cliente_nombre || det.comprador?.nombreCompleto || "Cliente"
-    );
-    clienteUsuarioId = fila?.prf_cliente_id ? String(fila.prf_cliente_id) : null;
+      if (error) {
+        return { ok: false, error: error.message };
+      }
+      if (!Array.isArray(filasUpd) || filasUpd.length === 0) {
+        return {
+          ok: false,
+          error: "No se pudo encontrar ni actualizar el pedido seleccionado.",
+        };
+      }
+
+      const fila = filasUpd[0];
+      const det = (fila?.prf_detalle_proforma ?? {}) as Record<string, any>;
+      const prefijo =
+        negNorm === "tinkay"
+          ? "TNK"
+          : negNorm === "margaritas"
+          ? "MRG"
+          : negNorm === "fastfix"
+          ? "FFH"
+          : "TRQ";
+      codigoOrden = String(
+        det.codigo_proforma ||
+          det.codigo_orden ||
+          `${prefijo}-ORD-${String(fila?.prf_secuencial || 1).padStart(4, "0")}`
+      );
+      compradorNombre = String(
+        fila?.prf_cliente_nombre || det.comprador?.nombreCompleto || "Cliente"
+      );
+      clienteUsuarioId = fila?.prf_cliente_id ? String(fila.prf_cliente_id) : null;
+    }
   }
 
   // 3. Emitir notificación Push + Campana + Realtime Broadcast a TODOS los roles con enlace directo al pedido

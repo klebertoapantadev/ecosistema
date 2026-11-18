@@ -1095,7 +1095,7 @@ export async function crearOActualizarPedidoOperadorAction(entrada: {
           etiquetaEstado: esExeq ? "Urgente Exequiales · En Taller" : "Enviado a Taller",
           compradorNombre: entrada.destinatarioFallecido || entrada.clienteSolicita,
           tituloPersonalizado: esExeq
-            ? `🕊️ URGENTE Exequiales (${entrada.salaServicio || "Sala"}): ${data.codigo}`
+            ? `🕯️ URGENTE Exequiales (${entrada.salaServicio || "Sala"}): ${data.codigo}`
             : `🌸 Pedido enviado a Taller (${entrada.fechaEntrega}): ${data.codigo}`,
           cuerpoPlanoPersonalizado: `${data.codigo} · ${entrada.productoResumen} (${entrada.destinatarioFallecido || entrada.clienteSolicita})`,
           contenidoHtmlPersonalizado: esExeq

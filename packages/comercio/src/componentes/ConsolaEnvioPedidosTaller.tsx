@@ -46,26 +46,6 @@ export interface PropsConsolaEnvioPedidosTaller {
 type PestanaDespacho = "bandeja_envio" | "exequiales_llamada" | "cargar_manual" | "calendario";
 type FiltroBandeja = "por_enviar" | "hoy" | "futuros" | "ya_en_taller" | "todos";
 
-function IconoCruzExequial() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.4"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      style={{ flexShrink: 0 }}
-    >
-      <path d="M12 2v20" />
-      <path d="M6 8h12" />
-    </svg>
-  );
-}
-
 export function ConsolaEnvioPedidosTaller({
   negocio,
   datosIniciales = null,
@@ -82,7 +62,8 @@ export function ConsolaEnvioPedidosTaller({
     }
   );
   const [pestana, setPestana] = useState<PestanaDespacho>("bandeja_envio");
-  const [filtroBandeja, setFiltroBandeja] = useState<FiltroBandeja>("por_enviar");
+  const [filtroBandeja, setFiltroBandeja] = useState<FiltroBandeja>("todos");
+  const [busquedaPedidoUrl, setBusquedaPedidoUrl] = useState<string>("");
   const [enviandoLote, setEnviandoLote] = useState<boolean>(false);
   const [idProcesando, setIdProcesando] = useState<string | null>(null);
   const [seleccionadosIds, setSeleccionadosIds] = useState<Set<string>>(new Set());
@@ -173,6 +154,26 @@ export function ConsolaEnvioPedidosTaller({
     },
     [negNorm, cacheKey]
   );
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const leerPedidoUrl = () => {
+      try {
+        const sp = new URLSearchParams(window.location.search);
+        const cod = (sp.get("pedido") || sp.get("codigo") || "").trim();
+        if (cod) {
+          setBusquedaPedidoUrl(cod);
+          setFiltroBandeja("todos");
+          setPestana("bandeja_envio");
+        }
+      } catch {
+        // Ignorar
+      }
+    };
+    leerPedidoUrl();
+    window.addEventListener("eco:abrir-ruta-push", leerPedidoUrl);
+    return () => window.removeEventListener("eco:abrir-ruta-push", leerPedidoUrl);
+  }, []);
 
   useEffect(() => {
     if (!datosIniciales) {
@@ -358,9 +359,11 @@ export function ConsolaEnvioPedidosTaller({
     setExeqFallecido("");
     setExeqNotas("");
     setMensajeExito(
-      `🕊️ Orden Exequiales ${res.codigo} enviada directo a Taller (${resumenProd} · ${exeqSala || "Por confirmar"} · Solicita: ${exeqSolicita}). Ya quedó lista también para Confirmación de Entregas.`
+      `🕯️ Orden Exequiales ${res.codigo} enviada directo a Taller (${resumenProd} · ${exeqSala || "Por confirmar"} · Solicita: ${exeqSolicita}). Ya quedó lista también para Confirmación de Entregas.`
     );
     await recargarDatos(true);
+    setFiltroBandeja("todos");
+    setPestana("bandeja_envio");
   };
 
   const handleAgregarItemCatalogo = () => {
@@ -509,6 +512,7 @@ export function ConsolaEnvioPedidosTaller({
         : `📥 Pedido ${res.codigo} guardado para entrega el ${manFechaEntrega}. Queda listo en bandeja para enviarlo a Taller en el día correspondiente.`
     );
     await recargarDatos(true);
+    setFiltroBandeja(enviarAhora ? "todos" : "por_enviar");
     setPestana("bandeja_envio");
   };
 
@@ -670,7 +674,7 @@ export function ConsolaEnvioPedidosTaller({
                   }}
                 >
                   {esExeq
-                    ? "🕊️ Exequiales"
+                    ? "🕯️ Exequiales"
                     : o.origenTipo === "PROFORMA_EVENTO"
                       ? "✨ Evento"
                       : o.origenTipo === "MANUAL_ADMIN"
@@ -966,8 +970,8 @@ export function ConsolaEnvioPedidosTaller({
               },
               {
                 id: "exequiales_llamada",
-                icono: <IconoCruzExequial />,
-                label: "Exequiales",
+                icono: null,
+                label: "🕯️ Exequiales",
                 badge: null,
               },
               {
@@ -1200,6 +1204,7 @@ export function ConsolaEnvioPedidosTaller({
               filas={filasFiltradas}
               idFila={(o) => o.id}
               nombreExportacion={`despacho-pedidos-taller-${negNorm}`}
+              busquedaInicial={busquedaPedidoUrl}
               contenidoExpandible={(o) => (
                 <div
                   style={{
