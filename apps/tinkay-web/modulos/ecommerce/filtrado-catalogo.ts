@@ -570,3 +570,182 @@ export function productoCoincideConBusqueda(
 
   return tokens.every((token) => corpus.includes(token));
 }
+
+/**
+ * Clasifica si un producto corresponde a Mobiliario en Renta / Alquiler.
+ */
+export function esProductoMobiliario(p: ProductoEcommerce): boolean {
+  if (p.esRenta === true) return true;
+  const tipoOferta = (p.tipoOferta || '').toUpperCase();
+  if (tipoOferta.includes('RENTA') || tipoOferta.includes('ALQUILER')) return true;
+
+  const catNom = normalizarTextoEcommerce(p.categoriaNombre);
+  const catPrin = normalizarTextoEcommerce(p.categoriaPrincipal);
+  if (
+    catNom.includes('mobiliario') ||
+    catPrin.includes('mobiliario') ||
+    catNom.includes('alquiler') ||
+    catPrin.includes('alquiler') ||
+    catNom.includes('renta') ||
+    catPrin.includes('renta')
+  ) {
+    return true;
+  }
+
+  const slug = normalizarTextoEcommerce(p.slug || p.id);
+  const nombre = normalizarTextoEcommerce(p.nombre);
+  const etiquetas = (p.etiquetas || []).map((e) => normalizarTextoEcommerce(e));
+
+  if (
+    etiquetas.some(
+      (et) =>
+        et.includes('mobiliario') ||
+        et.includes('renta') ||
+        et.includes('alquiler')
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    slug.includes('mobiliario') ||
+    slug.includes('alquiler') ||
+    slug.includes('backing') ||
+    slug.includes('atril') ||
+    slug.includes('cilindro') ||
+    slug.includes('mampara') ||
+    nombre.includes('mobiliario') ||
+    nombre.includes('backing') ||
+    nombre.includes('atril') ||
+    nombre.includes('mampara') ||
+    nombre.includes('mesas cilindro')
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Clasifica si un producto corresponde a Eventos y Ceremonias (bajo proforma personalizada).
+ */
+export function esProductoEvento(p: ProductoEcommerce): boolean {
+  if (esProductoMobiliario(p)) return false;
+
+  if (p.esEvento === true) return true;
+  const tipoOferta = (p.tipoOferta || '').toUpperCase();
+  if (tipoOferta === 'SERVICIO') return true;
+
+  const catNom = normalizarTextoEcommerce(p.categoriaNombre);
+  const catPrin = normalizarTextoEcommerce(p.categoriaPrincipal);
+  if (
+    catNom.includes('evento') ||
+    catNom.includes('ceremonia') ||
+    catPrin.includes('evento') ||
+    catPrin.includes('ceremonia')
+  ) {
+    return true;
+  }
+
+  const slug = normalizarTextoEcommerce(p.slug || p.id);
+  const nombre = normalizarTextoEcommerce(p.nombre);
+  const etiquetas = (p.etiquetas || []).map((e) => normalizarTextoEcommerce(e));
+
+  if (
+    etiquetas.some(
+      (et) =>
+        et.includes('evento') ||
+        et.includes('ceremonia') ||
+        et.includes('boda')
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    slug.includes('evento') ||
+    slug.includes('ceremonia') ||
+    slug.includes('aro floral') ||
+    slug.includes('aro-floral') ||
+    slug.includes('bienvenida de gala') ||
+    slug.includes('bienvenida-de-gala') ||
+    nombre.includes('evento') ||
+    nombre.includes('ceremonia') ||
+    nombre.includes('aro floral') ||
+    nombre.includes('bienvenida de gala') ||
+    nombre.includes('arco floral')
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Clasifica si un producto corresponde a Condolencias, Duelo o Funerarios.
+ */
+export function esProductoCondolencias(p: ProductoEcommerce): boolean {
+  if (esProductoMobiliario(p) || esProductoEvento(p)) return false;
+
+  if (p.esCondolencias === true) return true;
+
+  const catNom = normalizarTextoEcommerce(p.categoriaNombre);
+  const catPrin = normalizarTextoEcommerce(p.categoriaPrincipal);
+  if (
+    catNom.includes('condol') ||
+    catNom.includes('funer') ||
+    catPrin.includes('condol') ||
+    catPrin.includes('funer')
+  ) {
+    return true;
+  }
+
+  const slug = normalizarTextoEcommerce(p.slug || p.id);
+  const nombre = normalizarTextoEcommerce(p.nombre);
+  const etiquetas = (p.etiquetas || []).map((e) => normalizarTextoEcommerce(e));
+
+  if (
+    etiquetas.some(
+      (et) =>
+        et.includes('condol') ||
+        et.includes('funer') ||
+        et.includes('duelo') ||
+        et.includes('pesame')
+    )
+  ) {
+    return true;
+  }
+
+  if (
+    slug.includes('condol') ||
+    slug.includes('corona') ||
+    slug.includes('abanico') ||
+    slug.includes('pedestal') ||
+    slug.includes('cruz') ||
+    nombre.includes('condolencia') ||
+    nombre.includes('corona') ||
+    nombre.includes('abanico') ||
+    nombre.includes('pedestal') ||
+    nombre.includes('cruz')
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Jerarquía del catálogo Tinkay requerida por el usuario:
+ * Nivel 1: Todo los demás — Primero los destacados (Bouquets, Box florales, etc. destacados)
+ * Nivel 2: Todo los demás — Luego el resto (Bouquets, Box florales, etc. regulares)
+ * Nivel 3: Trasantepenúltimo: Condolencias
+ * Nivel 4: Penúltimo: Eventos
+ * Nivel 5: Último: Mobiliario
+ */
+export function obtenerJerarquiaCatalogoTinkay(p: ProductoEcommerce): number {
+  if (esProductoMobiliario(p)) return 5;
+  if (esProductoEvento(p)) return 4;
+  if (esProductoCondolencias(p)) return 3;
+  if (p.destacado) return 1;
+  return 2;
+}

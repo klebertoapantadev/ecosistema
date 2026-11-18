@@ -6,6 +6,7 @@ import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from '../datos-catalogo';
 import {
   expandirProductosVitrina,
   obtenerCategoriasVisibles,
+  obtenerJerarquiaCatalogoTinkay,
   obtenerNombreProductoIndividual,
   obtenerPvpProducto,
   productoCoincideConBusqueda,
@@ -46,8 +47,8 @@ export function VitrinaCatalogoTinkay() {
 
   const [filtroPresupuesto, setFiltroPresupuesto] = useState<string>('todos');
   const [criterioOrden, setCriterioOrden] = useState<
-    'precio-desc' | 'precio-asc' | 'destacados' | 'nombre-asc'
-  >('precio-desc');
+    'recomendados' | 'precio-desc' | 'precio-asc' | 'destacados' | 'nombre-asc'
+  >('recomendados');
   const [soloOfertas, setSoloOfertas] = useState<boolean>(false);
 
   // 1. Expandir todas las variaciones como productos individuales (excepto categoría Extras)
@@ -150,22 +151,44 @@ export function VitrinaCatalogoTinkay() {
     catalogoCategorias,
   ]);
 
-  // 4. Ordenamiento reactivo (por defecto de mayor a menor precio)
+  // 4. Ordenamiento reactivo con jerarquía estructural:
+  //    Nivel 1: Flores destacadas (Primero)
+  //    Nivel 2: Flores resto (Luego el resto)
+  //    Nivel 3: Condolencias (Trasantepenúltimo)
+  //    Nivel 4: Eventos (Penúltimo)
+  //    Nivel 5: Mobiliario (Último)
   const productosFinales = useMemo(() => {
     const lista = [...productosFiltrados];
-    switch (criterioOrden) {
-      case 'precio-desc':
-        return lista.sort((a, b) => obtenerPvpProducto(b) - obtenerPvpProducto(a));
-      case 'precio-asc':
-        return lista.sort((a, b) => obtenerPvpProducto(a) - obtenerPvpProducto(b));
-      case 'destacados':
-        return lista.sort((a, b) => (b.destacado ? 1 : 0) - (a.destacado ? 1 : 0));
-      case 'nombre-asc':
-        return lista.sort((a, b) => a.nombre.localeCompare(b.nombre));
-      default:
-        return lista;
-    }
-  }, [productosFiltrados, criterioOrden]);
+
+    return lista.sort((a, b) => {
+      // En "Todo el Catálogo" (vista general), preservar estrictamente los 5 niveles estructurales
+      if (categoriaActiva === 'cat-todos') {
+        const jA = obtenerJerarquiaCatalogoTinkay(a);
+        const jB = obtenerJerarquiaCatalogoTinkay(b);
+        if (jA !== jB) {
+          return jA - jB;
+        }
+      }
+
+      // Ordenamiento dentro del mismo nivel o cuando se filtra por una categoría específica
+      switch (criterioOrden) {
+        case 'precio-desc':
+          return obtenerPvpProducto(b) - obtenerPvpProducto(a);
+        case 'precio-asc':
+          return obtenerPvpProducto(a) - obtenerPvpProducto(b);
+        case 'nombre-asc':
+          return a.nombre.localeCompare(b.nombre);
+        case 'destacados':
+        case 'recomendados':
+        default: {
+          if (a.destacado !== b.destacado) {
+            return (b.destacado ? 1 : 0) - (a.destacado ? 1 : 0);
+          }
+          return obtenerPvpProducto(b) - obtenerPvpProducto(a);
+        }
+      }
+    });
+  }, [productosFiltrados, criterioOrden, categoriaActiva]);
 
   const categoriaActivaObj = categoriasVisibles.find((c) => c.id === categoriaActiva);
   const esModoCondolencias =
@@ -247,15 +270,21 @@ export function VitrinaCatalogoTinkay() {
                 value={criterioOrden}
                 onChange={(e) =>
                   setCriterioOrden(
-                    e.target.value as 'precio-desc' | 'precio-asc' | 'destacados' | 'nombre-asc'
+                    e.target.value as
+                      | 'recomendados'
+                      | 'precio-desc'
+                      | 'precio-asc'
+                      | 'destacados'
+                      | 'nombre-asc'
                   )
                 }
                 className="select-criterio-orden"
-                aria-label="Ordenar productos por precio o destacados"
+                aria-label="Ordenar productos por recomendación, precio o destacados"
               >
+                <option value="recomendados">Recomendados Tinkay</option>
+                <option value="destacados">Más Pedidos / Destacados</option>
                 <option value="precio-desc">Mayor a menor ($$$ → $)</option>
                 <option value="precio-asc">Menor a mayor ($ → $$$)</option>
-                <option value="destacados">Más Pedidos / Destacados</option>
                 <option value="nombre-asc">Nombre: A — Z</option>
               </select>
             </div>

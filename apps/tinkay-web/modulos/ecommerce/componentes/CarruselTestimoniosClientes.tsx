@@ -49,9 +49,27 @@ export function CarruselTestimoniosClientes() {
   }, []);
 
   const scroll = (direccion: 'izq' | 'der') => {
-    if (!scrollRef.current) return;
-    const offset = direccion === 'izq' ? -360 : 360;
-    scrollRef.current.scrollBy({ left: offset, behavior: 'smooth' });
+    const el = scrollRef.current;
+    if (!el) return;
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    if (maxScroll <= 0) return;
+    const paso = 360;
+
+    if (direccion === 'der') {
+      if (el.scrollLeft >= maxScroll - 25) {
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        const nuevoScroll = Math.min(el.scrollLeft + paso, maxScroll);
+        el.scrollTo({ left: nuevoScroll, behavior: 'smooth' });
+      }
+    } else {
+      if (el.scrollLeft <= 25) {
+        el.scrollTo({ left: maxScroll, behavior: 'smooth' });
+      } else {
+        const nuevoScroll = Math.max(el.scrollLeft - paso, 0);
+        el.scrollTo({ left: nuevoScroll, behavior: 'smooth' });
+      }
+    }
   };
 
   // Manejo de teclado para cerrar el lightbox con Escape o navegar con flechas

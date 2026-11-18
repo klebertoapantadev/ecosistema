@@ -20,9 +20,29 @@ export function CarruselProductosDestacados() {
   );
 
   const scroll = (direccion: 'izq' | 'der') => {
-    if (!scrollRef.current) return;
-    const offset = direccion === 'izq' ? -340 : 340;
-    scrollRef.current.scrollBy({ left: offset, behavior: 'smooth' });
+    const el = scrollRef.current;
+    if (!el) return;
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    if (maxScroll <= 0) return;
+    const paso = 340;
+
+    if (direccion === 'der') {
+      // Si ya está al final (o a menos de 25px del final), vuelve fluidamente al inicio
+      if (el.scrollLeft >= maxScroll - 25) {
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        const nuevoScroll = Math.min(el.scrollLeft + paso, maxScroll);
+        el.scrollTo({ left: nuevoScroll, behavior: 'smooth' });
+      }
+    } else {
+      // Si ya está al inicio (o a menos de 25px del inicio), va fluidamente al final
+      if (el.scrollLeft <= 25) {
+        el.scrollTo({ left: maxScroll, behavior: 'smooth' });
+      } else {
+        const nuevoScroll = Math.max(el.scrollLeft - paso, 0);
+        el.scrollTo({ left: nuevoScroll, behavior: 'smooth' });
+      }
+    }
   };
 
   return (
