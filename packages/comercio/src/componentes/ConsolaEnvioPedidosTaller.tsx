@@ -14,6 +14,7 @@ import {
   Loader2,
   PhoneCall,
   Plus,
+  Printer,
   RefreshCw,
   Save,
   Send,
@@ -38,6 +39,7 @@ import {
   type ItemOrdenTaller,
   type OrdenTrabajoTaller,
 } from "../operaciones-taller";
+import { ModalImprimirTarjetaTaller } from "./ModalImprimirTarjetaTaller";
 import { CalendarioPedidosTaller } from "./CalendarioPedidosTaller";
 
 export interface PropsConsolaEnvioPedidosTaller {
@@ -71,6 +73,7 @@ export function ConsolaEnvioPedidosTaller({
   const [seleccionadosIds, setSeleccionadosIds] = useState<Set<string>>(new Set());
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [ordenParaImprimir, setOrdenParaImprimir] = useState<OrdenTrabajoTaller | null>(null);
 
   // =========================================================================
   // FORMULARIO RÁPIDO: LLAMADA EXEQUIALES (POR DEFECTO HOY + SET CONDOLENCIAS)
@@ -787,6 +790,38 @@ export function ConsolaEnvioPedidosTaller({
                   <span>Enviar a Taller</span>
                 </button>
               )}
+
+              <button
+                type="button"
+                onClick={() => setOrdenParaImprimir(o)}
+                title="Imprimir o previsualizar tarjeta dedicatoria en Canon G3110"
+                aria-label="Imprimir Tarjeta"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  padding: "6px 9px",
+                  borderRadius: "8px",
+                  border:
+                    (o.tarjetaMetadata?.impresiones || 0) > 0
+                      ? "1px solid #F59E0B"
+                      : "1px solid #0284C7",
+                  background:
+                    (o.tarjetaMetadata?.impresiones || 0) > 0 ? "#FEF3C7" : "#F0F9FF",
+                  color:
+                    (o.tarjetaMetadata?.impresiones || 0) > 0 ? "#92400E" : "#0369A1",
+                  fontSize: "0.74rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                <Printer size={12} />
+                <span>
+                  {(o.tarjetaMetadata?.impresiones || 0) > 0
+                    ? `Tarjeta (x${o.tarjetaMetadata?.impresiones})`
+                    : "Tarjeta"}
+                </span>
+              </button>
 
               <button
                 type="button"
@@ -2179,6 +2214,23 @@ export function ConsolaEnvioPedidosTaller({
             </div>
           </form>
         </div>
+      )}
+
+      {ordenParaImprimir && (
+        <ModalImprimirTarjetaTaller
+          abierto={Boolean(ordenParaImprimir)}
+          onCerrar={() => setOrdenParaImprimir(null)}
+          orden={ordenParaImprimir}
+          negocio={negocio}
+          onActualizarOrden={(actualizada) => {
+            setDatos((prev) => ({
+              ...prev,
+              ordenes: prev.ordenes.map((ord) =>
+                ord.id === actualizada.id ? { ...ord, ...actualizada } : ord
+              ),
+            }));
+          }}
+        />
       )}
     </div>
   );

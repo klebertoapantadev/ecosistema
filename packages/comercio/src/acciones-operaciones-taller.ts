@@ -1049,6 +1049,10 @@ export async function crearOActualizarPedidoOperadorAction(entrada: {
   enlaceMapa?: string;
   retiroEnLocal?: boolean;
   dedicatoria?: string;
+  tarjetaTipo?: "DIPTICO" | "CONDOLENCIAS_PLANA" | "SOLO_DIGITAL";
+  tarjetaMusicaUrl?: string;
+  tarjetaMusicaTitulo?: string;
+  tarjetaLyrics?: any;
   observaciones?: string;
   totalUsd?: number;
   estadoPago?: string;
@@ -1557,3 +1561,146 @@ export async function actualizarUbicacionRutaDeliveryAction(entrada: {
     };
   }
 }
+
+export async function registrarImpresionTarjetaAction(entrada: {
+  ordenId: string;
+  tipo?: string;
+}): Promise<{ ok: boolean; impresiones?: number; ultimoImpresoPor?: string; error?: string }> {
+  try {
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+
+    const { data, error } = await invocarRpcComercio(
+      supabase,
+      "com_fn_registrar_impresion_tarjeta",
+      {
+        p_orden_id: entrada.ordenId,
+        p_tipo: entrada.tipo ?? null,
+      }
+    );
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+    if (data && data.ok === false) {
+      return { ok: false, error: String(data.error || "No se pudo registrar la impresión") };
+    }
+
+    return {
+      ok: true,
+      impresiones: data?.impresiones,
+      ultimoImpresoPor: data?.ultimoImpresoPor,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error al registrar impresión",
+    };
+  }
+}
+
+export async function obtenerTarjetaPublicaAction(token: string): Promise<{
+  ok: boolean;
+  tarjeta?: {
+    ordenId: string;
+    codigo: string;
+    negocio: string;
+    destinatario: string;
+    remitente: string;
+    dedicatoria: string;
+    tipo: "DIPTICO" | "CONDOLENCIAS_PLANA" | "SOLO_DIGITAL";
+    musicaUrl?: string | null;
+    musicaTitulo?: string | null;
+    lyrics?: Array<{ tiempo?: number; texto: string }>;
+    fechaEntrega?: string;
+    estadoTaller?: string;
+    bloqueadoEdicion?: boolean;
+    vistas?: number;
+  };
+  error?: string;
+}> {
+  try {
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+
+    const { data, error } = await invocarRpcComercio(
+      supabase,
+      "com_fn_obtener_tarjeta_publica",
+      {
+        p_token: token,
+      }
+    );
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+    if (!data || data.ok === false) {
+      return { ok: false, error: data?.error || "Tarjeta no encontrada" };
+    }
+
+    return {
+      ok: true,
+      tarjeta: {
+        ordenId: data.ordenId,
+        codigo: data.codigo,
+        negocio: data.negocio,
+        destinatario: data.destinatario,
+        remitente: data.remitente,
+        dedicatoria: data.dedicatoria,
+        tipo: data.tipo,
+        musicaUrl: data.musicaUrl,
+        musicaTitulo: data.musicaTitulo,
+        lyrics: data.lyrics,
+        fechaEntrega: data.fechaEntrega,
+        estadoTaller: data.estadoTaller,
+        bloqueadoEdicion: Boolean(data.bloqueadoEdicion),
+        vistas: data.vistas,
+      },
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error al consultar la tarjeta",
+    };
+  }
+}
+
+export async function editarTarjetaClienteAction(entrada: {
+  token: string;
+  dedicatoria: string;
+  musicaUrl?: string | null;
+  musicaTitulo?: string | null;
+  lyrics?: Array<{ tiempo?: number; texto: string }>;
+}): Promise<{ ok: boolean; error?: string; mensaje?: string }> {
+  try {
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+
+    const { data, error } = await invocarRpcComercio(
+      supabase,
+      "com_fn_editar_tarjeta_cliente",
+      {
+        p_token: entrada.token,
+        p_dedicatoria: entrada.dedicatoria,
+        p_musica_url: entrada.musicaUrl ?? null,
+        p_musica_titulo: entrada.musicaTitulo ?? null,
+        p_lyrics: entrada.lyrics ? JSON.stringify(entrada.lyrics) : null,
+      }
+    );
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+    if (!data || data.ok === false) {
+      return { ok: false, error: data?.error || "No se pudo actualizar la tarjeta" };
+    }
+
+    return { ok: true, mensaje: data.mensaje || "Tarjeta actualizada" };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error al actualizar la tarjeta",
+    };
+  }
+}
+

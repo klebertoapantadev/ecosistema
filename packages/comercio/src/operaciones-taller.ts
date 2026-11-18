@@ -426,6 +426,31 @@ export interface OrdenTrabajoTaller {
   enlaceMapa?: string | null;
   retiroEnLocal?: boolean;
   dedicatoria?: string;
+  tarjetaTipo?: "DIPTICO" | "CONDOLENCIAS_PLANA" | "SOLO_DIGITAL";
+  tarjetaToken?: string;
+  tarjetaMusicaUrl?: string | null;
+  tarjetaMusicaTitulo?: string | null;
+  tarjetaLyrics?: Array<{ tiempo?: number; texto: string }>;
+  tarjetaMetadata?: {
+    origen?: string;
+    creado_por?: string;
+    historial_cambios?: Array<{
+      autor?: string;
+      rol?: string;
+      fecha?: string;
+      dedicatoria_anterior?: string;
+      dedicatoria_nueva?: string;
+      musica_url_anterior?: string | null;
+      musica_url_nueva?: string | null;
+    }>;
+    vistas_cliente?: number;
+    ultima_vista_en?: string;
+    editado_por_cliente?: boolean;
+    ultima_edicion_cliente_en?: string;
+    impresiones?: number;
+    ultima_impresion_en?: string;
+    ultimo_impreso_por?: string;
+  };
   observaciones?: string;
   totalUsd?: number;
   enviadoTallerEn?: string | null;

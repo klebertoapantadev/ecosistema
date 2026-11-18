@@ -72,6 +72,8 @@ export * from "./componentes/ConsolaConfirmacionEntregas";
 export * from "./componentes/CalendarioPedidosTaller";
 export * from "./componentes/ConsolaEnvioPedidosTaller";
 export * from "./componentes/ConsolaTallerFloral";
+export * from "./componentes/ModalImprimirTarjetaTaller";
+export * from "./componentes/TarjetaDedicatoriaDigitalInteractiva";
 export * from "./componentes/VisorMultimediaChatModal";
 export * from "./componentes/ChatEquipoInterno";
 export * from "./componentes/IconoCanalOmnicanal";

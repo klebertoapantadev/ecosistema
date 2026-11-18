@@ -14,6 +14,7 @@ import {
   Hammer,
   Loader2,
   MapPinCheck,
+  Printer,
   RefreshCw,
   Send,
   Volume2,
@@ -33,6 +34,7 @@ import {
   type OrdenTrabajoTaller,
 } from "../operaciones-taller";
 import { CalendarioPedidosTaller } from "./CalendarioPedidosTaller";
+import { ModalImprimirTarjetaTaller } from "./ModalImprimirTarjetaTaller";
 
 export interface PropsConsolaTallerFloral {
   negocio: string;
@@ -94,6 +96,7 @@ export function ConsolaTallerFloral({
   const [idProcesando, setIdProcesando] = useState<string | null>(null);
   const [pedidoEnfocado, setPedidoEnfocado] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [ordenParaImprimir, setOrdenParaImprimir] = useState<OrdenTrabajoTaller | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -463,8 +466,33 @@ export function ConsolaTallerFloral({
             );
           }
 
+          const impresiones = o.tarjetaMetadata?.impresiones || 0;
+
           return (
-            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+              <button
+                type="button"
+                onClick={() => setOrdenParaImprimir(o)}
+                title="Imprimir Tarjeta Dedicatoria en Canon G3110"
+                aria-label="Imprimir Tarjeta"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  padding: "7px 10px",
+                  borderRadius: "8px",
+                  border: impresiones > 0 ? "1px solid #F59E0B" : "1px solid #0284C7",
+                  background: impresiones > 0 ? "#FEF3C7" : "#F0F9FF",
+                  color: impresiones > 0 ? "#92400E" : "#0369A1",
+                  fontSize: "0.76rem",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                }}
+              >
+                <Printer size={13} />
+                <span>{impresiones > 0 ? `Tarjeta (x${impresiones})` : "Tarjeta"}</span>
+              </button>
+
               <button
                 type="button"
                 disabled={proc}
@@ -937,9 +965,36 @@ export function ConsolaTallerFloral({
                       background: "#FFFBEB",
                       border: "1px solid #FDE68A",
                       color: "#92400E",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: "10px",
                     }}
                   >
-                    💌 <strong>Tarjeta:</strong> {o.dedicatoria}
+                    <div>
+                      💌 <strong>Tarjeta:</strong> {o.dedicatoria}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setOrdenParaImprimir(o)}
+                      style={{
+                        border: "none",
+                        background: "#0284C7",
+                        color: "#FFFFFF",
+                        padding: "5px 10px",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontWeight: 700,
+                        fontSize: "0.74rem",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      <Printer size={12} />
+                      <span>Imprimir</span>
+                    </button>
                   </div>
                 )}
               </div>
@@ -974,6 +1029,23 @@ export function ConsolaTallerFloral({
           )}
         />
       </div>
+
+      {ordenParaImprimir && (
+        <ModalImprimirTarjetaTaller
+          abierto={Boolean(ordenParaImprimir)}
+          onCerrar={() => setOrdenParaImprimir(null)}
+          orden={ordenParaImprimir}
+          negocio={negocio}
+          onActualizarOrden={(actualizada) => {
+            setDatos((prev) => ({
+              ...prev,
+              ordenes: prev.ordenes.map((ord) =>
+                ord.id === actualizada.id ? { ...ord, ...actualizada } : ord
+              ),
+            }));
+          }}
+        />
+      )}
     </div>
   );
 }
