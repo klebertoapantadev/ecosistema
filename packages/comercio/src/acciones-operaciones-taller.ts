@@ -1159,20 +1159,121 @@ export async function crearOActualizarPedidoOperadorAction(entrada: {
     }
 
     const db: any = crearClienteAdmin() ?? supabase;
-    const codigoManual = `PED-${Date.now().toString().slice(-5)}`;
     const estTaller: EstadoOrdenTaller = enviar ? "ENVIADO_TALLER" : "PENDIENTE_ENVIO";
+    const nombreClienteLimpio = (
+      entrada.clienteSolicita ||
+      entrada.destinatarioFallecido ||
+      "Cliente"
+    ).trim();
+    const montoTotal = Number(entrada.totalUsd ?? 0);
+    const itemsMapeados = (
+      entrada.items && entrada.items.length > 0
+        ? entrada.items
+        : [{ descripcion: entrada.productoResumen, cantidad: 1 }]
+    ).map((it) => ({
+      producto_nombre: it.descripcion,
+      descripcion: it.descripcion,
+      sku: it.sku || "MANUAL",
+      cantidad: it.cantidad,
+      pvp_unitario: it.precioUnitario ?? 0,
+      total_linea: (it.precioUnitario ?? 0) * it.cantidad,
+      dedicatoria: entrada.dedicatoria
+        ? {
+            para: entrada.destinatarioFallecido || "",
+            de: nombreClienteLimpio,
+            mensaje: entrada.dedicatoria,
+          }
+        : undefined,
+    }));
+
+    // Si es edición de una proforma existente en modo híbrido
+    if (entrada.ordenId && /^[0-9a-f-]{36}$/i.test(entrada.ordenId)) {
+      const { data: previa } = await db
+        .schema("comun_comercio")
+        .from("com_proforma")
+        .select("prf_id, prf_detalle_proforma")
+        .eq("prf_id", entrada.ordenId)
+        .maybeSingle();
+
+      if (previa?.prf_id) {
+        const detPrevio = (previa.prf_detalle_proforma ?? {}) as Record<string, any>;
+        const codigoExistente = String(
+          detPrevio.codigo_orden || `PED-${entrada.ordenId.slice(0, 5).toUpperCase()}`
+        );
+        const { error: errUpd } = await db
+          .schema("comun_comercio")
+          .from("com_proforma")
+          .update({
+            prf_cliente_nombre: nombreClienteLimpio,
+            prf_cliente_contacto: {
+              nombre: nombreClienteLimpio,
+              telefono: entrada.clienteTelefono || "",
+            },
+            prf_estado: enviar
+              ? "EN_PREPARACION"
+              : entrada.estadoPago || String(detPrevio.estado_pago || "APROBADA"),
+            prf_observaciones: entrada.observaciones || null,
+            prf_detalle_proforma: {
+              ...detPrevio,
+              codigo_orden: codigoExistente,
+              estado_taller: enviar ? "ENVIADO_TALLER" : detPrevio.estado_taller || "PENDIENTE_ENVIO",
+              fecha_elaboracion: enviar
+                ? obtenerFechaHoyEcuadorYmd()
+                : entrada.fechaElaboracion || detPrevio.fecha_elaboracion,
+              enviado_taller_en: enviar
+                ? detPrevio.enviado_taller_en || new Date().toISOString()
+                : detPrevio.enviado_taller_en || null,
+              comprador: {
+                ...(detPrevio.comprador ?? {}),
+                nombreCompleto: nombreClienteLimpio,
+                whatsapp: entrada.clienteTelefono || "",
+              },
+              logistica_entrega: {
+                ...(detPrevio.logistica_entrega ?? {}),
+                destinatario_nombre: entrada.destinatarioFallecido || nombreClienteLimpio,
+                direccion: entrada.ubicacionEntrega || "",
+                enlace_mapa: entrada.enlaceMapa || "",
+                retiro_en_local: Boolean(entrada.retiroEnLocal),
+                fecha_entrega: entrada.fechaEntrega,
+                franja_horaria: normalizarFranjaHorariaTienda(entrada.franjaHoraria),
+              },
+              items: itemsMapeados,
+              notas_taller: entrada.observaciones || "",
+            },
+            prf_actualizado_en: new Date().toISOString(),
+          })
+          .eq("prf_id", previa.prf_id);
+
+        if (errUpd) {
+          return { ok: false, error: errUpd.message };
+        }
+
+        revalidarRutasTienda(neg);
+        return {
+          ok: true,
+          ordenId: String(previa.prf_id),
+          codigo: codigoExistente,
+          estadoTaller: estTaller,
+        };
+      }
+    }
+
+    const codigoManual = `PED-${Date.now().toString().slice(-5)}`;
     const { data: insPrf, error: errPrf } = await db
       .schema("comun_comercio")
       .from("com_proforma")
       .insert({
         prf_negocio: neg,
+        prf_cliente_nombre: nombreClienteLimpio,
         prf_estado: enviar ? "EN_PREPARACION" : entrada.estadoPago || "APROBADA",
-        prf_subtotal: Number(entrada.totalUsd ?? 0),
-        prf_impuestos: 0,
-        prf_total: Number(entrada.totalUsd ?? 0),
+        prf_subtotal: montoTotal,
+        prf_descuento: 0,
+        prf_iva: 0,
+        prf_total: montoTotal,
         prf_token_aprobacion: crypto.randomUUID(),
+        prf_observaciones: entrada.observaciones || null,
         prf_cliente_contacto: {
-          nombre: entrada.clienteSolicita,
+          nombre: nombreClienteLimpio,
           telefono: entrada.clienteTelefono || "",
         },
         prf_detalle_proforma: {
@@ -1183,32 +1284,18 @@ export async function crearOActualizarPedidoOperadorAction(entrada: {
           enviado_taller_en: enviar ? new Date().toISOString() : null,
           metodo_pago: entrada.metodoPago || "manual",
           comprador: {
-            nombreCompleto: entrada.clienteSolicita,
+            nombreCompleto: nombreClienteLimpio,
             whatsapp: entrada.clienteTelefono || "",
           },
           logistica_entrega: {
-            destinatario_nombre: entrada.destinatarioFallecido || entrada.clienteSolicita,
+            destinatario_nombre: entrada.destinatarioFallecido || nombreClienteLimpio,
             direccion: entrada.ubicacionEntrega || "",
             enlace_mapa: entrada.enlaceMapa || "",
             retiro_en_local: Boolean(entrada.retiroEnLocal),
             fecha_entrega: entrada.fechaEntrega,
             franja_horaria: normalizarFranjaHorariaTienda(entrada.franjaHoraria),
           },
-          items: (
-            entrada.items && entrada.items.length > 0
-              ? entrada.items
-              : [{ descripcion: entrada.productoResumen, cantidad: 1 }]
-          ).map((it) => ({
-            producto_nombre: it.descripcion,
-            descripcion: it.descripcion,
-            sku: it.sku || "MANUAL",
-            cantidad: it.cantidad,
-            pvp_unitario: it.precioUnitario ?? 0,
-            total_linea: (it.precioUnitario ?? 0) * it.cantidad,
-            dedicatoria: entrada.dedicatoria
-              ? { para: entrada.destinatarioFallecido || "", de: entrada.clienteSolicita, mensaje: entrada.dedicatoria }
-              : undefined,
-          })),
+          items: itemsMapeados,
           notas_taller: entrada.observaciones || "",
         },
       })
@@ -1217,6 +1304,27 @@ export async function crearOActualizarPedidoOperadorAction(entrada: {
 
     if (errPrf || !insPrf?.prf_id) {
       return { ok: false, error: errPrf?.message || "No se pudo registrar el pedido manual" };
+    }
+
+    if (enviar) {
+      try {
+        const { despacharPushCambioEstadoPedidoTodosLosRoles } = await import(
+          "./notificaciones-pedidos-push"
+        );
+        await despacharPushCambioEstadoPedidoTodosLosRoles({
+          supabase,
+          negocio: neg,
+          pedidoId: String(insPrf.prf_id),
+          codigoOrden: codigoManual,
+          nuevoEstado: "ENVIADO_TALLER",
+          etiquetaEstado: "Enviado a Taller",
+          compradorNombre: entrada.destinatarioFallecido || nombreClienteLimpio,
+          tituloPersonalizado: `🌸 Pedido enviado a Taller (${entrada.fechaEntrega}): ${codigoManual}`,
+          cuerpoPlanoPersonalizado: `${codigoManual} · ${entrada.productoResumen} (${entrada.destinatarioFallecido || nombreClienteLimpio})`,
+        });
+      } catch {
+        // No interrumpir guardado si falla push secundario
+      }
     }
 
     revalidarRutasTienda(neg);

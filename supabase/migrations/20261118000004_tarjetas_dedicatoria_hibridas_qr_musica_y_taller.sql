@@ -15,6 +15,42 @@
 --   5. Actualización de com_fn_obtener_consola_taller_y_despacho y com_fn_crear_o_actualizar_pedido_operador.
 -- ==============================================================================
 
+-- 0. Garantizar permiso de gestión de pedidos para VENTAS, OPERADOR, ADMINISTRADOR y propietarios de Tinkay
+create or replace function comun_seguridad.seg_fn_es_operador_o_admin_negocio(p_negocio text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select exists (
+    select 1
+    from comun_seguridad.seg_usuario u
+    where u.usu_id = auth.uid()
+      and (
+        u.usu_superadmin_plataforma
+        or (
+          comun_seguridad.seg_fn_normalizar_negocio(p_negocio) = 'tinkay'
+          and lower(btrim(coalesce(u.usu_correo, ''))) in ('tinkay.uio@gmail.com', 'kleber.toapanta.ch@gmail.com')
+        )
+      )
+  ) or exists (
+    select 1
+    from comun_seguridad.seg_membresia m
+    left join comun_seguridad.seg_membresia_perfil mp on mp.mpe_membresia_id = m.mem_id
+    left join comun_seguridad.seg_perfil p on p.per_id = mp.mpe_perfil_id
+    where m.mem_usuario_id = auth.uid()
+      and comun_seguridad.seg_fn_normalizar_negocio(m.mem_negocio) = comun_seguridad.seg_fn_normalizar_negocio(p_negocio)
+      and m.mem_estado = 'ACTIVO'
+      and (
+        upper(coalesce(m.mem_rol, '')) in ('VENTAS', 'OPERADOR', 'AUXILIAR', 'TECNICO', 'ADMINISTRADOR', 'ADMIN', 'SUPERADMIN')
+        or upper(coalesce(p.per_clave, '')) in ('VENTAS', 'OPERADOR', 'AUXILIAR', 'TECNICO', 'ADMINISTRADOR', 'ADMIN', 'SUPERADMIN')
+      )
+  );
+$$;
+
+grant execute on function comun_seguridad.seg_fn_es_operador_o_admin_negocio(text) to authenticated, service_role;
+
 -- 1. Columnas en comun_comercio.com_orden_taller
 alter table comun_comercio.com_orden_taller
   add column if not exists ota_tarjeta_token text,
@@ -25,9 +61,9 @@ alter table comun_comercio.com_orden_taller
   add column if not exists ota_tarjeta_lyrics jsonb not null default '[]'::jsonb,
   add column if not exists ota_tarjeta_metadata jsonb not null default '{"origen": "AUTOMATICO", "historial_cambios": [], "vistas_cliente": 0, "impresiones": 0}'::jsonb;
 
--- Llenar retroactivamente tokens faltantes y asignar unicidad
+-- Llenar retroactivamente tokens faltantes y asignar unicidad (gen_random_uuid nativo PG13+, sin depender de pgcrypto en search_path)
 update comun_comercio.com_orden_taller
-   set ota_tarjeta_token = encode(gen_random_bytes(9), 'hex')
+   set ota_tarjeta_token = substr(replace(gen_random_uuid()::text, '-', ''), 1, 18)
  where ota_tarjeta_token is null or btrim(ota_tarjeta_token) = '';
 
 create unique index if not exists uq_com_orden_taller_tarjeta_token
@@ -244,7 +280,7 @@ $$;
 
 grant execute on function comun_comercio.com_fn_registrar_impresion_tarjeta(uuid, text) to authenticated, service_role;
 
--- 5. Actualización de com_fn_obtener_consola_taller_y_despacho para incluir campos de tarjeta
+-- 5. Actualización de com_fn_obtener_consola_taller_y_despacho para incluir campos de tarjeta + repartidores + aislamiento TALLER
 create or replace function comun_comercio.com_fn_obtener_consola_taller_y_despacho(p_negocio text default 'tinkay')
 returns jsonb
 language plpgsql
@@ -254,11 +290,14 @@ as $$
 declare
   v_negocio text := comun_comercio.com_fn_omnicanal_negocio_canonico(p_negocio);
   v_uid uuid := auth.uid();
+  v_rol text := comun_seguridad.seg_fn_obtener_rol_operativo_negocio(v_negocio);
+  v_es_solo_taller boolean := (v_rol = 'TALLER');
   v_usu_nombre text;
   v_ordenes jsonb;
   v_productos jsonb;
+  v_repartidores jsonb := '[]'::jsonb;
 begin
-  if not comun_seguridad.seg_fn_es_delivery_o_staff_negocio(v_negocio) then
+  if v_rol not in ('SUPERADMIN', 'ADMINISTRADOR', 'OPERADOR', 'VENTAS', 'TALLER') then
     return jsonb_build_object('ok', false, 'error', 'No tienes permisos para acceder a Pedidos y Taller.');
   end if;
 
@@ -279,8 +318,8 @@ begin
       'proformaId', o.ota_proforma_id,
       'entregaId', o.ota_entrega_id,
       'estadoTaller', o.ota_estado_taller,
-      'estadoPago', coalesce(p.prf_estado, o.ota_estado_pago),
-      'metodoPago', o.ota_metodo_pago,
+      'estadoPago', case when v_es_solo_taller then 'VALIDADO' else coalesce(p.prf_estado, o.ota_estado_pago) end,
+      'metodoPago', case when v_es_solo_taller then null else o.ota_metodo_pago end,
       'fechaPedido', o.ota_fecha_pedido,
       'fechaEntrega', to_char(o.ota_fecha_entrega, 'YYYY-MM-DD'),
       'fechaElaboracion', case when o.ota_fecha_elaboracion is not null then to_char(o.ota_fecha_elaboracion, 'YYYY-MM-DD') else null end,
@@ -289,7 +328,7 @@ begin
       'productoResumen', o.ota_producto_resumen,
       'items', coalesce(o.ota_items, '[]'::jsonb),
       'clienteSolicita', o.ota_cliente_solicita,
-      'clienteTelefono', o.ota_cliente_telefono,
+      'clienteTelefono', case when v_es_solo_taller then null else o.ota_cliente_telefono end,
       'destinatarioFallecido', o.ota_destinatario_fallecido,
       'salaServicio', o.ota_sala_servicio,
       'ubicacionEntrega', o.ota_ubicacion_entrega,
@@ -297,7 +336,7 @@ begin
       'retiroEnLocal', o.ota_retiro_en_local,
       'dedicatoria', o.ota_dedicatoria,
       'observaciones', o.ota_observaciones,
-      'totalUsd', o.ota_total_usd,
+      'totalUsd', case when v_es_solo_taller then 0 else o.ota_total_usd end,
       'enviadoTallerEn', o.ota_enviado_taller_en,
       'enviadoNombre', o.ota_enviado_nombre,
       'preparacionEn', o.ota_preparacion_en,
@@ -309,12 +348,17 @@ begin
       'tarjetaMusicaUrl', o.ota_tarjeta_musica_url,
       'tarjetaMusicaTitulo', o.ota_tarjeta_musica_titulo,
       'tarjetaLyrics', coalesce(o.ota_tarjeta_lyrics, '[]'::jsonb),
-      'tarjetaMetadata', coalesce(o.ota_tarjeta_metadata, '{}'::jsonb)
+      'tarjetaMetadata', coalesce(o.ota_tarjeta_metadata, '{}'::jsonb),
+      'repartidorId', (to_jsonb(o)->>'ota_repartidor_id'),
+      'repartidorNombre', (to_jsonb(o)->>'ota_repartidor_nombre'),
+      'repartidorTipo', (to_jsonb(o)->>'ota_repartidor_tipo'),
+      'enRuta', coalesce((to_jsonb(o)->>'ota_en_ruta')::boolean, false)
     ) as item
     from comun_comercio.com_orden_taller o
     left join comun_comercio.com_proforma p on p.prf_id = o.ota_proforma_id
     where o.ota_negocio = v_negocio
       and o.ota_eliminado_en is null
+      and (not v_es_solo_taller or o.ota_estado_taller <> 'PENDIENTE_ENVIO')
     order by
       o.ota_fecha_entrega asc,
       (case when o.ota_origen_tipo = 'EXEQUIALES_LLAMADA' then 0 else 1 end) asc,
@@ -322,43 +366,47 @@ begin
     limit 500
   ) sub;
 
-  select coalesce(jsonb_agg(sub.prod), '[]'::jsonb)
-  into v_productos
-  from (
-    select jsonb_build_object(
-      'productoId', pr.pro_id,
-      'productoNombre', pr.pro_nombre,
-      'varianteId', v.var_id,
-      'sku', coalesce(v.var_sku, pr.pro_slug),
-      'varianteNombre', coalesce(v.var_nombre, 'Estándar'),
-      'pvp', coalesce(v.var_precio, 0),
-      'portadaUrl', coalesce(v.var_detalle_variante->>'portada_url', pr.pro_detalle_producto->>'portada_url')
-    ) as prod
-    from comun_comercio.com_producto pr
-    join comun_comercio.com_variante v
-      on v.var_producto_id = pr.pro_id
-     and v.var_activo = true
-     and v.var_eliminado_en is null
-    where lower(pr.pro_negocio) = v_negocio
-      and pr.pro_activo = true
-      and pr.pro_eliminado_en is null
-    order by pr.pro_nombre asc, v.var_orden asc
-    limit 250
-  ) sub;
+  if v_es_solo_taller then
+    v_productos := '[]'::jsonb;
+  else
+    select coalesce(jsonb_agg(sub.prod), '[]'::jsonb)
+    into v_productos
+    from (
+      select jsonb_build_object(
+        'productoId', pr.pro_id,
+        'productoNombre', pr.pro_nombre,
+        'varianteId', v.var_id,
+        'sku', coalesce(v.var_sku, pr.pro_slug),
+        'varianteNombre', coalesce(v.var_nombre, 'Estándar'),
+        'pvp', coalesce(v.var_precio, 0),
+        'portadaUrl', coalesce(v.var_detalle_variante->>'portada_url', pr.pro_detalle_producto->>'portada_url')
+      ) as prod
+      from comun_comercio.com_producto pr
+      join comun_comercio.com_variante v
+        on v.var_producto_id = pr.pro_id
+       and v.var_activo = true
+       and v.var_eliminado_en is null
+      where lower(pr.pro_negocio) = v_negocio
+        and pr.pro_activo = true
+        and pr.pro_eliminado_en is null
+      order by pr.pro_nombre asc, v.var_orden asc
+      limit 250
+    ) sub;
+
+    begin
+      v_repartidores := comun_comercio.com_fn_listar_repartidores_negocio(v_negocio);
+    exception when others then
+      v_repartidores := '[]'::jsonb;
+    end;
+  end if;
 
   return jsonb_build_object(
     'ok', true,
+    'rolOperativo', v_rol,
     'usuarioActualNombre', coalesce(v_usu_nombre, 'Operador'),
     'ordenes', v_ordenes,
     'productosCatalogo', v_productos,
-    'rolOperativo', case
-      when comun_seguridad.seg_fn_es_superadmin() then 'SUPERADMIN'
-      when comun_seguridad.seg_fn_tiene_rol(v_negocio, 'ADMINISTRADOR') then 'ADMINISTRADOR'
-      when comun_seguridad.seg_fn_tiene_rol(v_negocio, 'OPERADOR') then 'OPERADOR'
-      when comun_seguridad.seg_fn_tiene_rol(v_negocio, 'TALLER') then 'TALLER'
-      when comun_seguridad.seg_fn_tiene_rol(v_negocio, 'DELIVERY') then 'DELIVERY'
-      else 'STAFF'
-    end
+    'repartidoresNegocio', v_repartidores
   );
 end;
 $$;
@@ -555,42 +603,66 @@ begin
     limit 1;
 
     begin
-      v_fecha_serv_ts := (v_fecha_entrega::text || ' ' || coalesce(v_hora, '10:00') || ':00')::timestamptz;
+      if v_hora is not null and v_hora ~ '^\d{1,2}:\d{2}' then
+        v_fecha_serv_ts := ((v_fecha_entrega::text || ' ' || substring(v_hora from '^\d{1,2}:\d{2}') || ':00')::timestamp at time zone 'America/Guayaquil');
+      else
+        v_fecha_serv_ts := ((v_fecha_entrega::text || ' 12:00:00')::timestamp at time zone 'America/Guayaquil');
+      end if;
     exception when others then
-      v_fecha_serv_ts := (v_fecha_entrega::text || ' 10:00:00')::timestamptz;
+      v_fecha_serv_ts := now();
     end;
 
     insert into comun_comercio.com_entrega_evidencia (
+      ent_uuid_cliente,
       ent_negocio,
+      ent_tipo_origen,
       ent_convenio_id,
-      ent_coordinador_nombre,
-      ent_coordinador_telefono,
+      ent_entregador_nombre,
       ent_fallecido_destinatario,
+      ent_fecha_servicio,
+      ent_capturado_en,
+      ent_descripcion_servicio,
       ent_sala_servicio,
       ent_hora_solicitada,
       ent_ubicacion_nombre,
-      ent_fecha_servicio,
-      ent_estado_proceso,
-      ent_descripcion_servicio,
-      ent_observaciones
+      ent_coordinador_nombre,
+      ent_recursos_utilizados,
+      ent_observaciones,
+      ent_detalle_entrega,
+      ent_estado
     ) values (
+      gen_random_uuid(),
       v_negocio,
+      'ORDEN_TRABAJO_CONVENIO',
       v_convenio_id,
-      v_solicita,
-      nullif(btrim(p_payload->>'clienteTelefono'), ''),
+      'Por asignar',
       v_destinatario,
+      v_fecha_serv_ts,
+      now(),
+      v_resumen,
       v_sala,
       v_hora,
-      coalesce(nullif(btrim(p_payload->>'ubicacionEntrega'), ''), 'Sala por coordinar'),
-      v_fecha_serv_ts,
-      'PROGRAMADA',
-      v_resumen,
-      nullif(btrim(p_payload->>'observaciones'), '')
-    ) returning ent_id into v_entrega_id;
-  end if;
+      coalesce(nullif(btrim(p_payload->>'ubicacionEntrega'), ''), 'Exequiales del IESS'),
+      v_solicita,
+      'Flores, follaje, bases y oasis',
+      nullif(btrim(coalesce(p_payload->>'observaciones', '')), ''),
+      jsonb_strip_nulls(jsonb_build_object(
+        'sala_servicio', v_sala,
+        'hora_solicitada', v_hora,
+        'quien_solicita', v_solicita
+      )),
+      'PROGRAMADA'
+    )
+    returning ent_id, coalesce(ent_codigo_ot, 'OT-' || lpad(ent_secuencial::text, 4, '0'))
+    into v_entrega_id, v_codigo;
 
-  -- Código secuencial de orden
-  v_codigo := 'OT-' || to_char(v_fecha_entrega, 'YYMMDD') || '-' || upper(substr(encode(gen_random_bytes(2), 'hex'), 1, 4));
+    update comun_comercio.com_entrega_evidencia
+       set ent_codigo_ot = v_codigo
+     where ent_id = v_entrega_id
+       and ent_codigo_ot is null;
+  else
+    v_codigo := 'PED-' || to_char(v_fecha_entrega, 'YYMMDD') || '-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 4));
+  end if;
 
   v_meta := jsonb_build_object(
     'origen', case when v_origen = 'MANUAL_ADMIN' then 'OPERADOR_TINKAY' else 'AUTOMATICO_SISTEMA' end,
@@ -611,6 +683,8 @@ begin
     ota_origen_tipo,
     ota_entrega_id,
     ota_estado_taller,
+    ota_estado_pago,
+    ota_metodo_pago,
     ota_fecha_entrega,
     ota_fecha_elaboracion,
     ota_franja_horaria,
@@ -641,6 +715,8 @@ begin
     v_origen,
     v_entrega_id,
     case when v_enviar then 'ENVIADO_TALLER' else 'PENDIENTE_ENVIO' end,
+    coalesce(nullif(btrim(p_payload->>'estadoPago'), ''), case when v_origen = 'EXEQUIALES_LLAMADA' then 'CONVENIO_IESS' else 'PENDIENTE_PAGO' end),
+    coalesce(nullif(btrim(p_payload->>'metodoPago'), ''), case when v_origen = 'EXEQUIALES_LLAMADA' then 'convenio' else 'manual' end),
     v_fecha_entrega,
     v_fecha_elab,
     v_franja,
@@ -655,7 +731,7 @@ begin
     nullif(btrim(p_payload->>'enlaceMapa'), ''),
     coalesce((p_payload->>'retiroEnLocal')::boolean, false),
     v_dedicatoria_nueva,
-    encode(gen_random_bytes(9), 'hex'),
+    substr(replace(gen_random_uuid()::text, '-', ''), 1, 18),
     v_tarjeta_tipo,
     v_tarjeta_musica_url,
     v_tarjeta_musica_titulo,

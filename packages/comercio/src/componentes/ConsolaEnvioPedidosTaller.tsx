@@ -1,21 +1,17 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { DataGrid, SelectConBuscador, type ColumnaDataGrid } from "@eco/datagrid";
 import { crearClienteNavegador } from "@eco/supabase/cliente";
 import {
-  AlertTriangle,
   Calendar,
   CheckCircle2,
   Clock,
   Edit3,
-  Hammer,
   Loader2,
   PhoneCall,
   Plus,
   Printer,
-  RefreshCw,
   Save,
   Send,
   Trash2,
@@ -50,6 +46,26 @@ export interface PropsConsolaEnvioPedidosTaller {
 type PestanaDespacho = "bandeja_envio" | "exequiales_llamada" | "cargar_manual" | "calendario";
 type FiltroBandeja = "por_enviar" | "hoy" | "futuros" | "ya_en_taller" | "todos";
 
+function IconoCruzExequial() {
+  return (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      style={{ flexShrink: 0 }}
+    >
+      <path d="M12 2v20" />
+      <path d="M6 8h12" />
+    </svg>
+  );
+}
+
 export function ConsolaEnvioPedidosTaller({
   negocio,
   datosIniciales = null,
@@ -67,7 +83,6 @@ export function ConsolaEnvioPedidosTaller({
   );
   const [pestana, setPestana] = useState<PestanaDespacho>("bandeja_envio");
   const [filtroBandeja, setFiltroBandeja] = useState<FiltroBandeja>("por_enviar");
-  const [cargando, setCargando] = useState<boolean>(false);
   const [enviandoLote, setEnviandoLote] = useState<boolean>(false);
   const [idProcesando, setIdProcesando] = useState<string | null>(null);
   const [seleccionadosIds, setSeleccionadosIds] = useState<Set<string>>(new Set());
@@ -141,11 +156,10 @@ export function ConsolaEnvioPedidosTaller({
   );
 
   const recargarDatos = useCallback(
-    async (silencioso = false) => {
-      if (!silencioso) setCargando(true);
+    async (_silencioso = false) => {
+      void _silencioso;
       setErrorMsg(null);
       const res = await obtenerConsolaTallerYDespachoAction(negNorm);
-      if (!silencioso) setCargando(false);
       if (!res.ok) {
         setErrorMsg(res.error);
         return;
@@ -381,12 +395,44 @@ export function ConsolaEnvioPedidosTaller({
   };
 
   const guardarPedidoManual = async (enviarAhora: boolean) => {
-    const listaFinal: ItemOrdenTaller[] =
-      manItems.length > 0
-        ? manItems
-        : manDetalleLibre.trim()
-          ? [{ descripcion: manDetalleLibre.trim(), cantidad: 1 }]
-          : [];
+    const listaAcumulada: ItemOrdenTaller[] = [...manItems];
+
+    // Si el usuario seleccionó un producto en el desplegable sin pulsar "+ Agregar", incluirlo automáticamente
+    if (manSkuSeleccionado) {
+      const encontrado = datos.productosCatalogo.find(
+        (p) => `${p.productoId}::${p.sku}` === manSkuSeleccionado
+      );
+      if (encontrado) {
+        const cant = Math.max(1, Number(manCantidadSel) || 1);
+        const descBase =
+          encontrado.varianteNombre && encontrado.varianteNombre !== "Estándar"
+            ? `${encontrado.productoNombre} (${encontrado.varianteNombre})`
+            : encontrado.productoNombre;
+        const notaDetalle = manDetalleLibre.trim();
+        listaAcumulada.push({
+          productoId: encontrado.productoId,
+          sku: encontrado.sku,
+          descripcion: notaDetalle ? `${descBase} — ${notaDetalle}` : descBase,
+          cantidad: cant,
+          precioUnitario: encontrado.pvp,
+        });
+      }
+    } else if (manDetalleLibre.trim()) {
+      if (listaAcumulada.length === 0) {
+        listaAcumulada.push({ descripcion: manDetalleLibre.trim(), cantidad: 1 });
+      } else {
+        const ultimoIdx = listaAcumulada.length - 1;
+        const ultimo = listaAcumulada[ultimoIdx];
+        if (ultimo) {
+          listaAcumulada[ultimoIdx] = {
+            ...ultimo,
+            descripcion: `${ultimo.descripcion} — ${manDetalleLibre.trim()}`,
+          };
+        }
+      }
+    }
+
+    const listaFinal = listaAcumulada;
 
     if (listaFinal.length === 0) {
       setErrorMsg("Agrega al menos un producto del catálogo o escribe el detalle del arreglo.");
@@ -405,6 +451,11 @@ export function ConsolaEnvioPedidosTaller({
     setErrorMsg(null);
     setMensajeExito(null);
 
+    const sumaItems = listaFinal.reduce(
+      (acc, it) => acc + (it.precioUnitario ?? 0) * it.cantidad,
+      0
+    );
+    const totalCalculado = Number(manTotalUsd) || sumaItems || 0;
     const resumen = listaFinal.map((i) => `${i.cantidad}x ${i.descripcion}`).join(" + ");
 
     const res = await crearOActualizarPedidoOperadorAction({
@@ -424,7 +475,7 @@ export function ConsolaEnvioPedidosTaller({
       retiroEnLocal: manRetiroLocal,
       dedicatoria: manDedicatoria.trim() || undefined,
       observaciones: manObservaciones.trim() || undefined,
-      totalUsd: Number(manTotalUsd) || 0,
+      totalUsd: totalCalculado,
     });
 
     setGuardandoManual(false);
@@ -441,6 +492,8 @@ export function ConsolaEnvioPedidosTaller({
     }
 
     setManItems([]);
+    setManSkuSeleccionado("");
+    setManCantidadSel(1);
     setManDetalleLibre("");
     setManCliente("");
     setManTelefono("");
@@ -880,6 +933,14 @@ export function ConsolaEnvioPedidosTaller({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      <style>{`
+        @media (max-width: 640px) {
+          .eco-ocultar-subtitulo-movil {
+            display: none !important;
+          }
+        }
+      `}</style>
+
       {/* Barra Principal de Navegación Operativa */}
       <div
         style={{
@@ -899,25 +960,34 @@ export function ConsolaEnvioPedidosTaller({
             [
               {
                 id: "bandeja_envio",
+                icono: null,
                 label: "📤 Validar y Enviar Ventas",
                 badge: pendientesEnvio.length,
               },
               {
                 id: "exequiales_llamada",
-                label: "🕊️ Llamada Exequiales",
+                icono: <IconoCruzExequial />,
+                label: "Exequiales",
                 badge: null,
               },
               {
                 id: "cargar_manual",
-                label: "➕ Cargar Pedido",
+                icono: <Plus size={14} />,
+                label: "Pedido Manual",
                 badge: null,
               },
               {
                 id: "calendario",
+                icono: null,
                 label: "📅 Calendario Entregas",
                 badge: ordenesActivas.filter((o) => o.estadoTaller !== "ENTREGADO").length,
               },
-            ] as Array<{ id: PestanaDespacho; label: string; badge: number | null }>
+            ] as Array<{
+              id: PestanaDespacho;
+              icono: React.ReactNode;
+              label: string;
+              badge: number | null;
+            }>
           ).map((tab) => {
             const activa = pestana === tab.id;
             return (
@@ -939,6 +1009,7 @@ export function ConsolaEnvioPedidosTaller({
                   cursor: "pointer",
                 }}
               >
+                {tab.icono}
                 <span>{tab.label}</span>
                 {tab.badge !== null && (
                   <span
@@ -957,79 +1028,7 @@ export function ConsolaEnvioPedidosTaller({
             );
           })}
         </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-          <Link
-            href="/panel/taller"
-            title="Abrir pantalla de producción del Taller Floral"
-            aria-label="Ver Taller"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "7px 12px",
-              borderRadius: "9px",
-              background: "#ECFDF5",
-              border: "1px solid #86EFAC",
-              color: "#065F46",
-              textDecoration: "none",
-              fontSize: "0.79rem",
-              fontWeight: 700,
-            }}
-          >
-            <Hammer size={14} />
-            <span>Ir a Taller ({enTallerActivas.length})</span>
-          </Link>
-
-          <button
-            type="button"
-            onClick={() => void recargarDatos(false)}
-            disabled={cargando}
-            title="Sincronizar ventas y pedidos"
-            aria-label="Actualizar"
-            className="btn-responsive-accion"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "7px 11px",
-              borderRadius: "9px",
-              border: "1px solid #CBD5E1",
-              background: "#FFFFFF",
-              color: "#0F172A",
-              fontSize: "0.79rem",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            {cargando ? <Loader2 size={14} /> : <RefreshCw size={14} />}
-            <span className="btn-texto-responsive">Actualizar</span>
-          </button>
-        </div>
       </div>
-
-      {datos.migracionPendiente && (
-        <div
-          style={{
-            padding: "10px 14px",
-            borderRadius: "10px",
-            background: "#FFFBEB",
-            border: "1px solid #FDE68A",
-            color: "#92400E",
-            fontSize: "0.8rem",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-          }}
-        >
-          <AlertTriangle size={15} />
-          <span>
-            Operando en modo híbrido sobre ventas y entregas actuales. Ejecuta{" "}
-            <code>20261116000001_despacho_pedidos_y_consola_taller.sql</code> en Supabase para
-            activar la tabla dedicada <code>com_orden_taller</code> con notificaciones Realtime.
-          </span>
-        </div>
-      )}
 
       {errorMsg && (
         <div
@@ -1291,9 +1290,12 @@ export function ConsolaEnvioPedidosTaller({
             </div>
             <div>
               <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#0F172A" }}>
-                Generar Pedido Exequiales por Llamada → Envío Directo a Taller
+                Exequiales → Envío Directo a Taller
               </h3>
-              <span style={{ fontSize: "0.78rem", color: "#64748B" }}>
+              <span
+                className="ocultar-en-movil eco-ocultar-subtitulo-movil"
+                style={{ fontSize: "0.78rem", color: "#64748B" }}
+              >
                 Notifica en vivo al Taller y deja precargada la orden para Confirmación de Entregas.
               </span>
             </div>
@@ -1597,9 +1599,12 @@ export function ConsolaEnvioPedidosTaller({
         >
           <div>
             <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#0F172A" }}>
-              Cargar Pedido (WhatsApp / Teléfono / Tienda)
+              Pedido Manual (WhatsApp / Teléfono / Tienda)
             </h3>
-            <span style={{ fontSize: "0.79rem", color: "#64748B" }}>
+            <span
+              className="ocultar-en-movil eco-ocultar-subtitulo-movil"
+              style={{ fontSize: "0.79rem", color: "#64748B" }}
+            >
               Programa la fecha real de entrega (hoy, mañana o cualquier día futuro) y elige si
               dejarlo pendiente de validación o enviarlo de una vez al Taller.
             </span>
@@ -1704,7 +1709,19 @@ export function ConsolaEnvioPedidosTaller({
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                 <SelectConBuscador
                   value={manSkuSeleccionado}
-                  onChange={(e) => setManSkuSeleccionado(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setManSkuSeleccionado(val);
+                    if (val && manItems.length === 0) {
+                      const prodSel = datos.productosCatalogo.find(
+                        (p) => `${p.productoId}::${p.sku}` === val
+                      );
+                      if (prodSel && prodSel.pvp > 0) {
+                        const cant = Math.max(1, Number(manCantidadSel) || 1);
+                        setManTotalUsd((prodSel.pvp * cant).toFixed(2));
+                      }
+                    }
+                  }}
                   aria-label="Seleccionar producto del catálogo"
                   placeholderBusqueda="Buscar arreglo, variante o precio…"
                   style={{ ...inputStyle, flex: "1 1 260px" }}
