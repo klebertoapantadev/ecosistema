@@ -1,10 +1,12 @@
 "use client";
-import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
+import { DataGrid, SelectConBuscador, type ColumnaDataGrid } from "@eco/datagrid";
 import {
+  Camera,
+  CheckCircle2,
   ClipboardList,
+  Clock,
   ExternalLink,
   FilePlus2,
   Loader2,
@@ -18,6 +20,19 @@ import {
   obtenerPedidosTiendaAction,
   type PedidoTiendaRegistrado,
 } from "../acciones-logistica";
+import { actualizarClasificacionPedidoAction } from "../acciones-operaciones-taller";
+import {
+  CLASIFICACIONES_OPERATIVAS_PEDIDO,
+  inferirClasificacionPedido,
+  obtenerDefinicionClasificacionPedido,
+  type ClasificacionOperativaPedido,
+} from "../operaciones-taller";
+import {
+  BarraFiltroClasificacionPedido,
+  InsigniaClasificacionPedido,
+  ModalVisorEvidenciaEntrega,
+  type DatosVisorEvidenciaModal,
+} from "./InsigniaClasificacionPedido";
 import { ModalEditarVariacionProforma } from "./ModalEditarVariacionProforma";
 
 interface PropsBandejaPedidosTienda {
@@ -25,7 +40,12 @@ interface PropsBandejaPedidosTienda {
   pedidosIniciales?: PedidoTiendaRegistrado[];
 }
 
-const ESTADOS_PEDIDO: Array<{ valor: string; etiqueta: string; colorFondo: string; colorTexto: string }> = [
+const ESTADOS_PEDIDO: Array<{
+  valor: string;
+  etiqueta: string;
+  colorFondo: string;
+  colorTexto: string;
+}> = [
   { valor: "ENVIADA", etiqueta: "Proforma Emitida", colorFondo: "#F3E8FF", colorTexto: "#6B21A8" },
   { valor: "PENDIENTE_PAGO", etiqueta: "Pendiente Pago", colorFondo: "#FEF3C7", colorTexto: "#92400E" },
   { valor: "ORDEN_CONFIRMADA", etiqueta: "Orden Confirmada", colorFondo: "#FEF9C3", colorTexto: "#854D0E" },
@@ -50,6 +70,25 @@ function estiloEstado(estado: string) {
   );
 }
 
+function resolverClasificacionPedidoTienda(
+  p: PedidoTiendaRegistrado
+): ClasificacionOperativaPedido {
+  return inferirClasificacionPedido({
+    clasificacionExplicita: p.clasificacionPedido,
+    origenTipo: p.tipoOrigen,
+    retiroEnLocal: p.logistica.retiroEnLocal,
+    salaServicio: p.exequiales?.salaServicio ?? p.salaServicio ?? null,
+    productoResumen: p.items.map((it) => it.descripcion).join(" "),
+    ubicacionEntrega: p.logistica.direccion,
+    metodoPago: p.metodoPago,
+    tieneEvento: Boolean(p.evento),
+    items: p.items.map((it) => ({
+      descripcion: it.descripcion,
+      sku: it.varianteNombre,
+    })),
+  });
+}
+
 export function BandejaPedidosTienda({
   negocio,
   pedidosIniciales,
@@ -60,6 +99,10 @@ export function BandejaPedidosTienda({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [actualizandoId, setActualizandoId] = useState<string | null>(null);
   const [pedidoEnfocado, setPedidoEnfocado] = useState<string>("");
+  const [filtroClasificacion, setFiltroClasificacion] = useState<
+    ClasificacionOperativaPedido | "TODOS"
+  >("TODOS");
+  const [visorEvidencia, setVisorEvidencia] = useState<DatosVisorEvidenciaModal | null>(null);
   const [proformaEditandoVariacion, setProformaEditandoVariacion] =
     useState<PedidoTiendaRegistrado | null>(null);
 
@@ -71,6 +114,7 @@ export function BandejaPedidosTienda({
         const cod = (params.get("pedido") || params.get("codigo") || "").trim();
         if (cod) {
           setPedidoEnfocado(cod);
+          setFiltroClasificacion("TODOS");
         }
       } catch {
         // Ignorar
@@ -80,15 +124,6 @@ export function BandejaPedidosTienda({
     window.addEventListener("eco:abrir-ruta-push", sincronizarDesdeUrl);
     return () => window.removeEventListener("eco:abrir-ruta-push", sincronizarDesdeUrl);
   }, []);
-
-  const idsExpandidosIniciales = useMemo(() => {
-    if (!pedidoEnfocado) return undefined;
-    const upper = pedidoEnfocado.toUpperCase();
-    const encontrados = pedidos
-      .filter((p) => p.codigoOrden.toUpperCase().includes(upper) || p.id === pedidoEnfocado)
-      .map((p) => p.id);
-    return encontrados.length > 0 ? encontrados : undefined;
-  }, [pedidoEnfocado, pedidos]);
 
   const cargarPedidos = useCallback(async () => {
     setCargando(true);
@@ -168,164 +203,343 @@ export function BandejaPedidosTienda({
     [negocio, cacheKey]
   );
 
+  const cambiarClasificacion = useCallback(
+    async (pedidoId: string, nuevaClasif: ClasificacionOperativaPedido) => {
+      setActualizandoId(pedidoId);
+      setErrorMsg(null);
+      const res = await actualizarClasificacionPedidoAction({
+        negocio,
+        pedidoId,
+        clasificacionPedido: nuevaClasif,
+      });
+      setActualizandoId(null);
+      if (!res.ok) {
+        setErrorMsg(res.error);
+        return;
+      }
+      setPedidos((prev) => {
+        const nuevaLista = prev.map((p) =>
+          p.id === pedidoId
+            ? {
+                ...p,
+                clasificacionPedido: res.clasificacionPedido,
+                logistica: {
+                  ...p.logistica,
+                  retiroEnLocal:
+                    res.clasificacionPedido === "LOCAL" ? true : p.logistica.retiroEnLocal,
+                },
+              }
+            : p
+        );
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify(nuevaLista));
+        } catch {
+          // Ignorar cuota
+        }
+        return nuevaLista;
+      });
+    },
+    [negocio, cacheKey]
+  );
+
+  const conteosClasificacion = useMemo(() => {
+    const mapa: Partial<Record<ClasificacionOperativaPedido, number>> = {};
+    for (const p of pedidos) {
+      const c = resolverClasificacionPedidoTienda(p);
+      mapa[c] = (mapa[c] ?? 0) + 1;
+    }
+    return mapa;
+  }, [pedidos]);
+
+  const pedidosFiltrados = useMemo(() => {
+    if (filtroClasificacion === "TODOS") return pedidos;
+    return pedidos.filter((p) => resolverClasificacionPedidoTienda(p) === filtroClasificacion);
+  }, [pedidos, filtroClasificacion]);
+
+  const idsExpandidosIniciales = useMemo(() => {
+    if (!pedidoEnfocado) return undefined;
+    const upper = pedidoEnfocado.toUpperCase();
+    const encontrados = pedidosFiltrados
+      .filter((p) => p.codigoOrden.toUpperCase().includes(upper) || p.id === pedidoEnfocado)
+      .map((p) => p.id);
+    return encontrados.length > 0 ? encontrados : undefined;
+  }, [pedidoEnfocado, pedidosFiltrados]);
+
+  const abrirModalEvidencia = useCallback((p: PedidoTiendaRegistrado) => {
+    const clasif = resolverClasificacionPedidoTienda(p);
+    const resumenProd =
+      p.items.map((it) => `${it.cantidad}x ${it.descripcion}`).join(" + ") || "Pedido floral";
+    setVisorEvidencia({
+      codigo: p.codigoOrden,
+      clasificacion: clasif,
+      productoResumen: resumenProd,
+      quienSolicita: p.exequiales?.quienSolicita || p.compradorNombre,
+      destinatarioFallecido:
+        p.exequiales?.nombreFallecido || p.logistica.destinatarioNombre || null,
+      salaServicio:
+        p.exequiales?.salaServicio || p.evidenciaEntrega?.salaServicio || p.salaServicio || null,
+      fechaEntrega: p.logistica.fechaEntrega,
+      horaEntrega: p.logistica.horaExacta || p.logistica.franjaHoraria,
+      direccionEntrega: p.logistica.retiroEnLocal
+        ? "Retiro en Tienda"
+        : p.evidenciaEntrega?.direccionGps || p.logistica.direccion || null,
+      entregadoEn: p.evidenciaEntrega?.capturadoEn || null,
+      entregadorNombre: p.evidenciaEntrega?.entregadorNombre || null,
+      fotoUrl: p.evidenciaEntrega?.fotoUrl || null,
+      mapaUrl: p.evidenciaEntrega?.mapaUrl || null,
+      latitud: p.evidenciaEntrega?.latitud ?? p.logistica.lat ?? null,
+      longitud: p.evidenciaEntrega?.longitud ?? p.logistica.lng ?? null,
+      numeroInforme:
+        p.evidenciaEntrega?.numeroInforme || p.exequiales?.numeroInforme || null,
+    });
+  }, []);
+
   const columnas = useMemo<ColumnaDataGrid<PedidoTiendaRegistrado>[]>(
     () => [
       {
         id: "orden",
-        encabezado: "Orden / Proforma",
-        valor: (p) => `${p.codigoOrden} ${p.tipoOrigen || ""}`,
+        encabezado: "Orden y Producto",
+        valor: (p) =>
+          `${p.codigoOrden} ${p.items.map((it) => it.descripcion).join(" ")} ${p.tipoOrigen || ""}`,
         render: (p) => {
-          const esProforma = p.tipoOrigen === "PROFORMA_EVENTO";
-          const esExequiales = p.tipoOrigen === "EXEQUIALES_LLAMADA";
-          const esManual = p.tipoOrigen === "MANUAL_ADMIN";
-          const bgBadge = esExequiales
-            ? "#FEF3C7"
-            : esManual
-              ? "#ECFDF5"
-              : esProforma
-                ? "#FAF5FF"
-                : "#F1F5F9";
-          const colorBadge = esExequiales
-            ? "#92400E"
-            : esManual
-              ? "#065F46"
-              : esProforma
-                ? "#7E22CE"
-                : "#475569";
-          const borderBadge = esExequiales
-            ? "#FDE68A"
-            : esManual
-              ? "#A7F3D0"
-              : esProforma
-                ? "#E9D5FF"
-                : "#E2E8F0";
-          const textoBadge = esExequiales
-            ? "🕯️ Exequiales"
-            : esManual
-              ? "📝 Pedido Manual"
-              : esProforma
-                ? "✨ Evento"
-                : "🛍️ Tienda";
+          const resumenProd =
+            p.items.map((it) => `${it.cantidad}× ${it.descripcion}`).join(" + ") ||
+            "Arreglo floral";
           return (
-            <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "3px", maxWidth: "300px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
                 <strong style={{ color: "#111827", fontSize: "0.84rem" }}>{p.codigoOrden}</strong>
-                <span
-                  style={{
-                    fontSize: "0.66rem",
-                    fontWeight: 700,
-                    padding: "2px 6px",
-                    borderRadius: "999px",
-                    background: bgBadge,
-                    color: colorBadge,
-                    border: `1px solid ${borderBadge}`,
-                  }}
-                >
-                  {textoBadge}
+                <span style={{ fontSize: "0.7rem", color: "#64748B" }}>
+                  {new Date(p.creadoEn).toLocaleString("es-EC", {
+                    dateStyle: "short",
+                    timeStyle: "short",
+                  })}
                 </span>
               </div>
-              <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>
-                {new Date(p.creadoEn).toLocaleString("es-EC", {
-                  dateStyle: "short",
-                  timeStyle: "short",
-                })}
+              <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#1E293B" }}>
+                {resumenProd}
               </span>
             </div>
           );
         },
       },
       {
+        id: "clasificacion",
+        encabezado: "Clasificación",
+        valor: (p) =>
+          obtenerDefinicionClasificacionPedido(resolverClasificacionPedidoTienda(p)).etiqueta,
+        render: (p) => {
+          const clasif = resolverClasificacionPedidoTienda(p);
+          const def = obtenerDefinicionClasificacionPedido(clasif);
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <InsigniaClasificacionPedido
+                clasificacion={clasif}
+                compacto
+                sufijoTexto={
+                  clasif === "EXEQUIALES" && (p.exequiales?.salaServicio || p.salaServicio)
+                    ? p.exequiales?.salaServicio || p.salaServicio
+                    : null
+                }
+              />
+              <SelectConBuscador
+                value={clasif}
+                disabled={actualizandoId === p.id}
+                onChange={(e) =>
+                  void cambiarClasificacion(p.id, e.target.value as ClasificacionOperativaPedido)
+                }
+                aria-label={`Clasificación de ${p.codigoOrden}`}
+                title="Cambiar clasificación operativa del pedido"
+                style={{
+                  padding: "3px 7px",
+                  borderRadius: "6px",
+                  border: `1px solid ${def.bordeHex}`,
+                  background: "#FFFFFF",
+                  color: "#334155",
+                  fontSize: "0.7rem",
+                  fontWeight: 600,
+                  maxWidth: "145px",
+                }}
+              >
+                {CLASIFICACIONES_OPERATIVAS_PEDIDO.map((op) => (
+                  <option key={op.clave} value={op.clave}>
+                    {op.etiqueta}
+                  </option>
+                ))}
+              </SelectConBuscador>
+            </div>
+          );
+        },
+      },
+      {
         id: "cliente",
-        encabezado: "Comprador",
-        valor: (p) => `${p.compradorNombre} ${p.compradorIdentificacion} ${p.compradorTelefono}`,
-        render: (p) => (
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <strong style={{ fontSize: "0.82rem", color: "#1F2937" }}>{p.compradorNombre}</strong>
-            <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>
-              {p.compradorTelefono || p.compradorCorreo}
-            </span>
-          </div>
-        ),
+        encabezado: "Solicita / Destinatario o Fallecido",
+        valor: (p) =>
+          `${p.compradorNombre} ${p.logistica.destinatarioNombre} ${
+            p.exequiales?.nombreFallecido || ""
+          } ${p.exequiales?.salaServicio || p.salaServicio || ""} ${p.compradorTelefono}`,
+        render: (p) => {
+          const clasif = resolverClasificacionPedidoTienda(p);
+          const esExeq = clasif === "EXEQUIALES";
+          const sala = p.exequiales?.salaServicio || p.salaServicio;
+          const fallecido = p.exequiales?.nombreFallecido || p.logistica.destinatarioNombre;
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px", maxWidth: "260px" }}>
+              <strong style={{ fontSize: "0.81rem", color: "#0F172A" }}>
+                {esExeq ? `Solicita: ${p.compradorNombre}` : p.compradorNombre}
+              </strong>
+              {esExeq ? (
+                <>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#4C1D95" }}>
+                    Fallecido: {fallecido || "Por confirmar"}
+                  </span>
+                  <span style={{ fontSize: "0.72rem", color: "#475569", fontWeight: 600 }}>
+                    Sala: {sala || "Por confirmar"}
+                  </span>
+                </>
+              ) : (
+                <>
+                  {p.logistica.destinatarioNombre &&
+                    p.logistica.destinatarioNombre !== p.compradorNombre && (
+                      <span style={{ fontSize: "0.74rem", color: "#334155", fontWeight: 600 }}>
+                        Recibe: {p.logistica.destinatarioNombre}
+                      </span>
+                    )}
+                  <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>
+                    {p.compradorTelefono || p.compradorCorreo || "—"}
+                  </span>
+                </>
+              )}
+            </div>
+          );
+        },
       },
       {
         id: "entrega",
-        encabezado: "Zona / Destino",
+        encabezado: "Fecha, Hora y Dirección de Entrega",
         valor: (p) =>
-          p.logistica.retiroEnLocal
-            ? "Retiro en Tienda"
-            : p.logistica.zonaDetectada || p.logistica.direccion || "Domicilio",
-        render: (p) => (
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#111827" }}>
-              {p.logistica.retiroEnLocal
-                ? "🏪 Retiro en Tienda"
-                : `📍 ${p.logistica.zonaDetectada || "Domicilio"}`}
-            </span>
-            <span style={{ fontSize: "0.72rem", color: "#4B5563" }}>
-              {p.logistica.fechaEntrega} · {p.logistica.franjaHoraria}
-              {typeof p.logistica.distanciaVialKm === "number" && !p.logistica.retiroEnLocal
-                ? ` · ${p.logistica.distanciaVialKm.toFixed(1)} km`
-                : ""}
-            </span>
-          </div>
-        ),
-      },
-      {
-        id: "envio_interno",
-        encabezado: "Envío y Cálculo Interno",
-        valor: (p) => `${p.costoEnvio.toFixed(2)} ${p.logistica.formulaCalculoInterno}`,
-        render: (p) => (
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px", maxWidth: "290px" }}>
-            <strong
-              style={{
-                fontSize: "0.82rem",
-                color: p.costoEnvio === 0 ? "#15803D" : "#0F172A",
-              }}
-            >
-              {p.costoEnvio === 0 ? "$0.00 (Gratis)" : `$${p.costoEnvio.toFixed(2)} USD`}
-            </strong>
-            <span style={{ fontSize: "0.71rem", color: "#475569", lineHeight: 1.35 }}>
-              {p.logistica.formulaCalculoInterno}
-            </span>
-          </div>
-        ),
+          `${p.logistica.fechaEntrega} ${p.logistica.horaExacta || p.logistica.franjaHoraria} ${
+            p.logistica.retiroEnLocal
+              ? "Retiro en Tienda"
+              : p.logistica.direccion || p.logistica.zonaDetectada || ""
+          }`,
+        render: (p) => {
+          const tieneEvid = Boolean(p.evidenciaEntrega?.confirmada || p.evidenciaEntrega?.fotoUrl);
+          const fotoUrl = p.evidenciaEntrega?.fotoUrl;
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: "3px", maxWidth: "285px" }}>
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  fontSize: "0.77rem",
+                  fontWeight: 700,
+                  color: "#0F172A",
+                }}
+              >
+                <Clock size={12} color="#0D9488" />
+                <span>
+                  {p.logistica.fechaEntrega || "Sin fecha"}
+                  {p.logistica.horaExacta
+                    ? ` · ${p.logistica.horaExacta}`
+                    : p.logistica.franjaHoraria
+                      ? ` · ${p.logistica.franjaHoraria}`
+                      : ""}
+                </span>
+              </span>
+
+              <span style={{ fontSize: "0.74rem", color: "#475569", lineHeight: 1.35 }}>
+                {p.logistica.retiroEnLocal
+                  ? "Retiro en Tienda"
+                  : p.logistica.direccion || p.logistica.zonaDetectada || "Por coordinar dirección"}
+              </span>
+
+              {tieneEvid && (
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap", marginTop: "2px" }}>
+                  <button
+                    type="button"
+                    onClick={() => abrirModalEvidencia(p)}
+                    title="Abrir fotografía y comprobante permanente de confirmación de entrega"
+                    aria-label="Ver Foto"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                      padding: "3px 8px",
+                      borderRadius: "6px",
+                      border: "1px solid #99F6E4",
+                      background: "#F0FDFA",
+                      color: "#115E59",
+                      fontSize: "0.7rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {fotoUrl ? <Camera size={11} /> : <CheckCircle2 size={11} />}
+                    <span>{fotoUrl ? "Ver Foto" : "Confirmada"}</span>
+                  </button>
+
+                  {(p.evidenciaEntrega?.numeroInforme || p.exequiales?.numeroInforme) && (
+                    <span
+                      style={{
+                        padding: "2px 6px",
+                        borderRadius: "6px",
+                        background: "#EFF6FF",
+                        border: "1px solid #BFDBFE",
+                        color: "#1E40AF",
+                        fontSize: "0.67rem",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {p.evidenciaEntrega?.numeroInforme || p.exequiales?.numeroInforme}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        },
       },
       {
         id: "total",
-        encabezado: "Total Orden",
+        encabezado: "Total / Convenio",
         valor: (p) => p.total,
-        render: (p) => (
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <strong style={{ fontSize: "0.86rem", color: "#111827" }}>
-              ${p.total.toFixed(2)}
-            </strong>
-            {typeof p.montoAbonadoUsd === "number" && p.montoAbonadoUsd > 0 && (
-              <span style={{ fontSize: "0.7rem", color: "#1D4ED8", fontWeight: 700 }}>
-                Abono: ${p.montoAbonadoUsd.toFixed(2)} · Saldo: $
-                {Math.max(0, p.saldoPendienteUsd ?? p.total - p.montoAbonadoUsd).toFixed(2)}
+        render: (p) => {
+          const esConvenio = p.metodoPago.toLowerCase().includes("convenio");
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+              <strong style={{ fontSize: "0.85rem", color: "#111827" }}>
+                {esConvenio && p.total === 0 ? "Convenio IESS" : `$${p.total.toFixed(2)}`}
+              </strong>
+              {typeof p.montoAbonadoUsd === "number" && p.montoAbonadoUsd > 0 && (
+                <span style={{ fontSize: "0.7rem", color: "#1D4ED8", fontWeight: 700 }}>
+                  Abono: ${p.montoAbonadoUsd.toFixed(2)} · Saldo: $
+                  {Math.max(0, p.saldoPendienteUsd ?? p.total - p.montoAbonadoUsd).toFixed(2)}
+                </span>
+              )}
+              <span style={{ fontSize: "0.69rem", color: "#6B7280", textTransform: "uppercase" }}>
+                {p.metodoPago}
               </span>
-            )}
-            <span style={{ fontSize: "0.7rem", color: "#6B7280", textTransform: "uppercase" }}>
-              {p.metodoPago}
-            </span>
-            {p.comprobanteTransferencia?.url && (
-              <span
-                style={{
-                  fontSize: "0.66rem",
-                  fontWeight: 700,
-                  color: "#065F46",
-                  background: "#ECFDF5",
-                  border: "1px solid #A7F3D0",
-                  borderRadius: "999px",
-                  padding: "1px 6px",
-                  alignSelf: "flex-start",
-                }}
-              >
-                📎 Comprobante
-              </span>
-            )}
-          </div>
-        ),
+              {p.comprobanteTransferencia?.url && (
+                <span
+                  style={{
+                    fontSize: "0.66rem",
+                    fontWeight: 700,
+                    color: "#065F46",
+                    background: "#ECFDF5",
+                    border: "1px solid #A7F3D0",
+                    borderRadius: "6px",
+                    padding: "1px 6px",
+                    alignSelf: "flex-start",
+                  }}
+                >
+                  Comprobante
+                </span>
+              )}
+            </div>
+          );
+        },
       },
       {
         id: "estado",
@@ -360,14 +574,14 @@ export function BandejaPedidosTienda({
         },
       },
     ],
-    [actualizandoId, cambiarEstado]
+    [actualizandoId, cambiarEstado, cambiarClasificacion, abrirModalEvidencia]
   );
 
-  const totalVentas = pedidos.reduce((acc, p) => acc + p.total, 0);
-  const totalEnvios = pedidos.reduce((acc, p) => acc + p.costoEnvio, 0);
+  const totalVentas = pedidosFiltrados.reduce((acc, p) => acc + p.total, 0);
+  const totalEnvios = pedidosFiltrados.reduce((acc, p) => acc + p.costoEnvio, 0);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       {/* Resumen superior */}
       <div
         style={{
@@ -388,9 +602,9 @@ export function BandejaPedidosTienda({
               width: "40px",
               height: "40px",
               borderRadius: "10px",
-              background: "#F0FDF4",
-              border: "1px solid #BBF7D0",
-              color: "#166534",
+              background: "#F0FDFA",
+              border: "1px solid #99F6E4",
+              color: "#0F766E",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -400,7 +614,7 @@ export function BandejaPedidosTienda({
           </div>
           <div>
             <strong style={{ fontSize: "0.96rem", color: "#111827" }}>
-              Pedidos Recibidos ({pedidos.length})
+              Historial Permanente de Pedidos ({pedidosFiltrados.length})
             </strong>
             <div style={{ fontSize: "0.78rem", color: "#6B7280" }}>
               Ventas acumuladas: <strong>${totalVentas.toFixed(2)}</strong> · Recaudado en transporte:{" "}
@@ -427,7 +641,7 @@ export function BandejaPedidosTienda({
               fontWeight: 700,
             }}
           >
-            <span>📤 Enviar a Taller</span>
+            <span>Enviar a Taller</span>
           </a>
 
           <a
@@ -448,14 +662,36 @@ export function BandejaPedidosTienda({
               fontWeight: 700,
             }}
           >
-            <span>🔨 Taller</span>
+            <span>Taller</span>
+          </a>
+
+          <a
+            href="/panel/entregas"
+            title="Abrir consola de confirmación fotográfica de entregas e informes IESS"
+            aria-label="Entregas GPS"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "8px 13px",
+              borderRadius: "8px",
+              border: "1px solid #99F6E4",
+              background: "#F0FDFA",
+              color: "#115E59",
+              textDecoration: "none",
+              fontSize: "0.8rem",
+              fontWeight: 700,
+            }}
+          >
+            <Camera size={14} />
+            <span>Entregas GPS</span>
           </a>
 
           <button
             type="button"
             onClick={() => void cargarPedidos()}
             disabled={cargando}
-            title="Actualizar listado de pedidos de la tienda"
+            title="Actualizar historial permanente de pedidos"
             aria-label="Actualizar"
             className="btn-responsive-accion"
             style={{
@@ -476,6 +712,28 @@ export function BandejaPedidosTienda({
             <span className="btn-texto-responsive">Actualizar</span>
           </button>
         </div>
+      </div>
+
+      {/* Barra profesional de Clasificación Operativa */}
+      <div
+        style={{
+          background: "#FFFFFF",
+          border: "1px solid #E5E7EB",
+          borderRadius: "12px",
+          padding: "12px 16px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "10px",
+          flexWrap: "wrap",
+        }}
+      >
+        <BarraFiltroClasificacionPedido
+          seleccionada={filtroClasificacion}
+          onSeleccionar={setFiltroClasificacion}
+          conteos={conteosClasificacion}
+          totalGeneral={pedidos.length}
+        />
       </div>
 
       {errorMsg && (
@@ -510,7 +768,7 @@ export function BandejaPedidosTienda({
           }}
         >
           <span>
-            📦 Mostrando acceso directo al pedido modificado: <strong>{pedidoEnfocado}</strong>
+            Mostrando acceso directo al pedido seleccionado: <strong>{pedidoEnfocado}</strong>
           </span>
           <button
             type="button"
@@ -521,7 +779,11 @@ export function BandejaPedidosTienda({
                 params.delete("pedido");
                 params.delete("codigo");
                 const qs = params.toString();
-                window.history.replaceState(null, "", `${window.location.pathname}${qs ? `?${qs}` : ""}`);
+                window.history.replaceState(
+                  null,
+                  "",
+                  `${window.location.pathname}${qs ? `?${qs}` : ""}`
+                );
               }
             }}
             title="Mostrar todos los pedidos de la tienda"
@@ -553,384 +815,601 @@ export function BandejaPedidosTienda({
       >
         <DataGrid
           columnas={columnas}
-          filas={pedidos}
+          filas={pedidosFiltrados}
           idFila={(p) => p.id}
-          nombreExportacion={`pedidos-tienda-${negocio}`}
+          nombreExportacion={`historial-pedidos-${negocio}`}
           busquedaInicial={pedidoEnfocado}
           filasExpandidasIniciales={idsExpandidosIniciales}
-          contenidoExpandible={(p) => (
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(min(240px, 100%), 1fr))",
-                gap: "14px",
-                padding: "12px",
-                background: "#F8FAFC",
-                borderRadius: "10px",
-                border: "1px solid #E2E8F0",
-              }}
-            >
-              {/* Auditoría Interna de Logística y Ruta GPS */}
+          contenidoExpandible={(p) => {
+            const clasif = resolverClasificacionPedidoTienda(p);
+            const esExeq = clasif === "EXEQUIALES";
+            const sala = p.exequiales?.salaServicio || p.salaServicio;
+            return (
               <div
                 style={{
-                  background: "#FFFFFF",
-                  border: "1px solid #CBD5E1",
-                  borderRadius: "9px",
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(min(255px, 100%), 1fr))",
+                  gap: "14px",
                   padding: "12px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "6px",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#0F172A" }}>
-                  <Truck size={15} color="#16A34A" />
-                  <strong style={{ fontSize: "0.82rem" }}>
-                    Detalle Logístico Interno (Exclusivo Tienda)
-                  </strong>
-                </div>
-                <div style={{ fontSize: "0.78rem", color: "#334155", lineHeight: 1.45 }}>
-                  <div>
-                    <strong>Destinatario:</strong> {p.logistica.destinatarioNombre || "—"} (
-                    {p.logistica.destinatarioTelefono || "—"})
-                  </div>
-                  <div>
-                    <strong>Dirección:</strong> {p.logistica.direccion || "—"}
-                    {p.logistica.referencia ? ` · Ref: ${p.logistica.referencia}` : ""}
-                  </div>
-                  {p.logistica.detalleDireccionGeo && (
-                    <div style={{ fontSize: "0.74rem", color: "#0F766E" }}>
-                      <strong>Mapa (Calle / Sector / Parroquia):</strong>{" "}
-                      {[
-                        p.logistica.detalleDireccionGeo.callePrincipal,
-                        p.logistica.detalleDireccionGeo.sectorBarrio
-                          ? `Sector ${p.logistica.detalleDireccionGeo.sectorBarrio}`
-                          : null,
-                        p.logistica.detalleDireccionGeo.parroquia
-                          ? `Parroquia ${p.logistica.detalleDireccionGeo.parroquia}`
-                          : null,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ") || p.logistica.detalleDireccionGeo.resumenDireccion}
-                    </div>
-                  )}
-                  <div>
-                    <strong>Fecha / Franja:</strong> {p.logistica.fechaEntrega} ·{" "}
-                    {p.logistica.franjaHoraria}
-                    {p.logistica.horaExacta ? ` (${p.logistica.horaExacta})` : ""}
-                  </div>
-                  {typeof p.logistica.distanciaVialKm === "number" && (
-                    <div>
-                      <strong>Distancia vial calculada:</strong>{" "}
-                      {p.logistica.distanciaVialKm.toFixed(2)} km
-                    </div>
-                  )}
-                  <div
-                    style={{
-                      marginTop: "6px",
-                      padding: "7px 9px",
-                      borderRadius: "7px",
-                      background: "#F0FDF4",
-                      border: "1px solid #BBF7D0",
-                      color: "#166534",
-                      fontSize: "0.75rem",
-                    }}
-                  >
-                    <strong>Cálculo aplicado:</strong> {p.logistica.formulaCalculoInterno}
-                  </div>
-                </div>
-
-                {p.logistica.enlaceMapa && (
-                  <div style={{ marginTop: "4px" }}>
-                    <a
-                      href={p.logistica.enlaceMapa}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Abrir ubicación exacta de entrega en Google Maps"
-                      aria-label="Abrir Mapa"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "5px",
-                        padding: "6px 11px",
-                        borderRadius: "7px",
-                        background: "#18181B",
-                        color: "#FFFFFF",
-                        textDecoration: "none",
-                        fontSize: "0.75rem",
-                        fontWeight: 600,
-                      }}
-                    >
-                      <MapPin size={13} />
-                      <span>Abrir Mapa</span>
-                      <ExternalLink size={12} />
-                    </a>
-                  </div>
-                )}
-              </div>
-
-              {/* Ítems y Dedicatorias */}
-              <div
-                style={{
-                  background: "#FFFFFF",
+                  background: "#F8FAFC",
+                  borderRadius: "10px",
                   border: "1px solid #E2E8F0",
-                  borderRadius: "9px",
-                  padding: "12px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "8px",
                 }}
               >
-                <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#0F172A" }}>
-                  <PackageCheck size={15} color="#2563EB" />
-                  <strong style={{ fontSize: "0.82rem" }}>
-                    Arreglos, Complementos y Dedicatorias ({p.items.length})
-                  </strong>
-                </div>
-
-                {p.items.map((it, idx) => (
-                  <div
-                    key={`${p.id}-it-${idx}`}
-                    style={{
-                      borderTop: idx === 0 ? "none" : "1px solid #F1F5F9",
-                      paddingTop: idx === 0 ? 0 : "6px",
-                      fontSize: "0.78rem",
-                      color: "#1E293B",
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", gap: "8px" }}>
-                      <strong>
-                        {it.cantidad}× {it.descripcion}
-                      </strong>
-                      <span>${it.totalLinea.toFixed(2)}</span>
-                    </div>
-                    {it.dedicatoria?.mensaje && (
-                      <div
-                        style={{
-                          marginTop: "3px",
-                          fontSize: "0.73rem",
-                          color: "#475569",
-                          background: "#FFFBEB",
-                          border: "1px solid #FDE68A",
-                          borderRadius: "6px",
-                          padding: "5px 8px",
-                        }}
-                      >
-                        💌 <strong>Para:</strong> {it.dedicatoria.para || "—"} ·{" "}
-                        <strong>De:</strong> {it.dedicatoria.de || "—"} — &ldquo;
-                        {it.dedicatoria.mensaje}&rdquo;
-                      </div>
-                    )}
-                  </div>
-                ))}
-
+                {/* 1. Auditoría Interna de Logística, Sala y Dirección */}
                 <div
                   style={{
-                    marginTop: "auto",
-                    paddingTop: "8px",
-                    borderTop: "1px solid #E2E8F0",
-                    fontSize: "0.75rem",
-                    color: "#475569",
+                    background: "#FFFFFF",
+                    border: "1px solid #CBD5E1",
+                    borderRadius: "9px",
+                    padding: "12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: "6px",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#0F172A" }}>
+                      <Truck size={15} color="#0D9488" />
+                      <strong style={{ fontSize: "0.82rem" }}>
+                        {esExeq ? "Detalle Permanente Exequiales" : "Detalle Logístico y Entrega"}
+                      </strong>
+                    </div>
+                    <InsigniaClasificacionPedido clasificacion={clasif} compacto />
+                  </div>
+
+                  <div style={{ fontSize: "0.78rem", color: "#334155", lineHeight: 1.48 }}>
+                    {esExeq ? (
+                      <>
+                        <div>
+                          <strong>Sala de entrega:</strong> {sala || "Por confirmar"}
+                        </div>
+                        <div>
+                          <strong>Quién solicitó:</strong>{" "}
+                          {p.exequiales?.quienSolicita || p.compradorNombre || "—"}
+                        </div>
+                        <div>
+                          <strong>Nombre del fallecido:</strong>{" "}
+                          {p.exequiales?.nombreFallecido || p.logistica.destinatarioNombre || "Por confirmar"}
+                        </div>
+                      </>
+                    ) : (
+                      <div>
+                        <strong>Destinatario:</strong> {p.logistica.destinatarioNombre || "—"} (
+                        {p.logistica.destinatarioTelefono || p.compradorTelefono || "—"})
+                      </div>
+                    )}
+
+                    <div>
+                      <strong>Dirección de entrega:</strong>{" "}
+                      {p.logistica.retiroEnLocal ? "Retiro en Tienda" : p.logistica.direccion || "—"}
+                      {p.logistica.referencia ? ` · Ref: ${p.logistica.referencia}` : ""}
+                    </div>
+
+                    {p.logistica.detalleDireccionGeo && (
+                      <div style={{ fontSize: "0.74rem", color: "#0F766E" }}>
+                        <strong>Mapa (Calle / Sector / Parroquia):</strong>{" "}
+                        {[
+                          p.logistica.detalleDireccionGeo.callePrincipal,
+                          p.logistica.detalleDireccionGeo.sectorBarrio
+                            ? `Sector ${p.logistica.detalleDireccionGeo.sectorBarrio}`
+                            : null,
+                          p.logistica.detalleDireccionGeo.parroquia
+                            ? `Parroquia ${p.logistica.detalleDireccionGeo.parroquia}`
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ") || p.logistica.detalleDireccionGeo.resumenDireccion}
+                      </div>
+                    )}
+
+                    <div>
+                      <strong>Fecha / Hora programada:</strong> {p.logistica.fechaEntrega || "—"} ·{" "}
+                      {p.logistica.horaExacta || p.logistica.franjaHoraria || "—"}
+                    </div>
+
+                    {typeof p.logistica.distanciaVialKm === "number" && (
+                      <div>
+                        <strong>Distancia vial calculada:</strong>{" "}
+                        {p.logistica.distanciaVialKm.toFixed(2)} km
+                      </div>
+                    )}
+
+                    <div
+                      style={{
+                        marginTop: "6px",
+                        padding: "7px 9px",
+                        borderRadius: "7px",
+                        background: esExeq ? "#F5F3FF" : "#F0FDF4",
+                        border: `1px solid ${esExeq ? "#DDD6FE" : "#BBF7D0"}`,
+                        color: esExeq ? "#4C1D95" : "#166534",
+                        fontSize: "0.75rem",
+                      }}
+                    >
+                      <strong>Registro interno:</strong> {p.logistica.formulaCalculoInterno}
+                    </div>
+                  </div>
+
+                  {p.logistica.enlaceMapa && (
+                    <div style={{ marginTop: "4px" }}>
+                      <a
+                        href={p.logistica.enlaceMapa}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Abrir ubicación exacta de entrega en Google Maps"
+                        aria-label="Abrir Mapa"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          padding: "6px 11px",
+                          borderRadius: "7px",
+                          background: "#18181B",
+                          color: "#FFFFFF",
+                          textDecoration: "none",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                        }}
+                      >
+                        <MapPin size={13} />
+                        <span>Abrir Mapa</span>
+                        <ExternalLink size={12} />
+                      </a>
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Ítems, Producto y Dedicatorias */}
+                <div
+                  style={{
+                    background: "#FFFFFF",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: "9px",
+                    padding: "12px",
                     display: "flex",
                     flexDirection: "column",
                     gap: "8px",
                   }}
                 >
-                  {p.evento && (
-                    <div
-                      style={{
-                        padding: "8px 10px",
-                        borderRadius: "7px",
-                        background: "#FAF5FF",
-                        border: "1px solid #E9D5FF",
-                        color: "#581C87",
-                      }}
-                    >
-                      <strong>✨ Evento:</strong> {p.evento.tipoEvento || "Evento"} · Fecha:{" "}
-                      {p.evento.fechaEvento || "—"}
-                      {p.evento.horaEvento ? ` (${p.evento.horaEvento})` : ""}
-                      {p.evento.paletaColores ? ` · Paleta: ${p.evento.paletaColores}` : ""}
-                      {p.evento.notasEvento ? (
-                        <div style={{ marginTop: "3px" }}>
-                          <strong>Notas:</strong> {p.evento.notasEvento}
-                        </div>
-                      ) : null}
-                    </div>
-                  )}
-
-                  <div>
-                    <strong>Facturación SRI:</strong> {p.compradorNombre} · ID:{" "}
-                    {p.compradorIdentificacion || "—"} · {p.compradorCorreo || "—"}
-                    {p.autorizaWhatsapp ? " · ✓ LOPDP WhatsApp" : ""}
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#0F172A" }}>
+                    <PackageCheck size={15} color="#2563EB" />
+                    <strong style={{ fontSize: "0.82rem" }}>
+                      Detalle del Producto y Dedicatorias ({p.items.length})
+                    </strong>
                   </div>
 
-                  {p.comprobanteTransferencia?.url && (
+                  {p.items.map((it, idx) => (
                     <div
+                      key={`${p.id}-it-${idx}`}
                       style={{
-                        padding: "9px 11px",
-                        borderRadius: "8px",
-                        background: "#ECFDF5",
-                        border: "1px solid #A7F3D0",
-                        color: "#065F46",
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "6px",
+                        borderTop: idx === 0 ? "none" : "1px solid #F1F5F9",
+                        paddingTop: idx === 0 ? 0 : "6px",
+                        fontSize: "0.78rem",
+                        color: "#1E293B",
                       }}
                     >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: "8px" }}>
                         <strong>
-                          📎 Comprobante adjunto:{" "}
-                          {p.comprobanteTransferencia.nombreArchivo || "Archivo"}
+                          {it.cantidad}× {it.descripcion}
                         </strong>
-                        <a
-                          href={p.comprobanteTransferencia.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          download={p.comprobanteTransferencia.nombreArchivo || "comprobante"}
-                          title="Ver o descargar comprobante de transferencia subido por el cliente"
-                          aria-label="Ver Comprobante"
+                        {it.totalLinea > 0 && <span>${it.totalLinea.toFixed(2)}</span>}
+                      </div>
+                      {it.dedicatoria?.mensaje && (
+                        <div
+                          style={{
+                            marginTop: "3px",
+                            fontSize: "0.73rem",
+                            color: "#475569",
+                            background: "#FFFBEB",
+                            border: "1px solid #FDE68A",
+                            borderRadius: "6px",
+                            padding: "5px 8px",
+                          }}
+                        >
+                          <strong>Para:</strong> {it.dedicatoria.para || "—"} ·{" "}
+                          <strong>De:</strong> {it.dedicatoria.de || "—"} — &ldquo;
+                          {it.dedicatoria.mensaje}&rdquo;
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  <div
+                    style={{
+                      marginTop: "auto",
+                      paddingTop: "8px",
+                      borderTop: "1px solid #E2E8F0",
+                      fontSize: "0.75rem",
+                      color: "#475569",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "8px",
+                    }}
+                  >
+                    {p.evento && (
+                      <div
+                        style={{
+                          padding: "8px 10px",
+                          borderRadius: "7px",
+                          background: "#FDF2F8",
+                          border: "1px solid #FBCFE8",
+                          color: "#9D174D",
+                        }}
+                      >
+                        <strong>Evento:</strong> {p.evento.tipoEvento || "Evento"} · Fecha:{" "}
+                        {p.evento.fechaEvento || "—"}
+                        {p.evento.horaEvento ? ` (${p.evento.horaEvento})` : ""}
+                        {p.evento.paletaColores ? ` · Paleta: ${p.evento.paletaColores}` : ""}
+                        {p.evento.notasEvento ? (
+                          <div style={{ marginTop: "3px" }}>
+                            <strong>Notas:</strong> {p.evento.notasEvento}
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
+
+                    {!esExeq && (
+                      <div>
+                        <strong>Facturación SRI:</strong> {p.compradorNombre} · ID:{" "}
+                        {p.compradorIdentificacion || "—"} · {p.compradorCorreo || "—"}
+                        {p.autorizaWhatsapp ? " · ✓ LOPDP WhatsApp" : ""}
+                      </div>
+                    )}
+
+                    {p.comprobanteTransferencia?.url && (
+                      <div
+                        style={{
+                          padding: "9px 11px",
+                          borderRadius: "8px",
+                          background: "#ECFDF5",
+                          border: "1px solid #A7F3D0",
+                          color: "#065F46",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "6px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: "8px",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          <strong>
+                            Comprobante adjunto:{" "}
+                            {p.comprobanteTransferencia.nombreArchivo || "Archivo"}
+                          </strong>
+                          <a
+                            href={p.comprobanteTransferencia.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            download={p.comprobanteTransferencia.nombreArchivo || "comprobante"}
+                            title="Ver o descargar comprobante de transferencia subido por el cliente"
+                            aria-label="Ver Comprobante"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              padding: "5px 10px",
+                              borderRadius: "6px",
+                              background: "#047857",
+                              color: "#FFFFFF",
+                              textDecoration: "none",
+                              fontSize: "0.73rem",
+                              fontWeight: 700,
+                            }}
+                          >
+                            <span>Ver Comprobante</span>
+                            <ExternalLink size={12} />
+                          </a>
+                        </div>
+                        {p.comprobanteTransferencia.mimeType?.startsWith("image/") && (
+                          <img
+                            src={p.comprobanteTransferencia.url}
+                            alt="Comprobante de pago"
+                            style={{
+                              maxWidth: "220px",
+                              maxHeight: "150px",
+                              objectFit: "contain",
+                              borderRadius: "6px",
+                              border: "1px solid #6EE7B7",
+                              background: "#FFFFFF",
+                            }}
+                          />
+                        )}
+                      </div>
+                    )}
+
+                    <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                      {p.tipoOrigen === "PROFORMA_EVENTO" && (
+                        <button
+                          type="button"
+                          onClick={() => setProformaEditandoVariacion(p)}
+                          title="Actualizar proforma creando una nueva variación y enviar PDF original + actualizado por correo al cliente"
+                          aria-label="Nueva Variación"
                           style={{
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "5px",
-                            padding: "5px 10px",
-                            borderRadius: "6px",
-                            background: "#047857",
+                            padding: "6px 11px",
+                            borderRadius: "7px",
+                            border: "none",
+                            background: "#BE185D",
                             color: "#FFFFFF",
-                            textDecoration: "none",
-                            fontSize: "0.73rem",
+                            fontSize: "0.75rem",
                             fontWeight: 700,
+                            cursor: "pointer",
                           }}
                         >
-                          <span>Ver Comprobante</span>
+                          <FilePlus2 size={13} />
+                          <span>Nueva Variación</span>
+                        </button>
+                      )}
+                      {p.tokenAprobacion && (
+                        <a
+                          href={`/proforma/${p.tokenAprobacion}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Abrir proforma pública con selector de variaciones y pago"
+                          aria-label="Ver Proforma"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            padding: "6px 11px",
+                            borderRadius: "7px",
+                            background: "#2D4A3E",
+                            color: "#FFFFFF",
+                            textDecoration: "none",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                          }}
+                        >
+                          <span>Ver Proforma</span>
                           <ExternalLink size={12} />
                         </a>
-                      </div>
-                      {p.comprobanteTransferencia.mimeType?.startsWith("image/") && (
-                        <img
-                          src={p.comprobanteTransferencia.url}
-                          alt="Comprobante de pago"
+                      )}
+                      {p.tokenAprobacion && (
+                        <a
+                          href={`/api/proforma/${p.tokenAprobacion}/pdf`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Descargar archivo PDF de esta versión"
+                          aria-label="Descargar PDF"
                           style={{
-                            maxWidth: "220px",
-                            maxHeight: "150px",
-                            objectFit: "contain",
-                            borderRadius: "6px",
-                            border: "1px solid #6EE7B7",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            padding: "6px 11px",
+                            borderRadius: "7px",
+                            border: "1px solid #CBD5E1",
                             background: "#FFFFFF",
+                            color: "#0F172A",
+                            textDecoration: "none",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
                           }}
-                        />
+                        >
+                          <span>Descargar PDF</span>
+                          <ExternalLink size={12} />
+                        </a>
+                      )}
+                      {p.compradorTelefono && (
+                        <a
+                          href={`https://wa.me/${p.compradorTelefono.replace(/\D+/g, "")}?text=${encodeURIComponent(
+                            `Hola ${p.compradorNombre}, te escribimos de ${negocio.toUpperCase()} respecto a tu pedido ${p.codigoOrden}.`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Contactar al cliente por WhatsApp"
+                          aria-label="WhatsApp"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            padding: "6px 11px",
+                            borderRadius: "7px",
+                            background: "#059669",
+                            color: "#FFFFFF",
+                            textDecoration: "none",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                          }}
+                        >
+                          <span>WhatsApp</span>
+                          <ExternalLink size={12} />
+                        </a>
                       )}
                     </div>
-                  )}
-
-                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                    {p.tipoOrigen === "PROFORMA_EVENTO" && (
-                      <button
-                        type="button"
-                        onClick={() => setProformaEditandoVariacion(p)}
-                        title="Actualizar proforma creando una nueva variación y enviar PDF original + actualizado por correo al cliente"
-                        aria-label="Nueva Variación"
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "5px",
-                          padding: "6px 11px",
-                          borderRadius: "7px",
-                          border: "none",
-                          background: "#7C3AED",
-                          color: "#FFFFFF",
-                          fontSize: "0.75rem",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                        }}
-                      >
-                        <FilePlus2 size={13} />
-                        <span>Nueva Variación</span>
-                      </button>
-                    )}
-                    {p.tokenAprobacion && (
-                      <a
-                        href={`/proforma/${p.tokenAprobacion}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Abrir proforma pública con selector de variaciones y pago"
-                        aria-label="Ver Proforma"
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "5px",
-                          padding: "6px 11px",
-                          borderRadius: "7px",
-                          background: "#2D4A3E",
-                          color: "#FFFFFF",
-                          textDecoration: "none",
-                          fontSize: "0.75rem",
-                          fontWeight: 600,
-                        }}
-                      >
-                        <span>Ver Proforma</span>
-                        <ExternalLink size={12} />
-                      </a>
-                    )}
-                    {p.tokenAprobacion && (
-                      <a
-                        href={`/api/proforma/${p.tokenAprobacion}/pdf`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Descargar archivo PDF de esta versión"
-                        aria-label="Descargar PDF"
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "5px",
-                          padding: "6px 11px",
-                          borderRadius: "7px",
-                          border: "1px solid #CBD5E1",
-                          background: "#FFFFFF",
-                          color: "#0F172A",
-                          textDecoration: "none",
-                          fontSize: "0.75rem",
-                          fontWeight: 600,
-                        }}
-                      >
-                        <span>Descargar PDF</span>
-                        <ExternalLink size={12} />
-                      </a>
-                    )}
-                    {p.compradorTelefono && (
-                      <a
-                        href={`https://wa.me/${p.compradorTelefono.replace(/\D+/g, "")}?text=${encodeURIComponent(
-                          `Hola ${p.compradorNombre}, te escribimos de ${negocio.toUpperCase()} respecto a tu proforma ${p.codigoOrden}${
-                            p.tokenAprobacion
-                              ? ` (${typeof window !== "undefined" ? window.location.origin : ""}/proforma/${p.tokenAprobacion})`
-                              : ""
-                          }.`
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Contactar al cliente por WhatsApp"
-                        aria-label="WhatsApp"
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "5px",
-                          padding: "6px 11px",
-                          borderRadius: "7px",
-                          background: "#059669",
-                          color: "#FFFFFF",
-                          textDecoration: "none",
-                          fontSize: "0.75rem",
-                          fontWeight: 600,
-                        }}
-                      >
-                        <span>WhatsApp</span>
-                        <ExternalLink size={12} />
-                      </a>
-                    )}
                   </div>
                 </div>
+
+                {/* 3. Evidencia Fotográfica Permanente de Confirmación de Entrega */}
+                <div
+                  style={{
+                    background: "#FFFFFF",
+                    border: "1px solid #E2E8F0",
+                    borderRadius: "9px",
+                    padding: "12px",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "8px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", color: "#0F172A" }}>
+                    <Camera size={15} color="#0D9488" />
+                    <strong style={{ fontSize: "0.82rem" }}>
+                      Confirmación Fotográfica de Entrega
+                    </strong>
+                  </div>
+
+                  {p.evidenciaEntrega?.fotoUrl ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      <button
+                        type="button"
+                        onClick={() => abrirModalEvidencia(p)}
+                        title="Ampliar fotografía georreferenciada de confirmación"
+                        aria-label="Ampliar Foto"
+                        style={{
+                          padding: 0,
+                          border: "1px solid #CBD5E1",
+                          borderRadius: "8px",
+                          overflow: "hidden",
+                          background: "#0F172A",
+                          cursor: "pointer",
+                          maxHeight: "175px",
+                        }}
+                      >
+                        <img
+                          src={p.evidenciaEntrega.fotoUrl}
+                          alt={`Evidencia ${p.codigoOrden}`}
+                          style={{
+                            width: "100%",
+                            maxHeight: "175px",
+                            objectFit: "cover",
+                            display: "block",
+                          }}
+                        />
+                      </button>
+
+                      <div style={{ fontSize: "0.75rem", color: "#334155", lineHeight: 1.42 }}>
+                        {p.evidenciaEntrega.capturadoEn && (
+                          <div>
+                            <strong>Fecha/Hora entrega:</strong>{" "}
+                            {new Date(p.evidenciaEntrega.capturadoEn).toLocaleString("es-EC", {
+                              dateStyle: "short",
+                              timeStyle: "short",
+                            })}
+                          </div>
+                        )}
+                        {p.evidenciaEntrega.entregadorNombre && (
+                          <div>
+                            <strong>Entregado por:</strong> {p.evidenciaEntrega.entregadorNombre}
+                          </div>
+                        )}
+                        {p.evidenciaEntrega.direccionGps && (
+                          <div>
+                            <strong>Ubicación GPS:</strong> {p.evidenciaEntrega.direccionGps}
+                          </div>
+                        )}
+                        {(p.evidenciaEntrega.numeroInforme || p.exequiales?.numeroInforme) && (
+                          <div>
+                            <strong>Informe IESS:</strong>{" "}
+                            {p.evidenciaEntrega.numeroInforme || p.exequiales?.numeroInforme}
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                        <button
+                          type="button"
+                          onClick={() => abrirModalEvidencia(p)}
+                          title="Ver fotografía en tamaño completo"
+                          aria-label="Ampliar Evidencia"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            padding: "6px 11px",
+                            borderRadius: "7px",
+                            border: "none",
+                            background: "#0F172A",
+                            color: "#FFFFFF",
+                            fontSize: "0.74rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <Camera size={13} />
+                          <span>Ampliar Foto</span>
+                        </button>
+
+                        {p.evidenciaEntrega.latitud != null &&
+                          p.evidenciaEntrega.longitud != null && (
+                            <a
+                              href={`https://www.google.com/maps?q=${p.evidenciaEntrega.latitud},${p.evidenciaEntrega.longitud}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Ver punto GPS exacto donde se tomó la foto"
+                              aria-label="GPS Entrega"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "5px",
+                                padding: "6px 11px",
+                                borderRadius: "7px",
+                                border: "1px solid #CBD5E1",
+                                background: "#FFFFFF",
+                                color: "#0F172A",
+                                textDecoration: "none",
+                                fontSize: "0.74rem",
+                                fontWeight: 600,
+                              }}
+                            >
+                              <MapPin size={13} color="#0D9488" />
+                              <span>GPS Entrega</span>
+                            </a>
+                          )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        padding: "14px",
+                        borderRadius: "8px",
+                        border: "1px dashed #CBD5E1",
+                        background: "#F8FAFC",
+                        fontSize: "0.76rem",
+                        color: "#64748B",
+                        lineHeight: 1.45,
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "8px",
+                      }}
+                    >
+                      <span>
+                        Aún no se ha subido fotografía de confirmación para este pedido. Al
+                        confirmar la entrega en campo quedará almacenada permanentemente aquí y
+                        disponible para informes.
+                      </span>
+                      <a
+                        href={`/panel/entregas?pedido=${encodeURIComponent(p.codigoOrden)}`}
+                        title="Ir a Confirmación de Entregas para adjuntar foto"
+                        aria-label="Confirmar Entrega"
+                        style={{
+                          alignSelf: "flex-start",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          padding: "6px 11px",
+                          borderRadius: "7px",
+                          background: "#0D9488",
+                          color: "#FFFFFF",
+                          textDecoration: "none",
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                        }}
+                      >
+                        <Camera size={13} />
+                        <span>Confirmar Entrega</span>
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          }}
         />
       </div>
 
@@ -939,11 +1418,15 @@ export function BandejaPedidosTienda({
           pedidoBase={proformaEditandoVariacion}
           alCerrar={() => setProformaEditandoVariacion(null)}
           alVariacionCreada={() => {
-            cargarPedidos();
+            void cargarPedidos();
           }}
         />
       )}
+
+      <ModalVisorEvidenciaEntrega
+        datos={visorEvidencia}
+        onCerrar={() => setVisorEvidencia(null)}
+      />
     </div>
   );
 }
-

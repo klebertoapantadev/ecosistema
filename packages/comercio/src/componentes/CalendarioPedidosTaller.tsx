@@ -3,25 +3,39 @@
 import React, { useMemo, useState } from "react";
 import {
   Calendar,
+  Camera,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock,
+  Eye,
+  EyeOff,
   Hammer,
-  CheckCircle2,
+  MapPin,
   Send,
-  Sparkles,
 } from "lucide-react";
 import {
+  esEntregaConfirmadaOrden,
   esPedidoDeElaboracionEnFecha,
   formatearFechaEntregaHumana,
   generarCuadriculaMesCalendario,
+  inferirClasificacionPedido,
   normalizarFranjaHorariaTienda,
+  obtenerDefinicionClasificacionPedido,
   obtenerFechaHoyEcuadorYmd,
   obtenerRangoSemanaLunesADomingo,
   sumarDiasYmd,
+  type ClasificacionOperativaPedido,
   type EstadoOrdenTaller,
   type OrdenTrabajoTaller,
 } from "../operaciones-taller";
+import {
+  BarraFiltroClasificacionPedido,
+  IconoClasificacionPedido,
+  InsigniaClasificacionPedido,
+  ModalVisorEvidenciaEntrega,
+  type DatosVisorEvidenciaModal,
+} from "./InsigniaClasificacionPedido";
 
 export type VistaCalendarioPedidos = "hoy" | "semana" | "mes";
 
@@ -60,36 +74,36 @@ function badgeEstadoTaller(estado: EstadoOrdenTaller): {
   switch (estado) {
     case "PENDIENTE_ENVIO":
       return {
-        etiqueta: "⏳ Por validar / enviar",
+        etiqueta: "Por enviar",
         fondo: "#FEF3C7",
         borde: "#FDE68A",
         color: "#92400E",
       };
     case "ENVIADO_TALLER":
       return {
-        etiqueta: "📨 Recibido en Taller",
+        etiqueta: "En Taller",
         fondo: "#E0F2FE",
         borde: "#BAE6FD",
         color: "#0369A1",
       };
     case "EN_PREPARACION":
       return {
-        etiqueta: "🔨 En preparación",
+        etiqueta: "En preparación",
         fondo: "#FFEDD5",
         borde: "#FED7AA",
         color: "#C2410C",
       };
     case "LISTO_ENTREGA":
       return {
-        etiqueta: "🟢 Listo entrega",
+        etiqueta: "Listo entrega",
         fondo: "#DCFCE7",
         borde: "#86EFAC",
         color: "#15803D",
       };
     case "ENTREGADO":
       return {
-        etiqueta: "✅ Entregado",
-        fondo: "#F1F5F9",
+        etiqueta: "Confirmado",
+        fondo: "#E2E8F0",
         borde: "#CBD5E1",
         color: "#475569",
       };
@@ -101,6 +115,43 @@ function badgeEstadoTaller(estado: EstadoOrdenTaller): {
         color: "#64748B",
       };
   }
+}
+
+function resolverClasificacionOrden(o: OrdenTrabajoTaller): ClasificacionOperativaPedido {
+  return inferirClasificacionPedido({
+    clasificacionExplicita: o.clasificacionPedido,
+    origenTipo: o.origenTipo,
+    retiroEnLocal: o.retiroEnLocal,
+    salaServicio: o.salaServicio,
+    productoResumen: o.productoResumen,
+    ubicacionEntrega: o.ubicacionEntrega,
+    metodoPago: o.metodoPago,
+    items: o.items,
+  });
+}
+
+function abrirDatosEvidenciaDesdeOrden(o: OrdenTrabajoTaller): DatosVisorEvidenciaModal {
+  const clasif = resolverClasificacionOrden(o);
+  return {
+    codigo: o.codigo,
+    clasificacion: clasif,
+    productoResumen: o.productoResumen,
+    quienSolicita: o.clienteSolicita,
+    destinatarioFallecido: o.destinatarioFallecido,
+    salaServicio: o.salaServicio,
+    fechaEntrega: o.fechaEntrega,
+    horaEntrega: o.horaEspecifica || o.franjaHoraria,
+    direccionEntrega: o.retiroEnLocal
+      ? "Retiro en Tienda"
+      : o.evidenciaDireccionGps || o.ubicacionEntrega || null,
+    entregadoEn: o.entregadoEn,
+    entregadorNombre: o.entregadoPorNombre || o.repartidorNombre,
+    fotoUrl: o.evidenciaFotoUrl,
+    mapaUrl: o.evidenciaMapaUrl,
+    latitud: o.evidenciaLatitud ?? o.rutaLatitud,
+    longitud: o.evidenciaLongitud ?? o.rutaLongitud,
+    numeroInforme: o.numeroInforme,
+  };
 }
 
 export function CalendarioPedidosTaller({
@@ -115,27 +166,85 @@ export function CalendarioPedidosTaller({
   const hoyYmd = useMemo(() => obtenerFechaHoyEcuadorYmd(), []);
   const [vista, setVista] = useState<VistaCalendarioPedidos>(vistaInicial);
   const [fechaCursor, setFechaCursor] = useState<string>(hoyYmd);
+  const [filtroClasificacion, setFiltroClasificacion] = useState<
+    ClasificacionOperativaPedido | "TODOS"
+  >("TODOS");
+  const [mostrarConfirmadas, setMostrarConfirmadas] = useState<boolean>(true);
+  const [visorEvidencia, setVisorEvidencia] = useState<DatosVisorEvidenciaModal | null>(null);
 
   const [anioCursor, mesCursor] = useMemo(() => {
     const [y, m] = (fechaCursor || hoyYmd).split("-").map((n) => Number(n));
     return [y || 2026, m || 11];
   }, [fechaCursor, hoyYmd]);
 
+  const ordenesValidas = useMemo(
+    () => ordenes.filter((o) => o.estadoTaller !== "ANULADO"),
+    [ordenes]
+  );
+
+  const conteosClasificacion = useMemo(() => {
+    const mapa: Partial<Record<ClasificacionOperativaPedido, number>> = {};
+    for (const o of ordenesValidas) {
+      if (!mostrarConfirmadas && esEntregaConfirmadaOrden(o)) continue;
+      const c = resolverClasificacionOrden(o);
+      mapa[c] = (mapa[c] ?? 0) + 1;
+    }
+    return mapa;
+  }, [ordenesValidas, mostrarConfirmadas]);
+
+  const totalConfirmadasGlobal = useMemo(
+    () => ordenesValidas.filter((o) => esEntregaConfirmadaOrden(o)).length,
+    [ordenesValidas]
+  );
+
+  const ordenesFiltradas = useMemo(() => {
+    return ordenesValidas.filter((o) => {
+      const confirmada = esEntregaConfirmadaOrden(o);
+      if (!mostrarConfirmadas && confirmada) return false;
+      if (filtroClasificacion !== "TODOS") {
+        return resolverClasificacionOrden(o) === filtroClasificacion;
+      }
+      return true;
+    });
+  }, [ordenesValidas, mostrarConfirmadas, filtroClasificacion]);
+
   const ordenesPorFechaEntrega = useMemo(() => {
     const mapa = new Map<string, OrdenTrabajoTaller[]>();
-    for (const o of ordenes) {
-      if (o.estadoTaller === "ANULADO") continue;
+    for (const o of ordenesFiltradas) {
       const f = (o.fechaEntrega || hoyYmd).slice(0, 10);
       const lista = mapa.get(f) ?? [];
       lista.push(o);
       mapa.set(f, lista);
     }
+    // Ordenar en cada día: primero pendientes (Exequiales primero), al final las ya confirmadas (tono opaco)
+    for (const [k, lista] of mapa.entries()) {
+      lista.sort((a, b) => {
+        const confA = esEntregaConfirmadaOrden(a) ? 1 : 0;
+        const confB = esEntregaConfirmadaOrden(b) ? 1 : 0;
+        if (confA !== confB) return confA - confB;
+        const exA = resolverClasificacionOrden(a) === "EXEQUIALES" ? 0 : 1;
+        const exB = resolverClasificacionOrden(b) === "EXEQUIALES" ? 0 : 1;
+        if (exA !== exB) return exA - exB;
+        return String(a.horaEspecifica || a.franjaHoraria || "").localeCompare(
+          String(b.horaEspecifica || b.franjaHoraria || "")
+        );
+      });
+      mapa.set(k, lista);
+    }
     return mapa;
-  }, [ordenes, hoyYmd]);
+  }, [ordenesFiltradas, hoyYmd]);
 
   const ordenesElaboracionDiaSeleccionado = useMemo(() => {
-    return ordenes.filter((o) => esPedidoDeElaboracionEnFecha(o, fechaCursor, hoyYmd));
-  }, [ordenes, fechaCursor, hoyYmd]);
+    const lista = ordenesFiltradas.filter((o) =>
+      esPedidoDeElaboracionEnFecha(o, fechaCursor, hoyYmd)
+    );
+    return lista.sort((a, b) => {
+      const confA = esEntregaConfirmadaOrden(a) ? 1 : 0;
+      const confB = esEntregaConfirmadaOrden(b) ? 1 : 0;
+      if (confA !== confB) return confA - confB;
+      return 0;
+    });
+  }, [ordenesFiltradas, fechaCursor, hoyYmd]);
 
   const semanaActual = useMemo(
     () => obtenerRangoSemanaLunesADomingo(fechaCursor),
@@ -172,23 +281,35 @@ export function CalendarioPedidosTaller({
   };
 
   const renderTarjetaCompacta = (o: OrdenTrabajoTaller, mostrarFechaEntregaExplicita = false) => {
-    const esExeq = o.origenTipo === "EXEQUIALES_LLAMADA";
-    const est = badgeEstadoTaller(o.estadoTaller);
+    const clasif = resolverClasificacionOrden(o);
+    const defCat = obtenerDefinicionClasificacionPedido(clasif);
+    const confirmada = esEntregaConfirmadaOrden(o);
+    const esExeq = clasif === "EXEQUIALES";
+    const est = badgeEstadoTaller(confirmada ? "ENTREGADO" : o.estadoTaller);
     const procesando = idProcesando === o.id;
     const entregaDistinta = (o.fechaEntrega || "").slice(0, 10) !== fechaCursor;
+
+    const acentoIzq = confirmada ? defCat.acentoOpacoHex : defCat.acentoHex;
+    const fondoTarjeta = confirmada ? defCat.fondoOpacoHex : "#FFFFFF";
+    const bordeTarjeta = confirmada ? defCat.bordeOpacoHex : defCat.bordeHex;
 
     return (
       <div
         key={o.id}
         style={{
-          background: esExeq ? "#FAF5FF" : "#FFFFFF",
-          border: esExeq ? "1.5px solid #C084FC" : `1px solid ${est.borde}`,
-          borderRadius: "11px",
+          background: fondoTarjeta,
+          borderTop: `1px solid ${bordeTarjeta}`,
+          borderRight: `1px solid ${bordeTarjeta}`,
+          borderBottom: `1px solid ${bordeTarjeta}`,
+          borderLeft: `4px solid ${acentoIzq}`,
+          borderRadius: "10px",
           padding: "10px 12px",
           display: "flex",
           flexDirection: "column",
           gap: "6px",
-          boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
+          opacity: confirmada ? 0.72 : 1,
+          boxShadow: confirmada ? "none" : "0 1px 3px rgba(15, 23, 42, 0.05)",
+          transition: "opacity 0.15s ease",
         }}
       >
         <div
@@ -200,58 +321,106 @@ export function CalendarioPedidosTaller({
             flexWrap: "wrap",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-            <strong style={{ fontSize: "0.82rem", color: "#0F172A" }}>{o.codigo}</strong>
+          <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
+            <strong
+              style={{
+                fontSize: "0.81rem",
+                color: confirmada ? "#475569" : "#0F172A",
+              }}
+            >
+              {o.codigo}
+            </strong>
+
+            <InsigniaClasificacionPedido
+              clasificacion={clasif}
+              opaco={confirmada}
+              compacto
+              sufijoTexto={esExeq && o.salaServicio ? o.salaServicio : null}
+            />
+
             <span
               style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "3px",
                 padding: "2px 7px",
-                borderRadius: "999px",
-                fontSize: "0.69rem",
+                borderRadius: "6px",
+                fontSize: "0.67rem",
                 fontWeight: 700,
                 background: est.fondo,
+                border: `1px solid ${est.borde}`,
                 color: est.color,
               }}
             >
-              {est.etiqueta}
+              {confirmada && <CheckCircle2 size={11} color="#15803D" />}
+              <span>{est.etiqueta}</span>
             </span>
-            {esExeq && (
-              <span
-                style={{
-                  padding: "2px 7px",
-                  borderRadius: "999px",
-                  fontSize: "0.69rem",
-                  fontWeight: 800,
-                  background: "#581C87",
-                  color: "#FFFFFF",
-                }}
-              >
-                🕊️ Exequiales {o.salaServicio ? `· ${o.salaServicio}` : ""}
-              </span>
-            )}
           </div>
 
-          <span style={{ fontSize: "0.73rem", fontWeight: 700, color: "#334155" }}>
-            {esExeq
-              ? `⏰ ${o.horaEspecifica || "Hoy"}`
-              : o.franjaHoraria || "A) 09:00 - 13:00"}
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              fontSize: "0.72rem",
+              fontWeight: 700,
+              color: confirmada ? "#64748B" : "#334155",
+            }}
+          >
+            <Clock size={11} />
+            <span>
+              {o.horaEspecifica
+                ? o.horaEspecifica
+                : o.franjaHoraria || "A) 09:00 - 13:00"}
+            </span>
           </span>
         </div>
 
-        <div style={{ fontSize: "0.84rem", fontWeight: 700, color: "#1E293B" }}>
-          💐 {o.productoResumen}
+        <div
+          style={{
+            fontSize: "0.83rem",
+            fontWeight: 700,
+            color: confirmada ? "#475569" : "#1E293B",
+            textDecoration: confirmada ? "none" : "none",
+          }}
+        >
+          {o.productoResumen}
         </div>
 
-        <div style={{ fontSize: "0.75rem", color: "#475569", lineHeight: 1.4 }}>
+        <div
+          style={{
+            fontSize: "0.74rem",
+            color: confirmada ? "#64748B" : "#475569",
+            lineHeight: 1.42,
+            display: "flex",
+            flexDirection: "column",
+            gap: "2px",
+          }}
+        >
           {esExeq ? (
             <>
-              <strong>Solicita:</strong> {o.clienteSolicita} · <strong>Fallecido:</strong>{" "}
-              {o.destinatarioFallecido || "Por confirmar"}
+              <div>
+                <strong>Solicita:</strong> {o.clienteSolicita || "—"}
+                {o.salaServicio ? ` · Sala: ${o.salaServicio}` : ""}
+              </div>
+              <div>
+                <strong>Fallecido:</strong> {o.destinatarioFallecido || "Por confirmar"}
+              </div>
             </>
           ) : (
-            <>
+            <div>
+              <strong>Solicita:</strong> {o.clienteSolicita || "—"} ·{" "}
               <strong>Recibe:</strong> {o.destinatarioFallecido || o.clienteSolicita}
-              {o.ubicacionEntrega ? ` · 📍 ${o.ubicacionEntrega}` : ""}
-            </>
+            </div>
+          )}
+
+          {(o.retiroEnLocal || o.ubicacionEntrega) && (
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
+              <MapPin size={11} style={{ flexShrink: 0 }} />
+              <span>
+                {o.retiroEnLocal ? "Retiro en Tienda" : o.ubicacionEntrega}
+              </span>
+            </div>
           )}
         </div>
 
@@ -261,116 +430,144 @@ export function CalendarioPedidosTaller({
               alignSelf: "flex-start",
               padding: "2px 8px",
               borderRadius: "6px",
-              background: entregaDistinta ? "#EFF6FF" : "#F0FDF4",
-              border: `1px solid ${entregaDistinta ? "#BFDBFE" : "#BBF7D0"}`,
-              color: entregaDistinta ? "#1D4ED8" : "#15803D",
-              fontSize: "0.71rem",
+              background: confirmada ? "#E2E8F0" : entregaDistinta ? "#EFF6FF" : "#F0FDF4",
+              border: `1px solid ${
+                confirmada ? "#CBD5E1" : entregaDistinta ? "#BFDBFE" : "#BBF7D0"
+              }`,
+              color: confirmada ? "#475569" : entregaDistinta ? "#1D4ED8" : "#15803D",
+              fontSize: "0.7rem",
               fontWeight: 700,
             }}
           >
             {entregaDistinta
-              ? `🔨 Elaborar Hoy → Entrega: ${formatearFechaEntregaHumana(o.fechaEntrega, hoyYmd).etiquetaPrincipal}`
-              : `📅 Entrega: ${formatearFechaEntregaHumana(o.fechaEntrega, hoyYmd).etiquetaPrincipal}`}
+              ? `Elaborar hoy → Entrega: ${formatearFechaEntregaHumana(o.fechaEntrega, hoyYmd).etiquetaPrincipal}`
+              : `Entrega: ${formatearFechaEntregaHumana(o.fechaEntrega, hoyYmd).etiquetaPrincipal}`}
           </div>
         )}
 
         <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", paddingTop: "2px" }}>
-          {modo === "despacho" && o.estadoTaller === "PENDIENTE_ENVIO" && onEnviarATaller && (
+          {confirmada && (
             <button
               type="button"
-              disabled={procesando}
-              onClick={() => onEnviarATaller(o)}
-              title="Validar y enviar este pedido al Taller ahora"
-              aria-label="Enviar a Taller"
+              onClick={() => setVisorEvidencia(abrirDatosEvidenciaDesdeOrden(o))}
+              title="Ver ficha permanente y fotografía de confirmación de entrega"
+              aria-label="Ver Evidencia"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "5px",
-                padding: "5px 10px",
-                borderRadius: "7px",
-                border: "none",
-                background: "#0F172A",
-                color: "#FFFFFF",
-                fontSize: "0.74rem",
+                padding: "4px 9px",
+                borderRadius: "6px",
+                border: "1px solid #94A3B8",
+                background: "#FFFFFF",
+                color: "#334155",
+                fontSize: "0.72rem",
                 fontWeight: 700,
-                cursor: procesando ? "wait" : "pointer",
+                cursor: "pointer",
               }}
             >
-              <Send size={12} />
-              <span>Enviar a Taller</span>
+              <Camera size={12} color="#0D9488" />
+              <span>{o.evidenciaFotoUrl ? "Ver Foto" : "Detalle Entrega"}</span>
             </button>
           )}
 
-          {modo === "taller" &&
-            o.estadoTaller !== "ENTREGADO" &&
-            onCambiarEstadoTaller && (
-              <>
-                <button
-                  type="button"
-                  disabled={procesando || o.estadoTaller === "EN_PREPARACION"}
-                  onClick={() => onCambiarEstadoTaller(o, "EN_PREPARACION")}
-                  title="Marcar pedido como En preparación en mesa de armado"
-                  aria-label="En Preparación"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    padding: "5px 10px",
-                    borderRadius: "7px",
-                    border:
-                      o.estadoTaller === "EN_PREPARACION"
-                        ? "1.5px solid #C2410C"
-                        : "1px solid #CBD5E1",
-                    background: o.estadoTaller === "EN_PREPARACION" ? "#FFEDD5" : "#FFFFFF",
-                    color: o.estadoTaller === "EN_PREPARACION" ? "#9A3412" : "#334155",
-                    fontSize: "0.74rem",
-                    fontWeight: 700,
-                    cursor: procesando ? "wait" : "pointer",
-                  }}
-                >
-                  <Hammer size={12} />
-                  <span>En Preparación</span>
-                </button>
-
-                <button
-                  type="button"
-                  disabled={procesando || o.estadoTaller === "LISTO_ENTREGA"}
-                  onClick={() => onCambiarEstadoTaller(o, "LISTO_ENTREGA")}
-                  title="Marcar arreglo como Listo para entrega"
-                  aria-label="Listo Entrega"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    padding: "5px 10px",
-                    borderRadius: "7px",
-                    border: "none",
-                    background: o.estadoTaller === "LISTO_ENTREGA" ? "#15803D" : "#059669",
-                    color: "#FFFFFF",
-                    fontSize: "0.74rem",
-                    fontWeight: 700,
-                    cursor: procesando ? "wait" : "pointer",
-                  }}
-                >
-                  <CheckCircle2 size={12} />
-                  <span>Listo Entrega</span>
-                </button>
-              </>
+          {modo === "despacho" &&
+            !confirmada &&
+            o.estadoTaller === "PENDIENTE_ENVIO" &&
+            onEnviarATaller && (
+              <button
+                type="button"
+                disabled={procesando}
+                onClick={() => onEnviarATaller(o)}
+                title="Validar y enviar este pedido al Taller ahora"
+                aria-label="Enviar a Taller"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  padding: "5px 10px",
+                  borderRadius: "7px",
+                  border: "none",
+                  background: "#0F172A",
+                  color: "#FFFFFF",
+                  fontSize: "0.73rem",
+                  fontWeight: 700,
+                  cursor: procesando ? "wait" : "pointer",
+                }}
+              >
+                <Send size={12} />
+                <span>A Taller</span>
+              </button>
             )}
+
+          {modo === "taller" && !confirmada && onCambiarEstadoTaller && (
+            <>
+              <button
+                type="button"
+                disabled={procesando || o.estadoTaller === "EN_PREPARACION"}
+                onClick={() => onCambiarEstadoTaller(o, "EN_PREPARACION")}
+                title="Marcar pedido como En preparación en mesa de armado"
+                aria-label="En Preparación"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  padding: "5px 10px",
+                  borderRadius: "7px",
+                  border:
+                    o.estadoTaller === "EN_PREPARACION"
+                      ? "1.5px solid #C2410C"
+                      : "1px solid #CBD5E1",
+                  background: o.estadoTaller === "EN_PREPARACION" ? "#FFEDD5" : "#FFFFFF",
+                  color: o.estadoTaller === "EN_PREPARACION" ? "#9A3412" : "#334155",
+                  fontSize: "0.73rem",
+                  fontWeight: 700,
+                  cursor: procesando ? "wait" : "pointer",
+                }}
+              >
+                <Hammer size={12} />
+                <span>Preparación</span>
+              </button>
+
+              <button
+                type="button"
+                disabled={procesando || o.estadoTaller === "LISTO_ENTREGA"}
+                onClick={() => onCambiarEstadoTaller(o, "LISTO_ENTREGA")}
+                title="Marcar arreglo como Listo para entrega"
+                aria-label="Listo Entrega"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  padding: "5px 10px",
+                  borderRadius: "7px",
+                  border: "none",
+                  background: o.estadoTaller === "LISTO_ENTREGA" ? "#15803D" : "#059669",
+                  color: "#FFFFFF",
+                  fontSize: "0.73rem",
+                  fontWeight: 700,
+                  cursor: procesando ? "wait" : "pointer",
+                }}
+              >
+                <CheckCircle2 size={12} />
+                <span>Listo</span>
+              </button>
+            </>
+          )}
 
           {onEditarOrden && (
             <button
               type="button"
               onClick={() => onEditarOrden(o)}
-              title="Editar fecha de entrega, sala o detalles del pedido"
+              title="Editar clasificación, fecha, sala o detalles del pedido"
               aria-label="Editar Pedido"
               style={{
-                padding: "5px 9px",
-                borderRadius: "7px",
+                padding: "4px 9px",
+                borderRadius: "6px",
                 border: "1px solid #CBD5E1",
                 background: "#F8FAFC",
                 color: "#334155",
-                fontSize: "0.73rem",
+                fontSize: "0.72rem",
                 fontWeight: 600,
                 cursor: "pointer",
               }}
@@ -383,20 +580,25 @@ export function CalendarioPedidosTaller({
     );
   };
 
-  // Agrupar la vista HOY por bloques horarios de elaboración
+  // Agrupar la vista HOY por bloques horarios de elaboración y entregas confirmadas
   const bloquesHoy = useMemo(() => {
     const exequiales: OrdenTrabajoTaller[] = [];
     const franjaA: OrdenTrabajoTaller[] = [];
     const franjaB: OrdenTrabajoTaller[] = [];
     const franjaC: OrdenTrabajoTaller[] = [];
     const anticipadosFuturos: OrdenTrabajoTaller[] = [];
+    const confirmadosDia: OrdenTrabajoTaller[] = [];
 
     for (const o of ordenesElaboracionDiaSeleccionado) {
+      if (esEntregaConfirmadaOrden(o)) {
+        confirmadosDia.push(o);
+        continue;
+      }
       if ((o.fechaEntrega || "").slice(0, 10) > fechaCursor) {
         anticipadosFuturos.push(o);
         continue;
       }
-      if (o.origenTipo === "EXEQUIALES_LLAMADA") {
+      if (resolverClasificacionOrden(o) === "EXEQUIALES") {
         exequiales.push(o);
         continue;
       }
@@ -409,43 +611,54 @@ export function CalendarioPedidosTaller({
     return [
       {
         id: "exeq",
-        titulo: "🕊️ Exequiales / Hora Específica",
-        colorBorde: "#D8B4FE",
-        fondo: "#FAF5FF",
+        titulo: "Exequiales / Hora Puntual",
+        colorBorde: "#DDD6FE",
+        fondo: "#F5F3FF",
         items: exequiales,
       },
       {
         id: "a",
-        titulo: "🌅 Rango A) 09:00 - 13:00",
+        titulo: "Franja A · 09:00 – 13:00",
         colorBorde: "#BAE6FD",
         fondo: "#F0F9FF",
         items: franjaA,
       },
       {
         id: "b",
-        titulo: "☀️ Rango B) 13:00 - 17:00",
+        titulo: "Franja B · 13:00 – 17:00",
         colorBorde: "#FDE68A",
         fondo: "#FFFBEB",
         items: franjaB,
       },
       {
         id: "c",
-        titulo: "🌙 Rango C) 17:00 - 20:00",
+        titulo: "Franja C · 17:00 – 20:00",
         colorBorde: "#C7D2FE",
         fondo: "#EEF2FF",
         items: franjaC,
       },
       {
         id: "fut",
-        titulo: "🔨 En Elaboración Hoy (Entrega Mañana / Próximos Días)",
+        titulo: "Elaboración Anticipada (Entregas Futuras)",
         colorBorde: "#A7F3D0",
         fondo: "#ECFDF5",
         items: anticipadosFuturos,
+      },
+      {
+        id: "conf",
+        titulo: "Entregas Confirmadas en la Fecha",
+        colorBorde: "#CBD5E1",
+        fondo: "#F8FAFC",
+        items: confirmadosDia,
       },
     ];
   }, [ordenesElaboracionDiaSeleccionado, fechaCursor]);
 
   const ordenesFechaSeleccionadaMes = ordenesPorFechaEntrega.get(fechaCursor) ?? [];
+  const pendientesMesSel = ordenesFechaSeleccionadaMes.filter(
+    (x) => !esEntregaConfirmadaOrden(x)
+  ).length;
+  const confirmadasMesSel = ordenesFechaSeleccionadaMes.length - pendientesMesSel;
 
   return (
     <div
@@ -470,10 +683,10 @@ export function CalendarioPedidosTaller({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-          <Calendar size={18} color="#059669" />
+          <Calendar size={18} color="#0D9488" />
           <strong style={{ fontSize: "0.96rem", color: "#0F172A" }}>
             {vista === "hoy"
-              ? `Elaboración y Entregas — ${formatearFechaEntregaHumana(fechaCursor, hoyYmd).etiquetaPrincipal}`
+              ? `Agenda Operativa — ${formatearFechaEntregaHumana(fechaCursor, hoyYmd).etiquetaPrincipal}`
               : vista === "semana"
                 ? `Semana: ${formatearFechaEntregaHumana(semanaActual.inicioLunes, hoyYmd).etiquetaPrincipal} → ${formatearFechaEntregaHumana(semanaActual.finDomingo, hoyYmd).etiquetaPrincipal}`
                 : `${NOMBRES_MESES[mesCursor - 1]} ${anioCursor}`}
@@ -481,7 +694,6 @@ export function CalendarioPedidosTaller({
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-          {/* Navegación temporal */}
           <div style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
             <button
               type="button"
@@ -509,8 +721,8 @@ export function CalendarioPedidosTaller({
                 padding: "6px 11px",
                 borderRadius: "8px",
                 border: "1px solid #CBD5E1",
-                background: fechaCursor === hoyYmd ? "#ECFDF5" : "#FFFFFF",
-                color: fechaCursor === hoyYmd ? "#065F46" : "#334155",
+                background: fechaCursor === hoyYmd ? "#F0FDFA" : "#FFFFFF",
+                color: fechaCursor === hoyYmd ? "#115E59" : "#334155",
                 fontSize: "0.78rem",
                 fontWeight: 700,
                 cursor: "pointer",
@@ -549,7 +761,7 @@ export function CalendarioPedidosTaller({
           >
             {(
               [
-                { id: "hoy", label: "Hoy (Elaboración)" },
+                { id: "hoy", label: "Día" },
                 { id: "semana", label: "Semana" },
                 { id: "mes", label: "Mes" },
               ] as Array<{ id: VistaCalendarioPedidos; label: string }>
@@ -584,8 +796,98 @@ export function CalendarioPedidosTaller({
         </div>
       </div>
 
+      {/* Leyenda Interactiva por Clasificación + Distinción Visual de Entregas Confirmadas */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "10px",
+          flexWrap: "wrap",
+          padding: "10px 12px",
+          borderRadius: "12px",
+          background: "#F8FAFC",
+          border: "1px solid #E2E8F0",
+        }}
+      >
+        <BarraFiltroClasificacionPedido
+          seleccionada={filtroClasificacion}
+          onSeleccionar={setFiltroClasificacion}
+          conteos={conteosClasificacion}
+          totalGeneral={
+            mostrarConfirmadas
+              ? ordenesValidas.length
+              : ordenesValidas.length - totalConfirmadasGlobal
+          }
+          compacta
+        />
+
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "10px",
+              padding: "4px 10px",
+              borderRadius: "8px",
+              background: "#FFFFFF",
+              border: "1px solid #E2E8F0",
+              fontSize: "0.71rem",
+              color: "#475569",
+            }}
+          >
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontWeight: 700 }}>
+              <span
+                style={{
+                  width: "9px",
+                  height: "9px",
+                  borderRadius: "3px",
+                  background: "#0D9488",
+                }}
+              />
+              <span>Pendiente</span>
+            </span>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                fontWeight: 700,
+                opacity: 0.75,
+              }}
+            >
+              <CheckCircle2 size={12} color="#475569" />
+              <span>Confirmada (opaco)</span>
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setMostrarConfirmadas((prev) => !prev)}
+            title="Mostrar u ocultar entregas ya confirmadas en la misma fecha"
+            aria-label="Confirmadas"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              padding: "5px 10px",
+              borderRadius: "8px",
+              border: mostrarConfirmadas ? "1px solid #94A3B8" : "1px solid #CBD5E1",
+              background: mostrarConfirmadas ? "#E2E8F0" : "#FFFFFF",
+              color: "#334155",
+              fontSize: "0.73rem",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            {mostrarConfirmadas ? <Eye size={13} /> : <EyeOff size={13} />}
+            <span>Confirmadas ({totalConfirmadasGlobal})</span>
+          </button>
+        </div>
+      </div>
+
       {/* =====================================================================
-          VISTA 1: HOY — PEDIDOS DE ELABORACIÓN POR BLOQUE HORARIO
+          VISTA 1: DÍA — PEDIDOS POR FRANJA Y CONFIRMADAS EN TONO OPACO
       ===================================================================== */}
       {vista === "hoy" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -598,16 +900,16 @@ export function CalendarioPedidosTaller({
                 border: "1px dashed #CBD5E1",
                 textAlign: "center",
                 color: "#64748B",
-                fontSize: "0.86rem",
+                fontSize: "0.85rem",
               }}
             >
-              No hay pedidos programados en elaboración para esta fecha ({fechaCursor}).
+              No hay pedidos registrados para esta fecha ({fechaCursor}) con el filtro actual.
             </div>
           ) : (
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(265px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(275px, 1fr))",
                 gap: "12px",
               }}
             >
@@ -634,7 +936,7 @@ export function CalendarioPedidosTaller({
                         gap: "6px",
                       }}
                     >
-                      <strong style={{ fontSize: "0.82rem", color: "#0F172A" }}>
+                      <strong style={{ fontSize: "0.81rem", color: "#0F172A" }}>
                         {bloque.titulo}
                       </strong>
                       <span
@@ -642,7 +944,8 @@ export function CalendarioPedidosTaller({
                           padding: "2px 8px",
                           borderRadius: "999px",
                           background: "#FFFFFF",
-                          fontSize: "0.72rem",
+                          border: "1px solid #E2E8F0",
+                          fontSize: "0.71rem",
                           fontWeight: 800,
                           color: "#0F172A",
                         }}
@@ -662,31 +965,43 @@ export function CalendarioPedidosTaller({
       )}
 
       {/* =====================================================================
-          VISTA 2: SEMANA — 7 DÍAS MARCANDO LA FECHA DE ENTREGA
+          VISTA 2: SEMANA — 7 COLUMNAS CON COLORES POR CATEGORÍA Y OPACOS
       ===================================================================== */}
       {vista === "semana" && (
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(185px, 1fr))",
             gap: "10px",
           }}
         >
           {semanaActual.dias.map((ymd, idx) => {
             const delDia = ordenesPorFechaEntrega.get(ymd) ?? [];
+            const pendientes = delDia.filter((x) => !esEntregaConfirmadaOrden(x)).length;
+            const confirmadas = delDia.length - pendientes;
+            const todoConfirmado = delDia.length > 0 && pendientes === 0;
             const esHoy = ymd === hoyYmd;
+
             return (
               <div
                 key={ymd}
                 style={{
-                  background: esHoy ? "#F0FDF4" : "#F8FAFC",
-                  border: esHoy ? "2px solid #10B981" : "1px solid #E2E8F0",
+                  background: esHoy
+                    ? "#F0FDFA"
+                    : todoConfirmado
+                      ? "#F8FAFC"
+                      : "#FFFFFF",
+                  border: esHoy
+                    ? "2px solid #0D9488"
+                    : todoConfirmado
+                      ? "1px solid #CBD5E1"
+                      : "1px solid #E2E8F0",
                   borderRadius: "12px",
                   padding: "10px",
                   display: "flex",
                   flexDirection: "column",
                   gap: "8px",
-                  minHeight: "175px",
+                  minHeight: "185px",
                 }}
               >
                 <div
@@ -706,31 +1021,57 @@ export function CalendarioPedidosTaller({
                   <div>
                     <div
                       style={{
-                        fontSize: "0.72rem",
+                        fontSize: "0.71rem",
                         fontWeight: 700,
-                        color: esHoy ? "#047857" : "#64748B",
+                        color: esHoy ? "#0F766E" : "#64748B",
                         textTransform: "uppercase",
                       }}
                     >
                       {NOMBRES_DIAS_CORTO[idx]} {esHoy ? "· HOY" : ""}
                     </div>
-                    <strong style={{ fontSize: "0.95rem", color: "#0F172A" }}>
+                    <strong style={{ fontSize: "0.94rem", color: "#0F172A" }}>
                       {ymd.slice(8, 10)}/{ymd.slice(5, 7)}
                     </strong>
                   </div>
 
-                  <span
-                    style={{
-                      padding: "2px 8px",
-                      borderRadius: "999px",
-                      background: delDia.length > 0 ? "#0F172A" : "#E2E8F0",
-                      color: delDia.length > 0 ? "#FFFFFF" : "#64748B",
-                      fontSize: "0.72rem",
-                      fontWeight: 800,
-                    }}
-                  >
-                    {delDia.length}
-                  </span>
+                  {delDia.length > 0 && (
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                      {pendientes > 0 && (
+                        <span
+                          title={`${pendientes} pendiente(s)`}
+                          style={{
+                            padding: "2px 7px",
+                            borderRadius: "999px",
+                            background: "#0F172A",
+                            color: "#FFFFFF",
+                            fontSize: "0.7rem",
+                            fontWeight: 800,
+                          }}
+                        >
+                          {pendientes}
+                        </span>
+                      )}
+                      {confirmadas > 0 && (
+                        <span
+                          title={`${confirmadas} entrega(s) confirmada(s)`}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "2px",
+                            padding: "2px 6px",
+                            borderRadius: "999px",
+                            background: "#E2E8F0",
+                            color: "#475569",
+                            fontSize: "0.68rem",
+                            fontWeight: 800,
+                          }}
+                        >
+                          <CheckCircle2 size={10} color="#15803D" />
+                          <span>{confirmadas}</span>
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {delDia.length === 0 ? (
@@ -747,7 +1088,7 @@ export function CalendarioPedidosTaller({
       )}
 
       {/* =====================================================================
-          VISTA 3: MES — CUADRÍCULA MENSUAL MARCANDO FECHAS DE ENTREGA
+          VISTA 3: MES — CUADRÍCULA PROFESIONAL CON ÍCONOS Y CONFIRMACIONES OPACAS
       ===================================================================== */}
       {vista === "mes" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -775,41 +1116,43 @@ export function CalendarioPedidosTaller({
 
             {celdasMes.map((celda) => {
               const delDia = ordenesPorFechaEntrega.get(celda.ymd) ?? [];
+              const pendientesDia = delDia.filter((x) => !esEntregaConfirmadaOrden(x)).length;
+              const confirmadasDia = delDia.length - pendientesDia;
+              const todoDiaConfirmado = delDia.length > 0 && pendientesDia === 0;
               const esHoy = celda.ymd === hoyYmd;
               const seleccionada = celda.ymd === fechaCursor;
-              const tieneExequiales = delDia.some((x) => x.origenTipo === "EXEQUIALES_LLAMADA");
 
               return (
                 <button
                   key={celda.ymd}
                   type="button"
                   onClick={() => setFechaCursor(celda.ymd)}
-                  title={`${celda.ymd}: ${delDia.length} entrega(s)`}
+                  title={`${celda.ymd}: ${pendientesDia} pendiente(s), ${confirmadasDia} confirmada(s)`}
                   aria-label={`Día ${celda.ymd}`}
                   style={{
-                    minHeight: "76px",
+                    minHeight: "92px",
                     padding: "6px",
                     borderRadius: "10px",
                     border: seleccionada
                       ? "2px solid #0F172A"
                       : esHoy
-                        ? "2px solid #10B981"
-                        : delDia.length > 0
-                          ? "1px solid #93C5FD"
-                          : "1px solid #E2E8F0",
+                        ? "2px solid #0D9488"
+                        : todoDiaConfirmado
+                          ? "1px solid #CBD5E1"
+                          : delDia.length > 0
+                            ? "1px solid #94A3B8"
+                            : "1px solid #E2E8F0",
                     background: !celda.enMesActual
                       ? "#F8FAFC"
-                      : delDia.length > 0
-                        ? tieneExequiales
-                          ? "#FAF5FF"
-                          : "#F0FDF4"
+                      : todoDiaConfirmado
+                        ? "#F8FAFC"
                         : "#FFFFFF",
-                    opacity: celda.enMesActual ? 1 : 0.52,
+                    opacity: celda.enMesActual ? 1 : 0.48,
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "stretch",
                     justifyContent: "space-between",
-                    gap: "4px",
+                    gap: "5px",
                     cursor: "pointer",
                     textAlign: "left",
                   }}
@@ -820,59 +1163,112 @@ export function CalendarioPedidosTaller({
                       justifyContent: "space-between",
                       alignItems: "center",
                       gap: "3px",
+                      flexWrap: "wrap",
                     }}
                   >
                     <strong
                       style={{
                         fontSize: "0.78rem",
-                        color: esHoy ? "#047857" : "#0F172A",
+                        color: esHoy ? "#0F766E" : todoDiaConfirmado ? "#64748B" : "#0F172A",
                       }}
                     >
                       {celda.diaMes}
                     </strong>
+
                     {delDia.length > 0 && (
-                      <span
-                        style={{
-                          padding: "1px 6px",
-                          borderRadius: "999px",
-                          background: "#059669",
-                          color: "#FFFFFF",
-                          fontSize: "0.66rem",
-                          fontWeight: 800,
-                        }}
-                      >
-                        {delDia.length}
-                      </span>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: "3px" }}>
+                        {pendientesDia > 0 && (
+                          <span
+                            style={{
+                              padding: "1px 5px",
+                              borderRadius: "999px",
+                              background: "#0F172A",
+                              color: "#FFFFFF",
+                              fontSize: "0.63rem",
+                              fontWeight: 800,
+                            }}
+                          >
+                            {pendientesDia}
+                          </span>
+                        )}
+                        {confirmadasDia > 0 && (
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "2px",
+                              padding: "1px 5px",
+                              borderRadius: "999px",
+                              background: "#E2E8F0",
+                              color: "#475569",
+                              fontSize: "0.62rem",
+                              fontWeight: 800,
+                            }}
+                          >
+                            ✓{confirmadasDia}
+                          </span>
+                        )}
+                      </div>
                     )}
                   </div>
 
                   {delDia.length > 0 && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                      {delDia.slice(0, 2).map((o) => (
-                        <span
-                          key={o.id}
-                          style={{
-                            display: "block",
-                            fontSize: "0.64rem",
-                            fontWeight: 700,
-                            padding: "1px 4px",
-                            borderRadius: "4px",
-                            background:
-                              o.origenTipo === "EXEQUIALES_LLAMADA" ? "#EDE9FE" : "#DCFCE7",
-                            color:
-                              o.origenTipo === "EXEQUIALES_LLAMADA" ? "#5B21B6" : "#166534",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {o.origenTipo === "EXEQUIALES_LLAMADA" ? "🕊️ " : "🌸 "}
-                          {o.productoResumen}
-                        </span>
-                      ))}
-                      {delDia.length > 2 && (
-                        <span style={{ fontSize: "0.62rem", color: "#475569", fontWeight: 700 }}>
-                          +{delDia.length - 2} más
+                    <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                      {delDia.slice(0, 3).map((o) => {
+                        const clasif = resolverClasificacionOrden(o);
+                        const def = obtenerDefinicionClasificacionPedido(clasif);
+                        const conf = esEntregaConfirmadaOrden(o);
+                        return (
+                          <span
+                            key={o.id}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              fontSize: "0.63rem",
+                              fontWeight: conf ? 600 : 700,
+                              padding: "2px 5px",
+                              borderRadius: "4px",
+                              borderLeft: `3px solid ${conf ? def.acentoOpacoHex : def.acentoHex}`,
+                              background: conf ? def.fondoOpacoHex : def.fondoHex,
+                              color: conf ? def.textoOpacoHex : def.textoHex,
+                              opacity: conf ? 0.68 : 1,
+                              overflow: "hidden",
+                            }}
+                          >
+                            {conf ? (
+                              <CheckCircle2
+                                size={10}
+                                color="#475569"
+                                style={{ flexShrink: 0 }}
+                              />
+                            ) : (
+                              <span style={{ display: "inline-flex", flexShrink: 0 }}>
+                                <IconoClasificacionPedido
+                                  clasificacion={clasif}
+                                  size={10}
+                                  color={def.acentoHex}
+                                />
+                              </span>
+                            )}
+                            <span
+                              style={{
+                                whiteSpace: "nowrap",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                              }}
+                            >
+                              {clasif === "EXEQUIALES" && o.salaServicio
+                                ? `${o.salaServicio} · `
+                                : ""}
+                              {o.productoResumen}
+                            </span>
+                          </span>
+                        );
+                      })}
+                      {delDia.length > 3 && (
+                        <span style={{ fontSize: "0.61rem", color: "#64748B", fontWeight: 700 }}>
+                          +{delDia.length - 3} más
                         </span>
                       )}
                     </div>
@@ -885,7 +1281,7 @@ export function CalendarioPedidosTaller({
           {/* Detalle del día seleccionado en la vista mensual */}
           <div
             style={{
-              padding: "12px 14px",
+              padding: "14px",
               borderRadius: "12px",
               background: "#F8FAFC",
               border: "1px solid #E2E8F0",
@@ -894,19 +1290,38 @@ export function CalendarioPedidosTaller({
               gap: "10px",
             }}
           >
-            <strong style={{ fontSize: "0.86rem", color: "#0F172A" }}>
-              Entregas marcadas para el {formatearFechaEntregaHumana(fechaCursor, hoyYmd).etiquetaPrincipal} (
-              {ordenesFechaSeleccionadaMes.length})
-            </strong>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "8px",
+                flexWrap: "wrap",
+              }}
+            >
+              <strong style={{ fontSize: "0.87rem", color: "#0F172A" }}>
+                Pedidos del {formatearFechaEntregaHumana(fechaCursor, hoyYmd).etiquetaPrincipal} (
+                {ordenesFechaSeleccionadaMes.length})
+              </strong>
+              {ordenesFechaSeleccionadaMes.length > 0 && (
+                <div style={{ display: "flex", gap: "8px", fontSize: "0.74rem", fontWeight: 700 }}>
+                  <span style={{ color: "#0F766E" }}>Pendientes: {pendientesMesSel}</span>
+                  <span style={{ color: "#64748B" }}>·</span>
+                  <span style={{ color: "#475569" }}>Confirmadas: {confirmadasMesSel}</span>
+                </div>
+              )}
+            </div>
+
             {ordenesFechaSeleccionadaMes.length === 0 ? (
               <span style={{ fontSize: "0.8rem", color: "#64748B" }}>
-                Selecciona cualquier día marcado en el calendario para revisar o gestionar sus pedidos.
+                Selecciona cualquier fecha del calendario para consultar sus pedidos pendientes y
+                entregas confirmadas.
               </span>
             ) : (
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(270px, 1fr))",
                   gap: "10px",
                 }}
               >
@@ -916,6 +1331,11 @@ export function CalendarioPedidosTaller({
           </div>
         </div>
       )}
+
+      <ModalVisorEvidenciaEntrega
+        datos={visorEvidencia}
+        onCerrar={() => setVisorEvidencia(null)}
+      />
     </div>
   );
 }

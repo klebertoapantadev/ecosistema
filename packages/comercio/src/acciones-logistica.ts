@@ -24,6 +24,10 @@ import {
   type SugerenciaDireccionMapa,
   type ZonaCoberturaLogistica,
 } from "./logistica";
+import {
+  inferirClasificacionPedido,
+  type ClasificacionOperativaPedido,
+} from "./operaciones-taller";
 
 const esquemaZona = z.object({
   id: z.string().min(1),
@@ -710,6 +714,31 @@ export interface PedidoTiendaRegistrado {
   secuencial: number;
   codigoOrden: string;
   tipoOrigen?: "PEDIDO_TIENDA" | "PROFORMA_EVENTO" | string;
+  /** Clasificación operativa canónica: Domicilio | Local | Exequiales | Eventos | Mobiliario */
+  clasificacionPedido?: ClasificacionOperativaPedido;
+  exequiales?: {
+    salaServicio?: string | null;
+    quienSolicita?: string | null;
+    nombreFallecido?: string | null;
+    horaServicio?: string | null;
+    numeroInforme?: string | null;
+    estadoEvidencia?: string | null;
+  };
+  evidenciaEntrega?: {
+    confirmada: boolean;
+    entregaId?: string | null;
+    codigoOt?: string | null;
+    fotoUrl?: string | null;
+    mapaUrl?: string | null;
+    capturadoEn?: string | null;
+    entregadorNombre?: string | null;
+    latitud?: number | null;
+    longitud?: number | null;
+    direccionGps?: string | null;
+    salaServicio?: string | null;
+    observaciones?: string | null;
+    numeroInforme?: string | null;
+  } | null;
   grupoProformaId?: string;
   versionNumero?: number;
   esOriginal?: boolean;
@@ -786,6 +815,37 @@ export interface PedidoTiendaRegistrado {
   } | null;
   comprobanteTransferencia?: ComprobanteTransferenciaSubido | null;
   conversacionWebId?: string;
+  ordenTallerId?: string | null;
+  entregaId?: string | null;
+  salaServicio?: string | null;
+  tarjeta?: {
+    token: string;
+    tipo: "DIPTICO" | "CONDOLENCIAS_PLANA" | "SOLO_DIGITAL";
+    mensaje: string;
+    para: string;
+    de: string;
+    musicaUrl?: string | null;
+    musicaTitulo?: string | null;
+    lyrics?: Array<{ tiempo?: number; texto: string }>;
+    metadata?: {
+      origen?: string;
+      creado_por?: string;
+      historial_cambios?: Array<{
+        autor?: string;
+        rol?: string;
+        fecha?: string;
+        dedicatoria_anterior?: string;
+        dedicatoria_nueva?: string;
+      }>;
+      vistas_cliente?: number;
+      ultima_vista_en?: string;
+      editado_por_cliente?: boolean;
+      ultima_edicion_cliente_en?: string;
+      impresiones?: number;
+      ultima_impresion_en?: string;
+      ultimo_impreso_por?: string;
+    };
+  };
 }
 
 const esquemaPedidoTienda = z.object({
@@ -1743,6 +1803,33 @@ export async function obtenerPedidosTiendaAction(
     const prefijoDoc = esProformaEvento ? "PRF" : "ORD";
     const totalNum = Number(f.prf_total ?? det.total_pagar ?? 0);
     const eventoRaw = det.evento && typeof det.evento === "object" ? det.evento : null;
+    const retiroEnLocalPrf = Boolean(log.retiro_en_local);
+    const direccionPrf = String(log.direccion || "");
+    const salaPrf = log.sala_servicio || det.sala_servicio || null;
+    const resumenItemsPrf = itemsRaw
+      .map((it: any) => String(it.descripcion || it.producto_nombre || ""))
+      .join(" ");
+    const clasifPrf = inferirClasificacionPedido({
+      clasificacionExplicita: det.clasificacion_pedido ? String(det.clasificacion_pedido) : null,
+      origenTipo: String(det.tipo_origen || "PEDIDO_TIENDA"),
+      retiroEnLocal: retiroEnLocalPrf,
+      salaServicio: salaPrf ? String(salaPrf) : null,
+      productoResumen: resumenItemsPrf,
+      ubicacionEntrega: direccionPrf,
+      metodoPago: det.metodo_pago ? String(det.metodo_pago) : null,
+      tieneEvento: Boolean(eventoRaw),
+      items: itemsRaw.map((it: any) => ({
+        descripcion: String(it.descripcion || it.producto_nombre || ""),
+        sku: it.sku ? String(it.sku) : undefined,
+        esRenta: Boolean(it.es_renta || it.esRenta),
+        tipoOferta: it.tipo_oferta ? String(it.tipo_oferta) : undefined,
+      })),
+    });
+
+    const entregaConfirmadaPrf =
+      String(f.prf_estado || "").toUpperCase() === "ENTREGADO" ||
+      Boolean(det.entrega_confirmada) ||
+      Boolean(det.entrega_foto_url);
 
     return {
       id: String(f.prf_id),
@@ -1753,6 +1840,38 @@ export async function obtenerPedidosTiendaAction(
           `${prefijo}-${prefijoDoc}-${String(sec || 1).padStart(4, "0")}`
       ),
       tipoOrigen: String(det.tipo_origen || "PEDIDO_TIENDA"),
+      clasificacionPedido: clasifPrf,
+      salaServicio: salaPrf ? String(salaPrf) : null,
+      exequiales:
+        clasifPrf === "EXEQUIALES"
+          ? {
+              salaServicio: salaPrf ? String(salaPrf) : null,
+              quienSolicita: String(f.prf_cliente_nombre || contacto.nombreCompleto || ""),
+              nombreFallecido: String(log.destinatario_nombre || ""),
+              horaServicio: log.hora_exacta ? String(log.hora_exacta) : String(log.franja_horaria || ""),
+            }
+          : undefined,
+      evidenciaEntrega:
+        entregaConfirmadaPrf
+          ? {
+              confirmada: true,
+              entregaId: det.entrega_evidencia_id ? String(det.entrega_evidencia_id) : null,
+              fotoUrl: det.entrega_foto_url ? String(det.entrega_foto_url) : null,
+              mapaUrl: det.entrega_mapa_url ? String(det.entrega_mapa_url) : null,
+              capturadoEn: det.entrega_capturado_en
+                ? String(det.entrega_capturado_en)
+                : det.entrega_confirmada_en
+                  ? String(det.entrega_confirmada_en)
+                  : null,
+              entregadorNombre: det.entrega_entregador_nombre
+                ? String(det.entrega_entregador_nombre)
+                : null,
+              latitud: det.entrega_latitud != null ? Number(det.entrega_latitud) : null,
+              longitud: det.entrega_longitud != null ? Number(det.entrega_longitud) : null,
+              direccionGps: det.entrega_direccion_gps ? String(det.entrega_direccion_gps) : null,
+              salaServicio: salaPrf ? String(salaPrf) : null,
+            }
+          : null,
       grupoProformaId: det.grupo_proforma_id ? String(det.grupo_proforma_id) : String(f.prf_id),
       versionNumero: Number(det.version_numero ?? 1),
       esOriginal: det.es_original !== undefined ? Boolean(det.es_original) : true,
@@ -1858,6 +1977,40 @@ export async function obtenerPedidosTiendaAction(
                 : undefined,
             }
           : null,
+      tarjeta:
+        det.tarjeta && typeof det.tarjeta === "object"
+          ? {
+              token: String(
+                det.tarjeta.token ||
+                  f.prf_token_aprobacion ||
+                  String(f.prf_id)
+              ),
+              tipo:
+                det.tarjeta.tipo === "CONDOLENCIAS_PLANA" ||
+                det.tarjeta.tipo === "SOLO_DIGITAL" ||
+                det.tarjeta.tipo === "DIPTICO"
+                  ? det.tarjeta.tipo
+                  : "DIPTICO",
+              mensaje: String(det.tarjeta.mensaje ?? ""),
+              para: String(det.tarjeta.para ?? log.destinatario_nombre ?? ""),
+              de: String(det.tarjeta.de ?? f.prf_cliente_nombre ?? ""),
+              musicaUrl: det.tarjeta.musica_url
+                ? String(det.tarjeta.musica_url)
+                : det.tarjeta.musicaUrl
+                  ? String(det.tarjeta.musicaUrl)
+                  : null,
+              musicaTitulo: det.tarjeta.musica_titulo
+                ? String(det.tarjeta.musica_titulo)
+                : det.tarjeta.musicaTitulo
+                  ? String(det.tarjeta.musicaTitulo)
+                  : null,
+              lyrics: Array.isArray(det.tarjeta.lyrics) ? det.tarjeta.lyrics : [],
+              metadata:
+                det.tarjeta.metadata && typeof det.tarjeta.metadata === "object"
+                  ? det.tarjeta.metadata
+                  : { origen: "AUTOMATICO_SISTEMA", vistas_cliente: 0, impresiones: 0 },
+            }
+          : undefined,
     };
   });
 
@@ -1910,7 +2063,151 @@ export async function obtenerPedidosTiendaAction(
           dedicatoria: o.ota_dedicatoria ? String(o.ota_dedicatoria) : null,
           observaciones: o.ota_observaciones ? String(o.ota_observaciones) : null,
           totalUsd: Number(o.ota_total_usd ?? 0),
+          clasificacionPedido: o.ota_clasificacion_pedido ? String(o.ota_clasificacion_pedido) : null,
+          entregadoEn: o.ota_entregado_en ? String(o.ota_entregado_en) : null,
+          evidenciaFotoUrl: o.ota_evidencia_foto_url ? String(o.ota_evidencia_foto_url) : null,
+          evidenciaMapaUrl: o.ota_evidencia_mapa_url ? String(o.ota_evidencia_mapa_url) : null,
+          evidenciaLatitud: o.ota_evidencia_latitud != null ? Number(o.ota_evidencia_latitud) : null,
+          evidenciaLongitud: o.ota_evidencia_longitud != null ? Number(o.ota_evidencia_longitud) : null,
+          evidenciaDireccionGps: o.ota_evidencia_direccion_gps ? String(o.ota_evidencia_direccion_gps) : null,
+          entregadoPorNombre: o.ota_entregado_por_nombre ? String(o.ota_entregado_por_nombre) : null,
+          tarjetaToken: o.ota_tarjeta_token ? String(o.ota_tarjeta_token) : null,
+          tarjetaTipo: o.ota_tarjeta_tipo ? String(o.ota_tarjeta_tipo) : null,
+          tarjetaMusicaUrl: o.ota_tarjeta_musica_url ? String(o.ota_tarjeta_musica_url) : null,
+          tarjetaMusicaTitulo: o.ota_tarjeta_musica_titulo ? String(o.ota_tarjeta_musica_titulo) : null,
+          tarjetaLyrics: Array.isArray(o.ota_tarjeta_lyrics) ? o.ota_tarjeta_lyrics : [],
+          tarjetaMetadata:
+            o.ota_tarjeta_metadata && typeof o.ota_tarjeta_metadata === "object"
+              ? o.ota_tarjeta_metadata
+              : {},
         }));
+      }
+    }
+
+    const mapaOrdenPorProforma = new Map<string, any>();
+    for (const o of ordenesTallerExtra) {
+      if (o.proformaId) {
+        mapaOrdenPorProforma.set(String(o.proformaId), o);
+      }
+    }
+
+    // Enriquecer 1:1 los pedidos de com_proforma con su orden de taller y su tarjeta dedicatoria
+    for (const p of pedidos) {
+      const oVinc = mapaOrdenPorProforma.get(p.id);
+      const primerDed = p.items.find((it) => it.dedicatoria?.mensaje)?.dedicatoria;
+      const textoResumen = p.items.map((it) => it.descripcion).join(" ").toLowerCase();
+      const tipoInferido: "DIPTICO" | "CONDOLENCIAS_PLANA" | "SOLO_DIGITAL" =
+        p.tipoOrigen === "EXEQUIALES_LLAMADA" ||
+        textoResumen.includes("condolen") ||
+        textoResumen.includes("funebr") ||
+        textoResumen.includes("exequial")
+          ? "CONDOLENCIAS_PLANA"
+          : "DIPTICO";
+
+      if (oVinc) {
+        p.ordenTallerId = String(oVinc.id);
+        p.entregaId = oVinc.entregaId ? String(oVinc.entregaId) : null;
+        if (oVinc.entregaId) {
+          idsEntregaCubiertos.add(String(oVinc.entregaId));
+        }
+        p.salaServicio = oVinc.salaServicio ? String(oVinc.salaServicio) : p.salaServicio ?? null;
+        if (oVinc.clasificacionPedido) {
+          p.clasificacionPedido = inferirClasificacionPedido({
+            clasificacionExplicita: String(oVinc.clasificacionPedido),
+          });
+        }
+        if (
+          oVinc.evidenciaFotoUrl ||
+          String(oVinc.estadoTaller || "").toUpperCase() === "ENTREGADO"
+        ) {
+          p.evidenciaEntrega = {
+            confirmada: true,
+            entregaId: oVinc.entregaId
+              ? String(oVinc.entregaId)
+              : p.evidenciaEntrega?.entregaId ?? null,
+            fotoUrl: oVinc.evidenciaFotoUrl
+              ? String(oVinc.evidenciaFotoUrl)
+              : p.evidenciaEntrega?.fotoUrl ?? null,
+            mapaUrl: oVinc.evidenciaMapaUrl
+              ? String(oVinc.evidenciaMapaUrl)
+              : p.evidenciaEntrega?.mapaUrl ?? null,
+            capturadoEn: oVinc.entregadoEn
+              ? String(oVinc.entregadoEn)
+              : p.evidenciaEntrega?.capturadoEn ?? null,
+            entregadorNombre: oVinc.entregadoPorNombre
+              ? String(oVinc.entregadoPorNombre)
+              : p.evidenciaEntrega?.entregadorNombre ?? null,
+            latitud:
+              oVinc.evidenciaLatitud != null
+                ? Number(oVinc.evidenciaLatitud)
+                : p.evidenciaEntrega?.latitud ?? null,
+            longitud:
+              oVinc.evidenciaLongitud != null
+                ? Number(oVinc.evidenciaLongitud)
+                : p.evidenciaEntrega?.longitud ?? null,
+            direccionGps: oVinc.evidenciaDireccionGps
+              ? String(oVinc.evidenciaDireccionGps)
+              : p.evidenciaEntrega?.direccionGps ?? null,
+            salaServicio: p.salaServicio,
+            numeroInforme: oVinc.numeroInforme ? String(oVinc.numeroInforme) : null,
+          };
+        }
+        const msgVinc = String(oVinc.dedicatoria ?? p.tarjeta?.mensaje ?? primerDed?.mensaje ?? "");
+        p.tarjeta = {
+          token: String(oVinc.tarjetaToken || p.tarjeta?.token || p.tokenAprobacion || p.id),
+          tipo:
+            oVinc.tarjetaTipo === "CONDOLENCIAS_PLANA" ||
+            oVinc.tarjetaTipo === "SOLO_DIGITAL" ||
+            oVinc.tarjetaTipo === "DIPTICO"
+              ? oVinc.tarjetaTipo
+              : p.tarjeta?.tipo || tipoInferido,
+          mensaje: msgVinc,
+          para: String(
+            oVinc.destinatarioFallecido ||
+              p.tarjeta?.para ||
+              primerDed?.para ||
+              p.logistica.destinatarioNombre ||
+              ""
+          ),
+          de: String(
+            oVinc.clienteSolicita || p.tarjeta?.de || primerDed?.de || p.compradorNombre || ""
+          ),
+          musicaUrl: oVinc.tarjetaMusicaUrl
+            ? String(oVinc.tarjetaMusicaUrl)
+            : p.tarjeta?.musicaUrl ?? null,
+          musicaTitulo: oVinc.tarjetaMusicaTitulo
+            ? String(oVinc.tarjetaMusicaTitulo)
+            : p.tarjeta?.musicaTitulo ?? null,
+          lyrics:
+            Array.isArray(oVinc.tarjetaLyrics) && oVinc.tarjetaLyrics.length > 0
+              ? oVinc.tarjetaLyrics
+              : p.tarjeta?.lyrics ?? [],
+          metadata:
+            oVinc.tarjetaMetadata &&
+            typeof oVinc.tarjetaMetadata === "object" &&
+            Object.keys(oVinc.tarjetaMetadata).length > 0
+              ? oVinc.tarjetaMetadata
+              : p.tarjeta?.metadata ?? {},
+        };
+      } else if (!p.tarjeta) {
+        p.tarjeta = {
+          token: String(p.tokenAprobacion || p.id),
+          tipo: tipoInferido,
+          mensaje: String(primerDed?.mensaje || ""),
+          para: String(primerDed?.para || p.logistica.destinatarioNombre || ""),
+          de: String(primerDed?.de || p.compradorNombre || ""),
+          musicaUrl: null,
+          musicaTitulo: null,
+          lyrics: [],
+          metadata: { origen: "AUTOMATICO_SISTEMA", vistas_cliente: 0, impresiones: 0 },
+        };
+      } else {
+        p.tarjeta = {
+          ...p.tarjeta,
+          mensaje: p.tarjeta.mensaje || String(primerDed?.mensaje || ""),
+          para: p.tarjeta.para || String(primerDed?.para || p.logistica.destinatarioNombre || ""),
+          de: p.tarjeta.de || String(primerDed?.de || p.compradorNombre || ""),
+        };
       }
     }
 
@@ -1947,11 +2244,56 @@ export async function obtenerPedidosTiendaAction(
       const codigoOta = String(o.codigo || "PEDIDO");
       codigosPresentes.add(codigoOta.toUpperCase());
 
+      const clasifOta = inferirClasificacionPedido({
+        clasificacionExplicita: o.clasificacionPedido ? String(o.clasificacionPedido) : null,
+        origenTipo: o.origenTipo ? String(o.origenTipo) : null,
+        retiroEnLocal: Boolean(o.retiroEnLocal),
+        salaServicio: o.salaServicio ? String(o.salaServicio) : null,
+        productoResumen: o.productoResumen ? String(o.productoResumen) : null,
+        ubicacionEntrega: o.ubicacionEntrega ? String(o.ubicacionEntrega) : null,
+        metodoPago: o.metodoPago ? String(o.metodoPago) : null,
+        items: itemsOta,
+      });
+
+      const esClasifExeq = clasifOta === "EXEQUIALES" || esExeq;
+      const confirmadaOta =
+        estTaller === "ENTREGADO" ||
+        Boolean(o.evidenciaFotoUrl) ||
+        (o.estadoEvidencia && o.estadoEvidencia !== "PROGRAMADA" && o.estadoEvidencia !== "ANULADA");
+
       pedidos.push({
         id: String(o.id),
         secuencial: 0,
         codigoOrden: codigoOta,
         tipoOrigen: esExeq ? "EXEQUIALES_LLAMADA" : String(o.origenTipo || "MANUAL_ADMIN"),
+        clasificacionPedido: clasifOta,
+        exequiales: esClasifExeq
+          ? {
+              salaServicio: o.salaServicio ? String(o.salaServicio) : null,
+              quienSolicita: String(o.clienteSolicita || "Exequiales IESS"),
+              nombreFallecido: String(o.destinatarioFallecido || ""),
+              horaServicio: String(o.horaEspecifica || o.franjaHoraria || ""),
+              numeroInforme: o.numeroInforme ? String(o.numeroInforme) : null,
+              estadoEvidencia: o.estadoEvidencia ? String(o.estadoEvidencia) : null,
+            }
+          : undefined,
+        evidenciaEntrega: confirmadaOta
+          ? {
+              confirmada: true,
+              entregaId: o.entregaId ? String(o.entregaId) : null,
+              codigoOt: codigoOta,
+              fotoUrl: o.evidenciaFotoUrl ? String(o.evidenciaFotoUrl) : null,
+              mapaUrl: o.evidenciaMapaUrl ? String(o.evidenciaMapaUrl) : null,
+              capturadoEn: o.entregadoEn ? String(o.entregadoEn) : null,
+              entregadorNombre: o.entregadoPorNombre ? String(o.entregadoPorNombre) : null,
+              latitud: o.evidenciaLatitud != null ? Number(o.evidenciaLatitud) : null,
+              longitud: o.evidenciaLongitud != null ? Number(o.evidenciaLongitud) : null,
+              direccionGps: o.evidenciaDireccionGps ? String(o.evidenciaDireccionGps) : null,
+              salaServicio: o.salaServicio ? String(o.salaServicio) : null,
+              observaciones: o.observaciones ? String(o.observaciones) : null,
+              numeroInforme: o.numeroInforme ? String(o.numeroInforme) : null,
+            }
+          : null,
         grupoProformaId: String(o.id),
         versionNumero: 1,
         esOriginal: true,
@@ -2019,23 +2361,70 @@ export async function obtenerPedidosTiendaAction(
               : undefined,
         })),
         comprobanteTransferencia: null,
+        ordenTallerId: String(o.id),
+        entregaId: o.entregaId ? String(o.entregaId) : null,
+        salaServicio: o.salaServicio ? String(o.salaServicio) : null,
+        tarjeta: {
+          token: String(o.tarjetaToken || o.id),
+          tipo:
+            o.tarjetaTipo === "CONDOLENCIAS_PLANA" ||
+            o.tarjetaTipo === "SOLO_DIGITAL" ||
+            o.tarjetaTipo === "DIPTICO"
+              ? o.tarjetaTipo
+              : esExeq
+                ? "CONDOLENCIAS_PLANA"
+                : "DIPTICO",
+          mensaje: String(o.dedicatoria || ""),
+          para: String(o.destinatarioFallecido || ""),
+          de: String(o.clienteSolicita || ""),
+          musicaUrl: o.tarjetaMusicaUrl ? String(o.tarjetaMusicaUrl) : null,
+          musicaTitulo: o.tarjetaMusicaTitulo ? String(o.tarjetaMusicaTitulo) : null,
+          lyrics: Array.isArray(o.tarjetaLyrics) ? o.tarjetaLyrics : [],
+          metadata:
+            o.tarjetaMetadata && typeof o.tarjetaMetadata === "object"
+              ? o.tarjetaMetadata
+              : {},
+        },
       });
     }
 
-    // Respaldo adicional: OTs Exequiales en com_entrega_evidencia que aún no tengan fila en com_orden_taller
+    // Respaldo adicional: Todas las evidencias de entrega (Exequiales y Tienda) en com_entrega_evidencia
     const resEntExtra = await dbLectura
       .schema("comun_comercio")
       .from("com_entrega_evidencia")
       .select("*")
       .eq("ent_negocio", negNorm)
-      .eq("ent_tipo_origen", "ORDEN_TRABAJO_CONVENIO")
       .is("ent_eliminado_en", null)
       .order("ent_creado_en", { ascending: false })
-      .limit(100);
+      .limit(500);
 
     for (const e of resEntExtra.data ?? []) {
+      if (e.ent_estado === "ANULADA") continue;
       const entId = String(e.ent_id);
-      if (idsEntregaCubiertos.has(entId) || e.ent_estado === "ANULADA") continue;
+
+      if (e.ent_tipo_origen === "PEDIDO_TIENDA" && e.ent_proforma_id) {
+        const pedExistente = pedidos.find((p) => p.id === String(e.ent_proforma_id));
+        if (pedExistente && (!pedExistente.evidenciaEntrega || !pedExistente.evidenciaEntrega.fotoUrl)) {
+          pedExistente.evidenciaEntrega = {
+            confirmada: true,
+            entregaId: entId,
+            codigoOt: e.ent_codigo_ot ? String(e.ent_codigo_ot) : null,
+            fotoUrl: e.ent_foto_url ? String(e.ent_foto_url) : null,
+            mapaUrl: e.ent_mapa_url ? String(e.ent_mapa_url) : null,
+            capturadoEn: e.ent_capturado_en ? String(e.ent_capturado_en) : null,
+            entregadorNombre: e.ent_entregador_nombre ? String(e.ent_entregador_nombre) : null,
+            latitud: e.ent_latitud != null ? Number(e.ent_latitud) : null,
+            longitud: e.ent_longitud != null ? Number(e.ent_longitud) : null,
+            direccionGps: e.ent_direccion_gps ? String(e.ent_direccion_gps) : null,
+            salaServicio: e.ent_sala_servicio ? String(e.ent_sala_servicio) : null,
+            observaciones: e.ent_observaciones ? String(e.ent_observaciones) : null,
+          };
+        }
+        continue;
+      }
+
+      if (e.ent_tipo_origen !== "ORDEN_TRABAJO_CONVENIO") continue;
+      if (idsEntregaCubiertos.has(entId)) continue;
       const codOt = String(
         e.ent_codigo_ot || `OT-${String(e.ent_secuencial ?? 1).padStart(4, "0")}`
       );
@@ -2043,12 +2432,39 @@ export async function obtenerPedidosTiendaAction(
       codigosPresentes.add(codOt.toUpperCase());
       const detEnt = (e.ent_detalle_entrega ?? {}) as Record<string, any>;
       const sala = e.ent_sala_servicio || detEnt.sala_servicio || "";
+      const confirmadaOt = e.ent_estado !== "PROGRAMADA";
 
       pedidos.push({
         id: entId,
         secuencial: Number(e.ent_secuencial ?? 0),
         codigoOrden: codOt,
         tipoOrigen: "EXEQUIALES_LLAMADA",
+        clasificacionPedido: "EXEQUIALES",
+        exequiales: {
+          salaServicio: sala || null,
+          quienSolicita: String(
+            e.ent_coordinador_nombre || detEnt.quien_solicita || "Exequiales IESS"
+          ),
+          nombreFallecido: String(e.ent_fallecido_destinatario || ""),
+          horaServicio: String(e.ent_hora_solicitada || detEnt.hora_solicitada || ""),
+          estadoEvidencia: e.ent_estado ? String(e.ent_estado) : null,
+        },
+        evidenciaEntrega: confirmadaOt
+          ? {
+              confirmada: true,
+              entregaId: entId,
+              codigoOt: codOt,
+              fotoUrl: e.ent_foto_url ? String(e.ent_foto_url) : null,
+              mapaUrl: e.ent_mapa_url ? String(e.ent_mapa_url) : null,
+              capturadoEn: e.ent_capturado_en ? String(e.ent_capturado_en) : null,
+              entregadorNombre: e.ent_entregador_nombre ? String(e.ent_entregador_nombre) : null,
+              latitud: e.ent_latitud != null ? Number(e.ent_latitud) : null,
+              longitud: e.ent_longitud != null ? Number(e.ent_longitud) : null,
+              direccionGps: e.ent_direccion_gps ? String(e.ent_direccion_gps) : null,
+              salaServicio: sala || null,
+              observaciones: e.ent_observaciones ? String(e.ent_observaciones) : null,
+            }
+          : null,
         grupoProformaId: entId,
         versionNumero: 1,
         esOriginal: true,
@@ -2100,6 +2516,33 @@ export async function obtenerPedidosTiendaAction(
           },
         ],
         comprobanteTransferencia: null,
+        ordenTallerId: e.ent_orden_taller_id ? String(e.ent_orden_taller_id) : null,
+        entregaId: entId,
+        salaServicio: sala || null,
+        tarjeta: {
+          token: String(detEnt.tarjeta?.token || entId),
+          tipo:
+            detEnt.tarjeta?.tipo === "DIPTICO" ||
+            detEnt.tarjeta?.tipo === "SOLO_DIGITAL" ||
+            detEnt.tarjeta?.tipo === "CONDOLENCIAS_PLANA"
+              ? detEnt.tarjeta.tipo
+              : "CONDOLENCIAS_PLANA",
+          mensaje: String(detEnt.tarjeta?.mensaje ?? detEnt.dedicatoria ?? ""),
+          para: String(detEnt.tarjeta?.para ?? e.ent_fallecido_destinatario ?? ""),
+          de: String(
+            detEnt.tarjeta?.de ??
+              e.ent_coordinador_nombre ??
+              detEnt.quien_solicita ??
+              "Exequiales IESS"
+          ),
+          musicaUrl: detEnt.tarjeta?.musica_url || detEnt.tarjeta?.musicaUrl || null,
+          musicaTitulo: detEnt.tarjeta?.musica_titulo || detEnt.tarjeta?.musicaTitulo || null,
+          lyrics: Array.isArray(detEnt.tarjeta?.lyrics) ? detEnt.tarjeta.lyrics : [],
+          metadata:
+            detEnt.tarjeta?.metadata && typeof detEnt.tarjeta.metadata === "object"
+              ? detEnt.tarjeta.metadata
+              : { origen: "AUTOMATICO_SISTEMA", vistas_cliente: 0, impresiones: 0 },
+        },
       });
     }
 

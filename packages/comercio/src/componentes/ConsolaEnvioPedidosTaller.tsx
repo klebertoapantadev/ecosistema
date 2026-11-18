@@ -5,6 +5,7 @@ import { DataGrid, SelectConBuscador, type ColumnaDataGrid } from "@eco/datagrid
 import { crearClienteNavegador } from "@eco/supabase/cliente";
 import {
   Calendar,
+  Camera,
   CheckCircle2,
   Clock,
   Edit3,
@@ -25,16 +26,27 @@ import {
   type DatosConsolaTallerYDespacho,
 } from "../acciones-operaciones-taller";
 import {
+  CLASIFICACIONES_OPERATIVAS_PEDIDO,
   OPCIONES_DESCRIPCION_SERVICIO_EXEQUIALES,
   OPCIONES_SALA_EXEQUIALES,
   RANGOS_HORARIO_ENTREGA_TIENDA,
   SOLICITANTES_EXEQUIALES_FRECUENTES,
+  esEntregaConfirmadaOrden,
   formatearFechaEntregaHumana,
+  inferirClasificacionPedido,
   obtenerFechaHoyEcuadorYmd,
   sumarDiasYmd,
+  type ClasificacionOperativaPedido,
   type ItemOrdenTaller,
   type OrdenTrabajoTaller,
 } from "../operaciones-taller";
+import {
+  BarraFiltroClasificacionPedido,
+  IconoClasificacionPedido,
+  InsigniaClasificacionPedido,
+  ModalVisorEvidenciaEntrega,
+  type DatosVisorEvidenciaModal,
+} from "./InsigniaClasificacionPedido";
 import { ModalImprimirTarjetaTaller } from "./ModalImprimirTarjetaTaller";
 import { CalendarioPedidosTaller } from "./CalendarioPedidosTaller";
 
@@ -44,7 +56,13 @@ export interface PropsConsolaEnvioPedidosTaller {
 }
 
 type PestanaDespacho = "bandeja_envio" | "exequiales_llamada" | "cargar_manual" | "calendario";
-type FiltroBandeja = "por_enviar" | "hoy" | "futuros" | "ya_en_taller" | "todos";
+type FiltroBandeja =
+  | "por_enviar"
+  | "hoy"
+  | "futuros"
+  | "ya_en_taller"
+  | "entregados"
+  | "todos";
 
 export function ConsolaEnvioPedidosTaller({
   negocio,
@@ -63,6 +81,10 @@ export function ConsolaEnvioPedidosTaller({
   );
   const [pestana, setPestana] = useState<PestanaDespacho>("bandeja_envio");
   const [filtroBandeja, setFiltroBandeja] = useState<FiltroBandeja>("todos");
+  const [filtroClasificacion, setFiltroClasificacion] = useState<
+    ClasificacionOperativaPedido | "TODOS"
+  >("TODOS");
+  const [visorEvidencia, setVisorEvidencia] = useState<DatosVisorEvidenciaModal | null>(null);
   const [busquedaPedidoUrl, setBusquedaPedidoUrl] = useState<string>("");
   const [enviandoLote, setEnviandoLote] = useState<boolean>(false);
   const [idProcesando, setIdProcesando] = useState<string | null>(null);
@@ -93,8 +115,12 @@ export function ConsolaEnvioPedidosTaller({
   // =========================================================================
   // FORMULARIO: CARGAR PEDIDO MANUAL (ADMIN / OPERADOR / VENTAS)
   // =========================================================================
+  const [manClasificacion, setManClasificacion] =
+    useState<ClasificacionOperativaPedido>("DOMICILIO");
   const [manFechaEntrega, setManFechaEntrega] = useState<string>(hoyYmd);
   const [manFranja, setManFranja] = useState<string>("A) 09:00 - 13:00");
+  const [manHoraPuntual, setManHoraPuntual] = useState<string>("");
+  const [manSalaServicio, setManSalaServicio] = useState<string>("");
   const [manSkuSeleccionado, setManSkuSeleccionado] = useState<string>("");
   const [manCantidadSel, setManCantidadSel] = useState<number>(1);
   const [manItems, setManItems] = useState<ItemOrdenTaller[]>([]);
@@ -258,19 +284,50 @@ export function ConsolaEnvioPedidosTaller({
       ),
     [ordenesActivas]
   );
+  const entregadasHistoricas = useMemo(
+    () => ordenesActivas.filter((o) => esEntregaConfirmadaOrden(o)),
+    [ordenesActivas]
+  );
+
+  const resolverClasif = useCallback((o: OrdenTrabajoTaller): ClasificacionOperativaPedido => {
+    return inferirClasificacionPedido({
+      clasificacionExplicita: o.clasificacionPedido,
+      origenTipo: o.origenTipo,
+      retiroEnLocal: o.retiroEnLocal,
+      salaServicio: o.salaServicio,
+      productoResumen: o.productoResumen,
+      ubicacionEntrega: o.ubicacionEntrega,
+      metodoPago: o.metodoPago,
+      items: o.items,
+    });
+  }, []);
+
+  const conteosClasificacion = useMemo(() => {
+    const m: Partial<Record<ClasificacionOperativaPedido, number>> = {};
+    for (const o of ordenesActivas) {
+      const c = resolverClasif(o);
+      m[c] = (m[c] ?? 0) + 1;
+    }
+    return m;
+  }, [ordenesActivas, resolverClasif]);
 
   const filasFiltradas = useMemo(() => {
     return ordenesActivas.filter((o) => {
+      if (filtroClasificacion !== "TODOS" && resolverClasif(o) !== filtroClasificacion) {
+        return false;
+      }
       const f = (o.fechaEntrega || "").slice(0, 10);
+      const entregada = esEntregaConfirmadaOrden(o);
       if (filtroBandeja === "por_enviar") return o.estadoTaller === "PENDIENTE_ENVIO";
-      if (filtroBandeja === "hoy") return f === hoyYmd && o.estadoTaller !== "ENTREGADO";
-      if (filtroBandeja === "futuros") return f > hoyYmd && o.estadoTaller !== "ENTREGADO";
+      if (filtroBandeja === "hoy") return f === hoyYmd && !entregada;
+      if (filtroBandeja === "futuros") return f > hoyYmd && !entregada;
       if (filtroBandeja === "ya_en_taller") {
         return ["ENVIADO_TALLER", "EN_PREPARACION", "LISTO_ENTREGA"].includes(o.estadoTaller);
       }
+      if (filtroBandeja === "entregados") return entregada;
       return true;
     });
-  }, [ordenesActivas, filtroBandeja, hoyYmd]);
+  }, [ordenesActivas, filtroBandeja, filtroClasificacion, resolverClasif, hoyYmd]);
 
   const handleEnviarIdsATaller = useCallback(
     async (ids: string[], resumenNotif?: string) => {
@@ -464,18 +521,27 @@ export function ConsolaEnvioPedidosTaller({
     const res = await crearOActualizarPedidoOperadorAction({
       negocio: negNorm,
       origenTipo: "MANUAL_ADMIN",
+      clasificacionPedido: manRetiroLocal ? "LOCAL" : manClasificacion,
       enviarATaller: enviarAhora,
       fechaEntrega: manFechaEntrega,
       fechaElaboracion: enviarAhora ? hoyYmd : undefined,
       franjaHoraria: manFranja,
+      horaEspecifica: manHoraPuntual.trim() || undefined,
       productoResumen: resumen,
       items: listaFinal,
       clienteSolicita: manCliente.trim() || manDestinatario.trim(),
       clienteTelefono: manTelefono.trim() || undefined,
       destinatarioFallecido: manDestinatario.trim() || manCliente.trim(),
-      ubicacionEntrega: manRetiroLocal ? "Retiro en Tienda" : manDireccion.trim(),
+      salaServicio:
+        manClasificacion === "EXEQUIALES" && manSalaServicio.trim()
+          ? manSalaServicio.trim()
+          : undefined,
+      ubicacionEntrega:
+        manRetiroLocal || manClasificacion === "LOCAL"
+          ? "Retiro en Tienda"
+          : manDireccion.trim(),
       enlaceMapa: manEnlaceMapa.trim() || undefined,
-      retiroEnLocal: manRetiroLocal,
+      retiroEnLocal: manRetiroLocal || manClasificacion === "LOCAL",
       dedicatoria: manDedicatoria.trim() || undefined,
       observaciones: manObservaciones.trim() || undefined,
       totalUsd: totalCalculado,
@@ -498,6 +564,8 @@ export function ConsolaEnvioPedidosTaller({
     setManSkuSeleccionado("");
     setManCantidadSel(1);
     setManDetalleLibre("");
+    setManHoraPuntual("");
+    setManSalaServicio("");
     setManCliente("");
     setManTelefono("");
     setManDestinatario("");
@@ -508,8 +576,8 @@ export function ConsolaEnvioPedidosTaller({
     setManTotalUsd("");
     setMensajeExito(
       enviarAhora
-        ? `✅ Pedido ${res.codigo} cargado y enviado a Taller (Entrega: ${manFechaEntrega}).`
-        : `📥 Pedido ${res.codigo} guardado para entrega el ${manFechaEntrega}. Queda listo en bandeja para enviarlo a Taller en el día correspondiente.`
+        ? `Pedido ${res.codigo} cargado y enviado a Taller (Entrega: ${manFechaEntrega}).`
+        : `Pedido ${res.codigo} guardado para entrega el ${manFechaEntrega}. Queda listo en bandeja para enviarlo a Taller en el día correspondiente.`
     );
     await recargarDatos(true);
     setFiltroBandeja(enviarAhora ? "todos" : "por_enviar");
@@ -526,6 +594,7 @@ export function ConsolaEnvioPedidosTaller({
       negocio: negNorm,
       ordenId: ordenEditando.id,
       origenTipo: ordenEditando.origenTipo,
+      clasificacionPedido: ordenEditando.clasificacionPedido,
       enviarATaller: ordenEditando.estadoTaller !== "PENDIENTE_ENVIO",
       fechaEntrega: ordenEditando.fechaEntrega,
       franjaHoraria: ordenEditando.franjaHoraria ?? undefined,
@@ -538,6 +607,8 @@ export function ConsolaEnvioPedidosTaller({
       salaServicio: ordenEditando.salaServicio ?? undefined,
       ubicacionEntrega: ordenEditando.ubicacionEntrega,
       enlaceMapa: ordenEditando.enlaceMapa ?? undefined,
+      retiroEnLocal:
+        ordenEditando.clasificacionPedido === "LOCAL" ? true : ordenEditando.retiroEnLocal,
       dedicatoria: ordenEditando.dedicatoria,
       observaciones: ordenEditando.observaciones,
     });
@@ -654,36 +725,24 @@ export function ConsolaEnvioPedidosTaller({
       },
       {
         id: "pedido",
-        encabezado: "Pedido / Producto",
-        valor: (o) => `${o.codigo} ${o.productoResumen} ${o.origenTipo}`,
+        encabezado: "Pedido / Clasificación / Producto",
+        valor: (o) => `${o.codigo} ${resolverClasif(o)} ${o.productoResumen} ${o.origenTipo}`,
         render: (o) => {
-          const esExeq = o.origenTipo === "EXEQUIALES_LLAMADA";
+          const clasif = resolverClasif(o);
+          const confirmada = esEntregaConfirmadaOrden(o);
           return (
-            <div style={{ display: "flex", flexDirection: "column", gap: "3px", maxWidth: "330px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", maxWidth: "335px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
                 <strong style={{ fontSize: "0.83rem", color: "#0F172A" }}>{o.codigo}</strong>
-                <span
-                  style={{
-                    fontSize: "0.68rem",
-                    fontWeight: 700,
-                    padding: "1px 6px",
-                    borderRadius: "999px",
-                    background: esExeq ? "#FAF5FF" : "#F8FAFC",
-                    color: esExeq ? "#6B21A8" : "#475569",
-                    border: `1px solid ${esExeq ? "#D8B4FE" : "#E2E8F0"}`,
-                  }}
-                >
-                  {esExeq
-                    ? "🕯️ Exequiales"
-                    : o.origenTipo === "PROFORMA_EVENTO"
-                      ? "✨ Evento"
-                      : o.origenTipo === "MANUAL_ADMIN"
-                        ? "📝 Manual"
-                        : "🛍️ Venta Web"}
-                </span>
+                <InsigniaClasificacionPedido
+                  clasificacion={clasif}
+                  opaco={confirmada}
+                  compacto
+                  sufijoTexto={clasif === "EXEQUIALES" && o.salaServicio ? o.salaServicio : null}
+                />
               </div>
               <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#1E293B" }}>
-                💐 {o.productoResumen}
+                {o.productoResumen}
               </span>
             </div>
           );
@@ -691,28 +750,36 @@ export function ConsolaEnvioPedidosTaller({
       },
       {
         id: "cliente_destino",
-        encabezado: "Solicita / Destinatario / Sala",
+        encabezado: "Solicita / Destinatario / Dirección",
         valor: (o) =>
           `${o.clienteSolicita} ${o.destinatarioFallecido} ${o.salaServicio || ""} ${o.ubicacionEntrega || ""}`,
-        render: (o) => (
-          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#0F172A" }}>
-              {o.origenTipo === "EXEQUIALES_LLAMADA"
-                ? `Solicita: ${o.clienteSolicita}`
-                : o.destinatarioFallecido || o.clienteSolicita}
-            </span>
-            {o.origenTipo === "EXEQUIALES_LLAMADA" ? (
-              <span style={{ fontSize: "0.74rem", color: "#581C87", fontWeight: 600 }}>
-                🏛️ {o.salaServicio || "Sala por confirmar"} · 🕊️{" "}
-                {o.destinatarioFallecido || "Por confirmar"}
+        render: (o) => {
+          const esExeq = resolverClasif(o) === "EXEQUIALES";
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: "2px", maxWidth: "260px" }}>
+              <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#0F172A" }}>
+                {esExeq
+                  ? `Solicita: ${o.clienteSolicita}`
+                  : o.destinatarioFallecido || o.clienteSolicita}
               </span>
-            ) : (
-              <span style={{ fontSize: "0.73rem", color: "#64748B" }}>
-                {o.retiroEnLocal ? "🏪 Retiro en Tienda" : o.ubicacionEntrega || "Sin dirección"}
-              </span>
-            )}
-          </div>
-        ),
+              {esExeq ? (
+                <>
+                  <span style={{ fontSize: "0.74rem", color: "#4C1D95", fontWeight: 700 }}>
+                    Fallecido: {o.destinatarioFallecido || "Por confirmar"}
+                  </span>
+                  <span style={{ fontSize: "0.72rem", color: "#475569" }}>
+                    {[o.salaServicio, o.ubicacionEntrega].filter(Boolean).join(" · ") ||
+                      "Sala por confirmar"}
+                  </span>
+                </>
+              ) : (
+                <span style={{ fontSize: "0.73rem", color: "#64748B" }}>
+                  {o.retiroEnLocal ? "Retiro en Tienda" : o.ubicacionEntrega || "Sin dirección"}
+                </span>
+              )}
+            </div>
+          );
+        },
       },
       {
         id: "pago_taller",
@@ -912,6 +979,7 @@ export function ConsolaEnvioPedidosTaller({
       idProcesando,
       seleccionadosIds,
       datos.repartidoresNegocio,
+      resolverClasif,
       toggleSeleccion,
       handleEnviarIdsATaller,
       handleAsignarRepartidor,
@@ -1093,6 +1161,14 @@ export function ConsolaEnvioPedidosTaller({
               gap: "12px",
             }}
           >
+            <BarraFiltroClasificacionPedido
+              seleccionada={filtroClasificacion}
+              onSeleccionar={setFiltroClasificacion}
+              conteos={conteosClasificacion}
+              totalGeneral={ordenesActivas.length}
+              compacta
+            />
+
             <div
               style={{
                 display: "flex",
@@ -1108,13 +1184,17 @@ export function ConsolaEnvioPedidosTaller({
                     { id: "por_enviar", label: `Por Enviar (${pendientesEnvio.length})` },
                     {
                       id: "hoy",
-                      label: `Entrega Hoy (${ordenesActivas.filter((o) => o.fechaEntrega === hoyYmd && o.estadoTaller !== "ENTREGADO").length})`,
+                      label: `Entrega Hoy (${ordenesActivas.filter((o) => o.fechaEntrega === hoyYmd && !esEntregaConfirmadaOrden(o)).length})`,
                     },
                     {
                       id: "futuros",
-                      label: `Mañana / Futuros (${ordenesActivas.filter((o) => o.fechaEntrega > hoyYmd && o.estadoTaller !== "ENTREGADO").length})`,
+                      label: `Mañana / Futuros (${ordenesActivas.filter((o) => o.fechaEntrega > hoyYmd && !esEntregaConfirmadaOrden(o)).length})`,
                     },
                     { id: "ya_en_taller", label: `En Taller (${enTallerActivas.length})` },
+                    {
+                      id: "entregados",
+                      label: `Historial Entregados (${entregadasHistoricas.length})`,
+                    },
                     { id: "todos", label: `Todos (${ordenesActivas.length})` },
                   ] as Array<{ id: FiltroBandeja; label: string }>
                 ).map((f) => (
@@ -1252,6 +1332,51 @@ export function ConsolaEnvioPedidosTaller({
                     {o.observaciones && (
                       <div style={{ marginTop: "4px" }}>
                         <strong>Notas:</strong> {o.observaciones}
+                      </div>
+                    )}
+                    {o.evidenciaFotoUrl && (
+                      <div style={{ marginTop: "8px" }}>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setVisorEvidencia({
+                              codigo: o.codigo,
+                              clasificacion: resolverClasif(o),
+                              productoResumen: o.productoResumen,
+                              quienSolicita: o.clienteSolicita,
+                              destinatarioFallecido: o.destinatarioFallecido,
+                              salaServicio: o.salaServicio,
+                              fechaEntrega: o.fechaEntrega,
+                              horaEntrega: o.horaEspecifica || o.franjaHoraria,
+                              direccionEntrega: o.ubicacionEntrega,
+                              entregadoEn: o.entregadoEn,
+                              entregadorNombre: o.entregadoPorNombre,
+                              fotoUrl: o.evidenciaFotoUrl,
+                              mapaUrl: o.evidenciaMapaUrl,
+                              latitud: o.evidenciaLatitud,
+                              longitud: o.evidenciaLongitud,
+                              numeroInforme: o.numeroInforme,
+                            })
+                          }
+                          title="Ampliar fotografía georreferenciada de confirmación"
+                          aria-label="Ver Foto"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            padding: "5px 10px",
+                            borderRadius: "7px",
+                            border: "1px solid #99F6E4",
+                            background: "#F0FDFA",
+                            color: "#115E59",
+                            fontSize: "0.74rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <Camera size={13} />
+                          <span>Ver Foto Confirmación</span>
+                        </button>
                       </div>
                     )}
                   </div>
@@ -1529,11 +1654,11 @@ export function ConsolaEnvioPedidosTaller({
             </div>
           </div>
 
-          {/* Nombre del Fallecido y Notas */}
+          {/* Nombre del Fallecido, Dirección y Notas */}
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
               gap: "12px",
             }}
           >
@@ -1544,6 +1669,17 @@ export function ConsolaEnvioPedidosTaller({
                 value={exeqFallecido}
                 onChange={(e) => setExeqFallecido(e.target.value)}
                 placeholder="Ej. Rodríguez Navarrete Myrian Graciela (o completar al entregar)"
+                style={inputStyle}
+              />
+            </div>
+
+            <div>
+              <label style={labelStyle}>Dirección / Ubicación de Entrega</label>
+              <input
+                type="text"
+                value={exeqUbicacion}
+                onChange={(e) => setExeqUbicacion(e.target.value)}
+                placeholder="Ej. Exequiales del IESS, Monteolivo, Camposanto..."
                 style={inputStyle}
               />
             </div>
@@ -1614,6 +1750,88 @@ export function ConsolaEnvioPedidosTaller({
               dejarlo pendiente de validación o enviarlo de una vez al Taller.
             </span>
           </div>
+
+          {/* 0. CLASIFICACIÓN OPERATIVA DEL PEDIDO */}
+          <div>
+            <label style={labelStyle}>Clasificación del Pedido *</label>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              {CLASIFICACIONES_OPERATIVAS_PEDIDO.map((cat) => {
+                const activa = manClasificacion === cat.clave;
+                return (
+                  <button
+                    key={cat.clave}
+                    type="button"
+                    onClick={() => {
+                      setManClasificacion(cat.clave);
+                      setManRetiroLocal(cat.clave === "LOCAL");
+                    }}
+                    title={cat.descripcion}
+                    aria-label={cat.etiqueta}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "8px 13px",
+                      borderRadius: "9px",
+                      border: activa ? `2px solid ${cat.acentoHex}` : `1px solid ${cat.bordeHex}`,
+                      background: activa ? cat.acentoHex : cat.fondoHex,
+                      color: activa ? "#FFFFFF" : cat.textoHex,
+                      fontSize: "0.81rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <IconoClasificacionPedido
+                      clasificacion={cat.clave}
+                      size={14}
+                      color={activa ? "#FFFFFF" : cat.acentoHex}
+                    />
+                    <span>{cat.etiqueta}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {manClasificacion === "EXEQUIALES" && (
+            <div
+              style={{
+                padding: "12px 14px",
+                borderRadius: "10px",
+                background: "#F5F3FF",
+                border: "1px solid #DDD6FE",
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                gap: "12px",
+              }}
+            >
+              <div>
+                <label style={{ ...labelStyle, color: "#4C1D95" }}>Sala de Entrega</label>
+                <SelectConBuscador
+                  value={manSalaServicio}
+                  onChange={(e) => setManSalaServicio(e.target.value)}
+                  style={inputStyle}
+                >
+                  <option value="">-- Seleccionar Sala o dejar por confirmar --</option>
+                  {OPCIONES_SALA_EXEQUIALES.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </SelectConBuscador>
+              </div>
+              <div>
+                <label style={{ ...labelStyle, color: "#4C1D95" }}>Hora Puntual (opcional)</label>
+                <input
+                  type="text"
+                  value={manHoraPuntual}
+                  onChange={(e) => setManHoraPuntual(e.target.value)}
+                  placeholder="Ej. 10:30 o Lo antes posible"
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+          )}
 
           {/* 1. FECHA DE ENTREGA (PRINCIPAL) Y RANGO DE HORARIO A / B / C */}
           <div
@@ -2072,6 +2290,32 @@ export function ConsolaEnvioPedidosTaller({
             </div>
 
             <div>
+              <label style={labelStyle}>Clasificación del Pedido</label>
+              <SelectConBuscador
+                value={resolverClasif(ordenEditando)}
+                onChange={(e) =>
+                  setOrdenEditando((prev) =>
+                    prev
+                      ? {
+                          ...prev,
+                          clasificacionPedido: e.target.value as ClasificacionOperativaPedido,
+                          retiroEnLocal:
+                            e.target.value === "LOCAL" ? true : prev.retiroEnLocal,
+                        }
+                      : null
+                  )
+                }
+                style={inputStyle}
+              >
+                {CLASIFICACIONES_OPERATIVAS_PEDIDO.map((op) => (
+                  <option key={op.clave} value={op.clave}>
+                    {op.etiqueta}
+                  </option>
+                ))}
+              </SelectConBuscador>
+            </div>
+
+            <div>
               <label style={labelStyle}>Fecha de Entrega *</label>
               <input
                 type="date"
@@ -2085,7 +2329,8 @@ export function ConsolaEnvioPedidosTaller({
               />
             </div>
 
-            {ordenEditando.origenTipo === "EXEQUIALES_LLAMADA" ? (
+            {resolverClasif(ordenEditando) === "EXEQUIALES" ||
+            ordenEditando.origenTipo === "EXEQUIALES_LLAMADA" ? (
               <>
                 <div>
                   <label style={labelStyle}>Hora del Servicio</label>
@@ -2184,6 +2429,21 @@ export function ConsolaEnvioPedidosTaller({
             </div>
 
             <div>
+              <label style={labelStyle}>Dirección / Ubicación de Entrega</label>
+              <input
+                type="text"
+                value={ordenEditando.ubicacionEntrega ?? ""}
+                onChange={(e) =>
+                  setOrdenEditando((prev) =>
+                    prev ? { ...prev, ubicacionEntrega: e.target.value } : null
+                  )
+                }
+                placeholder="Dirección exacta, sala o retiro en tienda"
+                style={inputStyle}
+              />
+            </div>
+
+            <div>
               <label style={labelStyle}>Notas / Observaciones</label>
               <input
                 type="text"
@@ -2254,6 +2514,11 @@ export function ConsolaEnvioPedidosTaller({
           }}
         />
       )}
+
+      <ModalVisorEvidenciaEntrega
+        datos={visorEvidencia}
+        onCerrar={() => setVisorEvidencia(null)}
+      />
     </div>
   );
 }

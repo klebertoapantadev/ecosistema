@@ -4,9 +4,11 @@ import { revalidatePath } from "next/cache";
 import {
   DATOS_PROVEEDOR_TINKAY_DEFECTO,
   extraerConteoJsonDesdeRespuestaAria,
+  inferirClasificacionPedido,
   normalizarFranjaHorariaTienda,
   obtenerFechaHoyEcuadorYmd,
   type ArregloEntregaInmediata,
+  type ClasificacionOperativaPedido,
   type ConvenioEntregaConfig,
   type CorteInventarioRosas,
   type DatosProveedorInformeIess,
@@ -792,14 +794,27 @@ export async function obtenerConsolaTallerYDespachoAction(
 
     if (!error && data?.ok) {
       const ordenes: OrdenTrabajoTaller[] = Array.isArray(data.ordenes)
-        ? (data.ordenes as any[]).map((o) => ({
-            ...o,
-            totalUsd: Number(o.totalUsd ?? 0),
-            items: Array.isArray(o.items) ? o.items : [],
-            franjaHoraria: o.franjaHoraria
-              ? normalizarFranjaHorariaTienda(String(o.franjaHoraria))
-              : null,
-          }))
+        ? (data.ordenes as any[]).map((o) => {
+            const itemsNorm = Array.isArray(o.items) ? o.items : [];
+            return {
+              ...o,
+              clasificacionPedido: inferirClasificacionPedido({
+                clasificacionExplicita: o.clasificacionPedido,
+                origenTipo: o.origenTipo,
+                retiroEnLocal: Boolean(o.retiroEnLocal),
+                salaServicio: o.salaServicio,
+                productoResumen: o.productoResumen,
+                ubicacionEntrega: o.ubicacionEntrega,
+                metodoPago: o.metodoPago,
+                items: itemsNorm,
+              }),
+              totalUsd: Number(o.totalUsd ?? 0),
+              items: itemsNorm,
+              franjaHoraria: o.franjaHoraria
+                ? normalizarFranjaHorariaTienda(String(o.franjaHoraria))
+                : null,
+            };
+          })
         : [];
       const productosCatalogo: ProductoLigeroSelectorTaller[] = Array.isArray(
         data.productosCatalogo
@@ -807,6 +822,8 @@ export async function obtenerConsolaTallerYDespachoAction(
         ? (data.productosCatalogo as any[]).map((p) => ({
             productoId: String(p.productoId),
             productoNombre: String(p.productoNombre),
+            tipoProducto: p.tipoProducto ? String(p.tipoProducto) : undefined,
+            esRenta: Boolean(p.esRenta),
             varianteId: p.varianteId ? String(p.varianteId) : undefined,
             sku: String(p.sku || ""),
             varianteNombre: String(p.varianteNombre || "Estándar"),
@@ -918,6 +935,11 @@ export async function obtenerConsolaTallerYDespachoAction(
               ? "EN_PREPARACION"
               : "PENDIENTE_ENVIO");
 
+      const resumenProdPrf =
+        items.map((i) => `${i.cantidad}x ${i.descripcion}`).join(" + ") || "Pedido floral";
+      const ubicacionPrf = String(log.direccion || det.ubicacion?.direccion || "");
+      const retiroPrf = Boolean(log.retiro_en_local);
+
       ordenesRespaldo.push({
         id: String(f.prf_id),
         codigo: String(
@@ -929,6 +951,16 @@ export async function obtenerConsolaTallerYDespachoAction(
             : tipoOrig === "MANUAL_ADMIN"
               ? "MANUAL_ADMIN"
               : "VENTA_TIENDA",
+        clasificacionPedido: inferirClasificacionPedido({
+          clasificacionExplicita: det.clasificacion_pedido ? String(det.clasificacion_pedido) : null,
+          origenTipo: tipoOrig,
+          retiroEnLocal: retiroPrf,
+          salaServicio: log.sala_servicio || det.sala_servicio || null,
+          productoResumen: resumenProdPrf,
+          ubicacionEntrega: ubicacionPrf,
+          tieneEvento: Boolean(det.evento),
+          items,
+        }),
         proformaId: String(f.prf_id),
         estadoTaller: estTaller,
         estadoPago: estadoPrf,
@@ -942,8 +974,7 @@ export async function obtenerConsolaTallerYDespachoAction(
           String(log.franja_horaria || log.franjaHoraria || "A) 09:00 - 13:00")
         ),
         horaEspecifica: log.hora_exacta || det.evento?.horaEvento || null,
-        productoResumen:
-          items.map((i) => `${i.cantidad}x ${i.descripcion}`).join(" + ") || "Pedido floral",
+        productoResumen: resumenProdPrf,
         items,
         clienteSolicita: String(
           det.comprador?.nombreCompleto || det.comprador?.nombre || "Cliente Tienda"
@@ -952,13 +983,39 @@ export async function obtenerConsolaTallerYDespachoAction(
         destinatarioFallecido: String(
           log.destinatario_nombre || log.destinatarioNombre || det.comprador?.nombreCompleto || ""
         ),
-        ubicacionEntrega: String(log.direccion || det.ubicacion?.direccion || ""),
+        salaServicio: log.sala_servicio || det.sala_servicio || null,
+        ubicacionEntrega: ubicacionPrf,
         enlaceMapa: log.enlace_mapa || log.enlaceMapa || null,
-        retiroEnLocal: Boolean(log.retiro_en_local),
-        dedicatoria: items.map((i) => i.dedicatoria).filter(Boolean).join(" || ") || undefined,
+        retiroEnLocal: retiroPrf,
+        dedicatoria:
+          det.tarjeta?.mensaje ||
+          items.map((i) => i.dedicatoria).filter(Boolean).join(" || ") ||
+          undefined,
+        tarjetaToken: String(det.tarjeta?.token || f.prf_token_aprobacion || f.prf_id),
+        tarjetaTipo:
+          det.tarjeta?.tipo === "CONDOLENCIAS_PLANA" ||
+          det.tarjeta?.tipo === "SOLO_DIGITAL" ||
+          det.tarjeta?.tipo === "DIPTICO"
+            ? det.tarjeta.tipo
+            : resumenProdPrf.toLowerCase().includes("condolen")
+              ? "CONDOLENCIAS_PLANA"
+              : "DIPTICO",
+        tarjetaMusicaUrl: det.tarjeta?.musica_url || det.tarjeta?.musicaUrl || null,
+        tarjetaMusicaTitulo: det.tarjeta?.musica_titulo || det.tarjeta?.musicaTitulo || null,
+        tarjetaLyrics: Array.isArray(det.tarjeta?.lyrics) ? det.tarjeta.lyrics : [],
+        tarjetaMetadata:
+          det.tarjeta?.metadata && typeof det.tarjeta.metadata === "object"
+            ? det.tarjeta.metadata
+            : {},
         observaciones: det.notas_taller || det.evento?.notasEvento || undefined,
         totalUsd: Number(f.prf_total ?? 0),
         enviadoTallerEn: det.enviado_taller_en || null,
+        entregadoEn: det.entrega_capturado_en || null,
+        evidenciaFotoUrl: det.entrega_foto_url || null,
+        evidenciaMapaUrl: det.entrega_mapa_url || null,
+        evidenciaLatitud: det.entrega_latitud != null ? Number(det.entrega_latitud) : null,
+        evidenciaLongitud: det.entrega_longitud != null ? Number(det.entrega_longitud) : null,
+        entregadoPorNombre: det.entrega_entregador_nombre || null,
         actualizadoTallerNombre: det.actualizado_taller_por || null,
       });
     }
@@ -975,6 +1032,7 @@ export async function obtenerConsolaTallerYDespachoAction(
         id: String(e.ent_id),
         codigo: String(e.ent_codigo_ot || `OT-${String(e.ent_secuencial ?? 1).padStart(4, "0")}`),
         origenTipo: "EXEQUIALES_LLAMADA",
+        clasificacionPedido: "EXEQUIALES",
         entregaId: String(e.ent_id),
         estadoTaller: estTaller,
         estadoPago: "CONVENIO_IESS",
@@ -994,8 +1052,31 @@ export async function obtenerConsolaTallerYDespachoAction(
         destinatarioFallecido: String(e.ent_fallecido_destinatario || ""),
         salaServicio: e.ent_sala_servicio || detEnt.sala_servicio || null,
         ubicacionEntrega: String(e.ent_ubicacion_nombre || "Exequiales del IESS"),
+        dedicatoria: detEnt.tarjeta?.mensaje || detEnt.dedicatoria || undefined,
+        tarjetaToken: String(detEnt.tarjeta?.token || e.ent_id),
+        tarjetaTipo:
+          detEnt.tarjeta?.tipo === "DIPTICO" ||
+          detEnt.tarjeta?.tipo === "SOLO_DIGITAL" ||
+          detEnt.tarjeta?.tipo === "CONDOLENCIAS_PLANA"
+            ? detEnt.tarjeta.tipo
+            : "CONDOLENCIAS_PLANA",
+        tarjetaMusicaUrl: detEnt.tarjeta?.musica_url || detEnt.tarjeta?.musicaUrl || null,
+        tarjetaMusicaTitulo: detEnt.tarjeta?.musica_titulo || detEnt.tarjeta?.musicaTitulo || null,
+        tarjetaLyrics: Array.isArray(detEnt.tarjeta?.lyrics) ? detEnt.tarjeta.lyrics : [],
+        tarjetaMetadata:
+          detEnt.tarjeta?.metadata && typeof detEnt.tarjeta.metadata === "object"
+            ? detEnt.tarjeta.metadata
+            : {},
         observaciones: e.ent_observaciones || undefined,
         enviadoTallerEn: String(e.ent_creado_en),
+        entregadoEn: e.ent_estado !== "PROGRAMADA" ? String(e.ent_capturado_en || "") : null,
+        evidenciaFotoUrl: e.ent_foto_url ? String(e.ent_foto_url) : null,
+        evidenciaMapaUrl: e.ent_mapa_url ? String(e.ent_mapa_url) : null,
+        evidenciaLatitud: e.ent_latitud != null ? Number(e.ent_latitud) : null,
+        evidenciaLongitud: e.ent_longitud != null ? Number(e.ent_longitud) : null,
+        evidenciaDireccionGps: e.ent_direccion_gps ? String(e.ent_direccion_gps) : null,
+        entregadoPorNombre: e.ent_entregador_nombre ? String(e.ent_entregador_nombre) : null,
+        estadoEvidencia: e.ent_estado ? String(e.ent_estado) : null,
       });
     }
 
@@ -1034,6 +1115,7 @@ export async function crearOActualizarPedidoOperadorAction(entrada: {
   negocio: string;
   ordenId?: string | null;
   origenTipo: OrigenOrdenTaller;
+  clasificacionPedido?: ClasificacionOperativaPedido;
   enviarATaller?: boolean;
   fechaEntrega: string;
   fechaElaboracion?: string;
@@ -1058,7 +1140,13 @@ export async function crearOActualizarPedidoOperadorAction(entrada: {
   estadoPago?: string;
   metodoPago?: string;
 }): Promise<
-  | { ok: true; ordenId: string; codigo: string; estadoTaller: EstadoOrdenTaller }
+  | {
+      ok: true;
+      ordenId: string;
+      codigo: string;
+      estadoTaller: EstadoOrdenTaller;
+      clasificacionPedido?: ClasificacionOperativaPedido;
+    }
   | { ok: false; error: string }
 > {
   try {
@@ -1670,12 +1758,753 @@ export async function actualizarUbicacionRutaDeliveryAction(entrada: {
   }
 }
 
+function parsearLrcSincronizado(lrcTexto: string): Array<{ tiempo: number; texto: string }> {
+  const lineas = lrcTexto.split(/\r?\n/);
+  const resultado: Array<{ tiempo: number; texto: string }> = [];
+  const regexTiempo = /\[(\d{1,3}):(\d{2})(?:[.:](\d{1,3}))?\]/g;
+
+  for (const linea of lineas) {
+    const matches = [...linea.matchAll(regexTiempo)];
+    if (matches.length === 0) continue;
+    const textoLimpio = linea.replace(regexTiempo, "").trim();
+    if (!textoLimpio) continue;
+    for (const m of matches) {
+      const min = Number(m[1] || 0);
+      const seg = Number(m[2] || 0);
+      const fracStr = m[3] || "0";
+      const frac = Number(fracStr) / Math.pow(10, fracStr.length);
+      resultado.push({
+        tiempo: Math.round((min * 60 + seg + frac) * 100) / 100,
+        texto: textoLimpio,
+      });
+    }
+  }
+  return resultado.sort((a, b) => a.tiempo - b.tiempo);
+}
+
+export async function buscarLyricsCancionAction(entrada: {
+  musicaUrl?: string | null;
+  musicaTitulo?: string | null;
+}): Promise<{
+  ok: boolean;
+  tituloDetectado?: string;
+  lyrics?: Array<{ tiempo?: number; texto: string }>;
+  sincronizado?: boolean;
+  error?: string;
+}> {
+  try {
+    let tituloBase = (entrada.musicaTitulo || "").trim();
+    const url = (entrada.musicaUrl || "").trim();
+
+    if (url && (!tituloBase || /youtube\.com|youtu\.be/i.test(url))) {
+      try {
+        const resOembed = await fetch(
+          `https://noembed.com/embed?url=${encodeURIComponent(url)}`,
+          { signal: AbortSignal.timeout(4500) }
+        );
+        if (resOembed.ok) {
+          const info = (await resOembed.json()) as { title?: string; author_name?: string };
+          if (!tituloBase && info?.title) {
+            tituloBase = info.title.trim();
+          }
+        }
+      } catch {
+        // Ignorar si noembed no responde
+      }
+    }
+
+    const queryLimpia = tituloBase
+      .replace(/\((official|video|lyric|lyrics|letra|audio|hd|4k|live|en vivo|remastered)[^)]*\)/gi, "")
+      .replace(/\[(official|video|lyric|lyrics|letra|audio|hd|4k|live|en vivo)[^\]]*\]/gi, "")
+      .replace(/\b(official music video|video oficial|letra oficial|lyrics)\b/gi, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (!queryLimpia) {
+      return {
+        ok: false,
+        error: "Ingresa el nombre de la canción (ej. Ed Sheeran - Perfect) o un link válido de YouTube.",
+      };
+    }
+
+    const resLrc = await fetch(
+      `https://lrclib.net/api/search?q=${encodeURIComponent(queryLimpia)}`,
+      {
+        headers: { "User-Agent": "TinkayFloristeria/1.0 (https://tinkay-web.vercel.app)" },
+        signal: AbortSignal.timeout(6000),
+      }
+    );
+
+    if (!resLrc.ok) {
+      return {
+        ok: false,
+        tituloDetectado: tituloBase || queryLimpia,
+        error: "No se pudo consultar el catálogo de letras en este momento. Puedes pegar la letra manualmente.",
+      };
+    }
+
+    const resultados = (await resLrc.json()) as Array<{
+      trackName?: string;
+      artistName?: string;
+      syncedLyrics?: string | null;
+      plainLyrics?: string | null;
+    }>;
+
+    if (!Array.isArray(resultados) || resultados.length === 0) {
+      return {
+        ok: false,
+        tituloDetectado: tituloBase || queryLimpia,
+        error: `No se encontró letra automática para "${queryLimpia}". Prueba con "Artista - Canción" o pégala abajo.`,
+      };
+    }
+
+    const conSync = resultados.find((r) => r.syncedLyrics && r.syncedLyrics.trim().length > 20);
+    const elegido = conSync || resultados.find((r) => r.plainLyrics && r.plainLyrics.trim().length > 10) || resultados[0];
+    const etiquetaCancion =
+      elegido?.artistName && elegido?.trackName
+        ? `${elegido.artistName} — ${elegido.trackName}`
+        : tituloBase || queryLimpia;
+
+    if (elegido?.syncedLyrics) {
+      const parsed = parsearLrcSincronizado(elegido.syncedLyrics);
+      if (parsed.length > 0) {
+        return {
+          ok: true,
+          tituloDetectado: etiquetaCancion,
+          lyrics: parsed,
+          sincronizado: true,
+        };
+      }
+    }
+
+    if (elegido?.plainLyrics) {
+      const lineasPlanas = elegido.plainLyrics
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .map((texto, idx) => ({
+          tiempo: Math.round((4 + idx * 4.2) * 10) / 10,
+          texto,
+        }));
+      if (lineasPlanas.length > 0) {
+        return {
+          ok: true,
+          tituloDetectado: etiquetaCancion,
+          lyrics: lineasPlanas,
+          sincronizado: false,
+        };
+      }
+    }
+
+    return {
+      ok: false,
+      tituloDetectado: etiquetaCancion,
+      error: "La canción encontrada es instrumental o no dispone de letra registrada.",
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error al buscar la letra de la canción",
+    };
+  }
+}
+
+export async function subirAudioTarjetaAction(entrada: {
+  negocio: string;
+  dataUrl: string;
+  nombreArchivo?: string;
+}): Promise<{ ok: true; publicUrl: string; nombreLimpio: string } | { ok: false; error: string }> {
+  try {
+    const neg = normalizarNegocio(entrada.negocio || "tinkay");
+    const coma = entrada.dataUrl.indexOf(",");
+    if (coma < 0) {
+      return { ok: false, error: "Archivo de audio inválido." };
+    }
+    const meta = entrada.dataUrl.slice(5, coma);
+    const contentType = meta.split(";")[0] || "audio/mpeg";
+    if (!contentType.startsWith("audio/") && !contentType.includes("mpeg") && !contentType.includes("mp4")) {
+      return { ok: false, error: "Solo se permiten archivos de audio (MP3, M4A, WAV, OGG)." };
+    }
+    const base64 = entrada.dataUrl.slice(coma + 1);
+    const buffer = Buffer.from(base64, "base64");
+    if (buffer.byteLength > 15 * 1024 * 1024) {
+      return { ok: false, error: "El archivo de audio supera el límite máximo de 15 MB." };
+    }
+
+    const ext = contentType.includes("wav")
+      ? "wav"
+      : contentType.includes("ogg")
+        ? "ogg"
+        : contentType.includes("mp4") || contentType.includes("m4a")
+          ? "m4a"
+          : "mp3";
+    const fechaCarpeta = new Date().toISOString().slice(0, 7);
+    const ruta = `tarjetas-audio/${neg}/${fechaCarpeta}/${crypto.randomUUID()}.${ext}`;
+
+    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const db: any = crearClienteAdmin() ?? supabase;
+
+    const { error } = await db.storage.from("comun-publico").upload(ruta, buffer, {
+      contentType,
+      upsert: false,
+    });
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+    const { data } = db.storage.from("comun-publico").getPublicUrl(ruta);
+    const nombreLimpio = (entrada.nombreArchivo || "Melodía personalizada")
+      .replace(/\.[a-z0-9]{2,4}$/i, "")
+      .trim();
+
+    return {
+      ok: true,
+      publicUrl: String(data?.publicUrl || ""),
+      nombreLimpio,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error al subir archivo de audio",
+    };
+  }
+}
+
+export async function guardarEdicionPedidoYTarjetaAction(entrada: {
+  negocio: string;
+  pedidoId: string;
+  ordenTallerId?: string | null;
+  entregaId?: string | null;
+  compradorNombre?: string;
+  compradorTelefono?: string;
+  destinatarioNombre?: string;
+  direccionEntrega?: string;
+  enlaceMapa?: string;
+  retiroEnLocal?: boolean;
+  salaServicio?: string | null;
+  fechaEntrega?: string;
+  franjaHoraria?: string;
+  horaEspecifica?: string | null;
+  productoResumen?: string;
+  observaciones?: string;
+  dedicatoria?: string;
+  tarjetaTipo?: "DIPTICO" | "CONDOLENCIAS_PLANA" | "SOLO_DIGITAL";
+  tarjetaMusicaUrl?: string | null;
+  tarjetaMusicaTitulo?: string | null;
+  tarjetaLyrics?: Array<{ tiempo?: number; texto: string }>;
+}): Promise<{
+  ok: boolean;
+  tarjetaToken?: string;
+  tarjetaMetadata?: Record<string, any>;
+  error?: string;
+}> {
+  try {
+    const neg = normalizarNegocio(entrada.negocio);
+    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { ok: false, error: "Debes iniciar sesión para editar el pedido o la tarjeta." };
+    }
+
+    const db: any = crearClienteAdmin() ?? supabase;
+    let autorNombre = user.email?.split("@")[0] || "Staff Tinkay";
+    let autorRol = "STAFF_TINKAY";
+
+    try {
+      const { data: usu } = await db
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_nombres, usu_apellidos, usu_correo, usu_superadmin_plataforma")
+        .eq("usu_id", user.id)
+        .maybeSingle();
+      if (usu) {
+        const completo = `${usu.usu_nombres || ""} ${usu.usu_apellidos || ""}`.trim();
+        if (completo) autorNombre = completo;
+        if (usu.usu_superadmin_plataforma) autorRol = "SUPERADMIN";
+      }
+      if (autorRol === "STAFF_TINKAY") {
+        const { data: mem } = await db
+          .schema("comun_seguridad")
+          .from("seg_membresia")
+          .select("mem_rol")
+          .eq("mem_usuario_id", user.id)
+          .eq("mem_estado", "ACTIVO")
+          .limit(1)
+          .maybeSingle();
+        if (mem?.mem_rol) autorRol = String(mem.mem_rol).toUpperCase();
+      }
+    } catch {
+      // Conservar nombre de respaldo
+    }
+
+    const ahoraIso = new Date().toISOString();
+    let tokenFinal: string | undefined;
+    let metaFinal: Record<string, any> | undefined;
+
+    // 1. Intentar actualizar com_orden_taller si existe la tabla y la fila vinculada
+    try {
+      const idCandidatoOta = entrada.ordenTallerId || entrada.pedidoId;
+      const { data: filaOta } = await db
+        .schema("comun_comercio")
+        .from("com_orden_taller")
+        .select("*")
+        .or(`ota_id.eq.${idCandidatoOta},ota_proforma_id.eq.${entrada.pedidoId}`)
+        .limit(1)
+        .maybeSingle();
+
+      if (filaOta?.ota_id) {
+        const metaPrevia =
+          filaOta.ota_tarjeta_metadata && typeof filaOta.ota_tarjeta_metadata === "object"
+            ? { ...filaOta.ota_tarjeta_metadata }
+            : { origen: "AUTOMATICO_SISTEMA", historial_cambios: [], vistas_cliente: 0, impresiones: 0 };
+
+        const histPrevio = Array.isArray(metaPrevia.historial_cambios)
+          ? [...metaPrevia.historial_cambios]
+          : [];
+
+        const dedNueva =
+          entrada.dedicatoria !== undefined ? entrada.dedicatoria.trim() : filaOta.ota_dedicatoria;
+        const musNueva =
+          entrada.tarjetaMusicaUrl !== undefined
+            ? entrada.tarjetaMusicaUrl?.trim() || null
+            : filaOta.ota_tarjeta_musica_url;
+
+        if (dedNueva !== filaOta.ota_dedicatoria || musNueva !== filaOta.ota_tarjeta_musica_url) {
+          histPrevio.push({
+            autor: autorNombre,
+            rol: autorRol,
+            fecha: ahoraIso,
+            dedicatoria_anterior: filaOta.ota_dedicatoria || "",
+            dedicatoria_nueva: dedNueva || "",
+            musica_url_anterior: filaOta.ota_tarjeta_musica_url || null,
+            musica_url_nueva: musNueva,
+          });
+        }
+
+        const nuevaMeta = {
+          ...metaPrevia,
+          editado_por_staff: true,
+          ultimo_editor_nombre: autorNombre,
+          ultimo_editor_rol: autorRol,
+          ultima_edicion_staff_en: ahoraIso,
+          historial_cambios: histPrevio,
+        };
+
+        const tokenOta =
+          filaOta.ota_tarjeta_token || crypto.randomUUID().replace(/-/g, "").slice(0, 18);
+
+        await db
+          .schema("comun_comercio")
+          .from("com_orden_taller")
+          .update({
+            ota_cliente_solicita:
+              entrada.compradorNombre?.trim() || filaOta.ota_cliente_solicita,
+            ota_cliente_telefono:
+              entrada.compradorTelefono !== undefined
+                ? entrada.compradorTelefono.trim() || null
+                : filaOta.ota_cliente_telefono,
+            ota_destinatario_fallecido:
+              entrada.destinatarioNombre !== undefined
+                ? entrada.destinatarioNombre.trim()
+                : filaOta.ota_destinatario_fallecido,
+            ota_ubicacion_entrega:
+              entrada.direccionEntrega !== undefined
+                ? entrada.direccionEntrega.trim()
+                : filaOta.ota_ubicacion_entrega,
+            ota_enlace_mapa:
+              entrada.enlaceMapa !== undefined
+                ? entrada.enlaceMapa.trim() || null
+                : filaOta.ota_enlace_mapa,
+            ota_retiro_en_local:
+              entrada.retiroEnLocal !== undefined
+                ? Boolean(entrada.retiroEnLocal)
+                : filaOta.ota_retiro_en_local,
+            ota_sala_servicio:
+              entrada.salaServicio !== undefined
+                ? entrada.salaServicio || null
+                : filaOta.ota_sala_servicio,
+            ota_fecha_entrega:
+              entrada.fechaEntrega?.slice(0, 10) || filaOta.ota_fecha_entrega,
+            ota_franja_horaria:
+              entrada.franjaHoraria !== undefined
+                ? normalizarFranjaHorariaTienda(entrada.franjaHoraria)
+                : filaOta.ota_franja_horaria,
+            ota_hora_especifica:
+              entrada.horaEspecifica !== undefined
+                ? entrada.horaEspecifica || null
+                : filaOta.ota_hora_especifica,
+            ota_producto_resumen:
+              entrada.productoResumen?.trim() || filaOta.ota_producto_resumen,
+            ota_observaciones:
+              entrada.observaciones !== undefined
+                ? entrada.observaciones.trim() || null
+                : filaOta.ota_observaciones,
+            ota_dedicatoria: dedNueva || null,
+            ota_tarjeta_token: tokenOta,
+            ota_tarjeta_tipo: entrada.tarjetaTipo || filaOta.ota_tarjeta_tipo || "DIPTICO",
+            ota_tarjeta_musica_url: musNueva,
+            ota_tarjeta_musica_titulo:
+              entrada.tarjetaMusicaTitulo !== undefined
+                ? entrada.tarjetaMusicaTitulo?.trim() || null
+                : filaOta.ota_tarjeta_musica_titulo,
+            ota_tarjeta_lyrics:
+              entrada.tarjetaLyrics !== undefined
+                ? entrada.tarjetaLyrics
+                : filaOta.ota_tarjeta_lyrics ?? [],
+            ota_tarjeta_metadata: nuevaMeta,
+            ota_actualizado_en: ahoraIso,
+          })
+          .eq("ota_id", filaOta.ota_id);
+
+        tokenFinal = tokenOta;
+        metaFinal = nuevaMeta;
+      }
+    } catch {
+      // Continuar con respaldo sobre com_proforma / com_entrega_evidencia
+    }
+
+    // 2. Sincronizar / actualizar com_proforma (Pedidos de Tienda y Pedidos Manuales híbridos)
+    if (/^[0-9a-f-]{36}$/i.test(entrada.pedidoId)) {
+      const { data: prf } = await db
+        .schema("comun_comercio")
+        .from("com_proforma")
+        .select("*")
+        .eq("prf_id", entrada.pedidoId)
+        .maybeSingle();
+
+      if (prf?.prf_id) {
+        const det = (prf.prf_detalle_proforma ?? {}) as Record<string, any>;
+        const logPrevio = (det.logistica_entrega ?? {}) as Record<string, any>;
+        const compPrevio = (det.comprador ?? {}) as Record<string, any>;
+        const tarPrevia = (det.tarjeta ?? {}) as Record<string, any>;
+        const metaPrevia =
+          tarPrevia.metadata && typeof tarPrevia.metadata === "object"
+            ? { ...tarPrevia.metadata }
+            : { origen: "AUTOMATICO_SISTEMA", historial_cambios: [], vistas_cliente: 0, impresiones: 0 };
+
+        const histPrevio = Array.isArray(metaPrevia.historial_cambios)
+          ? [...metaPrevia.historial_cambios]
+          : [];
+
+        const itemsPrevios = Array.isArray(det.items) ? [...det.items] : [];
+        const primerDedPrevio = itemsPrevios[0]?.dedicatoria?.mensaje || tarPrevia.mensaje || "";
+        const dedNueva =
+          entrada.dedicatoria !== undefined ? entrada.dedicatoria.trim() : primerDedPrevio;
+        const musNueva =
+          entrada.tarjetaMusicaUrl !== undefined
+            ? entrada.tarjetaMusicaUrl?.trim() || null
+            : tarPrevia.musica_url ?? tarPrevia.musicaUrl ?? null;
+
+        if (!metaFinal && (dedNueva !== primerDedPrevio || musNueva !== (tarPrevia.musica_url ?? null))) {
+          histPrevio.push({
+            autor: autorNombre,
+            rol: autorRol,
+            fecha: ahoraIso,
+            dedicatoria_anterior: primerDedPrevio,
+            dedicatoria_nueva: dedNueva,
+            musica_url_anterior: tarPrevia.musica_url ?? null,
+            musica_url_nueva: musNueva,
+          });
+        }
+
+        const nuevaMetaPrf =
+          metaFinal ?? {
+            ...metaPrevia,
+            editado_por_staff: true,
+            ultimo_editor_nombre: autorNombre,
+            ultimo_editor_rol: autorRol,
+            ultima_edicion_staff_en: ahoraIso,
+            historial_cambios: histPrevio,
+          };
+
+        const nombreCompradorNuevo =
+          entrada.compradorNombre?.trim() ||
+          prf.prf_cliente_nombre ||
+          compPrevio.nombreCompleto ||
+          "Cliente";
+        const telCompradorNuevo =
+          entrada.compradorTelefono !== undefined
+            ? entrada.compradorTelefono.trim()
+            : String(compPrevio.whatsapp || compPrevio.telefono || "");
+        const destNuevo =
+          entrada.destinatarioNombre !== undefined
+            ? entrada.destinatarioNombre.trim()
+            : String(logPrevio.destinatario_nombre || nombreCompradorNuevo);
+
+        const tokenPrf = String(
+          tokenFinal || tarPrevia.token || prf.prf_token_aprobacion || prf.prf_id
+        );
+
+        const itemsActualizados =
+          itemsPrevios.length > 0
+            ? itemsPrevios.map((it: any, idx: number) =>
+                idx === 0
+                  ? {
+                      ...it,
+                      ...(entrada.productoResumen?.trim()
+                        ? {
+                            descripcion: entrada.productoResumen.trim(),
+                            producto_nombre: entrada.productoResumen.trim(),
+                          }
+                        : {}),
+                      dedicatoria: dedNueva
+                        ? {
+                            para: destNuevo,
+                            de: nombreCompradorNuevo,
+                            mensaje: dedNueva,
+                          }
+                        : undefined,
+                    }
+                  : it
+              )
+            : [
+                {
+                  descripcion: entrada.productoResumen?.trim() || "Arreglo floral",
+                  producto_nombre: entrada.productoResumen?.trim() || "Arreglo floral",
+                  cantidad: 1,
+                  pvp_unitario: Number(prf.prf_total ?? 0),
+                  total_linea: Number(prf.prf_total ?? 0),
+                  dedicatoria: dedNueva
+                    ? { para: destNuevo, de: nombreCompradorNuevo, mensaje: dedNueva }
+                    : undefined,
+                },
+              ];
+
+        const { error: errPrf } = await db
+          .schema("comun_comercio")
+          .from("com_proforma")
+          .update({
+            prf_cliente_nombre: nombreCompradorNuevo,
+            prf_token_aprobacion: prf.prf_token_aprobacion || tokenPrf,
+            prf_cliente_contacto: {
+              ...(prf.prf_cliente_contacto ?? {}),
+              nombre: nombreCompradorNuevo,
+              nombreCompleto: nombreCompradorNuevo,
+              telefono: telCompradorNuevo,
+              whatsapp: telCompradorNuevo,
+            },
+            prf_observaciones:
+              entrada.observaciones !== undefined
+                ? entrada.observaciones.trim() || null
+                : prf.prf_observaciones,
+            prf_detalle_proforma: {
+              ...det,
+              comprador: {
+                ...compPrevio,
+                nombreCompleto: nombreCompradorNuevo,
+                whatsapp: telCompradorNuevo,
+                telefono: telCompradorNuevo,
+              },
+              logistica_entrega: {
+                ...logPrevio,
+                destinatario_nombre: destNuevo,
+                direccion:
+                  entrada.direccionEntrega !== undefined
+                    ? entrada.direccionEntrega.trim()
+                    : logPrevio.direccion || "",
+                enlace_mapa:
+                  entrada.enlaceMapa !== undefined
+                    ? entrada.enlaceMapa.trim()
+                    : logPrevio.enlace_mapa || "",
+                retiro_en_local:
+                  entrada.retiroEnLocal !== undefined
+                    ? Boolean(entrada.retiroEnLocal)
+                    : Boolean(logPrevio.retiro_en_local),
+                fecha_entrega:
+                  entrada.fechaEntrega?.slice(0, 10) || logPrevio.fecha_entrega || "",
+                franja_horaria:
+                  entrada.franjaHoraria !== undefined
+                    ? normalizarFranjaHorariaTienda(entrada.franjaHoraria)
+                    : logPrevio.franja_horaria || "",
+                hora_exacta:
+                  entrada.horaEspecifica !== undefined
+                    ? entrada.horaEspecifica || undefined
+                    : logPrevio.hora_exacta,
+                sala_servicio:
+                  entrada.salaServicio !== undefined
+                    ? entrada.salaServicio || undefined
+                    : logPrevio.sala_servicio,
+              },
+              items: itemsActualizados,
+              notas_taller:
+                entrada.observaciones !== undefined
+                  ? entrada.observaciones.trim()
+                  : det.notas_taller || "",
+              tarjeta: {
+                token: tokenPrf,
+                tipo: entrada.tarjetaTipo || tarPrevia.tipo || "DIPTICO",
+                mensaje: dedNueva,
+                para: destNuevo,
+                de: nombreCompradorNuevo,
+                musica_url: musNueva,
+                musica_titulo:
+                  entrada.tarjetaMusicaTitulo !== undefined
+                    ? entrada.tarjetaMusicaTitulo?.trim() || null
+                    : tarPrevia.musica_titulo ?? tarPrevia.musicaTitulo ?? null,
+                lyrics:
+                  entrada.tarjetaLyrics !== undefined
+                    ? entrada.tarjetaLyrics
+                    : tarPrevia.lyrics ?? [],
+                metadata: nuevaMetaPrf,
+              },
+            },
+            prf_actualizado_en: ahoraIso,
+          })
+          .eq("prf_id", prf.prf_id);
+
+        if (errPrf) {
+          return { ok: false, error: errPrf.message };
+        }
+        tokenFinal = tokenPrf;
+        metaFinal = nuevaMetaPrf;
+      }
+    }
+
+    // 3. Sincronizar / actualizar com_entrega_evidencia (Órdenes Exequiales OT-...)
+    const idEntrega = entrada.entregaId || entrada.pedidoId;
+    if (/^[0-9a-f-]{36}$/i.test(idEntrega)) {
+      const { data: ent } = await db
+        .schema("comun_comercio")
+        .from("com_entrega_evidencia")
+        .select("*")
+        .eq("ent_id", idEntrega)
+        .maybeSingle();
+
+      if (ent?.ent_id) {
+        const detEnt = (ent.ent_detalle_entrega ?? {}) as Record<string, any>;
+        const tarPrevia = (detEnt.tarjeta ?? {}) as Record<string, any>;
+        const metaPrevia =
+          tarPrevia.metadata && typeof tarPrevia.metadata === "object"
+            ? { ...tarPrevia.metadata }
+            : { origen: "AUTOMATICO_SISTEMA", historial_cambios: [], vistas_cliente: 0, impresiones: 0 };
+        const histPrevio = Array.isArray(metaPrevia.historial_cambios)
+          ? [...metaPrevia.historial_cambios]
+          : [];
+
+        const dedPrevia = String(tarPrevia.mensaje ?? detEnt.dedicatoria ?? "");
+        const dedNueva =
+          entrada.dedicatoria !== undefined ? entrada.dedicatoria.trim() : dedPrevia;
+        const musNueva =
+          entrada.tarjetaMusicaUrl !== undefined
+            ? entrada.tarjetaMusicaUrl?.trim() || null
+            : tarPrevia.musica_url ?? null;
+
+        if (!metaFinal && (dedNueva !== dedPrevia || musNueva !== (tarPrevia.musica_url ?? null))) {
+          histPrevio.push({
+            autor: autorNombre,
+            rol: autorRol,
+            fecha: ahoraIso,
+            dedicatoria_anterior: dedPrevia,
+            dedicatoria_nueva: dedNueva,
+          });
+        }
+
+        const nuevaMetaEnt =
+          metaFinal ?? {
+            ...metaPrevia,
+            editado_por_staff: true,
+            ultimo_editor_nombre: autorNombre,
+            ultimo_editor_rol: autorRol,
+            ultima_edicion_staff_en: ahoraIso,
+            historial_cambios: histPrevio,
+          };
+
+        const tokenEnt = String(tokenFinal || tarPrevia.token || ent.ent_id);
+        const coordNuevo =
+          entrada.compradorNombre?.trim() ||
+          ent.ent_coordinador_nombre ||
+          detEnt.quien_solicita ||
+          "Exequiales IESS";
+        const fallNuevo =
+          entrada.destinatarioNombre !== undefined
+            ? entrada.destinatarioNombre.trim()
+            : ent.ent_fallecido_destinatario || "";
+
+        await db
+          .schema("comun_comercio")
+          .from("com_entrega_evidencia")
+          .update({
+            ent_coordinador_nombre: coordNuevo,
+            ent_fallecido_destinatario: fallNuevo,
+            ent_descripcion_servicio:
+              entrada.productoResumen?.trim() || ent.ent_descripcion_servicio,
+            ent_ubicacion_nombre:
+              entrada.direccionEntrega?.trim() || ent.ent_ubicacion_nombre,
+            ent_observaciones:
+              entrada.observaciones !== undefined
+                ? entrada.observaciones.trim() || null
+                : ent.ent_observaciones,
+            ...(entrada.fechaEntrega
+              ? { ent_fecha_servicio: `${entrada.fechaEntrega.slice(0, 10)}T12:00:00.000Z` }
+              : {}),
+            ent_detalle_entrega: {
+              ...detEnt,
+              quien_solicita: coordNuevo,
+              sala_servicio:
+                entrada.salaServicio !== undefined
+                  ? entrada.salaServicio || undefined
+                  : detEnt.sala_servicio,
+              hora_solicitada:
+                entrada.horaEspecifica !== undefined
+                  ? entrada.horaEspecifica || undefined
+                  : detEnt.hora_solicitada,
+              dedicatoria: dedNueva,
+              tarjeta: {
+                token: tokenEnt,
+                tipo: entrada.tarjetaTipo || tarPrevia.tipo || "CONDOLENCIAS_PLANA",
+                mensaje: dedNueva,
+                para: fallNuevo,
+                de: coordNuevo,
+                musica_url: musNueva,
+                musica_titulo:
+                  entrada.tarjetaMusicaTitulo !== undefined
+                    ? entrada.tarjetaMusicaTitulo?.trim() || null
+                    : tarPrevia.musica_titulo ?? null,
+                lyrics:
+                  entrada.tarjetaLyrics !== undefined
+                    ? entrada.tarjetaLyrics
+                    : tarPrevia.lyrics ?? [],
+                metadata: nuevaMetaEnt,
+              },
+            },
+            ent_actualizado_en: ahoraIso,
+          })
+          .eq("ent_id", ent.ent_id);
+
+        tokenFinal = tokenEnt;
+        metaFinal = nuevaMetaEnt;
+      }
+    }
+
+    revalidarRutasTienda(neg);
+    if (tokenFinal) {
+      try {
+        revalidatePath(`/dedicatoria/${tokenFinal}`);
+      } catch {}
+    }
+
+    return {
+      ok: true,
+      tarjetaToken: tokenFinal,
+      tarjetaMetadata: metaFinal,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error al guardar cambios del pedido y tarjeta",
+    };
+  }
+}
+
 export async function registrarImpresionTarjetaAction(entrada: {
   ordenId: string;
   tipo?: string;
 }): Promise<{ ok: boolean; impresiones?: number; ultimoImpresoPor?: string; error?: string }> {
   try {
-    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
     const supabase = await crearClienteServidor();
 
     const { data, error } = await invocarRpcComercio(
@@ -1687,18 +2516,100 @@ export async function registrarImpresionTarjetaAction(entrada: {
       }
     );
 
-    if (error) {
-      return { ok: false, error: error.message };
-    }
-    if (data && data.ok === false) {
-      return { ok: false, error: String(data.error || "No se pudo registrar la impresión") };
+    if (!error && data?.ok) {
+      return {
+        ok: true,
+        impresiones: data.impresiones,
+        ultimoImpresoPor: data.ultimoImpresoPor,
+      };
     }
 
-    return {
-      ok: true,
-      impresiones: data?.impresiones,
-      ultimoImpresoPor: data?.ultimoImpresoPor,
-    };
+    // Respaldo híbrido sobre com_proforma / com_entrega_evidencia
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    const db: any = crearClienteAdmin() ?? supabase;
+    const impresoPor = user?.email?.split("@")[0] || "Taller";
+    const ahoraIso = new Date().toISOString();
+
+    if (/^[0-9a-f-]{36}$/i.test(entrada.ordenId)) {
+      const { data: prf } = await db
+        .schema("comun_comercio")
+        .from("com_proforma")
+        .select("prf_id, prf_token_aprobacion, prf_detalle_proforma")
+        .eq("prf_id", entrada.ordenId)
+        .maybeSingle();
+
+      if (prf?.prf_id) {
+        const det = (prf.prf_detalle_proforma ?? {}) as Record<string, any>;
+        const tar = (det.tarjeta ?? {}) as Record<string, any>;
+        const meta = (tar.metadata ?? {}) as Record<string, any>;
+        const nuevasImp = Number(meta.impresiones ?? 0) + 1;
+        await db
+          .schema("comun_comercio")
+          .from("com_proforma")
+          .update({
+            prf_detalle_proforma: {
+              ...det,
+              tarjeta: {
+                ...tar,
+                token: tar.token || prf.prf_token_aprobacion || prf.prf_id,
+                tipo: entrada.tipo || tar.tipo || "DIPTICO",
+                metadata: {
+                  ...meta,
+                  impresiones: nuevasImp,
+                  ultima_impresion_en: ahoraIso,
+                  ultimo_impreso_por: impresoPor,
+                },
+              },
+            },
+          })
+          .eq("prf_id", prf.prf_id);
+
+        return { ok: true, impresiones: nuevasImp, ultimoImpresoPor: impresoPor };
+      }
+
+      const { data: ent } = await db
+        .schema("comun_comercio")
+        .from("com_entrega_evidencia")
+        .select("ent_id, ent_detalle_entrega")
+        .eq("ent_id", entrada.ordenId)
+        .maybeSingle();
+
+      if (ent?.ent_id) {
+        const detEnt = (ent.ent_detalle_entrega ?? {}) as Record<string, any>;
+        const tar = (detEnt.tarjeta ?? {}) as Record<string, any>;
+        const meta = (tar.metadata ?? {}) as Record<string, any>;
+        const nuevasImp = Number(meta.impresiones ?? 0) + 1;
+        await db
+          .schema("comun_comercio")
+          .from("com_entrega_evidencia")
+          .update({
+            ent_detalle_entrega: {
+              ...detEnt,
+              tarjeta: {
+                ...tar,
+                token: tar.token || ent.ent_id,
+                tipo: entrada.tipo || tar.tipo || "CONDOLENCIAS_PLANA",
+                metadata: {
+                  ...meta,
+                  impresiones: nuevasImp,
+                  ultima_impresion_en: ahoraIso,
+                  ultimo_impreso_por: impresoPor,
+                },
+              },
+            },
+          })
+          .eq("ent_id", ent.ent_id);
+
+        return { ok: true, impresiones: nuevasImp, ultimoImpresoPor: impresoPor };
+      }
+    }
+
+    if (error && !esErrorMigracionPendiente(error.message)) {
+      return { ok: false, error: error.message };
+    }
+    return { ok: true, impresiones: 1, ultimoImpresoPor: impresoPor };
   } catch (err) {
     return {
       ok: false,
@@ -1728,43 +2639,182 @@ export async function obtenerTarjetaPublicaAction(token: string): Promise<{
   error?: string;
 }> {
   try {
-    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const tokenLimpio = (token || "").trim();
+    if (!tokenLimpio) {
+      return { ok: false, error: "Token de tarjeta vacío" };
+    }
+
+    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
     const supabase = await crearClienteServidor();
 
     const { data, error } = await invocarRpcComercio(
       supabase,
       "com_fn_obtener_tarjeta_publica",
-      {
-        p_token: token,
-      }
+      { p_token: tokenLimpio }
     );
 
-    if (error) {
-      return { ok: false, error: error.message };
-    }
-    if (!data || data.ok === false) {
-      return { ok: false, error: data?.error || "Tarjeta no encontrada" };
+    if (!error && data?.ok) {
+      return {
+        ok: true,
+        tarjeta: {
+          ordenId: data.ordenId,
+          codigo: data.codigo,
+          negocio: data.negocio,
+          destinatario: data.destinatario,
+          remitente: data.remitente,
+          dedicatoria: data.dedicatoria,
+          tipo: data.tipo,
+          musicaUrl: data.musicaUrl,
+          musicaTitulo: data.musicaTitulo,
+          lyrics: data.lyrics,
+          fechaEntrega: data.fechaEntrega,
+          estadoTaller: data.estadoTaller,
+          bloqueadoEdicion: Boolean(data.bloqueadoEdicion),
+          vistas: data.vistas,
+        },
+      };
     }
 
-    return {
-      ok: true,
-      tarjeta: {
-        ordenId: data.ordenId,
-        codigo: data.codigo,
-        negocio: data.negocio,
-        destinatario: data.destinatario,
-        remitente: data.remitente,
-        dedicatoria: data.dedicatoria,
-        tipo: data.tipo,
-        musicaUrl: data.musicaUrl,
-        musicaTitulo: data.musicaTitulo,
-        lyrics: data.lyrics,
-        fechaEntrega: data.fechaEntrega,
-        estadoTaller: data.estadoTaller,
-        bloqueadoEdicion: Boolean(data.bloqueadoEdicion),
-        vistas: data.vistas,
-      },
-    };
+    // Respaldo híbrido sobre com_proforma y com_entrega_evidencia
+    const db: any = crearClienteAdmin() ?? supabase;
+    const esUuid = /^[0-9a-f-]{36}$/i.test(tokenLimpio);
+
+    const queryPrf = db
+      .schema("comun_comercio")
+      .from("com_proforma")
+      .select("*")
+      .is("prf_eliminado_en", null);
+
+    const { data: prf } = await (esUuid
+      ? queryPrf.or(`prf_token_aprobacion.eq.${tokenLimpio},prf_id.eq.${tokenLimpio}`)
+      : queryPrf.eq("prf_token_aprobacion", tokenLimpio)
+    )
+      .limit(1)
+      .maybeSingle();
+
+    if (prf?.prf_id) {
+      const det = (prf.prf_detalle_proforma ?? {}) as Record<string, any>;
+      const log = (det.logistica_entrega ?? {}) as Record<string, any>;
+      const tar = (det.tarjeta ?? {}) as Record<string, any>;
+      const meta = (tar.metadata ?? {}) as Record<string, any>;
+      const items = Array.isArray(det.items) ? det.items : [];
+      const primerDed = items.find((i: any) => i?.dedicatoria?.mensaje)?.dedicatoria;
+      const nuevasVistas = Number(meta.vistas_cliente ?? 0) + 1;
+
+      await db
+        .schema("comun_comercio")
+        .from("com_proforma")
+        .update({
+          prf_detalle_proforma: {
+            ...det,
+            tarjeta: {
+              ...tar,
+              token: tar.token || prf.prf_token_aprobacion || prf.prf_id,
+              metadata: {
+                ...meta,
+                vistas_cliente: nuevasVistas,
+                ultima_vista_en: new Date().toISOString(),
+              },
+            },
+          },
+        })
+        .eq("prf_id", prf.prf_id);
+
+      const estadoPrf = String(prf.prf_estado || det.estado_taller || "").toUpperCase();
+      const bloqueado =
+        estadoPrf === "EN_RUTA" ||
+        estadoPrf === "ENTREGADO" ||
+        Number(meta.impresiones ?? 0) > 0;
+
+      return {
+        ok: true,
+        tarjeta: {
+          ordenId: String(prf.prf_id),
+          codigo: String(det.codigo_orden || det.codigo_proforma || "PEDIDO"),
+          negocio: String(prf.prf_negocio || "tinkay"),
+          destinatario: String(
+            tar.para || primerDed?.para || log.destinatario_nombre || "Para ti"
+          ),
+          remitente: String(
+            tar.de || primerDed?.de || prf.prf_cliente_nombre || "Alguien especial"
+          ),
+          dedicatoria: String(tar.mensaje ?? primerDed?.mensaje ?? ""),
+          tipo:
+            tar.tipo === "CONDOLENCIAS_PLANA" || tar.tipo === "SOLO_DIGITAL"
+              ? tar.tipo
+              : "DIPTICO",
+          musicaUrl: tar.musica_url || tar.musicaUrl || null,
+          musicaTitulo: tar.musica_titulo || tar.musicaTitulo || null,
+          lyrics: Array.isArray(tar.lyrics) ? tar.lyrics : [],
+          fechaEntrega: String(log.fecha_entrega || "").slice(0, 10),
+          estadoTaller: estadoPrf,
+          bloqueadoEdicion: bloqueado,
+          vistas: nuevasVistas,
+        },
+      };
+    }
+
+    if (esUuid) {
+      const { data: ent } = await db
+        .schema("comun_comercio")
+        .from("com_entrega_evidencia")
+        .select("*")
+        .eq("ent_id", tokenLimpio)
+        .is("ent_eliminado_en", null)
+        .maybeSingle();
+
+      if (ent?.ent_id) {
+        const detEnt = (ent.ent_detalle_entrega ?? {}) as Record<string, any>;
+        const tar = (detEnt.tarjeta ?? {}) as Record<string, any>;
+        const meta = (tar.metadata ?? {}) as Record<string, any>;
+        const nuevasVistas = Number(meta.vistas_cliente ?? 0) + 1;
+
+        await db
+          .schema("comun_comercio")
+          .from("com_entrega_evidencia")
+          .update({
+            ent_detalle_entrega: {
+              ...detEnt,
+              tarjeta: {
+                ...tar,
+                token: ent.ent_id,
+                metadata: {
+                  ...meta,
+                  vistas_cliente: nuevasVistas,
+                  ultima_vista_en: new Date().toISOString(),
+                },
+              },
+            },
+          })
+          .eq("ent_id", ent.ent_id);
+
+        return {
+          ok: true,
+          tarjeta: {
+            ordenId: String(ent.ent_id),
+            codigo: String(ent.ent_codigo_ot || "OT"),
+            negocio: String(ent.ent_negocio || "tinkay"),
+            destinatario: String(tar.para || ent.ent_fallecido_destinatario || "En memoria"),
+            remitente: String(tar.de || ent.ent_coordinador_nombre || "Condolencias"),
+            dedicatoria: String(
+              tar.mensaje ||
+                detEnt.dedicatoria ||
+                "Expresamos nuestras más sentidas condolencias."
+            ),
+            tipo: "CONDOLENCIAS_PLANA",
+            musicaUrl: tar.musica_url || tar.musicaUrl || null,
+            musicaTitulo: tar.musica_titulo || tar.musicaTitulo || null,
+            lyrics: Array.isArray(tar.lyrics) ? tar.lyrics : [],
+            fechaEntrega: String(ent.ent_fecha_servicio || "").slice(0, 10),
+            estadoTaller: String(ent.ent_estado || "PROGRAMADA"),
+            bloqueadoEdicion: ent.ent_estado !== "PROGRAMADA",
+            vistas: nuevasVistas,
+          },
+        };
+      }
+    }
+
+    return { ok: false, error: data?.error || error?.message || "Tarjeta no encontrada" };
   } catch (err) {
     return {
       ok: false,
@@ -1781,14 +2831,15 @@ export async function editarTarjetaClienteAction(entrada: {
   lyrics?: Array<{ tiempo?: number; texto: string }>;
 }): Promise<{ ok: boolean; error?: string; mensaje?: string }> {
   try {
-    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const tokenLimpio = (entrada.token || "").trim();
+    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
     const supabase = await crearClienteServidor();
 
     const { data, error } = await invocarRpcComercio(
       supabase,
       "com_fn_editar_tarjeta_cliente",
       {
-        p_token: entrada.token,
+        p_token: tokenLimpio,
         p_dedicatoria: entrada.dedicatoria,
         p_musica_url: entrada.musicaUrl ?? null,
         p_musica_titulo: entrada.musicaTitulo ?? null,
@@ -1796,14 +2847,105 @@ export async function editarTarjetaClienteAction(entrada: {
       }
     );
 
-    if (error) {
-      return { ok: false, error: error.message };
+    if (!error && data?.ok) {
+      return { ok: true, mensaje: data.mensaje || "Tarjeta actualizada" };
     }
-    if (!data || data.ok === false) {
-      return { ok: false, error: data?.error || "No se pudo actualizar la tarjeta" };
+    if (!error && data?.bloqueado) {
+      return { ok: false, error: String(data.error) };
     }
 
-    return { ok: true, mensaje: data.mensaje || "Tarjeta actualizada" };
+    // Respaldo híbrido sobre com_proforma y com_entrega_evidencia
+    const db: any = crearClienteAdmin() ?? supabase;
+    const esUuid = /^[0-9a-f-]{36}$/i.test(tokenLimpio);
+    const ahoraIso = new Date().toISOString();
+
+    const queryPrf = db
+      .schema("comun_comercio")
+      .from("com_proforma")
+      .select("*")
+      .is("prf_eliminado_en", null);
+
+    const { data: prf } = await (esUuid
+      ? queryPrf.or(`prf_token_aprobacion.eq.${tokenLimpio},prf_id.eq.${tokenLimpio}`)
+      : queryPrf.eq("prf_token_aprobacion", tokenLimpio)
+    )
+      .limit(1)
+      .maybeSingle();
+
+    if (prf?.prf_id) {
+      const det = (prf.prf_detalle_proforma ?? {}) as Record<string, any>;
+      const tar = (det.tarjeta ?? {}) as Record<string, any>;
+      const meta = (tar.metadata ?? {}) as Record<string, any>;
+      const estadoPrf = String(prf.prf_estado || "").toUpperCase();
+
+      if (
+        estadoPrf === "EN_RUTA" ||
+        estadoPrf === "ENTREGADO" ||
+        Number(meta.impresiones ?? 0) > 0
+      ) {
+        return {
+          ok: false,
+          error:
+            "Tu tarjeta ya fue impresa en nuestro taller y no es posible realizar más cambios.",
+        };
+      }
+
+      const hist = Array.isArray(meta.historial_cambios) ? [...meta.historial_cambios] : [];
+      hist.push({
+        autor: "Cliente (Web)",
+        rol: "CLIENTE",
+        fecha: ahoraIso,
+        dedicatoria_anterior: tar.mensaje || "",
+        dedicatoria_nueva: entrada.dedicatoria.trim(),
+        musica_url_nueva: entrada.musicaUrl || null,
+      });
+
+      const itemsPrev = Array.isArray(det.items) ? [...det.items] : [];
+      const itemsAct = itemsPrev.map((it: any, idx: number) =>
+        idx === 0
+          ? {
+              ...it,
+              dedicatoria: {
+                para: tar.para || it.dedicatoria?.para || "",
+                de: tar.de || it.dedicatoria?.de || prf.prf_cliente_nombre || "",
+                mensaje: entrada.dedicatoria.trim(),
+              },
+            }
+          : it
+      );
+
+      const { error: errUpd } = await db
+        .schema("comun_comercio")
+        .from("com_proforma")
+        .update({
+          prf_detalle_proforma: {
+            ...det,
+            items: itemsAct,
+            tarjeta: {
+              ...tar,
+              token: tar.token || prf.prf_token_aprobacion || prf.prf_id,
+              mensaje: entrada.dedicatoria.trim(),
+              musica_url: entrada.musicaUrl ?? tar.musica_url ?? null,
+              musica_titulo: entrada.musicaTitulo ?? tar.musica_titulo ?? null,
+              lyrics: entrada.lyrics ?? tar.lyrics ?? [],
+              metadata: {
+                ...meta,
+                editado_por_cliente: true,
+                ultima_edicion_cliente_en: ahoraIso,
+                historial_cambios: hist,
+              },
+            },
+          },
+          prf_actualizado_en: ahoraIso,
+        })
+        .eq("prf_id", prf.prf_id);
+
+      if (errUpd) return { ok: false, error: errUpd.message };
+      revalidarRutasTienda(String(prf.prf_negocio || "tinkay"));
+      return { ok: true, mensaje: "Tarjeta actualizada correctamente." };
+    }
+
+    return { ok: false, error: data?.error || error?.message || "No se pudo actualizar la tarjeta" };
   } catch (err) {
     return {
       ok: false,
@@ -1811,4 +2953,139 @@ export async function editarTarjetaClienteAction(entrada: {
     };
   }
 }
+
+export async function actualizarClasificacionPedidoAction(entrada: {
+  negocio: string;
+  pedidoId: string;
+  clasificacionPedido: ClasificacionOperativaPedido;
+}): Promise<{ ok: true; clasificacionPedido: ClasificacionOperativaPedido } | { ok: false; error: string }> {
+  try {
+    const neg = normalizarNegocio(entrada.negocio);
+    const clasif = inferirClasificacionPedido({
+      clasificacionExplicita: entrada.clasificacionPedido,
+    });
+    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+
+    const { data, error } = await invocarRpcComercio(
+      supabase,
+      "com_fn_actualizar_clasificacion_pedido",
+      {
+        p_negocio: neg,
+        p_pedido_id: entrada.pedidoId,
+        p_clasificacion: clasif,
+      }
+    );
+
+    if (!error && data?.ok) {
+      revalidarRutasTienda(neg);
+      return {
+        ok: true,
+        clasificacionPedido: inferirClasificacionPedido({
+          clasificacionExplicita: data.clasificacionPedido || clasif,
+        }),
+      };
+    }
+
+    if (data && data.ok === false) {
+      return { ok: false, error: String(data.error || "No se pudo clasificar el pedido") };
+    }
+
+    if (error && !esErrorMigracionPendiente(error.message)) {
+      return { ok: false, error: error.message };
+    }
+
+    // Respaldo híbrido sobre com_proforma / com_orden_taller antes de aplicar migración 20261118000005
+    const db: any = crearClienteAdmin() ?? supabase;
+    const { data: prf } = await db
+      .schema("comun_comercio")
+      .from("com_proforma")
+      .select("prf_id, prf_detalle_proforma")
+      .eq("prf_id", entrada.pedidoId)
+      .maybeSingle();
+
+    if (prf?.prf_id) {
+      const det = (prf.prf_detalle_proforma ?? {}) as Record<string, any>;
+      const { error: errUpd } = await db
+        .schema("comun_comercio")
+        .from("com_proforma")
+        .update({
+          prf_detalle_proforma: {
+            ...det,
+            clasificacion_pedido: clasif,
+          },
+          prf_actualizado_en: new Date().toISOString(),
+        })
+        .eq("prf_id", prf.prf_id);
+
+      if (errUpd) {
+        return { ok: false, error: errUpd.message };
+      }
+    }
+
+    revalidarRutasTienda(neg);
+    return { ok: true, clasificacionPedido: clasif };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error al clasificar el pedido",
+    };
+  }
+}
+
+export async function subirArchivoEvidenciaServidorAction(entrada: {
+  negocio: string;
+  carpeta: "evidencias-entregas" | "informes-entregas";
+  dataUrl: string;
+  extension?: "jpg" | "png" | "pdf";
+}): Promise<{ ok: true; publicUrl: string; path: string } | { ok: false; error: string }> {
+  try {
+    const neg = normalizarNegocio(entrada.negocio);
+    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { ok: false, error: "Debes iniciar sesión para almacenar evidencias de entrega." };
+    }
+
+    const coma = entrada.dataUrl.indexOf(",");
+    if (coma < 0) {
+      return { ok: false, error: "Formato de archivo inválido para evidencia." };
+    }
+    const meta = entrada.dataUrl.slice(5, coma);
+    const contentType =
+      meta.split(";")[0] ||
+      (entrada.extension === "pdf" ? "application/pdf" : "image/jpeg");
+    const base64 = entrada.dataUrl.slice(coma + 1);
+    const buffer = Buffer.from(base64, "base64");
+    const ext = entrada.extension || (contentType.includes("png") ? "png" : "jpg");
+    const fechaCarpeta = new Date().toISOString().slice(0, 10);
+    const ruta = `${entrada.carpeta}/${neg}/${fechaCarpeta}/${crypto.randomUUID()}.${ext}`;
+
+    const db: any = crearClienteAdmin() ?? supabase;
+    const { error } = await db.storage.from("comun-publico").upload(ruta, buffer, {
+      contentType,
+      upsert: false,
+    });
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+
+    const { data } = db.storage.from("comun-publico").getPublicUrl(ruta);
+    return {
+      ok: true,
+      publicUrl: String(data?.publicUrl || ""),
+      path: ruta,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error al almacenar la fotografía de evidencia",
+    };
+  }
+}
+
 

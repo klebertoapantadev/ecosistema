@@ -870,12 +870,32 @@ export async function subirArchivoOperativoStorage(
         ? contenido
         : new Blob([contenido as unknown as BlobPart], { type: contentType });
 
-    const { error } = await supabaseCliente.storage
+    // Usar upsert: false primero porque el UUID de ruta es único y solo exige permiso INSERT en storage.objects
+    let { error } = await supabaseCliente.storage
       .from("comun-publico")
       .upload(ruta, blobSubida, {
         contentType,
-        upsert: true,
+        upsert: false,
       });
+
+    if (error && /already exists|duplicate/i.test(String(error.message || ""))) {
+      const rutaAlt = `${carpeta}/${negocio.toLowerCase()}/${fechaCarpeta}/${idUnico}-${Date.now().toString(36)}.${extension}`;
+      const retry = await supabaseCliente.storage
+        .from("comun-publico")
+        .upload(rutaAlt, blobSubida, {
+          contentType,
+          upsert: false,
+        });
+      if (!retry.error) {
+        const { data: dAlt } = supabaseCliente.storage.from("comun-publico").getPublicUrl(rutaAlt);
+        return {
+          ok: true,
+          publicUrl: String(dAlt?.publicUrl || ""),
+          path: rutaAlt,
+        };
+      }
+      error = retry.error;
+    }
 
     if (error) {
       return { ok: false, error: error.message };

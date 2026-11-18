@@ -31,6 +31,7 @@ import {
   emitirInformeQuincenalAction,
   obtenerTableroEntregasAction,
   registrarOSincronizarEntregaAction,
+  subirArchivoEvidenciaServidorAction,
   type DatosTableroEntregas,
 } from "../acciones-operaciones-taller";
 import {
@@ -196,6 +197,10 @@ export function ConsolaConfirmacionEntregas({
   // Edición de entrega antes del informe
   const [entregaEditando, setEntregaEditando] = useState<RegistroEntregaEvidencia | null>(null);
   const [guardandoEdicion, setGuardandoEdicion] = useState<boolean>(false);
+  const [subiendoFotoEdicion, setSubiendoFotoEdicion] = useState<boolean>(false);
+  const [filtroHistoricoEntregas, setFiltroHistoricoEntregas] = useState<
+    "TODAS" | "EXEQUIALES" | "TIENDA"
+  >("TODAS");
 
   // =========================================================================
   // ESTADO DEL GENERADOR DE INFORME QUINCENAL IESS
@@ -387,7 +392,17 @@ export function ConsolaConfirmacionEntregas({
             "jpg",
             "image/jpeg"
           );
-          if (upFoto.ok) fotoUrlFinal = upFoto.publicUrl;
+          if (upFoto.ok) {
+            fotoUrlFinal = upFoto.publicUrl;
+          } else {
+            const upSrv = await subirArchivoEvidenciaServidorAction({
+              negocio: negNorm,
+              carpeta: "evidencias-entregas",
+              dataUrl: item.fotoDataUrl,
+              extension: "jpg",
+            });
+            if (upSrv.ok) fotoUrlFinal = upSrv.publicUrl;
+          }
         }
 
         if (item.mapaDataUrl) {
@@ -399,7 +414,17 @@ export function ConsolaConfirmacionEntregas({
             "jpg",
             "image/jpeg"
           );
-          if (upMapa.ok) mapaUrlFinal = upMapa.publicUrl;
+          if (upMapa.ok) {
+            mapaUrlFinal = upMapa.publicUrl;
+          } else {
+            const upMapaSrv = await subirArchivoEvidenciaServidorAction({
+              negocio: negNorm,
+              carpeta: "evidencias-entregas",
+              dataUrl: item.mapaDataUrl,
+              extension: "jpg",
+            });
+            if (upMapaSrv.ok) mapaUrlFinal = upMapaSrv.publicUrl;
+          }
         }
 
         const resSync = await registrarOSincronizarEntregaAction({
@@ -1037,6 +1062,7 @@ export function ConsolaConfirmacionEntregas({
     // Intento online directo; si falla la red a mitad de subida, cae automáticamente a IndexedDB
     try {
       const supabase = crearClienteNavegador();
+      let fotoUrlSubida: string | null = null;
       const upFoto = await subirArchivoOperativoStorage(
         supabase,
         "evidencias-entregas",
@@ -1046,8 +1072,19 @@ export function ConsolaConfirmacionEntregas({
         "image/jpeg"
       );
 
-      if (!upFoto.ok) {
-        throw new Error(upFoto.error);
+      if (upFoto.ok) {
+        fotoUrlSubida = upFoto.publicUrl;
+      } else {
+        const upSrv = await subirArchivoEvidenciaServidorAction({
+          negocio: negNorm,
+          carpeta: "evidencias-entregas",
+          dataUrl: fotoCapturadaDataUrl,
+          extension: "jpg",
+        });
+        if (!upSrv.ok) {
+          throw new Error(upSrv.error || upFoto.error);
+        }
+        fotoUrlSubida = upSrv.publicUrl;
       }
 
       let mapaUrlSubida: string | null = null;
@@ -1060,7 +1097,17 @@ export function ConsolaConfirmacionEntregas({
           "jpg",
           "image/jpeg"
         );
-        if (upMapa.ok) mapaUrlSubida = upMapa.publicUrl;
+        if (upMapa.ok) {
+          mapaUrlSubida = upMapa.publicUrl;
+        } else {
+          const upMapaSrv = await subirArchivoEvidenciaServidorAction({
+            negocio: negNorm,
+            carpeta: "evidencias-entregas",
+            dataUrl: mapaGeneradoDataUrl,
+            extension: "jpg",
+          });
+          if (upMapaSrv.ok) mapaUrlSubida = upMapaSrv.publicUrl;
+        }
       }
 
       const res = await registrarOSincronizarEntregaAction({
@@ -1083,7 +1130,7 @@ export function ConsolaConfirmacionEntregas({
         longitud,
         precisionMetros,
         direccionGps: paqueteOffline.direccionGps,
-        fotoUrl: upFoto.publicUrl,
+        fotoUrl: fotoUrlSubida,
         mapaUrl: mapaUrlSubida,
         observaciones: paqueteOffline.observaciones,
       });
@@ -1095,7 +1142,7 @@ export function ConsolaConfirmacionEntregas({
       void detenerSeguimientoRuta(false);
       setUltimaFotoConfirmada({
         imagenOrigen: fotoRespaldoParaWhatsapp,
-        urlPublica: upFoto.publicUrl,
+        urlPublica: fotoUrlSubida,
         textoResumen: construirResumenWhatsapp({
           codigoOt: res.codigoOt,
           sala: paqueteOffline.salaServicio,
@@ -1183,6 +1230,59 @@ export function ConsolaConfirmacionEntregas({
     await recargarTablero(true);
   };
 
+  const handleSubirFotoEnModalEdicion = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const archivo = e.target.files?.[0];
+    e.target.value = "";
+    if (!archivo || !entregaEditando) return;
+    setSubiendoFotoEdicion(true);
+    setErrorMsg(null);
+    try {
+      const baseDataUrl = await leerYComprimirFotoBase(archivo, 1360, 0.86);
+      const estampada = await estamparDataUrlConTarjetaGps(baseDataUrl, {
+        latitud: entregaEditando.latitud,
+        longitud: entregaEditando.longitud,
+        precisionMetros: entregaEditando.precisionMetros,
+        fechaHoraIso: entregaEditando.capturadoEn || entregaEditando.fechaServicio,
+        direccionGps: entregaEditando.direccionGps || undefined,
+        salaTexto: entregaEditando.salaServicio || undefined,
+        servicioTexto: entregaEditando.descripcionServicio,
+        ubicacionTexto: entregaEditando.ubicacionNombre || undefined,
+        entregadorNombre: entregaEditando.entregadorNombre || tablero.usuarioActualNombre,
+      });
+
+      const supabase = crearClienteNavegador();
+      let publicUrlFinal: string | null = null;
+      const upCli = await subirArchivoOperativoStorage(
+        supabase,
+        "evidencias-entregas",
+        negNorm,
+        dataUrlABlob(estampada),
+        "jpg",
+        "image/jpeg"
+      );
+      if (upCli.ok) {
+        publicUrlFinal = upCli.publicUrl;
+      } else {
+        const upSrv = await subirArchivoEvidenciaServidorAction({
+          negocio: negNorm,
+          carpeta: "evidencias-entregas",
+          dataUrl: estampada,
+          extension: "jpg",
+        });
+        if (!upSrv.ok) throw new Error(upSrv.error || upCli.error);
+        publicUrlFinal = upSrv.publicUrl;
+      }
+
+      setEntregaEditando((prev) => (prev ? { ...prev, fotoUrl: publicUrlFinal } : null));
+    } catch (err) {
+      setErrorMsg(
+        err instanceof Error ? err.message : "No se pudo subir la fotografía de confirmación"
+      );
+    } finally {
+      setSubiendoFotoEdicion(false);
+    }
+  };
+
   const handleGuardarEdicionEntrega = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!entregaEditando) return;
@@ -1201,6 +1301,7 @@ export function ConsolaConfirmacionEntregas({
         entregadorNombre: entregaEditando.entregadorNombre,
         facturaReferencia: entregaEditando.facturaReferencia ?? "",
         documentosAdjuntos: entregaEditando.documentosAdjuntos ?? "",
+        fotoUrl: entregaEditando.fotoUrl ?? undefined,
       },
     });
     setGuardandoEdicion(false);
@@ -3266,10 +3367,82 @@ export function ConsolaConfirmacionEntregas({
       )}
 
       {/* =====================================================================
-          PESTAÑA 4: HISTÓRICO DE INFORMES EMITIDOS Y PEDIDOS REGULARES
+          PESTAÑA 4: HISTÓRICO PERMANENTE DE TODAS LAS ENTREGAS E INFORMES EMITIDOS
       ===================================================================== */}
       {pestana === "historico" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+          <div
+            style={{
+              background: "#FFFFFF",
+              border: "1px solid #E2E8F0",
+              borderRadius: "16px",
+              padding: "18px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "10px",
+                flexWrap: "wrap",
+              }}
+            >
+              <h3 style={{ margin: 0, fontSize: "0.98rem", fontWeight: 700, color: "#0F172A" }}>
+                Historial Permanente de Entregas Confirmadas (Exequiales y Tienda)
+              </h3>
+              <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+                {(
+                  [
+                    { id: "TODAS", label: "Todas" },
+                    { id: "EXEQUIALES", label: "Exequiales" },
+                    { id: "TIENDA", label: "Resto de Pedidos" },
+                  ] as const
+                ).map((op) => {
+                  const act = filtroHistoricoEntregas === op.id;
+                  return (
+                    <button
+                      key={op.id}
+                      type="button"
+                      onClick={() => setFiltroHistoricoEntregas(op.id)}
+                      style={{
+                        padding: "5px 11px",
+                        borderRadius: "999px",
+                        border: act ? "1px solid #0F172A" : "1px solid #CBD5E1",
+                        background: act ? "#0F172A" : "#FFFFFF",
+                        color: act ? "#FFFFFF" : "#334155",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {op.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <DataGrid
+              columnas={columnasOrdenesOt}
+              filas={tablero.entregas.filter((e) => {
+                if (e.estado === "PROGRAMADA" || e.estado === "ANULADA") return false;
+                if (filtroHistoricoEntregas === "EXEQUIALES") {
+                  return e.tipoOrigen === "ORDEN_TRABAJO_CONVENIO";
+                }
+                if (filtroHistoricoEntregas === "TIENDA") {
+                  return e.tipoOrigen === "PEDIDO_TIENDA";
+                }
+                return true;
+              })}
+              idFila={(r) => r.id}
+              nombreExportacion={`historial-entregas-permanente-${negNorm}`}
+            />
+          </div>
+
           <div
             style={{
               background: "#FFFFFF",
@@ -3289,28 +3462,6 @@ export function ConsolaConfirmacionEntregas({
               filas={tablero.informes}
               idFila={(i) => i.id}
               nombreExportacion={`informes-quincenales-${negNorm}`}
-            />
-          </div>
-
-          <div
-            style={{
-              background: "#FFFFFF",
-              border: "1px solid #E2E8F0",
-              borderRadius: "16px",
-              padding: "18px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "12px",
-            }}
-          >
-            <h3 style={{ margin: 0, fontSize: "0.98rem", fontWeight: 700, color: "#0F172A" }}>
-              Entregas Confirmadas del Resto de Pedidos de la Tienda
-            </h3>
-            <DataGrid
-              columnas={columnasOrdenesOt}
-              filas={tablero.entregas.filter((e) => e.tipoOrigen === "PEDIDO_TIENDA")}
-              idFila={(r) => r.id}
-              nombreExportacion={`entregas-pedidos-tienda-${negNorm}`}
             />
           </div>
         </div>
@@ -3518,6 +3669,74 @@ export function ConsolaConfirmacionEntregas({
                   fontSize: "0.84rem",
                 }}
               />
+            </div>
+
+            <div
+              style={{
+                padding: "12px",
+                borderRadius: "10px",
+                background: "#F8FAFC",
+                border: "1px solid #E2E8F0",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+              }}
+            >
+              <label
+                style={{
+                  display: "block",
+                  fontSize: "0.76rem",
+                  fontWeight: 700,
+                  color: "#334155",
+                }}
+              >
+                Fotografía de Confirmación (Informe / Evidencia Permanente)
+              </label>
+              {entregaEditando.fotoUrl && (
+                <img
+                  src={entregaEditando.fotoUrl}
+                  alt="Foto confirmación"
+                  style={{
+                    width: "100%",
+                    maxHeight: "190px",
+                    objectFit: "cover",
+                    borderRadius: "8px",
+                    border: "1px solid #CBD5E1",
+                  }}
+                />
+              )}
+              <label
+                style={{
+                  alignSelf: "flex-start",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "7px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid #0D9488",
+                  background: "#F0FDFA",
+                  color: "#115E59",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  cursor: subiendoFotoEdicion ? "wait" : "pointer",
+                }}
+              >
+                {subiendoFotoEdicion ? <Loader2 size={14} /> : <Camera size={14} />}
+                <span>
+                  {subiendoFotoEdicion
+                    ? "Almacenando foto..."
+                    : entregaEditando.fotoUrl
+                      ? "Reemplazar Foto"
+                      : "Adjuntar Foto"}
+                </span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  disabled={subiendoFotoEdicion}
+                  onChange={(ev) => void handleSubirFotoEnModalEdicion(ev)}
+                  style={{ display: "none" }}
+                />
+              </label>
             </div>
 
             <div

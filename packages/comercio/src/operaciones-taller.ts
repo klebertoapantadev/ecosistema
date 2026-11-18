@@ -387,6 +387,236 @@ export type OrigenOrdenTaller =
   | "MANUAL_ADMIN"
   | "EXEQUIALES_LLAMADA";
 
+export type ClasificacionOperativaPedido =
+  | "DOMICILIO"
+  | "LOCAL"
+  | "EXEQUIALES"
+  | "EVENTOS"
+  | "MOBILIARIO";
+
+export interface DefinicionClasificacionPedido {
+  clave: ClasificacionOperativaPedido;
+  etiqueta: string;
+  etiquetaCorta: string;
+  descripcion: string;
+  /** Nombre semántico del ícono Lucide */
+  iconoClave: "Truck" | "Store" | "Ribbon" | "Sparkles" | "Armchair";
+  /** Paleta activa (pedido pendiente / en curso) */
+  acentoHex: string;
+  fondoHex: string;
+  bordeHex: string;
+  textoHex: string;
+  /** Paleta atenuada/opaca (entrega confirmada en calendario) */
+  acentoOpacoHex: string;
+  fondoOpacoHex: string;
+  bordeOpacoHex: string;
+  textoOpacoHex: string;
+}
+
+export const CLASIFICACIONES_OPERATIVAS_PEDIDO: readonly DefinicionClasificacionPedido[] = [
+  {
+    clave: "DOMICILIO",
+    etiqueta: "Domicilio",
+    etiquetaCorta: "Domicilio",
+    descripcion: "Entrega floral a dirección o domicilio del destinatario",
+    iconoClave: "Truck",
+    acentoHex: "#0D9488",
+    fondoHex: "#F0FDFA",
+    bordeHex: "#99F6E4",
+    textoHex: "#115E59",
+    acentoOpacoHex: "#64748B",
+    fondoOpacoHex: "#F1F5F9",
+    bordeOpacoHex: "#CBD5E1",
+    textoOpacoHex: "#475569",
+  },
+  {
+    clave: "LOCAL",
+    etiqueta: "Local",
+    etiquetaCorta: "Local",
+    descripcion: "Retiro o entrega directa en tienda física",
+    iconoClave: "Store",
+    acentoHex: "#2563EB",
+    fondoHex: "#EFF6FF",
+    bordeHex: "#BFDBFE",
+    textoHex: "#1E40AF",
+    acentoOpacoHex: "#64748B",
+    fondoOpacoHex: "#F1F5F9",
+    bordeOpacoHex: "#CBD5E1",
+    textoOpacoHex: "#475569",
+  },
+  {
+    clave: "EXEQUIALES",
+    etiqueta: "Exequiales",
+    etiquetaCorta: "Exequiales",
+    descripcion: "Servicios exequiales, salas de velación y condolencias",
+    iconoClave: "Ribbon",
+    acentoHex: "#6D28D9",
+    fondoHex: "#F5F3FF",
+    bordeHex: "#DDD6FE",
+    textoHex: "#4C1D95",
+    acentoOpacoHex: "#7C6F9B",
+    fondoOpacoHex: "#F3F1F7",
+    bordeOpacoHex: "#D4CFE0",
+    textoOpacoHex: "#575068",
+  },
+  {
+    clave: "EVENTOS",
+    etiqueta: "Eventos",
+    etiquetaCorta: "Eventos",
+    descripcion: "Decoración floral, ceremonias y montajes especiales",
+    iconoClave: "Sparkles",
+    acentoHex: "#BE185D",
+    fondoHex: "#FDF2F8",
+    bordeHex: "#FBCFE8",
+    textoHex: "#9D174D",
+    acentoOpacoHex: "#8C6275",
+    fondoOpacoHex: "#F5EFF2",
+    bordeOpacoHex: "#DECED6",
+    textoOpacoHex: "#5E4A53",
+  },
+  {
+    clave: "MOBILIARIO",
+    etiqueta: "Mobiliario",
+    etiquetaCorta: "Mobiliario",
+    descripcion: "Renta de estructuras, pedestales, arcos y mobiliario",
+    iconoClave: "Armchair",
+    acentoHex: "#B45309",
+    fondoHex: "#FFFBEB",
+    bordeHex: "#FDE68A",
+    textoHex: "#92400E",
+    acentoOpacoHex: "#8A7356",
+    fondoOpacoHex: "#F5F3EE",
+    bordeOpacoHex: "#DDD6C7",
+    textoOpacoHex: "#5C5243",
+  },
+] as const;
+
+export function obtenerDefinicionClasificacionPedido(
+  clave?: string | null
+): DefinicionClasificacionPedido {
+  const norm = String(clave || "").trim().toUpperCase();
+  return (
+    CLASIFICACIONES_OPERATIVAS_PEDIDO.find((c) => c.clave === norm) ??
+    CLASIFICACIONES_OPERATIVAS_PEDIDO[0]!
+  );
+}
+
+export function inferirClasificacionPedido(entrada: {
+  clasificacionExplicita?: string | null;
+  origenTipo?: string | null;
+  retiroEnLocal?: boolean | null;
+  salaServicio?: string | null;
+  productoResumen?: string | null;
+  ubicacionEntrega?: string | null;
+  metodoPago?: string | null;
+  tieneEvento?: boolean;
+  items?: Array<{
+    descripcion?: string;
+    sku?: string;
+    esRenta?: boolean;
+    tipoOferta?: string;
+  }> | null;
+}): ClasificacionOperativaPedido {
+  const exp = String(entrada.clasificacionExplicita || "")
+    .trim()
+    .toUpperCase();
+  if (
+    exp === "DOMICILIO" ||
+    exp === "LOCAL" ||
+    exp === "EXEQUIALES" ||
+    exp === "EVENTOS" ||
+    exp === "MOBILIARIO"
+  ) {
+    return exp;
+  }
+  if (exp === "EXEQUIAL" || exp === "CONDOLENCIAS" || exp === "FUNERARIO") return "EXEQUIALES";
+  if (exp === "EVENTO" || exp === "CEREMONIA") return "EVENTOS";
+  if (exp === "RENTA" || exp === "ALQUILER") return "MOBILIARIO";
+  if (exp === "TIENDA" || exp === "RETIRO" || exp === "RETIRO_LOCAL") return "LOCAL";
+
+  const orig = String(entrada.origenTipo || "")
+    .trim()
+    .toUpperCase();
+  const sala = String(entrada.salaServicio || "").trim();
+  const prod = String(entrada.productoResumen || "").toLowerCase();
+  const ubic = String(entrada.ubicacionEntrega || "").toLowerCase();
+  const met = String(entrada.metodoPago || "").toLowerCase();
+  const itemsTxt = (entrada.items ?? [])
+    .map((it) => `${it.descripcion || ""} ${it.sku || ""} ${it.tipoOferta || ""}`)
+    .join(" ")
+    .toLowerCase();
+  const itemsTieneRenta = (entrada.items ?? []).some(
+    (it) => it.esRenta === true || String(it.tipoOferta || "").toUpperCase() === "RENTA"
+  );
+
+  if (
+    orig === "EXEQUIALES_LLAMADA" ||
+    orig === "ORDEN_TRABAJO_CONVENIO" ||
+    Boolean(sala) ||
+    met.includes("convenio") ||
+    ubic.includes("exequial") ||
+    ubic.includes("camposanto") ||
+    ubic.includes("monteolivo") ||
+    ubic.includes("funeraria")
+  ) {
+    return "EXEQUIALES";
+  }
+
+  if (
+    itemsTieneRenta ||
+    prod.includes("en renta") ||
+    prod.includes("alquiler") ||
+    prod.includes("mobiliario") ||
+    prod.includes("pedestal") ||
+    prod.includes("backing") ||
+    prod.includes("mampara") ||
+    prod.includes("cilindro") ||
+    itemsTxt.includes("en renta") ||
+    itemsTxt.includes("mobiliario") ||
+    itemsTxt.includes("alquiler")
+  ) {
+    return "MOBILIARIO";
+  }
+
+  if (
+    orig === "PROFORMA_EVENTO" ||
+    entrada.tieneEvento === true ||
+    prod.includes("arco floral") ||
+    prod.includes("montaje de evento") ||
+    prod.includes("decoración de evento") ||
+    prod.includes("decoracion de evento")
+  ) {
+    return "EVENTOS";
+  }
+
+  if (
+    entrada.retiroEnLocal === true ||
+    ubic.includes("retiro en tienda") ||
+    ubic.includes("retiro en local") ||
+    ubic === "local" ||
+    ubic === "tienda"
+  ) {
+    return "LOCAL";
+  }
+
+  return "DOMICILIO";
+}
+
+export function esEntregaConfirmadaOrden(
+  orden: Pick<OrdenTrabajoTaller, "estadoTaller" | "entregadoEn" | "evidenciaFotoUrl" | "estadoEvidencia">
+): boolean {
+  if (orden.estadoTaller === "ENTREGADO") return true;
+  if (orden.entregadoEn) return true;
+  if (
+    orden.estadoEvidencia &&
+    orden.estadoEvidencia !== "PROGRAMADA" &&
+    orden.estadoEvidencia !== "ANULADA"
+  ) {
+    return true;
+  }
+  return Boolean(orden.evidenciaFotoUrl && orden.evidenciaFotoUrl.trim());
+}
+
 export interface ItemOrdenTaller {
   productoId?: string;
   sku?: string;
@@ -394,12 +624,16 @@ export interface ItemOrdenTaller {
   cantidad: number;
   precioUnitario?: number;
   dedicatoria?: string;
+  esRenta?: boolean;
+  tipoOferta?: string;
 }
 
 export interface OrdenTrabajoTaller {
   id: string;
   codigo: string;
   origenTipo: OrigenOrdenTaller;
+  /** Clasificación operativa canónica: Domicilio | Local | Exequiales | Eventos | Mobiliario */
+  clasificacionPedido?: ClasificacionOperativaPedido;
   proformaId?: string | null;
   entregaId?: string | null;
   estadoTaller: EstadoOrdenTaller;
@@ -412,7 +646,7 @@ export interface OrdenTrabajoTaller {
   fechaElaboracion?: string;
   /** Para ventas regulares: A) 09:00 - 13:00 | B) 13:00 - 17:00 | C) 17:00 - 20:00 */
   franjaHoraria?: string | null;
-  /** Para Exequiales vía llamada: hora solicitada (ej. '10:30' o 'Lo antes posible') */
+  /** Para Exequiales o entregas puntuales: hora solicitada (ej. '10:30' o 'Lo antes posible') */
   horaEspecifica?: string | null;
   productoResumen: string;
   items: ItemOrdenTaller[];
@@ -467,6 +701,15 @@ export interface OrdenTrabajoTaller {
   rutaLatitud?: number | null;
   rutaLongitud?: number | null;
   rutaActualizadaEn?: string | null;
+  /** Evidencia de entrega confirmada (almacenada igual para Exequiales y resto de entregas) */
+  evidenciaFotoUrl?: string | null;
+  evidenciaMapaUrl?: string | null;
+  evidenciaLatitud?: number | null;
+  evidenciaLongitud?: number | null;
+  evidenciaDireccionGps?: string | null;
+  entregadoPorNombre?: string | null;
+  estadoEvidencia?: EstadoEntregaEvidencia | string | null;
+  numeroInforme?: string | null;
 }
 
 export interface RepartidorDisponibleNegocio {
@@ -479,6 +722,8 @@ export interface RepartidorDisponibleNegocio {
 export interface ProductoLigeroSelectorTaller {
   productoId: string;
   productoNombre: string;
+  tipoProducto?: string;
+  esRenta?: boolean;
   varianteId?: string;
   sku: string;
   varianteNombre: string;

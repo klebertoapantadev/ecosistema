@@ -1,17 +1,20 @@
 import { describe, expect, it } from "vitest";
 import {
+  CLASIFICACIONES_OPERATIVAS_PEDIDO,
   DATOS_PROVEEDOR_TINKAY_DEFECTO,
   OPCIONES_DESCRIPCION_SERVICIO_EXEQUIALES,
   OPCIONES_SALA_EXEQUIALES,
   RANGOS_HORARIO_ENTREGA_TIENDA,
   SOLICITANTES_EXEQUIALES_FRECUENTES,
   consolidarFotosInventario,
+  esEntregaConfirmadaOrden,
   esPedidoDeElaboracionEnFecha,
   extraerConteoJsonDesdeRespuestaAria,
   formatearFechaCorteInventario,
   formatearFechaEntregaHumana,
   formatearResumenInventarioTexto,
   generarCuadriculaMesCalendario,
+  inferirClasificacionPedido,
   normalizarFranjaHorariaTienda,
   obtenerRangoSemanaLunesADomingo,
 } from "./operaciones-taller";
@@ -133,5 +136,64 @@ describe("operaciones-taller y pdf-informe-iess", () => {
     });
 
     expect(bytes.byteLength).toBeGreaterThan(1500);
+  });
+
+  it("clasifica los pedidos en las 5 categorías operativas y detecta entregas confirmadas para el calendario", () => {
+    expect(CLASIFICACIONES_OPERATIVAS_PEDIDO.map((c) => c.clave)).toEqual([
+      "DOMICILIO",
+      "LOCAL",
+      "EXEQUIALES",
+      "EVENTOS",
+      "MOBILIARIO",
+    ]);
+
+    expect(
+      inferirClasificacionPedido({
+        origenTipo: "EXEQUIALES_LLAMADA",
+        salaServicio: "Sala 1",
+        productoResumen: "Set condolencias (3 arreglos)",
+      })
+    ).toBe("EXEQUIALES");
+
+    expect(
+      inferirClasificacionPedido({
+        retiroEnLocal: true,
+        productoResumen: "Bouquet 24 rosas",
+      })
+    ).toBe("LOCAL");
+
+    expect(
+      inferirClasificacionPedido({
+        origenTipo: "PROFORMA_EVENTO",
+        productoResumen: "Arco floral ceremonia",
+      })
+    ).toBe("EVENTOS");
+
+    expect(
+      inferirClasificacionPedido({
+        productoResumen: "Juego de 3 pedestales dorados en renta",
+      })
+    ).toBe("MOBILIARIO");
+
+    expect(
+      inferirClasificacionPedido({
+        productoResumen: "Box floral mediano",
+        ubicacionEntrega: "Av. República del Salvador",
+      })
+    ).toBe("DOMICILIO");
+
+    expect(
+      esEntregaConfirmadaOrden({
+        estadoTaller: "EN_PREPARACION",
+        evidenciaFotoUrl: null,
+      })
+    ).toBe(false);
+
+    expect(
+      esEntregaConfirmadaOrden({
+        estadoTaller: "ENTREGADO",
+        evidenciaFotoUrl: "https://cdn/evidencia.jpg",
+      })
+    ).toBe(true);
   });
 });

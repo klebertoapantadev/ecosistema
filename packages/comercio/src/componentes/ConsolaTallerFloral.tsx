@@ -27,12 +27,19 @@ import {
   type DatosConsolaTallerYDespacho,
 } from "../acciones-operaciones-taller";
 import {
+  esEntregaConfirmadaOrden,
   esPedidoDeElaboracionEnFecha,
   formatearFechaEntregaHumana,
+  inferirClasificacionPedido,
   obtenerFechaHoyEcuadorYmd,
+  type ClasificacionOperativaPedido,
   type EstadoOrdenTaller,
   type OrdenTrabajoTaller,
 } from "../operaciones-taller";
+import {
+  BarraFiltroClasificacionPedido,
+  InsigniaClasificacionPedido,
+} from "./InsigniaClasificacionPedido";
 import { CalendarioPedidosTaller } from "./CalendarioPedidosTaller";
 import { ModalImprimirTarjetaTaller } from "./ModalImprimirTarjetaTaller";
 
@@ -89,7 +96,10 @@ export function ConsolaTallerFloral({
   );
   const esSoloTaller = modoSoloTaller || datos.rolOperativo === "TALLER";
   const [filtro, setFiltro] = useState<FiltroHorizonteTaller>("activos_hoy_y_futuros");
-  // Por requerimiento explícito: los históricos están OCULTOS por defecto
+  const [filtroClasificacion, setFiltroClasificacion] = useState<
+    ClasificacionOperativaPedido | "TODOS"
+  >("TODOS");
+  // Por requerimiento explícito: los históricos están OCULTOS por defecto en la cola DataGrid
   const [mostrarHistoricos, setMostrarHistoricos] = useState<boolean>(false);
   const [mostrarCalendario, setMostrarCalendario] = useState<boolean>(true);
   const [cargando, setCargando] = useState<boolean>(false);
@@ -318,14 +328,42 @@ export function ConsolaTallerFloral({
     };
   }, [todasOrdenesTaller, esOrdenHistorica, hoyYmd]);
 
+  const resolverClasifTaller = useCallback(
+    (o: OrdenTrabajoTaller): ClasificacionOperativaPedido => {
+      return inferirClasificacionPedido({
+        clasificacionExplicita: o.clasificacionPedido,
+        origenTipo: o.origenTipo,
+        retiroEnLocal: o.retiroEnLocal,
+        salaServicio: o.salaServicio,
+        productoResumen: o.productoResumen,
+        ubicacionEntrega: o.ubicacionEntrega,
+        metodoPago: o.metodoPago,
+        items: o.items,
+      });
+    },
+    []
+  );
+
+  const conteosClasificacion = useMemo(() => {
+    const m: Partial<Record<ClasificacionOperativaPedido, number>> = {};
+    for (const o of ordenesVisiblesBase) {
+      const c = resolverClasifTaller(o);
+      m[c] = (m[c] ?? 0) + 1;
+    }
+    return m;
+  }, [ordenesVisiblesBase, resolverClasifTaller]);
+
   const ordenesFiltradas = useMemo(() => {
     return ordenesVisiblesBase.filter((o) => {
+      if (filtroClasificacion !== "TODOS" && resolverClasifTaller(o) !== filtroClasificacion) {
+        return false;
+      }
       const f = (o.fechaEntrega || "").slice(0, 10);
       if (filtro === "hoy") return esPedidoDeElaboracionEnFecha(o, hoyYmd, hoyYmd);
       if (filtro === "futuros") return f > hoyYmd;
       return true;
     });
-  }, [ordenesVisiblesBase, filtro, hoyYmd]);
+  }, [ordenesVisiblesBase, filtro, filtroClasificacion, resolverClasifTaller, hoyYmd]);
 
   const handleCambiarEstado = useCallback(
     async (orden: OrdenTrabajoTaller, nuevoEstado: EstadoOrdenTaller) => {
@@ -396,33 +434,34 @@ export function ConsolaTallerFloral({
       },
       {
         id: "producto",
-        encabezado: "Arreglo a Elaborar",
-        valor: (o) => `${o.codigo} ${o.productoResumen} ${o.dedicatoria || ""}`,
-        render: (o) => (
-          <div style={{ display: "flex", flexDirection: "column", gap: "3px", maxWidth: "340px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-              <strong style={{ fontSize: "0.83rem", color: "#0F172A" }}>{o.codigo}</strong>
-              {o.origenTipo === "EXEQUIALES_LLAMADA" && (
-                <span
-                  style={{
-                    padding: "1px 7px",
-                    borderRadius: "999px",
-                    background: "#581C87",
-                    color: "#FFFFFF",
-                    fontSize: "0.68rem",
-                    fontWeight: 800,
-                  }}
-                >
-                  🕊️ Exequiales {o.salaServicio ? `· ${o.salaServicio}` : ""}
+        encabezado: "Arreglo y Clasificación",
+        valor: (o) =>
+          `${o.codigo} ${resolverClasifTaller(o)} ${o.productoResumen} ${o.dedicatoria || ""}`,
+        render: (o) => {
+          const clasif = resolverClasifTaller(o);
+          const conf = esEntregaConfirmadaOrden(o);
+          return (
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", maxWidth: "340px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                <strong style={{ fontSize: "0.83rem", color: "#0F172A" }}>{o.codigo}</strong>
+                <InsigniaClasificacionPedido
+                  clasificacion={clasif}
+                  opaco={conf}
+                  compacto
+                  sufijoTexto={clasif === "EXEQUIALES" && o.salaServicio ? o.salaServicio : null}
+                />
+              </div>
+              <strong style={{ fontSize: "0.85rem", color: "#1E293B" }}>
+                {o.productoResumen}
+              </strong>
+              {o.dedicatoria && (
+                <span style={{ fontSize: "0.73rem", color: "#92400E" }}>
+                  Dedicatoria: {o.dedicatoria}
                 </span>
               )}
             </div>
-            <strong style={{ fontSize: "0.85rem", color: "#1E293B" }}>💐 {o.productoResumen}</strong>
-            {o.dedicatoria && (
-              <span style={{ fontSize: "0.73rem", color: "#92400E" }}>💌 {o.dedicatoria}</span>
-            )}
-          </div>
-        ),
+          );
+        },
       },
       {
         id: "destinatario",
@@ -549,7 +588,7 @@ export function ConsolaTallerFloral({
         },
       },
     ],
-    [hoyYmd, idProcesando, handleCambiarEstado]
+    [hoyYmd, idProcesando, handleCambiarEstado, resolverClasifTaller]
   );
 
   return (
@@ -858,10 +897,10 @@ export function ConsolaTallerFloral({
         </div>
       )}
 
-      {/* CALENDARIO DE PEDIDOS EN TALLER (HOY ELABORACIÓN / SEMANA / MES) */}
+      {/* CALENDARIO DE PEDIDOS EN TALLER (DÍA / SEMANA / MES + CONFIRMADAS EN TONO OPACO) */}
       {mostrarCalendario && (
         <CalendarioPedidosTaller
-          ordenes={ordenesVisiblesBase}
+          ordenes={todasOrdenesTaller}
           modo="taller"
           vistaInicial="hoy"
           onCambiarEstadoTaller={(o, est) => void handleCambiarEstado(o, est)}
@@ -913,6 +952,14 @@ export function ConsolaTallerFloral({
             {mostrarCalendario ? "Ocultar Calendario" : "Mostrar Calendario"}
           </button>
         </div>
+
+        <BarraFiltroClasificacionPedido
+          seleccionada={filtroClasificacion}
+          onSeleccionar={setFiltroClasificacion}
+          conteos={conteosClasificacion}
+          totalGeneral={ordenesVisiblesBase.length}
+          compacta
+        />
 
         <DataGrid
           columnas={columnasTaller}

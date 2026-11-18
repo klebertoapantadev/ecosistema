@@ -69,6 +69,7 @@ export * from "./utils/evidenciaImagenGps";
 export * from "./componentes/ConsolaInventarioRosas";
 export * from "./componentes/ConsolaEntregaInmediata";
 export * from "./componentes/ConsolaConfirmacionEntregas";
+export * from "./componentes/InsigniaClasificacionPedido";
 export * from "./componentes/CalendarioPedidosTaller";
 export * from "./componentes/ConsolaEnvioPedidosTaller";
 export * from "./componentes/ConsolaTallerFloral";
