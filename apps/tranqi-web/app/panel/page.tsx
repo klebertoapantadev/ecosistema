@@ -11,7 +11,7 @@ import { obtenerPerfilActual, obtenerSaludo, obtenerPerfiles, obtenerNivelMaximo
 import { ROLES_DEFAULT, type ModoRol } from "./roles-sistema";
 import { TarjetasFavoritasGrid } from "./SeccionFavoritosInicio";
 import { BuscadorModulosGlobal } from "./BuscadorModulosGlobal";
-import { WidgetNotificacionesCliente } from "@eco/notificaciones";
+import { NotificacionesPanel } from "./NotificacionesPanel";
 import { obtenerSolicitudPropia } from "../../modulos/socios/consultas";
 import { obtenerMiPerfilAbogadoCompletoAction } from "../../modulos/socios/acciones-red-profesional";
 import { listarAgendaDelAbogado } from "../../modulos/agenda/consultas";
@@ -269,7 +269,7 @@ export default async function PagePanel({ searchParams }: Props) {
 
 /* ──────────────── SECCIÓN NOTIFICACIONES ECOSISTEMA DINÁMICA ──────────────── */
 function SeccionNotificacionesEcosistema({ esAdmin }: { esAdmin: boolean }) {
-  return <WidgetNotificacionesCliente negocio="tranqi" esAdmin={esAdmin} />;
+  return <NotificacionesPanel esAdmin={esAdmin} />;
 }
 
 /* ──────────────── 1. PANEL MODO CLIENTE ────────────────
