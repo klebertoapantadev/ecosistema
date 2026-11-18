@@ -19,7 +19,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 
 | Código | Funcionalidad / Requerimiento | Estado | Avance (%) | Responsable Asignado |
 | :--- | :--- | :---: | :---: | :--- |
-| **`PLT-001`** | Identidad Base con Registro, Login, Consentimiento y Perfil 100% Aislados por Negocio | ✅ Implementado | **94%** | Kleber Toapanta |
+| **`PLT-001`** | Identidad Base con Registro, Login, Consentimiento, Callback Google OAuth Resiliente y Perfil 100% Aislados por Negocio | ✅ Implementado | **96%** | Kleber Toapanta |
 | **`PLT-002`** | Autenticación Multifactor (MFA TOTP) & Expiración por Inactividad | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-003`** | Membresías, Jerarquía & Active Role Switcher | ✅ Implementado | **100%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-004`** | **Buddie Conversacional (Chat IA ARIA & OCR Multimodal)** | 🟡 En Desarrollo | **85%** | **Kleber Toapanta / Jesus Navarrete** |
