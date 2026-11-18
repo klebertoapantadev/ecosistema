@@ -18,7 +18,11 @@
 **Check**: Verificar en `acciones.ts` y `consultas.ts` si se llama a `supabase.schema("comun_agenda")` directamente sin persistir en `comun_configuracion.cfg_negocio` (`cfg_detalle_configuracion.agenda_horarios`) o `comun_seguridad.seg_usuario` (`usu_detalle_usuario.ficha_abogado`).
 **Fix**: En el proyecto Supabase remoto (`ecosistema`), `comun_agenda` es un esquema interno de motor SQL y no está en la lista `db_schemas` expuesta por PostgREST. Toda lectura/escritura desde Server Actions debe usar `comun_configuracion.cfg_negocio` (`cfg_detalle_configuracion.agenda_horarios`) para horarios del negocio y `comun_seguridad.seg_usuario` (`usu_detalle_usuario.ficha_abogado`) para horarios individuales del abogado, dejando `comun_agenda` como sincronización secundaria dentro de un `try/catch`.
 
-### 3. [Add Third Mistake]
+### 3. Usar `jsonb_build_object(...)` con más de 50 propiedades (100 argumentos) en funciones PostgreSQL / PL/pgSQL
+
+**Symptom**: `CREATE OR REPLACE FUNCTION` se ejecuta sin error en el SQL Editor, pero al invocar la RPC en tiempo de ejecución aparece `cannot pass more than 100 arguments to a function`.
+**Check**: En PostgreSQL (`FUNC_MAX_ARGS = 100`), `jsonb_build_object('k1', v1, 'k2', v2, ...)` cuenta cada clave y cada valor como un argumento individual (`51 campos × 2 = 102 argumentos`).
+**Fix**: Proyectar las columnas en un `SELECT ... AS "camelCaseKey"` tipado y convertir la fila completa con `to_jsonb(sub)` (ej. `select coalesce(jsonb_agg(to_jsonb(sub)), '[]'::jsonb) from (select o.id as "id", ... from ...) sub`). `to_jsonb(record)` recibe **1 solo argumento** (el registro compuesto) y soporta hasta 1.600 propiedades sin límite de 100 argumentos.
 
 ### 4. [Add Fourth Mistake]
 
@@ -26,4 +30,4 @@
 
 ---
 
-**Last Updated**: 2026-07-28
+**Last Updated**: 2026-11-18

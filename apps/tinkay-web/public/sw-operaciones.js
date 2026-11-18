@@ -1,5 +1,5 @@
 // Service Worker PWA + Web Push Estilo WhatsApp para Tinkay (/panel, /panel/conversaciones, /panel/chat-equipo, /panel/entregas, /panel/taller)
-const CACHE_NAME = "eco-portal-operaciones-v5";
+const CACHE_NAME = "eco-portal-operaciones-v6";
 const RUTAS_PRECACHE = [
   "/icons/icon-192.png",
   "/icons/icon-512.png",
