@@ -7,6 +7,15 @@ export const dynamic = "force-dynamic";
 
 const NEGOCIO_DEFECTO = "tinkay";
 
+// Lo que estas RPC devuelven y lo único que la ruta usa del cliente: el
+// esquema comun_comercio no está en los tipos generados de @eco/db.
+type RespuestaPush = { ok?: boolean; publicKey?: string; requiereGenerar?: boolean; error?: string };
+type EsquemaComercio = {
+  rpc: (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: RespuestaPush | null; error: { message: string } | null }>;
+};
+const esquemaComercioDe = (cliente: unknown) =>
+  (cliente as { schema: (s: string) => EsquemaComercio }).schema("comun_comercio");
+
 async function asegurarPublicKeyVapid(negocio: string): Promise<string | null> {
   const pubEnv = (
     process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
@@ -18,8 +27,7 @@ async function asegurarPublicKeyVapid(negocio: string): Promise<string | null> {
     return pubEnv;
   }
 
-  const supabase: any = crearClienteAdmin() ?? (await crearClienteServidor());
-  const esquemaComercio = supabase.schema("comun_comercio") as any;
+  const esquemaComercio = esquemaComercioDe(crearClienteAdmin() ?? (await crearClienteServidor()));
 
   // 1. Consultar si ya existe en Vault / cfg_negocio
   const consulta = await esquemaComercio.rpc("com_fn_push_asegurar_claves_vapid", {
@@ -98,7 +106,7 @@ export async function POST(req: NextRequest) {
     }
 
     const ua = req.headers.get("user-agent") || "";
-    const esquemaComercio = (supabase as any).schema("comun_comercio");
+    const esquemaComercio = esquemaComercioDe(supabase);
     const { data, error } = await esquemaComercio.rpc("com_fn_push_registrar_suscripcion", {
       p_negocio: negocio,
       p_endpoint: endpoint,
