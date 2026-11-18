@@ -92,6 +92,20 @@ function interpolarParaPerfil(
     .replace(/\{nombrecompleto\}/gi, nombreCompleto);
 }
 
+/**
+ * Cuerpo de las alertas de citas (TRQ-025): sin emoji ni cajas de color, que
+ * no son del sistema visual. El nombre y el motivo los escribe el cliente y
+ * el panel pinta este HTML tal cual, así que van escapados.
+ */
+function escaparHtml(texto: string) {
+  return texto.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+}
+
+function fichaCita(d: { aviso: string; cliente: string; cuando: string; modalidad: string; motivo?: string | null; enlace: string; accion: string }) {
+  const motivo = d.motivo ? `<p style="margin:4px 0 0;opacity:.75">${escaparHtml(d.motivo)}</p>` : "";
+  return `<div><p style="margin:0">${d.aviso}</p><p style="margin:4px 0 0"><b>${escaparHtml(d.cliente)}</b> · ${d.cuando} · ${d.modalidad}</p>${motivo}<p style="margin:8px 0 0"><a href="${d.enlace}">${d.accion}</a></p></div>`;
+}
+
 export async function GET() {
   try {
     const perfil = await obtenerPerfilActual();
@@ -190,26 +204,26 @@ export async function GET() {
 
             const espHtml =
               Array.isArray(prop.especialidadesNombres) && prop.especialidadesNombres.length > 0
-                ? `<br/><strong>⚖️ Especialidades:</strong> ${prop.especialidadesNombres.join(", ")}`
+                ? `<br/><strong>Especialidades:</strong> ${prop.especialidadesNombres.join(", ")}`
                 : "";
             const provHtml =
               Array.isArray(prop.provinciasNombres) && prop.provinciasNombres.length > 0
-                ? `<br/><strong>📍 Cobertura:</strong> ${prop.provinciasNombres.join(", ")}`
+                ? `<br/><strong>Cobertura:</strong> ${prop.provinciasNombres.join(", ")}`
                 : "";
 
             const estadoBadgeHtml =
               prop.estado === "aceptado"
-                ? `<span style="display:inline-block;margin-top:6px;padding:3px 8px;border-radius:999px;background:#ECFDF5;color:#065F46;font-weight:800;font-size:11px;">✅ Rol Aceptado el ${new Date(prop.respondidoEn || Date.now()).toLocaleString("es-EC", { dateStyle: "short", timeStyle: "short", timeZone: "America/Guayaquil" })}</span>`
+                ? `<span style="display:inline-block;margin-top:6px;padding:3px 8px;border-radius:999px;background:#ECFDF5;color:#065F46;font-weight:800;font-size:11px;">Rol aceptado el ${new Date(prop.respondidoEn || Date.now()).toLocaleString("es-EC", { dateStyle: "short", timeStyle: "short", timeZone: "America/Guayaquil" })}</span>`
                 : prop.estado === "rechazado"
-                ? `<span style="display:inline-block;margin-top:6px;padding:3px 8px;border-radius:999px;background:#FEF2F2;color:#991B1B;font-weight:800;font-size:11px;">❌ Rol Rechazado</span>`
-                : `<span style="display:inline-block;margin-top:6px;padding:3px 8px;border-radius:999px;background:#FEF3C7;color:#92400E;font-weight:800;font-size:11px;">⏳ Requiere tu confirmación para activar el rol</span>`;
+                ? `<span style="display:inline-block;margin-top:6px;padding:3px 8px;border-radius:999px;background:#FEF2F2;color:#991B1B;font-weight:800;font-size:11px;">Rol rechazado</span>`
+                : `<span style="display:inline-block;margin-top:6px;padding:3px 8px;border-radius:999px;background:#FEF3C7;color:#92400E;font-weight:800;font-size:11px;">Requiere tu confirmación para activar el rol</span>`;
 
             const tituloProp =
               prop.estado === "aceptado"
-                ? `✅ Nuevo Rol Activado: ${prop.rolNombre || prop.rolClave}`
+                ? `Rol activado: ${prop.rolNombre || prop.rolClave}`
                 : prop.estado === "rechazado"
-                ? `❌ Asignación de Rol Rechazada: ${prop.rolNombre || prop.rolClave}`
-                : `🛡️ Confirmación de Nuevo Rol: ${prop.rolNombre || prop.rolClave}`;
+                ? `Rol rechazado: ${prop.rolNombre || prop.rolClave}`
+                : `Confirma tu nuevo rol: ${prop.rolNombre || prop.rolClave}`;
 
             const htmlProp = `
               <div>
@@ -217,8 +231,8 @@ export async function GET() {
                   La plataforma está agregando el rol <strong>${prop.rolNombre || prop.rolClave}</strong> a tu cuenta en <strong>Tranqi</strong>.
                 </p>
                 <div style="font-size: 0.78rem; background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 8px 10px; margin: 6px 0;">
-                  <strong>👤 Agregado por:</strong> ${prop.solicitadoPorNombre || "Administrador"} (${prop.solicitadoPorCorreo || "admin@tranqi24.com"})<br/>
-                  <strong>📅 Fecha de solicitud:</strong> ${fechaFormateada}
+                  <strong>Agregado por:</strong> ${prop.solicitadoPorNombre || "Administrador"} (${prop.solicitadoPorCorreo || "admin@tranqi24.com"})<br/>
+                  <strong>Fecha de solicitud:</strong> ${fechaFormateada}
                   ${espHtml}
                   ${provHtml}
                 </div>
@@ -395,7 +409,7 @@ export async function GET() {
                   month: "short",
                   timeZone: "America/Guayaquil",
                 });
-                const modTxt = c.cit_modalidad === "presencial" ? "Presencial en Oficina" : "Telemática (Videollamada)";
+                const modTxt = c.cit_modalidad === "presencial" ? "Presencial" : "Videollamada";
                 const cliNombre = mapaCli.get(c.cit_cliente_id) || "Cliente";
 
                 if (esHoy) {
@@ -404,23 +418,8 @@ export async function GET() {
                     registrosClavesVistas.add(idAlertaHoy);
                     notificaciones.unshift({
                       not_id: idAlertaHoy,
-                      not_titulo: `🚨 URGENTE HOY (${horaEcu}): Cita sin abogado asignado`,
-                      not_contenido_html: `
-                        <div>
-                          <p style="margin:0 0 6px 0;color:#991B1B;font-weight:700;">
-                            La consulta programada para HOY aún no tiene un abogado asignado.
-                          </p>
-                          <div style="font-size:0.8rem;background:#FEF2F2;border:1px solid #FECACA;border-radius:8px;padding:8px 10px;margin:6px 0;">
-                            <strong>👤 Cliente:</strong> ${cliNombre}<br/>
-                            <strong>⏰ Hora de hoy:</strong> ${horaEcu}<br/>
-                            <strong>📍 Modalidad:</strong> ${modTxt}<br/>
-                            ${c.cit_motivo ? `<strong>📝 Motivo:</strong> ${c.cit_motivo}` : ""}
-                          </div>
-                          <a href="/panel/agendamiento?widget=asignaciones_agenda" style="color:#5000BA;font-weight:800;text-decoration:underline;font-size:0.8rem;">
-                            Asignar abogado ahora →
-                          </a>
-                        </div>
-                      `,
+                      not_titulo: `Hoy a las ${horaEcu}: consulta sin abogado`,
+                      not_contenido_html: fichaCita({ aviso: "La consulta de hoy todavía no tiene abogado asignado.", cliente: cliNombre, cuando: `hoy, ${horaEcu}`, modalidad: modTxt, motivo: c.cit_motivo, enlace: "/panel/agendamiento?widget=asignaciones_agenda", accion: "Asignar abogado" }),
                       not_url_accion: "/panel/agendamiento?widget=asignaciones_agenda",
                       not_leido_en: null,
                       not_creado_en: new Date().toISOString(),
@@ -434,23 +433,8 @@ export async function GET() {
                     registrosClavesVistas.add(idNuevaSinAbg);
                     notificaciones.unshift({
                       not_id: idNuevaSinAbg,
-                      not_titulo: `📅 Consulta confirmada pendiente de abogado (${fechaLargaEcu} · ${horaEcu})`,
-                      not_contenido_html: `
-                        <div>
-                          <p style="margin:0 0 6px 0;">
-                            Nueva consulta jurídica confirmada que requiere asignación de abogado.
-                          </p>
-                          <div style="font-size:0.8rem;background:#FFFBEB;border:1px solid #FDE68A;border-radius:8px;padding:8px 10px;margin:6px 0;">
-                            <strong>👤 Cliente:</strong> ${cliNombre}<br/>
-                            <strong>📅 Fecha y hora:</strong> ${fechaLargaEcu} · ${horaEcu}<br/>
-                            <strong>📍 Modalidad:</strong> ${modTxt}<br/>
-                            ${c.cit_motivo ? `<strong>📝 Motivo:</strong> ${c.cit_motivo}` : ""}
-                          </div>
-                          <a href="/panel/agendamiento?widget=asignaciones_agenda" style="color:#5000BA;font-weight:800;text-decoration:underline;font-size:0.8rem;">
-                            Abrir Agenda, Citas Abogados →
-                          </a>
-                        </div>
-                      `,
+                      not_titulo: `Consulta sin abogado asignado · ${fechaLargaEcu}, ${horaEcu}`,
+                      not_contenido_html: fichaCita({ aviso: "Hay una consulta confirmada que necesita abogado.", cliente: cliNombre, cuando: `${fechaLargaEcu}, ${horaEcu}`, modalidad: modTxt, motivo: c.cit_motivo, enlace: "/panel/agendamiento?widget=asignaciones_agenda", accion: "Asignar abogado" }),
                       not_url_accion: "/panel/agendamiento?widget=asignaciones_agenda",
                       not_leido_en: null,
                       not_creado_en: c.cit_creado_en || new Date().toISOString(),
@@ -527,29 +511,14 @@ export async function GET() {
                   minute: "2-digit",
                   timeZone: "America/Guayaquil",
                 });
-                const modTxt = c.cit_modalidad === "presencial" ? "Presencial en Oficina" : "Telemática (Videollamada)";
+                const modTxt = c.cit_modalidad === "presencial" ? "Presencial" : "Videollamada";
                 const cliNombre = mapaCli.get(c.cit_cliente_id) || "Cliente";
 
                 registrosClavesVistas.add(idNotAbg);
                 notificaciones.unshift({
                   not_id: idNotAbg,
-                  not_titulo: `📅 Cita jurídica asignada (${fechaHoraEcu}) — ${cliNombre}`,
-                  not_contenido_html: `
-                    <div>
-                      <p style="margin:0 0 6px 0;">
-                        Tienes una consulta jurídica asignada en tu agenda profesional.
-                      </p>
-                      <div style="font-size:0.8rem;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:8px 10px;margin:6px 0;">
-                        <strong>👤 Cliente:</strong> ${cliNombre}<br/>
-                        <strong>📅 Fecha y hora:</strong> ${fechaHoraEcu}<br/>
-                        <strong>📍 Modalidad:</strong> ${modTxt}<br/>
-                        ${c.cit_motivo ? `<strong>📝 Motivo:</strong> ${c.cit_motivo}` : ""}
-                      </div>
-                      <a href="/panel/agendamiento?widget=citas_programadas" style="color:#05876E;font-weight:800;text-decoration:underline;font-size:0.8rem;">
-                        Confirmar / Gestionar Cita →
-                      </a>
-                    </div>
-                  `,
+                  not_titulo: `Cita asignada · ${fechaHoraEcu}`,
+                  not_contenido_html: fichaCita({ aviso: "Tienes una consulta nueva en tu agenda.", cliente: cliNombre, cuando: fechaHoraEcu, modalidad: modTxt, motivo: c.cit_motivo, enlace: "/panel/agendamiento?widget=citas_programadas", accion: "Ver la cita" }),
                   not_url_accion: "/panel/agendamiento?widget=citas_programadas",
                   not_leido_en: null,
                   not_creado_en: c.cit_actualizado_en || c.cit_creado_en || new Date().toISOString(),

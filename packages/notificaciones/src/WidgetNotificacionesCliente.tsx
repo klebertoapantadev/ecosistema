@@ -30,13 +30,19 @@ export interface NotificacionItem {
 interface Props {
   negocio?: string;
   esAdmin?: boolean;
+  /**
+   * Si la app lo pasa, la notificación nueva se le entrega para que la muestre
+   * con sus propios avisos y el widget no pinta su ventana flotante. El estilo
+   * es de cada producto (marco-de-trabajo): tranqi la muestra con su aviso 9A.
+   */
+  alAlertaEnVivo?: (notificacion: NotificacionItem) => void;
 }
 
 const STORAGE_KEY_LEIDAS = "tranqi_notifs_leidas";
 const STORAGE_KEY_ELIMINADAS = "tranqi_notifs_eliminadas";
 const STORAGE_KEY_POSPUESTAS = "tranqi_notifs_pospuestas";
 
-export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = false }: Props) {
+export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = false, alAlertaEnVivo }: Props) {
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
   const [alertaPushToast, setAlertaPushToast] = useState<NotificacionItem | null>(null);
   const [permisoPush, setPermisoPush] = useState<string>("default");
@@ -51,6 +57,12 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
   const [eliminadasLocal, setEliminadasLocal] = useState<Set<string>>(new Set());
   const [pospuestasLocal, setPospuestasLocal] = useState<Record<string, number>>({});
   const yaCargadoInicialRef = useRef<boolean>(false);
+  // Ref y no dependencia del efecto de carga: así no se vuelve a pedir la
+  // lista cada vez que la app cree una función nueva.
+  const alAlertaEnVivoRef = useRef(alAlertaEnVivo);
+  useEffect(() => {
+    alAlertaEnVivoRef.current = alAlertaEnVivo;
+  }, [alAlertaEnVivo]);
 
   // Cargar preferencias locales al inicio
   useEffect(() => {
@@ -298,7 +310,8 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
           // Si hay una nueva notificación pendiente no mostrada antes
           if (pendientesParaToast.length > 0 && !yaCargadoInicialRef.current) {
             const masReciente = pendientesParaToast[0];
-            setAlertaPushToast(masReciente);
+            if (alAlertaEnVivoRef.current) alAlertaEnVivoRef.current(masReciente);
+            else setAlertaPushToast(masReciente);
 
             // Disparar Web Push nativo si el permiso fue concedido
             if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "granted") {
@@ -382,9 +395,6 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
               </div>
               <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "#ffffff", marginBottom: "4px" }}>
                 {alertaPushToast.not_titulo}
-              </div>
-              <div style={{ fontSize: "0.68rem", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", color: "#94a3b8", marginBottom: "6px" }}>
-                ID: {alertaPushToast.not_id}
               </div>
               <div
                 style={{ fontSize: "0.84rem", color: "#cbd5e1", lineHeight: 1.5 }}
@@ -652,9 +662,6 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                       {new Date(item.not_creado_en).toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit", timeZone: "America/Guayaquil" })}
                     </time>
                   </div>
-                  <div style={{ fontSize: "0.68rem", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", color: "#64748b", marginBottom: "4px" }}>
-                    ID: {item.not_id}
-                  </div>
                   <div
                     className="notif-cuerpo"
                     dangerouslySetInnerHTML={{ __html: item.not_contenido_html }}
@@ -782,9 +789,6 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                       {new Date(item.not_creado_en).toLocaleDateString("es-EC", { day: "2-digit", month: "2-digit" })}
                     </time>
                   </div>
-                  <div style={{ fontSize: "0.68rem", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", color: "#64748b", marginBottom: "4px" }}>
-                    ID: {item.not_id}
-                  </div>
                   <div
                     className="notif-cuerpo"
                     dangerouslySetInnerHTML={{ __html: item.not_contenido_html }}
@@ -827,9 +831,6 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                           ? new Date(item.not_eliminada_en).toLocaleDateString("es-EC", { day: "2-digit", month: "2-digit" })
                           : "—"}
                       </time>
-                    </div>
-                    <div style={{ fontSize: "0.68rem", fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace", color: "#64748b", marginBottom: "4px" }}>
-                      ID: {item.not_id}
                     </div>
                     <div
                       className="notif-cuerpo"

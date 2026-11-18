@@ -8,14 +8,7 @@ import {
   Scale,
   Wrench,
   Layers,
-  Image as ImageIcon,
-  Clock,
-  Sparkles,
-  CheckCircle,
-  HelpCircle,
   Calculator,
-  Truck,
-  Tag,
 } from "lucide-react";
 
 interface Props {

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { usePathname } from "next/navigation";
-import { Download, BellRing, WifiOff, Share, PlusSquare, CheckCircle2, X, Sparkles } from "lucide-react";
+import { Download, BellRing, WifiOff, Share, PlusSquare, CheckCircle2, X } from "lucide-react";
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[];
@@ -309,106 +309,29 @@ export function GestorPwaCliente() {
         </div>
       )}
 
-      {/* Barra discreta dentro del Panel (solo para usuarios registrados) para instalar PWA o activar Push */}
+      {/* Barra discreta dentro del Panel (solo usuarios registrados) para
+          instalar la app o activar los avisos. TRQ-025: tarjeta blanca del
+          panel en vez del degradado violeta, y en palabras del usuario
+          («Offline & Alertas Push» no le dice nada). Estilo en globals.css. */}
       {mostrarBarraPanel && (
-        <div
-          style={{
-            position: "fixed",
-            bottom: "74px",
-            left: "50%",
-            transform: "translateX(-50%)",
-            zIndex: 990,
-            background: "linear-gradient(135deg, #2D006B 0%, #5000BA 100%)",
-            color: "#FFFFFF",
-            borderRadius: "16px",
-            padding: "10px 14px",
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            boxShadow: "0 14px 34px rgba(20, 16, 25, 0.38)",
-            border: "1px solid rgba(255, 255, 255, 0.2)",
-            maxWidth: "calc(100vw - 24px)",
-            width: "fit-content",
-            flexWrap: "wrap",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <Sparkles size={16} color="#FAEB2C" style={{ flexShrink: 0 }} />
-            <span style={{ fontSize: "0.78rem", fontWeight: 700 }}>
-              App tranqi (Offline & Alertas Push)
-            </span>
+        <div className="barra-app" role="region" aria-label="Instalar tranqi">
+          <div className="barra-app-texto">
+            <b>Lleva tranqi en tu celular</b>
+            <span>Recibe los avisos aunque cierres el navegador.</span>
           </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <div className="barra-app-acciones">
             {!instalada && (Boolean(deferredPrompt) || esIos) && (
-              <button
-                type="button"
-                onClick={dispararInstalacion}
-                title="Instalar aplicación tranqi en este dispositivo"
-                aria-label="Instalar aplicación tranqi"
-                style={{
-                  background: "#FAEB2C",
-                  color: "#141019",
-                  border: "none",
-                  borderRadius: "999px",
-                  padding: "6px 12px",
-                  fontSize: "0.74rem",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "5px",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                <Download size={13} />
-                <span>Instalar App</span>
+              <button type="button" className="barra-app-principal" onClick={dispararInstalacion}>
+                <Download size={14} aria-hidden="true" /> Instalar
               </button>
             )}
-
             {!pushActivo && (
-              <button
-                type="button"
-                onClick={activarNotificacionesPush}
-                disabled={procesandoPush}
-                title="Activar notificaciones Push incluso con el navegador cerrado"
-                aria-label="Activar notificaciones Push"
-                style={{
-                  background: "rgba(255, 255, 255, 0.16)",
-                  color: "#FFFFFF",
-                  border: "1px solid rgba(255, 255, 255, 0.35)",
-                  borderRadius: "999px",
-                  padding: "6px 12px",
-                  fontSize: "0.74rem",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "5px",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                <BellRing size={13} />
-                <span>{procesandoPush ? "Activando..." : "Activar Push"}</span>
+              <button type="button" className="barra-app-secundaria" onClick={activarNotificacionesPush} disabled={procesandoPush}>
+                <BellRing size={14} aria-hidden="true" /> {procesandoPush ? "Activando…" : "Activar avisos"}
               </button>
             )}
-
-            <button
-              type="button"
-              onClick={ocultarBannerPwa}
-              title="Ocultar aviso de instalación"
-              aria-label="Cerrar aviso"
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "rgba(255, 255, 255, 0.75)",
-                cursor: "pointer",
-                padding: "4px",
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <X size={15} />
+            <button type="button" className="barra-app-cerrar" onClick={ocultarBannerPwa} aria-label="Cerrar">
+              <X size={15} aria-hidden="true" />
             </button>
           </div>
         </div>

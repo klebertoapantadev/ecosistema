@@ -3292,3 +3292,28 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 .tarjeta-admin .tarjeta-proteccion-plan i { color: var(--texto-suave); font-weight: 600; font-size: 1rem; }
 .tarjeta-admin .tarjeta-proteccion-meta { color: var(--texto-suave); max-width: 70ch; }
 .tarjeta-admin .badge-rol { background: var(--fondo-hundido); color: var(--texto-2); }
+
+/* ── TRQ-025 · Barra para instalar la app (GestorPwaCliente) ──────────────
+   Tarjeta blanca del panel, abajo al centro, por encima de la barra del
+   asistente. Antes: degradado violeta con «App tranqi (Offline & Alertas
+   Push)». El violeta queda solo para el botón de acción. */
+.barra-app {
+  position: fixed; z-index: 990; left: 50%; bottom: 74px; transform: translateX(-50%);
+  width: max-content; max-width: calc(100vw - 24px);
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 10px 10px 10px 16px;
+  background: var(--blanco); color: var(--negro); border: 1px solid var(--panel-linea); border-radius: 14px;
+  box-shadow: 0 16px 34px -18px rgba(20, 16, 25, 0.45);
+}
+.barra-app-texto { display: grid; gap: 1px; }
+.barra-app-texto b { font-size: 0.85rem; }
+.barra-app-texto span { font-size: 0.78rem; color: var(--panel-gris); }
+.barra-app-acciones { display: flex; align-items: center; gap: 6px; }
+.barra-app-principal, .barra-app-secundaria {
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 8px;
+  font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer; white-space: nowrap;
+}
+.barra-app-principal { background: var(--violeta); color: var(--blanco); border: 0; }
+.barra-app-secundaria { background: transparent; color: var(--negro); border: 1px solid var(--panel-linea); }
+.barra-app-secundaria:disabled { opacity: 0.6; cursor: wait; }
+.barra-app-cerrar { width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 8px; background: transparent; color: var(--panel-gris); cursor: pointer; }
+.barra-app-cerrar:hover { background: rgba(127, 127, 127, 0.12); color: var(--negro); }
