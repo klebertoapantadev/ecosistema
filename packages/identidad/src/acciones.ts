@@ -324,6 +324,17 @@ export async function registrarUsuario(datos: DatosRegistro, negocio: string): P
   const { ip, userAgent } = await obtenerIpYAgente();
   await registrarAcceso(supabase, usuarioId, ip, userAgent, negocioCanon);
 
+  // Reclamar cualquier invitación pendiente de rol de equipo para este negocio (ej. VENTAS / TALLER / DELIVERY en Tinkay)
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.schema("comun_seguridad") as any).rpc("seg_fn_sincronizar_acceso_rol_tinkay", {
+      p_negocio: negocioCanon,
+      p_crear_cliente_si_no_existe: false,
+    });
+  } catch {
+    // Ignorar si la migración aún no está desplegada
+  }
+
   // Despachar notificación multicanal ESTRICTAMENTE a Operadores y Administradores de ESTE negocio
   await notificarNuevoUsuarioRegistrado({
     usuarioId,
@@ -433,7 +444,25 @@ export async function iniciarSesion(datos: DatosIngreso, negocio: string): Promi
     correoLower === "familiammtg@gmail.com" ||
     (negocioCanon === "tinkay" && correoLower === "tinkay.uio@gmail.com");
 
-  if (!mem && !esSuperAdminPlataforma) {
+  let tieneMembresiaOInvitacion = Boolean(mem);
+  try {
+    // Reclamar invitación pendiente si el correo fue invitado a este negocio
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: syncInv } = await (supabase.schema("comun_seguridad") as any).rpc(
+      "seg_fn_sincronizar_acceso_rol_tinkay",
+      {
+        p_negocio: negocioCanon,
+        p_crear_cliente_si_no_existe: false,
+      }
+    );
+    if (syncInv?.tieneMembresia || syncInv?.invitacionAplicada) {
+      tieneMembresiaOInvitacion = true;
+    }
+  } catch {
+    // Ignorar si el RPC aún no está disponible
+  }
+
+  if (!tieneMembresiaOInvitacion && !esSuperAdminPlataforma) {
     await supabase.auth.signOut();
     return {
       ok: false,
@@ -609,6 +638,18 @@ export async function actualizarPerfilUsuario(
     .eq("usu_id", user.id);
 
   if (error) return { ok: false, error: error.message };
+
+  if (negocioCanon) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase.schema("comun_seguridad") as any).rpc("seg_fn_sincronizar_acceso_rol_tinkay", {
+        p_negocio: negocioCanon,
+        p_crear_cliente_si_no_existe: false,
+      });
+    } catch {
+      // Ignorar si la migración aún no está desplegada
+    }
+  }
 
   if (user.email && negocioCanon) {
     await procesarAutoafiliacionYBienvenidaConvenio({
@@ -848,6 +889,17 @@ export async function completarBienvenida(
     .eq("usu_id", user.id);
 
   if (error) return { ok: false, error: error.message };
+
+  // Reclamar invitación pendiente de equipo tras confirmar bienvenida
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase.schema("comun_seguridad") as any).rpc("seg_fn_sincronizar_acceso_rol_tinkay", {
+      p_negocio: negocioCanon,
+      p_crear_cliente_si_no_existe: false,
+    });
+  } catch {
+    // Ignorar si la migración aún no está desplegada
+  }
 
   if (adminDb) {
     await adminDb

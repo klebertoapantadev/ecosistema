@@ -4,6 +4,7 @@ import React, { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { CampanaNotificaciones } from '@eco/notificaciones';
+import { GestorPushChatsOmnicanal } from '@eco/comercio';
 import { ProveedorCarrito, useCarrito } from '../contexto-carrito';
 import { ModalDetalleProducto } from './ModalDetalleProducto';
 import { DrawerCarritoFloristeria } from './DrawerCarritoFloristeria';
@@ -690,6 +691,13 @@ export function MarcoEcommerceClienteTinkay(props: PropsMarcoEcommerceClienteTin
           </div>
         </footer>
 
+        <GestorPushChatsOmnicanal
+          negocio="tinkay"
+          usuarioId={props.usuarioId}
+          rolPrincipal="CLIENTE"
+          puedeVerConversacionesClientes={false}
+          modoClientePedidos={true}
+        />
         <ModalDetalleProducto />
         <DrawerCarritoFloristeria />
         <DrawerProformaEvento />

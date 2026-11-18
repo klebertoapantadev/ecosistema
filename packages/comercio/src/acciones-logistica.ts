@@ -1896,22 +1896,93 @@ export async function actualizarEstadoPedidoTiendaAction(
   }
 
   const db: any = crearClienteAdmin() ?? supabase;
-  const { error } = await db
-    .schema("comun_comercio")
-    .from("com_proforma")
-    .update({
-      prf_estado: nuevoEstado,
-      prf_actualizado_en: new Date().toISOString(),
-    })
-    .eq("prf_id", pedidoId)
-    .eq("prf_negocio", negNorm);
+  let codigoOrden = "";
+  let compradorNombre = "";
+  let clienteUsuarioId: string | null = null;
+  let repartidorAsignadoId: string | null = null;
 
-  if (error) {
-    return { ok: false, error: error.message };
+  // 1. Intentar primero vía RPC transaccional SECURITY DEFINER (sincroniza com_proforma + com_orden_taller sin depender de service_role)
+  const { data: rpcUpd, error: rpcErr } = await (supabase as any)
+    .schema("comun_comercio")
+    .rpc("com_fn_actualizar_estado_pedido_tienda", {
+      p_negocio: negNorm,
+      p_pedido_id: pedidoId,
+      p_nuevo_estado: nuevoEstado,
+    });
+
+  if (!rpcErr && rpcUpd) {
+    if (!rpcUpd.ok) {
+      return { ok: false, error: String(rpcUpd.error || "No se pudo actualizar el estado del pedido") };
+    }
+    codigoOrden = String(rpcUpd.codigoOrden || "");
+    compradorNombre = String(rpcUpd.compradorNombre || "");
+    clienteUsuarioId = rpcUpd.clienteUsuarioId ? String(rpcUpd.clienteUsuarioId) : null;
+    repartidorAsignadoId = rpcUpd.repartidorAsignadoId ? String(rpcUpd.repartidorAsignadoId) : null;
+  } else {
+    // 2. Respaldo compatible sobre com_proforma verificando fila afectada
+    const { data: filasUpd, error } = await db
+      .schema("comun_comercio")
+      .from("com_proforma")
+      .update({
+        prf_estado: nuevoEstado,
+        prf_actualizado_en: new Date().toISOString(),
+      })
+      .eq("prf_id", pedidoId)
+      .eq("prf_negocio", negNorm)
+      .select("prf_id, prf_secuencial, prf_cliente_id, prf_cliente_nombre, prf_detalle_proforma");
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+    if (!Array.isArray(filasUpd) || filasUpd.length === 0) {
+      return {
+        ok: false,
+        error: "No se pudo actualizar el pedido en la base de datos (ejecuta la migración SQL de pedidos en Supabase).",
+      };
+    }
+
+    const fila = filasUpd[0];
+    const det = (fila?.prf_detalle_proforma ?? {}) as Record<string, any>;
+    const prefijo =
+      negNorm === "tinkay"
+        ? "TNK"
+        : negNorm === "margaritas"
+        ? "MRG"
+        : negNorm === "fastfix"
+        ? "FFH"
+        : "TRQ";
+    codigoOrden = String(
+      det.codigo_proforma ||
+        det.codigo_orden ||
+        `${prefijo}-ORD-${String(fila?.prf_secuencial || 1).padStart(4, "0")}`
+    );
+    compradorNombre = String(
+      fila?.prf_cliente_nombre || det.comprador?.nombreCompleto || "Cliente"
+    );
+    clienteUsuarioId = fila?.prf_cliente_id ? String(fila.prf_cliente_id) : null;
   }
 
+  // 3. Emitir notificación Push + Campana + Realtime Broadcast a TODOS los roles con enlace directo al pedido
+  const { despacharPushCambioEstadoPedidoTodosLosRoles } = await import(
+    "./notificaciones-pedidos-push"
+  );
+  await despacharPushCambioEstadoPedidoTodosLosRoles({
+    supabase,
+    negocio: negNorm,
+    pedidoId,
+    codigoOrden,
+    nuevoEstado,
+    compradorNombre,
+    clienteUsuarioId,
+    repartidorAsignadoId,
+  });
+
   revalidatePath("/panel/pedidos");
+  revalidatePath("/panel/taller");
+  revalidatePath("/panel/entregas");
+  revalidatePath("/panel/envio-pedidos");
   revalidatePath("/panel/conversaciones");
+  revalidatePath("/panel");
   return { ok: true };
 }
 

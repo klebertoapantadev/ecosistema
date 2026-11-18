@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useId, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useId, useMemo, useState } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -46,14 +46,42 @@ export interface DataGridProps<T> {
   idFila: (fila: T) => string;
   nombreExportacion: string;
   contenidoExpandible?: (fila: T) => React.ReactNode;
+  busquedaInicial?: string;
+  filasExpandidasIniciales?: string[];
 }
 
-export function DataGrid<T>({ columnas, filas, idFila, nombreExportacion, contenidoExpandible }: DataGridProps<T>) {
-  const [busqueda, setBusqueda] = useState("");
+export function DataGrid<T>({
+  columnas,
+  filas,
+  idFila,
+  nombreExportacion,
+  contenidoExpandible,
+  busquedaInicial = "",
+  filasExpandidasIniciales,
+}: DataGridProps<T>) {
+  const [busqueda, setBusqueda] = useState(busquedaInicial);
   const [orden, setOrden] = useState<SortingState>([]);
   const [agrupamiento, setAgrupamiento] = useState<GroupingState>([]);
   const [ordenColumnas, setOrdenColumnas] = useState<string[]>(columnas.map((c) => c.id));
-  const [expandidas, setExpandidas] = useState<Set<string>>(new Set());
+  const [expandidas, setExpandidas] = useState<Set<string>>(
+    () => new Set(filasExpandidasIniciales ?? [])
+  );
+
+  useEffect(() => {
+    setBusqueda(busquedaInicial);
+  }, [busquedaInicial]);
+
+  useEffect(() => {
+    if (filasExpandidasIniciales && filasExpandidasIniciales.length > 0) {
+      setExpandidas((prev) => {
+        const next = new Set(prev);
+        for (const id of filasExpandidasIniciales) {
+          if (id) next.add(id);
+        }
+        return next;
+      });
+    }
+  }, [filasExpandidasIniciales]);
   // Sin un id propio, dnd-kit numera sus `aria-describedby` con un contador
   // global que no coincide entre servidor y cliente y React tira un error de
   // hidratacion en cada carga. `useId` si es estable entre ambos.

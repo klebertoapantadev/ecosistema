@@ -550,6 +550,65 @@ export interface EventoBroadcastIntervencionAsesor {
   eliminada?: boolean;
 }
 
+export interface EventoBroadcastEstadoPedido {
+  eventoId: string;
+  negocio: string;
+  pedidoId?: string | null;
+  codigoOrden: string;
+  nuevoEstado: string;
+  etiquetaEstado: string;
+  titulo: string;
+  cuerpo: string;
+  clienteUsuarioId?: string | null;
+  repartidorAsignadoId?: string | null;
+  notificacionesPorUsuario?: Record<
+    string,
+    {
+      notId: string;
+      rol: string;
+      url: string;
+    }
+  >;
+  emitidoEn: string;
+}
+
+export function resolverUrlDirectaPedidoPorRol(
+  rolRaw: string,
+  codigoOrden: string,
+  notId?: string | null
+): string {
+  const rol = String(rolRaw || "CLIENTE").trim().toUpperCase();
+  const params = new URLSearchParams();
+  if (codigoOrden) params.set("pedido", codigoOrden);
+  if (notId) params.set("not_id", notId);
+
+  if (
+    [
+      "SUPERADMIN",
+      "ADMINISTRADOR",
+      "ADMIN",
+      "OPERADOR",
+      "AUXILIAR",
+      "VENTAS",
+      "VENDEDOR",
+      "ASESOR",
+    ].includes(rol)
+  ) {
+    return `/panel/pedidos?${params.toString()}`;
+  }
+  if (["TALLER", "FLORISTA"].includes(rol)) {
+    return `/panel/taller?${params.toString()}`;
+  }
+  if (["DELIVERY", "REPARTIDOR", "DELIVERY_EXTERNO", "SUBCONTRATADO"].includes(rol)) {
+    return `/panel/entregas?${params.toString()}`;
+  }
+
+  const paramsCli = new URLSearchParams({ vista: "pedidos" });
+  if (codigoOrden) paramsCli.set("pedido", codigoOrden);
+  if (notId) paramsCli.set("not_id", notId);
+  return `/panel?${paramsCli.toString()}`;
+}
+
 export interface MiembroChatEquipo {
   usuarioId: string;
   nombre: string;

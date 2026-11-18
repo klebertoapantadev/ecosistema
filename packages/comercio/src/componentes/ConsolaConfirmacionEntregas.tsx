@@ -525,6 +525,58 @@ export function ConsolaConfirmacionEntregas({
     [tablero.pedidosPendientesTienda, pedidoSeleccionadoId]
   );
 
+  // Preseleccionar automáticamente el pedido cuando se ingresa desde una notificación Push (?pedido=...)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const aplicarPedidoUrl = () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const cod = (params.get("pedido") || params.get("codigo") || "").trim().toUpperCase();
+        if (!cod) return;
+
+        const matchTienda = tablero.pedidosPendientesTienda.find(
+          (p) =>
+            p.codigoOrden.toUpperCase() === cod ||
+            p.codigoOrden.toUpperCase().includes(cod) ||
+            p.proformaId.toUpperCase() === cod
+        );
+        if (matchTienda) {
+          setPestana("captura");
+          setTipoOrigenCaptura("PEDIDO_TIENDA");
+          setPedidoSeleccionadoId(matchTienda.proformaId);
+          return;
+        }
+
+        const matchOt = tablero.entregas.find(
+          (e) =>
+            e.tipoOrigen === "ORDEN_TRABAJO_CONVENIO" &&
+            e.estado === "PROGRAMADA" &&
+            (e.codigoOt.toUpperCase() === cod || e.id.toUpperCase() === cod)
+        );
+        if (matchOt) {
+          setPestana("captura");
+          setTipoOrigenCaptura("ORDEN_TRABAJO_CONVENIO");
+          setOtSeleccionadaId(matchOt.id);
+          return;
+        }
+
+        const matchEntregada = tablero.entregas.find(
+          (e) =>
+            e.codigoOt.toUpperCase().includes(cod) ||
+            (e.proformaId && e.proformaId.toUpperCase() === cod)
+        );
+        if (matchEntregada) {
+          setPestana("historico");
+        }
+      } catch {
+        // Ignorar
+      }
+    };
+    aplicarPedidoUrl();
+    window.addEventListener("eco:abrir-ruta-push", aplicarPedidoUrl);
+    return () => window.removeEventListener("eco:abrir-ruta-push", aplicarPedidoUrl);
+  }, [tablero.pedidosPendientesTienda, tablero.entregas]);
+
   const otSeleccionadaObj = useMemo(
     () => otsProgramadas.find((x) => x.id === otSeleccionadaId) ?? null,
     [otsProgramadas, otSeleccionadaId]

@@ -68,15 +68,38 @@ export async function obtenerPerfilesAsignables(negocio?: string): Promise<Perfi
         }
       }
 
-      // Perfiles autorizados para Tinkay Floristería (Ventas / Operador / Delivery / Administrador / Cliente)
-      const perfilesPermitidos = ["CLIENTE", "DELIVERY", "VENTAS", "OPERADOR", "ADMINISTRADOR"];
+      // Perfiles autorizados para Tinkay Floristería (Ventas / Taller / Operador / Delivery / Subcontratado / Administrador / Cliente)
+      const perfilesPermitidos = [
+        "CLIENTE",
+        "DELIVERY_EXTERNO",
+        "DELIVERY",
+        "TALLER",
+        "VENTAS",
+        "OPERADOR",
+        "ADMINISTRADOR",
+      ];
       const mapaExistentes = new Map(perfiles.map((p) => [p.clave.toUpperCase(), p]));
 
       if (!mapaExistentes.has("CLIENTE")) {
         mapaExistentes.set("CLIENTE", { clave: "CLIENTE", nombre: "Cliente", nivel: 10 });
       }
+      if (!mapaExistentes.has("DELIVERY_EXTERNO")) {
+        mapaExistentes.set("DELIVERY_EXTERNO", {
+          clave: "DELIVERY_EXTERNO",
+          nombre: "Delivery Subcontratado",
+          nivel: 12,
+        });
+      }
       if (!mapaExistentes.has("DELIVERY")) {
-        mapaExistentes.set("DELIVERY", { clave: "DELIVERY", nombre: "Delivery / Repartidor", nivel: 15 });
+        mapaExistentes.set("DELIVERY", { clave: "DELIVERY", nombre: "Delivery Interno", nivel: 15 });
+      } else {
+        mapaExistentes.set("DELIVERY", {
+          ...mapaExistentes.get("DELIVERY")!,
+          nombre: "Delivery Interno",
+        });
+      }
+      if (!mapaExistentes.has("TALLER")) {
+        mapaExistentes.set("TALLER", { clave: "TALLER", nombre: "Taller Floral", nivel: 18 });
       }
       if (!mapaExistentes.has("VENTAS")) {
         mapaExistentes.set("VENTAS", { clave: "VENTAS", nombre: "Ventas / Asesor Comercial", nivel: 20 });
@@ -87,7 +110,7 @@ export async function obtenerPerfilesAsignables(negocio?: string): Promise<Perfi
         });
       }
       if (!mapaExistentes.has("OPERADOR")) {
-        mapaExistentes.set("OPERADOR", { clave: "OPERADOR", nombre: "Operador / Taller Floral", nivel: 30 });
+        mapaExistentes.set("OPERADOR", { clave: "OPERADOR", nombre: "Operador", nivel: 30 });
       }
       if (!mapaExistentes.has("ADMINISTRADOR")) {
         mapaExistentes.set("ADMINISTRADOR", { clave: "ADMINISTRADOR", nombre: "Administrador", nivel: 80 });
@@ -134,6 +157,100 @@ export async function buscarUsuarios(
 
   // 1. Normalizar el negocio para consultar estrictamente sus propias membresías
   const { canon: negocioCanon, variantes: negociosFiltro } = resolverFiltroNegocio(negocio);
+
+  // 1b. Consultar primero vía RPC SECURITY DEFINER para garantizar listado completo sin depender de service_role en Vercel
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: rpcRes, error: rpcErr } = await (supabase.schema("comun_seguridad") as any).rpc(
+      "seg_fn_listar_usuarios_negocio",
+      {
+        p_negocio: negocioCanon,
+        p_consulta: consulta.trim(),
+      }
+    );
+
+    if (!rpcErr && rpcRes?.ok && Array.isArray(rpcRes.usuarios)) {
+      const listaRpc: UsuarioConMembresia[] = rpcRes.usuarios.map((u: any) => {
+        const perfilesDb: Array<{ clave: string; nivel: number }> = Array.isArray(u.perfiles_db)
+          ? u.perfiles_db
+          : [];
+        let listaClaves = perfilesDb.map((p) => {
+          const c = String(p.clave || "").toUpperCase();
+          return negocioCanon === "tinkay" && c === "VENDEDOR" ? "VENTAS" : c;
+        });
+
+        if (u.mem_rol) {
+          const rolMem =
+            negocioCanon === "tinkay" && String(u.mem_rol).toUpperCase() === "VENDEDOR"
+              ? "VENTAS"
+              : String(u.mem_rol).toUpperCase();
+          if (!listaClaves.includes(rolMem)) {
+            listaClaves.push(rolMem);
+          }
+        }
+
+        const correoLower = String(u.usu_correo || "").toLowerCase().trim();
+        const esPropietarioTinkay =
+          correoLower === "tinkay.uio@gmail.com" || correoLower === "kleber.toapanta.ch@gmail.com";
+
+        if (negocioCanon === "tinkay" && !esPropietarioTinkay) {
+          const tieneRolExplicitoTinkay = Boolean(u.roles_explicitos_tinkay);
+          if (!tieneRolExplicitoTinkay) {
+            listaClaves = listaClaves.filter(
+              (c) => c !== "SUPERADMIN" && c !== "ADMINISTRADOR" && c !== "ADMIN"
+            );
+          } else {
+            listaClaves = listaClaves.filter((c) => c !== "SUPERADMIN");
+          }
+        }
+
+        if (!listaClaves.includes("CLIENTE")) {
+          listaClaves.push("CLIENTE");
+        }
+
+        let nMax = 10;
+        for (const c of listaClaves) {
+          if (c === "SUPERADMIN") nMax = Math.max(nMax, 100);
+          else if (c === "ADMIN" || c === "ADMINISTRADOR") nMax = Math.max(nMax, 80);
+          else if (c === "ABOGADO" || c === "TECNICO") nMax = Math.max(nMax, 50);
+          else if (c === "OPERADOR" || c === "AUXILIAR") nMax = Math.max(nMax, 30);
+          else if (c === "VENTAS" || c === "VENDEDOR") nMax = Math.max(nMax, 20);
+          else if (c === "TALLER" || c === "FLORISTA") nMax = Math.max(nMax, 18);
+          else if (c === "DELIVERY" || c === "REPARTIDOR") nMax = Math.max(nMax, 15);
+          else if (c === "DELIVERY_EXTERNO" || c === "SUBCONTRATADO") nMax = Math.max(nMax, 12);
+        }
+
+        if (negocioCanon === "tinkay") {
+          if (esPropietarioTinkay) {
+            listaClaves = Array.from(new Set(["SUPERADMIN", "ADMINISTRADOR", ...listaClaves]));
+            nMax = 100;
+          }
+        } else if (
+          u.usu_superadmin_plataforma ||
+          correoLower === "kleber.toapanta.ch@gmail.com" ||
+          correoLower === "familiammtg@gmail.com" ||
+          correoLower === "jesus251296@gmail.com"
+        ) {
+          listaClaves = Array.from(new Set(["SUPERADMIN", ...listaClaves]));
+          nMax = 100;
+        }
+
+        return {
+          usu_id: u.usu_id,
+          usu_nombres: u.usu_nombres ?? null,
+          usu_apellidos: u.usu_apellidos ?? null,
+          usu_correo: u.usu_correo,
+          perfiles: Array.from(new Set(listaClaves)),
+          nivelMaximo: nMax,
+          mem_estado: u.mem_estado || "ACTIVO",
+        };
+      });
+
+      return { data: listaRpc, error: null };
+    }
+  } catch {
+    // Continuar con fallback de consultas directas
+  }
 
   // 2. Traer las membresías que pertenecen estrictamente a este negocio (cero cruce con otros negocios)
   const qMem = adminSupabase
@@ -277,7 +394,9 @@ export async function buscarUsuarios(
       else if (c === "ABOGADO" || c === "TECNICO") nMax = Math.max(nMax, 50);
       else if (c === "OPERADOR" || c === "AUXILIAR") nMax = Math.max(nMax, 30);
       else if (c === "VENTAS" || c === "VENDEDOR") nMax = Math.max(nMax, 20);
-      else if (c === "DELIVERY") nMax = Math.max(nMax, 15);
+      else if (c === "TALLER" || c === "FLORISTA") nMax = Math.max(nMax, 18);
+      else if (c === "DELIVERY" || c === "REPARTIDOR") nMax = Math.max(nMax, 15);
+      else if (c === "DELIVERY_EXTERNO" || c === "SUBCONTRATADO") nMax = Math.max(nMax, 12);
     }
 
     if (negocioCanon === "tinkay") {

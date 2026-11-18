@@ -28,7 +28,19 @@ export function FormularioIngreso({ negocio, intencion = "", destino = "" }: For
       document.cookie = `tranqi_intencion=${intencion}; path=/; max-age=86400`;
     }
     if (destinoTarget) {
-      document.cookie = `tranqi_destino=${destinoTarget}; path=/; max-age=86400`;
+      document.cookie = `tranqi_destino=${encodeURIComponent(destinoTarget)}; path=/; max-age=86400`;
+    }
+    if (typeof window !== "undefined") {
+      const sp = new URLSearchParams(window.location.search);
+      const hp = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      const errUrl =
+        sp.get("error_description") ||
+        sp.get("error") ||
+        hp.get("error_description") ||
+        hp.get("error");
+      if (errUrl) {
+        setError(errUrl);
+      }
     }
   }, [intencion, destinoTarget]);
 
@@ -63,10 +75,13 @@ export function FormularioIngreso({ negocio, intencion = "", destino = "" }: For
       document.cookie = `tranqi_rol_favorito=abogado; path=/; max-age=86400`;
     }
 
+    document.cookie = `tranqi_destino=${encodeURIComponent(destinoTarget)}; path=/; max-age=86400`;
+    const urlCallback = `${window.location.origin}/auth/callback`;
+
     const { error: errorGoogle } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(destinoTarget)}`,
+        redirectTo: urlCallback,
       },
     });
     if (errorGoogle) {

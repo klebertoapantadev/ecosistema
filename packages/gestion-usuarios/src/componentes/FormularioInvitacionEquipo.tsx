@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { Mail, Send, Trash2, CheckCircle2, Clock, ShieldCheck } from "lucide-react";
 import {
   invitarUsuarioPorCorreoAction,
@@ -72,6 +73,7 @@ export function FormularioInvitacionEquipo({
   negocio?: string;
   invitacionesIniciales?: InvitacionEquipoPortal[];
 }) {
+  const router = useRouter();
   const [correo, setCorreo] = useState("");
   const [nombre, setNombre] = useState("");
   const [rol, setRol] = useState<RolEquipoPortal>("VENTAS");
@@ -79,6 +81,10 @@ export function FormularioInvitacionEquipo({
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
   const [mensajeError, setMensajeError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setInvitaciones(invitacionesIniciales);
+  }, [invitacionesIniciales]);
 
   const rolSeleccionadoInfo =
     OPCIONES_ROL.find((r) => r.clave === rol) ?? OPCIONES_ROL[0]!;
@@ -112,15 +118,27 @@ export function FormularioInvitacionEquipo({
         res.mensaje ||
           `Invitación enviada a ${nueva.correo} con el rol ${rolSeleccionadoInfo.etiqueta}.`
       );
+      router.refresh();
     });
   }
 
-  function manejarEliminar(id: string) {
+  function manejarEliminar(id: string, correoInv?: string) {
+    setMensajeError(null);
+    setMensajeExito(null);
     startTransition(async () => {
-      const res = await eliminarInvitacionEquipoAction(id, negocio);
-      if (res.ok) {
-        setInvitaciones((prev) => prev.filter((i) => i.id !== id));
+      const res = await eliminarInvitacionEquipoAction(id, negocio, correoInv);
+      if (!res.ok) {
+        setMensajeError(res.error || "No se pudo revocar la invitación.");
+        return;
       }
+      setInvitaciones((prev) =>
+        prev.filter(
+          (i) =>
+            i.id !== id &&
+            (!correoInv || i.correo.toLowerCase() !== correoInv.toLowerCase())
+        )
+      );
+      router.refresh();
     });
   }
 
@@ -445,7 +463,7 @@ export function FormularioInvitacionEquipo({
 
                   <button
                     type="button"
-                    onClick={() => manejarEliminar(inv.id)}
+                    onClick={() => manejarEliminar(inv.id, inv.correo)}
                     disabled={isPending}
                     title="Revocar invitación de correo"
                     aria-label="Revocar invitación de correo"

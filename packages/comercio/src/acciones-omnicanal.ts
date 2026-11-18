@@ -109,7 +109,11 @@ async function despacharPushYCampanaStaffOmnicanal(params: {
       );
       await Promise.allSettled(
         suscripciones.map(async (sub) => {
-          const urlDestino = params.resolverUrlPorRol(String(sub.rol || "OPERADOR"));
+          const refUsuario = `${params.claveRefBase}-${String(sub.usuarioId || "").slice(0, 8)}`;
+          const notIdPush = `inapp-${refUsuario}`;
+          const urlBase = params.resolverUrlPorRol(String(sub.rol || "OPERADOR"));
+          const sep = urlBase.includes("?") ? "&" : "?";
+          const urlDestino = `${urlBase}${sep}not_id=${encodeURIComponent(notIdPush)}`;
           const resPush = await enviarNotificacionWebPushNativa(
             {
               endpoint: sub.endpoint,
@@ -120,6 +124,8 @@ async function despacharPushYCampanaStaffOmnicanal(params: {
               title: params.titulo,
               body: params.cuerpoPlano.slice(0, 160),
               url: urlDestino,
+              notId: notIdPush,
+              negocio: params.negocio,
               tag: params.tag,
               icon: "/icons/icon-192.png",
               badge: "/icons/icon-192.png",

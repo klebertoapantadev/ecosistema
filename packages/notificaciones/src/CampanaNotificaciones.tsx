@@ -76,7 +76,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura" }: Props) {
 
         if ("Notification" in window && Notification.permission === "granted") {
           try {
-            new Notification(candidataToast.not_titulo, {
+            const notifNativa = new Notification(candidataToast.not_titulo, {
               body: candidataToast.not_contenido_html
                 .replace(/<[^>]*>?/gm, " ")
                 .replace(/\s+/g, " ")
@@ -84,6 +84,30 @@ export function CampanaNotificaciones({ negocio, variante = "oscura" }: Props) {
                 .slice(0, 140),
               icon: "/favicon.ico",
             });
+            const itemCapturado = candidataToast;
+            notifNativa.onclick = () => {
+              const ahoraIso = new Date().toISOString();
+              registrarOverride(itemCapturado.not_id, { not_leido_en: ahoraIso });
+              setNotificaciones(prev =>
+                prev.map(n => (n.not_id === itemCapturado.not_id ? { ...n, not_leido_en: ahoraIso } : n))
+              );
+              setAlertaEmergente(null);
+              fetch(`/api/notificaciones/usuario?negocio=${encodeURIComponent(negocio)}`, {
+                method: "POST",
+                keepalive: true,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  negocio,
+                  not_id: itemCapturado.not_id,
+                  accion: "aceptar",
+                }),
+              }).catch(() => {});
+              window.focus();
+              if (itemCapturado.not_url_accion) {
+                window.location.assign(itemCapturado.not_url_accion);
+              }
+              notifNativa.close();
+            };
           } catch {}
         }
       }
@@ -118,16 +142,63 @@ export function CampanaNotificaciones({ negocio, variante = "oscura" }: Props) {
     cargarNotificaciones();
     const interval = setInterval(cargarNotificaciones, 8000);
     const alRefrescar = () => cargarNotificaciones();
+    const alMarcarLeidaExterna = (ev: Event) => {
+      const det = (ev as CustomEvent<{ notId?: string }>).detail;
+      const notIdExt = det?.notId?.trim();
+      if (!notIdExt) return;
+      const ahoraIso = new Date().toISOString();
+      registrarOverride(notIdExt, { not_leido_en: ahoraIso });
+      setNotificaciones(prev =>
+        prev.map(n =>
+          n.not_id === notIdExt ||
+          n.not_id === `inapp-${notIdExt}` ||
+          n.not_id === `push-${notIdExt}`
+            ? { ...n, not_leido_en: ahoraIso }
+            : n
+        )
+      );
+      fetch(`/api/notificaciones/usuario?negocio=${encodeURIComponent(negocio)}`, {
+        method: "POST",
+        keepalive: true,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ negocio, not_id: notIdExt, accion: "aceptar" }),
+      }).catch(() => {});
+    };
+
     if (typeof window !== "undefined") {
       window.addEventListener("eco:refrescar-notificaciones", alRefrescar);
+      window.addEventListener("eco:marcar-notificacion-leida", alMarcarLeidaExterna);
+
+      // Si el usuario ingresó haciendo clic en una notificación Push con ?not_id=..., marcarla como leída de inmediato
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const notIdUrl = params.get("not_id")?.trim();
+        if (notIdUrl) {
+          const ahoraIso = new Date().toISOString();
+          registrarOverride(notIdUrl, { not_leido_en: ahoraIso });
+          fetch(`/api/notificaciones/usuario?negocio=${encodeURIComponent(negocio)}`, {
+            method: "POST",
+            keepalive: true,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ negocio, not_id: notIdUrl, accion: "aceptar" }),
+          })
+            .then(() => cargarNotificaciones())
+            .catch(() => {});
+          params.delete("not_id");
+          const qsLimpio = params.toString();
+          const urlLimpia = `${window.location.pathname}${qsLimpio ? `?${qsLimpio}` : ""}${window.location.hash}`;
+          window.history.replaceState(null, "", urlLimpia);
+        }
+      } catch {}
     }
     return () => {
       clearInterval(interval);
       if (typeof window !== "undefined") {
         window.removeEventListener("eco:refrescar-notificaciones", alRefrescar);
+        window.removeEventListener("eco:marcar-notificacion-leida", alMarcarLeidaExterna);
       }
     };
-  }, [cargarNotificaciones]);
+  }, [cargarNotificaciones, negocio]);
 
   const ahora = Date.now();
 
@@ -144,6 +215,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura" }: Props) {
     try {
       await fetch(`/api/notificaciones/usuario?negocio=${encodeURIComponent(negocio)}`, {
         method: "POST",
+        keepalive: true,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           negocio,
@@ -736,10 +808,20 @@ export function CampanaNotificaciones({ negocio, variante = "oscura" }: Props) {
                 listaFiltrada.map(n => (
                   <div
                     key={n.not_id}
+                    onClick={() => {
+                      if (!n.not_eliminada && !n.not_leido_en) {
+                        marcarComoLeida(n);
+                      }
+                      if (!n.not_eliminada && n.not_url_accion) {
+                        setAbierto(false);
+                        window.location.assign(n.not_url_accion);
+                      }
+                    }}
                     style={{
                       padding: "12px 14px",
                       borderRadius: "8px",
                       marginBottom: "10px",
+                      cursor: !n.not_eliminada && n.not_url_accion ? "pointer" : "default",
                       background: n.not_eliminada
                         ? "rgba(239, 68, 68, 0.08)"
                         : n.not_leido_en
@@ -769,7 +851,10 @@ export function CampanaNotificaciones({ negocio, variante = "oscura" }: Props) {
                     <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "6px", flexWrap: "wrap" }}>
                       <button
                         type="button"
-                        onClick={() => copiarIdNotificacion(n.not_id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          copiarIdNotificacion(n.not_id);
+                        }}
                         title="Clic para copiar el ID único de esta notificación"
                         style={{
                           background: "#0d1117",
@@ -801,6 +886,13 @@ export function CampanaNotificaciones({ negocio, variante = "oscura" }: Props) {
                     {n.not_url_accion && (
                       <a
                         href={n.not_url_accion}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!n.not_leido_en) {
+                            marcarComoLeida(n);
+                          }
+                          setAbierto(false);
+                        }}
                         style={{
                           display: "inline-flex",
                           alignItems: "center",
@@ -812,12 +904,15 @@ export function CampanaNotificaciones({ negocio, variante = "oscura" }: Props) {
                           fontWeight: 600
                         }}
                       >
-                        Ir a la sección <ExternalLink size={12} />
+                        Abrir pedido / sección <ExternalLink size={12} />
                       </a>
                     )}
 
                     {/* Botones de acción en la tarjeta */}
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "10px", borderTop: "1px solid #21262d", paddingTop: "8px" }}>
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "10px", borderTop: "1px solid #21262d", paddingTop: "8px" }}
+                    >
                       {n.not_eliminada ? (
                         <button
                           type="button"

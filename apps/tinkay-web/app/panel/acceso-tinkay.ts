@@ -134,10 +134,10 @@ const MODULOS_POR_ROL: Record<RolTinkayPortal, string[]> = {
 };
 
 export async function obtenerContextoAccesoTinkay(): Promise<ContextoAccesoTinkay> {
-  const [perfil, sync] = await Promise.all([
-    obtenerPerfilActual("tinkay"),
-    sincronizarAccesoRolTinkayAction(),
-  ]);
+  // Sincronizar primero cualquier invitación pendiente o normalización de rol en BDD
+  // antes de leer el perfil y membresía actuales (evita condición de carrera al ingresar por primera vez).
+  const sync = await sincronizarAccesoRolTinkayAction();
+  const perfil = await obtenerPerfilActual("tinkay");
 
   if (!perfil) {
     return {

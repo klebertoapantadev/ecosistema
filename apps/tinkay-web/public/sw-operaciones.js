@@ -1,9 +1,6 @@
 // Service Worker PWA + Web Push Estilo WhatsApp para Tinkay (/panel, /panel/conversaciones, /panel/chat-equipo, /panel/entregas, /panel/taller)
-const CACHE_NAME = "eco-portal-operaciones-v4";
+const CACHE_NAME = "eco-portal-operaciones-v5";
 const RUTAS_PRECACHE = [
-  "/panel",
-  "/panel/entregas",
-  "/panel/taller",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
 ];
@@ -26,13 +23,15 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// Recepción de Notificación Web Push en segundo plano (estilo WhatsApp)
+// Recepción de Notificación Web Push en segundo plano (estilo WhatsApp + Pedidos)
 self.addEventListener("push", (event) => {
   let datos = {
-    title: "Tinkay · Nuevo mensaje",
-    body: "Tienes un mensaje pendiente en Tinkay.",
-    url: "/panel/conversaciones",
-    tag: "tinkay-chat",
+    title: "Tinkay · Nueva notificación",
+    body: "Tienes una actualización pendiente en Tinkay.",
+    url: "/panel",
+    notId: null,
+    negocio: "tinkay",
+    tag: "tinkay-alerta",
     icon: "/icons/icon-192.png",
     badge: "/icons/icon-192.png",
   };
@@ -45,6 +44,8 @@ self.addEventListener("push", (event) => {
           title: parsed.title || datos.title,
           body: parsed.body || datos.body,
           url: parsed.url || datos.url,
+          notId: parsed.notId || null,
+          negocio: parsed.negocio || datos.negocio,
           tag: parsed.tag || datos.tag,
           icon: parsed.icon || datos.icon,
           badge: parsed.badge || datos.badge,
@@ -53,7 +54,9 @@ self.addEventListener("push", (event) => {
     } catch {
       try {
         datos.body = event.data.text() || datos.body;
-      } catch {}
+      } catch {
+        // Ignorar payload no textual
+      }
     }
   }
 
@@ -65,22 +68,46 @@ self.addEventListener("push", (event) => {
       tag: datos.tag,
       renotify: true,
       vibrate: [160, 70, 160],
-      data: { url: datos.url },
+      data: {
+        url: datos.url,
+        notId: datos.notId,
+        negocio: datos.negocio,
+      },
     })
   );
 });
 
-// Al tocar la notificación en Android / iOS / Escritorio: abrir directamente el chat correspondiente en la App de Tinkay
+// Al tocar la notificación en Android / iOS / Escritorio: marcar como leída y abrir directamente el pedido o chat exacto
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const rutaRelativa =
-    (event.notification &&
-      event.notification.data &&
-      event.notification.data.url) ||
-    "/panel/conversaciones";
+  const dataNotif = (event.notification && event.notification.data) || {};
+  const rutaRelativa = dataNotif.url || "/panel";
+  const notId = dataNotif.notId || null;
+  const negocio = dataNotif.negocio || "tinkay";
   const urlDestino = new URL(rutaRelativa, self.location.origin).href;
 
-  event.waitUntil(
+  const promesas = [];
+
+  if (notId) {
+    promesas.push(
+      fetch(
+        `/api/notificaciones/usuario?negocio=${encodeURIComponent(negocio)}`,
+        {
+          method: "POST",
+          credentials: "include",
+          keepalive: true,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            negocio,
+            not_id: notId,
+            accion: "aceptar",
+          }),
+        }
+      ).catch(() => undefined)
+    );
+  }
+
+  promesas.push(
     self.clients
       .matchAll({ type: "window", includeUncontrolled: true })
       .then((clientes) => {
@@ -91,6 +118,7 @@ self.addEventListener("notificationclick", (event) => {
               cliente.postMessage({
                 tipo: "ECO_ABRIR_RUTA_PUSH",
                 url: rutaRelativa,
+                notId,
               });
               if ("navigate" in cliente && urlCliente.href !== urlDestino) {
                 return cliente
@@ -100,7 +128,9 @@ self.addEventListener("notificationclick", (event) => {
               }
               return cliente.focus();
             }
-          } catch {}
+          } catch {
+            // Continuar con siguiente ventana
+          }
         }
         if (self.clients.openWindow) {
           return self.clients.openWindow(urlDestino);
@@ -108,6 +138,8 @@ self.addEventListener("notificationclick", (event) => {
         return undefined;
       })
   );
+
+  event.waitUntil(Promise.all(promesas));
 });
 
 self.addEventListener("fetch", (event) => {
@@ -117,16 +149,16 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  const esRutaOperativaOActivo =
-    url.pathname === "/panel" ||
-    url.pathname.startsWith("/panel/entregas") ||
-    url.pathname.startsWith("/panel/taller") ||
+  // Nunca cachear HTML de navegación (/panel depende del rol/sesión del usuario activo en el teléfono)
+  if (req.mode === "navigate") return;
+
+  const esActivoEstatico =
     url.pathname.startsWith("/icons/") ||
     url.pathname.startsWith("/_next/static/") ||
     url.pathname.endsWith(".jpg") ||
     url.pathname.endsWith(".png");
 
-  if (!esRutaOperativaOActivo) return;
+  if (!esActivoEstatico) return;
 
   event.respondWith(
     fetch(req)
@@ -137,10 +169,6 @@ self.addEventListener("fetch", (event) => {
         }
         return res;
       })
-      .catch(() =>
-        caches
-          .match(req)
-          .then((cached) => cached || caches.match("/panel/entregas") || caches.match("/panel"))
-      )
+      .catch(() => caches.match(req))
   );
 });

@@ -603,6 +603,9 @@ importers:
       '@eco/supabase':
         specifier: workspace:*
         version: link:../supabase
+      '@supabase/ssr':
+        specifier: 0.12.3
+        version: 0.12.3(@supabase/supabase-js@2.110.8)
       libphonenumber-js:
         specifier: 1.13.9
         version: 1.13.9

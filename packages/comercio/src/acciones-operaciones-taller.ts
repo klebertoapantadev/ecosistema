@@ -532,6 +532,21 @@ export async function registrarOSincronizarEntregaAction(entrada: {
       return { ok: false, error: String(data?.error || "No se pudo registrar la entrega") };
     }
 
+    if (!entrada.soloProgramarOt) {
+      const { despacharPushCambioEstadoPedidoTodosLosRoles } = await import(
+        "./notificaciones-pedidos-push"
+      );
+      await despacharPushCambioEstadoPedidoTodosLosRoles({
+        supabase,
+        negocio: neg,
+        pedidoId: entrada.proformaId || String(data.entregaId),
+        codigoOrden: String(data.codigoOt || "PEDIDO"),
+        nuevoEstado: "ENTREGADO",
+        etiquetaEstado: "Entregado (GPS)",
+        compradorNombre: entrada.fallecidoDestinatario || entrada.coordinadorNombre || null,
+      });
+    }
+
     revalidarRutasTienda(neg);
     return {
       ok: true,
@@ -1026,12 +1041,22 @@ export async function crearOActualizarPedidoOperadorAction(entrada: {
     if (!error && data?.ok) {
       if (enviar) {
         const esExeq = entrada.origenTipo === "EXEQUIALES_LLAMADA";
-        await notificarPersonalTallerODespacho({
+        const { despacharPushCambioEstadoPedidoTodosLosRoles } = await import(
+          "./notificaciones-pedidos-push"
+        );
+        await despacharPushCambioEstadoPedidoTodosLosRoles({
+          supabase,
           negocio: neg,
-          titulo: esExeq
-            ? `🕊️ URGENTE Exequiales (${entrada.salaServicio || "Sala"}): ${entrada.productoResumen}`
-            : `🌸 Nuevo Pedido en Taller (${entrada.fechaEntrega}): ${data.codigo}`,
-          contenidoHtml: esExeq
+          pedidoId: String(data.ordenId),
+          codigoOrden: String(data.codigo),
+          nuevoEstado: "ENVIADO_TALLER",
+          etiquetaEstado: esExeq ? "Urgente Exequiales · En Taller" : "Enviado a Taller",
+          compradorNombre: entrada.destinatarioFallecido || entrada.clienteSolicita,
+          tituloPersonalizado: esExeq
+            ? `🕊️ URGENTE Exequiales (${entrada.salaServicio || "Sala"}): ${data.codigo}`
+            : `🌸 Pedido enviado a Taller (${entrada.fechaEntrega}): ${data.codigo}`,
+          cuerpoPlanoPersonalizado: `${data.codigo} · ${entrada.productoResumen} (${entrada.destinatarioFallecido || entrada.clienteSolicita})`,
+          contenidoHtmlPersonalizado: esExeq
             ? `<p><strong>Orden Exequiales:</strong> ${data.codigo}</p>
                <p><strong>Producto:</strong> ${entrada.productoResumen}</p>
                <p><strong>Fecha / Hora:</strong> ${entrada.fechaEntrega}${entrada.horaEspecifica ? ` · ${entrada.horaEspecifica}` : ""}</p>
@@ -1041,9 +1066,6 @@ export async function crearOActualizarPedidoOperadorAction(entrada: {
                <p><strong>Detalle:</strong> ${entrada.productoResumen}</p>
                <p><strong>Entrega:</strong> ${entrada.fechaEntrega} (${entrada.franjaHoraria || "Horario estándar"})</p>
                <p><strong>Destinatario:</strong> ${entrada.destinatarioFallecido || entrada.clienteSolicita}</p>`,
-          urlAccion: "/panel/taller",
-          roles: ["TALLER", "OPERADOR", "AUXILIAR", "ADMINISTRADOR", "SUPERADMIN"],
-          claveReferencia: `taller-nuevo:${data.ordenId}`,
         });
       }
 
@@ -1194,15 +1216,25 @@ export async function enviarPedidosATallerAction(entrada: {
 
     if (!error && data?.ok) {
       const codigos: string[] = Array.isArray(data.codigos) ? data.codigos.map(String) : [];
-      await notificarPersonalTallerODespacho({
+      const codigoPrincipal = codigos[0] || "PEDIDO";
+      const { despacharPushCambioEstadoPedidoTodosLosRoles } = await import(
+        "./notificaciones-pedidos-push"
+      );
+      await despacharPushCambioEstadoPedidoTodosLosRoles({
+        supabase,
         negocio: neg,
-        titulo: `🌸 ${Number(data.enviados || ids.length)} pedido(s) enviado(s) a Taller`,
-        contenidoHtml: `<p>El operador validó y envió <strong>${Number(
+        pedidoId: ids[0] ?? null,
+        codigoOrden: codigoPrincipal,
+        nuevoEstado: "ENVIADO_TALLER",
+        etiquetaEstado: "Enviado a Taller",
+        tituloPersonalizado:
+          codigos.length === 1
+            ? `🌸 Pedido ${codigoPrincipal} · Enviado a Taller`
+            : `🌸 ${Number(data.enviados || ids.length)} pedidos enviados a Taller (${codigos.join(", ")})`,
+        cuerpoPlanoPersonalizado: `Pedidos enviados a elaboración en Taller: ${codigos.join(", ")}. Toca para ver detalle.`,
+        contenidoHtmlPersonalizado: `<p>Se enviaron <strong>${Number(
           data.enviados || ids.length
         )}</strong> pedido(s) para elaboración en Taller: <strong>${codigos.join(", ")}</strong>.</p>`,
-        urlAccion: "/panel/taller",
-        roles: ["TALLER", "OPERADOR", "AUXILIAR", "ADMINISTRADOR", "SUPERADMIN"],
-        claveReferencia: `taller-lote:${Date.now()}`,
       });
 
       revalidarRutasTienda(neg);
@@ -1277,20 +1309,17 @@ export async function actualizarEstadoOrdenTallerAction(entrada: {
     });
 
     if (!error && data?.ok) {
-      if (entrada.nuevoEstado === "LISTO_ENTREGA") {
-        await notificarPersonalTallerODespacho({
-          negocio: neg,
-          titulo: `✅ Listo para entrega: ${data.codigo || "Pedido"}`,
-          contenidoHtml: `<p>El Taller marcó <strong>${data.codigo}</strong> (${
-            data.productoResumen || "Arreglo"
-          }) como <strong>Listo para entrega</strong>${
-            data.salaServicio ? ` · Sala: <strong>${data.salaServicio}</strong>` : ""
-          }.</p>`,
-          urlAccion: "/panel/entregas",
-          roles: ["DELIVERY", "REPARTIDOR", "OPERADOR", "ADMINISTRADOR", "SUPERADMIN"],
-          claveReferencia: `taller-listo:${entrada.ordenId}`,
-        });
-      }
+      const { despacharPushCambioEstadoPedidoTodosLosRoles } = await import(
+        "./notificaciones-pedidos-push"
+      );
+      await despacharPushCambioEstadoPedidoTodosLosRoles({
+        supabase,
+        negocio: neg,
+        pedidoId: entrada.ordenId,
+        codigoOrden: String(data.codigo || "PEDIDO"),
+        nuevoEstado: entrada.nuevoEstado,
+        compradorNombre: data.productoResumen ? String(data.productoResumen) : null,
+      });
 
       revalidarRutasTienda(neg);
       return {

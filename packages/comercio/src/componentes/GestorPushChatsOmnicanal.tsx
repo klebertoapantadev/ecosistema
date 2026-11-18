@@ -1,14 +1,16 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Bell, MessageSquare, Users, X } from "lucide-react";
+import { Bell, MessageSquare, Package, Users, X } from "lucide-react";
 import { crearClienteNavegador } from "@eco/supabase/cliente";
 import {
   limpiarVistaPreviaMensajeOmnicanal,
   nombreCanalRealtimeChatEquipo,
   nombreCanalRealtimeOmnicanal,
+  resolverUrlDirectaPedidoPorRol,
   type EventoBroadcastChatEquipo,
   type EventoBroadcastChatWeb,
+  type EventoBroadcastEstadoPedido,
 } from "../omnicanal";
 
 export interface PropsGestorPushChatsOmnicanal {
@@ -16,11 +18,14 @@ export interface PropsGestorPushChatsOmnicanal {
   usuarioId: string;
   rolPrincipal: string;
   puedeVerConversacionesClientes?: boolean;
+  modoClientePedidos?: boolean;
 }
 
 interface ToastChatEnVivo {
   id: string;
   esEquipo: boolean;
+  esPedido?: boolean;
+  notId?: string | null;
   titulo: string;
   extracto: string;
   urlDestino: string;
@@ -74,6 +79,7 @@ export function GestorPushChatsOmnicanal({
   usuarioId,
   rolPrincipal,
   puedeVerConversacionesClientes = true,
+  modoClientePedidos = false,
 }: PropsGestorPushChatsOmnicanal) {
   const negNorm = negocio.trim().toLowerCase();
   const [permisoPush, setPermisoPush] = useState<NotificationPermission | "unsupported">("default");
@@ -85,17 +91,52 @@ export function GestorPushChatsOmnicanal({
   const vistosRef = useRef<Set<string>>(new Set());
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const navegarADestinoChat = useCallback((urlDestino: string) => {
-    setToastActivo(null);
-    if (typeof window === "undefined") return;
-    window.dispatchEvent(
-      new CustomEvent("eco:abrir-ruta-push", { detail: { url: urlDestino } })
-    );
-    const actual = `${window.location.pathname}${window.location.search}`;
-    if (actual !== urlDestino) {
-      window.location.assign(urlDestino);
-    }
-  }, []);
+  const marcarNotificacionLeidaClick = useCallback(
+    (notId?: string | null, urlDestino?: string) => {
+      if (typeof window === "undefined") return;
+      let idCandidato = notId?.trim() || "";
+      if (!idCandidato && urlDestino) {
+        try {
+          const u = new URL(urlDestino, window.location.origin);
+          idCandidato = u.searchParams.get("not_id")?.trim() || "";
+        } catch {
+          // Ignorar URL inválida
+        }
+      }
+      if (!idCandidato) return;
+
+      window.dispatchEvent(
+        new CustomEvent("eco:marcar-notificacion-leida", { detail: { notId: idCandidato } })
+      );
+      fetch(`/api/notificaciones/usuario?negocio=${encodeURIComponent(negNorm)}`, {
+        method: "POST",
+        keepalive: true,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          negocio: negNorm,
+          not_id: idCandidato,
+          accion: "aceptar",
+        }),
+      }).catch(() => {});
+    },
+    [negNorm]
+  );
+
+  const navegarADestinoChat = useCallback(
+    (urlDestino: string, notId?: string | null) => {
+      setToastActivo(null);
+      if (typeof window === "undefined") return;
+      marcarNotificacionLeidaClick(notId, urlDestino);
+      window.dispatchEvent(
+        new CustomEvent("eco:abrir-ruta-push", { detail: { url: urlDestino } })
+      );
+      const actual = `${window.location.pathname}${window.location.search}`;
+      if (actual !== urlDestino) {
+        window.location.assign(urlDestino);
+      }
+    },
+    [marcarNotificacionLeidaClick]
+  );
 
   const sincronizarSuscripcionPushServidor = useCallback(
     async (reg: ServiceWorkerRegistration) => {
@@ -160,9 +201,9 @@ export function GestorPushChatsOmnicanal({
     if (!("serviceWorker" in navigator)) return;
 
     const alMensajeSw = (event: MessageEvent) => {
-      const data = event.data as { tipo?: string; url?: string } | null;
+      const data = event.data as { tipo?: string; url?: string; notId?: string | null } | null;
       if (data?.tipo === "ECO_ABRIR_RUTA_PUSH" && data.url) {
-        navegarADestinoChat(data.url);
+        navegarADestinoChat(data.url, data.notId ?? null);
       }
     };
 
@@ -210,6 +251,8 @@ export function GestorPushChatsOmnicanal({
       huella: string;
       tag: string;
       esEquipo: boolean;
+      esPedido?: boolean;
+      notId?: string | null;
       titulo: string;
       cuerpo: string;
       urlDestino: string;
@@ -232,7 +275,7 @@ export function GestorPushChatsOmnicanal({
 
       // Notificación nativa del sistema operativo (Android / iOS PWA / Windows / macOS)
       if ("Notification" in window && Notification.permission === "granted") {
-        if (pestanaOculta || (!yaEnConversaciones && !yaEnChatEquipoRuta)) {
+        if (entrada.esPedido || pestanaOculta || (!yaEnConversaciones && !yaEnChatEquipoRuta)) {
           const mostrarViaSw = async () => {
             try {
               const reg =
@@ -244,7 +287,11 @@ export function GestorPushChatsOmnicanal({
                   icon: "/icons/icon-192.png",
                   badge: "/icons/icon-192.png",
                   tag: entrada.tag,
-                  data: { url: entrada.urlDestino },
+                  data: {
+                    url: entrada.urlDestino,
+                    notId: entrada.notId ?? null,
+                    negocio: negNorm,
+                  },
                 });
                 return;
               }
@@ -258,7 +305,7 @@ export function GestorPushChatsOmnicanal({
               });
               notif.onclick = () => {
                 window.focus();
-                navegarADestinoChat(entrada.urlDestino);
+                navegarADestinoChat(entrada.urlDestino, entrada.notId ?? null);
                 notif.close();
               };
             } catch {}
@@ -267,8 +314,9 @@ export function GestorPushChatsOmnicanal({
         }
       }
 
-      // Banner emergente limpio dentro del panel cuando está en otra pantalla (o llega chat de equipo estando en bandeja)
+      // Banner emergente limpio dentro del panel con acceso directo al pedido o chat
       const mostrarToastInterno =
+        Boolean(entrada.esPedido) ||
         (!entrada.esEquipo && !yaEnConversaciones) ||
         (entrada.esEquipo && !yaEnChatEquipoRuta);
 
@@ -277,51 +325,130 @@ export function GestorPushChatsOmnicanal({
         setToastActivo({
           id: entrada.huella,
           esEquipo: entrada.esEquipo,
+          esPedido: Boolean(entrada.esPedido),
+          notId: entrada.notId ?? null,
           titulo: entrada.titulo,
           extracto: entrada.cuerpo,
           urlDestino: entrada.urlDestino,
         });
         toastTimerRef.current = setTimeout(() => {
           setToastActivo(null);
-        }, 7000);
+        }, 8500);
       }
     },
-    [navegarADestinoChat]
+    [navegarADestinoChat, negNorm]
   );
 
-  // 2. Suscripción en vivo (<50ms) a mensajes entrantes de clientes y mensajes del Chat Grupal del Equipo
+  // 2. Suscripción en vivo (<50ms) a cambios de estado de pedidos (todos los roles), mensajes de clientes y Chat Grupal
   useEffect(() => {
     const supabase = crearClienteNavegador();
     const canalesActivos: any[] = [];
 
-    if (puedeVerConversacionesClientes) {
-      const canalClientes = supabase
-        .channel(`${nombreCanalRealtimeOmnicanal(negNorm)}:push-global`, {
+    const canalOmnicanalGlobal = supabase
+      .channel(`${nombreCanalRealtimeOmnicanal(negNorm)}:push-global-${usuarioId.slice(0, 8)}`, {
+        config: { broadcast: { self: true } },
+      })
+      .on(
+        "broadcast",
+        { event: "estado_pedido_actualizado" },
+        ({ payload }: { payload: EventoBroadcastEstadoPedido }) => {
+          if (!payload || !payload.codigoOrden) return;
+          const rolUpper = rolPrincipal.toUpperCase();
+
+          // En modo cliente, notificar únicamente si el pedido pertenece al cliente autenticado
+          if (modoClientePedidos || rolUpper === "CLIENTE") {
+            if (!payload.clienteUsuarioId || payload.clienteUsuarioId !== usuarioId) {
+              return;
+            }
+          }
+
+          // Para Delivery Subcontratado, respetar aislamiento de pedidos asignados
+          if (
+            rolUpper === "DELIVERY_EXTERNO" &&
+            payload.repartidorAsignadoId &&
+            payload.repartidorAsignadoId !== usuarioId
+          ) {
+            return;
+          }
+
+          const infoDest = payload.notificacionesPorUsuario?.[usuarioId];
+          const notId = infoDest?.notId || null;
+          const urlDestino =
+            infoDest?.url ||
+            resolverUrlDirectaPedidoPorRol(rolUpper, payload.codigoOrden, notId);
+
+          dispararNotificacionEstiloWhatsapp({
+            huella: `ped:${payload.eventoId || `${payload.codigoOrden}-${payload.nuevoEstado}-${payload.emitidoEn}`}`,
+            tag: `pedido-${payload.codigoOrden}`,
+            esEquipo: false,
+            esPedido: true,
+            notId,
+            titulo: payload.titulo || `📦 Pedido ${payload.codigoOrden} · ${payload.etiquetaEstado}`,
+            cuerpo: payload.cuerpo || `Estado actualizado a ${payload.etiquetaEstado}.`,
+            urlDestino,
+          });
+        }
+      );
+
+    if (puedeVerConversacionesClientes && !modoClientePedidos) {
+      canalOmnicanalGlobal.on(
+        "broadcast",
+        { event: "actividad_chat_web" },
+        ({ payload }: { payload: EventoBroadcastChatWeb }) => {
+          if (!payload || payload.fase !== "ENTRADA_CLIENTE") return;
+          const remitente =
+            payload.remitenteNombre || payload.autorNombre || "Nuevo mensaje de cliente";
+          const canalTxt =
+            payload.canal === "whatsapp" || payload.claveHilo?.startsWith("wa:")
+              ? "WhatsApp"
+              : "Chat Web";
+          const limpio = limpiarVistaPreviaMensajeOmnicanal(payload.contenido).slice(0, 140);
+          const params = new URLSearchParams();
+          if (payload.conversacionId) params.set("chat", payload.conversacionId);
+          if (payload.remitenteTelefono) params.set("tel", payload.remitenteTelefono);
+          if (payload.eventoId) params.set("msg", payload.eventoId);
+          const qs = params.toString();
+          const urlDestino = `/panel/conversaciones${qs ? `?${qs}` : ""}`;
+
+          dispararNotificacionEstiloWhatsapp({
+            huella: `cli:${payload.eventoId || `${payload.claveHilo}-${payload.creadoEn}`}`,
+            tag: `wa-conv-${payload.conversacionId || payload.claveHilo}`,
+            esEquipo: false,
+            titulo: `${remitente} · ${canalTxt}`,
+            cuerpo: limpio,
+            urlDestino,
+          });
+        }
+      );
+    }
+
+    canalOmnicanalGlobal.subscribe();
+    canalesActivos.push(canalOmnicanalGlobal);
+
+    if (!modoClientePedidos) {
+      const canalEquipo = supabase
+        .channel(`${nombreCanalRealtimeChatEquipo(negNorm)}:push-global`, {
           config: { broadcast: { self: false } },
         })
         .on(
           "broadcast",
-          { event: "actividad_chat_web" },
-          ({ payload }: { payload: EventoBroadcastChatWeb }) => {
-            if (!payload || payload.fase !== "ENTRADA_CLIENTE") return;
-            const remitente =
-              payload.remitenteNombre || payload.autorNombre || "Nuevo mensaje de cliente";
-            const canalTxt = payload.canal === "whatsapp" || payload.claveHilo?.startsWith("wa:")
-              ? "WhatsApp"
-              : "Chat Web";
-            const limpio = limpiarVistaPreviaMensajeOmnicanal(payload.contenido).slice(0, 140);
-            const params = new URLSearchParams();
-            if (payload.conversacionId) params.set("chat", payload.conversacionId);
-            if (payload.remitenteTelefono) params.set("tel", payload.remitenteTelefono);
-            if (payload.eventoId) params.set("msg", payload.eventoId);
-            const qs = params.toString();
-            const urlDestino = `/panel/conversaciones${qs ? `?${qs}` : ""}`;
+          { event: "mensaje_equipo" },
+          ({ payload }: { payload: EventoBroadcastChatEquipo }) => {
+            const msg = payload?.mensaje;
+            if (!msg) return;
+            if (msg.autorUsuarioId && msg.autorUsuarioId === usuarioId) return;
+
+            const limpio = limpiarVistaPreviaMensajeOmnicanal(msg.contenido).slice(0, 140);
+            const rolUpper = rolPrincipal.toUpperCase();
+            const urlDestino = ["TALLER", "DELIVERY", "DELIVERY_EXTERNO"].includes(rolUpper)
+              ? `/panel/chat-equipo?msg=${encodeURIComponent(msg.id)}`
+              : `/panel/conversaciones?pestana=chat_equipo&msg=${encodeURIComponent(msg.id)}`;
 
             dispararNotificacionEstiloWhatsapp({
-              huella: `cli:${payload.eventoId || `${payload.claveHilo}-${payload.creadoEn}`}`,
-              tag: `wa-conv-${payload.conversacionId || payload.claveHilo}`,
-              esEquipo: false,
-              titulo: `${remitente} · ${canalTxt}`,
+              huella: `eq:${msg.id}`,
+              tag: `eq-sala-${payload.sala || "general"}`,
+              esEquipo: true,
+              titulo: `Equipo Tinkay · ${msg.autorNombre}`,
               cuerpo: limpio,
               urlDestino,
             });
@@ -329,40 +456,8 @@ export function GestorPushChatsOmnicanal({
         )
         .subscribe();
 
-      canalesActivos.push(canalClientes);
+      canalesActivos.push(canalEquipo);
     }
-
-    const canalEquipo = supabase
-      .channel(`${nombreCanalRealtimeChatEquipo(negNorm)}:push-global`, {
-        config: { broadcast: { self: false } },
-      })
-      .on(
-        "broadcast",
-        { event: "mensaje_equipo" },
-        ({ payload }: { payload: EventoBroadcastChatEquipo }) => {
-          const msg = payload?.mensaje;
-          if (!msg) return;
-          if (msg.autorUsuarioId && msg.autorUsuarioId === usuarioId) return;
-
-          const limpio = limpiarVistaPreviaMensajeOmnicanal(msg.contenido).slice(0, 140);
-          const rolUpper = rolPrincipal.toUpperCase();
-          const urlDestino = ["TALLER", "DELIVERY", "DELIVERY_EXTERNO"].includes(rolUpper)
-            ? `/panel/chat-equipo?msg=${encodeURIComponent(msg.id)}`
-            : `/panel/conversaciones?pestana=chat_equipo&msg=${encodeURIComponent(msg.id)}`;
-
-          dispararNotificacionEstiloWhatsapp({
-            huella: `eq:${msg.id}`,
-            tag: `eq-sala-${payload.sala || "general"}`,
-            esEquipo: true,
-            titulo: `Equipo Tinkay · ${msg.autorNombre}`,
-            cuerpo: limpio,
-            urlDestino,
-          });
-        }
-      )
-      .subscribe();
-
-    canalesActivos.push(canalEquipo);
 
     return () => {
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
@@ -370,7 +465,14 @@ export function GestorPushChatsOmnicanal({
         void supabase.removeChannel(ch);
       }
     };
-  }, [negNorm, usuarioId, rolPrincipal, puedeVerConversacionesClientes, dispararNotificacionEstiloWhatsapp]);
+  }, [
+    negNorm,
+    usuarioId,
+    rolPrincipal,
+    puedeVerConversacionesClientes,
+    modoClientePedidos,
+    dispararNotificacionEstiloWhatsapp,
+  ]);
 
   return (
     <>
@@ -394,7 +496,9 @@ export function GestorPushChatsOmnicanal({
           <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.79rem", color: "#27272A" }}>
             <Bell size={15} color="#52525B" />
             <span>
-              Activa las notificaciones para recibir mensajes de clientes y del Chat Grupal con acceso directo.
+              {modoClientePedidos
+                ? "Activa las notificaciones Push para recibir actualizaciones del estado de tus pedidos en vivo."
+                : "Activa las notificaciones Push para recibir estados de pedidos, mensajes de clientes y Chat Grupal con acceso directo."}
             </span>
           </div>
           <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
@@ -446,11 +550,11 @@ export function GestorPushChatsOmnicanal({
         </div>
       )}
 
-      {/* Notificación flotante sobria estilo WhatsApp con acceso directo al chat correspondiente */}
+      {/* Notificación flotante sobria estilo WhatsApp con acceso directo al pedido o chat correspondiente */}
       {toastActivo && (
         <div
           role="status"
-          onClick={() => navegarADestinoChat(toastActivo.urlDestino)}
+          onClick={() => navegarADestinoChat(toastActivo.urlDestino, toastActivo.notId ?? null)}
           style={{
             position: "fixed",
             top: "14px",
@@ -483,7 +587,13 @@ export function GestorPushChatsOmnicanal({
               flexShrink: 0,
             }}
           >
-            {toastActivo.esEquipo ? <Users size={17} /> : <MessageSquare size={17} />}
+            {toastActivo.esPedido ? (
+              <Package size={17} />
+            ) : toastActivo.esEquipo ? (
+              <Users size={17} />
+            ) : (
+              <MessageSquare size={17} />
+            )}
           </div>
 
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -521,7 +631,7 @@ export function GestorPushChatsOmnicanal({
                 textDecoration: "underline",
               }}
             >
-              Abrir chat →
+              {toastActivo.esPedido ? "Abrir pedido →" : "Abrir chat →"}
             </span>
           </div>
 

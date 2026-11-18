@@ -92,7 +92,28 @@ export function ConsolaTallerFloral({
   const [mostrarCalendario, setMostrarCalendario] = useState<boolean>(true);
   const [cargando, setCargando] = useState<boolean>(false);
   const [idProcesando, setIdProcesando] = useState<string | null>(null);
+  const [pedidoEnfocado, setPedidoEnfocado] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const aplicarDesdeUrl = () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const cod = (params.get("pedido") || params.get("codigo") || "").trim();
+        if (cod) {
+          setPedidoEnfocado(cod);
+          setMostrarHistoricos(true);
+          setFiltro("todos");
+        }
+      } catch {
+        // Ignorar
+      }
+    };
+    aplicarDesdeUrl();
+    window.addEventListener("eco:abrir-ruta-push", aplicarDesdeUrl);
+    return () => window.removeEventListener("eco:abrir-ruta-push", aplicarDesdeUrl);
+  }, []);
   const [alertaNuevoPedido, setAlertaNuevoPedido] = useState<{
     titulo: string;
     detalle: string;
@@ -870,6 +891,18 @@ export function ConsolaTallerFloral({
           filas={ordenesFiltradas}
           idFila={(o) => o.id}
           nombreExportacion={`cola-taller-${negNorm}`}
+          busquedaInicial={pedidoEnfocado}
+          filasExpandidasIniciales={
+            pedidoEnfocado
+              ? ordenesFiltradas
+                  .filter(
+                    (o) =>
+                      o.codigo.toUpperCase().includes(pedidoEnfocado.toUpperCase()) ||
+                      o.id === pedidoEnfocado
+                  )
+                  .map((o) => o.id)
+              : undefined
+          }
           contenidoExpandible={(o) => (
             <div
               style={{

@@ -147,6 +147,7 @@ function ContenidoEspacioCliente({
   } = useCarrito();
 
   const vistaUrl = (searchParams?.get('vista') || '').toLowerCase();
+  const pedidoUrl = (searchParams?.get('pedido') || '').trim();
   const vistaActiva: VistaEspacioCliente =
     vistaUrl === 'carrito'
       ? 'carrito'
@@ -797,6 +798,46 @@ function ContenidoEspacioCliente({
             )}
           </div>
 
+          {pedidoUrl && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '10px',
+                padding: '11px 16px',
+                borderRadius: '14px',
+                background: '#ECFDF5',
+                border: '1px solid #A7F3D0',
+                color: '#065F46',
+                fontSize: '0.84rem',
+              }}
+            >
+              <span>
+                📦 Viendo el pedido actualizado: <strong>{pedidoUrl}</strong>
+              </span>
+              <button
+                type="button"
+                onClick={() => router.replace('/panel?vista=pedidos', { scroll: false })}
+                title="Mostrar todos mis pedidos"
+                aria-label="Ver todos"
+                style={{
+                  padding: '5px 12px',
+                  borderRadius: '999px',
+                  border: '1px solid #6EE7B7',
+                  background: '#FFFFFF',
+                  color: '#047857',
+                  fontSize: '0.76rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                }}
+              >
+                Ver todos
+              </button>
+            </div>
+          )}
+
           {pedidosFiltrados.length === 0 ? (
             <div
               style={{
@@ -869,8 +910,26 @@ function ContenidoEspacioCliente({
                 gap: '16px',
               }}
             >
-              {pedidosFiltrados.map((pedido) => {
+              {(pedidoUrl
+                ? [
+                    ...pedidosFiltrados.filter(
+                      (p) =>
+                        p.codigo.toUpperCase() === pedidoUrl.toUpperCase() ||
+                        p.id === pedidoUrl
+                    ),
+                    ...pedidosFiltrados.filter(
+                      (p) =>
+                        p.codigo.toUpperCase() !== pedidoUrl.toUpperCase() &&
+                        p.id !== pedidoUrl
+                    ),
+                  ]
+                : pedidosFiltrados
+              ).map((pedido) => {
                 const badge = obtenerBadgeEstadoPedido(pedido);
+                const esPedidoEnfocado =
+                  Boolean(pedidoUrl) &&
+                  (pedido.codigo.toUpperCase() === pedidoUrl.toUpperCase() ||
+                    pedido.id === pedidoUrl);
                 const fechaPedido = new Date(pedido.creadoEn).toLocaleDateString('es-EC', {
                   day: '2-digit',
                   month: 'short',
@@ -884,8 +943,10 @@ function ContenidoEspacioCliente({
                       background: '#FFFFFF',
                       borderRadius: '18px',
                       padding: '20px',
-                      border: '1px solid var(--linea)',
-                      boxShadow: '0 4px 16px rgba(34, 29, 26, 0.04)',
+                      border: esPedidoEnfocado ? '1.5px solid #10B981' : '1px solid var(--linea)',
+                      boxShadow: esPedidoEnfocado
+                        ? '0 0 0 2.5px rgba(16, 185, 129, 0.25), 0 12px 28px rgba(16, 185, 129, 0.14)'
+                        : '0 4px 16px rgba(34, 29, 26, 0.04)',
                       display: 'flex',
                       flexDirection: 'column',
                       justifyContent: 'space-between',

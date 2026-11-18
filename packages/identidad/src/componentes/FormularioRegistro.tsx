@@ -14,13 +14,21 @@ interface FormularioRegistroProps {
   negocio: string;
   intencion?: string;
   destino?: string;
+  correoInicial?: string;
+  nombresIniciales?: string;
 }
 
-export function FormularioRegistro({ negocio, intencion = "", destino = "" }: FormularioRegistroProps) {
+export function FormularioRegistro({
+  negocio,
+  intencion = "",
+  destino = "",
+  correoInicial = "",
+  nombresIniciales = "",
+}: FormularioRegistroProps) {
   const router = useRouter();
-  const [nombres, setNombres] = useState("");
+  const [nombres, setNombres] = useState(nombresIniciales);
   const [apellidos, setApellidos] = useState("");
-  const [correo, setCorreo] = useState("");
+  const [correo, setCorreo] = useState(correoInicial);
   const [contrasena, setContrasena] = useState("");
   const [paisWhatsapp, setPaisWhatsapp] = useState<CountryCode>(PAIS_TELEFONO_DEFECTO);
   const [numeroWhatsapp, setNumeroWhatsapp] = useState("");
@@ -117,10 +125,13 @@ export function FormularioRegistro({ negocio, intencion = "", destino = "" }: Fo
       document.cookie = `tranqi_rol_favorito=abogado; path=/; max-age=86400`;
     }
 
+    document.cookie = `tranqi_destino=${encodeURIComponent(destinoTarget)}; path=/; max-age=86400`;
+    const urlCallback = `${window.location.origin}/auth/callback`;
+
     const { error: errorGoogle } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(destinoTarget)}`,
+        redirectTo: urlCallback,
       },
     });
     if (errorGoogle) {

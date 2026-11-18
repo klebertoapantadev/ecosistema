@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import {
   X,
   BookOpen,
@@ -10,19 +10,119 @@ import {
   Layers,
   Image as ImageIcon,
   Clock,
+  Sparkles,
+  CheckCircle,
+  HelpCircle,
   Calculator,
+  Truck,
+  Tag,
 } from "lucide-react";
 
 interface Props {
   abierto: boolean;
   onCerrar: () => void;
   negocio?: string;
+  mostrarSelectorNegocios?: boolean;
 }
 
-export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = "tranqi" }: Props) {
-  const [tabActiva, setTabActiva] = useState<string>(negocio);
+interface DatosManualNegocio {
+  nombreNegocio: string;
+  etiquetaRubro: string;
+  colorTema: string;
+  colorBgBadge: string;
+  colorTextoBadge: string;
+  icono: React.ReactNode;
+  capa1Ejemplos: string;
+  capa1Desc: string;
+  capa2Ejemplos: string;
+  capa2Desc: string;
+  capa3Ejemplos: string;
+  capa3Desc: string;
+}
+
+const DATOS_POR_NEGOCIO: Record<string, DatosManualNegocio> = {
+  tranqi: {
+    nombreNegocio: "Tranqi Legaltech",
+    etiquetaRubro: "SERVICIOS LEGALES & HONORARIOS PROFESIONALES",
+    colorTema: "#5000BA",
+    colorBgBadge: "#EDE9FE",
+    colorTextoBadge: "#5000BA",
+    icono: <Scale size={16} />,
+    capa1Ejemplos: '"Derecho Societario", "Inquilinato", "Laboral", "Contratos & Minutas", "Patrocinios"',
+    capa1Desc: "(Agrupa áreas del derecho, trámites y servicios jurídicos)",
+    capa2Ejemplos: '"Constitución de Compañía SAS", "Revisión de Contrato de Arrendamiento", "Divorcio por Mutuo Acuerdo"',
+    capa2Desc: "(El servicio jurídico base con alcance, requisitos y entregables)",
+    capa3Ejemplos: '"Asesoría Inicial ($35)", "Trámite Notarial ($150)", "Patrocinio Completo ($350)"',
+    capa3Desc: "(Modalidades de contratación con tarifa fija u honorario profesional)",
+  },
+  tinkay: {
+    nombreNegocio: "Tinkay Floristería",
+    etiquetaRubro: "FLORISTERÍA DE EXPORTACIÓN & ARREGLOS ON-DEMAND",
+    colorTema: "#BE123C",
+    colorBgBadge: "#FFE4E6",
+    colorTextoBadge: "#BE123C",
+    icono: <Flower2 size={16} />,
+    capa1Ejemplos: '"Bouquets Estilo Coreano", "Box Florales", "Para Florero", "Eventos y Ceremonias", "Condolencias"',
+    capa1Desc: "(Agrupa colecciones de arreglos, ocasiones botánicas, banners y fotos reales de taller)",
+    capa2Ejemplos: '"Bouquet Diseño Estilo Coreano", "Box Floral con Orquídea", "Ramo Clásico para Florero", "Aro Floral"',
+    capa2Desc: "(El arreglo floral o montaje base con fotografías, tarjeta caligráfica y cuidados Chrysal)",
+    capa3Ejemplos: '"Mediano 24 Rosas ($28)", "Grande 36 Rosas ($35)", "Gigante VIP 50 Rosas ($48)"',
+    capa3Desc: "(Presentaciones por tallos o tamaño, foto propia de variante y precio PVP con IVA 0% o 15%)",
+  },
+  fastfix: {
+    nombreNegocio: "FastFix Home",
+    etiquetaRubro: "MANTENIMIENTO DEL HOGAR & REPARACIONES",
+    colorTema: "#0284C7",
+    colorBgBadge: "#E0F2FE",
+    colorTextoBadge: "#0284C7",
+    icono: <Wrench size={16} />,
+    capa1Ejemplos: '"Plomería & Fugas", "Electricidad", "Calefones & Bombas", "Cerrajería"',
+    capa1Desc: "(Agrupa rubros técnicos de diagnóstico y reparación)",
+    capa2Ejemplos: '"Mantenimiento de Calefón a Gas", "Diagnóstico de Fuga de Agua", "Cambio de Breakers"',
+    capa2Desc: "(El servicio técnico base con herramientas y repuestos estándar)",
+    capa3Ejemplos: '"Visita de Inspección ($25)", "Reparación Básica ($45)", "Emergencia 24/7 ($65)"',
+    capa3Desc: "(Modalidades de servicio con SLA de llegada garantizado)",
+  },
+  margaritas: {
+    nombreNegocio: "Margaritas Floristería",
+    etiquetaRubro: "FLORISTERÍA BOUTIQUE & SUSCRIPCIONES",
+    colorTema: "#D97706",
+    colorBgBadge: "#FEF3C7",
+    colorTextoBadge: "#B45309",
+    icono: <Flower2 size={16} />,
+    capa1Ejemplos: '"Ramos Exclusivos", "Centros de Mesa", "Suscripciones Semanales", "Ocasiones Especiales"',
+    capa1Desc: "(Agrupa colecciones de flores silvestres y ambientaciones florales boutique)",
+    capa2Ejemplos: '"Composición Floral Silvestre", "Centro de Mesa Presidencial", "Ramo de Rosas de Jardín"',
+    capa2Desc: "(El diseño floral base con flores de temporada y tarjeta caligráfica)",
+    capa3Ejemplos: '"Ramo Mediano ($30)", "Ramo Deluxe ($50)", "Suscripción Mensual ($120)"',
+    capa3Desc: "(Presentaciones por volumen o frecuencia semanal con entrega programada)",
+  },
+};
+
+export function ManualConfiguracionCatalogoModal({
+  abierto,
+  onCerrar,
+  negocio = "tranqi",
+  mostrarSelectorNegocios = false,
+}: Props) {
+  const norm = (negocio || "tranqi").toLowerCase().trim();
+  const clave = norm.includes("tinkay")
+    ? "tinkay"
+    : norm.includes("margarita")
+    ? "margaritas"
+    : norm.includes("fastfix")
+    ? "fastfix"
+    : "tranqi";
+
+  const [tabActiva, setTabActiva] = React.useState<string>(clave);
+
+  React.useEffect(() => {
+    setTabActiva(clave);
+  }, [clave]);
 
   if (!abierto) return null;
+
+  const datos = DATOS_POR_NEGOCIO[tabActiva] || DATOS_POR_NEGOCIO.tranqi!;
 
   return (
     <div
@@ -37,6 +137,7 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
         zIndex: 10000,
         padding: "16px",
       }}
+      onClick={onCerrar}
     >
       <div
         style={{
@@ -50,6 +151,7 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
           flexDirection: "column",
           overflow: "hidden",
         }}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Cabecera */}
         <div
@@ -103,103 +205,82 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
           </button>
         </div>
 
-        {/* Selector de Negocio */}
-        <div
-          style={{
-            display: "flex",
-            background: "#F8FAFC",
-            borderBottom: "1px solid #E2E8F0",
-            padding: "8px 16px",
-            gap: "8px",
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => setTabActiva("tinkay")}
+        {/* Identificador exclusivo del negocio (Cero referencias a otras empresas) */}
+        {mostrarSelectorNegocios ? (
+          <div
             style={{
-              padding: "7px 14px",
-              borderRadius: "8px",
-              border: tabActiva === "tinkay" ? "1.5px solid #E11D48" : "1px solid #CBD5E1",
-              background: tabActiva === "tinkay" ? "#FFF1F2" : "#FFFFFF",
-              color: tabActiva === "tinkay" ? "#BE123C" : "#475569",
-              fontWeight: 700,
-              fontSize: "0.82rem",
-              cursor: "pointer",
               display: "flex",
-              alignItems: "center",
-              gap: "6px",
+              background: "#F8FAFC",
+              borderBottom: "1px solid #E2E8F0",
+              padding: "8px 16px",
+              gap: "8px",
             }}
           >
-            <Flower2 size={15} />
-            <span>Tinkay Floristería</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setTabActiva("tranqi")}
+            <button
+              type="button"
+              onClick={() => setTabActiva("tranqi")}
+              style={{
+                padding: "7px 14px",
+                borderRadius: "8px",
+                border: tabActiva === "tranqi" ? "1.5px solid #5000BA" : "1px solid #CBD5E1",
+                background: tabActiva === "tranqi" ? "#F5F3FF" : "#FFFFFF",
+                color: tabActiva === "tranqi" ? "#5000BA" : "#475569",
+                fontWeight: 700,
+                fontSize: "0.82rem",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <Scale size={15} />
+              <span>Tranqi Legal</span>
+            </button>
+          </div>
+        ) : (
+          <div
             style={{
-              padding: "7px 14px",
-              borderRadius: "8px",
-              border: tabActiva === "tranqi" ? "1.5px solid #5000BA" : "1px solid #CBD5E1",
-              background: tabActiva === "tranqi" ? "#F5F3FF" : "#FFFFFF",
-              color: tabActiva === "tranqi" ? "#5000BA" : "#475569",
-              fontWeight: 700,
-              fontSize: "0.82rem",
-              cursor: "pointer",
               display: "flex",
               alignItems: "center",
-              gap: "6px",
+              justifyContent: "space-between",
+              background: "#F8FAFC",
+              borderBottom: "1px solid #E2E8F0",
+              padding: "10px 20px",
             }}
           >
-            <Scale size={15} />
-            <span>Tranqi Legal</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setTabActiva("fastfix")}
-            style={{
-              padding: "7px 14px",
-              borderRadius: "8px",
-              border: tabActiva === "fastfix" ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
-              background: tabActiva === "fastfix" ? "#F0F9FF" : "#FFFFFF",
-              color: tabActiva === "fastfix" ? "#0369A1" : "#475569",
-              fontWeight: 700,
-              fontSize: "0.82rem",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-            }}
-          >
-            <Wrench size={15} />
-            <span>FastFix Home</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setTabActiva("margaritas")}
-            style={{
-              padding: "7px 14px",
-              borderRadius: "8px",
-              border: tabActiva === "margaritas" ? "1.5px solid #D97706" : "1px solid #CBD5E1",
-              background: tabActiva === "margaritas" ? "#FEF3C7" : "#FFFFFF",
-              color: tabActiva === "margaritas" ? "#B45309" : "#475569",
-              fontWeight: 700,
-              fontSize: "0.82rem",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-            }}
-          >
-            <Flower2 size={15} />
-            <span>Margaritas Floristería</span>
-          </button>
-        </div>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "7px",
+                padding: "4px 12px",
+                borderRadius: "999px",
+                background: datos.colorBgBadge,
+                color: datos.colorTextoBadge,
+                fontSize: "0.78rem",
+                fontWeight: 800,
+              }}
+            >
+              {datos.icono}
+              <span>{datos.nombreNegocio}</span>
+            </div>
+            <span style={{ fontSize: "0.72rem", color: "#64748B", fontWeight: 600 }}>
+              {datos.etiquetaRubro}
+            </span>
+          </div>
+        )}
 
         {/* Contenido del Manual */}
-        <div style={{ padding: "20px 24px", overflowY: "auto", flex: 1, fontSize: "0.88rem", color: "#334155", lineHeight: 1.5 }}>
+        <div
+          style={{
+            padding: "20px 24px",
+            overflowY: "auto",
+            flex: 1,
+            fontSize: "0.88rem",
+            color: "#334155",
+            lineHeight: 1.5,
+          }}
+        >
           {/* Guía Conceptual: Arquitectura de 3 Capas de Catálogo */}
           <div
             style={{
@@ -211,9 +292,19 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
               boxShadow: "0 4px 12px rgba(15, 23, 42, 0.15)",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#38BDF8", fontWeight: 800, fontSize: "0.95rem", marginBottom: "10px" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                color: "#38BDF8",
+                fontWeight: 800,
+                fontSize: "0.95rem",
+                marginBottom: "10px",
+              }}
+            >
               <Layers size={18} />
-              <span>MODELO MENTAL & ARQUITECTURA EN 3 CAPAS (ESTÁNDAR DEL ECOSISTEMA)</span>
+              <span>MODELO MENTAL & ARQUITECTURA EN 3 CAPAS (ESTÁNDAR DEL CATÁLOGO)</span>
             </div>
 
             <div
@@ -228,14 +319,26 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
                 marginBottom: "14px",
               }}
             >
-              <div style={{ color: "#E2E8F0" }}>[ <strong style={{ color: "#38BDF8" }}>CAPA 1: CATEGORÍA / COLECCIÓN</strong> ]  ➔  "Estilo Coreano", "Floreros", "Condolencias", "Honorarios"</div>
-              <div style={{ color: "#94A3B8" }}>                                        (Agrupa decenas de productos, banners, videos y galerías)</div>
+              <div style={{ color: "#E2E8F0" }}>
+                [ <strong style={{ color: "#38BDF8" }}>CAPA 1: CATEGORÍA / COLECCIÓN</strong> ]  ➔  {datos.capa1Ejemplos}
+              </div>
+              <div style={{ color: "#94A3B8" }}>
+                {"                                       "}{datos.capa1Desc}
+              </div>
               <div style={{ color: "#38BDF8" }}>              │</div>
-              <div style={{ color: "#E2E8F0" }}>[ <strong style={{ color: "#38BDF8" }}>CAPA 2: PRODUCTO MASTER</strong> ]        ➔  "Bouquet Diseño Estilo Coreano", "Constitución SAS"</div>
-              <div style={{ color: "#94A3B8" }}>                                        (El producto o servicio base con fotos y textos comunes)</div>
+              <div style={{ color: "#E2E8F0" }}>
+                [ <strong style={{ color: "#38BDF8" }}>CAPA 2: PRODUCTO MASTER</strong> ]        ➔  {datos.capa2Ejemplos}
+              </div>
+              <div style={{ color: "#94A3B8" }}>
+                {"                                       "}{datos.capa2Desc}
+              </div>
               <div style={{ color: "#38BDF8" }}>              │</div>
-              <div style={{ color: "#E2E8F0" }}>[ <strong style={{ color: "#38BDF8" }}>CAPA 3: VARIANTES / SKUs</strong> ]       ➔  "Pequeño 12 rosas ($25)", "Gigante VIP ($60)"</div>
-              <div style={{ color: "#94A3B8" }}>                                        (Opciones de compra con precio, foto propia y promesa de entrega)</div>
+              <div style={{ color: "#E2E8F0" }}>
+                [ <strong style={{ color: "#38BDF8" }}>CAPA 3: VARIANTES / SKUs</strong> ]       ➔  {datos.capa3Ejemplos}
+              </div>
+              <div style={{ color: "#94A3B8" }}>
+                {"                                       "}{datos.capa3Desc}
+              </div>
             </div>
 
             {/* Paso a paso de configuración */}
@@ -254,7 +357,7 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
                   2️⃣ Paso 2: Producto Master
                 </div>
                 <div style={{ fontSize: "0.74rem", color: "#CBD5E1", lineHeight: 1.4 }}>
-                  Registra el diseño/servicio. Define el nombre oficial, descripción general y portada base.
+                  Registra el servicio/diseño base. Define nombre oficial, descripción y requisitos.
                 </div>
               </div>
 
@@ -263,85 +366,28 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
                   3️⃣ Paso 3: Variantes / SKUs
                 </div>
                 <div style={{ fontSize: "0.74rem", color: "#CBD5E1", lineHeight: 1.4 }}>
-                  Configura precios finales PVP (calcula base imponible e IVA 15%). Asigna fotos o SLAs puntuales si difieren.
+                  Configura precios finales PVP, desglose de IVA SRI, foto de variante y SLA de entrega.
                 </div>
               </div>
             </div>
           </div>
 
-          {tabActiva === "tinkay" && (
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-                <span style={{ background: "#FFE4E6", color: "#E11D48", padding: "3px 10px", borderRadius: "12px", fontSize: "0.75rem", fontWeight: 800 }}>
-                  FLORISTERÍA DE ALTA GAMA & ON-DEMAND
-                </span>
-              </div>
-
-              <h3 style={{ margin: "0 0 8px", fontSize: "1.15rem", fontWeight: 800, color: "#0F172A" }}>
-                Manual de Catálogo: Tinkay Floristería
-              </h3>
-              <p style={{ margin: "0 0 16px", color: "#64748B" }}>
-                En Tinkay el catálogo comercial se estructura en torno al <strong>impacto visual y la inmediatez de entrega</strong>. A continuación se detallan las reglas de configuración:
-              </p>
-
-              {/* Sección 1: Multivariantes */}
-              <div style={{ background: "#FFFDF8", border: "1px solid #FED7AA", borderRadius: "10px", padding: "14px", marginBottom: "14px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", fontWeight: 800, color: "#9A3412" }}>
-                  <Layers size={17} />
-                  <span>1. Configuración Multivariante (Ejemplo: Bouquet Coreano)</span>
-                </div>
-                <p style={{ margin: "0 0 8px", fontSize: "0.84rem" }}>
-                  Un arreglo floral debe crearse como un <strong>producto maestro</strong> (ej. <em>Bouquet Diseño Estilo Coreano</em>) y contener sus diferentes tamaños o número de rosas como <strong>modalidades / variantes independientes</strong>:
-                </p>
-                <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem", color: "#431407" }}>
-                  <li><strong>Pequeño (12 Rosas):</strong> Base $21.7391 + IVA 15% ($3.26) = <strong>$25.00 PVP</strong> | SKU: <code>TNK-COR-PEQ</code></li>
-                  <li><strong>Mediano (24 Rosas):</strong> Base $30.4348 + IVA 15% ($4.57) = <strong>$35.00 PVP</strong> | SKU: <code>TNK-COR-MED</code></li>
-                  <li><strong>Grande (36 Rosas):</strong> Base $39.1304 + IVA 15% ($5.87) = <strong>$45.00 PVP</strong> | SKU: <code>TNK-COR-GRA</code></li>
-                  <li><strong>Gigante VIP (50 Rosas + Corona + Mariposas):</strong> Base $52.1739 + IVA 15% ($7.83) = <strong>$60.00 PVP</strong> | SKU: <code>TNK-COR-GIG</code></li>
-                </ul>
-              </div>
-
-              {/* Sección 2: Tiempos de Entrega */}
-              <div style={{ background: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: "10px", padding: "14px", marginBottom: "14px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", fontWeight: 800, color: "#166534" }}>
-                  <Clock size={17} />
-                  <span>2. Promesas y Tiempos de Entrega (SLAs Florales)</span>
-                </div>
-                <p style={{ margin: "0 0 8px", fontSize: "0.84rem" }}>
-                  El 80% de las ventas son de entrega urgente o el mismo día. Selecciona siempre el preset correspondiente:
-                </p>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", fontSize: "0.8rem" }}>
-                  <div style={{ background: "#FFFFFF", padding: "8px", borderRadius: "6px", border: "1px solid #DCFCE7" }}>
-                    <strong>⚡ Entrega Inmediata (45-90 min):</strong> Para ramos de vitrina y floreros con stock diario.
-                  </div>
-                  <div style={{ background: "#FFFFFF", padding: "8px", borderRadius: "6px", border: "1px solid #DCFCE7" }}>
-                    <strong>🌸 Pide Hoy, Recibe Hoy:</strong> Pedidos regulares ingresados antes de las 17:00.
-                  </div>
-                </div>
-              </div>
-
-              {/* Sección 3: Recursos Digitales */}
-              <div style={{ background: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: "10px", padding: "14px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", fontWeight: 800, color: "#1E40AF" }}>
-                  <ImageIcon size={17} />
-                  <span>3. Recursos Digitales y Muestras Reales</span>
-                </div>
-                <p style={{ margin: "0 0 8px", fontSize: "0.84rem" }}>
-                  Para maximizar la tasa de conversión en la vitrina y en los chats de Tranqi:
-                </p>
-                <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem", color: "#1E3A8A" }}>
-                  <li><strong>URL Imagen / Portada:</strong> Fotografía vertical nítida con buena iluminación (formato 4:5 o 1:1).</li>
-                  <li><strong>URL Álbum de Ejemplos:</strong> Enlace a Google Photos o Instagram (ej. <code>https://photos.app.goo.gl/...</code>) con fotos de entregas reales a clientes.</li>
-                  <li><strong>Video / GIF Demostrativo:</strong> Enlace a YouTube o archivo MP4/GIF que muestre el brillo de los papeles coreanos o el desempaque.</li>
-                </ul>
-              </div>
-            </div>
-          )}
-
+          {/* =========================================================================
+              CONTENIDO ESPECÍFICO DE TRANQI LEGALTECH
+             ========================================================================= */}
           {tabActiva === "tranqi" && (
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-                <span style={{ background: "#EDE9FE", color: "#5000BA", padding: "3px 10px", borderRadius: "12px", fontSize: "0.75rem", fontWeight: 800 }}>
+                <span
+                  style={{
+                    background: "#EDE9FE",
+                    color: "#5000BA",
+                    padding: "3px 10px",
+                    borderRadius: "12px",
+                    fontSize: "0.75rem",
+                    fontWeight: 800,
+                  }}
+                >
                   SERVICIOS LEGALES & HONORARIOS PROFESIONALES
                 </span>
               </div>
@@ -359,7 +405,7 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
                   <span>1. Tipos de Honorarios y Servicios Jurídicos</span>
                 </div>
                 <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem" }}>
-                  <li><strong>Servicio / Trámite Puntual:</strong> Consultas legales 1-a-1, redacción de contratos, minutas notariales (ej. <em>Divorcio por Mutuo Acuerdo</em> $130.43 + IVA = $150.00).</li>
+                  <li><strong>Servicio / Trámite Puntual:</strong> Consultas legales 1-a-1, redacción de contratos, minutas notariales.</li>
                   <li><strong>Suscripción / Plan Mensual:</strong> Blindaje legal para PYMEs y Startups con horas prepagadas de asesoría continua.</li>
                   <li><strong>Físico / Entrega Notarial:</strong> Documentos legalizados con entrega en notaría o casillero judicial.</li>
                 </ul>
@@ -371,51 +417,50 @@ export function ManualConfiguracionCatalogoModal({ abierto, onCerrar, negocio = 
                   <span>2. Facturación Electrónica e IVA 15% SRI</span>
                 </div>
                 <p style={{ margin: "0", fontSize: "0.82rem", color: "#4C1D95" }}>
-                  Todo honorario cobrado vía Payphone liquida automáticamente el comprobante con la base imponible y el IVA desglosado. Si el servicio goza de exención tributaria (art. 56 LRTI), configurar como <code>IVA 0% (Exento SRI)</code>.
+                  Todo honorario cobrado liquida automáticamente el comprobante con la base imponible y el IVA desglosado. Si el servicio goza de exención tributaria (art. 56 LRTI), configurar como <code>IVA 0% (Exento SRI)</code>.
                 </p>
               </div>
             </div>
           )}
 
-          {tabActiva === "fastfix" && (
+          {/* =========================================================================
+              CONTENIDO ESPECÍFICO DE TINKAY FLORISTERÍA
+             ========================================================================= */}
+          {tabActiva === "tinkay" && (
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-                <span style={{ background: "#E0F2FE", color: "#0284C7", padding: "3px 10px", borderRadius: "12px", fontSize: "0.75rem", fontWeight: 800 }}>
-                  MANTENIMIENTO DEL HOGAR & REPARACIONES
+                <span
+                  style={{
+                    background: "#FFE4E6",
+                    color: "#BE123C",
+                    padding: "3px 10px",
+                    borderRadius: "12px",
+                    fontSize: "0.75rem",
+                    fontWeight: 800,
+                  }}
+                >
+                  FLORISTERÍA DE ALTA GAMA & ON-DEMAND
                 </span>
               </div>
 
               <h3 style={{ margin: "0 0 8px", fontSize: "1.15rem", fontWeight: 800, color: "#0F172A" }}>
-                Manual de Catálogo: FastFix Home
+                Manual de Catálogo: Tinkay Floristería
               </h3>
               <p style={{ margin: "0 0 16px", color: "#64748B" }}>
-                En FastFix el catálogo tarifario gestiona <strong>visitas técnicas de diagnóstico, reparaciones por rubro y planes de mantenimiento preventivo</strong>.
+                En Tinkay el catálogo comercial se estructura en torno a{" "}
+                <strong>flores frescas de exportación, regalos on-demand y montajes de eventos</strong>.
               </p>
 
-              <div style={{ background: "#F0F9FF", border: "1px solid #BAE6FD", borderRadius: "10px", padding: "14px" }}>
-                <ul style={{ margin: 0, paddingLeft: "18px", fontSize: "0.82rem", color: "#0369A1" }}>
-                  <li><strong>Visita de Diagnóstico / Tarifa Básica:</strong> Costo fijo de inspección que se descuenta si el cliente aprueba la reparación.</li>
-                  <li><strong>Tiempos de Atención:</strong> Seleccionar <code>⚡ Emergencia Técnica (45-60 min)</code> para fugas de agua o cortes de luz.</li>
-                  <li><strong>Planes Preventivos:</strong> Suscripciones semestrales de limpieza de calefones, cisternas y tableros eléctricos.</li>
+              <div style={{ background: "#FFFDF8", border: "1px solid #FED7AA", borderRadius: "10px", padding: "14px", marginBottom: "14px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px", fontWeight: 800, color: "#9A3412" }}>
+                  <Layers size={17} />
+                  <span>1. Multivariantes y Tarifa IVA 0% / 15% SRI</span>
+                </div>
+                <ul style={{ margin: "0 0 10px 0", paddingLeft: "18px", fontSize: "0.82rem", color: "#431407" }}>
+                  <li><strong>Bouquets y Box Florales:</strong> Tarifa IVA 0% (PVP = Base Imponible).</li>
+                  <li><strong>Complementos (Chocolates, Peluches, Globos):</strong> Tarifa IVA 15%.</li>
                 </ul>
               </div>
-            </div>
-          )}
-
-          {tabActiva === "margaritas" && (
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px" }}>
-                <span style={{ background: "#FEF3C7", color: "#B45309", padding: "3px 10px", borderRadius: "12px", fontSize: "0.75rem", fontWeight: 800 }}>
-                  FLORISTERÍA BOUTIQUE & SUSCRIPCIONES
-                </span>
-              </div>
-
-              <h3 style={{ margin: "0 0 8px", fontSize: "1.15rem", fontWeight: 800, color: "#0F172A" }}>
-                Manual de Catálogo: Margaritas Floristería
-              </h3>
-              <p style={{ margin: "0 0 16px", color: "#64748B" }}>
-                Sigue el mismo estándar multivariante y de recursos digitales que Tinkay, enfocado en ramos para ocasiones especiales, centros de mesa y suscripciones florales semanales para oficinas y hogares.
-              </p>
             </div>
           )}
         </div>

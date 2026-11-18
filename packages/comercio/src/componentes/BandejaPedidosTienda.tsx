@@ -58,8 +58,36 @@ export function BandejaPedidosTienda({
   const [cargando, setCargando] = useState<boolean>(!pedidosIniciales);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [actualizandoId, setActualizandoId] = useState<string | null>(null);
+  const [pedidoEnfocado, setPedidoEnfocado] = useState<string>("");
   const [proformaEditandoVariacion, setProformaEditandoVariacion] =
     useState<PedidoTiendaRegistrado | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const sincronizarDesdeUrl = () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const cod = (params.get("pedido") || params.get("codigo") || "").trim();
+        if (cod) {
+          setPedidoEnfocado(cod);
+        }
+      } catch {
+        // Ignorar
+      }
+    };
+    sincronizarDesdeUrl();
+    window.addEventListener("eco:abrir-ruta-push", sincronizarDesdeUrl);
+    return () => window.removeEventListener("eco:abrir-ruta-push", sincronizarDesdeUrl);
+  }, []);
+
+  const idsExpandidosIniciales = useMemo(() => {
+    if (!pedidoEnfocado) return undefined;
+    const upper = pedidoEnfocado.toUpperCase();
+    const encontrados = pedidos
+      .filter((p) => p.codigoOrden.toUpperCase().includes(upper) || p.id === pedidoEnfocado)
+      .map((p) => p.id);
+    return encontrados.length > 0 ? encontrados : undefined;
+  }, [pedidoEnfocado, pedidos]);
 
   const cargarPedidos = useCallback(async () => {
     setCargando(true);
@@ -422,6 +450,55 @@ export function BandejaPedidosTienda({
         </div>
       )}
 
+      {pedidoEnfocado && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "10px",
+            padding: "10px 14px",
+            borderRadius: "10px",
+            background: "#EFF6FF",
+            border: "1px solid #BFDBFE",
+            color: "#1E3A8A",
+            fontSize: "0.82rem",
+          }}
+        >
+          <span>
+            📦 Mostrando acceso directo al pedido modificado: <strong>{pedidoEnfocado}</strong>
+          </span>
+          <button
+            type="button"
+            onClick={() => {
+              setPedidoEnfocado("");
+              if (typeof window !== "undefined") {
+                const params = new URLSearchParams(window.location.search);
+                params.delete("pedido");
+                params.delete("codigo");
+                const qs = params.toString();
+                window.history.replaceState(null, "", `${window.location.pathname}${qs ? `?${qs}` : ""}`);
+              }
+            }}
+            title="Mostrar todos los pedidos de la tienda"
+            aria-label="Ver todos"
+            style={{
+              padding: "5px 11px",
+              borderRadius: "8px",
+              border: "1px solid #93C5FD",
+              background: "#FFFFFF",
+              color: "#1D4ED8",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            Ver todos
+          </button>
+        </div>
+      )}
+
       <div
         style={{
           background: "#FFFFFF",
@@ -436,6 +513,8 @@ export function BandejaPedidosTienda({
           filas={pedidos}
           idFila={(p) => p.id}
           nombreExportacion={`pedidos-tienda-${negocio}`}
+          busquedaInicial={pedidoEnfocado}
+          filasExpandidasIniciales={idsExpandidosIniciales}
           contenidoExpandible={(p) => (
             <div
               style={{

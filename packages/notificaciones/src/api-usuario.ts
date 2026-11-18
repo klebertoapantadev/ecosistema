@@ -147,7 +147,7 @@ export async function consultarBandejaNotificacionesUsuario(
     const registrarItem = (cand: NotificacionItem) => {
       if (!cand?.not_id || !cand?.not_titulo) return;
       const itemFinal = aplicarEstadoLocal(cand);
-      const huellaTitulo = `${itemFinal.not_titulo.trim()}`;
+      const huellaTitulo = `${itemFinal.not_titulo.trim()}::${itemFinal.not_creado_en.slice(0, 16)}`;
       if (mapaItems.has(itemFinal.not_id)) return;
       if (titulosVistos.has(huellaTitulo)) return;
       titulosVistos.add(huellaTitulo);
@@ -518,7 +518,18 @@ export async function ejecutarAccionBandejaNotificacionUsuario(
         };
       }
 
-      // Si el ID es un UUID nativo de not_registro, sincronizar también vía RPC cuando esté disponible
+      // Sincronizar también en not_registro tanto por UUID como por clave_original (RPC texto + fallback UUID)
+      try {
+        await db.schema("comun_seguridad").rpc("seg_fn_marcar_notificacion_accion_texto", {
+          p_negocio: metaNeg.canon,
+          p_identificador: cuerpo.not_id,
+          p_accion: cuerpo.accion,
+          p_horas: Number(cuerpo.horas || 3),
+        });
+      } catch {
+        // Fallback a RPC clásico por UUID si la migración nueva aún no se ejecutó
+      }
+
       if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cuerpo.not_id)) {
         try {
           await db.schema("comun_seguridad").rpc("seg_fn_accion_mi_notificacion", {

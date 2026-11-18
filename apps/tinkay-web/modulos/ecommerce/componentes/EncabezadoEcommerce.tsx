@@ -7,6 +7,7 @@ import {
   type EstadoRegaloPrimeraCompra,
 } from '@eco/comercio';
 import { CampanaNotificaciones } from '@eco/notificaciones';
+import { crearClienteNavegador } from '@eco/supabase';
 import { useCarrito } from '../contexto-carrito';
 import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from '../datos-catalogo';
 import { expandirProductosVitrina, obtenerCategoriasVisibles } from '../filtrado-catalogo';
@@ -54,6 +55,32 @@ export function EncabezadoEcommerce() {
       window.removeEventListener('keydown', alEscape);
     };
   }, [menuMovilAbierto]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const sp = new URLSearchParams(window.location.search);
+    const code = sp.get('code');
+    if (code && window.location.pathname === '/') {
+      window.location.replace(`/auth/callback?code=${encodeURIComponent(code)}&next=%2Fpanel`);
+      return;
+    }
+    const hash = window.location.hash || '';
+    if (hash.includes('access_token=')) {
+      const supabase = crearClienteNavegador();
+      supabase.auth
+        .getSession()
+        .then(({ data }) => {
+          if (data?.session) {
+            window.location.replace('/panel');
+          }
+        })
+        .catch(() => {});
+    } else if (hash.includes('error_description=') || sp.get('error_description')) {
+      const hp = new URLSearchParams(hash.replace(/^#/, ''));
+      const errMsg = hp.get('error_description') || sp.get('error_description') || 'Error de autenticación';
+      window.location.replace(`/ingresar?error=${encodeURIComponent(errMsg)}`);
+    }
+  }, []);
 
   useEffect(() => {
     let cancelado = false;
@@ -216,6 +243,25 @@ export function EncabezadoEcommerce() {
                         gap: '3px',
                       }}
                     >
+                      <Link
+                        href="/panel"
+                        onClick={() => setMenuClienteAbierto(false)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '9px',
+                          padding: '9px 11px',
+                          borderRadius: '10px',
+                          textDecoration: 'none',
+                          background: 'rgba(61, 90, 69, 0.1)',
+                          color: '#2D4734',
+                          fontSize: '0.85rem',
+                          fontWeight: 700,
+                        }}
+                      >
+                        <User size={16} color="#2D4734" />
+                        <span>Abrir Mi Portal</span>
+                      </Link>
                       <Link
                         href="/panel?vista=pedidos"
                         onClick={() => setMenuClienteAbierto(false)}

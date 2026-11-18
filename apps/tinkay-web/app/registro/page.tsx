@@ -7,12 +7,20 @@ import { obtenerEstadoRegaloPrimeraCompraAction } from "@eco/comercio";
 export const metadata: Metadata = { title: "Crear cuenta — tinkay" };
 
 interface PageProps {
-  searchParams: Promise<{ destino?: string; next?: string; obsequio?: string }>;
+  searchParams: Promise<{
+    destino?: string;
+    next?: string;
+    obsequio?: string;
+    correo?: string;
+    nombre?: string;
+  }>;
 }
 
 export default async function PaginaRegistro({ searchParams }: PageProps) {
   const params = await searchParams;
   const destino = params.destino || params.next || "";
+  const correoInicial = (params.correo || "").trim();
+  const nombresIniciales = (params.nombre || "").trim();
   const vienePorObsequio =
     params.obsequio === "1" || destino.includes("obsequio=1");
 
@@ -66,7 +74,12 @@ export default async function PaginaRegistro({ searchParams }: PageProps) {
         </div>
       )}
 
-      <FormularioRegistro negocio="tinkay" destino={destino} />
+      <FormularioRegistro
+        negocio="tinkay"
+        destino={destino}
+        correoInicial={correoInicial}
+        nombresIniciales={nombresIniciales}
+      />
       <p className="enlace-auth">
         ¿Ya tienes cuenta?{" "}
         <Link

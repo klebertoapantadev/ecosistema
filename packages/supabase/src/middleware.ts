@@ -16,6 +16,23 @@ const LIMITE_SESION_MS = 3000;
 // navegador y las Server Actions empiezan a fallar con sesion invalida
 // aunque el usuario siga "logueado" en la UI.
 export async function actualizarSesion(request: NextRequest) {
+  // Si Supabase Auth redirige a la raíz (/?code=...) por fallback de Redirect URLs tras confirmar Google OAuth,
+  // reenviar de inmediato el código PKCE a /auth/callback para intercambiar la sesión y activar el rol invitado.
+  const codeOAuth = request.nextUrl.searchParams.get("code");
+  if (
+    codeOAuth &&
+    request.nextUrl.pathname !== "/auth/callback" &&
+    !request.nextUrl.pathname.startsWith("/api/")
+  ) {
+    const urlCallback = request.nextUrl.clone();
+    const nextPrevio = request.nextUrl.searchParams.get("next") || "/panel";
+    urlCallback.pathname = "/auth/callback";
+    urlCallback.search = "";
+    urlCallback.searchParams.set("code", codeOAuth);
+    urlCallback.searchParams.set("next", nextPrevio);
+    return NextResponse.redirect(urlCallback);
+  }
+
   let response = NextResponse.next({ request });
 
   const corte = new AbortController();

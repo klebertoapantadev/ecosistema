@@ -15,6 +15,8 @@ export interface PayloadNotificacionWebPush {
   title: string;
   body: string;
   url: string;
+  notId?: string;
+  negocio?: string;
   tag?: string;
   icon?: string;
   badge?: string;

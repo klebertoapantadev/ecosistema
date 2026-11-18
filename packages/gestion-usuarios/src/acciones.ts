@@ -78,7 +78,9 @@ export async function obtenerNivelMaximoGestor(negocio: string): Promise<number>
     if (rol === "ABOGADO" || rol === "TECNICO") return 50;
     if (rol === "OPERADOR" || rol === "AUXILIAR") return 30;
     if (rol === "VENTAS" || rol === "VENDEDOR") return 20;
-    if (rol === "DELIVERY") return 15;
+    if (rol === "TALLER" || rol === "FLORISTA") return 18;
+    if (rol === "DELIVERY" || rol === "REPARTIDOR") return 15;
+    if (rol === "DELIVERY_EXTERNO" || rol === "SUBCONTRATADO") return 12;
     return 10;
   } catch {
     return 10;
@@ -196,66 +198,93 @@ export async function asignarPerfil(usuarioId: string, perfil: string, negocio: 
 
     const rolNombreLegible = dbPerfil.per_nombre || perfilClaveUpper;
 
-    // En Tinkay Floristería (Ventas / Operador / Delivery / Administrador), aplicar rol de forma directa e inmediata
+    // En Tinkay Floristería (Ventas / Taller / Operador / Delivery / Administrador), aplicar rol vía RPC transaccional SECURITY DEFINER
     if (esTinkay) {
-      const { data: memsExistentes } = await adminClient
-        .schema("comun_seguridad")
-        .from("seg_membresia")
-        .select("mem_id, mem_negocio, mem_rol")
-        .eq("mem_usuario_id", usuarioId)
-        .in("mem_negocio", ["tinkay", "TINKAY", "tnk", "TNK"]);
+      const { data: rpcAsignacion, error: rpcAsigErr } = await (supabase
+        .schema("comun_seguridad") as any)
+        .rpc("seg_fn_asignar_perfil_negocio", {
+          p_usuario_id: usuarioId,
+          p_negocio: "tinkay",
+          p_perfil: perfilClaveUpper,
+        });
 
-      let memId = memsExistentes?.[0]?.mem_id;
-      if (!memId) {
-        const { data: nuevaMem } = await adminClient
-          .schema("comun_seguridad")
-          .from("seg_membresia")
-          .insert({
-            mem_usuario_id: usuarioId,
-            mem_negocio: "tinkay",
-            mem_rol: perfilClaveUpper,
-            mem_estado: "ACTIVO",
-          })
-          .select("mem_id")
-          .single();
-        memId = nuevaMem?.mem_id;
+      if (!rpcAsigErr && rpcAsignacion) {
+        if (!rpcAsignacion.ok) {
+          return { ok: false, error: rpcAsignacion.error || "No se pudo asignar el rol en la base de datos." };
+        }
       } else {
-        await adminClient
+        const { data: memsExistentes } = await adminClient
           .schema("comun_seguridad")
           .from("seg_membresia")
-          .update({
-            mem_rol: perfilClaveUpper,
-            mem_estado: "ACTIVO",
-            mem_actualizado_en: ahoraIso,
-          })
-          .eq("mem_id", memId);
-      }
+          .select("mem_id, mem_negocio, mem_rol")
+          .eq("mem_usuario_id", usuarioId)
+          .in("mem_negocio", ["tinkay", "TINKAY", "tnk", "TNK"]);
 
-      if (memId && dbPerfil.per_id) {
+        let memId = memsExistentes?.[0]?.mem_id;
+        if (!memId) {
+          const { data: nuevaMem, error: errInsMem } = await adminClient
+            .schema("comun_seguridad")
+            .from("seg_membresia")
+            .insert({
+              mem_usuario_id: usuarioId,
+              mem_negocio: "tinkay",
+              mem_rol: perfilClaveUpper,
+              mem_estado: "ACTIVO",
+            })
+            .select("mem_id")
+            .single();
+          if (errInsMem || !nuevaMem?.mem_id) {
+            return {
+              ok: false,
+              error: errInsMem?.message || "No se pudo guardar la membresía en PostgreSQL (verifica la migración SQL de roles).",
+            };
+          }
+          memId = nuevaMem.mem_id;
+        } else {
+          const { data: updMem, error: errUpdMem } = await adminClient
+            .schema("comun_seguridad")
+            .from("seg_membresia")
+            .update({
+              mem_rol: perfilClaveUpper,
+              mem_estado: "ACTIVO",
+              mem_actualizado_en: ahoraIso,
+            })
+            .eq("mem_id", memId)
+            .select("mem_id");
+          if (errUpdMem || !updMem || updMem.length === 0) {
+            return {
+              ok: false,
+              error: errUpdMem?.message || "Permiso RLS insuficiente para actualizar el rol. Ejecuta la migración SQL pendiente en Supabase.",
+            };
+          }
+        }
+
+        if (memId && dbPerfil.per_id) {
+          await adminClient
+            .schema("comun_seguridad")
+            .from("seg_membresia_perfil")
+            .upsert(
+              {
+                mpe_membresia_id: memId,
+                mpe_perfil_id: dbPerfil.per_id,
+              },
+              { onConflict: "mpe_membresia_id,mpe_perfil_id" }
+            );
+        }
+
+        const detTinkay = (usuTarget.usu_detalle_usuario || {}) as Record<string, any>;
         await adminClient
           .schema("comun_seguridad")
-          .from("seg_membresia_perfil")
-          .upsert(
-            {
-              mpe_membresia_id: memId,
-              mpe_perfil_id: dbPerfil.per_id,
+          .from("seg_usuario")
+          .update({
+            usu_detalle_usuario: {
+              ...detTinkay,
+              roles_explicitos_tinkay: true,
             },
-            { onConflict: "mpe_membresia_id,mpe_perfil_id" }
-          );
+            usu_actualizado_en: ahoraIso,
+          })
+          .eq("usu_id", usuarioId);
       }
-
-      const detTinkay = (usuTarget.usu_detalle_usuario || {}) as Record<string, any>;
-      await adminClient
-        .schema("comun_seguridad")
-        .from("seg_usuario")
-        .update({
-          usu_detalle_usuario: {
-            ...detTinkay,
-            roles_explicitos_tinkay: true,
-          },
-          usu_actualizado_en: ahoraIso,
-        })
-        .eq("usu_id", usuarioId);
 
       // Notificar por correo electrónico de Tinkay
       if (usuTarget.usu_correo && usuTarget.usu_correo.includes("@")) {
@@ -606,7 +635,26 @@ export async function quitarPerfil(usuarioId: string, perfil: string, negocio: s
     // Continuar
   }
 
-  // 1. Intentar primero con RPC
+  // 1. Intentar primero con RPC de negocio (sincroniza mem_rol + seg_membresia_perfil)
+  const { data: rpcQuitarNeg, error: errQuitarNeg } = await (supabase
+    .schema("comun_seguridad") as any)
+    .rpc("seg_fn_quitar_perfil_negocio", {
+      p_usuario_id: usuarioId,
+      p_negocio: negocioUpper.toLowerCase(),
+      p_perfil: perfilClaveUpper,
+    });
+
+  if (!errQuitarNeg && rpcQuitarNeg) {
+    if (!rpcQuitarNeg.ok) {
+      return { ok: false, error: rpcQuitarNeg.error || "No se pudo retirar el perfil." };
+    }
+    revalidatePath("/panel/usuarios");
+    revalidatePath("/panel/administrar");
+    revalidatePath("/panel");
+    return { ok: true, data: undefined };
+  }
+
+  // 1b. Fallback a RPC clásico seg_fn_quitar_perfil
   const { error } = await supabase
     .schema("comun_seguridad")
     .rpc("seg_fn_quitar_perfil", { p_usuario_id: usuarioId, p_negocio: negocioUpper, p_perfil: perfilClaveUpper });
@@ -1663,185 +1711,219 @@ export async function invitarUsuarioPorCorreoAction(entrada: {
   const correoAdmin = user?.email || "tinkay.uio@gmail.com";
   const ahoraIso = new Date().toISOString();
 
-  // 1. Asegurar que los perfiles operativos dedicados existan en seg_perfil
-  try {
-    await db
-      .schema("comun_seguridad")
-      .from("seg_perfil")
-      .upsert(
-        [
-          {
-            per_clave: "DELIVERY_EXTERNO",
-            per_nombre: "Delivery Subcontratado",
-            per_nivel: 12,
-            per_activo: true,
-            per_asignable: true,
-          },
-          {
-            per_clave: "DELIVERY",
-            per_nombre: "Delivery Interno",
-            per_nivel: 15,
-            per_activo: true,
-            per_asignable: true,
-          },
-          {
-            per_clave: "TALLER",
-            per_nombre: "Taller Floral",
-            per_nivel: 18,
-            per_activo: true,
-            per_asignable: true,
-          },
-          {
-            per_clave: "VENTAS",
-            per_nombre: "Ventas / Asesor Comercial",
-            per_nivel: 20,
-            per_activo: true,
-            per_asignable: true,
-          },
-        ],
-        { onConflict: "per_clave" }
-      );
-  } catch {
-    // Continuar
-  }
-
-  // 2. Verificar si el usuario ya existe en seg_usuario
-  const { data: usuarioExistente } = await db
-    .schema("comun_seguridad")
-    .from("seg_usuario")
-    .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_detalle_usuario")
-    .ilike("usu_correo", correoLimpio)
-    .maybeSingle();
-
+  // 1. Ejecutar RPC transaccional SECURITY DEFINER (garantiza persistencia real en PostgreSQL sin depender de service_role en Vercel)
+  let nuevaInvitacion: InvitacionEquipoPortal | null = null;
   let aplicadoInmediato = false;
 
-  if (usuarioExistente?.usu_id) {
-    const { data: dbPerfil } = await db
-      .schema("comun_seguridad")
-      .from("seg_perfil")
-      .select("per_id")
-      .eq("per_clave", rolUpper)
-      .maybeSingle();
+  const { data: rpcInv, error: rpcInvErr } = await (supabase
+    .schema("comun_seguridad") as any)
+    .rpc("seg_fn_invitar_miembro_equipo", {
+      p_negocio: negNorm,
+      p_correo: correoLimpio,
+      p_nombre: nombreLimpio || null,
+      p_rol: rolUpper,
+    });
 
-    const { data: mems } = await db
-      .schema("comun_seguridad")
-      .from("seg_membresia")
-      .select("mem_id")
-      .eq("mem_usuario_id", usuarioExistente.usu_id)
-      .in("mem_negocio", [negNorm, negNorm.toUpperCase(), "tnk", "TNK"]);
-
-    let memId = mems?.[0]?.mem_id;
-    if (!memId) {
-      const { data: nuevaMem } = await db
-        .schema("comun_seguridad")
-        .from("seg_membresia")
-        .insert({
-          mem_usuario_id: usuarioExistente.usu_id,
-          mem_negocio: negNorm,
-          mem_rol: rolUpper,
-          mem_estado: "ACTIVO",
-        })
-        .select("mem_id")
-        .single();
-      memId = nuevaMem?.mem_id;
-    } else {
-      await db
-        .schema("comun_seguridad")
-        .from("seg_membresia")
-        .update({
-          mem_rol: rolUpper,
-          mem_estado: "ACTIVO",
-          mem_actualizado_en: ahoraIso,
-        })
-        .eq("mem_id", memId);
+  if (!rpcInvErr && rpcInv) {
+    if (!rpcInv.ok || !rpcInv.invitacion) {
+      return {
+        ok: false,
+        error: rpcInv.error || "No se pudo guardar la invitación en la base de datos.",
+      };
     }
-
-    if (memId && dbPerfil?.per_id) {
+    nuevaInvitacion = rpcInv.invitacion as InvitacionEquipoPortal;
+    aplicadoInmediato = Boolean(rpcInv.aplicadoInmediato);
+  } else {
+    // Fallback con validación estricta de filas afectadas (Cero Supresión Silenciosa de Errores)
+    try {
       await db
         .schema("comun_seguridad")
-        .from("seg_membresia_perfil")
+        .from("seg_perfil")
         .upsert(
-          {
-            mpe_membresia_id: memId,
-            mpe_perfil_id: dbPerfil.per_id,
-          },
-          { onConflict: "mpe_membresia_id,mpe_perfil_id" }
+          [
+            {
+              per_clave: "DELIVERY_EXTERNO",
+              per_nombre: "Delivery Subcontratado",
+              per_nivel: 12,
+              per_activo: true,
+              per_asignable: true,
+            },
+            {
+              per_clave: "DELIVERY",
+              per_nombre: "Delivery Interno",
+              per_nivel: 15,
+              per_activo: true,
+              per_asignable: true,
+            },
+            {
+              per_clave: "TALLER",
+              per_nombre: "Taller Floral",
+              per_nivel: 18,
+              per_activo: true,
+              per_asignable: true,
+            },
+            {
+              per_clave: "VENTAS",
+              per_nombre: "Ventas / Asesor Comercial",
+              per_nivel: 20,
+              per_activo: true,
+              per_asignable: true,
+            },
+          ],
+          { onConflict: "per_clave" }
         );
+    } catch {
+      // Continuar
     }
 
-    const detUsr = (usuarioExistente.usu_detalle_usuario || {}) as Record<string, any>;
-    await db
+    const { data: usuarioExistente } = await db
       .schema("comun_seguridad")
       .from("seg_usuario")
-      .update({
-        usu_detalle_usuario: {
-          ...detUsr,
-          roles_explicitos_tinkay: true,
-        },
-        usu_actualizado_en: ahoraIso,
-      })
-      .eq("usu_id", usuarioExistente.usu_id);
+      .select("usu_id, usu_nombres, usu_apellidos, usu_correo, usu_detalle_usuario")
+      .ilike("usu_correo", correoLimpio)
+      .maybeSingle();
 
-    aplicadoInmediato = true;
-  }
+    if (usuarioExistente?.usu_id) {
+      const { data: mems } = await db
+        .schema("comun_seguridad")
+        .from("seg_membresia")
+        .select("mem_id")
+        .eq("mem_usuario_id", usuarioExistente.usu_id)
+        .in("mem_negocio", [negNorm, negNorm.toUpperCase(), "tnk", "TNK"]);
 
-  // 3. Guardar la invitación en comun_configuracion.cfg_negocio
-  const { data: cfgActual } = await db
-    .schema("comun_configuracion")
-    .from("cfg_negocio")
-    .select("cfg_id, cfg_detalle_configuracion")
-    .eq("cfg_negocio", negNorm)
-    .maybeSingle();
+      const memId = mems?.[0]?.mem_id;
+      if (memId) {
+        const { data: dbPerfil } = await db
+          .schema("comun_seguridad")
+          .from("seg_perfil")
+          .select("per_id")
+          .eq("per_clave", rolUpper)
+          .maybeSingle();
 
-  const detCfg = (cfgActual?.cfg_detalle_configuracion ?? {}) as Record<string, any>;
-  const prevInvitaciones: InvitacionEquipoPortal[] = Array.isArray(detCfg.invitaciones_equipo)
-    ? detCfg.invitaciones_equipo
-    : [];
+        const { data: memUpd, error: errMemUpd } = await db
+          .schema("comun_seguridad")
+          .from("seg_membresia")
+          .update({
+            mem_rol: rolUpper,
+            mem_estado: "ACTIVO",
+            mem_actualizado_en: ahoraIso,
+          })
+          .eq("mem_id", memId)
+          .select("mem_id");
 
-  const nuevaInvitacion: InvitacionEquipoPortal = {
-    id: `inv-${Date.now()}`,
-    correo: correoLimpio,
-    nombre:
-      nombreLimpio ||
-      (usuarioExistente
-        ? [usuarioExistente.usu_nombres, usuarioExistente.usu_apellidos].filter(Boolean).join(" ").trim()
-        : undefined),
-    rol: rolUpper,
-    estado: aplicadoInmediato ? "ACEPTADA" : "PENDIENTE",
-    invitadoPorCorreo: correoAdmin,
-    creadoEn: ahoraIso,
-    ...(aplicadoInmediato ? { aceptadoEn: ahoraIso } : {}),
-  };
+        if (!errMemUpd && Array.isArray(memUpd) && memUpd.length > 0) {
+          if (dbPerfil?.per_id) {
+            await db
+              .schema("comun_seguridad")
+              .from("seg_membresia_perfil")
+              .upsert(
+                {
+                  mpe_membresia_id: memId,
+                  mpe_perfil_id: dbPerfil.per_id,
+                },
+                { onConflict: "mpe_membresia_id,mpe_perfil_id" }
+              );
+          }
 
-  const invitacionesActualizadas = [
-    nuevaInvitacion,
-    ...prevInvitaciones.filter((i) => i.correo.toLowerCase() !== correoLimpio),
-  ].slice(0, 100);
+          const detUsr = (usuarioExistente.usu_detalle_usuario || {}) as Record<string, any>;
+          await db
+            .schema("comun_seguridad")
+            .from("seg_usuario")
+            .update({
+              usu_detalle_usuario: {
+                ...detUsr,
+                roles_explicitos_tinkay: true,
+              },
+              usu_actualizado_en: ahoraIso,
+            })
+            .eq("usu_id", usuarioExistente.usu_id);
 
-  if (cfgActual?.cfg_id) {
-    await db
+          aplicadoInmediato = true;
+        }
+      }
+    }
+
+    const { data: cfgActual, error: errCfgRead } = await db
       .schema("comun_configuracion")
       .from("cfg_negocio")
-      .update({
-        cfg_detalle_configuracion: {
-          ...detCfg,
-          invitaciones_equipo: invitacionesActualizadas,
-        },
-        cfg_actualizado_en: ahoraIso,
-      })
-      .eq("cfg_id", cfgActual.cfg_id);
-  } else {
-    await db
-      .schema("comun_configuracion")
-      .from("cfg_negocio")
-      .insert({
-        cfg_negocio: negNorm,
-        cfg_nombre_comercial: "Tinkay Floristería",
-        cfg_detalle_configuracion: {
-          ...detCfg,
-          invitaciones_equipo: invitacionesActualizadas,
-        },
-      });
+      .select("cfg_id, cfg_detalle_configuracion")
+      .eq("cfg_negocio", negNorm)
+      .maybeSingle();
+
+    if (errCfgRead) {
+      return { ok: false, error: `Error leyendo configuración del negocio: ${errCfgRead.message}` };
+    }
+
+    const detCfg = (cfgActual?.cfg_detalle_configuracion ?? {}) as Record<string, any>;
+    const prevInvitaciones: InvitacionEquipoPortal[] = Array.isArray(detCfg.invitaciones_equipo)
+      ? detCfg.invitaciones_equipo
+      : [];
+
+    nuevaInvitacion = {
+      id: `inv-${Date.now()}`,
+      correo: correoLimpio,
+      nombre:
+        nombreLimpio ||
+        (usuarioExistente
+          ? [usuarioExistente.usu_nombres, usuarioExistente.usu_apellidos].filter(Boolean).join(" ").trim()
+          : undefined),
+      rol: rolUpper,
+      estado: aplicadoInmediato ? "ACEPTADA" : "PENDIENTE",
+      invitadoPorCorreo: correoAdmin,
+      creadoEn: ahoraIso,
+      ...(aplicadoInmediato ? { aceptadoEn: ahoraIso } : {}),
+    };
+
+    const invitacionesActualizadas = [
+      nuevaInvitacion,
+      ...prevInvitaciones.filter((i) => i.correo.toLowerCase() !== correoLimpio),
+    ].slice(0, 100);
+
+    if (cfgActual?.cfg_id) {
+      const { data: filasCfg, error: errUpdCfg } = await db
+        .schema("comun_configuracion")
+        .from("cfg_negocio")
+        .update({
+          cfg_detalle_configuracion: {
+            ...detCfg,
+            invitaciones_equipo: invitacionesActualizadas,
+          },
+          cfg_actualizado_en: ahoraIso,
+        })
+        .eq("cfg_id", cfgActual.cfg_id)
+        .select("cfg_id");
+
+      if (errUpdCfg || !Array.isArray(filasCfg) || filasCfg.length === 0) {
+        return {
+          ok: false,
+          error:
+            errUpdCfg?.message ||
+            "PostgreSQL rechazó guardar la invitación por permisos RLS. Ejecuta en Supabase la migración 20261118000001_fix_invitaciones_equipo_y_sincronizacion_roles_tinkay.sql.",
+        };
+      }
+    } else {
+      const { data: filasIns, error: errInsCfg } = await db
+        .schema("comun_configuracion")
+        .from("cfg_negocio")
+        .insert({
+          cfg_negocio: negNorm,
+          cfg_nombre_comercial: "Tinkay Floristería",
+          cfg_detalle_configuracion: {
+            ...detCfg,
+            invitaciones_equipo: invitacionesActualizadas,
+          },
+        })
+        .select("cfg_id");
+
+      if (errInsCfg || !Array.isArray(filasIns) || filasIns.length === 0) {
+        return {
+          ok: false,
+          error:
+            errInsCfg?.message ||
+            "No se pudo persistir la invitación en la base de datos. Ejecuta en Supabase la migración 20261118000001_fix_invitaciones_equipo_y_sincronizacion_roles_tinkay.sql.",
+        };
+      }
+    }
   }
 
   // 4. Enviar correo de invitación con el rol y permisos asignados
@@ -1849,9 +1931,13 @@ export async function invitarUsuarioPorCorreoAction(entrada: {
   const permisosRol = PERMISOS_RESUMEN_ROL[rolUpper] || [];
   const urlBase =
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") || "https://tinkay-web.vercel.app";
+  const qsRegistro = new URLSearchParams({ correo: correoLimpio });
+  if (nuevaInvitacion.nombre) {
+    qsRegistro.set("nombre", nuevaInvitacion.nombre);
+  }
   const urlDestino = aplicadoInmediato
     ? `${urlBase}/panel`
-    : `${urlBase}/registro?correo=${encodeURIComponent(correoLimpio)}`;
+    : `${urlBase}/registro?${qsRegistro.toString()}`;
 
   try {
     const { enviarCorreo } = await import("@eco/notificaciones/enviar-correo");
@@ -1923,7 +2009,8 @@ export async function invitarUsuarioPorCorreoAction(entrada: {
 
 export async function eliminarInvitacionEquipoAction(
   invitacionId: string,
-  negocio: string = "tinkay"
+  negocio: string = "tinkay",
+  correoInvitacion?: string
 ): Promise<Resultado> {
   const negNorm = (negocio || "tinkay").trim().toLowerCase();
   const nivelGestor = await obtenerNivelMaximoGestor(negNorm);
@@ -1934,31 +2021,63 @@ export async function eliminarInvitacionEquipoAction(
   const supabase = await crearClienteServidor();
   const db: any = crearClienteAdmin() ?? supabase;
 
-  const { data: cfgActual } = await db
+  const { data: rpcDel, error: rpcDelErr } = await (supabase
+    .schema("comun_seguridad") as any)
+    .rpc("seg_fn_eliminar_invitacion_equipo", {
+      p_negocio: negNorm,
+      p_invitacion_id: invitacionId,
+      p_correo: correoInvitacion ? correoInvitacion.trim().toLowerCase() : null,
+    });
+
+  if (!rpcDelErr && rpcDel) {
+    if (!rpcDel.ok) {
+      return { ok: false, error: rpcDel.error || "No se pudo eliminar la invitación." };
+    }
+    revalidatePath("/panel/usuarios");
+    return { ok: true };
+  }
+
+  const { data: cfgActual, error: errRead } = await db
     .schema("comun_configuracion")
     .from("cfg_negocio")
     .select("cfg_id, cfg_detalle_configuracion")
     .eq("cfg_negocio", negNorm)
     .maybeSingle();
 
+  if (errRead) return { ok: false, error: errRead.message };
   if (!cfgActual?.cfg_id) return { ok: true };
 
   const detCfg = (cfgActual.cfg_detalle_configuracion ?? {}) as Record<string, any>;
   const prevInvitaciones: InvitacionEquipoPortal[] = Array.isArray(detCfg.invitaciones_equipo)
     ? detCfg.invitaciones_equipo
     : [];
+  const correoNorm = (correoInvitacion || "").trim().toLowerCase();
 
-  await db
+  const { data: filasUpd, error: errUpd } = await db
     .schema("comun_configuracion")
     .from("cfg_negocio")
     .update({
       cfg_detalle_configuracion: {
         ...detCfg,
-        invitaciones_equipo: prevInvitaciones.filter((i) => i.id !== invitacionId),
+        invitaciones_equipo: prevInvitaciones.filter(
+          (i) =>
+            i.id !== invitacionId &&
+            (!correoNorm || i.correo.toLowerCase() !== correoNorm)
+        ),
       },
       cfg_actualizado_en: new Date().toISOString(),
     })
-    .eq("cfg_id", cfgActual.cfg_id);
+    .eq("cfg_id", cfgActual.cfg_id)
+    .select("cfg_id");
+
+  if (errUpd || !Array.isArray(filasUpd) || filasUpd.length === 0) {
+    return {
+      ok: false,
+      error:
+        errUpd?.message ||
+        "No se pudo eliminar la invitación en PostgreSQL (permiso RLS denegado). Ejecuta la migración SQL pendiente en Supabase.",
+    };
+  }
 
   revalidatePath("/panel/usuarios");
   return { ok: true };
@@ -1966,7 +2085,9 @@ export async function eliminarInvitacionEquipoAction(
 
 /**
  * Sincroniza el rol del usuario autenticado al entrar al panel de Tinkay:
- * 1. Si existe una invitación pendiente para su correo en `cfg_negocio`, aplica el rol invitado.
+ * 1. Invoca el RPC `SECURITY DEFINER` `seg_fn_sincronizar_acceso_rol_tinkay`, que reclama de forma
+ *    transaccional cualquier invitación pendiente para su correo (sin depender de `service_role`),
+ *    actualiza `seg_membresia` + `seg_membresia_perfil` y marca la invitación como `ACEPTADA`.
  * 2. Si NO es propietario (`tinkay.uio@gmail.com` / `kleber.toapanta.ch@gmail.com`) y no tiene
  *    asignación explícita en Tinkay (`roles_explicitos_tinkay`), normaliza cualquier rol
  *    `SUPERADMIN` heredado de otro negocio a `CLIENTE`.
@@ -1992,6 +2113,26 @@ export async function sincronizarAccesoRolTinkayAction(): Promise<{
     const correo = (user.email || "").trim().toLowerCase();
     const esPropietarioTinkay =
       correo === "tinkay.uio@gmail.com" || correo === "kleber.toapanta.ch@gmail.com";
+
+    // Ejecutar primero el RPC transaccional SECURITY DEFINER en PostgreSQL
+    const { data: rpcSync, error: rpcSyncErr } = await (supabase
+      .schema("comun_seguridad") as any)
+      .rpc("seg_fn_sincronizar_acceso_rol_tinkay", {
+        p_negocio: "tinkay",
+        p_crear_cliente_si_no_existe: false,
+      });
+
+    if (!rpcSyncErr && rpcSync?.ok && rpcSync?.rolEfectivo) {
+      if (rpcSync.invitacionAplicada) {
+        try {
+          revalidatePath("/panel/usuarios");
+          revalidatePath("/panel");
+        } catch {
+          // Ignorar si se invoca durante render de Server Component
+        }
+      }
+      return { rolEfectivo: esPropietarioTinkay ? "SUPERADMIN" : rpcSync.rolEfectivo };
+    }
 
     if (esPropietarioTinkay) {
       return { rolEfectivo: "SUPERADMIN" };
