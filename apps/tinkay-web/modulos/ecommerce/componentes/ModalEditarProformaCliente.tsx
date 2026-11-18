@@ -1,4 +1,5 @@
 'use client';
+import { SelectConBuscador } from "@eco/comercio";
 
 import React, { useMemo, useState } from 'react';
 import {
@@ -576,7 +577,7 @@ export function ModalEditarProformaCliente({
             >
               <div>
                 <label style={estiloEtiqueta}>Tipo de evento</label>
-                <select
+                <SelectConBuscador
                   value={tipoEvento}
                   onChange={(e) => setTipoEvento(e.target.value)}
                   style={estiloCampo}
@@ -586,7 +587,7 @@ export function ModalEditarProformaCliente({
                       {t}
                     </option>
                   ))}
-                </select>
+                </SelectConBuscador>
               </div>
               <div>
                 <label style={estiloEtiqueta}>Fecha del evento</label>

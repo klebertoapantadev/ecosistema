@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useState, useEffect, useMemo } from "react";
 import {
@@ -595,7 +596,7 @@ export function TableroDisponibilidadOperativa({
               <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "5px" }}>
                 Selecciona tu Especialidad / Turno:
               </label>
-              <select
+              <SelectConBuscador
                 value={abogadoSeleccionadoId}
                 onChange={(e) => setAbogadoSeleccionadoId(e.target.value)}
                 style={{
@@ -614,7 +615,7 @@ export function TableroDisponibilidadOperativa({
                     {it.nombre} ({it.cantidad_disponible} hrs activas)
                   </option>
                 ))}
-              </select>
+              </SelectConBuscador>
             </div>
 
             <div>

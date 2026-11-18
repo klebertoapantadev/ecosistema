@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useEffect, useState } from "react";
 import {
@@ -1057,7 +1058,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
 
         {/* Filtro por Canal de Visibilidad */}
         <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-          <select
+          <SelectConBuscador
             value={canalSeleccionado}
             onChange={(e) => {
               setCanalSeleccionado(e.target.value);
@@ -1086,7 +1087,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 </option>
               );
             })}
-          </select>
+          </SelectConBuscador>
 
           {canalSeleccionado !== "todos" && modoVista === "admin" && (
             <button

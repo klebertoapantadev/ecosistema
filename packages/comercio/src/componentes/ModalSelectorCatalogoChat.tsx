@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useEffect, useMemo, useState } from "react";
 import {
@@ -728,7 +729,7 @@ export function ModalSelectorCatalogoChat({
                     >
                       Variación / Tamaño
                     </label>
-                    <select
+                    <SelectConBuscador
                       value={indiceVarianteSel}
                       onChange={(e) =>
                         setVariantePorProducto((prev) => ({
@@ -753,7 +754,7 @@ export function ModalSelectorCatalogoChat({
                           {Number(v.precio_total ?? v.var_precio ?? 0).toFixed(2)}
                         </option>
                       ))}
-                    </select>
+                    </SelectConBuscador>
                   </div>
                 )}
 

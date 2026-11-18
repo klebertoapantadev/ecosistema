@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useState, useRef, useEffect } from "react";
 import { Check, ShieldCheck, Camera, Trash2, Upload, Plus, X, Globe, Mail, FileText, ChevronDown } from "lucide-react";
@@ -446,7 +447,7 @@ export function FormularioPerfil({ inicial, negocio }: Props) {
         <div style={{ display: "flex", gap: "8px", alignItems: "center", width: "100%" }}>
           {/* Dropdown Compacto de Código de País (No se quiebra en móviles) */}
           <div style={{ position: "relative", width: "125px", flexShrink: 0 }}>
-            <select
+            <SelectConBuscador
               value={codigoPaisWhatsapp}
               onChange={(e) => setCodigoPaisWhatsapp(e.target.value)}
               aria-label="Seleccionar país de WhatsApp"
@@ -477,7 +478,7 @@ export function FormularioPerfil({ inicial, negocio }: Props) {
                   {p.iso} {p.codigo} — {p.nombre}
                 </option>
               ))}
-            </select>
+            </SelectConBuscador>
 
             {/* Flecha Desplegable a la Derecha */}
             <ChevronDown

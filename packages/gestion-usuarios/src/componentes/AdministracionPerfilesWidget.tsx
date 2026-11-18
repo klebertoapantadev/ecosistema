@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useState, useEffect, useRef } from "react";
 import {
@@ -1470,13 +1471,13 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
           <p style={{ fontSize: "0.8rem", color: "var(--panel-gris, #737373)", marginBottom: "12px" }}>
             Selecciona el rol con el que deseas navegar la plataforma para simular permisos y vistas:
           </p>
-          <select style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "2px solid var(--violeta, #5000BA)", fontSize: "0.88rem", fontWeight: 800, background: "#F5F3FF", color: "#4C1D95", cursor: "pointer" }}>
+          <SelectConBuscador style={{ width: "100%", padding: "10px 14px", borderRadius: "8px", border: "2px solid var(--violeta, #5000BA)", fontSize: "0.88rem", fontWeight: 800, background: "#F5F3FF", color: "#4C1D95", cursor: "pointer" }}>
             <option>Cliente (Jerarquía Base) - Nivel 1</option>
             <option>Operador / Auxiliar - Nivel 30</option>
             <option>Socio Abogado / Profesional - Nivel 50</option>
             <option>Administrador del Negocio - Nivel 80</option>
             <option>SuperAdmin de Plataforma - Nivel 100</option>
-          </select>
+          </SelectConBuscador>
         </div>
       );
 
@@ -3400,7 +3401,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 </label>
               </div>
 
-              <select
+              <SelectConBuscador
                 value={perfilSeleccionado}
                 onChange={e => setPerfilSeleccionado(e.target.value)}
                 style={{
@@ -3424,7 +3425,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                     </option>
                   );
                 })}
-              </select>
+              </SelectConBuscador>
             </div>
 
             <div style={{ flex: "2 1 240px", minWidth: "min(240px, 100%)" }}>
@@ -4647,7 +4648,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                       <span style={{ fontSize: "0.75rem", color: "#737373", fontWeight: 600 }}>Ordenar por:</span>
-                      <select
+                      <SelectConBuscador
                         value={criterioOrden}
                         onChange={(e) => setCriterioOrden(e.target.value as any)}
                         style={{
@@ -4665,7 +4666,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                         <option value="fecha">Fecha de Registro</option>
                         <option value="nombre">Nombre</option>
                         <option value="directorio">Directorio Real</option>
-                      </select>
+                      </SelectConBuscador>
                     </div>
                     <button
                       type="button"
@@ -4854,7 +4855,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                               );
                             })()}
 
-                            <select
+                            <SelectConBuscador
                               defaultValue=""
                               onChange={(e) => {
                                 if (e.target.value) {
@@ -4880,7 +4881,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                                   {p.nombre}
                                 </option>
                               ))}
-                            </select>
+                            </SelectConBuscador>
                           </div>
                         </div>
                       );
@@ -5438,7 +5439,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
               </div>
 
               <div style={{ minWidth: "220px" }}>
-                <select
+                <SelectConBuscador
                   value={filtroPerfilReporte}
                   onChange={e => setFiltroPerfilReporte(e.target.value)}
                   style={{
@@ -5459,7 +5460,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                       {p.nombre} (Nivel {p.nivel})
                     </option>
                   ))}
-                </select>
+                </SelectConBuscador>
               </div>
 
               <button
@@ -5904,7 +5905,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
 
             <div style={{ marginBottom: "12px" }}>
               <label style={{ fontSize: "0.8rem", fontWeight: 700, display: "block", marginBottom: "4px" }}>Panel Contenedor:</label>
-              <select
+              <SelectConBuscador
                 value={nuevoWidget.panelId}
                 onChange={e => setNuevoWidget({ ...nuevoWidget, panelId: e.target.value })}
                 style={{ width: "100%", padding: "8px 12px", borderRadius: "6px", border: "1px solid var(--panel-linea, #E4E4E4)" }}
@@ -5912,7 +5913,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 {panelesSidebar.map(p => (
                   <option key={p.id} value={p.id}>{p.nombre} ({p.ruta})</option>
                 ))}
-              </select>
+              </SelectConBuscador>
             </div>
 
             {/* SELECTOR DE PERFILES AUTORIZADOS CON COLORES */}
@@ -6329,7 +6330,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                 <label style={{ fontSize: "0.82rem", fontWeight: 800, color: "#111111", display: "block", marginBottom: "6px" }}>
                   Seleccionar Panel Destino
                 </label>
-                <select
+                <SelectConBuscador
                   value={panelDestinoId}
                   onChange={(e) => setPanelDestinoId(e.target.value)}
                   required
@@ -6350,7 +6351,7 @@ export function AdministracionPerfilesWidget({ esAdmin, negocio }: Props) {
                         {p.nombre} ({p.ruta})
                       </option>
                     ))}
-                </select>
+                </SelectConBuscador>
               </div>
 
               {/* Botones de Acción */}

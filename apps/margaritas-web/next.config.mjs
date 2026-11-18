@@ -27,7 +27,7 @@ const nextConfig = {
       bodySizeLimit: "6mb",
     },
   },
-  transpilePackages: ["@eco/supabase", "@eco/identidad", "@eco/configuracion-negocio", "@eco/gestion-usuarios", "@eco/primitivas"],
+  transpilePackages: ["@eco/datagrid", "@eco/supabase", "@eco/identidad", "@eco/configuracion-negocio", "@eco/gestion-usuarios", "@eco/primitivas"],
   env: {
     NEXT_PUBLIC_COMPILADO_EN: compiladoEn,
     ...(commit ? { NEXT_PUBLIC_COMMIT: commit } : {}),

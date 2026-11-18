@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useState, useEffect, useMemo } from "react";
 import {
@@ -2251,7 +2252,7 @@ export function ModalEditarProducto({
                       </button>
                     </div>
                   </div>
-                  <select
+                  <SelectConBuscador
                     value={categoriaId}
                     onChange={(e) => setCategoriaId(e.target.value)}
                     style={{
@@ -2269,7 +2270,7 @@ export function ModalEditarProducto({
                         {c.ctg_nombre}
                       </option>
                     ))}
-                  </select>
+                  </SelectConBuscador>
                 </div>
 
                 <div>
@@ -2327,7 +2328,7 @@ export function ModalEditarProducto({
                       </button>
                     </div>
                   </div>
-                  <select
+                  <SelectConBuscador
                     value={tipo}
                     onChange={(e) => {
                       const nextTipo = e.target.value;
@@ -2365,7 +2366,7 @@ export function ModalEditarProducto({
                         {op.tof_nombre}
                       </option>
                     ))}
-                  </select>
+                  </SelectConBuscador>
                 </div>
               </div>
 
@@ -4735,7 +4736,7 @@ export function ModalEditarProducto({
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
                         Tarifa IVA SRI
                       </label>
-                      <select
+                      <SelectConBuscador
                         value={varianteActual.var_tarifa_iva_porcentaje ?? 15}
                         onChange={(e) => actualizarVarianteActual("var_tarifa_iva_porcentaje", e.target.value)}
                         style={{
@@ -4750,7 +4751,7 @@ export function ModalEditarProducto({
                       >
                         <option value={15}>IVA 15%</option>
                         <option value={0}>IVA 0%</option>
-                      </select>
+                      </SelectConBuscador>
                     </div>
 
                     <div>

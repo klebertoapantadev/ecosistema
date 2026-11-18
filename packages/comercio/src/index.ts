@@ -1,4 +1,6 @@
 export * from "./acciones";
+export { SelectConBuscador } from "@eco/datagrid";
+export type { SelectConBuscadorProps, OpcionSelectBuscador } from "@eco/datagrid";
 export * from "./canales";
 export * from "./componentes/VitrinaComercialVisual";
 export * from "./componentes/ConsolaGestionCatalogo";

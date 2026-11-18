@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useState, useEffect, useRef } from "react";
 import {
@@ -1324,7 +1325,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
             </div>
 
             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              <select
+              <SelectConBuscador
                 value={filtroNegocioAudit}
                 onChange={(e) => setFiltroNegocioAudit(e.target.value)}
                 style={{
@@ -1341,7 +1342,7 @@ export function GestionTerminosConsentimientosWidget({ negocio = "tranqi", onGua
                 <option value="FASTF">FastFix Home (FASTF)</option>
                 <option value="TINKA">Tinkay (TINKA)</option>
                 <option value="MARGA">Margaritas (MARGA)</option>
-              </select>
+              </SelectConBuscador>
 
               <button
                 type="button"

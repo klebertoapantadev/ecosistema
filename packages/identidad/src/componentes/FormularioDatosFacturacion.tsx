@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useState, useEffect } from "react";
 import { Check, Receipt, UserCheck, FileText, MapPin, Mail, Phone, ShieldCheck } from "lucide-react";
@@ -198,7 +199,7 @@ export function FormularioDatosFacturacion({
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px" }}>
         <label>
           Tipo de Documento
-          <select
+          <SelectConBuscador
             value={tipoIdentificacion}
             onChange={(e) => setTipoIdentificacion(e.target.value)}
             style={{ width: "100%" }}
@@ -206,7 +207,7 @@ export function FormularioDatosFacturacion({
             <option value="cedula">Cédula de Identidad</option>
             <option value="ruc">RUC (Registro Único de Contribuyentes)</option>
             <option value="pasaporte">Pasaporte / Doc. Internacional</option>
-          </select>
+          </SelectConBuscador>
         </label>
 
         <label>

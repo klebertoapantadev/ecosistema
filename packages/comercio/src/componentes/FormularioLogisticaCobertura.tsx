@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useEffect, useState, useTransition } from "react";
 import {
@@ -1008,7 +1009,7 @@ export function FormularioLogisticaCobertura({
             >
               <div style={{ flex: "1 1 280px" }}>
                 <label style={estiloLabel}>Seleccionar Área a Editar</label>
-                <select
+                <SelectConBuscador
                   value={zonaSeleccionada.id}
                   onChange={(e) => seleccionarZonaDropdown(e.target.value)}
                   style={{
@@ -1024,7 +1025,7 @@ export function FormularioLogisticaCobertura({
                       {iconoTextoModo(z)} {z.nombre} — {resumirTarifaZona(z, form.tarifaPorKm)}
                     </option>
                   ))}
-                </select>
+                </SelectConBuscador>
               </div>
 
               <button
@@ -1216,7 +1217,7 @@ export function FormularioLogisticaCobertura({
 
               <div>
                 <label style={estiloLabel}>Modalidad de Cobro</label>
-                <select
+                <SelectConBuscador
                   value={zonaSeleccionada.modoCobro}
                   onChange={(e) =>
                     actualizarZona(zonaSeleccionada.id, {
@@ -1228,7 +1229,7 @@ export function FormularioLogisticaCobertura({
                   <option value="GRATIS">🟢 Envío Gratis ($0)</option>
                   <option value="TARIFA_FIJA">🏷️ Tarifa Fija Zona</option>
                   <option value="POR_KM">📏 Cálculo por Km</option>
-                </select>
+                </SelectConBuscador>
               </div>
 
               <div>

@@ -55,7 +55,7 @@
 .campo-check a { color: var(--eco-acento); font-weight: 700; }
 .etiqueta-campo { display: flex; flex-direction: column; gap: 6px; font-size: 0.82rem; font-weight: 700; }
 .campo-telefono { display: flex; gap: 8px; }
-.campo-telefono select { flex: none; width: 40%; padding: 12px 8px; border-radius: 10px; border: 1.5px solid var(--eco-borde); font-family: inherit; font-size: 0.85rem; }
+.campo-telefono select, .campo-telefono .eco-select-buscador { flex: none; width: 40%; padding: 12px 8px; border-radius: 10px; border: 1.5px solid var(--eco-borde); font-family: inherit; font-size: 0.85rem; }
 .campo-telefono input { flex: 1; min-width: 0; }
 
 .error-auth { color: var(--eco-peligro); font-size: 0.85rem; text-align: left; }
@@ -179,7 +179,7 @@
 .tabla-panel { width: 100%; min-width: 620px; border-collapse: collapse; background: var(--eco-blanco); border-radius: 12px; }
 .tabla-panel th, .tabla-panel td { padding: 12px 14px; text-align: left; font-size: 0.88rem; border-bottom: 1px solid var(--eco-borde); }
 .tabla-panel th { background: #eef2ff; font-weight: 700; }
-.tabla-panel select { padding: 6px 8px; border-radius: 6px; border: 1px solid var(--eco-borde); font-family: inherit; }
+.tabla-panel select, .tabla-panel .eco-select-buscador { padding: 6px 8px; border-radius: 6px; border: 1px solid var(--eco-borde); font-family: inherit; }
 
 .perfiles-usuario { display: flex; flex-wrap: wrap; gap: 6px; }
 .perfil-casilla {

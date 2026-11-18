@@ -30,7 +30,7 @@ const nextConfig = {
       bodySizeLimit: "6mb",
     },
   },
-  transpilePackages: ["@eco/agentes-ia", "@eco/supabase", "@eco/identidad", "@eco/configuracion-negocio", "@eco/gestion-usuarios", "@eco/primitivas"],
+  transpilePackages: ["@eco/agentes-ia", "@eco/datagrid", "@eco/supabase", "@eco/identidad", "@eco/configuracion-negocio", "@eco/gestion-usuarios", "@eco/primitivas"],
   // Monorepo pnpm: sin esto, el file tracing del build serverless no ve el
   // node_modules hoisted en la raiz del workspace y el deploy pierde
   // dependencias en runtime aunque el build local funcione.

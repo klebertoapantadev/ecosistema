@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -258,7 +259,7 @@ export function FormularioRegistro({
             Número de WhatsApp
           </span>
           <div style={{ display: "flex", gap: "8px", alignItems: "center", width: "100%" }}>
-            <select
+            <SelectConBuscador
               value={paisWhatsapp}
               aria-label="Código de país de WhatsApp"
               onChange={(e) => {
@@ -283,7 +284,7 @@ export function FormularioRegistro({
                   {p.prefijo} {p.codigo}
                 </option>
               ))}
-            </select>
+            </SelectConBuscador>
             <input
               value={numeroWhatsapp}
               onChange={(e) => alCambiarWhatsapp(e.target.value)}

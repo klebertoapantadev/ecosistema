@@ -1,4 +1,5 @@
 'use client';
+import { SelectConBuscador } from "@eco/comercio";
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -828,7 +829,7 @@ export function DrawerProformaEvento() {
 
                 <div className="grid-form-responsive-2col">
                   <div style={{ gridColumn: '1 / -1' }}>
-                    <select
+                    <SelectConBuscador
                       value={datosEventoProforma.tipoEvento}
                       onChange={(e) => actualizarDatosEventoProforma({ tipoEvento: e.target.value })}
                       style={inputEstilo}
@@ -838,7 +839,7 @@ export function DrawerProformaEvento() {
                           {t}
                         </option>
                       ))}
-                    </select>
+                    </SelectConBuscador>
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: '0.73rem', color: '#57534E', marginBottom: '3px' }}>
@@ -1010,7 +1011,7 @@ export function DrawerProformaEvento() {
                     Número de WhatsApp (opcional)
                   </label>
                   <div style={{ display: 'flex', gap: '6px' }}>
-                    <select
+                    <SelectConBuscador
                       value={codigoPais}
                       onChange={(e) => setCodigoPais(e.target.value)}
                       aria-label="País de WhatsApp"
@@ -1026,7 +1027,7 @@ export function DrawerProformaEvento() {
                           {p.codigo} ({p.prefijo})
                         </option>
                       ))}
-                    </select>
+                    </SelectConBuscador>
                     <input
                       type="tel"
                       placeholder="99 123 4567 (si lo dejas vacío se envía a tu correo)"

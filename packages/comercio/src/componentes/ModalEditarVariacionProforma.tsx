@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useMemo, useState } from "react";
 import { CheckCircle2, FilePlus2, Loader2, Mail, Plus, Trash2, X } from "lucide-react";
@@ -490,7 +491,7 @@ export function ModalEditarVariacionProforma({
                         title="Precio unitario PVP (USD)"
                         style={{ ...inputEstilo, width: "92px", flex: "1 1 84px", minWidth: "74px" }}
                       />
-                      <select
+                      <SelectConBuscador
                         value={lin.tarifaIva}
                         onChange={(e) =>
                           actualizarLinea(lin.idLocal, { tarifaIva: Number(e.target.value) })
@@ -500,7 +501,7 @@ export function ModalEditarVariacionProforma({
                       >
                         <option value={0}>IVA 0%</option>
                         <option value={15}>IVA 15%</option>
-                      </select>
+                      </SelectConBuscador>
                       <button
                         type="button"
                         onClick={() => eliminarLinea(lin.idLocal)}

@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useState, useEffect, useRef } from "react";
 import {
@@ -396,7 +397,7 @@ export function ModalGaleriaMedios({
               </div>
 
               {/* Filtro Carpeta */}
-              <select
+              <SelectConBuscador
                 value={filtroCarpeta}
                 onChange={(e) => setFiltroCarpeta(e.target.value)}
                 style={{
@@ -414,7 +415,7 @@ export function ModalGaleriaMedios({
                 <option value="variantes">Variantes / Tamaños</option>
                 <option value="galeria">Galería Adicional</option>
                 <option value="general">General</option>
-              </select>
+              </SelectConBuscador>
 
               {/* Botón Refrescar */}
               <button

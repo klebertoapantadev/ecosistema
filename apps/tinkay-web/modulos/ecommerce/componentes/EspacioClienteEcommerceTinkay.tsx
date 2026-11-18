@@ -1,4 +1,5 @@
 'use client';
+import { SelectConBuscador } from "@eco/comercio";
 
 import React, { Suspense, useMemo, useState, useTransition } from 'react';
 import Link from 'next/link';
@@ -2003,7 +2004,7 @@ function ContenidoEspacioCliente({
                     >
                       Franja horaria
                     </label>
-                    <select
+                    <SelectConBuscador
                       value={entregaUnificada.franjaHoraria}
                       onChange={(e) =>
                         actualizarEntregaUnificada({
@@ -2025,7 +2026,7 @@ function ContenidoEspacioCliente({
                       <option value="hora_exacta">
                         Hora Exacta (+${(configLogistica.recargoHoraExacta ?? 10).toFixed(2)})
                       </option>
-                    </select>
+                    </SelectConBuscador>
                   </div>
                 </div>
 

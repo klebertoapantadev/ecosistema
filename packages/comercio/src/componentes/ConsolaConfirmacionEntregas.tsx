@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
@@ -2079,7 +2080,7 @@ export function ConsolaConfirmacionEntregas({
               >
                 Seleccionar Pedido Pendiente de Entrega ({tablero.pedidosPendientesTienda.length})
               </label>
-              <select
+              <SelectConBuscador
                 value={pedidoSeleccionadoId}
                 onChange={(e) => handleSeleccionarPedidoTienda(e.target.value)}
                 style={{
@@ -2102,7 +2103,7 @@ export function ConsolaConfirmacionEntregas({
                     {p.destinatarioNombre} — {p.resumenItems}
                   </option>
                 ))}
-              </select>
+              </SelectConBuscador>
 
               {pedidoTiendaSeleccionadoObj?.enlaceMapa && (
                 <div style={{ marginTop: "8px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -2756,7 +2757,7 @@ export function ConsolaConfirmacionEntregas({
                 gap: "10px",
               }}
             >
-              <select
+              <SelectConBuscador
                 value={otNuevaSala}
                 onChange={(e) => setOtNuevaSala(e.target.value)}
                 aria-label="Sala de servicio"
@@ -2774,9 +2775,9 @@ export function ConsolaConfirmacionEntregas({
                     {s} *
                   </option>
                 ))}
-              </select>
+              </SelectConBuscador>
 
-              <select
+              <SelectConBuscador
                 value={otNuevaOpcionServicio}
                 onChange={(e) =>
                   setOtNuevaOpcionServicio(
@@ -2800,7 +2801,7 @@ export function ConsolaConfirmacionEntregas({
                   </option>
                 ))}
                 <option value="OTROS">Otros (editable)</option>
-              </select>
+              </SelectConBuscador>
 
               {otNuevaOpcionServicio === "OTROS" && (
                 <input
@@ -3360,7 +3361,7 @@ export function ConsolaConfirmacionEntregas({
               >
                 Sala del Servicio
               </label>
-              <select
+              <SelectConBuscador
                 value={entregaEditando.salaServicio ?? ""}
                 onChange={(e) =>
                   setEntregaEditando((prev) =>
@@ -3381,7 +3382,7 @@ export function ConsolaConfirmacionEntregas({
                     {s}
                   </option>
                 ))}
-              </select>
+              </SelectConBuscador>
             </div>
 
             <div>

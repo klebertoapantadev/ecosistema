@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import { useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -284,7 +285,7 @@ export function FormularioInvitacionEquipo({
           >
             Rol en el Portal *
           </label>
-          <select
+          <SelectConBuscador
             value={rol}
             onChange={(e) => setRol(e.target.value as RolEquipoPortal)}
             style={{
@@ -304,7 +305,7 @@ export function FormularioInvitacionEquipo({
                 {op.etiqueta}
               </option>
             ))}
-          </select>
+          </SelectConBuscador>
         </div>
 
         <div>

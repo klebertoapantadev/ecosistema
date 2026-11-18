@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/comercio";
 
 import React, { useState, useEffect, useTransition } from "react";
 import { KeyRound, Plus, Copy, Check, AlertTriangle, ShieldCheck, Trash2, RefreshCw, Terminal } from "lucide-react";
@@ -411,7 +412,7 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
                 <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#374151", marginBottom: "6px" }}>
                   Vigencia / Caducidad:
                 </label>
-                <select
+                <SelectConBuscador
                   value={expiracionDias}
                   onChange={(e) => setExpiracionDias(Number(e.target.value))}
                   style={{
@@ -427,7 +428,7 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
                   <option value={30}>30 días</option>
                   <option value={90}>90 días</option>
                   <option value={365}>1 año (365 días)</option>
-                </select>
+                </SelectConBuscador>
               </div>
 
               <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "12px" }}>

@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useState, useEffect, useMemo } from "react";
 import {
@@ -215,7 +216,7 @@ export function ComplianceScoreEmpresarial({ negocio = "tranqi", convenioId: pro
         {convenios.length > 1 && (
           <div className="flex items-center gap-2">
             <Building2 className="w-4 h-4 text-zinc-400" />
-            <select
+            <SelectConBuscador
               value={convenioActivoId}
               onChange={(e) => setConvenioActivoId(e.target.value)}
               className="text-xs font-semibold px-3 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -225,7 +226,7 @@ export function ComplianceScoreEmpresarial({ negocio = "tranqi", convenioId: pro
                   {c.cve_empresa_nombre} ({c.cve_empresa_ruc || "Sin RUC"})
                 </option>
               ))}
-            </select>
+            </SelectConBuscador>
           </div>
         )}
       </div>
@@ -343,7 +344,7 @@ export function ComplianceScoreEmpresarial({ negocio = "tranqi", convenioId: pro
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-          <select
+          <SelectConBuscador
             value={filtroEstado}
             onChange={(e) => setFiltroEstado(e.target.value)}
             className="text-xs px-3 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 font-medium"
@@ -353,9 +354,9 @@ export function ComplianceScoreEmpresarial({ negocio = "tranqi", convenioId: pro
             <option value="POR_VENCER">🟡 Por Vencer</option>
             <option value="VENCIDO">🔴 Vencidos</option>
             <option value="PENDIENTE">⚪ Pendientes</option>
-          </select>
+          </SelectConBuscador>
 
-          <select
+          <SelectConBuscador
             value={filtroCriticidad}
             onChange={(e) => setFiltroCriticidad(e.target.value)}
             className="text-xs px-3 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 font-medium"
@@ -364,7 +365,7 @@ export function ComplianceScoreEmpresarial({ negocio = "tranqi", convenioId: pro
             <option value="CRITICA">Crítica (Bloqueante)</option>
             <option value="ALTA">Alta</option>
             <option value="MEDIA">Media</option>
-          </select>
+          </SelectConBuscador>
 
           <button
             onClick={() => {
@@ -540,7 +541,7 @@ export function ComplianceScoreEmpresarial({ negocio = "tranqi", convenioId: pro
                   <label className="block font-semibold mb-1 text-zinc-700 dark:text-zinc-300">
                     Criticidad
                   </label>
-                  <select
+                  <SelectConBuscador
                     value={itemEnEdicion.cei_criticidad || "ALTA"}
                     onChange={(e) =>
                       setItemEnEdicion({
@@ -553,7 +554,7 @@ export function ComplianceScoreEmpresarial({ negocio = "tranqi", convenioId: pro
                     <option value="CRITICA">🔴 Crítica</option>
                     <option value="ALTA">🟠 Alta</option>
                     <option value="MEDIA">🔵 Media</option>
-                  </select>
+                  </SelectConBuscador>
                 </div>
               </div>
 

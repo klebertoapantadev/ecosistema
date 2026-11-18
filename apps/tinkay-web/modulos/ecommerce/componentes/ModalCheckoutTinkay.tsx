@@ -1,4 +1,5 @@
 'use client';
+import { SelectConBuscador } from "@eco/comercio";
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
@@ -1399,7 +1400,7 @@ export function ModalCheckoutTinkay() {
                           <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, color: '#475569', marginBottom: '3px' }}>
                             Rango de Horario
                           </label>
-                          <select
+                          <SelectConBuscador
                             value={entregaUnificada.franjaHoraria}
                             onChange={(e) =>
                               actualizarEntregaUnificada({
@@ -1411,7 +1412,7 @@ export function ModalCheckoutTinkay() {
                             <option value="A) 09:00 - 13:00">A) 09:00 - 13:00</option>
                             <option value="B) 13:00 - 17:00">B) 13:00 - 17:00</option>
                             <option value="C) 17:00 - 20:00">C) 17:00 - 20:00</option>
-                          </select>
+                          </SelectConBuscador>
                         </div>
                       </div>
                     ) : (
@@ -1535,7 +1536,7 @@ export function ModalCheckoutTinkay() {
                                 }
                                 className="input-checkout"
                               />
-                              <select
+                              <SelectConBuscador
                                 value={entregaUnificada.franjaHoraria}
                                 onChange={(e) =>
                                   actualizarEntregaUnificada({
@@ -1547,7 +1548,7 @@ export function ModalCheckoutTinkay() {
                                 <option value="A) 09:00 - 13:00">A) 09:00 - 13:00</option>
                                 <option value="B) 13:00 - 17:00">B) 13:00 - 17:00</option>
                                 <option value="C) 17:00 - 20:00">C) 17:00 - 20:00</option>
-                              </select>
+                              </SelectConBuscador>
                             </div>
                           </div>
                         )}
@@ -1613,7 +1614,7 @@ export function ModalCheckoutTinkay() {
                         Número de WhatsApp {requiereWhatsappCoordinacion ? '*' : '(opcional)'}
                       </label>
                       <div style={{ display: 'grid', gridTemplateColumns: '115px 1fr', gap: '8px' }}>
-                        <select
+                        <SelectConBuscador
                           value={paisWhatsapp}
                           onChange={(e) => setPaisWhatsapp(e.target.value)}
                           className="input-checkout"
@@ -1624,7 +1625,7 @@ export function ModalCheckoutTinkay() {
                               {p.codigo} ({p.prefijo})
                             </option>
                           ))}
-                        </select>
+                        </SelectConBuscador>
                         <input
                           type="tel"
                           placeholder="99 123 4567"

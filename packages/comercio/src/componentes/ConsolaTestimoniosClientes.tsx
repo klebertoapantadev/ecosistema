@@ -1,4 +1,5 @@
 'use client';
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -810,7 +811,7 @@ export function ConsolaTestimoniosClientes({
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
                   Ocasión o Tipo de Entrega
                 </label>
-                <select
+                <SelectConBuscador
                   value={testimonioEnEdicion.tes_ocasion}
                   onChange={(e) =>
                     setTestimonioEnEdicion((prev) => (prev ? { ...prev, tes_ocasion: e.target.value } : null))
@@ -830,7 +831,7 @@ export function ConsolaTestimoniosClientes({
                       {oc}
                     </option>
                   ))}
-                </select>
+                </SelectConBuscador>
               </div>
 
               {/* Comentario / Frase del Chat */}

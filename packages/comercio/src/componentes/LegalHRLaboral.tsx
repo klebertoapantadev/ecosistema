@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useState, useEffect, useMemo } from "react";
 import {
@@ -202,7 +203,7 @@ export function LegalHRLaboral({ negocio = "tranqi", convenioId: propConvenioId 
         {convenios.length > 1 && (
           <div className="flex items-center gap-2">
             <Building2 className="w-4 h-4 text-zinc-400" />
-            <select
+            <SelectConBuscador
               value={convenioActivoId}
               onChange={(e) => setConvenioActivoId(e.target.value)}
               className="text-xs font-semibold px-3 py-2 rounded-xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-800 dark:text-zinc-200"
@@ -212,7 +213,7 @@ export function LegalHRLaboral({ negocio = "tranqi", convenioId: propConvenioId 
                   {c.cve_empresa_nombre}
                 </option>
               ))}
-            </select>
+            </SelectConBuscador>
           </div>
         )}
       </div>
@@ -289,7 +290,7 @@ export function LegalHRLaboral({ negocio = "tranqi", convenioId: propConvenioId 
         </div>
 
         <div className="flex items-center gap-2">
-          <select
+          <SelectConBuscador
             value={filtroEstado}
             onChange={(e) => setFiltroEstado(e.target.value)}
             className="text-xs px-3 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 font-medium"
@@ -298,7 +299,7 @@ export function LegalHRLaboral({ negocio = "tranqi", convenioId: propConvenioId 
             <option value="ACTIVO">Activos</option>
             <option value="EN_PROCESO_SALIDA">En Salida</option>
             <option value="FINIQUITADO">Finiquitados</option>
-          </select>
+          </SelectConBuscador>
 
           <button
             onClick={() => setModalFiniquitoAbierto(true)}
@@ -491,7 +492,7 @@ export function LegalHRLaboral({ negocio = "tranqi", convenioId: propConvenioId 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold mb-1">Tipo de Contrato (Código Trabajo)</label>
-                  <select
+                  <SelectConBuscador
                     value={empleadoSeleccionado.elab_tipo_contrato || "INDEFINIDO"}
                     onChange={(e) =>
                       setEmpleadoSeleccionado({
@@ -506,7 +507,7 @@ export function LegalHRLaboral({ negocio = "tranqi", convenioId: propConvenioId 
                     <option value="TELETRABAJO">Teletrabajo / Remoto</option>
                     <option value="EMERGENTE">Especial Emergente</option>
                     <option value="SERVICIOS">Servicios Profesionales / Factura</option>
-                  </select>
+                  </SelectConBuscador>
                 </div>
                 <div>
                   <label className="block font-semibold mb-1">Fecha de Ingreso</label>
@@ -617,7 +618,7 @@ export function LegalHRLaboral({ negocio = "tranqi", convenioId: propConvenioId 
 
               <div>
                 <label className="block font-semibold mb-1">Causal de Desvinculación</label>
-                <select
+                <SelectConBuscador
                   value={calcCausalSalida}
                   onChange={(e) => setCalcCausalSalida(e.target.value as any)}
                   className="w-full p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 font-semibold"
@@ -625,7 +626,7 @@ export function LegalHRLaboral({ negocio = "tranqi", convenioId: propConvenioId 
                   <option value="MUTUO_ACUERDO">Acuerdo de las Partes / Renuncia Voluntaria</option>
                   <option value="DESAHUCIO">Desahucio (Art. 184 Código Trabajo)</option>
                   <option value="DESPIDO">Despido Intempestivo (Art. 188 Código Trabajo)</option>
-                </select>
+                </SelectConBuscador>
               </div>
 
               <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700 space-y-2">

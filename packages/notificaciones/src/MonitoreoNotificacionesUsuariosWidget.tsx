@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useState, useEffect, useMemo } from "react";
 import {
@@ -478,7 +479,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
         {/* Selector de Usuario */}
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <User size={15} color="#64748b" />
-          <select
+          <SelectConBuscador
             value={filtroUsuario}
             onChange={e => setFiltroUsuario(e.target.value)}
             style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.84rem", fontWeight: 600, background: "#ffffff", color: "#334155", maxWidth: "220px" }}
@@ -489,13 +490,13 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
                 {u.nombre} ({u.correo})
               </option>
             ))}
-          </select>
+          </SelectConBuscador>
         </div>
 
         {/* Selector de Estado */}
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <Filter size={15} color="#64748b" />
-          <select
+          <SelectConBuscador
             value={filtroEstado}
             onChange={e => setFiltroEstado(e.target.value as "TODOS" | "PENDIENTE" | "LEIDA" | "POSPUESTA" | "ELIMINADA")}
             style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.84rem", fontWeight: 600, background: "#ffffff", color: "#334155" }}
@@ -505,11 +506,11 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
             <option value="LEIDA">Confirmadas (Leídas)</option>
             <option value="POSPUESTA">Pospuestas</option>
             <option value="ELIMINADA">Eliminadas</option>
-          </select>
+          </SelectConBuscador>
         </div>
 
         {/* Selector de Canal */}
-        <select
+        <SelectConBuscador
           value={filtroCanal}
           onChange={e => setFiltroCanal(e.target.value)}
           style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #cbd5e1", fontSize: "0.84rem", fontWeight: 600, background: "#ffffff", color: "#334155" }}
@@ -519,7 +520,7 @@ export function MonitoreoNotificacionesUsuariosWidget({ negocio = "TRANQ" }: Pro
           <option value="PUSH">Push Notification</option>
           <option value="EMAIL">Email</option>
           <option value="WHATSAPP_PROPUESTA">WhatsApp</option>
-        </select>
+        </SelectConBuscador>
       </div>
 
       {/* TABLA DATAGRID */}

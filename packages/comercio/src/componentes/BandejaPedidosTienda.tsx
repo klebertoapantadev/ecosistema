@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
@@ -291,7 +292,7 @@ export function BandejaPedidosTienda({
         render: (p) => {
           const est = estiloEstado(p.estado);
           return (
-            <select
+            <SelectConBuscador
               value={p.estado}
               disabled={actualizandoId === p.id}
               onChange={(e) => void cambiarEstado(p.id, e.target.value)}
@@ -312,7 +313,7 @@ export function BandejaPedidosTienda({
                   {op.etiqueta}
                 </option>
               ))}
-            </select>
+            </SelectConBuscador>
           );
         },
       },

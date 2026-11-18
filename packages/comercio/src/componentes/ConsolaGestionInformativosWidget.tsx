@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useState, useEffect, useMemo } from "react";
 import {
@@ -535,7 +536,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
           </div>
 
           {/* Filtro Tipo */}
-          <select
+          <SelectConBuscador
             value={filtroTipo}
             onChange={(e) => setFiltroTipo(e.target.value)}
             style={{
@@ -552,10 +553,10 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
             <option value="ALERTA_REGULATORIA">Alertas Regulatorias</option>
             <option value="NOTICIA_TRIBUTARIA_MUNICIPAL">Noticias Tributarias</option>
             <option value="COMUNICADO_GENERAL">Comunicados Generales</option>
-          </select>
+          </SelectConBuscador>
 
           {/* Filtro Audiencia */}
-          <select
+          <SelectConBuscador
             value={filtroAudiencia}
             onChange={(e) => setFiltroAudiencia(e.target.value)}
             style={{
@@ -571,7 +572,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
             <option value="ABOGADOS">Exclusivo Abogados</option>
             <option value="CLIENTES">Personas / Clientes</option>
             <option value="EMPRESAS">Empresas / Corporativo</option>
-          </select>
+          </SelectConBuscador>
         </div>
 
         <div style={{ fontSize: "0.82rem", fontWeight: 700, color: "#64748B" }}>
@@ -981,7 +982,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                   <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
                     Tipo de Comunicado / Campaña *
                   </label>
-                  <select
+                  <SelectConBuscador
                     value={tipo}
                     onChange={(e) => setTipo(e.target.value as any)}
                     style={{
@@ -998,14 +999,14 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                     <option value="ALERTA_REGULATORIA">⚠️ Alerta Regulatoria (ANT, Judicatura, SRI)</option>
                     <option value="NOTICIA_TRIBUTARIA_MUNICIPAL">🏛️ Noticia Tributaria / Municipal (Descuentos)</option>
                     <option value="COMUNICADO_GENERAL">📢 Comunicado General de Plataforma</option>
-                  </select>
+                  </SelectConBuscador>
                 </div>
 
                 <div>
                   <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
                     Prioridad Visual
                   </label>
-                  <select
+                  <SelectConBuscador
                     value={prioridad}
                     onChange={(e) => setPrioridad(e.target.value as any)}
                     style={{
@@ -1020,7 +1021,7 @@ export function ConsolaGestionInformativosWidget({ negocio = "tranqi", esAdmin =
                     <option value="ALTA">Alta (Banner Flotante / Destacado)</option>
                     <option value="MEDIA">Media (Rejilla Estándar)</option>
                     <option value="BAJA">Baja (Informativo Secundario)</option>
-                  </select>
+                  </SelectConBuscador>
                 </div>
               </div>
 

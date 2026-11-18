@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useEffect, useState } from "react";
 import {
@@ -421,7 +422,7 @@ export function PanelCamposVentaChat({
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
             <label style={estiloLabel}>
               <span>Estado cobro</span>
-              <select
+              <SelectConBuscador
                 value={form.estadoCobro || "COTIZANDO"}
                 onChange={(e) =>
                   actualizarCampo("estadoCobro", e.target.value as EstadoCobroChatVenta)
@@ -431,7 +432,7 @@ export function PanelCamposVentaChat({
                 <option value="COTIZANDO">Cotizando</option>
                 <option value="PAGO_SOLICITADO">Pago solicitado</option>
                 <option value="PAGADO">Pagado</option>
-              </select>
+              </SelectConBuscador>
             </label>
 
             <label style={estiloLabel}>
@@ -501,7 +502,7 @@ export function PanelCamposVentaChat({
 
           <label style={estiloLabel}>
             <span>Hora / Rango de entrega</span>
-            <select
+            <SelectConBuscador
               value={form.franjaHora ?? ""}
               onChange={(e) => actualizarCampo("franjaHora", e.target.value)}
               style={estiloInput}
@@ -511,7 +512,7 @@ export function PanelCamposVentaChat({
                   {fr || "— Seleccionar horario —"}
                 </option>
               ))}
-            </select>
+            </SelectConBuscador>
           </label>
 
           <label style={estiloLabel}>

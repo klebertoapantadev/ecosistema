@@ -1,4 +1,5 @@
 'use client';
+import { SelectConBuscador } from "@eco/comercio";
 
 import React, { useState, useMemo } from 'react';
 import { useCarrito } from '../contexto-carrito';
@@ -266,7 +267,7 @@ export function VitrinaCatalogoTinkay() {
             {/* Selector de Ordenamiento por Precio / Relevancia */}
             <div className="selector-orden-wrapper" title="Ordenar catálogo">
               <ArrowUpDown size={15} />
-              <select
+              <SelectConBuscador
                 value={criterioOrden}
                 onChange={(e) =>
                   setCriterioOrden(
@@ -286,13 +287,13 @@ export function VitrinaCatalogoTinkay() {
                 <option value="precio-desc">Mayor a menor ($$$ → $)</option>
                 <option value="precio-asc">Menor a mayor ($ → $$$)</option>
                 <option value="nombre-asc">Nombre: A — Z</option>
-              </select>
+              </SelectConBuscador>
             </div>
 
             {/* Selector de Rango de Presupuesto */}
             <div className="selector-presupuesto-wrapper" title="Filtrar por presupuesto">
               <SlidersHorizontal size={15} />
-              <select
+              <SelectConBuscador
                 value={filtroPresupuesto}
                 onChange={(e) => setFiltroPresupuesto(e.target.value)}
                 className="select-filtro-presupuesto"
@@ -303,7 +304,7 @@ export function VitrinaCatalogoTinkay() {
                 <option value="30-50">$30.00 - $50.00</option>
                 <option value="50-80">$50.00 - $80.00</option>
                 <option value="mayor-80">Más de $80.00</option>
-              </select>
+              </SelectConBuscador>
             </div>
 
             {/* Botón Filtro Rápido de Ofertas con % de descuento */}

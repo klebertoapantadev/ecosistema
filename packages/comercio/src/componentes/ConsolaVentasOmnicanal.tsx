@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
@@ -3361,7 +3362,7 @@ export function ConsolaVentasOmnicanal({
                     }}
                   >
                     {/* Vista / Cola de atención */}
-                    <select
+                    <SelectConBuscador
                       value={
                         filtroIzquierdo === "todos" && estadoAperturaFiltro === "todos"
                           ? "todos_historial"
@@ -3407,7 +3408,7 @@ export function ConsolaVentasOmnicanal({
                       <option value="todos_historial">
                         Todos ({metricas.totalConversaciones})
                       </option>
-                    </select>
+                    </SelectConBuscador>
 
                     {/* Toggle No Leído */}
                     <button
@@ -3431,7 +3432,7 @@ export function ConsolaVentasOmnicanal({
                     </button>
 
                     {/* Filtro por Etiqueta de Clasificación */}
-                    <select
+                    <SelectConBuscador
                       value={etiquetaFiltroId || ""}
                       onChange={(e) => setEtiquetaFiltroId(e.target.value || null)}
                       aria-label="Filtrar por etiqueta"
@@ -3452,10 +3453,10 @@ export function ConsolaVentasOmnicanal({
                           {etq.nombre}
                         </option>
                       ))}
-                    </select>
+                    </SelectConBuscador>
 
                     {/* Filtro por Asesor / Operador */}
-                    <select
+                    <SelectConBuscador
                       value={vendedorFiltroId || ""}
                       onChange={(e) => setVendedorFiltroId(e.target.value || null)}
                       aria-label="Filtrar por asesor"
@@ -3479,7 +3480,7 @@ export function ConsolaVentasOmnicanal({
                           ({m.chatsActivos})
                         </option>
                       ))}
-                    </select>
+                    </SelectConBuscador>
 
                     {/* Botón Administrar Etiquetas — Exclusivo para Administrador y Operador */}
                     {Boolean(tablero.esAdminEtiquetas) && (

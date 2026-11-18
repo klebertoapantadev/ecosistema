@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useEffect, useState } from "react";
 import {
@@ -801,7 +802,7 @@ export function VitrinaComercialVisual({
                   {/* Selector de Variantes / Modalidades si tiene > 1 */}
                   {p.variantes.length > 1 && (
                     <div style={{ marginBottom: "14px" }}>
-                      <select
+                      <SelectConBuscador
                         value={currentVarId}
                         onChange={(e) =>
                           setVarianteSeleccionadaPorProducto((prev) => ({
@@ -826,7 +827,7 @@ export function VitrinaComercialVisual({
                             {v.var_nombre} — ${v.precio_total.toFixed(2)}
                           </option>
                         ))}
-                      </select>
+                      </SelectConBuscador>
                     </div>
                   )}
 

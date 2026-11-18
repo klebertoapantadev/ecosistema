@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -810,7 +811,7 @@ export function ConfiguracionFacturacionSri({
 
           <div>
             <label style={ESTILO_LABEL}>Régimen Tributario SRI *</label>
-            <select
+            <SelectConBuscador
               value={emisor.regimen}
               onChange={(e) =>
                 setEmisor((p) => ({
@@ -823,7 +824,7 @@ export function ConfiguracionFacturacionSri({
               <option value="GENERAL">Régimen General</option>
               <option value="RIMPE_EMPRENDEDOR">Contribuyente Régimen RIMPE (Emprendedor)</option>
               <option value="RIMPE_NEGOCIO_POPULAR">RIMPE — Negocio Popular</option>
-            </select>
+            </SelectConBuscador>
           </div>
 
           <div>

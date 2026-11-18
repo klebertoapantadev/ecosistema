@@ -1,4 +1,5 @@
 'use client';
+import { SelectConBuscador } from "@eco/comercio";
 
 import React, { useState } from 'react';
 import { SelectorUbicacionEntrega } from '@eco/comercio';
@@ -560,7 +561,7 @@ export function DrawerCarritoFloristeria() {
 
                               <label className="label-campo-mini">
                                 Horario:
-                                <select
+                                <SelectConBuscador
                                   value={item.entregaIndividual?.franjaHoraria || 'A) 09:00 - 13:00'}
                                   onChange={(e) =>
                                     actualizarEntregaIndividual(item.id, {
@@ -573,7 +574,7 @@ export function DrawerCarritoFloristeria() {
                                   <option value="A) 09:00 - 13:00">A) 09:00 - 13:00</option>
                                   <option value="B) 13:00 - 17:00">B) 13:00 - 17:00</option>
                                   <option value="C) 17:00 - 20:00">C) 17:00 - 20:00</option>
-                                </select>
+                                </SelectConBuscador>
                               </label>
                             </div>
                           </div>
@@ -747,7 +748,7 @@ export function DrawerCarritoFloristeria() {
 
                   <div className="campo-franja-horaria">
                     <label>Rango de Horario:</label>
-                    <select
+                    <SelectConBuscador
                       value={entregaUnificada.franjaHoraria}
                       onChange={(e) =>
                         actualizarEntregaUnificada({
@@ -759,7 +760,7 @@ export function DrawerCarritoFloristeria() {
                       <option value="A) 09:00 - 13:00">A) 09:00 - 13:00</option>
                       <option value="B) 13:00 - 17:00">B) 13:00 - 17:00</option>
                       <option value="C) 17:00 - 20:00">C) 17:00 - 20:00</option>
-                    </select>
+                    </SelectConBuscador>
                   </div>
 
                   {!entregaUnificada.retiroEnLocal &&

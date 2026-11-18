@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
+import { DataGrid, SelectConBuscador, type ColumnaDataGrid } from "@eco/datagrid";
 import { crearClienteNavegador } from "@eco/supabase/cliente";
 import {
   AlertTriangle,
@@ -703,7 +703,7 @@ export function ConsolaEnvioPedidosTaller({
             {!o.retiroEnLocal &&
               o.estadoTaller !== "ENTREGADO" &&
               (datos.repartidoresNegocio?.length ?? 0) > 0 && (
-                <select
+                <SelectConBuscador
                   value={o.repartidorId || ""}
                   onChange={(e) => void handleAsignarRepartidor(o, e.target.value)}
                   aria-label={`Asignar repartidor a ${o.codigo}`}
@@ -725,7 +725,7 @@ export function ConsolaEnvioPedidosTaller({
                       {rep.nombre} ({rep.modalidad === "EXTERNO" ? "Externo" : "Interno"})
                     </option>
                   ))}
-                </select>
+                </SelectConBuscador>
               )}
 
             {o.enRuta && o.rutaLatitud != null && o.rutaLongitud != null && (
@@ -1667,22 +1667,30 @@ export function ConsolaEnvioPedidosTaller({
 
             {datos.productosCatalogo.length > 0 && (
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                <select
+                <SelectConBuscador
                   value={manSkuSeleccionado}
                   onChange={(e) => setManSkuSeleccionado(e.target.value)}
+                  aria-label="Seleccionar producto del catálogo"
+                  placeholderBusqueda="Buscar arreglo, variante o precio…"
                   style={{ ...inputStyle, flex: "1 1 260px" }}
                 >
                   <option value="">-- Seleccionar producto del catálogo Tinkay --</option>
-                  {datos.productosCatalogo.map((p) => (
-                    <option key={`${p.productoId}::${p.sku}`} value={`${p.productoId}::${p.sku}`}>
-                      {p.productoNombre}{" "}
-                      {p.varianteNombre && p.varianteNombre !== "Estándar"
-                        ? `(${p.varianteNombre})`
-                        : ""}{" "}
-                      — ${p.pvp.toFixed(2)}
-                    </option>
-                  ))}
-                </select>
+                  {datos.productosCatalogo.map((p) => {
+                    const nomProd = (p.productoNombre || "").trim();
+                    const nomVar = (p.varianteNombre || "").trim();
+                    const etiquetaProducto =
+                      !nomVar || nomVar === "Estándar" || nomVar === nomProd
+                        ? nomProd
+                        : nomVar.toLowerCase().startsWith(nomProd.toLowerCase())
+                          ? nomVar
+                          : `${nomProd} (${nomVar})`;
+                    return (
+                      <option key={`${p.productoId}::${p.sku}`} value={`${p.productoId}::${p.sku}`}>
+                        {etiquetaProducto} — ${p.pvp.toFixed(2)}
+                      </option>
+                    );
+                  })}
+                </SelectConBuscador>
                 <input
                   type="number"
                   min={1}
@@ -2037,7 +2045,7 @@ export function ConsolaEnvioPedidosTaller({
                 </div>
                 <div>
                   <label style={labelStyle}>Sala</label>
-                  <select
+                  <SelectConBuscador
                     value={ordenEditando.salaServicio ?? ""}
                     onChange={(e) =>
                       setOrdenEditando((prev) =>
@@ -2052,13 +2060,13 @@ export function ConsolaEnvioPedidosTaller({
                         {s}
                       </option>
                     ))}
-                  </select>
+                  </SelectConBuscador>
                 </div>
               </>
             ) : (
               <div>
                 <label style={labelStyle}>Rango de Horario</label>
-                <select
+                <SelectConBuscador
                   value={ordenEditando.franjaHoraria || "A) 09:00 - 13:00"}
                   onChange={(e) =>
                     setOrdenEditando((prev) =>
@@ -2072,7 +2080,7 @@ export function ConsolaEnvioPedidosTaller({
                       {r.etiqueta}
                     </option>
                   ))}
-                </select>
+                </SelectConBuscador>
               </div>
             )}
 

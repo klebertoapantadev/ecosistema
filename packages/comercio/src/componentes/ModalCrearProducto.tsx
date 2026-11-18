@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useState, useEffect, useMemo } from "react";
 import {
@@ -1022,7 +1023,7 @@ export function ModalCrearProducto({
                         </button>
                       </div>
                     </div>
-                    <select
+                    <SelectConBuscador
                       value={categoriaId}
                       onChange={(e) => setCategoriaId(e.target.value)}
                       style={{
@@ -1039,7 +1040,7 @@ export function ModalCrearProducto({
                           {c.ctg_nombre}
                         </option>
                       ))}
-                    </select>
+                    </SelectConBuscador>
                   </div>
 
                   <div>
@@ -1095,7 +1096,7 @@ export function ModalCrearProducto({
                         </button>
                       </div>
                     </div>
-                    <select
+                    <SelectConBuscador
                       value={tipo}
                       onChange={(e) => {
                         const nextTipo = e.target.value;
@@ -1132,7 +1133,7 @@ export function ModalCrearProducto({
                           {op.tof_nombre}
                         </option>
                       ))}
-                    </select>
+                    </SelectConBuscador>
                   </div>
                 </div>
 
@@ -1247,7 +1248,7 @@ export function ModalCrearProducto({
                       >
                         Tarifa IVA SRI
                       </label>
-                      <select
+                      <SelectConBuscador
                         value={tarifaIva}
                         onChange={(e) => setTarifaIva(Number(e.target.value))}
                         style={{
@@ -1262,7 +1263,7 @@ export function ModalCrearProducto({
                       >
                         <option value={0}>IVA 0% (Flores / Exento)</option>
                         <option value={15}>IVA 15% (Tarifa General)</option>
-                      </select>
+                      </SelectConBuscador>
                     </div>
 
                     <div>

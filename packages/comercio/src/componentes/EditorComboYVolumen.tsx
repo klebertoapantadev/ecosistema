@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useState, useMemo } from "react";
 import { Plus, Trash2, Gift, Percent, AlertCircle, CheckCircle2, Minus } from "lucide-react";
@@ -165,7 +166,7 @@ export function EditorEscalasVolumenVariante({
                   </span>
                 </div>
 
-                <select
+                <SelectConBuscador
                   value={regla.tipo}
                   onChange={(e) =>
                     actualizarRegla(idx, {
@@ -185,7 +186,7 @@ export function EditorEscalasVolumenVariante({
                   <option value="PRECIO_FIJO">Precio fijo c/u ($)</option>
                   <option value="DESCUENTO_PORCENTAJE">% Descuento</option>
                   <option value="DESCUENTO_MONTO">-$ Descuento c/u</option>
-                </select>
+                </SelectConBuscador>
 
                 <input
                   type="number"
@@ -538,7 +539,7 @@ export function EditorSetComboConfigurable({
                     alignItems: "center",
                   }}
                 >
-                  <select
+                  <SelectConBuscador
                     value={prodActivoParaAgregar?.pro_id || ""}
                     onChange={(e) => {
                       const nuevoProd = productosFiltrados.find((p) => p.pro_id === e.target.value);
@@ -566,10 +567,10 @@ export function EditorSetComboConfigurable({
                         </option>
                       );
                     })}
-                  </select>
+                  </SelectConBuscador>
 
                   {prodActivoParaAgregar && prodActivoParaAgregar.variantes.length > 1 && (
-                    <select
+                    <SelectConBuscador
                       value={varActivaParaAgregar?.var_sku || ""}
                       onChange={(e) => setVarSeleccionadaSku(e.target.value)}
                       title="Tamaño / Variante predefinida en el Set Completo"
@@ -589,7 +590,7 @@ export function EditorSetComboConfigurable({
                           {v.var_nombre} (${obtenerPvpVariante(v).toFixed(2)})
                         </option>
                       ))}
-                    </select>
+                    </SelectConBuscador>
                   )}
 
                   <input
@@ -718,7 +719,7 @@ export function EditorSetComboConfigurable({
                       </div>
 
                       {fila.prod && fila.prod.variantes.length > 1 ? (
-                        <select
+                        <SelectConBuscador
                           value={fila.variante?.var_sku || ""}
                           onChange={(e) => {
                             const nuevaVar = fila.prod?.variantes.find(
@@ -752,7 +753,7 @@ export function EditorSetComboConfigurable({
                               Variante Set: {v.var_nombre} (${obtenerPvpVariante(v).toFixed(2)})
                             </option>
                           ))}
-                        </select>
+                        </SelectConBuscador>
                       ) : (
                         <div style={{ fontSize: "0.72rem", color: "#64748B" }}>
                           Precio individual: ${fila.pvpUnit.toFixed(2)} c/u

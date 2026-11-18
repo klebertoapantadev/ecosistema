@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useEffect, useState } from "react";
 import {
@@ -379,7 +380,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                   <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
                     Ambiente de Ejecución
                   </label>
-                  <select
+                  <SelectConBuscador
                     value={ambiente}
                     onChange={(e) => setAmbiente(e.target.value as any)}
                     style={{
@@ -394,14 +395,14 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                   >
                     <option value="PRUEBAS">Pruebas / Sandbox (Tarjetas de prueba)</option>
                     <option value="PRODUCCION">Producción en Vivo (Cobro real)</option>
-                  </select>
+                  </SelectConBuscador>
                 </div>
 
                 <div>
                   <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
                     Visibilidad en Checkout
                   </label>
-                  <select
+                  <SelectConBuscador
                     value={visibilidadPlux}
                     onChange={(e) => setVisibilidadPlux(e.target.value as any)}
                     style={{
@@ -416,7 +417,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                   >
                     <option value="TODOS">Visible para todos los usuarios</option>
                     <option value="PROBADORES">Solo superadmins y correos de probadores</option>
-                  </select>
+                  </SelectConBuscador>
                 </div>
               </div>
 
@@ -590,7 +591,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                   <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 700, color: "#334155", marginBottom: "6px" }}>
                     Ambiente de Ejecución
                   </label>
-                  <select
+                  <SelectConBuscador
                     value={ambiente}
                     onChange={(e) => setAmbiente(e.target.value as any)}
                     style={{
@@ -605,7 +606,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                   >
                     <option value="PRUEBAS">Pruebas / Staging</option>
                     <option value="PRODUCCION">Producción en Vivo</option>
-                  </select>
+                  </SelectConBuscador>
                   <p style={{ margin: "4px 0 0", fontSize: "0.75rem", color: "#64748B" }}>
                     Define la URL base de validación bancaria.
                   </p>

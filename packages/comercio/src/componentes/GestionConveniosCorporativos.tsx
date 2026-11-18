@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useState, useEffect, useMemo } from "react";
 import {
@@ -1325,14 +1326,14 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                     <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "3px" }}>
                       Frecuencia de Renovación:
                     </label>
-                    <select
+                    <SelectConBuscador
                       value={formFrecuenciaConsultas}
                       onChange={(e: any) => setFormFrecuenciaConsultas(e.target.value)}
                       style={{ width: "100%", padding: "7px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", fontSize: "0.85rem" }}
                     >
                       <option value="ANUAL">Anual ({formConsultasGratis} al año)</option>
                       <option value="MENSUAL">Mensual ({formConsultasGratis} al mes)</option>
-                    </select>
+                    </SelectConBuscador>
                   </div>
                 </div>
 
@@ -1363,7 +1364,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                       🎯 Excepciones de Descuento por Producto:
                     </label>
                     {productosDisponibles.length > 0 && (
-                      <select
+                      <SelectConBuscador
                         onChange={(e) => {
                           const p = productosDisponibles.find((prod) => prod.pro_id === e.target.value);
                           if (p) handleAgregarExcepcion(p.pro_nombre, p.pro_slug);
@@ -1375,7 +1376,7 @@ export function GestionConveniosCorporativos({ negocio = "tranqi" }: Props) {
                         {productosDisponibles.map((p) => (
                           <option key={p.pro_id} value={p.pro_id}>{p.pro_nombre}</option>
                         ))}
-                      </select>
+                      </SelectConBuscador>
                     )}
                   </div>
 

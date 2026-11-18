@@ -1,4 +1,5 @@
 "use client";
+import { SelectConBuscador } from "@eco/datagrid";
 
 import React, { useEffect, useMemo, useState } from "react";
 import {
@@ -1776,7 +1777,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                     >
                       Autocompletar desde Clientes Registrados (Opcional)
                     </label>
-                    <select
+                    <SelectConBuscador
                       value={clienteSeleccionadoId}
                       onChange={(e) => alCambiarClienteDirectorio(e.target.value)}
                       style={{
@@ -1794,7 +1795,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                           {c.nombre_completo} ({c.email}) {c.identificacion ? `· ID: ${c.identificacion}` : ""}
                         </option>
                       ))}
-                    </select>
+                    </SelectConBuscador>
                   </div>
                 )}
 
@@ -1811,7 +1812,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                     >
                       Tipo de Identificación *
                     </label>
-                    <select
+                    <SelectConBuscador
                       value={tipoIdentificacion}
                       onChange={(e) => setTipoIdentificacion(e.target.value as any)}
                       style={{
@@ -1827,7 +1828,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                       <option value="04">RUC (04)</option>
                       <option value="06">Pasaporte / ID Exterior (06)</option>
                       <option value="07">Consumidor Final (07)</option>
-                    </select>
+                    </SelectConBuscador>
                   </div>
 
                   {tipoIdentificacion !== "07" && (
@@ -2002,7 +2003,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                     >
                       Seleccionar Producto / Servicio del Catálogo
                     </label>
-                    <select
+                    <SelectConBuscador
                       value={varianteSeleccionadaId}
                       onChange={(e) => alCambiarVarianteCatalogo(e.target.value)}
                       style={{
@@ -2019,7 +2020,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                           {op.etiqueta}
                         </option>
                       ))}
-                    </select>
+                    </SelectConBuscador>
                   </div>
                 )}
 
@@ -2136,7 +2137,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                       >
                         Medio de Pago *
                       </label>
-                      <select
+                      <SelectConBuscador
                         value={medioPagoManual}
                         onChange={(e) => setMedioPagoManual(e.target.value as any)}
                         style={{
@@ -2154,7 +2155,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                         <option value="DEPOSITO">Depósito Bancario</option>
                         <option value="TARJETA_POS">Datafast / POS Físico</option>
                         <option value="CHEQUE">Cheque</option>
-                      </select>
+                      </SelectConBuscador>
                     </div>
 
                     <div>
@@ -3706,7 +3707,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 >
                   Medio de Pago Recibido *
                 </label>
-                <select
+                <SelectConBuscador
                   value={medioLiquidacion}
                   onChange={(e) => setMedioLiquidacion(e.target.value as any)}
                   style={{
@@ -3725,7 +3726,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   <option value="TARJETA_POS">Datafast / POS Físico (Tarjeta)</option>
                   <option value="PLUX">PagoPlux (PLUX — Link / Pasarela)</option>
                   <option value="CHEQUE">Cheque Certificado</option>
-                </select>
+                </SelectConBuscador>
               </div>
 
               <div>
