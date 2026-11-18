@@ -15,14 +15,19 @@
    - Proxy [`apps/tinkay-web/app/api/omnicanal/media/route.ts`](../../apps/tinkay-web/app/api/omnicanal/media/route.ts) ampliado con soporte `Range` / `206 Partial Content` para streaming HTML5 de audio y descarga de documentos PDF/Office.
    - Campo en `/panel/aria` (`FormularioAria.tsx`) para configurar en Vault la clave IA de transcripción de notas de voz.
 
-2. **Menú `Adjuntar` (`📎`) Estilo WhatsApp + Envío de Producto del Catálogo (`ModalSelectorCatalogoChat.tsx`):**
-   - Reemplazado el botón aislado de imagen por el botón **`📎 Adjuntar`** con hoja estilo WhatsApp (Bottom Sheet en móvil, popover flotante en escritorio) con las 6 opciones:
-     1. **`Nota`** (activa Modo Nota Interna)
+2. **Menú Unificado `Opciones` (`＋`) + Envío de Producto del Catálogo + Pull-to-Refresh Móvil:**
+   - Eliminados de la barra superior los botones `En vivo` e `Importar ARIA`, dejando `Actualizar` únicamente en vista Web y habilitando actualización deslizando hacia abajo (*Pull-to-Refresh*) en móvil tanto en la lista de conversaciones como en el hilo de mensajes.
+   - Eliminada la subbarra redundante `Cliente / Nota / /Atajos` sobre la caja de texto.
+   - Botón unificado **`＋ Opciones`** (Bottom Sheet en móvil, popover flotante en escritorio) con:
+     1. **`Nota`** (alterna Modo Nota Interna)
      2. **`Documento`** (sube PDF/Word/Excel/CSV/TXT y despacha `type: "document"` nativo en YCloud WhatsApp)
      3. **`Imagen`** (selector de galería, despacha `type: "image"` nativo en YCloud WhatsApp)
      4. **`Foto`** (captura directa de cámara `capture="environment"`)
      5. **`Respuesta '/'`** (abre menú de respuestas rápidas `/atajos`)
-     6. **`Catálogo`** (abre `ModalSelectorCatalogoChat.tsx` con buscador, categorías, variantes y casillas para enviar la **foto principal del producto**, el **link para revisar en la web** `/producto/{slug}` y el **link del álbum del producto**).
+     6. **`Catálogo`** (abre `ModalSelectorCatalogoChat.tsx` para enviar **foto principal del producto**, **link para revisar en la web** `/producto/{slug}` y **link del álbum del producto**)
+     7. **`Asignar`** (selector directo de responsable del equipo integrado dentro del menú)
+     8. **`Compartir`** (reenvío directo de la conversación al Chat Grupal del Equipo)
+     9. **`Eliminar`** (eliminación completa de la conversación exclusiva para Administrador).
 
 ## Verificación
 - `pnpm --filter @eco/comercio test`: 85/85 tests en verde.

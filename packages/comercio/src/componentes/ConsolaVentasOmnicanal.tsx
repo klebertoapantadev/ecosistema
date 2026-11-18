@@ -28,9 +28,9 @@ import {
   Mic,
   PanelRightClose,
   PanelRightOpen,
-  Paperclip,
   Pause,
   Play,
+  Plus,
   RefreshCw,
   RotateCcw,
   Search,
@@ -43,6 +43,7 @@ import {
   Store,
   Tag,
   Trash2,
+  UserCheck,
   Users,
   X,
   Zap,
@@ -856,12 +857,13 @@ export function ConsolaVentasOmnicanal({
   const [mensajesActivos, setMensajesActivos] = useState<MensajeOmnicanal[]>([]);
   const [cargandoMensajes, setCargandoMensajes] = useState<boolean>(false);
 
-  // Compositor de respuesta humana / nota interna / menú Adjuntar estilo WhatsApp
+  // Compositor de respuesta humana / nota interna / menú Opciones unificado
   const [textoRespuesta, setTextoRespuesta] = useState<string>("");
   const [modoNotaInterna, setModoNotaInterna] = useState<boolean>(false);
   const [enviandoMensaje, setEnviandoMensaje] = useState<boolean>(false);
   const [mostrarMenuRespuestas, setMostrarMenuRespuestas] = useState<boolean>(false);
   const [mostrarMenuAdjuntar, setMostrarMenuAdjuntar] = useState<boolean>(false);
+  const [vistaMenuOpciones, setVistaMenuOpciones] = useState<"principal" | "asignar">("principal");
   const [modalCatalogoChatAbierto, setModalCatalogoChatAbierto] = useState<boolean>(false);
   const [respuestaSeleccionadaId, setRespuestaSeleccionadaId] = useState<string | null>(null);
   const [imagenAdjuntaAsesorUrl, setImagenAdjuntaAsesorUrl] = useState<string | null>(null);
@@ -875,6 +877,12 @@ export function ConsolaVentasOmnicanal({
   const inputCamaraAsesorRef = useRef<HTMLInputElement>(null);
   const inputDocumentoAsesorRef = useRef<HTMLInputElement>(null);
   const textareaCompositorRef = useRef<HTMLTextAreaElement>(null);
+
+  // Pull-to-refresh táctil en móvil (deslizar hacia abajo en lista o conversación)
+  const [pullOffsetPx, setPullOffsetPx] = useState<number>(0);
+  const [refrescandoPull, setRefrescandoPull] = useState<boolean>(false);
+  const touchPullInicioYRef = useRef<number | null>(null);
+  const scrollListaRef = useRef<HTMLDivElement>(null);
 
   // Visor lightbox de imagen ampliada y modal de reenvío (a WhatsApp o Chat Grupal del Equipo)
   const [visorImagenDatos, setVisorImagenDatos] = useState<DatosImagenAmpliadaChat | null>(null);
@@ -1077,10 +1085,75 @@ export function ConsolaVentasOmnicanal({
     [negNorm]
   );
 
+  const iniciarPullMovil = useCallback(
+    (e: React.TouchEvent<HTMLDivElement>) => {
+      if (modoLayoutInbox !== "movil" || refrescandoPull) return;
+      if (e.currentTarget.scrollTop <= 2 && e.touches[0]) {
+        touchPullInicioYRef.current = e.touches[0].clientY;
+      } else {
+        touchPullInicioYRef.current = null;
+      }
+    },
+    [modoLayoutInbox, refrescandoPull]
+  );
+
+  const moverPullMovil = useCallback(
+    (e: React.TouchEvent<HTMLDivElement>) => {
+      if (
+        modoLayoutInbox !== "movil" ||
+        refrescandoPull ||
+        touchPullInicioYRef.current === null
+      ) {
+        return;
+      }
+      if (e.currentTarget.scrollTop > 2) {
+        touchPullInicioYRef.current = null;
+        if (pullOffsetPx !== 0) setPullOffsetPx(0);
+        return;
+      }
+      const deltaY = (e.touches[0]?.clientY ?? touchPullInicioYRef.current) - touchPullInicioYRef.current;
+      if (deltaY > 10) {
+        setPullOffsetPx(Math.min(72, Math.round((deltaY - 10) * 0.45)));
+      } else if (pullOffsetPx !== 0) {
+        setPullOffsetPx(0);
+      }
+    },
+    [modoLayoutInbox, refrescandoPull, pullOffsetPx]
+  );
+
+  const finalizarPullMovil = useCallback(async () => {
+    touchPullInicioYRef.current = null;
+    if (modoLayoutInbox !== "movil" || refrescandoPull) return;
+    if (pullOffsetPx >= 46) {
+      setRefrescandoPull(true);
+      setPullOffsetPx(48);
+      try {
+        const promesas: Array<Promise<unknown>> = [recargarTablero(true)];
+        if (conversacionActivaId && !conversacionActivaId.startsWith("rt-")) {
+          promesas.push(cargarMensajesConversacion(conversacionActivaId, true));
+        }
+        await Promise.all(promesas);
+      } finally {
+        setRefrescandoPull(false);
+        setPullOffsetPx(0);
+      }
+    } else if (pullOffsetPx !== 0) {
+      setPullOffsetPx(0);
+    }
+  }, [
+    modoLayoutInbox,
+    refrescandoPull,
+    pullOffsetPx,
+    recargarTablero,
+    conversacionActivaId,
+    cargarMensajesConversacion,
+  ]);
+
   useEffect(() => {
     setMenuCabeceraAbierto(null);
     setMostrarSelectorFechaCustom(false);
     setMostrarMenuAdjuntar(false);
+    setVistaMenuOpciones("principal");
     setMostrarMenuRespuestas(false);
     setNotaCierreInput("");
     if (!conversacionActivaId) {
@@ -2904,87 +2977,31 @@ export function ConsolaVentasOmnicanal({
             </span>
           </div>
 
-          <span
-            title={
-              realtimeConectado
-                ? "Canal WebSocket en vivo conectado: los mensajes nuevos aparecen al instante sin recargar"
-                : "Sincronizando canal en tiempo real..."
-            }
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "6px 10px",
-              borderRadius: "999px",
-              background: realtimeConectado ? "#ECFDF5" : "#F8FAFC",
-              border: `1px solid ${realtimeConectado ? "#A7F3D0" : "#E2E8F0"}`,
-              color: realtimeConectado ? "#047857" : "#64748B",
-              fontSize: "0.75rem",
-              fontWeight: 700,
-            }}
-          >
-            <span
+          {modoLayoutInbox !== "movil" && (
+            <button
+              type="button"
+              className="btn-responsive-accion"
+              onClick={() => void recargarTablero(false)}
+              title="Sincronizar conversaciones, usuarios y compras en tiempo real"
+              aria-label="Actualizar"
               style={{
-                width: "8px",
-                height: "8px",
-                borderRadius: "50%",
-                background: realtimeConectado ? "#10B981" : "#94A3B8",
-                boxShadow: realtimeConectado ? "0 0 0 3px rgba(16, 185, 129, 0.2)" : "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 12px",
+                borderRadius: "9px",
+                border: "1px solid #CBD5E1",
+                background: "#FFFFFF",
+                color: "#0F172A",
+                fontSize: "0.8rem",
+                fontWeight: 600,
+                cursor: "pointer",
               }}
-            />
-            {realtimeConectado ? "En vivo" : "Conectando..."}
-          </span>
-
-          <button
-            type="button"
-            className="btn-responsive-accion"
-            onClick={() => void handleImportarHistorialAria()}
-            disabled={importandoHistorialAria}
-            title="Importar conversaciones previas de WhatsApp registradas en la consola de ARIA"
-            aria-label="Importar ARIA"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "8px 12px",
-              borderRadius: "9px",
-              border: "1px solid #86EFAC",
-              background: "#F0FDF4",
-              color: "#15803D",
-              fontSize: "0.8rem",
-              fontWeight: 700,
-              cursor: importandoHistorialAria ? "wait" : "pointer",
-            }}
-          >
-            {importandoHistorialAria ? <Loader2 size={14} /> : <Bot size={14} />}
-            <span className="btn-texto-responsive">
-              {importandoHistorialAria ? "Importando…" : "Importar ARIA"}
-            </span>
-          </button>
-
-          <button
-            type="button"
-            className="btn-responsive-accion"
-            onClick={() => void recargarTablero(false)}
-            title="Sincronizar conversaciones, usuarios y compras en tiempo real"
-            aria-label="Actualizar"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "8px 12px",
-              borderRadius: "9px",
-              border: "1px solid #CBD5E1",
-              background: "#FFFFFF",
-              color: "#0F172A",
-              fontSize: "0.8rem",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            {cargando ? <Loader2 size={14} /> : <RefreshCw size={14} />}
-            <span className="btn-texto-responsive">Actualizar</span>
-          </button>
+            >
+              {cargando ? <Loader2 size={14} /> : <RefreshCw size={14} />}
+              <span className="btn-texto-responsive">Actualizar</span>
+            </button>
+          )}
         </div>
       </div>
       )}
@@ -3476,7 +3493,48 @@ export function ConsolaVentasOmnicanal({
                 minHeight: 0,
               }}
             >
-              <div style={{ flex: 1, overflowY: "auto" }}>
+              {modoLayoutInbox === "movil" &&
+                vistaMovilInbox === "lista" &&
+                (pullOffsetPx > 0 || refrescandoPull) && (
+                  <div
+                    style={{
+                      height: `${Math.max(refrescandoPull ? 44 : 0, pullOffsetPx)}px`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "7px",
+                      background: "#F8FAFC",
+                      borderBottom: "1px solid #E2E8F0",
+                      color: "#334155",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      overflow: "hidden",
+                      transition: refrescandoPull ? "height 160ms ease" : "none",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <RefreshCw size={14} />
+                    <span>
+                      {refrescandoPull
+                        ? "Actualizando conversaciones…"
+                        : pullOffsetPx >= 46
+                          ? "Suelta para actualizar"
+                          : "Desliza hacia abajo para actualizar"}
+                    </span>
+                  </div>
+                )}
+
+              <div
+                ref={scrollListaRef}
+                onTouchStart={iniciarPullMovil}
+                onTouchMove={moverPullMovil}
+                onTouchEnd={() => void finalizarPullMovil()}
+                style={{
+                  flex: 1,
+                  overflowY: "auto",
+                  overscrollBehaviorY: "contain",
+                }}
+              >
                 {conversacionesFiltradas.length === 0 ? (
                   <div
                     style={{
@@ -3925,7 +3983,7 @@ export function ConsolaVentasOmnicanal({
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
-                              maxWidth: modoLayoutInbox === "movil" ? "118px" : "220px",
+                              maxWidth: modoLayoutInbox === "movil" ? "165px" : "260px",
                             }}
                           >
                             {conversacionActiva.remitenteNombre}
@@ -3958,34 +4016,44 @@ export function ConsolaVentasOmnicanal({
                         </div>
 
                         <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                          <select
-                            value={conversacionActiva.asesoraAsignadaId || ""}
-                            onChange={(e) => void handleAsignarVendedor(e.target.value)}
-                            title="Asignar conversación a un miembro del equipo"
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setMenuCabeceraAbierto(null);
+                              setMostrarMenuRespuestas(false);
+                              setVistaMenuOpciones("asignar");
+                              setMostrarMenuAdjuntar(true);
+                            }}
+                            title="Cambiar asignación de este chat (también disponible en Opciones)"
                             aria-label="Asignar conversación"
                             style={{
-                              padding: modoLayoutInbox === "movil" ? "2px 6px" : "1px 4px",
-                              borderRadius: "6px",
-                              border: "1px solid #E2E8F0",
+                              padding: "1px 7px",
+                              borderRadius: "999px",
+                              border: conversacionActiva.asesoraAsignadaId
+                                ? "1px solid #BFDBFE"
+                                : "1px solid #E2E8F0",
                               background: conversacionActiva.asesoraAsignadaId
                                 ? "#EFF6FF"
                                 : "#F8FAFC",
                               color: conversacionActiva.asesoraAsignadaId ? "#1D4ED8" : "#64748B",
-                              fontSize: modoLayoutInbox === "movil" ? "13px" : "0.7rem",
-                              fontWeight: 600,
-                              maxWidth: modoLayoutInbox === "movil" ? "140px" : "155px",
+                              fontSize: "0.68rem",
+                              fontWeight: 700,
                               cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              whiteSpace: "nowrap",
                             }}
                           >
-                            <option value="">Sin asignar ▾</option>
-                            {tablero.equipo.map((m) => (
-                              <option key={m.usuarioId} value={m.usuarioId}>
-                                {m.usuarioId === tablero.usuarioActualId
-                                  ? `Yo (${m.nombre.split(" ")[0]})`
-                                  : `${m.nombre.split(" ")[0]} (${m.rol})`}
-                              </option>
-                            ))}
-                          </select>
+                            <UserCheck size={11} />
+                            <span>
+                              {conversacionActiva.asesoraAsignadaId
+                                ? conversacionActiva.asesoraAsignadaId === tablero.usuarioActualId
+                                  ? "Asignado a mí"
+                                  : conversacionActiva.asesoraNombre?.split(" ")[0] || "Asignado"
+                                : "Sin asignar"}
+                            </span>
+                          </button>
 
                           {conversacionActiva.recordatorioEn && (() => {
                             const vencido =
@@ -4629,56 +4697,7 @@ export function ConsolaVentasOmnicanal({
                           </button>
                         )}
 
-                        {/* 6. COMPARTIR AL CHAT GRUPAL DEL EQUIPO */}
-                        <button
-                          type="button"
-                          className="btn-responsive-accion"
-                          onClick={handleCompartirChatAlEquipo}
-                          title="Compartir esta conversación en el Chat Grupal del Equipo (@kleber, @taller)"
-                          aria-label="Compartir en chat grupal"
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "4px",
-                            padding: "6px 9px",
-                            borderRadius: "8px",
-                            border: "1px solid #DDD6FE",
-                            background: "#F5F3FF",
-                            color: "#5B21B6",
-                            fontSize: "0.73rem",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                          }}
-                        >
-                          <Share2 size={13} />
-                          <span className="btn-texto-responsive">Compartir</span>
-                        </button>
-
-                        {/* 6B. ELIMINAR CONVERSACIÓN COMPLETA (Exclusivo Administrador) */}
-                        {esAdminAplicacion && (
-                          <button
-                            type="button"
-                            onClick={() => setConversacionAEliminar(conversacionActiva)}
-                            title="Eliminar esta conversación completa (Exclusivo Administrador)"
-                            aria-label="Eliminar conversación"
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              width: "34px",
-                              height: "34px",
-                              borderRadius: "8px",
-                              border: "1px solid #FECACA",
-                              background: "#FEF2F2",
-                              color: "#DC2626",
-                              cursor: "pointer",
-                            }}
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        )}
-
-                        {/* 7. MOSTRAR / PLEGAR PANEL DERECHO */}
+                        {/* 6. MOSTRAR / PLEGAR PANEL DERECHO */}
                         {modoLayoutInbox === "desktop" ? (
                           <button
                             type="button"
@@ -4738,15 +4757,13 @@ export function ConsolaVentasOmnicanal({
                     )}
                   </div>
 
-                  {/* FILA 2 EXCLUSIVA EN MÓVIL: Rejilla táctil ergonómica de acciones (38px alto, sin desbordes) */}
+                  {/* FILA 2 EXCLUSIVA EN MÓVIL: Rejilla táctil ergonómica de acciones rápidas de estado (38px alto) */}
                   {modoLayoutInbox === "movil" && (
                     <div
                       style={{
                         display: "grid",
-                        gridTemplateColumns: esAdminAplicacion
-                          ? "repeat(7, minmax(0, 1fr))"
-                          : "repeat(6, minmax(0, 1fr))",
-                        gap: "5px",
+                        gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
+                        gap: "6px",
                         width: "100%",
                       }}
                     >
@@ -4958,56 +4975,6 @@ export function ConsolaVentasOmnicanal({
                           }}
                         >
                           <Play size={16} />
-                        </button>
-                      )}
-
-                      {/* 6. Compartir al Chat Grupal del Equipo */}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMenuCabeceraAbierto(null);
-                          handleCompartirChatAlEquipo();
-                        }}
-                        title="Compartir en Chat Grupal del Equipo"
-                        aria-label="Compartir en equipo"
-                        style={{
-                          height: "38px",
-                          borderRadius: "9px",
-                          border: "1px solid #DDD6FE",
-                          background: "#F5F3FF",
-                          color: "#5B21B6",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          cursor: "pointer",
-                        }}
-                      >
-                        <Share2 size={16} />
-                      </button>
-
-                      {/* 7. Eliminar Conversación Completa (Exclusivo Administrador) */}
-                      {esAdminAplicacion && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setMenuCabeceraAbierto(null);
-                            setConversacionAEliminar(conversacionActiva);
-                          }}
-                          title="Eliminar conversación completa"
-                          aria-label="Eliminar conversación"
-                          style={{
-                            height: "38px",
-                            borderRadius: "9px",
-                            border: "1px solid #FECACA",
-                            background: "#FEF2F2",
-                            color: "#DC2626",
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            cursor: "pointer",
-                          }}
-                        >
-                          <Trash2 size={16} />
                         </button>
                       )}
                     </div>
@@ -5434,13 +5401,49 @@ export function ConsolaVentasOmnicanal({
                   )}
                 </div>
 
+                {/* Pull-to-refresh táctil superior en el chat móvil */}
+                {modoLayoutInbox === "movil" &&
+                  vistaMovilInbox === "chat" &&
+                  (pullOffsetPx > 0 || refrescandoPull) && (
+                    <div
+                      style={{
+                        height: `${Math.max(refrescandoPull ? 42 : 0, pullOffsetPx)}px`,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "7px",
+                        background: "#FFFFFF",
+                        borderBottom: "1px solid #E2E8F0",
+                        color: "#334155",
+                        fontSize: "0.74rem",
+                        fontWeight: 700,
+                        overflow: "hidden",
+                        transition: refrescandoPull ? "height 160ms ease" : "none",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <RefreshCw size={13} />
+                      <span>
+                        {refrescandoPull
+                          ? "Actualizando chat…"
+                          : pullOffsetPx >= 46
+                            ? "Suelta para actualizar"
+                            : "Desliza hacia abajo para actualizar"}
+                      </span>
+                    </div>
+                  )}
+
                 {/* Línea de Tiempo de Mensajes (Cliente vs ARIA IA vs Vendedor Humano) */}
                 <div
                   ref={scrollMensajesRef}
+                  onTouchStart={iniciarPullMovil}
+                  onTouchMove={moverPullMovil}
+                  onTouchEnd={() => void finalizarPullMovil()}
                   style={{
                     flex: 1,
                     padding: modoLayoutInbox === "movil" ? "12px 10px" : "16px",
                     overflowY: "auto",
+                    overscrollBehaviorY: "contain",
                     display: "flex",
                     flexDirection: "column",
                     gap: "10px",
@@ -5790,122 +5793,6 @@ export function ConsolaVentasOmnicanal({
                     </div>
                   )}
 
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      gap: "6px",
-                    }}
-                  >
-                    <div style={{ display: "inline-flex", gap: "5px" }}>
-                      <button
-                        type="button"
-                        onClick={() => setModoNotaInterna(false)}
-                        style={{
-                          minHeight: "30px",
-                          padding: "4px 10px",
-                          borderRadius: "7px",
-                          border: "none",
-                          background: !modoNotaInterna ? "#DBEAFE" : "transparent",
-                          color: !modoNotaInterna ? "#1E40AF" : "#64748B",
-                          fontSize: "0.73rem",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        💬 Cliente
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setModoNotaInterna(true)}
-                        style={{
-                          minHeight: "30px",
-                          padding: "4px 10px",
-                          borderRadius: "7px",
-                          border: "none",
-                          background: modoNotaInterna ? "#FEF3C7" : "transparent",
-                          color: modoNotaInterna ? "#92400E" : "#64748B",
-                          fontSize: "0.73rem",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        📝 Nota
-                      </button>
-                    </div>
-
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                      {modoLayoutInbox === "movil" &&
-                        !modoNotaInterna &&
-                        conversacionActiva.estadoAtencion !== "CERRADO" &&
-                        Boolean(
-                          textoRespuesta.trim() ||
-                            imagenAdjuntaAsesorUrl ||
-                            documentoAdjuntoAsesor
-                        ) && (
-                          <button
-                            type="button"
-                            disabled={enviandoMensaje}
-                            onClick={async () => {
-                              await handleEnviarMensaje();
-                              setMenuCabeceraAbierto("cierre");
-                            }}
-                            title="Enviar mensaje y elegir motivo de cierre"
-                            aria-label="Enviar y cerrar"
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "4px",
-                              minHeight: "30px",
-                              padding: "4px 9px",
-                              borderRadius: "7px",
-                              border: "1px solid #16A34A",
-                              background: "#F0FDF4",
-                              color: "#15803D",
-                              fontSize: "0.72rem",
-                              fontWeight: 700,
-                              cursor: "pointer",
-                              whiteSpace: "nowrap",
-                            }}
-                          >
-                            <CheckCircle2 size={13} />
-                            <span>Enviar y cerrar</span>
-                          </button>
-                        )}
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setMostrarMenuAdjuntar(false);
-                          setMostrarMenuRespuestas((v) => !v);
-                        }}
-                        title="Insertar mensaje predeterminado (o escribe / en el cuadro)"
-                        aria-label="Atajos de respuesta"
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px",
-                          minHeight: "30px",
-                          padding: "4px 9px",
-                          borderRadius: "7px",
-                          border: mostrarMenuRespuestas ? "1px solid #0F172A" : "1px solid #CBD5E1",
-                          background: mostrarMenuRespuestas ? "#0F172A" : "#F8FAFC",
-                          color: mostrarMenuRespuestas ? "#FFFFFF" : "#334155",
-                          fontSize: "0.72rem",
-                          fontWeight: 600,
-                          cursor: "pointer",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        <Zap size={12} />
-                        <span>/Atajos</span>
-                      </button>
-                    </div>
-                  </div>
-
                   {modoNotaInterna && (
                     <div
                       style={{
@@ -5922,11 +5809,11 @@ export function ConsolaVentasOmnicanal({
                         fontWeight: 700,
                       }}
                     >
-                      <span>📝 Modo Nota Interna activo (solo visible para el equipo)</span>
+                      <span>📝 Modo Nota Interna activo (solo equipo)</span>
                       <button
                         type="button"
                         onClick={() => setModoNotaInterna(false)}
-                        title="Cambiar a respuesta para el cliente"
+                        title="Volver a responder al cliente"
                         aria-label="Cambiar a cliente"
                         style={{
                           border: "1px solid #F59E0B",
@@ -5939,7 +5826,7 @@ export function ConsolaVentasOmnicanal({
                           cursor: "pointer",
                         }}
                       >
-                        Cliente
+                        ✕ Cliente
                       </button>
                     </div>
                   )}
@@ -6052,12 +5939,15 @@ export function ConsolaVentasOmnicanal({
                     </div>
                   )}
 
-                  {/* Menú "Adjuntar" estilo WhatsApp (Nota | Documento | Imagen | Foto | Respuesta rápida '/' | Catálogo) */}
+                  {/* Menú unificado "Opciones" (Adjuntos + Nota + Respuesta '/' + Catálogo + Asignación + Compartir + Eliminar) */}
                   {mostrarMenuAdjuntar && (
                     <div
                       role="dialog"
-                      aria-label="Opciones para adjuntar"
-                      onClick={() => setMostrarMenuAdjuntar(false)}
+                      aria-label="Opciones de la conversación"
+                      onClick={() => {
+                        setMostrarMenuAdjuntar(false);
+                        setVistaMenuOpciones("principal");
+                      }}
                       style={
                         modoLayoutInbox === "movil"
                           ? {
@@ -6084,6 +5974,8 @@ export function ConsolaVentasOmnicanal({
                           modoLayoutInbox === "movil"
                             ? {
                                 width: "100%",
+                                maxHeight: "82dvh",
+                                overflowY: "auto",
                                 background: "#111B21",
                                 color: "#E9EDEF",
                                 borderRadius: "22px 22px 0 0",
@@ -6093,9 +5985,11 @@ export function ConsolaVentasOmnicanal({
                               }
                             : {
                                 position: "absolute",
-                                bottom: "66px",
+                                bottom: "64px",
                                 left: "14px",
-                                width: "332px",
+                                width: "344px",
+                                maxHeight: "76vh",
+                                overflowY: "auto",
                                 background: "#111B21",
                                 color: "#E9EDEF",
                                 borderRadius: "18px",
@@ -6112,148 +6006,320 @@ export function ConsolaVentasOmnicanal({
                               height: "4px",
                               borderRadius: "999px",
                               background: "rgba(255,255,255,0.28)",
-                              margin: "0 auto 14px",
+                              margin: "0 auto 12px",
                             }}
                           />
                         )}
 
-                        <div
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                            gap: "14px 10px",
-                          }}
-                        >
-                          {[
-                            {
-                              clave: "nota",
-                              etiqueta: "Nota",
-                              titulo: "Escribir Nota Interna para el equipo",
-                              fondo: "rgba(245, 158, 11, 0.18)",
-                              borde: "rgba(245, 158, 11, 0.42)",
-                              colorIcono: "#FBBF24",
-                              icono: <StickyNote size={22} />,
-                              onAccion: () => {
-                                setModoNotaInterna(true);
-                                setMostrarMenuAdjuntar(false);
-                                setTimeout(() => textareaCompositorRef.current?.focus(), 50);
-                              },
-                            },
-                            {
-                              clave: "documento",
-                              etiqueta: "Documento",
-                              titulo: "Adjuntar documento PDF, Word o Excel",
-                              fondo: "rgba(124, 58, 237, 0.2)",
-                              borde: "rgba(167, 139, 250, 0.42)",
-                              colorIcono: "#A78BFA",
-                              icono: <FileText size={22} />,
-                              onAccion: () => {
-                                setMostrarMenuAdjuntar(false);
-                                inputDocumentoAsesorRef.current?.click();
-                              },
-                            },
-                            {
-                              clave: "imagen",
-                              etiqueta: "Imagen",
-                              titulo: "Seleccionar imagen de la galería",
-                              fondo: "rgba(37, 99, 235, 0.2)",
-                              borde: "rgba(96, 165, 250, 0.42)",
-                              colorIcono: "#60A5FA",
-                              icono: <ImagePlus size={22} />,
-                              onAccion: () => {
-                                setMostrarMenuAdjuntar(false);
-                                inputFotoAsesorRef.current?.click();
-                              },
-                            },
-                            {
-                              clave: "foto",
-                              etiqueta: "Foto",
-                              titulo: "Tomar foto directa con la cámara",
-                              fondo: "rgba(236, 72, 153, 0.2)",
-                              borde: "rgba(244, 114, 182, 0.42)",
-                              colorIcono: "#F472B6",
-                              icono: <Camera size={22} />,
-                              onAccion: () => {
-                                setMostrarMenuAdjuntar(false);
-                                inputCamaraAsesorRef.current?.click();
-                              },
-                            },
-                            {
-                              clave: "rapida",
-                              etiqueta: "Respuesta '/'",
-                              titulo: "Abrir respuestas rápidas (/atajos)",
-                              fondo: "rgba(234, 179, 8, 0.2)",
-                              borde: "rgba(250, 204, 21, 0.42)",
-                              colorIcono: "#FACC15",
-                              icono: <Zap size={22} />,
-                              onAccion: () => {
-                                setMostrarMenuAdjuntar(false);
-                                setMostrarMenuRespuestas(true);
-                                setTimeout(() => textareaCompositorRef.current?.focus(), 50);
-                              },
-                            },
-                            {
-                              clave: "catalogo",
-                              etiqueta: "Catálogo",
-                              titulo:
-                                "Enviar producto del catálogo (foto principal + link web + álbum)",
-                              fondo: "rgba(22, 163, 74, 0.22)",
-                              borde: "rgba(74, 222, 128, 0.45)",
-                              colorIcono: "#4ADE80",
-                              icono: <Store size={22} />,
-                              onAccion: () => {
-                                setMostrarMenuAdjuntar(false);
-                                setModalCatalogoChatAbierto(true);
-                              },
-                            },
-                          ].map((item) => (
-                            <button
-                              key={item.clave}
-                              type="button"
-                              onClick={item.onAccion}
-                              title={item.titulo}
-                              aria-label={item.etiqueta}
+                        {vistaMenuOpciones === "asignar" ? (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                            <div
                               style={{
-                                border: "none",
-                                background: "transparent",
-                                color: "#E9EDEF",
                                 display: "flex",
-                                flexDirection: "column",
                                 alignItems: "center",
-                                gap: "7px",
-                                padding: "4px 2px",
-                                cursor: "pointer",
+                                justifyContent: "space-between",
+                                paddingBottom: "8px",
+                                borderBottom: "1px solid rgba(255,255,255,0.1)",
                               }}
                             >
-                              <span
+                              <button
+                                type="button"
+                                onClick={() => setVistaMenuOpciones("principal")}
+                                title="Volver a Opciones"
+                                aria-label="Volver"
                                 style={{
-                                  width: "56px",
-                                  height: "52px",
-                                  borderRadius: "999px",
-                                  background: item.fondo,
-                                  border: `1px solid ${item.borde}`,
-                                  color: item.colorIcono,
+                                  border: "none",
+                                  background: "rgba(255,255,255,0.08)",
+                                  color: "#E9EDEF",
+                                  borderRadius: "8px",
+                                  padding: "5px 10px",
+                                  fontSize: "0.75rem",
+                                  fontWeight: 700,
                                   display: "inline-flex",
                                   alignItems: "center",
-                                  justifyContent: "center",
+                                  gap: "5px",
+                                  cursor: "pointer",
                                 }}
                               >
-                                {item.icono}
-                              </span>
-                              <span
-                                style={{
-                                  fontSize: "0.76rem",
-                                  fontWeight: 600,
-                                  color: "#D1D7DB",
-                                  lineHeight: 1.2,
-                                  textAlign: "center",
-                                }}
-                              >
-                                {item.etiqueta}
-                              </span>
+                                <ArrowLeft size={14} />
+                                <span>Volver</span>
+                              </button>
+                              <strong style={{ fontSize: "0.82rem", color: "#F8FAFC" }}>
+                                👤 Asignar al equipo
+                              </strong>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                void handleAsignarVendedor("");
+                                setMostrarMenuAdjuntar(false);
+                                setVistaMenuOpciones("principal");
+                              }}
+                              style={{
+                                width: "100%",
+                                minHeight: "42px",
+                                padding: "8px 12px",
+                                borderRadius: "10px",
+                                border: !conversacionActiva.asesoraAsignadaId
+                                  ? "1px solid #38BDF8"
+                                  : "1px solid rgba(255,255,255,0.1)",
+                                background: !conversacionActiva.asesoraAsignadaId
+                                  ? "rgba(56, 189, 248, 0.16)"
+                                  : "rgba(255,255,255,0.04)",
+                                color: "#F8FAFC",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                fontSize: "0.82rem",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                                textAlign: "left",
+                              }}
+                            >
+                              <span>— Sin asignar (Cola general)</span>
+                              {!conversacionActiva.asesoraAsignadaId && (
+                                <Check size={15} color="#38BDF8" />
+                              )}
                             </button>
-                          ))}
-                        </div>
+
+                            {tablero.equipo.map((m) => {
+                              const activo = conversacionActiva.asesoraAsignadaId === m.usuarioId;
+                              return (
+                                <button
+                                  key={m.usuarioId}
+                                  type="button"
+                                  onClick={() => {
+                                    void handleAsignarVendedor(m.usuarioId);
+                                    setMostrarMenuAdjuntar(false);
+                                    setVistaMenuOpciones("principal");
+                                  }}
+                                  style={{
+                                    width: "100%",
+                                    minHeight: "44px",
+                                    padding: "8px 12px",
+                                    borderRadius: "10px",
+                                    border: activo
+                                      ? "1px solid #38BDF8"
+                                      : "1px solid rgba(255,255,255,0.1)",
+                                    background: activo
+                                      ? "rgba(56, 189, 248, 0.16)"
+                                      : "rgba(255,255,255,0.04)",
+                                    color: "#F8FAFC",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    gap: "8px",
+                                    cursor: "pointer",
+                                    textAlign: "left",
+                                  }}
+                                >
+                                  <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+                                    <span style={{ fontSize: "0.82rem", fontWeight: 700 }}>
+                                      {m.usuarioId === tablero.usuarioActualId
+                                        ? `Yo (${m.nombre})`
+                                        : m.nombre}
+                                    </span>
+                                    <span style={{ fontSize: "0.69rem", color: "#94A3B8" }}>
+                                      {m.rol} · {m.chatsActivos} chats activos
+                                    </span>
+                                  </div>
+                                  {activo && <Check size={15} color="#38BDF8" />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                              gap: "14px 10px",
+                            }}
+                          >
+                            {[
+                              {
+                                clave: "nota",
+                                etiqueta: modoNotaInterna ? "Modo Cliente" : "Nota",
+                                titulo: modoNotaInterna
+                                  ? "Volver a escribir al cliente"
+                                  : "Escribir Nota Interna para el equipo",
+                                fondo: "rgba(245, 158, 11, 0.18)",
+                                borde: "rgba(245, 158, 11, 0.42)",
+                                colorIcono: "#FBBF24",
+                                icono: <StickyNote size={22} />,
+                                visible: true,
+                                onAccion: () => {
+                                  setModoNotaInterna((prev) => !prev);
+                                  setMostrarMenuAdjuntar(false);
+                                  setTimeout(() => textareaCompositorRef.current?.focus(), 50);
+                                },
+                              },
+                              {
+                                clave: "documento",
+                                etiqueta: "Documento",
+                                titulo: "Adjuntar documento PDF, Word o Excel",
+                                fondo: "rgba(124, 58, 237, 0.2)",
+                                borde: "rgba(167, 139, 250, 0.42)",
+                                colorIcono: "#A78BFA",
+                                icono: <FileText size={22} />,
+                                visible: true,
+                                onAccion: () => {
+                                  setMostrarMenuAdjuntar(false);
+                                  inputDocumentoAsesorRef.current?.click();
+                                },
+                              },
+                              {
+                                clave: "imagen",
+                                etiqueta: "Imagen",
+                                titulo: "Seleccionar imagen de la galería",
+                                fondo: "rgba(37, 99, 235, 0.2)",
+                                borde: "rgba(96, 165, 250, 0.42)",
+                                colorIcono: "#60A5FA",
+                                icono: <ImagePlus size={22} />,
+                                visible: true,
+                                onAccion: () => {
+                                  setMostrarMenuAdjuntar(false);
+                                  inputFotoAsesorRef.current?.click();
+                                },
+                              },
+                              {
+                                clave: "foto",
+                                etiqueta: "Foto",
+                                titulo: "Tomar foto directa con la cámara",
+                                fondo: "rgba(236, 72, 153, 0.2)",
+                                borde: "rgba(244, 114, 182, 0.42)",
+                                colorIcono: "#F472B6",
+                                icono: <Camera size={22} />,
+                                visible: true,
+                                onAccion: () => {
+                                  setMostrarMenuAdjuntar(false);
+                                  inputCamaraAsesorRef.current?.click();
+                                },
+                              },
+                              {
+                                clave: "rapida",
+                                etiqueta: "Respuesta '/'",
+                                titulo: "Abrir respuestas rápidas (/atajos)",
+                                fondo: "rgba(234, 179, 8, 0.2)",
+                                borde: "rgba(250, 204, 21, 0.42)",
+                                colorIcono: "#FACC15",
+                                icono: <Zap size={22} />,
+                                visible: true,
+                                onAccion: () => {
+                                  setMostrarMenuAdjuntar(false);
+                                  setMostrarMenuRespuestas(true);
+                                  setTimeout(() => textareaCompositorRef.current?.focus(), 50);
+                                },
+                              },
+                              {
+                                clave: "catalogo",
+                                etiqueta: "Catálogo",
+                                titulo:
+                                  "Enviar producto del catálogo (foto principal + link web + álbum)",
+                                fondo: "rgba(22, 163, 74, 0.22)",
+                                borde: "rgba(74, 222, 128, 0.45)",
+                                colorIcono: "#4ADE80",
+                                icono: <Store size={22} />,
+                                visible: true,
+                                onAccion: () => {
+                                  setMostrarMenuAdjuntar(false);
+                                  setModalCatalogoChatAbierto(true);
+                                },
+                              },
+                              {
+                                clave: "asignar",
+                                etiqueta: "Asignar",
+                                titulo: "Asignar esta conversación a un miembro del equipo",
+                                fondo: "rgba(14, 165, 233, 0.2)",
+                                borde: "rgba(56, 189, 248, 0.42)",
+                                colorIcono: "#38BDF8",
+                                icono: <UserCheck size={22} />,
+                                visible: true,
+                                onAccion: () => {
+                                  setVistaMenuOpciones("asignar");
+                                },
+                              },
+                              {
+                                clave: "compartir",
+                                etiqueta: "Compartir",
+                                titulo: "Compartir conversación en el Chat Grupal del Equipo",
+                                fondo: "rgba(139, 92, 246, 0.2)",
+                                borde: "rgba(196, 181, 253, 0.42)",
+                                colorIcono: "#C4B5FD",
+                                icono: <Share2 size={22} />,
+                                visible: true,
+                                onAccion: () => {
+                                  setMostrarMenuAdjuntar(false);
+                                  handleCompartirChatAlEquipo();
+                                },
+                              },
+                              {
+                                clave: "eliminar",
+                                etiqueta: "Eliminar",
+                                titulo:
+                                  "Eliminar conversación completa (Exclusivo Administrador)",
+                                fondo: "rgba(239, 68, 68, 0.2)",
+                                borde: "rgba(248, 113, 113, 0.45)",
+                                colorIcono: "#F87171",
+                                icono: <Trash2 size={22} />,
+                                visible: esAdminAplicacion,
+                                onAccion: () => {
+                                  setMostrarMenuAdjuntar(false);
+                                  setConversacionAEliminar(conversacionActiva);
+                                },
+                              },
+                            ]
+                              .filter((item) => item.visible)
+                              .map((item) => (
+                                <button
+                                  key={item.clave}
+                                  type="button"
+                                  onClick={item.onAccion}
+                                  title={item.titulo}
+                                  aria-label={item.etiqueta}
+                                  style={{
+                                    border: "none",
+                                    background: "transparent",
+                                    color: "#E9EDEF",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    gap: "7px",
+                                    padding: "4px 2px",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      width: "56px",
+                                      height: "52px",
+                                      borderRadius: "999px",
+                                      background: item.fondo,
+                                      border: `1px solid ${item.borde}`,
+                                      color: item.colorIcono,
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                    }}
+                                  >
+                                    {item.icono}
+                                  </span>
+                                  <span
+                                    style={{
+                                      fontSize: "0.76rem",
+                                      fontWeight: 600,
+                                      color: "#D1D7DB",
+                                      lineHeight: 1.2,
+                                      textAlign: "center",
+                                    }}
+                                  >
+                                    {item.etiqueta}
+                                  </span>
+                                </button>
+                              ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -6301,10 +6367,11 @@ export function ConsolaVentasOmnicanal({
                       disabled={subiendoImagenAsesor}
                       onClick={() => {
                         setMostrarMenuRespuestas(false);
+                        setVistaMenuOpciones("principal");
                         setMostrarMenuAdjuntar((prev) => !prev);
                       }}
-                      title="Adjuntar (Nota, Documento, Imagen, Foto, Respuesta rápida '/', Catálogo)"
-                      aria-label="Adjuntar"
+                      title="Opciones (Nota, Documento, Imagen, Foto, Respuesta '/', Catálogo, Asignar, Compartir)"
+                      aria-label="Opciones"
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
@@ -6325,8 +6392,18 @@ export function ConsolaVentasOmnicanal({
                         flexShrink: 0,
                       }}
                     >
-                      {subiendoImagenAsesor ? <Loader2 size={16} /> : <Paperclip size={16} />}
-                      <span className="btn-texto-responsive">Adjuntar</span>
+                      {subiendoImagenAsesor ? (
+                        <Loader2 size={16} />
+                      ) : (
+                        <Plus
+                          size={18}
+                          style={{
+                            transform: mostrarMenuAdjuntar ? "rotate(45deg)" : "none",
+                            transition: "transform 160ms ease",
+                          }}
+                        />
+                      )}
+                      <span className="btn-texto-responsive">Opciones</span>
                     </button>
 
                     <textarea
