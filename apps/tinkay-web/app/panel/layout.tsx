@@ -12,7 +12,7 @@ import {
   type ItemNavegacionPanel,
 } from "@eco/configuracion-negocio";
 import { CampanaNotificaciones } from "@eco/notificaciones";
-import { obtenerMisProformasEventoAction } from "@eco/comercio";
+import { GestorPushChatsOmnicanal, obtenerMisProformasEventoAction } from "@eco/comercio";
 import { crearClienteServidor } from "@eco/supabase/servidor";
 import { MarcoEcommerceClienteTinkay } from "../../modulos/ecommerce/componentes/MarcoEcommerceClienteTinkay";
 import { obtenerContextoAccesoTinkay } from "./acceso-tinkay";
@@ -438,6 +438,12 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
         </>
       }
     >
+      <GestorPushChatsOmnicanal
+        negocio={NEGOCIO}
+        usuarioId={perfil.usu_id}
+        rolPrincipal={rolPrincipal}
+        puedeVerConversacionesClientes={clavesAutorizadas.has("consola_chat")}
+      />
       {children}
     </MarcoPanelLateral>
   );

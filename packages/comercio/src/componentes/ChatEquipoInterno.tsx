@@ -54,20 +54,20 @@ export interface PropsChatEquipoInterno {
 }
 
 const COLORES_ROL_EQUIPO: Record<string, { bg: string; color: string; etiqueta: string }> = {
-  SUPERADMIN: { bg: "#FEF3C7", color: "#92400E", etiqueta: "SuperAdmin" },
-  ADMINISTRADOR: { bg: "#DCFCE7", color: "#166534", etiqueta: "Admin" },
-  OPERADOR: { bg: "#E0F2FE", color: "#075985", etiqueta: "Operador" },
-  VENTAS: { bg: "#DBEAFE", color: "#1E40AF", etiqueta: "Ventas" },
-  TALLER: { bg: "#F0FDF4", color: "#15803D", etiqueta: "Taller" },
-  DELIVERY: { bg: "#FFEDD5", color: "#9A3412", etiqueta: "Delivery" },
-  DELIVERY_EXTERNO: { bg: "#FEE2E2", color: "#991B1B", etiqueta: "Delivery Ext." },
+  SUPERADMIN: { bg: "#F4F4F5", color: "#3F3F46", etiqueta: "SuperAdmin" },
+  ADMINISTRADOR: { bg: "#F4F4F5", color: "#3F3F46", etiqueta: "Admin" },
+  OPERADOR: { bg: "#F4F4F5", color: "#52525B", etiqueta: "Operador" },
+  VENTAS: { bg: "#F4F4F5", color: "#52525B", etiqueta: "Ventas" },
+  TALLER: { bg: "#F4F4F5", color: "#52525B", etiqueta: "Taller" },
+  DELIVERY: { bg: "#F4F4F5", color: "#52525B", etiqueta: "Delivery" },
+  DELIVERY_EXTERNO: { bg: "#F4F4F5", color: "#52525B", etiqueta: "Delivery Ext." },
 };
 
 function renderTextoConMencionesYEnlaces(
   texto: string,
   miHandle: string,
   miRol: string,
-  esMio: boolean
+  _esMio: boolean
 ): React.ReactNode {
   const tokenRegex = /(https?:\/\/[^\s]+|@[a-zA-Z0-9_áéíóúÁÉÍÓÚñÑ]{2,32})/g;
   const partes = texto.split(tokenRegex);
@@ -85,7 +85,7 @@ function renderTextoConMencionesYEnlaces(
             rel="noreferrer"
             title={info.href}
             style={{
-              color: esMio ? "#DDD6FE" : "#2563EB",
+              color: "#18181B",
               textDecoration: "underline",
               wordBreak: "break-word",
               fontWeight: 600,
@@ -116,15 +116,12 @@ function renderTextoConMencionesYEnlaces(
             display: "inline-block",
             padding: "1px 6px",
             margin: "0 1px",
-            borderRadius: "6px",
-            fontWeight: 800,
+            borderRadius: "5px",
+            fontWeight: 700,
             fontSize: "0.79rem",
-            background: meMenciona
-              ? "#FDE68A"
-              : esMio
-                ? "rgba(255, 255, 255, 0.22)"
-                : "#EDE9FE",
-            color: meMenciona ? "#78350F" : esMio ? "#FFFFFF" : "#5B21B6",
+            background: meMenciona ? "#E7E5E4" : "#F4F4F5",
+            border: meMenciona ? "1px solid #A8A29E" : "1px solid #E4E4E7",
+            color: "#18181B",
           }}
         >
           {parte}
@@ -166,7 +163,7 @@ function ImagenConRespaldoChatEquipo({
           cursor: "zoom-in",
           borderRadius: "10px",
           overflow: "hidden",
-          border: "1px solid rgba(15, 23, 42, 0.14)",
+          border: "1px solid #E4E4E7",
           background: "#FFFFFF",
         }}
       >
@@ -200,11 +197,11 @@ function ImagenConRespaldoChatEquipo({
             gap: "4px",
             padding: "4px 8px",
             borderRadius: "6px",
-            border: "1px solid rgba(148, 163, 184, 0.45)",
-            background: "rgba(255, 255, 255, 0.92)",
-            color: "#0F172A",
+            border: "1px solid #D4D4D8",
+            background: "#FFFFFF",
+            color: "#27272A",
             fontSize: "0.71rem",
-            fontWeight: 700,
+            fontWeight: 600,
             cursor: "pointer",
           }}
         >
@@ -224,11 +221,11 @@ function ImagenConRespaldoChatEquipo({
             gap: "4px",
             padding: "4px 8px",
             borderRadius: "6px",
-            border: "1px solid rgba(148, 163, 184, 0.45)",
-            background: "rgba(255, 255, 255, 0.92)",
-            color: "#0284C7",
+            border: "1px solid #D4D4D8",
+            background: "#FFFFFF",
+            color: "#27272A",
             fontSize: "0.71rem",
-            fontWeight: 700,
+            fontWeight: 600,
             cursor: "pointer",
           }}
         >
@@ -248,11 +245,11 @@ function ImagenConRespaldoChatEquipo({
             gap: "4px",
             padding: "4px 8px",
             borderRadius: "6px",
-            border: "1px solid #86EFAC",
-            background: "#F0FDF4",
-            color: "#15803D",
+            border: "1px solid #D4D4D8",
+            background: "#FFFFFF",
+            color: "#27272A",
             fontSize: "0.71rem",
-            fontWeight: 700,
+            fontWeight: 600,
             cursor: "pointer",
           }}
         >
@@ -379,11 +376,21 @@ export function ChatEquipoInterno({
     };
   }, [negNorm, recargarSala]);
 
-  // Auto-scroll al último mensaje
+  // Auto-scroll al último mensaje o al mensaje indicado en ?msg= desde notificación Push
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    const contenedor = scrollRef.current;
+    if (!contenedor) return;
+    if (typeof window !== "undefined") {
+      const msgParam = new URLSearchParams(window.location.search).get("msg");
+      if (msgParam) {
+        const nodo = contenedor.querySelector(`[data-eq-msg-id="${msgParam}"]`) as HTMLElement | null;
+        if (nodo) {
+          nodo.scrollIntoView({ behavior: "smooth", block: "center" });
+          return;
+        }
+      }
     }
+    contenedor.scrollTop = contenedor.scrollHeight;
   }, [sala?.mensajes.length, filtroVista]);
 
   const opcionesMencion = useMemo(() => {
@@ -591,13 +598,13 @@ export function ChatEquipoInterno({
       <div
         style={{
           background: "#FFFFFF",
-          border: "1px solid #E2E8F0",
+          border: "1px solid #E4E4E7",
           borderRadius: "14px",
           padding: "12px 16px",
           display: "flex",
           flexDirection: "column",
           gap: "10px",
-          boxShadow: "0 2px 8px rgba(15, 23, 42, 0.03)",
+          boxShadow: "0 1px 3px rgba(24, 24, 27, 0.04)",
         }}
       >
         <div
@@ -615,9 +622,9 @@ export function ChatEquipoInterno({
                 width: "36px",
                 height: "36px",
                 borderRadius: "10px",
-                background: "#F5F3FF",
-                border: "1px solid #DDD6FE",
-                color: "#6D28D9",
+                background: "#F4F4F5",
+                border: "1px solid #E4E4E7",
+                color: "#27272A",
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -627,26 +634,18 @@ export function ChatEquipoInterno({
             </div>
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                <strong style={{ fontSize: "0.96rem", color: "#0F172A" }}>
-                  {sala?.nombreSala || "Chat Grupal del Equipo · Floristería"}
+                <strong style={{ fontSize: "0.95rem", color: "#18181B" }}>
+                  {sala?.nombreSala || "Chat Grupal del Equipo"}
                 </strong>
-                <span
-                  style={{
-                    padding: "2px 8px",
-                    borderRadius: "999px",
-                    fontSize: "0.71rem",
-                    fontWeight: 700,
-                    background: enVivo ? "#ECFDF5" : "#F8FAFC",
-                    color: enVivo ? "#047857" : "#64748B",
-                    border: `1px solid ${enVivo ? "#A7F3D0" : "#E2E8F0"}`,
-                  }}
-                >
-                  {enVivo ? "● En vivo" : "Sincronizando…"}
-                </span>
+                {!enVivo && (
+                  <span style={{ fontSize: "0.71rem", color: "#71717A" }}>
+                    Sincronizando…
+                  </span>
+                )}
               </div>
-              <div style={{ fontSize: "0.75rem", color: "#64748B" }}>
+              <div style={{ fontSize: "0.75rem", color: "#71717A" }}>
                 Escribe <strong>@nombre</strong> (ej. <code>@kleber</code>) o{" "}
-                <code>@taller</code> / <code>@ventas</code> / <code>@delivery</code> para notificar una pregunta.
+                <code>@taller</code> / <code>@ventas</code> / <code>@delivery</code> para etiquetar.
               </div>
             </div>
           </div>
@@ -673,11 +672,11 @@ export function ChatEquipoInterno({
                   style={{
                     padding: "5px 10px",
                     borderRadius: "8px",
-                    border: act ? "1px solid #6D28D9" : "1px solid #E2E8F0",
-                    background: act ? "#6D28D9" : "#F8FAFC",
-                    color: act ? "#FFFFFF" : "#334155",
+                    border: act ? "1px solid #18181B" : "1px solid #E4E4E7",
+                    background: act ? "#18181B" : "#FAFAFA",
+                    color: act ? "#FFFFFF" : "#3F3F46",
                     fontSize: "0.75rem",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     cursor: "pointer",
                   }}
                 >
@@ -698,9 +697,9 @@ export function ChatEquipoInterno({
                 gap: "5px",
                 padding: "6px 10px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid #D4D4D8",
                 background: "#FFFFFF",
-                color: "#0F172A",
+                color: "#18181B",
                 fontSize: "0.75rem",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -723,7 +722,7 @@ export function ChatEquipoInterno({
               paddingBottom: "2px",
             }}
           >
-            <span style={{ fontSize: "0.71rem", fontWeight: 700, color: "#64748B", flexShrink: 0 }}>
+            <span style={{ fontSize: "0.71rem", fontWeight: 700, color: "#71717A", flexShrink: 0 }}>
               Equipo ({sala.miembros.length}):
             </span>
             {sala.miembros.map((mb) => {
@@ -741,24 +740,24 @@ export function ChatEquipoInterno({
                     gap: "5px",
                     padding: "3px 9px",
                     borderRadius: "999px",
-                    border: "1px solid #E2E8F0",
-                    background: "#F8FAFC",
+                    border: "1px solid #E4E4E7",
+                    background: "#FAFAFA",
                     fontSize: "0.72rem",
-                    color: "#0F172A",
+                    color: "#27272A",
                     cursor: "pointer",
                     flexShrink: 0,
                   }}
                 >
-                  <strong style={{ color: "#5B21B6" }}>@{mb.handle}</strong>
-                  <span>{mb.nombre.split(" ")[0]}</span>
+                  <strong style={{ color: "#18181B" }}>@{mb.handle}</strong>
+                  <span style={{ color: "#52525B" }}>{mb.nombre.split(" ")[0]}</span>
                   <span
                     style={{
                       padding: "1px 6px",
                       borderRadius: "999px",
-                      fontSize: "0.65rem",
-                      fontWeight: 700,
-                      background: badge.bg,
-                      color: badge.color,
+                      fontSize: "0.64rem",
+                      fontWeight: 600,
+                      background: "#ECECEE",
+                      color: "#52525B",
                     }}
                   >
                     {badge.etiqueta}
@@ -871,6 +870,7 @@ export function ChatEquipoInterno({
               return (
                 <div
                   key={m.id}
+                  data-eq-msg-id={m.id}
                   style={{
                     alignSelf: esMio ? "flex-end" : "flex-start",
                     maxWidth: "85%",
@@ -887,7 +887,7 @@ export function ChatEquipoInterno({
                       justifyContent: esMio ? "flex-end" : "flex-start",
                       gap: "6px",
                       fontSize: "0.71rem",
-                      color: "#475569",
+                      color: "#71717A",
                       flexWrap: "wrap",
                     }}
                   >
@@ -899,24 +899,25 @@ export function ChatEquipoInterno({
                           gap: "3px",
                           padding: "1px 6px",
                           borderRadius: "999px",
-                          background: "#FEF3C7",
-                          color: "#92400E",
-                          fontWeight: 800,
+                          background: "#F4F4F5",
+                          border: "1px solid #D4D4D8",
+                          color: "#18181B",
+                          fontWeight: 700,
                         }}
                       >
                         <BellRing size={11} />
-                        Te mencionaron
+                        Mención
                       </span>
                     )}
-                    <strong style={{ color: "#0F172A" }}>
+                    <strong style={{ color: "#27272A" }}>
                       {esMio ? `Tú (${m.autorNombre.split(" ")[0]})` : m.autorNombre}
                     </strong>
                     <span
                       style={{
                         padding: "1px 6px",
                         borderRadius: "999px",
-                        fontSize: "0.66rem",
-                        fontWeight: 700,
+                        fontSize: "0.65rem",
+                        fontWeight: 600,
                         background: badgeRol.bg,
                         color: badgeRol.color,
                       }}
@@ -931,23 +932,23 @@ export function ChatEquipoInterno({
                     </span>
                   </div>
 
-                  {/* Globo del mensaje */}
+                  {/* Globo del mensaje — Diseño limpio y sobrio */}
                   <div
                     style={{
                       padding: "10px 13px",
-                      borderRadius: "13px",
+                      borderRadius: "12px",
                       background: esMio
-                        ? "#4C1D95"
+                        ? "#ECEAE4"
                         : meMenciona
-                          ? "#FFFBEB"
+                          ? "#FAFAF9"
                           : "#FFFFFF",
-                      color: esMio ? "#FFFFFF" : "#0F172A",
+                      color: "#18181B",
                       border: esMio
-                        ? "none"
+                        ? "1px solid #DCD8D0"
                         : meMenciona
-                          ? "1.5px solid #F59E0B"
-                          : "1px solid #E2E8F0",
-                      boxShadow: "0 1px 3px rgba(15, 23, 42, 0.05)",
+                          ? "1.5px solid #78716C"
+                          : "1px solid #E4E4E7",
+                      boxShadow: "0 1px 2px rgba(24, 24, 27, 0.04)",
                       display: "flex",
                       flexDirection: "column",
                       gap: "8px",
@@ -961,15 +962,16 @@ export function ChatEquipoInterno({
                         style={{
                           padding: "6px 9px",
                           borderRadius: "8px",
-                          borderLeft: esMio ? "3px solid #DDD6FE" : "3px solid #6D28D9",
-                          background: esMio ? "rgba(255,255,255,0.12)" : "#F5F3FF",
+                          borderLeft: "3px solid #52525B",
+                          background: esMio ? "rgba(255,255,255,0.65)" : "#F4F4F5",
+                          color: "#27272A",
                           fontSize: "0.75rem",
                         }}
                       >
-                        <div style={{ fontWeight: 700, opacity: 0.9 }}>
+                        <div style={{ fontWeight: 700 }}>
                           ↩ En respuesta a {cita.autorNombre}
                         </div>
-                        <div style={{ opacity: 0.85 }}>{cita.extracto}</div>
+                        <div style={{ color: "#52525B" }}>{cita.extracto}</div>
                       </div>
                     )}
 
@@ -984,9 +986,9 @@ export function ChatEquipoInterno({
                           style={{
                             padding: "7px 10px",
                             borderRadius: "8px",
-                            borderLeft: "3px solid #10B981",
-                            background: esMio ? "rgba(255,255,255,0.14)" : "#ECFDF5",
-                            color: esMio ? "#F8FAFC" : "#064E3B",
+                            borderLeft: "3px solid #3F3F46",
+                            background: esMio ? "rgba(255,255,255,0.7)" : "#F8FAFC",
+                            color: "#27272A",
                             fontSize: "0.75rem",
                             display: "flex",
                             flexDirection: "column",
@@ -1003,7 +1005,7 @@ export function ChatEquipoInterno({
                             }}
                           >
                             <strong>
-                              ↪ Reenviado del cliente: {reenvio.clienteNombre}
+                              ↪ Cliente: {reenvio.clienteNombre}
                               {reenvio.clienteTelefono ? ` (${reenvio.clienteTelefono})` : ""}
                             </strong>
 
@@ -1023,13 +1025,12 @@ export function ChatEquipoInterno({
                                 gap: "4px",
                                 padding: "2px 8px",
                                 borderRadius: "999px",
-                                background: esMio ? "#10B981" : "#059669",
+                                background: "#18181B",
                                 color: "#FFFFFF",
                                 fontSize: "0.69rem",
-                                fontWeight: 800,
+                                fontWeight: 700,
                                 textDecoration: "none",
                                 whiteSpace: "nowrap",
-                                boxShadow: "0 1px 2px rgba(0,0,0,0.12)",
                               }}
                             >
                               <ExternalLink size={11} />
@@ -1038,7 +1039,7 @@ export function ChatEquipoInterno({
                           </div>
 
                           {reenvio.textoOriginal && (
-                            <span style={{ opacity: 0.92 }}>“{reenvio.textoOriginal}”</span>
+                            <span style={{ color: "#52525B" }}>“{reenvio.textoOriginal}”</span>
                           )}
                         </div>
                       );
@@ -1115,10 +1116,11 @@ export function ChatEquipoInterno({
                             gap: "4px",
                             padding: "2px 7px",
                             borderRadius: "6px",
-                            background: esMio ? "rgba(16, 185, 129, 0.28)" : "#ECFDF5",
-                            color: esMio ? "#A7F3D0" : "#047857",
+                            border: "1px solid #D4D4D8",
+                            background: "#FFFFFF",
+                            color: "#27272A",
                             fontSize: "0.7rem",
-                            fontWeight: 700,
+                            fontWeight: 600,
                             textDecoration: "none",
                           }}
                         >
@@ -1134,7 +1136,7 @@ export function ChatEquipoInterno({
                             id: m.id,
                             autorNombre: m.autorNombre,
                             extracto: m.contenido
-                              .replace(/!\s*\[[^\]]*\]\s*\([^)]+\)/g, "📷 Foto")
+                              .replace(/!\s*\[[^\]]*\]\s*\([^)]+\)/g, "Foto")
                               .slice(0, 110),
                             imagenUrl: primeraImg,
                           });
@@ -1148,11 +1150,11 @@ export function ChatEquipoInterno({
                           gap: "4px",
                           padding: "2px 7px",
                           borderRadius: "6px",
-                          border: "none",
-                          background: esMio ? "rgba(255,255,255,0.15)" : "#F1F5F9",
-                          color: esMio ? "#FFFFFF" : "#475569",
+                          border: "1px solid #D4D4D8",
+                          background: "#FFFFFF",
+                          color: "#3F3F46",
                           fontSize: "0.7rem",
-                          fontWeight: 700,
+                          fontWeight: 600,
                           cursor: "pointer",
                         }}
                       >
@@ -1182,11 +1184,11 @@ export function ChatEquipoInterno({
                           gap: "4px",
                           padding: "2px 7px",
                           borderRadius: "6px",
-                          border: "none",
-                          background: esMio ? "rgba(255,255,255,0.15)" : "#F0FDF4",
-                          color: esMio ? "#BBF7D0" : "#15803D",
+                          border: "1px solid #D4D4D8",
+                          background: "#FFFFFF",
+                          color: "#3F3F46",
                           fontSize: "0.7rem",
-                          fontWeight: 700,
+                          fontWeight: 600,
                           cursor: "pointer",
                         }}
                       >
@@ -1264,9 +1266,9 @@ export function ChatEquipoInterno({
                   }}
                 >
                   <span>
-                    <strong style={{ color: "#6D28D9" }}>@{op.handle}</strong> · {op.nombre}
+                    <strong style={{ color: "#18181B" }}>@{op.handle}</strong> · {op.nombre}
                   </span>
-                  <span style={{ fontSize: "0.69rem", color: "#64748B", fontWeight: 700 }}>
+                  <span style={{ fontSize: "0.69rem", color: "#71717A", fontWeight: 700 }}>
                     {op.rol}
                   </span>
                 </button>
@@ -1284,10 +1286,10 @@ export function ChatEquipoInterno({
                 gap: "8px",
                 padding: "6px 10px",
                 borderRadius: "8px",
-                background: "#F5F3FF",
-                borderLeft: "3px solid #6D28D9",
+                background: "#F4F4F5",
+                borderLeft: "3px solid #3F3F46",
                 fontSize: "0.76rem",
-                color: "#4C1D95",
+                color: "#27272A",
               }}
             >
               <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -1396,11 +1398,11 @@ export function ChatEquipoInterno({
                 gap: "4px",
                 padding: "9px 11px",
                 borderRadius: "10px",
-                border: "1px solid #DDD6FE",
-                background: "#F5F3FF",
-                color: "#6D28D9",
+                border: "1px solid #D4D4D8",
+                background: "#FAFAFA",
+                color: "#27272A",
                 fontSize: "0.78rem",
-                fontWeight: 700,
+                fontWeight: 600,
                 cursor: "pointer",
               }}
             >
@@ -1431,7 +1433,7 @@ export function ChatEquipoInterno({
                 padding: "9px 12px",
                 lineHeight: 1.35,
                 borderRadius: "10px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid #D4D4D8",
                 fontSize: "16px",
                 fontFamily: "inherit",
                 resize: "none",
@@ -1451,12 +1453,12 @@ export function ChatEquipoInterno({
                 padding: "10px 15px",
                 borderRadius: "10px",
                 border: "none",
-                background: "#6D28D9",
+                background: "#18181B",
                 color: "#FFFFFF",
                 fontSize: "0.82rem",
                 fontWeight: 700,
                 cursor: enviando ? "wait" : "pointer",
-                opacity: !texto.trim() && !imagenPendienteUrl ? 0.55 : 1,
+                opacity: !texto.trim() && !imagenPendienteUrl ? 0.45 : 1,
               }}
             >
               {enviando ? <Loader2 size={15} /> : <Send size={15} />}

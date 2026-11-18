@@ -257,17 +257,18 @@ export function PanelCamposVentaChat({
           gap: "6px",
         }}
       >
-        <strong style={{ fontSize: "0.78rem", color: "#0F172A" }}>
-          📋 Campos de Venta
+        <strong style={{ fontSize: "0.79rem", color: "#18181B" }}>
+          Campos de Venta
         </strong>
         <span
           style={{
             padding: "2px 8px",
             borderRadius: "999px",
-            background: totalCalculado > 0 ? "#DCFCE7" : "#F1F5F9",
-            color: totalCalculado > 0 ? "#15803D" : "#64748B",
+            background: "#F4F4F5",
+            border: "1px solid #E4E4E7",
+            color: totalCalculado > 0 ? "#18181B" : "#71717A",
             fontSize: "0.74rem",
-            fontWeight: 800,
+            fontWeight: 700,
           }}
         >
           Total: ${totalCalculado.toFixed(2)}
@@ -280,38 +281,44 @@ export function PanelCamposVentaChat({
           display: "grid",
           gridTemplateColumns: "1fr 1fr 1fr",
           gap: "4px",
-          background: "#F8FAFC",
+          background: "#F4F4F5",
           padding: "3px",
           borderRadius: "8px",
-          border: "1px solid #E2E8F0",
+          border: "1px solid #E4E4E7",
         }}
       >
         {(
           [
-            { id: "pedido" as const, texto: "🛒 Pedido", icono: ShoppingBag },
-            { id: "entrega" as const, texto: "📍 Entrega", icono: MapPin },
-            { id: "tarjeta" as const, texto: "✍🏼 Tarjeta", icono: User },
+            { id: "pedido" as const, texto: "Pedido", icono: ShoppingBag },
+            { id: "entrega" as const, texto: "Entrega", icono: MapPin },
+            { id: "tarjeta" as const, texto: "Tarjeta", icono: User },
           ] as const
         ).map((tab) => {
           const act = seccion === tab.id;
+          const IconoTab = tab.icono;
           return (
             <button
               key={tab.id}
               type="button"
               onClick={() => setSeccion(tab.id)}
               style={{
-                minHeight: "36px",
-                padding: "6px 4px",
+                minHeight: "34px",
+                padding: "5px 4px",
                 borderRadius: "6px",
                 border: "none",
-                background: act ? "#0F172A" : "transparent",
-                color: act ? "#FFFFFF" : "#475569",
+                background: act ? "#18181B" : "transparent",
+                color: act ? "#FFFFFF" : "#52525B",
                 fontSize: "0.73rem",
-                fontWeight: 700,
+                fontWeight: 600,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "4px",
                 cursor: "pointer",
               }}
             >
-              {tab.texto}
+              <IconoTab size={12} />
+              <span>{tab.texto}</span>
             </button>
           );
         })}
@@ -321,7 +328,7 @@ export function PanelCamposVentaChat({
       {seccion === "pedido" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <label style={estiloLabel}>
-            <span>🛒 Producto / Arreglo</span>
+            <span>Producto / Arreglo</span>
             <input
               type="text"
               value={form.producto ?? ""}
@@ -332,7 +339,7 @@ export function PanelCamposVentaChat({
           </label>
 
           <label style={estiloLabel}>
-            <span>🎨 Colores, tallos y notas Taller</span>
+            <span>Colores, tallos y notas Taller</span>
             <textarea
               rows={2}
               value={form.preferenciasDetalle ?? ""}
@@ -382,7 +389,7 @@ export function PanelCamposVentaChat({
 
           <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: "6px" }}>
             <label style={estiloLabel}>
-              <span>🎁 Extras</span>
+              <span>Extras</span>
               <input
                 type="text"
                 value={form.extras ?? ""}
@@ -413,7 +420,7 @@ export function PanelCamposVentaChat({
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
             <label style={estiloLabel}>
-              <span>💳 Estado cobro</span>
+              <span>Estado cobro</span>
               <select
                 value={form.estadoCobro || "COTIZANDO"}
                 onChange={(e) =>
@@ -423,12 +430,12 @@ export function PanelCamposVentaChat({
               >
                 <option value="COTIZANDO">Cotizando</option>
                 <option value="PAGO_SOLICITADO">Pago solicitado</option>
-                <option value="PAGADO">✅ Pagado</option>
+                <option value="PAGADO">Pagado</option>
               </select>
             </label>
 
             <label style={estiloLabel}>
-              <span>#️⃣ Código pedido</span>
+              <span>Código pedido</span>
               <input
                 type="text"
                 value={form.codigoPedido ?? ""}
@@ -447,7 +454,7 @@ export function PanelCamposVentaChat({
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: "0.69rem", fontWeight: 700, color: "#475569" }}>
-                📅 Cuándo (Fecha entrega)
+                Fecha de entrega
               </span>
               <div style={{ display: "flex", gap: "4px" }}>
                 <button
@@ -456,10 +463,11 @@ export function PanelCamposVentaChat({
                   style={{
                     padding: "1px 6px",
                     borderRadius: "5px",
-                    border: "1px solid #CBD5E1",
-                    background: "#F8FAFC",
+                    border: "1px solid #D4D4D8",
+                    background: "#FAFAFA",
+                    color: "#27272A",
                     fontSize: "0.66rem",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     cursor: "pointer",
                   }}
                 >
@@ -471,10 +479,11 @@ export function PanelCamposVentaChat({
                   style={{
                     padding: "1px 6px",
                     borderRadius: "5px",
-                    border: "1px solid #CBD5E1",
-                    background: "#F8FAFC",
+                    border: "1px solid #D4D4D8",
+                    background: "#FAFAFA",
+                    color: "#27272A",
                     fontSize: "0.66rem",
-                    fontWeight: 700,
+                    fontWeight: 600,
                     cursor: "pointer",
                   }}
                 >
@@ -491,7 +500,7 @@ export function PanelCamposVentaChat({
           </div>
 
           <label style={estiloLabel}>
-            <span>🕙 Hora / Rango de entrega</span>
+            <span>Hora / Rango de entrega</span>
             <select
               value={form.franjaHora ?? ""}
               onChange={(e) => actualizarCampo("franjaHora", e.target.value)}
@@ -506,7 +515,7 @@ export function PanelCamposVentaChat({
           </label>
 
           <label style={estiloLabel}>
-            <span>📍 Sector</span>
+            <span>Sector</span>
             <input
               type="text"
               value={form.sector ?? ""}
@@ -517,7 +526,7 @@ export function PanelCamposVentaChat({
           </label>
 
           <label style={estiloLabel}>
-            <span>🏠 Dónde (Dirección / Sala / Referencia)</span>
+            <span>Dirección / Sala / Referencia</span>
             <textarea
               rows={2}
               value={form.direccionReferencia ?? ""}
@@ -530,7 +539,7 @@ export function PanelCamposVentaChat({
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: "0.69rem", fontWeight: 700, color: "#475569" }}>
-                🗺️ Enlace Ubicación GPS
+                Enlace Ubicación GPS
               </span>
               {form.ubicacionUrl && /^https?:\/\//i.test(form.ubicacionUrl) && (
                 <a
@@ -539,7 +548,8 @@ export function PanelCamposVentaChat({
                   rel="noreferrer"
                   style={{
                     fontSize: "0.68rem",
-                    color: "#0284C7",
+                    color: "#27272A",
+                    textDecoration: "underline",
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "3px",
@@ -564,13 +574,13 @@ export function PanelCamposVentaChat({
                 title="Calcular automáticamente Sector y Costo de Envío desde el link GPS"
                 aria-label="Cotizar GPS"
                 style={{
-                  padding: "6px 8px",
+                  padding: "6px 9px",
                   borderRadius: "7px",
-                  border: "1px solid #0284C7",
-                  background: "#F0F9FF",
-                  color: "#0369A1",
+                  border: "1px solid #D4D4D8",
+                  background: "#FAFAFA",
+                  color: "#18181B",
                   fontSize: "0.7rem",
-                  fontWeight: 700,
+                  fontWeight: 600,
                   cursor: cotizandoGps ? "wait" : "pointer",
                   whiteSpace: "nowrap",
                 }}
@@ -586,7 +596,7 @@ export function PanelCamposVentaChat({
       {seccion === "tarjeta" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <label style={estiloLabel}>
-            <span>🤵🏻 Nombre del Cliente (compra)</span>
+            <span>Nombre del Cliente (compra)</span>
             <input
               type="text"
               value={form.nombreCliente ?? ""}
@@ -597,7 +607,7 @@ export function PanelCamposVentaChat({
           </label>
 
           <label style={estiloLabel}>
-            <span>💐 Quién Recibe (Nombre y Celular)</span>
+            <span>Quién Recibe (Nombre y Celular)</span>
             <input
               type="text"
               value={form.quienRecibe ?? ""}
@@ -608,7 +618,7 @@ export function PanelCamposVentaChat({
           </label>
 
           <label style={estiloLabel}>
-            <span>✍🏼 Mensaje de Tarjeta / Cinta</span>
+            <span>Mensaje de Tarjeta / Cinta</span>
             <textarea
               rows={3}
               value={form.dedicatoriaTarjeta ?? ""}
@@ -619,7 +629,7 @@ export function PanelCamposVentaChat({
           </label>
 
           <label style={estiloLabel}>
-            <span>✒️ Firma de la Tarjeta</span>
+            <span>Firma de la Tarjeta</span>
             <input
               type="text"
               value={form.firmaTarjeta ?? ""}
@@ -663,11 +673,11 @@ export function PanelCamposVentaChat({
             gap: "5px",
             padding: "8px 10px",
             borderRadius: "9px",
-            border: "1px solid #CBD5E1",
-            background: guardadoReciente ? "#ECFDF5" : "#F8FAFC",
-            color: guardadoReciente ? "#047857" : "#0F172A",
+            border: "1px solid #D4D4D8",
+            background: guardadoReciente ? "#F4F4F5" : "#FFFFFF",
+            color: "#18181B",
             fontSize: "0.78rem",
-            fontWeight: 700,
+            fontWeight: 600,
             cursor: guardando ? "wait" : "pointer",
           }}
         >
@@ -697,7 +707,7 @@ export function PanelCamposVentaChat({
             padding: "8px 10px",
             borderRadius: "9px",
             border: "none",
-            background: "#15803D",
+            background: "#2D4734",
             color: "#FFFFFF",
             fontSize: "0.78rem",
             fontWeight: 700,

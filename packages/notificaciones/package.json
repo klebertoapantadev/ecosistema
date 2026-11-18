@@ -9,7 +9,8 @@
     "./enviar-correo": "./src/enviar-correo.ts",
     "./notificar-usuario": "./src/notificar-usuario.ts",
     "./api-usuario": "./src/api-usuario.ts",
-    "./despachador": "./src/despachador.ts"
+    "./despachador": "./src/despachador.ts",
+    "./web-push-nativo": "./src/web-push-nativo.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

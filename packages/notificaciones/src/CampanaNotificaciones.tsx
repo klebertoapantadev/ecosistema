@@ -417,27 +417,52 @@ export function CampanaNotificaciones({ negocio, variante = "oscura" }: Props) {
             >
               Entendido
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setAlertaEmergente(null);
-                setAbierto(true);
-              }}
-              title="Ver detalle en el centro de notificaciones"
-              aria-label="Ver Detalle"
-              style={{
-                padding: "6px 14px",
-                borderRadius: "8px",
-                border: "none",
-                background: "#10B981",
-                color: "#052E16",
-                fontSize: "0.76rem",
-                fontWeight: 800,
-                cursor: "pointer",
-              }}
-            >
-              Ver Detalle
-            </button>
+            {alertaEmergente.not_url_accion ? (
+              <a
+                href={alertaEmergente.not_url_accion}
+                onClick={() => {
+                  marcarComoLeida(alertaEmergente);
+                  setAlertaEmergente(null);
+                }}
+                title="Abrir directamente el chat o sección correspondiente"
+                aria-label="Abrir"
+                style={{
+                  padding: "6px 14px",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: "#FFFFFF",
+                  color: "#0F172A",
+                  fontSize: "0.76rem",
+                  fontWeight: 800,
+                  textDecoration: "none",
+                  cursor: "pointer",
+                }}
+              >
+                Abrir →
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  setAlertaEmergente(null);
+                  setAbierto(true);
+                }}
+                title="Ver detalle en el centro de notificaciones"
+                aria-label="Ver Detalle"
+                style={{
+                  padding: "6px 14px",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: "#FFFFFF",
+                  color: "#0F172A",
+                  fontSize: "0.76rem",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                }}
+              >
+                Ver Detalle
+              </button>
+            )}
           </div>
         </div>
       )}

@@ -165,8 +165,9 @@ function renderTextoConEnlaces(texto: string, esFondoOscuro: boolean): React.Rea
             rel="noreferrer"
             title={info.href}
             style={{
-              color: esFondoOscuro ? "#BAE6FD" : "#0284C7",
+              color: esFondoOscuro ? "#E4E4E7" : "#18181B",
               textDecoration: "underline",
+              textUnderlineOffset: "2px",
               wordBreak: "break-word",
               fontWeight: 600,
             }}
@@ -209,7 +210,7 @@ function TarjetaImagenBurbujaOmnicanal({
       style={{
         display: "inline-flex",
         flexDirection: "column",
-        gap: "5px",
+        gap: "6px",
         maxWidth: "min(245px, 100%)",
       }}
     >
@@ -220,14 +221,14 @@ function TarjetaImagenBurbujaOmnicanal({
             borderRadius: "10px",
             border: esFondoOscuro
               ? "1px dashed rgba(255,255,255,0.35)"
-              : "1px dashed #CBD5E1",
-            background: esFondoOscuro ? "rgba(255,255,255,0.1)" : "#F8FAFC",
-            color: esFondoOscuro ? "#E2E8F0" : "#475569",
+              : "1px dashed #D4D4D8",
+            background: esFondoOscuro ? "rgba(255,255,255,0.1)" : "#FAFAFA",
+            color: esFondoOscuro ? "#E4E4E7" : "#52525B",
             fontSize: "0.75rem",
             lineHeight: 1.4,
           }}
         >
-          📷 {alt || "Imagen adjunta en chat"} (enlace temporal expirado)
+          {alt || "Imagen adjunta en chat"} (enlace temporal expirado)
         </div>
       ) : (
         <div
@@ -244,8 +245,8 @@ function TarjetaImagenBurbujaOmnicanal({
             borderRadius: "10px",
             overflow: "hidden",
             border: esFondoOscuro
-              ? "1px solid rgba(255,255,255,0.28)"
-              : "1px solid rgba(15,23,42,0.12)",
+              ? "1px solid rgba(255,255,255,0.24)"
+              : "1px solid #E4E4E7",
             background: "#FFFFFF",
           }}
         >
@@ -275,16 +276,16 @@ function TarjetaImagenBurbujaOmnicanal({
           style={{
             fontSize: "0.72rem",
             fontWeight: 600,
-            color: esFondoOscuro ? "#E2E8F0" : "#475569",
+            color: esFondoOscuro ? "#E4E4E7" : "#52525B",
           }}
         >
-          📷 {alt}
+          {alt}
         </span>
       )}
 
-      {/* Acciones directas: Ampliar, Descargar, Reenviar */}
+      {/* Acciones directas sobrias: Ampliar, Descargar, Reenviar */}
       {!falloCarga && (
-        <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
           <button
             type="button"
             className="btn-responsive-accion"
@@ -296,15 +297,15 @@ function TarjetaImagenBurbujaOmnicanal({
               alignItems: "center",
               justifyContent: "center",
               gap: "4px",
-              minHeight: "32px",
-              minWidth: "34px",
-              padding: "5px 9px",
+              minHeight: "30px",
+              minWidth: "32px",
+              padding: "4px 9px",
               borderRadius: "7px",
-              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.28)" : "1px solid #CBD5E1",
-              background: esFondoOscuro ? "rgba(255,255,255,0.14)" : "#F8FAFC",
-              color: esFondoOscuro ? "#FFFFFF" : "#0F172A",
-              fontSize: "0.72rem",
-              fontWeight: 700,
+              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.25)" : "1px solid #D4D4D8",
+              background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#FFFFFF",
+              color: esFondoOscuro ? "#FFFFFF" : "#27272A",
+              fontSize: "0.71rem",
+              fontWeight: 600,
               cursor: "pointer",
             }}
           >
@@ -323,15 +324,15 @@ function TarjetaImagenBurbujaOmnicanal({
               alignItems: "center",
               justifyContent: "center",
               gap: "4px",
-              minHeight: "32px",
-              minWidth: "34px",
-              padding: "5px 9px",
+              minHeight: "30px",
+              minWidth: "32px",
+              padding: "4px 9px",
               borderRadius: "7px",
-              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.28)" : "1px solid #BAE6FD",
-              background: esFondoOscuro ? "rgba(255,255,255,0.14)" : "#F0F9FF",
-              color: esFondoOscuro ? "#E0F2FE" : "#0369A1",
-              fontSize: "0.72rem",
-              fontWeight: 700,
+              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.25)" : "1px solid #D4D4D8",
+              background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#FFFFFF",
+              color: esFondoOscuro ? "#FFFFFF" : "#27272A",
+              fontSize: "0.71rem",
+              fontWeight: 600,
               cursor: "pointer",
             }}
           >
@@ -350,15 +351,15 @@ function TarjetaImagenBurbujaOmnicanal({
               alignItems: "center",
               justifyContent: "center",
               gap: "4px",
-              minHeight: "32px",
-              minWidth: "34px",
-              padding: "5px 9px",
+              minHeight: "30px",
+              minWidth: "32px",
+              padding: "4px 9px",
               borderRadius: "7px",
-              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.28)" : "1px solid #86EFAC",
-              background: esFondoOscuro ? "rgba(255,255,255,0.14)" : "#F0FDF4",
-              color: esFondoOscuro ? "#BBF7D0" : "#15803D",
-              fontSize: "0.72rem",
-              fontWeight: 700,
+              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.25)" : "1px solid #D4D4D8",
+              background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#FFFFFF",
+              color: esFondoOscuro ? "#FFFFFF" : "#27272A",
+              fontSize: "0.71rem",
+              fontWeight: 600,
               cursor: "pointer",
             }}
           >
@@ -420,9 +421,9 @@ function TarjetaAudioBurbujaOmnicanal({
         flexDirection: "column",
         gap: "8px",
         padding: "9px 11px",
-        borderRadius: "11px",
-        background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#F8FAFC",
-        border: esFondoOscuro ? "1px solid rgba(255,255,255,0.24)" : "1px solid #E2E8F0",
+        borderRadius: "10px",
+        background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#FAFAFA",
+        border: esFondoOscuro ? "1px solid rgba(255,255,255,0.24)" : "1px solid #E4E4E7",
         minWidth: "min(255px, 100%)",
         maxWidth: "330px",
       }}
@@ -440,12 +441,12 @@ function TarjetaAudioBurbujaOmnicanal({
             display: "inline-flex",
             alignItems: "center",
             gap: "6px",
-            fontSize: "0.76rem",
+            fontSize: "0.75rem",
             fontWeight: 700,
-            color: esFondoOscuro ? "#FFFFFF" : "#0F172A",
+            color: esFondoOscuro ? "#FFFFFF" : "#18181B",
           }}
         >
-          <Mic size={14} color={esFondoOscuro ? "#86EFAC" : "#16A34A"} />
+          <Mic size={14} color={esFondoOscuro ? "#E4E4E7" : "#3F3F46"} />
           <span>Nota de voz</span>
         </span>
 
@@ -458,11 +459,11 @@ function TarjetaAudioBurbujaOmnicanal({
             style={{
               padding: "2px 8px",
               borderRadius: "999px",
-              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.3)" : "1px solid #CBD5E1",
+              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.3)" : "1px solid #D4D4D8",
               background: esFondoOscuro ? "rgba(255,255,255,0.16)" : "#FFFFFF",
-              color: esFondoOscuro ? "#FFFFFF" : "#334155",
+              color: esFondoOscuro ? "#FFFFFF" : "#27272A",
               fontSize: "0.69rem",
-              fontWeight: 800,
+              fontWeight: 700,
               cursor: "pointer",
             }}
           >
@@ -501,13 +502,13 @@ function TarjetaAudioBurbujaOmnicanal({
         <div
           style={{
             fontSize: "0.74rem",
-            color: esFondoOscuro ? "#E2E8F0" : "#64748B",
+            color: esFondoOscuro ? "#E4E4E7" : "#52525B",
             lineHeight: 1.38,
           }}
         >
           {url
-            ? "⚠️ El enlace temporal del audio expiró en WhatsApp."
-            : "ℹ️ Nota de voz recibida antes de activar la captura de audio. Las nuevas notas incluirán reproductor y transcripción automática."}
+            ? "El enlace temporal del audio expiró en WhatsApp."
+            : "Nota de voz recibida antes de activar la captura de audio. Las nuevas notas incluirán reproductor y transcripción automática."}
         </div>
       )}
 
@@ -527,16 +528,16 @@ function TarjetaAudioBurbujaOmnicanal({
                 minHeight: "30px",
                 padding: "4px 9px",
                 borderRadius: "7px",
-                border: "1px solid #FDE68A",
-                background: "#FEF3C7",
-                color: "#92400E",
+                border: "1px solid #D4D4D8",
+                background: "#FFFFFF",
+                color: "#27272A",
                 fontSize: "0.71rem",
-                fontWeight: 700,
+                fontWeight: 600,
                 cursor: procesando ? "wait" : "pointer",
               }}
             >
               {procesando ? <Loader2 size={12} /> : <StickyNote size={12} />}
-              <span>{yaTranscrito ? "Ver Nota" : "Transcribir"}</span>
+              <span>{yaTranscrito ? "Ver nota" : "Transcribir"}</span>
             </button>
           )}
 
@@ -554,11 +555,11 @@ function TarjetaAudioBurbujaOmnicanal({
                 minHeight: "30px",
                 padding: "4px 9px",
                 borderRadius: "7px",
-                border: "1px solid #A7F3D0",
-                background: "#ECFDF5",
-                color: "#047857",
+                border: "1px solid #2D4734",
+                background: "#2D4734",
+                color: "#FFFFFF",
                 fontSize: "0.71rem",
-                fontWeight: 700,
+                fontWeight: 600,
                 cursor: procesando ? "wait" : "pointer",
               }}
             >
@@ -591,8 +592,8 @@ function TarjetaDocumentoBurbujaOmnicanal({
         gap: "10px",
         padding: "9px 11px",
         borderRadius: "10px",
-        background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#F8FAFC",
-        border: esFondoOscuro ? "1px solid rgba(255,255,255,0.24)" : "1px solid #CBD5E1",
+        background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#FAFAFA",
+        border: esFondoOscuro ? "1px solid rgba(255,255,255,0.24)" : "1px solid #E4E4E7",
         maxWidth: "320px",
       }}
     >
@@ -602,8 +603,9 @@ function TarjetaDocumentoBurbujaOmnicanal({
             width: "32px",
             height: "32px",
             borderRadius: "8px",
-            background: esFondoOscuro ? "rgba(255,255,255,0.18)" : "#EDE9FE",
-            color: esFondoOscuro ? "#FFFFFF" : "#6D28D9",
+            background: esFondoOscuro ? "rgba(255,255,255,0.18)" : "#F4F4F5",
+            color: esFondoOscuro ? "#FFFFFF" : "#27272A",
+            border: esFondoOscuro ? "none" : "1px solid #E4E4E7",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -616,8 +618,8 @@ function TarjetaDocumentoBurbujaOmnicanal({
           title={nombre}
           style={{
             fontSize: "0.77rem",
-            fontWeight: 700,
-            color: esFondoOscuro ? "#FFFFFF" : "#0F172A",
+            fontWeight: 600,
+            color: esFondoOscuro ? "#FFFFFF" : "#18181B",
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -641,9 +643,9 @@ function TarjetaDocumentoBurbujaOmnicanal({
             width: "30px",
             height: "30px",
             borderRadius: "7px",
-            border: esFondoOscuro ? "1px solid rgba(255,255,255,0.28)" : "1px solid #CBD5E1",
+            border: esFondoOscuro ? "1px solid rgba(255,255,255,0.28)" : "1px solid #D4D4D8",
             background: esFondoOscuro ? "rgba(255,255,255,0.14)" : "#FFFFFF",
-            color: esFondoOscuro ? "#FFFFFF" : "#334155",
+            color: esFondoOscuro ? "#FFFFFF" : "#27272A",
             textDecoration: "none",
           }}
         >
@@ -661,9 +663,9 @@ function TarjetaDocumentoBurbujaOmnicanal({
             width: "30px",
             height: "30px",
             borderRadius: "7px",
-            border: esFondoOscuro ? "1px solid rgba(255,255,255,0.28)" : "1px solid #BAE6FD",
-            background: esFondoOscuro ? "rgba(255,255,255,0.14)" : "#F0F9FF",
-            color: esFondoOscuro ? "#E0F2FE" : "#0369A1",
+            border: esFondoOscuro ? "1px solid rgba(255,255,255,0.28)" : "1px solid #D4D4D8",
+            background: esFondoOscuro ? "rgba(255,255,255,0.14)" : "#FFFFFF",
+            color: esFondoOscuro ? "#FFFFFF" : "#27272A",
             textDecoration: "none",
           }}
         >
@@ -777,38 +779,38 @@ function badgeEstadoAtencion(estado: EstadoAtencionOmnicanal): {
   switch (estado) {
     case "ESCALADO_HUMANO":
       return {
-        etiqueta: "🚨 Requiere Humano",
+        etiqueta: "Requiere humano",
         fondo: "#FEF2F2",
-        texto: "#B91C1C",
+        texto: "#991B1B",
         borde: "#FECACA",
       };
     case "EN_ATENCION_ASESORA":
       return {
-        etiqueta: "👩‍💼 Atención Humana",
-        fondo: "#EFF6FF",
-        texto: "#1D4ED8",
-        borde: "#BFDBFE",
+        etiqueta: "Atención humana",
+        fondo: "#F4F4F5",
+        texto: "#27272A",
+        borde: "#E4E4E7",
       };
     case "EN_ESPERA_CLIENTE":
       return {
-        etiqueta: "⏳ Espera Cliente",
-        fondo: "#FFFBEB",
-        texto: "#B45309",
-        borde: "#FDE68A",
+        etiqueta: "Espera cliente",
+        fondo: "#F4F4F5",
+        texto: "#52525B",
+        borde: "#E4E4E7",
       };
     case "CERRADO":
       return {
-        etiqueta: "✅ Cerrado",
-        fondo: "#F1F5F9",
-        texto: "#475569",
-        borde: "#CBD5E1",
+        etiqueta: "Cerrado",
+        fondo: "#F4F4F5",
+        texto: "#71717A",
+        borde: "#E4E4E7",
       };
     default:
       return {
-        etiqueta: "🤖 IA ARIA Activa",
-        fondo: "#ECFDF5",
-        texto: "#047857",
-        borde: "#A7F3D0",
+        etiqueta: "IA activa",
+        fondo: "#F2F5F3",
+        texto: "#2D4734",
+        borde: "#DCE4DF",
       };
   }
 }
@@ -1182,38 +1184,89 @@ export function ConsolaVentasOmnicanal({
     return () => window.removeEventListener("keydown", alEsc);
   }, [menuCabeceraAbierto]);
 
-  // Navegación de retorno desde ?chat=...&msg=...&tel=...&cliente=...&cita=... (cuando vienen desde /panel/chat-equipo)
+  // Navegación directa desde notificaciones Push estilo WhatsApp (?pestana=chat_equipo o ?chat=...&msg=...&tel=...)
   useEffect(() => {
-    if (deepLinkProcesadoRef.current || tablero.conversaciones.length === 0) return;
     if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const chatParam = params.get("chat");
-    const telParam = params.get("tel");
-    const cliParam = params.get("cliente");
-    const msgParam = params.get("msg");
-    const citaParam = params.get("cita");
 
-    if (!chatParam && !telParam && !cliParam) return;
-    deepLinkProcesadoRef.current = true;
+    const aplicarRutaDesdeSearch = (searchStr: string, desdeEventoPush: boolean): boolean => {
+      const params = new URLSearchParams(searchStr);
+      const pestanaParam = params.get("pestana");
+      const chatParam = params.get("chat");
+      const telParam = params.get("tel");
+      const cliParam = params.get("cliente");
+      const msgParam = params.get("msg");
+      const citaParam = params.get("cita");
 
-    const encontrada = resolverConversacionPorContextoReenvio(tablero.conversaciones, {
-      conversacionId: chatParam,
-      clienteTelefono: telParam,
-      clienteNombre: cliParam || "",
-    });
+      if (pestanaParam === "chat_equipo") {
+        setPestana("chat_equipo");
+        return true;
+      }
 
-    if (encontrada) {
-      setPestana("inbox");
-      setEstadoAperturaFiltro("todos");
-      setFiltroIzquierdo("todos");
-      setCanalFiltro("todos");
-      setSoloNoLeidos(false);
-      setConversacionActivaId(encontrada.id);
-      setVistaMovilInbox("chat");
-      if (msgParam) setMensajeResaltadoId(msgParam);
-      if (citaParam) setCitaResaltadaTexto(citaParam);
+      if (!chatParam && !telParam && !cliParam) return false;
+
+      const encontrada = resolverConversacionPorContextoReenvio(tablero.conversaciones, {
+        conversacionId: chatParam,
+        clienteTelefono: telParam,
+        clienteNombre: cliParam || "",
+      });
+
+      if (encontrada) {
+        setPestana("inbox");
+        setEstadoAperturaFiltro("todos");
+        setFiltroIzquierdo("todos");
+        setCanalFiltro("todos");
+        setSoloNoLeidos(false);
+        setConversacionActivaId(encontrada.id);
+        setVistaMovilInbox("chat");
+        if (msgParam) setMensajeResaltadoId(msgParam);
+        if (citaParam) setCitaResaltadaTexto(citaParam);
+        return true;
+      }
+
+      if (desdeEventoPush && chatParam) {
+        setPestana("inbox");
+        setEstadoAperturaFiltro("todos");
+        setFiltroIzquierdo("todos");
+        setCanalFiltro("todos");
+        setSoloNoLeidos(false);
+        setConversacionActivaId(chatParam);
+        setVistaMovilInbox("chat");
+        if (msgParam) setMensajeResaltadoId(msgParam);
+        void recargarTablero(true);
+        return true;
+      }
+
+      return false;
+    };
+
+    if (!deepLinkProcesadoRef.current) {
+      const paramsIniciales = new URLSearchParams(window.location.search);
+      if (paramsIniciales.get("pestana") === "chat_equipo") {
+        deepLinkProcesadoRef.current = true;
+        setPestana("chat_equipo");
+      } else if (tablero.conversaciones.length > 0) {
+        if (aplicarRutaDesdeSearch(window.location.search, false)) {
+          deepLinkProcesadoRef.current = true;
+        }
+      }
     }
-  }, [tablero.conversaciones]);
+
+    const alAbrirRutaPush = (ev: Event) => {
+      const detalle = (ev as CustomEvent<{ url?: string }>).detail;
+      const urlRaw = detalle?.url || window.location.href;
+      try {
+        const parsed = new URL(urlRaw, window.location.origin);
+        if (parsed.pathname.startsWith("/panel/conversaciones")) {
+          aplicarRutaDesdeSearch(parsed.search, true);
+        }
+      } catch {
+        aplicarRutaDesdeSearch(window.location.search, true);
+      }
+    };
+
+    window.addEventListener("eco:abrir-ruta-push", alAbrirRutaPush);
+    return () => window.removeEventListener("eco:abrir-ruta-push", alAbrirRutaPush);
+  }, [tablero.conversaciones, recargarTablero]);
 
   // Auto-scroll al último mensaje o al mensaje compartido resaltado al volver del Chat Grupal
   useEffect(() => {
@@ -2958,22 +3011,22 @@ export function ConsolaVentasOmnicanal({
               gap: "8px",
               fontSize: "0.74rem",
               padding: "5px 10px",
-              borderRadius: "10px",
-              background: "#F8FAFC",
-              border: "1px solid #E2E8F0",
-              color: "#334155",
+              borderRadius: "9px",
+              background: "#FAFAFA",
+              border: "1px solid #E4E4E7",
+              color: "#3F3F46",
             }}
           >
             <span>
-              🤖 ARIA: <strong>{metricas.totalRespuestasAria}</strong>
+              ARIA: <strong style={{ color: "#18181B" }}>{metricas.totalRespuestasAria}</strong>
             </span>
-            <span style={{ color: "#CBD5E1" }}>|</span>
+            <span style={{ color: "#D4D4D8" }}>|</span>
             <span>
-              👩‍💼 Humanas: <strong>{metricas.totalIntervencionesHumanas}</strong>
+              Humanas: <strong style={{ color: "#18181B" }}>{metricas.totalIntervencionesHumanas}</strong>
             </span>
-            <span style={{ color: "#CBD5E1" }}>|</span>
+            <span style={{ color: "#D4D4D8" }}>|</span>
             <span>
-              💰 Ventas Web: <strong>${metricas.montoTotalVentasUsd.toFixed(2)}</strong>
+              Ventas Web: <strong style={{ color: "#18181B" }}>${metricas.montoTotalVentasUsd.toFixed(2)}</strong>
             </span>
           </div>
 
@@ -3331,28 +3384,28 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         padding: "5px 8px",
                         borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid #D4D4D8",
                         fontSize: "0.75rem",
                         fontWeight: 600,
                         background: "#FFFFFF",
-                        color: "#0F172A",
+                        color: "#18181B",
                       }}
                     >
-                      <option value="todos">📂 Abiertos ({metricas.conversacionesAbiertas})</option>
-                      <option value="no_asignado">📥 Sin asignar ({metricas.sinAsignar})</option>
-                      <option value="mios">🙋 Asignado a mí</option>
+                      <option value="todos">Abiertos ({metricas.conversacionesAbiertas})</option>
+                      <option value="no_asignado">Sin asignar ({metricas.sinAsignar})</option>
+                      <option value="mios">Asignado a mí</option>
                       <option value="escalados">
-                        🚨 Requiere humano ({metricas.escaladasHumano})
+                        Requiere humano ({metricas.escaladasHumano})
                       </option>
-                      <option value="ia_activa">🤖 IA ARIA ({metricas.atendidasPorIa})</option>
+                      <option value="ia_activa">IA ARIA ({metricas.atendidasPorIa})</option>
                       <option value="recordatorios">
-                        ⏰ Recordatorios ({metricas.conRecordatorio})
+                        Recordatorios ({metricas.conRecordatorio})
                       </option>
                       <option value="cerrados">
-                        ✅ Cerrados ({metricas.totalConversaciones - metricas.conversacionesAbiertas})
+                        Cerrados ({metricas.totalConversaciones - metricas.conversacionesAbiertas})
                       </option>
                       <option value="todos_historial">
-                        📋 Todos ({metricas.totalConversaciones})
+                        Todos ({metricas.totalConversaciones})
                       </option>
                     </select>
 
@@ -3365,11 +3418,11 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         padding: "5px 9px",
                         borderRadius: "8px",
-                        border: soloNoLeidos ? "1px solid #2563EB" : "1px solid #CBD5E1",
-                        background: soloNoLeidos ? "#EFF6FF" : "#FFFFFF",
-                        color: soloNoLeidos ? "#1D4ED8" : "#475569",
+                        border: soloNoLeidos ? "1px solid #18181B" : "1px solid #D4D4D8",
+                        background: soloNoLeidos ? "#18181B" : "#FFFFFF",
+                        color: soloNoLeidos ? "#FFFFFF" : "#3F3F46",
                         fontSize: "0.74rem",
-                        fontWeight: 700,
+                        fontWeight: 600,
                         cursor: "pointer",
                         whiteSpace: "nowrap",
                       }}
@@ -3385,18 +3438,18 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         padding: "5px 8px",
                         borderRadius: "8px",
-                        border: etiquetaFiltroId ? "1px solid #DB2777" : "1px solid #CBD5E1",
+                        border: etiquetaFiltroId ? "1px solid #18181B" : "1px solid #D4D4D8",
                         fontSize: "0.75rem",
                         fontWeight: etiquetaFiltroId ? 700 : 500,
-                        background: etiquetaFiltroId ? "#FDF2F8" : "#FFFFFF",
-                        color: "#0F172A",
+                        background: etiquetaFiltroId ? "#F4F4F5" : "#FFFFFF",
+                        color: "#18181B",
                         maxWidth: "175px",
                       }}
                     >
-                      <option value="">🏷️ Etiquetas (Todas)</option>
+                      <option value="">Etiquetas (Todas)</option>
                       {etiquetasClasificacion.map((etq) => (
                         <option key={etq.id} value={etq.id}>
-                          {etq.icono} {etq.nombre}
+                          {etq.nombre}
                         </option>
                       ))}
                     </select>
@@ -3409,15 +3462,15 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         padding: "5px 8px",
                         borderRadius: "8px",
-                        border: vendedorFiltroId ? "1px solid #2563EB" : "1px solid #CBD5E1",
+                        border: vendedorFiltroId ? "1px solid #18181B" : "1px solid #D4D4D8",
                         fontSize: "0.75rem",
                         fontWeight: vendedorFiltroId ? 700 : 500,
-                        background: vendedorFiltroId ? "#EFF6FF" : "#FFFFFF",
-                        color: "#0F172A",
+                        background: vendedorFiltroId ? "#F4F4F5" : "#FFFFFF",
+                        color: "#18181B",
                         maxWidth: "165px",
                       }}
                     >
-                      <option value="">👤 Equipo ({tablero.equipo.length})</option>
+                      <option value="">Equipo ({tablero.equipo.length})</option>
                       {tablero.equipo.map((m) => (
                         <option key={m.usuarioId} value={m.usuarioId}>
                           {m.usuarioId === tablero.usuarioActualId
@@ -3582,16 +3635,16 @@ export function ConsolaVentasOmnicanal({
                         }}
                         style={{
                           padding: "10px 12px",
-                          borderBottom: "1px solid #F1F5F9",
+                          borderBottom: "1px solid #F4F4F5",
                           background: seleccionada
-                            ? "#F0F9FF"
+                            ? "#F4F4F5"
                             : tieneNoLeidos
-                              ? "#F8FAFC"
+                              ? "#FAFAFA"
                               : "#FFFFFF",
                           borderLeft: seleccionada
-                            ? "3px solid #0284C7"
+                            ? "3px solid #18181B"
                             : tieneNoLeidos
-                              ? "3px solid #2563EB"
+                              ? "3px solid #71717A"
                               : "3px solid transparent",
                           cursor: "pointer",
                           display: "flex",
@@ -3626,7 +3679,7 @@ export function ConsolaVentasOmnicanal({
                               style={{
                                 fontSize: "0.83rem",
                                 fontWeight: tieneNoLeidos ? 800 : 600,
-                                color: "#0F172A",
+                                color: "#18181B",
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",
@@ -3649,10 +3702,10 @@ export function ConsolaVentasOmnicanal({
                                     height: "18px",
                                     padding: "0 5px",
                                     borderRadius: "999px",
-                                    background: "#2563EB",
+                                    background: "#18181B",
                                     color: "#FFFFFF",
                                     fontSize: "0.67rem",
-                                    fontWeight: 800,
+                                    fontWeight: 700,
                                     display: "inline-flex",
                                     alignItems: "center",
                                     justifyContent: "center",
@@ -3661,7 +3714,7 @@ export function ConsolaVentasOmnicanal({
                                   {conv.noLeidosAsesora}
                                 </span>
                               )}
-                              <span style={{ fontSize: "0.69rem", color: "#64748B" }}>
+                              <span style={{ fontSize: "0.69rem", color: "#71717A" }}>
                                 {formatearTiempoCorto(conv.ultimoMensajeEn)}
                               </span>
                               {esAdminAplicacion && seleccionada && (
@@ -3677,9 +3730,9 @@ export function ConsolaVentasOmnicanal({
                                     width: "22px",
                                     height: "22px",
                                     borderRadius: "6px",
-                                    border: "none",
-                                    background: "rgba(220, 38, 38, 0.08)",
-                                    color: "#DC2626",
+                                    border: "1px solid #E4E4E7",
+                                    background: "#FFFFFF",
+                                    color: "#71717A",
                                     display: "inline-flex",
                                     alignItems: "center",
                                     justifyContent: "center",
@@ -3696,15 +3749,14 @@ export function ConsolaVentasOmnicanal({
                           <div
                             style={{
                               fontSize: "0.75rem",
-                              color: tieneNoLeidos ? "#1E293B" : "#475569",
+                              color: tieneNoLeidos ? "#18181B" : "#52525B",
                               fontWeight: tieneNoLeidos ? 600 : 400,
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
                             }}
                           >
-                            {conv.ultimoMensajeOrigen === "BOT_ARIA" && "🤖 "}
-                            {conv.ultimoMensajeOrigen === "ASESORA_HUMANA" && "👩‍💼 "}
+                            {conv.ultimoMensajeOrigen === "BOT_ARIA" && "ARIA · "}
                             {limpiarVistaPreviaMensajeOmnicanal(conv.ultimoMensajeTexto)}
                           </div>
 
@@ -3735,20 +3787,20 @@ export function ConsolaVentasOmnicanal({
                                     })}${conv.recordatorioNota ? ` · ${conv.recordatorioNota}` : ""}`}
                                     style={{
                                       fontSize: "0.64rem",
-                                      fontWeight: 700,
+                                      fontWeight: 600,
                                       padding: "1px 6px",
                                       borderRadius: "999px",
-                                      background: vencido ? "#FEF3C7" : "#F1F5F9",
-                                      color: vencido ? "#B45309" : "#475569",
-                                      border: vencido ? "1px solid #F59E0B" : "none",
+                                      background: vencido ? "#FAF6EC" : "#F4F4F5",
+                                      color: vencido ? "#78350F" : "#52525B",
+                                      border: vencido ? "1px solid #E8DEC6" : "1px solid #E4E4E7",
                                     }}
                                   >
                                     {vencido
-                                      ? "🔔 Seguimiento"
-                                      : `⏰ ${new Date(conv.recordatorioEn).toLocaleTimeString(
+                                      ? "Seguimiento"
+                                      : new Date(conv.recordatorioEn).toLocaleTimeString(
                                           "es-EC",
                                           { hour: "2-digit", minute: "2-digit" }
-                                        )}`}
+                                        )}
                                   </span>
                                 );
                               })()}
@@ -3757,11 +3809,12 @@ export function ConsolaVentasOmnicanal({
                                 <span
                                   style={{
                                     fontSize: "0.64rem",
-                                    fontWeight: 700,
+                                    fontWeight: 600,
                                     padding: "1px 6px",
                                     borderRadius: "999px",
-                                    background: "#F1F5F9",
-                                    color: "#334155",
+                                    background: "#F4F4F5",
+                                    color: "#52525B",
+                                    border: "1px solid #E4E4E7",
                                   }}
                                 >
                                   {conv.cierre.motivoEtiqueta}
@@ -3772,14 +3825,15 @@ export function ConsolaVentasOmnicanal({
                                 <span
                                   style={{
                                     fontSize: "0.64rem",
-                                    fontWeight: 700,
+                                    fontWeight: 600,
                                     padding: "1px 6px",
                                     borderRadius: "999px",
-                                    background: "#FEE2E2",
-                                    color: "#B91C1C",
+                                    background: "#FEF2F2",
+                                    color: "#991B1B",
+                                    border: "1px solid #FECACA",
                                   }}
                                 >
-                                  🚨 Humano
+                                  Humano
                                 </span>
                               )}
 
@@ -3787,14 +3841,15 @@ export function ConsolaVentasOmnicanal({
                                 <span
                                   style={{
                                     fontSize: "0.64rem",
-                                    fontWeight: 700,
+                                    fontWeight: 600,
                                     padding: "1px 6px",
                                     borderRadius: "999px",
-                                    background: "#DBEAFE",
-                                    color: "#1D4ED8",
+                                    background: "#F4F4F5",
+                                    color: "#3F3F46",
+                                    border: "1px solid #E4E4E7",
                                   }}
                                 >
-                                  👩‍💼 {conv.asesoraNombre?.split(" ")[0] || "Humano"}
+                                  {conv.asesoraNombre?.split(" ")[0] || "Humano"}
                                 </span>
                               )}
 
@@ -3802,15 +3857,28 @@ export function ConsolaVentasOmnicanal({
                                 <span
                                   key={etq.id}
                                   style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    gap: "4px",
                                     fontSize: "0.64rem",
                                     fontWeight: 600,
                                     padding: "1px 6px",
                                     borderRadius: "999px",
-                                    background: `${etq.color}18`,
-                                    color: etq.color,
+                                    background: "#FAFAFA",
+                                    color: "#3F3F46",
+                                    border: "1px solid #E4E4E7",
                                   }}
                                 >
-                                  {etq.icono} {etq.nombre}
+                                  <span
+                                    style={{
+                                      width: "6px",
+                                      height: "6px",
+                                      borderRadius: "999px",
+                                      background: etq.color,
+                                      flexShrink: 0,
+                                    }}
+                                  />
+                                  <span>{etq.nombre}</span>
                                 </span>
                               ))}
                             </div>
@@ -4030,14 +4098,14 @@ export function ConsolaVentasOmnicanal({
                               padding: "1px 7px",
                               borderRadius: "999px",
                               border: conversacionActiva.asesoraAsignadaId
-                                ? "1px solid #BFDBFE"
-                                : "1px solid #E2E8F0",
+                                ? "1px solid #D4D4D8"
+                                : "1px solid #E4E4E7",
                               background: conversacionActiva.asesoraAsignadaId
-                                ? "#EFF6FF"
-                                : "#F8FAFC",
-                              color: conversacionActiva.asesoraAsignadaId ? "#1D4ED8" : "#64748B",
+                                ? "#F4F4F5"
+                                : "#FAFAFA",
+                              color: conversacionActiva.asesoraAsignadaId ? "#18181B" : "#71717A",
                               fontSize: "0.68rem",
-                              fontWeight: 700,
+                              fontWeight: 600,
                               cursor: "pointer",
                               display: "inline-flex",
                               alignItems: "center",
@@ -4062,23 +4130,23 @@ export function ConsolaVentasOmnicanal({
                               <span
                                 style={{
                                   fontSize: "0.65rem",
-                                  fontWeight: 700,
+                                  fontWeight: 600,
                                   padding: "1px 6px",
                                   borderRadius: "999px",
-                                  background: vencido ? "#FEF3C7" : "#F1F5F9",
-                                  color: vencido ? "#B45309" : "#475569",
-                                  border: vencido ? "1px solid #F59E0B" : "none",
+                                  background: vencido ? "#FAF6EC" : "#F4F4F5",
+                                  color: vencido ? "#78350F" : "#52525B",
+                                  border: vencido ? "1px solid #E8DEC6" : "1px solid #E4E4E7",
                                   whiteSpace: "nowrap",
                                 }}
                               >
                                 {vencido
-                                  ? "🔔 Seguimiento"
-                                  : `⏰ ${new Date(
+                                  ? "Seguimiento"
+                                  : new Date(
                                       conversacionActiva.recordatorioEn
                                     ).toLocaleString("es-EC", {
                                       dateStyle: "short",
                                       timeStyle: "short",
-                                    })}`}
+                                    })}
                               </span>
                             );
                           })()}
@@ -4630,16 +4698,16 @@ export function ConsolaVentasOmnicanal({
                             borderRadius: "8px",
                             border:
                               (conversacionActiva.noLeidosAsesora || 0) > 0
-                                ? "1px solid #2563EB"
-                                : "1px solid #E2E8F0",
+                                ? "1px solid #18181B"
+                                : "1px solid #E4E4E7",
                             background:
                               (conversacionActiva.noLeidosAsesora || 0) > 0
-                                ? "#EFF6FF"
+                                ? "#18181B"
                                 : "#FFFFFF",
                             color:
                               (conversacionActiva.noLeidosAsesora || 0) > 0
-                                ? "#1D4ED8"
-                                : "#334155",
+                                ? "#FFFFFF"
+                                : "#3F3F46",
                             cursor: "pointer",
                           }}
                         >
@@ -4660,11 +4728,11 @@ export function ConsolaVentasOmnicanal({
                               gap: "4px",
                               padding: "6px 9px",
                               borderRadius: "8px",
-                              border: "1px solid #CBD5E1",
+                              border: "1px solid #D4D4D8",
                               background: "#FFFFFF",
-                              color: "#0F172A",
+                              color: "#18181B",
                               fontSize: "0.73rem",
-                              fontWeight: 700,
+                              fontWeight: 600,
                               cursor: "pointer",
                             }}
                           >
@@ -4684,11 +4752,11 @@ export function ConsolaVentasOmnicanal({
                               gap: "4px",
                               padding: "6px 9px",
                               borderRadius: "8px",
-                              border: "1px solid #10B981",
-                              background: "#ECFDF5",
-                              color: "#047857",
+                              border: "1px solid #2D4734",
+                              background: "#2D4734",
+                              color: "#FFFFFF",
                               fontSize: "0.73rem",
-                              fontWeight: 700,
+                              fontWeight: 600,
                               cursor: "pointer",
                             }}
                           >
@@ -4716,10 +4784,10 @@ export function ConsolaVentasOmnicanal({
                               height: "34px",
                               borderRadius: "8px",
                               border: fichaDerechaDesktop
-                                ? "1px solid #93C5FD"
-                                : "1px solid #E2E8F0",
-                              background: fichaDerechaDesktop ? "#EFF6FF" : "#FFFFFF",
-                              color: fichaDerechaDesktop ? "#1D4ED8" : "#334155",
+                                ? "1px solid #18181B"
+                                : "1px solid #E4E4E7",
+                              background: fichaDerechaDesktop ? "#F4F4F5" : "#FFFFFF",
+                              color: fichaDerechaDesktop ? "#18181B" : "#3F3F46",
                               cursor: "pointer",
                             }}
                           >
@@ -4741,11 +4809,11 @@ export function ConsolaVentasOmnicanal({
                               gap: "4px",
                               padding: "6px 9px",
                               borderRadius: "8px",
-                              border: "1px solid #0F172A",
-                              background: "#0F172A",
+                              border: "1px solid #18181B",
+                              background: "#18181B",
                               color: "#FFFFFF",
                               fontSize: "0.73rem",
-                              fontWeight: 700,
+                              fontWeight: 600,
                               cursor: "pointer",
                             }}
                           >
@@ -4757,7 +4825,7 @@ export function ConsolaVentasOmnicanal({
                     )}
                   </div>
 
-                  {/* FILA 2 EXCLUSIVA EN MÓVIL: Rejilla táctil ergonómica de acciones rápidas de estado (38px alto) */}
+                  {/* FILA 2 EXCLUSIVA EN MÓVIL: Rejilla táctil sobria de acciones rápidas de estado (38px alto) */}
                   {modoLayoutInbox === "movil" && (
                     <div
                       style={{
@@ -4782,28 +4850,26 @@ export function ConsolaVentasOmnicanal({
                           borderRadius: "9px",
                           border:
                             menuCabeceraAbierto === "etiquetas"
-                              ? "1.5px solid #0F172A"
+                              ? "1.5px solid #18181B"
                               : (conversacionActiva.etiquetasIds ?? []).length > 0
-                                ? "1px solid #93C5FD"
-                                : "1px solid #CBD5E1",
+                                ? "1px solid #71717A"
+                                : "1px solid #D4D4D8",
                           background:
                             menuCabeceraAbierto === "etiquetas"
-                              ? "#0F172A"
+                              ? "#18181B"
                               : (conversacionActiva.etiquetasIds ?? []).length > 0
-                                ? "#EFF6FF"
-                                : "#F8FAFC",
+                                ? "#F4F4F5"
+                                : "#FAFAFA",
                           color:
                             menuCabeceraAbierto === "etiquetas"
                               ? "#FFFFFF"
-                              : (conversacionActiva.etiquetasIds ?? []).length > 0
-                                ? "#1D4ED8"
-                                : "#334155",
+                              : "#27272A",
                           display: "inline-flex",
                           alignItems: "center",
                           justifyContent: "center",
                           gap: "3px",
                           fontSize: "0.68rem",
-                          fontWeight: 800,
+                          fontWeight: 700,
                           cursor: "pointer",
                         }}
                       >
@@ -4829,22 +4895,20 @@ export function ConsolaVentasOmnicanal({
                           borderRadius: "9px",
                           border:
                             menuCabeceraAbierto === "recordatorio"
-                              ? "1.5px solid #0F172A"
+                              ? "1.5px solid #18181B"
                               : conversacionActiva.recordatorioEn
-                                ? "1px solid #F59E0B"
-                                : "1px solid #CBD5E1",
+                                ? "1px solid #71717A"
+                                : "1px solid #D4D4D8",
                           background:
                             menuCabeceraAbierto === "recordatorio"
-                              ? "#0F172A"
+                              ? "#18181B"
                               : conversacionActiva.recordatorioEn
-                                ? "#FEF3C7"
-                                : "#F8FAFC",
+                                ? "#F4F4F5"
+                                : "#FAFAFA",
                           color:
                             menuCabeceraAbierto === "recordatorio"
                               ? "#FFFFFF"
-                              : conversacionActiva.recordatorioEn
-                                ? "#B45309"
-                                : "#334155",
+                              : "#27272A",
                           display: "inline-flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -4870,11 +4934,11 @@ export function ConsolaVentasOmnicanal({
                             borderRadius: "9px",
                             border:
                               menuCabeceraAbierto === "cierre"
-                                ? "1.5px solid #0F172A"
-                                : "1px solid #CBD5E1",
+                                ? "1.5px solid #18181B"
+                                : "1px solid #D4D4D8",
                             background:
-                              menuCabeceraAbierto === "cierre" ? "#0F172A" : "#F8FAFC",
-                            color: menuCabeceraAbierto === "cierre" ? "#FFFFFF" : "#334155",
+                              menuCabeceraAbierto === "cierre" ? "#18181B" : "#FAFAFA",
+                            color: menuCabeceraAbierto === "cierre" ? "#FFFFFF" : "#27272A",
                             display: "inline-flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -4892,9 +4956,9 @@ export function ConsolaVentasOmnicanal({
                           style={{
                             height: "38px",
                             borderRadius: "9px",
-                            border: "1px solid #16A34A",
-                            background: "#DCFCE7",
-                            color: "#15803D",
+                            border: "1px solid #2D4734",
+                            background: "#2D4734",
+                            color: "#FFFFFF",
                             display: "inline-flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -4916,16 +4980,16 @@ export function ConsolaVentasOmnicanal({
                           borderRadius: "9px",
                           border:
                             (conversacionActiva.noLeidosAsesora || 0) > 0
-                              ? "1px solid #2563EB"
-                              : "1px solid #CBD5E1",
+                              ? "1px solid #18181B"
+                              : "1px solid #D4D4D8",
                           background:
                             (conversacionActiva.noLeidosAsesora || 0) > 0
-                              ? "#EFF6FF"
-                              : "#F8FAFC",
+                              ? "#18181B"
+                              : "#FAFAFA",
                           color:
                             (conversacionActiva.noLeidosAsesora || 0) > 0
-                              ? "#1D4ED8"
-                              : "#334155",
+                              ? "#FFFFFF"
+                              : "#27272A",
                           display: "inline-flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -4945,9 +5009,9 @@ export function ConsolaVentasOmnicanal({
                           style={{
                             height: "38px",
                             borderRadius: "9px",
-                            border: "1px solid #F59E0B",
-                            background: "#FFFBEB",
-                            color: "#B45309",
+                            border: "1px solid #D4D4D8",
+                            background: "#FAFAFA",
+                            color: "#27272A",
                             display: "inline-flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -4965,9 +5029,9 @@ export function ConsolaVentasOmnicanal({
                           style={{
                             height: "38px",
                             borderRadius: "9px",
-                            border: "1px solid #10B981",
-                            background: "#ECFDF5",
-                            color: "#047857",
+                            border: "1px solid #2D4734",
+                            background: "#2D4734",
+                            color: "#FFFFFF",
                             display: "inline-flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -5370,7 +5434,7 @@ export function ConsolaVentasOmnicanal({
                     </div>
                   )}
 
-                  {/* Píldoras compactas de etiquetas asignadas actualmente al chat */}
+                  {/* Píldoras compactas y sobrias de etiquetas asignadas actualmente al chat */}
                   {(conversacionActiva.etiquetasIds ?? []).some((id) => mapaEtiquetas.has(id)) && (
                     <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
                       {(conversacionActiva.etiquetasIds ?? [])
@@ -5384,17 +5448,29 @@ export function ConsolaVentasOmnicanal({
                             title={`Toca para quitar etiqueta ${etq.nombre}`}
                             aria-label={`Quitar etiqueta ${etq.nombre}`}
                             style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
                               padding: "2px 8px",
                               borderRadius: "999px",
                               fontSize: "0.69rem",
-                              fontWeight: 700,
-                              border: `1px solid ${etq.color}66`,
-                              background: `${etq.color}18`,
-                              color: etq.color,
+                              fontWeight: 600,
+                              border: "1px solid #E4E4E7",
+                              background: "#FAFAFA",
+                              color: "#3F3F46",
                               cursor: "pointer",
                             }}
                           >
-                            {etq.icono} {etq.nombre} ×
+                            <span
+                              style={{
+                                width: "6px",
+                                height: "6px",
+                                borderRadius: "999px",
+                                background: etq.color,
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span>{etq.nombre} ×</span>
                           </button>
                         ))}
                     </div>
@@ -5413,10 +5489,10 @@ export function ConsolaVentasOmnicanal({
                         justifyContent: "center",
                         gap: "7px",
                         background: "#FFFFFF",
-                        borderBottom: "1px solid #E2E8F0",
-                        color: "#334155",
+                        borderBottom: "1px solid #E4E4E7",
+                        color: "#3F3F46",
                         fontSize: "0.74rem",
-                        fontWeight: 700,
+                        fontWeight: 600,
                         overflow: "hidden",
                         transition: refrescandoPull ? "height 160ms ease" : "none",
                         flexShrink: 0,
@@ -5433,7 +5509,7 @@ export function ConsolaVentasOmnicanal({
                     </div>
                   )}
 
-                {/* Línea de Tiempo de Mensajes (Cliente vs ARIA IA vs Vendedor Humano) */}
+                {/* Línea de Tiempo de Mensajes — Paleta Limpia y Sobria */}
                 <div
                   ref={scrollMensajesRef}
                   onTouchStart={iniciarPullMovil}
@@ -5450,11 +5526,11 @@ export function ConsolaVentasOmnicanal({
                   }}
                 >
                   {cargandoMensajes ? (
-                    <div style={{ textAlign: "center", padding: "24px", color: "#64748B" }}>
+                    <div style={{ textAlign: "center", padding: "24px", color: "#71717A" }}>
                       Cargando historial de la conversación…
                     </div>
                   ) : mensajesActivos.length === 0 ? (
-                    <div style={{ textAlign: "center", padding: "24px", color: "#64748B", fontSize: "0.82rem" }}>
+                    <div style={{ textAlign: "center", padding: "24px", color: "#71717A", fontSize: "0.82rem" }}>
                       Aún no hay mensajes registrados en este hilo.
                     </div>
                   ) : (
@@ -5465,17 +5541,18 @@ export function ConsolaVentasOmnicanal({
                             key={m.id}
                             style={{
                               alignSelf: "center",
-                              padding: "5px 12px",
+                              padding: "4px 12px",
                               borderRadius: "999px",
-                              background: "#E2E8F0",
-                              color: "#334155",
-                              fontSize: "0.73rem",
-                              fontWeight: 600,
+                              background: "#EFECE6",
+                              border: "1px solid #E4E0D8",
+                              color: "#52525B",
+                              fontSize: "0.72rem",
+                              fontWeight: 500,
                               maxWidth: "90%",
                               textAlign: "center",
                             }}
                           >
-                            ⚙️ {m.contenido}
+                            {m.contenido}
                           </div>
                         );
                       }
@@ -5491,7 +5568,7 @@ export function ConsolaVentasOmnicanal({
                           data-msg-id={m.id}
                           style={{
                             alignSelf: esCliente ? "flex-start" : "flex-end",
-                            maxWidth: modoLayoutInbox === "movil" ? "88%" : "82%",
+                            maxWidth: modoLayoutInbox === "movil" ? "88%" : "80%",
                             display: "flex",
                             flexDirection: "column",
                             gap: "3px",
@@ -5499,15 +5576,13 @@ export function ConsolaVentasOmnicanal({
                         >
                           <div
                             style={{
-                              fontSize: "0.69rem",
-                              fontWeight: 700,
-                              color: esCliente
-                                ? "#475569"
+                              fontSize: "0.68rem",
+                              fontWeight: 600,
+                              color: esNota
+                                ? "#78350F"
                                 : esAria
-                                  ? "#047857"
-                                  : esNota
-                                    ? "#B45309"
-                                    : "#1D4ED8",
+                                  ? "#2D4734"
+                                  : "#71717A",
                               textAlign: esCliente ? "left" : "right",
                             }}
                           >
@@ -5518,21 +5593,21 @@ export function ConsolaVentasOmnicanal({
                                   marginRight: "6px",
                                   padding: "1px 6px",
                                   borderRadius: "999px",
-                                  background: "#FEF3C7",
-                                  color: "#92400E",
-                                  border: "1px solid #F59E0B",
-                                  fontSize: "0.64rem",
-                                  fontWeight: 800,
+                                  background: "#FAF6EC",
+                                  color: "#78350F",
+                                  border: "1px solid #D6C7A9",
+                                  fontSize: "0.63rem",
+                                  fontWeight: 700,
                                 }}
                               >
-                                📌 Mensaje compartido
+                                Mensaje compartido
                               </span>
                             )}
-                            {esCliente && `👤 ${m.autorNombre || conversacionActiva.remitenteNombre}`}
-                            {esAria && `🤖 IA ARIA (${m.autorNombre || "Automático"})`}
-                            {esNota && `📝 Nota Interna · ${m.autorNombre || "Equipo"}`}
+                            {esCliente && (m.autorNombre || conversacionActiva.remitenteNombre)}
+                            {esAria && `ARIA · ${m.autorNombre || "Automático"}`}
+                            {esNota && `Nota interna · ${m.autorNombre || "Equipo"}`}
                             {m.origen === "ASESORA_HUMANA" &&
-                              `👩‍💼 Intervención Humana · ${m.autorNombre || "Asesor"}`}
+                              `${m.autorNombre || "Asesor"}`}
                             {" · "}
                             {new Date(m.creadoEn).toLocaleTimeString("es-EC", {
                               hour: "2-digit",
@@ -5543,30 +5618,31 @@ export function ConsolaVentasOmnicanal({
                           <div
                             style={{
                               padding: "10px 13px",
-                              borderRadius: "12px",
+                              borderRadius: esCliente
+                                ? "14px 14px 14px 4px"
+                                : "14px 14px 4px 14px",
                               background: esCliente
                                 ? "#FFFFFF"
                                 : esAria
-                                  ? "#ECFDF5"
+                                  ? "#F2F5F3"
                                   : esNota
-                                    ? "#FEF3C7"
-                                    : "#1E40AF",
-                              color:
-                                m.origen === "ASESORA_HUMANA" ? "#FFFFFF" : "#0F172A",
+                                    ? "#FAF6EC"
+                                    : "#ECEAE4",
+                              color: esNota ? "#292524" : "#18181B",
                               border: esResaltado
-                                ? "2px solid #F59E0B"
+                                ? "1.5px solid #18181B"
                                 : esCliente
-                                  ? "1px solid #E2E8F0"
+                                  ? "1px solid #E4E4E7"
                                   : esAria
-                                    ? "1px solid #A7F3D0"
+                                    ? "1px solid #DCE4DF"
                                     : esNota
-                                      ? "1px solid #FDE68A"
-                                      : "none",
+                                      ? "1px solid #E8DEC6"
+                                      : "1px solid #DCD8D0",
                               fontSize: "0.83rem",
                               lineHeight: 1.48,
                               boxShadow: esResaltado
-                                ? "0 0 0 4px rgba(245, 158, 11, 0.22)"
-                                : "0 1px 2px rgba(15, 23, 42, 0.04)",
+                                ? "0 0 0 3px rgba(24, 24, 27, 0.10)"
+                                : "0 1px 2px rgba(24, 24, 27, 0.03)",
                               display: "flex",
                               flexDirection: "column",
                               gap: "8px",
@@ -5575,7 +5651,7 @@ export function ConsolaVentasOmnicanal({
                           >
                             {renderContenidoMensajeOmnicanal(
                               m,
-                              m.origen === "ASESORA_HUMANA",
+                              false,
                               {
                                 onAmpliarImagen: (url, alt) =>
                                   setVisorImagenDatos({
@@ -5634,7 +5710,7 @@ export function ConsolaVentasOmnicanal({
                               }
                             )}
 
-                            {/* Botón rápido para enviar cualquier consulta/mensaje al Chat Grupal del Equipo con @menciones */}
+                            {/* Botón discreto para enviar cualquier consulta/mensaje al Chat Grupal del Equipo */}
                             <div
                               style={{
                                 display: "flex",
@@ -5679,17 +5755,13 @@ export function ConsolaVentasOmnicanal({
                                   display: "inline-flex",
                                   alignItems: "center",
                                   gap: "4px",
-                                  padding: "2px 6px",
+                                  padding: "2px 7px",
                                   borderRadius: "6px",
-                                  border: "none",
-                                  background:
-                                    m.origen === "ASESORA_HUMANA"
-                                      ? "rgba(255,255,255,0.16)"
-                                      : "rgba(109, 40, 217, 0.08)",
-                                  color:
-                                    m.origen === "ASESORA_HUMANA" ? "#E9D5FF" : "#5B21B6",
-                                  fontSize: "0.68rem",
-                                  fontWeight: 700,
+                                  border: "1px solid rgba(24, 24, 27, 0.10)",
+                                  background: "rgba(255, 255, 255, 0.72)",
+                                  color: "#52525B",
+                                  fontSize: "0.67rem",
+                                  fontWeight: 600,
                                   cursor: "pointer",
                                 }}
                               >
@@ -5704,12 +5776,12 @@ export function ConsolaVentasOmnicanal({
                   )}
                 </div>
 
-                {/* Compositor Compacto y Responsive con /Atajos y Modo Nota Interna */}
+                {/* Compositor Compacto y Sobrio (Sin botón "Enviar y cerrar" y con "Opciones" anclado sobre el botón en Web) */}
                 <form
                   onSubmit={handleEnviarMensaje}
                   style={{
                     background: "#FFFFFF",
-                    borderTop: "1px solid #E2E8F0",
+                    borderTop: "1px solid #E4E4E7",
                     padding:
                       modoLayoutInbox === "movil"
                         ? "8px 10px calc(8px + env(safe-area-inset-bottom, 0px))"
@@ -5742,9 +5814,9 @@ export function ConsolaVentasOmnicanal({
                         right: modoLayoutInbox === "movil" ? "8px" : "12px",
                         marginBottom: "6px",
                         background: "#FFFFFF",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid #D4D4D8",
                         borderRadius: "12px",
-                        boxShadow: "0 10px 25px rgba(15, 23, 42, 0.14)",
+                        boxShadow: "0 12px 28px rgba(24, 24, 27, 0.12)",
                         maxHeight: "230px",
                         overflowY: "auto",
                         zIndex: 25,
@@ -5760,7 +5832,7 @@ export function ConsolaVentasOmnicanal({
                             minHeight: "46px",
                             padding: "9px 12px",
                             border: "none",
-                            borderBottom: "1px solid #F1F5F9",
+                            borderBottom: "1px solid #F4F4F5",
                             background: "#FFFFFF",
                             textAlign: "left",
                             cursor: "pointer",
@@ -5770,17 +5842,17 @@ export function ConsolaVentasOmnicanal({
                           }}
                         >
                           <div style={{ display: "flex", justifyContent: "space-between", gap: "6px" }}>
-                            <strong style={{ fontSize: "0.79rem", color: "#0F172A" }}>
-                              <code style={{ color: "#2563EB" }}>{r.atajo}</code> · {r.titulo}
+                            <strong style={{ fontSize: "0.79rem", color: "#18181B" }}>
+                              <code style={{ color: "#2D4734" }}>{r.atajo}</code> · {r.titulo}
                             </strong>
-                            <span style={{ fontSize: "0.68rem", color: "#64748B", flexShrink: 0 }}>
+                            <span style={{ fontSize: "0.68rem", color: "#71717A", flexShrink: 0 }}>
                               {r.categoria}
                             </span>
                           </div>
                           <span
                             style={{
                               fontSize: "0.74rem",
-                              color: "#475569",
+                              color: "#52525B",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
@@ -5802,27 +5874,27 @@ export function ConsolaVentasOmnicanal({
                         gap: "8px",
                         padding: "5px 10px",
                         borderRadius: "8px",
-                        background: "#FEF3C7",
-                        border: "1px solid #FDE68A",
-                        color: "#92400E",
+                        background: "#FAF6EC",
+                        border: "1px solid #E8DEC6",
+                        color: "#78350F",
                         fontSize: "0.73rem",
-                        fontWeight: 700,
+                        fontWeight: 600,
                       }}
                     >
-                      <span>📝 Modo Nota Interna activo (solo equipo)</span>
+                      <span>Modo nota interna activo (solo equipo)</span>
                       <button
                         type="button"
                         onClick={() => setModoNotaInterna(false)}
                         title="Volver a responder al cliente"
                         aria-label="Cambiar a cliente"
                         style={{
-                          border: "1px solid #F59E0B",
+                          border: "1px solid #D6C7A9",
                           background: "#FFFFFF",
-                          color: "#92400E",
+                          color: "#78350F",
                           borderRadius: "6px",
                           padding: "2px 8px",
                           fontSize: "0.7rem",
-                          fontWeight: 700,
+                          fontWeight: 600,
                           cursor: "pointer",
                         }}
                       >
@@ -5839,8 +5911,8 @@ export function ConsolaVentasOmnicanal({
                         gap: "10px",
                         padding: "6px 10px",
                         borderRadius: "9px",
-                        background: "#F8FAFC",
-                        border: "1px solid #CBD5E1",
+                        background: "#FAFAFA",
+                        border: "1px solid #E4E4E7",
                       }}
                     >
                       <img
@@ -5853,8 +5925,8 @@ export function ConsolaVentasOmnicanal({
                           borderRadius: "7px",
                         }}
                       />
-                      <span style={{ fontSize: "0.75rem", color: "#334155", flex: 1 }}>
-                        🖼️ Imagen lista para enviar
+                      <span style={{ fontSize: "0.75rem", color: "#27272A", flex: 1 }}>
+                        Imagen lista para enviar
                       </span>
                       <button
                         type="button"
@@ -5866,6 +5938,7 @@ export function ConsolaVentasOmnicanal({
                           height: "32px",
                           border: "none",
                           background: "transparent",
+                          color: "#52525B",
                           cursor: "pointer",
                           display: "inline-flex",
                           alignItems: "center",
@@ -5885,8 +5958,8 @@ export function ConsolaVentasOmnicanal({
                         gap: "10px",
                         padding: "6px 10px",
                         borderRadius: "9px",
-                        background: "#FAF5FF",
-                        border: "1px solid #DDD6FE",
+                        background: "#FAFAFA",
+                        border: "1px solid #E4E4E7",
                       }}
                     >
                       <div
@@ -5894,8 +5967,9 @@ export function ConsolaVentasOmnicanal({
                           width: "36px",
                           height: "36px",
                           borderRadius: "8px",
-                          background: "#EDE9FE",
-                          color: "#6D28D9",
+                          background: "#F4F4F5",
+                          color: "#27272A",
+                          border: "1px solid #E4E4E7",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -5907,15 +5981,15 @@ export function ConsolaVentasOmnicanal({
                       <span
                         style={{
                           fontSize: "0.75rem",
-                          fontWeight: 700,
-                          color: "#4C1D95",
+                          fontWeight: 600,
+                          color: "#18181B",
                           flex: 1,
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
                         }}
                       >
-                        📄 {documentoAdjuntoAsesor.nombre}
+                        {documentoAdjuntoAsesor.nombre}
                       </span>
                       <button
                         type="button"
@@ -5927,7 +6001,7 @@ export function ConsolaVentasOmnicanal({
                           height: "32px",
                           border: "none",
                           background: "transparent",
-                          color: "#4C1D95",
+                          color: "#52525B",
                           cursor: "pointer",
                           display: "inline-flex",
                           alignItems: "center",
@@ -5939,593 +6013,560 @@ export function ConsolaVentasOmnicanal({
                     </div>
                   )}
 
-                  {/* Menú unificado "Opciones" (Adjuntos + Nota + Respuesta '/' + Catálogo + Asignación + Compartir + Eliminar) */}
-                  {mostrarMenuAdjuntar && (
-                    <div
-                      role="dialog"
-                      aria-label="Opciones de la conversación"
-                      onClick={() => {
-                        setMostrarMenuAdjuntar(false);
-                        setVistaMenuOpciones("principal");
-                      }}
-                      style={
-                        modoLayoutInbox === "movil"
-                          ? {
-                              position: "fixed",
-                              inset: 0,
-                              zIndex: 9940,
-                              background: "rgba(15, 23, 42, 0.52)",
-                              backdropFilter: "blur(2px)",
-                              display: "flex",
-                              alignItems: "flex-end",
-                              justifyContent: "center",
-                            }
-                          : {
-                              position: "fixed",
-                              inset: 0,
-                              zIndex: 35,
-                              background: "transparent",
-                            }
-                      }
-                    >
-                      <div
-                        onClick={(e) => e.stopPropagation()}
-                        style={
-                          modoLayoutInbox === "movil"
-                            ? {
-                                width: "100%",
-                                maxHeight: "82dvh",
-                                overflowY: "auto",
-                                background: "#111B21",
-                                color: "#E9EDEF",
-                                borderRadius: "22px 22px 0 0",
-                                padding:
-                                  "12px 18px calc(20px + env(safe-area-inset-bottom, 0px))",
-                                boxShadow: "0 -14px 36px rgba(0, 0, 0, 0.42)",
-                              }
-                            : {
-                                position: "absolute",
-                                bottom: "64px",
-                                left: "14px",
-                                width: "344px",
-                                maxHeight: "76vh",
-                                overflowY: "auto",
-                                background: "#111B21",
-                                color: "#E9EDEF",
-                                borderRadius: "18px",
-                                padding: "16px 16px 14px",
-                                boxShadow: "0 18px 42px rgba(15, 23, 42, 0.34)",
-                                border: "1px solid rgba(255, 255, 255, 0.08)",
-                              }
-                        }
-                      >
-                        {modoLayoutInbox === "movil" && (
+                  {(() => {
+                    const contenidoPanelOpciones =
+                      vistaMenuOpciones === "asignar" ? (
+                        <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
                           <div
                             style={{
-                              width: "40px",
-                              height: "4px",
-                              borderRadius: "999px",
-                              background: "rgba(255,255,255,0.28)",
-                              margin: "0 auto 12px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              paddingBottom: "8px",
+                              borderBottom: "1px solid #F4F4F5",
                             }}
-                          />
-                        )}
-
-                        {vistaMenuOpciones === "asignar" ? (
-                          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                            <div
+                          >
+                            <button
+                              type="button"
+                              onClick={() => setVistaMenuOpciones("principal")}
+                              title="Volver a Opciones"
+                              aria-label="Volver"
                               style={{
-                                display: "flex",
+                                border: "1px solid #E4E4E7",
+                                background: "#FAFAFA",
+                                color: "#27272A",
+                                borderRadius: "8px",
+                                padding: "5px 10px",
+                                fontSize: "0.75rem",
+                                fontWeight: 600,
+                                display: "inline-flex",
                                 alignItems: "center",
-                                justifyContent: "space-between",
-                                paddingBottom: "8px",
-                                borderBottom: "1px solid rgba(255,255,255,0.1)",
+                                gap: "5px",
+                                cursor: "pointer",
                               }}
                             >
+                              <ArrowLeft size={14} />
+                              <span>Volver</span>
+                            </button>
+                            <strong style={{ fontSize: "0.82rem", color: "#18181B" }}>
+                              Asignar al equipo
+                            </strong>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              void handleAsignarVendedor("");
+                              setMostrarMenuAdjuntar(false);
+                              setVistaMenuOpciones("principal");
+                            }}
+                            style={{
+                              width: "100%",
+                              minHeight: "42px",
+                              padding: "8px 12px",
+                              borderRadius: "10px",
+                              border: !conversacionActiva.asesoraAsignadaId
+                                ? "1px solid #18181B"
+                                : "1px solid #E4E4E7",
+                              background: !conversacionActiva.asesoraAsignadaId
+                                ? "#F4F4F5"
+                                : "#FFFFFF",
+                              color: "#18181B",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              fontSize: "0.81rem",
+                              fontWeight: 600,
+                              cursor: "pointer",
+                              textAlign: "left",
+                            }}
+                          >
+                            <span>— Sin asignar (Cola general)</span>
+                            {!conversacionActiva.asesoraAsignadaId && (
+                              <Check size={15} color="#18181B" />
+                            )}
+                          </button>
+
+                          {tablero.equipo.map((m) => {
+                            const activo = conversacionActiva.asesoraAsignadaId === m.usuarioId;
+                            return (
                               <button
+                                key={m.usuarioId}
                                 type="button"
-                                onClick={() => setVistaMenuOpciones("principal")}
-                                title="Volver a Opciones"
-                                aria-label="Volver"
+                                onClick={() => {
+                                  void handleAsignarVendedor(m.usuarioId);
+                                  setMostrarMenuAdjuntar(false);
+                                  setVistaMenuOpciones("principal");
+                                }}
+                                style={{
+                                  width: "100%",
+                                  minHeight: "44px",
+                                  padding: "8px 12px",
+                                  borderRadius: "10px",
+                                  border: activo ? "1px solid #18181B" : "1px solid #E4E4E7",
+                                  background: activo ? "#F4F4F5" : "#FFFFFF",
+                                  color: "#18181B",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "space-between",
+                                  gap: "8px",
+                                  cursor: "pointer",
+                                  textAlign: "left",
+                                }}
+                              >
+                                <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
+                                  <span style={{ fontSize: "0.81rem", fontWeight: 700 }}>
+                                    {m.usuarioId === tablero.usuarioActualId
+                                      ? `Yo (${m.nombre})`
+                                      : m.nombre}
+                                  </span>
+                                  <span style={{ fontSize: "0.69rem", color: "#71717A" }}>
+                                    {m.rol} · {m.chatsActivos} chats activos
+                                  </span>
+                                </div>
+                                {activo && <Check size={15} color="#18181B" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                            gap: "12px 10px",
+                          }}
+                        >
+                          {[
+                            {
+                              clave: "nota",
+                              etiqueta: modoNotaInterna ? "Modo cliente" : "Nota",
+                              titulo: modoNotaInterna
+                                ? "Volver a escribir al cliente"
+                                : "Escribir Nota Interna para el equipo",
+                              esPeligro: false,
+                              icono: <StickyNote size={20} />,
+                              visible: true,
+                              onAccion: () => {
+                                setModoNotaInterna((prev) => !prev);
+                                setMostrarMenuAdjuntar(false);
+                                setTimeout(() => textareaCompositorRef.current?.focus(), 50);
+                              },
+                            },
+                            {
+                              clave: "documento",
+                              etiqueta: "Documento",
+                              titulo: "Adjuntar documento PDF, Word o Excel",
+                              esPeligro: false,
+                              icono: <FileText size={20} />,
+                              visible: true,
+                              onAccion: () => {
+                                setMostrarMenuAdjuntar(false);
+                                inputDocumentoAsesorRef.current?.click();
+                              },
+                            },
+                            {
+                              clave: "imagen",
+                              etiqueta: "Imagen",
+                              titulo: "Seleccionar imagen de la galería",
+                              esPeligro: false,
+                              icono: <ImagePlus size={20} />,
+                              visible: true,
+                              onAccion: () => {
+                                setMostrarMenuAdjuntar(false);
+                                inputFotoAsesorRef.current?.click();
+                              },
+                            },
+                            {
+                              clave: "foto",
+                              etiqueta: "Foto",
+                              titulo: "Tomar foto directa con la cámara",
+                              esPeligro: false,
+                              icono: <Camera size={20} />,
+                              visible: true,
+                              onAccion: () => {
+                                setMostrarMenuAdjuntar(false);
+                                inputCamaraAsesorRef.current?.click();
+                              },
+                            },
+                            {
+                              clave: "rapida",
+                              etiqueta: "Respuesta '/'",
+                              titulo: "Abrir respuestas rápidas (/atajos)",
+                              esPeligro: false,
+                              icono: <Zap size={20} />,
+                              visible: true,
+                              onAccion: () => {
+                                setMostrarMenuAdjuntar(false);
+                                setMostrarMenuRespuestas(true);
+                                setTimeout(() => textareaCompositorRef.current?.focus(), 50);
+                              },
+                            },
+                            {
+                              clave: "catalogo",
+                              etiqueta: "Catálogo",
+                              titulo:
+                                "Enviar producto del catálogo (foto principal + link web + álbum)",
+                              esPeligro: false,
+                              icono: <Store size={20} />,
+                              visible: true,
+                              onAccion: () => {
+                                setMostrarMenuAdjuntar(false);
+                                setModalCatalogoChatAbierto(true);
+                              },
+                            },
+                            {
+                              clave: "asignar",
+                              etiqueta: "Asignar",
+                              titulo: "Asignar esta conversación a un miembro del equipo",
+                              esPeligro: false,
+                              icono: <UserCheck size={20} />,
+                              visible: true,
+                              onAccion: () => {
+                                setVistaMenuOpciones("asignar");
+                              },
+                            },
+                            {
+                              clave: "compartir",
+                              etiqueta: "Compartir",
+                              titulo: "Compartir conversación en el Chat Grupal del Equipo",
+                              esPeligro: false,
+                              icono: <Share2 size={20} />,
+                              visible: true,
+                              onAccion: () => {
+                                setMostrarMenuAdjuntar(false);
+                                handleCompartirChatAlEquipo();
+                              },
+                            },
+                            {
+                              clave: "eliminar",
+                              etiqueta: "Eliminar",
+                              titulo:
+                                "Eliminar conversación completa (Exclusivo Administrador)",
+                              esPeligro: true,
+                              icono: <Trash2 size={20} />,
+                              visible: esAdminAplicacion,
+                              onAccion: () => {
+                                setMostrarMenuAdjuntar(false);
+                                setConversacionAEliminar(conversacionActiva);
+                              },
+                            },
+                          ]
+                            .filter((item) => item.visible)
+                            .map((item) => (
+                              <button
+                                key={item.clave}
+                                type="button"
+                                onClick={item.onAccion}
+                                title={item.titulo}
+                                aria-label={item.etiqueta}
                                 style={{
                                   border: "none",
-                                  background: "rgba(255,255,255,0.08)",
-                                  color: "#E9EDEF",
-                                  borderRadius: "8px",
-                                  padding: "5px 10px",
-                                  fontSize: "0.75rem",
-                                  fontWeight: 700,
-                                  display: "inline-flex",
+                                  background: "transparent",
+                                  color: item.esPeligro ? "#B91C1C" : "#27272A",
+                                  display: "flex",
+                                  flexDirection: "column",
                                   alignItems: "center",
-                                  gap: "5px",
+                                  gap: "6px",
+                                  padding: "4px 2px",
                                   cursor: "pointer",
                                 }}
                               >
-                                <ArrowLeft size={14} />
-                                <span>Volver</span>
+                                <span
+                                  style={{
+                                    width: "50px",
+                                    height: "46px",
+                                    borderRadius: "14px",
+                                    background: item.esPeligro ? "#FEF2F2" : "#F4F4F5",
+                                    border: item.esPeligro
+                                      ? "1px solid #FECACA"
+                                      : "1px solid #E4E4E7",
+                                    color: item.esPeligro ? "#B91C1C" : "#27272A",
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                  }}
+                                >
+                                  {item.icono}
+                                </span>
+                                <span
+                                  style={{
+                                    fontSize: "0.74rem",
+                                    fontWeight: 600,
+                                    color: item.esPeligro ? "#B91C1C" : "#3F3F46",
+                                    lineHeight: 1.2,
+                                    textAlign: "center",
+                                  }}
+                                >
+                                  {item.etiqueta}
+                                </span>
                               </button>
-                              <strong style={{ fontSize: "0.82rem", color: "#F8FAFC" }}>
-                                👤 Asignar al equipo
-                              </strong>
-                            </div>
+                            ))}
+                        </div>
+                      );
 
-                            <button
-                              type="button"
+                    return (
+                      <>
+                        {/* En móvil: Bottom Sheet sobrio de pantalla inferior; en Web: Backdrop transparente click-outside */}
+                        {mostrarMenuAdjuntar &&
+                          (modoLayoutInbox === "movil" ? (
+                            <div
+                              role="dialog"
+                              aria-label="Opciones de la conversación"
                               onClick={() => {
-                                void handleAsignarVendedor("");
                                 setMostrarMenuAdjuntar(false);
                                 setVistaMenuOpciones("principal");
                               }}
                               style={{
-                                width: "100%",
-                                minHeight: "42px",
-                                padding: "8px 12px",
-                                borderRadius: "10px",
-                                border: !conversacionActiva.asesoraAsignadaId
-                                  ? "1px solid #38BDF8"
-                                  : "1px solid rgba(255,255,255,0.1)",
-                                background: !conversacionActiva.asesoraAsignadaId
-                                  ? "rgba(56, 189, 248, 0.16)"
-                                  : "rgba(255,255,255,0.04)",
-                                color: "#F8FAFC",
+                                position: "fixed",
+                                inset: 0,
+                                zIndex: 9940,
+                                background: "rgba(24, 24, 27, 0.42)",
+                                backdropFilter: "blur(2px)",
                                 display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                                fontSize: "0.82rem",
-                                fontWeight: 600,
-                                cursor: "pointer",
-                                textAlign: "left",
+                                alignItems: "flex-end",
+                                justifyContent: "center",
                               }}
                             >
-                              <span>— Sin asignar (Cola general)</span>
-                              {!conversacionActiva.asesoraAsignadaId && (
-                                <Check size={15} color="#38BDF8" />
-                              )}
-                            </button>
-
-                            {tablero.equipo.map((m) => {
-                              const activo = conversacionActiva.asesoraAsignadaId === m.usuarioId;
-                              return (
-                                <button
-                                  key={m.usuarioId}
-                                  type="button"
-                                  onClick={() => {
-                                    void handleAsignarVendedor(m.usuarioId);
-                                    setMostrarMenuAdjuntar(false);
-                                    setVistaMenuOpciones("principal");
-                                  }}
+                              <div
+                                onClick={(e) => e.stopPropagation()}
+                                style={{
+                                  width: "100%",
+                                  maxHeight: "82dvh",
+                                  overflowY: "auto",
+                                  background: "#FFFFFF",
+                                  color: "#18181B",
+                                  borderTop: "1px solid #E4E4E7",
+                                  borderRadius: "20px 20px 0 0",
+                                  padding:
+                                    "12px 18px calc(20px + env(safe-area-inset-bottom, 0px))",
+                                  boxShadow: "0 -14px 36px rgba(24, 24, 27, 0.18)",
+                                }}
+                              >
+                                <div
                                   style={{
-                                    width: "100%",
-                                    minHeight: "44px",
-                                    padding: "8px 12px",
-                                    borderRadius: "10px",
-                                    border: activo
-                                      ? "1px solid #38BDF8"
-                                      : "1px solid rgba(255,255,255,0.1)",
-                                    background: activo
-                                      ? "rgba(56, 189, 248, 0.16)"
-                                      : "rgba(255,255,255,0.04)",
-                                    color: "#F8FAFC",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "space-between",
-                                    gap: "8px",
-                                    cursor: "pointer",
-                                    textAlign: "left",
+                                    width: "40px",
+                                    height: "4px",
+                                    borderRadius: "999px",
+                                    background: "#D4D4D8",
+                                    margin: "0 auto 14px",
                                   }}
-                                >
-                                  <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
-                                    <span style={{ fontSize: "0.82rem", fontWeight: 700 }}>
-                                      {m.usuarioId === tablero.usuarioActualId
-                                        ? `Yo (${m.nombre})`
-                                        : m.nombre}
-                                    </span>
-                                    <span style={{ fontSize: "0.69rem", color: "#94A3B8" }}>
-                                      {m.rol} · {m.chatsActivos} chats activos
-                                    </span>
-                                  </div>
-                                  {activo && <Check size={15} color="#38BDF8" />}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        ) : (
+                                />
+                                {contenidoPanelOpciones}
+                              </div>
+                            </div>
+                          ) : (
+                            <div
+                              aria-hidden="true"
+                              onClick={() => {
+                                setMostrarMenuAdjuntar(false);
+                                setVistaMenuOpciones("principal");
+                              }}
+                              style={{
+                                position: "fixed",
+                                inset: 0,
+                                zIndex: 35,
+                                background: "transparent",
+                              }}
+                            />
+                          ))}
+
+                        <div style={{ display: "flex", gap: "6px", alignItems: "flex-end" }}>
+                          {/* Inputs ocultos para Imagen (galería), Foto (cámara) y Documento */}
+                          <input
+                            ref={inputFotoAsesorRef}
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const archivo = e.target.files?.[0];
+                              if (archivo) void subirImagenAsesorOmnicanal(archivo);
+                              e.target.value = "";
+                            }}
+                            style={{ display: "none" }}
+                          />
+                          <input
+                            ref={inputCamaraAsesorRef}
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            onChange={(e) => {
+                              const archivo = e.target.files?.[0];
+                              if (archivo) void subirImagenAsesorOmnicanal(archivo);
+                              e.target.value = "";
+                            }}
+                            style={{ display: "none" }}
+                          />
+                          <input
+                            ref={inputDocumentoAsesorRef}
+                            type="file"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,application/pdf"
+                            onChange={(e) => {
+                              const archivo = e.target.files?.[0];
+                              if (archivo) void subirDocumentoAsesorOmnicanal(archivo);
+                              e.target.value = "";
+                            }}
+                            style={{ display: "none" }}
+                          />
+
+                          {/* Contenedor relativo para anclar el Popover de "Opciones" exactamente encima del botón en Web */}
                           <div
                             style={{
-                              display: "grid",
-                              gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                              gap: "14px 10px",
+                              position: "relative",
+                              flexShrink: 0,
+                              zIndex: mostrarMenuAdjuntar && modoLayoutInbox !== "movil" ? 45 : undefined,
                             }}
                           >
-                            {[
-                              {
-                                clave: "nota",
-                                etiqueta: modoNotaInterna ? "Modo Cliente" : "Nota",
-                                titulo: modoNotaInterna
-                                  ? "Volver a escribir al cliente"
-                                  : "Escribir Nota Interna para el equipo",
-                                fondo: "rgba(245, 158, 11, 0.18)",
-                                borde: "rgba(245, 158, 11, 0.42)",
-                                colorIcono: "#FBBF24",
-                                icono: <StickyNote size={22} />,
-                                visible: true,
-                                onAccion: () => {
-                                  setModoNotaInterna((prev) => !prev);
-                                  setMostrarMenuAdjuntar(false);
-                                  setTimeout(() => textareaCompositorRef.current?.focus(), 50);
-                                },
-                              },
-                              {
-                                clave: "documento",
-                                etiqueta: "Documento",
-                                titulo: "Adjuntar documento PDF, Word o Excel",
-                                fondo: "rgba(124, 58, 237, 0.2)",
-                                borde: "rgba(167, 139, 250, 0.42)",
-                                colorIcono: "#A78BFA",
-                                icono: <FileText size={22} />,
-                                visible: true,
-                                onAccion: () => {
-                                  setMostrarMenuAdjuntar(false);
-                                  inputDocumentoAsesorRef.current?.click();
-                                },
-                              },
-                              {
-                                clave: "imagen",
-                                etiqueta: "Imagen",
-                                titulo: "Seleccionar imagen de la galería",
-                                fondo: "rgba(37, 99, 235, 0.2)",
-                                borde: "rgba(96, 165, 250, 0.42)",
-                                colorIcono: "#60A5FA",
-                                icono: <ImagePlus size={22} />,
-                                visible: true,
-                                onAccion: () => {
-                                  setMostrarMenuAdjuntar(false);
-                                  inputFotoAsesorRef.current?.click();
-                                },
-                              },
-                              {
-                                clave: "foto",
-                                etiqueta: "Foto",
-                                titulo: "Tomar foto directa con la cámara",
-                                fondo: "rgba(236, 72, 153, 0.2)",
-                                borde: "rgba(244, 114, 182, 0.42)",
-                                colorIcono: "#F472B6",
-                                icono: <Camera size={22} />,
-                                visible: true,
-                                onAccion: () => {
-                                  setMostrarMenuAdjuntar(false);
-                                  inputCamaraAsesorRef.current?.click();
-                                },
-                              },
-                              {
-                                clave: "rapida",
-                                etiqueta: "Respuesta '/'",
-                                titulo: "Abrir respuestas rápidas (/atajos)",
-                                fondo: "rgba(234, 179, 8, 0.2)",
-                                borde: "rgba(250, 204, 21, 0.42)",
-                                colorIcono: "#FACC15",
-                                icono: <Zap size={22} />,
-                                visible: true,
-                                onAccion: () => {
-                                  setMostrarMenuAdjuntar(false);
-                                  setMostrarMenuRespuestas(true);
-                                  setTimeout(() => textareaCompositorRef.current?.focus(), 50);
-                                },
-                              },
-                              {
-                                clave: "catalogo",
-                                etiqueta: "Catálogo",
-                                titulo:
-                                  "Enviar producto del catálogo (foto principal + link web + álbum)",
-                                fondo: "rgba(22, 163, 74, 0.22)",
-                                borde: "rgba(74, 222, 128, 0.45)",
-                                colorIcono: "#4ADE80",
-                                icono: <Store size={22} />,
-                                visible: true,
-                                onAccion: () => {
-                                  setMostrarMenuAdjuntar(false);
-                                  setModalCatalogoChatAbierto(true);
-                                },
-                              },
-                              {
-                                clave: "asignar",
-                                etiqueta: "Asignar",
-                                titulo: "Asignar esta conversación a un miembro del equipo",
-                                fondo: "rgba(14, 165, 233, 0.2)",
-                                borde: "rgba(56, 189, 248, 0.42)",
-                                colorIcono: "#38BDF8",
-                                icono: <UserCheck size={22} />,
-                                visible: true,
-                                onAccion: () => {
-                                  setVistaMenuOpciones("asignar");
-                                },
-                              },
-                              {
-                                clave: "compartir",
-                                etiqueta: "Compartir",
-                                titulo: "Compartir conversación en el Chat Grupal del Equipo",
-                                fondo: "rgba(139, 92, 246, 0.2)",
-                                borde: "rgba(196, 181, 253, 0.42)",
-                                colorIcono: "#C4B5FD",
-                                icono: <Share2 size={22} />,
-                                visible: true,
-                                onAccion: () => {
-                                  setMostrarMenuAdjuntar(false);
-                                  handleCompartirChatAlEquipo();
-                                },
-                              },
-                              {
-                                clave: "eliminar",
-                                etiqueta: "Eliminar",
-                                titulo:
-                                  "Eliminar conversación completa (Exclusivo Administrador)",
-                                fondo: "rgba(239, 68, 68, 0.2)",
-                                borde: "rgba(248, 113, 113, 0.45)",
-                                colorIcono: "#F87171",
-                                icono: <Trash2 size={22} />,
-                                visible: esAdminAplicacion,
-                                onAccion: () => {
-                                  setMostrarMenuAdjuntar(false);
-                                  setConversacionAEliminar(conversacionActiva);
-                                },
-                              },
-                            ]
-                              .filter((item) => item.visible)
-                              .map((item) => (
-                                <button
-                                  key={item.clave}
-                                  type="button"
-                                  onClick={item.onAccion}
-                                  title={item.titulo}
-                                  aria-label={item.etiqueta}
+                            {mostrarMenuAdjuntar && modoLayoutInbox !== "movil" && (
+                              <div
+                                role="dialog"
+                                aria-label="Opciones de la conversación"
+                                onClick={(e) => e.stopPropagation()}
+                                style={{
+                                  position: "absolute",
+                                  bottom: "calc(100% + 8px)",
+                                  left: 0,
+                                  width: "316px",
+                                  maxHeight: "72vh",
+                                  overflowY: "auto",
+                                  background: "#FFFFFF",
+                                  color: "#18181B",
+                                  borderRadius: "16px",
+                                  padding: "14px",
+                                  boxShadow: "0 16px 38px rgba(24, 24, 27, 0.14)",
+                                  border: "1px solid #E4E4E7",
+                                  zIndex: 50,
+                                }}
+                              >
+                                {contenidoPanelOpciones}
+                              </div>
+                            )}
+
+                            <button
+                              type="button"
+                              className="btn-responsive-accion"
+                              disabled={subiendoImagenAsesor}
+                              onClick={() => {
+                                setMostrarMenuRespuestas(false);
+                                setVistaMenuOpciones("principal");
+                                setMostrarMenuAdjuntar((prev) => !prev);
+                              }}
+                              title="Opciones (Nota, Documento, Imagen, Foto, Respuesta '/', Catálogo, Asignar, Compartir)"
+                              aria-label="Opciones"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: "5px",
+                                minWidth: modoLayoutInbox === "movil" ? "42px" : undefined,
+                                minHeight: modoLayoutInbox === "movil" ? "42px" : undefined,
+                                padding: modoLayoutInbox === "movil" ? "0 10px" : "9px 11px",
+                                borderRadius: "10px",
+                                border: mostrarMenuAdjuntar
+                                  ? "1px solid #18181B"
+                                  : "1px solid #D4D4D8",
+                                background: mostrarMenuAdjuntar ? "#18181B" : "#FAFAFA",
+                                color: mostrarMenuAdjuntar ? "#FFFFFF" : "#27272A",
+                                fontSize: "0.78rem",
+                                fontWeight: 600,
+                                cursor: subiendoImagenAsesor ? "wait" : "pointer",
+                                flexShrink: 0,
+                              }}
+                            >
+                              {subiendoImagenAsesor ? (
+                                <Loader2 size={16} />
+                              ) : (
+                                <Plus
+                                  size={18}
                                   style={{
-                                    border: "none",
-                                    background: "transparent",
-                                    color: "#E9EDEF",
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    alignItems: "center",
-                                    gap: "7px",
-                                    padding: "4px 2px",
-                                    cursor: "pointer",
+                                    transform: mostrarMenuAdjuntar ? "rotate(45deg)" : "none",
+                                    transition: "transform 160ms ease",
                                   }}
-                                >
-                                  <span
-                                    style={{
-                                      width: "56px",
-                                      height: "52px",
-                                      borderRadius: "999px",
-                                      background: item.fondo,
-                                      border: `1px solid ${item.borde}`,
-                                      color: item.colorIcono,
-                                      display: "inline-flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                    }}
-                                  >
-                                    {item.icono}
-                                  </span>
-                                  <span
-                                    style={{
-                                      fontSize: "0.76rem",
-                                      fontWeight: 600,
-                                      color: "#D1D7DB",
-                                      lineHeight: 1.2,
-                                      textAlign: "center",
-                                    }}
-                                  >
-                                    {item.etiqueta}
-                                  </span>
-                                </button>
-                              ))}
+                                />
+                              )}
+                              <span className="btn-texto-responsive">Opciones</span>
+                            </button>
                           </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
 
-                  <div style={{ display: "flex", gap: "6px", alignItems: "flex-end" }}>
-                    {/* Inputs ocultos para Imagen (galería), Foto (cámara) y Documento */}
-                    <input
-                      ref={inputFotoAsesorRef}
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const archivo = e.target.files?.[0];
-                        if (archivo) void subirImagenAsesorOmnicanal(archivo);
-                        e.target.value = "";
-                      }}
-                      style={{ display: "none" }}
-                    />
-                    <input
-                      ref={inputCamaraAsesorRef}
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      onChange={(e) => {
-                        const archivo = e.target.files?.[0];
-                        if (archivo) void subirImagenAsesorOmnicanal(archivo);
-                        e.target.value = "";
-                      }}
-                      style={{ display: "none" }}
-                    />
-                    <input
-                      ref={inputDocumentoAsesorRef}
-                      type="file"
-                      accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,application/pdf"
-                      onChange={(e) => {
-                        const archivo = e.target.files?.[0];
-                        if (archivo) void subirDocumentoAsesorOmnicanal(archivo);
-                        e.target.value = "";
-                      }}
-                      style={{ display: "none" }}
-                    />
+                          <textarea
+                            ref={textareaCompositorRef}
+                            value={textoRespuesta}
+                            onChange={(e) => setTextoRespuesta(e.target.value)}
+                            onPaste={handlePegarImagenCompositor}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" && !e.shiftKey) {
+                                e.preventDefault();
+                                void handleEnviarMensaje();
+                              }
+                            }}
+                            rows={modoLayoutInbox === "movil" ? 1 : 2}
+                            placeholder={
+                              modoNotaInterna
+                                ? "Nota interna…"
+                                : modoLayoutInbox === "movil"
+                                  ? "Mensaje o /atajo…"
+                                  : "Escribe al cliente, pega una foto (Ctrl+V) o usa /saludo, /transferencia…"
+                            }
+                            style={{
+                              flex: 1,
+                              minWidth: 0,
+                              minHeight: modoLayoutInbox === "movil" ? "42px" : "44px",
+                              maxHeight: "110px",
+                              padding: modoLayoutInbox === "movil" ? "9px 11px" : "8px 11px",
+                              lineHeight: 1.35,
+                              borderRadius: "10px",
+                              border: modoNotaInterna ? "1px solid #D6C7A9" : "1px solid #D4D4D8",
+                              background: modoNotaInterna ? "#FAF6EC" : "#FFFFFF",
+                              color: "#18181B",
+                              fontSize: modoLayoutInbox === "movil" ? "16px" : "0.83rem",
+                              fontFamily: "inherit",
+                              resize: "none",
+                            }}
+                          />
 
-                    <button
-                      type="button"
-                      className="btn-responsive-accion"
-                      disabled={subiendoImagenAsesor}
-                      onClick={() => {
-                        setMostrarMenuRespuestas(false);
-                        setVistaMenuOpciones("principal");
-                        setMostrarMenuAdjuntar((prev) => !prev);
-                      }}
-                      title="Opciones (Nota, Documento, Imagen, Foto, Respuesta '/', Catálogo, Asignar, Compartir)"
-                      aria-label="Opciones"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "5px",
-                        minWidth: modoLayoutInbox === "movil" ? "42px" : undefined,
-                        minHeight: modoLayoutInbox === "movil" ? "42px" : undefined,
-                        padding: modoLayoutInbox === "movil" ? "0 10px" : "9px 11px",
-                        borderRadius: "10px",
-                        border: mostrarMenuAdjuntar
-                          ? "1px solid #0F172A"
-                          : "1px solid #CBD5E1",
-                        background: mostrarMenuAdjuntar ? "#0F172A" : "#F8FAFC",
-                        color: mostrarMenuAdjuntar ? "#FFFFFF" : "#334155",
-                        fontSize: "0.78rem",
-                        fontWeight: 700,
-                        cursor: subiendoImagenAsesor ? "wait" : "pointer",
-                        flexShrink: 0,
-                      }}
-                    >
-                      {subiendoImagenAsesor ? (
-                        <Loader2 size={16} />
-                      ) : (
-                        <Plus
-                          size={18}
-                          style={{
-                            transform: mostrarMenuAdjuntar ? "rotate(45deg)" : "none",
-                            transition: "transform 160ms ease",
-                          }}
-                        />
-                      )}
-                      <span className="btn-texto-responsive">Opciones</span>
-                    </button>
-
-                    <textarea
-                      ref={textareaCompositorRef}
-                      value={textoRespuesta}
-                      onChange={(e) => setTextoRespuesta(e.target.value)}
-                      onPaste={handlePegarImagenCompositor}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                          e.preventDefault();
-                          void handleEnviarMensaje();
-                        }
-                      }}
-                      rows={modoLayoutInbox === "movil" ? 1 : 2}
-                      placeholder={
-                        modoNotaInterna
-                          ? "Nota interna…"
-                          : modoLayoutInbox === "movil"
-                            ? "Mensaje o /atajo…"
-                            : "Escribe al cliente, pega una foto (Ctrl+V) o usa /saludo, /transferencia…"
-                      }
-                      style={{
-                        flex: 1,
-                        minWidth: 0,
-                        minHeight: modoLayoutInbox === "movil" ? "42px" : "46px",
-                        maxHeight: "110px",
-                        padding: modoLayoutInbox === "movil" ? "9px 11px" : "8px 11px",
-                        lineHeight: 1.35,
-                        borderRadius: "10px",
-                        border: modoNotaInterna ? "1px solid #F59E0B" : "1px solid #CBD5E1",
-                        background: modoNotaInterna ? "#FFFBEB" : "#FFFFFF",
-                        fontSize: modoLayoutInbox === "movil" ? "16px" : "0.83rem",
-                        fontFamily: "inherit",
-                        resize: "none",
-                      }}
-                    />
-                    {!modoNotaInterna &&
-                      conversacionActiva.estadoAtencion !== "CERRADO" &&
-                      modoLayoutInbox !== "movil" && (
-                        <button
-                          type="button"
-                          disabled={
-                            enviandoMensaje ||
-                            (!textoRespuesta.trim() &&
-                              !imagenAdjuntaAsesorUrl &&
-                              !documentoAdjuntoAsesor)
-                          }
-                          onClick={async () => {
-                            await handleEnviarMensaje();
-                            setMenuCabeceraAbierto("cierre");
-                          }}
-                          title="Enviar mensaje al cliente y elegir el motivo para cerrar la conversación"
-                          aria-label="Enviar y cerrar"
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "5px",
-                            padding: "10px 11px",
-                            borderRadius: "10px",
-                            border: "1px solid #CBD5E1",
-                            background: "#F8FAFC",
-                            color: "#0F172A",
-                            fontSize: "0.78rem",
-                            fontWeight: 700,
-                            cursor: enviandoMensaje ? "wait" : "pointer",
-                            opacity:
-                              !textoRespuesta.trim() &&
-                              !imagenAdjuntaAsesorUrl &&
-                              !documentoAdjuntoAsesor
-                                ? 0.5
-                                : 1,
-                            flexShrink: 0,
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          <CheckCircle2 size={14} />
-                          <span>Enviar y cerrar</span>
-                        </button>
-                      )}
-
-                    <button
-                      type="submit"
-                      className="btn-responsive-accion"
-                      disabled={
-                        enviandoMensaje ||
-                        (!textoRespuesta.trim() &&
-                          !imagenAdjuntaAsesorUrl &&
-                          !documentoAdjuntoAsesor)
-                      }
-                      title={modoNotaInterna ? "Guardar nota interna" : "Enviar respuesta al cliente"}
-                      aria-label="Enviar"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "6px",
-                        minWidth: modoLayoutInbox === "movil" ? "44px" : undefined,
-                        minHeight: modoLayoutInbox === "movil" ? "42px" : undefined,
-                        padding: modoLayoutInbox === "movil" ? "0 12px" : "10px 14px",
-                        borderRadius: "10px",
-                        border: "none",
-                        background: modoNotaInterna ? "#D97706" : "#0F172A",
-                        color: "#FFFFFF",
-                        fontSize: "0.82rem",
-                        fontWeight: 700,
-                        cursor: enviandoMensaje ? "wait" : "pointer",
-                        opacity:
-                          !textoRespuesta.trim() &&
-                          !imagenAdjuntaAsesorUrl &&
-                          !documentoAdjuntoAsesor
-                            ? 0.55
-                            : 1,
-                        flexShrink: 0,
-                      }}
-                    >
-                      {enviandoMensaje ? <Loader2 size={16} /> : <Send size={16} />}
-                      <span className="btn-texto-responsive">
-                        {modoNotaInterna ? "Guardar" : "Enviar"}
-                      </span>
-                    </button>
-                  </div>
+                          <button
+                            type="submit"
+                            className="btn-responsive-accion"
+                            disabled={
+                              enviandoMensaje ||
+                              (!textoRespuesta.trim() &&
+                                !imagenAdjuntaAsesorUrl &&
+                                !documentoAdjuntoAsesor)
+                            }
+                            title={modoNotaInterna ? "Guardar nota interna" : "Enviar respuesta al cliente"}
+                            aria-label="Enviar"
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "6px",
+                              minWidth: modoLayoutInbox === "movil" ? "44px" : undefined,
+                              minHeight: modoLayoutInbox === "movil" ? "42px" : undefined,
+                              padding: modoLayoutInbox === "movil" ? "0 12px" : "10px 14px",
+                              borderRadius: "10px",
+                              border: "none",
+                              background: modoNotaInterna ? "#44403C" : "#18181B",
+                              color: "#FFFFFF",
+                              fontSize: "0.82rem",
+                              fontWeight: 600,
+                              cursor: enviandoMensaje ? "wait" : "pointer",
+                              opacity:
+                                !textoRespuesta.trim() &&
+                                !imagenAdjuntaAsesorUrl &&
+                                !documentoAdjuntoAsesor
+                                  ? 0.48
+                                  : 1,
+                              flexShrink: 0,
+                            }}
+                          >
+                            {enviandoMensaje ? <Loader2 size={16} /> : <Send size={16} />}
+                            <span className="btn-texto-responsive">
+                              {modoNotaInterna ? "Guardar" : "Enviar"}
+                            </span>
+                          </button>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </form>
               </>
             )}
@@ -6556,10 +6597,10 @@ export function ConsolaVentasOmnicanal({
                     justifyContent: "space-between",
                     alignItems: "center",
                     paddingBottom: "8px",
-                    borderBottom: "1px solid #E2E8F0",
+                    borderBottom: "1px solid #E4E4E7",
                   }}
                 >
-                  <strong style={{ fontSize: "0.86rem", color: "#0F172A" }}>
+                  <strong style={{ fontSize: "0.86rem", color: "#18181B" }}>
                     Campos de Venta y Datos 360°
                   </strong>
                   <button
@@ -6579,11 +6620,11 @@ export function ConsolaVentasOmnicanal({
                       gap: "5px",
                       padding: "5px 10px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid #D4D4D8",
                       background: "#FFFFFF",
-                      color: "#0F172A",
+                      color: "#18181B",
                       fontSize: "0.75rem",
-                      fontWeight: 700,
+                      fontWeight: 600,
                       cursor: "pointer",
                     }}
                   >
@@ -6594,19 +6635,19 @@ export function ConsolaVentasOmnicanal({
               )}
 
               {!conversacionActiva ? (
-                <div style={{ fontSize: "0.8rem", color: "#64748B" }}>
-                  <strong>Resumen Rápido del Portal</strong>
+                <div style={{ fontSize: "0.8rem", color: "#71717A" }}>
+                  <strong style={{ color: "#18181B" }}>Resumen Rápido del Portal</strong>
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "10px" }}>
                     <div
                       style={{
                         padding: "10px",
                         borderRadius: "10px",
-                        background: "#F8FAFC",
-                        border: "1px solid #E2E8F0",
+                        background: "#FFFFFF",
+                        border: "1px solid #E4E4E7",
                       }}
                     >
-                      <div style={{ fontSize: "0.72rem", color: "#64748B" }}>Usuarios Registrados Web</div>
-                      <strong style={{ fontSize: "1.1rem", color: "#0F172A" }}>
+                      <div style={{ fontSize: "0.72rem", color: "#71717A" }}>Usuarios Registrados Web</div>
+                      <strong style={{ fontSize: "1.1rem", color: "#18181B" }}>
                         {metricas.totalUsuariosRegistradosWeb}
                       </strong>
                     </div>
@@ -6614,14 +6655,14 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         padding: "10px",
                         borderRadius: "10px",
-                        background: "#F8FAFC",
-                        border: "1px solid #E2E8F0",
+                        background: "#FFFFFF",
+                        border: "1px solid #E4E4E7",
                       }}
                     >
-                      <div style={{ fontSize: "0.72rem", color: "#64748B" }}>
+                      <div style={{ fontSize: "0.72rem", color: "#71717A" }}>
                         Compras Web (Reg. / Invitados)
                       </div>
-                      <strong style={{ fontSize: "1.05rem", color: "#0F172A" }}>
+                      <strong style={{ fontSize: "1.05rem", color: "#18181B" }}>
                         {metricas.comprasUsuariosRegistrados} reg. ·{" "}
                         {metricas.comprasInvitadosNoRegistrados} inv.
                       </strong>
@@ -6630,14 +6671,14 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         padding: "10px",
                         borderRadius: "10px",
-                        background: "#ECFDF5",
-                        border: "1px solid #A7F3D0",
+                        background: "#F2F5F3",
+                        border: "1px solid #DCE4DF",
                       }}
                     >
-                      <div style={{ fontSize: "0.72rem", color: "#065F46" }}>
+                      <div style={{ fontSize: "0.72rem", color: "#2D4734" }}>
                         Resolución Autónoma IA ARIA
                       </div>
-                      <strong style={{ fontSize: "1.1rem", color: "#047857" }}>
+                      <strong style={{ fontSize: "1.1rem", color: "#2D4734" }}>
                         {metricas.porcentajeResolucionIa}%
                       </strong>
                     </div>
@@ -6672,13 +6713,13 @@ export function ConsolaVentasOmnicanal({
                     }}
                   />
 
-                  {/* Perfil compacto del contacto */}
+                  {/* Perfil compacto y sobrio del contacto */}
                   <div
                     style={{
                       padding: "10px 11px",
                       borderRadius: "11px",
                       background: "#FFFFFF",
-                      border: "1px solid #E2E8F0",
+                      border: "1px solid #E4E4E7",
                       display: "flex",
                       flexDirection: "column",
                       gap: "4px",
@@ -6688,47 +6729,36 @@ export function ConsolaVentasOmnicanal({
                       <span
                         style={{
                           fontSize: "0.66rem",
-                          fontWeight: 700,
+                          fontWeight: 600,
                           padding: "2px 7px",
                           borderRadius: "999px",
-                          background:
-                            contactoVinculadoActivo?.tipoCuenta === "USUARIO_REGISTRADO" ||
-                            conversacionActiva.usuarioId
-                              ? "#DBEAFE"
-                              : comprasDeConversacionActiva.length > 0
-                                ? "#FEF3C7"
-                                : "#F1F5F9",
-                          color:
-                            contactoVinculadoActivo?.tipoCuenta === "USUARIO_REGISTRADO" ||
-                            conversacionActiva.usuarioId
-                              ? "#1E40AF"
-                              : comprasDeConversacionActiva.length > 0
-                                ? "#92400E"
-                                : "#334155",
+                          background: "#F4F4F5",
+                          border: "1px solid #E4E4E7",
+                          color: "#3F3F46",
                         }}
                       >
                         {contactoVinculadoActivo?.tipoCuenta === "USUARIO_REGISTRADO" ||
                         conversacionActiva.usuarioId
-                          ? "✅ Registrado Web"
+                          ? "Registrado Web"
                           : comprasDeConversacionActiva.length > 0
-                            ? "🛒 Comprador Invitado"
-                            : "👤 Contacto Directo"}
+                            ? "Comprador invitado"
+                            : "Contacto directo"}
                       </span>
-                      <span style={{ fontSize: "0.68rem", color: "#64748B", fontWeight: 600 }}>
-                        🤖 {conversacionActiva.mensajesIaConteo} · 👩‍💼 {conversacionActiva.mensajesHumanoConteo}
+                      <span style={{ fontSize: "0.68rem", color: "#71717A", fontWeight: 500 }}>
+                        IA {conversacionActiva.mensajesIaConteo} · Hum. {conversacionActiva.mensajesHumanoConteo}
                       </span>
                     </div>
-                    <strong style={{ fontSize: "0.84rem", color: "#0F172A" }}>
+                    <strong style={{ fontSize: "0.84rem", color: "#18181B" }}>
                       {conversacionActiva.remitenteNombre}
                     </strong>
                     {conversacionActiva.remitenteTelefono && (
-                      <span style={{ fontSize: "0.74rem", color: "#475569" }}>
-                        📱 {conversacionActiva.remitenteTelefono}
+                      <span style={{ fontSize: "0.74rem", color: "#52525B" }}>
+                        {conversacionActiva.remitenteTelefono}
                       </span>
                     )}
                     {conversacionActiva.remitenteCorreo && (
-                      <span style={{ fontSize: "0.74rem", color: "#475569", wordBreak: "break-all" }}>
-                        ✉️ {conversacionActiva.remitenteCorreo}
+                      <span style={{ fontSize: "0.74rem", color: "#52525B", wordBreak: "break-all" }}>
+                        {conversacionActiva.remitenteCorreo}
                       </span>
                     )}
                   </div>

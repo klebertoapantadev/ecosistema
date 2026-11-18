@@ -54,6 +54,130 @@ async function emitirBroadcastServidorOmnicanal(
   }
 }
 
+/**
+ * Despacha notificaciones Push estilo WhatsApp (OS Web Push RFC 8291/8292 + Campana In-App)
+ * con enlace directo hacia el chat exacto en la app de Tinkay.
+ */
+async function despacharPushYCampanaStaffOmnicanal(params: {
+  supabase: any;
+  negocio: string;
+  tokenWebhook?: string | null;
+  excluirUsuarioId?: string | null;
+  soloVentas: boolean;
+  titulo: string;
+  cuerpoPlano: string;
+  contenidoHtml: string;
+  tag: string;
+  claveRefBase: string;
+  resolverUrlPorRol: (rol: string) => string;
+}): Promise<void> {
+  try {
+    const esquemaComercio = params.supabase.schema("comun_comercio") as any;
+    const { data: ctx } = await esquemaComercio.rpc("com_fn_push_obtener_contexto_envio_staff", {
+      p_negocio: params.negocio,
+      p_token_webhook: params.tokenWebhook ?? null,
+      p_excluir_usuario_id:
+        params.excluirUsuarioId && /^[0-9a-f-]{36}$/i.test(params.excluirUsuarioId)
+          ? params.excluirUsuarioId
+          : null,
+      p_solo_ventas: params.soloVentas,
+    });
+
+    const miembros: Array<{ usuarioId: string; rol: string }> =
+      ctx?.ok && Array.isArray(ctx.miembros) ? ctx.miembros : [];
+    const suscripciones: Array<{
+      usuarioId: string;
+      rol: string;
+      endpoint: string;
+      p256dh: string;
+      auth: string;
+    }> = ctx?.ok && Array.isArray(ctx.suscripciones) ? ctx.suscripciones : [];
+
+    // 1. Enviar Web Push nativo a teléfonos/navegadores suscritos (incluso con app cerrada)
+    const vapidPub =
+      (
+        process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ||
+        process.env.VAPID_PUBLIC_KEY ||
+        ctx?.vapidPublicKey ||
+        ""
+      ).trim();
+    const vapidPriv = (process.env.VAPID_PRIVATE_KEY || ctx?.vapidPrivateKey || "").trim();
+
+    if (vapidPub && vapidPriv && suscripciones.length > 0) {
+      const { enviarNotificacionWebPushNativa } = await import(
+        "@eco/notificaciones/web-push-nativo"
+      );
+      await Promise.allSettled(
+        suscripciones.map(async (sub) => {
+          const urlDestino = params.resolverUrlPorRol(String(sub.rol || "OPERADOR"));
+          const resPush = await enviarNotificacionWebPushNativa(
+            {
+              endpoint: sub.endpoint,
+              p256dh: sub.p256dh,
+              auth: sub.auth,
+            },
+            {
+              title: params.titulo,
+              body: params.cuerpoPlano.slice(0, 160),
+              url: urlDestino,
+              tag: params.tag,
+              icon: "/icons/icon-192.png",
+              badge: "/icons/icon-192.png",
+              renotify: true,
+            },
+            {
+              publicKey: vapidPub,
+              privateKey: vapidPriv,
+            }
+          );
+          if (resPush.suscripcionExpirada) {
+            await esquemaComercio
+              .rpc("com_fn_push_desactivar_suscripcion", {
+                p_negocio: params.negocio,
+                p_endpoint: sub.endpoint,
+              })
+              .catch(() => {});
+          }
+        })
+      );
+    }
+
+    // 2. Registrar en CampanaNotificaciones (IN_APP + PUSH) con urlAccion directa al chat
+    if (miembros.length > 0) {
+      const { persistirNotificacionesInternasResiliente } = await import(
+        "@eco/notificaciones/notificar-usuario"
+      );
+      const itemsNotif = miembros.flatMap((m) => {
+        const urlDestino = params.resolverUrlPorRol(String(m.rol || "OPERADOR"));
+        const ref = `${params.claveRefBase}-${m.usuarioId.slice(0, 8)}`;
+        return [
+          {
+            usuarioId: m.usuarioId,
+            negocioCode: params.negocio.toUpperCase(),
+            canal: "IN_APP" as const,
+            titulo: params.titulo,
+            contenidoHtml: params.contenidoHtml,
+            urlAccion: urlDestino,
+            claveReferencia: `inapp-${ref}`,
+          },
+          {
+            usuarioId: m.usuarioId,
+            negocioCode: params.negocio.toUpperCase(),
+            canal: "PUSH" as const,
+            titulo: params.titulo,
+            contenidoHtml: params.cuerpoPlano,
+            urlAccion: urlDestino,
+            claveReferencia: `push-${ref}`,
+          },
+        ];
+      });
+      await persistirNotificacionesInternasResiliente(params.negocio, itemsNotif);
+    }
+  } catch {
+    // Nunca interrumpir el flujo conversacional si falla el despacho secundario de notificación
+  }
+}
+
 export interface PedidoWebConTipoCliente extends PedidoTiendaRegistrado {
   esUsuarioRegistrado: boolean;
 }
@@ -298,6 +422,25 @@ export async function registrarInteraccionChatWebAction(entrada: {
       "actividad_chat_web",
       payloadRt as unknown as Record<string, unknown>
     );
+
+    if (entrada.fase === "ENTRADA_CLIENTE" && data.conversacion_id) {
+      const convIdStr = String(data.conversacion_id);
+      const msgIdStr = String(data.mensaje_id || Date.now());
+      const nombreVis = nombreMeta || "Visitante Web";
+      const extracto = texto.replace(/!\s*\[[^\]]*\]\s*\([^)]+\)/g, "Foto").slice(0, 150);
+      await despacharPushYCampanaStaffOmnicanal({
+        supabase,
+        negocio: neg,
+        soloVentas: true,
+        titulo: `${nombreVis} · Chat Web`,
+        cuerpoPlano: extracto,
+        contenidoHtml: `<p><strong>${nombreVis}:</strong> ${extracto}</p>`,
+        tag: `wa-conv-${convIdStr}`,
+        claveRefBase: `msg-web-${msgIdStr}`,
+        resolverUrlPorRol: () =>
+          `/panel/conversaciones?chat=${encodeURIComponent(convIdStr)}&msg=${encodeURIComponent(msgIdStr)}`,
+      });
+    }
 
     return {
       ok: true,
@@ -2322,6 +2465,28 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
         "actividad_chat_web",
         eventoEntrada as unknown as Record<string, unknown>
       );
+
+      if (accion !== "ECO_MOVIL_REGISTRADO") {
+        const convIdWa = String(rec.conversacionId);
+        const msgIdWa = String(rec.mensajeId || Date.now());
+        const remitenteWa = String(rec.remitenteNombre || "Cliente WhatsApp");
+        const resumenWa = contenidoCliente
+          .replace(/!\s*\[[^\]]*\]\s*\([^)]+\)/g, "Imagen")
+          .slice(0, 150);
+        await despacharPushYCampanaStaffOmnicanal({
+          supabase,
+          negocio,
+          tokenWebhook: entrada.token,
+          soloVentas: true,
+          titulo: `${remitenteWa} · WhatsApp`,
+          cuerpoPlano: resumenWa || "Nuevo mensaje recibido",
+          contenidoHtml: `<p><strong>${remitenteWa}:</strong> ${resumenWa || "Nuevo mensaje recibido"}</p>`,
+          tag: `wa-conv-${convIdWa}`,
+          claveRefBase: `msg-wa-${msgIdWa}`,
+          resolverUrlPorRol: () =>
+            `/panel/conversaciones?chat=${encodeURIComponent(convIdWa)}&msg=${encodeURIComponent(msgIdWa)}`,
+        });
+      }
     }
 
     // 5. Si el cliente envió una NOTA DE VOZ / AUDIO, escucharla y guardar su transcripción como "NOTA_INTERNA"
@@ -2879,43 +3044,34 @@ export async function enviarMensajeChatEquipoAction(entrada: {
       // El cliente también publica en el canal activo
     }
 
-    // 2. Si hay @menciones (@kleber, @taller, @ventas, @delivery, @todos), alertar en CampanaNotificaciones + Push
-    if (mencionadosIds.length > 0) {
-      try {
-        const { persistirNotificacionesInternasResiliente } = await import(
-          "@eco/notificaciones/notificar-usuario"
-        );
-        const extracto = String(entrada.contenido || "📷 Imagen compartida")
-          .replace(/!\s*\[[^\]]*\]\s*\([^)]+\)/g, "📷 Foto")
-          .slice(0, 180);
-        const itemsNotif = mencionadosIds.flatMap((uid) => [
-          {
-            usuarioId: uid,
-            negocioCode: neg.toUpperCase(),
-            canal: "IN_APP" as const,
-            titulo: `💬 ${mensaje.autorNombre} te mencionó en el Chat del Equipo`,
-            contenidoHtml: `<p><strong>${mensaje.autorNombre}:</strong> ${extracto}</p>${
-              entrada.reenviadoDe?.clienteNombre
-                ? `<p style="font-size:12px;color:#475569;">Reenviado del cliente: ${entrada.reenviadoDe.clienteNombre}</p>`
-                : ""
-            }`,
-            urlAccion: "/panel/chat-equipo",
-            claveReferencia: `mencion-equipo-${mensaje.id}-${uid}`,
-          },
-          {
-            usuarioId: uid,
-            negocioCode: neg.toUpperCase(),
-            canal: "PUSH" as const,
-            titulo: `💬 @mención de ${mensaje.autorNombre}`,
-            contenidoHtml: extracto,
-            urlAccion: "/panel/chat-equipo",
-            claveReferencia: `push-mencion-${mensaje.id}-${uid}`,
-          },
-        ]);
-        await persistirNotificacionesInternasResiliente(neg, itemsNotif);
-      } catch {
-        // No bloquear el mensaje si falla el despacho secundario de notificación
-      }
+    // 2. Despachar notificación Push estilo WhatsApp + Campana a todo el equipo activo (con acceso directo al Chat Grupal)
+    {
+      const extracto = String(entrada.contenido || "Imagen compartida")
+        .replace(/!\s*\[[^\]]*\]\s*\([^)]+\)/g, "Imagen")
+        .slice(0, 180);
+      const tieneMenciones = mencionadosIds.length > 0;
+      const tituloEquipo = tieneMenciones
+        ? `Equipo Tinkay · ${mensaje.autorNombre} (@mención)`
+        : `Equipo Tinkay · ${mensaje.autorNombre}`;
+      await despacharPushYCampanaStaffOmnicanal({
+        supabase,
+        negocio: neg,
+        excluirUsuarioId: mensaje.autorUsuarioId ?? null,
+        soloVentas: false,
+        titulo: tituloEquipo,
+        cuerpoPlano: extracto,
+        contenidoHtml: `<p><strong>${mensaje.autorNombre}:</strong> ${extracto}</p>${
+          entrada.reenviadoDe?.clienteNombre
+            ? `<p style="font-size:12px;color:#52525B;">Cliente: ${entrada.reenviadoDe.clienteNombre}</p>`
+            : ""
+        }`,
+        tag: `eq-sala-${sala}`,
+        claveRefBase: `msg-eq-${mensaje.id}`,
+        resolverUrlPorRol: (rol) =>
+          ["TALLER", "DELIVERY", "DELIVERY_EXTERNO"].includes(rol.toUpperCase())
+            ? `/panel/chat-equipo?msg=${encodeURIComponent(mensaje.id)}`
+            : `/panel/conversaciones?pestana=chat_equipo&msg=${encodeURIComponent(mensaje.id)}`,
+      });
     }
 
     return {
