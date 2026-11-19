@@ -13,6 +13,7 @@ import {
   Hammer,
   MapPin,
   Send,
+  Trash2,
 } from "lucide-react";
 import {
   esEntregaConfirmadaOrden,
@@ -48,6 +49,7 @@ export interface PropsCalendarioPedidosTaller {
   onEnviarATaller?: (orden: OrdenTrabajoTaller) => void;
   onCambiarEstadoTaller?: (orden: OrdenTrabajoTaller, nuevoEstado: EstadoOrdenTaller) => void;
   onEditarOrden?: (orden: OrdenTrabajoTaller) => void;
+  onEliminarOrden?: (orden: OrdenTrabajoTaller) => void;
   idProcesando?: string | null;
 }
 
@@ -164,6 +166,7 @@ export function CalendarioPedidosTaller({
   onEnviarATaller,
   onCambiarEstadoTaller,
   onEditarOrden,
+  onEliminarOrden,
   idProcesando = null,
 }: PropsCalendarioPedidosTaller) {
   const hoyYmd = useMemo(() => obtenerFechaHoyEcuadorYmd(), []);
@@ -578,6 +581,31 @@ export function CalendarioPedidosTaller({
               }}
             >
               Editar
+            </button>
+          )}
+
+          {modo === "despacho" && onEliminarOrden && (
+            <button
+              type="button"
+              onClick={() => onEliminarOrden(o)}
+              title="Eliminar pedido"
+              aria-label="Eliminar Pedido"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+                padding: "4px 9px",
+                borderRadius: "6px",
+                border: "1px solid #FECACA",
+                background: "#FEF2F2",
+                color: "#B91C1C",
+                fontSize: "0.72rem",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              <Trash2 size={11} />
+              <span>Eliminar</span>
             </button>
           )}
         </div>

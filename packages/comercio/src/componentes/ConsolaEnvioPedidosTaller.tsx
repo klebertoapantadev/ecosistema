@@ -1463,7 +1463,15 @@ export function ConsolaEnvioPedidosTaller({
             modo="despacho"
             vistaInicial="hoy"
             onEnviarATaller={(o) => void handleEnviarIdsATaller([o.id], o.productoResumen)}
-            onEditarOrden={(o) => setOrdenEditando({ ...o })}
+            onEditarOrden={(o) => abrirModalEditarOrden(o)}
+            onEliminarOrden={
+              puedeEliminarLogico
+                ? (o) => {
+                    setMotivoEliminacion("");
+                    setOrdenAEliminar(o);
+                  }
+                : undefined
+            }
             idProcesando={idProcesando}
           />
 
@@ -2644,6 +2652,14 @@ export function ConsolaEnvioPedidosTaller({
           vistaInicial="mes"
           onEnviarATaller={(o) => void handleEnviarIdsATaller([o.id], o.productoResumen)}
           onEditarOrden={(o) => abrirModalEditarOrden(o)}
+          onEliminarOrden={
+            puedeEliminarLogico
+              ? (o) => {
+                  setMotivoEliminacion("");
+                  setOrdenAEliminar(o);
+                }
+              : undefined
+          }
           idProcesando={idProcesando}
         />
       )}

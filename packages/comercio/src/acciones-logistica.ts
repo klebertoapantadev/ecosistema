@@ -2125,6 +2125,19 @@ export async function obtenerPedidosTiendaAction(
         }
       }
     } else {
+      try {
+        const resRol = await (supabase.schema("comun_seguridad") as any).rpc(
+          "seg_fn_obtener_rol_operativo_negocio",
+          { p_negocio: negNorm }
+        );
+        const rolFb = String(resRol?.data || "").toUpperCase();
+        esAdminEstricto = rolFb === "SUPERADMIN" || rolFb === "ADMINISTRADOR";
+        puedeEliminarLogico =
+          esAdminEstricto || rolFb === "OPERADOR" || rolFb === "VENTAS";
+      } catch {
+        // Ignorar si la función aún no existe
+      }
+
       const resOtaDir = await dbLectura
         .schema("comun_comercio")
         .from("com_orden_taller")
