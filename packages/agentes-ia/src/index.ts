@@ -104,6 +104,13 @@ export interface OpcionesInvocarPorNegocio {
   tiempoMaximoMs?: number;
   /** Prefijo de variables de entorno de respaldo cuando Vault no está activo (por defecto "ARIA"). */
   prefijoEntornoRespaldo?: string;
+  /**
+   * JWT de sesión del usuario autenticado (ej. `session.access_token`).
+   * Permite usar el puente RPC autenticado `cfg_fn_invocar_aria_multimodal`
+   * (Visión / Documentos vía Vault + pgsql-http) cuando la Edge Function
+   * `invocar-aria` no está desplegada o no tiene `ARIA_FUNCION_CLAVE`.
+   */
+  accessToken?: string;
 }
 
 export class ErrorSinConfiguracionAria extends Error {
@@ -141,12 +148,13 @@ export async function invocarAgentePorNegocio(
 
   let errorVaultNoConfigurado = false;
   let faltaPuenteSupabase = false;
+  let faltaPuenteMultimodal = false;
   let errorInfraestructuraVault: string | null = null;
   let errorAguasArribaAria: Error | null = null;
 
   if (supabaseUrl && supabaseKey) {
     const baseSupabase = supabaseUrl.replace(/\/+$/, "");
-    let funcionNoDesplegada = false;
+    let funcionNoDisponibleParaEstaLlamada = false;
 
     // 1. Intentar primero vía Edge Function invocar-aria (soporta adjuntos y tool_context)
     try {
@@ -185,8 +193,8 @@ export async function invocarAgentePorNegocio(
         };
       }
 
-      if (r.status === 404) {
-        funcionNoDesplegada = true;
+      if (r.status === 404 || (r.status === 401 && !claveFuncion)) {
+        funcionNoDisponibleParaEstaLlamada = true;
       } else if (r.status === 409) {
         errorVaultNoConfigurado = true;
       } else if (r.status === 502) {
@@ -198,31 +206,47 @@ export async function invocarAgentePorNegocio(
       if (err instanceof Error && err.name === "TimeoutError") {
         throw err;
       }
-      funcionNoDesplegada = true;
+      funcionNoDisponibleParaEstaLlamada = true;
     }
 
-    // 2. Si la Edge Function aún no está desplegada (404), usar el puente RPC
-    //    directo en PostgreSQL (comun_configuracion.cfg_fn_invocar_aria con Vault + pgsql-http)
-    const tieneAdjuntosComplejos =
-      Boolean(opciones?.toolContext) ||
-      Boolean(opciones?.imageUrls?.length) ||
-      Boolean(opciones?.documentUrls?.length);
+    // 2. Si la Edge Function aún no está desplegada (404) o requiere x-aria-clave no definida (401),
+    //    usar el puente RPC directo en PostgreSQL (Vault + pgsql-http):
+    //    - Multimodal (imageUrls / documentUrls): `cfg_fn_invocar_aria_multimodal` (autenticado)
+    //    - Texto simple: `cfg_fn_invocar_aria`
+    const tieneToolContext = Boolean(opciones?.toolContext);
+    const esLlamadaMultimodal =
+      Boolean(opciones?.imageUrls?.length) || Boolean(opciones?.documentUrls?.length);
 
-    if (funcionNoDesplegada && !tieneAdjuntosComplejos && !errorAguasArribaAria) {
+    if (funcionNoDisponibleParaEstaLlamada && !tieneToolContext && !errorAguasArribaAria) {
+      const nombreRpc = esLlamadaMultimodal
+        ? "cfg_fn_invocar_aria_multimodal"
+        : "cfg_fn_invocar_aria";
+      const tokenAutorizacion =
+        esLlamadaMultimodal && opciones?.accessToken ? opciones.accessToken : supabaseKey;
+      const cuerpoRpc = esLlamadaMultimodal
+        ? {
+            p_negocio: negocio.trim().toLowerCase(),
+            p_prompt: prompt,
+            p_image_urls: opciones?.imageUrls?.length ? opciones.imageUrls : null,
+            p_document_urls: opciones?.documentUrls?.length ? opciones.documentUrls : null,
+            p_conversation_id: opciones?.conversationId ?? null,
+          }
+        : {
+            p_negocio: negocio.trim().toLowerCase(),
+            p_prompt: prompt,
+            p_conversation_id: opciones?.conversationId ?? null,
+          };
+
       try {
-        const rRpc = await fetch(`${baseSupabase}/rest/v1/rpc/cfg_fn_invocar_aria`, {
+        const rRpc = await fetch(`${baseSupabase}/rest/v1/rpc/${nombreRpc}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "Content-Profile": "comun_configuracion",
             apikey: supabaseKey,
-            Authorization: `Bearer ${supabaseKey}`,
+            Authorization: `Bearer ${tokenAutorizacion}`,
           },
-          body: JSON.stringify({
-            p_negocio: negocio.trim().toLowerCase(),
-            p_prompt: prompt,
-            p_conversation_id: opciones?.conversationId ?? null,
-          }),
+          body: JSON.stringify(cuerpoRpc),
           signal: AbortSignal.timeout(tiempoMaximoMs),
         });
 
@@ -244,11 +268,14 @@ export async function invocarAgentePorNegocio(
             );
           }
         } else if (rRpc.status === 404) {
-          // Ni la Edge Function invocar-aria ni el RPC cfg_fn_invocar_aria están creados aún
-          faltaPuenteSupabase = true;
+          if (esLlamadaMultimodal) {
+            faltaPuenteMultimodal = true;
+          } else {
+            faltaPuenteSupabase = true;
+          }
         } else {
           errorInfraestructuraVault =
-            dataRpc?.message ?? dataRpc?.error ?? `cfg_fn_invocar_aria respondió ${rRpc.status}`;
+            dataRpc?.message ?? dataRpc?.error ?? `${nombreRpc} respondió ${rRpc.status}`;
         }
       } catch (err) {
         if (err instanceof Error && err.name === "TimeoutError") {
@@ -278,6 +305,13 @@ export async function invocarAgentePorNegocio(
 
   if (errorInfraestructuraVault && !errorVaultNoConfigurado) {
     throw new Error(errorInfraestructuraVault);
+  }
+
+  if (faltaPuenteMultimodal) {
+    throw new ErrorSinConfiguracionAria(
+      negocio,
+      `Falta aplicar en Supabase SQL Editor la migración 20261119000001_cfg_fn_invocar_aria_multimodal.sql para habilitar ARIA Visión desde Vault.`,
+    );
   }
 
   if (faltaPuenteSupabase) {

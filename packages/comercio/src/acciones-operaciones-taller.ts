@@ -171,19 +171,37 @@ export async function analizarFotoBonchesConAriaAction(
       };
     }
 
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     const { invocarAgentePorNegocio } = await import("@eco/agentes-ia");
 
     const promptVision =
-      "TAREA OPERATIVA DE INVENTARIO DE TALLER FLORAL (MODO VISIÓN ESTRICTO):\n" +
-      "Observa detenidamente esta fotografía de paquetes/bonches de rosas (normalmente de 25 tallos envueltos en capuchón/cartón o papel).\n" +
-      "Cuenta exactamente cuántos paquetes (bonches individuales, NO tallos sueltos) ves agrupados por su color principal.\n" +
-      "Responde ÚNICAMENTE con un objeto JSON válido usando estas claves exactas cuando apliquen: " +
-      '{"colores": {"rojo": 0, "blanco": 0, "rosado": 0, "fucsia": 0, "amarillo": 0, "durazno": 0, "bicolor": 0, "azul": 0, "otro": 0}, "nota": "observación breve de 1 línea"}.\n' +
-      "Omite colores con valor 0. No agregues saludo comercial ni markdown adicional.";
+      "[MODO_OPERATIVO_INVENTARIO] NO saludes, NO vendas ni uses herramientas de catálogo.\n" +
+      "Eres un contador visual de inventario de taller floral. Observa la fotografía adjunta de paquetes/bonches de rosas (cada paquete envuelto en cartón kraft, papel blanco o caja contiene ~25 tallos).\n" +
+      "INSTRUCCIONES DE CONTEO:\n" +
+      "1. Recorre la imagen sistemáticamente fila por fila (de arriba hacia abajo y de izquierda a derecha) para no omitir ni duplicar ningún paquete.\n" +
+      "2. Cuenta CADA paquete/bonche completo visible (NO cuentes tallos individuales).\n" +
+      "3. Clasifica cada paquete por su color principal usando ÚNICAMENTE estas claves exactas:\n" +
+      '   - "rojo": rosas rojas / rojo oscuro\n' +
+      '   - "blanco": blancas / crema / marfil\n' +
+      '   - "rosado": rosado claro, pastel o pálido\n' +
+      '   - "fucsia": fucsia intenso, magenta o hot pink\n' +
+      '   - "amarillo": amarillas\n' +
+      '   - "durazno": durazno, salmón, naranja o coral\n' +
+      '   - "bicolor": pétalos con dos tonos marcados\n' +
+      '   - "azul": azules, celestes o tinturadas\n' +
+      '   - "otro": lila, morado, lavanda u otro tono\n' +
+      "4. Verifica que la suma de los colores coincida con el total de paquetes visibles.\n" +
+      'Responde ÚNICAMENTE con un objeto JSON válido sin texto extra ni markdown: {"colores": {"rojo": 0, "blanco": 0, "rosado": 0, "fucsia": 0, "amarillo": 0, "durazno": 0, "bicolor": 0, "azul": 0, "otro": 0}, "total_paquetes": 0, "nota": "resumen breve en 1 línea"}. Omite colores con valor 0.';
 
     const respuesta = await invocarAgentePorNegocio(neg, promptVision, {
       imageUrls: [urlLimpia],
-      tiempoMaximoMs: 45000,
+      accessToken: session?.access_token,
+      tiempoMaximoMs: 55000,
     });
 
     const extraido = extraerConteoJsonDesdeRespuestaAria(respuesta.response);

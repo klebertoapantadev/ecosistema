@@ -160,6 +160,45 @@ describe("invocarAgentePorNegocio", () => {
     );
   });
 
+  it("usa el puente RPC cfg_fn_invocar_aria_multimodal cuando hay imageUrls y la Edge Function devuelve 404", async () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://proyecto.supabase.co";
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "sb_pub_123";
+
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: "Function not found" }), { status: 404 }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            ok: true,
+            response: '{"colores":{"rojo":8,"amarillo":2}}',
+            runId: "run-vision-1",
+          }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const res = await invocarAgentePorNegocio("tinkay", "Cuenta los bonches", {
+      imageUrls: ["https://storage.ejemplo.com/bonches.jpg"],
+      accessToken: "jwt-usuario-123",
+    });
+
+    expect(res).toEqual({
+      response: '{"colores":{"rojo":8,"amarillo":2}}',
+      usage: undefined,
+      runId: "run-vision-1",
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      "https://proyecto.supabase.co/rest/v1/rpc/cfg_fn_invocar_aria_multimodal",
+    );
+    const initRpc = fetchMock.mock.calls[1]?.[1] as RequestInit;
+    expect((initRpc.headers as Record<string, string>).Authorization).toBe("Bearer jwt-usuario-123");
+  });
+
   it("lanza ErrorSinConfiguracionAria cuando no hay ni Vault ni variables de entorno", async () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://proyecto.supabase.co";
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "sb_pub_123";
