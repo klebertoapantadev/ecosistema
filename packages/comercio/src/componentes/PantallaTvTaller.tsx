@@ -21,9 +21,11 @@ import {
   Minimize2,
   Monitor,
   Music,
+  PanelRight,
   Pause,
   Play,
   QrCode,
+  Radio,
   RefreshCw,
   Search,
   SkipBack,
@@ -40,6 +42,7 @@ import {
 } from "lucide-react";
 import {
   actualizarEstadoOrdenTvAction,
+  buscarEmisorasRadioTvAction,
   buscarVideosYoutubeTvAction,
   extraerImagenesAlbumGoogleFotosAction,
   guardarConfigTvTallerAction,
@@ -55,7 +58,9 @@ import {
   type ConfiguracionTvTaller,
   type DatosTableroTvTaller,
   type DensidadLayoutTv,
+  type EmisoraRadioTv,
   type FavoritoYoutubeTv,
+  type FuenteMediaTv,
   type ModoPantallaTv,
   type OrdenTvTaller,
   type PosicionLateralTv,
@@ -194,6 +199,8 @@ export function PantallaTvTaller({
 
   // Overrides locales rápidos en la TV (sin tener que abrir el celular)
   const [modoLocal, setModoLocal] = useState<ModoPantallaTv | null>(null);
+  const [fuenteMediaLocal, setFuenteMediaLocal] = useState<FuenteMediaTv | null>(null);
+  const [modoBarraLateral, setModoBarraLateral] = useState<boolean>(false);
   const [ladoLocal, setLadoLocal] = useState<PosicionLateralTv | null>(null);
   const [densidadLocal, setDensidadLocal] = useState<DensidadLayoutTv | null>(null);
   const [mostrarListosLocal, setMostrarListosLocal] = useState<boolean | null>(null);
@@ -202,9 +209,23 @@ export function PantallaTvTaller({
   const [enPantallaCompleta, setEnPantallaCompleta] = useState<boolean>(false);
   const [hudVisible, setHudVisible] = useState<boolean>(true);
 
+  // Radio en Vivo (Ecuador y géneros, 0 bloqueos de disquera)
+  const radioAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [emisorasRadio, setEmisorasRadio] = useState<EmisoraRadioTv[]>([]);
+  const [emisoraActual, setEmisoraActual] = useState<EmisoraRadioTv | null>(
+    datosIniciales?.configTv.radioActual ?? null
+  );
+  const [radioReproduciendo, setRadioReproduciendo] = useState<boolean>(false);
+  const [cargandoRadios, setCargandoRadios] = useState<boolean>(false);
+  const [consultaRadio, setConsultaRadio] = useState<string>("");
+  const [errorRadio, setErrorRadio] = useState<string | null>(null);
+  const [radiosFavoritasLocal, setRadiosFavoritasLocal] = useState<EmisoraRadioTv[]>(
+    datosIniciales?.configTv.radiosFavoritas ?? []
+  );
+
   // Buscador, Cola ("A continuación"), Sugerencias y Favoritos de YouTube en la TV
   const [abiertoBuscadorYt, setAbiertoBuscadorYt] = useState<boolean>(false);
-  const [tabModalYt, setTabModalYt] = useState<"buscar" | "favoritos" | "cola">("buscar");
+  const [tabModalYt, setTabModalYt] = useState<"radio" | "buscar" | "favoritos" | "cola">("radio");
   const [consultaYt, setConsultaYt] = useState<string>("");
   const [buscandoYt, setBuscandoYt] = useState<boolean>(false);
   const [errorYtBusqueda, setErrorYtBusqueda] = useState<string | null>(null);
@@ -253,6 +274,7 @@ export function PantallaTvTaller({
   // Preferencias efectivas (local override -> config remota)
   const cfg = tablero.configTv;
   const modoActivo: ModoPantallaTv = modoLocal ?? cfg.modoActivo;
+  const fuenteMedia: FuenteMediaTv = fuenteMediaLocal ?? cfg.fuenteMedia ?? "RADIO";
   const posicionLateral: PosicionLateralTv = ladoLocal ?? cfg.posicionLateral;
   const densidadConfig: DensidadLayoutTv = densidadLocal ?? cfg.densidadLayout;
   const mostrarFranjaListos: boolean = mostrarListosLocal ?? cfg.mostrarFranjaListos;
@@ -260,6 +282,175 @@ export function PantallaTvTaller({
   const youtubeUrlActual =
     youtubeUrlLocal ??
     (modoActivo === "EVENTOS" ? cfg.youtubeUrlEventosAudio : cfg.youtubeUrlTaller);
+
+  // Detectar ?modo=lateral en la URL (para ventana acoplable junto a youtube.com)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      if (sp.get("modo") === "lateral") {
+        setModoBarraLateral(true);
+      }
+    } catch {
+      // Ignorar
+    }
+  }, []);
+
+  useEffect(() => {
+    if (Array.isArray(cfg.radiosFavoritas)) {
+      setRadiosFavoritasLocal(cfg.radiosFavoritas);
+    }
+    if (cfg.radioActual && !emisoraActual) {
+      setEmisoraActual(cfg.radioActual);
+    }
+  }, [cfg.radioActual, cfg.radiosFavoritas, emisoraActual]);
+
+  const cargarEmisorasRadio = useCallback(
+    async (filtro: { consulta?: string; pais?: string; genero?: string }, autoReproducirPrimera = false) => {
+      setCargandoRadios(true);
+      setErrorRadio(null);
+      const res = await buscarEmisorasRadioTvAction(filtro);
+      setCargandoRadios(false);
+      if (!res.ok) {
+        setErrorRadio(res.error);
+        return;
+      }
+      setEmisorasRadio(res.emisoras);
+      if (autoReproducirPrimera && res.emisoras.length > 0) {
+        const primera = res.emisoras[0]!;
+        setEmisoraActual(primera);
+        setFuenteMediaLocal("RADIO");
+        setTimeout(() => {
+          const el = radioAudioRef.current;
+          if (el) {
+            el.src = primera.streamUrl;
+            el.volume = Math.max(0, Math.min(1, (cfg.volumenYoutube || 75) / 100));
+            void el.play().then(() => setRadioReproduciendo(true)).catch(() => setRadioReproduciendo(false));
+          }
+        }, 60);
+      }
+    },
+    [cfg.volumenYoutube]
+  );
+
+  // Cargar catálogo inicial de emisoras de Ecuador cuando estamos en fuente RADIO
+  useEffect(() => {
+    if (fuenteMedia === "RADIO" && emisorasRadio.length === 0 && !cargandoRadios && !modoBarraLateral) {
+      void cargarEmisorasRadio({ pais: "EC" }, false);
+    }
+  }, [cargandoRadios, cargarEmisorasRadio, emisorasRadio.length, fuenteMedia, modoBarraLateral]);
+
+  const reproducirEmisoraRadio = useCallback(
+    (emisora: EmisoraRadioTv, cerrarModal = true) => {
+      setEmisoraActual(emisora);
+      setFuenteMediaLocal("RADIO");
+      setErrorRadio(null);
+      if (cerrarModal) setAbiertoBuscadorYt(false);
+      // Pausar YouTube si estaba sonando
+      try {
+        ytPlayerRef.current?.pauseVideo?.();
+      } catch {
+        // Ignorar
+      }
+      setTimeout(() => {
+        const el = radioAudioRef.current;
+        if (!el) return;
+        el.src = emisora.streamUrl;
+        el.volume = Math.max(0, Math.min(1, (cfg.volumenYoutube || 75) / 100));
+        void el
+          .play()
+          .then(() => setRadioReproduciendo(true))
+          .catch(() => {
+            setRadioReproduciendo(false);
+            setErrorRadio("Haz clic en Play para iniciar el audio de la emisora.");
+          });
+      }, 40);
+
+      if (tablero.modoAcceso === "AUTENTICADO") {
+        void guardarConfigTvTallerAction({
+          negocio: negNorm,
+          config: { fuenteMedia: "RADIO", radioActual: emisora },
+        });
+      }
+    },
+    [cfg.volumenYoutube, negNorm, tablero.modoAcceso]
+  );
+
+  const togglePlayPausaRadio = useCallback(() => {
+    const el = radioAudioRef.current;
+    if (!el) return;
+    if (radioReproduciendo) {
+      el.pause();
+      setRadioReproduciendo(false);
+      return;
+    }
+    const objetivo = emisoraActual ?? emisorasRadio[0] ?? null;
+    if (!objetivo) {
+      void cargarEmisorasRadio({ pais: "EC" }, true);
+      return;
+    }
+    if (!el.src || el.src !== objetivo.streamUrl) {
+      el.src = objetivo.streamUrl;
+    }
+    el.volume = Math.max(0, Math.min(1, (cfg.volumenYoutube || 75) / 100));
+    void el
+      .play()
+      .then(() => {
+        setEmisoraActual(objetivo);
+        setRadioReproduciendo(true);
+        setErrorRadio(null);
+      })
+      .catch(() => {
+        setErrorRadio("Esta emisora no respondió. Prueba otra emisora de la lista.");
+      });
+  }, [cargarEmisorasRadio, cfg.volumenYoutube, emisoraActual, emisorasRadio, radioReproduciendo]);
+
+  const cambiarEmisoraRadio = useCallback(
+    (delta: number) => {
+      const lista = emisorasRadio.length > 0 ? emisorasRadio : radiosFavoritasLocal;
+      if (lista.length === 0) return;
+      const idxActual = emisoraActual ? lista.findIndex((e) => e.id === emisoraActual.id) : -1;
+      const siguiente = (idxActual + delta + lista.length) % lista.length;
+      const elegida = lista[siguiente];
+      if (elegida) reproducirEmisoraRadio(elegida, false);
+    },
+    [emisoraActual, emisorasRadio, radiosFavoritasLocal, reproducirEmisoraRadio]
+  );
+
+  const toggleRadioFavorita = useCallback(
+    async (emisora: EmisoraRadioTv) => {
+      const yaExiste = radiosFavoritasLocal.some((r) => r.streamUrl === emisora.streamUrl);
+      const nuevas = yaExiste
+        ? radiosFavoritasLocal.filter((r) => r.streamUrl !== emisora.streamUrl)
+        : [emisora, ...radiosFavoritasLocal];
+      setRadiosFavoritasLocal(nuevas);
+      if (tablero.modoAcceso === "AUTENTICADO") {
+        await guardarConfigTvTallerAction({
+          negocio: negNorm,
+          config: { radiosFavoritas: nuevas },
+        });
+      }
+    },
+    [negNorm, radiosFavoritasLocal, tablero.modoAcceso]
+  );
+
+  const abrirVentanaBarraLateral = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const base = window.location.pathname;
+    const sp = new URLSearchParams(window.location.search);
+    sp.set("modo", "lateral");
+    const ancho = 420;
+    const alto = window.screen?.availHeight || 960;
+    const left = Math.max(0, (window.screen?.availWidth || 1440) - ancho);
+    const popup = window.open(
+      `${base}?${sp.toString()}`,
+      "eco_tv_taller_lateral",
+      `width=${ancho},height=${alto},left=${left},top=0,resizable=yes,scrollbars=yes`
+    );
+    if (!popup) {
+      setModoBarraLateral(true);
+    }
+  }, []);
 
   useEffect(() => {
     colaYtRef.current = colaYt;
@@ -276,6 +467,14 @@ export function PantallaTvTaller({
     async (nuevaUrl: string, cerrarModal = true) => {
       const limpia = nuevaUrl.trim();
       if (!limpia) return;
+      // Pausar radio si estaba sonando
+      try {
+        radioAudioRef.current?.pause();
+        setRadioReproduciendo(false);
+      } catch {
+        // Ignorar
+      }
+      setFuenteMediaLocal("YOUTUBE");
       setYoutubeUrlLocal(limpia);
       setErrorReproductorYt(false);
       if (cerrarModal) setAbiertoBuscadorYt(false);
@@ -285,8 +484,8 @@ export function PantallaTvTaller({
           negocio: negNorm,
           config:
             modoActivo === "EVENTOS"
-              ? { youtubeUrlEventosAudio: limpia }
-              : { youtubeUrlTaller: limpia },
+              ? { fuenteMedia: "YOUTUBE", youtubeUrlEventosAudio: limpia }
+              : { fuenteMedia: "YOUTUBE", youtubeUrlTaller: limpia },
         });
       }
     },
@@ -453,9 +652,11 @@ export function PantallaTvTaller({
 
       if (sonidoAlertas) {
         const player = ytPlayerRef.current;
+        const radioEl = radioAudioRef.current;
         const volOriginal = cfg.volumenYoutube || 75;
         try {
           player?.setVolume?.(16);
+          if (radioEl && !radioEl.paused) radioEl.volume = 0.14;
         } catch {
           // Ignorar
         }
@@ -464,6 +665,7 @@ export function PantallaTvTaller({
         duckTimerRef.current = setTimeout(() => {
           try {
             player?.setVolume?.(volOriginal);
+            if (radioEl) radioEl.volume = Math.max(0, Math.min(1, volOriginal / 100));
           } catch {
             // Ignorar
           }
@@ -567,8 +769,16 @@ export function PantallaTvTaller({
     };
   }, [negNorm, recargarTablero]);
 
-  // YouTube IFrame API loader & controller
+  // YouTube IFrame API loader & controller (solo cuando fuenteMedia === "YOUTUBE" y no está en Barra Lateral)
   useEffect(() => {
+    if (modoBarraLateral || fuenteMedia !== "YOUTUBE") {
+      try {
+        ytPlayerRef.current?.pauseVideo?.();
+      } catch {
+        // Ignorar
+      }
+      return;
+    }
     if (!youtubeUrlActual) return;
     const { videoId, playlistId } = extraerYoutubeVideoOPlaylist(youtubeUrlActual);
     if (!videoId && !playlistId) return;
@@ -683,7 +893,7 @@ export function PantallaTvTaller({
       prevCb?.();
       inicializarPlayer();
     };
-  }, [cfg.volumenYoutube, siguienteCancionYt, youtubeUrlActual]);
+  }, [cfg.volumenYoutube, fuenteMedia, modoBarraLateral, siguienteCancionYt, youtubeUrlActual]);
 
   // Ajustar volumen cuando cambia en configuración
   useEffect(() => {
@@ -1027,6 +1237,18 @@ export function PantallaTvTaller({
         flexDirection: "column",
       }}
     >
+      {/* Elemento HTML5 Audio para Radio en Vivo (0 bloqueos de disquera, funciona en cualquier Smart TV) */}
+      <audio
+        ref={radioAudioRef}
+        preload="none"
+        onPlay={() => setRadioReproduciendo(true)}
+        onPause={() => setRadioReproduciendo(false)}
+        onError={() => {
+          setRadioReproduciendo(false);
+          setErrorRadio("Esa emisora no respondió. Prueba otra emisora de la lista.");
+        }}
+      />
+
       {/* Banner flotante de Nuevo Pedido (Audio Ducking) */}
       {alertaNuevoPedido && (
         <div
@@ -1159,16 +1381,43 @@ export function PantallaTvTaller({
           <button
             type="button"
             onClick={() => {
-              setTabModalYt("buscar");
+              setTabModalYt(fuenteMedia === "RADIO" ? "radio" : "buscar");
               setAbiertoBuscadorYt(true);
               setErrorYtBusqueda(null);
             }}
-            title="Buscar en YouTube, ver Mis Favoritos, Cola o pegar URL"
-            style={hudBtnStyle("#DC2626")}
+            title="Elegir Radio en Vivo (0 bloqueos), buscar en YouTube o ver Favoritos"
+            style={hudBtnStyle(fuenteMedia === "RADIO" ? "#059669" : "#DC2626")}
           >
-            <Search size={14} />
-            YouTube / Música
+            {fuenteMedia === "RADIO" ? <Radio size={14} /> : <Search size={14} />}
+            {fuenteMedia === "RADIO" ? "Radio / YouTube" : "YouTube / Radio"}
           </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (modoBarraLateral) {
+                setModoBarraLateral(false);
+              } else {
+                setModoBarraLateral(true);
+              }
+            }}
+            title="Modo Barra Lateral: solo pedidos para usar junto a youtube.com oficial en PC/Laptop"
+            style={hudBtnStyle(modoBarraLateral ? "#0284C7" : "#1E293B")}
+          >
+            <PanelRight size={14} />
+            {modoBarraLateral ? "TV Completa" : "Barra Lateral"}
+          </button>
+
+          {modoBarraLateral && (
+            <button
+              type="button"
+              onClick={abrirVentanaBarraLateral}
+              title="Abrir en ventana angosta acoplable para poner al lado de youtube.com"
+              style={hudBtnStyle("#0F766E")}
+            >
+              Ventana Acoplable
+            </button>
+          )}
 
           <button
             type="button"
@@ -1286,7 +1535,8 @@ export function PantallaTvTaller({
           position: "relative",
         }}
       >
-        {/* REPRODUCTOR YOUTUBE (Siempre montado para no cortar la música al cambiar densidad/modo) */}
+        {/* REPRODUCTOR MULTIMEDIA (Radio en Vivo sin bloqueos O YouTube) — Oculto en Modo Barra Lateral */}
+        {!modoBarraLateral && (
         <div
           style={
             esSoloAudio
@@ -1304,12 +1554,284 @@ export function PantallaTvTaller({
               : {
                   width: `${100 - anchoLateralPct}%`,
                   height: "100%",
-                  background: "#000000",
+                  background: fuenteMedia === "RADIO" ? "radial-gradient(circle at 25% 25%, #132544 0%, #070B14 75%)" : "#000000",
                   position: "relative",
                   flexShrink: 0,
+                  display: "flex",
+                  flexDirection: "column",
                 }
           }
         >
+          {/* VISTA RADIO EN VIVO (0 bloqueos de disquera, 24/7 en Smart TV) */}
+          {fuenteMedia === "RADIO" ? (
+            esSoloAudio ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: "10px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+                  <Radio size={17} color="#34D399" />
+                  <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#E2E8F0", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                    {emisoraActual ? `${emisoraActual.nombre}` : "Radio en Vivo Taller"}
+                  </span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <button type="button" onClick={togglePlayPausaRadio} style={hudBtnStyle("#059669")}>
+                    {radioReproduciendo ? <Pause size={13} /> : <Play size={13} />}
+                    {radioReproduciendo ? "Pausa" : "Play"}
+                  </button>
+                  <button type="button" onClick={() => cambiarEmisoraRadio(1)} style={hudBtnStyle("#1E293B")}>
+                    <SkipForward size={13} /> Otra emisora
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTabModalYt("radio");
+                      setAbiertoBuscadorYt(true);
+                    }}
+                    style={hudBtnStyle("#1E293B")}
+                  >
+                    Emisoras
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div
+                style={{
+                  flex: 1,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "space-between",
+                  padding: "28px 34px",
+                  gap: "18px",
+                  overflowY: "auto",
+                }}
+              >
+                {/* Fila superior: Reloj gigante TV + Resumen operativo del día */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "16px" }}>
+                  <div>
+                    <div style={{ fontSize: "3.8rem", fontWeight: 900, lineHeight: 1, letterSpacing: "-0.03em", color: "#F8FAFC" }}>
+                      {formatearHoraEcuador(reloj)}
+                    </div>
+                    <div style={{ fontSize: "1.05rem", color: "#94A3B8", marginTop: "6px", textTransform: "capitalize", fontWeight: 600 }}>
+                      {formatearFechaEcuadorLarga(reloj)} · {nombreNegocio}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                    <div style={{ padding: "10px 16px", borderRadius: "12px", background: "rgba(245,158,11,0.14)", border: "1px solid rgba(245,158,11,0.35)", textAlign: "center", minWidth: "96px" }}>
+                      <div style={{ fontSize: "1.5rem", fontWeight: 900, color: "#FBBF24" }}>{pendientes.length}</div>
+                      <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#FDE68A" }}>PENDIENTES</div>
+                    </div>
+                    <div style={{ padding: "10px 16px", borderRadius: "12px", background: "rgba(16,185,129,0.14)", border: "1px solid rgba(16,185,129,0.35)", textAlign: "center", minWidth: "96px" }}>
+                      <div style={{ fontSize: "1.5rem", fontWeight: 900, color: "#34D399" }}>
+                        {tablero.ordenes.filter((o) => o.estadoTaller === "LISTO_ENTREGA").length}
+                      </div>
+                      <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#A7F3D0" }}>LISTOS</div>
+                    </div>
+                    <div style={{ padding: "10px 16px", borderRadius: "12px", background: "rgba(56,189,248,0.12)", border: "1px solid rgba(56,189,248,0.3)", textAlign: "center", minWidth: "96px" }}>
+                      <div style={{ fontSize: "1.5rem", fontWeight: 900, color: "#38BDF8" }}>{totalEntregadosHoy}</div>
+                      <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#BAE6FD" }}>ENTREGADOS</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tarjeta central de Radio en Vivo */}
+                <div
+                  style={{
+                    padding: "24px 26px",
+                    borderRadius: "20px",
+                    background: "rgba(15, 23, 42, 0.84)",
+                    border: radioReproduciendo ? "2px solid #10B981" : "1.5px solid rgba(148,163,184,0.28)",
+                    boxShadow: "0 18px 46px rgba(0,0,0,0.45)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "16px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "16px", minWidth: 0 }}>
+                      <div
+                        style={{
+                          width: "68px",
+                          height: "68px",
+                          borderRadius: "16px",
+                          background: "linear-gradient(135deg, #059669, #0284C7)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                          overflow: "hidden",
+                        }}
+                      >
+                        {emisoraActual?.faviconUrl ? (
+                          <img
+                            src={emisoraActual.faviconUrl}
+                            alt={emisoraActual.nombre}
+                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                          />
+                        ) : (
+                          <Radio size={34} color="#FFFFFF" />
+                        )}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontSize: "0.75rem", fontWeight: 800, color: radioReproduciendo ? "#34D399" : "#94A3B8", letterSpacing: "0.08em" }}>
+                          {radioReproduciendo ? "● SONANDO EN VIVO · SIN BLOQUEOS" : "📻 RADIO EN VIVO DEL TALLER"}
+                        </div>
+                        <div style={{ fontSize: "1.45rem", fontWeight: 900, color: "#FFFFFF", marginTop: "2px" }}>
+                          {emisoraActual?.nombre || "Elige un género o emisora de Ecuador"}
+                        </div>
+                        <div style={{ fontSize: "0.84rem", color: "#94A3B8", marginTop: "2px" }}>
+                          {emisoraActual
+                            ? [emisoraActual.pais, emisoraActual.etiquetas].filter(Boolean).join(" · ")
+                            : "Cero bloqueos de LatinAutor · Cero anuncios de YouTube · 24/7"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        onClick={() => cambiarEmisoraRadio(-1)}
+                        title="Emisora anterior"
+                        style={{ ...hudBtnStyle("#1E293B"), padding: "11px 13px" }}
+                      >
+                        <SkipBack size={18} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={togglePlayPausaRadio}
+                        style={{
+                          padding: "12px 24px",
+                          borderRadius: "12px",
+                          border: "none",
+                          background: radioReproduciendo ? "#D97706" : "#059669",
+                          color: "#FFFFFF",
+                          fontSize: "0.95rem",
+                          fontWeight: 800,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "7px",
+                        }}
+                      >
+                        {radioReproduciendo ? <Pause size={18} /> : <Play size={18} />}
+                        {radioReproduciendo ? "Pausar" : "Escuchar Ahora"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => cambiarEmisoraRadio(1)}
+                        title="Siguiente emisora"
+                        style={{ ...hudBtnStyle("#1E293B"), padding: "11px 13px" }}
+                      >
+                        <SkipForward size={18} />
+                      </button>
+                      {emisoraActual && (
+                        <button
+                          type="button"
+                          onClick={() => void toggleRadioFavorita(emisoraActual)}
+                          title="Guardar emisora favorita"
+                          style={{
+                            ...hudBtnStyle(
+                              radiosFavoritasLocal.some((r) => r.streamUrl === emisoraActual.streamUrl)
+                                ? "#B45309"
+                                : "#1E293B"
+                            ),
+                            padding: "11px 13px",
+                          }}
+                        >
+                          <Star
+                            size={18}
+                            fill={
+                              radiosFavoritasLocal.some((r) => r.streamUrl === emisoraActual.streamUrl)
+                                ? "#FDE047"
+                                : "none"
+                            }
+                            color={
+                              radiosFavoritasLocal.some((r) => r.streamUrl === emisoraActual.streamUrl)
+                                ? "#FDE047"
+                                : "#F8FAFC"
+                            }
+                          />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {errorRadio && (
+                    <div style={{ fontSize: "0.82rem", color: "#FDE68A", fontWeight: 600 }}>
+                      ⚠ {errorRadio}
+                    </div>
+                  )}
+
+                  {/* Géneros y Ecuador de 1 clic directo en pantalla */}
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", paddingTop: "8px", borderTop: "1px solid rgba(148,163,184,0.16)" }}>
+                    {(
+                      [
+                        { label: "🇪🇨 Radios Ecuador", filtro: { pais: "EC" } },
+                        { label: "💃 Salsa", filtro: { genero: "salsa" } },
+                        { label: "🪘 Cumbia", filtro: { genero: "cumbia" } },
+                        { label: "❤️ Baladas / Romántica", filtro: { genero: "romantic" } },
+                        { label: "🎵 Pop Latino", filtro: { genero: "latin pop" } },
+                        { label: "🎸 Rock Español", filtro: { genero: "rock en espanol" } },
+                        { label: "☕ Jazz / Café", filtro: { genero: "jazz" } },
+                        { label: "🎹 Piano / Relajante", filtro: { genero: "piano" } },
+                      ] as const
+                    ).map((chip) => (
+                      <button
+                        key={chip.label}
+                        type="button"
+                        disabled={cargandoRadios}
+                        onClick={() => void cargarEmisorasRadio(chip.filtro, true)}
+                        style={{
+                          padding: "8px 14px",
+                          borderRadius: "999px",
+                          border: "1px solid rgba(148,163,184,0.3)",
+                          background: "rgba(30, 41, 59, 0.9)",
+                          color: "#F8FAFC",
+                          fontSize: "0.82rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {chip.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Pie de acceso rápido a todas las emisoras, YouTube o Barra Lateral */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
+                  <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTabModalYt("radio");
+                        setAbiertoBuscadorYt(true);
+                      }}
+                      style={{ ...hudBtnStyle("#059669"), padding: "9px 14px", fontSize: "0.82rem" }}
+                    >
+                      <Radio size={15} /> Ver todas las emisoras ({emisorasRadio.length})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTabModalYt("buscar");
+                        setAbiertoBuscadorYt(true);
+                      }}
+                      style={{ ...hudBtnStyle("#1E293B"), padding: "9px 14px", fontSize: "0.82rem" }}
+                    >
+                      <Search size={15} /> Cambiar a YouTube
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={abrirVentanaBarraLateral}
+                    style={{ ...hudBtnStyle("#0284C7"), padding: "9px 14px", fontSize: "0.82rem" }}
+                  >
+                    <PanelRight size={15} /> Usar con YouTube.com oficial (Barra Lateral)
+                  </button>
+                </div>
+              </div>
+            )
+          ) : (
+            <>
           {esSoloAudio && (
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <Music size={17} color="#38BDF8" />
@@ -1421,7 +1943,10 @@ export function PantallaTvTaller({
               </div>
             )}
           </div>
+            </>
+          )}
         </div>
+        )}
 
         {/* ============================================================
             VISTA A: MODO TALLER (COLA DE PEDIDOS PENDIENTES PRIORIZADOS)
@@ -2235,9 +2760,10 @@ export function PantallaTvTaller({
             >
               {(
                 [
-                  { id: "buscar", label: "🔍 Buscar / URL" },
-                  { id: "favoritos", label: `⭐ Mis Favoritos (${favoritosLocales.length})` },
-                  { id: "cola", label: `📋 Cola / Sugerencias (${colaYt.length})` },
+                  { id: "radio", label: `📻 Radios en Vivo (${emisorasRadio.length})` },
+                  { id: "buscar", label: "🔍 YouTube / URL" },
+                  { id: "favoritos", label: `⭐ Favoritos (${favoritosLocales.length + radiosFavoritasLocal.length})` },
+                  { id: "cola", label: `📋 Cola YouTube (${colaYt.length})` },
                 ] as const
               ).map((t) => (
                 <button
@@ -2261,7 +2787,140 @@ export function PantallaTvTaller({
             </div>
 
             <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: "12px", overflowY: "auto" }}>
-              {tabModalYt === "favoritos" ? (
+              {tabModalYt === "radio" ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      void cargarEmisorasRadio({ consulta: consultaRadio.trim() || undefined }, false);
+                    }}
+                    style={{ display: "flex", gap: "8px" }}
+                  >
+                    <input
+                      type="text"
+                      value={consultaRadio}
+                      onChange={(e) => setConsultaRadio(e.target.value)}
+                      placeholder="Buscar emisora por nombre (ej: Canela, La Otra, Disney, FM Mundo, Caracol...)"
+                      style={{
+                        flex: 1,
+                        padding: "11px 14px",
+                        borderRadius: "10px",
+                        border: "1.5px solid #334155",
+                        background: "#020617",
+                        color: "#F8FAFC",
+                        fontSize: "0.9rem",
+                      }}
+                    />
+                    <button
+                      type="submit"
+                      disabled={cargandoRadios}
+                      style={{
+                        padding: "11px 18px",
+                        borderRadius: "10px",
+                        border: "none",
+                        background: "#059669",
+                        color: "#FFFFFF",
+                        fontSize: "0.86rem",
+                        fontWeight: 800,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {cargandoRadios ? "Buscando..." : "Buscar Radio"}
+                    </button>
+                  </form>
+
+                  <div style={{ display: "flex", gap: "7px", flexWrap: "wrap" }}>
+                    {(
+                      [
+                        { label: "🇪🇨 Ecuador", filtro: { pais: "EC" } },
+                        { label: "🇨🇴 Colombia", filtro: { pais: "CO" } },
+                        { label: "💃 Salsa", filtro: { genero: "salsa" } },
+                        { label: "🪘 Cumbia", filtro: { genero: "cumbia" } },
+                        { label: "❤️ Baladas", filtro: { genero: "romantic" } },
+                        { label: "🎵 Pop Latino", filtro: { genero: "latin pop" } },
+                        { label: "☕ Jazz / Café", filtro: { genero: "jazz" } },
+                        { label: "🎹 Piano", filtro: { genero: "piano" } },
+                      ] as const
+                    ).map((g) => (
+                      <button
+                        key={g.label}
+                        type="button"
+                        onClick={() => void cargarEmisorasRadio(g.filtro, false)}
+                        style={hudBtnStyle("#1E293B")}
+                      >
+                        {g.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {errorRadio && (
+                    <div style={{ padding: "10px 12px", borderRadius: "9px", background: "rgba(245,158,11,0.16)", color: "#FDE68A", fontSize: "0.83rem" }}>
+                      {errorRadio}
+                    </div>
+                  )}
+
+                  {cargandoRadios ? (
+                    <div style={{ padding: "24px", textAlign: "center", color: "#94A3B8" }}>
+                      <Loader2 size={20} /> Cargando emisoras en vivo...
+                    </div>
+                  ) : (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "10px" }}>
+                      {emisorasRadio.map((em) => {
+                        const activa = emisoraActual?.streamUrl === em.streamUrl;
+                        const esFav = radiosFavoritasLocal.some((r) => r.streamUrl === em.streamUrl);
+                        return (
+                          <div
+                            key={em.id}
+                            style={{
+                              padding: "10px 12px",
+                              borderRadius: "11px",
+                              background: activa ? "rgba(5,150,105,0.22)" : "#1E293B",
+                              border: activa ? "1.5px solid #10B981" : "1px solid #334155",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "8px",
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                              <div style={{ width: "36px", height: "36px", borderRadius: "8px", background: "#0F172A", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flexShrink: 0 }}>
+                                {em.faviconUrl ? (
+                                  <img src={em.faviconUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                ) : (
+                                  <Radio size={18} color="#34D399" />
+                                )}
+                              </div>
+                              <div style={{ minWidth: 0 }}>
+                                <div style={{ fontWeight: 700, fontSize: "0.84rem", color: "#F8FAFC", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                  {em.nombre}
+                                </div>
+                                <div style={{ fontSize: "0.72rem", color: "#94A3B8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                  {[em.pais, em.etiquetas].filter(Boolean).join(" · ") || "Radio Online"}
+                                </div>
+                              </div>
+                            </div>
+                            <div style={{ display: "flex", justifyContent: "space-between", gap: "6px" }}>
+                              <button
+                                type="button"
+                                onClick={() => reproducirEmisoraRadio(em, true)}
+                                style={hudBtnStyle("#059669")}
+                              >
+                                <Play size={12} /> Escuchar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => void toggleRadioFavorita(em)}
+                                style={hudBtnStyle(esFav ? "#B45309" : "#0F172A")}
+                              >
+                                <Star size={12} fill={esFav ? "#FDE047" : "none"} color={esFav ? "#FDE047" : "#F8FAFC"} />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : tabModalYt === "favoritos" ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                     <span style={{ fontSize: "0.84rem", color: "#CBD5E1" }}>

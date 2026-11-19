@@ -17,6 +17,7 @@ import {
   type DatosProveedorInformeIess,
   type DatosTableroTvTaller,
   type DisenoVisualTarjeta,
+  type EmisoraRadioTv,
   type EstadoOrdenTaller,
   type FotoConteoBonches,
   type InformeQuincenalEntregas,
@@ -4530,6 +4531,118 @@ export async function buscarVideosYoutubeTvAction(consulta: string): Promise<
         err instanceof Error
           ? `No se pudo buscar en YouTube: ${err.message}`
           : "Error al buscar en YouTube",
+    };
+  }
+}
+
+const CACHE_RADIOS_TV = new Map<
+  string,
+  { expiraEn: number; emisoras: EmisoraRadioTv[] }
+>();
+
+export async function buscarEmisorasRadioTvAction(entrada: {
+  consulta?: string;
+  pais?: string;
+  genero?: string;
+}): Promise<{ ok: true; emisoras: EmisoraRadioTv[] } | { ok: false; error: string }> {
+  try {
+    const q = String(entrada.consulta || "").trim();
+    const pais = String(entrada.pais || "").trim();
+    const genero = String(entrada.genero || "").trim();
+
+    const clave = `${q.toLowerCase()}|${pais.toLowerCase()}|${genero.toLowerCase()}`;
+    const ahora = Date.now();
+    const cached = CACHE_RADIOS_TV.get(clave);
+    if (cached && cached.expiraEn > ahora) {
+      return { ok: true, emisoras: cached.emisoras };
+    }
+
+    const params = new URLSearchParams({
+      hidebroken: "true",
+      order: "clickcount",
+      reverse: "true",
+      limit: "28",
+    });
+    if (q) params.set("name", q);
+    if (pais) params.set("countrycode", pais.toUpperCase());
+    if (genero) params.set("tag", genero.toLowerCase());
+    if (!q && !pais && !genero) {
+      params.set("countrycode", "EC");
+    }
+
+    const mirrors = [
+      "https://de1.api.radio-browser.info",
+      "https://at1.api.radio-browser.info",
+      "https://nl1.api.radio-browser.info",
+    ];
+
+    let rawList: any[] | null = null;
+    for (const base of mirrors) {
+      try {
+        const resp = await fetch(`${base}/json/stations/search?${params.toString()}`, {
+          method: "GET",
+          headers: {
+            "User-Agent": "EcosistemaFloristeriaTV/1.0",
+            Accept: "application/json",
+          },
+          cache: "no-store",
+        });
+        if (resp.ok) {
+          const json = await resp.json();
+          if (Array.isArray(json)) {
+            rawList = json;
+            break;
+          }
+        }
+      } catch {
+        // Intentar siguiente mirror
+      }
+    }
+
+    if (!rawList) {
+      return {
+        ok: false,
+        error: "No se pudo conectar al directorio de radios en vivo. Intenta de nuevo en unos segundos.",
+      };
+    }
+
+    const vistos = new Set<string>();
+    const emisoras: EmisoraRadioTv[] = [];
+    for (const item of rawList) {
+      const streamUrl = String(item?.url_resolved || item?.url || "").trim();
+      // Solo streams HTTPS para evitar bloqueo de Mixed Content en navegadores modernos
+      if (!streamUrl.startsWith("https://")) continue;
+      if (item?.lastcheckok === 0) continue;
+      const nombre = String(item?.name || "").trim();
+      if (!nombre || vistos.has(streamUrl)) continue;
+      vistos.add(streamUrl);
+      emisoras.push({
+        id: String(item?.stationuuid || `rad-${emisoras.length + 1}`),
+        nombre: nombre.slice(0, 80),
+        streamUrl,
+        pais: item?.country ? String(item.country).trim() : undefined,
+        etiquetas: item?.tags ? String(item.tags).split(",").slice(0, 3).join(", ") : undefined,
+        faviconUrl:
+          typeof item?.favicon === "string" && item.favicon.startsWith("https://")
+            ? item.favicon
+            : undefined,
+      });
+      if (emisoras.length >= 16) break;
+    }
+
+    CACHE_RADIOS_TV.set(clave, {
+      expiraEn: ahora + 30 * 60 * 1000,
+      emisoras,
+    });
+
+    return { ok: true, emisoras };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error
+          ? `Error buscando emisoras en vivo: ${err.message}`
+          : "Error al buscar radios en vivo",
     };
   }
 }

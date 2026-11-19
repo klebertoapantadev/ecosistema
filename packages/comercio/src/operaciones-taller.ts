@@ -1317,6 +1317,16 @@ export async function eliminarDeColaOfflineEntrega(uuidCliente: string): Promise
 export type ModoPantallaTv = "TALLER" | "EVENTOS";
 export type PosicionLateralTv = "derecha" | "izquierda";
 export type DensidadLayoutTv = "AUTO" | "NORMAL" | "PICO" | "SOLO_AUDIO";
+export type FuenteMediaTv = "RADIO" | "YOUTUBE";
+
+export interface EmisoraRadioTv {
+  id: string;
+  nombre: string;
+  streamUrl: string;
+  pais?: string;
+  etiquetas?: string;
+  faviconUrl?: string;
+}
 
 export interface AlbumGoogleFotosTv {
   id: string;
@@ -1335,6 +1345,9 @@ export interface FavoritoYoutubeTv {
 
 export interface ConfiguracionTvTaller {
   modoActivo: ModoPantallaTv;
+  fuenteMedia: FuenteMediaTv;
+  radioActual?: EmisoraRadioTv | null;
+  radiosFavoritas: EmisoraRadioTv[];
   youtubeUrlTaller: string;
   youtubeUrlEventosAudio: string;
   posicionLateral: PosicionLateralTv;
@@ -1355,6 +1368,9 @@ export interface ConfiguracionTvTaller {
 
 export const CONFIG_TV_TALLER_DEFECTO: ConfiguracionTvTaller = {
   modoActivo: "TALLER",
+  fuenteMedia: "RADIO",
+  radioActual: null,
+  radiosFavoritas: [],
   youtubeUrlTaller: "https://www.youtube.com/watch?v=4xDzrJKXOOY",
   youtubeUrlEventosAudio: "https://www.youtube.com/watch?v=4oStw0r33so",
   posicionLateral: "derecha",
@@ -1399,6 +1415,38 @@ export function normalizarConfigTvTaller(raw?: Record<string, unknown> | null): 
   const modoRaw = String(src.modoActivo || "TALLER").toUpperCase();
   const modoActivo: ModoPantallaTv = modoRaw === "EVENTOS" ? "EVENTOS" : "TALLER";
 
+  const fuenteRaw = String(src.fuenteMedia || "RADIO").toUpperCase();
+  const fuenteMedia: FuenteMediaTv = fuenteRaw === "YOUTUBE" ? "YOUTUBE" : "RADIO";
+
+  const radioRaw =
+    src.radioActual && typeof src.radioActual === "object"
+      ? (src.radioActual as Record<string, unknown>)
+      : null;
+  const radioActual: EmisoraRadioTv | null =
+    radioRaw && typeof radioRaw.streamUrl === "string" && radioRaw.streamUrl.trim()
+      ? {
+          id: String(radioRaw.id || "radio-actual"),
+          nombre: String(radioRaw.nombre || "Radio en Vivo").trim(),
+          streamUrl: radioRaw.streamUrl.trim(),
+          pais: radioRaw.pais ? String(radioRaw.pais).trim() : undefined,
+          etiquetas: radioRaw.etiquetas ? String(radioRaw.etiquetas).trim() : undefined,
+          faviconUrl: radioRaw.faviconUrl ? String(radioRaw.faviconUrl).trim() : undefined,
+        }
+      : null;
+
+  const radiosFavRaw = Array.isArray(src.radiosFavoritas) ? src.radiosFavoritas : [];
+  const radiosFavoritas: EmisoraRadioTv[] = radiosFavRaw
+    .filter((r): r is Record<string, unknown> => Boolean(r && typeof r === "object"))
+    .map((r, i) => ({
+      id: String(r.id || `rad-${i + 1}`),
+      nombre: String(r.nombre || `Emisora ${i + 1}`).trim(),
+      streamUrl: String(r.streamUrl || "").trim(),
+      pais: r.pais ? String(r.pais).trim() : undefined,
+      etiquetas: r.etiquetas ? String(r.etiquetas).trim() : undefined,
+      faviconUrl: r.faviconUrl ? String(r.faviconUrl).trim() : undefined,
+    }))
+    .filter((r) => Boolean(r.streamUrl));
+
   const posRaw = String(src.posicionLateral || "derecha").toLowerCase();
   const posicionLateral: PosicionLateralTv = posRaw === "izquierda" ? "izquierda" : "derecha";
 
@@ -1408,6 +1456,9 @@ export function normalizarConfigTvTaller(raw?: Record<string, unknown> | null): 
 
   return {
     modoActivo,
+    fuenteMedia,
+    radioActual,
+    radiosFavoritas,
     youtubeUrlTaller:
       typeof src.youtubeUrlTaller === "string" && src.youtubeUrlTaller.trim()
         ? src.youtubeUrlTaller.trim()
