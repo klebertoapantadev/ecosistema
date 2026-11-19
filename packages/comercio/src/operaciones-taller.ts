@@ -797,6 +797,22 @@ export interface ItemOrdenTaller {
   tipoOferta?: string;
 }
 
+export interface DisenoVisualTarjeta {
+  fuente?: "cursiva" | "serif" | "formal";
+  tamanoPt?: number;
+  alineacion?: "left" | "center" | "right" | "justify";
+  negrita?: boolean;
+  italica?: boolean;
+  textoXPct?: number;
+  textoYPct?: number;
+  textoAnchoPct?: number;
+  imagenUrl?: string | null;
+  imagenXPct?: number;
+  imagenYPct?: number;
+  imagenAnchoMm?: number;
+  escalaGrisesImagen?: boolean;
+}
+
 export interface OrdenTrabajoTaller {
   id: string;
   codigo: string;
@@ -819,6 +835,12 @@ export interface OrdenTrabajoTaller {
   horaEspecifica?: string | null;
   productoResumen: string;
   items: ItemOrdenTaller[];
+  /** Colores de flores/envoltura solicitados para el taller (ej. "Rojo, Blanco, Dorado") */
+  colores?: string | null;
+  /** Extras incluidos en el arreglo (ej. "Ferrero x8, Globo metalizado") */
+  extras?: string | null;
+  /** Orden manual de elaboración priorizado por operador (#1, #2, #3...) */
+  prioridadOrden?: number | null;
   /** Comprador o persona que solicita en llamada Exequiales ("Cristian Montaluisa", "Cristina") */
   clienteSolicita: string;
   clienteTelefono?: string;
@@ -838,11 +860,14 @@ export interface OrdenTrabajoTaller {
   tarjetaTokenEdicion?: string;
   /** Cuando es true (confidencialidad/discreción), en la cartulina física solo se imprime el QR sin mostrar el mensaje escrito */
   tarjetaConfidencial?: boolean;
+  /** Parámetros de diseño gráfico interactivo (posición X/Y, alineación/justificación, tipografía e imagen opcional) */
+  tarjetaDiseno?: DisenoVisualTarjeta;
   tarjetaMetadata?: {
     origen?: string;
     creado_por?: string;
     token_edicion?: string;
     confidencial_solo_qr?: boolean;
+    diseno?: DisenoVisualTarjeta;
     historial_cambios?: Array<{
       autor?: string;
       rol?: string;
@@ -1283,4 +1308,297 @@ export async function eliminarDeColaOfflineEntrega(uuidCliente: string): Promise
   } catch {
     // Ignorar
   }
+}
+
+// =============================================================================
+// MÓDULO 5: PANTALLA SMART TV TALLER & SHOWROOM DE EVENTOS (TINKAY / MARGARITAS)
+// =============================================================================
+
+export type ModoPantallaTv = "TALLER" | "EVENTOS";
+export type PosicionLateralTv = "derecha" | "izquierda";
+export type DensidadLayoutTv = "AUTO" | "NORMAL" | "PICO" | "SOLO_AUDIO";
+
+export interface AlbumGoogleFotosTv {
+  id: string;
+  titulo: string;
+  url: string;
+  categoria?: string;
+}
+
+export interface ConfiguracionTvTaller {
+  modoActivo: ModoPantallaTv;
+  youtubeUrlTaller: string;
+  youtubeUrlEventosAudio: string;
+  posicionLateral: PosicionLateralTv;
+  densidadLayout: DensidadLayoutTv;
+  mostrarFranjaListos: boolean;
+  ocultarEntregadosMinutos: number;
+  sonidoAlertas: boolean;
+  volumenYoutube: number;
+  mostrarPreciosEventos: boolean;
+  segundosSlideEventos: number;
+  albumesGoogleFotos: AlbumGoogleFotosTv[];
+  kioscoActivo: boolean;
+  permitirCambiarEstadoKiosco: boolean;
+  tokenKiosco?: string;
+  actualizadoEn?: string;
+}
+
+export const CONFIG_TV_TALLER_DEFECTO: ConfiguracionTvTaller = {
+  modoActivo: "TALLER",
+  youtubeUrlTaller: "https://www.youtube.com/watch?v=jfKfPfyJRdk",
+  youtubeUrlEventosAudio: "https://www.youtube.com/watch?v=4oStw0r33so",
+  posicionLateral: "derecha",
+  densidadLayout: "AUTO",
+  mostrarFranjaListos: true,
+  ocultarEntregadosMinutos: 15,
+  sonidoAlertas: true,
+  volumenYoutube: 75,
+  mostrarPreciosEventos: false,
+  segundosSlideEventos: 10,
+  albumesGoogleFotos: [],
+  kioscoActivo: true,
+  permitirCambiarEstadoKiosco: true,
+};
+
+export function normalizarConfigTvTaller(raw?: Record<string, unknown> | null): ConfiguracionTvTaller {
+  const src = raw && typeof raw === "object" ? raw : {};
+  const albumesRaw = Array.isArray(src.albumesGoogleFotos) ? src.albumesGoogleFotos : [];
+  const albumes: AlbumGoogleFotosTv[] = albumesRaw
+    .filter((a): a is Record<string, unknown> => Boolean(a && typeof a === "object"))
+    .map((a, i) => ({
+      id: String(a.id || `alb-${i + 1}`),
+      titulo: String(a.titulo || `Álbum Eventos ${i + 1}`).trim(),
+      url: String(a.url || "").trim(),
+      categoria: a.categoria ? String(a.categoria).trim() : undefined,
+    }))
+    .filter((a) => Boolean(a.url));
+
+  const modoRaw = String(src.modoActivo || "TALLER").toUpperCase();
+  const modoActivo: ModoPantallaTv = modoRaw === "EVENTOS" ? "EVENTOS" : "TALLER";
+
+  const posRaw = String(src.posicionLateral || "derecha").toLowerCase();
+  const posicionLateral: PosicionLateralTv = posRaw === "izquierda" ? "izquierda" : "derecha";
+
+  const densRaw = String(src.densidadLayout || "AUTO").toUpperCase();
+  const densidadLayout: DensidadLayoutTv =
+    densRaw === "NORMAL" || densRaw === "PICO" || densRaw === "SOLO_AUDIO" ? densRaw : "AUTO";
+
+  return {
+    modoActivo,
+    youtubeUrlTaller:
+      typeof src.youtubeUrlTaller === "string" && src.youtubeUrlTaller.trim()
+        ? src.youtubeUrlTaller.trim()
+        : CONFIG_TV_TALLER_DEFECTO.youtubeUrlTaller,
+    youtubeUrlEventosAudio:
+      typeof src.youtubeUrlEventosAudio === "string" && src.youtubeUrlEventosAudio.trim()
+        ? src.youtubeUrlEventosAudio.trim()
+        : CONFIG_TV_TALLER_DEFECTO.youtubeUrlEventosAudio,
+    posicionLateral,
+    densidadLayout,
+    mostrarFranjaListos:
+      typeof src.mostrarFranjaListos === "boolean"
+        ? src.mostrarFranjaListos
+        : CONFIG_TV_TALLER_DEFECTO.mostrarFranjaListos,
+    ocultarEntregadosMinutos:
+      typeof src.ocultarEntregadosMinutos === "number" && src.ocultarEntregadosMinutos >= 0
+        ? src.ocultarEntregadosMinutos
+        : CONFIG_TV_TALLER_DEFECTO.ocultarEntregadosMinutos,
+    sonidoAlertas:
+      typeof src.sonidoAlertas === "boolean"
+        ? src.sonidoAlertas
+        : CONFIG_TV_TALLER_DEFECTO.sonidoAlertas,
+    volumenYoutube:
+      typeof src.volumenYoutube === "number"
+        ? Math.max(0, Math.min(100, Math.round(src.volumenYoutube)))
+        : CONFIG_TV_TALLER_DEFECTO.volumenYoutube,
+    mostrarPreciosEventos:
+      typeof src.mostrarPreciosEventos === "boolean"
+        ? src.mostrarPreciosEventos
+        : CONFIG_TV_TALLER_DEFECTO.mostrarPreciosEventos,
+    segundosSlideEventos:
+      typeof src.segundosSlideEventos === "number" && src.segundosSlideEventos >= 4
+        ? Math.min(60, Math.round(src.segundosSlideEventos))
+        : CONFIG_TV_TALLER_DEFECTO.segundosSlideEventos,
+    albumesGoogleFotos: albumes,
+    kioscoActivo:
+      typeof src.kioscoActivo === "boolean" ? src.kioscoActivo : CONFIG_TV_TALLER_DEFECTO.kioscoActivo,
+    permitirCambiarEstadoKiosco:
+      typeof src.permitirCambiarEstadoKiosco === "boolean"
+        ? src.permitirCambiarEstadoKiosco
+        : CONFIG_TV_TALLER_DEFECTO.permitirCambiarEstadoKiosco,
+    tokenKiosco: typeof src.tokenKiosco === "string" ? src.tokenKiosco : undefined,
+    actualizadoEn: typeof src.actualizadoEn === "string" ? src.actualizadoEn : undefined,
+  };
+}
+
+export interface OrdenTvTaller {
+  id: string;
+  codigo: string;
+  origenTipo: OrigenOrdenTaller;
+  clasificacionPedido?: ClasificacionOperativaPedido;
+  estadoTaller: EstadoOrdenTaller;
+  fechaEntrega: string;
+  fechaElaboracion?: string | null;
+  franjaHoraria?: string | null;
+  horaEspecifica?: string | null;
+  productoResumen: string;
+  colores?: string | null;
+  extras?: string | null;
+  observaciones?: string | null;
+  salaServicio?: string | null;
+  retiroEnLocal?: boolean;
+  prioridadOrden?: number | null;
+  enviadoTallerEn?: string | null;
+  preparacionEn?: string | null;
+  listoEn?: string | null;
+  entregadoEn?: string | null;
+}
+
+export interface ProductoEventoTv {
+  productoId: string;
+  nombre: string;
+  descripcion: string;
+  slug: string;
+  tipo?: string | null;
+  imagenUrl: string;
+  precioDesde: number;
+  categoriaNombre: string;
+}
+
+export interface DatosTableroTvTaller {
+  modoAcceso: "AUTENTICADO" | "KIOSCO";
+  puedeInteractuar: boolean;
+  hoyYmd: string;
+  ordenes: OrdenTvTaller[];
+  productosEventos: ProductoEventoTv[];
+  configTv: ConfiguracionTvTaller;
+}
+
+export interface ChipColorPedido {
+  etiqueta: string;
+  hex: string;
+  bordeHex: string;
+}
+
+export const PALETA_COLORES_PEDIDO_TALLER: readonly ChipColorPedido[] = [
+  { etiqueta: "Rojo", hex: "#EF4444", bordeHex: "#FCA5A5" },
+  { etiqueta: "Blanco", hex: "#F8FAFC", bordeHex: "#CBD5E1" },
+  { etiqueta: "Rosado", hex: "#F472B6", bordeHex: "#FBCFE8" },
+  { etiqueta: "Fucsia", hex: "#EC4899", bordeHex: "#F9A8D4" },
+  { etiqueta: "Amarillo", hex: "#FACC15", bordeHex: "#FEF08A" },
+  { etiqueta: "Durazno", hex: "#FB923C", bordeHex: "#FED7AA" },
+  { etiqueta: "Lila / Morado", hex: "#A855F7", bordeHex: "#D8B4FE" },
+  { etiqueta: "Azul", hex: "#3B82F6", bordeHex: "#93C5FD" },
+  { etiqueta: "Dorado", hex: "#D97706", bordeHex: "#FDE68A" },
+  { etiqueta: "Pasteles", hex: "#F9A8D4", bordeHex: "#FDE68A" },
+  { etiqueta: "Vino / Burdeos", hex: "#881337", bordeHex: "#FDA4AF" },
+  { etiqueta: "Verde follaje", hex: "#22C55E", bordeHex: "#86EFAC" },
+] as const;
+
+export function parsearColoresPedido(texto?: string | null): ChipColorPedido[] {
+  const limpio = String(texto || "").trim();
+  if (!limpio) return [];
+  const partes = limpio
+    .split(/[,;/+]+|\s+y\s+/i)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  return partes.map((parte) => {
+    const low = parte
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+    if (low.includes("roj") || low.includes("red")) return { etiqueta: parte, hex: "#EF4444", bordeHex: "#FCA5A5" };
+    if (low.includes("blanc") || low.includes("white") || low.includes("marfil") || low.includes("crema"))
+      return { etiqueta: parte, hex: "#F8FAFC", bordeHex: "#CBD5E1" };
+    if (low.includes("fucsia") || low.includes("magenta")) return { etiqueta: parte, hex: "#EC4899", bordeHex: "#F9A8D4" };
+    if (low.includes("rosa") || low.includes("pink") || low.includes("pastel"))
+      return { etiqueta: parte, hex: "#F472B6", bordeHex: "#FBCFE8" };
+    if (low.includes("amarill") || low.includes("girasol") || low.includes("yellow"))
+      return { etiqueta: parte, hex: "#FACC15", bordeHex: "#FEF08A" };
+    if (low.includes("durazn") || low.includes("salmon") || low.includes("naranja") || low.includes("coral"))
+      return { etiqueta: parte, hex: "#FB923C", bordeHex: "#FED7AA" };
+    if (low.includes("lila") || low.includes("morad") || low.includes("violet") || low.includes("lavanda"))
+      return { etiqueta: parte, hex: "#A855F7", bordeHex: "#D8B4FE" };
+    if (low.includes("azul") || low.includes("celest") || low.includes("blue"))
+      return { etiqueta: parte, hex: "#3B82F6", bordeHex: "#93C5FD" };
+    if (low.includes("dorad") || low.includes("oro") || low.includes("gold"))
+      return { etiqueta: parte, hex: "#D97706", bordeHex: "#FDE68A" };
+    if (low.includes("vino") || low.includes("burdeo") || low.includes("concho"))
+      return { etiqueta: parte, hex: "#881337", bordeHex: "#FDA4AF" };
+    if (low.includes("negro") || low.includes("black"))
+      return { etiqueta: parte, hex: "#1E293B", bordeHex: "#94A3B8" };
+    if (low.includes("verd") || low.includes("eucalipt"))
+      return { etiqueta: parte, hex: "#22C55E", bordeHex: "#86EFAC" };
+    return { etiqueta: parte, hex: "#94A3B8", bordeHex: "#CBD5E1" };
+  });
+}
+
+export function extraerYoutubeVideoOPlaylist(url?: string | null): {
+  videoId: string | null;
+  playlistId: string | null;
+} {
+  const txt = String(url || "").trim();
+  if (!txt) return { videoId: null, playlistId: null };
+
+  // Si pegaron directamente un ID de 11 caracteres
+  if (/^[a-zA-Z0-9_-]{11}$/.test(txt)) {
+    return { videoId: txt, playlistId: null };
+  }
+
+  try {
+    const u = new URL(txt.startsWith("http") ? txt : `https://${txt}`);
+    const list = u.searchParams.get("list");
+    let videoId = u.searchParams.get("v");
+
+    if (!videoId && u.hostname.includes("youtu.be")) {
+      videoId = u.pathname.replace(/^\//, "").split("/")[0] || null;
+    }
+    if (!videoId && u.pathname.includes("/embed/")) {
+      videoId = u.pathname.split("/embed/")[1]?.split(/[/?]/)[0] || null;
+    }
+    if (!videoId && u.pathname.includes("/live/")) {
+      videoId = u.pathname.split("/live/")[1]?.split(/[/?]/)[0] || null;
+    }
+    if (!videoId && u.pathname.includes("/shorts/")) {
+      videoId = u.pathname.split("/shorts/")[1]?.split(/[/?]/)[0] || null;
+    }
+
+    return {
+      videoId: videoId && /^[a-zA-Z0-9_-]{11}$/.test(videoId) ? videoId : null,
+      playlistId: list && /^[a-zA-Z0-9_-]{10,}$/.test(list) ? list : null,
+    };
+  } catch {
+    return { videoId: null, playlistId: null };
+  }
+}
+
+export function ordenarPedidosPorPrioridadTaller<
+  T extends {
+    prioridadOrden?: number | null;
+    clasificacionPedido?: string | null;
+    origenTipo?: string | null;
+    horaEspecifica?: string | null;
+    franjaHoraria?: string | null;
+    fechaEntrega?: string | null;
+  },
+>(ordenes: T[]): T[] {
+  return [...ordenes].sort((a, b) => {
+    const pA = typeof a.prioridadOrden === "number" && a.prioridadOrden > 0 ? a.prioridadOrden : 999999;
+    const pB = typeof b.prioridadOrden === "number" && b.prioridadOrden > 0 ? b.prioridadOrden : 999999;
+    if (pA !== pB) return pA - pB;
+
+    const exA = a.clasificacionPedido === "EXEQUIALES" || a.origenTipo === "EXEQUIALES_LLAMADA" ? 0 : 1;
+    const exB = b.clasificacionPedido === "EXEQUIALES" || b.origenTipo === "EXEQUIALES_LLAMADA" ? 0 : 1;
+    if (exA !== exB) return exA - exB;
+
+    const fA = String(a.fechaEntrega || "9999-99-99");
+    const fB = String(b.fechaEntrega || "9999-99-99");
+    if (fA !== fB) return fA.localeCompare(fB);
+
+    const hA = String(a.horaEspecifica || a.franjaHoraria || "Z");
+    const hB = String(b.horaEspecifica || b.franjaHoraria || "Z");
+    return hA.localeCompare(hB);
+  });
 }

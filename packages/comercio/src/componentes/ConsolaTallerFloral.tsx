@@ -17,6 +17,8 @@ import {
   Printer,
   RefreshCw,
   Send,
+  SlidersHorizontal,
+  Tv,
   Volume2,
   X,
   Zap,
@@ -42,6 +44,7 @@ import {
   InsigniaClasificacionPedido,
 } from "./InsigniaClasificacionPedido";
 import { CalendarioPedidosTaller } from "./CalendarioPedidosTaller";
+import { ControlRemotoTvTaller } from "./ControlRemotoTvTaller";
 import { ModalImprimirTarjetaTaller } from "./ModalImprimirTarjetaTaller";
 
 export interface PropsConsolaTallerFloral {
@@ -108,6 +111,7 @@ export function ConsolaTallerFloral({
   const [pedidoEnfocado, setPedidoEnfocado] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [ordenParaImprimir, setOrdenParaImprimir] = useState<OrdenTrabajoTaller | null>(null);
+  const [mostrarControlTv, setMostrarControlTv] = useState<boolean>(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -870,6 +874,55 @@ export function ConsolaTallerFloral({
 
           <button
             type="button"
+            onClick={() => setMostrarControlTv(true)}
+            title="Control Remoto Smart TV, Prioridad #1/#2/#3 y Showroom Eventos"
+            aria-label="Control TV"
+            className="btn-responsive-accion"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "7px 11px",
+              borderRadius: "9px",
+              border: "1px solid #0284C7",
+              background: "#E0F2FE",
+              color: "#0369A1",
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            <SlidersHorizontal size={14} />
+            <span className="btn-texto-responsive">Control TV</span>
+          </button>
+
+          <Link
+            href="/panel/taller/tv"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Abrir Pantalla Smart TV en modo pantalla completa"
+            aria-label="Abrir TV"
+            className="btn-responsive-accion"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "7px 11px",
+              borderRadius: "9px",
+              border: "1px solid #0F172A",
+              background: "#0F172A",
+              color: "#FFFFFF",
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              textDecoration: "none",
+            }}
+          >
+            <Tv size={14} />
+            <span className="btn-texto-responsive">Abrir TV</span>
+          </Link>
+
+          <button
+            type="button"
             onClick={() => void recargarTaller(false)}
             disabled={cargando}
             title="Actualizar pedidos del Taller"
@@ -1084,6 +1137,16 @@ export function ConsolaTallerFloral({
                     <strong>Sala Exequiales:</strong> {o.salaServicio}
                   </div>
                 )}
+                {o.colores && (
+                  <div style={{ marginTop: "4px" }}>
+                    <strong>Colores:</strong> {o.colores}
+                  </div>
+                )}
+                {o.extras && (
+                  <div style={{ marginTop: "4px" }}>
+                    <strong>Extras:</strong> {o.extras}
+                  </div>
+                )}
                 {o.observaciones && (
                   <div style={{ marginTop: "4px" }}>
                     <strong>Notas Taller:</strong> {o.observaciones}
@@ -1094,6 +1157,14 @@ export function ConsolaTallerFloral({
           )}
         />
       </div>
+
+      <ControlRemotoTvTaller
+        negocio={negocio}
+        ordenesPendientes={datos.ordenes}
+        abierto={mostrarControlTv}
+        onCerrar={() => setMostrarControlTv(false)}
+        onPrioridadActualizada={() => void recargarTaller(true)}
+      />
 
       {ordenParaImprimir && (
         <ModalImprimirTarjetaTaller

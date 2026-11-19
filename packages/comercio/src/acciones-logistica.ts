@@ -28,6 +28,7 @@ import {
 import {
   inferirClasificacionPedido,
   type ClasificacionOperativaPedido,
+  type DisenoVisualTarjeta,
 } from "./operaciones-taller";
 
 const esquemaZona = z.object({
@@ -660,6 +661,8 @@ export interface DestinoEntregaPedidoInput {
   costoEnvioCalculado?: number;
   etiquetaCotizacion?: string;
   formulaCalculoInterno?: string;
+  colores?: string;
+  extras?: string;
   detalleDireccionGeo?: DetalleDireccionGeoespacial | null;
 }
 
@@ -823,6 +826,7 @@ export interface PedidoTiendaRegistrado {
     token: string;
     tokenEdicion?: string;
     confidencial?: boolean;
+    diseno?: DisenoVisualTarjeta;
     tipo: "DIPTICO" | "CONDOLENCIAS_PLANA" | "SOLO_DIGITAL";
     mensaje: string;
     para: string;
@@ -835,6 +839,7 @@ export interface PedidoTiendaRegistrado {
       creado_por?: string;
       token_edicion?: string;
       confidencial_solo_qr?: boolean;
+      diseno?: DisenoVisualTarjeta;
       historial_cambios?: Array<{
         autor?: string;
         rol?: string;
@@ -1307,6 +1312,8 @@ export async function registrarPedidoTiendaAction(
     logistica_entrega: {
       modalidad_entrega: entrada.modalidadEntrega,
       ...logisticaPrincipal,
+      colores: entrada.entregaUnificada?.colores?.trim() || undefined,
+      extras: entrada.entregaUnificada?.extras?.trim() || undefined,
       recargo_horario_exacto_usd: entrada.totalRecargoHorarioExacto,
       parametros_tarifarios_snapshot: {
         tarifa_por_km: config.tarifaPorKm,
@@ -2023,6 +2030,12 @@ export async function obtenerPedidosTiendaAction(
                   ? String(det.tarjeta.musicaTitulo)
                   : null,
               lyrics: Array.isArray(det.tarjeta.lyrics) ? det.tarjeta.lyrics : [],
+              diseno:
+                det.tarjeta.diseno && typeof det.tarjeta.diseno === "object"
+                  ? det.tarjeta.diseno
+                  : det.tarjeta.metadata?.diseno && typeof det.tarjeta.metadata.diseno === "object"
+                    ? det.tarjeta.metadata.diseno
+                    : undefined,
               metadata:
                 det.tarjeta.metadata && typeof det.tarjeta.metadata === "object"
                   ? det.tarjeta.metadata
@@ -2694,9 +2707,10 @@ export async function obtenerPedidosTiendaAction(
     if (p.tarjeta) {
       p.tarjeta.token = tokVista;
       p.tarjeta.tokenEdicion = generarTokenEdicionTarjetaServidor(tokVista);
-      p.tarjeta.confidencial = Boolean(
-        p.tarjeta.confidencial ?? p.tarjeta.metadata?.confidencial_solo_qr
-      );
+      p.tarjeta.diseno = p.tarjeta.diseno ?? p.tarjeta.metadata?.diseno;
+      p.tarjeta.confidencial = esCondol
+        ? false
+        : Boolean(p.tarjeta.confidencial ?? p.tarjeta.metadata?.confidencial_solo_qr);
       if (esCondol) {
         p.tarjeta.tipo = "CONDOLENCIAS_PLANA";
         p.tarjeta.musicaUrl = null;

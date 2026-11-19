@@ -73,6 +73,8 @@ export * from "./componentes/InsigniaClasificacionPedido";
 export * from "./componentes/CalendarioPedidosTaller";
 export * from "./componentes/ConsolaEnvioPedidosTaller";
 export * from "./componentes/ConsolaTallerFloral";
+export * from "./componentes/ControlRemotoTvTaller";
+export * from "./componentes/PantallaTvTaller";
 export * from "./componentes/ModalImprimirTarjetaTaller";
 export * from "./componentes/TarjetaDedicatoriaDigitalInteractiva";
 export * from "./componentes/EditorTarjetaPublicoCliente";

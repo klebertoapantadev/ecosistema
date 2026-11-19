@@ -458,6 +458,7 @@ export function ModalCheckoutTinkay() {
                 ? `Retiro en ${configLogistica.origenNombre}`
                 : entregaUnificada.direccion || 'Quito, Ecuador',
               referencia: entregaUnificada.referencia,
+              colores: entregaUnificada.colores || undefined,
               ciudad: entregaUnificada.ciudad,
               fechaEntrega: entregaUnificada.fechaEntrega,
               franjaHoraria: entregaUnificada.franjaHoraria,

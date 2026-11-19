@@ -732,6 +732,16 @@ export function DrawerCarritoFloristeria() {
                     </>
                   )}
 
+                  <input
+                    type="text"
+                    placeholder="🎨 Colores preferidos para el arreglo (ej. Rojo y blanco, Tonos pastel)"
+                    value={entregaUnificada.colores ?? ""}
+                    onChange={(e) =>
+                      actualizarEntregaUnificada({ colores: e.target.value })
+                    }
+                    className="input-entrega input-col-2"
+                  />
+
                   <div className="campo-fecha-entrega">
                     <label>
                       {entregaUnificada.retiroEnLocal ? 'Fecha de Retiro:' : 'Fecha de Entrega:'}

@@ -6,20 +6,26 @@ import {
   esNombreFallecidoPendiente,
   extraerConteoJsonDesdeRespuestaAria,
   inferirClasificacionPedido,
+  normalizarConfigTvTaller,
   normalizarFranjaHorariaTienda,
   obtenerFechaHoyEcuadorYmd,
   type ArregloEntregaInmediata,
   type ClasificacionOperativaPedido,
+  type ConfiguracionTvTaller,
   type ConvenioEntregaConfig,
   type CorteInventarioRosas,
   type DatosProveedorInformeIess,
+  type DatosTableroTvTaller,
+  type DisenoVisualTarjeta,
   type EstadoOrdenTaller,
   type FotoConteoBonches,
   type InformeQuincenalEntregas,
   type ItemOrdenTaller,
   type OrdenTrabajoTaller,
+  type OrdenTvTaller,
   type OrigenOrdenTaller,
   type PedidoPendienteConfirmacion,
+  type ProductoEventoTv,
   type ProductoLigeroSelectorTaller,
   type RegistroEntregaEvidencia,
   type RepartidorDisponibleNegocio,
@@ -853,13 +859,15 @@ export async function obtenerConsolaTallerYDespachoAction(
 
       const ordenesEnriquecidas = ordenes.map((o) => {
         const tokVista = String(o.tarjetaToken || o.proformaId || o.id);
+        const esCondolOta = o.tarjetaTipo === "CONDOLENCIAS_PLANA";
         return {
           ...o,
           tarjetaToken: tokVista,
           tarjetaTokenEdicion: generarTokenEdicionTarjetaServidor(tokVista),
-          tarjetaConfidencial: Boolean(
-            o.tarjetaConfidencial ?? o.tarjetaMetadata?.confidencial_solo_qr
-          ),
+          tarjetaConfidencial: esCondolOta
+            ? false
+            : Boolean(o.tarjetaConfidencial ?? o.tarjetaMetadata?.confidencial_solo_qr),
+          tarjetaDiseno: o.tarjetaDiseno ?? o.tarjetaMetadata?.diseno,
         };
       });
 
@@ -1154,13 +1162,15 @@ export async function obtenerConsolaTallerYDespachoAction(
 
     const ordenesRespaldoEnriquecidas = ordenesRespaldo.map((o) => {
       const tokVista = String(o.tarjetaToken || o.proformaId || o.id);
+      const esCondolOta = o.tarjetaTipo === "CONDOLENCIAS_PLANA";
       return {
         ...o,
         tarjetaToken: tokVista,
         tarjetaTokenEdicion: generarTokenEdicionTarjetaServidor(tokVista),
-        tarjetaConfidencial: Boolean(
-          o.tarjetaConfidencial ?? o.tarjetaMetadata?.confidencial_solo_qr
-        ),
+        tarjetaConfidencial: esCondolOta
+          ? false
+          : Boolean(o.tarjetaConfidencial ?? o.tarjetaMetadata?.confidencial_solo_qr),
+        tarjetaDiseno: o.tarjetaDiseno ?? o.tarjetaMetadata?.diseno,
       };
     });
 
@@ -1193,6 +1203,9 @@ export async function crearOActualizarPedidoOperadorAction(entrada: {
   horaEspecifica?: string;
   productoResumen: string;
   items?: ItemOrdenTaller[];
+  colores?: string;
+  extras?: string;
+  prioridadOrden?: number | null;
   clienteSolicita: string;
   clienteTelefono?: string;
   destinatarioFallecido?: string;
@@ -2100,6 +2113,83 @@ export async function subirAudioTarjetaAction(entrada: {
   }
 }
 
+export async function subirImagenTarjetaAction(entrada: {
+  negocio: string;
+  dataUrl: string;
+  nombreArchivo?: string;
+}): Promise<{ ok: true; publicUrl: string; nombreLimpio: string } | { ok: false; error: string }> {
+  try {
+    const neg = normalizarNegocio(entrada.negocio || "tinkay");
+    const coma = entrada.dataUrl.indexOf(",");
+    if (coma < 0) {
+      return { ok: false, error: "Archivo de imagen inválido." };
+    }
+    const meta = entrada.dataUrl.slice(5, coma);
+    const contentType = meta.split(";")[0] || "image/png";
+    if (!contentType.startsWith("image/")) {
+      return { ok: false, error: "Solo se permiten imágenes (PNG, JPG, WEBP)." };
+    }
+    const base64 = entrada.dataUrl.slice(coma + 1);
+    const buffer = Buffer.from(base64, "base64");
+    if (buffer.byteLength > 8 * 1024 * 1024) {
+      return { ok: false, error: "La imagen supera el tamaño máximo de 8 MB." };
+    }
+
+    const ext = contentType.includes("png")
+      ? "png"
+      : contentType.includes("webp")
+        ? "webp"
+        : contentType.includes("gif")
+          ? "gif"
+          : "jpg";
+    const fechaCarpeta = new Date().toISOString().slice(0, 7);
+    const ruta = `tarjetas-imagenes/${neg}/${fechaCarpeta}/${crypto.randomUUID()}.${ext}`;
+    const nombreLimpio = (entrada.nombreArchivo || "Imagen tarjeta")
+      .replace(/\.[a-z0-9]{2,4}$/i, "")
+      .trim();
+
+    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const db: any = crearClienteAdmin() ?? supabase;
+
+    const { error } = await db.storage.from("comun-publico").upload(ruta, buffer, {
+      contentType,
+      upsert: false,
+    });
+
+    if (error) {
+      // Respaldo resiliente si el usuario no está autenticado y aún no corre la política de storage 000009
+      if (entrada.dataUrl.length <= 420000) {
+        return {
+          ok: true,
+          publicUrl: entrada.dataUrl,
+          nombreLimpio,
+        };
+      }
+      return { ok: false, error: error.message };
+    }
+
+    const { data } = db.storage.from("comun-publico").getPublicUrl(ruta);
+    return {
+      ok: true,
+      publicUrl: String(data?.publicUrl || ""),
+      nombreLimpio,
+    };
+  } catch (err) {
+    if (entrada.dataUrl && entrada.dataUrl.startsWith("data:image/") && entrada.dataUrl.length <= 420000) {
+      return {
+        ok: true,
+        publicUrl: entrada.dataUrl,
+        nombreLimpio: "Imagen tarjeta",
+      };
+    }
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error al subir la imagen de la tarjeta",
+    };
+  }
+}
+
 export async function guardarEdicionPedidoYTarjetaAction(entrada: {
   negocio: string;
   pedidoId: string;
@@ -2121,6 +2211,7 @@ export async function guardarEdicionPedidoYTarjetaAction(entrada: {
   dedicatoria?: string;
   tarjetaTipo?: "DIPTICO" | "CONDOLENCIAS_PLANA" | "SOLO_DIGITAL";
   tarjetaConfidencial?: boolean;
+  tarjetaDiseno?: DisenoVisualTarjeta;
   tarjetaMusicaUrl?: string | null;
   tarjetaMusicaTitulo?: string | null;
   tarjetaLyrics?: Array<{ tiempo?: number; texto: string }>;
@@ -2220,10 +2311,13 @@ export async function guardarEdicionPedidoYTarjetaAction(entrada: {
           : entrada.tarjetaMusicaUrl !== undefined
             ? entrada.tarjetaMusicaUrl?.trim() || null
             : filaOta.ota_tarjeta_musica_url;
-        const confOta =
-          entrada.tarjetaConfidencial !== undefined
+        const confOta = esCondolOta
+          ? false
+          : entrada.tarjetaConfidencial !== undefined
             ? Boolean(entrada.tarjetaConfidencial)
             : Boolean(metaPrevia.confidencial_solo_qr);
+        const disenoOta =
+          entrada.tarjetaDiseno !== undefined ? entrada.tarjetaDiseno : metaPrevia.diseno;
 
         if (dedNueva !== filaOta.ota_dedicatoria || musNueva !== filaOta.ota_tarjeta_musica_url) {
           histPrevio.push({
@@ -2240,6 +2334,7 @@ export async function guardarEdicionPedidoYTarjetaAction(entrada: {
         const nuevaMeta = {
           ...metaPrevia,
           confidencial_solo_qr: confOta,
+          ...(disenoOta ? { diseno: disenoOta } : {}),
           editado_por_staff: true,
           ultimo_editor_nombre: autorNombre,
           ultimo_editor_rol: autorRol,
@@ -2362,10 +2457,15 @@ export async function guardarEdicionPedidoYTarjetaAction(entrada: {
         const itemsPrevios = Array.isArray(det.items) ? [...det.items] : [];
         const tipoResueltoPrf = entrada.tarjetaTipo || tarPrevia.tipo || "DIPTICO";
         const esCondolPrf = tipoResueltoPrf === "CONDOLENCIAS_PLANA";
-        const confPrf =
-          entrada.tarjetaConfidencial !== undefined
+        const confPrf = esCondolPrf
+          ? false
+          : entrada.tarjetaConfidencial !== undefined
             ? Boolean(entrada.tarjetaConfidencial)
             : Boolean(metaPrevia.confidencial_solo_qr ?? tarPrevia.confidencial);
+        const disenoPrf =
+          entrada.tarjetaDiseno !== undefined
+            ? entrada.tarjetaDiseno
+            : tarPrevia.diseno ?? metaPrevia.diseno;
         const primerDedPrevio = itemsPrevios[0]?.dedicatoria?.mensaje || tarPrevia.mensaje || "";
         const dedNueva =
           entrada.dedicatoria !== undefined ? entrada.dedicatoria.trim() : primerDedPrevio;
@@ -2391,6 +2491,7 @@ export async function guardarEdicionPedidoYTarjetaAction(entrada: {
           metaFinal ?? {
             ...metaPrevia,
             confidencial_solo_qr: confPrf,
+            ...(disenoPrf ? { diseno: disenoPrf } : {}),
             editado_por_staff: true,
             ultimo_editor_nombre: autorNombre,
             ultimo_editor_rol: autorRol,
@@ -2528,6 +2629,7 @@ export async function guardarEdicionPedidoYTarjetaAction(entrada: {
                 token: tokenPrf,
                 tipo: tipoResueltoPrf,
                 confidencial: confPrf,
+                ...(disenoPrf ? { diseno: disenoPrf } : {}),
                 mensaje: entrada.clasificacionPedido === "EXEQUIALES" ? "" : dedNueva,
                 para: destNuevo,
                 de: nombreCompradorNuevo,
@@ -2580,10 +2682,15 @@ export async function guardarEdicionPedidoYTarjetaAction(entrada: {
 
         const tipoResueltoEnt = entrada.tarjetaTipo || tarPrevia.tipo || "CONDOLENCIAS_PLANA";
         const esCondolEnt = tipoResueltoEnt === "CONDOLENCIAS_PLANA";
-        const confEnt =
-          entrada.tarjetaConfidencial !== undefined
+        const confEnt = esCondolEnt
+          ? false
+          : entrada.tarjetaConfidencial !== undefined
             ? Boolean(entrada.tarjetaConfidencial)
             : Boolean(metaPrevia.confidencial_solo_qr ?? tarPrevia.confidencial);
+        const disenoEnt =
+          entrada.tarjetaDiseno !== undefined
+            ? entrada.tarjetaDiseno
+            : tarPrevia.diseno ?? metaPrevia.diseno;
 
         const dedPrevia = String(tarPrevia.mensaje ?? detEnt.dedicatoria ?? "");
         const dedNueva =
@@ -2608,6 +2715,7 @@ export async function guardarEdicionPedidoYTarjetaAction(entrada: {
           metaFinal ?? {
             ...metaPrevia,
             confidencial_solo_qr: confEnt,
+            ...(disenoEnt ? { diseno: disenoEnt } : {}),
             editado_por_staff: true,
             ultimo_editor_nombre: autorNombre,
             ultimo_editor_rol: autorRol,
@@ -2673,6 +2781,7 @@ export async function guardarEdicionPedidoYTarjetaAction(entrada: {
                 token: tokenEnt,
                 tipo: tipoResueltoEnt,
                 confidencial: confEnt,
+                ...(disenoEnt ? { diseno: disenoEnt } : {}),
                 mensaje: dedNueva,
                 para: fallNuevo,
                 de: coordNuevo,
@@ -3915,6 +4024,347 @@ export async function restaurarPedidoEliminadoAction(entrada: {
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Error al restaurar el pedido",
+    };
+  }
+}
+
+// =============================================================================
+// 6. PANTALLA SMART TV TALLER, PRIORIZACIÓN MANUAL Y SHOWROOM DE EVENTOS
+// =============================================================================
+
+export async function reordenarPrioridadTallerAction(entrada: {
+  negocio: string;
+  ordenIds: string[];
+}): Promise<{ ok: true; actualizados: number } | { ok: false; error: string }> {
+  try {
+    const neg = normalizarNegocio(entrada.negocio);
+    const idsLimpios = (entrada.ordenIds || []).filter((id) =>
+      /^[0-9a-f-]{36}$/i.test(String(id || "").trim())
+    );
+    if (idsLimpios.length === 0) {
+      return { ok: true, actualizados: 0 };
+    }
+
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+
+    const { data, error } = await invocarRpcComercio(
+      supabase,
+      "com_fn_reordenar_prioridad_taller",
+      {
+        p_negocio: neg,
+        p_orden_ids: idsLimpios,
+      }
+    );
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+    if (!data?.ok) {
+      return { ok: false, error: String(data?.error || "No se pudo actualizar la prioridad.") };
+    }
+
+    revalidarRutasTienda(neg);
+    return { ok: true, actualizados: Number(data.actualizados) || idsLimpios.length };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error al reordenar prioridad del taller",
+    };
+  }
+}
+
+export async function obtenerConfigTvTallerAction(
+  negocio: string
+): Promise<{ ok: true; config: ConfiguracionTvTaller } | { ok: false; error: string }> {
+  try {
+    const neg = normalizarNegocio(negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+
+    const { data, error } = await invocarRpcComercio(
+      supabase,
+      "com_fn_obtener_config_tv_taller",
+      { p_negocio: neg }
+    );
+
+    if (!error && data?.ok) {
+      return {
+        ok: true,
+        config: normalizarConfigTvTaller(data.config as Record<string, unknown>),
+      };
+    }
+    if (data && data.ok === false) {
+      return { ok: false, error: String(data.error || "Sin permisos para leer config TV.") };
+    }
+    return {
+      ok: false,
+      error: error?.message || "No se pudo consultar la configuración de Pantalla TV.",
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error consultando configuración de Pantalla TV",
+    };
+  }
+}
+
+export async function guardarConfigTvTallerAction(entrada: {
+  negocio: string;
+  config: Partial<ConfiguracionTvTaller> & { regenerarToken?: boolean };
+}): Promise<{ ok: true; config: ConfiguracionTvTaller } | { ok: false; error: string }> {
+  try {
+    const neg = normalizarNegocio(entrada.negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+
+    const { data, error } = await invocarRpcComercio(
+      supabase,
+      "com_fn_guardar_config_tv_taller",
+      {
+        p_negocio: neg,
+        p_config: entrada.config,
+      }
+    );
+
+    if (!error && data?.ok) {
+      revalidarRutasTienda(neg);
+      try {
+        revalidatePath("/panel/taller/tv");
+        revalidatePath("/tv-taller");
+      } catch {
+        // Ignorar fuera de request
+      }
+      return {
+        ok: true,
+        config: normalizarConfigTvTaller(data.config as Record<string, unknown>),
+      };
+    }
+    if (data && data.ok === false) {
+      return { ok: false, error: String(data.error || "No se pudo guardar la configuración TV.") };
+    }
+    return {
+      ok: false,
+      error: error?.message || "Error al guardar la configuración de Pantalla TV.",
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error inesperado al guardar config TV",
+    };
+  }
+}
+
+export async function obtenerTableroTvTallerAction(
+  negocio: string,
+  token?: string | null
+): Promise<{ ok: true; datos: DatosTableroTvTaller } | { ok: false; error: string }> {
+  try {
+    const neg = normalizarNegocio(negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+
+    const { data, error } = await invocarRpcComercio(
+      supabase,
+      "com_fn_obtener_tablero_tv_taller",
+      {
+        p_negocio: neg,
+        p_token: token ? String(token).trim() : null,
+      }
+    );
+
+    if (!error && data?.ok) {
+      return {
+        ok: true,
+        datos: {
+          modoAcceso: data.modoAcceso === "KIOSCO" ? "KIOSCO" : "AUTENTICADO",
+          puedeInteractuar: Boolean(data.puedeInteractuar),
+          hoyYmd: String(data.hoyYmd || obtenerFechaHoyEcuadorYmd()),
+          ordenes: Array.isArray(data.ordenes) ? (data.ordenes as OrdenTvTaller[]) : [],
+          productosEventos: Array.isArray(data.productosEventos)
+            ? (data.productosEventos as ProductoEventoTv[])
+            : [],
+          configTv: normalizarConfigTvTaller(data.configTv as Record<string, unknown>),
+        },
+      };
+    }
+
+    if (data && data.ok === false) {
+      return { ok: false, error: String(data.error || "Acceso no autorizado a Pantalla TV.") };
+    }
+
+    return {
+      ok: false,
+      error: error?.message || "No se pudo cargar el tablero de Pantalla TV.",
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error al cargar el tablero de Pantalla TV",
+    };
+  }
+}
+
+export async function actualizarEstadoOrdenTvAction(entrada: {
+  negocio: string;
+  ordenId: string;
+  nuevoEstado: "EN_PREPARACION" | "LISTO_ENTREGA";
+  token?: string | null;
+}): Promise<
+  | { ok: true; ordenId: string; codigo: string; estadoTaller: EstadoOrdenTaller }
+  | { ok: false; error: string }
+> {
+  try {
+    const neg = normalizarNegocio(entrada.negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+
+    const { data, error } = await invocarRpcComercio(
+      supabase,
+      "com_fn_actualizar_estado_tv_kiosco",
+      {
+        p_negocio: neg,
+        p_orden_id: entrada.ordenId,
+        p_nuevo_estado: entrada.nuevoEstado,
+        p_token: entrada.token ? String(entrada.token).trim() : null,
+      }
+    );
+
+    if (!error && data?.ok) {
+      revalidarRutasTienda(neg);
+      return {
+        ok: true,
+        ordenId: String(data.ordenId),
+        codigo: String(data.codigo),
+        estadoTaller: (data.estadoTaller as EstadoOrdenTaller) || entrada.nuevoEstado,
+      };
+    }
+
+    if (data && data.ok === false) {
+      return { ok: false, error: String(data.error || "No se pudo actualizar el estado.") };
+    }
+    return { ok: false, error: error?.message || "Error al actualizar estado desde TV." };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error inesperado al actualizar estado TV",
+    };
+  }
+}
+
+const CACHE_ALBUMES_GOOGLE_FOTOS = new Map<
+  string,
+  { expiraEn: number; imagenes: string[]; titulo?: string }
+>();
+
+export async function extraerImagenesAlbumGoogleFotosAction(albumUrl: string): Promise<
+  | { ok: true; imagenes: string[]; titulo?: string; desdeCache?: boolean }
+  | { ok: false; error: string }
+> {
+  try {
+    const urlLimpia = String(albumUrl || "").trim();
+    if (!urlLimpia) {
+      return { ok: false, error: "URL de álbum vacía." };
+    }
+
+    let parsed: URL;
+    try {
+      parsed = new URL(urlLimpia);
+    } catch {
+      return { ok: false, error: "URL de álbum inválida." };
+    }
+
+    const host = parsed.hostname.toLowerCase();
+    const esGoogleFotos =
+      host === "photos.app.goo.gl" ||
+      host === "photos.google.com" ||
+      host.endsWith(".googleusercontent.com");
+
+    if (parsed.protocol !== "https:" || !esGoogleFotos) {
+      return {
+        ok: false,
+        error: "Solo se permiten enlaces HTTPS de Google Fotos (photos.app.goo.gl o photos.google.com).",
+      };
+    }
+
+    // Si es una imagen directa de googleusercontent, retornarla directamente
+    if (host.endsWith(".googleusercontent.com")) {
+      return { ok: true, imagenes: [urlLimpia] };
+    }
+
+    const ahora = Date.now();
+    const cached = CACHE_ALBUMES_GOOGLE_FOTOS.get(urlLimpia);
+    if (cached && cached.expiraEn > ahora) {
+      return {
+        ok: true,
+        imagenes: cached.imagenes,
+        titulo: cached.titulo,
+        desdeCache: true,
+      };
+    }
+
+    const resp = await fetch(urlLimpia, {
+      method: "GET",
+      redirect: "follow",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+        Accept: "text/html,application/xhtml+xml",
+      },
+      cache: "no-store",
+    });
+
+    if (!resp.ok) {
+      return {
+        ok: false,
+        error: `Google Fotos respondió HTTP ${resp.status}. Verifica que el álbum sea público compartido.`,
+      };
+    }
+
+    const html = await resp.text();
+    const tituloMatch = html.match(/<meta\s+property="og:title"\s+content="([^"]+)"/i);
+    const titulo = tituloMatch?.[1]?.trim();
+
+    // Extraer URLs de fotos HD en Google Fotos (lh3.googleusercontent.com/pw/...)
+    const regexPw = /https:\/\/lh3\.googleusercontent\.com\/pw\/[a-zA-Z0-9_-]+/g;
+    const encontradas = new Set<string>();
+    let m: RegExpExecArray | null;
+    while ((m = regexPw.exec(html)) !== null) {
+      encontradas.add(`${m[0]}=w1920-h1080-no`);
+      if (encontradas.size >= 40) break;
+    }
+
+    // Fallback: og:image si Google cambió el patrón /pw/
+    if (encontradas.size === 0) {
+      const ogImg = html.match(/<meta\s+property="og:image"\s+content="([^"]+)"/i)?.[1];
+      if (ogImg && ogImg.startsWith("https://lh3.googleusercontent.com/")) {
+        encontradas.add(ogImg.replace(/=w\d+-h\d+.*$/, "=w1920-h1080-no"));
+      }
+    }
+
+    const imagenes = Array.from(encontradas);
+    if (imagenes.length === 0) {
+      return {
+        ok: false,
+        error:
+          "No se detectaron imágenes públicas en el enlace. Verifica que el álbum tenga activado 'Compartir enlace'.",
+      };
+    }
+
+    CACHE_ALBUMES_GOOGLE_FOTOS.set(urlLimpia, {
+      expiraEn: ahora + 2 * 60 * 60 * 1000, // 2 horas
+      imagenes,
+      titulo,
+    });
+
+    return { ok: true, imagenes, titulo };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error
+          ? `No se pudo leer el álbum de Google Fotos: ${err.message}`
+          : "Error al leer álbum de Google Fotos",
     };
   }
 }

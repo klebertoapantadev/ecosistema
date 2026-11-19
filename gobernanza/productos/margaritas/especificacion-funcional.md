@@ -18,7 +18,7 @@ responsable: Kleber Toapanta
 | :--- | :--- | :---: | :---: | :--- |
 | **`MRG-001`** | **Identidad, Registro sin Fricción y Mi Cuenta (`@eco/identidad`)** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`MRG-002`** | **Catálogo Comercial Unificado y Vitrina E-Commerce (`comun_comercio`)** | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`MRG-003`** | **Gestión de Pedidos, Clasificación en 4 Tipos (`Floristería / Ocasiones`, `Condolencias`, `Eventos`, `Exequiales`), Hora de Entrega (Rango u Hora Exacta) y Taller (`@eco/comercio`)** | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`MRG-003`** | **Gestión de Pedidos, Clasificación en 4 Tipos (`Floristería / Ocasiones`, `Condolencias`, `Eventos`, `Exequiales`), Hora de Entrega, Taller y Pantalla Smart TV Taller & Showroom Eventos (`@eco/comercio`)** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`MRG-004`** | **Suscripciones Florales Recurrentes (`mrg_suscripcion_flor`)** | ⏳ Pendiente | **0%** | Kleber Toapanta |
 
 ---

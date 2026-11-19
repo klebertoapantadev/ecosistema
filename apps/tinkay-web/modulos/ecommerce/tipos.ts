@@ -105,6 +105,7 @@ export interface DatosEntrega {
   destinatarioTelefono: string;
   direccion: string;
   referencia: string;
+  colores?: string;
   ciudad: string;
   fechaEntrega: string;
   franjaHoraria: FranjaHoraria;

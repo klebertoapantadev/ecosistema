@@ -12,6 +12,7 @@ import {
   esNombreFallecidoPendiente,
   esPedidoDeElaboracionEnFecha,
   extraerConteoJsonDesdeRespuestaAria,
+  extraerYoutubeVideoOPlaylist,
   formatearFechaCorteInventario,
   formatearFechaEntregaHumana,
   formatearHorarioEntregaOrden,
@@ -20,6 +21,8 @@ import {
   inferirClasificacionPedido,
   normalizarFranjaHorariaTienda,
   obtenerRangoSemanaLunesADomingo,
+  ordenarPedidosPorPrioridadTaller,
+  parsearColoresPedido,
   resolverEstadoInicialHorario,
 } from "./operaciones-taller";
 import { generarPdfInformeQuincenalIess } from "./pdf-informe-iess";
@@ -242,5 +245,32 @@ describe("operaciones-taller y pdf-informe-iess", () => {
         evidenciaFotoUrl: "https://cdn/evidencia.jpg",
       })
     ).toBe(true);
+  });
+
+  it("parsea colores de pedidos, URLs de YouTube y respeta prioridad manual en TV Taller", () => {
+    const chips = parsearColoresPedido("Rojo, Blanco y Dorado");
+    expect(chips).toHaveLength(3);
+    expect(chips[0]?.hex).toBe("#EF4444");
+    expect(chips[1]?.hex).toBe("#F8FAFC");
+    expect(chips[2]?.hex).toBe("#D97706");
+
+    expect(
+      extraerYoutubeVideoOPlaylist("https://www.youtube.com/watch?v=jfKfPfyJRdk&list=PL1234567890ab")
+    ).toEqual({
+      videoId: "jfKfPfyJRdk",
+      playlistId: "PL1234567890ab",
+    });
+    expect(extraerYoutubeVideoOPlaylist("https://youtu.be/4oStw0r33so")).toEqual({
+      videoId: "4oStw0r33so",
+      playlistId: null,
+    });
+
+    const ordenados = ordenarPedidosPorPrioridadTaller([
+      { id: "a", prioridadOrden: 3, clasificacionPedido: "FLORISTERIA_OCASIONES" },
+      { id: "b", prioridadOrden: 1, clasificacionPedido: "FLORISTERIA_OCASIONES" },
+      { id: "c", prioridadOrden: null, clasificacionPedido: "EXEQUIALES" },
+      { id: "d", prioridadOrden: 2, clasificacionPedido: "FLORISTERIA_OCASIONES" },
+    ]);
+    expect(ordenados.map((o) => o.id)).toEqual(["b", "d", "a", "c"]);
   });
 });

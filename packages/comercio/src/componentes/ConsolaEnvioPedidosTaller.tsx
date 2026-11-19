@@ -17,6 +17,7 @@ import {
   Save,
   Send,
   Trash2,
+  Tv,
   X,
 } from "lucide-react";
 import {
@@ -32,6 +33,7 @@ import {
   CLASIFICACIONES_OPERATIVAS_PEDIDO,
   OPCIONES_DESCRIPCION_SERVICIO_EXEQUIALES,
   OPCIONES_SALA_EXEQUIALES,
+  PALETA_COLORES_PEDIDO_TALLER,
   RANGOS_HORARIO_ENTREGA_TIENDA,
   SOLICITANTES_EXEQUIALES_FRECUENTES,
   construirValoresHorarioGuardar,
@@ -48,6 +50,7 @@ import {
   type ModoSelectorHorarioEntrega,
   type OrdenTrabajoTaller,
 } from "../operaciones-taller";
+import { ControlRemotoTvTaller } from "./ControlRemotoTvTaller";
 import {
   BarraFiltroClasificacionPedido,
   IconoClasificacionPedido,
@@ -144,6 +147,8 @@ export function ConsolaEnvioPedidosTaller({
   const [manRetiroLocal, setManRetiroLocal] = useState<boolean>(false);
   const [manDedicatoria, setManDedicatoria] = useState<string>("");
   const [manTarjetaConfidencial, setManTarjetaConfidencial] = useState<boolean>(false);
+  const [manColores, setManColores] = useState<string>("");
+  const [manExtras, setManExtras] = useState<string>("");
   const [manObservaciones, setManObservaciones] = useState<string>("");
   const [manTotalUsd, setManTotalUsd] = useState<string>("");
   const [guardandoManual, setGuardandoManual] = useState<boolean>(false);
@@ -160,6 +165,7 @@ export function ConsolaEnvioPedidosTaller({
   const [ordenAEliminar, setOrdenAEliminar] = useState<OrdenTrabajoTaller | null>(null);
   const [motivoEliminacion, setMotivoEliminacion] = useState<string>("");
   const [procesandoEliminacion, setProcesandoEliminacion] = useState<boolean>(false);
+  const [mostrarControlTv, setMostrarControlTv] = useState<boolean>(false);
 
   const esAdminEstricto = useMemo(() => {
     if (typeof datos.esAdminEstricto === "boolean") return datos.esAdminEstricto;
@@ -713,6 +719,8 @@ export function ConsolaEnvioPedidosTaller({
       tarjetaTipo:
         manClasificacion === "CONDOLENCIAS" || esManExeq ? "CONDOLENCIAS_PLANA" : "DIPTICO",
       tarjetaConfidencial: manTarjetaConfidencial,
+      colores: manColores.trim() || undefined,
+      extras: manExtras.trim() || undefined,
       observaciones: manObservaciones.trim() || undefined,
       totalUsd: totalCalculado,
     });
@@ -738,6 +746,8 @@ export function ConsolaEnvioPedidosTaller({
     setManItems([]);
     setManSkuSeleccionado("");
     setManCantidadSel(1);
+    setManColores("");
+    setManExtras("");
     setManDetalleLibre("");
     setManHoraPuntual("10:30");
     setManSalaServicio("");
@@ -806,6 +816,8 @@ export function ConsolaEnvioPedidosTaller({
       retiroEnLocal: esExeq ? false : ordenEditando.retiroEnLocal,
       dedicatoria: esExeq ? "" : ordenEditando.dedicatoria ?? "",
       tarjetaTipo: clasifEdicion === "CONDOLENCIAS" ? "CONDOLENCIAS_PLANA" : undefined,
+      colores: ordenEditando.colores ?? "",
+      extras: ordenEditando.extras ?? "",
       observaciones: ordenEditando.observaciones ?? "",
     });
 
@@ -1344,7 +1356,29 @@ export function ConsolaEnvioPedidosTaller({
           flexWrap: "wrap",
         }}
       >
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+          <button
+            type="button"
+            onClick={() => setMostrarControlTv(true)}
+            title="Priorizar orden de elaboración #1/#2/#3 y controlar la Smart TV del Taller"
+            aria-label="Prioridad y TV"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "8px 13px",
+              borderRadius: "10px",
+              border: "1px solid #0284C7",
+              background: "#E0F2FE",
+              color: "#0369A1",
+              fontSize: "0.81rem",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            <Tv size={14} />
+            <span>Prioridad y TV</span>
+          </button>
           {(
             [
               {
@@ -2570,12 +2604,85 @@ export function ConsolaEnvioPedidosTaller({
             )}
 
             <div>
+              <label style={labelStyle}>Colores a utilizar (para Taller y TV)</label>
+              <input
+                type="text"
+                value={manColores}
+                onChange={(e) => setManColores(e.target.value)}
+                placeholder="Ej. Rojo, Blanco, Dorado..."
+                style={inputStyle}
+              />
+              <div style={{ display: "flex", gap: "5px", flexWrap: "wrap", marginTop: "6px" }}>
+                {PALETA_COLORES_PEDIDO_TALLER.map((c) => {
+                  const yaEsta = manColores.toLowerCase().includes(c.etiqueta.toLowerCase());
+                  return (
+                    <button
+                      key={c.etiqueta}
+                      type="button"
+                      onClick={() => {
+                        const actual = manColores
+                          .split(",")
+                          .map((s) => s.trim())
+                          .filter(Boolean);
+                        if (yaEsta) {
+                          setManColores(
+                            actual
+                              .filter((s) => s.toLowerCase() !== c.etiqueta.toLowerCase())
+                              .join(", ")
+                          );
+                        } else {
+                          setManColores([...actual, c.etiqueta].join(", "));
+                        }
+                      }}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        padding: "3px 8px",
+                        borderRadius: "999px",
+                        border: yaEsta ? `1.5px solid #0F172A` : `1px solid ${c.bordeHex}`,
+                        background: yaEsta ? "#F1F5F9" : "#FFFFFF",
+                        fontSize: "0.72rem",
+                        fontWeight: yaEsta ? 700 : 500,
+                        color: "#1E293B",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: "8px",
+                          height: "8px",
+                          borderRadius: "50%",
+                          background: c.hex,
+                          border: "1px solid #94A3B8",
+                          display: "inline-block",
+                        }}
+                      />
+                      {c.etiqueta}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div>
+              <label style={labelStyle}>Extras (chocolates, globos, peluche, vino)</label>
+              <input
+                type="text"
+                value={manExtras}
+                onChange={(e) => setManExtras(e.target.value)}
+                placeholder="Ej. Ferrero x8, Globo metalizado, Peluche"
+                style={inputStyle}
+              />
+            </div>
+
+            <div>
               <label style={labelStyle}>Indicaciones para Taller</label>
               <input
                 type="text"
                 value={manObservaciones}
                 onChange={(e) => setManObservaciones(e.target.value)}
-                placeholder="Papel negro, tonos pastel, etc."
+                placeholder="Papel negro, cinta dorada, entregar en recepción, etc."
                 style={inputStyle}
               />
             </div>
@@ -3055,6 +3162,37 @@ export function ConsolaEnvioPedidosTaller({
               </>
             )}
 
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+              <div>
+                <label style={labelStyle}>Colores para Taller</label>
+                <input
+                  type="text"
+                  value={ordenEditando.colores ?? ""}
+                  onChange={(e) =>
+                    setOrdenEditando((prev) =>
+                      prev ? { ...prev, colores: e.target.value } : null
+                    )
+                  }
+                  placeholder="Ej. Rojo, Blanco, Dorado"
+                  style={inputStyle}
+                />
+              </div>
+              <div>
+                <label style={labelStyle}>Extras</label>
+                <input
+                  type="text"
+                  value={ordenEditando.extras ?? ""}
+                  onChange={(e) =>
+                    setOrdenEditando((prev) =>
+                      prev ? { ...prev, extras: e.target.value } : null
+                    )
+                  }
+                  placeholder="Ej. Ferrero, Globo, Vino"
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+
             <div>
               <label style={labelStyle}>Notas / Observaciones</label>
               <input
@@ -3285,6 +3423,14 @@ export function ConsolaEnvioPedidosTaller({
           </div>
         </div>
       )}
+
+      <ControlRemotoTvTaller
+        negocio={negocio}
+        ordenesPendientes={ordenesActivas}
+        abierto={mostrarControlTv}
+        onCerrar={() => setMostrarControlTv(false)}
+        onPrioridadActualizada={() => void recargarDatos(true)}
+      />
 
       <ModalVisorEvidenciaEntrega
         datos={visorEvidencia}
