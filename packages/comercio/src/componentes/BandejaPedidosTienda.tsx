@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { DataGrid, SelectConBuscador, type ColumnaDataGrid } from "@eco/datagrid";
 import {
+  Calendar,
   Camera,
   CheckCircle2,
   ClipboardList,
@@ -45,6 +46,7 @@ import {
   formatearHorarioEntregaOrden,
   inferirClasificacionPedido,
   obtenerDefinicionClasificacionPedido,
+  obtenerFechaHoyEcuadorYmd,
   resolverEstadoInicialHorario,
   type ClasificacionOperativaPedido,
   type ModoSelectorHorarioEntrega,
@@ -197,6 +199,90 @@ interface FormularioEdicionPedido {
   dedicatoria: string;
 }
 
+type FiltroFechaPedidos =
+  | "HOY"
+  | "AYER"
+  | "ESTA_SEMANA"
+  | "SEMANA_MAS_MENOS_3"
+  | "MES"
+  | "TODOS";
+
+const TABS_FECHA_PEDIDOS: ReadonlyArray<{
+  clave: FiltroFechaPedidos;
+  etiqueta: string;
+  descripcion: string;
+}> = [
+  { clave: "HOY", etiqueta: "Hoy", descripcion: "Pedidos con entrega hoy" },
+  { clave: "AYER", etiqueta: "Ayer", descripcion: "Pedidos con entrega ayer" },
+  {
+    clave: "ESTA_SEMANA",
+    etiqueta: "Esta Semana",
+    descripcion: "Lunes a domingo de la semana actual",
+  },
+  {
+    clave: "SEMANA_MAS_MENOS_3",
+    etiqueta: "Semana ±3 días",
+    descripcion: "Desde hace 3 días hasta los próximos 3 días",
+  },
+  { clave: "MES", etiqueta: "Mes", descripcion: "Todos los pedidos del mes actual" },
+  { clave: "TODOS", etiqueta: "Todos", descripcion: "Historial completo sin límite de fechas" },
+];
+
+function sumarDiasYmd(ymd: string, dias: number): string {
+  const partes = ymd.split("-").map(Number);
+  const anio = partes[0] || 2026;
+  const mes = (partes[1] || 1) - 1;
+  const dia = partes[2] || 1;
+  const dt = new Date(Date.UTC(anio, mes, dia + dias));
+  const y = dt.getUTCFullYear();
+  const m = String(dt.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(dt.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function obtenerRangoSemanaActualYmd(hoyYmd: string): { inicio: string; fin: string } {
+  const partes = hoyYmd.split("-").map(Number);
+  const dt = new Date(Date.UTC(partes[0] || 2026, (partes[1] || 1) - 1, partes[2] || 1));
+  const diaSemana = dt.getUTCDay(); // 0 = Dom, 1 = Lun, ... 6 = Sab
+  const diffALunes = diaSemana === 0 ? -6 : 1 - diaSemana;
+  const inicio = sumarDiasYmd(hoyYmd, diffALunes);
+  const fin = sumarDiasYmd(inicio, 6);
+  return { inicio, fin };
+}
+
+function obtenerFechaReferenciaPedidoYmd(p: PedidoTiendaRegistrado): string {
+  const entrega = String(p.logistica?.fechaEntrega || "").trim().slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(entrega)) return entrega;
+  const creado = String(p.creadoEn || "").trim().slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(creado)) return creado;
+  return "";
+}
+
+function pedidoPerteneceAFiltroFecha(
+  p: PedidoTiendaRegistrado,
+  filtro: FiltroFechaPedidos,
+  hoyYmd: string
+): boolean {
+  if (filtro === "TODOS") return true;
+  const f = obtenerFechaReferenciaPedidoYmd(p);
+  if (!f) return false;
+  if (filtro === "HOY") return f === hoyYmd;
+  if (filtro === "AYER") return f === sumarDiasYmd(hoyYmd, -1);
+  if (filtro === "ESTA_SEMANA") {
+    const { inicio, fin } = obtenerRangoSemanaActualYmd(hoyYmd);
+    return f >= inicio && f <= fin;
+  }
+  if (filtro === "SEMANA_MAS_MENOS_3") {
+    const inicio = sumarDiasYmd(hoyYmd, -3);
+    const fin = sumarDiasYmd(hoyYmd, 3);
+    return f >= inicio && f <= fin;
+  }
+  if (filtro === "MES") {
+    return f.slice(0, 7) === hoyYmd.slice(0, 7);
+  }
+  return true;
+}
+
 export function BandejaPedidosTienda({
   negocio,
   pedidosIniciales,
@@ -225,9 +311,11 @@ export function BandejaPedidosTienda({
   const [motivoEliminacion, setMotivoEliminacion] = useState<string>("");
   const [procesandoEliminacion, setProcesandoEliminacion] = useState<boolean>(false);
   const [modoVista, setModoVista] = useState<"tabla" | "kanban">("tabla");
+  const [filtroFecha, setFiltroFecha] = useState<FiltroFechaPedidos>("HOY");
   const [busquedaKanban, setBusquedaKanban] = useState<string>("");
   const [arrastrandoPedidoId, setArrastrandoPedidoId] = useState<string | null>(null);
   const [estadoHoverKanban, setEstadoHoverKanban] = useState<string | null>(null);
+  const hoyEcuadorYmd = useMemo(() => obtenerFechaHoyEcuadorYmd(), []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -236,10 +324,31 @@ export function BandejaPedidosTienda({
       if (guardado === "kanban" || guardado === "tabla") {
         setModoVista(guardado);
       }
+      const fechaGuardada = localStorage.getItem(
+        `eco_pedidos_filtro_fecha_${negocio.trim().toLowerCase()}`
+      ) as FiltroFechaPedidos | null;
+      if (
+        fechaGuardada &&
+        TABS_FECHA_PEDIDOS.some((t) => t.clave === fechaGuardada)
+      ) {
+        setFiltroFecha(fechaGuardada);
+      }
     } catch {
       // Ignorar
     }
   }, [negocio]);
+
+  const cambiarFiltroFecha = useCallback(
+    (nuevo: FiltroFechaPedidos) => {
+      setFiltroFecha(nuevo);
+      try {
+        localStorage.setItem(`eco_pedidos_filtro_fecha_${negocio.trim().toLowerCase()}`, nuevo);
+      } catch {
+        // Ignorar
+      }
+    },
+    [negocio]
+  );
 
   const cambiarModoVista = useCallback(
     (nuevo: "tabla" | "kanban") => {
@@ -419,6 +528,7 @@ export function BandejaPedidosTienda({
 
   useEffect(() => {
     if (!pedidoEnfocado) return;
+    setFiltroFecha("TODOS");
     const upper = pedidoEnfocado.toUpperCase();
     const existe = pedidos.some(
       (p) => p.codigoOrden.toUpperCase().includes(upper) || p.id === pedidoEnfocado
@@ -487,20 +597,52 @@ export function BandejaPedidosTienda({
     [negocio, cacheKey]
   );
 
+  const baseActivaPedidos = useMemo(
+    () => (verPapelera && esAdminEstricto ? pedidosEliminados : pedidos),
+    [verPapelera, esAdminEstricto, pedidosEliminados, pedidos]
+  );
+
+  const conteosFecha = useMemo(() => {
+    const mapa: Record<FiltroFechaPedidos, number> = {
+      HOY: 0,
+      AYER: 0,
+      ESTA_SEMANA: 0,
+      SEMANA_MAS_MENOS_3: 0,
+      MES: 0,
+      TODOS: baseActivaPedidos.length,
+    };
+    for (const p of baseActivaPedidos) {
+      if (pedidoPerteneceAFiltroFecha(p, "HOY", hoyEcuadorYmd)) mapa.HOY++;
+      if (pedidoPerteneceAFiltroFecha(p, "AYER", hoyEcuadorYmd)) mapa.AYER++;
+      if (pedidoPerteneceAFiltroFecha(p, "ESTA_SEMANA", hoyEcuadorYmd)) mapa.ESTA_SEMANA++;
+      if (pedidoPerteneceAFiltroFecha(p, "SEMANA_MAS_MENOS_3", hoyEcuadorYmd)) {
+        mapa.SEMANA_MAS_MENOS_3++;
+      }
+      if (pedidoPerteneceAFiltroFecha(p, "MES", hoyEcuadorYmd)) mapa.MES++;
+    }
+    return mapa;
+  }, [baseActivaPedidos, hoyEcuadorYmd]);
+
+  const pedidosPorFecha = useMemo(() => {
+    if (filtroFecha === "TODOS") return baseActivaPedidos;
+    return baseActivaPedidos.filter((p) =>
+      pedidoPerteneceAFiltroFecha(p, filtroFecha, hoyEcuadorYmd)
+    );
+  }, [baseActivaPedidos, filtroFecha, hoyEcuadorYmd]);
+
   const conteosClasificacion = useMemo(() => {
     const mapa: Partial<Record<ClasificacionOperativaPedido, number>> = {};
-    for (const p of pedidos) {
+    for (const p of pedidosPorFecha) {
       const c = resolverClasificacionPedidoTienda(p);
       mapa[c] = (mapa[c] ?? 0) + 1;
     }
     return mapa;
-  }, [pedidos]);
+  }, [pedidosPorFecha]);
 
   const pedidosFiltrados = useMemo(() => {
-    const base = verPapelera && esAdminEstricto ? pedidosEliminados : pedidos;
-    if (filtroClasificacion === "TODOS") return base;
-    return base.filter((p) => resolverClasificacionPedidoTienda(p) === filtroClasificacion);
-  }, [verPapelera, esAdminEstricto, pedidosEliminados, pedidos, filtroClasificacion]);
+    if (filtroClasificacion === "TODOS") return pedidosPorFecha;
+    return pedidosPorFecha.filter((p) => resolverClasificacionPedidoTienda(p) === filtroClasificacion);
+  }, [pedidosPorFecha, filtroClasificacion]);
 
   const columnasKanbanDisponibles = useMemo(() => {
     const q = (busquedaKanban || pedidoEnfocado || "").trim().toLowerCase();
@@ -1270,6 +1412,86 @@ export function BandejaPedidosTienda({
         </div>
       </div>
 
+      {/* Barra de TABS por Fechas (Hoy / Ayer / Esta Semana / Semana ±3 días / Mes / Todos) */}
+      <div
+        role="tablist"
+        aria-label="Filtrar pedidos por fecha"
+        style={{
+          background: "#FFFFFF",
+          border: "1px solid #E5E7EB",
+          borderRadius: "12px",
+          padding: "8px 14px",
+          display: "flex",
+          alignItems: "center",
+          gap: "6px",
+          flexWrap: "wrap",
+        }}
+      >
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "5px",
+            fontSize: "0.75rem",
+            fontWeight: 700,
+            color: "#475569",
+            marginRight: "4px",
+          }}
+        >
+          <Calendar size={14} color="#0F766E" />
+          <span>Fecha:</span>
+        </span>
+
+        {TABS_FECHA_PEDIDOS.map((tab) => {
+          const activo = filtroFecha === tab.clave;
+          const conteo = conteosFecha[tab.clave] ?? 0;
+          return (
+            <button
+              key={tab.clave}
+              type="button"
+              role="tab"
+              aria-selected={activo}
+              onClick={() => cambiarFiltroFecha(tab.clave)}
+              title={tab.descripcion}
+              aria-label={`${tab.etiqueta} (${conteo})`}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 12px",
+                borderRadius: "999px",
+                border: activo ? "1px solid #0F172A" : "1px solid #E2E8F0",
+                background: activo ? "#0F172A" : "#F8FAFC",
+                color: activo ? "#FFFFFF" : "#334155",
+                fontSize: "0.77rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <span>{tab.etiqueta}</span>
+              <span
+                style={{
+                  minWidth: "20px",
+                  height: "18px",
+                  padding: "0 6px",
+                  borderRadius: "999px",
+                  background: activo ? "rgba(255,255,255,0.2)" : "#E2E8F0",
+                  color: activo ? "#FFFFFF" : "#475569",
+                  fontSize: "0.7rem",
+                  fontWeight: 800,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {conteo}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Barra profesional de Clasificación Operativa */}
       <div
         style={{
@@ -1288,7 +1510,7 @@ export function BandejaPedidosTienda({
           seleccionada={filtroClasificacion}
           onSeleccionar={setFiltroClasificacion}
           conteos={conteosClasificacion}
-          totalGeneral={pedidos.length}
+          totalGeneral={pedidosPorFecha.length}
         />
 
         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
