@@ -3974,7 +3974,19 @@
 
   /* Carrusel de Productos Destacados */
   .seccion-carrusel-destacados {
-    padding: 36px 16px;
+    padding: 28px 16px 32px;
+  }
+  .cabecera-carrusel-destacados {
+    align-items: center;
+    margin-bottom: 14px;
+    gap: 12px;
+  }
+  .titulos-seccion-destacados p,
+  .subtitulo-seccion-vitrina,
+  .titulos-testimonios p,
+  .contenido-tienda-fisica > p,
+  .texto-oculto-movil-ecommerce {
+    display: none !important;
   }
   .item-riel-destacados {
     flex: 0 0 82vw;

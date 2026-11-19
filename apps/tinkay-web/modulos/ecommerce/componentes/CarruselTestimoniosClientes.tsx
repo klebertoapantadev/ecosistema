@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import {
   ChevronLeft,
   ChevronRight,
@@ -18,8 +18,21 @@ import {
   type TestimonioCliente,
 } from '../datos-testimonios';
 
+function reposicionarRielTestimonios(el: HTMLDivElement, nuevoLeft: number) {
+  const prevSnap = el.style.scrollSnapType;
+  const prevBehavior = el.style.scrollBehavior;
+  el.style.scrollSnapType = 'none';
+  el.style.scrollBehavior = 'auto';
+  el.scrollLeft = nuevoLeft;
+  void el.offsetWidth;
+  el.style.scrollSnapType = prevSnap;
+  el.style.scrollBehavior = prevBehavior;
+}
+
 export function CarruselTestimoniosClientes() {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const ajustandoRef = useRef(false);
   const [listaTestimonios, setListaTestimonios] = useState<TestimonioCliente[]>(TESTIMONIOS_TINKAY);
   const [testimonioSeleccionado, setTestimonioSeleccionado] = useState<TestimonioCliente | null>(null);
 
@@ -48,27 +61,99 @@ export function CarruselTestimoniosClientes() {
     sincronizarBDD();
   }, []);
 
+  const totalPorCiclo = listaTestimonios.length + 1; // testimonios + tarjeta álbum Google Photos
+  const esInfinito = listaTestimonios.length > 1;
+  const copiasCiclo = useMemo(() => (esInfinito ? [0, 1, 2] : [0]), [esInfinito]);
+
+  const obtenerMetricasCiclo = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el || !esInfinito) return null;
+    const hijos = el.children;
+    if (hijos.length < totalPorCiclo * 2) return null;
+    const primero = hijos[0] as HTMLElement | undefined;
+    const segundo = hijos[1] as HTMLElement | undefined;
+    const inicioCopiaMedia = hijos[totalPorCiclo] as HTMLElement | undefined;
+    if (!primero || !inicioCopiaMedia) return null;
+    const anchoCiclo = inicioCopiaMedia.offsetLeft - primero.offsetLeft;
+    if (anchoCiclo <= 0) return null;
+    const paso = segundo ? Math.max(220, segundo.offsetLeft - primero.offsetLeft) : 340;
+    return { el, anchoCiclo, paso };
+  }, [esInfinito, totalPorCiclo]);
+
+  const normalizarPosicion = useCallback(() => {
+    const m = obtenerMetricasCiclo();
+    if (!m || ajustandoRef.current) return;
+    const { el, anchoCiclo } = m;
+    if (el.scrollLeft >= anchoCiclo * 2 - 4) {
+      ajustandoRef.current = true;
+      reposicionarRielTestimonios(el, el.scrollLeft - anchoCiclo);
+      ajustandoRef.current = false;
+    } else if (el.scrollLeft <= anchoCiclo * 0.5) {
+      ajustandoRef.current = true;
+      reposicionarRielTestimonios(el, el.scrollLeft + anchoCiclo);
+      ajustandoRef.current = false;
+    }
+  }, [obtenerMetricasCiclo]);
+
+  useEffect(() => {
+    if (!esInfinito) return;
+    const centrar = () => {
+      const m = obtenerMetricasCiclo();
+      if (!m) return;
+      ajustandoRef.current = true;
+      reposicionarRielTestimonios(m.el, m.anchoCiclo);
+      ajustandoRef.current = false;
+    };
+    const raf = requestAnimationFrame(centrar);
+    return () => cancelAnimationFrame(raf);
+  }, [esInfinito, obtenerMetricasCiclo]);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || !esInfinito) return;
+    const alScroll = () => {
+      if (ajustandoRef.current) return;
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = setTimeout(normalizarPosicion, 150);
+    };
+    const alScrollEnd = () => {
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      normalizarPosicion();
+    };
+    el.addEventListener('scroll', alScroll, { passive: true });
+    el.addEventListener('scrollend', alScrollEnd as EventListener, { passive: true });
+    return () => {
+      el.removeEventListener('scroll', alScroll);
+      el.removeEventListener('scrollend', alScrollEnd as EventListener);
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    };
+  }, [esInfinito, normalizarPosicion]);
+
   const scroll = (direccion: 'izq' | 'der') => {
     const el = scrollRef.current;
     if (!el) return;
-    const maxScroll = el.scrollWidth - el.clientWidth;
-    if (maxScroll <= 0) return;
-    const paso = 360;
+    const m = obtenerMetricasCiclo();
+    if (!m) {
+      el.scrollBy({ left: direccion === 'der' ? 360 : -360, behavior: 'smooth' });
+      return;
+    }
+    const { anchoCiclo, paso } = m;
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
 
     if (direccion === 'der') {
-      if (el.scrollLeft >= maxScroll - 25) {
-        el.scrollTo({ left: 0, behavior: 'smooth' });
-      } else {
-        const nuevoScroll = Math.min(el.scrollLeft + paso, maxScroll);
-        el.scrollTo({ left: nuevoScroll, behavior: 'smooth' });
+      if (el.scrollLeft + paso >= anchoCiclo * 2 - 4) {
+        ajustandoRef.current = true;
+        reposicionarRielTestimonios(el, el.scrollLeft - anchoCiclo);
+        ajustandoRef.current = false;
       }
+      el.scrollTo({ left: el.scrollLeft + paso, behavior: 'smooth' });
     } else {
-      if (el.scrollLeft <= 25) {
-        el.scrollTo({ left: maxScroll, behavior: 'smooth' });
-      } else {
-        const nuevoScroll = Math.max(el.scrollLeft - paso, 0);
-        el.scrollTo({ left: nuevoScroll, behavior: 'smooth' });
+      if (el.scrollLeft - paso <= anchoCiclo * 0.5) {
+        ajustandoRef.current = true;
+        reposicionarRielTestimonios(el, el.scrollLeft + anchoCiclo);
+        ajustandoRef.current = false;
       }
+      el.scrollTo({ left: el.scrollLeft - paso, behavior: 'smooth' });
     }
   };
 
@@ -139,90 +224,94 @@ export function CarruselTestimoniosClientes() {
           </div>
         </div>
 
-        {/* Riel Horizontal Deslizable */}
+        {/* Riel Horizontal Deslizable Infinito */}
         <div className="riel-testimonios-tinkay" ref={scrollRef}>
-          {listaTestimonios.map((testimonio) => (
-            <article key={testimonio.id} className="tarjeta-testimonio-card">
-              {/* Marco de Captura / Fotografía */}
-              <div
-                className="marco-foto-testimonio"
-                onClick={() => setTestimonioSeleccionado(testimonio)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    setTestimonioSeleccionado(testimonio);
-                  }
-                }}
-                title="Clic para ampliar foto o captura de chat"
-                aria-label={`Ampliar testimonio de ${testimonio.nombreCliente}`}
-              >
-                <img
-                  src={testimonio.imagenUrl}
-                  alt={`Testimonio y entrega floral para ${testimonio.nombreCliente}`}
-                  className="foto-testimonio-img"
-                  loading="lazy"
-                />
-                <span className="pildora-ocasion-testimonio">{testimonio.ocasion}</span>
-                <div className="overlay-lupa-testimonio">
-                  <ZoomIn size={18} />
-                  <span>Ampliar</span>
-                </div>
-              </div>
-
-              {/* Información y Mensaje del Cliente */}
-              <div className="cuerpo-testimonio">
-                <div className="fila-estrellas-verificado">
-                  <div className="estrellas-calificacion" aria-label="Calificación 5 de 5 estrellas">
-                    {[...Array(testimonio.calificacion)].map((_, i) => (
-                      <Star key={i} size={15} fill="currentColor" />
-                    ))}
+          {copiasCiclo.map((copia) => (
+            <React.Fragment key={`ciclo-${copia}`}>
+              {listaTestimonios.map((testimonio) => (
+                <article key={`${testimonio.id}-${copia}`} className="tarjeta-testimonio-card">
+                  {/* Marco de Captura / Fotografía */}
+                  <div
+                    className="marco-foto-testimonio"
+                    onClick={() => setTestimonioSeleccionado(testimonio)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setTestimonioSeleccionado(testimonio);
+                      }
+                    }}
+                    title="Clic para ampliar foto o captura de chat"
+                    aria-label={`Ampliar testimonio de ${testimonio.nombreCliente}`}
+                  >
+                    <img
+                      src={testimonio.imagenUrl}
+                      alt={`Testimonio y entrega floral para ${testimonio.nombreCliente}`}
+                      className="foto-testimonio-img"
+                      loading="lazy"
+                    />
+                    <span className="pildora-ocasion-testimonio">{testimonio.ocasion}</span>
+                    <div className="overlay-lupa-testimonio">
+                      <ZoomIn size={18} />
+                      <span>Ampliar</span>
+                    </div>
                   </div>
-                  <span className="badge-cliente-verificado">
-                    <CheckCircle2 size={13} />
-                    <span>Verificado</span>
-                  </span>
-                </div>
 
-                <blockquote className="comentario-cita-testimonio">
-                  {testimonio.comentario}
-                </blockquote>
+                  {/* Información y Mensaje del Cliente */}
+                  <div className="cuerpo-testimonio">
+                    <div className="fila-estrellas-verificado">
+                      <div className="estrellas-calificacion" aria-label="Calificación 5 de 5 estrellas">
+                        {[...Array(testimonio.calificacion)].map((_, i) => (
+                          <Star key={i} size={15} fill="currentColor" />
+                        ))}
+                      </div>
+                      <span className="badge-cliente-verificado">
+                        <CheckCircle2 size={13} />
+                        <span>Verificado</span>
+                      </span>
+                    </div>
 
-                <footer className="autor-testimonio">
-                  <div className="datos-autor-linea">
-                    <strong className="nombre-cliente">{testimonio.nombreCliente}</strong>
-                    <span className="separador-punto">•</span>
-                    <span className="ciudad-cliente">{testimonio.ciudad}</span>
+                    <blockquote className="comentario-cita-testimonio">
+                      {testimonio.comentario}
+                    </blockquote>
+
+                    <footer className="autor-testimonio">
+                      <div className="datos-autor-linea">
+                        <strong className="nombre-cliente">{testimonio.nombreCliente}</strong>
+                        <span className="separador-punto">•</span>
+                        <span className="ciudad-cliente">{testimonio.ciudad}</span>
+                      </div>
+                      {testimonio.fecha && <span className="fecha-testimonio">{testimonio.fecha}</span>}
+                    </footer>
                   </div>
-                  {testimonio.fecha && <span className="fecha-testimonio">{testimonio.fecha}</span>}
-                </footer>
+                </article>
+              ))}
+
+              {/* Tarjeta Final del ciclo: Enlace al Álbum de Google Photos */}
+              <div key={`album-${copia}`} className="tarjeta-cta-album-google">
+                <div className="icono-album-circulo">
+                  <Camera size={32} />
+                </div>
+                <h3>+100 Entregas y Momentos Reales</h3>
+                <p>
+                  Explora fotos de entregas en vivo, reacciones de clientes y arreglos en nuestro álbum oficial
+                  de Google Photos.
+                </p>
+                <a
+                  href={ENLACE_ALBUM_GOOGLE_PHOTOS}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-ver-album-google"
+                  title="Abrir álbum oficial en Google Photos"
+                  aria-label="Abrir álbum de fotos de entregas en Google Photos"
+                >
+                  <span>Ver Álbum en Google Photos</span>
+                  <ExternalLink size={16} />
+                </a>
               </div>
-            </article>
+            </React.Fragment>
           ))}
-
-          {/* Tarjeta Final: Enlace al Álbum de Google Photos */}
-          <div className="tarjeta-cta-album-google">
-            <div className="icono-album-circulo">
-              <Camera size={32} />
-            </div>
-            <h3>+100 Entregas y Momentos Reales</h3>
-            <p>
-              Explora fotos de entregas en vivo, reacciones de clientes y arreglos en nuestro álbum oficial
-              de Google Photos.
-            </p>
-            <a
-              href={ENLACE_ALBUM_GOOGLE_PHOTOS}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-ver-album-google"
-              title="Abrir álbum oficial en Google Photos"
-              aria-label="Abrir álbum de fotos de entregas en Google Photos"
-            >
-              <span>Ver Álbum en Google Photos</span>
-              <ExternalLink size={16} />
-            </a>
-          </div>
         </div>
 
         {/* Barra inferior destacada de confianza */}
