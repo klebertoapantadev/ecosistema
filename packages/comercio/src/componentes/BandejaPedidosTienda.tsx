@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ClipboardList,
   Clock,
+  Columns3,
   Edit3,
   ExternalLink,
   FilePlus2,
@@ -18,6 +19,8 @@ import {
   RefreshCw,
   RotateCcw,
   Save,
+  Search,
+  Table2,
   Trash2,
   Truck,
   X,
@@ -221,6 +224,34 @@ export function BandejaPedidosTienda({
   const [pedidoAEliminar, setPedidoAEliminar] = useState<PedidoTiendaRegistrado | null>(null);
   const [motivoEliminacion, setMotivoEliminacion] = useState<string>("");
   const [procesandoEliminacion, setProcesandoEliminacion] = useState<boolean>(false);
+  const [modoVista, setModoVista] = useState<"tabla" | "kanban">("tabla");
+  const [busquedaKanban, setBusquedaKanban] = useState<string>("");
+  const [arrastrandoPedidoId, setArrastrandoPedidoId] = useState<string | null>(null);
+  const [estadoHoverKanban, setEstadoHoverKanban] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const guardado = localStorage.getItem(`eco_pedidos_modo_vista_${negocio.trim().toLowerCase()}`);
+      if (guardado === "kanban" || guardado === "tabla") {
+        setModoVista(guardado);
+      }
+    } catch {
+      // Ignorar
+    }
+  }, [negocio]);
+
+  const cambiarModoVista = useCallback(
+    (nuevo: "tabla" | "kanban") => {
+      setModoVista(nuevo);
+      try {
+        localStorage.setItem(`eco_pedidos_modo_vista_${negocio.trim().toLowerCase()}`, nuevo);
+      } catch {
+        // Ignorar
+      }
+    },
+    [negocio]
+  );
 
   const abrirEdicionDatosPedido = useCallback((p: PedidoTiendaRegistrado) => {
     const primerDed = p.items.find((it) => it.dedicatoria?.mensaje)?.dedicatoria;
@@ -470,6 +501,63 @@ export function BandejaPedidosTienda({
     if (filtroClasificacion === "TODOS") return base;
     return base.filter((p) => resolverClasificacionPedidoTienda(p) === filtroClasificacion);
   }, [verPapelera, esAdminEstricto, pedidosEliminados, pedidos, filtroClasificacion]);
+
+  const columnasKanbanDisponibles = useMemo(() => {
+    const q = (busquedaKanban || pedidoEnfocado || "").trim().toLowerCase();
+    const filtradosTexto = q
+      ? pedidosFiltrados.filter((p) => {
+          const texto = [
+            p.codigoOrden,
+            p.compradorNombre,
+            p.logistica.destinatarioNombre,
+            p.exequiales?.nombreFallecido,
+            p.exequiales?.quienSolicita,
+            p.exequiales?.salaServicio,
+            p.salaServicio,
+            p.logistica.direccion,
+            ...p.items.map((it) => it.descripcion),
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+          return texto.includes(q);
+        })
+      : pedidosFiltrados;
+
+    const agrupados = new Map<string, PedidoTiendaRegistrado[]>();
+    for (const p of filtradosTexto) {
+      const clave = String(p.estado || "ORDEN_CONFIRMADA").toUpperCase();
+      const lista = agrupados.get(clave);
+      if (lista) lista.push(p);
+      else agrupados.set(clave, [p]);
+    }
+
+    const columnas: Array<{
+      valor: string;
+      etiqueta: string;
+      colorFondo: string;
+      colorTexto: string;
+      items: PedidoTiendaRegistrado[];
+    }> = [];
+
+    for (const def of ESTADOS_PEDIDO) {
+      const itemsCol = agrupados.get(def.valor);
+      if (itemsCol && itemsCol.length > 0) {
+        columnas.push({ ...def, items: itemsCol });
+        agrupados.delete(def.valor);
+      }
+    }
+
+    // Cualquier estado adicional no listado en ESTADOS_PEDIDO que tenga pedidos
+    for (const [valor, itemsCol] of agrupados.entries()) {
+      if (itemsCol.length > 0) {
+        const est = estiloEstado(valor);
+        columnas.push({ ...est, items: itemsCol });
+      }
+    }
+
+    return columnas;
+  }, [pedidosFiltrados, busquedaKanban, pedidoEnfocado]);
 
   const handleConfirmarEliminacion = useCallback(
     async (definitivo: boolean) => {
@@ -1203,34 +1291,95 @@ export function BandejaPedidosTienda({
           totalGeneral={pedidos.length}
         />
 
-        {esAdminEstricto && (
-          <button
-            type="button"
-            onClick={() => setVerPapelera((prev) => !prev)}
-            title="Ver pedidos eliminados lógicamente por el equipo (solo Administrador)"
-            aria-label="Papelera de Pedidos"
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+          <div
+            role="group"
+            aria-label="Modo de visualización"
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: "6px",
-              padding: "6px 12px",
+              padding: "3px",
               borderRadius: "999px",
-              border: verPapelera ? "1px solid #DC2626" : "1px solid #FECACA",
-              background: verPapelera ? "#DC2626" : "#FEF2F2",
-              color: verPapelera ? "#FFFFFF" : "#991B1B",
-              fontSize: "0.76rem",
-              fontWeight: 700,
-              cursor: "pointer",
+              background: "#F1F5F9",
+              border: "1px solid #CBD5E1",
+              gap: "2px",
             }}
           >
-            <Trash2 size={13} />
-            <span>
-              {verPapelera
-                ? `Viendo Papelera (${pedidosEliminados.length}) · Volver`
-                : `Papelera (${pedidosEliminados.length})`}
-            </span>
-          </button>
-        )}
+            <button
+              type="button"
+              onClick={() => cambiarModoVista("tabla")}
+              title="Vista de tabla detallada con exportación Excel/CSV"
+              aria-label="Modo Tabla"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                padding: "5px 11px",
+                borderRadius: "999px",
+                border: "none",
+                background: modoVista === "tabla" ? "#0F172A" : "transparent",
+                color: modoVista === "tabla" ? "#FFFFFF" : "#475569",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              <Table2 size={13} />
+              <span>Tabla</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => cambiarModoVista("kanban")}
+              title="Tablero Kanban por estado (oculta columnas vacías)"
+              aria-label="Modo Kanban"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                padding: "5px 11px",
+                borderRadius: "999px",
+                border: "none",
+                background: modoVista === "kanban" ? "#0F172A" : "transparent",
+                color: modoVista === "kanban" ? "#FFFFFF" : "#475569",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              <Columns3 size={13} />
+              <span>Kanban</span>
+            </button>
+          </div>
+
+          {esAdminEstricto && (
+            <button
+              type="button"
+              onClick={() => setVerPapelera((prev) => !prev)}
+              title="Ver pedidos eliminados lógicamente por el equipo (solo Administrador)"
+              aria-label="Papelera de Pedidos"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 12px",
+                borderRadius: "999px",
+                border: verPapelera ? "1px solid #DC2626" : "1px solid #FECACA",
+                background: verPapelera ? "#DC2626" : "#FEF2F2",
+                color: verPapelera ? "#FFFFFF" : "#991B1B",
+                fontSize: "0.76rem",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              <Trash2 size={13} />
+              <span>
+                {verPapelera
+                  ? `Viendo Papelera (${pedidosEliminados.length}) · Volver`
+                  : `Papelera (${pedidosEliminados.length})`}
+              </span>
+            </button>
+          )}
+        </div>
       </div>
 
       {errorMsg && (
@@ -1310,6 +1459,487 @@ export function BandejaPedidosTienda({
           minWidth: 0,
         }}
       >
+        {modoVista === "kanban" ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: "10px",
+                flexWrap: "wrap",
+              }}
+            >
+              <div
+                style={{
+                  position: "relative",
+                  flex: "1 1 260px",
+                  maxWidth: "420px",
+                }}
+              >
+                <Search
+                  size={14}
+                  style={{
+                    position: "absolute",
+                    left: "11px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "#94A3B8",
+                    pointerEvents: "none",
+                  }}
+                />
+                <input
+                  type="search"
+                  value={busquedaKanban}
+                  onChange={(e) => setBusquedaKanban(e.target.value)}
+                  placeholder="Buscar en Kanban por código, cliente, fallecido, sala o producto..."
+                  style={{
+                    width: "100%",
+                    padding: "8px 12px 8px 32px",
+                    borderRadius: "9px",
+                    border: "1px solid #CBD5E1",
+                    fontSize: "0.81rem",
+                    color: "#0F172A",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
+              <span style={{ fontSize: "0.75rem", color: "#64748B", fontWeight: 600 }}>
+                {columnasKanbanDisponibles.length}{" "}
+                {columnasKanbanDisponibles.length === 1 ? "estado activo" : "estados activos"} ·{" "}
+                {!verPapelera
+                  ? "Arrastra una tarjeta o cambia su estado desde el selector"
+                  : "Vista de Papelera (solo Administrador)"}
+              </span>
+            </div>
+
+            {columnasKanbanDisponibles.length === 0 ? (
+              <div
+                style={{
+                  padding: "36px 16px",
+                  textAlign: "center",
+                  color: "#64748B",
+                  fontSize: "0.86rem",
+                  background: "#F8FAFC",
+                  borderRadius: "10px",
+                  border: "1px dashed #CBD5E1",
+                }}
+              >
+                No hay pedidos disponibles en esta vista o filtro.
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  gap: "14px",
+                  overflowX: "auto",
+                  alignItems: "flex-start",
+                  paddingBottom: "8px",
+                }}
+              >
+                {columnasKanbanDisponibles.map((col) => {
+                  const esDropHover = !verPapelera && estadoHoverKanban === col.valor;
+                  return (
+                    <div
+                      key={col.valor}
+                      onDragOver={(e) => {
+                        if (verPapelera) return;
+                        e.preventDefault();
+                        if (estadoHoverKanban !== col.valor) {
+                          setEstadoHoverKanban(col.valor);
+                        }
+                      }}
+                      onDragLeave={() => {
+                        if (estadoHoverKanban === col.valor) {
+                          setEstadoHoverKanban(null);
+                        }
+                      }}
+                      onDrop={(e) => {
+                        if (verPapelera) return;
+                        e.preventDefault();
+                        const idArrastrado =
+                          e.dataTransfer.getData("text/plain") || arrastrandoPedidoId;
+                        setEstadoHoverKanban(null);
+                        setArrastrandoPedidoId(null);
+                        if (!idArrastrado) return;
+                        const ped = pedidosFiltrados.find((x) => x.id === idArrastrado);
+                        if (ped && ped.estado !== col.valor) {
+                          void cambiarEstado(ped.id, col.valor);
+                        }
+                      }}
+                      style={{
+                        flex: "1 0 295px",
+                        minWidth: "295px",
+                        maxWidth: "360px",
+                        background: esDropHover ? "#EFF6FF" : "#F8FAFC",
+                        border: esDropHover ? "2px dashed #3B82F6" : "1px solid #E2E8F0",
+                        borderRadius: "12px",
+                        padding: "10px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "10px",
+                        transition: "background 0.15s ease, border-color 0.15s ease",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: "8px",
+                          padding: "6px 8px",
+                          borderRadius: "8px",
+                          background: col.colorFondo,
+                          color: col.colorTexto,
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+                          <span
+                            style={{
+                              width: "8px",
+                              height: "8px",
+                              borderRadius: "999px",
+                              background: col.colorTexto,
+                              display: "inline-block",
+                            }}
+                          />
+                          <strong style={{ fontSize: "0.8rem" }}>{col.etiqueta}</strong>
+                        </div>
+                        <span
+                          style={{
+                            padding: "1px 8px",
+                            borderRadius: "999px",
+                            background: "rgba(255,255,255,0.75)",
+                            color: col.colorTexto,
+                            fontSize: "0.72rem",
+                            fontWeight: 800,
+                          }}
+                        >
+                          {col.items.length}
+                        </span>
+                      </div>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: "9px" }}>
+                        {col.items.map((p) => {
+                          const clasif = resolverClasificacionPedidoTienda(p);
+                          const esExeq = clasif === "EXEQUIALES";
+                          const sala = p.exequiales?.salaServicio || p.salaServicio;
+                          const fallecido =
+                            p.exequiales?.nombreFallecido || p.logistica.destinatarioNombre || "";
+                          const solicita = p.exequiales?.quienSolicita || p.compradorNombre;
+                          const horaMostrar =
+                            p.logistica.horaExacta ||
+                            p.exequiales?.horaServicio ||
+                            p.logistica.franjaHoraria ||
+                            "Por coordinar";
+                          const fotoEvidencia = p.evidenciaEntrega?.fotoUrl;
+                          const impresiones = Number(p.tarjeta?.metadata?.impresiones ?? 0);
+
+                          return (
+                            <div
+                              key={p.id}
+                              draggable={!verPapelera}
+                              onDragStart={(e) => {
+                                if (verPapelera) return;
+                                setArrastrandoPedidoId(p.id);
+                                e.dataTransfer.setData("text/plain", p.id);
+                              }}
+                              onDragEnd={() => {
+                                setArrastrandoPedidoId(null);
+                                setEstadoHoverKanban(null);
+                              }}
+                              style={{
+                                background: "#FFFFFF",
+                                border:
+                                  arrastrandoPedidoId === p.id
+                                    ? "1.5px solid #3B82F6"
+                                    : "1px solid #E2E8F0",
+                                borderRadius: "10px",
+                                padding: "11px",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: "7px",
+                                boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
+                                cursor: verPapelera ? "default" : "grab",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "flex-start",
+                                  gap: "6px",
+                                  flexWrap: "wrap",
+                                }}
+                              >
+                                <strong style={{ fontSize: "0.82rem", color: "#0F172A" }}>
+                                  {p.codigoOrden}
+                                </strong>
+                                <InsigniaClasificacionPedido
+                                  clasificacion={clasif}
+                                  sufijoTexto={sala}
+                                  compacto
+                                />
+                              </div>
+
+                              <div style={{ fontSize: "0.78rem", color: "#1E293B", fontWeight: 600 }}>
+                                {p.items.map((it) => `${it.cantidad}× ${it.descripcion}`).join(" + ") ||
+                                  "Arreglo floral"}
+                              </div>
+
+                              <div style={{ fontSize: "0.74rem", color: "#475569", lineHeight: 1.35 }}>
+                                <div>
+                                  <strong>Solicita:</strong> {solicita}
+                                </div>
+                                {esExeq && fallecido ? (
+                                  <div style={{ color: "#581C87" }}>
+                                    <strong>Fallecido:</strong> {fallecido}
+                                  </div>
+                                ) : fallecido && fallecido !== solicita ? (
+                                  <div>
+                                    <strong>Para:</strong> {fallecido}
+                                  </div>
+                                ) : null}
+                                {sala ? (
+                                  <div style={{ color: "#6B21A8", fontWeight: 600 }}>
+                                    Sala: {sala}
+                                  </div>
+                                ) : p.logistica.direccion ? (
+                                  <div style={{ color: "#64748B" }}>
+                                    📍 {p.logistica.direccion}
+                                  </div>
+                                ) : null}
+                              </div>
+
+                              <div
+                                style={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  alignItems: "center",
+                                  gap: "6px",
+                                  fontSize: "0.72rem",
+                                  color: "#0F766E",
+                                  background: "#F0FDFA",
+                                  padding: "4px 7px",
+                                  borderRadius: "6px",
+                                }}
+                              >
+                                <span style={{ fontWeight: 700 }}>
+                                  🕒 {p.logistica.fechaEntrega || "Hoy"} · {horaMostrar}
+                                </span>
+                                <strong style={{ color: "#0F172A" }}>
+                                  {esExeq ? "IESS" : `$${p.total.toFixed(2)}`}
+                                </strong>
+                              </div>
+
+                              {p.eliminadoEn && esAdminEstricto ? (
+                                <div
+                                  style={{
+                                    padding: "5px 7px",
+                                    borderRadius: "6px",
+                                    background: "#FEF2F2",
+                                    border: "1px solid #FECACA",
+                                    color: "#991B1B",
+                                    fontSize: "0.7rem",
+                                  }}
+                                >
+                                  <div>
+                                    <strong>🗑️ Eliminado por:</strong>{" "}
+                                    {p.eliminadoPorNombre || "Staff"}
+                                  </div>
+                                  {p.eliminadoMotivo ? (
+                                    <div style={{ fontStyle: "italic" }}>
+                                      Motivo: {p.eliminadoMotivo}
+                                    </div>
+                                  ) : null}
+                                </div>
+                              ) : (
+                                <SelectConBuscador
+                                  value={p.estado}
+                                  disabled={actualizandoId === p.id}
+                                  onChange={(e) => void cambiarEstado(p.id, e.target.value)}
+                                  aria-label={`Estado de ${p.codigoOrden}`}
+                                  style={{
+                                    width: "100%",
+                                    padding: "5px 8px",
+                                    borderRadius: "7px",
+                                    border: "1px solid #CBD5E1",
+                                    background: col.colorFondo,
+                                    color: col.colorTexto,
+                                    fontSize: "0.72rem",
+                                    fontWeight: 700,
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  {ESTADOS_PEDIDO.map((op) => (
+                                    <option key={op.valor} value={op.valor}>
+                                      {op.etiqueta}
+                                    </option>
+                                  ))}
+                                </SelectConBuscador>
+                              )}
+
+                              <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+                                {p.eliminadoEn && esAdminEstricto ? (
+                                  <>
+                                    <button
+                                      type="button"
+                                      disabled={actualizandoId === p.id}
+                                      onClick={() => void handleRestaurarPedido(p)}
+                                      style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "4px",
+                                        padding: "4px 8px",
+                                        borderRadius: "6px",
+                                        border: "1px solid #10B981",
+                                        background: "#ECFDF5",
+                                        color: "#065F46",
+                                        fontSize: "0.7rem",
+                                        fontWeight: 700,
+                                        cursor: "pointer",
+                                      }}
+                                    >
+                                      <RotateCcw size={11} />
+                                      <span>Restaurar</span>
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={actualizandoId === p.id}
+                                      onClick={() => {
+                                        setMotivoEliminacion("");
+                                        setPedidoAEliminar(p);
+                                      }}
+                                      style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "4px",
+                                        padding: "4px 8px",
+                                        borderRadius: "6px",
+                                        border: "none",
+                                        background: "#DC2626",
+                                        color: "#FFFFFF",
+                                        fontSize: "0.7rem",
+                                        fontWeight: 700,
+                                        cursor: "pointer",
+                                      }}
+                                    >
+                                      <Trash2 size={11} />
+                                      <span>Eliminar Definitivo</span>
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    {fotoEvidencia && (
+                                      <button
+                                        type="button"
+                                        onClick={() => abrirModalEvidencia(p)}
+                                        style={{
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          gap: "4px",
+                                          padding: "4px 8px",
+                                          borderRadius: "6px",
+                                          border: "1px solid #A7F3D0",
+                                          background: "#ECFDF5",
+                                          color: "#065F46",
+                                          fontSize: "0.7rem",
+                                          fontWeight: 700,
+                                          cursor: "pointer",
+                                        }}
+                                      >
+                                        <Camera size={11} />
+                                        <span>Ver Foto</span>
+                                      </button>
+                                    )}
+
+                                    <button
+                                      type="button"
+                                      onClick={() => abrirEdicionDatosPedido(p)}
+                                      style={{
+                                        display: "inline-flex",
+                                        alignItems: "center",
+                                        gap: "4px",
+                                        padding: "4px 8px",
+                                        borderRadius: "6px",
+                                        border: "1px solid #CBD5E1",
+                                        background: "#FFFFFF",
+                                        color: "#334155",
+                                        fontSize: "0.7rem",
+                                        fontWeight: 700,
+                                        cursor: "pointer",
+                                      }}
+                                    >
+                                      <Edit3 size={11} />
+                                      <span>Editar</span>
+                                    </button>
+
+                                    {!esExeq && (
+                                      <button
+                                        type="button"
+                                        onClick={() => setPedidoParaTarjeta(p)}
+                                        style={{
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          gap: "4px",
+                                          padding: "4px 8px",
+                                          borderRadius: "6px",
+                                          border:
+                                            impresiones > 0
+                                              ? "1px solid #F59E0B"
+                                              : "1px solid #0284C7",
+                                          background: impresiones > 0 ? "#FEF3C7" : "#F0F9FF",
+                                          color: impresiones > 0 ? "#92400E" : "#0369A1",
+                                          fontSize: "0.7rem",
+                                          fontWeight: 700,
+                                          cursor: "pointer",
+                                        }}
+                                      >
+                                        <Printer size={11} />
+                                        <span>Tarjeta</span>
+                                      </button>
+                                    )}
+
+                                    {puedeEliminarLogico && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setMotivoEliminacion("");
+                                          setPedidoAEliminar(p);
+                                        }}
+                                        style={{
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          gap: "4px",
+                                          padding: "4px 8px",
+                                          borderRadius: "6px",
+                                          border: "1px solid #FECACA",
+                                          background: "#FEF2F2",
+                                          color: "#B91C1C",
+                                          fontSize: "0.7rem",
+                                          fontWeight: 700,
+                                          cursor: "pointer",
+                                        }}
+                                      >
+                                        <Trash2 size={11} />
+                                        <span>Eliminar</span>
+                                      </button>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        ) : (
         <DataGrid
           columnas={columnas}
           filas={pedidosFiltrados}
@@ -2171,6 +2801,7 @@ export function BandejaPedidosTienda({
             );
           }}
         />
+        )}
       </div>
 
       {proformaEditandoVariacion && (
