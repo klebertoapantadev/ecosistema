@@ -737,6 +737,9 @@ export function PantallaTvTaller({
     return (
       <div
         style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 9999,
           width: "100vw",
           height: "100vh",
           background: "#0B1120",
@@ -789,6 +792,7 @@ export function PantallaTvTaller({
       style={{
         position: "fixed",
         inset: 0,
+        zIndex: 9999,
         width: "100vw",
         height: "100vh",
         overflow: "hidden",

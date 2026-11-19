@@ -1395,7 +1395,7 @@ begin
     select
       pr.pro_id as "productoId",
       pr.pro_nombre as "nombre",
-      coalesce(pr.pro_descripcion_corta, pr.pro_descripcion, ''::text) as "descripcion",
+      coalesce(pr.pro_descripcion, ''::text) as "descripcion",
       pr.pro_slug as "slug",
       pr.pro_tipo as "tipo",
       coalesce(
@@ -1412,22 +1412,36 @@ begin
           where v3.var_producto_id = pr.pro_id and v3.var_activo = true and v3.var_eliminado_en is null),
         0::numeric
       ) as "precioDesde",
-      coalesce(cat.cat_nombre, 'Eventos'::text) as "categoriaNombre"
+      coalesce(ctg.ctg_nombre, 'Eventos'::text) as "categoriaNombre"
     from comun_comercio.com_producto pr
-    left join comun_comercio.com_categoria cat on cat.cat_id = pr.pro_categoria_id
+    left join comun_comercio.com_categoria ctg on ctg.ctg_id = pr.pro_categoria_principal_id
     where lower(pr.pro_negocio) = v_negocio
       and pr.pro_activo = true
       and pr.pro_eliminado_en is null
       and (
         upper(coalesce(pr.pro_tipo, '')) = 'RENTA'
         or coalesce((pr.pro_detalle_producto->>'es_renta')::boolean, false) = true
-        or lower(coalesce(cat.cat_nombre, '')) like '%evento%'
-        or lower(coalesce(cat.cat_nombre, '')) like '%boda%'
-        or lower(coalesce(cat.cat_nombre, '')) like '%matrimon%'
-        or lower(coalesce(cat.cat_nombre, '')) like '%decorac%'
-        or lower(coalesce(cat.cat_nombre, '')) like '%mobiliario%'
-        or lower(coalesce(cat.cat_nombre, '')) like '%ceremonia%'
-        or lower(coalesce(cat.cat_slug, '')) like '%evento%'
+        or upper(coalesce(ctg.ctg_tipo, '')) = 'EVENTO'
+        or exists (
+          select 1
+          from comun_comercio.com_producto_categoria pct
+          join comun_comercio.com_categoria c2 on c2.ctg_id = pct.pct_categoria_id
+          where pct.pct_producto_id = pr.pro_id
+            and (
+              upper(coalesce(c2.ctg_tipo, '')) = 'EVENTO'
+              or lower(coalesce(c2.ctg_nombre, '')) like '%evento%'
+              or lower(coalesce(c2.ctg_nombre, '')) like '%boda%'
+              or lower(coalesce(c2.ctg_nombre, '')) like '%mobiliario%'
+              or lower(coalesce(c2.ctg_slug, '')) like '%evento%'
+            )
+        )
+        or lower(coalesce(ctg.ctg_nombre, '')) like '%evento%'
+        or lower(coalesce(ctg.ctg_nombre, '')) like '%boda%'
+        or lower(coalesce(ctg.ctg_nombre, '')) like '%matrimon%'
+        or lower(coalesce(ctg.ctg_nombre, '')) like '%decorac%'
+        or lower(coalesce(ctg.ctg_nombre, '')) like '%mobiliario%'
+        or lower(coalesce(ctg.ctg_nombre, '')) like '%ceremonia%'
+        or lower(coalesce(ctg.ctg_slug, '')) like '%evento%'
         or lower(coalesce(pr.pro_nombre, '')) like '%evento%'
         or lower(coalesce(pr.pro_nombre, '')) like '%boda%'
         or lower(coalesce(pr.pro_nombre, '')) like '%arco%'
