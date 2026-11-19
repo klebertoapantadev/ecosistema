@@ -1512,21 +1512,30 @@ export interface OrdenTvTaller {
   origenTipo: OrigenOrdenTaller;
   clasificacionPedido?: ClasificacionOperativaPedido;
   estadoTaller: EstadoOrdenTaller;
+  estadoPago?: string | null;
+  metodoPago?: string | null;
   fechaEntrega: string;
   fechaElaboracion?: string | null;
   franjaHoraria?: string | null;
   horaEspecifica?: string | null;
   productoResumen: string;
+  items?: ItemOrdenTaller[];
   colores?: string | null;
   extras?: string | null;
   observaciones?: string | null;
+  dedicatoria?: string | null;
+  clienteSolicita?: string | null;
+  destinatarioFallecido?: string | null;
   salaServicio?: string | null;
+  ubicacionEntrega?: string | null;
   retiroEnLocal?: boolean;
+  totalUsd?: number | null;
   prioridadOrden?: number | null;
   enviadoTallerEn?: string | null;
   preparacionEn?: string | null;
   listoEn?: string | null;
   entregadoEn?: string | null;
+  actualizadoTallerNombre?: string | null;
 }
 
 export interface ProductoEventoTv {

@@ -1098,7 +1098,7 @@ export function PantallaTvTaller({
         return;
       }
 
-      // Modal de confirmación "Marcar Listo" con control remoto
+  // Modal de detalle y confirmación "Marcar Listo" con control remoto
       if (ordenConfirmandoListo) {
         if (e.key === "Escape") {
           e.preventDefault();
@@ -1108,8 +1108,14 @@ export function PantallaTvTaller({
           setBotonConfirmFoco((b) => (b === "SI" ? "NO" : "SI"));
         } else if (e.key === "Enter") {
           e.preventDefault();
-          if (botonConfirmFoco === "SI") {
-            void avanzarEstadoDesdeTv(ordenConfirmandoListo, "LISTO_ENTREGA");
+          if (botonConfirmFoco === "SI" && tablero.puedeInteractuar) {
+            if (ordenConfirmandoListo.estadoTaller === "ENVIADO_TALLER") {
+              void avanzarEstadoDesdeTv(ordenConfirmandoListo, "EN_PREPARACION");
+            } else if (ordenConfirmandoListo.estadoTaller === "EN_PREPARACION") {
+              void avanzarEstadoDesdeTv(ordenConfirmandoListo, "LISTO_ENTREGA");
+            } else {
+              setOrdenConfirmandoListo(null);
+            }
           } else {
             setOrdenConfirmandoListo(null);
           }
@@ -1125,16 +1131,12 @@ export function PantallaTvTaller({
       } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
         e.preventDefault();
         setIndiceFoco((i) => (i - 1 + pendientesPagina.length) % pendientesPagina.length);
-      } else if (e.key === "Enter" && tablero.puedeInteractuar) {
+      } else if (e.key === "Enter") {
         e.preventDefault();
         const seleccionada = pendientesPagina[indiceFoco];
         if (!seleccionada) return;
-        if (seleccionada.estadoTaller === "ENVIADO_TALLER") {
-          void avanzarEstadoDesdeTv(seleccionada, "EN_PREPARACION");
-        } else if (seleccionada.estadoTaller === "EN_PREPARACION") {
-          setBotonConfirmFoco("SI");
-          setOrdenConfirmandoListo(seleccionada);
-        }
+        setBotonConfirmFoco("SI");
+        setOrdenConfirmandoListo(seleccionada);
       }
     };
 
@@ -2065,13 +2067,8 @@ export function PantallaTvTaller({
                       key={orden.id}
                       onClick={() => {
                         setIndiceFoco(idx);
-                        if (!tablero.puedeInteractuar) return;
-                        if (orden.estadoTaller === "ENVIADO_TALLER") {
-                          void avanzarEstadoDesdeTv(orden, "EN_PREPARACION");
-                        } else if (orden.estadoTaller === "EN_PREPARACION") {
-                          setBotonConfirmFoco("SI");
-                          setOrdenConfirmandoListo(orden);
-                        }
+                        setBotonConfirmFoco("SI");
+                        setOrdenConfirmandoListo(orden);
                       }}
                       style={{
                         padding: densidadEfectiva === "SOLO_AUDIO" ? "11px 12px" : "13px 14px",
@@ -2621,6 +2618,11 @@ export function PantallaTvTaller({
                 return (
                   <div
                     key={o.id}
+                    onClick={() => {
+                      setBotonConfirmFoco("NO");
+                      setOrdenConfirmandoListo(o);
+                    }}
+                    title="Clic para ver detalle completo del pedido"
                     style={{
                       minWidth: "215px",
                       maxWidth: "260px",
@@ -2634,6 +2636,7 @@ export function PantallaTvTaller({
                         : "1.5px solid #34D399",
                       opacity: entregado ? 0.72 : 1,
                       flexShrink: 0,
+                      cursor: "pointer",
                     }}
                   >
                     <div
@@ -3283,83 +3286,382 @@ export function PantallaTvTaller({
         </div>
       )}
 
-      {/* Modal de Confirmación rápida para Control Remoto TV ("¿Marcar LISTO?") */}
-      {ordenConfirmandoListo && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 130,
-            background: "rgba(2, 6, 23, 0.82)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "24px",
-          }}
-        >
+      {/* Modal Detalle Completo del Pedido + Cambio de Estado en Pantalla TV */}
+      {ordenConfirmandoListo && (() => {
+        const o = ordenConfirmandoListo;
+        const esExeq =
+          o.clasificacionPedido === "EXEQUIALES" || o.origenTipo === "EXEQUIALES_LLAMADA";
+        const chipsColor = parsearColoresPedido(o.colores);
+        const horario = formatearHorarioEntregaOrden({
+          franjaHoraria: o.franjaHoraria,
+          horaEspecifica: o.horaEspecifica,
+          esExequiales: esExeq,
+        });
+        const valorNum = typeof o.totalUsd === "number" ? o.totalUsd : Number(o.totalUsd || 0);
+        const itemsDetalle = Array.isArray(o.items) ? o.items : [];
+        const estadoLabel =
+          o.estadoTaller === "ENVIADO_TALLER"
+            ? "NUEVO EN TALLER"
+            : o.estadoTaller === "EN_PREPARACION"
+              ? "EN PREPARACIÓN"
+              : o.estadoTaller === "LISTO_ENTREGA"
+                ? "LISTO PARA ENTREGA"
+                : "ENTREGADO";
+
+        return (
           <div
+            onClick={() => setOrdenConfirmandoListo(null)}
             style={{
-              width: "100%",
-              maxWidth: "520px",
-              padding: "28px",
-              borderRadius: "20px",
-              background: "#0F172A",
-              border: "2px solid #38BDF8",
-              boxShadow: "0 24px 60px rgba(0,0,0,0.7)",
-              textAlign: "center",
+              position: "fixed",
+              inset: 0,
+              zIndex: 130,
+              background: "rgba(2, 6, 23, 0.84)",
               display: "flex",
-              flexDirection: "column",
-              gap: "16px",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "20px",
             }}
           >
-            <CheckCircle2 size={46} color="#10B981" style={{ margin: "0 auto" }} />
-            <h2 style={{ margin: 0, fontSize: "1.4rem", fontWeight: 800 }}>
-              ¿Marcar pedido como LISTO?
-            </h2>
-            <p style={{ margin: 0, fontSize: "1.05rem", color: "#CBD5E1" }}>
-              <strong>{ordenConfirmandoListo.codigo}</strong> —{" "}
-              {ordenConfirmandoListo.productoResumen}
-            </p>
-            <div style={{ display: "flex", gap: "12px", justifyContent: "center", marginTop: "6px" }}>
-              <button
-                type="button"
-                onClick={() => void avanzarEstadoDesdeTv(ordenConfirmandoListo, "LISTO_ENTREGA")}
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: "100%",
+                maxWidth: "720px",
+                maxHeight: "90vh",
+                borderRadius: "20px",
+                background: "#0F172A",
+                border: "2px solid #38BDF8",
+                boxShadow: "0 24px 64px rgba(0,0,0,0.75)",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+              }}
+            >
+              {/* Encabezado */}
+              <div
                 style={{
-                  padding: "12px 24px",
-                  borderRadius: "12px",
-                  border: botonConfirmFoco === "SI" ? "3px solid #FFFFFF" : "1px solid #10B981",
-                  background: "#059669",
-                  color: "#FFFFFF",
-                  fontSize: "1rem",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                }}
-              >
-                <Check size={18} /> SÍ, LISTO PARA ENTREGA
-              </button>
-              <button
-                type="button"
-                onClick={() => setOrdenConfirmandoListo(null)}
-                style={{
-                  padding: "12px 20px",
-                  borderRadius: "12px",
-                  border: botonConfirmFoco === "NO" ? "3px solid #FFFFFF" : "1px solid #475569",
+                  padding: "18px 22px",
                   background: "#1E293B",
-                  color: "#E2E8F0",
-                  fontSize: "1rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
+                  borderBottom: "1px solid rgba(148,163,184,0.22)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  flexWrap: "wrap",
                 }}
               >
-                Cancelar
-              </button>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                  <span
+                    style={{
+                      padding: "4px 11px",
+                      borderRadius: "8px",
+                      background: "#0284C7",
+                      color: "#FFFFFF",
+                      fontSize: "1rem",
+                      fontWeight: 900,
+                    }}
+                  >
+                    {o.codigo}
+                  </span>
+                  <span
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: "999px",
+                      background:
+                        o.estadoTaller === "LISTO_ENTREGA" || o.estadoTaller === "ENTREGADO"
+                          ? "#059669"
+                          : o.estadoTaller === "EN_PREPARACION"
+                            ? "#D97706"
+                            : "#2563EB",
+                      color: "#FFFFFF",
+                      fontSize: "0.76rem",
+                      fontWeight: 800,
+                    }}
+                  >
+                    {estadoLabel}
+                  </span>
+                  {o.clasificacionPedido && (
+                    <span
+                      style={{
+                        padding: "4px 10px",
+                        borderRadius: "999px",
+                        background: "rgba(148,163,184,0.2)",
+                        color: "#E2E8F0",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                      }}
+                    >
+                      {o.clasificacionPedido.replace("_", " / ")}
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  {valorNum > 0 && (
+                    <span
+                      style={{
+                        padding: "5px 13px",
+                        borderRadius: "10px",
+                        background: "rgba(16, 185, 129, 0.2)",
+                        border: "1.5px solid #10B981",
+                        color: "#34D399",
+                        fontSize: "1.1rem",
+                        fontWeight: 900,
+                      }}
+                    >
+                      ${valorNum.toFixed(2)}
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setOrdenConfirmandoListo(null)}
+                    aria-label="Cerrar detalle"
+                    style={{
+                      padding: "7px",
+                      borderRadius: "8px",
+                      border: "none",
+                      background: "rgba(255,255,255,0.1)",
+                      color: "#F8FAFC",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                    }}
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Cuerpo con TODOS los datos del pedido */}
+              <div
+                style={{
+                  padding: "18px 22px",
+                  overflowY: "auto",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "14px",
+                }}
+              >
+                {/* Arreglo principal e ítems */}
+                <div
+                  style={{
+                    padding: "14px 16px",
+                    borderRadius: "13px",
+                    background: "rgba(30, 41, 59, 0.75)",
+                    border: "1px solid rgba(148,163,184,0.2)",
+                  }}
+                >
+                  <div style={{ fontSize: "0.74rem", fontWeight: 800, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    🌸 Producto / Arreglo
+                  </div>
+                  <div style={{ fontSize: "1.22rem", fontWeight: 900, color: "#FFFFFF", marginTop: "4px" }}>
+                    {o.productoResumen}
+                  </div>
+                  {itemsDetalle.length > 0 && (
+                    <div style={{ marginTop: "8px", display: "flex", flexDirection: "column", gap: "4px" }}>
+                      {itemsDetalle.map((it, i) => (
+                        <div key={i} style={{ fontSize: "0.86rem", color: "#CBD5E1", display: "flex", justifyContent: "space-between", gap: "8px" }}>
+                          <span>• {it.cantidad || 1}x {it.descripcion || "Arreglo"}</span>
+                          {typeof it.precioUnitario === "number" && it.precioUnitario > 0 && (
+                            <span style={{ color: "#34D399", fontWeight: 700 }}>${Number(it.precioUnitario).toFixed(2)}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Grid 2 columnas: Fecha/Hora + Valor/Pago */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div style={{ padding: "12px 14px", borderRadius: "12px", background: "rgba(30,41,59,0.65)", border: "1px solid rgba(148,163,184,0.18)" }}>
+                    <div style={{ fontSize: "0.73rem", fontWeight: 800, color: "#94A3B8", textTransform: "uppercase" }}>
+                      📅 Fecha y Hora de Entrega
+                    </div>
+                    <div style={{ fontSize: "1rem", fontWeight: 800, color: "#FDE68A", marginTop: "4px" }}>
+                      {o.fechaEntrega} · {horario}
+                    </div>
+                    {o.fechaElaboracion && o.fechaElaboracion !== o.fechaEntrega && (
+                      <div style={{ fontSize: "0.78rem", color: "#94A3B8", marginTop: "3px" }}>
+                        Elaboración programada: {o.fechaElaboracion}
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ padding: "12px 14px", borderRadius: "12px", background: "rgba(30,41,59,0.65)", border: "1px solid rgba(148,163,184,0.18)" }}>
+                    <div style={{ fontSize: "0.73rem", fontWeight: 800, color: "#94A3B8", textTransform: "uppercase" }}>
+                      💵 Valor y Pago
+                    </div>
+                    <div style={{ fontSize: "1rem", fontWeight: 800, color: "#34D399", marginTop: "4px" }}>
+                      {valorNum > 0 ? `$${valorNum.toFixed(2)} USD` : "Convenio / Sin monto"}
+                    </div>
+                    <div style={{ fontSize: "0.78rem", color: "#CBD5E1", marginTop: "3px" }}>
+                      {[o.estadoPago, o.metodoPago].filter(Boolean).join(" · ") || "Registrado"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Colores y Extras */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                  <div style={{ padding: "12px 14px", borderRadius: "12px", background: "rgba(30,41,59,0.65)", border: "1px solid rgba(148,163,184,0.18)" }}>
+                    <div style={{ fontSize: "0.73rem", fontWeight: 800, color: "#94A3B8", textTransform: "uppercase" }}>
+                      🎨 Colores a Utilizar
+                    </div>
+                    {chipsColor.length > 0 ? (
+                      <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "6px" }}>
+                        {chipsColor.map((chip, idx) => (
+                          <span
+                            key={`${chip.etiqueta}-${idx}`}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              padding: "4px 10px",
+                              borderRadius: "999px",
+                              background: "#0F172A",
+                              border: `1px solid ${chip.bordeHex}`,
+                              color: "#F8FAFC",
+                              fontSize: "0.84rem",
+                              fontWeight: 700,
+                            }}
+                          >
+                            <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: chip.hex, display: "inline-block" }} />
+                            {chip.etiqueta}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: "0.86rem", color: "#64748B", marginTop: "5px" }}>
+                        Sin colores específicos (estándar del arreglo)
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ padding: "12px 14px", borderRadius: "12px", background: "rgba(30,41,59,0.65)", border: "1px solid rgba(148,163,184,0.18)" }}>
+                    <div style={{ fontSize: "0.73rem", fontWeight: 800, color: "#94A3B8", textTransform: "uppercase" }}>
+                      🎁 Extras Incluidos
+                    </div>
+                    <div style={{ fontSize: "0.94rem", fontWeight: 700, color: o.extras ? "#FBCFE8" : "#64748B", marginTop: "5px" }}>
+                      {o.extras || "Sin extras adicionales"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Cliente / Destinatario / Entrega */}
+                <div style={{ padding: "12px 14px", borderRadius: "12px", background: "rgba(30,41,59,0.65)", border: "1px solid rgba(148,163,184,0.18)", display: "flex", flexDirection: "column", gap: "5px" }}>
+                  <div style={{ fontSize: "0.73rem", fontWeight: 800, color: "#94A3B8", textTransform: "uppercase" }}>
+                    👤 Entrega y Destinatario
+                  </div>
+                  <div style={{ fontSize: "0.88rem", color: "#E2E8F0", display: "flex", gap: "16px", flexWrap: "wrap" }}>
+                    {o.clienteSolicita && <span><strong>Solicita:</strong> {o.clienteSolicita}</span>}
+                    {o.destinatarioFallecido && (
+                      <span><strong>{esExeq ? "Fallecido:" : "Destinatario:"}</strong> {o.destinatarioFallecido}</span>
+                    )}
+                    {o.salaServicio && <span><strong>Sala:</strong> {o.salaServicio}</span>}
+                  </div>
+                  {(o.ubicacionEntrega || o.retiroEnLocal) && (
+                    <div style={{ fontSize: "0.85rem", color: "#CBD5E1" }}>
+                      <strong>Ubicación:</strong>{" "}
+                      {o.retiroEnLocal ? "Retiro en Tienda / Local" : o.ubicacionEntrega}
+                    </div>
+                  )}
+                </div>
+
+                {/* Notas y Dedicatoria */}
+                {o.observaciones && (
+                  <div style={{ padding: "12px 14px", borderRadius: "12px", background: "rgba(245, 158, 11, 0.15)", border: "1px solid rgba(245, 158, 11, 0.45)", color: "#FDE68A", fontSize: "0.92rem", fontWeight: 600 }}>
+                    📝 <strong>Notas para Taller:</strong> {o.observaciones}
+                  </div>
+                )}
+
+                {o.dedicatoria && (
+                  <div style={{ padding: "12px 14px", borderRadius: "12px", background: "rgba(236, 72, 153, 0.12)", border: "1px solid rgba(244, 114, 182, 0.35)", color: "#FCE7F3", fontSize: "0.88rem" }}>
+                    💌 <strong>Dedicatoria:</strong> {o.dedicatoria}
+                  </div>
+                )}
+              </div>
+
+              {/* Pie con acciones rápidas */}
+              <div
+                style={{
+                  padding: "14px 22px",
+                  background: "#1E293B",
+                  borderTop: "1px solid rgba(148,163,184,0.22)",
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: "10px",
+                  flexWrap: "wrap",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setOrdenConfirmandoListo(null)}
+                  style={{
+                    padding: "10px 18px",
+                    borderRadius: "10px",
+                    border: botonConfirmFoco === "NO" ? "2.5px solid #FFFFFF" : "1px solid #475569",
+                    background: "#0F172A",
+                    color: "#E2E8F0",
+                    fontSize: "0.9rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  Cerrar
+                </button>
+
+                {tablero.puedeInteractuar && o.estadoTaller === "ENVIADO_TALLER" && (
+                  <button
+                    type="button"
+                    disabled={procesandoId === o.id}
+                    onClick={() => void avanzarEstadoDesdeTv(o, "EN_PREPARACION")}
+                    style={{
+                      padding: "10px 20px",
+                      borderRadius: "10px",
+                      border: botonConfirmFoco === "SI" ? "2.5px solid #FFFFFF" : "1px solid #38BDF8",
+                      background: "#0284C7",
+                      color: "#FFFFFF",
+                      fontSize: "0.92rem",
+                      fontWeight: 800,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <Play size={16} /> Iniciar Preparación
+                  </button>
+                )}
+
+                {tablero.puedeInteractuar &&
+                  (o.estadoTaller === "ENVIADO_TALLER" || o.estadoTaller === "EN_PREPARACION") && (
+                    <button
+                      type="button"
+                      disabled={procesandoId === o.id}
+                      onClick={() => void avanzarEstadoDesdeTv(o, "LISTO_ENTREGA")}
+                      style={{
+                        padding: "10px 22px",
+                        borderRadius: "10px",
+                        border:
+                          botonConfirmFoco === "SI" && o.estadoTaller === "EN_PREPARACION"
+                            ? "2.5px solid #FFFFFF"
+                            : "1px solid #10B981",
+                        background: "#059669",
+                        color: "#FFFFFF",
+                        fontSize: "0.92rem",
+                        fontWeight: 800,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <Check size={17} /> Marcar Listo para Entrega
+                    </button>
+                  )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }
