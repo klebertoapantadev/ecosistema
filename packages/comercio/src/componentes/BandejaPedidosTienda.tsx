@@ -6,7 +6,6 @@ import {
   Calendar,
   Camera,
   CheckCircle2,
-  ClipboardList,
   Clock,
   Columns3,
   Edit3,
@@ -1275,142 +1274,15 @@ export function BandejaPedidosTienda({
     ]
   );
 
-  const totalVentas = pedidosFiltrados.reduce((acc, p) => acc + p.total, 0);
-  const totalEnvios = pedidosFiltrados.reduce((acc, p) => acc + p.costoEnvio, 0);
-
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-      {/* Resumen superior */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexWrap: "wrap",
-          gap: "12px",
-          background: "#FFFFFF",
-          border: "1px solid #E5E7EB",
-          borderRadius: "12px",
-          padding: "16px 20px",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <div
-            style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "10px",
-              background: "#F0FDFA",
-              border: "1px solid #99F6E4",
-              color: "#0F766E",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <ClipboardList size={20} />
-          </div>
-          <div>
-            <strong style={{ fontSize: "0.96rem", color: "#111827" }}>
-              Historial Permanente de Pedidos ({pedidosFiltrados.length})
-            </strong>
-            <div style={{ fontSize: "0.78rem", color: "#6B7280" }}>
-              Ventas acumuladas: <strong>${totalVentas.toFixed(2)}</strong> · Recaudado en transporte:{" "}
-              <strong>${totalEnvios.toFixed(2)}</strong>
-            </div>
-          </div>
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-          <a
-            href="/panel/envio-pedidos"
-            title="Ir a validación, calendario y envío diario de pedidos a Taller"
-            aria-label="Enviar Pedidos"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "8px 13px",
-              borderRadius: "8px",
-              background: "#0F172A",
-              color: "#FFFFFF",
-              textDecoration: "none",
-              fontSize: "0.8rem",
-              fontWeight: 700,
-            }}
-          >
-            <span>Enviar a Taller</span>
-          </a>
-
-          <a
-            href="/panel/taller"
-            title="Abrir pantalla de producción del Taller"
-            aria-label="Ver Taller"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "8px 13px",
-              borderRadius: "8px",
-              border: "1px solid #86EFAC",
-              background: "#ECFDF5",
-              color: "#065F46",
-              textDecoration: "none",
-              fontSize: "0.8rem",
-              fontWeight: 700,
-            }}
-          >
-            <span>Taller</span>
-          </a>
-
-          <a
-            href="/panel/entregas"
-            title="Abrir consola de confirmación fotográfica de entregas e informes IESS"
-            aria-label="Entregas GPS"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "8px 13px",
-              borderRadius: "8px",
-              border: "1px solid #99F6E4",
-              background: "#F0FDFA",
-              color: "#115E59",
-              textDecoration: "none",
-              fontSize: "0.8rem",
-              fontWeight: 700,
-            }}
-          >
-            <Camera size={14} />
-            <span>Entregas GPS</span>
-          </a>
-
-          <button
-            type="button"
-            onClick={() => void cargarPedidos()}
-            disabled={cargando}
-            title="Actualizar historial permanente de pedidos"
-            aria-label="Actualizar"
-            className="btn-responsive-accion"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "8px 14px",
-              borderRadius: "8px",
-              border: "1px solid #D4D4D8",
-              background: "#FFFFFF",
-              color: "#18181B",
-              fontSize: "0.8rem",
-              fontWeight: 600,
-              cursor: cargando ? "wait" : "pointer",
-            }}
-          >
-            {cargando ? <Loader2 size={14} /> : <RefreshCw size={14} />}
-            <span className="btn-texto-responsive">Actualizar</span>
-          </button>
-        </div>
-      </div>
+      <style>{`
+        @media (max-width: 639px) {
+          .eco-solo-escritorio-pedidos {
+            display: none !important;
+          }
+        }
+      `}</style>
 
       {/* Barra de TABS por Fechas (Hoy / Ayer / Esta Semana / Semana ±3 días / Mes / Todos) */}
       <div
@@ -1511,6 +1383,7 @@ export function BandejaPedidosTienda({
           onSeleccionar={setFiltroClasificacion}
           conteos={conteosClasificacion}
           totalGeneral={pedidosPorFecha.length}
+          ocultarSinPedidos
         />
 
         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
@@ -1601,6 +1474,29 @@ export function BandejaPedidosTienda({
               </span>
             </button>
           )}
+
+          <button
+            type="button"
+            onClick={() => void cargarPedidos()}
+            disabled={cargando}
+            title="Actualizar pedidos"
+            aria-label="Actualizar"
+            className="eco-solo-escritorio-pedidos"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "32px",
+              height: "32px",
+              borderRadius: "999px",
+              border: "1px solid #D4D4D8",
+              background: "#FFFFFF",
+              color: "#18181B",
+              cursor: cargando ? "wait" : "pointer",
+            }}
+          >
+            {cargando ? <Loader2 size={14} /> : <RefreshCw size={14} />}
+          </button>
         </div>
       </div>
 

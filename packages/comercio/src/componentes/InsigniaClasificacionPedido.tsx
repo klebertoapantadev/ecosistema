@@ -110,6 +110,7 @@ export interface PropsBarraFiltroClasificacionPedido {
   conteos: Partial<Record<ClasificacionOperativaPedido, number>>;
   totalGeneral: number;
   compacta?: boolean;
+  ocultarSinPedidos?: boolean;
 }
 
 export function BarraFiltroClasificacionPedido({
@@ -118,6 +119,7 @@ export function BarraFiltroClasificacionPedido({
   conteos,
   totalGeneral,
   compacta = false,
+  ocultarSinPedidos = false,
 }: PropsBarraFiltroClasificacionPedido) {
   return (
     <div
@@ -166,6 +168,9 @@ export function BarraFiltroClasificacionPedido({
       {CLASIFICACIONES_OPERATIVAS_PEDIDO.map((cat) => {
         const activa = seleccionada === cat.clave;
         const cantidad = conteos[cat.clave] ?? 0;
+        if (ocultarSinPedidos && cantidad === 0 && !activa) {
+          return null;
+        }
         return (
           <button
             key={cat.clave}
