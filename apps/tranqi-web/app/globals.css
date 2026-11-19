@@ -1549,6 +1549,10 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
   padding: 15px 20px; border-bottom: 1px solid var(--panel-linea-suave);
 }
 .tarjeta-seccion > header h2 { font-size: 1rem; font-weight: 700; margin: 0; }
+/* Cuerpo de texto de una tarjeta: mismo margen lateral que la cabecera
+   (TRQ-032; «Mis pagos y facturas» tenía 0 y el texto tocaba el borde). */
+.cuerpo-seccion { padding: 14px 20px 18px; font-size: 0.84rem; color: var(--panel-gris); }
+.cuerpo-seccion p { margin: 0 0 12px; }
 /* estado vacío dentro de una tarjeta: sin borde propio, la tarjeta ya lo pone */
 .vacio-seccion {
   padding: 30px 20px; display: grid; gap: 5px; justify-items: center; text-align: center;
