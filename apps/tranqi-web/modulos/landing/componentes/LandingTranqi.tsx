@@ -77,36 +77,80 @@ export function LandingTranqi() {
     };
   }, []);
 
-  // La cinta se traza al entrar su sección. pathLength se calibra con el largo
-  // real en pantalla: con non-scaling-stroke y preserveAspectRatio="none" el
-  // guion «1» no cubre todo el trazo estirado (nota de TRQ-012).
+  // La cinta es UN hilo que sigue al scroll (TRQ-026): la punta va a la altura
+  // de una línea fija de la pantalla (CABEZA), así que al bajar se dibuja y al
+  // subir se recoge. Antes cada tramo se trazaba entero de golpe al entrar su
+  // sección, con 1,6 s de animación: en móvil la cinta iba por detrás o por
+  // delante del dedo.
+  //
+  // pathLength se calibra con el largo real en pantalla: con non-scaling-stroke
+  // y preserveAspectRatio="none" el guion «1» no cubre todo el trazo estirado
+  // (nota de TRQ-012). Con el mismo muestreo se guarda, para cada punto del
+  // trazo, su altura en la sección y la fracción del largo recorrida hasta él.
   useEffect(() => {
+    const CABEZA = 0.72; // fracción del alto de la pantalla donde va la punta
+    const MUESTRAS = 240;
+    type Tramo = { path: SVGPathElement; seccion: HTMLElement; alturas: Float32Array; fracciones: Float32Array };
+    const tramos = new Map<SVGPathElement, Tramo>();
+    const sinMovimiento = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
     const calibrar = (svg: SVGSVGElement, ancho: number, alto: number) => {
       const vb = svg.viewBox.baseVal;
-      if (!ancho || !alto || !vb.width || !vb.height) return;
+      const seccion = svg.closest("section");
+      if (!seccion || !ancho || !alto || !vb.width || !vb.height) return;
       const sx = ancho / vb.width, sy = alto / vb.height;
       svg.querySelectorAll("path").forEach((p) => {
         const largo = p.getTotalLength();
-        let enPantalla = 0, previo = p.getPointAtLength(0);
-        for (let i = 1; i <= 200; i++) {
-          const q = p.getPointAtLength((largo * i) / 200);
-          enPantalla += Math.hypot((q.x - previo.x) * sx, (q.y - previo.y) * sy);
+        const alturas = new Float32Array(MUESTRAS + 1);
+        const acumulado = new Float32Array(MUESTRAS + 1);
+        let previo = p.getPointAtLength(0);
+        alturas[0] = previo.y * sy;
+        for (let i = 1; i <= MUESTRAS; i++) {
+          const q = p.getPointAtLength((largo * i) / MUESTRAS);
+          acumulado[i] = acumulado[i - 1]! + Math.hypot((q.x - previo.x) * sx, (q.y - previo.y) * sy);
+          alturas[i] = q.y * sy;
           previo = q;
         }
-        if (enPantalla > 0) p.setAttribute("pathLength", String(largo / enPantalla));
+        const enPantalla = acumulado[MUESTRAS]!;
+        if (enPantalla <= 0) return;
+        p.setAttribute("pathLength", String(largo / enPantalla));
+        tramos.set(p, { path: p, seccion, alturas, fracciones: acumulado.map((v) => v / enPantalla) });
       });
+      pedirDibujo();
     };
+
+    // Lo dibujado de cada tramo llega hasta el primer punto que queda por
+    // debajo de la punta: los rizos se completan cuando la punta los pasa.
+    const dibujar = () => {
+      pendiente = 0;
+      const punta = innerHeight * CABEZA;
+      for (const t of tramos.values()) {
+        const y = punta - t.seccion.getBoundingClientRect().top;
+        let k = 0;
+        if (sinMovimiento) k = t.alturas.length;
+        else while (k < t.alturas.length && t.alturas[k]! <= y) k++;
+        const fraccion = k === 0 ? 0 : t.fracciones[k - 1]!;
+        // 1,05 y no 1 sin nada dibujado: con extremo redondo asomaría medio
+        // círculo en el arranque del tramo.
+        t.path.style.strokeDashoffset = fraccion === 0 ? "1.05" : String(1 - fraccion);
+      }
+    };
+    let pendiente = 0;
+    const pedirDibujo = () => {
+      if (!pendiente) pendiente = requestAnimationFrame(dibujar);
+    };
+
     const medidor = new ResizeObserver((es) => {
       for (const e of es) calibrar(e.target as SVGSVGElement, e.contentRect.width, e.contentRect.height);
     });
     document.querySelectorAll<SVGSVGElement>(".landing .churo svg").forEach((s) => medidor.observe(s));
-    const trazo = new IntersectionObserver((es) => {
-      for (const e of es) e.target.querySelectorAll(".churo path").forEach((p) => p.classList.toggle("trazado", e.isIntersecting));
-    }, { threshold: 0.12 });
-    document.querySelectorAll(".landing section").forEach((s) => trazo.observe(s));
+    addEventListener("scroll", pedirDibujo, { passive: true });
+    addEventListener("resize", pedirDibujo);
     return () => {
       medidor.disconnect();
-      trazo.disconnect();
+      removeEventListener("scroll", pedirDibujo);
+      removeEventListener("resize", pedirDibujo);
+      cancelAnimationFrame(pendiente);
     };
   }, []);
 
