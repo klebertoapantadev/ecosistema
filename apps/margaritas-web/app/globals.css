@@ -60,3 +60,19 @@ body {
 @media (max-width: 860px) {
   .sello-compilacion { display: none !important; }
 }
+
+@media (max-width: 768px) {
+  .panel-contenido > div > div:first-child > p,
+  .panel-contenido > div > header > p,
+  .panel-contenido > header > p,
+  .panel-contenido .texto-apoyo,
+  .panel-subtitulo-explicativo,
+  .panel-descripcion-pagina {
+    display: none !important;
+  }
+  .panel-contenido h1 {
+    font-size: 1.08rem !important;
+    line-height: 1.25 !important;
+    margin-bottom: 4px !important;
+  }
+}

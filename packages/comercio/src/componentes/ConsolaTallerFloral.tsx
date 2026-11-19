@@ -766,11 +766,11 @@ export function ConsolaTallerFloral({
               gap: "5px",
               padding: "7px 11px",
               borderRadius: "9px",
-              border: "1px solid #CBD5E1",
-              background: permisoNotifNav === "granted" ? "#ECFDF5" : "#FFFBEB",
-              color: permisoNotifNav === "granted" ? "#065F46" : "#92400E",
+              border: permisoNotifNav === "granted" ? "1px solid #C9D6CC" : "1px solid #DFD3BC",
+              background: permisoNotifNav === "granted" ? "#F3F6F3" : "#FAF5EB",
+              color: permisoNotifNav === "granted" ? "#2E4635" : "#7A5B26",
               fontSize: "0.76rem",
-              fontWeight: 700,
+              fontWeight: 600,
               cursor: "pointer",
             }}
           >
@@ -790,12 +790,12 @@ export function ConsolaTallerFloral({
                   gap: "5px",
                   padding: "7px 11px",
                   borderRadius: "9px",
-                  border: "1px solid #CBD5E1",
-                  background: "#F8FAFC",
-                  color: "#0F172A",
+                  border: "1px solid #DDD5C9",
+                  background: "#FAF7F2",
+                  color: "#221D1A",
                   textDecoration: "none",
                   fontSize: "0.78rem",
-                  fontWeight: 700,
+                  fontWeight: 600,
                 }}
               >
                 <Camera size={13} />
@@ -812,12 +812,12 @@ export function ConsolaTallerFloral({
                   gap: "5px",
                   padding: "7px 11px",
                   borderRadius: "9px",
-                  border: "1px solid #86EFAC",
-                  background: "#F0FDF4",
-                  color: "#166534",
+                  border: "1px solid #C9D6CC",
+                  background: "#F3F6F3",
+                  color: "#2E4635",
                   textDecoration: "none",
                   fontSize: "0.78rem",
-                  fontWeight: 700,
+                  fontWeight: 600,
                 }}
               >
                 <Zap size={13} />
@@ -836,12 +836,12 @@ export function ConsolaTallerFloral({
                   gap: "5px",
                   padding: "7px 11px",
                   borderRadius: "9px",
-                  border: "1px solid #CBD5E1",
-                  background: "#F8FAFC",
-                  color: "#0F172A",
+                  border: "1px solid #DDD5C9",
+                  background: "#FAF7F2",
+                  color: "#221D1A",
                   textDecoration: "none",
                   fontSize: "0.78rem",
-                  fontWeight: 700,
+                  fontWeight: 600,
                 }}
               >
                 <Send size={13} />
@@ -858,12 +858,12 @@ export function ConsolaTallerFloral({
                   gap: "5px",
                   padding: "7px 11px",
                   borderRadius: "9px",
-                  border: "1px solid #86EFAC",
-                  background: "#F0FDF4",
-                  color: "#166534",
+                  border: "1px solid #C9D6CC",
+                  background: "#F3F6F3",
+                  color: "#2E4635",
                   textDecoration: "none",
                   fontSize: "0.78rem",
-                  fontWeight: 700,
+                  fontWeight: 600,
                 }}
               >
                 <MapPinCheck size={14} />
@@ -884,11 +884,11 @@ export function ConsolaTallerFloral({
               gap: "6px",
               padding: "7px 11px",
               borderRadius: "9px",
-              border: "1px solid #0284C7",
-              background: "#E0F2FE",
-              color: "#0369A1",
+              border: "1px solid #D9C49B",
+              background: "#FAF5EB",
+              color: "#6E5222",
               fontSize: "0.78rem",
-              fontWeight: 700,
+              fontWeight: 600,
               cursor: "pointer",
             }}
           >
@@ -909,11 +909,11 @@ export function ConsolaTallerFloral({
               gap: "6px",
               padding: "7px 11px",
               borderRadius: "9px",
-              border: "1px solid #0F172A",
-              background: "#0F172A",
-              color: "#FFFFFF",
+              border: "1px solid #221D1A",
+              background: "#221D1A",
+              color: "#F6F1E8",
               fontSize: "0.78rem",
-              fontWeight: 700,
+              fontWeight: 600,
               textDecoration: "none",
             }}
           >

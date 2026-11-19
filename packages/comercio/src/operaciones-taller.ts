@@ -573,14 +573,14 @@ export const CLASIFICACIONES_OPERATIVAS_PEDIDO: readonly DefinicionClasificacion
     etiquetaCorta: "Floristería / Ocasiones",
     descripcion: "Ramos, box florales, cumpleaños, aniversarios y ocasiones especiales (domicilio o retiro)",
     iconoClave: "Flower2",
-    acentoHex: "#0D9488",
-    fondoHex: "#F0FDFA",
-    bordeHex: "#99F6E4",
-    textoHex: "#115E59",
-    acentoOpacoHex: "#64748B",
-    fondoOpacoHex: "#F1F5F9",
-    bordeOpacoHex: "#CBD5E1",
-    textoOpacoHex: "#475569",
+    acentoHex: "#3D5A45",
+    fondoHex: "#F3F6F3",
+    bordeHex: "#C9D6CC",
+    textoHex: "#2C4232",
+    acentoOpacoHex: "#6E655D",
+    fondoOpacoHex: "#F5F2EC",
+    bordeOpacoHex: "#DDD5C9",
+    textoOpacoHex: "#574E46",
   },
   {
     clave: "CONDOLENCIAS",
@@ -588,14 +588,14 @@ export const CLASIFICACIONES_OPERATIVAS_PEDIDO: readonly DefinicionClasificacion
     etiquetaCorta: "Condolencias",
     descripcion: "Coronas, pedestales y arreglos fúnebres particulares con tarjeta y dirección de entrega",
     iconoClave: "HeartHandshake",
-    acentoHex: "#334155",
-    fondoHex: "#F8FAFC",
-    bordeHex: "#CBD5E1",
-    textoHex: "#1E293B",
-    acentoOpacoHex: "#64748B",
-    fondoOpacoHex: "#F1F5F9",
-    bordeOpacoHex: "#CBD5E1",
-    textoOpacoHex: "#475569",
+    acentoHex: "#4E4740",
+    fondoHex: "#F6F3EE",
+    bordeHex: "#D8D0C5",
+    textoHex: "#332E29",
+    acentoOpacoHex: "#7A7269",
+    fondoOpacoHex: "#F5F2EC",
+    bordeOpacoHex: "#DDD5C9",
+    textoOpacoHex: "#574E46",
   },
   {
     clave: "EVENTOS",
@@ -603,14 +603,14 @@ export const CLASIFICACIONES_OPERATIVAS_PEDIDO: readonly DefinicionClasificacion
     etiquetaCorta: "Eventos",
     descripcion: "Decoración floral, ceremonias, bodas, montajes especiales y mobiliario",
     iconoClave: "Sparkles",
-    acentoHex: "#BE185D",
-    fondoHex: "#FDF2F8",
-    bordeHex: "#FBCFE8",
-    textoHex: "#9D174D",
-    acentoOpacoHex: "#8C6275",
-    fondoOpacoHex: "#F5EFF2",
-    bordeOpacoHex: "#DECED6",
-    textoOpacoHex: "#5E4A53",
+    acentoHex: "#9C5266",
+    fondoHex: "#FAF4F6",
+    bordeHex: "#E6CED5",
+    textoHex: "#733747",
+    acentoOpacoHex: "#876F76",
+    fondoOpacoHex: "#F5F0F2",
+    bordeOpacoHex: "#DFD1D5",
+    textoOpacoHex: "#5C4A4F",
   },
   {
     clave: "EXEQUIALES",
@@ -618,14 +618,14 @@ export const CLASIFICACIONES_OPERATIVAS_PEDIDO: readonly DefinicionClasificacion
     etiquetaCorta: "Exequiales",
     descripcion: "Órdenes de convenio Exequiales por sala y persona fallecida (sin tarjeta ni dirección)",
     iconoClave: "Ribbon",
-    acentoHex: "#6D28D9",
-    fondoHex: "#F5F3FF",
-    bordeHex: "#DDD6FE",
-    textoHex: "#4C1D95",
-    acentoOpacoHex: "#7C6F9B",
-    fondoOpacoHex: "#F3F1F7",
-    bordeOpacoHex: "#D4CFE0",
-    textoOpacoHex: "#575068",
+    acentoHex: "#63506B",
+    fondoHex: "#F6F3F8",
+    bordeHex: "#DBD1E0",
+    textoHex: "#47374E",
+    acentoOpacoHex: "#7D7282",
+    fondoOpacoHex: "#F4F1F5",
+    bordeOpacoHex: "#D9D2DC",
+    textoOpacoHex: "#594F5E",
   },
 ] as const;
 
@@ -1317,7 +1317,7 @@ export async function eliminarDeColaOfflineEntrega(uuidCliente: string): Promise
 export type ModoPantallaTv = "TALLER" | "EVENTOS";
 export type PosicionLateralTv = "derecha" | "izquierda";
 export type DensidadLayoutTv = "AUTO" | "NORMAL" | "PICO" | "SOLO_AUDIO";
-export type FuenteMediaTv = "RADIO" | "YOUTUBE";
+export type FuenteMediaTv = "RADIO" | "YOUTUBE" | "INDICADORES";
 
 export interface EmisoraRadioTv {
   id: string;
@@ -1416,7 +1416,12 @@ export function normalizarConfigTvTaller(raw?: Record<string, unknown> | null): 
   const modoActivo: ModoPantallaTv = modoRaw === "EVENTOS" ? "EVENTOS" : "TALLER";
 
   const fuenteRaw = String(src.fuenteMedia || "RADIO").toUpperCase();
-  const fuenteMedia: FuenteMediaTv = fuenteRaw === "YOUTUBE" ? "YOUTUBE" : "RADIO";
+  const fuenteMedia: FuenteMediaTv =
+    fuenteRaw === "YOUTUBE"
+      ? "YOUTUBE"
+      : fuenteRaw === "INDICADORES"
+        ? "INDICADORES"
+        : "RADIO";
 
   const radioRaw =
     src.radioActual && typeof src.radioActual === "object"
@@ -1549,11 +1554,38 @@ export interface ProductoEventoTv {
   categoriaNombre: string;
 }
 
+export interface DiaSerieSemanaTv {
+  fecha: string;
+  diaCorto: string;
+  esHoy: boolean;
+  pedidos: number;
+  ventasUsd: number;
+}
+
+export interface IndicadoresEjecutivosTv {
+  chatsHoy: number;
+  chatsPendientesSeguimiento: number;
+  chatsEscalados: number;
+  chatsNoLeidos: number;
+  totalVentasHoyUsd: number;
+  totalVentasSemanaUsd: number;
+  pedidosHoy: number;
+  pedidosSemana: number;
+  sinEnviarTallerHoy: number;
+  inicioSemanaYmd?: string;
+  finSemanaYmd?: string;
+  serieSemana: DiaSerieSemanaTv[];
+  desgloseClasificacionHoy: Record<string, number>;
+}
+
 export interface DatosTableroTvTaller {
   modoAcceso: "AUTENTICADO" | "KIOSCO";
+  rolOperativo?: string;
+  esOperadorOAdmin?: boolean;
   puedeInteractuar: boolean;
   hoyYmd: string;
   ordenes: OrdenTvTaller[];
+  indicadoresTv?: IndicadoresEjecutivosTv | null;
   productosEventos: ProductoEventoTv[];
   configTv: ConfiguracionTvTaller;
 }

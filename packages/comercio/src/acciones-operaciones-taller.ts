@@ -4363,9 +4363,15 @@ export async function obtenerTableroTvTallerAction(
         ok: true,
         datos: {
           modoAcceso: data.modoAcceso === "KIOSCO" ? "KIOSCO" : "AUTENTICADO",
+          rolOperativo: data.rolOperativo ? String(data.rolOperativo) : undefined,
+          esOperadorOAdmin: Boolean(data.esOperadorOAdmin),
           puedeInteractuar: Boolean(data.puedeInteractuar),
           hoyYmd: String(data.hoyYmd || obtenerFechaHoyEcuadorYmd()),
           ordenes: Array.isArray(data.ordenes) ? (data.ordenes as OrdenTvTaller[]) : [],
+          indicadoresTv:
+            data.indicadoresTv && typeof data.indicadoresTv === "object"
+              ? data.indicadoresTv
+              : null,
           productosEventos: Array.isArray(data.productosEventos)
             ? (data.productosEventos as ProductoEventoTv[])
             : [],

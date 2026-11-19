@@ -4,12 +4,14 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { crearClienteNavegador } from "@eco/supabase/cliente";
 import {
   ArrowLeftRight,
+  BarChart3,
   Bell,
   Check,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Clock,
+  DollarSign,
   Eye,
   EyeOff,
   Flame,
@@ -18,9 +20,11 @@ import {
   ListMusic,
   Loader2,
   Maximize2,
+  MessageSquare,
   Minimize2,
   Monitor,
   Music,
+  Package,
   PanelRight,
   Pause,
   Play,
@@ -273,8 +277,12 @@ export function PantallaTvTaller({
 
   // Preferencias efectivas (local override -> config remota)
   const cfg = tablero.configTv;
+  const esOperadorOAdmin = Boolean(tablero.esOperadorOAdmin);
   const modoActivo: ModoPantallaTv = modoLocal ?? cfg.modoActivo;
-  const fuenteMedia: FuenteMediaTv = fuenteMediaLocal ?? cfg.fuenteMedia ?? "RADIO";
+  const fuenteMediaRaw: FuenteMediaTv = fuenteMediaLocal ?? cfg.fuenteMedia ?? "RADIO";
+  // Seguridad UI: el modo INDICADORES solo puede activarse para operadores/administradores
+  const fuenteMedia: FuenteMediaTv =
+    fuenteMediaRaw === "INDICADORES" && !esOperadorOAdmin ? "RADIO" : fuenteMediaRaw;
   const posicionLateral: PosicionLateralTv = ladoLocal ?? cfg.posicionLateral;
   const densidadConfig: DensidadLayoutTv = densidadLocal ?? cfg.densidadLayout;
   const mostrarFranjaListos: boolean = mostrarListosLocal ?? cfg.mostrarFranjaListos;
@@ -752,6 +760,19 @@ export function PantallaTvTaller({
           void recargarTablero(true);
         }
       )
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "comun_agentes",
+          table: "agc_conversacion",
+        },
+        () => {
+          if (esOperadorOAdmin) {
+            void recargarTablero(true);
+          }
+        }
+      )
       .on("broadcast", { event: "nuevo_pedido_taller" }, () => {
         void recargarTablero(true);
       })
@@ -767,7 +788,7 @@ export function PantallaTvTaller({
       clearInterval(intervalo);
       void supabase.removeChannel(canal);
     };
-  }, [negNorm, recargarTablero]);
+  }, [esOperadorOAdmin, negNorm, recargarTablero]);
 
   // YouTube IFrame API loader & controller (solo cuando fuenteMedia === "YOUTUBE" y no está en Barra Lateral)
   useEffect(() => {
@@ -1178,8 +1199,8 @@ export function PantallaTvTaller({
           zIndex: 9999,
           width: "100vw",
           height: "100vh",
-          background: "#0B1120",
-          color: "#F8FAFC",
+          background: "#14110F",
+          color: "#F6F1E8",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
@@ -1189,18 +1210,20 @@ export function PantallaTvTaller({
           gap: "14px",
         }}
       >
-        <Monitor size={48} color="#38BDF8" />
-        <h1 style={{ margin: 0, fontSize: "1.5rem" }}>Pantalla TV Taller — {nombreNegocio}</h1>
-        <p style={{ margin: 0, color: "#FCA5A5", maxWidth: "520px", fontSize: "1rem" }}>
+        <Monitor size={46} color="#C8A25A" />
+        <h1 style={{ margin: 0, fontSize: "1.5rem", fontFamily: "Georgia, serif" }}>
+          Pantalla TV Taller — {nombreNegocio}
+        </h1>
+        <p style={{ margin: 0, color: "#E5B4AC", maxWidth: "520px", fontSize: "0.98rem" }}>
           {errorAcceso}
         </p>
         <a
           href="/panel/taller"
           style={{
-            padding: "10px 18px",
+            padding: "10px 20px",
             borderRadius: "10px",
-            background: colorMarca,
-            color: "#FFFFFF",
+            background: "#3D5A45",
+            color: "#F6F1E8",
             fontWeight: 700,
             textDecoration: "none",
           }}
@@ -1232,9 +1255,9 @@ export function PantallaTvTaller({
         width: "100vw",
         height: "100vh",
         overflow: "hidden",
-        background: "#070B14",
-        color: "#F8FAFC",
-        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        background: "#14110F",
+        color: "#F6F1E8",
+        fontFamily: "var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         display: "flex",
         flexDirection: "column",
       }}
@@ -1286,13 +1309,13 @@ export function PantallaTvTaller({
         </div>
       )}
 
-      {/* Barra Superior Compacta (Reloj + Estado + HUD ocultable) */}
+      {/* Barra Superior Sobria y Cálida (Reloj + Estado + HUD ocultable) */}
       <div
         style={{
-          height: "46px",
-          padding: "0 16px",
-          background: "rgba(15, 23, 42, 0.95)",
-          borderBottom: "1px solid rgba(148, 163, 184, 0.16)",
+          height: "48px",
+          padding: "0 18px",
+          background: "#1B1714",
+          borderBottom: "1px solid rgba(214, 195, 165, 0.14)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
@@ -1304,52 +1327,86 @@ export function PantallaTvTaller({
         <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <span
             style={{
-              padding: "3px 10px",
+              padding: "4px 11px",
               borderRadius: "999px",
-              background: modoActivo === "EVENTOS" ? "#BE185D" : colorMarca,
-              color: "#FFFFFF",
-              fontSize: "0.78rem",
+              background: modoActivo === "EVENTOS" ? "#7D4759" : "#3D5A45",
+              color: "#F6F1E8",
+              fontSize: "0.75rem",
               fontWeight: 800,
-              letterSpacing: "0.04em",
+              letterSpacing: "0.06em",
+              border: "1px solid rgba(214, 195, 165, 0.22)",
             }}
           >
             {nombreNegocio.toUpperCase()}
           </span>
-          <span style={{ fontSize: "0.86rem", fontWeight: 700, color: "#E2E8F0" }}>
-            {modoActivo === "EVENTOS" ? "✨ Showroom de Eventos" : "🌸 Taller en Vivo"}
+          <span style={{ fontSize: "0.84rem", fontWeight: 600, color: "#D6CEC2" }}>
+            {modoActivo === "EVENTOS"
+              ? "Showroom de Eventos"
+              : fuenteMedia === "INDICADORES"
+                ? "Tablero Ejecutivo"
+                : "Taller en Vivo"}
           </span>
           <span
             style={{
               display: "inline-flex",
               alignItems: "center",
               gap: "5px",
-              fontSize: "0.74rem",
+              fontSize: "0.72rem",
               fontWeight: 700,
-              color: conectado ? "#34D399" : "#F87171",
+              color: conectado ? "#8AB597" : "#D98A7E",
             }}
           >
-            {conectado ? <Wifi size={14} /> : <WifiOff size={14} />}
+            {conectado ? <Wifi size={13} /> : <WifiOff size={13} />}
             {conectado ? "EN VIVO" : "RECONECTANDO"}
           </span>
         </div>
 
-        {/* Controles rápidos (siempre visibles al mover mouse o en modo eventos) */}
+        {/* Controles rápidos sobrios */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
             gap: "6px",
-            opacity: hudVisible ? 1 : 0.25,
+            opacity: hudVisible ? 1 : 0.3,
             transition: "opacity 0.3s ease",
           }}
         >
-          {colaYt.length > 1 && (
+          {esOperadorOAdmin && modoActivo === "TALLER" && !modoBarraLateral && (
+            <button
+              type="button"
+              onClick={() => {
+                const nuevaFuente: FuenteMediaTv =
+                  fuenteMedia === "INDICADORES" ? "RADIO" : "INDICADORES";
+                setFuenteMediaLocal(nuevaFuente);
+                if (nuevaFuente === "INDICADORES") {
+                  try {
+                    ytPlayerRef.current?.pauseVideo?.();
+                  } catch {
+                    // Ignorar
+                  }
+                }
+                if (tablero.modoAcceso === "AUTENTICADO") {
+                  void guardarConfigTvTallerAction({
+                    negocio: negNorm,
+                    config: { fuenteMedia: nuevaFuente },
+                  });
+                }
+              }}
+              title="Tablero de Indicadores en vivo (solo Operadores y Administradores)"
+              style={hudBtnStyle(fuenteMedia === "INDICADORES" ? "#B8923F" : "#26201C")}
+            >
+              <BarChart3 size={14} />
+              Indicadores
+            </button>
+          )}
+
+          {colaYt.length > 1 && fuenteMedia === "YOUTUBE" && (
             <>
               <button
                 type="button"
                 onClick={anteriorCancionYt}
                 title="Canción anterior en la cola"
-                style={hudBtnStyle("#1E293B")}
+                style={hudBtnStyle("#26201C")}
               >
                 <SkipBack size={14} />
               </button>
@@ -1357,54 +1414,50 @@ export function PantallaTvTaller({
                 type="button"
                 onClick={() => siguienteCancionYt(false)}
                 title="Siguiente canción en la cola"
-                style={hudBtnStyle("#1E293B")}
+                style={hudBtnStyle("#26201C")}
               >
                 <SkipForward size={14} />
               </button>
             </>
           )}
 
-          <button
-            type="button"
-            onClick={() =>
-              void toggleFavoritoYt({
-                titulo: cancionActualCola?.titulo || "Música Taller",
-                url: youtubeUrlActual,
-                canal: cancionActualCola?.canal,
-                miniaturaUrl: cancionActualCola?.miniaturaUrl,
-              })
-            }
-            title={esActualFavorito ? "Quitar de Mis Favoritos" : "Guardar canción actual en Favoritos"}
-            style={hudBtnStyle(esActualFavorito ? "#B45309" : "#1E293B")}
-          >
-            <Star size={14} fill={esActualFavorito ? "#FDE047" : "none"} color={esActualFavorito ? "#FDE047" : "#F8FAFC"} />
-          </button>
+          {fuenteMedia === "YOUTUBE" && (
+            <button
+              type="button"
+              onClick={() =>
+                void toggleFavoritoYt({
+                  titulo: cancionActualCola?.titulo || "Música Taller",
+                  url: youtubeUrlActual,
+                  canal: cancionActualCola?.canal,
+                  miniaturaUrl: cancionActualCola?.miniaturaUrl,
+                })
+              }
+              title={esActualFavorito ? "Quitar de Mis Favoritos" : "Guardar canción actual en Favoritos"}
+              style={hudBtnStyle(esActualFavorito ? "#8C6D2E" : "#26201C")}
+            >
+              <Star size={14} fill={esActualFavorito ? "#E8C97E" : "none"} color={esActualFavorito ? "#E8C97E" : "#E8E0D5"} />
+            </button>
+          )}
 
           <button
             type="button"
             onClick={() => {
-              setTabModalYt(fuenteMedia === "RADIO" ? "radio" : "buscar");
+              setTabModalYt(fuenteMedia === "YOUTUBE" ? "buscar" : "radio");
               setAbiertoBuscadorYt(true);
               setErrorYtBusqueda(null);
             }}
             title="Elegir Radio en Vivo (0 bloqueos), buscar en YouTube o ver Favoritos"
-            style={hudBtnStyle(fuenteMedia === "RADIO" ? "#059669" : "#DC2626")}
+            style={hudBtnStyle(fuenteMedia !== "INDICADORES" ? "#3D5A45" : "#26201C")}
           >
-            {fuenteMedia === "RADIO" ? <Radio size={14} /> : <Search size={14} />}
-            {fuenteMedia === "RADIO" ? "Radio / YouTube" : "YouTube / Radio"}
+            {fuenteMedia === "YOUTUBE" ? <Search size={14} /> : <Radio size={14} />}
+            Música / Radio
           </button>
 
           <button
             type="button"
-            onClick={() => {
-              if (modoBarraLateral) {
-                setModoBarraLateral(false);
-              } else {
-                setModoBarraLateral(true);
-              }
-            }}
+            onClick={() => setModoBarraLateral(!modoBarraLateral)}
             title="Modo Barra Lateral: solo pedidos para usar junto a youtube.com oficial en PC/Laptop"
-            style={hudBtnStyle(modoBarraLateral ? "#0284C7" : "#1E293B")}
+            style={hudBtnStyle(modoBarraLateral ? "#8C6D2E" : "#26201C")}
           >
             <PanelRight size={14} />
             {modoBarraLateral ? "TV Completa" : "Barra Lateral"}
@@ -1415,7 +1468,7 @@ export function PantallaTvTaller({
               type="button"
               onClick={abrirVentanaBarraLateral}
               title="Abrir en ventana angosta acoplable para poner al lado de youtube.com"
-              style={hudBtnStyle("#0F766E")}
+              style={hudBtnStyle("#3D5A45")}
             >
               Ventana Acoplable
             </button>
@@ -1425,13 +1478,13 @@ export function PantallaTvTaller({
             type="button"
             onClick={() => setModoLocal(modoActivo === "TALLER" ? "EVENTOS" : "TALLER")}
             title="Cambiar entre Modo Taller y Modo Showroom Eventos"
-            style={hudBtnStyle(modoActivo === "EVENTOS" ? "#BE185D" : "#1E293B")}
+            style={hudBtnStyle(modoActivo === "EVENTOS" ? "#7D4759" : "#26201C")}
           >
             {modoActivo === "TALLER" ? <Sparkles size={14} /> : <Monitor size={14} />}
             {modoActivo === "TALLER" ? "Eventos" : "Taller"}
           </button>
 
-          {modoActivo === "TALLER" && (
+          {modoActivo === "TALLER" && !modoBarraLateral && (
             <>
               <button
                 type="button"
@@ -1439,7 +1492,7 @@ export function PantallaTvTaller({
                   setLadoLocal(posicionLateral === "derecha" ? "izquierda" : "derecha")
                 }
                 title="Cambiar columna de pedidos Izquierda / Derecha"
-                style={hudBtnStyle("#1E293B")}
+                style={hudBtnStyle("#26201C")}
               >
                 <ArrowLeftRight size={14} />
                 {posicionLateral === "derecha" ? "Der" : "Izq"}
@@ -1452,14 +1505,14 @@ export function PantallaTvTaller({
                   const next = orden[(orden.indexOf(densidadConfig) + 1) % orden.length]!;
                   setDensidadLocal(next);
                 }}
-                title="Cambiar espacio YouTube / Pedidos"
-                style={hudBtnStyle("#1E293B")}
+                title="Cambiar espacio principal / Pedidos"
+                style={hudBtnStyle("#26201C")}
               >
                 <Layers size={14} />
                 {densidadConfig === "AUTO"
                   ? `Auto (${densidadEfectiva})`
                   : densidadConfig === "SOLO_AUDIO"
-                    ? "Solo Audio"
+                    ? "Compacto"
                     : densidadConfig}
               </button>
 
@@ -1467,7 +1520,7 @@ export function PantallaTvTaller({
                 type="button"
                 onClick={() => setMostrarListosLocal(!mostrarFranjaListos)}
                 title="Mostrar u ocultar franja inferior de pedidos listos"
-                style={hudBtnStyle("#1E293B")}
+                style={hudBtnStyle("#26201C")}
               >
                 {mostrarFranjaListos ? <Eye size={14} /> : <EyeOff size={14} />}
                 Listos
@@ -1479,7 +1532,7 @@ export function PantallaTvTaller({
             type="button"
             onClick={() => setSonidoLocal(!sonidoAlertas)}
             title="Activar o silenciar alertas sonoras"
-            style={hudBtnStyle("#1E293B")}
+            style={hudBtnStyle("#26201C")}
           >
             {sonidoAlertas ? <Volume2 size={14} /> : <VolumeX size={14} />}
           </button>
@@ -1488,7 +1541,7 @@ export function PantallaTvTaller({
             type="button"
             onClick={() => void recargarTablero(true)}
             title="Actualizar ahora"
-            style={hudBtnStyle("#1E293B")}
+            style={hudBtnStyle("#26201C")}
           >
             <RefreshCw size={14} />
           </button>
@@ -1497,7 +1550,7 @@ export function PantallaTvTaller({
             type="button"
             onClick={() => void togglePantallaCompleta()}
             title="Pantalla completa"
-            style={hudBtnStyle("#1E293B")}
+            style={hudBtnStyle("#26201C")}
           >
             {enPantallaCompleta ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
           </button>
@@ -1506,16 +1559,16 @@ export function PantallaTvTaller({
             style={{
               marginLeft: "8px",
               paddingLeft: "10px",
-              borderLeft: "1px solid rgba(148,163,184,0.25)",
+              borderLeft: "1px solid rgba(214, 195, 165, 0.2)",
               display: "flex",
               alignItems: "baseline",
               gap: "6px",
             }}
           >
-            <span style={{ fontSize: "0.74rem", color: "#94A3B8", textTransform: "capitalize" }}>
+            <span style={{ fontSize: "0.74rem", color: "#A89D8F", textTransform: "capitalize" }}>
               {formatearFechaEcuadorLarga(reloj)}
             </span>
-            <span style={{ fontSize: "1.05rem", fontWeight: 800, color: "#F8FAFC" }}>
+            <span style={{ fontSize: "1.02rem", fontWeight: 800, color: "#F6F1E8" }}>
               {formatearHoraEcuador(reloj)}
             </span>
           </div>
@@ -1537,7 +1590,7 @@ export function PantallaTvTaller({
           position: "relative",
         }}
       >
-        {/* REPRODUCTOR MULTIMEDIA (Radio en Vivo sin bloqueos O YouTube) — Oculto en Modo Barra Lateral */}
+        {/* ZONA PRINCIPAL: TABLERO DE INDICADORES (Solo Operadores/Admin) | RADIO EN VIVO | YOUTUBE */}
         {!modoBarraLateral && (
         <div
           style={
@@ -1545,8 +1598,8 @@ export function PantallaTvTaller({
               ? {
                   height: "46px",
                   padding: "0 16px",
-                  background: "#0F172A",
-                  borderBottom: "1px solid rgba(148,163,184,0.18)",
+                  background: "#1B1714",
+                  borderBottom: "1px solid rgba(214, 195, 165, 0.14)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "space-between",
@@ -1556,7 +1609,10 @@ export function PantallaTvTaller({
               : {
                   width: `${100 - anchoLateralPct}%`,
                   height: "100%",
-                  background: fuenteMedia === "RADIO" ? "radial-gradient(circle at 25% 25%, #132544 0%, #070B14 75%)" : "#000000",
+                  background:
+                    fuenteMedia === "YOUTUBE"
+                      ? "#000000"
+                      : "radial-gradient(circle at 20% 15%, #261F1A 0%, #14110F 72%)",
                   position: "relative",
                   flexShrink: 0,
                   display: "flex",
@@ -1564,8 +1620,242 @@ export function PantallaTvTaller({
                 }
           }
         >
-          {/* VISTA RADIO EN VIVO (0 bloqueos de disquera, 24/7 en Smart TV) */}
-          {fuenteMedia === "RADIO" ? (
+          {/* VISTA 0: TABLERO EJECUTIVO DE INDICADORES (EXCLUSIVO OPERADORES Y ADMINISTRADORES) */}
+          {fuenteMedia === "INDICADORES" && esOperadorOAdmin ? (
+            esSoloAudio ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: "12px", fontSize: "0.82rem", color: "#E8E0D5" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "14px", flexWrap: "wrap" }}>
+                  <strong style={{ color: "#C8A25A" }}>Indicadores Hoy:</strong>
+                  <span>Chats: <strong>{tablero.indicadoresTv?.chatsHoy ?? 0}</strong></span>
+                  <span>Pend. seguimiento: <strong style={{ color: "#E5988B" }}>{tablero.indicadoresTv?.chatsPendientesSeguimiento ?? 0}</strong></span>
+                  <span>Ventas hoy: <strong style={{ color: "#8AB597" }}>${Number(tablero.indicadoresTv?.totalVentasHoyUsd ?? 0).toFixed(2)}</strong></span>
+                  <span>Pedidos hoy/sem: <strong>{tablero.indicadoresTv?.pedidosHoy ?? 0} / {tablero.indicadoresTv?.pedidosSemana ?? 0}</strong></span>
+                </div>
+              </div>
+            ) : (() => {
+              const ind = tablero.indicadoresTv;
+              const serie = ind?.serieSemana ?? [];
+              const maxPed = Math.max(1, ...serie.map((s) => s.pedidos));
+              const desglose = ind?.desgloseClasificacionHoy ?? {};
+              return (
+                <div
+                  style={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    padding: "26px 32px",
+                    gap: "20px",
+                    overflowY: "auto",
+                  }}
+                >
+                  {/* Cabecera editorial */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "14px" }}>
+                    <div>
+                      <div style={{ fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "#C8A25A" }}>
+                        TABLERO EJECUTIVO · OPERADORES Y ADMINISTRADORES
+                      </div>
+                      <h2 style={{ margin: "4px 0 0 0", fontFamily: "var(--font-fraunces), Georgia, serif", fontSize: "2rem", fontWeight: 600, color: "#F6F1E8" }}>
+                        Resumen Operativo — {nombreNegocio}
+                      </h2>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <div style={{ fontSize: "2.35rem", fontWeight: 800, lineHeight: 1, color: "#F6F1E8", fontVariantNumeric: "tabular-nums" }}>
+                        {formatearHoraEcuador(reloj)}
+                      </div>
+                      <div style={{ fontSize: "0.84rem", color: "#A89D8F", textTransform: "capitalize", marginTop: "3px" }}>
+                        {formatearFechaEcuadorLarga(reloj)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 4 Tarjetas KPI Principales */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "14px" }}>
+                    {/* KPI 1: Chats Hoy */}
+                    <div style={kpiCardTvStyle("rgba(214, 195, 165, 0.2)")}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={kpiLabelTvStyle}>Chats Hoy</span>
+                        <MessageSquare size={18} color="#C8A25A" />
+                      </div>
+                      <div style={kpiNumTvStyle("#F6F1E8")}>{ind?.chatsHoy ?? 0}</div>
+                      <div style={kpiSubTvStyle}>Conversaciones activas hoy</div>
+                    </div>
+
+                    {/* KPI 2: Chats Pendientes de Seguimiento */}
+                    <div
+                      style={kpiCardTvStyle(
+                        (ind?.chatsPendientesSeguimiento ?? 0) > 0
+                          ? "rgba(196, 91, 75, 0.55)"
+                          : "rgba(214, 195, 165, 0.2)"
+                      )}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={kpiLabelTvStyle}>Pend. Seguimiento</span>
+                        <Bell size={18} color={(ind?.chatsPendientesSeguimiento ?? 0) > 0 ? "#D97B6C" : "#A89D8F"} />
+                      </div>
+                      <div style={kpiNumTvStyle((ind?.chatsPendientesSeguimiento ?? 0) > 0 ? "#E5988B" : "#F6F1E8")}>
+                        {ind?.chatsPendientesSeguimiento ?? 0}
+                      </div>
+                      <div style={kpiSubTvStyle}>
+                        Escalados: {ind?.chatsEscalados ?? 0} · Sin leer: {ind?.chatsNoLeidos ?? 0}
+                      </div>
+                    </div>
+
+                    {/* KPI 3: Total Ventas Hoy */}
+                    <div style={kpiCardTvStyle("rgba(138, 181, 151, 0.32)")}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={kpiLabelTvStyle}>Ventas Hoy</span>
+                        <DollarSign size={18} color="#8AB597" />
+                      </div>
+                      <div style={kpiNumTvStyle("#9CC4A8")}>
+                        ${Number(ind?.totalVentasHoyUsd ?? 0).toFixed(2)}
+                      </div>
+                      <div style={kpiSubTvStyle}>
+                        Semana: ${Number(ind?.totalVentasSemanaUsd ?? 0).toFixed(2)}
+                      </div>
+                    </div>
+
+                    {/* KPI 4: Pedidos Hoy y Semana */}
+                    <div style={kpiCardTvStyle("rgba(200, 162, 90, 0.35)")}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={kpiLabelTvStyle}>Pedidos Hoy / Sem</span>
+                        <Package size={18} color="#C8A25A" />
+                      </div>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: "8px" }}>
+                        <span style={kpiNumTvStyle("#E8C97E")}>{ind?.pedidosHoy ?? 0}</span>
+                        <span style={{ fontSize: "1.15rem", fontWeight: 700, color: "#A89D8F" }}>
+                          / {ind?.pedidosSemana ?? 0} sem
+                        </span>
+                      </div>
+                      <div style={kpiSubTvStyle}>
+                        Sin enviar a taller: {ind?.sinEnviarTallerHoy ?? 0}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Fila inferior: Gráfica semanal + Desglose por tipo de negocio */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1.45fr 1fr", gap: "16px", flex: 1, minHeight: "220px" }}>
+                    {/* Gráfica semanal Lun-Dom */}
+                    <div
+                      style={{
+                        padding: "18px 20px",
+                        borderRadius: "16px",
+                        background: "#1E1916",
+                        border: "1px solid rgba(214, 195, 165, 0.14)",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                        gap: "12px",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#E8E0D5", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                          Pedidos de la Semana (Lun – Dom)
+                        </span>
+                        <span style={{ fontSize: "0.78rem", color: "#A89D8F" }}>
+                          Total: {ind?.pedidosSemana ?? 0} pedidos
+                        </span>
+                      </div>
+
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(0, 1fr))", gap: "10px", alignItems: "end", flex: 1, paddingTop: "12px" }}>
+                        {serie.map((d) => {
+                          const alturaPct = Math.max(10, Math.round((d.pedidos / maxPed) * 100));
+                          return (
+                            <div
+                              key={d.fecha}
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "flex-end",
+                                height: "100%",
+                                gap: "6px",
+                              }}
+                            >
+                              <span style={{ fontSize: "0.85rem", fontWeight: 800, color: d.esHoy ? "#E8C97E" : "#D6CEC2" }}>
+                                {d.pedidos}
+                              </span>
+                              <div
+                                style={{
+                                  width: "100%",
+                                  maxWidth: "46px",
+                                  height: `${alturaPct}%`,
+                                  minHeight: "12px",
+                                  borderRadius: "8px 8px 3px 3px",
+                                  background: d.esHoy
+                                    ? "linear-gradient(180deg, #D5B16A 0%, #9E7B39 100%)"
+                                    : "rgba(214, 195, 165, 0.22)",
+                                  border: d.esHoy ? "1px solid #E8C97E" : "1px solid rgba(214, 195, 165, 0.14)",
+                                }}
+                              />
+                              <span style={{ fontSize: "0.76rem", fontWeight: d.esHoy ? 800 : 600, color: d.esHoy ? "#E8C97E" : "#A89D8F" }}>
+                                {d.diaCorto}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Desglose Hoy por Clasificación */}
+                    <div
+                      style={{
+                        padding: "18px 20px",
+                        borderRadius: "16px",
+                        background: "#1E1916",
+                        border: "1px solid rgba(214, 195, 165, 0.14)",
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-between",
+                        gap: "12px",
+                      }}
+                    >
+                      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#E8E0D5", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                        Pedidos de Hoy por Tipo
+                      </span>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                        {[
+                          { k: "FLORISTERIA_OCASIONES", label: "Floristería / Ocasiones", color: "#6F9A7B" },
+                          { k: "CONDOLENCIAS", label: "Condolencias", color: "#A89D8F" },
+                          { k: "EVENTOS", label: "Eventos", color: "#C97A94" },
+                          { k: "EXEQUIALES", label: "Exequiales", color: "#9E89AD" },
+                        ].map((item) => {
+                          const val = Number(desglose[item.k] ?? 0);
+                          return (
+                            <div
+                              key={item.k}
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                padding: "8px 12px",
+                                borderRadius: "10px",
+                                background: "rgba(255,255,255,0.03)",
+                                border: "1px solid rgba(214, 195, 165, 0.1)",
+                              }}
+                            >
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                <span style={{ width: "9px", height: "9px", borderRadius: "50%", background: item.color }} />
+                                <span style={{ fontSize: "0.84rem", color: "#E8E0D5", fontWeight: 600 }}>{item.label}</span>
+                              </div>
+                              <strong style={{ fontSize: "1rem", color: "#F6F1E8" }}>{val}</strong>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.76rem", color: "#A89D8F", paddingTop: "6px", borderTop: "1px solid rgba(214,195,165,0.12)" }}>
+                        <span>En taller: {pendientes.length}</span>
+                        <span>Listos: {tablero.ordenes.filter((o) => o.estadoTaller === "LISTO_ENTREGA").length}</span>
+                        <span>Entregados: {totalEntregadosHoy}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()
+          ) : fuenteMedia === "RADIO" ? (
             esSoloAudio ? (
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", gap: "10px" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
@@ -1959,18 +2249,18 @@ export function PantallaTvTaller({
               flex: 1,
               minWidth: 0,
               minHeight: 0,
-              background: "#0B1220",
+              background: "#181411",
               borderLeft:
-                !esSoloAudio && posicionLateral === "derecha"
-                  ? "2px solid rgba(56, 189, 248, 0.25)"
+                !esSoloAudio && !modoBarraLateral && posicionLateral === "derecha"
+                  ? "1px solid rgba(214, 195, 165, 0.16)"
                   : undefined,
               borderRight:
-                !esSoloAudio && posicionLateral === "izquierda"
-                  ? "2px solid rgba(56, 189, 248, 0.25)"
+                !esSoloAudio && !modoBarraLateral && posicionLateral === "izquierda"
+                  ? "1px solid rgba(214, 195, 165, 0.16)"
                   : undefined,
               display: "flex",
               flexDirection: "column",
-              padding: "12px",
+              padding: "14px",
               gap: "10px",
             }}
           >
@@ -1985,8 +2275,8 @@ export function PantallaTvTaller({
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <Flame size={20} color="#F59E0B" />
-                <span style={{ fontSize: "1rem", fontWeight: 800, letterSpacing: "0.02em" }}>
+                <Flame size={18} color="#C8A25A" />
+                <span style={{ fontSize: "0.94rem", fontWeight: 800, letterSpacing: "0.05em", color: "#F6F1E8" }}>
                   PENDIENTES TALLER ({pendientes.length})
                 </span>
               </div>
@@ -1996,9 +2286,9 @@ export function PantallaTvTaller({
                     style={{
                       padding: "3px 9px",
                       borderRadius: "999px",
-                      background: "rgba(56,189,248,0.18)",
-                      color: "#7DD3FC",
-                      fontSize: "0.76rem",
+                      background: "rgba(200, 162, 90, 0.18)",
+                      color: "#E8C97E",
+                      fontSize: "0.74rem",
                       fontWeight: 700,
                     }}
                   >
@@ -2006,7 +2296,7 @@ export function PantallaTvTaller({
                   </span>
                 )}
                 {tablero.puedeInteractuar && (
-                  <span style={{ fontSize: "0.72rem", color: "#94A3B8" }}>
+                  <span style={{ fontSize: "0.7rem", color: "#A89D8F" }}>
                     Control TV: ▲▼ + OK
                   </span>
                 )}
@@ -2074,24 +2364,24 @@ export function PantallaTvTaller({
                         padding: densidadEfectiva === "SOLO_AUDIO" ? "11px 12px" : "13px 14px",
                         borderRadius: "14px",
                         background: esExequiales
-                          ? "linear-gradient(145deg, #2E1065, #1E1B4B)"
+                          ? "linear-gradient(145deg, #2B2127, #1E181C)"
                           : enPrep
-                            ? "linear-gradient(145deg, #0F2942, #111827)"
-                            : "linear-gradient(145deg, #1E293B, #0F172A)",
+                            ? "linear-gradient(145deg, #27211B, #1D1814)"
+                            : "linear-gradient(145deg, #231D19, #1A1613)",
                         border: enfocado
-                          ? "3px solid #38BDF8"
+                          ? "2px solid #C8A25A"
                           : esExequiales
-                            ? "2px solid #A855F7"
+                            ? "1.5px solid rgba(158, 137, 173, 0.45)"
                             : enPrep
-                              ? "2px solid #F59E0B"
-                              : "1.5px solid rgba(148,163,184,0.28)",
+                              ? "1.5px solid rgba(200, 162, 90, 0.45)"
+                              : "1px solid rgba(214, 195, 165, 0.18)",
                         boxShadow: enfocado
-                          ? "0 0 22px rgba(56, 189, 248, 0.38)"
-                          : "0 6px 16px rgba(0, 0, 0, 0.35)",
+                          ? "0 0 18px rgba(200, 162, 90, 0.25)"
+                          : "0 6px 16px rgba(0, 0, 0, 0.3)",
                         display: "flex",
                         flexDirection: "column",
                         gap: "7px",
-                        cursor: tablero.puedeInteractuar ? "pointer" : "default",
+                        cursor: "pointer",
                         opacity: procesandoId === orden.id ? 0.65 : 1,
                       }}
                     >
@@ -2563,14 +2853,14 @@ export function PantallaTvTaller({
         )}
       </div>
 
-      {/* Franja Inferior: Pedidos Listos Entrega (Hoy) — solo en Modo Taller cuando está visible */}
+      {/* Franja Inferior Sobria: Pedidos Listos Entrega (Hoy) */}
       {modoActivo === "TALLER" && mostrarFranjaListos && (
         <div
           style={{
-            height: densidadEfectiva === "SOLO_AUDIO" ? "64px" : "96px",
-            padding: "8px 16px",
-            background: "#0F172A",
-            borderTop: "2px solid rgba(16, 185, 129, 0.35)",
+            height: densidadEfectiva === "SOLO_AUDIO" ? "64px" : "92px",
+            padding: "8px 18px",
+            background: "#1B1714",
+            borderTop: "1px solid rgba(214, 195, 165, 0.16)",
             display: "flex",
             alignItems: "center",
             gap: "12px",
@@ -2585,24 +2875,25 @@ export function PantallaTvTaller({
               flexDirection: "column",
               gap: "2px",
               flexShrink: 0,
-              borderRight: "1px solid rgba(148,163,184,0.2)",
+              borderRight: "1px solid rgba(214, 195, 165, 0.16)",
               paddingRight: "12px",
             }}
           >
             <span
               style={{
-                fontSize: "0.82rem",
+                fontSize: "0.8rem",
                 fontWeight: 800,
-                color: "#34D399",
+                color: "#8AB597",
                 display: "flex",
                 alignItems: "center",
                 gap: "5px",
+                letterSpacing: "0.04em",
               }}
             >
-              <CheckCircle2 size={16} /> LISTOS HOY (
+              <CheckCircle2 size={15} /> LISTOS HOY (
               {tablero.ordenes.filter((o) => o.estadoTaller === "LISTO_ENTREGA").length})
             </span>
-            <span style={{ fontSize: "0.74rem", color: "#94A3B8", fontWeight: 600 }}>
+            <span style={{ fontSize: "0.73rem", color: "#A89D8F", fontWeight: 600 }}>
               ✓✓ {totalEntregadosHoy} entregados hoy
             </span>
           </div>
@@ -3672,23 +3963,60 @@ function hudBtnStyle(bg: string): React.CSSProperties {
     alignItems: "center",
     gap: "5px",
     padding: "5px 10px",
-    borderRadius: "7px",
-    border: "1px solid rgba(148, 163, 184, 0.28)",
+    borderRadius: "8px",
+    border: "1px solid rgba(214, 195, 165, 0.22)",
     background: bg,
-    color: "#F8FAFC",
+    color: "#F6F1E8",
     fontSize: "0.74rem",
     fontWeight: 700,
     cursor: "pointer",
   };
 }
 
+function kpiCardTvStyle(borderColor: string): React.CSSProperties {
+  return {
+    padding: "16px 18px",
+    borderRadius: "15px",
+    background: "#1E1916",
+    border: `1px solid ${borderColor}`,
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between",
+    gap: "8px",
+  };
+}
+
+const kpiLabelTvStyle: React.CSSProperties = {
+  fontSize: "0.74rem",
+  fontWeight: 700,
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+  color: "#A89D8F",
+};
+
+function kpiNumTvStyle(color: string): React.CSSProperties {
+  return {
+    fontSize: "2.25rem",
+    fontWeight: 800,
+    lineHeight: 1.05,
+    color,
+    fontVariantNumeric: "tabular-nums",
+  };
+}
+
+const kpiSubTvStyle: React.CSSProperties = {
+  fontSize: "0.76rem",
+  color: "#A89D8F",
+  fontWeight: 500,
+};
+
 function pillShowroomStyle(activo: boolean): React.CSSProperties {
   return {
     padding: "6px 13px",
     borderRadius: "999px",
-    border: activo ? "1.5px solid #F472B6" : "1px solid rgba(148,163,184,0.28)",
-    background: activo ? "rgba(190, 24, 93, 0.35)" : "rgba(30, 41, 59, 0.8)",
-    color: activo ? "#FCE7F3" : "#CBD5E1",
+    border: activo ? "1.5px solid #C8A25A" : "1px solid rgba(214,195,165,0.22)",
+    background: activo ? "rgba(184, 146, 63, 0.24)" : "rgba(38, 32, 28, 0.85)",
+    color: activo ? "#F6F1E8" : "#C9BEB0",
     fontSize: "0.8rem",
     fontWeight: 700,
     cursor: "pointer",
