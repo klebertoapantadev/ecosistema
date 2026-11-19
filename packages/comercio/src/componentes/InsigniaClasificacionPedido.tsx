@@ -111,6 +111,7 @@ export interface PropsBarraFiltroClasificacionPedido {
   totalGeneral: number;
   compacta?: boolean;
   ocultarSinPedidos?: boolean;
+  deslizableMovil?: boolean;
 }
 
 export function BarraFiltroClasificacionPedido({
@@ -120,9 +121,11 @@ export function BarraFiltroClasificacionPedido({
   totalGeneral,
   compacta = false,
   ocultarSinPedidos = false,
+  deslizableMovil = false,
 }: PropsBarraFiltroClasificacionPedido) {
   return (
     <div
+      className={deslizableMovil ? "eco-barra-clasif-movil" : undefined}
       style={{
         display: "flex",
         alignItems: "center",

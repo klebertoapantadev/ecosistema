@@ -1281,6 +1281,26 @@ export function BandejaPedidosTienda({
           .eco-solo-escritorio-pedidos {
             display: none !important;
           }
+          .eco-barra-horizontal-movil {
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+          }
+          .eco-barra-horizontal-movil::-webkit-scrollbar {
+            display: none;
+          }
+          .eco-barra-horizontal-movil > * {
+            flex-shrink: 0 !important;
+          }
+          .eco-barra-clasif-movil {
+            flex-wrap: nowrap !important;
+            flex-shrink: 0 !important;
+          }
+          .eco-barra-clasif-movil > button {
+            flex-shrink: 0 !important;
+            white-space: nowrap !important;
+          }
         }
       `}</style>
 
@@ -1288,6 +1308,7 @@ export function BandejaPedidosTienda({
       <div
         role="tablist"
         aria-label="Filtrar pedidos por fecha"
+        className="eco-barra-horizontal-movil"
         style={{
           background: "#FFFFFF",
           border: "1px solid #E5E7EB",
@@ -1300,6 +1321,7 @@ export function BandejaPedidosTienda({
         }}
       >
         <span
+          className="eco-solo-escritorio-pedidos"
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -1339,6 +1361,8 @@ export function BandejaPedidosTienda({
                 fontWeight: 700,
                 cursor: "pointer",
                 transition: "all 0.15s ease",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
               }}
             >
               <span>{tab.etiqueta}</span>
@@ -1366,11 +1390,12 @@ export function BandejaPedidosTienda({
 
       {/* Barra profesional de Clasificación Operativa */}
       <div
+        className="eco-barra-horizontal-movil"
         style={{
           background: "#FFFFFF",
           border: "1px solid #E5E7EB",
           borderRadius: "12px",
-          padding: "12px 16px",
+          padding: "10px 14px",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
@@ -1384,9 +1409,13 @@ export function BandejaPedidosTienda({
           conteos={conteosClasificacion}
           totalGeneral={pedidosPorFecha.length}
           ocultarSinPedidos
+          deslizableMovil
         />
 
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+        <div
+          className="eco-barra-clasif-movil"
+          style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}
+        >
           <div
             role="group"
             aria-label="Modo de visualización"
@@ -2943,7 +2972,59 @@ export function BandejaPedidosTienda({
           onCerrar={() => setPedidoParaTarjeta(null)}
           orden={convertirPedidoTiendaAOrdenTaller(pedidoParaTarjeta)}
           negocio={negocio}
-          onActualizarOrden={() => {
+          onActualizarOrden={(act) => {
+            const actualizarRegistro = (reg: PedidoTiendaRegistrado): PedidoTiendaRegistrado => {
+              const coincide =
+                reg.id === act.id ||
+                reg.ordenTallerId === act.id ||
+                reg.id === pedidoParaTarjeta.id;
+              if (!coincide) return reg;
+              const tarPrev = reg.tarjeta ?? {
+                token: reg.tokenAprobacion || reg.id,
+                tipo: "DIPTICO" as const,
+                mensaje: "",
+                para: reg.logistica.destinatarioNombre || "",
+                de: reg.compradorNombre || "",
+              };
+              return {
+                ...reg,
+                tarjeta: {
+                  ...tarPrev,
+                  ...(act.tarjetaToken !== undefined ? { token: act.tarjetaToken } : {}),
+                  ...(act.tarjetaTokenEdicion !== undefined
+                    ? { tokenEdicion: act.tarjetaTokenEdicion }
+                    : {}),
+                  ...(act.tarjetaTipo !== undefined ? { tipo: act.tarjetaTipo } : {}),
+                  ...(act.tarjetaConfidencial !== undefined
+                    ? { confidencial: act.tarjetaConfidencial }
+                    : {}),
+                  ...(act.dedicatoria !== undefined ? { mensaje: act.dedicatoria } : {}),
+                  ...(act.destinatarioFallecido !== undefined
+                    ? { para: act.destinatarioFallecido }
+                    : {}),
+                  ...(act.clienteSolicita !== undefined ? { de: act.clienteSolicita } : {}),
+                  ...(act.tarjetaDiseno !== undefined ? { diseno: act.tarjetaDiseno } : {}),
+                  ...(act.tarjetaMusicaUrl !== undefined
+                    ? { musicaUrl: act.tarjetaMusicaUrl }
+                    : {}),
+                  ...(act.tarjetaMusicaTitulo !== undefined
+                    ? { musicaTitulo: act.tarjetaMusicaTitulo }
+                    : {}),
+                  ...(act.tarjetaLyrics !== undefined ? { lyrics: act.tarjetaLyrics } : {}),
+                  ...(act.tarjetaMetadata !== undefined
+                    ? { metadata: act.tarjetaMetadata }
+                    : {}),
+                },
+              };
+            };
+            setPedidoParaTarjeta((prev) => (prev ? actualizarRegistro(prev) : null));
+            setPedidos((prev) => {
+              const siguiente = prev.map(actualizarRegistro);
+              try {
+                localStorage.setItem(cacheKey, JSON.stringify(siguiente));
+              } catch {}
+              return siguiente;
+            });
             void cargarPedidos();
           }}
         />
