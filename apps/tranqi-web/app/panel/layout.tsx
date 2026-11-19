@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { SelloCompilacion } from "@eco/primitivas";
 import { obtenerPerfilActual, asegurarMembresiaCliente, obtenerPerfiles } from "@eco/identidad";
-import { CampanaNotificaciones } from "@eco/notificaciones";
+import { CampanaPanel } from "./CampanaPanel";
 import { NavegacionSidebar } from "./NavegacionSidebar";
 import { CapaPerfilRail, COOKIE_RAIL_PLEGADO } from "./CapaPerfilRail";
 import { BotonPlegarRail } from "./BotonPlegarRail";
@@ -159,7 +159,7 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
             <Link href="/panel" className="panel-marca-logo" title="Ir al tablero principal (Inicio)">
               <img src="/assets/tranqi-white.svg" alt="tranqi" />
             </Link>
-            <CampanaNotificaciones negocio={NEGOCIO} usuarioId={perfil.usu_id} />
+            <CampanaPanel negocio={NEGOCIO} usuarioId={perfil.usu_id} />
             <BotonPlegarRail />
           </div>
 

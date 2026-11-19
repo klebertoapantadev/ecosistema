@@ -106,6 +106,14 @@ function fichaCita(d: { aviso: string; cliente: string; cuando: string; modalida
   return `<div><p style="margin:0">${d.aviso}</p><p style="margin:4px 0 0"><b>${escaparHtml(d.cliente)}</b> · ${d.cuando} · ${d.modalidad}</p>${motivo}<p style="margin:8px 0 0"><a href="${d.enlace}">${d.accion}</a></p></div>`;
 }
 
+/**
+ * Solo las notificaciones de tranqi (TRQ-031). not_registro es compartida por
+ * los negocios del ecosistema y un superadmin recibe también las de tinkay
+ * («URGENTE Exequiales…»), que aparecían en el panel de tranqi. Se guardan
+ * como «TRANQ» o «tranqi»; las antiguas sin negocio se tratan como de tranqi.
+ */
+const SOLO_TRANQI = "not_negocio.ilike.tranq*,not_negocio.is.null";
+
 export async function GET() {
   try {
     const perfil = await obtenerPerfilActual();
@@ -156,7 +164,7 @@ export async function GET() {
           .order("not_creado_en", { ascending: false })
           .limit(100);
 
-        query = query.eq("not_usuario_id", perfil.usu_id);
+        query = query.eq("not_usuario_id", perfil.usu_id).or(SOLO_TRANQI);
 
         let registros: any[] = [];
         try {
@@ -666,7 +674,8 @@ export async function POST(request: Request) {
             not_leido_en: ahora,
             not_detalles: { eliminada: true, eliminada_en: ahora, eliminada_por: actorInfo }
           })
-          .eq("not_usuario_id", perfil.usu_id);
+          .eq("not_usuario_id", perfil.usu_id)
+          .or(SOLO_TRANQI);
       } catch (errClear) {
         console.warn("Aviso al limpiar notificaciones en BDD:", errClear);
       }
@@ -1137,7 +1146,8 @@ export async function DELETE() {
             not_leido_en: ahora,
             not_detalles: { eliminada: true, eliminada_en: ahora }
           })
-          .eq("not_usuario_id", perfil.usu_id);
+          .eq("not_usuario_id", perfil.usu_id)
+          .or(SOLO_TRANQI);
       } catch (errDel) {
         console.warn("Aviso al eliminar notificaciones:", errDel);
       }
