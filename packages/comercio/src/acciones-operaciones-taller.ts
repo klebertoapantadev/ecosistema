@@ -509,7 +509,7 @@ export async function eliminarVariedadesRosaLoteAction(entrada: {
       return { ok: false, error: "Selecciona al menos una variedad guardada para eliminar." };
     }
 
-    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
     const supabase = await crearClienteServidor();
 
     const init = await asegurarCatalogoVariedadesInicializado(supabase, neg);
@@ -522,21 +522,25 @@ export async function eliminarVariedadesRosaLoteAction(entrada: {
       };
     }
 
-    const db: any = crearClienteAdmin() ?? supabase;
-    const { error } = await db
-      .schema("comun_comercio")
-      .from("com_variedad_rosa")
-      .update({
-        vro_eliminado_en: new Date().toISOString(),
-        vro_activo: false,
-        vro_es_defecto: false,
-        vro_actualizado_en: new Date().toISOString(),
-      })
-      .eq("vro_negocio", neg)
-      .in("vro_id", idsLimpios);
+    const resultados = await Promise.all(
+      idsLimpios.map((variedadId) =>
+        invocarRpcComercio(supabase, "com_fn_eliminar_variedad_rosa", {
+          p_negocio: neg,
+          p_variedad_id: variedadId,
+        })
+      )
+    );
 
-    if (error) {
-      return { ok: false, error: error.message };
+    const primerFallo = resultados.find((r) => r.error || r.data?.ok === false);
+    if (primerFallo) {
+      return {
+        ok: false,
+        error: String(
+          primerFallo.error?.message ||
+            primerFallo.data?.error ||
+            "No se pudieron eliminar las variedades seleccionadas."
+        ),
+      };
     }
 
     const lista = await asegurarCatalogoVariedadesInicializado(supabase, neg);
