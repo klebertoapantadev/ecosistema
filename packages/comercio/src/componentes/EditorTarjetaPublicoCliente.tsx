@@ -10,11 +10,16 @@ import {
   Sparkles,
   Upload,
 } from "lucide-react";
+import type { DisenoVisualTarjeta } from "../operaciones-taller";
 import {
   buscarLyricsCancionAction,
   editarTarjetaClienteAction,
   subirAudioTarjetaAction,
 } from "../acciones-operaciones-taller";
+import {
+  LienzoDisenadorTarjeta,
+  normalizarDisenoTarjeta,
+} from "./LienzoDisenadorTarjeta";
 
 export interface PropsEditorTarjetaPublicoCliente {
   datosIniciales: {
@@ -27,6 +32,7 @@ export interface PropsEditorTarjetaPublicoCliente {
     dedicatoria: string;
     tipo: "DIPTICO" | "CONDOLENCIAS_PLANA" | "SOLO_DIGITAL";
     confidencial: boolean;
+    diseno?: DisenoVisualTarjeta;
     musicaUrl?: string | null;
     musicaTitulo?: string | null;
     lyrics?: Array<{ tiempo?: number; texto: string }>;
@@ -49,7 +55,16 @@ export function EditorTarjetaPublicoCliente({
   const [para, setPara] = useState<string>(datosIniciales.destinatario || "");
   const [de, setDe] = useState<string>(datosIniciales.remitente || "");
   const [mensaje, setMensaje] = useState<string>(datosIniciales.dedicatoria || "");
-  const [confidencial, setConfidencial] = useState<boolean>(Boolean(datosIniciales.confidencial));
+  const [confidencial, setConfidencial] = useState<boolean>(
+    esCondolencias ? false : Boolean(datosIniciales.confidencial)
+  );
+  const [diseno, setDiseno] = useState<DisenoVisualTarjeta>(() =>
+    normalizarDisenoTarjeta(
+      datosIniciales.diseno,
+      esCondolencias,
+      datosIniciales.dedicatoria || ""
+    )
+  );
   const [musicaUrl, setMusicaUrl] = useState<string>(
     esCondolencias ? "" : datosIniciales.musicaUrl || ""
   );
@@ -67,6 +82,7 @@ export function EditorTarjetaPublicoCliente({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const inputAudioRef = useRef<HTMLInputElement | null>(null);
+  const soloQrEfectivo = !esCondolencias && confidencial;
 
   const handleSubirAudio = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -91,7 +107,7 @@ export function EditorTarjetaPublicoCliente({
       }
       setMusicaUrl(res.publicUrl);
       if (!musicaTitulo.trim()) setMusicaTitulo(res.nombreLimpio);
-      setExitoMsg("🎵 Audio cargado. Pulsa Guardar Cambios para aplicarlo.");
+      setExitoMsg("🎵 Audio cargado. Pulsa Guardar Tarjeta para aplicarlo.");
     };
     reader.onerror = () => {
       setSubiendoMp3(false);
@@ -154,12 +170,15 @@ export function EditorTarjetaPublicoCliente({
       }
     }
 
+    const disenoFinal = normalizarDisenoTarjeta(diseno, esCondolencias, mensaje.trim());
+
     const res = await editarTarjetaClienteAction({
       token: tokenEdicion,
       dedicatoria: mensaje.trim(),
       para: para.trim(),
       de: de.trim(),
-      confidencial,
+      confidencial: soloQrEfectivo,
+      diseno: disenoFinal,
       musicaUrl: esCondolencias ? null : musicaUrl.trim() || null,
       musicaTitulo: tituloFinal,
       lyrics: lyricsFinales,
@@ -170,7 +189,7 @@ export function EditorTarjetaPublicoCliente({
       setErrorMsg(res.error || "No se pudieron guardar los cambios.");
       return;
     }
-    setExitoMsg("✅ Tu tarjeta fue actualizada y quedó lista para nuestro taller.");
+    setExitoMsg("✅ Tu tarjeta y diseño fueron guardados y quedaron listos para nuestro taller.");
   };
 
   return (
@@ -184,24 +203,25 @@ export function EditorTarjetaPublicoCliente({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "24px 16px",
+        padding: "20px 14px",
         boxSizing: "border-box",
       }}
     >
       <div
         style={{
           width: "100%",
-          maxWidth: "560px",
+          maxWidth: "960px",
           backgroundColor: "#FFFFFF",
           color: "#0F172A",
           borderRadius: "18px",
-          padding: "24px",
+          padding: "22px",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
           display: "flex",
           flexDirection: "column",
           gap: "16px",
         }}
       >
+        {/* ENCABEZADO */}
         <div
           style={{
             display: "flex",
@@ -226,38 +246,40 @@ export function EditorTarjetaPublicoCliente({
               {nombreMarca} · Pedido {datosIniciales.codigo}
             </span>
             <h1 style={{ fontSize: "1.2rem", fontWeight: 800, margin: "4px 0 2px 0", color: "#0F172A" }}>
-              {esCondolencias ? "🕊️ Editar Tarjeta de Condolencias" : "💌 Editar Tarjeta de Dedicatoria"}
+              {esCondolencias ? "🕊️ Diseñar Tarjeta de Condolencias" : "💌 Diseñar Tarjeta de Dedicatoria"}
             </h1>
             <p style={{ margin: 0, fontSize: "0.78rem", color: "#64748B" }}>
               {esCondolencias
-                ? "Formato horizontal (16,8 × 11,3 cm)."
-                : "Formato vertical plegable (11,3 × 16,8 cm)."}
+                ? "Formato horizontal (16,8 × 11,3 cm). Puedes mover el texto, alinear/justificar y agregar un logo o imagen."
+                : "Formato vertical plegable (11,3 × 16,8 cm). Personaliza el mensaje, diseño, imagen o modo Solo QR."}
             </p>
           </div>
 
-          <a
-            href={`/dedicatoria/${datosIniciales.tokenVista}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Ver cómo visualizará el destinatario la tarjeta digital"
-            aria-label="Ver Tarjeta Digital"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "5px",
-              padding: "7px 12px",
-              borderRadius: "8px",
-              border: "1px solid #CBD5E1",
-              background: "#F8FAFC",
-              color: "#0F172A",
-              textDecoration: "none",
-              fontSize: "0.76rem",
-              fontWeight: 700,
-            }}
-          >
-            <span>Ver Tarjeta Digital</span>
-            <ExternalLink size={13} />
-          </a>
+          {!esCondolencias && (
+            <a
+              href={`/dedicatoria/${datosIniciales.tokenVista}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Ver cómo visualizará el destinatario la tarjeta digital"
+              aria-label="Ver Tarjeta Digital"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                padding: "7px 12px",
+                borderRadius: "8px",
+                border: "1px solid #CBD5E1",
+                background: "#F8FAFC",
+                color: "#0F172A",
+                textDecoration: "none",
+                fontSize: "0.76rem",
+                fontWeight: 700,
+              }}
+            >
+              <span>Ver Digital</span>
+              <ExternalLink size={13} />
+            </a>
+          )}
         </div>
 
         {datosIniciales.bloqueadoEdicion ? (
@@ -280,248 +302,350 @@ export function EditorTarjetaPublicoCliente({
             </div>
             <p style={{ margin: 0 }}>
               Tu tarjeta ya fue impresa para acompañar el arreglo floral y no admite más modificaciones.
-              Puedes abrir la vista digital arriba para ver cómo luce.
             </p>
           </div>
         ) : (
-          <form onSubmit={handleGuardar} style={{ display: "flex", flexDirection: "column", gap: "13px" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-              <div>
-                <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
-                  {esCondolencias ? "En memoria / Destinatario:" : "Para (Destinatario):"}
-                </label>
-                <input
-                  type="text"
-                  value={para}
-                  onChange={(e) => setPara(e.target.value)}
-                  placeholder="Quien recibe"
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.84rem",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-              <div>
-                <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
-                  De parte de (Firma):
-                </label>
-                <input
-                  type="text"
-                  value={de}
-                  onChange={(e) => setDe(e.target.value)}
-                  placeholder="Quien envía"
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.84rem",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-            </div>
+          <form
+            onSubmit={handleGuardar}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+              gap: "18px",
+              alignItems: "start",
+            }}
+          >
+            {/* COLUMNA IZQUIERDA: DISEÑADOR GRÁFICO WYSIWYG */}
+            <LienzoDisenadorTarjeta
+              negocio={negNorm}
+              esCondolencias={esCondolencias}
+              soloQr={soloQrEfectivo}
+              mensaje={mensaje}
+              diseno={diseno}
+              onCambiarDiseno={setDiseno}
+              onError={(msg) => setErrorMsg(msg)}
+            />
 
-            <div>
-              <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#0F172A", marginBottom: "4px" }}>
-                Mensaje de tu tarjeta:
-              </label>
-              <textarea
-                rows={5}
-                value={mensaje}
-                onChange={(e) => setMensaje(e.target.value)}
-                placeholder={
-                  esCondolencias
-                    ? "Escribe el mensaje de condolencias..."
-                    : "Escribe tu dedicatoria..."
-                }
-                style={{
-                  width: "100%",
-                  padding: "10px 12px",
-                  borderRadius: "10px",
-                  border: "1px solid #94A3B8",
-                  fontSize: "0.88rem",
-                  lineHeight: 1.45,
-                  boxSizing: "border-box",
-                }}
-              />
-            </div>
-
-            {/* MODO CONFIDENCIAL / DISCRECIÓN */}
-            <label
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                gap: "10px",
-                padding: "11px 12px",
-                borderRadius: "10px",
-                backgroundColor: confidencial ? "#F0F9FF" : "#F8FAFC",
-                border: confidencial ? "1.5px solid #0284C7" : "1px solid #E2E8F0",
-                cursor: "pointer",
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={confidencial}
-                onChange={(e) => setConfidencial(e.target.checked)}
-                style={{ marginTop: "3px", width: "16px", height: "16px", cursor: "pointer" }}
-              />
-              <div>
-                <strong style={{ display: "block", fontSize: "0.82rem", color: "#0F172A" }}>
-                  🔒 Confidencialidad / Discreción (imprimir solo el QR en la tarjeta física)
-                </strong>
-                <span style={{ fontSize: "0.74rem", color: "#64748B", lineHeight: 1.35 }}>
-                  En la cartulina impresa no aparecerá el texto escrito, únicamente el código QR para que
-                  quien reciba las flores escanee y lea el mensaje en privado desde su celular.
-                </span>
-              </div>
-            </label>
-
-            {/* MÚSICA Y LETRA SOLO PARA DEDICATORIA */}
-            {!esCondolencias && (
-              <div
-                style={{
-                  padding: "12px",
-                  borderRadius: "10px",
-                  backgroundColor: "#F8FAFC",
-                  border: "1px solid #E2E8F0",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "8px",
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                  <strong style={{ fontSize: "0.8rem", color: "#1E293B" }}>
-                    🎵 Canción de fondo (Link de YouTube o MP3):
-                  </strong>
-                  <div style={{ display: "flex", gap: "6px" }}>
+            {/* COLUMNA DERECHA: DATOS, MODO MENSAJE VS QR, Y MÚSICA (SOLO DEDICATORIA) */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {/* MODO DE IMPRESIÓN EXCLUSIVO PARA DEDICATORIA (MENSAJE O QR, NUNCA AMBOS) */}
+              {!esCondolencias && (
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.76rem",
+                      fontWeight: 700,
+                      color: "#334155",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    ¿Cómo deseas imprimir tu tarjeta física?
+                  </label>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                     <button
                       type="button"
-                      disabled={subiendoMp3}
-                      onClick={() => inputAudioRef.current?.click()}
+                      onClick={() => setConfidencial(false)}
                       style={{
-                        padding: "4px 9px",
-                        borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
-                        background: "#FFFFFF",
-                        color: "#0F172A",
-                        fontSize: "0.73rem",
+                        padding: "9px 10px",
+                        borderRadius: "8px",
+                        border: !soloQrEfectivo ? "2px solid #0F766E" : "1px solid #CBD5E1",
+                        background: !soloQrEfectivo ? "#F0FDFA" : "#FFFFFF",
+                        color: !soloQrEfectivo ? "#0F766E" : "#475569",
                         fontWeight: 700,
+                        fontSize: "0.78rem",
                         cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
+                        textAlign: "left",
                       }}
                     >
-                      {subiendoMp3 ? <Loader2 size={12} /> : <Upload size={12} />}
-                      <span>{subiendoMp3 ? "Subiendo..." : "Subir MP3"}</span>
+                      📝 Imprimir Mensaje
+                      <span style={{ display: "block", fontSize: "0.66rem", fontWeight: 400, color: "#64748B" }}>
+                        Texto + imagen (sin QR)
+                      </span>
                     </button>
-                    <input
-                      ref={inputAudioRef}
-                      type="file"
-                      accept="audio/*,.mp3,.m4a,.wav,.ogg"
-                      onChange={handleSubirAudio}
-                      style={{ display: "none" }}
-                    />
                     <button
                       type="button"
-                      disabled={buscandoLyrics}
-                      onClick={() => void handleBuscarLetra()}
+                      onClick={() => setConfidencial(true)}
                       style={{
-                        padding: "4px 9px",
-                        borderRadius: "6px",
-                        border: "1px solid #BAE6FD",
-                        background: "#E0F2FE",
-                        color: "#0369A1",
-                        fontSize: "0.73rem",
+                        padding: "9px 10px",
+                        borderRadius: "8px",
+                        border: soloQrEfectivo ? "2px solid #0284C7" : "1px solid #CBD5E1",
+                        background: soloQrEfectivo ? "#F0F9FF" : "#FFFFFF",
+                        color: soloQrEfectivo ? "#0369A1" : "#475569",
                         fontWeight: 700,
+                        fontSize: "0.78rem",
                         cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
+                        textAlign: "left",
                       }}
                     >
-                      {buscandoLyrics ? <Loader2 size={12} /> : <Sparkles size={12} />}
-                      <span>{buscandoLyrics ? "Buscando..." : "Cargar Letra"}</span>
+                      <Lock size={11} style={{ verticalAlign: "middle", marginRight: "3px" }} />
+                      Imprimir Solo QR
+                      <span style={{ display: "block", fontSize: "0.66rem", fontWeight: 400, color: "#64748B" }}>
+                        Confidencial · Se abre en web
+                      </span>
                     </button>
                   </div>
                 </div>
+              )}
 
-                <input
-                  type="text"
-                  value={musicaUrl}
-                  onChange={(e) => setMusicaUrl(e.target.value)}
-                  placeholder="https://www.youtube.com/watch?v=..."
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.76rem",
+                      fontWeight: 700,
+                      color: "#334155",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    {esCondolencias ? "En memoria / Destinatario:" : "Para (Destinatario):"}
+                  </label>
+                  <input
+                    type="text"
+                    value={para}
+                    onChange={(e) => setPara(e.target.value)}
+                    placeholder="Quien recibe"
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      borderRadius: "8px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.84rem",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.76rem",
+                      fontWeight: 700,
+                      color: "#334155",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    De parte de (Firma):
+                  </label>
+                  <input
+                    type="text"
+                    value={de}
+                    onChange={(e) => setDe(e.target.value)}
+                    placeholder="Quien envía"
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      borderRadius: "8px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.84rem",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.78rem",
+                    fontWeight: 700,
+                    color: "#0F172A",
+                    marginBottom: "4px",
+                  }}
+                >
+                  Mensaje de tu tarjeta:
+                </label>
+                <textarea
+                  rows={5}
+                  value={mensaje}
+                  onChange={(e) => setMensaje(e.target.value)}
+                  placeholder={
+                    esCondolencias
+                      ? "Escribe el mensaje de condolencias..."
+                      : "Escribe tu dedicatoria..."
+                  }
                   style={{
                     width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "7px",
-                    border: "1px solid #CBD5E1",
-                    background: "#FFFFFF",
-                    fontSize: "0.8rem",
+                    padding: "10px 12px",
+                    borderRadius: "10px",
+                    border: "1px solid #94A3B8",
+                    fontSize: "0.88rem",
+                    lineHeight: 1.45,
                     boxSizing: "border-box",
                   }}
                 />
-                <input
-                  type="text"
-                  value={musicaTitulo}
-                  onChange={(e) => setMusicaTitulo(e.target.value)}
-                  placeholder="Artista - Canción (ej: Ed Sheeran - Perfect)"
+              </div>
+
+              {/* MÚSICA Y LETRA SOLO PARA DEDICATORIA */}
+              {!esCondolencias && (
+                <div
                   style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "7px",
-                    border: "1px solid #CBD5E1",
-                    background: "#FFFFFF",
-                    fontSize: "0.8rem",
-                    boxSizing: "border-box",
+                    padding: "11px",
+                    borderRadius: "10px",
+                    backgroundColor: "#F8FAFC",
+                    border: "1px solid #E2E8F0",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "7px",
                   }}
-                />
-                {lyrics.length > 0 && (
-                  <span style={{ fontSize: "0.72rem", color: "#15803D", fontWeight: 600 }}>
-                    <Check size={12} style={{ verticalAlign: "middle" }} /> {lyrics.length} líneas de letra listas para deslizarse al reproducirse la canción.
-                  </span>
-                )}
-              </div>
-            )}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: "8px",
+                      flexWrap: "wrap",
+                    }}
+                  >
+                    <strong style={{ fontSize: "0.78rem", color: "#1E293B" }}>
+                      🎵 Canción de fondo (YouTube o MP3):
+                    </strong>
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      <button
+                        type="button"
+                        disabled={subiendoMp3}
+                        onClick={() => inputAudioRef.current?.click()}
+                        style={{
+                          padding: "4px 9px",
+                          borderRadius: "6px",
+                          border: "1px solid #CBD5E1",
+                          background: "#FFFFFF",
+                          color: "#0F172A",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        {subiendoMp3 ? <Loader2 size={12} /> : <Upload size={12} />}
+                        <span>{subiendoMp3 ? "Subiendo..." : "Subir MP3"}</span>
+                      </button>
+                      <input
+                        ref={inputAudioRef}
+                        type="file"
+                        accept="audio/*,.mp3,.m4a,.wav,.ogg"
+                        onChange={handleSubirAudio}
+                        style={{ display: "none" }}
+                      />
+                      <button
+                        type="button"
+                        disabled={buscandoLyrics}
+                        onClick={() => void handleBuscarLetra()}
+                        style={{
+                          padding: "4px 9px",
+                          borderRadius: "6px",
+                          border: "1px solid #BAE6FD",
+                          background: "#E0F2FE",
+                          color: "#0369A1",
+                          fontSize: "0.72rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        {buscandoLyrics ? <Loader2 size={12} /> : <Sparkles size={12} />}
+                        <span>{buscandoLyrics ? "Buscando..." : "Cargar Letra"}</span>
+                      </button>
+                    </div>
+                  </div>
 
-            {errorMsg && (
-              <div style={{ padding: "9px 12px", borderRadius: "8px", background: "#FEE2E2", color: "#991B1B", fontSize: "0.78rem", fontWeight: 600 }}>
-                {errorMsg}
-              </div>
-            )}
-            {exitoMsg && (
-              <div style={{ padding: "9px 12px", borderRadius: "8px", background: "#DCFCE7", color: "#166534", fontSize: "0.78rem", fontWeight: 600 }}>
-                {exitoMsg}
-              </div>
-            )}
+                  <input
+                    type="text"
+                    value={musicaUrl}
+                    onChange={(e) => setMusicaUrl(e.target.value)}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      borderRadius: "7px",
+                      border: "1px solid #CBD5E1",
+                      background: "#FFFFFF",
+                      fontSize: "0.79rem",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                  <input
+                    type="text"
+                    value={musicaTitulo}
+                    onChange={(e) => setMusicaTitulo(e.target.value)}
+                    placeholder="Artista - Canción (ej: Ed Sheeran - Perfect)"
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      borderRadius: "7px",
+                      border: "1px solid #CBD5E1",
+                      background: "#FFFFFF",
+                      fontSize: "0.79rem",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                  {lyrics.length > 0 && (
+                    <span style={{ fontSize: "0.71rem", color: "#15803D", fontWeight: 600 }}>
+                      <Check size={12} style={{ verticalAlign: "middle" }} /> {lyrics.length} líneas
+                      de letra listas para deslizarse al reproducirse la canción.
+                    </span>
+                  )}
+                </div>
+              )}
 
-            <button
-              type="submit"
-              disabled={guardando}
-              style={{
-                padding: "12px 18px",
-                borderRadius: "10px",
-                border: "none",
-                background: "#0284C7",
-                color: "#FFFFFF",
-                fontSize: "0.9rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-                boxShadow: "0 4px 12px rgba(2, 132, 199, 0.3)",
-              }}
-            >
-              {guardando ? <Loader2 size={16} /> : <Save size={16} />}
-              <span>{guardando ? "Guardando..." : "Guardar Tarjeta"}</span>
-            </button>
+              {errorMsg && (
+                <div
+                  style={{
+                    padding: "9px 12px",
+                    borderRadius: "8px",
+                    background: "#FEE2E2",
+                    color: "#991B1B",
+                    fontSize: "0.78rem",
+                    fontWeight: 600,
+                  }}
+                >
+                  {errorMsg}
+                </div>
+              )}
+              {exitoMsg && (
+                <div
+                  style={{
+                    padding: "9px 12px",
+                    borderRadius: "8px",
+                    background: "#DCFCE7",
+                    color: "#166534",
+                    fontSize: "0.78rem",
+                    fontWeight: 600,
+                  }}
+                >
+                  {exitoMsg}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={guardando}
+                style={{
+                  padding: "12px 18px",
+                  borderRadius: "10px",
+                  border: "none",
+                  background: "#0284C7",
+                  color: "#FFFFFF",
+                  fontSize: "0.9rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  boxShadow: "0 4px 12px rgba(2, 132, 199, 0.3)",
+                }}
+              >
+                {guardando ? <Loader2 size={16} /> : <Save size={16} />}
+                <span>{guardando ? "Guardando..." : "Guardar Tarjeta"}</span>
+              </button>
+            </div>
           </form>
         )}
       </div>

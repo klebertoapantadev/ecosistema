@@ -166,6 +166,7 @@ function convertirPedidoTiendaAOrdenTaller(p: PedidoTiendaRegistrado): OrdenTrab
       p.tarjeta?.confidencial ?? p.tarjeta?.metadata?.confidencial_solo_qr
     ),
     tarjetaTipo: p.tarjeta?.tipo || (esExeq ? "CONDOLENCIAS_PLANA" : "DIPTICO"),
+    tarjetaDiseno: p.tarjeta?.diseno ?? p.tarjeta?.metadata?.diseno,
     tarjetaMusicaUrl: p.tarjeta?.musicaUrl ?? null,
     tarjetaMusicaTitulo: p.tarjeta?.musicaTitulo ?? null,
     tarjetaLyrics: p.tarjeta?.lyrics ?? [],
@@ -1747,29 +1748,31 @@ export function BandejaPedidosTienda({
                             </a>
                           )}
 
-                          <a
-                            href={`/dedicatoria/${tokenTarj}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title="Vista de solo lectura de la tarjeta digital (la misma URL impresa en el QR)"
-                            aria-label="Ver Tarjeta Digital"
-                            style={{
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "4px",
-                              padding: "5px 9px",
-                              borderRadius: "6px",
-                              border: "1px solid #CBD5E1",
-                              background: "#FFFFFF",
-                              color: "#0F172A",
-                              textDecoration: "none",
-                              fontSize: "0.73rem",
-                              fontWeight: 700,
-                            }}
-                          >
-                            <span>Ver Digital</span>
-                            <ExternalLink size={11} />
-                          </a>
+                          {!esCondolTarj && (
+                            <a
+                              href={`/dedicatoria/${tokenTarj}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Vista de solo lectura de la tarjeta digital (la misma URL impresa en el QR)"
+                              aria-label="Ver Tarjeta Digital"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                padding: "5px 9px",
+                                borderRadius: "6px",
+                                border: "1px solid #CBD5E1",
+                                background: "#FFFFFF",
+                                color: "#0F172A",
+                                textDecoration: "none",
+                                fontSize: "0.73rem",
+                                fontWeight: 700,
+                              }}
+                            >
+                              <span>Ver Digital</span>
+                              <ExternalLink size={11} />
+                            </a>
+                          )}
                         </div>
                       </div>
                     );

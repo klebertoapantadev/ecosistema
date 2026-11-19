@@ -19,13 +19,18 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import type { OrdenTrabajoTaller } from "../operaciones-taller";
+import type { DisenoVisualTarjeta, OrdenTrabajoTaller } from "../operaciones-taller";
 import {
   buscarLyricsCancionAction,
   guardarEdicionPedidoYTarjetaAction,
   registrarImpresionTarjetaAction,
   subirAudioTarjetaAction,
 } from "../acciones-operaciones-taller";
+import {
+  LienzoDisenadorTarjeta,
+  normalizarDisenoTarjeta,
+  resolverFontFamilyCss,
+} from "./LienzoDisenadorTarjeta";
 
 export interface PropsModalImprimirTarjetaTaller {
   abierto: boolean;
@@ -36,7 +41,6 @@ export interface PropsModalImprimirTarjetaTaller {
 }
 
 type FormatoTarjeta = "DIPTICO" | "CONDOLENCIAS_PLANA" | "SOLO_DIGITAL";
-type EstiloFuente = "cursiva" | "formal" | "serif";
 
 // Medidas reales medidas con regla: 16,8 x 11,3 cm (168 x 113 mm)
 const MEDIDAS_DEDICATORIA_VERTICAL = { anchoMm: 113, altoMm: 168 };
@@ -55,14 +59,14 @@ function envolverLineasPdf(
   font: any,
   fontSize: number,
   maxWidthPt: number
-): string[] {
+): Array<{ texto: string; finParrafo: boolean }> {
   const parrafos = texto.split(/\r?\n/);
-  const lineasFinales: string[] = [];
+  const lineasFinales: Array<{ texto: string; finParrafo: boolean }> = [];
 
   for (const parrafo of parrafos) {
     const limpio = parrafo.trim();
     if (!limpio) {
-      lineasFinales.push("");
+      lineasFinales.push({ texto: "", finParrafo: true });
       continue;
     }
     const palabras = limpio.split(/\s+/);
@@ -73,13 +77,33 @@ function envolverLineasPdf(
       if (ancho <= maxWidthPt || !actual) {
         actual = prueba;
       } else {
-        lineasFinales.push(actual);
+        lineasFinales.push({ texto: actual, finParrafo: false });
         actual = palabra;
       }
     }
-    if (actual) lineasFinales.push(actual);
+    if (actual) lineasFinales.push({ texto: actual, finParrafo: true });
   }
   return lineasFinales;
+}
+
+function seleccionarFuentePdf(
+  fuente: "cursiva" | "serif" | "formal",
+  negrita: boolean,
+  italica: boolean
+) {
+  if (fuente === "formal") {
+    if (negrita && italica) return StandardFonts.HelveticaBoldOblique;
+    if (negrita) return StandardFonts.HelveticaBold;
+    if (italica) return StandardFonts.HelveticaOblique;
+    return StandardFonts.Helvetica;
+  }
+  if (fuente === "cursiva") {
+    return negrita ? StandardFonts.TimesRomanBoldItalic : StandardFonts.TimesRomanItalic;
+  }
+  if (negrita && italica) return StandardFonts.TimesRomanBoldItalic;
+  if (negrita) return StandardFonts.TimesRomanBold;
+  if (italica) return StandardFonts.TimesRomanItalic;
+  return StandardFonts.TimesRoman;
 }
 
 export function ModalImprimirTarjetaTaller({
@@ -104,12 +128,20 @@ export function ModalImprimirTarjetaTaller({
   const [formato, setFormato] = useState<FormatoTarjeta>(formatoInicial);
   const esCondolencias = formato === "CONDOLENCIAS_PLANA";
 
-  const [fuente, setFuente] = useState<EstiloFuente>(esCondolencias ? "serif" : "cursiva");
   const [mensajeEditable, setMensajeEditable] = useState<string>(orden?.dedicatoria || "");
   const [paraEditable, setParaEditable] = useState<string>(orden?.destinatarioFallecido || "");
   const [deEditable, setDeEditable] = useState<string>(orden?.clienteSolicita || "");
   const [confidencialSoloQr, setConfidencialSoloQr] = useState<boolean>(
-    Boolean(orden?.tarjetaConfidencial ?? orden?.tarjetaMetadata?.confidencial_solo_qr)
+    formatoInicial === "CONDOLENCIAS_PLANA"
+      ? false
+      : Boolean(orden?.tarjetaConfidencial ?? orden?.tarjetaMetadata?.confidencial_solo_qr)
+  );
+  const [diseno, setDiseno] = useState<DisenoVisualTarjeta>(() =>
+    normalizarDisenoTarjeta(
+      orden?.tarjetaDiseno ?? orden?.tarjetaMetadata?.diseno,
+      formatoInicial === "CONDOLENCIAS_PLANA",
+      orden?.dedicatoria || ""
+    )
   );
   const [musicaUrlEditable, setMusicaUrlEditable] = useState<string>(orden?.tarjetaMusicaUrl || "");
   const [musicaTituloEditable, setMusicaTituloEditable] = useState<string>(
@@ -118,14 +150,6 @@ export function ModalImprimirTarjetaTaller({
   const [lyricsEditables, setLyricsEditables] = useState<Array<{ tiempo?: number; texto: string }>>(
     Array.isArray(orden?.tarjetaLyrics) ? orden.tarjetaLyrics : []
   );
-
-  const [tamanoFuentePt, setTamanoFuentePt] = useState<number>(() => {
-    const len = (orden?.dedicatoria || "").length;
-    if (len < 60) return 22;
-    if (len < 140) return 18;
-    if (len < 240) return 15;
-    return 12;
-  });
 
   // Medidas reales: Dedicatoria Vertical (113x168 mm) | Condolencias Horizontal (168x113 mm)
   const [anchoMm, setAnchoMm] = useState<number>(
@@ -140,7 +164,6 @@ export function ModalImprimirTarjetaTaller({
   );
   const [offsetX, setOffsetX] = useState<number>(0);
   const [offsetY, setOffsetY] = useState<number>(0);
-  const [incluirQr, setIncluirQr] = useState<boolean>(true);
   const [mostrarCalibrador, setMostrarCalibrador] = useState<boolean>(false);
   const [mostrarHistorial, setMostrarHistorial] = useState<boolean>(false);
 
@@ -169,33 +192,38 @@ export function ModalImprimirTarjetaTaller({
 
   useEffect(() => {
     if (!orden) return;
+    const esCondolInit = formatoInicial === "CONDOLENCIAS_PLANA";
     setFormato(formatoInicial);
-    if (formatoInicial === "CONDOLENCIAS_PLANA") {
+    if (esCondolInit) {
       setAnchoMm(MEDIDAS_CONDOLENCIAS_HORIZONTAL.anchoMm);
       setAltoMm(MEDIDAS_CONDOLENCIAS_HORIZONTAL.altoMm);
-      setFuente("serif");
     } else {
       setAnchoMm(MEDIDAS_DEDICATORIA_VERTICAL.anchoMm);
       setAltoMm(MEDIDAS_DEDICATORIA_VERTICAL.altoMm);
-      setFuente("cursiva");
     }
     setMensajeEditable(orden.dedicatoria || "");
     setParaEditable(orden.destinatarioFallecido || "");
     setDeEditable(orden.clienteSolicita || "");
     setConfidencialSoloQr(
-      Boolean(orden.tarjetaConfidencial ?? orden.tarjetaMetadata?.confidencial_solo_qr)
+      esCondolInit
+        ? false
+        : Boolean(orden.tarjetaConfidencial ?? orden.tarjetaMetadata?.confidencial_solo_qr)
     );
-    setMusicaUrlEditable(orden.tarjetaMusicaUrl || "");
-    setMusicaTituloEditable(orden.tarjetaMusicaTitulo || "");
-    setLyricsEditables(Array.isArray(orden.tarjetaLyrics) ? orden.tarjetaLyrics : []);
+    setDiseno(
+      normalizarDisenoTarjeta(
+        orden.tarjetaDiseno ?? orden.tarjetaMetadata?.diseno,
+        esCondolInit,
+        orden.dedicatoria || ""
+      )
+    );
+    setMusicaUrlEditable(esCondolInit ? "" : orden.tarjetaMusicaUrl || "");
+    setMusicaTituloEditable(esCondolInit ? "" : orden.tarjetaMusicaTitulo || "");
+    setLyricsEditables(!esCondolInit && Array.isArray(orden.tarjetaLyrics) ? orden.tarjetaLyrics : []);
     setTokenVistaActual(orden.tarjetaToken || orden.proformaId || orden.id);
     setTokenEdicionActual(orden.tarjetaTokenEdicion || "");
     setMetaLocal(orden.tarjetaMetadata || {});
-    const len = (orden.dedicatoria || "").length;
-    setTamanoFuentePt(len < 60 ? 22 : len < 140 ? 18 : len < 240 ? 15 : 12);
   }, [orden, formatoInicial]);
 
-  // La tarjeta impresa SOLO contiene en el QR la URL de la tarjeta digital de visualización
   useEffect(() => {
     if (typeof window === "undefined" || !orden) return;
     const tokVista = tokenVistaActual || orden.tarjetaToken || orden.id;
@@ -210,7 +238,7 @@ export function ModalImprimirTarjetaTaller({
     }
 
     QRCode.toDataURL(urlVista, {
-      width: 220,
+      width: 240,
       margin: 1,
       color: {
         dark: "#18181B",
@@ -221,17 +249,10 @@ export function ModalImprimirTarjetaTaller({
       .catch((err: unknown) => console.error("Error generando QR", err));
   }, [tokenVistaActual, tokenEdicionActual, orden]);
 
-  const fontStyleCss = useMemo(() => {
-    if (fuente === "cursiva") {
-      return "'Dancing Script', 'Brush Script MT', 'Great Vibes', 'Allura', cursive";
-    }
-    if (fuente === "serif") {
-      return "'Playfair Display', Georgia, 'Times New Roman', serif";
-    }
-    return "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
-  }, [fuente]);
-
   if (!abierto || !orden) return null;
+
+  const disenoNorm = normalizarDisenoTarjeta(diseno, esCondolencias, mensajeEditable);
+  const soloQrEfectivo = !esCondolencias && confidencialSoloQr;
 
   const conteoImpresiones = Number(metaLocal?.impresiones ?? 0);
   const ultimoImpresoPor = metaLocal?.ultimo_impreso_por || null;
@@ -239,18 +260,26 @@ export function ModalImprimirTarjetaTaller({
   const fueEditadaPorStaff = Boolean(metaLocal?.editado_por_staff);
   const vistasCliente = Number(metaLocal?.vistas_cliente ?? 0);
   const historial = Array.isArray(metaLocal?.historial_cambios) ? metaLocal.historial_cambios : [];
-  const mostrarQrEfectivo = confidencialSoloQr || incluirQr;
 
   const cambiarFormatoTarjeta = (nuevo: FormatoTarjeta) => {
     setFormato(nuevo);
     if (nuevo === "CONDOLENCIAS_PLANA") {
       setAnchoMm(MEDIDAS_CONDOLENCIAS_HORIZONTAL.anchoMm);
       setAltoMm(MEDIDAS_CONDOLENCIAS_HORIZONTAL.altoMm);
-      setFuente("serif");
+      setConfidencialSoloQr(false);
+      setDiseno((prev) => ({
+        ...normalizarDisenoTarjeta(prev, true, mensajeEditable),
+        fuente: "serif",
+        textoAnchoPct: 74,
+      }));
     } else {
       setAnchoMm(MEDIDAS_DEDICATORIA_VERTICAL.anchoMm);
       setAltoMm(MEDIDAS_DEDICATORIA_VERTICAL.altoMm);
-      setFuente("cursiva");
+      setDiseno((prev) => ({
+        ...normalizarDisenoTarjeta(prev, false, mensajeEditable),
+        fuente: "cursiva",
+        textoAnchoPct: 82,
+      }));
     }
   };
 
@@ -361,7 +390,8 @@ export function ModalImprimirTarjetaTaller({
       destinatarioNombre: paraEditable.trim(),
       dedicatoria: mensajeEditable.trim(),
       tarjetaTipo: formato,
-      tarjetaConfidencial: confidencialSoloQr,
+      tarjetaConfidencial: soloQrEfectivo,
+      tarjetaDiseno: disenoNorm,
       tarjetaMusicaUrl: esCondolencias ? null : musicaUrlEditable.trim() || null,
       tarjetaMusicaTitulo: tituloAGuardar,
       tarjetaLyrics: lyricsAGuardar,
@@ -387,7 +417,8 @@ export function ModalImprimirTarjetaTaller({
         destinatarioFallecido: paraEditable.trim(),
         clienteSolicita: deEditable.trim() || orden.clienteSolicita,
         tarjetaTipo: formato,
-        tarjetaConfidencial: confidencialSoloQr,
+        tarjetaConfidencial: soloQrEfectivo,
+        tarjetaDiseno: disenoNorm,
         tarjetaToken: nuevoTokVista,
         tarjetaTokenEdicion: nuevoTokEdicion,
         tarjetaMusicaUrl: esCondolencias ? null : musicaUrlEditable.trim() || null,
@@ -416,31 +447,53 @@ export function ModalImprimirTarjetaTaller({
       const pdfDoc = await PDFDocument.create();
       const page = pdfDoc.addPage([pageW, pageH]);
 
-      const fontEnum =
-        fuente === "cursiva"
-          ? StandardFonts.TimesRomanItalic
-          : fuente === "serif"
-            ? StandardFonts.TimesRoman
-            : StandardFonts.Helvetica;
+      const fontEnum = seleccionarFuentePdf(
+        disenoNorm.fuente,
+        disenoNorm.negrita,
+        disenoNorm.italica
+      );
       const pdfFont = await pdfDoc.embedFont(fontEnum);
 
-      if (confidencialSoloQr) {
-        // MODO CONFIDENCIAL: SOLO IMPRIME EL QR (CON LA URL DE LA TARJETA DIGITAL)
+      if (soloQrEfectivo) {
+        // DEDICATORIA SOLO QR: ÚNICAMENTE QR CENTRADO EN LA MITAD INFERIOR (SIN MENSAJE NI IMAGEN)
         if (qrDataUrl) {
           const base64Qr = qrDataUrl.split(",")[1];
           if (base64Qr) {
             const qrBytes = Uint8Array.from(atob(base64Qr), (c) => c.charCodeAt(0));
             const qrImg = await pdfDoc.embedPng(qrBytes);
-            const qrDim = (esCondolencias ? 26 : 28) * MM_TO_PT;
+            const qrDim = 28 * MM_TO_PT;
             const qrX = (pageW - qrDim) / 2 + offsetX * MM_TO_PT;
-            // En Dedicatoria vertical (113x168 mm), centramos el QR en la mitad inferior (debajo del doblez de 84 mm)
-            const qrY = esCondolencias
-              ? (pageH - qrDim) / 2 - offsetY * MM_TO_PT
-              : pageH * 0.25 - qrDim / 2 - offsetY * MM_TO_PT;
+            const qrY = pageH * 0.25 - qrDim / 2 - offsetY * MM_TO_PT;
             page.drawImage(qrImg, { x: qrX, y: qrY, width: qrDim, height: qrDim });
           }
         }
       } else {
+        // MODO MENSAJE (+ IMAGEN OPCIONAL) — NUNCA INCLUYE QR
+        if (disenoNorm.imagenUrl) {
+          try {
+            const respImg = await fetch(disenoNorm.imagenUrl);
+            const arrBuf = await respImg.arrayBuffer();
+            const bytesImg = new Uint8Array(arrBuf);
+            const esPng =
+              bytesImg.length >= 4 &&
+              bytesImg[0] === 0x89 &&
+              bytesImg[1] === 0x50 &&
+              bytesImg[2] === 0x4e &&
+              bytesImg[3] === 0x47;
+            const pdfImg = esPng
+              ? await pdfDoc.embedPng(bytesImg)
+              : await pdfDoc.embedJpg(bytesImg);
+            const imgW = disenoNorm.imagenAnchoMm * MM_TO_PT;
+            const imgH = imgW * (pdfImg.height / Math.max(1, pdfImg.width));
+            const imgX = (disenoNorm.imagenXPct / 100) * pageW - imgW / 2 + offsetX * MM_TO_PT;
+            const imgY =
+              pageH - (disenoNorm.imagenYPct / 100) * pageH - imgH / 2 - offsetY * MM_TO_PT;
+            page.drawImage(pdfImg, { x: imgX, y: imgY, width: imgW, height: imgH });
+          } catch {
+            // Si la imagen remota falla por CORS, continuar generando el PDF con el texto
+          }
+        }
+
         const textoBase = limpiarCaracteresWinAnsi(
           mensajeEditable.trim() ||
             (esCondolencias
@@ -448,47 +501,66 @@ export function ModalImprimirTarjetaTaller({
               : "Con todo nuestro carino.")
         );
 
-        // Márgenes respetando orientación:
-        // Condolencias (168x113 mm horizontal): protege esquinas diagonales (22 mm laterales)
-        // Dedicatoria (113x168 mm vertical): margen lateral de 11 mm
-        const margenX = (esCondolencias ? 22 : 11) * MM_TO_PT;
-        const areaW = pageW - margenX * 2;
+        const boxW = (disenoNorm.textoAnchoPct / 100) * pageW;
+        const boxCenterX = (disenoNorm.textoXPct / 100) * pageW + offsetX * MM_TO_PT;
+        const boxLeft = boxCenterX - boxW / 2;
 
-        const sizePt = Math.max(9, Math.min(30, tamanoFuentePt));
+        const sizePt = Math.max(9, Math.min(34, disenoNorm.tamanoPt));
         const interlineado = sizePt * 1.38;
-        const lineas = envolverLineasPdf(textoBase, pdfFont, sizePt, areaW);
+        const lineas = envolverLineasPdf(textoBase, pdfFont, sizePt, boxW);
         const altoBloque = lineas.length * interlineado;
-        let cursorY =
-          pageH / 2 + altoBloque / 2 - sizePt * 0.8 + (mostrarQrEfectivo ? 5 * MM_TO_PT : 0);
+        const boxCenterY = pageH - (disenoNorm.textoYPct / 100) * pageH - offsetY * MM_TO_PT;
+        let cursorY = boxCenterY + altoBloque / 2 - sizePt * 0.82;
 
-        for (const lin of lineas) {
+        for (const item of lineas) {
+          const lin = item.texto;
           if (lin) {
             const wLin = pdfFont.widthOfTextAtSize(lin, sizePt);
-            const xCentrado = margenX + Math.max(0, (areaW - wLin) / 2);
-            page.drawText(lin, {
-              x: xCentrado + offsetX * MM_TO_PT,
-              y: cursorY - offsetY * MM_TO_PT,
-              size: sizePt,
-              font: pdfFont,
-              color: rgb(0.09, 0.09, 0.11),
-            });
+            if (disenoNorm.alineacion === "justify" && !item.finParrafo) {
+              const palabras = lin.split(/\s+/).filter(Boolean);
+              if (palabras.length > 1) {
+                const anchoPalabras = palabras.reduce(
+                  (acc, p) => acc + pdfFont.widthOfTextAtSize(p, sizePt),
+                  0
+                );
+                const espacioExtra = Math.max(0, (boxW - anchoPalabras) / (palabras.length - 1));
+                let xPal = boxLeft;
+                for (const pal of palabras) {
+                  page.drawText(pal, {
+                    x: xPal,
+                    y: cursorY,
+                    size: sizePt,
+                    font: pdfFont,
+                    color: rgb(0.09, 0.09, 0.11),
+                  });
+                  xPal += pdfFont.widthOfTextAtSize(pal, sizePt) + espacioExtra;
+                }
+              } else {
+                page.drawText(lin, {
+                  x: boxLeft,
+                  y: cursorY,
+                  size: sizePt,
+                  font: pdfFont,
+                  color: rgb(0.09, 0.09, 0.11),
+                });
+              }
+            } else {
+              const xLinea =
+                disenoNorm.alineacion === "left" || disenoNorm.alineacion === "justify"
+                  ? boxLeft
+                  : disenoNorm.alineacion === "right"
+                    ? boxLeft + Math.max(0, boxW - wLin)
+                    : boxLeft + Math.max(0, (boxW - wLin) / 2);
+              page.drawText(lin, {
+                x: xLinea,
+                y: cursorY,
+                size: sizePt,
+                font: pdfFont,
+                color: rgb(0.09, 0.09, 0.11),
+              });
+            }
           }
           cursorY -= interlineado;
-        }
-
-        if (mostrarQrEfectivo && qrDataUrl) {
-          const base64Qr = qrDataUrl.split(",")[1];
-          if (base64Qr) {
-            const qrBytes = Uint8Array.from(atob(base64Qr), (c) => c.charCodeAt(0));
-            const qrImg = await pdfDoc.embedPng(qrBytes);
-            const qrDim = (esCondolencias ? 17 : 18) * MM_TO_PT;
-            // En Condolencias la esquina inferior derecha tiene hojas preimpresas, por eso va abajo a la izquierda
-            const qrX = esCondolencias
-              ? 10 * MM_TO_PT + offsetX * MM_TO_PT
-              : pageW - qrDim - 8 * MM_TO_PT + offsetX * MM_TO_PT;
-            const qrY = 7 * MM_TO_PT - offsetY * MM_TO_PT;
-            page.drawImage(qrImg, { x: qrX, y: qrY, width: qrDim, height: qrDim });
-          }
         }
       }
 
@@ -523,7 +595,8 @@ export function ModalImprimirTarjetaTaller({
       if (res.ok && typeof res.impresiones === "number") {
         const nuevaMeta = {
           ...metaLocal,
-          confidencial_solo_qr: confidencialSoloQr,
+          confidencial_solo_qr: soloQrEfectivo,
+          diseno: disenoNorm,
           impresiones: res.impresiones,
           ultimo_impreso_por: res.ultimoImpresoPor || "Taller",
           ultima_impresion_en: new Date().toISOString(),
@@ -534,7 +607,8 @@ export function ModalImprimirTarjetaTaller({
             id: orden.id,
             dedicatoria: mensajeEditable.trim(),
             tarjetaTipo: formato,
-            tarjetaConfidencial: confidencialSoloQr,
+            tarjetaConfidencial: soloQrEfectivo,
+            tarjetaDiseno: disenoNorm,
             tarjetaMetadata: nuevaMeta,
           });
         }
@@ -588,18 +662,13 @@ export function ModalImprimirTarjetaTaller({
 
       {/* ZONA DE IMPRESIÓN FÍSICA CALIBRADA (113x168 mm VERTICAL ó 168x113 mm HORIZONTAL) */}
       <div className="area-impresion-tarjeta">
-        {confidencialSoloQr ? (
-          // MODO CONFIDENCIAL / DISCRECIÓN: SOLO IMPRIME EL QR DE LA TARJETA DIGITAL
+        {soloQrEfectivo ? (
+          // DEDICATORIA MODO SOLO QR (SIN MENSAJE NI IMAGEN EN CARTULINA)
           <div
             style={{
               width: "100%",
               height: "100%",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: esCondolencias ? "center" : "flex-end",
-              paddingBottom: esCondolencias ? "0mm" : "28mm",
-              boxSizing: "border-box",
+              position: "relative",
             }}
           >
             {qrDataUrl && (
@@ -607,102 +676,67 @@ export function ModalImprimirTarjetaTaller({
                 src={qrDataUrl}
                 alt="QR Tarjeta Digital"
                 style={{
-                  width: esCondolencias ? "26mm" : "28mm",
-                  height: esCondolencias ? "26mm" : "28mm",
-                  objectFit: "contain",
-                }}
-              />
-            )}
-          </div>
-        ) : esCondolencias ? (
-          // CONDOLENCIAS HORIZONTAL (168 × 113 mm) — RESPETA ESQUINAS SUPERIOR-IZQUIERDA E INFERIOR-DERECHA
-          <div
-            style={{
-              width: "100%",
-              height: "100%",
-              padding: "15mm 22mm 14mm 22mm",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-              boxSizing: "border-box",
-              textAlign: "center",
-              position: "relative",
-            }}
-          >
-            <div
-              style={{
-                fontFamily: fontStyleCss,
-                fontSize: `${tamanoFuentePt}pt`,
-                lineHeight: 1.38,
-                color: "#18181B",
-                whiteSpace: "pre-wrap",
-                maxWidth: "100%",
-                wordBreak: "break-word",
-              }}
-            >
-              {mensajeEditable || "Expresamos nuestras más sentidas condolencias."}
-            </div>
-
-            {mostrarQrEfectivo && qrDataUrl && (
-              <img
-                src={qrDataUrl}
-                alt="QR Tarjeta Digital"
-                style={{
                   position: "absolute",
-                  bottom: "7mm",
-                  left: "10mm",
-                  width: "17mm",
-                  height: "17mm",
+                  left: "50%",
+                  top: "75%",
+                  transform: "translate(-50%, -50%)",
+                  width: "28mm",
+                  height: "28mm",
                   objectFit: "contain",
                 }}
               />
             )}
           </div>
         ) : (
-          // DEDICATORIA VERTICAL (113 × 168 mm) — CARA INTERNA COMPLETA (SE DOBLA A LA MITAD A 84 mm)
+          // MODO MENSAJE + IMAGEN OPCIONAL (SIN QR EN ABSOLUTO)
           <div
             style={{
               width: "100%",
               height: "100%",
-              padding: mostrarQrEfectivo ? "14mm 11mm 26mm 11mm" : "14mm 11mm 14mm 11mm",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              alignItems: "center",
-              boxSizing: "border-box",
-              textAlign: "center",
               position: "relative",
+              boxSizing: "border-box",
             }}
           >
-            <div
-              style={{
-                fontFamily: fontStyleCss,
-                fontSize: `${tamanoFuentePt}pt`,
-                lineHeight: 1.38,
-                color: "#18181B",
-                whiteSpace: "pre-wrap",
-                maxWidth: "100%",
-                wordBreak: "break-word",
-              }}
-            >
-              {mensajeEditable || "Con todo mi cariño"}
-            </div>
-
-            {mostrarQrEfectivo && qrDataUrl && (
+            {disenoNorm.imagenUrl && (
               <img
-                src={qrDataUrl}
-                alt="QR Tarjeta Digital"
+                src={disenoNorm.imagenUrl}
+                alt="Imagen tarjeta"
                 style={{
                   position: "absolute",
-                  bottom: "7mm",
-                  right: "8mm",
-                  width: "18mm",
-                  height: "18mm",
+                  left: `${disenoNorm.imagenXPct}%`,
+                  top: `${disenoNorm.imagenYPct}%`,
+                  transform: "translate(-50%, -50%)",
+                  width: `${disenoNorm.imagenAnchoMm}mm`,
+                  height: "auto",
                   objectFit: "contain",
+                  filter: disenoNorm.escalaGrisesImagen ? "grayscale(100%)" : "none",
                 }}
               />
             )}
+
+            <div
+              style={{
+                position: "absolute",
+                left: `${disenoNorm.textoXPct}%`,
+                top: `${disenoNorm.textoYPct}%`,
+                transform: "translate(-50%, -50%)",
+                width: `${disenoNorm.textoAnchoPct}%`,
+                fontFamily: resolverFontFamilyCss(disenoNorm.fuente),
+                fontSize: `${disenoNorm.tamanoPt}pt`,
+                fontWeight: disenoNorm.negrita ? 700 : 400,
+                fontStyle: disenoNorm.italica ? "italic" : "normal",
+                textAlign: disenoNorm.alineacion,
+                lineHeight: 1.38,
+                color: "#18181B",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+              }}
+            >
+              {mensajeEditable ||
+                (esCondolencias
+                  ? "Expresamos nuestras más sentidas condolencias."
+                  : "Con todo mi cariño")}
+            </div>
           </div>
         )}
       </div>
@@ -728,7 +762,7 @@ export function ModalImprimirTarjetaTaller({
             backgroundColor: "#FFFFFF",
             borderRadius: "16px",
             width: "100%",
-            maxWidth: "980px",
+            maxWidth: "1040px",
             maxHeight: "94vh",
             display: "flex",
             flexDirection: "column",
@@ -765,13 +799,13 @@ export function ModalImprimirTarjetaTaller({
                     color: esCondolencias ? "#6B21A8" : "#166534",
                   }}
                 >
-                  {esCondolencias
-                    ? "Horizontal 16,8 × 11,3 cm"
-                    : "Vertical 11,3 × 16,8 cm"}
+                  {esCondolencias ? "Horizontal 16,8 × 11,3 cm" : "Vertical 11,3 × 16,8 cm"}
                 </span>
               </div>
-              <p style={{ margin: "2px 0 0 0", fontSize: "0.76rem", color: "#64748B" }}>
-                La tarjeta impresa solo codifica en el QR la URL de visualización digital.
+              <p style={{ margin: "2px 0 0 0", fontSize: "0.75rem", color: "#64748B" }}>
+                {esCondolencias
+                  ? "Diseñador visual para impresión en cartulina horizontal (sin QR ni música)."
+                  : "Elige imprimir el mensaje (+ imagen opcional) o únicamente el QR para la tarjeta digital."}
               </p>
             </div>
             <button
@@ -796,190 +830,44 @@ export function ModalImprimirTarjetaTaller({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))",
               gap: "18px",
               padding: "16px 20px",
               overflowY: "auto",
             }}
           >
-            {/* COLUMNA IZQUIERDA: SIMULADOR DE CARTULINA EN PROPORCIÓN REAL + AUDITORÍA + 2 ENLACES */}
+            {/* COLUMNA IZQUIERDA: DISEÑADOR VISUAL INTERACTIVO + TRAZABILIDAD + ENLACES */}
             <div style={{ display: "flex", flexDirection: "column", gap: "11px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#334155" }}>
-                  Zona de impresión ({anchoMm} × {altoMm} mm)
+                  Diseñador de tarjeta ({anchoMm} × {altoMm} mm)
                 </span>
-                {confidencialSoloQr && (
-                  <span
-                    style={{
-                      fontSize: "0.7rem",
-                      color: "#0369A1",
-                      background: "#E0F2FE",
-                      padding: "2px 8px",
-                      borderRadius: "6px",
-                      fontWeight: 700,
-                    }}
-                  >
-                    🔒 Confidencial: Solo QR
-                  </span>
-                )}
-              </div>
-
-              {/* CONTENEDOR DE VISTA PREVIA CON ORIENTACIÓN REAL (VERTICAL vs HORIZONTAL) */}
-              <div
-                style={{
-                  background: "#F1F5F9",
-                  borderRadius: "12px",
-                  padding: "14px",
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  minHeight: "290px",
-                }}
-              >
-                <div
+                <span
                   style={{
-                    width: esCondolencias ? "100%" : "225px",
-                    maxWidth: esCondolencias ? "360px" : "225px",
-                    aspectRatio: esCondolencias ? "168 / 113" : "113 / 168",
-                    backgroundColor: "#F6F4EE",
-                    border: "1.5px solid #CBD5E1",
+                    fontSize: "0.69rem",
+                    color: soloQrEfectivo ? "#0369A1" : "#166534",
+                    background: soloQrEfectivo ? "#E0F2FE" : "#DCFCE7",
+                    padding: "2px 8px",
                     borderRadius: "6px",
-                    boxShadow: "0 10px 22px rgba(15, 23, 42, 0.12)",
-                    position: "relative",
-                    overflow: "hidden",
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent:
-                      confidencialSoloQr && !esCondolencias ? "flex-end" : "center",
-                    padding:
-                      confidencialSoloQr && !esCondolencias
-                        ? "16px 16px 38px 16px"
-                        : esCondolencias
-                          ? "24px 34px"
-                          : mostrarQrEfectivo
-                            ? "20px 16px 42px 16px"
-                            : "20px 16px",
-                    boxSizing: "border-box",
-                    textAlign: "center",
+                    fontWeight: 700,
                   }}
                 >
-                  {/* Guía visual (no impresa) del doblez central horizontal en Dedicatoria Vertical */}
-                  {!esCondolencias && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "50%",
-                        left: 0,
-                        right: 0,
-                        borderTop: "1px dashed rgba(148, 163, 184, 0.55)",
-                        pointerEvents: "none",
-                      }}
-                    >
-                      <span
-                        style={{
-                          position: "absolute",
-                          right: "6px",
-                          top: "-13px",
-                          fontSize: "0.56rem",
-                          color: "#94A3B8",
-                          background: "rgba(246, 244, 238, 0.85)",
-                          padding: "0 3px",
-                        }}
-                      >
-                        doblez 8,4 cm
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Arte preimpreso en esquinas diagonales (superior-izquierda e inferior-derecha) para Condolencias */}
-                  {esCondolencias && (
-                    <>
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "6px",
-                          left: "8px",
-                          fontSize: "1.35rem",
-                          opacity: 0.35,
-                          filter: "grayscale(100%)",
-                          pointerEvents: "none",
-                        }}
-                      >
-                        🌿
-                      </div>
-                      <div
-                        style={{
-                          position: "absolute",
-                          bottom: "6px",
-                          right: "8px",
-                          fontSize: "1.35rem",
-                          opacity: 0.35,
-                          filter: "grayscale(100%)",
-                          transform: "rotate(180deg)",
-                          pointerEvents: "none",
-                        }}
-                      >
-                        🌿
-                      </div>
-                    </>
-                  )}
-
-                  {confidencialSoloQr ? (
-                    qrDataUrl && (
-                      <img
-                        src={qrDataUrl}
-                        alt="QR Confidencial"
-                        style={{
-                          width: "64px",
-                          height: "64px",
-                          background: "#FFFFFF",
-                          padding: "3px",
-                          borderRadius: "4px",
-                        }}
-                      />
-                    )
-                  ) : (
-                    <>
-                      <div
-                        style={{
-                          fontFamily: fontStyleCss,
-                          fontSize: `${Math.max(10, tamanoFuentePt * 0.68)}pt`,
-                          lineHeight: 1.36,
-                          color: "#18181B",
-                          whiteSpace: "pre-wrap",
-                          wordBreak: "break-word",
-                          maxHeight: "90%",
-                          overflowY: "auto",
-                          zIndex: 1,
-                        }}
-                      >
-                        {mensajeEditable ||
-                          (esCondolencias
-                            ? "Expresamos nuestras más sentidas condolencias."
-                            : "Escribe el mensaje de dedicatoria...")}
-                      </div>
-
-                      {mostrarQrEfectivo && qrDataUrl && (
-                        <img
-                          src={qrDataUrl}
-                          alt="QR Tarjeta Digital"
-                          style={{
-                            position: "absolute",
-                            bottom: "8px",
-                            ...(esCondolencias ? { left: "12px" } : { right: "10px" }),
-                            width: "36px",
-                            height: "36px",
-                            background: "#FFFFFF",
-                            padding: "2px",
-                            borderRadius: "3px",
-                          }}
-                        />
-                      )}
-                    </>
-                  )}
-                </div>
+                  {soloQrEfectivo ? "📱 Solo QR (Sin texto)" : "📝 Mensaje Impreso (Sin QR)"}
+                </span>
               </div>
+
+              <LienzoDisenadorTarjeta
+                negocio={negNorm}
+                esCondolencias={esCondolencias}
+                soloQr={soloQrEfectivo}
+                mensaje={mensajeEditable}
+                diseno={disenoNorm}
+                onCambiarDiseno={setDiseno}
+                qrDataUrl={qrDataUrl}
+                anchoMm={anchoMm}
+                altoMm={altoMm}
+                onError={(msg) => setErrorMsg(msg)}
+              />
 
               {/* TRAZABILIDAD */}
               <div
@@ -1040,17 +928,19 @@ export function ModalImprimirTarjetaTaller({
                         ? `✏️ Editada (${metaLocal?.ultimo_editor_nombre || "Staff"})`
                         : "🤖 Creada automática"}
                   </span>
-                  <span
-                    style={{
-                      background: vistasCliente > 0 ? "#E0F2FE" : "#F1F5F9",
-                      color: vistasCliente > 0 ? "#0369A1" : "#475569",
-                      padding: "2px 7px",
-                      borderRadius: "6px",
-                      fontWeight: 600,
-                    }}
-                  >
-                    👀 {vistasCliente > 0 ? `Vista ${vistasCliente}x` : "Sin abrir"}
-                  </span>
+                  {!esCondolencias && (
+                    <span
+                      style={{
+                        background: vistasCliente > 0 ? "#E0F2FE" : "#F1F5F9",
+                        color: vistasCliente > 0 ? "#0369A1" : "#475569",
+                        padding: "2px 7px",
+                        borderRadius: "6px",
+                        fontWeight: 600,
+                      }}
+                    >
+                      👀 {vistasCliente > 0 ? `Vista ${vistasCliente}x` : "Sin abrir"}
+                    </span>
+                  )}
                   <span
                     style={{
                       background: conteoImpresiones > 0 ? "#FEF3C7" : "#F1F5F9",
@@ -1096,7 +986,7 @@ export function ModalImprimirTarjetaTaller({
                 )}
               </div>
 
-              {/* LOS 2 ENLACES SEPARADOS: 1) EDICIÓN Y 2) SOLO VISUALIZACIÓN DIGITAL (QR) */}
+              {/* ENLACES: EDICIÓN SIEMPRE DISPONIBLE (SIN LOGIN); VISTA DIGITAL QR SOLO EN DEDICATORIA */}
               <div
                 style={{
                   background: "#F8FAFC",
@@ -1110,8 +1000,16 @@ export function ModalImprimirTarjetaTaller({
               >
                 {urlEdicionTarjeta && (
                   <div>
-                    <span style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#0F766E", marginBottom: "3px" }}>
-                      ✏️ Enlace para Editar Tarjeta (Cliente / Ventas):
+                    <span
+                      style={{
+                        display: "block",
+                        fontSize: "0.72rem",
+                        fontWeight: 700,
+                        color: "#0F766E",
+                        marginBottom: "3px",
+                      }}
+                    >
+                      ✏️ Enlace para Editar Tarjeta (Cliente / Diseñador — sin login):
                     </span>
                     <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
                       <input
@@ -1154,7 +1052,7 @@ export function ModalImprimirTarjetaTaller({
                       {orden.clienteTelefono && (
                         <a
                           href={`https://wa.me/${orden.clienteTelefono.replace(/\D+/g, "")}?text=${encodeURIComponent(
-                            `Hola ${deEditable || orden.clienteSolicita} 🌸, aquí puedes revisar o editar el mensaje de tu tarjeta del pedido ${orden.codigo} antes de que pase a impresión: ${urlEdicionTarjeta}`
+                            `Hola ${deEditable || orden.clienteSolicita} 🌸, aquí puedes revisar o diseñar el mensaje de tu tarjeta del pedido ${orden.codigo} antes de impresión: ${urlEdicionTarjeta}`
                           )}`}
                           target="_blank"
                           rel="noopener noreferrer"
@@ -1181,10 +1079,18 @@ export function ModalImprimirTarjetaTaller({
                   </div>
                 )}
 
-                {urlSoloVistaDigital && (
+                {!esCondolencias && urlSoloVistaDigital && (
                   <div>
-                    <span style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#0369A1", marginBottom: "3px" }}>
-                      👁️ Tarjeta Digital Solo Lectura (URL impresa en el QR):
+                    <span
+                      style={{
+                        display: "block",
+                        fontSize: "0.72rem",
+                        fontWeight: 700,
+                        color: "#0369A1",
+                        marginBottom: "3px",
+                      }}
+                    >
+                      👁️ Tarjeta Digital Solo Lectura (URL del QR — sin login):
                     </span>
                     <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
                       <input
@@ -1253,11 +1159,19 @@ export function ModalImprimirTarjetaTaller({
               </div>
             </div>
 
-            {/* COLUMNA DERECHA: DISTINCIÓN DEDICATORIA VS CONDOLENCIAS, CONFIDENCIALIDAD, MENSAJE Y MÚSICA */}
+            {/* COLUMNA DERECHA: TIPO, MODO DE IMPRESIÓN (MENSAJE O QR), TEXTO, MÚSICA Y CALIBRACIÓN */}
             <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
               {/* 1. TIPO DE TARJETA Y ORIENTACIÓN */}
               <div>
-                <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#334155", display: "block", marginBottom: "4px" }}>
+                <label
+                  style={{
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    color: "#334155",
+                    display: "block",
+                    marginBottom: "4px",
+                  }}
+                >
                   Tipo de pedido y orientación física:
                 </label>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
@@ -1278,7 +1192,7 @@ export function ModalImprimirTarjetaTaller({
                   >
                     💌 Dedicatoria (Vertical)
                     <span style={{ display: "block", fontSize: "0.66rem", fontWeight: 400, color: "#64748B" }}>
-                      11,3 × 16,8 cm · Se dobla + Música
+                      11,3 × 16,8 cm · Se dobla
                     </span>
                   </button>
 
@@ -1299,16 +1213,85 @@ export function ModalImprimirTarjetaTaller({
                   >
                     🕊️ Condolencias (Horizontal)
                     <span style={{ display: "block", fontSize: "0.66rem", fontWeight: 400, color: "#64748B" }}>
-                      16,8 × 11,3 cm · Plana (sin música)
+                      16,8 × 11,3 cm · Sin QR ni música
                     </span>
                   </button>
                 </div>
               </div>
 
-              {/* 2. PARA Y DE */}
+              {/* 2. MODO DE IMPRESIÓN MUTUAMENTE EXCLUYENTE (SOLO DEDICATORIA: MENSAJE O QR, NUNCA AMBOS) */}
+              {!esCondolencias && (
+                <div>
+                  <label
+                    style={{
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      color: "#334155",
+                      display: "block",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    ¿Qué se imprime en la cartulina? (Mutuamente excluyente):
+                  </label>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                    <button
+                      type="button"
+                      onClick={() => setConfidencialSoloQr(false)}
+                      style={{
+                        padding: "8px 10px",
+                        borderRadius: "8px",
+                        border: !soloQrEfectivo ? "2px solid #0F766E" : "1px solid #CBD5E1",
+                        background: !soloQrEfectivo ? "#F0FDFA" : "#FFFFFF",
+                        color: !soloQrEfectivo ? "#0F766E" : "#475569",
+                        fontWeight: 700,
+                        fontSize: "0.76rem",
+                        cursor: "pointer",
+                        textAlign: "left",
+                      }}
+                    >
+                      📝 Imprimir Mensaje
+                      <span style={{ display: "block", fontSize: "0.65rem", fontWeight: 400, color: "#64748B" }}>
+                        Texto + imagen opcional (sin QR)
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setConfidencialSoloQr(true)}
+                      style={{
+                        padding: "8px 10px",
+                        borderRadius: "8px",
+                        border: soloQrEfectivo ? "2px solid #0284C7" : "1px solid #CBD5E1",
+                        background: soloQrEfectivo ? "#F0F9FF" : "#FFFFFF",
+                        color: soloQrEfectivo ? "#0369A1" : "#475569",
+                        fontWeight: 700,
+                        fontSize: "0.76rem",
+                        cursor: "pointer",
+                        textAlign: "left",
+                      }}
+                    >
+                      <Lock size={11} style={{ verticalAlign: "middle", marginRight: "3px" }} />
+                      Imprimir Solo QR
+                      <span style={{ display: "block", fontSize: "0.65rem", fontWeight: 400, color: "#64748B" }}>
+                        Confidencial · Mensaje y música en web
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* 3. PARA Y DE */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
                 <div>
-                  <label style={{ fontSize: "0.74rem", fontWeight: 700, color: "#334155", display: "block", marginBottom: "3px" }}>
+                  <label
+                    style={{
+                      fontSize: "0.74rem",
+                      fontWeight: 700,
+                      color: "#334155",
+                      display: "block",
+                      marginBottom: "3px",
+                    }}
+                  >
                     {esCondolencias ? "En memoria / Destinatario:" : "Para (Destinatario):"}
                   </label>
                   <input
@@ -1327,7 +1310,15 @@ export function ModalImprimirTarjetaTaller({
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: "0.74rem", fontWeight: 700, color: "#334155", display: "block", marginBottom: "3px" }}>
+                  <label
+                    style={{
+                      fontSize: "0.74rem",
+                      fontWeight: 700,
+                      color: "#334155",
+                      display: "block",
+                      marginBottom: "3px",
+                    }}
+                  >
                     De parte de (Firma):
                   </label>
                   <input
@@ -1347,20 +1338,23 @@ export function ModalImprimirTarjetaTaller({
                 </div>
               </div>
 
-              {/* 3. MENSAJE */}
+              {/* 4. MENSAJE */}
               <div>
-                <label style={{ fontSize: "0.76rem", fontWeight: 700, color: "#0F172A", display: "block", marginBottom: "3px" }}>
+                <label
+                  style={{
+                    fontSize: "0.76rem",
+                    fontWeight: 700,
+                    color: "#0F172A",
+                    display: "block",
+                    marginBottom: "3px",
+                  }}
+                >
                   Mensaje de la tarjeta:
                 </label>
                 <textarea
                   rows={4}
                   value={mensajeEditable}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setMensajeEditable(val);
-                    const len = val.length;
-                    setTamanoFuentePt(len < 60 ? 22 : len < 140 ? 18 : len < 240 ? 15 : 12);
-                  }}
+                  onChange={(e) => setMensajeEditable(e.target.value)}
                   placeholder={
                     esCondolencias
                       ? "Escribe el mensaje de condolencias..."
@@ -1378,36 +1372,6 @@ export function ModalImprimirTarjetaTaller({
                 />
               </div>
 
-              {/* 4. CONFIDENCIALIDAD / DISCRECIÓN (SOLO QR IMPRESO) */}
-              <label
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "8px",
-                  padding: "8px 10px",
-                  borderRadius: "8px",
-                  background: confidencialSoloQr ? "#F0F9FF" : "#F8FAFC",
-                  border: confidencialSoloQr ? "1.5px solid #0284C7" : "1px solid #E2E8F0",
-                  cursor: "pointer",
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={confidencialSoloQr}
-                  onChange={(e) => setConfidencialSoloQr(e.target.checked)}
-                  style={{ marginTop: "2px", cursor: "pointer" }}
-                />
-                <div>
-                  <strong style={{ display: "block", fontSize: "0.76rem", color: "#0F172A" }}>
-                    <Lock size={12} style={{ verticalAlign: "middle", marginRight: "3px" }} />
-                    Confidencialidad / Discreción (imprimir solo el QR)
-                  </strong>
-                  <span style={{ fontSize: "0.69rem", color: "#64748B" }}>
-                    Oculta el texto en la cartulina física e imprime únicamente el QR hacia la tarjeta digital.
-                  </span>
-                </div>
-              </label>
-
               {/* 5. MÚSICA Y LYRIC: EXCLUSIVO PARA DEDICATORIA */}
               {!esCondolencias && (
                 <div
@@ -1421,9 +1385,17 @@ export function ModalImprimirTarjetaTaller({
                     gap: "6px",
                   }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: "6px",
+                      flexWrap: "wrap",
+                    }}
+                  >
                     <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#334155" }}>
-                      🎵 Canción de fondo (YouTube o MP3):
+                      🎵 Canción de fondo (YouTube o MP3 — para tarjeta digital):
                     </span>
                     <div style={{ display: "flex", gap: "5px" }}>
                       <button
@@ -1520,62 +1492,8 @@ export function ModalImprimirTarjetaTaller({
                 </div>
               )}
 
-              {/* TIPOGRAFÍA Y CALIBRACIÓN */}
-              {!confidencialSoloQr && (
-                <div style={{ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" }}>
-                  {[
-                    { id: "cursiva", label: "Cursiva" },
-                    { id: "serif", label: "Serif" },
-                    { id: "formal", label: "Formal" },
-                  ].map((f) => (
-                    <button
-                      key={f.id}
-                      type="button"
-                      onClick={() => setFuente(f.id as EstiloFuente)}
-                      style={{
-                        padding: "4px 9px",
-                        borderRadius: "6px",
-                        border: fuente === f.id ? "2px solid #0284C7" : "1px solid #CBD5E1",
-                        background: fuente === f.id ? "#F0F9FF" : "#FFFFFF",
-                        color: fuente === f.id ? "#0369A1" : "#475569",
-                        fontWeight: 700,
-                        fontSize: "0.72rem",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {f.label}
-                    </button>
-                  ))}
-                  <input
-                    type="range"
-                    min="10"
-                    max="30"
-                    value={tamanoFuentePt}
-                    onChange={(e) => setTamanoFuentePt(Number(e.target.value))}
-                    style={{ flex: 1, minWidth: "70px", cursor: "pointer" }}
-                  />
-                  <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#1E293B" }}>
-                    {tamanoFuentePt}pt
-                  </span>
-                </div>
-              )}
-
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                {!confidencialSoloQr ? (
-                  <label style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.74rem", fontWeight: 600, color: "#334155", cursor: "pointer" }}>
-                    <input
-                      type="checkbox"
-                      checked={incluirQr}
-                      onChange={(e) => setIncluirQr(e.target.checked)}
-                    />
-                    <span>Incluir QR junto al mensaje</span>
-                  </label>
-                ) : (
-                  <span style={{ fontSize: "0.72rem", color: "#0369A1", fontWeight: 600 }}>
-                    QR centrado activo
-                  </span>
-                )}
-
+              {/* CALIBRACIÓN FINA DE IMPRESORA CANON G3110 */}
+              <div style={{ display: "flex", justifyContent: "flex-end" }}>
                 <button
                   type="button"
                   onClick={() => setMostrarCalibrador(!mostrarCalibrador)}
@@ -1593,68 +1511,122 @@ export function ModalImprimirTarjetaTaller({
                   }}
                 >
                   <Sliders size={12} />
-                  <span>{mostrarCalibrador ? "Ocultar ajuste fino" : "Ajuste fino mm"}</span>
+                  <span>{mostrarCalibrador ? "Ocultar ajuste fino" : "Ajuste fino Canon G3110 (mm)"}</span>
                 </button>
               </div>
 
               {mostrarCalibrador && (
                 <div
                   style={{
-                    padding: "8px 10px",
-                    background: "#F1F5F9",
+                    background: "#F8FAFC",
+                    padding: "9px 11px",
                     borderRadius: "8px",
+                    border: "1px solid #E2E8F0",
                     display: "grid",
                     gridTemplateColumns: "repeat(4, 1fr)",
-                    gap: "6px",
-                    fontSize: "0.7rem",
+                    gap: "8px",
                   }}
                 >
                   <div>
-                    <label style={{ display: "block", color: "#475569" }}>Ancho mm</label>
+                    <label style={{ fontSize: "0.68rem", color: "#475569", display: "block" }}>
+                      Ancho (mm)
+                    </label>
                     <input
                       type="number"
                       value={anchoMm}
                       onChange={(e) => setAnchoMm(Number(e.target.value))}
-                      style={{ width: "100%", padding: "4px", borderRadius: "4px", border: "1px solid #CBD5E1" }}
+                      style={{
+                        width: "100%",
+                        padding: "4px 6px",
+                        borderRadius: "5px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.76rem",
+                        boxSizing: "border-box",
+                      }}
                     />
                   </div>
                   <div>
-                    <label style={{ display: "block", color: "#475569" }}>Alto mm</label>
+                    <label style={{ fontSize: "0.68rem", color: "#475569", display: "block" }}>
+                      Alto (mm)
+                    </label>
                     <input
                       type="number"
                       value={altoMm}
                       onChange={(e) => setAltoMm(Number(e.target.value))}
-                      style={{ width: "100%", padding: "4px", borderRadius: "4px", border: "1px solid #CBD5E1" }}
+                      style={{
+                        width: "100%",
+                        padding: "4px 6px",
+                        borderRadius: "5px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.76rem",
+                        boxSizing: "border-box",
+                      }}
                     />
                   </div>
                   <div>
-                    <label style={{ display: "block", color: "#475569" }}>Offset X</label>
+                    <label style={{ fontSize: "0.68rem", color: "#475569", display: "block" }}>
+                      Desfase X (mm)
+                    </label>
                     <input
                       type="number"
                       value={offsetX}
                       onChange={(e) => setOffsetX(Number(e.target.value))}
-                      style={{ width: "100%", padding: "4px", borderRadius: "4px", border: "1px solid #CBD5E1" }}
+                      style={{
+                        width: "100%",
+                        padding: "4px 6px",
+                        borderRadius: "5px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.76rem",
+                        boxSizing: "border-box",
+                      }}
                     />
                   </div>
                   <div>
-                    <label style={{ display: "block", color: "#475569" }}>Offset Y</label>
+                    <label style={{ fontSize: "0.68rem", color: "#475569", display: "block" }}>
+                      Desfase Y (mm)
+                    </label>
                     <input
                       type="number"
                       value={offsetY}
                       onChange={(e) => setOffsetY(Number(e.target.value))}
-                      style={{ width: "100%", padding: "4px", borderRadius: "4px", border: "1px solid #CBD5E1" }}
+                      style={{
+                        width: "100%",
+                        padding: "4px 6px",
+                        borderRadius: "5px",
+                        border: "1px solid #CBD5E1",
+                        fontSize: "0.76rem",
+                        boxSizing: "border-box",
+                      }}
                     />
                   </div>
                 </div>
               )}
 
               {errorMsg && (
-                <div style={{ padding: "7px 10px", borderRadius: "7px", background: "#FEE2E2", color: "#991B1B", fontSize: "0.74rem", fontWeight: 600 }}>
+                <div
+                  style={{
+                    padding: "8px 10px",
+                    borderRadius: "8px",
+                    background: "#FEE2E2",
+                    color: "#991B1B",
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                  }}
+                >
                   {errorMsg}
                 </div>
               )}
               {avisoOk && (
-                <div style={{ padding: "7px 10px", borderRadius: "7px", background: "#DCFCE7", color: "#166534", fontSize: "0.74rem", fontWeight: 600 }}>
+                <div
+                  style={{
+                    padding: "8px 10px",
+                    borderRadius: "8px",
+                    background: "#DCFCE7",
+                    color: "#166534",
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                  }}
+                >
                   {avisoOk}
                 </div>
               )}
@@ -1666,11 +1638,11 @@ export function ModalImprimirTarjetaTaller({
             style={{
               padding: "12px 20px",
               borderTop: "1px solid #E2E8F0",
+              background: "#F8FAFC",
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              background: "#F8FAFC",
-              gap: "10px",
+              gap: "8px",
               flexWrap: "wrap",
             }}
           >
@@ -1678,14 +1650,14 @@ export function ModalImprimirTarjetaTaller({
               type="button"
               disabled={guardando}
               onClick={() => void persistirCambiosTarjeta(false)}
-              title="Guardar cambios de la tarjeta"
+              title="Guardar cambios y diseño de la tarjeta"
               aria-label="Guardar Tarjeta"
               style={{
-                padding: "8px 14px",
+                padding: "9px 14px",
                 borderRadius: "8px",
-                border: "1px solid #059669",
-                background: "#ECFDF5",
-                color: "#065F46",
+                border: "1px solid #0F766E",
+                background: "#F0FDFA",
+                color: "#0F766E",
                 fontWeight: 700,
                 fontSize: "0.82rem",
                 cursor: "pointer",
@@ -1694,8 +1666,8 @@ export function ModalImprimirTarjetaTaller({
                 gap: "6px",
               }}
             >
-              {guardando ? <Loader2 size={15} /> : <Save size={15} />}
-              <span>Guardar Tarjeta</span>
+              {guardando ? <Loader2 size={14} /> : <Save size={14} />}
+              <span>{guardando ? "Guardando..." : "Guardar Tarjeta"}</span>
             </button>
 
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -1703,10 +1675,10 @@ export function ModalImprimirTarjetaTaller({
                 type="button"
                 disabled={descargandoPdf}
                 onClick={() => void handleDescargarPdf()}
-                title="Descargar PDF con medidas reales (16,8 x 11,3 cm)"
+                title="Descargar tarjeta en PDF calibrada a medida exacta"
                 aria-label="Descargar PDF"
                 style={{
-                  padding: "8px 14px",
+                  padding: "9px 14px",
                   borderRadius: "8px",
                   border: "1px solid #CBD5E1",
                   background: "#FFFFFF",
@@ -1719,18 +1691,18 @@ export function ModalImprimirTarjetaTaller({
                   gap: "6px",
                 }}
               >
-                {descargandoPdf ? <Loader2 size={15} /> : <Download size={15} />}
-                <span>Descargar PDF</span>
+                {descargandoPdf ? <Loader2 size={14} /> : <Download size={14} />}
+                <span>{descargandoPdf ? "Generando..." : "Descargar PDF"}</span>
               </button>
 
               <button
                 type="button"
                 disabled={imprimiendo}
                 onClick={() => void handleLanzarImpresion()}
-                title="Imprimir tarjeta directo en Canon G3110"
+                title="Mandar a imprimir directamente en Canon PIXMA G3110"
                 aria-label="Imprimir Tarjeta"
                 style={{
-                  padding: "8px 18px",
+                  padding: "9px 16px",
                   borderRadius: "8px",
                   border: "none",
                   background: "#0284C7",
@@ -1741,11 +1713,11 @@ export function ModalImprimirTarjetaTaller({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
-                  boxShadow: "0 2px 6px rgba(2, 132, 199, 0.3)",
+                  boxShadow: "0 4px 10px rgba(2, 132, 199, 0.25)",
                 }}
               >
-                <Printer size={15} />
-                <span>{conteoImpresiones > 0 ? "Reimprimir" : "Imprimir Tarjeta"}</span>
+                {imprimiendo ? <Loader2 size={14} /> : <Printer size={14} />}
+                <span>{imprimiendo ? "Preparando..." : "Imprimir Tarjeta"}</span>
               </button>
             </div>
           </div>

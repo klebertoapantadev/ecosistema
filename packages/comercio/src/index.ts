@@ -76,6 +76,7 @@ export * from "./componentes/ConsolaTallerFloral";
 export * from "./componentes/ControlRemotoTvTaller";
 export * from "./componentes/PantallaTvTaller";
 export * from "./componentes/ModalImprimirTarjetaTaller";
+export * from "./componentes/LienzoDisenadorTarjeta";
 export * from "./componentes/TarjetaDedicatoriaDigitalInteractiva";
 export * from "./componentes/EditorTarjetaPublicoCliente";
 export * from "./componentes/VisorMultimediaChatModal";

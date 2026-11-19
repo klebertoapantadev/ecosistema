@@ -2,6 +2,11 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Heart, Play, Pause, Volume2, VolumeX, Sparkles } from "lucide-react";
+import type { DisenoVisualTarjeta } from "../operaciones-taller";
+import {
+  normalizarDisenoTarjeta,
+  resolverFontFamilyCss,
+} from "./LienzoDisenadorTarjeta";
 
 export interface PropsTarjetaDedicatoriaDigitalInteractiva {
   datosIniciales: {
@@ -13,6 +18,7 @@ export interface PropsTarjetaDedicatoriaDigitalInteractiva {
     dedicatoria: string;
     tipo: "DIPTICO" | "CONDOLENCIAS_PLANA" | "SOLO_DIGITAL";
     confidencial?: boolean;
+    diseno?: DisenoVisualTarjeta;
     musicaUrl?: string | null;
     musicaTitulo?: string | null;
     lyrics?: Array<{ tiempo?: number; texto: string }>;
@@ -36,6 +42,15 @@ export function TarjetaDedicatoriaDigitalInteractiva({
   datosIniciales,
 }: PropsTarjetaDedicatoriaDigitalInteractiva) {
   const esCondolencias = datosIniciales.tipo === "CONDOLENCIAS_PLANA";
+  const disenoNorm = useMemo(
+    () =>
+      normalizarDisenoTarjeta(
+        datosIniciales.diseno,
+        esCondolencias,
+        datosIniciales.dedicatoria || ""
+      ),
+    [datosIniciales.diseno, esCondolencias, datosIniciales.dedicatoria]
+  );
   const musicaActivaUrl = esCondolencias ? null : datosIniciales.musicaUrl || null;
   const youtubeId = useMemo(() => extraerYouTubeId(musicaActivaUrl), [musicaActivaUrl]);
   const esAudioDirecto = Boolean(musicaActivaUrl && !youtubeId);
@@ -411,17 +426,33 @@ export function TarjetaDedicatoriaDigitalInteractiva({
               </>
             )}
 
+            {disenoNorm.imagenUrl && (
+              <img
+                src={disenoNorm.imagenUrl}
+                alt="Imagen de la tarjeta"
+                style={{
+                  maxWidth: `${Math.max(20, Math.min(72, (disenoNorm.imagenAnchoMm / (esCondolencias ? 168 : 113)) * 100))}%`,
+                  maxHeight: "140px",
+                  objectFit: "contain",
+                  marginBottom: "14px",
+                  filter: disenoNorm.escalaGrisesImagen ? "grayscale(100%)" : "none",
+                }}
+              />
+            )}
+
             <div
               style={{
-                fontFamily: esCondolencias
-                  ? "'Playfair Display', Georgia, 'Times New Roman', serif"
-                  : "'Dancing Script', 'Brush Script MT', 'Great Vibes', cursive",
-                fontSize: esCondolencias ? "1.35rem" : "1.95rem",
+                fontFamily: resolverFontFamilyCss(disenoNorm.fuente),
+                fontSize: esCondolencias ? "1.35rem" : "1.85rem",
+                fontWeight: disenoNorm.negrita ? 700 : 400,
+                fontStyle: disenoNorm.italica ? "italic" : "normal",
+                textAlign: disenoNorm.alineacion,
                 lineHeight: 1.4,
                 color: "#18181B",
                 whiteSpace: "pre-wrap",
                 wordBreak: "break-word",
-                maxWidth: "92%",
+                width: `${disenoNorm.textoAnchoPct}%`,
+                maxWidth: "94%",
               }}
             >
               {datosIniciales.dedicatoria ||
