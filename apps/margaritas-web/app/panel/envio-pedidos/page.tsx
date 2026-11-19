@@ -22,7 +22,7 @@ export default async function PaginaEnvioPedidosMargaritas() {
   return (
     <div style={{ maxWidth: "1360px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "16px" }}>
       <div>
-        <h1 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 4px 0", color: "#111827" }}>
+        <h1 style={{ fontSize: "1.12rem", fontWeight: 600, margin: "0 0 4px 0", color: "#1F1C19" }}>
           Programación y Envío Diario de Pedidos a Taller
         </h1>
       </div>

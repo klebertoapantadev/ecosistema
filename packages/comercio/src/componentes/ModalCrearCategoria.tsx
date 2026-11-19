@@ -284,11 +284,11 @@ export function ModalCrearCategoria({
         <div
           style={{
             padding: "16px 20px",
-            borderBottom: "1px solid #E2E8F0",
+            borderBottom: "1px solid #E6E2DA",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: esFloristeria ? "#FFFDF8" : "#F8FAFC",
+            background: esFloristeria ? "#FFFDF8" : "#F8F7F4",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
@@ -297,8 +297,8 @@ export function ModalCrearCategoria({
                 width: "36px",
                 height: "36px",
                 borderRadius: "10px",
-                background: esFloristeria ? "#FEF2F2" : "#E0F2FE",
-                color: esFloristeria ? "#E11D48" : "#0284C7",
+                background: esFloristeria ? "#FAF2F2" : "#EFECE6",
+                color: esFloristeria ? "#221E1B" : "#221E1B",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -307,10 +307,10 @@ export function ModalCrearCategoria({
               {esFloristeria ? <Flower2 size={20} /> : <FolderPlus size={20} />}
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
+              <h2 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 800, color: "#1F1C19" }}>
                 {esFloristeria ? "Colecciones & Ocasiones Florales" : "Categorías Comerciales"}
               </h2>
-              <span style={{ fontSize: "0.75rem", color: "#64748B" }}>
+              <span style={{ fontSize: "0.75rem", color: "#847D74" }}>
                 {tabActiva === "crear"
                   ? "Crea una nueva clasificación para el catálogo"
                   : "Administra y elimina categorías sin productos activos"}
@@ -325,7 +325,7 @@ export function ModalCrearCategoria({
               background: "transparent",
               border: "none",
               cursor: "pointer",
-              color: "#64748B",
+              color: "#847D74",
               padding: "6px",
             }}
           >
@@ -337,9 +337,9 @@ export function ModalCrearCategoria({
         <div
           style={{
             display: "flex",
-            background: "#F1F5F9",
+            background: "#F4F2EE",
             padding: "4px 8px",
-            borderBottom: "1px solid #E2E8F0",
+            borderBottom: "1px solid #E6E2DA",
             gap: "6px",
           }}
         >
@@ -362,7 +362,7 @@ export function ModalCrearCategoria({
               justifyContent: "center",
               gap: "6px",
               background: tabActiva === "crear" ? "#FFFFFF" : "transparent",
-              color: tabActiva === "crear" ? (esFloristeria ? "#E11D48" : "#0284C7") : "#64748B",
+              color: tabActiva === "crear" ? (esFloristeria ? "#221E1B" : "#221E1B") : "#847D74",
               boxShadow: tabActiva === "crear" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
             }}
           >
@@ -390,7 +390,7 @@ export function ModalCrearCategoria({
               justifyContent: "center",
               gap: "6px",
               background: tabActiva === "gestionar" ? "#FFFFFF" : "transparent",
-              color: tabActiva === "gestionar" ? "#0F172A" : "#64748B",
+              color: tabActiva === "gestionar" ? "#1F1C19" : "#847D74",
               boxShadow: tabActiva === "gestionar" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
             }}
           >
@@ -407,9 +407,9 @@ export function ModalCrearCategoria({
               {errorCrear && (
                 <div
                   style={{
-                    background: "#FEF2F2",
-                    border: "1px solid #FCA5A5",
-                    color: "#991B1B",
+                    background: "#FAF2F2",
+                    border: "1px solid #DEBABA",
+                    color: "#8A2E2E",
                     padding: "8px 12px",
                     borderRadius: "8px",
                     marginBottom: "12px",
@@ -425,7 +425,7 @@ export function ModalCrearCategoria({
               )}
 
               <div style={{ marginBottom: "12px" }}>
-                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#334155", marginBottom: "4px" }}>
+                <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "#57524C", marginBottom: "4px" }}>
                   Nombre de la {esFloristeria ? "Colección" : "Categoría"} *
                 </label>
                 <input
@@ -438,7 +438,7 @@ export function ModalCrearCategoria({
                     width: "100%",
                     padding: "8px 12px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid #D5CFC4",
                     fontSize: "0.85rem",
                     boxSizing: "border-box",
                   }}
@@ -447,7 +447,7 @@ export function ModalCrearCategoria({
 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(160px, 100%), 1fr))", gap: "10px", marginBottom: "12px" }}>
                 <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#57524C", marginBottom: "4px" }}>
                     Identificador Slug
                   </label>
                   <input
@@ -459,7 +459,7 @@ export function ModalCrearCategoria({
                       width: "100%",
                       padding: "7px 10px",
                       borderRadius: "6px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid #D5CFC4",
                       fontSize: "0.8rem",
                       boxSizing: "border-box",
                     }}
@@ -467,7 +467,7 @@ export function ModalCrearCategoria({
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
+                  <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#57524C", marginBottom: "4px" }}>
                     Posición / Orden
                   </label>
                   <input
@@ -479,7 +479,7 @@ export function ModalCrearCategoria({
                       width: "100%",
                       padding: "7px 10px",
                       borderRadius: "6px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid #D5CFC4",
                       fontSize: "0.8rem",
                       boxSizing: "border-box",
                     }}
@@ -490,7 +490,7 @@ export function ModalCrearCategoria({
               {/* Recursos Digitales */}
               <div
                 style={{
-                  background: "#F0FDF4",
+                  background: "#F2F6F3",
                   border: "1px solid #BBF7D0",
                   borderRadius: "8px",
                   padding: "10px 12px",
@@ -498,15 +498,15 @@ export function ModalCrearCategoria({
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
-                  <ImageIcon size={14} color="#15803D" />
-                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#15803D", textTransform: "uppercase" }}>
+                  <ImageIcon size={14} color="#2F4737" />
+                  <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#2F4737", textTransform: "uppercase" }}>
                     Recursos Digitales de la Colección
                   </span>
                 </div>
 
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(170px, 100%), 1fr))", gap: "8px", marginBottom: "8px" }}>
                   <div>
-                    <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#334155", marginBottom: "2px" }}>
+                    <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#57524C", marginBottom: "2px" }}>
                       URL Portada / Banner
                     </label>
                     <input
@@ -518,7 +518,7 @@ export function ModalCrearCategoria({
                         width: "100%",
                         padding: "6px 8px",
                         borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid #D5CFC4",
                         fontSize: "0.75rem",
                         boxSizing: "border-box",
                       }}
@@ -526,7 +526,7 @@ export function ModalCrearCategoria({
                   </div>
 
                   <div>
-                    <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#334155", marginBottom: "2px" }}>
+                    <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#57524C", marginBottom: "2px" }}>
                       URL Video Reel / Spot
                     </label>
                     <input
@@ -538,7 +538,7 @@ export function ModalCrearCategoria({
                         width: "100%",
                         padding: "6px 8px",
                         borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid #D5CFC4",
                         fontSize: "0.75rem",
                         boxSizing: "border-box",
                       }}
@@ -547,7 +547,7 @@ export function ModalCrearCategoria({
                 </div>
 
                 <div>
-                  <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#334155", marginBottom: "2px" }}>
+                  <label style={{ display: "block", fontSize: "0.7rem", fontWeight: 600, color: "#57524C", marginBottom: "2px" }}>
                     URL Álbum de Fotos / Galería
                   </label>
                   <input
@@ -559,7 +559,7 @@ export function ModalCrearCategoria({
                       width: "100%",
                       padding: "6px 8px",
                       borderRadius: "6px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid #D5CFC4",
                       fontSize: "0.75rem",
                       boxSizing: "border-box",
                     }}
@@ -568,7 +568,7 @@ export function ModalCrearCategoria({
               </div>
 
               <div style={{ marginBottom: "16px" }}>
-                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "4px" }}>
+                <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 600, color: "#57524C", marginBottom: "4px" }}>
                   Descripción / Alcance
                 </label>
                 <textarea
@@ -580,7 +580,7 @@ export function ModalCrearCategoria({
                     width: "100%",
                     padding: "8px 12px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid #D5CFC4",
                     fontSize: "0.82rem",
                     boxSizing: "border-box",
                   }}
@@ -592,8 +592,8 @@ export function ModalCrearCategoria({
                   type="button"
                   onClick={onCerrar}
                   style={{
-                    background: "#F1F5F9",
-                    color: "#475569",
+                    background: "#F4F2EE",
+                    color: "#57524C",
                     border: "none",
                     padding: "8px 14px",
                     borderRadius: "8px",
@@ -608,7 +608,7 @@ export function ModalCrearCategoria({
                   type="submit"
                   disabled={guardando}
                   style={{
-                    background: esFloristeria ? "#E11D48" : "#0284C7",
+                    background: esFloristeria ? "#221E1B" : "#221E1B",
                     color: "#FFFFFF",
                     border: "none",
                     padding: "8px 18px",
@@ -633,9 +633,9 @@ export function ModalCrearCategoria({
               {mensajeExitoGestion && (
                 <div
                   style={{
-                    background: "#F0FDF4",
-                    border: "1px solid #86EFAC",
-                    color: "#166534",
+                    background: "#F2F6F3",
+                    border: "1px solid #CEDDD3",
+                    color: "#2B4A36",
                     padding: "9px 14px",
                     borderRadius: "8px",
                     marginBottom: "12px",
@@ -653,9 +653,9 @@ export function ModalCrearCategoria({
               {mensajeErrorGestion && (
                 <div
                   style={{
-                    background: "#FEF2F2",
-                    border: "1px solid #FCA5A5",
-                    color: "#991B1B",
+                    background: "#FAF2F2",
+                    border: "1px solid #DEBABA",
+                    color: "#8A2E2E",
                     padding: "9px 14px",
                     borderRadius: "8px",
                     marginBottom: "12px",
@@ -673,8 +673,8 @@ export function ModalCrearCategoria({
               {/* Banner Informativo de Regla de Negocio */}
               <div
                 style={{
-                  background: "#EFF6FF",
-                  border: "1px solid #BFDBFE",
+                  background: "#F4F2EE",
+                  border: "1px solid #DDD8CE",
                   borderRadius: "8px",
                   padding: "10px 12px",
                   marginBottom: "14px",
@@ -683,8 +683,8 @@ export function ModalCrearCategoria({
                   gap: "8px",
                 }}
               >
-                <Info size={16} color="#1D4ED8" style={{ marginTop: "2px", flexShrink: 0 }} />
-                <span style={{ fontSize: "0.76rem", color: "#1E40AF", lineHeight: 1.4 }}>
+                <Info size={16} color="#221E1B" style={{ marginTop: "2px", flexShrink: 0 }} />
+                <span style={{ fontSize: "0.76rem", color: "#3A3530", lineHeight: 1.4 }}>
                   <strong>Control de Integridad:</strong> Solo es posible eliminar categorías que{" "}
                   <strong>no tengan productos asignados</strong>. Si una categoría está en uso, el botón estará bloqueado
                   para proteger la consistencia del catálogo comercial.
@@ -696,7 +696,7 @@ export function ModalCrearCategoria({
                 <div style={{ position: "relative", flex: 1 }}>
                   <Search
                     size={14}
-                    style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#94A3B8" }}
+                    style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#847D74" }}
                   />
                   <input
                     type="text"
@@ -707,7 +707,7 @@ export function ModalCrearCategoria({
                       width: "100%",
                       padding: "7px 10px 7px 32px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid #D5CFC4",
                       fontSize: "0.82rem",
                       boxSizing: "border-box",
                     }}
@@ -719,7 +719,7 @@ export function ModalCrearCategoria({
                   disabled={cargandoLista}
                   style={{
                     background: "#FFFFFF",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid #D5CFC4",
                     borderRadius: "8px",
                     padding: "7px 12px",
                     cursor: "pointer",
@@ -728,7 +728,7 @@ export function ModalCrearCategoria({
                     gap: "6px",
                     fontSize: "0.78rem",
                     fontWeight: 600,
-                    color: "#475569",
+                    color: "#57524C",
                   }}
                   title="Actualizar estado de uso"
                 >
@@ -739,12 +739,12 @@ export function ModalCrearCategoria({
 
               {/* Lista de Categorías */}
               {cargandoLista ? (
-                <div style={{ padding: "28px", textAlign: "center", color: "#64748B", fontSize: "0.82rem" }}>
+                <div style={{ padding: "28px", textAlign: "center", color: "#847D74", fontSize: "0.82rem" }}>
                   <RefreshCw size={20} className="animate-spin" style={{ margin: "0 auto 8px" }} />
                   <span>Verificando categorías y uso de productos...</span>
                 </div>
               ) : categoriasFiltradas.length === 0 ? (
-                <div style={{ padding: "28px", textAlign: "center", color: "#94A3B8", fontSize: "0.82rem" }}>
+                <div style={{ padding: "28px", textAlign: "center", color: "#847D74", fontSize: "0.82rem" }}>
                   No se encontraron categorías coincidentes.
                 </div>
               ) : (
@@ -760,15 +760,15 @@ export function ModalCrearCategoria({
                           justifyContent: "space-between",
                           padding: "10px 14px",
                           borderRadius: "10px",
-                          border: "1px solid #E2E8F0",
-                          background: enUso ? "#FAFAFA" : "#FFFFFF",
+                          border: "1px solid #E6E2DA",
+                          background: enUso ? "#F8F7F4" : "#FFFFFF",
                           gap: "12px",
                         }}
                       >
                         {/* Datos de la Categoría */}
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                            <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "#1E293B" }}>
+                            <span style={{ fontSize: "0.88rem", fontWeight: 700, color: "#221E1B" }}>
                               {cat.ctg_nombre}
                             </span>
                             <span
@@ -776,8 +776,8 @@ export function ModalCrearCategoria({
                                 fontSize: "0.7rem",
                                 padding: "2px 6px",
                                 borderRadius: "4px",
-                                background: "#F1F5F9",
-                                color: "#64748B",
+                                background: "#F4F2EE",
+                                color: "#847D74",
                                 fontFamily: "monospace",
                               }}
                             >
@@ -794,8 +794,8 @@ export function ModalCrearCategoria({
                                   gap: "4px",
                                   fontSize: "0.72rem",
                                   fontWeight: 600,
-                                  color: "#0369A1",
-                                  background: "#E0F2FE",
+                                  color: "#3A3530",
+                                  background: "#EFECE6",
                                   padding: "2px 8px",
                                   borderRadius: "12px",
                                 }}
@@ -814,8 +814,8 @@ export function ModalCrearCategoria({
                                   gap: "4px",
                                   fontSize: "0.72rem",
                                   fontWeight: 600,
-                                  color: "#15803D",
-                                  background: "#DCFCE7",
+                                  color: "#2F4737",
+                                  background: "#F2F6F3",
                                   padding: "2px 8px",
                                   borderRadius: "12px",
                                 }}
@@ -829,7 +829,7 @@ export function ModalCrearCategoria({
                               <span
                                 style={{
                                   fontSize: "0.72rem",
-                                  color: "#64748B",
+                                  color: "#847D74",
                                   whiteSpace: "nowrap",
                                   overflow: "hidden",
                                   textOverflow: "ellipsis",
@@ -852,9 +852,9 @@ export function ModalCrearCategoria({
                             title={`Copiar link directo a la categoría "${cat.ctg_nombre}" para compartir por WhatsApp o Chat`}
                             aria-label={`Copiar link de ${cat.ctg_nombre}`}
                             style={{
-                              background: catLinkCopiadoId === cat.ctg_id ? "#ECFDF5" : "#F0F9FF",
-                              border: catLinkCopiadoId === cat.ctg_id ? "1px solid #34D399" : "1px solid #BAE6FD",
-                              color: catLinkCopiadoId === cat.ctg_id ? "#047857" : "#0369A1",
+                              background: catLinkCopiadoId === cat.ctg_id ? "#F2F6F3" : "#F4F2EE",
+                              border: catLinkCopiadoId === cat.ctg_id ? "1px solid #7EA389" : "1px solid #DDD8CE",
+                              color: catLinkCopiadoId === cat.ctg_id ? "#2F4737" : "#3A3530",
                               padding: "6px 10px",
                               borderRadius: "8px",
                               fontSize: "0.74rem",
@@ -867,7 +867,7 @@ export function ModalCrearCategoria({
                           >
                             {catLinkCopiadoId === cat.ctg_id ? (
                               <>
-                                <CheckCircle2 size={12} color="#059669" />
+                                <CheckCircle2 size={12} color="#2F4737" />
                                 <span className="btn-texto-responsive">Copiado</span>
                               </>
                             ) : (
@@ -884,9 +884,9 @@ export function ModalCrearCategoria({
                               disabled
                               title={`No se puede eliminar: tiene ${cat.productos_conteo} producto(s) asignados${cat.productos_ejemplo?.length ? ` (ej. ${cat.productos_ejemplo.join(", ")})` : ""}.`}
                               style={{
-                                background: "#F1F5F9",
-                                border: "1px solid #E2E8F0",
-                                color: "#94A3B8",
+                                background: "#F4F2EE",
+                                border: "1px solid #E6E2DA",
+                                color: "#847D74",
                                 padding: "6px 12px",
                                 borderRadius: "8px",
                                 fontSize: "0.74rem",
@@ -909,9 +909,9 @@ export function ModalCrearCategoria({
                                 setCatAEliminar(cat);
                               }}
                               style={{
-                                background: eliminandoId === cat.ctg_id ? "#FFE4E6" : "#FFF1F2",
-                                border: "1px solid #FECDD3",
-                                color: "#E11D48",
+                                background: eliminandoId === cat.ctg_id ? "#F5E9E9" : "#FAF2F2",
+                                border: "1px solid #E5CACA",
+                                color: "#221E1B",
                                 padding: "6px 12px",
                                 borderRadius: "8px",
                                 fontSize: "0.74rem",
@@ -949,8 +949,8 @@ export function ModalCrearCategoria({
                   type="button"
                   onClick={onCerrar}
                   style={{
-                    background: "#F1F5F9",
-                    color: "#475569",
+                    background: "#F4F2EE",
+                    color: "#57524C",
                     border: "none",
                     padding: "8px 16px",
                     borderRadius: "8px",
@@ -997,7 +997,7 @@ export function ModalCrearCategoria({
               maxWidth: "460px",
               padding: "24px",
               boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)",
-              border: "1px solid #FECDD3",
+              border: "1px solid #E5CACA",
               position: "relative",
             }}
             onClick={(e) => e.stopPropagation()}
@@ -1008,8 +1008,8 @@ export function ModalCrearCategoria({
                   width: "44px",
                   height: "44px",
                   borderRadius: "12px",
-                  background: "#FFE4E6",
-                  color: "#E11D48",
+                  background: "#F5E9E9",
+                  color: "#221E1B",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -1019,17 +1019,17 @@ export function ModalCrearCategoria({
                 <Trash2 size={22} />
               </div>
               <div style={{ flex: 1 }}>
-                <h3 style={{ margin: "0 0 4px 0", fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
+                <h3 style={{ margin: "0 0 4px 0", fontSize: "0.9rem", fontWeight: 800, color: "#1F1C19" }}>
                   ¿Eliminar esta categoría?
                 </h3>
-                <p style={{ margin: 0, fontSize: "0.82rem", color: "#64748B", lineHeight: 1.4 }}>
+                <p style={{ margin: 0, fontSize: "0.82rem", color: "#847D74", lineHeight: 1.4 }}>
                   Vas a retirar del catálogo la categoría:
                 </p>
                 <div style={{ marginTop: "6px", display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "#E11D48" }}>
+                  <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "#221E1B" }}>
                     {catAEliminar.ctg_nombre}
                   </span>
-                  <code style={{ fontSize: "0.72rem", background: "#F1F5F9", color: "#475569", padding: "2px 6px", borderRadius: "4px" }}>
+                  <code style={{ fontSize: "0.72rem", background: "#F4F2EE", color: "#57524C", padding: "2px 6px", borderRadius: "4px" }}>
                     {catAEliminar.ctg_slug}
                   </code>
                 </div>
@@ -1039,8 +1039,8 @@ export function ModalCrearCategoria({
             {errorEliminarModal ? (
               <div
                 style={{
-                  background: "#FEF2F2",
-                  border: "1px solid #FCA5A5",
+                  background: "#FAF2F2",
+                  border: "1px solid #DEBABA",
                   borderRadius: "10px",
                   padding: "12px 14px",
                   marginBottom: "20px",
@@ -1048,12 +1048,12 @@ export function ModalCrearCategoria({
                   alignItems: "flex-start",
                   gap: "10px",
                   fontSize: "0.8rem",
-                  color: "#991B1B",
+                  color: "#8A2E2E",
                 }}
               >
-                <AlertCircle size={18} style={{ flexShrink: 0, marginTop: "2px", color: "#DC2626" }} />
+                <AlertCircle size={18} style={{ flexShrink: 0, marginTop: "2px", color: "#8A2E2E" }} />
                 <div style={{ flex: 1 }}>
-                  <strong style={{ display: "block", marginBottom: "3px", color: "#B91C1C" }}>
+                  <strong style={{ display: "block", marginBottom: "3px", color: "#8A2E2E" }}>
                     No se puede eliminar en este momento:
                   </strong>
                   <span>{errorEliminarModal}</span>
@@ -1062,8 +1062,8 @@ export function ModalCrearCategoria({
             ) : (
               <div
                 style={{
-                  background: "#FFF1F2",
-                  border: "1px solid #FECDD3",
+                  background: "#FAF2F2",
+                  border: "1px solid #E5CACA",
                   borderRadius: "10px",
                   padding: "10px 12px",
                   marginBottom: "20px",
@@ -1071,7 +1071,7 @@ export function ModalCrearCategoria({
                   alignItems: "center",
                   gap: "8px",
                   fontSize: "0.78rem",
-                  color: "#9F1239",
+                  color: "#8A2E2E",
                 }}
               >
                 <AlertTriangle size={16} style={{ flexShrink: 0 }} />
@@ -1090,8 +1090,8 @@ export function ModalCrearCategoria({
                   setErrorEliminarModal(null);
                 }}
                 style={{
-                  background: "#F1F5F9",
-                  color: "#475569",
+                  background: "#F4F2EE",
+                  color: "#57524C",
                   border: "none",
                   padding: "9px 16px",
                   borderRadius: "8px",
@@ -1107,7 +1107,7 @@ export function ModalCrearCategoria({
                 disabled={Boolean(eliminandoId)}
                 onClick={handleConfirmarEliminar}
                 style={{
-                  background: "#E11D48",
+                  background: "#221E1B",
                   color: "#FFFFFF",
                   border: "none",
                   padding: "9px 18px",

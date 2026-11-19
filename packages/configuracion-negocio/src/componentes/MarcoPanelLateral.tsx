@@ -273,7 +273,7 @@ export function MarcoPanelLateral({
                   borderRadius: "999px",
                   border: "1px solid rgba(52, 211, 153, 0.45)",
                   background: "rgba(6, 95, 70, 0.85)",
-                  color: "#ECFDF5",
+                  color: "#F2F6F3",
                   fontSize: "0.75rem",
                   fontWeight: 700,
                   cursor: "pointer",
@@ -413,7 +413,7 @@ export function MarcoPanelLateral({
                   borderRadius: "10px",
                   border: "1px solid rgba(52, 211, 153, 0.35)",
                   background: "rgba(16, 185, 129, 0.16)",
-                  color: "#A7F3D0",
+                  color: "#CEDDD3",
                   fontSize: "0.8rem",
                   fontWeight: 700,
                   cursor: "pointer",
@@ -458,7 +458,7 @@ export function MarcoPanelLateral({
                 display: "flex",
                 flexDirection: "column",
                 gap: "14px",
-                color: "#0F172A",
+                color: "#1F1C19",
               }}
             >
               <div
@@ -470,7 +470,7 @@ export function MarcoPanelLateral({
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <Smartphone size={20} color="#059669" />
+                  <Smartphone size={20} color="#2F4737" />
                   <strong style={{ fontSize: "1.02rem" }}>
                     Instalar App {marcaNombre}
                   </strong>
@@ -481,8 +481,8 @@ export function MarcoPanelLateral({
                   title="Cerrar guía de instalación"
                   aria-label="Cerrar"
                   style={{
-                    border: "1px solid #E2E8F0",
-                    background: "#F8FAFC",
+                    border: "1px solid #E6E2DA",
+                    background: "#F8F7F4",
                     borderRadius: "8px",
                     width: "32px",
                     height: "32px",
@@ -496,7 +496,7 @@ export function MarcoPanelLateral({
                 </button>
               </div>
 
-              <p style={{ margin: 0, fontSize: "0.85rem", lineHeight: 1.5, color: "#475569" }}>
+              <p style={{ margin: 0, fontSize: "0.85rem", lineHeight: 1.5, color: "#57524C" }}>
                 Instala la aplicación en la pantalla de inicio de tu celular para capturar fotos GPS y
                 confirmar entregas incluso sin conexión a internet:
               </p>
@@ -504,8 +504,8 @@ export function MarcoPanelLateral({
               {esIos ? (
                 <div
                   style={{
-                    background: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
+                    background: "#F8F7F4",
+                    border: "1px solid #E6E2DA",
                     borderRadius: "12px",
                     padding: "12px 14px",
                     fontSize: "0.84rem",
@@ -516,7 +516,7 @@ export function MarcoPanelLateral({
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <Share size={16} color="#2563EB" />
+                    <Share size={16} color="#221E1B" />
                     <span>
                       <strong>1.</strong> Toca el botón <strong>Compartir</strong> en la barra de Safari.
                     </span>
@@ -529,8 +529,8 @@ export function MarcoPanelLateral({
               ) : (
                 <div
                   style={{
-                    background: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
+                    background: "#F8F7F4",
+                    border: "1px solid #E6E2DA",
                     borderRadius: "12px",
                     padding: "12px 14px",
                     fontSize: "0.84rem",
@@ -561,7 +561,7 @@ export function MarcoPanelLateral({
                   padding: "10px 16px",
                   borderRadius: "10px",
                   border: "none",
-                  background: "#059669",
+                  background: "#2F4737",
                   color: "#FFFFFF",
                   fontSize: "0.86rem",
                   fontWeight: 700,

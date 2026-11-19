@@ -211,9 +211,9 @@ export function ConsolaConfiguracionUnificada({
               <h1
                 style={{
                   margin: 0,
-                  fontSize: "1.35rem",
-                  fontWeight: 700,
-                  color: "#111827",
+                  fontSize: "1.12rem",
+                  fontWeight: 600,
+                  color: "#1F1C19",
                   lineHeight: 1.25,
                 }}
               >
@@ -221,9 +221,9 @@ export function ConsolaConfiguracionUnificada({
               </h1>
               <p
                 style={{
-                  margin: "5px 0 0 0",
-                  fontSize: "0.86rem",
-                  color: "#6B7280",
+                  margin: "4px 0 0 0",
+                  fontSize: "0.8rem",
+                  color: "#6E6861",
                   lineHeight: 1.45,
                   maxWidth: "640px",
                 }}

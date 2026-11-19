@@ -37,10 +37,10 @@ export default async function PaginaTallerFloralTinkay() {
       }}
     >
       <div>
-        <h1 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 4px 0", color: "#111827" }}>
+        <h1 style={{ fontSize: "1.12rem", fontWeight: 600, margin: "0 0 4px 0", color: "#1F1C19" }}>
           Taller — Producción y Elaboración de Arreglos
         </h1>
-        <p style={{ margin: 0, fontSize: "13.5px", color: "#6B7280", lineHeight: 1.5 }}>
+        <p style={{ margin: 0, fontSize: "0.8rem", color: "#6E6861", lineHeight: 1.5 }}>
           Recibe notificaciones en vivo de nuevos pedidos, consulta el calendario de elaboración de
           hoy y entregas futuras, y marca cada arreglo En Preparación o Listo para Entrega.
         </p>

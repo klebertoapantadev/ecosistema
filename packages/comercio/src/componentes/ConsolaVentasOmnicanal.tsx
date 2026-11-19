@@ -166,7 +166,7 @@ function renderTextoConEnlaces(texto: string, esFondoOscuro: boolean): React.Rea
             rel="noreferrer"
             title={info.href}
             style={{
-              color: esFondoOscuro ? "#E4E4E7" : "#18181B",
+              color: esFondoOscuro ? "#E6E2DA" : "#221E1B",
               textDecoration: "underline",
               textUnderlineOffset: "2px",
               wordBreak: "break-word",
@@ -222,9 +222,9 @@ function TarjetaImagenBurbujaOmnicanal({
             borderRadius: "10px",
             border: esFondoOscuro
               ? "1px dashed rgba(255,255,255,0.35)"
-              : "1px dashed #D4D4D8",
-            background: esFondoOscuro ? "rgba(255,255,255,0.1)" : "#FAFAFA",
-            color: esFondoOscuro ? "#E4E4E7" : "#52525B",
+              : "1px dashed #D5CFC4",
+            background: esFondoOscuro ? "rgba(255,255,255,0.1)" : "#F8F7F4",
+            color: esFondoOscuro ? "#E6E2DA" : "#6E6861",
             fontSize: "0.75rem",
             lineHeight: 1.4,
           }}
@@ -247,7 +247,7 @@ function TarjetaImagenBurbujaOmnicanal({
             overflow: "hidden",
             border: esFondoOscuro
               ? "1px solid rgba(255,255,255,0.24)"
-              : "1px solid #E4E4E7",
+              : "1px solid #E6E2DA",
             background: "#FFFFFF",
           }}
         >
@@ -277,7 +277,7 @@ function TarjetaImagenBurbujaOmnicanal({
           style={{
             fontSize: "0.72rem",
             fontWeight: 600,
-            color: esFondoOscuro ? "#E4E4E7" : "#52525B",
+            color: esFondoOscuro ? "#E6E2DA" : "#6E6861",
           }}
         >
           {alt}
@@ -302,9 +302,9 @@ function TarjetaImagenBurbujaOmnicanal({
               minWidth: "32px",
               padding: "4px 9px",
               borderRadius: "7px",
-              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.25)" : "1px solid #D4D4D8",
+              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.25)" : "1px solid #D5CFC4",
               background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#FFFFFF",
-              color: esFondoOscuro ? "#FFFFFF" : "#27272A",
+              color: esFondoOscuro ? "#FFFFFF" : "#3A3530",
               fontSize: "0.71rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -329,9 +329,9 @@ function TarjetaImagenBurbujaOmnicanal({
               minWidth: "32px",
               padding: "4px 9px",
               borderRadius: "7px",
-              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.25)" : "1px solid #D4D4D8",
+              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.25)" : "1px solid #D5CFC4",
               background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#FFFFFF",
-              color: esFondoOscuro ? "#FFFFFF" : "#27272A",
+              color: esFondoOscuro ? "#FFFFFF" : "#3A3530",
               fontSize: "0.71rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -356,9 +356,9 @@ function TarjetaImagenBurbujaOmnicanal({
               minWidth: "32px",
               padding: "4px 9px",
               borderRadius: "7px",
-              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.25)" : "1px solid #D4D4D8",
+              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.25)" : "1px solid #D5CFC4",
               background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#FFFFFF",
-              color: esFondoOscuro ? "#FFFFFF" : "#27272A",
+              color: esFondoOscuro ? "#FFFFFF" : "#3A3530",
               fontSize: "0.71rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -423,8 +423,8 @@ function TarjetaAudioBurbujaOmnicanal({
         gap: "8px",
         padding: "9px 11px",
         borderRadius: "10px",
-        background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#FAFAFA",
-        border: esFondoOscuro ? "1px solid rgba(255,255,255,0.24)" : "1px solid #E4E4E7",
+        background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#F8F7F4",
+        border: esFondoOscuro ? "1px solid rgba(255,255,255,0.24)" : "1px solid #E6E2DA",
         minWidth: "min(255px, 100%)",
         maxWidth: "330px",
       }}
@@ -444,10 +444,10 @@ function TarjetaAudioBurbujaOmnicanal({
             gap: "6px",
             fontSize: "0.75rem",
             fontWeight: 700,
-            color: esFondoOscuro ? "#FFFFFF" : "#18181B",
+            color: esFondoOscuro ? "#FFFFFF" : "#221E1B",
           }}
         >
-          <Mic size={14} color={esFondoOscuro ? "#E4E4E7" : "#3F3F46"} />
+          <Mic size={14} color={esFondoOscuro ? "#E6E2DA" : "#57524C"} />
           <span>Nota de voz</span>
         </span>
 
@@ -460,9 +460,9 @@ function TarjetaAudioBurbujaOmnicanal({
             style={{
               padding: "2px 8px",
               borderRadius: "999px",
-              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.3)" : "1px solid #D4D4D8",
+              border: esFondoOscuro ? "1px solid rgba(255,255,255,0.3)" : "1px solid #D5CFC4",
               background: esFondoOscuro ? "rgba(255,255,255,0.16)" : "#FFFFFF",
-              color: esFondoOscuro ? "#FFFFFF" : "#27272A",
+              color: esFondoOscuro ? "#FFFFFF" : "#3A3530",
               fontSize: "0.69rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -503,7 +503,7 @@ function TarjetaAudioBurbujaOmnicanal({
         <div
           style={{
             fontSize: "0.74rem",
-            color: esFondoOscuro ? "#E4E4E7" : "#52525B",
+            color: esFondoOscuro ? "#E6E2DA" : "#6E6861",
             lineHeight: 1.38,
           }}
         >
@@ -529,9 +529,9 @@ function TarjetaAudioBurbujaOmnicanal({
                 minHeight: "30px",
                 padding: "4px 9px",
                 borderRadius: "7px",
-                border: "1px solid #D4D4D8",
+                border: "1px solid #D5CFC4",
                 background: "#FFFFFF",
-                color: "#27272A",
+                color: "#3A3530",
                 fontSize: "0.71rem",
                 fontWeight: 600,
                 cursor: procesando ? "wait" : "pointer",
@@ -556,8 +556,8 @@ function TarjetaAudioBurbujaOmnicanal({
                 minHeight: "30px",
                 padding: "4px 9px",
                 borderRadius: "7px",
-                border: "1px solid #2D4734",
-                background: "#2D4734",
+                border: "1px solid #2F4737",
+                background: "#2F4737",
                 color: "#FFFFFF",
                 fontSize: "0.71rem",
                 fontWeight: 600,
@@ -593,8 +593,8 @@ function TarjetaDocumentoBurbujaOmnicanal({
         gap: "10px",
         padding: "9px 11px",
         borderRadius: "10px",
-        background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#FAFAFA",
-        border: esFondoOscuro ? "1px solid rgba(255,255,255,0.24)" : "1px solid #E4E4E7",
+        background: esFondoOscuro ? "rgba(255,255,255,0.12)" : "#F8F7F4",
+        border: esFondoOscuro ? "1px solid rgba(255,255,255,0.24)" : "1px solid #E6E2DA",
         maxWidth: "320px",
       }}
     >
@@ -604,9 +604,9 @@ function TarjetaDocumentoBurbujaOmnicanal({
             width: "32px",
             height: "32px",
             borderRadius: "8px",
-            background: esFondoOscuro ? "rgba(255,255,255,0.18)" : "#F4F4F5",
-            color: esFondoOscuro ? "#FFFFFF" : "#27272A",
-            border: esFondoOscuro ? "none" : "1px solid #E4E4E7",
+            background: esFondoOscuro ? "rgba(255,255,255,0.18)" : "#F4F2EE",
+            color: esFondoOscuro ? "#FFFFFF" : "#3A3530",
+            border: esFondoOscuro ? "none" : "1px solid #E6E2DA",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -620,7 +620,7 @@ function TarjetaDocumentoBurbujaOmnicanal({
           style={{
             fontSize: "0.77rem",
             fontWeight: 600,
-            color: esFondoOscuro ? "#FFFFFF" : "#18181B",
+            color: esFondoOscuro ? "#FFFFFF" : "#221E1B",
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
@@ -644,9 +644,9 @@ function TarjetaDocumentoBurbujaOmnicanal({
             width: "30px",
             height: "30px",
             borderRadius: "7px",
-            border: esFondoOscuro ? "1px solid rgba(255,255,255,0.28)" : "1px solid #D4D4D8",
+            border: esFondoOscuro ? "1px solid rgba(255,255,255,0.28)" : "1px solid #D5CFC4",
             background: esFondoOscuro ? "rgba(255,255,255,0.14)" : "#FFFFFF",
-            color: esFondoOscuro ? "#FFFFFF" : "#27272A",
+            color: esFondoOscuro ? "#FFFFFF" : "#3A3530",
             textDecoration: "none",
           }}
         >
@@ -664,9 +664,9 @@ function TarjetaDocumentoBurbujaOmnicanal({
             width: "30px",
             height: "30px",
             borderRadius: "7px",
-            border: esFondoOscuro ? "1px solid rgba(255,255,255,0.28)" : "1px solid #D4D4D8",
+            border: esFondoOscuro ? "1px solid rgba(255,255,255,0.28)" : "1px solid #D5CFC4",
             background: esFondoOscuro ? "rgba(255,255,255,0.14)" : "#FFFFFF",
-            color: esFondoOscuro ? "#FFFFFF" : "#27272A",
+            color: esFondoOscuro ? "#FFFFFF" : "#3A3530",
             textDecoration: "none",
           }}
         >
@@ -781,36 +781,36 @@ function badgeEstadoAtencion(estado: EstadoAtencionOmnicanal): {
     case "ESCALADO_HUMANO":
       return {
         etiqueta: "Requiere humano",
-        fondo: "#FEF2F2",
-        texto: "#991B1B",
-        borde: "#FECACA",
+        fondo: "#FAF2F2",
+        texto: "#8A2E2E",
+        borde: "#E5CACA",
       };
     case "EN_ATENCION_ASESORA":
       return {
         etiqueta: "Atención humana",
-        fondo: "#F4F4F5",
-        texto: "#27272A",
-        borde: "#E4E4E7",
+        fondo: "#F4F2EE",
+        texto: "#3A3530",
+        borde: "#E6E2DA",
       };
     case "EN_ESPERA_CLIENTE":
       return {
         etiqueta: "Espera cliente",
-        fondo: "#F4F4F5",
-        texto: "#52525B",
-        borde: "#E4E4E7",
+        fondo: "#F4F2EE",
+        texto: "#6E6861",
+        borde: "#E6E2DA",
       };
     case "CERRADO":
       return {
         etiqueta: "Cerrado",
-        fondo: "#F4F4F5",
-        texto: "#71717A",
-        borde: "#E4E4E7",
+        fondo: "#F4F2EE",
+        texto: "#847D74",
+        borde: "#E6E2DA",
       };
     default:
       return {
         etiqueta: "IA activa",
         fondo: "#F2F5F3",
-        texto: "#2D4734",
+        texto: "#2F4737",
         borde: "#DCE4DF",
       };
   }
@@ -2565,8 +2565,8 @@ export function ConsolaVentasOmnicanal({
         valor: (p) => `${p.codigoOrden} ${p.tipoOrigen || ""}`,
         render: (p) => (
           <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-            <strong style={{ fontSize: "0.84rem", color: "#111827" }}>{p.codigoOrden}</strong>
-            <span style={{ fontSize: "0.72rem", color: "#6B7280" }}>
+            <strong style={{ fontSize: "0.84rem", color: "#1F1C19" }}>{p.codigoOrden}</strong>
+            <span style={{ fontSize: "0.72rem", color: "#847D74" }}>
               {p.tipoOrigen === "PROFORMA_EVENTO" ? "✨ Proforma Evento" : "🛍️ Compra Tienda"}
             </span>
           </div>
@@ -2586,9 +2586,9 @@ export function ConsolaVentasOmnicanal({
               borderRadius: "999px",
               fontSize: "0.73rem",
               fontWeight: 700,
-              background: p.esUsuarioRegistrado ? "#DCFCE7" : "#FEF3C7",
-              color: p.esUsuarioRegistrado ? "#166534" : "#92400E",
-              border: `1px solid ${p.esUsuarioRegistrado ? "#BBF7D0" : "#FDE68A"}`,
+              background: p.esUsuarioRegistrado ? "#F2F6F3" : "#FAF6EE",
+              color: p.esUsuarioRegistrado ? "#2B4A36" : "#745622",
+              border: `1px solid ${p.esUsuarioRegistrado ? "#CEDDD3" : "#E5D7BC"}`,
             }}
           >
             {p.esUsuarioRegistrado ? "✅ Registrado Web" : "🛒 Invitado (Sin Cuenta)"}
@@ -2601,8 +2601,8 @@ export function ConsolaVentasOmnicanal({
         valor: (p) => `${p.compradorNombre} ${p.compradorCorreo} ${p.compradorTelefono}`,
         render: (p) => (
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <strong style={{ fontSize: "0.83rem", color: "#1F2937" }}>{p.compradorNombre}</strong>
-            <span style={{ fontSize: "0.73rem", color: "#6B7280" }}>
+            <strong style={{ fontSize: "0.83rem", color: "#2E2A26" }}>{p.compradorNombre}</strong>
+            <span style={{ fontSize: "0.73rem", color: "#847D74" }}>
               {p.compradorTelefono || "Sin tel."} · {p.compradorCorreo || "Sin correo"}
             </span>
           </div>
@@ -2614,10 +2614,10 @@ export function ConsolaVentasOmnicanal({
         valor: (p) => Number(p.total) || 0,
         render: (p) => (
           <div style={{ display: "flex", flexDirection: "column" }}>
-            <strong style={{ fontSize: "0.86rem", color: "#111827" }}>
+            <strong style={{ fontSize: "0.86rem", color: "#1F1C19" }}>
               ${Number(p.total || 0).toFixed(2)}
             </strong>
-            <span style={{ fontSize: "0.7rem", color: "#6B7280" }}>
+            <span style={{ fontSize: "0.7rem", color: "#847D74" }}>
               {(p.metodoPago || "ONLINE").toUpperCase()}
             </span>
           </div>
@@ -2635,8 +2635,8 @@ export function ConsolaVentasOmnicanal({
               fontSize: "0.72rem",
               fontWeight: 700,
               background:
-                p.estado === "APROBADA" || p.estado === "ENTREGADO" ? "#DCFCE7" : "#FEF9C3",
-              color: p.estado === "APROBADA" || p.estado === "ENTREGADO" ? "#15803D" : "#854D0E",
+                p.estado === "APROBADA" || p.estado === "ENTREGADO" ? "#F2F6F3" : "#FAF6EE",
+              color: p.estado === "APROBADA" || p.estado === "ENTREGADO" ? "#2F4737" : "#745622",
             }}
           >
             {p.estado}
@@ -2682,9 +2682,9 @@ export function ConsolaVentasOmnicanal({
               gap: "6px",
               padding: "6px 10px",
               borderRadius: "8px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid #D5CFC4",
               background: "#FFFFFF",
-              color: "#0F172A",
+              color: "#1F1C19",
               fontSize: "0.76rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -2719,8 +2719,8 @@ export function ConsolaVentasOmnicanal({
         valor: (u) => `${u.nombre} ${u.correo || ""} ${u.telefono || ""}`,
         render: (u) => (
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <strong style={{ fontSize: "0.84rem", color: "#111827" }}>{u.nombre}</strong>
-            <span style={{ fontSize: "0.73rem", color: "#6B7280" }}>
+            <strong style={{ fontSize: "0.84rem", color: "#1F1C19" }}>{u.nombre}</strong>
+            <span style={{ fontSize: "0.73rem", color: "#847D74" }}>
               {u.correo || "Sin correo"} {u.telefono ? `· ${u.telefono}` : ""}
             </span>
           </div>
@@ -2741,8 +2741,8 @@ export function ConsolaVentasOmnicanal({
               borderRadius: "999px",
               fontSize: "0.73rem",
               fontWeight: 700,
-              background: u.tipoCuenta === "USUARIO_REGISTRADO" ? "#DBEAFE" : "#F3F4F6",
-              color: u.tipoCuenta === "USUARIO_REGISTRADO" ? "#1E40AF" : "#374151",
+              background: u.tipoCuenta === "USUARIO_REGISTRADO" ? "#EFECE6" : "#F4F2EE",
+              color: u.tipoCuenta === "USUARIO_REGISTRADO" ? "#3A3530" : "#57524C",
             }}
           >
             {u.tipoCuenta === "USUARIO_REGISTRADO" ? "✅ Usuario Registrado" : "🛒 Invitado"}
@@ -2758,7 +2758,7 @@ export function ConsolaVentasOmnicanal({
             style={{
               fontSize: "0.74rem",
               fontWeight: 600,
-              color: u.autorizaWhatsapp ? "#15803D" : "#6B7280",
+              color: u.autorizaWhatsapp ? "#2F4737" : "#847D74",
             }}
           >
             {u.autorizaWhatsapp ? "✔ Autorizado" : "— Sin opt-in"}
@@ -2770,7 +2770,7 @@ export function ConsolaVentasOmnicanal({
         encabezado: "Compras Realizadas",
         valor: (u) => u.totalCompras,
         render: (u) => (
-          <strong style={{ fontSize: "0.83rem", color: "#111827" }}>
+          <strong style={{ fontSize: "0.83rem", color: "#1F1C19" }}>
             {u.totalCompras} {u.totalCompras === 1 ? "compra" : "compras"}
           </strong>
         ),
@@ -2780,7 +2780,7 @@ export function ConsolaVentasOmnicanal({
         encabezado: "Monto Acumulado",
         valor: (u) => Number(u.montoAcumulado) || 0,
         render: (u) => (
-          <strong style={{ fontSize: "0.84rem", color: "#047857" }}>
+          <strong style={{ fontSize: "0.84rem", color: "#2F4737" }}>
             ${Number(u.montoAcumulado || 0).toFixed(2)}
           </strong>
         ),
@@ -2796,7 +2796,7 @@ export function ConsolaVentasOmnicanal({
         render: (u) => (
           <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
             {(u.etiquetasIds ?? []).length === 0 && (
-              <span style={{ fontSize: "0.72rem", color: "#9CA3AF" }}>Sin etiquetas</span>
+              <span style={{ fontSize: "0.72rem", color: "#9B948B" }}>Sin etiquetas</span>
             )}
             {(u.etiquetasIds ?? []).map((id) => {
               const etq = mapaEtiquetas.get(id);
@@ -2846,9 +2846,9 @@ export function ConsolaVentasOmnicanal({
               gap: "6px",
               padding: "6px 10px",
               borderRadius: "8px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid #D5CFC4",
               background: "#FFFFFF",
-              color: "#0F172A",
+              color: "#1F1C19",
               fontSize: "0.76rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -2972,9 +2972,9 @@ export function ConsolaVentasOmnicanal({
                   padding: modoLayoutInbox === "movil" ? "7px 10px" : "8px 14px",
                   minHeight: "36px",
                   borderRadius: "10px",
-                  border: activa ? "1px solid #0F172A" : "1px solid #E2E8F0",
-                  background: activa ? "#0F172A" : "#F8FAFC",
-                  color: activa ? "#FFFFFF" : "#334155",
+                  border: activa ? "1px solid #1F1C19" : "1px solid #E6E2DA",
+                  background: activa ? "#1F1C19" : "#F8F7F4",
+                  color: activa ? "#FFFFFF" : "#57524C",
                   fontSize: modoLayoutInbox === "movil" ? "0.76rem" : "0.83rem",
                   fontWeight: 700,
                   cursor: "pointer",
@@ -2990,8 +2990,8 @@ export function ConsolaVentasOmnicanal({
                       padding: "1px 6px",
                       borderRadius: "999px",
                       fontSize: "0.7rem",
-                      background: activa ? "rgba(255,255,255,0.2)" : "#E2E8F0",
-                      color: activa ? "#FFFFFF" : "#334155",
+                      background: activa ? "rgba(255,255,255,0.2)" : "#E6E2DA",
+                      color: activa ? "#FFFFFF" : "#57524C",
                     }}
                   >
                     {tab.contador}
@@ -3013,21 +3013,21 @@ export function ConsolaVentasOmnicanal({
               fontSize: "0.74rem",
               padding: "5px 10px",
               borderRadius: "9px",
-              background: "#FAFAFA",
-              border: "1px solid #E4E4E7",
-              color: "#3F3F46",
+              background: "#F8F7F4",
+              border: "1px solid #E6E2DA",
+              color: "#57524C",
             }}
           >
             <span>
-              ARIA: <strong style={{ color: "#18181B" }}>{metricas.totalRespuestasAria}</strong>
+              ARIA: <strong style={{ color: "#221E1B" }}>{metricas.totalRespuestasAria}</strong>
             </span>
-            <span style={{ color: "#D4D4D8" }}>|</span>
+            <span style={{ color: "#D5CFC4" }}>|</span>
             <span>
-              Humanas: <strong style={{ color: "#18181B" }}>{metricas.totalIntervencionesHumanas}</strong>
+              Humanas: <strong style={{ color: "#221E1B" }}>{metricas.totalIntervencionesHumanas}</strong>
             </span>
-            <span style={{ color: "#D4D4D8" }}>|</span>
+            <span style={{ color: "#D5CFC4" }}>|</span>
             <span>
-              Ventas Web: <strong style={{ color: "#18181B" }}>${metricas.montoTotalVentasUsd.toFixed(2)}</strong>
+              Ventas Web: <strong style={{ color: "#221E1B" }}>${metricas.montoTotalVentasUsd.toFixed(2)}</strong>
             </span>
           </div>
 
@@ -3044,9 +3044,9 @@ export function ConsolaVentasOmnicanal({
                 gap: "6px",
                 padding: "8px 12px",
                 borderRadius: "9px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid #D5CFC4",
                 background: "#FFFFFF",
-                color: "#0F172A",
+                color: "#1F1C19",
                 fontSize: "0.8rem",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -3065,9 +3065,9 @@ export function ConsolaVentasOmnicanal({
           style={{
             padding: "10px 14px",
             borderRadius: "10px",
-            background: "#FFFBEB",
-            border: "1px solid #FDE68A",
-            color: "#92400E",
+            background: "#FAF6EE",
+            border: "1px solid #E5D7BC",
+            color: "#745622",
             fontSize: "0.8rem",
             display: "flex",
             alignItems: "center",
@@ -3092,9 +3092,9 @@ export function ConsolaVentasOmnicanal({
           style={{
             padding: "10px 14px",
             borderRadius: "10px",
-            background: "#ECFDF5",
-            border: "1px solid #A7F3D0",
-            color: "#065F46",
+            background: "#F2F6F3",
+            border: "1px solid #CEDDD3",
+            color: "#2B4A36",
             fontSize: "0.82rem",
             display: "flex",
             justifyContent: "space-between",
@@ -3110,7 +3110,7 @@ export function ConsolaVentasOmnicanal({
             style={{
               border: "none",
               background: "transparent",
-              color: "#065F46",
+              color: "#2B4A36",
               fontWeight: 700,
               cursor: "pointer",
             }}
@@ -3125,9 +3125,9 @@ export function ConsolaVentasOmnicanal({
           style={{
             padding: "10px 14px",
             borderRadius: "10px",
-            background: "#FEF2F2",
-            border: "1px solid #FECACA",
-            color: "#991B1B",
+            background: "#FAF2F2",
+            border: "1px solid #E5CACA",
+            color: "#8A2E2E",
             fontSize: "0.82rem",
             display: "flex",
             justifyContent: "space-between",
@@ -3143,7 +3143,7 @@ export function ConsolaVentasOmnicanal({
             style={{
               border: "none",
               background: "transparent",
-              color: "#991B1B",
+              color: "#8A2E2E",
               fontWeight: 700,
               cursor: "pointer",
             }}
@@ -3222,7 +3222,7 @@ export function ConsolaVentasOmnicanal({
                       left: "9px",
                       top: "50%",
                       transform: "translateY(-50%)",
-                      color: "#94A3B8",
+                      color: "#847D74",
                     }}
                   />
                   <input
@@ -3234,7 +3234,7 @@ export function ConsolaVentasOmnicanal({
                       width: "100%",
                       padding: "6px 9px 6px 29px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid #D5CFC4",
                       background: "#FFFFFF",
                       fontSize: modoLayoutInbox === "movil" ? "16px" : "0.78rem",
                     }}
@@ -3264,7 +3264,7 @@ export function ConsolaVentasOmnicanal({
                       borderRadius: "7px",
                       border: "none",
                       background: canalFiltro === "todos" ? "#FFFFFF" : "transparent",
-                      color: canalFiltro === "todos" ? "#0F172A" : "#475569",
+                      color: canalFiltro === "todos" ? "#1F1C19" : "#57524C",
                       fontSize: "0.72rem",
                       fontWeight: canalFiltro === "todos" ? 800 : 600,
                       boxShadow:
@@ -3298,7 +3298,7 @@ export function ConsolaVentasOmnicanal({
                           borderRadius: "7px",
                           border: "none",
                           background: activo ? "#FFFFFF" : "transparent",
-                          color: activo ? "#0F172A" : "#475569",
+                          color: activo ? "#1F1C19" : "#57524C",
                           fontSize: "0.71rem",
                           fontWeight: activo ? 800 : 600,
                           boxShadow: activo ? "0 1px 2px rgba(15,23,42,0.12)" : "none",
@@ -3314,7 +3314,7 @@ export function ConsolaVentasOmnicanal({
                             style={{
                               fontSize: "0.66rem",
                               fontWeight: 800,
-                              color: activo ? c.color : "#64748B",
+                              color: activo ? c.color : "#847D74",
                             }}
                           >
                             {conteoCanal}
@@ -3337,9 +3337,9 @@ export function ConsolaVentasOmnicanal({
                       gap: "4px",
                       padding: "6px 9px",
                       borderRadius: "8px",
-                      border: mostrarFiltrosInbox ? "1px solid #0F172A" : "1px solid #CBD5E1",
-                      background: mostrarFiltrosInbox ? "#0F172A" : "#FFFFFF",
-                      color: mostrarFiltrosInbox ? "#FFFFFF" : "#334155",
+                      border: mostrarFiltrosInbox ? "1px solid #1F1C19" : "1px solid #D5CFC4",
+                      background: mostrarFiltrosInbox ? "#1F1C19" : "#FFFFFF",
+                      color: mostrarFiltrosInbox ? "#FFFFFF" : "#57524C",
                       fontSize: "0.74rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -3385,11 +3385,11 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         padding: "5px 8px",
                         borderRadius: "8px",
-                        border: "1px solid #D4D4D8",
+                        border: "1px solid #D5CFC4",
                         fontSize: "0.75rem",
                         fontWeight: 600,
                         background: "#FFFFFF",
-                        color: "#18181B",
+                        color: "#221E1B",
                       }}
                     >
                       <option value="todos">Abiertos ({metricas.conversacionesAbiertas})</option>
@@ -3419,9 +3419,9 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         padding: "5px 9px",
                         borderRadius: "8px",
-                        border: soloNoLeidos ? "1px solid #18181B" : "1px solid #D4D4D8",
-                        background: soloNoLeidos ? "#18181B" : "#FFFFFF",
-                        color: soloNoLeidos ? "#FFFFFF" : "#3F3F46",
+                        border: soloNoLeidos ? "1px solid #221E1B" : "1px solid #D5CFC4",
+                        background: soloNoLeidos ? "#221E1B" : "#FFFFFF",
+                        color: soloNoLeidos ? "#FFFFFF" : "#57524C",
                         fontSize: "0.74rem",
                         fontWeight: 600,
                         cursor: "pointer",
@@ -3439,11 +3439,11 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         padding: "5px 8px",
                         borderRadius: "8px",
-                        border: etiquetaFiltroId ? "1px solid #18181B" : "1px solid #D4D4D8",
+                        border: etiquetaFiltroId ? "1px solid #221E1B" : "1px solid #D5CFC4",
                         fontSize: "0.75rem",
                         fontWeight: etiquetaFiltroId ? 700 : 500,
-                        background: etiquetaFiltroId ? "#F4F4F5" : "#FFFFFF",
-                        color: "#18181B",
+                        background: etiquetaFiltroId ? "#F4F2EE" : "#FFFFFF",
+                        color: "#221E1B",
                         maxWidth: "175px",
                       }}
                     >
@@ -3463,11 +3463,11 @@ export function ConsolaVentasOmnicanal({
                       style={{
                         padding: "5px 8px",
                         borderRadius: "8px",
-                        border: vendedorFiltroId ? "1px solid #18181B" : "1px solid #D4D4D8",
+                        border: vendedorFiltroId ? "1px solid #221E1B" : "1px solid #D5CFC4",
                         fontSize: "0.75rem",
                         fontWeight: vendedorFiltroId ? 700 : 500,
-                        background: vendedorFiltroId ? "#F4F4F5" : "#FFFFFF",
-                        color: "#18181B",
+                        background: vendedorFiltroId ? "#F4F2EE" : "#FFFFFF",
+                        color: "#221E1B",
                         maxWidth: "165px",
                       }}
                     >
@@ -3496,9 +3496,9 @@ export function ConsolaVentasOmnicanal({
                           gap: "5px",
                           padding: "5px 10px",
                           borderRadius: "8px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           background: "#FFFFFF",
-                          color: "#0F172A",
+                          color: "#1F1C19",
                           fontSize: "0.74rem",
                           fontWeight: 700,
                           cursor: "pointer",
@@ -3557,9 +3557,9 @@ export function ConsolaVentasOmnicanal({
                       alignItems: "center",
                       justifyContent: "center",
                       gap: "7px",
-                      background: "#F8FAFC",
-                      borderBottom: "1px solid #E2E8F0",
-                      color: "#334155",
+                      background: "#F8F7F4",
+                      borderBottom: "1px solid #E6E2DA",
+                      color: "#57524C",
                       fontSize: "0.75rem",
                       fontWeight: 700,
                       overflow: "hidden",
@@ -3594,7 +3594,7 @@ export function ConsolaVentasOmnicanal({
                     style={{
                       padding: "32px 18px",
                       textAlign: "center",
-                      color: "#64748B",
+                      color: "#847D74",
                       fontSize: "0.82rem",
                       lineHeight: 1.5,
                     }}
@@ -3636,16 +3636,16 @@ export function ConsolaVentasOmnicanal({
                         }}
                         style={{
                           padding: "10px 12px",
-                          borderBottom: "1px solid #F4F4F5",
+                          borderBottom: "1px solid #F4F2EE",
                           background: seleccionada
-                            ? "#F4F4F5"
+                            ? "#F4F2EE"
                             : tieneNoLeidos
-                              ? "#FAFAFA"
+                              ? "#F8F7F4"
                               : "#FFFFFF",
                           borderLeft: seleccionada
-                            ? "3px solid #18181B"
+                            ? "3px solid #221E1B"
                             : tieneNoLeidos
-                              ? "3px solid #71717A"
+                              ? "3px solid #847D74"
                               : "3px solid transparent",
                           cursor: "pointer",
                           display: "flex",
@@ -3680,7 +3680,7 @@ export function ConsolaVentasOmnicanal({
                               style={{
                                 fontSize: "0.83rem",
                                 fontWeight: tieneNoLeidos ? 800 : 600,
-                                color: "#18181B",
+                                color: "#221E1B",
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",
@@ -3703,7 +3703,7 @@ export function ConsolaVentasOmnicanal({
                                     height: "18px",
                                     padding: "0 5px",
                                     borderRadius: "999px",
-                                    background: "#18181B",
+                                    background: "#221E1B",
                                     color: "#FFFFFF",
                                     fontSize: "0.67rem",
                                     fontWeight: 700,
@@ -3715,7 +3715,7 @@ export function ConsolaVentasOmnicanal({
                                   {conv.noLeidosAsesora}
                                 </span>
                               )}
-                              <span style={{ fontSize: "0.69rem", color: "#71717A" }}>
+                              <span style={{ fontSize: "0.69rem", color: "#847D74" }}>
                                 {formatearTiempoCorto(conv.ultimoMensajeEn)}
                               </span>
                               {esAdminAplicacion && seleccionada && (
@@ -3731,9 +3731,9 @@ export function ConsolaVentasOmnicanal({
                                     width: "22px",
                                     height: "22px",
                                     borderRadius: "6px",
-                                    border: "1px solid #E4E4E7",
+                                    border: "1px solid #E6E2DA",
                                     background: "#FFFFFF",
-                                    color: "#71717A",
+                                    color: "#847D74",
                                     display: "inline-flex",
                                     alignItems: "center",
                                     justifyContent: "center",
@@ -3750,7 +3750,7 @@ export function ConsolaVentasOmnicanal({
                           <div
                             style={{
                               fontSize: "0.75rem",
-                              color: tieneNoLeidos ? "#18181B" : "#52525B",
+                              color: tieneNoLeidos ? "#221E1B" : "#6E6861",
                               fontWeight: tieneNoLeidos ? 600 : 400,
                               overflow: "hidden",
                               textOverflow: "ellipsis",
@@ -3791,9 +3791,9 @@ export function ConsolaVentasOmnicanal({
                                       fontWeight: 600,
                                       padding: "1px 6px",
                                       borderRadius: "999px",
-                                      background: vencido ? "#FAF6EC" : "#F4F4F5",
-                                      color: vencido ? "#78350F" : "#52525B",
-                                      border: vencido ? "1px solid #E8DEC6" : "1px solid #E4E4E7",
+                                      background: vencido ? "#FAF6EC" : "#F4F2EE",
+                                      color: vencido ? "#745622" : "#6E6861",
+                                      border: vencido ? "1px solid #E8DEC6" : "1px solid #E6E2DA",
                                     }}
                                   >
                                     {vencido
@@ -3813,9 +3813,9 @@ export function ConsolaVentasOmnicanal({
                                     fontWeight: 600,
                                     padding: "1px 6px",
                                     borderRadius: "999px",
-                                    background: "#F4F4F5",
-                                    color: "#52525B",
-                                    border: "1px solid #E4E4E7",
+                                    background: "#F4F2EE",
+                                    color: "#6E6861",
+                                    border: "1px solid #E6E2DA",
                                   }}
                                 >
                                   {conv.cierre.motivoEtiqueta}
@@ -3829,9 +3829,9 @@ export function ConsolaVentasOmnicanal({
                                     fontWeight: 600,
                                     padding: "1px 6px",
                                     borderRadius: "999px",
-                                    background: "#FEF2F2",
-                                    color: "#991B1B",
-                                    border: "1px solid #FECACA",
+                                    background: "#FAF2F2",
+                                    color: "#8A2E2E",
+                                    border: "1px solid #E5CACA",
                                   }}
                                 >
                                   Humano
@@ -3845,9 +3845,9 @@ export function ConsolaVentasOmnicanal({
                                     fontWeight: 600,
                                     padding: "1px 6px",
                                     borderRadius: "999px",
-                                    background: "#F4F4F5",
-                                    color: "#3F3F46",
-                                    border: "1px solid #E4E4E7",
+                                    background: "#F4F2EE",
+                                    color: "#57524C",
+                                    border: "1px solid #E6E2DA",
                                   }}
                                 >
                                   {conv.asesoraNombre?.split(" ")[0] || "Humano"}
@@ -3865,9 +3865,9 @@ export function ConsolaVentasOmnicanal({
                                     fontWeight: 600,
                                     padding: "1px 6px",
                                     borderRadius: "999px",
-                                    background: "#FAFAFA",
-                                    color: "#3F3F46",
-                                    border: "1px solid #E4E4E7",
+                                    background: "#F8F7F4",
+                                    color: "#57524C",
+                                    border: "1px solid #E6E2DA",
                                   }}
                                 >
                                   <span
@@ -3921,7 +3921,7 @@ export function ConsolaVentasOmnicanal({
                   justifyContent: "center",
                   padding: "clamp(20px, 5vw, 36px)",
                   textAlign: "center",
-                  color: "#475569",
+                  color: "#57524C",
                 }}
               >
                 {modoLayoutInbox === "movil" && (
@@ -3937,9 +3937,9 @@ export function ConsolaVentasOmnicanal({
                       padding: "6px 12px",
                       marginBottom: "16px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid #D5CFC4",
                       background: "#FFFFFF",
-                      color: "#0F172A",
+                      color: "#1F1C19",
                       fontSize: "0.78rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -3949,8 +3949,8 @@ export function ConsolaVentasOmnicanal({
                     <span>Hilos</span>
                   </button>
                 )}
-                <Sparkles size={40} style={{ color: "#0284C7", marginBottom: "12px" }} />
-                <h3 style={{ margin: "0 0 6px", fontSize: "1.05rem", color: "#0F172A" }}>
+                <Sparkles size={40} style={{ color: "#221E1B", marginBottom: "12px" }} />
+                <h3 style={{ margin: "0 0 6px", fontSize: "0.9rem", color: "#1F1C19" }}>
                   Monitoreo Omnicanal de Ventas e IA ARIA
                 </h3>
                 <p style={{ margin: 0, maxWidth: "400px", fontSize: "0.84rem", lineHeight: 1.55 }}>
@@ -3966,7 +3966,7 @@ export function ConsolaVentasOmnicanal({
                   style={{
                     background: "#FFFFFF",
                     padding: modoLayoutInbox === "movil" ? "8px 10px" : "9px 14px",
-                    borderBottom: "1px solid #E2E8F0",
+                    borderBottom: "1px solid #E6E2DA",
                     display: "flex",
                     flexDirection: "column",
                     gap: modoLayoutInbox === "movil" ? "7px" : "6px",
@@ -4026,9 +4026,9 @@ export function ConsolaVentasOmnicanal({
                             width: "36px",
                             height: "36px",
                             borderRadius: "10px",
-                            border: "1px solid #CBD5E1",
-                            background: "#F8FAFC",
-                            color: "#0F172A",
+                            border: "1px solid #D5CFC4",
+                            background: "#F8F7F4",
+                            color: "#1F1C19",
                             cursor: "pointer",
                             flexShrink: 0,
                           }}
@@ -4048,7 +4048,7 @@ export function ConsolaVentasOmnicanal({
                           <strong
                             style={{
                               fontSize: "0.88rem",
-                              color: "#0F172A",
+                              color: "#1F1C19",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
@@ -4099,12 +4099,12 @@ export function ConsolaVentasOmnicanal({
                               padding: "1px 7px",
                               borderRadius: "999px",
                               border: conversacionActiva.asesoraAsignadaId
-                                ? "1px solid #D4D4D8"
-                                : "1px solid #E4E4E7",
+                                ? "1px solid #D5CFC4"
+                                : "1px solid #E6E2DA",
                               background: conversacionActiva.asesoraAsignadaId
-                                ? "#F4F4F5"
-                                : "#FAFAFA",
-                              color: conversacionActiva.asesoraAsignadaId ? "#18181B" : "#71717A",
+                                ? "#F4F2EE"
+                                : "#F8F7F4",
+                              color: conversacionActiva.asesoraAsignadaId ? "#221E1B" : "#847D74",
                               fontSize: "0.68rem",
                               fontWeight: 600,
                               cursor: "pointer",
@@ -4134,9 +4134,9 @@ export function ConsolaVentasOmnicanal({
                                   fontWeight: 600,
                                   padding: "1px 6px",
                                   borderRadius: "999px",
-                                  background: vencido ? "#FAF6EC" : "#F4F4F5",
-                                  color: vencido ? "#78350F" : "#52525B",
-                                  border: vencido ? "1px solid #E8DEC6" : "1px solid #E4E4E7",
+                                  background: vencido ? "#FAF6EC" : "#F4F2EE",
+                                  color: vencido ? "#745622" : "#6E6861",
+                                  border: vencido ? "1px solid #E8DEC6" : "1px solid #E6E2DA",
                                   whiteSpace: "nowrap",
                                 }}
                               >
@@ -4173,8 +4173,8 @@ export function ConsolaVentasOmnicanal({
                           height: "36px",
                           padding: "0 11px",
                           borderRadius: "10px",
-                          border: "1px solid #0F172A",
-                          background: "#0F172A",
+                          border: "1px solid #1F1C19",
+                          background: "#1F1C19",
                           color: "#FFFFFF",
                           fontSize: "0.75rem",
                           fontWeight: 700,
@@ -4219,11 +4219,11 @@ export function ConsolaVentasOmnicanal({
                               borderRadius: "8px",
                               border:
                                 menuCabeceraAbierto === "etiquetas"
-                                  ? "1px solid #0F172A"
-                                  : "1px solid #E2E8F0",
+                                  ? "1px solid #1F1C19"
+                                  : "1px solid #E6E2DA",
                               background:
-                                menuCabeceraAbierto === "etiquetas" ? "#F1F5F9" : "#FFFFFF",
-                              color: "#334155",
+                                menuCabeceraAbierto === "etiquetas" ? "#F4F2EE" : "#FFFFFF",
+                              color: "#57524C",
                               cursor: "pointer",
                             }}
                           >
@@ -4239,7 +4239,7 @@ export function ConsolaVentasOmnicanal({
                                 width: "232px",
                                 maxWidth: "calc(100vw - 24px)",
                                 background: "#FFFFFF",
-                                border: "1px solid #CBD5E1",
+                                border: "1px solid #D5CFC4",
                                 borderRadius: "12px",
                                 boxShadow: "0 12px 28px rgba(15, 23, 42, 0.14)",
                                 padding: "8px 0",
@@ -4251,8 +4251,8 @@ export function ConsolaVentasOmnicanal({
                                   padding: "4px 12px 6px",
                                   fontSize: "0.73rem",
                                   fontWeight: 700,
-                                  color: "#64748B",
-                                  borderBottom: "1px solid #F1F5F9",
+                                  color: "#847D74",
+                                  borderBottom: "1px solid #F4F2EE",
                                 }}
                               >
                                 Gestionar etiquetas
@@ -4271,14 +4271,14 @@ export function ConsolaVentasOmnicanal({
                                         width: "100%",
                                         padding: "7px 12px",
                                         border: "none",
-                                        background: puesta ? "#F8FAFC" : "#FFFFFF",
+                                        background: puesta ? "#F8F7F4" : "#FFFFFF",
                                         display: "flex",
                                         alignItems: "center",
                                         gap: "9px",
                                         cursor: "pointer",
                                         textAlign: "left",
                                         fontSize: "0.8rem",
-                                        color: "#0F172A",
+                                        color: "#1F1C19",
                                         fontWeight: puesta ? 700 : 500,
                                       }}
                                     >
@@ -4288,9 +4288,9 @@ export function ConsolaVentasOmnicanal({
                                           height: "16px",
                                           borderRadius: "4px",
                                           border: puesta
-                                            ? "1.5px solid #2563EB"
-                                            : "1.5px solid #CBD5E1",
-                                          background: puesta ? "#2563EB" : "#FFFFFF",
+                                            ? "1.5px solid #221E1B"
+                                            : "1.5px solid #D5CFC4",
+                                          background: puesta ? "#221E1B" : "#FFFFFF",
                                           color: "#FFFFFF",
                                           display: "inline-flex",
                                           alignItems: "center",
@@ -4319,7 +4319,7 @@ export function ConsolaVentasOmnicanal({
                               {Boolean(tablero.esAdminEtiquetas) && (
                                 <div
                                   style={{
-                                    borderTop: "1px solid #F1F5F9",
+                                    borderTop: "1px solid #F4F2EE",
                                     padding: "6px 10px 2px",
                                   }}
                                 >
@@ -4334,8 +4334,8 @@ export function ConsolaVentasOmnicanal({
                                       padding: "6px 8px",
                                       borderRadius: "7px",
                                       border: "none",
-                                      background: "#F8FAFC",
-                                      color: "#0F172A",
+                                      background: "#F8F7F4",
+                                      color: "#1F1C19",
                                       fontSize: "0.75rem",
                                       fontWeight: 700,
                                       display: "flex",
@@ -4373,16 +4373,16 @@ export function ConsolaVentasOmnicanal({
                               height: "34px",
                               borderRadius: "8px",
                               border: conversacionActiva.recordatorioEn
-                                ? "1px solid #F59E0B"
+                                ? "1px solid #8F6A2E"
                                 : menuCabeceraAbierto === "recordatorio"
-                                  ? "1px solid #0F172A"
-                                  : "1px solid #E2E8F0",
+                                  ? "1px solid #1F1C19"
+                                  : "1px solid #E6E2DA",
                               background: conversacionActiva.recordatorioEn
-                                ? "#FEF3C7"
+                                ? "#FAF6EE"
                                 : menuCabeceraAbierto === "recordatorio"
-                                  ? "#F1F5F9"
+                                  ? "#F4F2EE"
                                   : "#FFFFFF",
-                              color: conversacionActiva.recordatorioEn ? "#B45309" : "#334155",
+                              color: conversacionActiva.recordatorioEn ? "#745622" : "#57524C",
                               cursor: "pointer",
                             }}
                           >
@@ -4398,7 +4398,7 @@ export function ConsolaVentasOmnicanal({
                                 width: "240px",
                                 maxWidth: "calc(100vw - 24px)",
                                 background: "#FFFFFF",
-                                border: "1px solid #CBD5E1",
+                                border: "1px solid #D5CFC4",
                                 borderRadius: "12px",
                                 boxShadow: "0 12px 28px rgba(15, 23, 42, 0.14)",
                                 padding: "8px 0",
@@ -4410,8 +4410,8 @@ export function ConsolaVentasOmnicanal({
                                   padding: "4px 12px 6px",
                                   fontSize: "0.73rem",
                                   fontWeight: 700,
-                                  color: "#64748B",
-                                  borderBottom: "1px solid #F1F5F9",
+                                  color: "#847D74",
+                                  borderBottom: "1px solid #F4F2EE",
                                 }}
                               >
                                 Recuérdamelo en
@@ -4429,7 +4429,7 @@ export function ConsolaVentasOmnicanal({
                                     background: "#FFFFFF",
                                     textAlign: "left",
                                     fontSize: "0.8rem",
-                                    color: "#0F172A",
+                                    color: "#1F1C19",
                                     fontWeight: 500,
                                     cursor: "pointer",
                                   }}
@@ -4440,7 +4440,7 @@ export function ConsolaVentasOmnicanal({
 
                               <div
                                 style={{
-                                  borderTop: "1px solid #F1F5F9",
+                                  borderTop: "1px solid #F4F2EE",
                                   marginTop: "4px",
                                   paddingTop: "4px",
                                 }}
@@ -4452,13 +4452,13 @@ export function ConsolaVentasOmnicanal({
                                     width: "100%",
                                     padding: "7px 12px",
                                     border: "none",
-                                    background: mostrarSelectorFechaCustom ? "#F8FAFC" : "#FFFFFF",
+                                    background: mostrarSelectorFechaCustom ? "#F8F7F4" : "#FFFFFF",
                                     display: "flex",
                                     alignItems: "center",
                                     gap: "7px",
                                     fontSize: "0.79rem",
                                     fontWeight: 700,
-                                    color: "#0F172A",
+                                    color: "#1F1C19",
                                     cursor: "pointer",
                                   }}
                                 >
@@ -4473,7 +4473,7 @@ export function ConsolaVentasOmnicanal({
                                       display: "flex",
                                       flexDirection: "column",
                                       gap: "6px",
-                                      background: "#F8FAFC",
+                                      background: "#F8F7F4",
                                     }}
                                   >
                                     <input
@@ -4484,7 +4484,7 @@ export function ConsolaVentasOmnicanal({
                                         width: "100%",
                                         padding: "5px 7px",
                                         borderRadius: "6px",
-                                        border: "1px solid #CBD5E1",
+                                        border: "1px solid #D5CFC4",
                                         fontSize: "0.75rem",
                                       }}
                                     />
@@ -4497,7 +4497,7 @@ export function ConsolaVentasOmnicanal({
                                         width: "100%",
                                         padding: "5px 7px",
                                         borderRadius: "6px",
-                                        border: "1px solid #CBD5E1",
+                                        border: "1px solid #D5CFC4",
                                         fontSize: "0.75rem",
                                       }}
                                     />
@@ -4509,7 +4509,7 @@ export function ConsolaVentasOmnicanal({
                                         padding: "6px 10px",
                                         borderRadius: "6px",
                                         border: "none",
-                                        background: "#0F172A",
+                                        background: "#1F1C19",
                                         color: "#FFFFFF",
                                         fontSize: "0.75rem",
                                         fontWeight: 700,
@@ -4534,7 +4534,7 @@ export function ConsolaVentasOmnicanal({
                                       textAlign: "left",
                                       fontSize: "0.76rem",
                                       fontWeight: 700,
-                                      color: "#DC2626",
+                                      color: "#8A2E2E",
                                       cursor: "pointer",
                                     }}
                                   >
@@ -4567,11 +4567,11 @@ export function ConsolaVentasOmnicanal({
                                 borderRadius: "8px",
                                 border:
                                   menuCabeceraAbierto === "cierre"
-                                    ? "1px solid #0F172A"
-                                    : "1px solid #E2E8F0",
+                                    ? "1px solid #1F1C19"
+                                    : "1px solid #E6E2DA",
                                 background:
-                                  menuCabeceraAbierto === "cierre" ? "#F1F5F9" : "#FFFFFF",
-                                color: "#334155",
+                                  menuCabeceraAbierto === "cierre" ? "#F4F2EE" : "#FFFFFF",
+                                color: "#57524C",
                                 cursor: "pointer",
                               }}
                             >
@@ -4590,9 +4590,9 @@ export function ConsolaVentasOmnicanal({
                                 gap: "4px",
                                 padding: "6px 9px",
                                 borderRadius: "8px",
-                                border: "1px solid #16A34A",
-                                background: "#DCFCE7",
-                                color: "#15803D",
+                                border: "1px solid #2F4737",
+                                background: "#F2F6F3",
+                                color: "#2F4737",
                                 fontSize: "0.73rem",
                                 fontWeight: 700,
                                 cursor: "pointer",
@@ -4612,7 +4612,7 @@ export function ConsolaVentasOmnicanal({
                                 width: "272px",
                                 maxWidth: "calc(100vw - 24px)",
                                 background: "#FFFFFF",
-                                border: "1px solid #CBD5E1",
+                                border: "1px solid #D5CFC4",
                                 borderRadius: "12px",
                                 boxShadow: "0 12px 28px rgba(15, 23, 42, 0.16)",
                                 padding: "8px 0",
@@ -4624,8 +4624,8 @@ export function ConsolaVentasOmnicanal({
                                   padding: "4px 12px 6px",
                                   fontSize: "0.73rem",
                                   fontWeight: 700,
-                                  color: "#0F172A",
-                                  borderBottom: "1px solid #F1F5F9",
+                                  color: "#1F1C19",
+                                  borderBottom: "1px solid #F4F2EE",
                                 }}
                               >
                                 Cerrar chat · Selecciona el motivo
@@ -4641,7 +4641,7 @@ export function ConsolaVentasOmnicanal({
                                     width: "100%",
                                     padding: "5px 8px",
                                     borderRadius: "6px",
-                                    border: "1px solid #CBD5E1",
+                                    border: "1px solid #D5CFC4",
                                     fontSize: "0.75rem",
                                   }}
                                 />
@@ -4674,7 +4674,7 @@ export function ConsolaVentasOmnicanal({
                                     >
                                       {mot.icono} {mot.etiqueta}
                                     </span>
-                                    <span style={{ fontSize: "0.69rem", color: "#64748B" }}>
+                                    <span style={{ fontSize: "0.69rem", color: "#847D74" }}>
                                       {mot.descripcion}
                                     </span>
                                   </button>
@@ -4699,16 +4699,16 @@ export function ConsolaVentasOmnicanal({
                             borderRadius: "8px",
                             border:
                               (conversacionActiva.noLeidosAsesora || 0) > 0
-                                ? "1px solid #18181B"
-                                : "1px solid #E4E4E7",
+                                ? "1px solid #221E1B"
+                                : "1px solid #E6E2DA",
                             background:
                               (conversacionActiva.noLeidosAsesora || 0) > 0
-                                ? "#18181B"
+                                ? "#221E1B"
                                 : "#FFFFFF",
                             color:
                               (conversacionActiva.noLeidosAsesora || 0) > 0
                                 ? "#FFFFFF"
-                                : "#3F3F46",
+                                : "#57524C",
                             cursor: "pointer",
                           }}
                         >
@@ -4729,9 +4729,9 @@ export function ConsolaVentasOmnicanal({
                               gap: "4px",
                               padding: "6px 9px",
                               borderRadius: "8px",
-                              border: "1px solid #D4D4D8",
+                              border: "1px solid #D5CFC4",
                               background: "#FFFFFF",
-                              color: "#18181B",
+                              color: "#221E1B",
                               fontSize: "0.73rem",
                               fontWeight: 600,
                               cursor: "pointer",
@@ -4753,8 +4753,8 @@ export function ConsolaVentasOmnicanal({
                               gap: "4px",
                               padding: "6px 9px",
                               borderRadius: "8px",
-                              border: "1px solid #2D4734",
-                              background: "#2D4734",
+                              border: "1px solid #2F4737",
+                              background: "#2F4737",
                               color: "#FFFFFF",
                               fontSize: "0.73rem",
                               fontWeight: 600,
@@ -4785,10 +4785,10 @@ export function ConsolaVentasOmnicanal({
                               height: "34px",
                               borderRadius: "8px",
                               border: fichaDerechaDesktop
-                                ? "1px solid #18181B"
-                                : "1px solid #E4E4E7",
-                              background: fichaDerechaDesktop ? "#F4F4F5" : "#FFFFFF",
-                              color: fichaDerechaDesktop ? "#18181B" : "#3F3F46",
+                                ? "1px solid #221E1B"
+                                : "1px solid #E6E2DA",
+                              background: fichaDerechaDesktop ? "#F4F2EE" : "#FFFFFF",
+                              color: fichaDerechaDesktop ? "#221E1B" : "#57524C",
                               cursor: "pointer",
                             }}
                           >
@@ -4810,8 +4810,8 @@ export function ConsolaVentasOmnicanal({
                               gap: "4px",
                               padding: "6px 9px",
                               borderRadius: "8px",
-                              border: "1px solid #18181B",
-                              background: "#18181B",
+                              border: "1px solid #221E1B",
+                              background: "#221E1B",
                               color: "#FFFFFF",
                               fontSize: "0.73rem",
                               fontWeight: 600,
@@ -4851,20 +4851,20 @@ export function ConsolaVentasOmnicanal({
                           borderRadius: "9px",
                           border:
                             menuCabeceraAbierto === "etiquetas"
-                              ? "1.5px solid #18181B"
+                              ? "1.5px solid #221E1B"
                               : (conversacionActiva.etiquetasIds ?? []).length > 0
-                                ? "1px solid #71717A"
-                                : "1px solid #D4D4D8",
+                                ? "1px solid #847D74"
+                                : "1px solid #D5CFC4",
                           background:
                             menuCabeceraAbierto === "etiquetas"
-                              ? "#18181B"
+                              ? "#221E1B"
                               : (conversacionActiva.etiquetasIds ?? []).length > 0
-                                ? "#F4F4F5"
-                                : "#FAFAFA",
+                                ? "#F4F2EE"
+                                : "#F8F7F4",
                           color:
                             menuCabeceraAbierto === "etiquetas"
                               ? "#FFFFFF"
-                              : "#27272A",
+                              : "#3A3530",
                           display: "inline-flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -4896,20 +4896,20 @@ export function ConsolaVentasOmnicanal({
                           borderRadius: "9px",
                           border:
                             menuCabeceraAbierto === "recordatorio"
-                              ? "1.5px solid #18181B"
+                              ? "1.5px solid #221E1B"
                               : conversacionActiva.recordatorioEn
-                                ? "1px solid #71717A"
-                                : "1px solid #D4D4D8",
+                                ? "1px solid #847D74"
+                                : "1px solid #D5CFC4",
                           background:
                             menuCabeceraAbierto === "recordatorio"
-                              ? "#18181B"
+                              ? "#221E1B"
                               : conversacionActiva.recordatorioEn
-                                ? "#F4F4F5"
-                                : "#FAFAFA",
+                                ? "#F4F2EE"
+                                : "#F8F7F4",
                           color:
                             menuCabeceraAbierto === "recordatorio"
                               ? "#FFFFFF"
-                              : "#27272A",
+                              : "#3A3530",
                           display: "inline-flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -4935,11 +4935,11 @@ export function ConsolaVentasOmnicanal({
                             borderRadius: "9px",
                             border:
                               menuCabeceraAbierto === "cierre"
-                                ? "1.5px solid #18181B"
-                                : "1px solid #D4D4D8",
+                                ? "1.5px solid #221E1B"
+                                : "1px solid #D5CFC4",
                             background:
-                              menuCabeceraAbierto === "cierre" ? "#18181B" : "#FAFAFA",
-                            color: menuCabeceraAbierto === "cierre" ? "#FFFFFF" : "#27272A",
+                              menuCabeceraAbierto === "cierre" ? "#221E1B" : "#F8F7F4",
+                            color: menuCabeceraAbierto === "cierre" ? "#FFFFFF" : "#3A3530",
                             display: "inline-flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -4957,8 +4957,8 @@ export function ConsolaVentasOmnicanal({
                           style={{
                             height: "38px",
                             borderRadius: "9px",
-                            border: "1px solid #2D4734",
-                            background: "#2D4734",
+                            border: "1px solid #2F4737",
+                            background: "#2F4737",
                             color: "#FFFFFF",
                             display: "inline-flex",
                             alignItems: "center",
@@ -4981,16 +4981,16 @@ export function ConsolaVentasOmnicanal({
                           borderRadius: "9px",
                           border:
                             (conversacionActiva.noLeidosAsesora || 0) > 0
-                              ? "1px solid #18181B"
-                              : "1px solid #D4D4D8",
+                              ? "1px solid #221E1B"
+                              : "1px solid #D5CFC4",
                           background:
                             (conversacionActiva.noLeidosAsesora || 0) > 0
-                              ? "#18181B"
-                              : "#FAFAFA",
+                              ? "#221E1B"
+                              : "#F8F7F4",
                           color:
                             (conversacionActiva.noLeidosAsesora || 0) > 0
                               ? "#FFFFFF"
-                              : "#27272A",
+                              : "#3A3530",
                           display: "inline-flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -5010,9 +5010,9 @@ export function ConsolaVentasOmnicanal({
                           style={{
                             height: "38px",
                             borderRadius: "9px",
-                            border: "1px solid #D4D4D8",
-                            background: "#FAFAFA",
-                            color: "#27272A",
+                            border: "1px solid #D5CFC4",
+                            background: "#F8F7F4",
+                            color: "#3A3530",
                             display: "inline-flex",
                             alignItems: "center",
                             justifyContent: "center",
@@ -5030,8 +5030,8 @@ export function ConsolaVentasOmnicanal({
                           style={{
                             height: "38px",
                             borderRadius: "9px",
-                            border: "1px solid #2D4734",
-                            background: "#2D4734",
+                            border: "1px solid #2F4737",
+                            background: "#2F4737",
                             color: "#FFFFFF",
                             display: "inline-flex",
                             alignItems: "center",
@@ -5090,7 +5090,7 @@ export function ConsolaVentasOmnicanal({
                         <div
                           style={{
                             padding: "10px 16px 10px",
-                            borderBottom: "1px solid #E2E8F0",
+                            borderBottom: "1px solid #E6E2DA",
                             display: "flex",
                             flexDirection: "column",
                             gap: "8px",
@@ -5101,7 +5101,7 @@ export function ConsolaVentasOmnicanal({
                               width: "40px",
                               height: "4px",
                               borderRadius: "999px",
-                              background: "#CBD5E1",
+                              background: "#D5CFC4",
                               margin: "0 auto",
                             }}
                           />
@@ -5112,7 +5112,7 @@ export function ConsolaVentasOmnicanal({
                               alignItems: "center",
                             }}
                           >
-                            <strong style={{ fontSize: "0.94rem", color: "#0F172A" }}>
+                            <strong style={{ fontSize: "0.94rem", color: "#1F1C19" }}>
                               {menuCabeceraAbierto === "etiquetas" && "🏷️ Gestionar etiquetas"}
                               {menuCabeceraAbierto === "recordatorio" && "⏰ Recuérdamelo en…"}
                               {menuCabeceraAbierto === "cierre" &&
@@ -5131,8 +5131,8 @@ export function ConsolaVentasOmnicanal({
                                 height: "34px",
                                 borderRadius: "9px",
                                 border: "none",
-                                background: "#F1F5F9",
-                                color: "#334155",
+                                background: "#F4F2EE",
+                                color: "#57524C",
                                 display: "inline-flex",
                                 alignItems: "center",
                                 justifyContent: "center",
@@ -5162,15 +5162,15 @@ export function ConsolaVentasOmnicanal({
                                       minHeight: "46px",
                                       padding: "10px 12px",
                                       borderRadius: "10px",
-                                      border: puesta ? "1px solid #BFDBFE" : "1px solid #F1F5F9",
-                                      background: puesta ? "#EFF6FF" : "#FFFFFF",
+                                      border: puesta ? "1px solid #DDD8CE" : "1px solid #F4F2EE",
+                                      background: puesta ? "#F4F2EE" : "#FFFFFF",
                                       display: "flex",
                                       alignItems: "center",
                                       gap: "10px",
                                       cursor: "pointer",
                                       textAlign: "left",
                                       fontSize: "0.88rem",
-                                      color: "#0F172A",
+                                      color: "#1F1C19",
                                       fontWeight: puesta ? 700 : 500,
                                     }}
                                   >
@@ -5180,9 +5180,9 @@ export function ConsolaVentasOmnicanal({
                                         height: "20px",
                                         borderRadius: "6px",
                                         border: puesta
-                                          ? "1.5px solid #2563EB"
-                                          : "1.5px solid #CBD5E1",
-                                        background: puesta ? "#2563EB" : "#FFFFFF",
+                                          ? "1.5px solid #221E1B"
+                                          : "1.5px solid #D5CFC4",
+                                        background: puesta ? "#221E1B" : "#FFFFFF",
                                         color: "#FFFFFF",
                                         display: "inline-flex",
                                         alignItems: "center",
@@ -5221,9 +5221,9 @@ export function ConsolaVentasOmnicanal({
                                     minHeight: "44px",
                                     padding: "10px 12px",
                                     borderRadius: "10px",
-                                    border: "1px solid #CBD5E1",
-                                    background: "#F8FAFC",
-                                    color: "#0F172A",
+                                    border: "1px solid #D5CFC4",
+                                    background: "#F8F7F4",
+                                    color: "#1F1C19",
                                     fontSize: "0.84rem",
                                     fontWeight: 700,
                                     display: "flex",
@@ -5252,11 +5252,11 @@ export function ConsolaVentasOmnicanal({
                                     minHeight: "46px",
                                     padding: "10px 12px",
                                     borderRadius: "10px",
-                                    border: "1px solid #F1F5F9",
+                                    border: "1px solid #F4F2EE",
                                     background: "#FFFFFF",
                                     textAlign: "left",
                                     fontSize: "0.88rem",
-                                    color: "#0F172A",
+                                    color: "#1F1C19",
                                     fontWeight: 600,
                                     cursor: "pointer",
                                   }}
@@ -5273,14 +5273,14 @@ export function ConsolaVentasOmnicanal({
                                   minHeight: "46px",
                                   padding: "10px 12px",
                                   borderRadius: "10px",
-                                  border: "1px solid #E2E8F0",
-                                  background: mostrarSelectorFechaCustom ? "#F1F5F9" : "#F8FAFC",
+                                  border: "1px solid #E6E2DA",
+                                  background: mostrarSelectorFechaCustom ? "#F4F2EE" : "#F8F7F4",
                                   display: "flex",
                                   alignItems: "center",
                                   gap: "8px",
                                   fontSize: "0.86rem",
                                   fontWeight: 700,
-                                  color: "#0F172A",
+                                  color: "#1F1C19",
                                   cursor: "pointer",
                                 }}
                               >
@@ -5293,8 +5293,8 @@ export function ConsolaVentasOmnicanal({
                                   style={{
                                     padding: "10px 12px",
                                     borderRadius: "10px",
-                                    background: "#F8FAFC",
-                                    border: "1px solid #E2E8F0",
+                                    background: "#F8F7F4",
+                                    border: "1px solid #E6E2DA",
                                     display: "flex",
                                     flexDirection: "column",
                                     gap: "8px",
@@ -5309,7 +5309,7 @@ export function ConsolaVentasOmnicanal({
                                       minHeight: "42px",
                                       padding: "8px 10px",
                                       borderRadius: "8px",
-                                      border: "1px solid #CBD5E1",
+                                      border: "1px solid #D5CFC4",
                                       fontSize: "16px",
                                       background: "#FFFFFF",
                                     }}
@@ -5324,7 +5324,7 @@ export function ConsolaVentasOmnicanal({
                                       minHeight: "42px",
                                       padding: "8px 10px",
                                       borderRadius: "8px",
-                                      border: "1px solid #CBD5E1",
+                                      border: "1px solid #D5CFC4",
                                       fontSize: "16px",
                                       background: "#FFFFFF",
                                     }}
@@ -5338,7 +5338,7 @@ export function ConsolaVentasOmnicanal({
                                       padding: "10px 14px",
                                       borderRadius: "9px",
                                       border: "none",
-                                      background: "#0F172A",
+                                      background: "#1F1C19",
                                       color: "#FFFFFF",
                                       fontSize: "0.86rem",
                                       fontWeight: 700,
@@ -5361,12 +5361,12 @@ export function ConsolaVentasOmnicanal({
                                     minHeight: "44px",
                                     padding: "10px 12px",
                                     borderRadius: "10px",
-                                    border: "1px solid #FECACA",
-                                    background: "#FEF2F2",
+                                    border: "1px solid #E5CACA",
+                                    background: "#FAF2F2",
                                     textAlign: "center",
                                     fontSize: "0.84rem",
                                     fontWeight: 700,
-                                    color: "#DC2626",
+                                    color: "#8A2E2E",
                                     cursor: "pointer",
                                   }}
                                 >
@@ -5389,9 +5389,9 @@ export function ConsolaVentasOmnicanal({
                                   padding: "8px 11px",
                                   marginBottom: "4px",
                                   borderRadius: "9px",
-                                  border: "1px solid #CBD5E1",
+                                  border: "1px solid #D5CFC4",
                                   fontSize: "16px",
-                                  background: "#F8FAFC",
+                                  background: "#F8F7F4",
                                 }}
                               />
 
@@ -5405,7 +5405,7 @@ export function ConsolaVentasOmnicanal({
                                     minHeight: "52px",
                                     padding: "10px 12px",
                                     borderRadius: "10px",
-                                    border: "1px solid #E2E8F0",
+                                    border: "1px solid #E6E2DA",
                                     background: "#FFFFFF",
                                     display: "flex",
                                     flexDirection: "column",
@@ -5423,7 +5423,7 @@ export function ConsolaVentasOmnicanal({
                                   >
                                     {mot.icono} {mot.etiqueta}
                                   </span>
-                                  <span style={{ fontSize: "0.75rem", color: "#64748B" }}>
+                                  <span style={{ fontSize: "0.75rem", color: "#847D74" }}>
                                     {mot.descripcion}
                                   </span>
                                 </button>
@@ -5456,9 +5456,9 @@ export function ConsolaVentasOmnicanal({
                               borderRadius: "999px",
                               fontSize: "0.69rem",
                               fontWeight: 600,
-                              border: "1px solid #E4E4E7",
-                              background: "#FAFAFA",
-                              color: "#3F3F46",
+                              border: "1px solid #E6E2DA",
+                              background: "#F8F7F4",
+                              color: "#57524C",
                               cursor: "pointer",
                             }}
                           >
@@ -5490,8 +5490,8 @@ export function ConsolaVentasOmnicanal({
                         justifyContent: "center",
                         gap: "7px",
                         background: "#FFFFFF",
-                        borderBottom: "1px solid #E4E4E7",
-                        color: "#3F3F46",
+                        borderBottom: "1px solid #E6E2DA",
+                        color: "#57524C",
                         fontSize: "0.74rem",
                         fontWeight: 600,
                         overflow: "hidden",
@@ -5527,11 +5527,11 @@ export function ConsolaVentasOmnicanal({
                   }}
                 >
                   {cargandoMensajes ? (
-                    <div style={{ textAlign: "center", padding: "24px", color: "#71717A" }}>
+                    <div style={{ textAlign: "center", padding: "24px", color: "#847D74" }}>
                       Cargando historial de la conversación…
                     </div>
                   ) : mensajesActivos.length === 0 ? (
-                    <div style={{ textAlign: "center", padding: "24px", color: "#71717A", fontSize: "0.82rem" }}>
+                    <div style={{ textAlign: "center", padding: "24px", color: "#847D74", fontSize: "0.82rem" }}>
                       Aún no hay mensajes registrados en este hilo.
                     </div>
                   ) : (
@@ -5546,7 +5546,7 @@ export function ConsolaVentasOmnicanal({
                               borderRadius: "999px",
                               background: "#EFECE6",
                               border: "1px solid #E4E0D8",
-                              color: "#52525B",
+                              color: "#6E6861",
                               fontSize: "0.72rem",
                               fontWeight: 500,
                               maxWidth: "90%",
@@ -5580,10 +5580,10 @@ export function ConsolaVentasOmnicanal({
                               fontSize: "0.68rem",
                               fontWeight: 600,
                               color: esNota
-                                ? "#78350F"
+                                ? "#745622"
                                 : esAria
-                                  ? "#2D4734"
-                                  : "#71717A",
+                                  ? "#2F4737"
+                                  : "#847D74",
                               textAlign: esCliente ? "left" : "right",
                             }}
                           >
@@ -5595,7 +5595,7 @@ export function ConsolaVentasOmnicanal({
                                   padding: "1px 6px",
                                   borderRadius: "999px",
                                   background: "#FAF6EC",
-                                  color: "#78350F",
+                                  color: "#745622",
                                   border: "1px solid #D6C7A9",
                                   fontSize: "0.63rem",
                                   fontWeight: 700,
@@ -5629,11 +5629,11 @@ export function ConsolaVentasOmnicanal({
                                   : esNota
                                     ? "#FAF6EC"
                                     : "#ECEAE4",
-                              color: esNota ? "#292524" : "#18181B",
+                              color: esNota ? "#292524" : "#221E1B",
                               border: esResaltado
-                                ? "1.5px solid #18181B"
+                                ? "1.5px solid #221E1B"
                                 : esCliente
-                                  ? "1px solid #E4E4E7"
+                                  ? "1px solid #E6E2DA"
                                   : esAria
                                     ? "1px solid #DCE4DF"
                                     : esNota
@@ -5760,7 +5760,7 @@ export function ConsolaVentasOmnicanal({
                                   borderRadius: "6px",
                                   border: "1px solid rgba(24, 24, 27, 0.10)",
                                   background: "rgba(255, 255, 255, 0.72)",
-                                  color: "#52525B",
+                                  color: "#6E6861",
                                   fontSize: "0.67rem",
                                   fontWeight: 600,
                                   cursor: "pointer",
@@ -5782,7 +5782,7 @@ export function ConsolaVentasOmnicanal({
                   onSubmit={handleEnviarMensaje}
                   style={{
                     background: "#FFFFFF",
-                    borderTop: "1px solid #E4E4E7",
+                    borderTop: "1px solid #E6E2DA",
                     padding:
                       modoLayoutInbox === "movil"
                         ? "8px 10px calc(8px + env(safe-area-inset-bottom, 0px))"
@@ -5815,7 +5815,7 @@ export function ConsolaVentasOmnicanal({
                         right: modoLayoutInbox === "movil" ? "8px" : "12px",
                         marginBottom: "6px",
                         background: "#FFFFFF",
-                        border: "1px solid #D4D4D8",
+                        border: "1px solid #D5CFC4",
                         borderRadius: "12px",
                         boxShadow: "0 12px 28px rgba(24, 24, 27, 0.12)",
                         maxHeight: "230px",
@@ -5833,7 +5833,7 @@ export function ConsolaVentasOmnicanal({
                             minHeight: "46px",
                             padding: "9px 12px",
                             border: "none",
-                            borderBottom: "1px solid #F4F4F5",
+                            borderBottom: "1px solid #F4F2EE",
                             background: "#FFFFFF",
                             textAlign: "left",
                             cursor: "pointer",
@@ -5843,17 +5843,17 @@ export function ConsolaVentasOmnicanal({
                           }}
                         >
                           <div style={{ display: "flex", justifyContent: "space-between", gap: "6px" }}>
-                            <strong style={{ fontSize: "0.79rem", color: "#18181B" }}>
-                              <code style={{ color: "#2D4734" }}>{r.atajo}</code> · {r.titulo}
+                            <strong style={{ fontSize: "0.79rem", color: "#221E1B" }}>
+                              <code style={{ color: "#2F4737" }}>{r.atajo}</code> · {r.titulo}
                             </strong>
-                            <span style={{ fontSize: "0.68rem", color: "#71717A", flexShrink: 0 }}>
+                            <span style={{ fontSize: "0.68rem", color: "#847D74", flexShrink: 0 }}>
                               {r.categoria}
                             </span>
                           </div>
                           <span
                             style={{
                               fontSize: "0.74rem",
-                              color: "#52525B",
+                              color: "#6E6861",
                               overflow: "hidden",
                               textOverflow: "ellipsis",
                               whiteSpace: "nowrap",
@@ -5877,7 +5877,7 @@ export function ConsolaVentasOmnicanal({
                         borderRadius: "8px",
                         background: "#FAF6EC",
                         border: "1px solid #E8DEC6",
-                        color: "#78350F",
+                        color: "#745622",
                         fontSize: "0.73rem",
                         fontWeight: 600,
                       }}
@@ -5891,7 +5891,7 @@ export function ConsolaVentasOmnicanal({
                         style={{
                           border: "1px solid #D6C7A9",
                           background: "#FFFFFF",
-                          color: "#78350F",
+                          color: "#745622",
                           borderRadius: "6px",
                           padding: "2px 8px",
                           fontSize: "0.7rem",
@@ -5912,8 +5912,8 @@ export function ConsolaVentasOmnicanal({
                         gap: "10px",
                         padding: "6px 10px",
                         borderRadius: "9px",
-                        background: "#FAFAFA",
-                        border: "1px solid #E4E4E7",
+                        background: "#F8F7F4",
+                        border: "1px solid #E6E2DA",
                       }}
                     >
                       <img
@@ -5926,7 +5926,7 @@ export function ConsolaVentasOmnicanal({
                           borderRadius: "7px",
                         }}
                       />
-                      <span style={{ fontSize: "0.75rem", color: "#27272A", flex: 1 }}>
+                      <span style={{ fontSize: "0.75rem", color: "#3A3530", flex: 1 }}>
                         Imagen lista para enviar
                       </span>
                       <button
@@ -5939,7 +5939,7 @@ export function ConsolaVentasOmnicanal({
                           height: "32px",
                           border: "none",
                           background: "transparent",
-                          color: "#52525B",
+                          color: "#6E6861",
                           cursor: "pointer",
                           display: "inline-flex",
                           alignItems: "center",
@@ -5959,8 +5959,8 @@ export function ConsolaVentasOmnicanal({
                         gap: "10px",
                         padding: "6px 10px",
                         borderRadius: "9px",
-                        background: "#FAFAFA",
-                        border: "1px solid #E4E4E7",
+                        background: "#F8F7F4",
+                        border: "1px solid #E6E2DA",
                       }}
                     >
                       <div
@@ -5968,9 +5968,9 @@ export function ConsolaVentasOmnicanal({
                           width: "36px",
                           height: "36px",
                           borderRadius: "8px",
-                          background: "#F4F4F5",
-                          color: "#27272A",
-                          border: "1px solid #E4E4E7",
+                          background: "#F4F2EE",
+                          color: "#3A3530",
+                          border: "1px solid #E6E2DA",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -5983,7 +5983,7 @@ export function ConsolaVentasOmnicanal({
                         style={{
                           fontSize: "0.75rem",
                           fontWeight: 600,
-                          color: "#18181B",
+                          color: "#221E1B",
                           flex: 1,
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -6002,7 +6002,7 @@ export function ConsolaVentasOmnicanal({
                           height: "32px",
                           border: "none",
                           background: "transparent",
-                          color: "#52525B",
+                          color: "#6E6861",
                           cursor: "pointer",
                           display: "inline-flex",
                           alignItems: "center",
@@ -6024,7 +6024,7 @@ export function ConsolaVentasOmnicanal({
                               alignItems: "center",
                               justifyContent: "space-between",
                               paddingBottom: "8px",
-                              borderBottom: "1px solid #F4F4F5",
+                              borderBottom: "1px solid #F4F2EE",
                             }}
                           >
                             <button
@@ -6033,9 +6033,9 @@ export function ConsolaVentasOmnicanal({
                               title="Volver a Opciones"
                               aria-label="Volver"
                               style={{
-                                border: "1px solid #E4E4E7",
-                                background: "#FAFAFA",
-                                color: "#27272A",
+                                border: "1px solid #E6E2DA",
+                                background: "#F8F7F4",
+                                color: "#3A3530",
                                 borderRadius: "8px",
                                 padding: "5px 10px",
                                 fontSize: "0.75rem",
@@ -6049,7 +6049,7 @@ export function ConsolaVentasOmnicanal({
                               <ArrowLeft size={14} />
                               <span>Volver</span>
                             </button>
-                            <strong style={{ fontSize: "0.82rem", color: "#18181B" }}>
+                            <strong style={{ fontSize: "0.82rem", color: "#221E1B" }}>
                               Asignar al equipo
                             </strong>
                           </div>
@@ -6067,12 +6067,12 @@ export function ConsolaVentasOmnicanal({
                               padding: "8px 12px",
                               borderRadius: "10px",
                               border: !conversacionActiva.asesoraAsignadaId
-                                ? "1px solid #18181B"
-                                : "1px solid #E4E4E7",
+                                ? "1px solid #221E1B"
+                                : "1px solid #E6E2DA",
                               background: !conversacionActiva.asesoraAsignadaId
-                                ? "#F4F4F5"
+                                ? "#F4F2EE"
                                 : "#FFFFFF",
-                              color: "#18181B",
+                              color: "#221E1B",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "space-between",
@@ -6084,7 +6084,7 @@ export function ConsolaVentasOmnicanal({
                           >
                             <span>— Sin asignar (Cola general)</span>
                             {!conversacionActiva.asesoraAsignadaId && (
-                              <Check size={15} color="#18181B" />
+                              <Check size={15} color="#221E1B" />
                             )}
                           </button>
 
@@ -6104,9 +6104,9 @@ export function ConsolaVentasOmnicanal({
                                   minHeight: "44px",
                                   padding: "8px 12px",
                                   borderRadius: "10px",
-                                  border: activo ? "1px solid #18181B" : "1px solid #E4E4E7",
-                                  background: activo ? "#F4F4F5" : "#FFFFFF",
-                                  color: "#18181B",
+                                  border: activo ? "1px solid #221E1B" : "1px solid #E6E2DA",
+                                  background: activo ? "#F4F2EE" : "#FFFFFF",
+                                  color: "#221E1B",
                                   display: "flex",
                                   alignItems: "center",
                                   justifyContent: "space-between",
@@ -6121,11 +6121,11 @@ export function ConsolaVentasOmnicanal({
                                       ? `Yo (${m.nombre})`
                                       : m.nombre}
                                   </span>
-                                  <span style={{ fontSize: "0.69rem", color: "#71717A" }}>
+                                  <span style={{ fontSize: "0.69rem", color: "#847D74" }}>
                                     {m.rol} · {m.chatsActivos} chats activos
                                   </span>
                                 </div>
-                                {activo && <Check size={15} color="#18181B" />}
+                                {activo && <Check size={15} color="#221E1B" />}
                               </button>
                             );
                           })}
@@ -6264,7 +6264,7 @@ export function ConsolaVentasOmnicanal({
                                 style={{
                                   border: "none",
                                   background: "transparent",
-                                  color: item.esPeligro ? "#B91C1C" : "#27272A",
+                                  color: item.esPeligro ? "#8A2E2E" : "#3A3530",
                                   display: "flex",
                                   flexDirection: "column",
                                   alignItems: "center",
@@ -6278,11 +6278,11 @@ export function ConsolaVentasOmnicanal({
                                     width: "50px",
                                     height: "46px",
                                     borderRadius: "14px",
-                                    background: item.esPeligro ? "#FEF2F2" : "#F4F4F5",
+                                    background: item.esPeligro ? "#FAF2F2" : "#F4F2EE",
                                     border: item.esPeligro
-                                      ? "1px solid #FECACA"
-                                      : "1px solid #E4E4E7",
-                                    color: item.esPeligro ? "#B91C1C" : "#27272A",
+                                      ? "1px solid #E5CACA"
+                                      : "1px solid #E6E2DA",
+                                    color: item.esPeligro ? "#8A2E2E" : "#3A3530",
                                     display: "inline-flex",
                                     alignItems: "center",
                                     justifyContent: "center",
@@ -6294,7 +6294,7 @@ export function ConsolaVentasOmnicanal({
                                   style={{
                                     fontSize: "0.74rem",
                                     fontWeight: 600,
-                                    color: item.esPeligro ? "#B91C1C" : "#3F3F46",
+                                    color: item.esPeligro ? "#8A2E2E" : "#57524C",
                                     lineHeight: 1.2,
                                     textAlign: "center",
                                   }}
@@ -6336,8 +6336,8 @@ export function ConsolaVentasOmnicanal({
                                   maxHeight: "82dvh",
                                   overflowY: "auto",
                                   background: "#FFFFFF",
-                                  color: "#18181B",
-                                  borderTop: "1px solid #E4E4E7",
+                                  color: "#221E1B",
+                                  borderTop: "1px solid #E6E2DA",
                                   borderRadius: "20px 20px 0 0",
                                   padding:
                                     "12px 18px calc(20px + env(safe-area-inset-bottom, 0px))",
@@ -6349,7 +6349,7 @@ export function ConsolaVentasOmnicanal({
                                     width: "40px",
                                     height: "4px",
                                     borderRadius: "999px",
-                                    background: "#D4D4D8",
+                                    background: "#D5CFC4",
                                     margin: "0 auto 14px",
                                   }}
                                 />
@@ -6430,11 +6430,11 @@ export function ConsolaVentasOmnicanal({
                                   maxHeight: "72vh",
                                   overflowY: "auto",
                                   background: "#FFFFFF",
-                                  color: "#18181B",
+                                  color: "#221E1B",
                                   borderRadius: "16px",
                                   padding: "14px",
                                   boxShadow: "0 16px 38px rgba(24, 24, 27, 0.14)",
-                                  border: "1px solid #E4E4E7",
+                                  border: "1px solid #E6E2DA",
                                   zIndex: 50,
                                 }}
                               >
@@ -6463,10 +6463,10 @@ export function ConsolaVentasOmnicanal({
                                 padding: modoLayoutInbox === "movil" ? "0 10px" : "9px 11px",
                                 borderRadius: "10px",
                                 border: mostrarMenuAdjuntar
-                                  ? "1px solid #18181B"
-                                  : "1px solid #D4D4D8",
-                                background: mostrarMenuAdjuntar ? "#18181B" : "#FAFAFA",
-                                color: mostrarMenuAdjuntar ? "#FFFFFF" : "#27272A",
+                                  ? "1px solid #221E1B"
+                                  : "1px solid #D5CFC4",
+                                background: mostrarMenuAdjuntar ? "#221E1B" : "#F8F7F4",
+                                color: mostrarMenuAdjuntar ? "#FFFFFF" : "#3A3530",
                                 fontSize: "0.78rem",
                                 fontWeight: 600,
                                 cursor: subiendoImagenAsesor ? "wait" : "pointer",
@@ -6515,9 +6515,9 @@ export function ConsolaVentasOmnicanal({
                               padding: modoLayoutInbox === "movil" ? "9px 11px" : "8px 11px",
                               lineHeight: 1.35,
                               borderRadius: "10px",
-                              border: modoNotaInterna ? "1px solid #D6C7A9" : "1px solid #D4D4D8",
+                              border: modoNotaInterna ? "1px solid #D6C7A9" : "1px solid #D5CFC4",
                               background: modoNotaInterna ? "#FAF6EC" : "#FFFFFF",
-                              color: "#18181B",
+                              color: "#221E1B",
                               fontSize: modoLayoutInbox === "movil" ? "16px" : "0.83rem",
                               fontFamily: "inherit",
                               resize: "none",
@@ -6545,7 +6545,7 @@ export function ConsolaVentasOmnicanal({
                               padding: modoLayoutInbox === "movil" ? "0 12px" : "10px 14px",
                               borderRadius: "10px",
                               border: "none",
-                              background: modoNotaInterna ? "#44403C" : "#18181B",
+                              background: modoNotaInterna ? "#44403C" : "#221E1B",
                               color: "#FFFFFF",
                               fontSize: "0.82rem",
                               fontWeight: 600,
@@ -6598,10 +6598,10 @@ export function ConsolaVentasOmnicanal({
                     justifyContent: "space-between",
                     alignItems: "center",
                     paddingBottom: "8px",
-                    borderBottom: "1px solid #E4E4E7",
+                    borderBottom: "1px solid #E6E2DA",
                   }}
                 >
-                  <strong style={{ fontSize: "0.86rem", color: "#18181B" }}>
+                  <strong style={{ fontSize: "0.86rem", color: "#221E1B" }}>
                     Campos de Venta y Datos 360°
                   </strong>
                   <button
@@ -6621,9 +6621,9 @@ export function ConsolaVentasOmnicanal({
                       gap: "5px",
                       padding: "5px 10px",
                       borderRadius: "8px",
-                      border: "1px solid #D4D4D8",
+                      border: "1px solid #D5CFC4",
                       background: "#FFFFFF",
-                      color: "#18181B",
+                      color: "#221E1B",
                       fontSize: "0.75rem",
                       fontWeight: 600,
                       cursor: "pointer",
@@ -6636,19 +6636,19 @@ export function ConsolaVentasOmnicanal({
               )}
 
               {!conversacionActiva ? (
-                <div style={{ fontSize: "0.8rem", color: "#71717A" }}>
-                  <strong style={{ color: "#18181B" }}>Resumen Rápido del Portal</strong>
+                <div style={{ fontSize: "0.8rem", color: "#847D74" }}>
+                  <strong style={{ color: "#221E1B" }}>Resumen Rápido del Portal</strong>
                   <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "10px" }}>
                     <div
                       style={{
                         padding: "10px",
                         borderRadius: "10px",
                         background: "#FFFFFF",
-                        border: "1px solid #E4E4E7",
+                        border: "1px solid #E6E2DA",
                       }}
                     >
-                      <div style={{ fontSize: "0.72rem", color: "#71717A" }}>Usuarios Registrados Web</div>
-                      <strong style={{ fontSize: "1.1rem", color: "#18181B" }}>
+                      <div style={{ fontSize: "0.72rem", color: "#847D74" }}>Usuarios Registrados Web</div>
+                      <strong style={{ fontSize: "0.92rem", color: "#221E1B" }}>
                         {metricas.totalUsuariosRegistradosWeb}
                       </strong>
                     </div>
@@ -6657,13 +6657,13 @@ export function ConsolaVentasOmnicanal({
                         padding: "10px",
                         borderRadius: "10px",
                         background: "#FFFFFF",
-                        border: "1px solid #E4E4E7",
+                        border: "1px solid #E6E2DA",
                       }}
                     >
-                      <div style={{ fontSize: "0.72rem", color: "#71717A" }}>
+                      <div style={{ fontSize: "0.72rem", color: "#847D74" }}>
                         Compras Web (Reg. / Invitados)
                       </div>
-                      <strong style={{ fontSize: "1.05rem", color: "#18181B" }}>
+                      <strong style={{ fontSize: "0.9rem", color: "#221E1B" }}>
                         {metricas.comprasUsuariosRegistrados} reg. ·{" "}
                         {metricas.comprasInvitadosNoRegistrados} inv.
                       </strong>
@@ -6676,10 +6676,10 @@ export function ConsolaVentasOmnicanal({
                         border: "1px solid #DCE4DF",
                       }}
                     >
-                      <div style={{ fontSize: "0.72rem", color: "#2D4734" }}>
+                      <div style={{ fontSize: "0.72rem", color: "#2F4737" }}>
                         Resolución Autónoma IA ARIA
                       </div>
-                      <strong style={{ fontSize: "1.1rem", color: "#2D4734" }}>
+                      <strong style={{ fontSize: "0.92rem", color: "#2F4737" }}>
                         {metricas.porcentajeResolucionIa}%
                       </strong>
                     </div>
@@ -6720,7 +6720,7 @@ export function ConsolaVentasOmnicanal({
                       padding: "10px 11px",
                       borderRadius: "11px",
                       background: "#FFFFFF",
-                      border: "1px solid #E4E4E7",
+                      border: "1px solid #E6E2DA",
                       display: "flex",
                       flexDirection: "column",
                       gap: "4px",
@@ -6733,9 +6733,9 @@ export function ConsolaVentasOmnicanal({
                           fontWeight: 600,
                           padding: "2px 7px",
                           borderRadius: "999px",
-                          background: "#F4F4F5",
-                          border: "1px solid #E4E4E7",
-                          color: "#3F3F46",
+                          background: "#F4F2EE",
+                          border: "1px solid #E6E2DA",
+                          color: "#57524C",
                         }}
                       >
                         {contactoVinculadoActivo?.tipoCuenta === "USUARIO_REGISTRADO" ||
@@ -6745,20 +6745,20 @@ export function ConsolaVentasOmnicanal({
                             ? "Comprador invitado"
                             : "Contacto directo"}
                       </span>
-                      <span style={{ fontSize: "0.68rem", color: "#71717A", fontWeight: 500 }}>
+                      <span style={{ fontSize: "0.68rem", color: "#847D74", fontWeight: 500 }}>
                         IA {conversacionActiva.mensajesIaConteo} · Hum. {conversacionActiva.mensajesHumanoConteo}
                       </span>
                     </div>
-                    <strong style={{ fontSize: "0.84rem", color: "#18181B" }}>
+                    <strong style={{ fontSize: "0.84rem", color: "#221E1B" }}>
                       {conversacionActiva.remitenteNombre}
                     </strong>
                     {conversacionActiva.remitenteTelefono && (
-                      <span style={{ fontSize: "0.74rem", color: "#52525B" }}>
+                      <span style={{ fontSize: "0.74rem", color: "#6E6861" }}>
                         {conversacionActiva.remitenteTelefono}
                       </span>
                     )}
                     {conversacionActiva.remitenteCorreo && (
-                      <span style={{ fontSize: "0.74rem", color: "#52525B", wordBreak: "break-all" }}>
+                      <span style={{ fontSize: "0.74rem", color: "#6E6861", wordBreak: "break-all" }}>
                         {conversacionActiva.remitenteCorreo}
                       </span>
                     )}
@@ -6767,7 +6767,7 @@ export function ConsolaVentasOmnicanal({
                   {/* Historial de Compras y Proformas Web de este contacto */}
                   {comprasDeConversacionActiva.length > 0 && (
                     <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#475569" }}>
+                      <span style={{ fontSize: "0.72rem", fontWeight: 700, color: "#57524C" }}>
                         Compras Web Vinculadas ({comprasDeConversacionActiva.length})
                       </span>
                       {comprasDeConversacionActiva.map((ord) => (
@@ -6776,7 +6776,7 @@ export function ConsolaVentasOmnicanal({
                           style={{
                             padding: "8px 10px",
                             borderRadius: "9px",
-                            border: "1px solid #E2E8F0",
+                            border: "1px solid #E6E2DA",
                             background: "#FFFFFF",
                             display: "flex",
                             flexDirection: "column",
@@ -6784,14 +6784,14 @@ export function ConsolaVentasOmnicanal({
                           }}
                         >
                           <div style={{ display: "flex", justifyContent: "space-between" }}>
-                            <strong style={{ fontSize: "0.76rem", color: "#0F172A" }}>
+                            <strong style={{ fontSize: "0.76rem", color: "#1F1C19" }}>
                               {ord.codigoOrden}
                             </strong>
-                            <strong style={{ fontSize: "0.76rem", color: "#047857" }}>
+                            <strong style={{ fontSize: "0.76rem", color: "#2F4737" }}>
                               ${Number(ord.total).toFixed(2)}
                             </strong>
                           </div>
-                          <span style={{ fontSize: "0.69rem", color: "#64748B" }}>
+                          <span style={{ fontSize: "0.69rem", color: "#847D74" }}>
                             {ord.estado} ·{" "}
                             {new Date(ord.creadoEn).toLocaleDateString("es-EC", {
                               day: "2-digit",
@@ -6818,7 +6818,7 @@ export function ConsolaVentasOmnicanal({
                         style={{
                           fontSize: "0.7rem",
                           fontWeight: 700,
-                          color: "#B45309",
+                          color: "#745622",
                           textTransform: "uppercase",
                         }}
                       >
@@ -6833,8 +6833,8 @@ export function ConsolaVentasOmnicanal({
                             gap: "8px",
                             padding: "7px 8px",
                             borderRadius: "9px",
-                            border: "1px solid #FDE68A",
-                            background: "#FFFBEB",
+                            border: "1px solid #E5D7BC",
+                            background: "#FAF6EE",
                           }}
                         >
                           {disp.imagenUrl && (
@@ -6854,7 +6854,7 @@ export function ConsolaVentasOmnicanal({
                               style={{
                                 display: "block",
                                 fontSize: "0.74rem",
-                                color: "#0F172A",
+                                color: "#1F1C19",
                                 overflow: "hidden",
                                 textOverflow: "ellipsis",
                                 whiteSpace: "nowrap",
@@ -6862,7 +6862,7 @@ export function ConsolaVentasOmnicanal({
                             >
                               {disp.nombre}
                             </strong>
-                            <span style={{ fontSize: "0.71rem", color: "#059669", fontWeight: 700 }}>
+                            <span style={{ fontSize: "0.71rem", color: "#2F4737", fontWeight: 700 }}>
                               ${Number(disp.precio).toFixed(2)}
                             </span>
                           </div>
@@ -6885,7 +6885,7 @@ export function ConsolaVentasOmnicanal({
                               padding: "4px 8px",
                               borderRadius: "7px",
                               border: "none",
-                              background: "#D97706",
+                              background: "#8F6A2E",
                               color: "#FFFFFF",
                               fontSize: "0.7rem",
                               fontWeight: 700,
@@ -6905,12 +6905,12 @@ export function ConsolaVentasOmnicanal({
                         padding: "8px 10px",
                         borderRadius: "9px",
                         background: "#FFFFFF",
-                        border: "1px solid #E2E8F0",
+                        border: "1px solid #E6E2DA",
                         fontSize: "0.72rem",
-                        color: "#334155",
+                        color: "#57524C",
                       }}
                     >
-                      <strong style={{ display: "block", color: "#0F172A", marginBottom: "2px" }}>
+                      <strong style={{ display: "block", color: "#1F1C19", marginBottom: "2px" }}>
                         🌹 Rosas ({formatearFechaCorteInventario(ultimoInvRosas.fechaCorte)})
                       </strong>
                       <span>{formatearResumenInventarioTexto(ultimoInvRosas.resumenColores)}</span>
@@ -6930,7 +6930,7 @@ export function ConsolaVentasOmnicanal({
         <div
           style={{
             background: "#FFFFFF",
-            border: "1px solid #E2E8F0",
+            border: "1px solid #E6E2DA",
             borderRadius: "16px",
             padding: "clamp(14px, 3vw, 20px)",
             display: "flex",
@@ -6948,10 +6948,10 @@ export function ConsolaVentasOmnicanal({
             }}
           >
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#0F172A" }}>
+              <h2 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700, color: "#1F1C19" }}>
                 Compras y Proformas Web — Usuarios Registrados e Invitados
               </h2>
-              <p style={{ margin: "3px 0 0", fontSize: "0.8rem", color: "#64748B" }}>
+              <p style={{ margin: "3px 0 0", fontSize: "0.8rem", color: "#847D74" }}>
                 Monitorea todas las ventas generadas en el e-commerce distinguiendo clientes con
                 cuenta registrada vs compradores invitados sin registro, e inicia seguimiento en 1
                 clic.
@@ -6981,9 +6981,9 @@ export function ConsolaVentasOmnicanal({
                     padding: "6px 12px",
                     borderRadius: "8px",
                     border:
-                      filtroTipoComprador === f.id ? "1px solid #0F172A" : "1px solid #CBD5E1",
-                    background: filtroTipoComprador === f.id ? "#0F172A" : "#FFFFFF",
-                    color: filtroTipoComprador === f.id ? "#FFFFFF" : "#334155",
+                      filtroTipoComprador === f.id ? "1px solid #1F1C19" : "1px solid #D5CFC4",
+                    background: filtroTipoComprador === f.id ? "#1F1C19" : "#FFFFFF",
+                    color: filtroTipoComprador === f.id ? "#FFFFFF" : "#57524C",
                     fontSize: "0.78rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -7004,7 +7004,7 @@ export function ConsolaVentasOmnicanal({
               <div
                 style={{
                   padding: "10px 14px",
-                  background: "#F8FAFC",
+                  background: "#F8F7F4",
                   borderRadius: "10px",
                   fontSize: "0.8rem",
                   display: "flex",
@@ -7038,7 +7038,7 @@ export function ConsolaVentasOmnicanal({
         <div
           style={{
             background: "#FFFFFF",
-            border: "1px solid #E2E8F0",
+            border: "1px solid #E6E2DA",
             borderRadius: "16px",
             padding: "clamp(14px, 3vw, 20px)",
             display: "flex",
@@ -7056,10 +7056,10 @@ export function ConsolaVentasOmnicanal({
             }}
           >
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#0F172A" }}>
+              <h2 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700, color: "#1F1C19" }}>
                 Directorio Unificado de Usuarios Web y Compradores Invitados
               </h2>
-              <p style={{ margin: "3px 0 0", fontSize: "0.8rem", color: "#64748B" }}>
+              <p style={{ margin: "3px 0 0", fontSize: "0.8rem", color: "#847D74" }}>
                 Sustituye la base de suscriptores de ManyChat sin cobro por contacto almacenado,
                 cruzando membresías web, autorización LOPDP y compras acumuladas.
               </p>
@@ -7089,9 +7089,9 @@ export function ConsolaVentasOmnicanal({
                     padding: "6px 12px",
                     borderRadius: "8px",
                     border:
-                      filtroTipoUsuarioDir === f.id ? "1px solid #0F172A" : "1px solid #CBD5E1",
-                    background: filtroTipoUsuarioDir === f.id ? "#0F172A" : "#FFFFFF",
-                    color: filtroTipoUsuarioDir === f.id ? "#FFFFFF" : "#334155",
+                      filtroTipoUsuarioDir === f.id ? "1px solid #1F1C19" : "1px solid #D5CFC4",
+                    background: filtroTipoUsuarioDir === f.id ? "#1F1C19" : "#FFFFFF",
+                    color: filtroTipoUsuarioDir === f.id ? "#FFFFFF" : "#57524C",
                     fontSize: "0.78rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -7121,7 +7121,7 @@ export function ConsolaVentasOmnicanal({
           <div
             style={{
               background: "#FFFFFF",
-              border: "1px solid #E2E8F0",
+              border: "1px solid #E6E2DA",
               borderRadius: "16px",
               padding: "clamp(14px, 3vw, 20px)",
               display: "grid",
@@ -7133,17 +7133,17 @@ export function ConsolaVentasOmnicanal({
               style={{
                 padding: "14px",
                 borderRadius: "12px",
-                background: "#ECFDF5",
-                border: "1px solid #A7F3D0",
+                background: "#F2F6F3",
+                border: "1px solid #CEDDD3",
               }}
             >
-              <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "#065F46" }}>
+              <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "#2B4A36" }}>
                 🤖 Respuestas Automáticas ARIA
               </div>
-              <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#047857", marginTop: "4px" }}>
+              <div style={{ fontSize: "1.08rem", fontWeight: 800, color: "#2F4737", marginTop: "4px" }}>
                 {metricas.totalRespuestasAria}
               </div>
-              <div style={{ fontSize: "0.73rem", color: "#065F46" }}>
+              <div style={{ fontSize: "0.73rem", color: "#2B4A36" }}>
                 {metricas.porcentajeResolucionIa}% de hilos sin escalamiento humano
               </div>
             </div>
@@ -7152,17 +7152,17 @@ export function ConsolaVentasOmnicanal({
               style={{
                 padding: "14px",
                 borderRadius: "12px",
-                background: "#EFF6FF",
-                border: "1px solid #BFDBFE",
+                background: "#F4F2EE",
+                border: "1px solid #DDD8CE",
               }}
             >
-              <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "#1E40AF" }}>
+              <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "#3A3530" }}>
                 👩‍💼 Intervenciones de Vendedores
               </div>
-              <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1D4ED8", marginTop: "4px" }}>
+              <div style={{ fontSize: "1.08rem", fontWeight: 800, color: "#221E1B", marginTop: "4px" }}>
                 {metricas.totalIntervencionesHumanas}
               </div>
-              <div style={{ fontSize: "0.73rem", color: "#1E40AF" }}>
+              <div style={{ fontSize: "0.73rem", color: "#3A3530" }}>
                 {metricas.enAtencionHumana} conversaciones bajo control humano hoy
               </div>
             </div>
@@ -7171,17 +7171,17 @@ export function ConsolaVentasOmnicanal({
               style={{
                 padding: "14px",
                 borderRadius: "12px",
-                background: "#FFFBEB",
-                border: "1px solid #FDE68A",
+                background: "#FAF6EE",
+                border: "1px solid #E5D7BC",
               }}
             >
-              <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "#92400E" }}>
+              <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "#745622" }}>
                 🚨 Escalados / En Cola
               </div>
-              <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#B45309", marginTop: "4px" }}>
+              <div style={{ fontSize: "1.08rem", fontWeight: 800, color: "#745622", marginTop: "4px" }}>
                 {metricas.escaladasHumano}
               </div>
-              <div style={{ fontSize: "0.73rem", color: "#92400E" }}>
+              <div style={{ fontSize: "0.73rem", color: "#745622" }}>
                 {metricas.sinAsignar} hilos abiertos sin vendedor asignado
               </div>
             </div>
@@ -7191,7 +7191,7 @@ export function ConsolaVentasOmnicanal({
           <div
             style={{
               background: "#FFFFFF",
-              border: "1px solid #E2E8F0",
+              border: "1px solid #E6E2DA",
               borderRadius: "16px",
               padding: "clamp(14px, 3vw, 20px)",
               display: "flex",
@@ -7200,10 +7200,10 @@ export function ConsolaVentasOmnicanal({
             }}
           >
             <div>
-              <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "#0F172A" }}>
+              <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "#1F1C19" }}>
                 ⚡ Mensajes Predeterminados (Snippets para Vendedores)
               </h3>
-              <p style={{ margin: "3px 0 0", fontSize: "0.79rem", color: "#64748B" }}>
+              <p style={{ margin: "3px 0 0", fontSize: "0.79rem", color: "#847D74" }}>
                 Invócalos escribiendo <code>/</code> en el chat. Soporta variables dinámicas{" "}
                 <code>{"{{nombre}}"}</code> y <code>{"{{asesor}}"}</code>.
               </p>
@@ -7217,10 +7217,10 @@ export function ConsolaVentasOmnicanal({
                   modoLayoutInbox === "desktop" ? "140px 1fr 150px auto" : "minmax(0, 1fr)",
                 gap: "8px",
                 alignItems: "start",
-                background: "#F8FAFC",
+                background: "#F8F7F4",
                 padding: "12px",
                 borderRadius: "12px",
-                border: "1px solid #E2E8F0",
+                border: "1px solid #E6E2DA",
               }}
             >
               <input
@@ -7231,7 +7231,7 @@ export function ConsolaVentasOmnicanal({
                 style={{
                   padding: "8px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid #D5CFC4",
                   fontSize: "0.8rem",
                 }}
               />
@@ -7243,7 +7243,7 @@ export function ConsolaVentasOmnicanal({
                 style={{
                   padding: "8px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid #D5CFC4",
                   fontSize: "0.8rem",
                 }}
               />
@@ -7255,7 +7255,7 @@ export function ConsolaVentasOmnicanal({
                 style={{
                   padding: "8px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid #D5CFC4",
                   fontSize: "0.8rem",
                 }}
               />
@@ -7268,7 +7268,7 @@ export function ConsolaVentasOmnicanal({
                   padding: "8px 14px",
                   borderRadius: "8px",
                   border: "none",
-                  background: "#0F172A",
+                  background: "#1F1C19",
                   color: "#FFFFFF",
                   fontSize: "0.8rem",
                   fontWeight: 700,
@@ -7286,7 +7286,7 @@ export function ConsolaVentasOmnicanal({
                   gridColumn: "1 / -1",
                   padding: "8px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid #D5CFC4",
                   fontSize: "0.8rem",
                   fontFamily: "inherit",
                 }}
@@ -7306,7 +7306,7 @@ export function ConsolaVentasOmnicanal({
                   style={{
                     padding: "12px",
                     borderRadius: "10px",
-                    border: "1px solid #E2E8F0",
+                    border: "1px solid #E6E2DA",
                     display: "flex",
                     flexDirection: "column",
                     justifyContent: "space-between",
@@ -7315,8 +7315,8 @@ export function ConsolaVentasOmnicanal({
                 >
                   <div>
                     <div style={{ display: "flex", justifyContent: "space-between", gap: "6px" }}>
-                      <strong style={{ fontSize: "0.82rem", color: "#0F172A" }}>
-                        <code style={{ color: "#2563EB" }}>{r.atajo}</code> · {r.titulo}
+                      <strong style={{ fontSize: "0.82rem", color: "#1F1C19" }}>
+                        <code style={{ color: "#221E1B" }}>{r.atajo}</code> · {r.titulo}
                       </strong>
                       <button
                         type="button"
@@ -7330,14 +7330,14 @@ export function ConsolaVentasOmnicanal({
                         style={{
                           border: "none",
                           background: "transparent",
-                          color: "#DC2626",
+                          color: "#8A2E2E",
                           cursor: "pointer",
                         }}
                       >
                         <Trash2 size={14} />
                       </button>
                     </div>
-                    <p style={{ margin: "6px 0 0", fontSize: "0.76rem", color: "#475569", lineHeight: 1.45 }}>
+                    <p style={{ margin: "6px 0 0", fontSize: "0.76rem", color: "#57524C", lineHeight: 1.45 }}>
                       {r.contenido}
                     </p>
                   </div>
@@ -7435,7 +7435,7 @@ export function ConsolaVentasOmnicanal({
               maxWidth: "420px",
               background: "#FFFFFF",
               borderRadius: "16px",
-              border: "1px solid #FECACA",
+              border: "1px solid #E5CACA",
               boxShadow: "0 20px 50px rgba(15, 23, 42, 0.25)",
               padding: "20px",
               display: "flex",
@@ -7449,9 +7449,9 @@ export function ConsolaVentasOmnicanal({
                   width: "40px",
                   height: "40px",
                   borderRadius: "10px",
-                  background: "#FEF2F2",
-                  border: "1px solid #FECACA",
-                  color: "#DC2626",
+                  background: "#FAF2F2",
+                  border: "1px solid #E5CACA",
+                  color: "#8A2E2E",
                   display: "inline-flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -7461,12 +7461,12 @@ export function ConsolaVentasOmnicanal({
                 <Trash2 size={20} />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}>
-                <strong style={{ fontSize: "0.96rem", color: "#0F172A" }}>
+                <strong style={{ fontSize: "0.96rem", color: "#1F1C19" }}>
                   ¿Eliminar conversación completa?
                 </strong>
-                <span style={{ fontSize: "0.82rem", color: "#475569", lineHeight: 1.48 }}>
+                <span style={{ fontSize: "0.82rem", color: "#57524C", lineHeight: 1.48 }}>
                   Se eliminará el hilo completo con{" "}
-                  <strong style={{ color: "#0F172A" }}>
+                  <strong style={{ color: "#1F1C19" }}>
                     {conversacionAEliminar.remitenteNombre}
                   </strong>
                   {conversacionAEliminar.remitenteTelefono
@@ -7481,9 +7481,9 @@ export function ConsolaVentasOmnicanal({
               style={{
                 padding: "8px 11px",
                 borderRadius: "9px",
-                background: "#FFFBEB",
-                border: "1px solid #FDE68A",
-                color: "#92400E",
+                background: "#FAF6EE",
+                border: "1px solid #E5D7BC",
+                color: "#745622",
                 fontSize: "0.75rem",
                 lineHeight: 1.4,
               }}
@@ -7503,9 +7503,9 @@ export function ConsolaVentasOmnicanal({
                   minHeight: "40px",
                   padding: "8px 14px",
                   borderRadius: "10px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid #D5CFC4",
                   background: "#FFFFFF",
-                  color: "#334155",
+                  color: "#57524C",
                   fontSize: "0.82rem",
                   fontWeight: 700,
                   cursor: eliminandoConversacion ? "not-allowed" : "pointer",
@@ -7529,7 +7529,7 @@ export function ConsolaVentasOmnicanal({
                   padding: "8px 16px",
                   borderRadius: "10px",
                   border: "none",
-                  background: "#DC2626",
+                  background: "#8A2E2E",
                   color: "#FFFFFF",
                   fontSize: "0.82rem",
                   fontWeight: 700,

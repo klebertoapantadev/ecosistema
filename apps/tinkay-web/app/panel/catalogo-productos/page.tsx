@@ -31,8 +31,8 @@ export default async function PaginaCatalogoProductosTinkay() {
           aria-label="Cerrar y volver al panel"
           style={{
             background: "#FFFFFF",
-            border: "1.5px solid #E2E8F0",
-            color: "#1E293B",
+            border: "1px solid #D5CFC4",
+            color: "#1F1C19",
             borderRadius: "50%",
             width: "36px",
             height: "36px",

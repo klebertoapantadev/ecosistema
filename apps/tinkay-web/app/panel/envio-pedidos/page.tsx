@@ -37,12 +37,12 @@ export default async function PaginaEnvioPedidosTallerTinkay() {
       }}
     >
       <div>
-        <h1 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 4px 0", color: "#111827" }}>
+        <h1 style={{ fontSize: "1.12rem", fontWeight: 600, margin: "0 0 4px 0", color: "#1F1C19" }}>
           Programación y Envío Diario de Pedidos a Taller
         </h1>
         <p
           className="ocultar-en-movil"
-          style={{ margin: 0, fontSize: "13.5px", color: "#6B7280", lineHeight: 1.5 }}
+          style={{ margin: 0, fontSize: "0.8rem", color: "#6E6861", lineHeight: 1.5 }}
         >
           Valida las ventas recibidas, revisa el calendario de entregas (Hoy / Semana / Mes), carga
           pedidos futuros o llamadas urgentes de Exequiales y despáchalos al Taller.

@@ -37,12 +37,12 @@ export default async function PaginaConfirmacionEntregasTinkay() {
       }}
     >
       <div>
-        <h1 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 4px 0", color: "#111827" }}>
+        <h1 style={{ fontSize: "1.12rem", fontWeight: 600, margin: "0 0 4px 0", color: "#1F1C19" }}>
           {esRolDelivery
             ? "Mis Entregas Pendientes y Confirmación GPS"
             : "Confirmación de Entregas GPS, Exequiales IESS e Informes Quincenales"}
         </h1>
-        <p style={{ margin: 0, fontSize: "13.5px", color: "#6B7280", lineHeight: 1.5 }}>
+        <p style={{ margin: 0, fontSize: "0.8rem", color: "#6E6861", lineHeight: 1.5 }}>
           {ctx.rolPrincipal === "DELIVERY_EXTERNO"
             ? "Consulta los pedidos asignados a tu cuenta, comparte tu ubicación mientras estás en ruta y confirma cada entrega con fotografía GPS."
             : esRolDelivery

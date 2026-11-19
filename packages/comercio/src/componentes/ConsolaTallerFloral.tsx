@@ -423,13 +423,13 @@ export function ConsolaTallerFloral({
                   borderRadius: "999px",
                   fontSize: "0.73rem",
                   fontWeight: 800,
-                  background: esHoy ? "#DCFCE7" : "#DBEAFE",
-                  color: esHoy ? "#15803D" : "#1D4ED8",
+                  background: esHoy ? "#F2F6F3" : "#EFECE6",
+                  color: esHoy ? "#2F4737" : "#221E1B",
                 }}
               >
                 📅 {info.etiquetaPrincipal}
               </span>
-              <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#334155" }}>
+              <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#57524C" }}>
                 ⏰{" "}
                 {formatearHorarioEntregaOrden({
                   franjaHoraria: o.franjaHoraria,
@@ -452,7 +452,7 @@ export function ConsolaTallerFloral({
           return (
             <div style={{ display: "flex", flexDirection: "column", gap: "4px", maxWidth: "340px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                <strong style={{ fontSize: "0.83rem", color: "#0F172A" }}>{o.codigo}</strong>
+                <strong style={{ fontSize: "0.83rem", color: "#1F1C19" }}>{o.codigo}</strong>
                 <InsigniaClasificacionPedido
                   clasificacion={clasif}
                   opaco={conf}
@@ -460,11 +460,11 @@ export function ConsolaTallerFloral({
                   sufijoTexto={clasif === "EXEQUIALES" && o.salaServicio ? o.salaServicio : null}
                 />
               </div>
-              <strong style={{ fontSize: "0.85rem", color: "#1E293B" }}>
+              <strong style={{ fontSize: "0.85rem", color: "#221E1B" }}>
                 {o.productoResumen}
               </strong>
               {clasif !== "EXEQUIALES" && o.dedicatoria && (
-                <span style={{ fontSize: "0.73rem", color: "#92400E" }}>
+                <span style={{ fontSize: "0.73rem", color: "#745622" }}>
                   Dedicatoria: {o.dedicatoria}
                 </span>
               )}
@@ -480,12 +480,12 @@ export function ConsolaTallerFloral({
           const esExeq = resolverClasifTaller(o) === "EXEQUIALES";
           return (
             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-              <strong style={{ fontSize: "0.8rem", color: "#0F172A" }}>
+              <strong style={{ fontSize: "0.8rem", color: "#1F1C19" }}>
                 {esExeq
                   ? `Solicita: ${o.clienteSolicita}`
                   : o.destinatarioFallecido || o.clienteSolicita}
               </strong>
-              <span style={{ fontSize: "0.74rem", color: "#475569" }}>
+              <span style={{ fontSize: "0.74rem", color: "#57524C" }}>
                 {esExeq
                   ? `${o.salaServicio || "Sala por confirmar"} · Fallecido: ${o.destinatarioFallecido || "Pendiente"}`
                   : o.retiroEnLocal
@@ -509,8 +509,8 @@ export function ConsolaTallerFloral({
                 style={{
                   padding: "4px 10px",
                   borderRadius: "999px",
-                  background: "#F1F5F9",
-                  color: "#475569",
+                  background: "#F4F2EE",
+                  color: "#57524C",
                   fontSize: "0.74rem",
                   fontWeight: 700,
                 }}
@@ -536,9 +536,9 @@ export function ConsolaTallerFloral({
                     gap: "4px",
                     padding: "7px 10px",
                     borderRadius: "8px",
-                    border: impresiones > 0 ? "1px solid #F59E0B" : "1px solid #0284C7",
-                    background: impresiones > 0 ? "#FEF3C7" : "#F0F9FF",
-                    color: impresiones > 0 ? "#92400E" : "#0369A1",
+                    border: impresiones > 0 ? "1px solid #8F6A2E" : "1px solid #221E1B",
+                    background: impresiones > 0 ? "#FAF6EE" : "#F4F2EE",
+                    color: impresiones > 0 ? "#745622" : "#3A3530",
                     fontSize: "0.76rem",
                     fontWeight: 800,
                     cursor: "pointer",
@@ -563,10 +563,10 @@ export function ConsolaTallerFloral({
                   borderRadius: "8px",
                   border:
                     o.estadoTaller === "EN_PREPARACION"
-                      ? "2px solid #C2410C"
-                      : "1px solid #CBD5E1",
-                  background: o.estadoTaller === "EN_PREPARACION" ? "#FFEDD5" : "#FFFFFF",
-                  color: o.estadoTaller === "EN_PREPARACION" ? "#9A3412" : "#334155",
+                      ? "2px solid #745622"
+                      : "1px solid #D5CFC4",
+                  background: o.estadoTaller === "EN_PREPARACION" ? "#F5EFE3" : "#FFFFFF",
+                  color: o.estadoTaller === "EN_PREPARACION" ? "#745622" : "#57524C",
                   fontSize: "0.76rem",
                   fontWeight: 800,
                   cursor: proc ? "wait" : "pointer",
@@ -589,9 +589,9 @@ export function ConsolaTallerFloral({
                   padding: "7px 12px",
                   borderRadius: "8px",
                   border:
-                    o.estadoTaller === "LISTO_ENTREGA" ? "2px solid #15803D" : "none",
-                  background: o.estadoTaller === "LISTO_ENTREGA" ? "#DCFCE7" : "#059669",
-                  color: o.estadoTaller === "LISTO_ENTREGA" ? "#14532D" : "#FFFFFF",
+                    o.estadoTaller === "LISTO_ENTREGA" ? "2px solid #2F4737" : "none",
+                  background: o.estadoTaller === "LISTO_ENTREGA" ? "#F2F6F3" : "#2F4737",
+                  color: o.estadoTaller === "LISTO_ENTREGA" ? "#2B4A36" : "#FFFFFF",
                   fontSize: "0.76rem",
                   fontWeight: 800,
                   cursor: proc ? "wait" : "pointer",
@@ -616,7 +616,7 @@ export function ConsolaTallerFloral({
           style={{
             padding: "14px 16px",
             borderRadius: "14px",
-            background: alertaNuevoPedido.esExequiales ? "#581C87" : "#065F46",
+            background: alertaNuevoPedido.esExequiales ? "#3A3530" : "#2B4A36",
             color: "#FFFFFF",
             display: "flex",
             justifyContent: "space-between",
@@ -666,7 +666,7 @@ export function ConsolaTallerFloral({
       <div
         style={{
           background: "#FFFFFF",
-          border: "1px solid #E2E8F0",
+          border: "1px solid #E6E2DA",
           borderRadius: "14px",
           padding: "12px 16px",
           display: "flex",
@@ -705,9 +705,9 @@ export function ConsolaTallerFloral({
                 style={{
                   padding: "8px 13px",
                   borderRadius: "10px",
-                  border: activo ? "1px solid #0F172A" : "1px solid #E2E8F0",
-                  background: activo ? "#0F172A" : "#F8FAFC",
-                  color: activo ? "#FFFFFF" : "#334155",
+                  border: activo ? "1px solid #1F1C19" : "1px solid #E6E2DA",
+                  background: activo ? "#1F1C19" : "#F8F7F4",
+                  color: activo ? "#FFFFFF" : "#57524C",
                   fontSize: "0.8rem",
                   fontWeight: 700,
                   cursor: "pointer",
@@ -737,9 +737,9 @@ export function ConsolaTallerFloral({
               gap: "6px",
               padding: "8px 12px",
               borderRadius: "10px",
-              border: mostrarHistoricos ? "1.5px solid #2563EB" : "1px solid #CBD5E1",
-              background: mostrarHistoricos ? "#EFF6FF" : "#FFFFFF",
-              color: mostrarHistoricos ? "#1D4ED8" : "#475569",
+              border: mostrarHistoricos ? "1.5px solid #221E1B" : "1px solid #D5CFC4",
+              background: mostrarHistoricos ? "#F4F2EE" : "#FFFFFF",
+              color: mostrarHistoricos ? "#221E1B" : "#57524C",
               fontSize: "0.78rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -934,9 +934,9 @@ export function ConsolaTallerFloral({
               gap: "6px",
               padding: "7px 11px",
               borderRadius: "9px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid #D5CFC4",
               background: "#FFFFFF",
-              color: "#0F172A",
+              color: "#1F1C19",
               fontSize: "0.78rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -953,9 +953,9 @@ export function ConsolaTallerFloral({
           style={{
             padding: "11px 14px",
             borderRadius: "10px",
-            background: "#FEF2F2",
-            border: "1px solid #FECACA",
-            color: "#991B1B",
+            background: "#FAF2F2",
+            border: "1px solid #E5CACA",
+            color: "#8A2E2E",
             fontSize: "0.83rem",
           }}
         >
@@ -978,7 +978,7 @@ export function ConsolaTallerFloral({
       <div
         style={{
           background: "#FFFFFF",
-          border: "1px solid #E2E8F0",
+          border: "1px solid #E6E2DA",
           borderRadius: "16px",
           padding: "16px",
           display: "flex",
@@ -995,7 +995,7 @@ export function ConsolaTallerFloral({
             flexWrap: "wrap",
           }}
         >
-          <strong style={{ fontSize: "0.95rem", color: "#0F172A" }}>
+          <strong style={{ fontSize: "0.95rem", color: "#1F1C19" }}>
             Cola de Producción del Taller ({ordenesFiltradas.length} pedido
             {ordenesFiltradas.length === 1 ? "" : "s"})
           </strong>
@@ -1007,11 +1007,11 @@ export function ConsolaTallerFloral({
             style={{
               padding: "5px 10px",
               borderRadius: "8px",
-              border: "1px solid #CBD5E1",
-              background: "#F8FAFC",
+              border: "1px solid #D5CFC4",
+              background: "#F8F7F4",
               fontSize: "0.75rem",
               fontWeight: 700,
-              color: "#334155",
+              color: "#57524C",
               cursor: "pointer",
             }}
           >
@@ -1048,9 +1048,9 @@ export function ConsolaTallerFloral({
             <div
               style={{
                 padding: "12px",
-                background: "#F8FAFC",
+                background: "#F8F7F4",
                 borderRadius: "10px",
-                border: "1px solid #E2E8F0",
+                border: "1px solid #E6E2DA",
                 display: "grid",
                 gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
                 gap: "12px",
@@ -1075,9 +1075,9 @@ export function ConsolaTallerFloral({
                       marginTop: "8px",
                       padding: "8px 10px",
                       borderRadius: "8px",
-                      background: "#FFFBEB",
-                      border: "1px solid #FDE68A",
-                      color: "#92400E",
+                      background: "#FAF6EE",
+                      border: "1px solid #E5D7BC",
+                      color: "#745622",
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
@@ -1092,7 +1092,7 @@ export function ConsolaTallerFloral({
                       onClick={() => setOrdenParaImprimir(o)}
                       style={{
                         border: "none",
-                        background: "#0284C7",
+                        background: "#221E1B",
                         color: "#FFFFFF",
                         padding: "5px 10px",
                         borderRadius: "6px",

@@ -23,32 +23,32 @@ const OPCIONES_ROL: Array<{
     etiqueta: "Ventas / Asesor Comercial",
     resumen:
       "Aterriza directo en Ventas y Chats en Vivo. Acceso a Enviar Pedidos, Proformas (V2/V3), Entrega Inmediata e Inventario.",
-    colorFondo: "#EFF6FF",
-    colorTexto: "#1D4ED8",
+    colorFondo: "#F4F2EE",
+    colorTexto: "#221E1B",
   },
   {
     clave: "TALLER",
     etiqueta: "Taller Floral",
     resumen:
       "Aterriza directo en Taller (sin precios). Actualiza estado (En Preparación / Listo Entrega), Inventario de Rosas y Entrega Inmediata.",
-    colorFondo: "#F0FDF4",
-    colorTexto: "#15803D",
+    colorFondo: "#F2F6F3",
+    colorTexto: "#2F4737",
   },
   {
     clave: "DELIVERY",
     etiqueta: "Delivery Interno",
     resumen:
       "Aterriza directo en Entregas GPS. Ve pedidos listos y asignados, comparte GPS en ruta y confirma entrega con foto.",
-    colorFondo: "#FEF3C7",
-    colorTexto: "#B45309",
+    colorFondo: "#FAF6EE",
+    colorTexto: "#745622",
   },
   {
     clave: "DELIVERY_EXTERNO",
     etiqueta: "Delivery Subcontratado",
     resumen:
       "Aterriza directo en Entregas GPS. Ve ÚNICAMENTE los pedidos asignados a su cuenta, comparte GPS en ruta y confirma entrega.",
-    colorFondo: "#FFF7ED",
-    colorTexto: "#C2410C",
+    colorFondo: "#FAF6EE",
+    colorTexto: "#745622",
   },
   {
     clave: "OPERADOR",
@@ -56,14 +56,14 @@ const OPCIONES_ROL: Array<{
     resumen:
       "Coordinación integral: Enviar Pedidos, Taller, Entregas e Informes IESS, Inventario, Entrega Inmediata y Logística.",
     colorFondo: "#ECFEFF",
-    colorTexto: "#0369A1",
+    colorTexto: "#3A3530",
   },
   {
     clave: "ADMINISTRADOR",
     etiqueta: "Administrador de Tienda",
     resumen: "Acceso completo 360° a Operación, Facturación, Usuarios/Roles y Configuración de Tienda.",
-    colorFondo: "#F3E8FF",
-    colorTexto: "#6B21A8",
+    colorFondo: "#F4F2EE",
+    colorTexto: "#3A3530",
   },
 ];
 
@@ -183,7 +183,7 @@ export function FormularioInvitacionEquipo({
             <h2
               style={{
                 margin: 0,
-                fontSize: "1.05rem",
+                fontSize: "0.9rem",
                 fontWeight: 700,
                 color: "#1C261F",
               }}
@@ -363,9 +363,9 @@ export function FormularioInvitacionEquipo({
             marginTop: 12,
             padding: "10px 14px",
             borderRadius: 10,
-            background: "#ECFDF5",
-            border: "1px solid #A7F3D0",
-            color: "#065F46",
+            background: "#F2F6F3",
+            border: "1px solid #CEDDD3",
+            color: "#2B4A36",
             fontSize: "0.83rem",
             fontWeight: 600,
           }}
@@ -380,9 +380,9 @@ export function FormularioInvitacionEquipo({
             marginTop: 12,
             padding: "10px 14px",
             borderRadius: 10,
-            background: "#FEF2F2",
-            border: "1px solid #FECACA",
-            color: "#991B1B",
+            background: "#FAF2F2",
+            border: "1px solid #E5CACA",
+            color: "#8A2E2E",
             fontSize: "0.83rem",
             fontWeight: 600,
           }}
@@ -447,7 +447,7 @@ export function FormularioInvitacionEquipo({
                         gap: 4,
                         fontSize: "0.74rem",
                         fontWeight: 600,
-                        color: inv.estado === "ACEPTADA" ? "#15803D" : "#B45309",
+                        color: inv.estado === "ACEPTADA" ? "#2F4737" : "#745622",
                       }}
                     >
                       {inv.estado === "ACEPTADA" ? (
@@ -474,9 +474,9 @@ export function FormularioInvitacionEquipo({
                       gap: 5,
                       padding: "5px 10px",
                       borderRadius: 8,
-                      border: "1px solid #FECACA",
-                      background: "#FEF2F2",
-                      color: "#B91C1C",
+                      border: "1px solid #E5CACA",
+                      background: "#FAF2F2",
+                      color: "#8A2E2E",
                       fontSize: "0.75rem",
                       fontWeight: 600,
                       cursor: "pointer",

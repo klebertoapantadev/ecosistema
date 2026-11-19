@@ -71,7 +71,7 @@ export function CatalogoVariedadesRosas({
   // Edición de categoría de color (ej. Rosa Intenso -> Fucsia)
   const [editandoCategoria, setEditandoCategoria] = useState<boolean>(false);
   const [nombreCategoriaEdit, setNombreCategoriaEdit] = useState<string>("");
-  const [colorHexCategoriaEdit, setColorHexCategoriaEdit] = useState<string>("#DB2777");
+  const [colorHexCategoriaEdit, setColorHexCategoriaEdit] = useState<string>("#221E1B");
   const [guardandoCategoria, setGuardandoCategoria] = useState<boolean>(false);
 
   // Multiselección para eliminar variedades
@@ -260,12 +260,12 @@ export function CatalogoVariedadesRosas({
       <div
         style={{
           background: "#FFFFFF",
-          border: "1px solid #E2E8F0",
-          borderRadius: "16px",
-          padding: "18px 20px",
+          border: "1px solid #E6E2DA",
+          borderRadius: "12px",
+          padding: "16px 18px",
           display: "flex",
           flexDirection: "column",
-          gap: "14px",
+          gap: "12px",
         }}
       >
         <div
@@ -273,12 +273,12 @@ export function CatalogoVariedadesRosas({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            gap: "12px",
+            gap: "10px",
             flexWrap: "wrap",
           }}
         >
           <div>
-            <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#0F172A" }}>
+            <h2 style={{ margin: 0, fontSize: "0.92rem", fontWeight: 600, color: "#1F1C19" }}>
               Catálogo Maestro de Variedades de Rosas ({catalogo.length})
             </h2>
           </div>
@@ -296,17 +296,17 @@ export function CatalogoVariedadesRosas({
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
-              padding: "9px 14px",
-              borderRadius: "10px",
-              border: "none",
-              background: "#0F172A",
-              color: "#FFFFFF",
-              fontSize: "0.83rem",
-              fontWeight: 700,
+              padding: "7px 13px",
+              borderRadius: "8px",
+              border: "1px solid #221E1B",
+              background: "#221E1B",
+              color: "#FAF8F5",
+              fontSize: "0.78rem",
+              fontWeight: 600,
               cursor: "pointer",
             }}
           >
-            {mostrarFormulario ? <X size={15} /> : <Plus size={15} />}
+            {mostrarFormulario ? <X size={14} /> : <Plus size={14} />}
             <span>{mostrarFormulario ? "Cerrar" : "Nueva Variedad"}</span>
           </button>
         </div>
@@ -314,12 +314,12 @@ export function CatalogoVariedadesRosas({
         {migracionPendiente && (
           <div
             style={{
-              padding: "10px 12px",
-              borderRadius: "10px",
-              background: "#FFFBEB",
-              border: "1px solid #FDE68A",
-              color: "#92400E",
-              fontSize: "0.8rem",
+              padding: "9px 12px",
+              borderRadius: "9px",
+              background: "#FAF6EE",
+              border: "1px solid #E5D7BC",
+              color: "#745622",
+              fontSize: "0.78rem",
             }}
           >
             Mostrando catálogo base Floraroma. Ejecuta la migración{" "}
@@ -331,12 +331,12 @@ export function CatalogoVariedadesRosas({
         {mensajeError && (
           <div
             style={{
-              padding: "10px 12px",
-              borderRadius: "10px",
-              background: "#FEF2F2",
-              border: "1px solid #FECACA",
-              color: "#991B1B",
-              fontSize: "0.82rem",
+              padding: "9px 12px",
+              borderRadius: "9px",
+              background: "#FAF2F2",
+              border: "1px solid #E5CACA",
+              color: "#8A2E2E",
+              fontSize: "0.79rem",
             }}
           >
             {mensajeError}
@@ -346,18 +346,18 @@ export function CatalogoVariedadesRosas({
         {mensajeOk && (
           <div
             style={{
-              padding: "10px 12px",
-              borderRadius: "10px",
-              background: "#ECFDF5",
-              border: "1px solid #A7F3D0",
-              color: "#065F46",
-              fontSize: "0.82rem",
+              padding: "9px 12px",
+              borderRadius: "9px",
+              background: "#F2F6F3",
+              border: "1px solid #CEDDD3",
+              color: "#2B4A36",
+              fontSize: "0.79rem",
               display: "flex",
               alignItems: "center",
               gap: "7px",
             }}
           >
-            <CheckCircle2 size={15} />
+            <CheckCircle2 size={14} />
             <span>{mensajeOk}</span>
           </div>
         )}
@@ -369,15 +369,15 @@ export function CatalogoVariedadesRosas({
             style={{
               padding: "14px",
               borderRadius: "12px",
-              background: "#F8FAFC",
-              border: "1px solid #CBD5E1",
+              background: "#F8F7F4",
+              border: "1px solid #D5CFC4",
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
               gap: "12px",
               alignItems: "end",
             }}
           >
-            <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
+            <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.78rem", fontWeight: 600, color: "#57524C" }}>
               Color
               <select
                 value={nuevoColor}
@@ -385,7 +385,7 @@ export function CatalogoVariedadesRosas({
                 style={{
                   padding: "8px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid #D5CFC4",
                   background: "#FFFFFF",
                   fontSize: "0.84rem",
                 }}
@@ -398,7 +398,7 @@ export function CatalogoVariedadesRosas({
               </select>
             </label>
 
-            <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
+            <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.78rem", fontWeight: 600, color: "#57524C" }}>
               Nombre de Variedad
               <input
                 type="text"
@@ -409,14 +409,14 @@ export function CatalogoVariedadesRosas({
                 style={{
                   padding: "8px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid #D5CFC4",
                   background: "#FFFFFF",
                   fontSize: "0.84rem",
                 }}
               />
             </label>
 
-            <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.78rem", fontWeight: 600, color: "#334155" }}>
+            <label style={{ display: "flex", flexDirection: "column", gap: "4px", fontSize: "0.78rem", fontWeight: 600, color: "#57524C" }}>
               URL Imagen o Subir Foto
               <div style={{ display: "flex", gap: "6px" }}>
                 <input
@@ -429,7 +429,7 @@ export function CatalogoVariedadesRosas({
                     minWidth: 0,
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid #D5CFC4",
                     background: "#FFFFFF",
                     fontSize: "0.82rem",
                   }}
@@ -442,10 +442,10 @@ export function CatalogoVariedadesRosas({
                     justifyContent: "center",
                     padding: "0 10px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid #D5CFC4",
                     background: "#FFFFFF",
                     cursor: subiendoImg ? "wait" : "pointer",
-                    color: "#0F172A",
+                    color: "#1F1C19",
                   }}
                 >
                   {subiendoImg ? <Loader2 size={15} /> : <Upload size={15} />}
@@ -467,7 +467,7 @@ export function CatalogoVariedadesRosas({
                   alignItems: "center",
                   gap: "6px",
                   fontSize: "0.8rem",
-                  color: "#0F172A",
+                  color: "#1F1C19",
                   cursor: "pointer",
                   fontWeight: 600,
                 }}
@@ -491,10 +491,10 @@ export function CatalogoVariedadesRosas({
                   padding: "8px 14px",
                   borderRadius: "8px",
                   border: "none",
-                  background: "#059669",
+                  background: "#2F4737",
                   color: "#FFFFFF",
-                  fontSize: "0.83rem",
-                  fontWeight: 700,
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
                   cursor: guardandoNueva ? "wait" : "pointer",
                 }}
               >
@@ -507,7 +507,7 @@ export function CatalogoVariedadesRosas({
 
         {/* Selector de los 11 colores + buscador */}
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
             {categoriasColores.map((col) => {
               const cant = catalogo.filter((v) => v.colorClave === col.clave).length;
               const def = obtenerVariedadDefectoPorColor(catalogo, col.clave);
@@ -523,32 +523,32 @@ export function CatalogoVariedadesRosas({
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: "7px",
-                    padding: "7px 11px",
-                    borderRadius: "10px",
-                    border: activo ? "2px solid #0F172A" : "1px solid #E2E8F0",
-                    background: activo ? "#0F172A" : "#FFFFFF",
-                    color: activo ? "#FFFFFF" : "#1E293B",
-                    fontSize: "0.8rem",
+                    gap: "6px",
+                    padding: "6px 10px",
+                    borderRadius: "8px",
+                    border: activo ? "1px solid #221E1B" : "1px solid #E6E2DA",
+                    background: activo ? "#221E1B" : "#FFFFFF",
+                    color: activo ? "#FAF8F5" : "#2E2A26",
+                    fontSize: "0.77rem",
                     fontWeight: 600,
                     cursor: "pointer",
                   }}
                 >
                   <span
                     style={{
-                      width: "10px",
-                      height: "10px",
+                      width: "9px",
+                      height: "9px",
                       borderRadius: "50%",
                       background: col.colorHex,
-                      border: "1px solid rgba(0,0,0,0.2)",
+                      border: "1px solid rgba(0,0,0,0.18)",
                       flexShrink: 0,
                     }}
                   />
                   <span>{col.etiqueta}</span>
                   <span
                     style={{
-                      fontSize: "0.72rem",
-                      opacity: 0.78,
+                      fontSize: "0.7rem",
+                      opacity: 0.72,
                       fontWeight: 500,
                     }}
                   >
@@ -557,12 +557,13 @@ export function CatalogoVariedadesRosas({
                   {def && (
                     <span
                       style={{
-                        fontSize: "0.7rem",
+                        fontSize: "0.68rem",
                         padding: "1px 6px",
                         borderRadius: "999px",
-                        background: activo ? "rgba(255,255,255,0.16)" : "#FEF3C7",
-                        color: activo ? "#FDE68A" : "#92400E",
-                        fontWeight: 700,
+                        background: activo ? "rgba(255,255,255,0.14)" : "#F8F7F4",
+                        border: activo ? "none" : "1px solid #E6E2DA",
+                        color: activo ? "#E8D5AE" : "#6E6861",
+                        fontWeight: 600,
                       }}
                     >
                       ★ {def.nombre}
@@ -578,14 +579,14 @@ export function CatalogoVariedadesRosas({
               display: "flex",
               alignItems: "center",
               gap: "8px",
-              padding: "8px 12px",
-              borderRadius: "10px",
-              border: "1px solid #CBD5E1",
-              background: "#F8FAFC",
-              maxWidth: "360px",
+              padding: "7px 11px",
+              borderRadius: "8px",
+              border: "1px solid #D5CFC4",
+              background: "#F8F7F4",
+              maxWidth: "340px",
             }}
           >
-            <Search size={15} color="#64748B" />
+            <Search size={14} color="#847D74" />
             <input
               type="text"
               value={busqueda}
@@ -595,9 +596,9 @@ export function CatalogoVariedadesRosas({
                 border: "none",
                 outline: "none",
                 background: "transparent",
-                fontSize: "0.84rem",
+                fontSize: "0.8rem",
                 width: "100%",
-                color: "#0F172A",
+                color: "#1F1C19",
               }}
             />
             {busqueda && (
@@ -608,11 +609,11 @@ export function CatalogoVariedadesRosas({
                   border: "none",
                   background: "transparent",
                   cursor: "pointer",
-                  color: "#64748B",
+                  color: "#847D74",
                   padding: 0,
                 }}
               >
-                <X size={14} />
+                <X size={13} />
               </button>
             )}
           </div>
@@ -626,12 +627,12 @@ export function CatalogoVariedadesRosas({
             justifyContent: "space-between",
             gap: "10px",
             flexWrap: "wrap",
-            borderTop: "1px solid #F1F5F9",
-            paddingTop: "12px",
+            borderTop: "1px solid #EFECE6",
+            paddingTop: "10px",
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-            <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "#0F172A", letterSpacing: "0.02em" }}>
+            <div style={{ fontSize: "0.84rem", fontWeight: 600, color: "#1F1C19", letterSpacing: "0.02em" }}>
               {busqueda.trim()
                 ? `Resultados para "${busqueda.trim()}" (${variedadesFiltradas.length})`
                 : `${defColorActivo.etiqueta.toUpperCase()} (${variedadesFiltradas.length} variedades)`}
@@ -650,17 +651,17 @@ export function CatalogoVariedadesRosas({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "4px",
-                  padding: "4px 9px",
-                  borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
-                  background: "#F8FAFC",
-                  color: "#334155",
-                  fontSize: "0.74rem",
-                  fontWeight: 700,
+                  padding: "4px 8px",
+                  borderRadius: "7px",
+                  border: "1px solid #D5CFC4",
+                  background: "#F8F7F4",
+                  color: "#57524C",
+                  fontSize: "0.72rem",
+                  fontWeight: 600,
                   cursor: "pointer",
                 }}
               >
-                <Edit3 size={12} />
+                <Edit3 size={11} />
                 <span>Renombrar</span>
               </button>
             )}
@@ -680,16 +681,16 @@ export function CatalogoVariedadesRosas({
                 alignItems: "center",
                 gap: "5px",
                 padding: "5px 10px",
-                borderRadius: "8px",
-                border: modoSeleccion ? "1px solid #0F172A" : "1px solid #CBD5E1",
-                background: modoSeleccion ? "#0F172A" : "#FFFFFF",
-                color: modoSeleccion ? "#FFFFFF" : "#334155",
-                fontSize: "0.75rem",
-                fontWeight: 700,
+                borderRadius: "7px",
+                border: modoSeleccion ? "1px solid #221E1B" : "1px solid #D5CFC4",
+                background: modoSeleccion ? "#221E1B" : "#FFFFFF",
+                color: modoSeleccion ? "#FAF8F5" : "#57524C",
+                fontSize: "0.73rem",
+                fontWeight: 600,
                 cursor: "pointer",
               }}
             >
-              <CheckSquare size={13} />
+              <CheckSquare size={12} />
               <span>{modoSeleccion ? "Cancelar selección" : "Seleccionar"}</span>
             </button>
 
@@ -706,11 +707,11 @@ export function CatalogoVariedadesRosas({
                   }}
                   style={{
                     padding: "5px 10px",
-                    borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
-                    background: "#F8FAFC",
-                    color: "#0F172A",
-                    fontSize: "0.75rem",
+                    borderRadius: "7px",
+                    border: "1px solid #D5CFC4",
+                    background: "#F8F7F4",
+                    color: "#1F1C19",
+                    fontSize: "0.73rem",
                     fontWeight: 600,
                     cursor: "pointer",
                   }}
@@ -729,17 +730,17 @@ export function CatalogoVariedadesRosas({
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "5px",
-                      padding: "5px 11px",
-                      borderRadius: "8px",
+                      padding: "5px 10px",
+                      borderRadius: "7px",
                       border: "none",
-                      background: "#DC2626",
+                      background: "#8A2E2E",
                       color: "#FFFFFF",
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
+                      fontSize: "0.73rem",
+                      fontWeight: 600,
                       cursor: eliminandoLote ? "wait" : "pointer",
                     }}
                   >
-                    {eliminandoLote ? <Loader2 size={13} /> : <Trash2 size={13} />}
+                    {eliminandoLote ? <Loader2 size={12} /> : <Trash2 size={12} />}
                     <span>Eliminar ({seleccionadosIds.size})</span>
                   </button>
                 )}
@@ -754,8 +755,8 @@ export function CatalogoVariedadesRosas({
             style={{
               padding: "12px",
               borderRadius: "10px",
-              background: "#F8FAFC",
-              border: "1px solid #CBD5E1",
+              background: "#F8F7F4",
+              border: "1px solid #D5CFC4",
               display: "flex",
               flexWrap: "wrap",
               gap: "10px",
@@ -769,7 +770,7 @@ export function CatalogoVariedadesRosas({
                 gap: "4px",
                 fontSize: "0.76rem",
                 fontWeight: 700,
-                color: "#334155",
+                color: "#57524C",
                 flex: "1 1 190px",
               }}
             >
@@ -782,7 +783,7 @@ export function CatalogoVariedadesRosas({
                 style={{
                   padding: "7px 10px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid #D5CFC4",
                   fontSize: "0.84rem",
                   background: "#FFFFFF",
                 }}
@@ -795,7 +796,7 @@ export function CatalogoVariedadesRosas({
                 gap: "4px",
                 fontSize: "0.76rem",
                 fontWeight: 700,
-                color: "#334155",
+                color: "#57524C",
               }}
             >
               Color
@@ -807,7 +808,7 @@ export function CatalogoVariedadesRosas({
                   width: "44px",
                   height: "34px",
                   borderRadius: "6px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid #D5CFC4",
                   padding: "2px",
                   background: "#FFFFFF",
                   cursor: "pointer",
@@ -821,7 +822,7 @@ export function CatalogoVariedadesRosas({
                 style={{
                   padding: "7px 12px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid #D5CFC4",
                   background: "#FFFFFF",
                   fontSize: "0.78rem",
                   fontWeight: 600,
@@ -837,10 +838,10 @@ export function CatalogoVariedadesRosas({
                   padding: "7px 14px",
                   borderRadius: "8px",
                   border: "none",
-                  background: "#059669",
+                  background: "#2F4737",
                   color: "#FFFFFF",
-                  fontSize: "0.78rem",
-                  fontWeight: 700,
+                  fontSize: "0.77rem",
+                  fontWeight: 600,
                   cursor: guardandoCategoria ? "wait" : "pointer",
                 }}
               >
@@ -855,7 +856,7 @@ export function CatalogoVariedadesRosas({
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fill, minmax(min(150px, 100%), 1fr))",
-            gap: "12px",
+            gap: "11px",
           }}
         >
           {variedadesFiltradas.map((v) => {
@@ -867,20 +868,17 @@ export function CatalogoVariedadesRosas({
                 key={v.id}
                 onClick={modoSeleccion ? () => toggleSeleccionVariedad(v.id) : undefined}
                 style={{
-                  borderRadius: "14px",
+                  borderRadius: "10px",
                   border: seleccionada
-                    ? "2px solid #DC2626"
+                    ? "1.5px solid #8A2E2E"
                     : v.esDefecto
-                      ? "2px solid #F59E0B"
-                      : "1px solid #E2E8F0",
-                  background: seleccionada ? "#FEF2F2" : "#FFFFFF",
+                      ? "1.5px solid #B8923F"
+                      : "1px solid #E6E2DA",
+                  background: seleccionada ? "#FAF2F2" : "#FFFFFF",
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
                   cursor: modoSeleccion ? "pointer" : "default",
-                  boxShadow: v.esDefecto
-                    ? "0 6px 16px rgba(245, 158, 11, 0.14)"
-                    : "0 2px 6px rgba(15, 23, 42, 0.04)",
                 }}
               >
                 <div
@@ -888,7 +886,7 @@ export function CatalogoVariedadesRosas({
                     position: "relative",
                     width: "100%",
                     aspectRatio: "1 / 1",
-                    background: "#0B0F19",
+                    background: "#1A1715",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -903,27 +901,28 @@ export function CatalogoVariedadesRosas({
                       style={{ width: "100%", height: "100%", objectFit: "cover" }}
                     />
                   ) : (
-                    <Flower2 size={36} color="#64748B" />
+                    <Flower2 size={32} color="#847D74" />
                   )}
 
                   {v.esDefecto && (
                     <span
                       style={{
                         position: "absolute",
-                        top: "8px",
-                        left: "8px",
+                        top: "7px",
+                        left: "7px",
                         display: "inline-flex",
                         alignItems: "center",
                         gap: "4px",
-                        padding: "3px 8px",
+                        padding: "2.5px 7px",
                         borderRadius: "999px",
-                        background: "#F59E0B",
-                        color: "#FFFFFF",
-                        fontSize: "0.7rem",
-                        fontWeight: 800,
+                        background: "rgba(31, 28, 25, 0.85)",
+                        border: "1px solid rgba(200, 162, 90, 0.55)",
+                        color: "#E8D5AE",
+                        fontSize: "0.66rem",
+                        fontWeight: 600,
                       }}
                     >
-                      <Star size={11} fill="#FFFFFF" />
+                      <Star size={10} fill="#E8D5AE" />
                       Defecto
                     </span>
                   )}
@@ -938,34 +937,34 @@ export function CatalogoVariedadesRosas({
                     aria-label={seleccionada ? `Deseleccionar ${v.nombre}` : `Seleccionar ${v.nombre}`}
                     style={{
                       position: "absolute",
-                      top: "8px",
-                      right: "8px",
+                      top: "7px",
+                      right: "7px",
                       display: "inline-flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      width: "26px",
-                      height: "26px",
-                      borderRadius: "7px",
+                      width: "24px",
+                      height: "24px",
+                      borderRadius: "6px",
                       border: "none",
-                      background: seleccionada ? "#DC2626" : "rgba(15, 23, 42, 0.72)",
+                      background: seleccionada ? "#8A2E2E" : "rgba(31, 28, 25, 0.72)",
                       color: "#FFFFFF",
                       cursor: "pointer",
                     }}
                   >
-                    {seleccionada ? <CheckSquare size={15} /> : <Square size={15} />}
+                    {seleccionada ? <CheckSquare size={14} /> : <Square size={14} />}
                   </button>
 
                   {busqueda.trim() && colInfo && (
                     <span
                       style={{
                         position: "absolute",
-                        bottom: "8px",
-                        left: "8px",
+                        bottom: "7px",
+                        left: "7px",
                         padding: "2px 7px",
                         borderRadius: "999px",
-                        background: "rgba(15, 23, 42, 0.8)",
-                        color: "#FFFFFF",
-                        fontSize: "0.68rem",
+                        background: "rgba(31, 28, 25, 0.8)",
+                        color: "#FAF8F5",
+                        fontSize: "0.66rem",
                         fontWeight: 600,
                       }}
                     >
@@ -976,26 +975,26 @@ export function CatalogoVariedadesRosas({
 
                 <div
                   style={{
-                    padding: "10px",
+                    padding: "9px",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "8px",
+                    gap: "7px",
                     flex: 1,
                     justifyContent: "space-between",
                   }}
                 >
                   <div
                     style={{
-                      fontSize: "0.86rem",
-                      fontWeight: 700,
-                      color: "#0F172A",
+                      fontSize: "0.81rem",
+                      fontWeight: 600,
+                      color: "#1F1C19",
                       lineHeight: 1.25,
                     }}
                   >
                     {v.nombre}
                   </div>
 
-                  <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                  <div style={{ display: "flex", gap: "5px", alignItems: "center" }}>
                     {!v.esDefecto ? (
                       <button
                         type="button"
@@ -1009,26 +1008,26 @@ export function CatalogoVariedadesRosas({
                           alignItems: "center",
                           justifyContent: "center",
                           gap: "4px",
-                          padding: "5px 8px",
-                          borderRadius: "8px",
-                          border: "1px solid #FDE68A",
-                          background: "#FFFBEB",
-                          color: "#92400E",
-                          fontSize: "0.73rem",
-                          fontWeight: 700,
+                          padding: "4.5px 7px",
+                          borderRadius: "7px",
+                          border: "1px solid #D5CFC4",
+                          background: "#F8F7F4",
+                          color: "#57524C",
+                          fontSize: "0.71rem",
+                          fontWeight: 600,
                           cursor: ocupada ? "wait" : "pointer",
                         }}
                       >
-                        {ocupada ? <Loader2 size={12} /> : <Star size={12} />}
+                        {ocupada ? <Loader2 size={11} /> : <Star size={11} />}
                         <span>Por defecto</span>
                       </button>
                     ) : (
                       <span
                         style={{
                           flex: 1,
-                          fontSize: "0.72rem",
-                          color: "#B45309",
-                          fontWeight: 700,
+                          fontSize: "0.7rem",
+                          color: "#745622",
+                          fontWeight: 600,
                         }}
                       >
                         ★ Activa por defecto
@@ -1045,15 +1044,15 @@ export function CatalogoVariedadesRosas({
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        padding: "5px 7px",
-                        borderRadius: "8px",
-                        border: "1px solid #FECACA",
-                        background: "#FEF2F2",
-                        color: "#B91C1C",
+                        padding: "4.5px 6.5px",
+                        borderRadius: "7px",
+                        border: "1px solid #E5CACA",
+                        background: "#FAF2F2",
+                        color: "#8A2E2E",
                         cursor: ocupada ? "wait" : "pointer",
                       }}
                     >
-                      <Trash2 size={13} />
+                      <Trash2 size={12} />
                     </button>
                   </div>
                 </div>

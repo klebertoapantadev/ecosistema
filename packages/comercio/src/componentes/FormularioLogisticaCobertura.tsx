@@ -44,23 +44,23 @@ export interface PropsFormularioLogisticaCobertura {
 }
 
 const PALETA_COLORES_ZONAS = [
-  "#0EA5E9",
-  "#10B981",
-  "#8B5CF6",
-  "#F59E0B",
+  "#4A453F",
+  "#2F4737",
+  "#4A453F",
+  "#8F6A2E",
   "#EC4899",
-  "#6366F1",
-  "#14B8A6",
-  "#EA580C",
+  "#4A453F",
+  "#2F4737",
+  "#8F6A2E",
 ];
 
 const estiloInput: React.CSSProperties = {
   width: "100%",
   padding: "8px 11px",
   borderRadius: "8px",
-  border: "1px solid #D4D4D8",
+  border: "1px solid #D5CFC4",
   fontSize: "0.84rem",
-  color: "#18181B",
+  color: "#221E1B",
   background: "#FFFFFF",
   boxSizing: "border-box",
 };
@@ -69,7 +69,7 @@ const estiloLabel: React.CSSProperties = {
   display: "block",
   fontSize: "0.75rem",
   fontWeight: 700,
-  color: "#3F3F46",
+  color: "#57524C",
   marginBottom: "4px",
 };
 
@@ -211,7 +211,7 @@ export function FormularioLogisticaCobertura({
     const num = form.zonas.length + 1;
     const nuevaId = `zon-custom-${Date.now()}`;
     const colorSugerido =
-      PALETA_COLORES_ZONAS[(num - 1) % PALETA_COLORES_ZONAS.length] ?? "#0EA5E9";
+      PALETA_COLORES_ZONAS[(num - 1) % PALETA_COLORES_ZONAS.length] ?? "#4A453F";
     const nueva: ZonaCoberturaLogistica = {
       id: nuevaId,
       codigo: `zona_personalizada_${num}`,
@@ -385,8 +385,8 @@ export function FormularioLogisticaCobertura({
       {/* Bloque 1: Taller / Punto de Origen */}
       <div
         style={{
-          background: "#FAFAFA",
-          border: "1px solid #E4E4E7",
+          background: "#F8F7F4",
+          border: "1px solid #E6E2DA",
           borderRadius: "12px",
           padding: "16px 18px",
           display: "flex",
@@ -404,8 +404,8 @@ export function FormularioLogisticaCobertura({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <MapPin size={17} color="#18181B" />
-            <strong style={{ fontSize: "0.92rem", color: "#18181B" }}>
+            <MapPin size={17} color="#221E1B" />
+            <strong style={{ fontSize: "0.92rem", color: "#221E1B" }}>
               1. Punto de Partida (Taller / Tienda Física)
             </strong>
           </div>
@@ -416,7 +416,7 @@ export function FormularioLogisticaCobertura({
               gap: "6px",
               fontSize: "0.8rem",
               fontWeight: 600,
-              color: "#3F3F46",
+              color: "#57524C",
               cursor: "pointer",
             }}
           >
@@ -486,9 +486,9 @@ export function FormularioLogisticaCobertura({
                   gap: "5px",
                   padding: "8px 12px",
                   borderRadius: "8px",
-                  border: "1px solid #D4D4D8",
+                  border: "1px solid #D5CFC4",
                   background: "#FFFFFF",
-                  color: "#18181B",
+                  color: "#221E1B",
                   fontSize: "0.76rem",
                   fontWeight: 700,
                   cursor: "pointer",
@@ -529,7 +529,7 @@ export function FormularioLogisticaCobertura({
       <div
         style={{
           background: "#FFFFFF",
-          border: "1px solid #E4E4E7",
+          border: "1px solid #E6E2DA",
           borderRadius: "12px",
           padding: "16px 18px",
           display: "flex",
@@ -538,8 +538,8 @@ export function FormularioLogisticaCobertura({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Truck size={17} color="#16A34A" />
-          <strong style={{ fontSize: "0.92rem", color: "#18181B" }}>
+          <Truck size={17} color="#2F4737" />
+          <strong style={{ fontSize: "0.92rem", color: "#221E1B" }}>
             2. Zona Envío Gratis por Defecto y Fórmula por Kilómetro
           </strong>
         </div>
@@ -659,8 +659,8 @@ export function FormularioLogisticaCobertura({
             display: "flex",
             alignItems: "flex-start",
             gap: "10px",
-            background: "#F8FAFC",
-            border: "1px solid #E2E8F0",
+            background: "#F8F7F4",
+            border: "1px solid #E6E2DA",
             borderRadius: "9px",
             padding: "10px 12px",
             cursor: "pointer",
@@ -670,13 +670,13 @@ export function FormularioLogisticaCobertura({
             type="checkbox"
             checked={form.mostrarKilometrosCliente !== false}
             onChange={(e) => setForm({ ...form, mostrarKilometrosCliente: e.target.checked })}
-            style={{ marginTop: "3px", width: "16px", height: "16px", accentColor: "#16A34A" }}
+            style={{ marginTop: "3px", width: "16px", height: "16px", accentColor: "#2F4737" }}
           />
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#0F172A" }}>
+            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#1F1C19" }}>
               Mostrar número de kilómetros (km) al cliente en cotizaciones y chat
             </span>
-            <span style={{ fontSize: "0.74rem", color: "#64748B", lineHeight: 1.4 }}>
+            <span style={{ fontSize: "0.74rem", color: "#847D74", lineHeight: 1.4 }}>
               La fórmula interna (costo por km y descuento absorbido) nunca es visible para el
               cliente y se guarda únicamente en el pedido de la tienda.
             </span>
@@ -686,8 +686,8 @@ export function FormularioLogisticaCobertura({
         {/* Beneficio Exclusivo para Clientes Registrados vs Visitantes sin Cuenta */}
         <div
           style={{
-            background: "#FFFBEB",
-            border: "1px solid #FDE68A",
+            background: "#FAF6EE",
+            border: "1px solid #E5D7BC",
             borderRadius: "9px",
             padding: "12px 14px",
             display: "flex",
@@ -709,13 +709,13 @@ export function FormularioLogisticaCobertura({
               onChange={(e) =>
                 setForm({ ...form, envioGratisSoloRegistrados: e.target.checked })
               }
-              style={{ marginTop: "3px", width: "16px", height: "16px", accentColor: "#16A34A" }}
+              style={{ marginTop: "3px", width: "16px", height: "16px", accentColor: "#2F4737" }}
             />
             <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-              <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#78350F" }}>
+              <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#745622" }}>
                 Zona de cobertura gratuita exclusiva para Clientes Registrados
               </span>
-              <span style={{ fontSize: "0.74rem", color: "#92400E", lineHeight: 1.4 }}>
+              <span style={{ fontSize: "0.74rem", color: "#745622", lineHeight: 1.4 }}>
                 Cuando está activo, los compradores invitados sin cuenta no cuentan con cobertura
                 gratuita y pagan la tarifa mínima base + costo por kilómetro.
               </span>
@@ -763,12 +763,12 @@ export function FormularioLogisticaCobertura({
 
         <div
           style={{
-            background: "#F0FDF4",
+            background: "#F2F6F3",
             border: "1px solid #BBF7D0",
             borderRadius: "9px",
             padding: "10px 12px",
             fontSize: "0.78rem",
-            color: "#166534",
+            color: "#2B4A36",
             lineHeight: 1.45,
           }}
         >
@@ -794,7 +794,7 @@ export function FormularioLogisticaCobertura({
                 inset: "12px",
                 zIndex: 9990,
                 background: "#FFFFFF",
-                border: "1px solid #CBD5E1",
+                border: "1px solid #D5CFC4",
                 borderRadius: "14px",
                 padding: "16px 20px",
                 boxShadow: "0 25px 50px -12px rgba(15, 23, 42, 0.38)",
@@ -805,7 +805,7 @@ export function FormularioLogisticaCobertura({
               }
             : {
                 background: "#FFFFFF",
-                border: "1px solid #E4E4E7",
+                border: "1px solid #E6E2DA",
                 borderRadius: "12px",
                 padding: "16px 18px",
                 display: "flex",
@@ -826,7 +826,7 @@ export function FormularioLogisticaCobertura({
         >
           <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-              <strong style={{ fontSize: "0.94rem", color: "#18181B" }}>
+              <strong style={{ fontSize: "0.94rem", color: "#221E1B" }}>
                 3. Áreas de Cobertura en Pichincha y Simulador GPS
               </strong>
               <span
@@ -836,9 +836,9 @@ export function FormularioLogisticaCobertura({
                   gap: "5px",
                   padding: "2px 9px",
                   borderRadius: "999px",
-                  background: "#EFF6FF",
-                  border: "1px solid #BFDBFE",
-                  color: "#1D4ED8",
+                  background: "#F4F2EE",
+                  border: "1px solid #DDD8CE",
+                  color: "#221E1B",
                   fontSize: "0.71rem",
                   fontWeight: 700,
                 }}
@@ -847,7 +847,7 @@ export function FormularioLogisticaCobertura({
                 <span>Solapamiento activo: gana tarifa menor</span>
               </span>
             </div>
-            <div style={{ fontSize: "0.75rem", color: "#71717A" }}>
+            <div style={{ fontSize: "0.75rem", color: "#847D74" }}>
               Selecciona un área en el desplegable para editar su precio o dibujar sus límites sobre
               el mapa ({totalActivas} de {form.zonas.length} activas).
             </div>
@@ -865,8 +865,8 @@ export function FormularioLogisticaCobertura({
                 gap: "5px",
                 padding: "7px 12px",
                 borderRadius: "8px",
-                border: "1px solid #18181B",
-                background: "#18181B",
+                border: "1px solid #221E1B",
+                background: "#221E1B",
                 color: "#FFFFFF",
                 fontSize: "0.76rem",
                 fontWeight: 700,
@@ -888,9 +888,9 @@ export function FormularioLogisticaCobertura({
                 gap: "5px",
                 padding: "7px 11px",
                 borderRadius: "8px",
-                border: "1px solid #D4D4D8",
+                border: "1px solid #D5CFC4",
                 background: "#FFFFFF",
-                color: "#3F3F46",
+                color: "#57524C",
                 fontSize: "0.76rem",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -916,9 +916,9 @@ export function FormularioLogisticaCobertura({
                   gap: "5px",
                   padding: "7px 11px",
                   borderRadius: "8px",
-                  border: "1px solid #D4D4D8",
-                  background: mapaAltoAmpliado ? "#F4F4F5" : "#FFFFFF",
-                  color: "#18181B",
+                  border: "1px solid #D5CFC4",
+                  background: mapaAltoAmpliado ? "#F4F2EE" : "#FFFFFF",
+                  color: "#221E1B",
                   fontSize: "0.76rem",
                   fontWeight: 700,
                   cursor: "pointer",
@@ -944,9 +944,9 @@ export function FormularioLogisticaCobertura({
                 gap: "5px",
                 padding: "7px 12px",
                 borderRadius: "8px",
-                border: mapaPantallaCompleta ? "1px solid #DC2626" : "1px solid #0284C7",
-                background: mapaPantallaCompleta ? "#FEF2F2" : "#F0F9FF",
-                color: mapaPantallaCompleta ? "#B91C1C" : "#0369A1",
+                border: mapaPantallaCompleta ? "1px solid #8A2E2E" : "1px solid #221E1B",
+                background: mapaPantallaCompleta ? "#FAF2F2" : "#F4F2EE",
+                color: mapaPantallaCompleta ? "#8A2E2E" : "#3A3530",
                 fontSize: "0.76rem",
                 fontWeight: 700,
                 cursor: "pointer",
@@ -969,8 +969,8 @@ export function FormularioLogisticaCobertura({
                   gap: "6px",
                   padding: "7px 13px",
                   borderRadius: "8px",
-                  border: "1px solid #16A34A",
-                  background: "#16A34A",
+                  border: "1px solid #2F4737",
+                  background: "#2F4737",
                   color: "#FFFFFF",
                   fontSize: "0.76rem",
                   fontWeight: 700,
@@ -988,9 +988,9 @@ export function FormularioLogisticaCobertura({
         {zonaSeleccionada && (
           <div
             style={{
-              background: "#F8FAFC",
-              border: "1px solid #E2E8F0",
-              borderLeft: `4px solid ${zonaSeleccionada.color || "#0284C7"}`,
+              background: "#F8F7F4",
+              border: "1px solid #E6E2DA",
+              borderLeft: `4px solid ${zonaSeleccionada.color || "#221E1B"}`,
               borderRadius: "10px",
               padding: "12px 14px",
               display: "flex",
@@ -1016,7 +1016,7 @@ export function FormularioLogisticaCobertura({
                     ...estiloInput,
                     fontWeight: 700,
                     fontSize: "0.84rem",
-                    borderColor: "#CBD5E1",
+                    borderColor: "#D5CFC4",
                     cursor: "pointer",
                   }}
                 >
@@ -1040,9 +1040,9 @@ export function FormularioLogisticaCobertura({
                   height: "36px",
                   padding: "0 11px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid #D5CFC4",
                   background: "#FFFFFF",
-                  color: "#0F172A",
+                  color: "#1F1C19",
                   fontSize: "0.76rem",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -1064,9 +1064,9 @@ export function FormularioLogisticaCobertura({
                   height: "36px",
                   padding: "0 11px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid #D5CFC4",
                   background: "#FFFFFF",
-                  color: "#475569",
+                  color: "#57524C",
                   fontSize: "0.76rem",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -1098,10 +1098,10 @@ export function FormularioLogisticaCobertura({
                   borderRadius: "8px",
                   border:
                     zonaDibujandoId === zonaSeleccionada.id
-                      ? "1px solid #DC2626"
-                      : "1px solid #18181B",
+                      ? "1px solid #8A2E2E"
+                      : "1px solid #221E1B",
                   background:
-                    zonaDibujandoId === zonaSeleccionada.id ? "#DC2626" : "#18181B",
+                    zonaDibujandoId === zonaSeleccionada.id ? "#8A2E2E" : "#221E1B",
                   color: "#FFFFFF",
                   fontSize: "0.76rem",
                   fontWeight: 700,
@@ -1127,9 +1127,9 @@ export function FormularioLogisticaCobertura({
                     height: "36px",
                     padding: "0 10px",
                     borderRadius: "8px",
-                    border: "1px solid #FECACA",
-                    background: "#FEF2F2",
-                    color: "#DC2626",
+                    border: "1px solid #E5CACA",
+                    background: "#FAF2F2",
+                    color: "#8A2E2E",
                     fontSize: "0.76rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -1161,10 +1161,10 @@ export function FormularioLogisticaCobertura({
                     padding: "0 10px",
                     borderRadius: "8px",
                     background: "#FFFFFF",
-                    border: "1px solid #E2E8F0",
+                    border: "1px solid #E6E2DA",
                     fontSize: "0.78rem",
                     fontWeight: 700,
-                    color: "#0F172A",
+                    color: "#1F1C19",
                     cursor: "pointer",
                     whiteSpace: "nowrap",
                     flex: "1 1 auto",
@@ -1184,7 +1184,7 @@ export function FormularioLogisticaCobertura({
                   <label style={estiloLabel}>Color</label>
                   <input
                     type="color"
-                    value={zonaSeleccionada.color || "#0284C7"}
+                    value={zonaSeleccionada.color || "#221E1B"}
                     title="Color del polígono en el mapa (útil para distinguir áreas solapadas)"
                     onChange={(e) =>
                       actualizarZona(zonaSeleccionada.id, { color: e.target.value })
@@ -1194,7 +1194,7 @@ export function FormularioLogisticaCobertura({
                       height: "35px",
                       padding: "2px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid #D5CFC4",
                       background: "#FFFFFF",
                       cursor: "pointer",
                       display: "block",
@@ -1255,14 +1255,14 @@ export function FormularioLogisticaCobertura({
                       height: "35px",
                       padding: "0 10px",
                       borderRadius: "8px",
-                      border: "1px solid #E2E8F0",
+                      border: "1px solid #E6E2DA",
                       background: "#FFFFFF",
                       display: "flex",
                       alignItems: "center",
                       fontSize: "0.8rem",
                       fontWeight: 700,
                       color:
-                        zonaSeleccionada.modoCobro === "GRATIS" ? "#16A34A" : "#475569",
+                        zonaSeleccionada.modoCobro === "GRATIS" ? "#2F4737" : "#57524C",
                     }}
                   >
                     {zonaSeleccionada.modoCobro === "GRATIS"
@@ -1297,8 +1297,8 @@ export function FormularioLogisticaCobertura({
         {zonaEnDibujo && (
           <div
             style={{
-              background: "#FEF2F2",
-              border: "1px solid #FECACA",
+              background: "#FAF2F2",
+              border: "1px solid #E5CACA",
               borderRadius: "9px",
               padding: "9px 12px",
               display: "flex",
@@ -1307,7 +1307,7 @@ export function FormularioLogisticaCobertura({
               flexWrap: "wrap",
               gap: "8px",
               fontSize: "0.79rem",
-              color: "#991B1B",
+              color: "#8A2E2E",
             }}
           >
             <span>
@@ -1328,9 +1328,9 @@ export function FormularioLogisticaCobertura({
                   gap: "4px",
                   padding: "5px 10px",
                   borderRadius: "6px",
-                  border: "1px solid #FCA5A5",
+                  border: "1px solid #DEBABA",
                   background: "#FFFFFF",
-                  color: "#991B1B",
+                  color: "#8A2E2E",
                   fontSize: "0.74rem",
                   fontWeight: 700,
                   cursor: verticesBorrador.length === 0 ? "not-allowed" : "pointer",
@@ -1350,7 +1350,7 @@ export function FormularioLogisticaCobertura({
                   padding: "5px 12px",
                   borderRadius: "6px",
                   border: "none",
-                  background: "#DC2626",
+                  background: "#8A2E2E",
                   color: "#FFFFFF",
                   fontSize: "0.74rem",
                   fontWeight: 700,
@@ -1371,9 +1371,9 @@ export function FormularioLogisticaCobertura({
                 style={{
                   padding: "5px 10px",
                   borderRadius: "6px",
-                  border: "1px solid #FCA5A5",
+                  border: "1px solid #DEBABA",
                   background: "#FFFFFF",
-                  color: "#991B1B",
+                  color: "#8A2E2E",
                   fontSize: "0.74rem",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -1431,8 +1431,8 @@ export function FormularioLogisticaCobertura({
               gap: "6px",
               padding: "0 14px",
               borderRadius: "8px",
-              border: "1px solid #16A34A",
-              background: "#16A34A",
+              border: "1px solid #2F4737",
+              background: "#2F4737",
               color: "#FFFFFF",
               fontSize: "0.78rem",
               fontWeight: 700,
@@ -1447,12 +1447,12 @@ export function FormularioLogisticaCobertura({
         {resultadoSimulador && (
           <div
             style={{
-              background: "#F8FAFC",
-              border: "1px solid #CBD5E1",
+              background: "#F8F7F4",
+              border: "1px solid #D5CFC4",
               borderRadius: "9px",
               padding: "10px 12px",
               fontSize: "0.8rem",
-              color: "#0F172A",
+              color: "#1F1C19",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
@@ -1470,9 +1470,9 @@ export function FormularioLogisticaCobertura({
                     style={{
                       padding: "2px 8px",
                       borderRadius: "999px",
-                      background: "#FEF3C7",
-                      border: "1px solid #FDE68A",
-                      color: "#92400E",
+                      background: "#FAF6EE",
+                      border: "1px solid #E5D7BC",
+                      color: "#745622",
                       fontSize: "0.7rem",
                       fontWeight: 700,
                     }}
@@ -1482,7 +1482,7 @@ export function FormularioLogisticaCobertura({
                   </span>
                 )}
               </div>
-              <div style={{ fontSize: "0.73rem", color: "#475569" }}>
+              <div style={{ fontSize: "0.73rem", color: "#57524C" }}>
                 <strong>Auditoría en Pedido de Tienda (oculto al cliente):</strong>{" "}
                 {resultadoSimulador.formulaDetalle}
               </div>
@@ -1490,7 +1490,7 @@ export function FormularioLogisticaCobertura({
                 <div
                   style={{
                     fontSize: "0.74rem",
-                    color: "#0F766E",
+                    color: "#2F4737",
                     marginTop: "2px",
                     display: "flex",
                     flexWrap: "wrap",
@@ -1500,12 +1500,12 @@ export function FormularioLogisticaCobertura({
                   <strong>📍 Dirección detectada:</strong>
                   <span>{resultadoSimulador.detalleDireccion.resumenDireccion}</span>
                   {resultadoSimulador.detalleDireccion.sectorBarrio && (
-                    <span style={{ color: "#475569" }}>
+                    <span style={{ color: "#57524C" }}>
                       · <strong>Sector:</strong> {resultadoSimulador.detalleDireccion.sectorBarrio}
                     </span>
                   )}
                   {resultadoSimulador.detalleDireccion.parroquia && (
-                    <span style={{ color: "#475569" }}>
+                    <span style={{ color: "#57524C" }}>
                       · <strong>Parroquia:</strong> {resultadoSimulador.detalleDireccion.parroquia}
                     </span>
                   )}
@@ -1515,7 +1515,7 @@ export function FormularioLogisticaCobertura({
             <strong
               style={{
                 fontSize: "0.98rem",
-                color: resultadoSimulador.costoTotalEnvio === 0 ? "#16A34A" : "#0F172A",
+                color: resultadoSimulador.costoTotalEnvio === 0 ? "#2F4737" : "#1F1C19",
               }}
             >
               ${resultadoSimulador.costoTotalEnvio.toFixed(2)} USD
@@ -1528,12 +1528,12 @@ export function FormularioLogisticaCobertura({
       {mensajeError && (
         <div
           style={{
-            background: "#FEF2F2",
-            border: "1px solid #FECACA",
+            background: "#FAF2F2",
+            border: "1px solid #E5CACA",
             borderRadius: "10px",
             padding: "10px 14px",
             fontSize: "0.82rem",
-            color: "#B91C1C",
+            color: "#8A2E2E",
           }}
         >
           {mensajeError}
@@ -1543,12 +1543,12 @@ export function FormularioLogisticaCobertura({
       {mensajeOk && (
         <div
           style={{
-            background: "#F0FDF4",
+            background: "#F2F6F3",
             border: "1px solid #BBF7D0",
             borderRadius: "10px",
             padding: "10px 14px",
             fontSize: "0.82rem",
-            color: "#166534",
+            color: "#2B4A36",
             display: "flex",
             alignItems: "center",
             gap: "8px",
@@ -1571,8 +1571,8 @@ export function FormularioLogisticaCobertura({
             gap: "8px",
             padding: "10px 20px",
             borderRadius: "10px",
-            border: "1px solid #18181B",
-            background: "#18181B",
+            border: "1px solid #221E1B",
+            background: "#221E1B",
             color: "#FFFFFF",
             fontSize: "0.86rem",
             fontWeight: 700,

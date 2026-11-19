@@ -293,12 +293,10 @@ function EnlaceMenuLateral({
           height: "40px",
           borderRadius: "10px",
           textDecoration: "none",
-          color: activo ? "#FFFFFF" : "rgba(255, 255, 255, 0.72)",
-          background: activo
-            ? "linear-gradient(135deg, rgba(236, 127, 167, 0.24), rgba(184, 146, 63, 0.22))"
-            : "transparent",
-          border: activo ? "1px solid rgba(236, 127, 167, 0.45)" : "1px solid transparent",
-          boxShadow: activo ? "0 4px 12px rgba(0, 0, 0, 0.22)" : "none",
+          color: activo ? "#F6F1E8" : "rgba(255, 255, 255, 0.68)",
+          background: activo ? "rgba(200, 162, 90, 0.14)" : "transparent",
+          border: activo ? "1px solid rgba(200, 162, 90, 0.36)" : "1px solid transparent",
+          boxShadow: "none",
           transition: "background 0.15s ease, color 0.15s ease, border-color 0.15s ease",
         }}
       >
@@ -315,14 +313,14 @@ function EnlaceMenuLateral({
         display: "flex",
         alignItems: "center",
         gap: "9px",
-        padding: compacto ? "7px 10px" : "8px 11px",
-        borderRadius: "9px",
+        padding: compacto ? "7px 10px" : "7.5px 11px",
+        borderRadius: "8px",
         textDecoration: "none",
-        fontSize: compacto ? "0.82rem" : "0.85rem",
+        fontSize: compacto ? "0.79rem" : "0.82rem",
         fontWeight: activo ? 600 : 400,
-        color: activo ? "#FFFFFF" : "rgba(255, 255, 255, 0.78)",
-        background: activo ? "rgba(255, 255, 255, 0.12)" : "transparent",
-        boxShadow: activo ? "inset 2.5px 0 0 #EC7FA7" : "none",
+        color: activo ? "#F6F1E8" : "rgba(235, 229, 220, 0.76)",
+        background: activo ? "rgba(200, 162, 90, 0.13)" : "transparent",
+        boxShadow: activo ? "inset 2px 0 0 #C8A25A" : "none",
         transition: "background 0.15s ease, color 0.15s ease",
       }}
     >

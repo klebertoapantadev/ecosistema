@@ -170,14 +170,14 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel> = [
 ];
 
 const COLOR_BADGE_ROL: Record<string, { bg: string; color: string }> = {
-  SUPERADMIN: { bg: "#C27D5F", color: "#FFFFFF" },
-  ADMINISTRADOR: { bg: "#3D5A45", color: "#FFFFFF" },
-  OPERADOR: { bg: "#0284C7", color: "#FFFFFF" },
-  VENTAS: { bg: "#1D4ED8", color: "#FFFFFF" },
-  TALLER: { bg: "#15803D", color: "#FFFFFF" },
-  DELIVERY: { bg: "#B45309", color: "#FFFFFF" },
-  DELIVERY_EXTERNO: { bg: "#C2410C", color: "#FFFFFF" },
-  CLIENTE: { bg: "rgba(255, 255, 255, 0.14)", color: "#F5F2EB" },
+  SUPERADMIN: { bg: "rgba(200, 162, 90, 0.2)", color: "#E8D5AE" },
+  ADMINISTRADOR: { bg: "rgba(126, 163, 137, 0.2)", color: "#D4E5D9" },
+  OPERADOR: { bg: "rgba(255, 255, 255, 0.12)", color: "#EAE4DC" },
+  VENTAS: { bg: "rgba(255, 255, 255, 0.12)", color: "#EAE4DC" },
+  TALLER: { bg: "rgba(126, 163, 137, 0.18)", color: "#D4E5D9" },
+  DELIVERY: { bg: "rgba(200, 162, 90, 0.16)", color: "#E8D5AE" },
+  DELIVERY_EXTERNO: { bg: "rgba(200, 162, 90, 0.16)", color: "#E8D5AE" },
+  CLIENTE: { bg: "rgba(255, 255, 255, 0.1)", color: "#EAE4DC" },
 };
 
 export default async function LayoutPanel({ children }: { children: React.ReactNode }) {

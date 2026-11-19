@@ -114,15 +114,15 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
           flexWrap: "wrap",
           gap: "12px",
           paddingBottom: "16px",
-          borderBottom: "1px solid #E5E7EB",
+          borderBottom: "1px solid #E6E2DA",
         }}
       >
         <div>
-          <h3 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "#111827", display: "flex", alignItems: "center", gap: "8px" }}>
-            <KeyRound size={20} color="var(--violeta, #18181B)" />
+          <h3 style={{ margin: 0, fontSize: "0.94rem", fontWeight: 700, color: "#1F1C19", display: "flex", alignItems: "center", gap: "8px" }}>
+            <KeyRound size={20} color="var(--violeta, #221E1B)" />
             Tokens de Integración & Servidor MCP
           </h3>
-          <p style={{ margin: "4px 0 0 0", fontSize: "0.85rem", color: "#6B7280" }}>
+          <p style={{ margin: "4px 0 0 0", fontSize: "0.85rem", color: "#847D74" }}>
             Credenciales de acceso seguro para conectar el catálogo con bots de WhatsApp (YCloud), n8n, Claude o Cursor.
           </p>
         </div>
@@ -140,9 +140,9 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
               gap: "6px",
               padding: "8px 12px",
               borderRadius: "8px",
-              border: "1px solid #D1D5DB",
+              border: "1px solid #D5CFC4",
               background: "#FFFFFF",
-              color: "#374151",
+              color: "#57524C",
               fontSize: "0.85rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -165,7 +165,7 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
               padding: "8px 14px",
               borderRadius: "8px",
               border: "none",
-              background: "var(--violeta, #18181B)",
+              background: "var(--violeta, #221E1B)",
               color: "#FFFFFF",
               fontSize: "0.85rem",
               fontWeight: 700,
@@ -182,8 +182,8 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
       {/* Banner Informativo de Endpoint */}
       <div
         style={{
-          background: "#F9FAFB",
-          border: "1px solid #E5E7EB",
+          background: "#F8F7F4",
+          border: "1px solid #E6E2DA",
           borderRadius: "10px",
           padding: "14px 16px",
           display: "flex",
@@ -192,32 +192,32 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
         }}
       >
         <Terminal size={18} color="#4B5563" style={{ marginTop: "2px" }} />
-        <div style={{ fontSize: "0.85rem", color: "#374151", lineHeight: 1.5 }}>
+        <div style={{ fontSize: "0.85rem", color: "#57524C", lineHeight: 1.5 }}>
           <strong>Endpoint MCP HTTP:</strong>{" "}
-          <code style={{ background: "#EEF2FF", color: "#4338CA", padding: "2px 6px", borderRadius: "4px", fontSize: "0.82rem" }}>
+          <code style={{ background: "#F4F2EE", color: "#221E1B", padding: "2px 6px", borderRadius: "4px", fontSize: "0.82rem" }}>
             POST /api/mcp/catalogo
           </code>
           <br />
-          <span style={{ color: "#6B7280", fontSize: "0.8rem" }}>
+          <span style={{ color: "#847D74", fontSize: "0.8rem" }}>
             Autenticación requerida: Encabezado <code>Authorization: Bearer eco_live_...</code>
           </span>
         </div>
       </div>
 
       {error && (
-        <div style={{ background: "#FEF2F2", border: "1px solid #FCA5A5", borderRadius: "8px", padding: "12px 14px", color: "#B91C1C", fontSize: "0.85rem" }}>
+        <div style={{ background: "#FAF2F2", border: "1px solid #DEBABA", borderRadius: "8px", padding: "12px 14px", color: "#8A2E2E", fontSize: "0.85rem" }}>
           {error}
         </div>
       )}
 
       {/* Listado de Tokens */}
       {cargando ? (
-        <p style={{ fontSize: "0.88rem", color: "#6B7280", textAlign: "center", padding: "30px 0" }}>Cargando credenciales MCP...</p>
+        <p style={{ fontSize: "0.88rem", color: "#847D74", textAlign: "center", padding: "30px 0" }}>Cargando credenciales MCP...</p>
       ) : tokens.length === 0 ? (
-        <div style={{ textAlign: "center", padding: "40px 20px", background: "#F9FAFB", borderRadius: "12px", border: "1px dashed #D1D5DB" }}>
-          <KeyRound size={36} color="#9CA3AF" style={{ marginBottom: "10px" }} />
-          <h4 style={{ margin: "0 0 6px 0", color: "#374151" }}>No hay tokens generados</h4>
-          <p style={{ margin: 0, fontSize: "0.85rem", color: "#6B7280" }}>
+        <div style={{ textAlign: "center", padding: "40px 20px", background: "#F8F7F4", borderRadius: "12px", border: "1px dashed #D5CFC4" }}>
+          <KeyRound size={36} color="#9B948B" style={{ marginBottom: "10px" }} />
+          <h4 style={{ margin: "0 0 6px 0", color: "#57524C" }}>No hay tokens generados</h4>
+          <p style={{ margin: 0, fontSize: "0.85rem", color: "#847D74" }}>
             Crea tu primer token de acceso para conectar bots y asistentes al catálogo de {negocio.toUpperCase()}.
           </p>
         </div>
@@ -225,7 +225,7 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.85rem" }}>
             <thead>
-              <tr style={{ background: "#F9FAFB", borderBottom: "2px solid #E5E7EB", color: "#4B5563", fontWeight: 700 }}>
+              <tr style={{ background: "#F8F7F4", borderBottom: "2px solid #E6E2DA", color: "#4B5563", fontWeight: 700 }}>
                 <th style={{ padding: "10px 12px" }}>Nombre & Integración</th>
                 <th style={{ padding: "10px 12px" }}>Identificador (Prefijo)</th>
                 <th style={{ padding: "10px 12px" }}>Alcances</th>
@@ -236,15 +236,15 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
             </thead>
             <tbody>
               {tokens.map((t) => (
-                <tr key={t.id} style={{ borderBottom: "1px solid #F3F4F6" }}>
-                  <td style={{ padding: "12px", fontWeight: 600, color: "#111827" }}>
+                <tr key={t.id} style={{ borderBottom: "1px solid #F4F2EE" }}>
+                  <td style={{ padding: "12px", fontWeight: 600, color: "#1F1C19" }}>
                     {t.nombre}
-                    <div style={{ fontSize: "0.75rem", color: "#9CA3AF", fontWeight: 400 }}>
+                    <div style={{ fontSize: "0.75rem", color: "#9B948B", fontWeight: 400 }}>
                       Creado: {new Date(t.creado_en).toLocaleDateString()}
                     </div>
                   </td>
                   <td style={{ padding: "12px" }}>
-                    <code style={{ background: "#F3F4F6", padding: "3px 6px", borderRadius: "4px", fontSize: "0.8rem", color: "#374151" }}>
+                    <code style={{ background: "#F4F2EE", padding: "3px 6px", borderRadius: "4px", fontSize: "0.8rem", color: "#57524C" }}>
                       {t.prefijo}
                     </code>
                   </td>
@@ -254,8 +254,8 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
                         <span
                           key={alcance}
                           style={{
-                            background: "#E0E7FF",
-                            color: "#3730A3",
+                            background: "#EFECE6",
+                            color: "#3A3530",
                             fontSize: "0.72rem",
                             fontWeight: 600,
                             padding: "2px 6px",
@@ -269,20 +269,20 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
                   </td>
                   <td style={{ padding: "12px" }}>
                     {t.revocado_en ? (
-                      <span style={{ color: "#EF4444", fontWeight: 700, fontSize: "0.75rem", background: "#FEE2E2", padding: "3px 8px", borderRadius: "12px" }}>
+                      <span style={{ color: "#8A2E2E", fontWeight: 700, fontSize: "0.75rem", background: "#F6E9E9", padding: "3px 8px", borderRadius: "12px" }}>
                         Revocado
                       </span>
                     ) : t.expira_en && new Date(t.expira_en) <= new Date() ? (
-                      <span style={{ color: "#D97706", fontWeight: 700, fontSize: "0.75rem", background: "#FEF3C7", padding: "3px 8px", borderRadius: "12px" }}>
+                      <span style={{ color: "#8F6A2E", fontWeight: 700, fontSize: "0.75rem", background: "#FAF6EE", padding: "3px 8px", borderRadius: "12px" }}>
                         Expirado
                       </span>
                     ) : (
-                      <span style={{ color: "#059669", fontWeight: 700, fontSize: "0.75rem", background: "#D1FAE5", padding: "3px 8px", borderRadius: "12px" }}>
+                      <span style={{ color: "#2F4737", fontWeight: 700, fontSize: "0.75rem", background: "#EAF1EC", padding: "3px 8px", borderRadius: "12px" }}>
                         Activo
                       </span>
                     )}
                   </td>
-                  <td style={{ padding: "12px", color: "#6B7280", fontSize: "0.8rem" }}>
+                  <td style={{ padding: "12px", color: "#847D74", fontSize: "0.8rem" }}>
                     {t.ultimo_uso_en ? new Date(t.ultimo_uso_en).toLocaleString() : "Sin uso aún"}
                   </td>
                   <td style={{ padding: "12px", textAlign: "right" }}>
@@ -295,8 +295,8 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
                         title="Revocar credencial"
                         aria-label="Revocar credencial"
                         style={{
-                          background: "#FEE2E2",
-                          color: "#DC2626",
+                          background: "#F6E9E9",
+                          color: "#8A2E2E",
                           border: "none",
                           borderRadius: "6px",
                           padding: "6px 10px",
@@ -347,16 +347,16 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
               boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
             }}
           >
-            <h3 style={{ margin: "0 0 12px 0", fontSize: "1.2rem", fontWeight: 700, color: "#111827" }}>
+            <h3 style={{ margin: "0 0 12px 0", fontSize: "0.96rem", fontWeight: 700, color: "#1F1C19" }}>
               Generar Token MCP ({negocio.toUpperCase()})
             </h3>
-            <p style={{ margin: "0 0 20px 0", fontSize: "0.85rem", color: "#6B7280" }}>
+            <p style={{ margin: "0 0 20px 0", fontSize: "0.85rem", color: "#847D74" }}>
               Crea una credencial con permisos específicos para interactuar con las herramientas de catálogo.
             </p>
 
             <form onSubmit={handleCrearToken} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               <div>
-                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#374151", marginBottom: "6px" }}>
+                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#57524C", marginBottom: "6px" }}>
                   Nombre descriptivo:
                 </label>
                 <input
@@ -369,7 +369,7 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
                     width: "100%",
                     padding: "10px 12px",
                     borderRadius: "8px",
-                    border: "1px solid #D1D5DB",
+                    border: "1px solid #D5CFC4",
                     fontSize: "0.9rem",
                     boxSizing: "border-box",
                   }}
@@ -377,11 +377,11 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#374151", marginBottom: "6px" }}>
+                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#57524C", marginBottom: "6px" }}>
                   Alcances de acceso (Scopes):
                 </label>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.85rem", color: "#374151", cursor: "pointer" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.85rem", color: "#57524C", cursor: "pointer" }}>
                     <input
                       type="checkbox"
                       checked={alcanceCatalogo}
@@ -389,7 +389,7 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
                     />
                     <code>catalogo:leer</code> — Consultar productos, existencias y precios
                   </label>
-                  <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.85rem", color: "#374151", cursor: "pointer" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.85rem", color: "#57524C", cursor: "pointer" }}>
                     <input
                       type="checkbox"
                       checked={alcancePedidos}
@@ -397,7 +397,7 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
                     />
                     <code>pedidos:crear</code> — Generar cotizaciones y pedidos agénticos
                   </label>
-                  <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.85rem", color: "#374151", cursor: "pointer" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.85rem", color: "#57524C", cursor: "pointer" }}>
                     <input
                       type="checkbox"
                       checked={alcanceProspectos}
@@ -409,7 +409,7 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#374151", marginBottom: "6px" }}>
+                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#57524C", marginBottom: "6px" }}>
                   Vigencia / Caducidad:
                 </label>
                 <SelectConBuscador
@@ -419,7 +419,7 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
                     width: "100%",
                     padding: "10px 12px",
                     borderRadius: "8px",
-                    border: "1px solid #D1D5DB",
+                    border: "1px solid #D5CFC4",
                     fontSize: "0.9rem",
                     background: "#FFFFFF",
                   }}
@@ -439,9 +439,9 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
                   style={{
                     padding: "10px 16px",
                     borderRadius: "8px",
-                    border: "1px solid #D1D5DB",
+                    border: "1px solid #D5CFC4",
                     background: "#FFFFFF",
-                    color: "#374151",
+                    color: "#57524C",
                     fontWeight: 600,
                     fontSize: "0.85rem",
                     cursor: "pointer",
@@ -456,7 +456,7 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
                     padding: "10px 18px",
                     borderRadius: "8px",
                     border: "none",
-                    background: "var(--violeta, #18181B)",
+                    background: "var(--violeta, #221E1B)",
                     color: "#FFFFFF",
                     fontWeight: 700,
                     fontSize: "0.85rem",
@@ -498,20 +498,20 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
               boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px", color: "#059669" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "12px", color: "#2F4737" }}>
               <ShieldCheck size={24} />
-              <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 700, color: "#111827" }}>
+              <h3 style={{ margin: 0, fontSize: "0.98rem", fontWeight: 700, color: "#1F1C19" }}>
                 Token Creado Exitosamente
               </h3>
             </div>
 
             <div
               style={{
-                background: "#FEF3C7",
-                border: "1px solid #F59E0B",
+                background: "#FAF6EE",
+                border: "1px solid #8F6A2E",
                 borderRadius: "10px",
                 padding: "12px 14px",
-                color: "#92400E",
+                color: "#745622",
                 fontSize: "0.85rem",
                 display: "flex",
                 alignItems: "flex-start",
@@ -527,7 +527,7 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
             </div>
 
             <div style={{ marginBottom: "20px" }}>
-              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#374151", marginBottom: "6px" }}>
+              <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "#57524C", marginBottom: "6px" }}>
                 Bearer Token ({tokenGenerado.nombre}):
               </label>
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -540,11 +540,11 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
                     minWidth: 0,
                     padding: "10px 12px",
                     borderRadius: "8px",
-                    border: "1px solid #D1D5DB",
-                    background: "#F9FAFB",
+                    border: "1px solid #D5CFC4",
+                    background: "#F8F7F4",
                     fontFamily: "monospace",
                     fontSize: "0.85rem",
-                    color: "#111827",
+                    color: "#1F1C19",
                   }}
                 />
                 <button
@@ -557,7 +557,7 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
                     padding: "10px 16px",
                     borderRadius: "8px",
                     border: "none",
-                    background: copiado ? "#059669" : "var(--violeta, #18181B)",
+                    background: copiado ? "#2F4737" : "var(--violeta, #221E1B)",
                     color: "#FFFFFF",
                     fontWeight: 700,
                     fontSize: "0.85rem",
@@ -579,7 +579,7 @@ export function GestionTokensMcpWidget({ negocio }: Props) {
                   padding: "10px 20px",
                   borderRadius: "8px",
                   border: "none",
-                  background: "#111827",
+                  background: "#1F1C19",
                   color: "#FFFFFF",
                   fontWeight: 700,
                   fontSize: "0.85rem",

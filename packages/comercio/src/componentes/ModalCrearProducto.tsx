@@ -116,7 +116,7 @@ export function ModalCrearProducto({
   negocio = "tranqi",
 }: Props) {
   const { esFloristeria, esLegal, esMantenimiento } = detectarTipoNegocio(negocio);
-  const colorTema = esFloristeria ? "#E11D48" : "#0284C7";
+  const colorTema = esFloristeria ? "#221E1B" : "#221E1B";
 
   const [pasoActivo, setPasoActivo] = useState<PasoWizardProducto>("identidad_precio");
 
@@ -818,11 +818,11 @@ export function ModalCrearProducto({
         <div
           style={{
             padding: "14px 20px",
-            borderBottom: "1px solid #E2E8F0",
+            borderBottom: "1px solid #E6E2DA",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+            background: "linear-gradient(135deg, #1F1C19 0%, #221E1B 100%)",
             color: "#FFFFFF",
           }}
         >
@@ -848,14 +848,14 @@ export function ModalCrearProducto({
               )}
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 800, color: "#FFFFFF" }}>
+              <h2 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 800, color: "#FFFFFF" }}>
                 {esFloristeria
                   ? "Asistente de Nuevo Producto / Arreglo"
                   : esMantenimiento
                     ? "Asistente de Nuevo Servicio Técnico"
                     : "Asistente de Nuevo Producto / Servicio"}
               </h2>
-              <span style={{ fontSize: "0.74rem", color: "#94A3B8" }}>
+              <span style={{ fontSize: "0.74rem", color: "#847D74" }}>
                 Paso {indicePaso + 1} de {PASOS_WIZARD_PRODUCTO.length} ·{" "}
                 {nombre.trim() ? `${nombre} ($${totalCalc.toFixed(2)})` : "Configuración guiada"}
               </span>
@@ -871,7 +871,7 @@ export function ModalCrearProducto({
               background: "transparent",
               border: "none",
               cursor: "pointer",
-              color: "#94A3B8",
+              color: "#847D74",
               padding: "6px",
             }}
           >
@@ -904,9 +904,9 @@ export function ModalCrearProducto({
             {error && (
               <div
                 style={{
-                  background: "#FEF2F2",
-                  border: "1px solid #FCA5A5",
-                  color: "#991B1B",
+                  background: "#FAF2F2",
+                  border: "1px solid #DEBABA",
+                  color: "#8A2E2E",
                   padding: "10px 14px",
                   borderRadius: "8px",
                   marginBottom: "14px",
@@ -939,7 +939,7 @@ export function ModalCrearProducto({
                         display: "block",
                         fontSize: "0.8rem",
                         fontWeight: 700,
-                        color: "#1E293B",
+                        color: "#221E1B",
                         marginBottom: "4px",
                       }}
                     >
@@ -958,7 +958,7 @@ export function ModalCrearProducto({
                         width: "100%",
                         padding: "10px 12px",
                         borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid #D5CFC4",
                         fontSize: "0.92rem",
                         boxSizing: "border-box",
                         fontWeight: 700,
@@ -975,7 +975,7 @@ export function ModalCrearProducto({
                         marginBottom: "4px",
                       }}
                     >
-                      <label style={{ fontSize: "0.78rem", fontWeight: 700, color: "#334155" }}>
+                      <label style={{ fontSize: "0.78rem", fontWeight: 700, color: "#57524C" }}>
                         Categoría / Colección *
                       </label>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -1009,7 +1009,7 @@ export function ModalCrearProducto({
                           style={{
                             background: "none",
                             border: "none",
-                            color: "#64748B",
+                            color: "#847D74",
                             fontSize: "0.73rem",
                             fontWeight: 600,
                             cursor: "pointer",
@@ -1030,7 +1030,7 @@ export function ModalCrearProducto({
                         width: "100%",
                         padding: "9px 12px",
                         borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid #D5CFC4",
                         fontSize: "0.85rem",
                         background: "#FFFFFF",
                       }}
@@ -1052,7 +1052,7 @@ export function ModalCrearProducto({
                         marginBottom: "4px",
                       }}
                     >
-                      <label style={{ fontSize: "0.78rem", fontWeight: 700, color: "#334155" }}>
+                      <label style={{ fontSize: "0.78rem", fontWeight: 700, color: "#57524C" }}>
                         Tipo de Oferta Comercial
                       </label>
                       <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -1082,7 +1082,7 @@ export function ModalCrearProducto({
                           style={{
                             background: "none",
                             border: "none",
-                            color: "#64748B",
+                            color: "#847D74",
                             fontSize: "0.73rem",
                             fontWeight: 600,
                             cursor: "pointer",
@@ -1122,7 +1122,7 @@ export function ModalCrearProducto({
                         width: "100%",
                         padding: "9px 12px",
                         borderRadius: "8px",
-                        border: esOfertaRentaActiva ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
+                        border: esOfertaRentaActiva ? "1.5px solid #8F6A2E" : "1px solid #D5CFC4",
                         fontSize: "0.85rem",
                         background: esOfertaRentaActiva ? "#FFFDF5" : "#FFFFFF",
                         fontWeight: esOfertaRentaActiva ? 700 : 500,
@@ -1144,8 +1144,8 @@ export function ModalCrearProducto({
                 {/* Bloque de Precio, Oferta, SKU e IVA */}
                 <div
                   style={{
-                    background: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
+                    background: "#F8F7F4",
+                    border: "1px solid #E6E2DA",
                     borderRadius: "12px",
                     padding: "14px",
                   }}
@@ -1163,7 +1163,7 @@ export function ModalCrearProducto({
                           display: "block",
                           fontSize: "0.75rem",
                           fontWeight: 700,
-                          color: "#334155",
+                          color: "#57524C",
                           marginBottom: "4px",
                         }}
                       >
@@ -1188,7 +1188,7 @@ export function ModalCrearProducto({
                           width: "100%",
                           padding: "8px 11px",
                           borderRadius: "8px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           fontSize: "0.95rem",
                           fontWeight: 800,
                           boxSizing: "border-box",
@@ -1202,7 +1202,7 @@ export function ModalCrearProducto({
                           display: "block",
                           fontSize: "0.75rem",
                           fontWeight: 700,
-                          color: "#D97706",
+                          color: "#8F6A2E",
                           marginBottom: "4px",
                         }}
                       >
@@ -1227,10 +1227,10 @@ export function ModalCrearProducto({
                           width: "100%",
                           padding: "8px 11px",
                           borderRadius: "8px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           fontSize: "0.92rem",
                           fontWeight: 700,
-                          color: "#D97706",
+                          color: "#8F6A2E",
                           boxSizing: "border-box",
                         }}
                       />
@@ -1242,7 +1242,7 @@ export function ModalCrearProducto({
                           display: "block",
                           fontSize: "0.75rem",
                           fontWeight: 700,
-                          color: "#334155",
+                          color: "#57524C",
                           marginBottom: "4px",
                         }}
                       >
@@ -1255,7 +1255,7 @@ export function ModalCrearProducto({
                           width: "100%",
                           padding: "8px 11px",
                           borderRadius: "8px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           fontSize: "0.84rem",
                           background: "#FFFFFF",
                           fontWeight: 700,
@@ -1272,7 +1272,7 @@ export function ModalCrearProducto({
                           display: "block",
                           fontSize: "0.75rem",
                           fontWeight: 700,
-                          color: "#334155",
+                          color: "#57524C",
                           marginBottom: "4px",
                         }}
                       >
@@ -1287,7 +1287,7 @@ export function ModalCrearProducto({
                           width: "100%",
                           padding: "8px 11px",
                           borderRadius: "8px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           fontSize: "0.83rem",
                           fontWeight: 600,
                           boxSizing: "border-box",
@@ -1301,7 +1301,7 @@ export function ModalCrearProducto({
                       marginTop: "10px",
                       padding: "8px 12px",
                       background: "#FFFFFF",
-                      border: "1px dashed #CBD5E1",
+                      border: "1px dashed #D5CFC4",
                       borderRadius: "8px",
                       display: "flex",
                       justifyContent: "space-between",
@@ -1312,15 +1312,15 @@ export function ModalCrearProducto({
                     }}
                   >
                     <div>
-                      <span style={{ color: "#64748B" }}>Base: </span>
+                      <span style={{ color: "#847D74" }}>Base: </span>
                       <strong>${baseNum.toFixed(2)}</strong>
-                      <span style={{ margin: "0 6px", color: "#CBD5E1" }}>|</span>
-                      <span style={{ color: "#64748B" }}>IVA ({tarifaIva}%): </span>
+                      <span style={{ margin: "0 6px", color: "#D5CFC4" }}>|</span>
+                      <span style={{ color: "#847D74" }}>IVA ({tarifaIva}%): </span>
                       <strong>${montoIvaCalc.toFixed(2)}</strong>
                     </div>
                     <div>
-                      <span style={{ color: "#64748B", marginRight: "6px" }}>PVP Final:</span>
-                      <strong style={{ color: "#059669", fontSize: "1.05rem", fontWeight: 800 }}>
+                      <span style={{ color: "#847D74", marginRight: "6px" }}>PVP Final:</span>
+                      <strong style={{ color: "#2F4737", fontSize: "0.9rem", fontWeight: 800 }}>
                         ${totalCalc.toFixed(2)}
                       </strong>
                     </div>
@@ -1387,10 +1387,10 @@ export function ModalCrearProducto({
                   style={{
                     padding: "12px 14px",
                     borderRadius: "10px",
-                    background: "#F0F9FF",
-                    border: "1px solid #BAE6FD",
+                    background: "#F4F2EE",
+                    border: "1px solid #DDD8CE",
                     fontSize: "0.78rem",
-                    color: "#0369A1",
+                    color: "#3A3530",
                     display: "flex",
                     alignItems: "center",
                     gap: "8px",
@@ -1410,7 +1410,7 @@ export function ModalCrearProducto({
                       display: "block",
                       fontSize: "0.82rem",
                       fontWeight: 800,
-                      color: "#0F172A",
+                      color: "#1F1C19",
                       marginBottom: "5px",
                     }}
                   >
@@ -1431,7 +1431,7 @@ export function ModalCrearProducto({
                       width: "100%",
                       padding: "10px 12px",
                       borderRadius: "10px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid #D5CFC4",
                       fontSize: "0.86rem",
                       lineHeight: 1.45,
                       boxSizing: "border-box",
@@ -1450,7 +1450,7 @@ export function ModalCrearProducto({
                       marginBottom: "6px",
                     }}
                   >
-                    <label style={{ fontSize: "0.82rem", fontWeight: 800, color: "#0F172A" }}>
+                    <label style={{ fontSize: "0.82rem", fontWeight: 800, color: "#1F1C19" }}>
                       Beneficios / ¿Qué incluye? (una viñeta por línea)
                     </label>
                     <div style={{ display: "flex", gap: "6px", flexWrap: "wrap" }}>
@@ -1466,11 +1466,11 @@ export function ModalCrearProducto({
                             style={{
                               padding: "3px 9px",
                               borderRadius: "999px",
-                              border: "1px solid #CBD5E1",
+                              border: "1px solid #D5CFC4",
                               background: "#FFFFFF",
                               fontSize: "0.71rem",
                               fontWeight: 700,
-                              color: "#334155",
+                              color: "#57524C",
                               cursor: "pointer",
                             }}
                           >
@@ -1486,11 +1486,11 @@ export function ModalCrearProducto({
                             style={{
                               padding: "3px 9px",
                               borderRadius: "999px",
-                              border: "1px solid #CBD5E1",
+                              border: "1px solid #D5CFC4",
                               background: "#FFFFFF",
                               fontSize: "0.71rem",
                               fontWeight: 700,
-                              color: "#334155",
+                              color: "#57524C",
                               cursor: "pointer",
                             }}
                           >
@@ -1505,11 +1505,11 @@ export function ModalCrearProducto({
                           style={{
                             padding: "3px 9px",
                             borderRadius: "999px",
-                            border: "1px solid #FECACA",
-                            background: "#FEF2F2",
+                            border: "1px solid #E5CACA",
+                            background: "#FAF2F2",
                             fontSize: "0.71rem",
                             fontWeight: 700,
-                            color: "#DC2626",
+                            color: "#8A2E2E",
                             cursor: "pointer",
                           }}
                         >
@@ -1530,7 +1530,7 @@ export function ModalCrearProducto({
                       width: "100%",
                       padding: "10px 12px",
                       borderRadius: "10px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid #D5CFC4",
                       fontSize: "0.85rem",
                       lineHeight: 1.45,
                       boxSizing: "border-box",
@@ -1543,14 +1543,14 @@ export function ModalCrearProducto({
                         marginTop: "8px",
                         padding: "10px 12px",
                         borderRadius: "9px",
-                        background: "#F8FAFC",
-                        border: "1px solid #E2E8F0",
+                        background: "#F8F7F4",
+                        border: "1px solid #E6E2DA",
                         display: "flex",
                         flexDirection: "column",
                         gap: "4px",
                       }}
                     >
-                      <span style={{ fontSize: "0.71rem", fontWeight: 700, color: "#64748B" }}>
+                      <span style={{ fontSize: "0.71rem", fontWeight: 700, color: "#847D74" }}>
                         Vista previa en tienda ({listaViñetasPreview.length} viñetas):
                       </span>
                       {listaViñetasPreview.map((item, idx) => (
@@ -1558,13 +1558,13 @@ export function ModalCrearProducto({
                           key={idx}
                           style={{
                             fontSize: "0.78rem",
-                            color: "#1E293B",
+                            color: "#221E1B",
                             display: "flex",
                             alignItems: "center",
                             gap: "6px",
                           }}
                         >
-                          <CheckCircle2 size={13} color="#059669" />
+                          <CheckCircle2 size={13} color="#2F4737" />
                           <span>{item}</span>
                         </div>
                       ))}
@@ -1578,7 +1578,7 @@ export function ModalCrearProducto({
                       display: "block",
                       fontSize: "0.78rem",
                       fontWeight: 700,
-                      color: "#334155",
+                      color: "#57524C",
                       marginBottom: "4px",
                     }}
                   >
@@ -1597,10 +1597,10 @@ export function ModalCrearProducto({
                           fontWeight: 700,
                           border:
                             tiempoEntrega === pr.val
-                              ? "1.5px solid #16A34A"
-                              : "1px solid #CBD5E1",
-                          background: tiempoEntrega === pr.val ? "#DCFCE7" : "#FFFFFF",
-                          color: tiempoEntrega === pr.val ? "#15803D" : "#475569",
+                              ? "1.5px solid #2F4737"
+                              : "1px solid #D5CFC4",
+                          background: tiempoEntrega === pr.val ? "#F2F6F3" : "#FFFFFF",
+                          color: tiempoEntrega === pr.val ? "#2F4737" : "#57524C",
                           cursor: "pointer",
                         }}
                       >
@@ -1617,7 +1617,7 @@ export function ModalCrearProducto({
                       width: "100%",
                       padding: "8px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid #D5CFC4",
                       fontSize: "0.84rem",
                       boxSizing: "border-box",
                     }}
@@ -1630,7 +1630,7 @@ export function ModalCrearProducto({
                       display: "block",
                       fontSize: "0.78rem",
                       fontWeight: 700,
-                      color: "#334155",
+                      color: "#57524C",
                       marginBottom: "4px",
                     }}
                   >
@@ -1645,7 +1645,7 @@ export function ModalCrearProducto({
                       width: "100%",
                       padding: "8px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid #D5CFC4",
                       fontSize: "0.82rem",
                       boxSizing: "border-box",
                     }}
@@ -1661,7 +1661,7 @@ export function ModalCrearProducto({
               <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                 <div
                   style={{
-                    background: "#F0FDF4",
+                    background: "#F2F6F3",
                     border: "1px solid #BBF7D0",
                     borderRadius: "12px",
                     padding: "16px",
@@ -1682,13 +1682,13 @@ export function ModalCrearProducto({
                         style={{
                           fontSize: "0.84rem",
                           fontWeight: 800,
-                          color: "#15803D",
+                          color: "#2F4737",
                           textTransform: "uppercase",
                         }}
                       >
                         📷 Galería de Fotos del Producto ({fotosCrear.length})
                       </div>
-                      <span style={{ fontSize: "0.73rem", color: "#166534" }}>
+                      <span style={{ fontSize: "0.73rem", color: "#2B4A36" }}>
                         La foto marcada como ★ #1 será la portada principal en vitrina.
                       </span>
                     </div>
@@ -1696,7 +1696,7 @@ export function ModalCrearProducto({
                     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                       <label
                         style={{
-                          background: subiendoImagen ? "#94A3B8" : "#15803D",
+                          background: subiendoImagen ? "#847D74" : "#2F4737",
                           color: "#FFFFFF",
                           padding: "7px 13px",
                           borderRadius: "8px",
@@ -1727,7 +1727,7 @@ export function ModalCrearProducto({
                           setModalGaleriaAbierto(true);
                         }}
                         style={{
-                          background: "#0284C7",
+                          background: "#221E1B",
                           color: "#FFFFFF",
                           border: "none",
                           padding: "7px 13px",
@@ -1751,11 +1751,11 @@ export function ModalCrearProducto({
                       style={{
                         marginBottom: "10px",
                         fontSize: "0.74rem",
-                        color: "#15803D",
-                        background: "#DCFCE7",
+                        color: "#2F4737",
+                        background: "#F2F6F3",
                         padding: "6px 10px",
                         borderRadius: "6px",
-                        border: "1px solid #86EFAC",
+                        border: "1px solid #CEDDD3",
                         display: "flex",
                         alignItems: "center",
                         gap: "6px",
@@ -1769,12 +1769,12 @@ export function ModalCrearProducto({
                   {fotosCrear.length === 0 ? (
                     <div
                       style={{
-                        border: "2px dashed #86EFAC",
+                        border: "2px dashed #CEDDD3",
                         borderRadius: "10px",
                         padding: "22px 16px",
                         textAlign: "center",
                         background: "#FFFFFF",
-                        color: "#475569",
+                        color: "#57524C",
                         marginBottom: "12px",
                         fontSize: "0.8rem",
                       }}
@@ -1803,9 +1803,9 @@ export function ModalCrearProducto({
                               position: "relative",
                               borderRadius: "8px",
                               overflow: "hidden",
-                              border: esPortada ? "2.5px solid #10B981" : "1px solid #CBD5E1",
+                              border: esPortada ? "2.5px solid #2F4737" : "1px solid #D5CFC4",
                               aspectRatio: "1 / 1",
-                              background: "#0F172A",
+                              background: "#1F1C19",
                               cursor: esPortada ? "default" : "pointer",
                             }}
                           >
@@ -1829,7 +1829,7 @@ export function ModalCrearProducto({
                                 style={{
                                   fontSize: "0.62rem",
                                   fontWeight: 800,
-                                  background: esPortada ? "#10B981" : "rgba(0,0,0,0.65)",
+                                  background: esPortada ? "#2F4737" : "rgba(0,0,0,0.65)",
                                   color: "#FFFFFF",
                                   padding: "2px 5px",
                                   borderRadius: "4px",
@@ -1876,7 +1876,7 @@ export function ModalCrearProducto({
                       onCambiarPosicion={setFotoPosicion}
                       onCambiarAjuste={setFotoAjuste}
                       onCambiarZoom={setFotoZoom}
-                      colorTema="#15803D"
+                      colorTema="#2F4737"
                     />
                   )}
 
@@ -1895,7 +1895,7 @@ export function ModalCrearProducto({
                           display: "block",
                           fontSize: "0.72rem",
                           fontWeight: 700,
-                          color: "#334155",
+                          color: "#57524C",
                           marginBottom: "3px",
                         }}
                       >
@@ -1920,7 +1920,7 @@ export function ModalCrearProducto({
                           width: "100%",
                           padding: "7px 10px",
                           borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           fontSize: "0.78rem",
                           boxSizing: "border-box",
                         }}
@@ -1933,7 +1933,7 @@ export function ModalCrearProducto({
                           onClick={() => void handleConvertirImagenGlobal()}
                           style={{
                             marginTop: "6px",
-                            background: "#0284C7",
+                            background: "#221E1B",
                             color: "#FFFFFF",
                             border: "none",
                             padding: "5px 10px",
@@ -1961,14 +1961,14 @@ export function ModalCrearProducto({
                           marginBottom: "3px",
                         }}
                       >
-                        <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
+                        <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#57524C" }}>
                           URLs adicionales de galería (1 por línea)
                         </label>
                         <label
                           style={{
                             fontSize: "0.68rem",
                             fontWeight: 700,
-                            color: "#15803D",
+                            color: "#2F4737",
                             cursor: "pointer",
                           }}
                         >
@@ -1992,7 +1992,7 @@ export function ModalCrearProducto({
                           width: "100%",
                           padding: "6px 10px",
                           borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           fontSize: "0.76rem",
                           boxSizing: "border-box",
                         }}
@@ -2014,7 +2014,7 @@ export function ModalCrearProducto({
                           display: "block",
                           fontSize: "0.72rem",
                           fontWeight: 700,
-                          color: "#334155",
+                          color: "#57524C",
                           marginBottom: "3px",
                         }}
                       >
@@ -2029,7 +2029,7 @@ export function ModalCrearProducto({
                           width: "100%",
                           padding: "7px 10px",
                           borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           fontSize: "0.78rem",
                           boxSizing: "border-box",
                         }}
@@ -2042,7 +2042,7 @@ export function ModalCrearProducto({
                           display: "block",
                           fontSize: "0.72rem",
                           fontWeight: 700,
-                          color: "#334155",
+                          color: "#57524C",
                           marginBottom: "3px",
                         }}
                       >
@@ -2057,7 +2057,7 @@ export function ModalCrearProducto({
                           width: "100%",
                           padding: "7px 10px",
                           borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           fontSize: "0.78rem",
                           boxSizing: "border-box",
                         }}
@@ -2076,8 +2076,8 @@ export function ModalCrearProducto({
                 {/* Estado y Temporalidad */}
                 <div
                   style={{
-                    background: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
+                    background: "#F8F7F4",
+                    border: "1px solid #E6E2DA",
                     borderRadius: "12px",
                     padding: "14px",
                   }}
@@ -2093,8 +2093,8 @@ export function ModalCrearProducto({
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <Calendar size={16} color="#0284C7" />
-                      <strong style={{ fontSize: "0.82rem", color: "#1E293B" }}>
+                      <Calendar size={16} color="#221E1B" />
+                      <strong style={{ fontSize: "0.82rem", color: "#221E1B" }}>
                         Estado en Catálogo y Vigencia Estacional
                       </strong>
                     </div>
@@ -2104,9 +2104,9 @@ export function ModalCrearProducto({
                         type="button"
                         onClick={() => setProActivo(!proActivo)}
                         style={{
-                          background: proActivo ? "#ECFDF5" : "#FEF2F2",
-                          border: proActivo ? "1.5px solid #10B981" : "1.5px solid #EF4444",
-                          color: proActivo ? "#065F46" : "#991B1B",
+                          background: proActivo ? "#F2F6F3" : "#FAF2F2",
+                          border: proActivo ? "1.5px solid #2F4737" : "1.5px solid #8A2E2E",
+                          color: proActivo ? "#2B4A36" : "#8A2E2E",
                           padding: "5px 12px",
                           borderRadius: "8px",
                           fontSize: "0.75rem",
@@ -2125,9 +2125,9 @@ export function ModalCrearProducto({
                         type="button"
                         onClick={() => setDestacado(!destacado)}
                         style={{
-                          background: destacado ? "#FEF3C7" : "#FFFFFF",
-                          border: destacado ? "1.5px solid #F59E0B" : "1px solid #CBD5E1",
-                          color: destacado ? "#B45309" : "#475569",
+                          background: destacado ? "#FAF6EE" : "#FFFFFF",
+                          border: destacado ? "1.5px solid #8F6A2E" : "1px solid #D5CFC4",
+                          color: destacado ? "#745622" : "#57524C",
                           padding: "5px 12px",
                           borderRadius: "8px",
                           fontSize: "0.75rem",
@@ -2173,9 +2173,9 @@ export function ModalCrearProducto({
                           padding: "8px 10px",
                           borderRadius: "8px",
                           border:
-                            vigenciaTipo === v.id ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
-                          background: vigenciaTipo === v.id ? "#E0F2FE" : "#FFFFFF",
-                          color: vigenciaTipo === v.id ? "#0369A1" : "#475569",
+                            vigenciaTipo === v.id ? "1.5px solid #221E1B" : "1px solid #D5CFC4",
+                          background: vigenciaTipo === v.id ? "#EFECE6" : "#FFFFFF",
+                          color: vigenciaTipo === v.id ? "#3A3530" : "#57524C",
                           fontSize: "0.76rem",
                           fontWeight: 700,
                           cursor: "pointer",
@@ -2203,7 +2203,7 @@ export function ModalCrearProducto({
                         style={{
                           padding: "7px 10px",
                           borderRadius: "8px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           fontSize: "0.8rem",
                         }}
                       />
@@ -2215,7 +2215,7 @@ export function ModalCrearProducto({
                         style={{
                           padding: "7px 10px",
                           borderRadius: "8px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           fontSize: "0.8rem",
                         }}
                       />
@@ -2229,7 +2229,7 @@ export function ModalCrearProducto({
                             style={{
                               padding: "7px 10px",
                               borderRadius: "8px",
-                              border: "1px solid #CBD5E1",
+                              border: "1px solid #D5CFC4",
                               fontSize: "0.8rem",
                             }}
                           />
@@ -2241,7 +2241,7 @@ export function ModalCrearProducto({
                             style={{
                               padding: "7px 10px",
                               borderRadius: "8px",
-                              border: "1px solid #CBD5E1",
+                              border: "1px solid #D5CFC4",
                               fontSize: "0.8rem",
                             }}
                           />
@@ -2254,15 +2254,15 @@ export function ModalCrearProducto({
                 {/* Logística y Transporte */}
                 <div
                   style={{
-                    background: deliveryIncluido ? "#F0FDF4" : "#F8FAFC",
-                    border: deliveryIncluido ? "1.5px solid #86EFAC" : "1px solid #E2E8F0",
+                    background: deliveryIncluido ? "#F2F6F3" : "#F8F7F4",
+                    border: deliveryIncluido ? "1.5px solid #CEDDD3" : "1px solid #E6E2DA",
                     borderRadius: "12px",
                     padding: "14px",
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "10px" }}>
-                    <Truck size={16} color="#16A34A" />
-                    <strong style={{ fontSize: "0.82rem", color: "#1E293B" }}>
+                    <Truck size={16} color="#2F4737" />
+                    <strong style={{ fontSize: "0.82rem", color: "#221E1B" }}>
                       Logística, Envíos y Modalidad de Entrega
                     </strong>
                   </div>
@@ -2291,13 +2291,13 @@ export function ModalCrearProducto({
                           borderRadius: "8px",
                           border:
                             deliveryIncluido && modalidadTransporte === "INCLUIDO_GRATIS"
-                              ? "1.5px solid #16A34A"
-                              : "1px solid #CBD5E1",
+                              ? "1.5px solid #2F4737"
+                              : "1px solid #D5CFC4",
                           background:
                             deliveryIncluido && modalidadTransporte === "INCLUIDO_GRATIS"
-                              ? "#DCFCE7"
+                              ? "#F2F6F3"
                               : "#FFFFFF",
-                          color: "#166534",
+                          color: "#2B4A36",
                           fontSize: "0.74rem",
                           fontWeight: 700,
                           cursor: "pointer",
@@ -2318,13 +2318,13 @@ export function ModalCrearProducto({
                           borderRadius: "8px",
                           border:
                             !deliveryIncluido && modalidadTransporte === "COSTO_ADICIONAL"
-                              ? "1.5px solid #F59E0B"
-                              : "1px solid #CBD5E1",
+                              ? "1.5px solid #8F6A2E"
+                              : "1px solid #D5CFC4",
                           background:
                             !deliveryIncluido && modalidadTransporte === "COSTO_ADICIONAL"
-                              ? "#FEF3C7"
+                              ? "#FAF6EE"
                               : "#FFFFFF",
-                          color: "#92400E",
+                          color: "#745622",
                           fontSize: "0.74rem",
                           fontWeight: 700,
                           cursor: "pointer",
@@ -2345,13 +2345,13 @@ export function ModalCrearProducto({
                           borderRadius: "8px",
                           border:
                             !deliveryIncluido && modalidadTransporte === "SOLO_RETIRO"
-                              ? "1.5px solid #475569"
-                              : "1px solid #CBD5E1",
+                              ? "1.5px solid #57524C"
+                              : "1px solid #D5CFC4",
                           background:
                             !deliveryIncluido && modalidadTransporte === "SOLO_RETIRO"
-                              ? "#F1F5F9"
+                              ? "#F4F2EE"
                               : "#FFFFFF",
-                          color: "#1E293B",
+                          color: "#221E1B",
                           fontSize: "0.74rem",
                           fontWeight: 700,
                           cursor: "pointer",
@@ -2370,7 +2370,7 @@ export function ModalCrearProducto({
                     }}
                   >
                     <div>
-                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#57524C", marginBottom: "2px" }}>
                         Etiqueta Visible de Transporte
                       </label>
                       <input
@@ -2381,7 +2381,7 @@ export function ModalCrearProducto({
                           width: "100%",
                           padding: "7px 10px",
                           borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           fontSize: "0.78rem",
                           boxSizing: "border-box",
                           background: "#FFFFFF",
@@ -2390,7 +2390,7 @@ export function ModalCrearProducto({
                     </div>
 
                     <div>
-                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                      <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#57524C", marginBottom: "2px" }}>
                         Zona de Cobertura
                       </label>
                       <input
@@ -2401,7 +2401,7 @@ export function ModalCrearProducto({
                           width: "100%",
                           padding: "7px 10px",
                           borderRadius: "6px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           fontSize: "0.78rem",
                           boxSizing: "border-box",
                           background: "#FFFFFF",
@@ -2411,7 +2411,7 @@ export function ModalCrearProducto({
 
                     {!esLegal && (
                       <div>
-                        <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#334155", marginBottom: "2px" }}>
+                        <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#57524C", marginBottom: "2px" }}>
                           Recargo Especial (+USD)
                         </label>
                         <input
@@ -2426,7 +2426,7 @@ export function ModalCrearProducto({
                             width: "100%",
                             padding: "7px 10px",
                             borderRadius: "6px",
-                            border: "1px solid #CBD5E1",
+                            border: "1px solid #D5CFC4",
                             fontSize: "0.78rem",
                             boxSizing: "border-box",
                             background: "#FFFFFF",
@@ -2447,8 +2447,8 @@ export function ModalCrearProducto({
                 {/* Canales */}
                 <div
                   style={{
-                    background: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
+                    background: "#F8F7F4",
+                    border: "1px solid #E6E2DA",
                     borderRadius: "12px",
                     padding: "14px",
                   }}
@@ -2462,12 +2462,12 @@ export function ModalCrearProducto({
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <Share2 size={16} color="#0284C7" />
-                      <strong style={{ fontSize: "0.82rem", color: "#1E293B" }}>
+                      <Share2 size={16} color="#221E1B" />
+                      <strong style={{ fontSize: "0.82rem", color: "#221E1B" }}>
                         Canales de Visibilidad y Venta
                       </strong>
                     </div>
-                    <span style={{ fontSize: "0.74rem", color: "#64748B", fontWeight: 600 }}>
+                    <span style={{ fontSize: "0.74rem", color: "#847D74", fontWeight: 600 }}>
                       {canalesSeleccionados.length} activos
                     </span>
                   </div>
@@ -2475,13 +2475,13 @@ export function ModalCrearProducto({
                   {!tieneAlMenosUnaImagen && (
                     <div
                       style={{
-                        background: "#FFFBEB",
-                        border: "1px solid #FDE68A",
+                        background: "#FAF6EE",
+                        border: "1px solid #E5D7BC",
                         borderRadius: "8px",
                         padding: "8px 10px",
                         marginBottom: "10px",
                         fontSize: "0.74rem",
-                        color: "#92400E",
+                        color: "#745622",
                       }}
                     >
                       📷 Los canales <strong>E-Commerce Web</strong> y <strong>App Clientes</strong>{" "}
@@ -2511,9 +2511,9 @@ export function ModalCrearProducto({
                             gap: "8px",
                             padding: "8px 10px",
                             borderRadius: "8px",
-                            border: `1.5px solid ${activo ? c.color : "#E2E8F0"}`,
+                            border: `1.5px solid ${activo ? c.color : "#E6E2DA"}`,
                             background: activo ? `${c.color}12` : "#FFFFFF",
-                            color: activo ? "#0F172A" : "#64748B",
+                            color: activo ? "#1F1C19" : "#847D74",
                             cursor: "pointer",
                             fontSize: "0.77rem",
                             fontWeight: activo ? 700 : 500,
@@ -2526,7 +2526,7 @@ export function ModalCrearProducto({
                               width: "8px",
                               height: "8px",
                               borderRadius: "50%",
-                              background: activo ? c.color : "#CBD5E1",
+                              background: activo ? c.color : "#D5CFC4",
                             }}
                           />
                           <span style={{ flex: 1 }}>{c.nombre}</span>
@@ -2539,8 +2539,8 @@ export function ModalCrearProducto({
                 {/* Usos y Ocasiones */}
                 <div
                   style={{
-                    background: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
+                    background: "#F8F7F4",
+                    border: "1px solid #E6E2DA",
                     borderRadius: "12px",
                     padding: "14px",
                   }}
@@ -2554,12 +2554,12 @@ export function ModalCrearProducto({
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                      <Target size={16} color="#0284C7" />
-                      <strong style={{ fontSize: "0.82rem", color: "#1E293B" }}>
+                      <Target size={16} color="#221E1B" />
+                      <strong style={{ fontSize: "0.82rem", color: "#221E1B" }}>
                         Usos y Ocasiones Recomendadas (IA y Buscador)
                       </strong>
                     </div>
-                    <span style={{ fontSize: "0.73rem", color: "#0369A1", fontWeight: 700 }}>
+                    <span style={{ fontSize: "0.73rem", color: "#3A3530", fontWeight: 700 }}>
                       {usosSeleccionados.length} seleccionados
                     </span>
                   </div>
@@ -2567,9 +2567,9 @@ export function ModalCrearProducto({
                   {mensajeExitoUso && (
                     <div
                       style={{
-                        background: "#ECFDF5",
-                        color: "#065F46",
-                        border: "1px solid #A7F3D0",
+                        background: "#F2F6F3",
+                        color: "#2B4A36",
+                        border: "1px solid #CEDDD3",
                         padding: "6px 10px",
                         borderRadius: "6px",
                         fontSize: "0.75rem",
@@ -2604,9 +2604,9 @@ export function ModalCrearProducto({
                             borderRadius: "6px",
                             fontSize: "0.74rem",
                             fontWeight: activo ? 700 : 500,
-                            border: activo ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
-                            background: activo ? "#F0F9FF" : "#FFFFFF",
-                            color: activo ? "#0369A1" : "#475569",
+                            border: activo ? "1.5px solid #221E1B" : "1px solid #D5CFC4",
+                            background: activo ? "#F4F2EE" : "#FFFFFF",
+                            color: activo ? "#3A3530" : "#57524C",
                             cursor: "pointer",
                             textAlign: "left",
                             gap: "4px",
@@ -2622,7 +2622,7 @@ export function ModalCrearProducto({
                               ev.stopPropagation();
                               void handleSolicitarEliminarUso(u.clave, u.label);
                             }}
-                            style={{ color: "#94A3B8", display: "inline-flex" }}
+                            style={{ color: "#847D74", display: "inline-flex" }}
                           >
                             {estaVerif ? <Loader2 size={11} /> : <X size={11} />}
                           </span>
@@ -2647,7 +2647,7 @@ export function ModalCrearProducto({
                         flex: 1,
                         padding: "6px 10px",
                         borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid #D5CFC4",
                         fontSize: "0.76rem",
                       }}
                     />
@@ -2655,7 +2655,7 @@ export function ModalCrearProducto({
                       type="button"
                       onClick={handleAgregarUsoPersonalizado}
                       style={{
-                        background: "#0F172A",
+                        background: "#1F1C19",
                         color: "#FFFFFF",
                         border: "none",
                         padding: "6px 12px",
@@ -2677,7 +2677,7 @@ export function ModalCrearProducto({
                         marginTop: "6px",
                         background: "transparent",
                         border: "none",
-                        color: "#0284C7",
+                        color: "#221E1B",
                         fontSize: "0.72rem",
                         cursor: "pointer",
                         textDecoration: "underline",
@@ -2691,15 +2691,15 @@ export function ModalCrearProducto({
                 {/* Etiquetas Semánticas */}
                 <div
                   style={{
-                    background: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
+                    background: "#F8F7F4",
+                    border: "1px solid #E6E2DA",
                     borderRadius: "12px",
                     padding: "14px",
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
-                    <Tag size={15} color="#0284C7" />
-                    <strong style={{ fontSize: "0.8rem", color: "#1E293B" }}>
+                    <Tag size={15} color="#221E1B" />
+                    <strong style={{ fontSize: "0.8rem", color: "#221E1B" }}>
                       Etiquetas de Búsqueda (Keywords)
                     </strong>
                   </div>
@@ -2713,7 +2713,7 @@ export function ModalCrearProducto({
                           alignItems: "center",
                           gap: "4px",
                           background: "#FFFFFF",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           borderRadius: "6px",
                           padding: "3px 8px",
                           fontSize: "0.74rem",
@@ -2751,7 +2751,7 @@ export function ModalCrearProducto({
                         flex: 1,
                         padding: "6px 10px",
                         borderRadius: "6px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid #D5CFC4",
                         fontSize: "0.76rem",
                       }}
                     />
@@ -2759,7 +2759,7 @@ export function ModalCrearProducto({
                       type="button"
                       onClick={handleAgregarEtiqueta}
                       style={{
-                        background: "#0284C7",
+                        background: "#221E1B",
                         color: "#FFFFFF",
                         border: "none",
                         padding: "6px 12px",
@@ -2781,8 +2781,8 @@ export function ModalCrearProducto({
           <div
             style={{
               padding: "12px 20px",
-              borderTop: "1px solid #E2E8F0",
-              background: "#F8FAFC",
+              borderTop: "1px solid #E6E2DA",
+              background: "#F8F7F4",
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
@@ -2803,9 +2803,9 @@ export function ModalCrearProducto({
                     gap: "6px",
                     padding: "8px 14px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid #D5CFC4",
                     background: "#FFFFFF",
-                    color: "#334155",
+                    color: "#57524C",
                     fontSize: "0.82rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -2821,9 +2821,9 @@ export function ModalCrearProducto({
                   style={{
                     padding: "8px 14px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid #D5CFC4",
                     background: "#FFFFFF",
-                    color: "#475569",
+                    color: "#57524C",
                     fontSize: "0.82rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -2848,7 +2848,7 @@ export function ModalCrearProducto({
                     padding: "9px 16px",
                     borderRadius: "8px",
                     border: "none",
-                    background: "#0F172A",
+                    background: "#1F1C19",
                     color: "#FFFFFF",
                     fontSize: "0.84rem",
                     fontWeight: 700,

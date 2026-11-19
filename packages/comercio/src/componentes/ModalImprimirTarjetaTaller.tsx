@@ -261,7 +261,7 @@ export function ModalImprimirTarjetaTaller({
       width: 240,
       margin: 1,
       color: {
-        dark: "#18181B",
+        dark: "#221E1B",
         light: "#FFFFFF",
       },
     })
@@ -904,7 +904,7 @@ export function ModalImprimirTarjetaTaller({
                     fontStyle: blk.italica ? "italic" : "normal",
                     textAlign: blk.alineacion || "center",
                     lineHeight: 1.38,
-                    color: blk.colorHex || "#18181B",
+                    color: blk.colorHex || "#221E1B",
                     whiteSpace: "pre-wrap",
                     wordBreak: "break-word",
                     zIndex: 5,
@@ -952,18 +952,18 @@ export function ModalImprimirTarjetaTaller({
           <div
             style={{
               padding: "13px 20px",
-              borderBottom: "1px solid #E2E8F0",
+              borderBottom: "1px solid #E6E2DA",
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              background: "#F8FAFC",
+              background: "#F8F7F4",
               gap: "10px",
             }}
           >
             <div>
               <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                <span style={{ fontSize: "1.15rem" }}>{esCondolencias ? "🕊️" : "💌"}</span>
-                <h2 style={{ fontSize: "1.03rem", fontWeight: 700, color: "#0F172A", margin: 0 }}>
+                <span style={{ fontSize: "0.94rem" }}>{esCondolencias ? "🕊️" : "💌"}</span>
+                <h2 style={{ fontSize: "1.03rem", fontWeight: 700, color: "#1F1C19", margin: 0 }}>
                   {esCondolencias ? "Tarjeta de Condolencias" : "Tarjeta de Dedicatoria"} — {orden.codigo}
                 </h2>
                 <span
@@ -972,14 +972,14 @@ export function ModalImprimirTarjetaTaller({
                     fontWeight: 700,
                     padding: "2px 8px",
                     borderRadius: "999px",
-                    background: esCondolencias ? "#F3E8FF" : "#DCFCE7",
-                    color: esCondolencias ? "#6B21A8" : "#166534",
+                    background: esCondolencias ? "#F4F2EE" : "#F2F6F3",
+                    color: esCondolencias ? "#3A3530" : "#2B4A36",
                   }}
                 >
                   {esCondolencias ? "Horizontal 16,8 × 11,3 cm" : "Vertical 11,3 × 16,8 cm"}
                 </span>
               </div>
-              <p style={{ margin: "2px 0 0 0", fontSize: "0.75rem", color: "#64748B" }}>
+              <p style={{ margin: "2px 0 0 0", fontSize: "0.75rem", color: "#847D74" }}>
                 {esCondolencias
                   ? "Diseñador visual para impresión en cartulina horizontal (sin QR ni música)."
                   : "Elige imprimir el mensaje (+ imagen opcional) o únicamente el QR para la tarjeta digital."}
@@ -992,9 +992,9 @@ export function ModalImprimirTarjetaTaller({
               aria-label="Cerrar"
               style={{
                 border: "none",
-                background: "#F1F5F9",
+                background: "#F4F2EE",
                 cursor: "pointer",
-                color: "#475569",
+                color: "#57524C",
                 padding: "6px",
                 borderRadius: "8px",
               }}
@@ -1008,16 +1008,16 @@ export function ModalImprimirTarjetaTaller({
             <div
               style={{
                 padding: "10px 20px",
-                background: "#FEF3C7",
-                borderBottom: "1px solid #F59E0B",
-                color: "#92400E",
+                background: "#FAF6EE",
+                borderBottom: "1px solid #8F6A2E",
+                color: "#745622",
                 display: "flex",
                 alignItems: "center",
                 gap: "9px",
                 fontSize: "0.78rem",
               }}
             >
-              <AlertTriangle size={17} style={{ flexShrink: 0, color: "#D97706" }} />
+              <AlertTriangle size={17} style={{ flexShrink: 0, color: "#8F6A2E" }} />
               <div>
                 <strong>¡Atención! Tarjeta modificada por el cliente</strong>
                 {metaLocal?.ultima_edicion_cliente_en
@@ -1041,14 +1041,14 @@ export function ModalImprimirTarjetaTaller({
             {/* COLUMNA IZQUIERDA: DISEÑADOR VISUAL INTERACTIVO + TRAZABILIDAD + ENLACES */}
             <div style={{ display: "flex", flexDirection: "column", gap: "11px" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#334155" }}>
+                <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#57524C" }}>
                   Diseñador de tarjeta ({anchoMm} × {altoMm} mm)
                 </span>
                 <span
                   style={{
                     fontSize: "0.69rem",
-                    color: soloQrEfectivo ? "#0369A1" : "#166534",
-                    background: soloQrEfectivo ? "#E0F2FE" : "#DCFCE7",
+                    color: soloQrEfectivo ? "#3A3530" : "#2B4A36",
+                    background: soloQrEfectivo ? "#EFECE6" : "#F2F6F3",
                     padding: "2px 8px",
                     borderRadius: "6px",
                     fontWeight: 700,
@@ -1075,8 +1075,8 @@ export function ModalImprimirTarjetaTaller({
               {/* TRAZABILIDAD */}
               <div
                 style={{
-                  background: "#F8FAFC",
-                  border: "1px solid #E2E8F0",
+                  background: "#F8F7F4",
+                  border: "1px solid #E6E2DA",
                   borderRadius: "10px",
                   padding: "9px 12px",
                   display: "flex",
@@ -1086,14 +1086,14 @@ export function ModalImprimirTarjetaTaller({
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <strong style={{ color: "#334155" }}>Estado y trazabilidad:</strong>
+                  <strong style={{ color: "#57524C" }}>Estado y trazabilidad:</strong>
                   <button
                     type="button"
                     onClick={() => setMostrarHistorial(!mostrarHistorial)}
                     style={{
                       border: "none",
                       background: "transparent",
-                      color: "#0284C7",
+                      color: "#221E1B",
                       cursor: "pointer",
                       fontSize: "0.72rem",
                       fontWeight: 700,
@@ -1111,15 +1111,15 @@ export function ModalImprimirTarjetaTaller({
                   <span
                     style={{
                       background: fueEditadaPorCliente
-                        ? "#DCFCE7"
+                        ? "#F2F6F3"
                         : fueEditadaPorStaff
-                          ? "#DBEAFE"
-                          : "#F1F5F9",
+                          ? "#EFECE6"
+                          : "#F4F2EE",
                       color: fueEditadaPorCliente
-                        ? "#166534"
+                        ? "#2B4A36"
                         : fueEditadaPorStaff
-                          ? "#1E40AF"
-                          : "#475569",
+                          ? "#3A3530"
+                          : "#57524C",
                       padding: "2px 7px",
                       borderRadius: "6px",
                       fontWeight: 600,
@@ -1134,8 +1134,8 @@ export function ModalImprimirTarjetaTaller({
                   {!esCondolencias && (
                     <span
                       style={{
-                        background: vistasCliente > 0 ? "#E0F2FE" : "#F1F5F9",
-                        color: vistasCliente > 0 ? "#0369A1" : "#475569",
+                        background: vistasCliente > 0 ? "#EFECE6" : "#F4F2EE",
+                        color: vistasCliente > 0 ? "#3A3530" : "#57524C",
                         padding: "2px 7px",
                         borderRadius: "6px",
                         fontWeight: 600,
@@ -1146,8 +1146,8 @@ export function ModalImprimirTarjetaTaller({
                   )}
                   <span
                     style={{
-                      background: conteoImpresiones > 0 ? "#FEF3C7" : "#F1F5F9",
-                      color: conteoImpresiones > 0 ? "#92400E" : "#475569",
+                      background: conteoImpresiones > 0 ? "#FAF6EE" : "#F4F2EE",
+                      color: conteoImpresiones > 0 ? "#745622" : "#57524C",
                       padding: "2px 7px",
                       borderRadius: "6px",
                       fontWeight: 600,
@@ -1165,7 +1165,7 @@ export function ModalImprimirTarjetaTaller({
                     style={{
                       marginTop: "4px",
                       paddingTop: "5px",
-                      borderTop: "1px dashed #CBD5E1",
+                      borderTop: "1px dashed #D5CFC4",
                       maxHeight: "80px",
                       overflowY: "auto",
                       display: "flex",
@@ -1174,12 +1174,12 @@ export function ModalImprimirTarjetaTaller({
                     }}
                   >
                     {historial.length === 0 ? (
-                      <span style={{ color: "#94A3B8" }}>Sin ediciones posteriores.</span>
+                      <span style={{ color: "#847D74" }}>Sin ediciones posteriores.</span>
                     ) : (
                       historial.map((h: any, i: number) => (
-                        <div key={i} style={{ fontSize: "0.7rem", color: "#334155" }}>
+                        <div key={i} style={{ fontSize: "0.7rem", color: "#57524C" }}>
                           • <strong>{h.autor || "Usuario"}</strong> ({h.rol || "STAFF"}):{" "}
-                          <span style={{ color: "#64748B" }}>
+                          <span style={{ color: "#847D74" }}>
                             {h.fecha ? new Date(h.fecha).toLocaleString("es-EC") : ""}
                           </span>
                         </div>
@@ -1192,8 +1192,8 @@ export function ModalImprimirTarjetaTaller({
               {/* ENLACES: EDICIÓN SIEMPRE DISPONIBLE (SIN LOGIN); VISTA DIGITAL QR SOLO EN DEDICATORIA */}
               <div
                 style={{
-                  background: "#F8FAFC",
-                  border: "1px solid #CBD5E1",
+                  background: "#F8F7F4",
+                  border: "1px solid #D5CFC4",
                   borderRadius: "10px",
                   padding: "9px 11px",
                   display: "flex",
@@ -1208,7 +1208,7 @@ export function ModalImprimirTarjetaTaller({
                         display: "block",
                         fontSize: "0.72rem",
                         fontWeight: 700,
-                        color: "#0F766E",
+                        color: "#2F4737",
                         marginBottom: "3px",
                       }}
                     >
@@ -1224,9 +1224,9 @@ export function ModalImprimirTarjetaTaller({
                           minWidth: "140px",
                           padding: "5px 7px",
                           fontSize: "0.7rem",
-                          color: "#334155",
+                          color: "#57524C",
                           background: "#FFFFFF",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           borderRadius: "6px",
                         }}
                       />
@@ -1237,7 +1237,7 @@ export function ModalImprimirTarjetaTaller({
                         aria-label="Copiar Enlace Edición"
                         style={{
                           padding: "5px 9px",
-                          background: copiadoEdicion ? "#16A34A" : "#0F766E",
+                          background: copiadoEdicion ? "#2F4737" : "#2F4737",
                           color: "#FFFFFF",
                           border: "none",
                           borderRadius: "6px",
@@ -1263,7 +1263,7 @@ export function ModalImprimirTarjetaTaller({
                           aria-label="WhatsApp Edición"
                           style={{
                             padding: "5px 8px",
-                            background: "#16A34A",
+                            background: "#2F4737",
                             color: "#FFFFFF",
                             borderRadius: "6px",
                             fontSize: "0.7rem",
@@ -1289,7 +1289,7 @@ export function ModalImprimirTarjetaTaller({
                         display: "block",
                         fontSize: "0.72rem",
                         fontWeight: 700,
-                        color: "#0369A1",
+                        color: "#3A3530",
                         marginBottom: "3px",
                       }}
                     >
@@ -1305,9 +1305,9 @@ export function ModalImprimirTarjetaTaller({
                           minWidth: "140px",
                           padding: "5px 7px",
                           fontSize: "0.7rem",
-                          color: "#334155",
+                          color: "#57524C",
                           background: "#FFFFFF",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           borderRadius: "6px",
                         }}
                       />
@@ -1318,7 +1318,7 @@ export function ModalImprimirTarjetaTaller({
                         aria-label="Copiar Enlace Digital"
                         style={{
                           padding: "5px 9px",
-                          background: copiadoVista ? "#16A34A" : "#0284C7",
+                          background: copiadoVista ? "#2F4737" : "#221E1B",
                           color: "#FFFFFF",
                           border: "none",
                           borderRadius: "6px",
@@ -1342,8 +1342,8 @@ export function ModalImprimirTarjetaTaller({
                         style={{
                           padding: "5px 8px",
                           background: "#FFFFFF",
-                          border: "1px solid #CBD5E1",
-                          color: "#0F172A",
+                          border: "1px solid #D5CFC4",
+                          color: "#1F1C19",
                           borderRadius: "6px",
                           fontSize: "0.7rem",
                           fontWeight: 700,
@@ -1370,7 +1370,7 @@ export function ModalImprimirTarjetaTaller({
                   style={{
                     fontSize: "0.75rem",
                     fontWeight: 700,
-                    color: "#334155",
+                    color: "#57524C",
                     display: "block",
                     marginBottom: "4px",
                   }}
@@ -1384,9 +1384,9 @@ export function ModalImprimirTarjetaTaller({
                     style={{
                       padding: "8px 10px",
                       borderRadius: "8px",
-                      border: !esCondolencias ? "2px solid #0284C7" : "1px solid #CBD5E1",
-                      background: !esCondolencias ? "#F0F9FF" : "#FFFFFF",
-                      color: !esCondolencias ? "#0369A1" : "#475569",
+                      border: !esCondolencias ? "2px solid #221E1B" : "1px solid #D5CFC4",
+                      background: !esCondolencias ? "#F4F2EE" : "#FFFFFF",
+                      color: !esCondolencias ? "#3A3530" : "#57524C",
                       fontWeight: 700,
                       fontSize: "0.77rem",
                       cursor: "pointer",
@@ -1394,7 +1394,7 @@ export function ModalImprimirTarjetaTaller({
                     }}
                   >
                     💌 Dedicatoria (Vertical)
-                    <span style={{ display: "block", fontSize: "0.66rem", fontWeight: 400, color: "#64748B" }}>
+                    <span style={{ display: "block", fontSize: "0.66rem", fontWeight: 400, color: "#847D74" }}>
                       11,3 × 16,8 cm · Se dobla
                     </span>
                   </button>
@@ -1405,9 +1405,9 @@ export function ModalImprimirTarjetaTaller({
                     style={{
                       padding: "8px 10px",
                       borderRadius: "8px",
-                      border: esCondolencias ? "2px solid #7C3AED" : "1px solid #CBD5E1",
-                      background: esCondolencias ? "#F5F3FF" : "#FFFFFF",
-                      color: esCondolencias ? "#5B21B6" : "#475569",
+                      border: esCondolencias ? "2px solid #221E1B" : "1px solid #D5CFC4",
+                      background: esCondolencias ? "#F4F2EE" : "#FFFFFF",
+                      color: esCondolencias ? "#3A3530" : "#57524C",
                       fontWeight: 700,
                       fontSize: "0.77rem",
                       cursor: "pointer",
@@ -1415,7 +1415,7 @@ export function ModalImprimirTarjetaTaller({
                     }}
                   >
                     🕊️ Condolencias (Horizontal)
-                    <span style={{ display: "block", fontSize: "0.66rem", fontWeight: 400, color: "#64748B" }}>
+                    <span style={{ display: "block", fontSize: "0.66rem", fontWeight: 400, color: "#847D74" }}>
                       16,8 × 11,3 cm · Sin QR ni música
                     </span>
                   </button>
@@ -1429,7 +1429,7 @@ export function ModalImprimirTarjetaTaller({
                     style={{
                       fontSize: "0.75rem",
                       fontWeight: 700,
-                      color: "#334155",
+                      color: "#57524C",
                       display: "block",
                       marginBottom: "4px",
                     }}
@@ -1443,9 +1443,9 @@ export function ModalImprimirTarjetaTaller({
                       style={{
                         padding: "8px 10px",
                         borderRadius: "8px",
-                        border: !soloQrEfectivo ? "2px solid #0F766E" : "1px solid #CBD5E1",
-                        background: !soloQrEfectivo ? "#F0FDFA" : "#FFFFFF",
-                        color: !soloQrEfectivo ? "#0F766E" : "#475569",
+                        border: !soloQrEfectivo ? "2px solid #2F4737" : "1px solid #D5CFC4",
+                        background: !soloQrEfectivo ? "#F2F6F3" : "#FFFFFF",
+                        color: !soloQrEfectivo ? "#2F4737" : "#57524C",
                         fontWeight: 700,
                         fontSize: "0.76rem",
                         cursor: "pointer",
@@ -1453,7 +1453,7 @@ export function ModalImprimirTarjetaTaller({
                       }}
                     >
                       📝 Imprimir Mensaje
-                      <span style={{ display: "block", fontSize: "0.65rem", fontWeight: 400, color: "#64748B" }}>
+                      <span style={{ display: "block", fontSize: "0.65rem", fontWeight: 400, color: "#847D74" }}>
                         Texto + imagen opcional (sin QR)
                       </span>
                     </button>
@@ -1464,9 +1464,9 @@ export function ModalImprimirTarjetaTaller({
                       style={{
                         padding: "8px 10px",
                         borderRadius: "8px",
-                        border: soloQrEfectivo ? "2px solid #0284C7" : "1px solid #CBD5E1",
-                        background: soloQrEfectivo ? "#F0F9FF" : "#FFFFFF",
-                        color: soloQrEfectivo ? "#0369A1" : "#475569",
+                        border: soloQrEfectivo ? "2px solid #221E1B" : "1px solid #D5CFC4",
+                        background: soloQrEfectivo ? "#F4F2EE" : "#FFFFFF",
+                        color: soloQrEfectivo ? "#3A3530" : "#57524C",
                         fontWeight: 700,
                         fontSize: "0.76rem",
                         cursor: "pointer",
@@ -1475,7 +1475,7 @@ export function ModalImprimirTarjetaTaller({
                     >
                       <Lock size={11} style={{ verticalAlign: "middle", marginRight: "3px" }} />
                       Imprimir Solo QR
-                      <span style={{ display: "block", fontSize: "0.65rem", fontWeight: 400, color: "#64748B" }}>
+                      <span style={{ display: "block", fontSize: "0.65rem", fontWeight: 400, color: "#847D74" }}>
                         Confidencial · Mensaje y música en web
                       </span>
                     </button>
@@ -1490,7 +1490,7 @@ export function ModalImprimirTarjetaTaller({
                     style={{
                       fontSize: "0.74rem",
                       fontWeight: 700,
-                      color: "#334155",
+                      color: "#57524C",
                       display: "block",
                       marginBottom: "3px",
                     }}
@@ -1506,7 +1506,7 @@ export function ModalImprimirTarjetaTaller({
                       width: "100%",
                       padding: "6px 8px",
                       borderRadius: "7px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid #D5CFC4",
                       fontSize: "0.79rem",
                       boxSizing: "border-box",
                     }}
@@ -1517,7 +1517,7 @@ export function ModalImprimirTarjetaTaller({
                     style={{
                       fontSize: "0.74rem",
                       fontWeight: 700,
-                      color: "#334155",
+                      color: "#57524C",
                       display: "block",
                       marginBottom: "3px",
                     }}
@@ -1533,7 +1533,7 @@ export function ModalImprimirTarjetaTaller({
                       width: "100%",
                       padding: "6px 8px",
                       borderRadius: "7px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid #D5CFC4",
                       fontSize: "0.79rem",
                       boxSizing: "border-box",
                     }}
@@ -1547,7 +1547,7 @@ export function ModalImprimirTarjetaTaller({
                   style={{
                     fontSize: "0.76rem",
                     fontWeight: 700,
-                    color: "#0F172A",
+                    color: "#1F1C19",
                     display: "block",
                     marginBottom: "3px",
                   }}
@@ -1567,7 +1567,7 @@ export function ModalImprimirTarjetaTaller({
                     width: "100%",
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    border: "1px solid #94A3B8",
+                    border: "1px solid #847D74",
                     fontSize: "0.83rem",
                     lineHeight: 1.4,
                     boxSizing: "border-box",
@@ -1579,8 +1579,8 @@ export function ModalImprimirTarjetaTaller({
               {!esCondolencias && (
                 <div
                   style={{
-                    background: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
+                    background: "#F8F7F4",
+                    border: "1px solid #E6E2DA",
                     borderRadius: "9px",
                     padding: "8px 10px",
                     display: "flex",
@@ -1597,7 +1597,7 @@ export function ModalImprimirTarjetaTaller({
                       flexWrap: "wrap",
                     }}
                   >
-                    <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#334155" }}>
+                    <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#57524C" }}>
                       🎵 Canción de fondo (YouTube o MP3 — para tarjeta digital):
                     </span>
                     <div style={{ display: "flex", gap: "5px" }}>
@@ -1608,9 +1608,9 @@ export function ModalImprimirTarjetaTaller({
                         title="Subir archivo MP3"
                         aria-label="Subir MP3"
                         style={{
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           background: "#FFFFFF",
-                          color: "#0F172A",
+                          color: "#1F1C19",
                           padding: "3px 7px",
                           borderRadius: "6px",
                           fontSize: "0.7rem",
@@ -1638,9 +1638,9 @@ export function ModalImprimirTarjetaTaller({
                         title="Generar letra sincronizada"
                         aria-label="Cargar Letra"
                         style={{
-                          border: "1px solid #BAE6FD",
-                          background: "#E0F2FE",
-                          color: "#0369A1",
+                          border: "1px solid #DDD8CE",
+                          background: "#EFECE6",
+                          color: "#3A3530",
                           padding: "3px 7px",
                           borderRadius: "6px",
                           fontSize: "0.7rem",
@@ -1666,7 +1666,7 @@ export function ModalImprimirTarjetaTaller({
                       width: "100%",
                       padding: "6px 8px",
                       borderRadius: "6px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid #D5CFC4",
                       fontSize: "0.76rem",
                       background: "#FFFFFF",
                       boxSizing: "border-box",
@@ -1681,14 +1681,14 @@ export function ModalImprimirTarjetaTaller({
                       width: "100%",
                       padding: "6px 8px",
                       borderRadius: "6px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid #D5CFC4",
                       fontSize: "0.76rem",
                       background: "#FFFFFF",
                       boxSizing: "border-box",
                     }}
                   />
                   {lyricsEditables.length > 0 && (
-                    <span style={{ fontSize: "0.69rem", color: "#15803D", fontWeight: 600 }}>
+                    <span style={{ fontSize: "0.69rem", color: "#2F4737", fontWeight: 600 }}>
                       ✓ {lyricsEditables.length} líneas de lyric listas para deslizarse abajo.
                     </span>
                   )}
@@ -1703,7 +1703,7 @@ export function ModalImprimirTarjetaTaller({
                   style={{
                     border: "none",
                     background: "transparent",
-                    color: "#0369A1",
+                    color: "#3A3530",
                     fontSize: "0.72rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -1721,17 +1721,17 @@ export function ModalImprimirTarjetaTaller({
               {mostrarCalibrador && (
                 <div
                   style={{
-                    background: "#F8FAFC",
+                    background: "#F8F7F4",
                     padding: "9px 11px",
                     borderRadius: "8px",
-                    border: "1px solid #E2E8F0",
+                    border: "1px solid #E6E2DA",
                     display: "grid",
                     gridTemplateColumns: "repeat(4, 1fr)",
                     gap: "8px",
                   }}
                 >
                   <div>
-                    <label style={{ fontSize: "0.68rem", color: "#475569", display: "block" }}>
+                    <label style={{ fontSize: "0.68rem", color: "#57524C", display: "block" }}>
                       Ancho (mm)
                     </label>
                     <input
@@ -1742,14 +1742,14 @@ export function ModalImprimirTarjetaTaller({
                         width: "100%",
                         padding: "4px 6px",
                         borderRadius: "5px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid #D5CFC4",
                         fontSize: "0.76rem",
                         boxSizing: "border-box",
                       }}
                     />
                   </div>
                   <div>
-                    <label style={{ fontSize: "0.68rem", color: "#475569", display: "block" }}>
+                    <label style={{ fontSize: "0.68rem", color: "#57524C", display: "block" }}>
                       Alto (mm)
                     </label>
                     <input
@@ -1760,14 +1760,14 @@ export function ModalImprimirTarjetaTaller({
                         width: "100%",
                         padding: "4px 6px",
                         borderRadius: "5px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid #D5CFC4",
                         fontSize: "0.76rem",
                         boxSizing: "border-box",
                       }}
                     />
                   </div>
                   <div>
-                    <label style={{ fontSize: "0.68rem", color: "#475569", display: "block" }}>
+                    <label style={{ fontSize: "0.68rem", color: "#57524C", display: "block" }}>
                       Desfase X (mm)
                     </label>
                     <input
@@ -1778,14 +1778,14 @@ export function ModalImprimirTarjetaTaller({
                         width: "100%",
                         padding: "4px 6px",
                         borderRadius: "5px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid #D5CFC4",
                         fontSize: "0.76rem",
                         boxSizing: "border-box",
                       }}
                     />
                   </div>
                   <div>
-                    <label style={{ fontSize: "0.68rem", color: "#475569", display: "block" }}>
+                    <label style={{ fontSize: "0.68rem", color: "#57524C", display: "block" }}>
                       Desfase Y (mm)
                     </label>
                     <input
@@ -1796,7 +1796,7 @@ export function ModalImprimirTarjetaTaller({
                         width: "100%",
                         padding: "4px 6px",
                         borderRadius: "5px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid #D5CFC4",
                         fontSize: "0.76rem",
                         boxSizing: "border-box",
                       }}
@@ -1810,8 +1810,8 @@ export function ModalImprimirTarjetaTaller({
                   style={{
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    background: "#FEE2E2",
-                    color: "#991B1B",
+                    background: "#F6E9E9",
+                    color: "#8A2E2E",
                     fontSize: "0.75rem",
                     fontWeight: 600,
                   }}
@@ -1824,8 +1824,8 @@ export function ModalImprimirTarjetaTaller({
                   style={{
                     padding: "8px 10px",
                     borderRadius: "8px",
-                    background: "#DCFCE7",
-                    color: "#166534",
+                    background: "#F2F6F3",
+                    color: "#2B4A36",
                     fontSize: "0.75rem",
                     fontWeight: 600,
                   }}
@@ -1840,8 +1840,8 @@ export function ModalImprimirTarjetaTaller({
           <div
             style={{
               padding: "12px 20px",
-              borderTop: "1px solid #E2E8F0",
-              background: "#F8FAFC",
+              borderTop: "1px solid #E6E2DA",
+              background: "#F8F7F4",
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
@@ -1858,9 +1858,9 @@ export function ModalImprimirTarjetaTaller({
               style={{
                 padding: "9px 14px",
                 borderRadius: "8px",
-                border: "1px solid #0F766E",
-                background: "#F0FDFA",
-                color: "#0F766E",
+                border: "1px solid #2F4737",
+                background: "#F2F6F3",
+                color: "#2F4737",
                 fontWeight: 700,
                 fontSize: "0.82rem",
                 cursor: "pointer",
@@ -1883,9 +1883,9 @@ export function ModalImprimirTarjetaTaller({
                 style={{
                   padding: "9px 13px",
                   borderRadius: "8px",
-                  border: "1px solid #16A34A",
-                  background: "#F0FDF4",
-                  color: "#15803D",
+                  border: "1px solid #2F4737",
+                  background: "#F2F6F3",
+                  color: "#2F4737",
                   fontWeight: 700,
                   fontSize: "0.82rem",
                   cursor: "pointer",
@@ -1907,9 +1907,9 @@ export function ModalImprimirTarjetaTaller({
                 style={{
                   padding: "9px 14px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid #D5CFC4",
                   background: "#FFFFFF",
-                  color: "#0F172A",
+                  color: "#1F1C19",
                   fontWeight: 700,
                   fontSize: "0.82rem",
                   cursor: "pointer",
@@ -1932,7 +1932,7 @@ export function ModalImprimirTarjetaTaller({
                   padding: "9px 16px",
                   borderRadius: "8px",
                   border: "none",
-                  background: "#0284C7",
+                  background: "#221E1B",
                   color: "#FFFFFF",
                   fontWeight: 700,
                   fontSize: "0.82rem",

@@ -51,9 +51,8 @@ export default async function PaginaConversacionesOmnicanalTinkay() {
       >
         <h1
           style={{
-            fontSize: "1.18rem",
-            fontWeight: 700,
-            margin: 0,
+            fontSize: "1.12rem",
+            fontWeight: 600, margin: 0,
             color: "#221D1A",
             letterSpacing: "-0.01em",
           }}

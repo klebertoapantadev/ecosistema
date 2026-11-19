@@ -176,9 +176,9 @@ export function ModalEditarVariacionProforma({
     width: "100%",
     padding: "8px 10px",
     borderRadius: "8px",
-    border: "1px solid #CBD5E1",
+    border: "1px solid #D5CFC4",
     fontSize: "0.84rem",
-    color: "#0F172A",
+    color: "#1F1C19",
     background: "#FFFFFF",
   };
 
@@ -207,7 +207,7 @@ export function ModalEditarVariacionProforma({
           overflowY: "auto",
           background: "#FFFFFF",
           borderRadius: "16px",
-          border: "1px solid #E2E8F0",
+          border: "1px solid #E6E2DA",
           boxShadow: "0 20px 50px rgba(15, 23, 42, 0.25)",
           padding: "22px",
         }}
@@ -218,7 +218,7 @@ export function ModalEditarVariacionProforma({
             justifyContent: "space-between",
             alignItems: "flex-start",
             gap: "12px",
-            borderBottom: "1px solid #E2E8F0",
+            borderBottom: "1px solid #E6E2DA",
             paddingBottom: "14px",
             marginBottom: "16px",
           }}
@@ -229,8 +229,8 @@ export function ModalEditarVariacionProforma({
                 display: "inline-block",
                 padding: "2px 8px",
                 borderRadius: "999px",
-                background: "#ECFDF5",
-                color: "#065F46",
+                background: "#F2F6F3",
+                color: "#2B4A36",
                 fontSize: "0.72rem",
                 fontWeight: 700,
                 marginBottom: "4px",
@@ -238,10 +238,10 @@ export function ModalEditarVariacionProforma({
             >
               ACTUALIZACIÓN DE ASESOR · CONSERVA VERSIÓN ORIGINAL
             </span>
-            <h3 style={{ margin: 0, fontSize: "1.12rem", color: "#0F172A" }}>
+            <h3 style={{ margin: 0, fontSize: "1.12rem", color: "#1F1C19" }}>
               Nueva Variación sobre {pedidoBase.codigoOrden}
             </h3>
-            <p style={{ margin: "4px 0 0", fontSize: "0.82rem", color: "#475569" }}>
+            <p style={{ margin: "4px 0 0", fontSize: "0.82rem", color: "#57524C" }}>
               Cliente: <strong>{pedidoBase.compradorNombre}</strong> ({pedidoBase.compradorCorreo}) ·
               Se enviará por correo el PDF Original + el PDF de esta nueva variación.
             </p>
@@ -252,8 +252,8 @@ export function ModalEditarVariacionProforma({
             title="Cerrar editor de proforma"
             aria-label="Cerrar"
             style={{
-              border: "1px solid #E2E8F0",
-              background: "#F8FAFC",
+              border: "1px solid #E6E2DA",
+              background: "#F8F7F4",
               borderRadius: "8px",
               padding: "6px",
               cursor: "pointer",
@@ -268,16 +268,16 @@ export function ModalEditarVariacionProforma({
             style={{
               padding: "20px",
               borderRadius: "12px",
-              background: "#F0FDF4",
+              background: "#F2F6F3",
               border: "1px solid #BBF7D0",
               textAlign: "center",
             }}
           >
-            <CheckCircle2 size={42} style={{ color: "#15803D", marginBottom: "8px" }} />
-            <h4 style={{ margin: "0 0 6px", fontSize: "1.05rem", color: "#14532D" }}>
+            <CheckCircle2 size={42} style={{ color: "#2F4737", marginBottom: "8px" }} />
+            <h4 style={{ margin: "0 0 6px", fontSize: "0.9rem", color: "#14532D" }}>
               Variación {resultadoExito.codigoProforma} emitida con éxito
             </h4>
-            <p style={{ margin: "0 0 12px", fontSize: "0.86rem", color: "#166534" }}>
+            <p style={{ margin: "0 0 12px", fontSize: "0.86rem", color: "#2B4A36" }}>
               {resultadoExito.correoEnviado
                 ? `Enviamos a ${pedidoBase.compradorCorreo} el correo con los 2 PDFs adjuntos (Proforma Original + Nueva Variación) y el link de selección.`
                 : `La variación quedó almacenada y activa. (${
@@ -295,7 +295,7 @@ export function ModalEditarVariacionProforma({
                 style={{
                   padding: "9px 16px",
                   borderRadius: "8px",
-                  background: "#2D4734",
+                  background: "#2F4737",
                   color: "#FFFFFF",
                   textDecoration: "none",
                   fontSize: "0.84rem",
@@ -312,9 +312,9 @@ export function ModalEditarVariacionProforma({
                 style={{
                   padding: "9px 16px",
                   borderRadius: "8px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid #D5CFC4",
                   background: "#FFFFFF",
-                  color: "#0F172A",
+                  color: "#1F1C19",
                   fontSize: "0.84rem",
                   fontWeight: 600,
                   cursor: "pointer",
@@ -406,10 +406,10 @@ export function ModalEditarVariacionProforma({
             {/* Tabla editable de ítems */}
             <div
               style={{
-                border: "1px solid #E2E8F0",
+                border: "1px solid #E6E2DA",
                 borderRadius: "10px",
                 padding: "12px",
-                background: "#F8FAFC",
+                background: "#F8F7F4",
               }}
             >
               <div
@@ -420,7 +420,7 @@ export function ModalEditarVariacionProforma({
                   marginBottom: "10px",
                 }}
               >
-                <strong style={{ fontSize: "0.84rem", color: "#0F172A" }}>
+                <strong style={{ fontSize: "0.84rem", color: "#1F1C19" }}>
                   Ítems de esta Variación
                 </strong>
                 <button
@@ -434,9 +434,9 @@ export function ModalEditarVariacionProforma({
                     gap: "5px",
                     padding: "5px 10px",
                     borderRadius: "7px",
-                    border: "1px solid #2D4734",
+                    border: "1px solid #2F4737",
                     background: "#FFFFFF",
-                    color: "#2D4734",
+                    color: "#2F4737",
                     fontSize: "0.76rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -509,9 +509,9 @@ export function ModalEditarVariacionProforma({
                         title="Quitar ítem"
                         aria-label="Quitar ítem"
                         style={{
-                          border: "1px solid #FECACA",
-                          background: "#FEF2F2",
-                          color: "#B91C1C",
+                          border: "1px solid #E5CACA",
+                          background: "#FAF2F2",
+                          color: "#8A2E2E",
                           borderRadius: "7px",
                           padding: "7px",
                           flexShrink: 0,
@@ -585,13 +585,13 @@ export function ModalEditarVariacionProforma({
                 gap: "10px",
                 padding: "12px 14px",
                 borderRadius: "10px",
-                background: "#F0FDF4",
+                background: "#F2F6F3",
                 border: "1px solid #BBF7D0",
                 fontSize: "0.84rem",
               }}
             >
               <div>
-                <span style={{ color: "#475569" }}>
+                <span style={{ color: "#57524C" }}>
                   Base anterior ({pedidoBase.codigoOrden}):{" "}
                   <strong>${pedidoBase.total.toFixed(2)}</strong>
                 </span>
@@ -610,7 +610,7 @@ export function ModalEditarVariacionProforma({
                   style={{
                     padding: "9px 14px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid #D5CFC4",
                     background: "#FFFFFF",
                     fontSize: "0.82rem",
                     fontWeight: 600,
@@ -631,7 +631,7 @@ export function ModalEditarVariacionProforma({
                     padding: "9px 16px",
                     borderRadius: "8px",
                     border: "none",
-                    background: "#2D4734",
+                    background: "#2F4737",
                     color: "#FFFFFF",
                     fontSize: "0.84rem",
                     fontWeight: 700,
@@ -651,9 +651,9 @@ export function ModalEditarVariacionProforma({
                 style={{
                   padding: "10px 12px",
                   borderRadius: "8px",
-                  background: "#FEF2F2",
-                  border: "1px solid #FECACA",
-                  color: "#B91C1C",
+                  background: "#FAF2F2",
+                  border: "1px solid #E5CACA",
+                  color: "#8A2E2E",
                   fontSize: "0.82rem",
                 }}
               >

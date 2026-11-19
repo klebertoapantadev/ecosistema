@@ -37,10 +37,10 @@ export default async function PaginaGestionUsuarios({
   return (
     <div style={{ maxWidth: "1140px", margin: "0 auto" }}>
       <div style={{ marginBottom: 20 }}>
-        <h1 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 6px 0", color: "#1C261F" }}>
+        <h1 style={{ fontSize: "1.12rem", fontWeight: 600, margin: "0 0 6px 0", color: "#1F1C19" }}>
           Gestión de Equipo, Invitaciones y Roles
         </h1>
-        <p style={{ margin: 0, fontSize: "13.5px", color: "#6B746C", lineHeight: 1.5 }}>
+        <p style={{ margin: 0, fontSize: "0.8rem", color: "#6E6861", lineHeight: 1.5 }}>
           Envía invitaciones por correo electrónico definiendo el rol en el portal (<strong>Ventas</strong>, <strong>Taller Floral</strong>, <strong>Delivery Interno</strong>, <strong>Delivery Subcontratado</strong>, <strong>Operador</strong> o <strong>Administrador</strong>). Al instalar una única App en su celular, cada perfil ingresa directamente a las pantallas de su rol.
         </p>
       </div>
@@ -53,7 +53,7 @@ export default async function PaginaGestionUsuarios({
       <section
         style={{
           background: "#FFFFFF",
-          border: "1px solid #E5DFD5",
+          border: "1px solid #E6E2DA",
           borderRadius: 16,
           padding: "clamp(14px, 3.5vw, 24px)",
           boxShadow: "0 4px 18px rgba(28, 38, 31, 0.04)",
@@ -69,7 +69,7 @@ export default async function PaginaGestionUsuarios({
             marginBottom: 16,
           }}
         >
-          <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#1C261F" }}>
+          <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#1F1C19" }}>
             Usuarios Registrados en Tinkay ({usuarios.length})
           </h2>
           <form method="GET" className="form-busqueda" style={{ margin: 0 }}>

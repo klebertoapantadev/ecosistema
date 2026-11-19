@@ -252,10 +252,10 @@ export function ConsolaEntregaInmediata({
               />
             )}
             <div>
-              <strong style={{ fontSize: "0.84rem", color: "#0F172A", display: "block" }}>
+              <strong style={{ fontSize: "0.84rem", color: "#1F1C19", display: "block" }}>
                 {x.nombre}
               </strong>
-              <span style={{ fontSize: "0.72rem", color: "#64748B" }}>{x.sku}</span>
+              <span style={{ fontSize: "0.72rem", color: "#847D74" }}>{x.sku}</span>
             </div>
           </div>
         ),
@@ -282,8 +282,8 @@ export function ConsolaEntregaInmediata({
                 borderRadius: "999px",
                 fontSize: "0.74rem",
                 fontWeight: 700,
-                background: esWeb ? "#DCFCE7" : "#F1F5F9",
-                color: esWeb ? "#166534" : "#475569",
+                background: esWeb ? "#F2F6F3" : "#F4F2EE",
+                color: esWeb ? "#2B4A36" : "#57524C",
               }}
             >
               {esWeb
@@ -318,9 +318,9 @@ export function ConsolaEntregaInmediata({
           style={{
             padding: "11px 14px",
             borderRadius: "10px",
-            background: "#FFFBEB",
-            border: "1px solid #FDE68A",
-            color: "#92400E",
+            background: "#FAF6EE",
+            border: "1px solid #E5D7BC",
+            color: "#745622",
             fontSize: "0.82rem",
             display: "flex",
             alignItems: "center",
@@ -341,7 +341,7 @@ export function ConsolaEntregaInmediata({
         onSubmit={(e) => void handlePublicar(e)}
         style={{
           background: "#FFFFFF",
-          border: "1px solid #E2E8F0",
+          border: "1px solid #E6E2DA",
           borderRadius: "16px",
           padding: "20px",
           display: "flex",
@@ -365,8 +365,8 @@ export function ConsolaEntregaInmediata({
                 width: "38px",
                 height: "38px",
                 borderRadius: "10px",
-                background: "#FEF3C7",
-                color: "#D97706",
+                background: "#FAF6EE",
+                color: "#8F6A2E",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -375,10 +375,10 @@ export function ConsolaEntregaInmediata({
               <Zap size={20} />
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#0F172A" }}>
+              <h2 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700, color: "#1F1C19" }}>
                 Publicar Arreglo para Entrega Inmediata (1 a 2 Horas)
               </h2>
-              <p style={{ margin: "2px 0 0", fontSize: "0.81rem", color: "#64748B" }}>
+              <p style={{ margin: "2px 0 0", fontSize: "0.81rem", color: "#847D74" }}>
                 Sube la foto y su precio especial. Se publica al instante en Web y Chat, y se
                 descarta solo si se vende en línea.
               </p>
@@ -397,9 +397,9 @@ export function ConsolaEntregaInmediata({
               gap: "6px",
               padding: "8px 12px",
               borderRadius: "9px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid #D5CFC4",
               background: "#FFFFFF",
-              color: "#0F172A",
+              color: "#1F1C19",
               fontSize: "0.8rem",
               fontWeight: 600,
               cursor: "pointer",
@@ -415,9 +415,9 @@ export function ConsolaEntregaInmediata({
             style={{
               padding: "10px 13px",
               borderRadius: "9px",
-              background: "#FEF2F2",
-              border: "1px solid #FECACA",
-              color: "#991B1B",
+              background: "#FAF2F2",
+              border: "1px solid #E5CACA",
+              color: "#8A2E2E",
               fontSize: "0.82rem",
             }}
           >
@@ -430,9 +430,9 @@ export function ConsolaEntregaInmediata({
             style={{
               padding: "10px 13px",
               borderRadius: "9px",
-              background: "#ECFDF5",
-              border: "1px solid #A7F3D0",
-              color: "#065F46",
+              background: "#F2F6F3",
+              border: "1px solid #CEDDD3",
+              color: "#2B4A36",
               fontSize: "0.83rem",
               display: "flex",
               alignItems: "center",
@@ -457,7 +457,7 @@ export function ConsolaEntregaInmediata({
                 display: "block",
                 fontSize: "0.78rem",
                 fontWeight: 700,
-                color: "#334155",
+                color: "#57524C",
                 marginBottom: "5px",
               }}
             >
@@ -473,7 +473,7 @@ export function ConsolaEntregaInmediata({
                   gap: "6px",
                   padding: "9px 13px",
                   borderRadius: "9px",
-                  background: "#0F172A",
+                  background: "#1F1C19",
                   color: "#FFFFFF",
                   fontSize: "0.81rem",
                   fontWeight: 700,
@@ -501,9 +501,9 @@ export function ConsolaEntregaInmediata({
                   gap: "6px",
                   padding: "9px 13px",
                   borderRadius: "9px",
-                  border: "1px solid #CBD5E1",
-                  background: "#F8FAFC",
-                  color: "#0F172A",
+                  border: "1px solid #D5CFC4",
+                  background: "#F8F7F4",
+                  color: "#1F1C19",
                   fontSize: "0.81rem",
                   fontWeight: 600,
                   cursor: subiendoImagen ? "wait" : "pointer",
@@ -529,7 +529,7 @@ export function ConsolaEntregaInmediata({
                 display: "block",
                 fontSize: "0.78rem",
                 fontWeight: 700,
-                color: "#334155",
+                color: "#57524C",
                 marginBottom: "5px",
               }}
             >
@@ -544,7 +544,7 @@ export function ConsolaEntregaInmediata({
                 width: "100%",
                 padding: "9px 11px",
                 borderRadius: "9px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid #D5CFC4",
                 fontSize: "0.85rem",
               }}
             />
@@ -557,7 +557,7 @@ export function ConsolaEntregaInmediata({
                   display: "block",
                   fontSize: "0.78rem",
                   fontWeight: 700,
-                  color: "#334155",
+                  color: "#57524C",
                   marginBottom: "5px",
                 }}
               >
@@ -575,7 +575,7 @@ export function ConsolaEntregaInmediata({
                   width: "100%",
                   padding: "9px 10px",
                   borderRadius: "9px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid #D5CFC4",
                   fontSize: "0.85rem",
                   fontWeight: 700,
                 }}
@@ -588,7 +588,7 @@ export function ConsolaEntregaInmediata({
                   display: "block",
                   fontSize: "0.78rem",
                   fontWeight: 600,
-                  color: "#64748B",
+                  color: "#847D74",
                   marginBottom: "5px",
                 }}
               >
@@ -605,7 +605,7 @@ export function ConsolaEntregaInmediata({
                   width: "100%",
                   padding: "9px 10px",
                   borderRadius: "9px",
-                  border: "1px solid #E2E8F0",
+                  border: "1px solid #E6E2DA",
                   fontSize: "0.84rem",
                 }}
               />
@@ -617,7 +617,7 @@ export function ConsolaEntregaInmediata({
                   display: "block",
                   fontSize: "0.78rem",
                   fontWeight: 600,
-                  color: "#64748B",
+                  color: "#847D74",
                   marginBottom: "5px",
                 }}
               >
@@ -633,7 +633,7 @@ export function ConsolaEntregaInmediata({
                   width: "100%",
                   padding: "9px 10px",
                   borderRadius: "9px",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid #D5CFC4",
                   fontSize: "0.84rem",
                 }}
               />
@@ -653,7 +653,7 @@ export function ConsolaEntregaInmediata({
                     height: "84px",
                     objectFit: "cover",
                     borderRadius: "10px",
-                    border: "2px solid #10B981",
+                    border: "2px solid #2F4737",
                   }}
                 />
                 <button
@@ -669,7 +669,7 @@ export function ConsolaEntregaInmediata({
                     height: "22px",
                     borderRadius: "50%",
                     border: "none",
-                    background: "#DC2626",
+                    background: "#8A2E2E",
                     color: "#FFFFFF",
                     fontSize: "0.7rem",
                     fontWeight: 700,
@@ -701,7 +701,7 @@ export function ConsolaEntregaInmediata({
               flex: "1 1 320px",
               padding: "9px 12px",
               borderRadius: "9px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid #D5CFC4",
               fontSize: "0.84rem",
             }}
           />
@@ -718,7 +718,7 @@ export function ConsolaEntregaInmediata({
               padding: "10px 18px",
               borderRadius: "10px",
               border: "none",
-              background: "#D97706",
+              background: "#8F6A2E",
               color: "#FFFFFF",
               fontSize: "0.86rem",
               fontWeight: 700,
@@ -735,7 +735,7 @@ export function ConsolaEntregaInmediata({
       <div
         style={{
           background: "#FFFFFF",
-          border: "1px solid #E2E8F0",
+          border: "1px solid #E6E2DA",
           borderRadius: "16px",
           padding: "20px",
           display: "flex",
@@ -744,7 +744,7 @@ export function ConsolaEntregaInmediata({
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "#0F172A" }}>
+          <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "#1F1C19" }}>
             ⚡ Disponibles Ahora Mismo en Vitrina y Chat ({disponiblesActivos.length})
           </h3>
         </div>
@@ -754,10 +754,10 @@ export function ConsolaEntregaInmediata({
             style={{
               padding: "32px 16px",
               textAlign: "center",
-              color: "#64748B",
-              background: "#F8FAFC",
+              color: "#847D74",
+              background: "#F8F7F4",
               borderRadius: "12px",
-              border: "1px dashed #CBD5E1",
+              border: "1px dashed #D5CFC4",
               fontSize: "0.86rem",
             }}
           >
@@ -780,7 +780,7 @@ export function ConsolaEntregaInmediata({
                 <div
                   key={item.productoId}
                   style={{
-                    border: "1px solid #E2E8F0",
+                    border: "1px solid #E6E2DA",
                     borderRadius: "14px",
                     overflow: "hidden",
                     background: "#FFFFFF",
@@ -789,7 +789,7 @@ export function ConsolaEntregaInmediata({
                     boxShadow: "0 2px 8px rgba(15, 23, 42, 0.05)",
                   }}
                 >
-                  <div style={{ position: "relative", height: "210px", background: "#F1F5F9" }}>
+                  <div style={{ position: "relative", height: "210px", background: "#F4F2EE" }}>
                     <img
                       src={item.imagenUrl}
                       alt={item.nombre}
@@ -803,7 +803,7 @@ export function ConsolaEntregaInmediata({
                         padding: "4px 9px",
                         borderRadius: "999px",
                         background: "rgba(15, 23, 42, 0.82)",
-                        color: "#FDE68A",
+                        color: "#E5D7BC",
                         fontSize: "0.72rem",
                         fontWeight: 700,
                       }}
@@ -829,18 +829,18 @@ export function ConsolaEntregaInmediata({
                         gap: "8px",
                       }}
                     >
-                      <strong style={{ fontSize: "0.94rem", color: "#0F172A" }}>
+                      <strong style={{ fontSize: "0.94rem", color: "#1F1C19" }}>
                         {item.nombre}
                       </strong>
                       <div style={{ textAlign: "right" }}>
-                        <strong style={{ fontSize: "1.05rem", color: "#059669" }}>
+                        <strong style={{ fontSize: "0.9rem", color: "#2F4737" }}>
                           ${Number(item.precio).toFixed(2)}
                         </strong>
                         {item.precioComparacion && item.precioComparacion > item.precio && (
                           <div
                             style={{
                               fontSize: "0.73rem",
-                              color: "#94A3B8",
+                              color: "#847D74",
                               textDecoration: "line-through",
                             }}
                           >
@@ -854,7 +854,7 @@ export function ConsolaEntregaInmediata({
                       style={{
                         margin: 0,
                         fontSize: "0.79rem",
-                        color: "#64748B",
+                        color: "#847D74",
                         lineHeight: 1.4,
                         flex: 1,
                       }}
@@ -868,7 +868,7 @@ export function ConsolaEntregaInmediata({
                         gap: "6px",
                         flexWrap: "wrap",
                         paddingTop: "6px",
-                        borderTop: "1px solid #F1F5F9",
+                        borderTop: "1px solid #F4F2EE",
                       }}
                     >
                       <button
@@ -884,9 +884,9 @@ export function ConsolaEntregaInmediata({
                           gap: "5px",
                           padding: "7px 10px",
                           borderRadius: "8px",
-                          border: "1px solid #CBD5E1",
-                          background: "#F8FAFC",
-                          color: "#0F172A",
+                          border: "1px solid #D5CFC4",
+                          background: "#F8F7F4",
+                          color: "#1F1C19",
                           fontSize: "0.76rem",
                           fontWeight: 600,
                           cursor: "pointer",
@@ -908,9 +908,9 @@ export function ConsolaEntregaInmediata({
                           justifyContent: "center",
                           padding: "7px 9px",
                           borderRadius: "8px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           background: "#FFFFFF",
-                          color: "#334155",
+                          color: "#57524C",
                         }}
                       >
                         <ExternalLink size={13} />
@@ -931,7 +931,7 @@ export function ConsolaEntregaInmediata({
                           padding: "7px 10px",
                           borderRadius: "8px",
                           border: "none",
-                          background: "#059669",
+                          background: "#2F4737",
                           color: "#FFFFFF",
                           fontSize: "0.76rem",
                           fontWeight: 700,
@@ -954,9 +954,9 @@ export function ConsolaEntregaInmediata({
                           justifyContent: "center",
                           padding: "7px 9px",
                           borderRadius: "8px",
-                          border: "1px solid #FECACA",
-                          background: "#FEF2F2",
-                          color: "#B91C1C",
+                          border: "1px solid #E5CACA",
+                          background: "#FAF2F2",
+                          color: "#8A2E2E",
                           cursor: enProceso ? "wait" : "pointer",
                         }}
                       >
@@ -976,7 +976,7 @@ export function ConsolaEntregaInmediata({
         <div
           style={{
             background: "#FFFFFF",
-            border: "1px solid #E2E8F0",
+            border: "1px solid #E6E2DA",
             borderRadius: "16px",
             padding: "18px",
             display: "flex",
@@ -984,7 +984,7 @@ export function ConsolaEntregaInmediata({
             gap: "12px",
           }}
         >
-          <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "#0F172A" }}>
+          <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "#1F1C19" }}>
             Historial de Arreglos Inmediatos Vendidos o Retirados
           </h3>
           <DataGrid

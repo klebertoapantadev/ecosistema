@@ -545,15 +545,15 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const getIconoProducto = (p: ProductoCatalogo) => {
     const iconoTipo = p.pro_detalle_producto?.icono;
     if (iconoTipo === "Scale" || p.pro_slug.includes("honorarios") || p.pro_slug.includes("patrocinio")) {
-      return <Scale size={24} color="#0284C7" />;
+      return <Scale size={24} color="#221E1B" />;
     }
     if (iconoTipo === "ShieldCheck" || p.pro_slug.includes("plan") || p.pro_slug.includes("proteccion")) {
-      return <ShieldCheck size={24} color="#059669" />;
+      return <ShieldCheck size={24} color="#2F4737" />;
     }
     if (iconoTipo === "FileCheck" || p.pro_slug.includes("dictamen") || p.pro_slug.includes("contrato")) {
-      return <FileCheck size={24} color="#7E22CE" />;
+      return <FileCheck size={24} color="#4A453F" />;
     }
-    return <CreditCard size={24} color="#D97706" />;
+    return <CreditCard size={24} color="#8F6A2E" />;
   };
 
   return (
@@ -589,8 +589,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
             <span
               style={{
-                background: "#E0F2FE",
-                color: "#0284C7",
+                background: "#EFECE6",
+                color: "#221E1B",
                 padding: "3px 10px",
                 borderRadius: "12px",
                 fontSize: "0.75rem",
@@ -605,8 +605,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             </span>
             <span
               style={{
-                background: "#FEF3C7",
-                color: "#92400E",
+                background: "#FAF6EE",
+                color: "#745622",
                 padding: "3px 10px",
                 borderRadius: "12px",
                 fontSize: "0.75rem",
@@ -620,14 +620,14 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               Payphone Botón de Pago
             </span>
           </div>
-          <h1 style={{ margin: 0, fontSize: "1.45rem", fontWeight: 800, color: "#0F172A" }}>
+          <h1 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 800, color: "#1F1C19" }}>
             {esFloristeria
               ? "Catálogo Comercial y Diseños Florales"
               : esMantenimiento
               ? "Catálogo de Servicios y Mantenimiento"
               : "Catálogo Comercial y Honorarios Profesionales"}
           </h1>
-          <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#64748B" }}>
+          <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#847D74" }}>
             {esFloristeria
               ? "Arreglos florales, bouquets estilo coreano, complementos y suscripciones con entrega express y Payphone."
               : esMantenimiento
@@ -641,10 +641,10 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           <div
             style={{
               display: "inline-flex",
-              background: "#F1F5F9",
+              background: "#F4F2EE",
               padding: "3px",
               borderRadius: "10px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid #D5CFC4",
               marginRight: "4px",
             }}
           >
@@ -656,8 +656,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 padding: "6px 12px",
                 borderRadius: "7px",
                 border: "none",
-                background: modoVista === "admin" ? "#0F172A" : "transparent",
-                color: modoVista === "admin" ? "#FFFFFF" : "#475569",
+                background: modoVista === "admin" ? "#1F1C19" : "transparent",
+                color: modoVista === "admin" ? "#FFFFFF" : "#57524C",
                 fontSize: "0.78rem",
                 fontWeight: 700,
                 cursor: "pointer",
@@ -679,8 +679,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 padding: "6px 12px",
                 borderRadius: "7px",
                 border: "none",
-                background: modoVista === "cliente" ? (esFloristeria ? "#E11D48" : "#0284C7") : "transparent",
-                color: modoVista === "cliente" ? "#FFFFFF" : "#475569",
+                background: modoVista === "cliente" ? (esFloristeria ? "#221E1B" : "#221E1B") : "transparent",
+                color: modoVista === "cliente" ? "#FFFFFF" : "#57524C",
                 fontSize: "0.78rem",
                 fontWeight: 700,
                 cursor: "pointer",
@@ -702,9 +702,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             title="Ver Manual de Configuración"
             aria-label="Ver Manual de Configuración"
             style={{
-              background: "#F8FAFC",
-              color: "#334155",
-              border: "1.5px solid #CBD5E1",
+              background: "#F8F7F4",
+              color: "#57524C",
+              border: "1.5px solid #D5CFC4",
               padding: "8px 14px",
               borderRadius: "8px",
               fontSize: "0.85rem",
@@ -715,7 +715,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               gap: "6px",
             }}
           >
-            <BookOpen size={15} color={esFloristeria ? "#E11D48" : "#0284C7"} />
+            <BookOpen size={15} color={esFloristeria ? "#221E1B" : "#221E1B"} />
             <span className="btn-texto-responsive">Manual de Uso</span>
           </button>
 
@@ -728,7 +728,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 title={esFloristeria ? "Crear Nuevo Arreglo Floral" : "Crear Nuevo Producto"}
                 aria-label={esFloristeria ? "Crear Nuevo Arreglo Floral" : "Crear Nuevo Producto"}
                 style={{
-                  background: esFloristeria ? "#E11D48" : "#0F172A",
+                  background: esFloristeria ? "#221E1B" : "#1F1C19",
                   color: "#FFFFFF",
                   border: "none",
                   padding: "8px 14px",
@@ -766,8 +766,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     aria-label={esFloristeria ? "Colecciones" : "Categorías"}
                     style={{
                       background: "#FFFFFF",
-                      color: "#334155",
-                      border: "1px solid #CBD5E1",
+                      color: "#57524C",
+                      border: "1px solid #D5CFC4",
                       padding: "8px 14px",
                       borderRadius: "8px",
                       fontSize: "0.85rem",
@@ -791,9 +791,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     title="Administrar Tipos de Oferta Comercial (Venta, Decoración, Renta de Mobiliario, etc.)"
                     aria-label="Tipos Oferta"
                     style={{
-                      background: "#FFFBEB",
-                      color: "#92400E",
-                      border: "1px solid #FDE68A",
+                      background: "#FAF6EE",
+                      color: "#745622",
+                      border: "1px solid #E5D7BC",
                       padding: "8px 12px",
                       borderRadius: "8px",
                       fontSize: "0.85rem",
@@ -804,7 +804,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       gap: "6px",
                     }}
                   >
-                    <Tag size={15} color="#D97706" />
+                    <Tag size={15} color="#8F6A2E" />
                     <span className="btn-texto-responsive">Tipos Oferta</span>
                   </button>
 
@@ -819,9 +819,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     title="Ver y Gestionar Convenios Corporativos y Beneficios B2B (SATCOM)"
                     aria-label="Convenios B2B"
                     style={{
-                      background: "#ECFDF5",
-                      color: "#05876E",
-                      border: "1px solid #A7F3D0",
+                      background: "#F2F6F3",
+                      color: "#2F4737",
+                      border: "1px solid #CEDDD3",
                       padding: "8px 14px",
                       borderRadius: "8px",
                       fontSize: "0.85rem",
@@ -850,9 +850,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 title="Copiar enlace con los filtros y parámetros de consulta del catálogo"
                 aria-label="Compartir"
                 style={{
-                  background: copiadoConsulta ? "#ECFDF5" : "#F8FAFC",
-                  color: copiadoConsulta ? "#047857" : "#334155",
-                  border: copiadoConsulta ? "1.5px solid #10B981" : "1.5px solid #CBD5E1",
+                  background: copiadoConsulta ? "#F2F6F3" : "#F8F7F4",
+                  color: copiadoConsulta ? "#2F4737" : "#57524C",
+                  border: copiadoConsulta ? "1.5px solid #2F4737" : "1.5px solid #D5CFC4",
                   padding: "8px 14px",
                   borderRadius: "8px",
                   fontSize: "0.85rem",
@@ -865,9 +865,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 }}
               >
                 {copiadoConsulta ? (
-                  <CheckCircle size={15} color="#10B981" />
+                  <CheckCircle size={15} color="#2F4737" />
                 ) : (
-                  <Share2 size={15} color="#0284C7" />
+                  <Share2 size={15} color="#221E1B" />
                 )}
                 <span className="btn-texto-responsive">
                   {copiadoConsulta ? "¡Copiado!" : "Compartir"}
@@ -882,9 +882,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 title="Actualizar Catálogo"
                 aria-label="Actualizar"
                 style={{
-                  background: "#F1F5F9",
-                  color: "#334155",
-                  border: "1px solid #CBD5E1",
+                  background: "#F4F2EE",
+                  color: "#57524C",
+                  border: "1px solid #D5CFC4",
                   padding: "8px 14px",
                   borderRadius: "8px",
                   fontSize: "0.85rem",
@@ -913,7 +913,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         style={{
           display: "flex",
           gap: "8px",
-          borderBottom: "1px solid #E2E8F0",
+          borderBottom: "1px solid #E6E2DA",
           marginBottom: "20px",
           paddingBottom: "8px",
           flexWrap: "wrap",
@@ -923,8 +923,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           type="button"
           onClick={() => setPestanaActiva("catalogo")}
           style={{
-            background: pestanaActiva === "catalogo" ? (esFloristeria ? "#E11D48" : "#0284C7") : "transparent",
-            color: pestanaActiva === "catalogo" ? "#FFFFFF" : "#64748B",
+            background: pestanaActiva === "catalogo" ? (esFloristeria ? "#221E1B" : "#221E1B") : "transparent",
+            color: pestanaActiva === "catalogo" ? "#FFFFFF" : "#847D74",
             border: "none",
             padding: "8px 16px",
             borderRadius: "8px",
@@ -948,7 +948,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               onClick={() => setPestanaActiva("empresas")}
               style={{
                 background: pestanaActiva === "empresas" ? "#5000BA" : "transparent",
-                color: pestanaActiva === "empresas" ? "#FFFFFF" : "#64748B",
+                color: pestanaActiva === "empresas" ? "#FFFFFF" : "#847D74",
                 border: "none",
                 padding: "8px 16px",
                 borderRadius: "8px",
@@ -969,8 +969,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               type="button"
               onClick={() => setPestanaActiva("convenios")}
               style={{
-                background: pestanaActiva === "convenios" ? "#05876E" : "transparent",
-                color: pestanaActiva === "convenios" ? "#FFFFFF" : "#64748B",
+                background: pestanaActiva === "convenios" ? "#2F4737" : "transparent",
+                color: pestanaActiva === "convenios" ? "#FFFFFF" : "#847D74",
                 border: "none",
                 padding: "8px 16px",
                 borderRadius: "8px",
@@ -993,8 +993,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           type="button"
           onClick={() => setPestanaActiva("disponibilidad")}
           style={{
-            background: pestanaActiva === "disponibilidad" ? (esFloristeria ? "#E11D48" : "#0284C7") : "transparent",
-            color: pestanaActiva === "disponibilidad" ? "#FFFFFF" : "#64748B",
+            background: pestanaActiva === "disponibilidad" ? (esFloristeria ? "#221E1B" : "#221E1B") : "transparent",
+            color: pestanaActiva === "disponibilidad" ? "#FFFFFF" : "#847D74",
             border: "none",
             padding: "8px 16px",
             borderRadius: "8px",
@@ -1034,7 +1034,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           <div
             style={{
               background: "#FFFFFF",
-              border: "1px solid #E2E8F0",
+              border: "1px solid #E6E2DA",
               borderRadius: "16px",
               padding: "16px",
               marginBottom: "24px",
@@ -1046,7 +1046,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         }}
       >
         <div style={{ flex: 1, minWidth: "240px", position: "relative" }}>
-          <Search size={16} color="#94A3B8" style={{ position: "absolute", left: "12px", top: "11px" }} />
+          <Search size={16} color="#847D74" style={{ position: "absolute", left: "12px", top: "11px" }} />
           <input
             type="text"
             placeholder="Buscar por servicio, honorario, plan o palabra clave..."
@@ -1056,7 +1056,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               width: "100%",
               padding: "8px 12px 8px 36px",
               borderRadius: "8px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid #D5CFC4",
               fontSize: "0.85rem",
               boxSizing: "border-box",
             }}
@@ -1075,11 +1075,11 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             style={{
               padding: "7px 12px",
               borderRadius: "8px",
-              border: canalSeleccionado !== "todos" ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
+              border: canalSeleccionado !== "todos" ? "1.5px solid #221E1B" : "1px solid #D5CFC4",
               fontSize: "0.8rem",
               fontWeight: 700,
-              background: canalSeleccionado !== "todos" ? "#F0F9FF" : "#F8FAFC",
-              color: canalSeleccionado !== "todos" ? "#0369A1" : "#0F172A",
+              background: canalSeleccionado !== "todos" ? "#F4F2EE" : "#F8F7F4",
+              color: canalSeleccionado !== "todos" ? "#3A3530" : "#1F1C19",
               cursor: "pointer",
             }}
           >
@@ -1110,9 +1110,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               style={{
                 padding: "6px 11px",
                 borderRadius: "8px",
-                border: verTodosEnFiltroCanal ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
-                background: verTodosEnFiltroCanal ? "#0284C7" : "#FFFFFF",
-                color: verTodosEnFiltroCanal ? "#FFFFFF" : "#475569",
+                border: verTodosEnFiltroCanal ? "1.5px solid #221E1B" : "1px solid #D5CFC4",
+                background: verTodosEnFiltroCanal ? "#221E1B" : "#FFFFFF",
+                color: verTodosEnFiltroCanal ? "#FFFFFF" : "#57524C",
                 fontSize: "0.78rem",
                 fontWeight: 700,
                 cursor: "pointer",
@@ -1144,9 +1144,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 fontSize: "0.76rem",
                 fontWeight: 700,
                 cursor: "pointer",
-                border: filtroEstadoAdmin === "todos" ? "1.5px solid #0F172A" : "1px solid #CBD5E1",
-                background: filtroEstadoAdmin === "todos" ? "#0F172A" : "#FFFFFF",
-                color: filtroEstadoAdmin === "todos" ? "#FFFFFF" : "#475569",
+                border: filtroEstadoAdmin === "todos" ? "1.5px solid #1F1C19" : "1px solid #D5CFC4",
+                background: filtroEstadoAdmin === "todos" ? "#1F1C19" : "#FFFFFF",
+                color: filtroEstadoAdmin === "todos" ? "#FFFFFF" : "#57524C",
               }}
             >
               Todos ({productos.length})
@@ -1162,9 +1162,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 fontSize: "0.76rem",
                 fontWeight: 700,
                 cursor: "pointer",
-                border: filtroEstadoAdmin === "activos" ? "1.5px solid #059669" : "1px solid #A7F3D0",
-                background: filtroEstadoAdmin === "activos" ? "#059669" : "#ECFDF5",
-                color: filtroEstadoAdmin === "activos" ? "#FFFFFF" : "#065F46",
+                border: filtroEstadoAdmin === "activos" ? "1.5px solid #2F4737" : "1px solid #CEDDD3",
+                background: filtroEstadoAdmin === "activos" ? "#2F4737" : "#F2F6F3",
+                color: filtroEstadoAdmin === "activos" ? "#FFFFFF" : "#2B4A36",
               }}
             >
               Activos ({totalActivos})
@@ -1182,22 +1182,22 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 cursor: "pointer",
                 border:
                   filtroEstadoAdmin === "inactivos"
-                    ? "1.5px solid #DC2626"
+                    ? "1.5px solid #8A2E2E"
                     : totalInactivos > 0
-                    ? "1.5px solid #F59E0B"
-                    : "1px solid #CBD5E1",
+                    ? "1.5px solid #8F6A2E"
+                    : "1px solid #D5CFC4",
                 background:
                   filtroEstadoAdmin === "inactivos"
-                    ? "#DC2626"
+                    ? "#8A2E2E"
                     : totalInactivos > 0
-                    ? "#FFFBEB"
-                    : "#F8FAFC",
+                    ? "#FAF6EE"
+                    : "#F8F7F4",
                 color:
                   filtroEstadoAdmin === "inactivos"
                     ? "#FFFFFF"
                     : totalInactivos > 0
-                    ? "#B45309"
-                    : "#64748B",
+                    ? "#745622"
+                    : "#847D74",
               }}
             >
               Inactivos ({totalInactivos})
@@ -1216,8 +1216,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               fontWeight: 600,
               cursor: "pointer",
               border: "none",
-              background: categoriaSeleccionada === "todas" ? "#0F172A" : "#F1F5F9",
-              color: categoriaSeleccionada === "todas" ? "#FFFFFF" : "#475569",
+              background: categoriaSeleccionada === "todas" ? "#1F1C19" : "#F4F2EE",
+              color: categoriaSeleccionada === "todas" ? "#FFFFFF" : "#57524C",
             }}
           >
             Todas ({productos.length})
@@ -1234,8 +1234,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 fontWeight: 600,
                 cursor: "pointer",
                 border: "none",
-                background: categoriaSeleccionada === c.ctg_slug ? (esFloristeria ? "#E11D48" : "#0284C7") : "#F1F5F9",
-                color: categoriaSeleccionada === c.ctg_slug ? "#FFFFFF" : "#475569",
+                background: categoriaSeleccionada === c.ctg_slug ? (esFloristeria ? "#221E1B" : "#221E1B") : "#F4F2EE",
+                color: categoriaSeleccionada === c.ctg_slug ? "#FFFFFF" : "#57524C",
               }}
             >
               {c.ctg_nombre}
@@ -1262,9 +1262,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 fontSize: "0.78rem",
                 fontWeight: 700,
                 cursor: "pointer",
-                border: "1.5px dashed #CBD5E1",
+                border: "1.5px dashed #D5CFC4",
                 background: "#FFFFFF",
-                color: esFloristeria ? "#E11D48" : "#0284C7",
+                color: esFloristeria ? "#221E1B" : "#221E1B",
                 display: "inline-flex",
                 alignItems: "center",
                 gap: "5px",
@@ -1288,7 +1288,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         return (
           <div
             style={{
-              background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+              background: "#221E1B",
               borderRadius: "14px",
               padding: "16px 20px",
               color: "#FFFFFF",
@@ -1305,7 +1305,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
                 <span
                   style={{
-                    background: esFloristeria ? "#E11D48" : "#0284C7",
+                    background: esFloristeria ? "#221E1B" : "#221E1B",
                     color: "#FFFFFF",
                     padding: "2px 8px",
                     borderRadius: "12px",
@@ -1316,10 +1316,10 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 >
                   {esFloristeria ? "Colección Floral" : "Categoría Comercial"}
                 </span>
-                <h2 style={{ margin: 0, fontSize: "1.18rem", fontWeight: 800 }}>{catActiva.ctg_nombre}</h2>
+                <h2 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800 }}>{catActiva.ctg_nombre}</h2>
               </div>
               {catActiva.ctg_descripcion && (
-                <p style={{ margin: "4px 0 0", fontSize: "0.83rem", color: "#CBD5E1", lineHeight: 1.4 }}>
+                <p style={{ margin: "4px 0 0", fontSize: "0.83rem", color: "#D5CFC4", lineHeight: 1.4 }}>
                   {catActiva.ctg_descripcion}
                 </p>
               )}
@@ -1349,7 +1349,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   color: "#FFFFFF",
                   border:
                     linkTiendaCopiadoKey === `cat_${catActiva.ctg_id}`
-                      ? "1px solid #34D399"
+                      ? "1px solid #7EA389"
                       : "1px solid rgba(255, 255, 255, 0.38)",
                   padding: "6px 12px",
                   borderRadius: "8px",
@@ -1368,7 +1368,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   </>
                 ) : (
                   <>
-                    <Link2 size={13} color="#38BDF8" />
+                    <Link2 size={13} color="#C8A25A" />
                     <span className="btn-texto-responsive">Link Tienda</span>
                   </>
                 )}
@@ -1392,7 +1392,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     gap: "6px",
                   }}
                 >
-                  <Play size={13} color="#38BDF8" />
+                  <Play size={13} color="#C8A25A" />
                   <span>Ver Reel / Video</span>
                 </button>
               )}
@@ -1403,7 +1403,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   rel="noreferrer"
                   style={{
                     background: "rgba(255, 255, 255, 0.95)",
-                    color: "#0F172A",
+                    color: "#1F1C19",
                     padding: "6px 12px",
                     borderRadius: "8px",
                     fontSize: "0.78rem",
@@ -1427,9 +1427,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
       {mensajeErrorCanal && (
         <div
           style={{
-            background: "#FEF2F2",
-            border: "1px solid #FECACA",
-            color: "#991B1B",
+            background: "#FAF2F2",
+            border: "1px solid #E5CACA",
+            color: "#8A2E2E",
             padding: "10px 16px",
             borderRadius: "10px",
             marginBottom: "16px",
@@ -1441,7 +1441,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <AlertCircle size={16} color="#DC2626" />
+            <AlertCircle size={16} color="#8A2E2E" />
             <span>{mensajeErrorCanal}</span>
           </div>
           <button
@@ -1450,7 +1450,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             style={{
               background: "none",
               border: "none",
-              color: "#991B1B",
+              color: "#8A2E2E",
               cursor: "pointer",
               padding: "2px",
             }}
@@ -1462,15 +1462,15 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
 
       {/* Grid de Productos */}
       {cargando ? (
-        <div style={{ padding: "60px 20px", textAlign: "center", color: "#64748B" }}>
-          <RefreshCw size={32} className="animate-spin" style={{ margin: "0 auto 12px", color: "#0284C7" }} />
+        <div style={{ padding: "60px 20px", textAlign: "center", color: "#847D74" }}>
+          <RefreshCw size={32} className="animate-spin" style={{ margin: "0 auto 12px", color: "#221E1B" }} />
           <div style={{ fontWeight: 600 }}>Cargando catálogo comercial unificado...</div>
         </div>
       ) : productosFiltrados.length === 0 ? (
         <div
           style={{
             background: "#FFFFFF",
-            border: "1px dashed #CBD5E1",
+            border: "1px dashed #D5CFC4",
             borderRadius: "16px",
             padding: "50px 24px",
             textAlign: "center",
@@ -1481,20 +1481,20 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               width: "56px",
               height: "56px",
               borderRadius: "16px",
-              background: "#F1F5F9",
+              background: "#F4F2EE",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               margin: "0 auto 16px",
-              color: "#64748B",
+              color: "#847D74",
             }}
           >
             <ShoppingBag size={28} />
           </div>
-          <h3 style={{ margin: "0 0 6px", fontSize: "1.1rem", fontWeight: 700, color: "#0F172A" }}>
+          <h3 style={{ margin: "0 0 6px", fontSize: "0.92rem", fontWeight: 700, color: "#1F1C19" }}>
             No se encontraron productos o servicios
           </h3>
-          <p style={{ margin: "0 auto 20px", fontSize: "0.85rem", color: "#64748B", maxWidth: "420px" }}>
+          <p style={{ margin: "0 auto 20px", fontSize: "0.85rem", color: "#847D74", maxWidth: "420px" }}>
             Puedes crear un nuevo honorario profesional o cargar inmediatamente el catálogo de ejemplo con tarifas y planes preconfigurados.
           </p>
           <div style={{ display: "flex", gap: "10px", justifyContent: "center", flexWrap: "wrap" }}>
@@ -1503,7 +1503,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 type="button"
                 onClick={() => setModalProdAbierto(true)}
                 style={{
-                  background: "#0F172A",
+                  background: "#1F1C19",
                   color: "#FFFFFF",
                   border: "none",
                   padding: "9px 18px",
@@ -1525,7 +1525,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               onClick={handleCargarSemillas}
               disabled={cargandoSemillas}
               style={{
-                background: "#0284C7",
+                background: "#221E1B",
                 color: "#FFFFFF",
                 border: "none",
                 padding: "9px 18px",
@@ -1680,14 +1680,14 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               <div
                 key={p.pro_id}
                 style={{
-                  background: !estaActivoGeneral ? "#F8FAFC" : "#FFFFFF",
+                  background: !estaActivoGeneral ? "#F8F7F4" : "#FFFFFF",
                   border: !estaActivoGeneral
-                    ? "2px dashed #94A3B8"
+                    ? "2px dashed #847D74"
                     : !vigenciaInfo.estaVigente
-                    ? "2px solid #F59E0B"
+                    ? "2px solid #8F6A2E"
                     : esHonorario
-                    ? "2px solid #0284C7"
-                    : "1px solid #E2E8F0",
+                    ? "2px solid #221E1B"
+                    : "1px solid #E6E2DA",
                   borderRadius: "16px",
                   overflow: "hidden",
                   display: "flex",
@@ -1702,7 +1702,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               >
                 {/* Carrusel de Imágenes: Portada Master + Fotos de Variantes */}
                 {fotoMostrar && (
-                  <div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", background: "#0F172A", overflow: "hidden" }}>
+                  <div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", background: "#1F1C19", overflow: "hidden" }}>
                     {/* Fondo difuminado si el ajuste es contain */}
                     {ajusteActual === "contain" && (
                       <img
@@ -1770,7 +1770,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           boxShadow: "0 2px 5px rgba(0,0,0,0.25)",
                         }}
                       >
-                        <Play size={10} color="#38BDF8" fill="#38BDF8" />
+                        <Play size={10} color="#C8A25A" fill="#C8A25A" />
                         <span>Video Reel</span>
                       </button>
                     )}
@@ -1838,7 +1838,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                             zIndex: 3,
                           }}
                         >
-                          <ChevronLeft size={16} color="#0F172A" />
+                          <ChevronLeft size={16} color="#1F1C19" />
                         </button>
 
                         <button
@@ -1872,7 +1872,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                             zIndex: 3,
                           }}
                         >
-                          <ChevronRight size={16} color="#0F172A" />
+                          <ChevronRight size={16} color="#1F1C19" />
                         </button>
 
                         {/* Indicadores de bolitas del carrusel */}
@@ -1909,7 +1909,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                                   height: "6px",
                                   borderRadius: "3px",
                                   border: "none",
-                                  background: isDotActive ? (f.col ? f.col.border : "#38BDF8") : "rgba(255, 255, 255, 0.5)",
+                                  background: isDotActive ? (f.col ? f.col.border : "#C8A25A") : "rgba(255, 255, 255, 0.5)",
                                   cursor: "pointer",
                                   padding: 0,
                                   transition: "all 0.2s ease",
@@ -1940,7 +1940,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           zIndex: 2,
                         }}
                       >
-                        <Clock size={11} color="#38BDF8" />
+                        <Clock size={11} color="#C8A25A" />
                         <span>{tiempoMostrar}</span>
                       </div>
                     )}
@@ -1954,7 +1954,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           bottom: "8px",
                           right: "8px",
                           background: "rgba(255, 255, 255, 0.9)",
-                          color: "#0F172A",
+                          color: "#1F1C19",
                           padding: "3px 8px",
                           borderRadius: "6px",
                           fontSize: "0.68rem",
@@ -1993,13 +1993,13 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       aria-label={estaActivoGeneral ? "Desactivar producto" : "Activar producto"}
                       style={{
                         background: isSavingActivo
-                          ? "#F1F5F9"
+                          ? "#F4F2EE"
                           : estaActivoGeneral
-                          ? "linear-gradient(135deg, #059669 0%, #10B981 100%)"
-                          : "linear-gradient(135deg, #475569 0%, #334155 100%)",
+                          ? "#2F4737"
+                          : "#57524C",
                         border: estaActivoGeneral
-                          ? "1.5px solid #34D399"
-                          : "1.5px solid #94A3B8",
+                          ? "1.5px solid #7EA389"
+                          : "1.5px solid #847D74",
                         color: "#FFFFFF",
                         padding: "5px 10px",
                         borderRadius: "8px",
@@ -2019,7 +2019,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       ) : estaActivoGeneral ? (
                         <Power size={12} color="#FFFFFF" />
                       ) : (
-                        <Power size={12} color="#CBD5E1" />
+                        <Power size={12} color="#D5CFC4" />
                       )}
                       <span className="btn-texto-responsive">
                         {estaActivoGeneral ? "🟢 Activo" : "⚪ Inactivo"}
@@ -2054,10 +2054,10 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         aria-label={`Alternar visibilidad en ${infoCanalFiltro?.nombre || canalSeleccionado}`}
                         style={{
                           background: estaActivoEnCanal
-                            ? "linear-gradient(135deg, #059669 0%, #10B981 100%)"
+                            ? "#2F4737"
                             : "rgba(15, 23, 42, 0.88)",
                           border: estaActivoEnCanal
-                            ? "1.5px solid #34D399"
+                            ? "1.5px solid #7EA389"
                             : "1.5px solid rgba(255, 255, 255, 0.35)",
                           color: "#FFFFFF",
                           padding: "5px 10px",
@@ -2108,9 +2108,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       aria-label={p.pro_destacado ? "Quitar insignia de producto destacado" : "Asignar insignia de producto destacado"}
                       style={{
                         background: p.pro_destacado
-                          ? "linear-gradient(135deg, #F59E0B, #D97706)"
+                          ? "#8F6A2E"
                           : "rgba(15, 23, 42, 0.78)",
-                        border: p.pro_destacado ? "1.5px solid #FCD34D" : "1.5px solid rgba(255, 255, 255, 0.35)",
+                        border: p.pro_destacado ? "1.5px solid #E5D7BC" : "1.5px solid rgba(255, 255, 255, 0.35)",
                         color: "#FFFFFF",
                         padding: "4px 9px",
                         borderRadius: "12px",
@@ -2128,7 +2128,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       {guardandoDestacadoKey === p.pro_id ? (
                         <RefreshCw size={10} className="animate-spin" />
                       ) : (
-                        <Sparkles size={11} color={p.pro_destacado ? "#FFFFFF" : "#FCD34D"} />
+                        <Sparkles size={11} color={p.pro_destacado ? "#FFFFFF" : "#E5D7BC"} />
                       )}
                       <span className="btn-texto-responsive">
                         {p.pro_destacado ? "DESTACADO" : "DESTACAR"}
@@ -2138,7 +2138,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     p.pro_destacado && (
                       <div
                         style={{
-                          background: "linear-gradient(135deg, #F59E0B, #D97706)",
+                          background: "#8F6A2E",
                           color: "#FFFFFF",
                           padding: "2px 8px",
                           borderRadius: "12px",
@@ -2179,7 +2179,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                             : "rgba(15, 23, 42, 0.9)",
                         border:
                           linkTiendaCopiadoKey === `prod_${p.pro_id}`
-                            ? "1.5px solid #34D399"
+                            ? "1.5px solid #7EA389"
                             : "1.5px solid rgba(16, 185, 129, 0.45)",
                         color: "#FFFFFF",
                         padding: "5px 10px",
@@ -2200,7 +2200,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         </>
                       ) : (
                         <>
-                          <Link2 size={12} color="#34D399" />
+                          <Link2 size={12} color="#7EA389" />
                           <span className="btn-texto-responsive">Link Tienda</span>
                         </>
                       )}
@@ -2234,7 +2234,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
                       }}
                     >
-                      <Pencil size={12} color="#38BDF8" />
+                      <Pencil size={12} color="#C8A25A" />
                       <span className="btn-texto-responsive">Editar Master</span>
                     </button>
                   )}
@@ -2245,9 +2245,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   {!estaActivoGeneral ? (
                     <div
                       style={{
-                        background: "#FEF2F2",
-                        border: "1px solid #FECACA",
-                        color: "#DC2626",
+                        background: "#FAF2F2",
+                        border: "1px solid #E5CACA",
+                        color: "#8A2E2E",
                         padding: "3px 8px",
                         borderRadius: "6px",
                         fontSize: "0.7rem",
@@ -2259,15 +2259,15 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         alignSelf: "flex-start",
                       }}
                     >
-                      <AlertCircle size={12} color="#DC2626" />
+                      <AlertCircle size={12} color="#8A2E2E" />
                       <span>⚪ INACTIVO — Oculto al público</span>
                     </div>
                   ) : vigenciaInfo.vigenciaTipo !== "SIEMPRE" ? (
                     <div
                       style={{
-                        background: vigenciaInfo.estaVigente ? "#ECFDF5" : "#FFFBEB",
-                        border: vigenciaInfo.estaVigente ? "1px solid #A7F3D0" : "1px solid #FDE68A",
-                        color: vigenciaInfo.estaVigente ? "#065F46" : "#92400E",
+                        background: vigenciaInfo.estaVigente ? "#F2F6F3" : "#FAF6EE",
+                        border: vigenciaInfo.estaVigente ? "1px solid #CEDDD3" : "1px solid #E5D7BC",
+                        color: vigenciaInfo.estaVigente ? "#2B4A36" : "#745622",
                         padding: "3px 8px",
                         borderRadius: "6px",
                         fontSize: "0.7rem",
@@ -2280,7 +2280,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       }}
                       title={vigenciaInfo.mensaje}
                     >
-                      <Calendar size={12} color={vigenciaInfo.estaVigente ? "#059669" : "#D97706"} />
+                      <Calendar size={12} color={vigenciaInfo.estaVigente ? "#2F4737" : "#8F6A2E"} />
                       <span>{vigenciaInfo.etiquetaBadge}</span>
                     </div>
                   ) : null}
@@ -2289,9 +2289,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   {esCodigoOfertaRenta(p.pro_tipo, p.pro_detalle_producto) && (
                     <div
                       style={{
-                        background: "#FFFBEB",
-                        border: "1px solid #FCD34D",
-                        color: "#92400E",
+                        background: "#FAF6EE",
+                        border: "1px solid #E5D7BC",
+                        color: "#745622",
                         padding: "3px 9px",
                         borderRadius: "6px",
                         fontSize: "0.7rem",
@@ -2318,8 +2318,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           width: "44px",
                           height: "44px",
                           borderRadius: "12px",
-                          background: "#F8FAFC",
-                          border: "1px solid #E2E8F0",
+                          background: "#F8F7F4",
+                          border: "1px solid #E6E2DA",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -2333,7 +2333,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         style={{
                           fontSize: "0.72rem",
                           fontWeight: 700,
-                          color: "#64748B",
+                          color: "#847D74",
                           textTransform: "uppercase",
                           letterSpacing: "0.5px",
                         }}
@@ -2343,9 +2343,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       <h3
                         style={{
                           margin: "2px 0 0",
-                          fontSize: "1.05rem",
+                          fontSize: "0.9rem",
                           fontWeight: 800,
-                          color: "#0F172A",
+                          color: "#1F1C19",
                           lineHeight: 1.3,
                         }}
                       >
@@ -2359,7 +2359,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     style={{
                       margin: "0 0 14px",
                       fontSize: "0.82rem",
-                      color: "#475569",
+                      color: "#57524C",
                       lineHeight: 1.45,
                       flex: 1,
                     }}
@@ -2375,9 +2375,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           display: "inline-flex",
                           alignItems: "center",
                           gap: "6px",
-                          background: "#ECFDF5",
-                          border: "1px solid #10B981",
-                          color: "#065F46",
+                          background: "#F2F6F3",
+                          border: "1px solid #2F4737",
+                          color: "#2B4A36",
                           padding: "4px 10px",
                           borderRadius: "8px",
                           fontSize: "0.72rem",
@@ -2386,10 +2386,10 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           alignSelf: "flex-start",
                         }}
                       >
-                        <Truck size={13} color="#059669" />
+                        <Truck size={13} color="#2F4737" />
                         <span>{p.pro_detalle_producto?.logistica?.etiqueta_transporte || "📦 Mensajería Notarial Segura"}</span>
                         {p.pro_detalle_producto?.logistica?.cobertura_texto && (
-                          <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#047857", marginLeft: "2px" }}>
+                          <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#2F4737", marginLeft: "2px" }}>
                             • {p.pro_detalle_producto.logistica.cobertura_texto}
                           </span>
                         )}
@@ -2400,9 +2400,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           display: "inline-flex",
                           alignItems: "center",
                           gap: "6px",
-                          background: "#EFF6FF",
-                          border: "1px solid #BFDBFE",
-                          color: "#1E40AF",
+                          background: "#F4F2EE",
+                          border: "1px solid #DDD8CE",
+                          color: "#3A3530",
                           padding: "4px 10px",
                           borderRadius: "8px",
                           fontSize: "0.72rem",
@@ -2411,7 +2411,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           alignSelf: "flex-start",
                         }}
                       >
-                        <Scale size={13} color="#2563EB" />
+                        <Scale size={13} color="#221E1B" />
                         <span>
                           {p.pro_tipo === "SUSCRIPCION"
                             ? "🛡️ Cobertura Legal Continua"
@@ -2420,7 +2420,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                             : "🌐 Modalidad 100% Telemática"}
                         </span>
                         {p.pro_detalle_producto?.logistica?.cobertura_texto && !p.pro_detalle_producto.logistica.cobertura_texto.includes("Quito Urbano") && (
-                          <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#1D4ED8", marginLeft: "2px" }}>
+                          <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#221E1B", marginLeft: "2px" }}>
                             • {p.pro_detalle_producto.logistica.cobertura_texto}
                           </span>
                         )}
@@ -2432,9 +2432,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         display: "inline-flex",
                         alignItems: "center",
                         gap: "6px",
-                        background: "linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)",
-                        border: "1px solid #10B981",
-                        color: "#065F46",
+                        background: "#F2F6F3",
+                        border: "1px solid #2F4737",
+                        color: "#2B4A36",
                         padding: "4px 10px",
                         borderRadius: "8px",
                         fontSize: "0.72rem",
@@ -2444,10 +2444,10 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         alignSelf: "flex-start",
                       }}
                     >
-                      <Truck size={13} color="#059669" />
+                      <Truck size={13} color="#2F4737" />
                       <span>{p.pro_detalle_producto?.logistica?.etiqueta_transporte || "🚚 Envío a Domicilio Incluido"}</span>
                       {p.pro_detalle_producto?.logistica?.cobertura_texto && (
-                        <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#047857", marginLeft: "2px" }}>
+                        <span style={{ fontSize: "0.68rem", fontWeight: 600, color: "#2F4737", marginLeft: "2px" }}>
                           • {p.pro_detalle_producto.logistica.cobertura_texto}
                         </span>
                       )}
@@ -2463,9 +2463,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         style={{
                           fontSize: "0.66rem",
                           fontWeight: 800,
-                          background: "#FEF2F2",
-                          color: "#DC2626",
-                          border: "1px solid #FECACA",
+                          background: "#FAF2F2",
+                          color: "#8A2E2E",
+                          border: "1px solid #E5CACA",
                           borderRadius: "6px",
                           padding: "2px 6px",
                           display: "inline-flex",
@@ -2473,7 +2473,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           gap: "4px",
                         }}
                       >
-                        <AlertCircle size={11} color="#DC2626" />
+                        <AlertCircle size={11} color="#8A2E2E" />
                         <span>Sin imagen (Oculto Web/App)</span>
                       </span>
                     )}
@@ -2509,20 +2509,20 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                               fontSize: "0.66rem",
                               fontWeight: 700,
                               background: isSaving
-                                ? "#F1F5F9"
+                                ? "#F4F2EE"
                                 : estaActivo
-                                ? "#ECFDF5"
-                                : "#F8FAFC",
+                                ? "#F2F6F3"
+                                : "#F8F7F4",
                               color: isSaving
-                                ? "#64748B"
+                                ? "#847D74"
                                 : estaActivo
-                                ? "#065F46"
-                                : "#94A3B8",
+                                ? "#2B4A36"
+                                : "#847D74",
                               border: isSaving
-                                ? "1px dashed #CBD5E1"
+                                ? "1px dashed #D5CFC4"
                                 : estaActivo
-                                ? "1px solid #10B981"
-                                : "1px dashed #CBD5E1",
+                                ? "1px solid #2F4737"
+                                : "1px dashed #D5CFC4",
                               borderRadius: "6px",
                               padding: "2px 6px",
                               display: "inline-flex",
@@ -2537,9 +2537,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                             {isSaving ? (
                               <RefreshCw size={9} className="animate-spin" />
                             ) : estaActivo ? (
-                              <CheckCircle2 size={10} color="#10B981" />
+                              <CheckCircle2 size={10} color="#2F4737" />
                             ) : (
-                              <div style={{ width: "8px", height: "8px", borderRadius: "2px", border: "1.5px solid #94A3B8" }} />
+                              <div style={{ width: "8px", height: "8px", borderRadius: "2px", border: "1.5px solid #847D74" }} />
                             )}
                             <span>{canalObj.nombre}</span>
                           </button>
@@ -2557,9 +2557,9 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           style={{
                             fontSize: "0.66rem",
                             fontWeight: 700,
-                            background: "#F1F5F9",
-                            color: requiereImgYFalta ? "#94A3B8" : "#475569",
-                            border: `1px solid ${requiereImgYFalta ? "#CBD5E1" : "#E2E8F0"}`,
+                            background: "#F4F2EE",
+                            color: requiereImgYFalta ? "#847D74" : "#57524C",
+                            border: `1px solid ${requiereImgYFalta ? "#D5CFC4" : "#E6E2DA"}`,
                             borderRadius: "6px",
                             padding: "2px 6px",
                             display: "inline-flex",
@@ -2579,8 +2579,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   {beneficiosLista.length > 0 && (
                     <div
                       style={{
-                        background: "#F8FAFC",
-                        border: "1px solid #E2E8F0",
+                        background: "#F8F7F4",
+                        border: "1px solid #E6E2DA",
                         borderRadius: "10px",
                         padding: "10px 12px",
                         marginBottom: "14px",
@@ -2590,7 +2590,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         style={{
                           fontSize: "0.72rem",
                           fontWeight: 800,
-                          color: "#334155",
+                          color: "#57524C",
                           textTransform: "uppercase",
                           letterSpacing: "0.02em",
                           marginBottom: "6px",
@@ -2599,7 +2599,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           gap: "5px",
                         }}
                       >
-                        <Sparkles size={12} color="#0284C7" />
+                        <Sparkles size={12} color="#221E1B" />
                         <span>
                           {esFloristeria
                             ? "🌸 ¿Qué incluye este arreglo?"
@@ -2614,14 +2614,14 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                             key={bIdx}
                             style={{
                               fontSize: "0.75rem",
-                              color: "#475569",
+                              color: "#57524C",
                               display: "flex",
                               alignItems: "flex-start",
                               gap: "6px",
                               lineHeight: 1.35,
                             }}
                           >
-                            <CheckCircle2 size={13} color="#10B981" style={{ flexShrink: 0, marginTop: "2px" }} />
+                            <CheckCircle2 size={13} color="#2F4737" style={{ flexShrink: 0, marginTop: "2px" }} />
                             <span>{ben}</span>
                           </div>
                         ))}
@@ -2637,7 +2637,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           display: "block",
                           fontSize: "0.73rem",
                           fontWeight: 700,
-                          color: "#334155",
+                          color: "#57524C",
                           marginBottom: "6px",
                         }}
                       >
@@ -2692,7 +2692,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                                     fontWeight: activa ? 800 : 600,
                                     color: activa
                                       ? colVar.text
-                                      : "#334155",
+                                      : "#57524C",
                                   }}
                                 >
                                   {v.var_nombre}
@@ -2705,7 +2705,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                                 {v.var_detalle_variante?.album_url && (
                                   <span
                                     title={`Álbum exclusivo para ${v.var_nombre}`}
-                                    style={{ fontSize: "0.62rem", background: "#EFF6FF", color: "#1D4ED8", border: "1px solid #BFDBFE", padding: "1px 5px", borderRadius: "4px", fontWeight: 700 }}
+                                    style={{ fontSize: "0.62rem", background: "#F4F2EE", color: "#221E1B", border: "1px solid #DDD8CE", padding: "1px 5px", borderRadius: "4px", fontWeight: 700 }}
                                   >
                                     📁 Álbum
                                   </span>
@@ -2713,7 +2713,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                               </div>
 
                               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <div style={{ fontSize: "0.85rem", fontWeight: 800, color: activa ? colVar.text : "#0F172A" }}>
+                                <div style={{ fontSize: "0.85rem", fontWeight: 800, color: activa ? colVar.text : "#1F1C19" }}>
                                   ${v.precio_total ? v.precio_total.toFixed(2) : "0.00"}
                                 </div>
 
@@ -2806,27 +2806,27 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   {currentVar && (
                     <div
                       style={{
-                        background: "#F8FAFC",
+                        background: "#F8F7F4",
                         borderRadius: "10px",
                         padding: "12px",
                         marginTop: "auto",
-                        border: "1px solid #E2E8F0",
+                        border: "1px solid #E6E2DA",
                       }}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                         <div>
-                          <div style={{ fontSize: "0.75rem", color: "#64748B" }}>
+                          <div style={{ fontSize: "0.75rem", color: "#847D74" }}>
                             Base Imponible: ${currentVar.var_precio !== undefined ? currentVar.var_precio.toFixed(2) : "0.00"}
                           </div>
-                          <div style={{ fontSize: "0.7rem", color: "#94A3B8" }}>
+                          <div style={{ fontSize: "0.7rem", color: "#847D74" }}>
                             + IVA ({currentVar.var_tarifa_iva_porcentaje ?? 0}%): ${currentVar.monto_iva !== undefined ? currentVar.monto_iva.toFixed(2) : "0.00"}
                           </div>
                         </div>
                         <div style={{ textAlign: "right" }}>
-                          <div style={{ fontSize: "1.35rem", fontWeight: 800, color: "#0F172A" }}>
+                          <div style={{ fontSize: "1.02rem", fontWeight: 800, color: "#1F1C19" }}>
                             ${currentVar.precio_total !== undefined ? currentVar.precio_total.toFixed(2) : "0.00"}
                           </div>
-                          <div style={{ fontSize: "0.65rem", color: "#059669", fontWeight: 700 }}>
+                          <div style={{ fontSize: "0.65rem", color: "#2F4737", fontWeight: 700 }}>
                             TOTAL FACTURABLE
                           </div>
                         </div>
@@ -2840,7 +2840,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     onClick={() => abrirCheckout(p, currentVar?.var_id)}
                     style={{
                       marginTop: "16px",
-                      background: esFloristeria ? "#E11D48" : "#0284C7",
+                      background: esFloristeria ? "#221E1B" : "#221E1B",
                       color: "#FFFFFF",
                       border: "none",
                       padding: "10px 16px",
@@ -2964,7 +2964,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         >
           <div
             style={{
-              background: "#0F172A",
+              background: "#1F1C19",
               borderRadius: "16px",
               width: "100%",
               maxWidth: "760px",
@@ -2980,10 +2980,10 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                borderBottom: "1px solid #334155",
+                borderBottom: "1px solid #57524C",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#38BDF8", fontWeight: 700, fontSize: "0.88rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#C8A25A", fontWeight: 700, fontSize: "0.88rem" }}>
                 <Video size={17} />
                 <span>Demostración en Video / Reel</span>
               </div>
@@ -2993,7 +2993,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 style={{
                   background: "transparent",
                   border: "none",
-                  color: "#94A3B8",
+                  color: "#847D74",
                   cursor: "pointer",
                   padding: "4px",
                 }}

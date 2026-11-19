@@ -320,24 +320,25 @@ export default async function PaginaPanel() {
   const modulosConfiguracion = modulosDisponibles.filter((m) => m.grupo === "configuracion");
 
   return (
-    <div style={{ maxWidth: "1120px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "28px" }}>
-      {/* Cabecera Sobria del Panel */}
+    <div style={{ maxWidth: "1120px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "22px" }}>
+      {/* Cabecera Sobria y Editorial del Panel */}
       <div
         style={{
-          background: "linear-gradient(135deg, #2D4334 0%, #1F2E24 100%)",
-          borderRadius: "16px",
-          padding: "clamp(18px, 4vw, 28px) clamp(16px, 4.5vw, 32px)",
-          color: "#FFFFFF",
-          boxShadow: "0 8px 20px -6px rgba(31, 46, 36, 0.25)",
+          background: "#FFFFFF",
+          border: "1px solid #E6E2DA",
+          borderLeft: "3px solid #2F4737",
+          borderRadius: "12px",
+          padding: "clamp(16px, 3vw, 22px) clamp(16px, 3.5vw, 24px)",
+          color: "#1F1C19",
         }}
       >
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
-            alignItems: "flex-start",
+            alignItems: "center",
             flexWrap: "wrap",
-            gap: "16px",
+            gap: "14px",
           }}
         >
           <div style={{ minWidth: 0 }}>
@@ -345,24 +346,22 @@ export default async function PaginaPanel() {
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "6px",
-                background: "rgba(255,255,255,0.12)",
-                padding: "4px 11px",
-                borderRadius: "999px",
-                fontSize: "11px",
+                gap: "5px",
+                color: "#847D74",
+                fontSize: "0.69rem",
                 fontWeight: 600,
                 textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                marginBottom: "10px",
+                letterSpacing: "0.07em",
+                marginBottom: "4px",
               }}
             >
-              <Sparkles size={13} />
+              <Sparkles size={12} color="#B8923F" />
               {infoBanner.subtitulo}
             </div>
-            <h1 style={{ fontSize: "clamp(1.25rem, 4vw, 1.55rem)", fontWeight: 700, margin: "0 0 6px 0", color: "#FFFFFF" }}>
+            <h1 style={{ fontSize: "1.15rem", fontWeight: 600, margin: "0 0 4px 0", color: "#1F1C19" }}>
               {saludo ?? `Hola, ${nombre}`}
             </h1>
-            <p style={{ margin: 0, fontSize: "13.5px", color: "rgba(255,255,255,0.84)", maxWidth: "600px", lineHeight: 1.5 }}>
+            <p style={{ margin: 0, fontSize: "0.82rem", color: "#57524C", maxWidth: "640px", lineHeight: 1.48 }}>
               {infoBanner.descripcion}
             </p>
           </div>
@@ -374,18 +373,18 @@ export default async function PaginaPanel() {
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "8px",
-                padding: "10px 16px",
-                borderRadius: "10px",
-                background: "rgba(255, 255, 255, 0.12)",
-                border: "1px solid rgba(255, 255, 255, 0.22)",
-                color: "#FFFFFF",
+                gap: "7px",
+                padding: "8px 14px",
+                borderRadius: "8px",
+                background: "#F8F7F4",
+                border: "1px solid #D5CFC4",
+                color: "#1F1C19",
                 textDecoration: "none",
-                fontSize: "13px",
+                fontSize: "0.8rem",
                 fontWeight: 600,
               }}
             >
-              <Settings size={15} />
+              <Settings size={14} />
               <span>Configuración</span>
             </Link>
           )}
@@ -397,14 +396,14 @@ export default async function PaginaPanel() {
 
       {/* Grupo 1: Operación Comercial */}
       {modulosOperacion.length > 0 && (
-        <section style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+        <section style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "8px" }}>
-            <h2 style={{ fontSize: "15px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", margin: 0, color: "#374151" }}>
+            <h2 style={{ fontSize: "0.78rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", margin: 0, color: "#57524C" }}>
               Operación Comercial y Equipo
             </h2>
-            <span style={{ fontSize: "12.5px", color: "#6B7280" }}>Gestión diaria de la floristería</span>
+            <span style={{ fontSize: "0.76rem", color: "#847D74" }}>Gestión diaria de la floristería</span>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(275px, 100%), 1fr))", gap: "14px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(265px, 100%), 1fr))", gap: "12px" }}>
             {modulosOperacion.map((mod) => (
               <TarjetaModuloPanel key={mod.clave} mod={mod} />
             ))}
@@ -414,14 +413,14 @@ export default async function PaginaPanel() {
 
       {/* Grupo 2: Configuración e Integraciones */}
       {modulosConfiguracion.length > 0 && (
-        <section style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+        <section style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "8px" }}>
-            <h2 style={{ fontSize: "15px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", margin: 0, color: "#374151" }}>
+            <h2 style={{ fontSize: "0.78rem", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em", margin: 0, color: "#57524C" }}>
               Configuración e Integraciones
             </h2>
-            <span style={{ fontSize: "12.5px", color: "#6B7280" }}>Parámetros exclusivos de Tinkay en Vault</span>
+            <span style={{ fontSize: "0.76rem", color: "#847D74" }}>Parámetros exclusivos de Tinkay en Vault</span>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(240px, 100%), 1fr))", gap: "14px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(240px, 100%), 1fr))", gap: "12px" }}>
             {modulosConfiguracion.map((mod) => (
               <TarjetaModuloPanel key={mod.clave} mod={mod} />
             ))}
@@ -440,13 +439,12 @@ function TarjetaModuloPanel({ mod }: { mod: WidgetInfo }) {
       style={{
         textDecoration: "none",
         background: "#FFFFFF",
-        borderRadius: "13px",
-        padding: "20px 22px",
-        border: "1px solid #E5E7EB",
+        borderRadius: "11px",
+        padding: "16px 18px",
+        border: "1px solid #E6E2DA",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)",
       }}
     >
       <div>
@@ -455,44 +453,44 @@ function TarjetaModuloPanel({ mod }: { mod: WidgetInfo }) {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: "14px",
+            marginBottom: "11px",
           }}
         >
           <div
             style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "10px",
-              background: "#F4F4F5",
-              border: "1px solid #E4E4E7",
-              color: "#18181B",
+              width: "34px",
+              height: "34px",
+              borderRadius: "8px",
+              background: "#F6F4F0",
+              border: "1px solid #E6E2DA",
+              color: "#221E1B",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
             }}
           >
-            <Icono size={19} />
+            <Icono size={16} />
           </div>
           {mod.etiqueta && (
             <span
               style={{
-                fontSize: "11px",
+                fontSize: "0.68rem",
                 fontWeight: 600,
-                padding: "3px 9px",
+                padding: "2px 8px",
                 borderRadius: "999px",
-                background: "#F3F4F6",
-                color: "#374151",
-                border: "1px solid #E5E7EB",
+                background: "#F8F7F4",
+                color: "#57524C",
+                border: "1px solid #E6E2DA",
               }}
             >
               {mod.etiqueta}
             </span>
           )}
         </div>
-        <h3 style={{ fontSize: "15.5px", fontWeight: 700, color: "#111827", margin: "0 0 6px 0" }}>
+        <h3 style={{ fontSize: "0.88rem", fontWeight: 600, color: "#1F1C19", margin: "0 0 5px 0" }}>
           {mod.nombre}
         </h3>
-        <p style={{ fontSize: "13px", color: "#6B7280", margin: 0, lineHeight: 1.5 }}>
+        <p style={{ fontSize: "0.78rem", color: "#6E6861", margin: 0, lineHeight: 1.45 }}>
           {mod.descripcion}
         </p>
       </div>
@@ -501,15 +499,15 @@ function TarjetaModuloPanel({ mod }: { mod: WidgetInfo }) {
         style={{
           display: "flex",
           alignItems: "center",
-          gap: "6px",
-          marginTop: "18px",
-          fontSize: "12.5px",
+          gap: "5px",
+          marginTop: "14px",
+          fontSize: "0.76rem",
           fontWeight: 600,
-          color: "#18181B",
+          color: "#2F4737",
         }}
       >
         Abrir
-        <ArrowRight size={14} />
+        <ArrowRight size={13} />
       </div>
     </Link>
   );

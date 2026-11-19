@@ -260,7 +260,7 @@ export function PanelCamposVentaChat({
   const estiloLabel: React.CSSProperties = {
     fontSize: "0.69rem",
     fontWeight: 700,
-    color: "#475569",
+    color: "#57524C",
     display: "flex",
     flexDirection: "column",
     gap: "3px",
@@ -270,10 +270,10 @@ export function PanelCamposVentaChat({
     width: "100%",
     padding: "6px 8px",
     borderRadius: "7px",
-    border: "1px solid #CBD5E1",
+    border: "1px solid #D5CFC4",
     fontSize: "0.79rem",
     background: "#FFFFFF",
-    color: "#0F172A",
+    color: "#1F1C19",
     fontFamily: "inherit",
   };
 
@@ -281,7 +281,7 @@ export function PanelCamposVentaChat({
     <div
       style={{
         background: "#FFFFFF",
-        border: "1px solid #E2E8F0",
+        border: "1px solid #E6E2DA",
         borderRadius: "12px",
         padding: "11px",
         display: "flex",
@@ -298,16 +298,16 @@ export function PanelCamposVentaChat({
           gap: "6px",
         }}
       >
-        <strong style={{ fontSize: "0.79rem", color: "#18181B" }}>
+        <strong style={{ fontSize: "0.79rem", color: "#221E1B" }}>
           Campos de Venta
         </strong>
         <span
           style={{
             padding: "2px 8px",
             borderRadius: "999px",
-            background: "#F4F4F5",
-            border: "1px solid #E4E4E7",
-            color: totalCalculado > 0 ? "#18181B" : "#71717A",
+            background: "#F4F2EE",
+            border: "1px solid #E6E2DA",
+            color: totalCalculado > 0 ? "#221E1B" : "#847D74",
             fontSize: "0.74rem",
             fontWeight: 700,
           }}
@@ -322,10 +322,10 @@ export function PanelCamposVentaChat({
           display: "grid",
           gridTemplateColumns: "1fr 1fr 1fr",
           gap: "4px",
-          background: "#F4F4F5",
+          background: "#F4F2EE",
           padding: "3px",
           borderRadius: "8px",
-          border: "1px solid #E4E4E7",
+          border: "1px solid #E6E2DA",
         }}
       >
         {(
@@ -347,8 +347,8 @@ export function PanelCamposVentaChat({
                 padding: "5px 4px",
                 borderRadius: "6px",
                 border: "none",
-                background: act ? "#18181B" : "transparent",
-                color: act ? "#FFFFFF" : "#52525B",
+                background: act ? "#221E1B" : "transparent",
+                color: act ? "#FFFFFF" : "#6E6861",
                 fontSize: "0.73rem",
                 fontWeight: 600,
                 display: "inline-flex",
@@ -509,7 +509,7 @@ export function PanelCamposVentaChat({
         <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
           <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontSize: "0.69rem", fontWeight: 700, color: "#475569" }}>
+              <span style={{ fontSize: "0.69rem", fontWeight: 700, color: "#57524C" }}>
                 Fecha de entrega
               </span>
               <div style={{ display: "flex", gap: "4px" }}>
@@ -519,9 +519,9 @@ export function PanelCamposVentaChat({
                   style={{
                     padding: "1px 6px",
                     borderRadius: "5px",
-                    border: "1px solid #D4D4D8",
-                    background: "#FAFAFA",
-                    color: "#27272A",
+                    border: "1px solid #D5CFC4",
+                    background: "#F8F7F4",
+                    color: "#3A3530",
                     fontSize: "0.66rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -535,9 +535,9 @@ export function PanelCamposVentaChat({
                   style={{
                     padding: "1px 6px",
                     borderRadius: "5px",
-                    border: "1px solid #D4D4D8",
-                    background: "#FAFAFA",
-                    color: "#27272A",
+                    border: "1px solid #D5CFC4",
+                    background: "#F8F7F4",
+                    color: "#3A3530",
                     fontSize: "0.66rem",
                     fontWeight: 600,
                     cursor: "pointer",
@@ -581,19 +581,19 @@ export function PanelCamposVentaChat({
           </label>
 
           {form.franjaHora === "HORA_EXACTA" && (
-            <label style={{ ...estiloLabel, color: "#0F766E" }}>
+            <label style={{ ...estiloLabel, color: "#2F4737" }}>
               <span>Indicar Hora Exacta *</span>
               <input
                 type="time"
                 value={form.horaExacta ?? "10:30"}
                 onChange={(e) => actualizarCampo("horaExacta", e.target.value)}
-                style={{ ...estiloInput, border: "1.5px solid #0D9488", fontWeight: 700 }}
+                style={{ ...estiloInput, border: "1.5px solid #2F4737", fontWeight: 700 }}
               />
             </label>
           )}
 
           {form.clasificacionPedido === "EXEQUIALES" ? (
-            <label style={{ ...estiloLabel, color: "#4C1D95" }}>
+            <label style={{ ...estiloLabel, color: "#3A3530" }}>
               <span>Sala Exequiales</span>
               <SelectConBuscador
                 value={form.salaServicio ?? ""}
@@ -634,7 +634,7 @@ export function PanelCamposVentaChat({
 
               <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "0.69rem", fontWeight: 700, color: "#475569" }}>
+                  <span style={{ fontSize: "0.69rem", fontWeight: 700, color: "#57524C" }}>
                     Enlace Ubicación GPS
                   </span>
                   {form.ubicacionUrl && /^https?:\/\//i.test(form.ubicacionUrl) && (
@@ -644,7 +644,7 @@ export function PanelCamposVentaChat({
                       rel="noreferrer"
                       style={{
                         fontSize: "0.68rem",
-                        color: "#27272A",
+                        color: "#3A3530",
                         textDecoration: "underline",
                         display: "inline-flex",
                         alignItems: "center",
@@ -672,9 +672,9 @@ export function PanelCamposVentaChat({
                     style={{
                       padding: "6px 9px",
                       borderRadius: "7px",
-                      border: "1px solid #D4D4D8",
-                      background: "#FAFAFA",
-                      color: "#18181B",
+                      border: "1px solid #D5CFC4",
+                      background: "#F8F7F4",
+                      color: "#221E1B",
                       fontSize: "0.7rem",
                       fontWeight: 600,
                       cursor: cotizandoGps ? "wait" : "pointer",
@@ -715,7 +715,7 @@ export function PanelCamposVentaChat({
           <label
             style={
               form.clasificacionPedido === "EXEQUIALES"
-                ? { ...estiloLabel, color: "#4C1D95" }
+                ? { ...estiloLabel, color: "#3A3530" }
                 : estiloLabel
             }
           >
@@ -737,7 +737,7 @@ export function PanelCamposVentaChat({
               }
               style={
                 form.clasificacionPedido === "EXEQUIALES"
-                  ? { ...estiloInput, border: "1.5px solid #8B5CF6" }
+                  ? { ...estiloInput, border: "1.5px solid #4A453F" }
                   : estiloInput
               }
             />
@@ -780,9 +780,9 @@ export function PanelCamposVentaChat({
           style={{
             padding: "6px 8px",
             borderRadius: "7px",
-            background: "#FEF2F2",
-            border: "1px solid #FECACA",
-            color: "#991B1B",
+            background: "#FAF2F2",
+            border: "1px solid #E5CACA",
+            color: "#8A2E2E",
             fontSize: "0.72rem",
           }}
         >
@@ -807,9 +807,9 @@ export function PanelCamposVentaChat({
             gap: "5px",
             padding: "8px 10px",
             borderRadius: "9px",
-            border: "1px solid #D4D4D8",
-            background: guardadoReciente ? "#F4F4F5" : "#FFFFFF",
-            color: "#18181B",
+            border: "1px solid #D5CFC4",
+            background: guardadoReciente ? "#F4F2EE" : "#FFFFFF",
+            color: "#221E1B",
             fontSize: "0.78rem",
             fontWeight: 600,
             cursor: guardando ? "wait" : "pointer",
@@ -841,7 +841,7 @@ export function PanelCamposVentaChat({
             padding: "8px 10px",
             borderRadius: "9px",
             border: "none",
-            background: "#2D4734",
+            background: "#2F4737",
             color: "#FFFFFF",
             fontSize: "0.78rem",
             fontWeight: 700,

@@ -34,7 +34,7 @@ export default async function PaginaInventarioRosasTinkay() {
       }}
     >
       <div>
-        <h1 style={{ fontSize: "22px", fontWeight: 700, margin: 0, color: "#111827" }}>
+        <h1 style={{ fontSize: "1.12rem", fontWeight: 600, margin: 0, color: "#1F1C19" }}>
           Inventario de Rosas con Conteo IA (ARIA)
         </h1>
       </div>

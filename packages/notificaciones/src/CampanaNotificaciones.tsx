@@ -362,37 +362,35 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
         aria-label={`Centro de notificaciones (${noLeidasCount} pendientes)`}
         style={{
           position: "relative",
-          background: esClara ? "#FFFFFF" : "#161b22",
-          border: esClara ? "1.5px solid #D1D5DB" : "1px solid #30363d",
+          background: esClara ? "#FFFFFF" : "rgba(255, 255, 255, 0.06)",
+          border: esClara ? "1px solid #D5CFC4" : "1px solid rgba(214, 195, 165, 0.2)",
           borderRadius: "50%",
-          width: "40px",
-          height: "40px",
+          width: "36px",
+          height: "36px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: esClara ? "#2D4734" : "#c9d1d9",
+          color: esClara ? "#2F4737" : "#E5DDD2",
           cursor: "pointer",
           transition: "all 0.2s ease",
           flexShrink: 0,
         }}
       >
-        <Bell size={19} />
+        <Bell size={17} />
         {noLeidasCount > 0 && (
           <span
             style={{
               position: "absolute",
               top: "-3px",
               right: "-3px",
-              background: esClara ? "#DC2626" : "#1f6feb",
-              color: "#ffffff",
-              fontSize: "0.7rem",
-              fontWeight: 800,
-              borderRadius: "10px",
-              padding: "1px 6px",
-              boxShadow: esClara
-                ? "0 2px 8px rgba(220, 38, 38, 0.45)"
-                : "0 0 10px rgba(31, 111, 235, 0.8)",
-              border: esClara ? "2px solid #FFFFFF" : "2px solid #0d1117",
+              background: esClara ? "#8A2E2E" : "#C8A25A",
+              color: esClara ? "#FFFFFF" : "#1C1714",
+              fontSize: "0.66rem",
+              fontWeight: 700,
+              borderRadius: "999px",
+              padding: "1px 5.5px",
+              boxShadow: "0 1px 4px rgba(0, 0, 0, 0.22)",
+              border: esClara ? "1.5px solid #FFFFFF" : "1.5px solid #1A1512",
             }}
           >
             {noLeidasCount}
@@ -409,45 +407,45 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
             top: "18px",
             right: "18px",
             width: "calc(100vw - 36px)",
-            maxWidth: "390px",
-            background: "#0F172A",
-            color: "#F8FAFC",
-            borderRadius: "14px",
-            border: "1.5px solid #10B981",
-            boxShadow: "0 18px 40px rgba(15, 23, 42, 0.45)",
-            padding: "14px 16px",
+            maxWidth: "380px",
+            background: "#221E1B",
+            color: "#F6F1E8",
+            borderRadius: "12px",
+            border: "1px solid rgba(200, 162, 90, 0.45)",
+            boxShadow: "0 14px 32px rgba(24, 18, 14, 0.32)",
+            padding: "13px 15px",
             zIndex: 100001,
             display: "flex",
             flexDirection: "column",
-            gap: "10px",
+            gap: "9px",
           }}
         >
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "10px" }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
               <div
                 style={{
-                  width: "34px",
-                  height: "34px",
-                  borderRadius: "10px",
-                  background: "rgba(16, 185, 129, 0.18)",
-                  color: "#34D399",
+                  width: "32px",
+                  height: "32px",
+                  borderRadius: "8px",
+                  background: "rgba(200, 162, 90, 0.16)",
+                  color: "#C8A25A",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   flexShrink: 0,
                 }}
               >
-                <Bell size={18} />
+                <Bell size={16} />
               </div>
               <div>
                 <span
                   style={{
                     display: "block",
-                    fontSize: "0.68rem",
-                    fontWeight: 800,
+                    fontSize: "0.66rem",
+                    fontWeight: 700,
                     letterSpacing: "0.06em",
                     textTransform: "uppercase",
-                    color: "#34D399",
+                    color: "#C8A25A",
                     marginBottom: "2px",
                   }}
                 >

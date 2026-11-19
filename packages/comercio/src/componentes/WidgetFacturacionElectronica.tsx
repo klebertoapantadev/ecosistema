@@ -488,8 +488,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
           ? `Tarjeta ${tipoTarj} · ${t.pag_tarjeta_marca} •••• ${t.pag_tarjeta_ultimos_digitos || ""}`
           : `Tarjeta ${tipoTarj} · Pasarela PLUX`,
         esAutomatica: true,
-        colorBg: "#EEF2FF",
-        colorText: "#4338CA",
+        colorBg: "#F4F2EE",
+        colorText: "#221E1B",
       };
     }
     if (p === "PAYPHONE") {
@@ -499,8 +499,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
           ? `Tarjeta ${tipoTarj} · ${t.pag_tarjeta_marca} •••• ${t.pag_tarjeta_ultimos_digitos || ""}`
           : "Emisión Automática",
         esAutomatica: true,
-        colorBg: "#EFF6FF",
-        colorText: "#1D4ED8",
+        colorBg: "#F4F2EE",
+        colorText: "#221E1B",
       };
     }
     if (p === "TARJETA_POS") {
@@ -508,8 +508,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
         titulo: "Datafast / POS",
         subtitulo: "Voucher Físico (Operador)",
         esAutomatica: false,
-        colorBg: "#E0E7FF",
-        colorText: "#3730A3",
+        colorBg: "#EFECE6",
+        colorText: "#3A3530",
       };
     }
     if (p === "TRANSFERENCIA") {
@@ -517,8 +517,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
         titulo: "Transferencia Bancaria",
         subtitulo: "Registro Operador",
         esAutomatica: false,
-        colorBg: "#F0FDFA",
-        colorText: "#0F766E",
+        colorBg: "#F2F6F3",
+        colorText: "#2F4737",
       };
     }
     if (p === "EFECTIVO") {
@@ -526,8 +526,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
         titulo: "Efectivo en Caja",
         subtitulo: "Registro Operador",
         esAutomatica: false,
-        colorBg: "#FEF3C7",
-        colorText: "#B45309",
+        colorBg: "#FAF6EE",
+        colorText: "#745622",
       };
     }
     if (p === "DEUNA") {
@@ -535,8 +535,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
         titulo: "Deuna! / QR",
         subtitulo: "Registro Operador",
         esAutomatica: false,
-        colorBg: "#F3E8FF",
-        colorText: "#6D28D9",
+        colorBg: "#F4F2EE",
+        colorText: "#4A453F",
       };
     }
     if (p === "DEPOSITO") {
@@ -544,16 +544,16 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
         titulo: "Depósito Bancario",
         subtitulo: "Registro Operador",
         esAutomatica: false,
-        colorBg: "#ECFDF5",
-        colorText: "#047857",
+        colorBg: "#F2F6F3",
+        colorText: "#2F4737",
       };
     }
     return {
       titulo: p || "PLUX",
       subtitulo: t.pag_detalle_transaccion?.registro_manual ? "Registro Operador" : "Pasarela Digital",
       esAutomatica: !t.pag_detalle_transaccion?.registro_manual,
-      colorBg: "#F1F5F9",
-      colorText: "#334155",
+      colorBg: "#F4F2EE",
+      colorText: "#57524C",
     };
   };
 
@@ -567,8 +567,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               borderRadius: "12px",
               fontSize: "0.73rem",
               fontWeight: 700,
-              background: "#D1FAE5",
-              color: "#065F46",
+              background: "#EAF1EC",
+              color: "#2B4A36",
               display: "inline-flex",
               alignItems: "center",
               gap: "4px",
@@ -586,8 +586,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               borderRadius: "12px",
               fontSize: "0.73rem",
               fontWeight: 700,
-              background: "#FEE2E2",
-              color: "#991B1B",
+              background: "#F6E9E9",
+              color: "#8A2E2E",
               display: "inline-flex",
               alignItems: "center",
               gap: "4px",
@@ -605,8 +605,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               borderRadius: "12px",
               fontSize: "0.73rem",
               fontWeight: 700,
-              background: "#FEF3C7",
-              color: "#92400E",
+              background: "#FAF6EE",
+              color: "#745622",
               display: "inline-flex",
               alignItems: "center",
               gap: "4px",
@@ -624,8 +624,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               borderRadius: "12px",
               fontSize: "0.73rem",
               fontWeight: 700,
-              background: "#F1F5F9",
-              color: "#475569",
+              background: "#F4F2EE",
+              color: "#57524C",
             }}
           >
             {estado}
@@ -746,8 +746,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", flexWrap: "wrap" }}>
             <span
               style={{
-                background: "#EDE9FE",
-                color: "#5B21B6",
+                background: "#F4F2EE",
+                color: "#3A3530",
                 padding: "3px 10px",
                 borderRadius: "12px",
                 fontSize: "0.73rem",
@@ -762,8 +762,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
             </span>
             <span
               style={{
-                background: "#DCFCE7",
-                color: "#166534",
+                background: "#F2F6F3",
+                color: "#2B4A36",
                 padding: "3px 10px",
                 borderRadius: "12px",
                 fontSize: "0.72rem",
@@ -777,12 +777,12 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               {esVistaCliente ? "Facturas Autorizadas Descargables" : "Emisión Automática con Tarjeta Activa"}
             </span>
           </div>
-          <h1 style={{ margin: 0, fontSize: "1.45rem", fontWeight: 800, color: "#0F172A" }}>
+          <h1 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 800, color: "#1F1C19" }}>
             {esVistaCliente
               ? "Mis Pagos Realizados & Facturas Electrónicas"
               : "Facturación, Comprobantes Electrónicos e Historial de Pagos"}
           </h1>
-          <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#64748B" }}>
+          <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#847D74" }}>
             {esVistaCliente
               ? "Consulta el historial de tus pagos realizados, el detalle del servicio facturado y descarga tu factura electrónica SRI."
               : "Control de valores generados y valores pagados, detalle del rubro facturado y emisión automática o manual de facturas electrónicas."}
@@ -802,9 +802,9 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 title="Configurar parámetros del emisor, firma electrónica .p12 y secuenciales SRI"
                 aria-label="Configurar parámetros SRI"
                 style={{
-                  background: "#ECFDF5",
-                  color: "#065F46",
-                  border: "1px solid #A7F3D0",
+                  background: "#F2F6F3",
+                  color: "#2B4A36",
+                  border: "1px solid #CEDDD3",
                   padding: "9px 14px",
                   borderRadius: "10px",
                   fontSize: "0.84rem",
@@ -830,9 +830,9 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 title="Generar un valor pendiente de pago (Cuenta por Cobrar) a un cliente"
                 aria-label="Generar Cobro"
                 style={{
-                  background: "#FEF3C7",
-                  color: "#92400E",
-                  border: "1px solid #FCD34D",
+                  background: "#FAF6EE",
+                  color: "#745622",
+                  border: "1px solid #E5D7BC",
                   padding: "9px 15px",
                   borderRadius: "10px",
                   fontSize: "0.84rem",
@@ -858,7 +858,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 title="Registrar pago manual (transferencia, efectivo, Deuna) y emitir factura electrónica"
                 aria-label="Registrar pago manual y emitir factura electrónica"
                 style={{
-                  background: "linear-gradient(135deg, #4F46E5 0%, #3730A3 100%)",
+                  background: "#221E1B",
                   color: "#FFFFFF",
                   border: "none",
                   padding: "9px 16px",
@@ -885,9 +885,9 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
             title="Actualizar listado de facturación y pagos"
             aria-label="Actualizar listado de facturación y pagos"
             style={{
-              background: "#F8FAFC",
-              color: "#334155",
-              border: "1px solid #CBD5E1",
+              background: "#F8F7F4",
+              color: "#57524C",
+              border: "1px solid #D5CFC4",
               padding: "9px 14px",
               borderRadius: "10px",
               fontSize: "0.84rem",
@@ -908,8 +908,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
       {exitoFacturaReciente && (
         <div
           style={{
-            background: "#ECFDF5",
-            border: "1px solid #6EE7B7",
+            background: "#F2F6F3",
+            border: "1px solid #CEDDD3",
             borderRadius: "12px",
             padding: "12px 16px",
             marginBottom: "18px",
@@ -917,13 +917,13 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
             justifyContent: "space-between",
             alignItems: "center",
             gap: "12px",
-            color: "#065F46",
+            color: "#2B4A36",
             fontSize: "0.86rem",
             fontWeight: 600,
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <CheckCircle2 size={18} color="#059669" />
+            <CheckCircle2 size={18} color="#2F4737" />
             <span>{exitoFacturaReciente}</span>
           </div>
           <button
@@ -934,7 +934,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
             style={{
               background: "transparent",
               border: "none",
-              color: "#047857",
+              color: "#2F4737",
               cursor: "pointer",
               padding: "4px",
             }}
@@ -957,14 +957,14 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
         <div
           style={{
             background: "#FFFFFF",
-            border: "1px solid #E2E8F0",
+            border: "1px solid #E6E2DA",
             borderRadius: "16px",
             padding: "16px 18px",
             boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#847D74", textTransform: "uppercase" }}>
               Valores Generados (Facturado)
             </span>
             <div
@@ -972,8 +972,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 width: "32px",
                 height: "32px",
                 borderRadius: "10px",
-                background: "#EEF2FF",
-                color: "#4F46E5",
+                background: "#F4F2EE",
+                color: "#221E1B",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -982,11 +982,11 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               <FileText size={17} />
             </div>
           </div>
-          <div style={{ fontSize: "1.55rem", fontWeight: 800, color: "#0F172A" }}>
+          <div style={{ fontSize: "1.08rem", fontWeight: 800, color: "#1F1C19" }}>
             ${metricas.valoresGeneradosTotal.toFixed(2)}{" "}
-            <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#64748B" }}>USD</span>
+            <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#847D74" }}>USD</span>
           </div>
-          <div style={{ marginTop: "6px", fontSize: "0.76rem", color: "#475569" }}>
+          <div style={{ marginTop: "6px", fontSize: "0.76rem", color: "#57524C" }}>
             Subtotal Base: <strong>${metricas.baseImponiblePagada.toFixed(2)}</strong> · IVA 15%:{" "}
             <strong>${metricas.ivaTotalPagado.toFixed(2)}</strong>
           </div>
@@ -995,15 +995,14 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
         {/* KPI 2: Valores Pagados */}
         <div
           style={{
-            background: "linear-gradient(135deg, #ECFDF5 0%, #FFFFFF 100%)",
-            border: "1px solid #A7F3D0",
-            borderRadius: "16px",
-            padding: "16px 18px",
-            boxShadow: "0 1px 3px rgba(5, 150, 105, 0.06)",
+            background: "#FFFFFF",
+            border: "1px solid #E6E2DA",
+            borderRadius: "12px",
+            padding: "14px 16px",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#065F46", textTransform: "uppercase" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#2B4A36", textTransform: "uppercase" }}>
               Valores Pagados (Recaudado)
             </span>
             <div
@@ -1011,8 +1010,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 width: "32px",
                 height: "32px",
                 borderRadius: "10px",
-                background: "#D1FAE5",
-                color: "#059669",
+                background: "#EAF1EC",
+                color: "#2F4737",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -1021,11 +1020,11 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               <DollarSign size={17} />
             </div>
           </div>
-          <div style={{ fontSize: "1.55rem", fontWeight: 800, color: "#065F46" }}>
+          <div style={{ fontSize: "1.08rem", fontWeight: 800, color: "#2B4A36" }}>
             ${metricas.valoresPagadosTotal.toFixed(2)}{" "}
-            <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#047857" }}>USD</span>
+            <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#2F4737" }}>USD</span>
           </div>
-          <div style={{ marginTop: "6px", fontSize: "0.76rem", color: "#047857" }}>
+          <div style={{ marginTop: "6px", fontSize: "0.76rem", color: "#2F4737" }}>
             {metricas.cantidadPagosAprobados} pago(s) liquidado(s) · Pendiente:{" "}
             <strong>${metricas.valoresPendientes.toFixed(2)}</strong>
           </div>
@@ -1035,14 +1034,14 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
         <div
           style={{
             background: "#FFFFFF",
-            border: "1px solid #E2E8F0",
+            border: "1px solid #E6E2DA",
             borderRadius: "16px",
             padding: "16px 18px",
             boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#847D74", textTransform: "uppercase" }}>
               Tarjeta vs. Otros Medios
             </span>
             <div
@@ -1050,8 +1049,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 width: "32px",
                 height: "32px",
                 borderRadius: "10px",
-                background: "#EFF6FF",
-                color: "#2563EB",
+                background: "#F4F2EE",
+                color: "#221E1B",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -1062,19 +1061,19 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: "8px" }}>
             <div>
-              <div style={{ fontSize: "0.72rem", color: "#64748B" }}>Tarjeta Crédito/Débito</div>
-              <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#1D4ED8" }}>
+              <div style={{ fontSize: "0.72rem", color: "#847D74" }}>Tarjeta Crédito/Débito</div>
+              <div style={{ fontSize: "0.92rem", fontWeight: 800, color: "#221E1B" }}>
                 ${metricas.valoresPagadosTarjeta.toFixed(2)}
               </div>
             </div>
             <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: "0.72rem", color: "#64748B" }}>Transferencia / Efectivo</div>
-              <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#0F766E" }}>
+              <div style={{ fontSize: "0.72rem", color: "#847D74" }}>Transferencia / Efectivo</div>
+              <div style={{ fontSize: "0.92rem", fontWeight: 800, color: "#2F4737" }}>
                 ${metricas.valoresPagadosOtrosMedios.toFixed(2)}
               </div>
             </div>
           </div>
-          <div style={{ marginTop: "6px", fontSize: "0.74rem", color: "#64748B" }}>
+          <div style={{ marginTop: "6px", fontSize: "0.74rem", color: "#847D74" }}>
             Ambos canales emiten factura electrónica SRI
           </div>
         </div>
@@ -1083,14 +1082,14 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
         <div
           style={{
             background: "#FFFFFF",
-            border: "1px solid #E2E8F0",
+            border: "1px solid #E6E2DA",
             borderRadius: "16px",
             padding: "16px 18px",
             boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#64748B", textTransform: "uppercase" }}>
+            <span style={{ fontSize: "0.76rem", fontWeight: 700, color: "#847D74", textTransform: "uppercase" }}>
               Comprobantes SRI Emitidos
             </span>
             <div
@@ -1098,8 +1097,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 width: "32px",
                 height: "32px",
                 borderRadius: "10px",
-                background: "#F5F3FF",
-                color: "#7C3AED",
+                background: "#F4F2EE",
+                color: "#221E1B",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -1108,11 +1107,11 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               <ShieldCheck size={17} />
             </div>
           </div>
-          <div style={{ fontSize: "1.55rem", fontWeight: 800, color: "#0F172A" }}>
+          <div style={{ fontSize: "1.08rem", fontWeight: 800, color: "#1F1C19" }}>
             {metricas.cantidadFacturasEmitidas}{" "}
-            <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#64748B" }}>Facturas (001-001)</span>
+            <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#847D74" }}>Facturas (001-001)</span>
           </div>
-          <div style={{ marginTop: "6px", fontSize: "0.75rem", color: "#5B21B6", fontWeight: 600 }}>
+          <div style={{ marginTop: "6px", fontSize: "0.75rem", color: "#3A3530", fontWeight: 600 }}>
             Clave de acceso de 49 dígitos verificada
           </div>
         </div>
@@ -1122,7 +1121,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
       <div
         style={{
           background: "#FFFFFF",
-          border: "1px solid #E2E8F0",
+          border: "1px solid #E6E2DA",
           borderRadius: "16px",
           padding: "14px 16px",
           marginBottom: "18px",
@@ -1134,7 +1133,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
         }}
       >
         <div style={{ flex: 1, minWidth: "250px", position: "relative" }}>
-          <Search size={16} color="#94A3B8" style={{ position: "absolute", left: "12px", top: "10px" }} />
+          <Search size={16} color="#847D74" style={{ position: "absolute", left: "12px", top: "10px" }} />
           <input
             type="text"
             placeholder="Buscar por N° de factura (001-001-...), rubro facturado, cliente, cédula/RUC o referencia..."
@@ -1144,7 +1143,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               width: "100%",
               padding: "8px 12px 8px 36px",
               borderRadius: "8px",
-              border: "1px solid #CBD5E1",
+              border: "1px solid #D5CFC4",
               fontSize: "0.84rem",
               boxSizing: "border-box",
             }}
@@ -1168,9 +1167,9 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 fontWeight: 600,
                 cursor: "pointer",
                 border: "1px solid",
-                borderColor: filtroMedio === m.id ? "#4F46E5" : "#E2E8F0",
-                background: filtroMedio === m.id ? "#EEF2FF" : "#F8FAFC",
-                color: filtroMedio === m.id ? "#4338CA" : "#475569",
+                borderColor: filtroMedio === m.id ? "#221E1B" : "#E6E2DA",
+                background: filtroMedio === m.id ? "#F4F2EE" : "#F8F7F4",
+                color: filtroMedio === m.id ? "#221E1B" : "#57524C",
               }}
             >
               {m.label}
@@ -1191,8 +1190,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 fontWeight: 600,
                 cursor: "pointer",
                 border: "none",
-                background: filtroEstado === est ? "#0F172A" : "#F1F5F9",
-                color: filtroEstado === est ? "#FFFFFF" : "#475569",
+                background: filtroEstado === est ? "#1F1C19" : "#F4F2EE",
+                color: filtroEstado === est ? "#FFFFFF" : "#57524C",
               }}
             >
               {est === "todos" ? "Todos" : est === "APROBADO" ? "Pagados" : est}
@@ -1205,24 +1204,24 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
       <div
         style={{
           background: "#FFFFFF",
-          border: "1px solid #E2E8F0",
+          border: "1px solid #E6E2DA",
           borderRadius: "16px",
           overflow: "hidden",
           boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
         }}
       >
         {cargando ? (
-          <div style={{ padding: "50px 20px", textAlign: "center", color: "#64748B" }}>
+          <div style={{ padding: "50px 20px", textAlign: "center", color: "#847D74" }}>
             <RefreshCw size={26} style={{ margin: "0 auto 10px" }} />
             <div>Cargando comprobantes electrónicos e historial de pagos...</div>
           </div>
         ) : filtradas.length === 0 ? (
           <div style={{ padding: "50px 20px", textAlign: "center" }}>
-            <Receipt size={40} color="#94A3B8" style={{ margin: "0 auto 12px" }} />
-            <h3 style={{ margin: "0 0 6px", fontSize: "1rem", color: "#0F172A" }}>
+            <Receipt size={40} color="#847D74" style={{ margin: "0 auto 12px" }} />
+            <h3 style={{ margin: "0 0 6px", fontSize: "1rem", color: "#1F1C19" }}>
               No se encontraron comprobantes ni pagos con este filtro
             </h3>
-            <p style={{ margin: "0 0 16px", fontSize: "0.85rem", color: "#64748B" }}>
+            <p style={{ margin: "0 0 16px", fontSize: "0.85rem", color: "#847D74" }}>
               {esVistaCliente
                 ? "Aquí aparecerán tus pagos realizados y tus facturas electrónicas listas para descargar."
                 : "Las facturas electrónicas se emiten automáticamente al pagar con tarjeta o al registrar un pago manual."}
@@ -1235,7 +1234,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 title="Registrar un pago manual y emitir su factura electrónica"
                 aria-label="Registrar un pago manual y emitir su factura electrónica"
                 style={{
-                  background: "#4F46E5",
+                  background: "#221E1B",
                   color: "#FFFFFF",
                   border: "none",
                   padding: "9px 16px",
@@ -1257,7 +1256,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.83rem" }}>
               <thead>
-                <tr style={{ background: "#F8FAFC", borderBottom: "1px solid #E2E8F0", color: "#475569" }}>
+                <tr style={{ background: "#F8F7F4", borderBottom: "1px solid #E6E2DA", color: "#57524C" }}>
                   <th style={{ padding: "12px 14px", fontWeight: 700 }}>N° Factura Electrónica</th>
                   <th style={{ padding: "12px 14px", fontWeight: 700 }}>Fecha</th>
                   <th style={{ padding: "12px 14px", fontWeight: 700 }}>Detalle del Rubro Facturado</th>
@@ -1285,8 +1284,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   return (
                     <tr
                       key={t.pag_id}
-                      style={{ borderBottom: "1px solid #F1F5F9", transition: "background 0.1s ease" }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = "#F8FAFC")}
+                      style={{ borderBottom: "1px solid #F4F2EE", transition: "background 0.1s ease" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = "#F8F7F4")}
                       onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                     >
                       {/* Columna 1: N° Comprobante Electrónico */}
@@ -1298,8 +1297,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                                 fontFamily: "monospace",
                                 fontWeight: 800,
                                 fontSize: "0.85rem",
-                                color: "#4338CA",
-                                background: "#EEF2FF",
+                                color: "#221E1B",
+                                background: "#F4F2EE",
                                 padding: "3px 8px",
                                 borderRadius: "6px",
                                 display: "inline-block",
@@ -1307,17 +1306,17 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                             >
                               {t.numero_comprobante}
                             </div>
-                            <div style={{ fontSize: "0.7rem", color: "#64748B", marginTop: "3px" }}>
+                            <div style={{ fontSize: "0.7rem", color: "#847D74", marginTop: "3px" }}>
                               SRI: {t.estado_factura || "AUTORIZADO"}
                             </div>
                           </div>
                         ) : (
-                          <span style={{ fontSize: "0.76rem", color: "#94A3B8" }}>Sin emitir</span>
+                          <span style={{ fontSize: "0.76rem", color: "#847D74" }}>Sin emitir</span>
                         )}
                       </td>
 
                       {/* Columna 2: Fecha */}
-                      <td style={{ padding: "13px 14px", color: "#475569", whiteSpace: "nowrap" }}>
+                      <td style={{ padding: "13px 14px", color: "#57524C", whiteSpace: "nowrap" }}>
                         <div style={{ fontWeight: 600 }}>
                           {new Date(t.pag_confirmado_en || t.pag_creado_en).toLocaleDateString("es-EC", {
                             day: "2-digit",
@@ -1325,7 +1324,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                             year: "numeric",
                           })}
                         </div>
-                        <div style={{ fontSize: "0.72rem", color: "#94A3B8" }}>
+                        <div style={{ fontSize: "0.72rem", color: "#847D74" }}>
                           {new Date(t.pag_confirmado_en || t.pag_creado_en).toLocaleTimeString("es-EC", {
                             hour: "2-digit",
                             minute: "2-digit",
@@ -1335,10 +1334,10 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
 
                       {/* Columna 3: Detalle del Rubro Facturado */}
                       <td style={{ padding: "13px 14px", maxWidth: "260px" }}>
-                        <div style={{ fontWeight: 700, color: "#0F172A", lineHeight: 1.3 }}>
+                        <div style={{ fontWeight: 700, color: "#1F1C19", lineHeight: 1.3 }}>
                           {t.rubro_facturado || "Servicio Legal Facturado"}
                         </div>
-                        <div style={{ fontSize: "0.72rem", color: "#64748B", marginTop: "2px", fontFamily: "monospace" }}>
+                        <div style={{ fontSize: "0.72rem", color: "#847D74", marginTop: "2px", fontFamily: "monospace" }}>
                           Tx: {t.pag_identificador_cliente}
                         </div>
                       </td>
@@ -1358,19 +1357,19 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                               margin: 0,
                               fontWeight: 700,
                               fontSize: "0.84rem",
-                              color: "#1E1B4B",
+                              color: "#221E1B",
                               cursor: "pointer",
                               textAlign: "left",
                               display: "inline-flex",
                               alignItems: "center",
                               gap: "5px",
                               textDecoration: "underline",
-                              textDecorationColor: "#A5B4FC",
+                              textDecorationColor: "#DDD8CE",
                               textUnderlineOffset: "3px",
                             }}
                           >
                             <span>{t.cliente_nombre || t.pag_titular_email || "Cliente"}</span>
-                            <ArrowUpRight size={13} color="#4F46E5" />
+                            <ArrowUpRight size={13} color="#221E1B" />
                           </button>
 
                           {t.pag_titular_email && (
@@ -1386,7 +1385,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                                 margin: 0,
                                 fontSize: "0.74rem",
                                 fontWeight: 600,
-                                color: "#4F46E5",
+                                color: "#221E1B",
                                 cursor: "pointer",
                                 display: "inline-flex",
                                 alignItems: "center",
@@ -1407,7 +1406,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                               marginTop: "2px",
                             }}
                           >
-                            <span style={{ fontSize: "0.72rem", color: "#64748B", fontFamily: "monospace" }}>
+                            <span style={{ fontSize: "0.72rem", color: "#847D74", fontFamily: "monospace" }}>
                               ID: {t.pag_titular_identificacion || "9999999999999"}
                             </span>
                             <button
@@ -1417,9 +1416,9 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                               title="Analizar cliente 360°: datos personales, casos, reuniones y pagos"
                               aria-label="Cliente 360"
                               style={{
-                                background: "#EEF2FF",
-                                color: "#4338CA",
-                                border: "1px solid #C7D2FE",
+                                background: "#F4F2EE",
+                                color: "#221E1B",
+                                border: "1px solid #DDD8CE",
                                 padding: "2px 8px",
                                 borderRadius: "999px",
                                 fontSize: "0.69rem",
@@ -1452,20 +1451,20 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                         >
                           {infoMedio.titulo}
                         </span>
-                        <div style={{ fontSize: "0.72rem", color: "#64748B", marginTop: "3px" }}>
+                        <div style={{ fontSize: "0.72rem", color: "#847D74", marginTop: "3px" }}>
                           {infoMedio.subtitulo}
                           {t.pag_autorizacion_codigo ? ` · Ref: ${t.pag_autorizacion_codigo}` : ""}
                         </div>
                       </td>
 
                       {/* Columna 6: Subtotal / IVA */}
-                      <td style={{ padding: "13px 14px", color: "#475569", whiteSpace: "nowrap" }}>
+                      <td style={{ padding: "13px 14px", color: "#57524C", whiteSpace: "nowrap" }}>
                         <div style={{ fontSize: "0.78rem" }}>Base: ${subtotal.toFixed(2)}</div>
-                        <div style={{ fontSize: "0.73rem", color: "#64748B" }}>IVA 15%: ${iva.toFixed(2)}</div>
+                        <div style={{ fontSize: "0.73rem", color: "#847D74" }}>IVA 15%: ${iva.toFixed(2)}</div>
                       </td>
 
                       {/* Columna 7: Valor Total Pagado */}
-                      <td style={{ padding: "13px 14px", fontWeight: 800, color: "#0F172A", whiteSpace: "nowrap" }}>
+                      <td style={{ padding: "13px 14px", fontWeight: 800, color: "#1F1C19", whiteSpace: "nowrap" }}>
                         ${montoTotal.toFixed(2)} USD
                       </td>
 
@@ -1483,7 +1482,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                               title="Descargar Factura Electrónica RIDE"
                               aria-label="Descargar Factura Electrónica"
                               style={{
-                                background: "#059669",
+                                background: "#2F4737",
                                 color: "#FFFFFF",
                                 border: "none",
                                 padding: "6px 11px",
@@ -1506,9 +1505,9 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                               title="Ver Factura Electrónica RIDE"
                               aria-label="Ver Factura Electrónica"
                               style={{
-                                background: "#EEF2FF",
-                                color: "#4338CA",
-                                border: "1px solid #C7D2FE",
+                                background: "#F4F2EE",
+                                color: "#221E1B",
+                                border: "1px solid #DDD8CE",
                                 padding: "6px 11px",
                                 borderRadius: "8px",
                                 fontSize: "0.76rem",
@@ -1532,7 +1531,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                             title="Emitir Factura Electrónica SRI para este pago"
                             aria-label="Emitir Factura Electrónica"
                             style={{
-                              background: "#059669",
+                              background: "#2F4737",
                               color: "#FFFFFF",
                               border: "none",
                               padding: "6px 11px",
@@ -1563,7 +1562,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                             title="Registrar el cobro recibido de este valor pendiente y emitir su factura electrónica"
                             aria-label="Registrar Cobro"
                             style={{
-                              background: "#4F46E5",
+                              background: "#221E1B",
                               color: "#FFFFFF",
                               border: "none",
                               padding: "6px 11px",
@@ -1584,8 +1583,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                             style={{
                               fontSize: "0.74rem",
                               fontWeight: 700,
-                              color: "#B45309",
-                              background: "#FEF3C7",
+                              color: "#745622",
+                              background: "#FAF6EE",
                               padding: "4px 9px",
                               borderRadius: "6px",
                             }}
@@ -1593,7 +1592,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                             Por Pagar
                           </span>
                         ) : (
-                          <span style={{ fontSize: "0.74rem", color: "#94A3B8" }}>—</span>
+                          <span style={{ fontSize: "0.74rem", color: "#847D74" }}>—</span>
                         )}
                       </td>
                     </tr>
@@ -1630,25 +1629,25 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               maxHeight: "90vh",
               overflowY: "auto",
               boxShadow: "0 20px 50px rgba(15, 23, 42, 0.3)",
-              border: "1px solid #E2E8F0",
+              border: "1px solid #E6E2DA",
             }}
           >
             {/* Cabecera del Modal */}
             <div
               style={{
                 padding: "18px 22px",
-                borderBottom: "1px solid #E2E8F0",
+                borderBottom: "1px solid #E6E2DA",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                background: "#F8FAFC",
+                background: "#F8F7F4",
               }}
             >
               <div>
-                <div style={{ fontSize: "0.73rem", fontWeight: 800, color: "#4F46E5", textTransform: "uppercase" }}>
+                <div style={{ fontSize: "0.73rem", fontWeight: 800, color: "#221E1B", textTransform: "uppercase" }}>
                   Operación de Caja & Facturación SRI
                 </div>
-                <h2 style={{ margin: "2px 0 0", fontSize: "1.15rem", fontWeight: 800, color: "#0F172A" }}>
+                <h2 style={{ margin: "2px 0 0", fontSize: "0.94rem", fontWeight: 800, color: "#1F1C19" }}>
                   {modoOperacionModal === "PENDIENTE"
                     ? "Generar Valor Pendiente de Pago al Cliente"
                     : "Registrar Pago Manual y Emitir Factura Electrónica"}
@@ -1661,11 +1660,11 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 aria-label="Cerrar ventana"
                 style={{
                   background: "#FFFFFF",
-                  border: "1px solid #CBD5E1",
+                  border: "1px solid #D5CFC4",
                   borderRadius: "8px",
                   padding: "6px",
                   cursor: "pointer",
-                  color: "#475569",
+                  color: "#57524C",
                 }}
               >
                 <X size={18} />
@@ -1680,7 +1679,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   gridTemplateColumns: "repeat(auto-fit, minmax(min(200px, 100%), 1fr))",
                   gap: "8px",
                   marginBottom: "16px",
-                  background: "#F1F5F9",
+                  background: "#F4F2EE",
                   padding: "5px",
                   borderRadius: "12px",
                 }}
@@ -1691,9 +1690,9 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   style={{
                     padding: "9px 12px",
                     borderRadius: "9px",
-                    border: modoOperacionModal === "PENDIENTE" ? "1px solid #F59E0B" : "none",
-                    background: modoOperacionModal === "PENDIENTE" ? "#FFFBEB" : "transparent",
-                    color: modoOperacionModal === "PENDIENTE" ? "#92400E" : "#475569",
+                    border: modoOperacionModal === "PENDIENTE" ? "1px solid #8F6A2E" : "none",
+                    background: modoOperacionModal === "PENDIENTE" ? "#FAF6EE" : "transparent",
+                    color: modoOperacionModal === "PENDIENTE" ? "#745622" : "#57524C",
                     fontSize: "0.8rem",
                     fontWeight: 800,
                     cursor: "pointer",
@@ -1712,9 +1711,9 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   style={{
                     padding: "9px 12px",
                     borderRadius: "9px",
-                    border: modoOperacionModal === "APROBADO" ? "1px solid #10B981" : "none",
-                    background: modoOperacionModal === "APROBADO" ? "#ECFDF5" : "transparent",
-                    color: modoOperacionModal === "APROBADO" ? "#065F46" : "#475569",
+                    border: modoOperacionModal === "APROBADO" ? "1px solid #2F4737" : "none",
+                    background: modoOperacionModal === "APROBADO" ? "#F2F6F3" : "transparent",
+                    color: modoOperacionModal === "APROBADO" ? "#2B4A36" : "#57524C",
                     fontSize: "0.8rem",
                     fontWeight: 800,
                     cursor: "pointer",
@@ -1731,9 +1730,9 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               {errorPagoManual && (
                 <div
                   style={{
-                    background: "#FEF2F2",
-                    border: "1px solid #FECACA",
-                    color: "#991B1B",
+                    background: "#FAF2F2",
+                    border: "1px solid #E5CACA",
+                    color: "#8A2E2E",
                     padding: "10px 14px",
                     borderRadius: "10px",
                     fontSize: "0.83rem",
@@ -1748,8 +1747,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               {/* Sección 1: Datos del Cliente a Facturar */}
               <div
                 style={{
-                  background: "#F8FAFC",
-                  border: "1px solid #E2E8F0",
+                  background: "#F8F7F4",
+                  border: "1px solid #E6E2DA",
                   borderRadius: "12px",
                   padding: "14px",
                   marginBottom: "16px",
@@ -1759,21 +1758,21 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   style={{
                     fontSize: "0.8rem",
                     fontWeight: 800,
-                    color: "#1E293B",
+                    color: "#221E1B",
                     marginBottom: "10px",
                     display: "flex",
                     alignItems: "center",
                     gap: "6px",
                   }}
                 >
-                  <UserCheck size={15} color="#4F46E5" />
+                  <UserCheck size={15} color="#221E1B" />
                   1. Datos del Cliente / Adquirente para la Factura Electrónica
                 </div>
 
                 {clientesDirectorio.length > 0 && (
                   <div style={{ marginBottom: "12px" }}>
                     <label
-                      style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}
+                      style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#57524C", marginBottom: "4px" }}
                     >
                       Autocompletar desde Clientes Registrados (Opcional)
                     </label>
@@ -1784,7 +1783,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                         width: "100%",
                         padding: "8px 10px",
                         borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid #D5CFC4",
                         fontSize: "0.83rem",
                         background: "#FFFFFF",
                       }}
@@ -1808,7 +1807,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 >
                   <div>
                     <label
-                      style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}
+                      style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#57524C", marginBottom: "4px" }}
                     >
                       Tipo de Identificación *
                     </label>
@@ -1819,7 +1818,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                         width: "100%",
                         padding: "8px 10px",
                         borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid #D5CFC4",
                         fontSize: "0.83rem",
                         background: "#FFFFFF",
                       }}
@@ -1834,7 +1833,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   {tipoIdentificacion !== "07" && (
                     <div>
                       <label
-                        style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}
+                        style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#57524C", marginBottom: "4px" }}
                       >
                         Número Cédula / RUC *
                       </label>
@@ -1848,7 +1847,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                           width: "100%",
                           padding: "8px 10px",
                           borderRadius: "8px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           fontSize: "0.83rem",
                           boxSizing: "border-box",
                         }}
@@ -1858,7 +1857,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
 
                   <div style={{ gridColumn: "1 / -1" }}>
                     <label
-                      style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}
+                      style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#57524C", marginBottom: "4px" }}
                     >
                       Nombres Completos o Razón Social *
                     </label>
@@ -1872,7 +1871,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                         width: "100%",
                         padding: "8px 10px",
                         borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid #D5CFC4",
                         fontSize: "0.83rem",
                         boxSizing: "border-box",
                       }}
@@ -1881,7 +1880,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
 
                   <div>
                     <label
-                      style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}
+                      style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#57524C", marginBottom: "4px" }}
                     >
                       Correo para envío de Factura *
                     </label>
@@ -1895,7 +1894,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                         width: "100%",
                         padding: "8px 10px",
                         borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid #D5CFC4",
                         fontSize: "0.83rem",
                         boxSizing: "border-box",
                       }}
@@ -1904,7 +1903,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
 
                   <div>
                     <label
-                      style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}
+                      style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#57524C", marginBottom: "4px" }}
                     >
                       Teléfono
                     </label>
@@ -1917,7 +1916,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                         width: "100%",
                         padding: "8px 10px",
                         borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid #D5CFC4",
                         fontSize: "0.83rem",
                         boxSizing: "border-box",
                       }}
@@ -1929,8 +1928,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               {/* Sección 2: Detalle del Rubro Facturado */}
               <div
                 style={{
-                  background: "#F8FAFC",
-                  border: "1px solid #E2E8F0",
+                  background: "#F8F7F4",
+                  border: "1px solid #E6E2DA",
                   borderRadius: "12px",
                   padding: "14px",
                   marginBottom: "16px",
@@ -1950,13 +1949,13 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                     style={{
                       fontSize: "0.8rem",
                       fontWeight: 800,
-                      color: "#1E293B",
+                      color: "#221E1B",
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
                     }}
                   >
-                    <Receipt size={15} color="#4F46E5" />
+                    <Receipt size={15} color="#221E1B" />
                     2. Detalle del Rubro Facturado y Valores
                   </div>
 
@@ -1971,8 +1970,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                         fontWeight: 700,
                         border: "none",
                         cursor: "pointer",
-                        background: modoRubro === "catalogo" ? "#4F46E5" : "#E2E8F0",
-                        color: modoRubro === "catalogo" ? "#FFFFFF" : "#475569",
+                        background: modoRubro === "catalogo" ? "#221E1B" : "#E6E2DA",
+                        color: modoRubro === "catalogo" ? "#FFFFFF" : "#57524C",
                       }}
                     >
                       Del Catálogo
@@ -1987,8 +1986,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                         fontWeight: 700,
                         border: "none",
                         cursor: "pointer",
-                        background: modoRubro === "personalizado" ? "#4F46E5" : "#E2E8F0",
-                        color: modoRubro === "personalizado" ? "#FFFFFF" : "#475569",
+                        background: modoRubro === "personalizado" ? "#221E1B" : "#E6E2DA",
+                        color: modoRubro === "personalizado" ? "#FFFFFF" : "#57524C",
                       }}
                     >
                       Rubro Libre
@@ -1999,7 +1998,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 {modoRubro === "catalogo" && opcionesVariantes.length > 0 && (
                   <div style={{ marginBottom: "10px" }}>
                     <label
-                      style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}
+                      style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#57524C", marginBottom: "4px" }}
                     >
                       Seleccionar Producto / Servicio del Catálogo
                     </label>
@@ -2010,7 +2009,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                         width: "100%",
                         padding: "8px 10px",
                         borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid #D5CFC4",
                         fontSize: "0.83rem",
                         background: "#FFFFFF",
                       }}
@@ -2034,7 +2033,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 >
                   <div>
                     <label
-                      style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}
+                      style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#57524C", marginBottom: "4px" }}
                     >
                       Descripción del Rubro en la Factura *
                     </label>
@@ -2048,7 +2047,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                         width: "100%",
                         padding: "8px 10px",
                         borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid #D5CFC4",
                         fontSize: "0.83rem",
                         boxSizing: "border-box",
                       }}
@@ -2057,7 +2056,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
 
                   <div>
                     <label
-                      style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}
+                      style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#57524C", marginBottom: "4px" }}
                     >
                       Subtotal Base (USD) *
                     </label>
@@ -2072,7 +2071,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                         width: "100%",
                         padding: "8px 10px",
                         borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
+                        border: "1px solid #D5CFC4",
                         fontSize: "0.85rem",
                         fontWeight: 700,
                         boxSizing: "border-box",
@@ -2082,7 +2081,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 </div>
 
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
-                  <label style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", color: "#334155", cursor: "pointer" }}>
+                  <label style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", color: "#57524C", cursor: "pointer" }}>
                     <input
                       type="checkbox"
                       checked={aplicaIva15}
@@ -2091,9 +2090,9 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                     Aplicar IVA 15% (Tarifa vigente SRI)
                   </label>
 
-                  <div style={{ fontSize: "0.83rem", color: "#0F172A" }}>
+                  <div style={{ fontSize: "0.83rem", color: "#1F1C19" }}>
                     Subtotal: <strong>${baseNum.toFixed(2)}</strong> · IVA 15%: <strong>${ivaNum.toFixed(2)}</strong> ·{" "}
-                    <span style={{ color: "#4F46E5", fontWeight: 800 }}>Total a Facturar: ${totalNum.toFixed(2)} USD</span>
+                    <span style={{ color: "#221E1B", fontWeight: 800 }}>Total a Facturar: ${totalNum.toFixed(2)} USD</span>
                   </div>
                 </div>
               </div>
@@ -2102,8 +2101,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               {modoOperacionModal === "APROBADO" ? (
                 <div
                   style={{
-                    background: "#F8FAFC",
-                    border: "1px solid #E2E8F0",
+                    background: "#F8F7F4",
+                    border: "1px solid #E6E2DA",
                     borderRadius: "12px",
                     padding: "14px",
                     marginBottom: "18px",
@@ -2113,14 +2112,14 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                     style={{
                       fontSize: "0.8rem",
                       fontWeight: 800,
-                      color: "#1E293B",
+                      color: "#221E1B",
                       marginBottom: "10px",
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
                     }}
                   >
-                    <Wallet size={15} color="#4F46E5" />
+                    <Wallet size={15} color="#221E1B" />
                     3. Medio de Pago y Referencia de Recaudación
                   </div>
 
@@ -2133,7 +2132,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   >
                     <div>
                       <label
-                        style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}
+                        style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#57524C", marginBottom: "4px" }}
                       >
                         Medio de Pago *
                       </label>
@@ -2144,7 +2143,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                           width: "100%",
                           padding: "8px 10px",
                           borderRadius: "8px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           fontSize: "0.83rem",
                           background: "#FFFFFF",
                         }}
@@ -2160,7 +2159,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
 
                     <div>
                       <label
-                        style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#475569", marginBottom: "4px" }}
+                        style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#57524C", marginBottom: "4px" }}
                       >
                         N° Comprobante / Referencia del Pago
                       </label>
@@ -2173,7 +2172,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                           width: "100%",
                           padding: "8px 10px",
                           borderRadius: "8px",
-                          border: "1px solid #CBD5E1",
+                          border: "1px solid #D5CFC4",
                           fontSize: "0.83rem",
                           boxSizing: "border-box",
                         }}
@@ -2184,13 +2183,13 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               ) : (
                 <div
                   style={{
-                    background: "#FFFBEB",
-                    border: "1px solid #FDE68A",
+                    background: "#FAF6EE",
+                    border: "1px solid #E5D7BC",
                     borderRadius: "12px",
                     padding: "12px 14px",
                     marginBottom: "18px",
                     fontSize: "0.8rem",
-                    color: "#92400E",
+                    color: "#745622",
                     lineHeight: 1.5,
                   }}
                 >
@@ -2207,9 +2206,9 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   type="button"
                   onClick={() => setModalPagoManualAbierto(false)}
                   style={{
-                    background: "#F1F5F9",
-                    color: "#475569",
-                    border: "1px solid #CBD5E1",
+                    background: "#F4F2EE",
+                    color: "#57524C",
+                    border: "1px solid #D5CFC4",
                     padding: "9px 16px",
                     borderRadius: "10px",
                     fontSize: "0.84rem",
@@ -2232,8 +2231,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   style={{
                     background:
                       modoOperacionModal === "PENDIENTE"
-                        ? "linear-gradient(135deg, #D97706 0%, #B45309 100%)"
-                        : "linear-gradient(135deg, #059669 0%, #047857 100%)",
+                        ? "#8F6A2E"
+                        : "#2F4737",
                     color: "#FFFFFF",
                     border: "none",
                     padding: "9px 18px",
@@ -2286,26 +2285,26 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               maxHeight: "90vh",
               overflowY: "auto",
               boxShadow: "0 20px 50px rgba(15, 23, 42, 0.3)",
-              border: "1px solid #E2E8F0",
+              border: "1px solid #E6E2DA",
             }}
           >
             {/* Cabecera RIDE */}
             <div
               style={{
                 padding: "16px 22px",
-                borderBottom: "1px solid #E2E8F0",
+                borderBottom: "1px solid #E6E2DA",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                background: "#0F172A",
+                background: "#1F1C19",
                 color: "#FFFFFF",
               }}
             >
               <div>
-                <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#93C5FD", textTransform: "uppercase" }}>
+                <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#DDD8CE", textTransform: "uppercase" }}>
                   Representación Impresa de Comprobante Electrónico (RIDE - SRI)
                 </div>
-                <h3 style={{ margin: "2px 0 0", fontSize: "1.1rem", fontWeight: 800 }}>
+                <h3 style={{ margin: "2px 0 0", fontSize: "0.92rem", fontWeight: 800 }}>
                   FACTURA ELECTRÓNICA N° {transaccionSeleccionada.numero_comprobante}
                 </h3>
               </div>
@@ -2318,7 +2317,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   title="Descargar archivo de esta Factura Electrónica"
                   aria-label="Descargar Factura"
                   style={{
-                    background: "#059669",
+                    background: "#2F4737",
                     color: "#FFFFFF",
                     border: "none",
                     padding: "7px 12px",
@@ -2341,7 +2340,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   title="Imprimir o guardar en PDF esta Factura Electrónica"
                   aria-label="Imprimir RIDE"
                   style={{
-                    background: "#3B82F6",
+                    background: "#4A453F",
                     color: "#FFFFFF",
                     border: "none",
                     padding: "7px 12px",
@@ -2389,16 +2388,16 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               >
                 <div
                   style={{
-                    border: "1px solid #E2E8F0",
+                    border: "1px solid #E6E2DA",
                     borderRadius: "12px",
                     padding: "14px",
-                    background: "#F8FAFC",
+                    background: "#F8F7F4",
                   }}
                 >
-                  <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "#0F172A", marginBottom: "4px" }}>
+                  <div style={{ fontWeight: 800, fontSize: "0.95rem", color: "#1F1C19", marginBottom: "4px" }}>
                     {transaccionSeleccionada.factura_electronica?.emisor?.razonSocial || emisorSri.razonSocial}
                   </div>
-                  <div style={{ fontSize: "0.78rem", color: "#475569", lineHeight: 1.5 }}>
+                  <div style={{ fontSize: "0.78rem", color: "#57524C", lineHeight: 1.5 }}>
                     <div>
                       <strong>RUC:</strong>{" "}
                       {transaccionSeleccionada.factura_electronica?.emisor?.ruc || emisorSri.ruc}
@@ -2426,16 +2425,16 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
 
                 <div
                   style={{
-                    border: "1px solid #C7D2FE",
+                    border: "1px solid #DDD8CE",
                     borderRadius: "12px",
                     padding: "14px",
-                    background: "#EEF2FF",
+                    background: "#F4F2EE",
                   }}
                 >
-                  <div style={{ fontSize: "0.75rem", fontWeight: 800, color: "#3730A3" }}>
+                  <div style={{ fontSize: "0.75rem", fontWeight: 800, color: "#3A3530" }}>
                     ESTADO SRI: {transaccionSeleccionada.estado_factura || "AUTORIZADO"}
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "#1E1B4B", marginTop: "6px", lineHeight: 1.45 }}>
+                  <div style={{ fontSize: "0.75rem", color: "#221E1B", marginTop: "6px", lineHeight: 1.45 }}>
                     <div>
                       <strong>Ambiente:</strong>{" "}
                       {transaccionSeleccionada.factura_electronica?.ambiente === 2 ? "PRODUCCIÓN" : "PRUEBAS / CERTIFICADO"}
@@ -2456,7 +2455,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                           padding: "4px 6px",
                           borderRadius: "6px",
                           marginTop: "2px",
-                          border: "1px solid #C7D2FE",
+                          border: "1px solid #DDD8CE",
                         }}
                       >
                         {transaccionSeleccionada.clave_acceso_sri}
@@ -2469,12 +2468,12 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               {/* Datos del Adquirente / Cliente */}
               <div
                 style={{
-                  border: "1px solid #E2E8F0",
+                  border: "1px solid #E6E2DA",
                   borderRadius: "12px",
                   padding: "12px 14px",
                   marginBottom: "16px",
                   fontSize: "0.8rem",
-                  color: "#334155",
+                  color: "#57524C",
                   display: "grid",
                   gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
                   gap: "8px",
@@ -2495,7 +2494,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                       background: "transparent",
                       border: "none",
                       padding: 0,
-                      color: "#4338CA",
+                      color: "#221E1B",
                       fontWeight: 700,
                       textDecoration: "underline",
                       cursor: "pointer",
@@ -2521,7 +2520,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               {/* Tabla del Detalle del Rubro Facturado */}
               <div
                 style={{
-                  border: "1px solid #E2E8F0",
+                  border: "1px solid #E6E2DA",
                   borderRadius: "12px",
                   overflow: "hidden",
                   marginBottom: "16px",
@@ -2529,7 +2528,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               >
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem", textAlign: "left" }}>
                   <thead>
-                    <tr style={{ background: "#F1F5F9", color: "#334155", borderBottom: "1px solid #E2E8F0" }}>
+                    <tr style={{ background: "#F4F2EE", color: "#57524C", borderBottom: "1px solid #E6E2DA" }}>
                       <th style={{ padding: "10px 12px" }}>Código</th>
                       <th style={{ padding: "10px 12px" }}>Cant.</th>
                       <th style={{ padding: "10px 12px" }}>Detalle del Rubro Facturado</th>
@@ -2542,14 +2541,14 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                       const lineasDoc = transaccionSeleccionada.factura_electronica?.lineas;
                       if (Array.isArray(lineasDoc) && lineasDoc.length > 0) {
                         return lineasDoc.map((lin, idx) => (
-                          <tr key={`${lin.codigo}-${idx}`} style={{ borderBottom: "1px solid #F1F5F9" }}>
+                          <tr key={`${lin.codigo}-${idx}`} style={{ borderBottom: "1px solid #F4F2EE" }}>
                             <td style={{ padding: "10px 12px", fontFamily: "monospace" }}>
                               {lin.codigo || `ITEM-${idx + 1}`}
                             </td>
                             <td style={{ padding: "10px 12px" }}>{Number(lin.cantidad || 1).toFixed(2)}</td>
-                            <td style={{ padding: "10px 12px", fontWeight: 700, color: "#0F172A" }}>
+                            <td style={{ padding: "10px 12px", fontWeight: 700, color: "#1F1C19" }}>
                               {lin.descripcion}
-                              <span style={{ marginLeft: "6px", fontSize: "0.7rem", color: "#64748B", fontWeight: 600 }}>
+                              <span style={{ marginLeft: "6px", fontSize: "0.7rem", color: "#847D74", fontWeight: 600 }}>
                                 (IVA {Number(lin.tarifa_iva || 0)}%)
                               </span>
                             </td>
@@ -2584,7 +2583,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                               (esNegocioFloral ? "TNK-001" : "SERV-001")}
                           </td>
                           <td style={{ padding: "12px" }}>1.00</td>
-                          <td style={{ padding: "12px", fontWeight: 700, color: "#0F172A" }}>
+                          <td style={{ padding: "12px", fontWeight: 700, color: "#1F1C19" }}>
                             {transaccionSeleccionada.rubro_facturado}
                           </td>
                           <td style={{ padding: "12px", textAlign: "right" }}>${sub.toFixed(2)}</td>
@@ -2618,23 +2617,23 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                     <div
                       style={{
                         width: "260px",
-                        border: "1px solid #E2E8F0",
+                        border: "1px solid #E6E2DA",
                         borderRadius: "12px",
                         padding: "12px 14px",
-                        background: "#F8FAFC",
+                        background: "#F8F7F4",
                         fontSize: "0.82rem",
                       }}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                        <span style={{ color: "#475569" }}>Subtotal 15%:</span>
+                        <span style={{ color: "#57524C" }}>Subtotal 15%:</span>
                         <strong>${desglose.subtotal15.toFixed(2)}</strong>
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                        <span style={{ color: "#475569" }}>Subtotal 0%:</span>
+                        <span style={{ color: "#57524C" }}>Subtotal 0%:</span>
                         <strong>${desglose.subtotal0.toFixed(2)}</strong>
                       </div>
                       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                        <span style={{ color: "#475569" }}>IVA 15%:</span>
+                        <span style={{ color: "#57524C" }}>IVA 15%:</span>
                         <strong>${desglose.iva15.toFixed(2)}</strong>
                       </div>
                       <div
@@ -2642,10 +2641,10 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                           display: "flex",
                           justifyContent: "space-between",
                           paddingTop: "8px",
-                          borderTop: "1px solid #CBD5E1",
+                          borderTop: "1px solid #D5CFC4",
                           fontSize: "0.95rem",
                           fontWeight: 800,
-                          color: "#0F172A",
+                          color: "#1F1C19",
                         }}
                       >
                         <span>VALOR TOTAL:</span>
@@ -2685,19 +2684,19 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               maxHeight: "92vh",
               overflowY: "auto",
               boxShadow: "0 24px 60px rgba(15, 23, 42, 0.35)",
-              border: "1px solid #E2E8F0",
+              border: "1px solid #E6E2DA",
             }}
           >
             {/* Cabecera del Modal 360° */}
             <div
               style={{
-                padding: "18px 24px",
-                background: "linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)",
-                color: "#FFFFFF",
+                padding: "16px 20px",
+                background: "#221E1B",
+                color: "#FAF8F5",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "flex-start",
-                gap: "14px",
+                gap: "12px",
                 flexWrap: "wrap",
               }}
             >
@@ -2706,7 +2705,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   <span
                     style={{
                       background: "rgba(255, 255, 255, 0.16)",
-                      color: "#E0E7FF",
+                      color: "#EFECE6",
                       padding: "3px 10px",
                       borderRadius: "999px",
                       fontSize: "0.7rem",
@@ -2720,7 +2719,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   {expediente360?.cliente.plan_activo && (
                     <span
                       style={{
-                        background: "#10B981",
+                        background: "#2F4737",
                         color: "#FFFFFF",
                         padding: "3px 10px",
                         borderRadius: "999px",
@@ -2733,7 +2732,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   )}
                 </div>
 
-                <h2 style={{ margin: 0, fontSize: "1.28rem", fontWeight: 800, color: "#FFFFFF" }}>
+                <h2 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#FFFFFF" }}>
                   {cargando360 ? "Cargando expediente del cliente..." : expediente360?.cliente.nombre_completo || "Cliente"}
                 </h2>
 
@@ -2746,14 +2745,14 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                       flexWrap: "wrap",
                       marginTop: "6px",
                       fontSize: "0.8rem",
-                      color: "#C7D2FE",
+                      color: "#DDD8CE",
                     }}
                   >
                     {expediente360.cliente.correo && (
                       <a
                         href={`mailto:${expediente360.cliente.correo}`}
                         style={{
-                          color: "#E0E7FF",
+                          color: "#EFECE6",
                           textDecoration: "underline",
                           display: "inline-flex",
                           alignItems: "center",
@@ -2771,7 +2770,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                         target="_blank"
                         rel="noreferrer"
                         style={{
-                          color: "#A7F3D0",
+                          color: "#CEDDD3",
                           textDecoration: "underline",
                           display: "inline-flex",
                           alignItems: "center",
@@ -2800,7 +2799,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                       title="Generar un valor pendiente de pago (cuenta por cobrar) a este cliente"
                       aria-label="Generar Cobro"
                       style={{
-                        background: "#F59E0B",
+                        background: "#8F6A2E",
                         color: "#FFFFFF",
                         border: "none",
                         padding: "7px 13px",
@@ -2824,7 +2823,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                       title="Registrar pago manual y emitir factura electrónica a este cliente"
                       aria-label="Registrar Pago"
                       style={{
-                        background: "#10B981",
+                        background: "#2F4737",
                         color: "#FFFFFF",
                         border: "none",
                         padding: "7px 13px",
@@ -2886,7 +2885,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
             </div>
 
             {cargando360 || !expediente360 ? (
-              <div style={{ padding: "50px 24px", textAlign: "center", color: "#64748B" }}>
+              <div style={{ padding: "50px 24px", textAlign: "center", color: "#847D74" }}>
                 <RefreshCw size={26} style={{ margin: "0 auto 10px" }} />
                 <div>Consultando casos, reuniones, pagos y facturas electrónicas del cliente...</div>
               </div>
@@ -2904,20 +2903,20 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   <div
                     onClick={() => setPestana360("pagos")}
                     style={{
-                      background: "#ECFDF5",
-                      border: "1px solid #A7F3D0",
+                      background: "#F2F6F3",
+                      border: "1px solid #CEDDD3",
                       borderRadius: "14px",
                       padding: "13px 15px",
                       cursor: "pointer",
                     }}
                   >
-                    <div style={{ fontSize: "0.72rem", fontWeight: 800, color: "#065F46", textTransform: "uppercase" }}>
+                    <div style={{ fontSize: "0.72rem", fontWeight: 800, color: "#2B4A36", textTransform: "uppercase" }}>
                       Total Pagado / Facturado
                     </div>
-                    <div style={{ fontSize: "1.35rem", fontWeight: 800, color: "#065F46", marginTop: "3px" }}>
+                    <div style={{ fontSize: "1.02rem", fontWeight: 800, color: "#2B4A36", marginTop: "3px" }}>
                       ${expediente360.resumen.total_pagado.toFixed(2)} USD
                     </div>
-                    <div style={{ fontSize: "0.74rem", color: "#047857", marginTop: "3px" }}>
+                    <div style={{ fontSize: "0.74rem", color: "#2F4737", marginTop: "3px" }}>
                       {expediente360.resumen.cantidad_pagos} pago(s) · Facturado: ${expediente360.resumen.total_facturado.toFixed(2)}
                     </div>
                   </div>
@@ -2925,20 +2924,20 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   <div
                     onClick={() => setPestana360("reuniones")}
                     style={{
-                      background: "#EFF6FF",
-                      border: "1px solid #BFDBFE",
+                      background: "#F4F2EE",
+                      border: "1px solid #DDD8CE",
                       borderRadius: "14px",
                       padding: "13px 15px",
                       cursor: "pointer",
                     }}
                   >
-                    <div style={{ fontSize: "0.72rem", fontWeight: 800, color: "#1E40AF", textTransform: "uppercase" }}>
+                    <div style={{ fontSize: "0.72rem", fontWeight: 800, color: "#3A3530", textTransform: "uppercase" }}>
                       Reuniones & Citas
                     </div>
-                    <div style={{ fontSize: "1.35rem", fontWeight: 800, color: "#1E3A8A", marginTop: "3px" }}>
+                    <div style={{ fontSize: "1.02rem", fontWeight: 800, color: "#3A3530", marginTop: "3px" }}>
                       {expediente360.resumen.cantidad_citas} cita(s)
                     </div>
-                    <div style={{ fontSize: "0.74rem", color: "#1D4ED8", marginTop: "3px" }}>
+                    <div style={{ fontSize: "0.74rem", color: "#221E1B", marginTop: "3px" }}>
                       Teleconsultas y sesiones agendadas
                     </div>
                   </div>
@@ -2946,20 +2945,20 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   <div
                     onClick={() => setPestana360("casos")}
                     style={{
-                      background: "#F5F3FF",
-                      border: "1px solid #DDD6FE",
+                      background: "#F4F2EE",
+                      border: "1px solid #DDD8CE",
                       borderRadius: "14px",
                       padding: "13px 15px",
                       cursor: "pointer",
                     }}
                   >
-                    <div style={{ fontSize: "0.72rem", fontWeight: 800, color: "#5B21B6", textTransform: "uppercase" }}>
+                    <div style={{ fontSize: "0.72rem", fontWeight: 800, color: "#3A3530", textTransform: "uppercase" }}>
                       Casos / Expedientes
                     </div>
-                    <div style={{ fontSize: "1.35rem", fontWeight: 800, color: "#4C1D95", marginTop: "3px" }}>
+                    <div style={{ fontSize: "1.02rem", fontWeight: 800, color: "#3A3530", marginTop: "3px" }}>
                       {expediente360.resumen.cantidad_casos} caso(s)
                     </div>
-                    <div style={{ fontSize: "0.74rem", color: "#6D28D9", marginTop: "3px" }}>
+                    <div style={{ fontSize: "0.74rem", color: "#4A453F", marginTop: "3px" }}>
                       Procesos judiciales y patrocinios
                     </div>
                   </div>
@@ -2967,20 +2966,20 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   <div
                     onClick={() => setPestana360("documentos")}
                     style={{
-                      background: "#F8FAFC",
-                      border: "1px solid #E2E8F0",
+                      background: "#F8F7F4",
+                      border: "1px solid #E6E2DA",
                       borderRadius: "14px",
                       padding: "13px 15px",
                       cursor: "pointer",
                     }}
                   >
-                    <div style={{ fontSize: "0.72rem", fontWeight: 800, color: "#334155", textTransform: "uppercase" }}>
+                    <div style={{ fontSize: "0.72rem", fontWeight: 800, color: "#57524C", textTransform: "uppercase" }}>
                       Billetera Digital
                     </div>
-                    <div style={{ fontSize: "1.35rem", fontWeight: 800, color: "#0F172A", marginTop: "3px" }}>
+                    <div style={{ fontSize: "1.02rem", fontWeight: 800, color: "#1F1C19", marginTop: "3px" }}>
                       {expediente360.resumen.cantidad_documentos_billetera} doc(s)
                     </div>
-                    <div style={{ fontSize: "0.74rem", color: "#64748B", marginTop: "3px" }}>
+                    <div style={{ fontSize: "0.74rem", color: "#847D74", marginTop: "3px" }}>
                       Documentos y contratos custodiados
                     </div>
                   </div>
@@ -2992,7 +2991,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                     display: "flex",
                     gap: "6px",
                     flexWrap: "wrap",
-                    borderBottom: "1px solid #E2E8F0",
+                    borderBottom: "1px solid #E6E2DA",
                     paddingBottom: "10px",
                     marginBottom: "16px",
                   }}
@@ -3012,8 +3011,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                         type="button"
                         onClick={() => setPestana360(tab.id as any)}
                         style={{
-                          background: activa ? "#4F46E5" : "#F1F5F9",
-                          color: activa ? "#FFFFFF" : "#475569",
+                          background: activa ? "#221E1B" : "#F4F2EE",
+                          color: activa ? "#FFFFFF" : "#57524C",
                           border: "none",
                           padding: "7px 14px",
                           borderRadius: "9px",
@@ -3037,8 +3036,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   <div style={{ display: "grid", gap: "16px" }}>
                     <div
                       style={{
-                        background: "#F8FAFC",
-                        border: "1px solid #E2E8F0",
+                        background: "#F8F7F4",
+                        border: "1px solid #E6E2DA",
                         borderRadius: "14px",
                         padding: "16px",
                         display: "grid",
@@ -3048,38 +3047,38 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                       }}
                     >
                       <div>
-                        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B" }}>NOMBRES Y APELLIDOS</div>
-                        <div style={{ fontWeight: 800, color: "#0F172A", marginTop: "2px" }}>
+                        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#847D74" }}>NOMBRES Y APELLIDOS</div>
+                        <div style={{ fontWeight: 800, color: "#1F1C19", marginTop: "2px" }}>
                           {expediente360.cliente.nombre_completo}
                         </div>
                       </div>
                       <div>
-                        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B" }}>CORREO ELECTRÓNICO</div>
-                        <div style={{ fontWeight: 700, color: "#4F46E5", marginTop: "2px" }}>
+                        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#847D74" }}>CORREO ELECTRÓNICO</div>
+                        <div style={{ fontWeight: 700, color: "#221E1B", marginTop: "2px" }}>
                           {expediente360.cliente.correo || "—"}
                         </div>
                       </div>
                       <div>
-                        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B" }}>CÉDULA / RUC</div>
-                        <div style={{ fontWeight: 700, color: "#0F172A", fontFamily: "monospace", marginTop: "2px" }}>
+                        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#847D74" }}>CÉDULA / RUC</div>
+                        <div style={{ fontWeight: 700, color: "#1F1C19", fontFamily: "monospace", marginTop: "2px" }}>
                           {expediente360.cliente.identificacion}
                         </div>
                       </div>
                       <div>
-                        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B" }}>WHATSAPP / TELÉFONO</div>
-                        <div style={{ fontWeight: 700, color: "#0F172A", marginTop: "2px" }}>
+                        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#847D74" }}>WHATSAPP / TELÉFONO</div>
+                        <div style={{ fontWeight: 700, color: "#1F1C19", marginTop: "2px" }}>
                           {expediente360.cliente.whatsapp || "No registrado"}
                         </div>
                       </div>
                       <div>
-                        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B" }}>RAZÓN SOCIAL FACTURACIÓN</div>
-                        <div style={{ fontWeight: 700, color: "#0F172A", marginTop: "2px" }}>
+                        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#847D74" }}>RAZÓN SOCIAL FACTURACIÓN</div>
+                        <div style={{ fontWeight: 700, color: "#1F1C19", marginTop: "2px" }}>
                           {expediente360.cliente.razon_social}
                         </div>
                       </div>
                       <div>
-                        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#64748B" }}>DIRECCIÓN FISCAL</div>
-                        <div style={{ fontWeight: 600, color: "#334155", marginTop: "2px" }}>
+                        <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#847D74" }}>DIRECCIÓN FISCAL</div>
+                        <div style={{ fontWeight: 600, color: "#57524C", marginTop: "2px" }}>
                           {expediente360.cliente.direccion_fiscal}
                         </div>
                       </div>
@@ -3096,7 +3095,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                       {/* Últimas Reuniones */}
                       <div
                         style={{
-                          border: "1px solid #E2E8F0",
+                          border: "1px solid #E6E2DA",
                           borderRadius: "14px",
                           padding: "14px",
                           background: "#FFFFFF",
@@ -3106,7 +3105,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                           style={{
                             fontSize: "0.82rem",
                             fontWeight: 800,
-                            color: "#0F172A",
+                            color: "#1F1C19",
                             marginBottom: "10px",
                             display: "flex",
                             justifyContent: "space-between",
@@ -3120,7 +3119,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                             style={{
                               background: "transparent",
                               border: "none",
-                              color: "#4F46E5",
+                              color: "#221E1B",
                               fontSize: "0.75rem",
                               fontWeight: 700,
                               cursor: "pointer",
@@ -3130,7 +3129,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                           </button>
                         </div>
                         {expediente360.reuniones.length === 0 ? (
-                          <div style={{ fontSize: "0.8rem", color: "#64748B", padding: "12px 0" }}>
+                          <div style={{ fontSize: "0.8rem", color: "#847D74", padding: "12px 0" }}>
                             Sin reuniones registradas para este cliente.
                           </div>
                         ) : (
@@ -3139,14 +3138,14 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                               key={r.id}
                               style={{
                                 padding: "9px 0",
-                                borderBottom: "1px solid #F1F5F9",
+                                borderBottom: "1px solid #F4F2EE",
                                 fontSize: "0.8rem",
                               }}
                             >
-                              <div style={{ fontWeight: 700, color: "#0F172A" }}>
+                              <div style={{ fontWeight: 700, color: "#1F1C19" }}>
                                 {r.modalidad === "PRESENCIAL" ? "Cita Presencial" : "Teleconsulta"} — {r.motivo}
                               </div>
-                              <div style={{ fontSize: "0.73rem", color: "#64748B", marginTop: "2px" }}>
+                              <div style={{ fontSize: "0.73rem", color: "#847D74", marginTop: "2px" }}>
                                 {new Date(r.inicio_en).toLocaleString("es-EC", {
                                   dateStyle: "medium",
                                   timeStyle: "short",
@@ -3161,7 +3160,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                       {/* Últimos Pagos y Facturas */}
                       <div
                         style={{
-                          border: "1px solid #E2E8F0",
+                          border: "1px solid #E6E2DA",
                           borderRadius: "14px",
                           padding: "14px",
                           background: "#FFFFFF",
@@ -3171,7 +3170,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                           style={{
                             fontSize: "0.82rem",
                             fontWeight: 800,
-                            color: "#0F172A",
+                            color: "#1F1C19",
                             marginBottom: "10px",
                             display: "flex",
                             justifyContent: "space-between",
@@ -3185,7 +3184,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                             style={{
                               background: "transparent",
                               border: "none",
-                              color: "#4F46E5",
+                              color: "#221E1B",
                               fontSize: "0.75rem",
                               fontWeight: 700,
                               cursor: "pointer",
@@ -3195,7 +3194,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                           </button>
                         </div>
                         {expediente360.pagos.length === 0 ? (
-                          <div style={{ fontSize: "0.8rem", color: "#64748B", padding: "12px 0" }}>
+                          <div style={{ fontSize: "0.8rem", color: "#847D74", padding: "12px 0" }}>
                             Sin pagos registrados para este cliente.
                           </div>
                         ) : (
@@ -3204,7 +3203,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                               key={p.pag_id}
                               style={{
                                 padding: "9px 0",
-                                borderBottom: "1px solid #F1F5F9",
+                                borderBottom: "1px solid #F4F2EE",
                                 fontSize: "0.8rem",
                                 display: "flex",
                                 justifyContent: "space-between",
@@ -3213,10 +3212,10 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                               }}
                             >
                               <div>
-                                <div style={{ fontWeight: 700, color: "#0F172A" }}>
+                                <div style={{ fontWeight: 700, color: "#1F1C19" }}>
                                   {p.numero_comprobante || p.pag_identificador_cliente} · ${Number(p.pag_monto_total).toFixed(2)} USD
                                 </div>
-                                <div style={{ fontSize: "0.73rem", color: "#64748B" }}>
+                                <div style={{ fontSize: "0.73rem", color: "#847D74" }}>
                                   {p.rubro_facturado}
                                 </div>
                               </div>
@@ -3227,7 +3226,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                                 title="Descargar Factura Electrónica"
                                 aria-label="Descargar Factura"
                                 style={{
-                                  background: "#059669",
+                                  background: "#2F4737",
                                   color: "#FFFFFF",
                                   border: "none",
                                   padding: "5px 9px",
@@ -3255,7 +3254,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 {pestana360 === "reuniones" && (
                   <div>
                     {expediente360.reuniones.length === 0 ? (
-                      <div style={{ padding: "30px", textAlign: "center", color: "#64748B", fontSize: "0.85rem" }}>
+                      <div style={{ padding: "30px", textAlign: "center", color: "#847D74", fontSize: "0.85rem" }}>
                         Este cliente aún no registra reuniones ni citas agendadas.
                       </div>
                     ) : (
@@ -3264,10 +3263,10 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                           <div
                             key={r.id}
                             style={{
-                              border: "1px solid #E2E8F0",
+                              border: "1px solid #E6E2DA",
                               borderRadius: "12px",
                               padding: "12px 16px",
-                              background: "#F8FAFC",
+                              background: "#F8F7F4",
                               display: "flex",
                               justifyContent: "space-between",
                               alignItems: "center",
@@ -3279,8 +3278,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                               <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                                 <span
                                   style={{
-                                    background: "#EEF2FF",
-                                    color: "#4338CA",
+                                    background: "#F4F2EE",
+                                    color: "#221E1B",
                                     padding: "2px 8px",
                                     borderRadius: "6px",
                                     fontSize: "0.72rem",
@@ -3291,8 +3290,8 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                                 </span>
                                 <span
                                   style={{
-                                    background: r.estado === "CONFIRMADA" ? "#D1FAE5" : "#FEF3C7",
-                                    color: r.estado === "CONFIRMADA" ? "#065F46" : "#92400E",
+                                    background: r.estado === "CONFIRMADA" ? "#EAF1EC" : "#FAF6EE",
+                                    color: r.estado === "CONFIRMADA" ? "#2B4A36" : "#745622",
                                     padding: "2px 8px",
                                     borderRadius: "6px",
                                     fontSize: "0.72rem",
@@ -3301,17 +3300,17 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                                 >
                                   {r.estado}
                                 </span>
-                                <strong style={{ fontSize: "0.86rem", color: "#0F172A" }}>
+                                <strong style={{ fontSize: "0.86rem", color: "#1F1C19" }}>
                                   {new Date(r.inicio_en).toLocaleString("es-EC", {
                                     dateStyle: "full",
                                     timeStyle: "short",
                                   })}
                                 </strong>
                               </div>
-                              <div style={{ fontSize: "0.82rem", color: "#334155", marginTop: "5px" }}>
+                              <div style={{ fontSize: "0.82rem", color: "#57524C", marginTop: "5px" }}>
                                 <strong>Motivo / Caso:</strong> {r.motivo}
                               </div>
-                              <div style={{ fontSize: "0.75rem", color: "#64748B", marginTop: "3px" }}>
+                              <div style={{ fontSize: "0.75rem", color: "#847D74", marginTop: "3px" }}>
                                 Especialista asignado: <strong>{r.abogado_nombre}</strong>
                               </div>
                             </div>
@@ -3325,7 +3324,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                                 title="Abrir enlace de sala telemática"
                                 aria-label="Unirse a Sala"
                                 style={{
-                                  background: "#2563EB",
+                                  background: "#221E1B",
                                   color: "#FFFFFF",
                                   padding: "7px 12px",
                                   borderRadius: "8px",
@@ -3352,7 +3351,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 {pestana360 === "casos" && (
                   <div>
                     {expediente360.casos.length === 0 ? (
-                      <div style={{ padding: "30px", textAlign: "center", color: "#64748B", fontSize: "0.85rem" }}>
+                      <div style={{ padding: "30px", textAlign: "center", color: "#847D74", fontSize: "0.85rem" }}>
                         Este cliente no tiene expedientes o procesos judiciales abiertos actualmente.
                       </div>
                     ) : (
@@ -3361,20 +3360,20 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                           <div
                             key={c.id}
                             style={{
-                              border: "1px solid #E2E8F0",
+                              border: "1px solid #E6E2DA",
                               borderRadius: "12px",
                               padding: "12px 16px",
-                              background: "#F8FAFC",
+                              background: "#F8F7F4",
                             }}
                           >
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
-                              <strong style={{ fontSize: "0.88rem", color: "#0F172A" }}>
+                              <strong style={{ fontSize: "0.88rem", color: "#1F1C19" }}>
                                 #{c.secuencial} — {c.titulo}
                               </strong>
                               <span
                                 style={{
-                                  background: "#EDE9FE",
-                                  color: "#5B21B6",
+                                  background: "#F4F2EE",
+                                  color: "#3A3530",
                                   padding: "3px 9px",
                                   borderRadius: "999px",
                                   fontSize: "0.72rem",
@@ -3385,12 +3384,12 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                               </span>
                             </div>
                             {c.numero_proceso && (
-                              <div style={{ fontSize: "0.76rem", color: "#4F46E5", fontFamily: "monospace", marginTop: "3px" }}>
+                              <div style={{ fontSize: "0.76rem", color: "#221E1B", fontFamily: "monospace", marginTop: "3px" }}>
                                 Proceso Judicial SATJE: {c.numero_proceso}
                               </div>
                             )}
                             {c.descripcion && (
-                              <div style={{ fontSize: "0.8rem", color: "#334155", marginTop: "5px" }}>
+                              <div style={{ fontSize: "0.8rem", color: "#57524C", marginTop: "5px" }}>
                                 {c.descripcion}
                               </div>
                             )}
@@ -3405,7 +3404,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 {pestana360 === "pagos" && (
                   <div>
                     {expediente360.pagos.length === 0 ? (
-                      <div style={{ padding: "30px", textAlign: "center", color: "#64748B", fontSize: "0.85rem" }}>
+                      <div style={{ padding: "30px", textAlign: "center", color: "#847D74", fontSize: "0.85rem" }}>
                         No se registran pagos ni facturas para este cliente.
                       </div>
                     ) : (
@@ -3414,10 +3413,10 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                           <div
                             key={p.pag_id}
                             style={{
-                              border: "1px solid #E2E8F0",
+                              border: "1px solid #E6E2DA",
                               borderRadius: "12px",
                               padding: "12px 16px",
-                              background: "#F8FAFC",
+                              background: "#F8F7F4",
                               display: "flex",
                               justifyContent: "space-between",
                               alignItems: "center",
@@ -3432,23 +3431,23 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                                     fontFamily: "monospace",
                                     fontWeight: 800,
                                     fontSize: "0.82rem",
-                                    color: "#4338CA",
-                                    background: "#EEF2FF",
+                                    color: "#221E1B",
+                                    background: "#F4F2EE",
                                     padding: "2px 8px",
                                     borderRadius: "6px",
                                   }}
                                 >
                                   {p.numero_comprobante || "Sin comprobante"}
                                 </span>
-                                <strong style={{ fontSize: "0.9rem", color: "#0F172A" }}>
+                                <strong style={{ fontSize: "0.9rem", color: "#1F1C19" }}>
                                   ${Number(p.pag_monto_total).toFixed(2)} USD
                                 </strong>
                                 {getBadgeEstado(p.pag_estado)}
                               </div>
-                              <div style={{ fontSize: "0.8rem", color: "#334155", marginTop: "4px", fontWeight: 600 }}>
+                              <div style={{ fontSize: "0.8rem", color: "#57524C", marginTop: "4px", fontWeight: 600 }}>
                                 {p.rubro_facturado}
                               </div>
-                              <div style={{ fontSize: "0.73rem", color: "#64748B", marginTop: "2px" }}>
+                              <div style={{ fontSize: "0.73rem", color: "#847D74", marginTop: "2px" }}>
                                 Fecha: {new Date(p.pag_confirmado_en || p.pag_creado_en).toLocaleString("es-EC")} · Medio:{" "}
                                 {p.pag_pasarela}
                               </div>
@@ -3469,7 +3468,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                                   title="Registrar el cobro de este valor pendiente y emitir Factura Electrónica SRI"
                                   aria-label="Registrar Cobro"
                                   style={{
-                                    background: "#D97706",
+                                    background: "#8F6A2E",
                                     color: "#FFFFFF",
                                     border: "none",
                                     padding: "6px 11px",
@@ -3495,7 +3494,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                                     title="Descargar Factura Electrónica RIDE"
                                     aria-label="Descargar Factura"
                                     style={{
-                                      background: "#059669",
+                                      background: "#2F4737",
                                       color: "#FFFFFF",
                                       border: "none",
                                       padding: "6px 11px",
@@ -3521,9 +3520,9 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                                     title="Ver Factura Electrónica RIDE"
                                     aria-label="Ver Factura"
                                     style={{
-                                      background: "#EEF2FF",
-                                      color: "#4338CA",
-                                      border: "1px solid #C7D2FE",
+                                      background: "#F4F2EE",
+                                      color: "#221E1B",
+                                      border: "1px solid #DDD8CE",
                                       padding: "6px 11px",
                                       borderRadius: "8px",
                                       fontSize: "0.75rem",
@@ -3551,7 +3550,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 {pestana360 === "documentos" && (
                   <div>
                     {expediente360.documentos_billetera.length === 0 ? (
-                      <div style={{ padding: "30px", textAlign: "center", color: "#64748B", fontSize: "0.85rem" }}>
+                      <div style={{ padding: "30px", textAlign: "center", color: "#847D74", fontSize: "0.85rem" }}>
                         El cliente aún no tiene documentos cargados en su Billetera Digital.
                       </div>
                     ) : (
@@ -3560,10 +3559,10 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                           <div
                             key={d.id}
                             style={{
-                              border: "1px solid #E2E8F0",
+                              border: "1px solid #E6E2DA",
                               borderRadius: "10px",
                               padding: "10px 14px",
-                              background: "#F8FAFC",
+                              background: "#F8F7F4",
                               display: "flex",
                               justifyContent: "space-between",
                               alignItems: "center",
@@ -3571,12 +3570,12 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                             }}
                           >
                             <div>
-                              <strong style={{ color: "#0F172A" }}>{d.titulo}</strong>
-                              <span style={{ marginLeft: "8px", fontSize: "0.73rem", color: "#64748B" }}>
+                              <strong style={{ color: "#1F1C19" }}>{d.titulo}</strong>
+                              <span style={{ marginLeft: "8px", fontSize: "0.73rem", color: "#847D74" }}>
                                 ({d.categoria})
                               </span>
                             </div>
-                            <span style={{ fontSize: "0.74rem", color: "#475569" }}>
+                            <span style={{ fontSize: "0.74rem", color: "#57524C" }}>
                               {d.fecha_caducidad ? `Vence: ${d.fecha_caducidad}` : "Vigente"}
                             </span>
                           </div>
@@ -3616,14 +3615,14 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               maxHeight: "92vh",
               overflowY: "auto",
               boxShadow: "0 24px 60px rgba(15, 23, 42, 0.35)",
-              border: "1px solid #E2E8F0",
+              border: "1px solid #E6E2DA",
             }}
           >
             <div
               style={{
-                padding: "18px 22px",
-                background: "linear-gradient(135deg, #065F46 0%, #059669 100%)",
-                color: "#FFFFFF",
+                padding: "16px 20px",
+                background: "#221E1B",
+                color: "#FAF8F5",
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "flex-start",
@@ -3634,7 +3633,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 <span
                   style={{
                     background: "rgba(255, 255, 255, 0.18)",
-                    color: "#D1FAE5",
+                    color: "#EAF1EC",
                     padding: "2px 9px",
                     borderRadius: "999px",
                     fontSize: "0.68rem",
@@ -3644,7 +3643,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                 >
                   LIQUIDACIÓN DE VALOR PENDIENTE + FACTURA SRI
                 </span>
-                <h2 style={{ margin: "6px 0 0", fontSize: "1.15rem", fontWeight: 800, color: "#FFFFFF" }}>
+                <h2 style={{ margin: "6px 0 0", fontSize: "0.94rem", fontWeight: 800, color: "#FFFFFF" }}>
                   Registrar Cobro y Emitir Factura Electrónica
                 </h2>
               </div>
@@ -3670,26 +3669,26 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
               {/* Resumen del cargo pendiente */}
               <div
                 style={{
-                  background: "#FFFBEB",
-                  border: "1px solid #FDE68A",
+                  background: "#FAF6EE",
+                  border: "1px solid #E5D7BC",
                   borderRadius: "12px",
                   padding: "12px 14px",
                   fontSize: "0.82rem",
-                  color: "#78350F",
+                  color: "#745622",
                   display: "grid",
                   gap: "6px",
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}>
                   <strong>Cliente: {transaccionPendienteLiquidar.cliente_nombre || "Consumidor Final"}</strong>
-                  <span style={{ fontFamily: "monospace", fontWeight: 800, fontSize: "1rem", color: "#92400E" }}>
+                  <span style={{ fontFamily: "monospace", fontWeight: 800, fontSize: "1rem", color: "#745622" }}>
                     ${Number(transaccionPendienteLiquidar.pag_monto_total).toFixed(2)} USD
                   </span>
                 </div>
-                <div style={{ fontSize: "0.78rem", color: "#92400E" }}>
+                <div style={{ fontSize: "0.78rem", color: "#745622" }}>
                   <strong>Rubro:</strong> {transaccionPendienteLiquidar.rubro_facturado}
                 </div>
-                <div style={{ fontSize: "0.73rem", color: "#B45309", fontFamily: "monospace" }}>
+                <div style={{ fontSize: "0.73rem", color: "#745622", fontFamily: "monospace" }}>
                   Orden: {transaccionPendienteLiquidar.pag_identificador_cliente} · C.I./RUC:{" "}
                   {transaccionPendienteLiquidar.pag_titular_identificacion || "9999999999999"}
                 </div>
@@ -3701,7 +3700,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                     display: "block",
                     fontSize: "0.78rem",
                     fontWeight: 700,
-                    color: "#334155",
+                    color: "#57524C",
                     marginBottom: "6px",
                   }}
                 >
@@ -3714,7 +3713,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                     width: "100%",
                     padding: "9px 11px",
                     borderRadius: "9px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid #D5CFC4",
                     fontSize: "0.83rem",
                     background: "#FFFFFF",
                   }}
@@ -3735,7 +3734,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                     display: "block",
                     fontSize: "0.78rem",
                     fontWeight: 700,
-                    color: "#334155",
+                    color: "#57524C",
                     marginBottom: "6px",
                   }}
                 >
@@ -3751,7 +3750,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                     width: "100%",
                     padding: "9px 11px",
                     borderRadius: "9px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid #D5CFC4",
                     fontSize: "0.83rem",
                     boxSizing: "border-box",
                   }}
@@ -3764,7 +3763,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                     display: "block",
                     fontSize: "0.78rem",
                     fontWeight: 700,
-                    color: "#334155",
+                    color: "#57524C",
                     marginBottom: "6px",
                   }}
                 >
@@ -3779,7 +3778,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                     width: "100%",
                     padding: "9px 11px",
                     borderRadius: "9px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid #D5CFC4",
                     fontSize: "0.83rem",
                     boxSizing: "border-box",
                   }}
@@ -3792,15 +3791,15 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   justifyContent: "flex-end",
                   gap: "10px",
                   paddingTop: "8px",
-                  borderTop: "1px solid #E2E8F0",
+                  borderTop: "1px solid #E6E2DA",
                 }}
               >
                 <button
                   type="button"
                   onClick={() => setTransaccionPendienteLiquidar(null)}
                   style={{
-                    background: "#F1F5F9",
-                    color: "#475569",
+                    background: "#F4F2EE",
+                    color: "#57524C",
                     border: "none",
                     padding: "9px 16px",
                     borderRadius: "10px",
@@ -3818,7 +3817,7 @@ export function WidgetFacturacionElectronica({ negocio = "tranqi", modoVistaForz
                   title="Confirmar el cobro y emitir la Factura Electrónica SRI"
                   aria-label="Confirmar y Facturar"
                   style={{
-                    background: "#059669",
+                    background: "#2F4737",
                     color: "#FFFFFF",
                     border: "none",
                     padding: "9px 18px",

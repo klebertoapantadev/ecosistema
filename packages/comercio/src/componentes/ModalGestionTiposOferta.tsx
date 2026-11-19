@@ -51,7 +51,7 @@ export function ModalGestionTiposOferta({
   onCambioCatalogo,
 }: ModalGestionTiposOfertaProps) {
   const { esFloristeria } = detectarTipoNegocio(negocio);
-  const colorPrimario = esFloristeria ? "#E11D48" : "#0284C7";
+  const colorPrimario = esFloristeria ? "#221E1B" : "#221E1B";
 
   const [tabActiva, setTabActiva] = useState<"crear" | "gestionar">(tabInicial);
   const [listaTipos, setListaTipos] = useState<TipoOfertaComercial[]>([]);
@@ -311,13 +311,13 @@ export function ModalGestionTiposOferta({
           flexDirection: "column",
           overflow: "hidden",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)",
-          border: "1px solid #E2E8F0",
+          border: "1px solid #E6E2DA",
         }}
       >
         {/* Cabecera */}
         <div
           style={{
-            background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
+            background: "linear-gradient(135deg, #1F1C19 0%, #221E1B 100%)",
             color: "#FFFFFF",
             padding: "16px 20px",
             display: "flex",
@@ -344,7 +344,7 @@ export function ModalGestionTiposOferta({
               <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 800 }}>
                 Tipos de Oferta Comercial
               </h3>
-              <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#94A3B8" }}>
+              <p style={{ margin: "2px 0 0", fontSize: "0.75rem", color: "#847D74" }}>
                 Administra venta física, decoración, renta de mobiliario, suscripciones y más
               </p>
             </div>
@@ -357,7 +357,7 @@ export function ModalGestionTiposOferta({
             style={{
               background: "rgba(255,255,255,0.1)",
               border: "none",
-              color: "#CBD5E1",
+              color: "#D5CFC4",
               width: "32px",
               height: "32px",
               borderRadius: "8px",
@@ -377,8 +377,8 @@ export function ModalGestionTiposOferta({
             display: "flex",
             gap: "6px",
             padding: "10px 20px",
-            background: "#F8FAFC",
-            borderBottom: "1px solid #E2E8F0",
+            background: "#F8F7F4",
+            borderBottom: "1px solid #E6E2DA",
           }}
         >
           <button
@@ -391,9 +391,9 @@ export function ModalGestionTiposOferta({
               flex: 1,
               padding: "8px 12px",
               borderRadius: "8px",
-              border: tabActiva === "crear" ? `1.5px solid ${colorPrimario}` : "1px solid #CBD5E1",
+              border: tabActiva === "crear" ? `1.5px solid ${colorPrimario}` : "1px solid #D5CFC4",
               background: tabActiva === "crear" ? "#FFFFFF" : "transparent",
-              color: tabActiva === "crear" ? colorPrimario : "#475569",
+              color: tabActiva === "crear" ? colorPrimario : "#57524C",
               fontSize: "0.8rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -413,9 +413,9 @@ export function ModalGestionTiposOferta({
               flex: 1,
               padding: "8px 12px",
               borderRadius: "8px",
-              border: tabActiva === "gestionar" ? "1.5px solid #0F172A" : "1px solid #CBD5E1",
-              background: tabActiva === "gestionar" ? "#0F172A" : "transparent",
-              color: tabActiva === "gestionar" ? "#FFFFFF" : "#475569",
+              border: tabActiva === "gestionar" ? "1.5px solid #1F1C19" : "1px solid #D5CFC4",
+              background: tabActiva === "gestionar" ? "#1F1C19" : "transparent",
+              color: tabActiva === "gestionar" ? "#FFFFFF" : "#57524C",
               fontSize: "0.8rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -438,9 +438,9 @@ export function ModalGestionTiposOferta({
                 marginBottom: "12px",
                 padding: "10px 12px",
                 borderRadius: "10px",
-                background: mensajeFeedback.tipo === "ok" ? "#ECFDF5" : "#FEF2F2",
-                border: `1px solid ${mensajeFeedback.tipo === "ok" ? "#6EE7B7" : "#FCA5A5"}`,
-                color: mensajeFeedback.tipo === "ok" ? "#065F46" : "#991B1B",
+                background: mensajeFeedback.tipo === "ok" ? "#F2F6F3" : "#FAF2F2",
+                border: `1px solid ${mensajeFeedback.tipo === "ok" ? "#CEDDD3" : "#DEBABA"}`,
+                color: mensajeFeedback.tipo === "ok" ? "#2B4A36" : "#8A2E2E",
                 fontSize: "0.8rem",
                 fontWeight: 600,
                 display: "flex",
@@ -449,9 +449,9 @@ export function ModalGestionTiposOferta({
               }}
             >
               {mensajeFeedback.tipo === "ok" ? (
-                <CheckCircle2 size={16} color="#059669" />
+                <CheckCircle2 size={16} color="#2F4737" />
               ) : (
-                <AlertCircle size={16} color="#DC2626" />
+                <AlertCircle size={16} color="#8A2E2E" />
               )}
               <span>{mensajeFeedback.texto}</span>
             </div>
@@ -465,9 +465,9 @@ export function ModalGestionTiposOferta({
                     marginBottom: "12px",
                     padding: "10px 12px",
                     borderRadius: "8px",
-                    background: "#FEF2F2",
-                    border: "1px solid #FECACA",
-                    color: "#B91C1C",
+                    background: "#FAF2F2",
+                    border: "1px solid #E5CACA",
+                    color: "#8A2E2E",
                     fontSize: "0.8rem",
                     fontWeight: 600,
                   }}
@@ -490,7 +490,7 @@ export function ModalGestionTiposOferta({
                       display: "block",
                       fontSize: "0.78rem",
                       fontWeight: 700,
-                      color: "#334155",
+                      color: "#57524C",
                       marginBottom: "4px",
                     }}
                   >
@@ -518,7 +518,7 @@ export function ModalGestionTiposOferta({
                       width: "100%",
                       padding: "9px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid #D5CFC4",
                       fontSize: "0.85rem",
                       boxSizing: "border-box",
                     }}
@@ -531,7 +531,7 @@ export function ModalGestionTiposOferta({
                       display: "block",
                       fontSize: "0.78rem",
                       fontWeight: 700,
-                      color: "#334155",
+                      color: "#57524C",
                       marginBottom: "4px",
                     }}
                   >
@@ -550,10 +550,10 @@ export function ModalGestionTiposOferta({
                       width: "100%",
                       padding: "9px 12px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid #D5CFC4",
                       fontSize: "0.82rem",
                       fontFamily: "monospace",
-                      background: editandoId ? "#F1F5F9" : "#FFFFFF",
+                      background: editandoId ? "#F4F2EE" : "#FFFFFF",
                       boxSizing: "border-box",
                     }}
                   />
@@ -566,7 +566,7 @@ export function ModalGestionTiposOferta({
                     display: "block",
                     fontSize: "0.78rem",
                     fontWeight: 700,
-                    color: "#334155",
+                    color: "#57524C",
                     marginBottom: "4px",
                   }}
                 >
@@ -581,7 +581,7 @@ export function ModalGestionTiposOferta({
                     width: "100%",
                     padding: "8px 12px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid #D5CFC4",
                     fontSize: "0.84rem",
                     boxSizing: "border-box",
                   }}
@@ -594,7 +594,7 @@ export function ModalGestionTiposOferta({
                     display: "block",
                     fontSize: "0.78rem",
                     fontWeight: 700,
-                    color: "#334155",
+                    color: "#57524C",
                     marginBottom: "4px",
                   }}
                 >
@@ -609,7 +609,7 @@ export function ModalGestionTiposOferta({
                     width: "100%",
                     padding: "8px 12px",
                     borderRadius: "8px",
-                    border: "1px solid #CBD5E1",
+                    border: "1px solid #D5CFC4",
                     fontSize: "0.83rem",
                     boxSizing: "border-box",
                     resize: "vertical",
@@ -620,8 +620,8 @@ export function ModalGestionTiposOferta({
               {/* Switch Modalidad de Renta / Alquiler */}
               <div
                 style={{
-                  background: esRenta ? "#FFFBEB" : "#F8FAFC",
-                  border: esRenta ? "1.5px solid #F59E0B" : "1px solid #E2E8F0",
+                  background: esRenta ? "#FAF6EE" : "#F8F7F4",
+                  border: esRenta ? "1.5px solid #8F6A2E" : "1px solid #E6E2DA",
                   borderRadius: "10px",
                   padding: "12px",
                   marginBottom: "16px",
@@ -635,20 +635,20 @@ export function ModalGestionTiposOferta({
                     cursor: "pointer",
                     fontSize: "0.84rem",
                     fontWeight: 700,
-                    color: "#0F172A",
+                    color: "#1F1C19",
                   }}
                 >
                   <input
                     type="checkbox"
                     checked={esRenta}
                     onChange={(e) => setEsRenta(e.target.checked)}
-                    style={{ width: "16px", height: "16px", accentColor: "#D97706" }}
+                    style={{ width: "16px", height: "16px", accentColor: "#8F6A2E" }}
                   />
                   <span>🪑 Es modalidad de Renta / Alquiler temporal (requiere devolución o retiro)</span>
                 </label>
 
                 {esRenta && (
-                  <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: "1px dashed #FCD34D" }}>
+                  <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: "1px dashed #E5D7BC" }}>
                     <div
                       style={{
                         display: "grid",
@@ -663,7 +663,7 @@ export function ModalGestionTiposOferta({
                             display: "block",
                             fontSize: "0.74rem",
                             fontWeight: 700,
-                            color: "#92400E",
+                            color: "#745622",
                             marginBottom: "3px",
                           }}
                         >
@@ -678,7 +678,7 @@ export function ModalGestionTiposOferta({
                             width: "100%",
                             padding: "7px 10px",
                             borderRadius: "7px",
-                            border: "1px solid #FCD34D",
+                            border: "1px solid #E5D7BC",
                             fontSize: "0.8rem",
                             background: "#FFFFFF",
                             boxSizing: "border-box",
@@ -693,7 +693,7 @@ export function ModalGestionTiposOferta({
                             gap: "6px",
                             fontSize: "0.78rem",
                             fontWeight: 600,
-                            color: "#78350F",
+                            color: "#745622",
                             cursor: "pointer",
                           }}
                         >
@@ -713,7 +713,7 @@ export function ModalGestionTiposOferta({
                           display: "block",
                           fontSize: "0.74rem",
                           fontWeight: 700,
-                          color: "#92400E",
+                          color: "#745622",
                           marginBottom: "3px",
                         }}
                       >
@@ -727,7 +727,7 @@ export function ModalGestionTiposOferta({
                           width: "100%",
                           padding: "7px 10px",
                           borderRadius: "7px",
-                          border: "1px solid #FCD34D",
+                          border: "1px solid #E5D7BC",
                           fontSize: "0.8rem",
                           background: "#FFFFFF",
                           boxSizing: "border-box",
@@ -744,9 +744,9 @@ export function ModalGestionTiposOferta({
                     type="button"
                     onClick={limpiarFormulario}
                     style={{
-                      background: "#F1F5F9",
-                      border: "1px solid #CBD5E1",
-                      color: "#334155",
+                      background: "#F4F2EE",
+                      border: "1px solid #D5CFC4",
+                      color: "#57524C",
                       padding: "9px 14px",
                       borderRadius: "8px",
                       fontSize: "0.82rem",
@@ -790,7 +790,7 @@ export function ModalGestionTiposOferta({
                 <div style={{ position: "relative", flex: 1, minWidth: "180px" }}>
                   <Search
                     size={14}
-                    color="#94A3B8"
+                    color="#847D74"
                     style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }}
                   />
                   <input
@@ -802,7 +802,7 @@ export function ModalGestionTiposOferta({
                       width: "100%",
                       padding: "8px 10px 8px 32px",
                       borderRadius: "8px",
-                      border: "1px solid #CBD5E1",
+                      border: "1px solid #D5CFC4",
                       fontSize: "0.82rem",
                       boxSizing: "border-box",
                     }}
@@ -815,9 +815,9 @@ export function ModalGestionTiposOferta({
                   title="Actualizar conteo de productos"
                   aria-label="Actualizar conteo de productos"
                   style={{
-                    background: "#F8FAFC",
-                    border: "1px solid #CBD5E1",
-                    color: "#334155",
+                    background: "#F8F7F4",
+                    border: "1px solid #D5CFC4",
+                    color: "#57524C",
                     padding: "8px 10px",
                     borderRadius: "8px",
                     fontSize: "0.76rem",
@@ -838,9 +838,9 @@ export function ModalGestionTiposOferta({
                   title="Restaurar tipos de oferta predeterminados"
                   aria-label="Restaurar tipos de oferta predeterminados"
                   style={{
-                    background: "#FFFBEB",
-                    border: "1px solid #FDE68A",
-                    color: "#92400E",
+                    background: "#FAF6EE",
+                    border: "1px solid #E5D7BC",
+                    color: "#745622",
                     padding: "8px 11px",
                     borderRadius: "8px",
                     fontSize: "0.76rem",
@@ -857,7 +857,7 @@ export function ModalGestionTiposOferta({
               </div>
 
               {cargando && listaTipos.length === 0 ? (
-                <p style={{ textAlign: "center", color: "#64748B", fontSize: "0.84rem", padding: "20px 0" }}>
+                <p style={{ textAlign: "center", color: "#847D74", fontSize: "0.84rem", padding: "20px 0" }}>
                   Cargando tipos de oferta comercial...
                 </p>
               ) : (
@@ -873,7 +873,7 @@ export function ModalGestionTiposOferta({
                       <div
                         key={item.tof_codigo}
                         style={{
-                          border: esItemRenta ? "1.5px solid #FCD34D" : "1px solid #E2E8F0",
+                          border: esItemRenta ? "1.5px solid #E5D7BC" : "1px solid #E6E2DA",
                           background: esItemRenta ? "#FFFDF5" : "#FFFFFF",
                           borderRadius: "10px",
                           padding: "10px 12px",
@@ -886,7 +886,7 @@ export function ModalGestionTiposOferta({
                       >
                         <div style={{ flex: 1, minWidth: "200px" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                            <strong style={{ fontSize: "0.86rem", color: "#0F172A" }}>
+                            <strong style={{ fontSize: "0.86rem", color: "#1F1C19" }}>
                               {item.tof_nombre}
                             </strong>
                             <span
@@ -894,8 +894,8 @@ export function ModalGestionTiposOferta({
                                 fontSize: "0.68rem",
                                 fontFamily: "monospace",
                                 fontWeight: 700,
-                                background: "#F1F5F9",
-                                color: "#475569",
+                                background: "#F4F2EE",
+                                color: "#57524C",
                                 padding: "2px 6px",
                                 borderRadius: "5px",
                               }}
@@ -907,9 +907,9 @@ export function ModalGestionTiposOferta({
                                 style={{
                                   fontSize: "0.68rem",
                                   fontWeight: 800,
-                                  background: "#FEF3C7",
-                                  color: "#92400E",
-                                  border: "1px solid #FDE68A",
+                                  background: "#FAF6EE",
+                                  color: "#745622",
+                                  border: "1px solid #E5D7BC",
                                   padding: "2px 7px",
                                   borderRadius: "999px",
                                 }}
@@ -926,13 +926,13 @@ export function ModalGestionTiposOferta({
                               gap: "8px",
                               flexWrap: "wrap",
                               fontSize: "0.74rem",
-                              color: "#64748B",
+                              color: "#847D74",
                             }}
                           >
                             <span
                               style={{
                                 fontWeight: 700,
-                                color: enUso ? "#0369A1" : "#64748B",
+                                color: enUso ? "#3A3530" : "#847D74",
                               }}
                             >
                               {enUso
@@ -952,9 +952,9 @@ export function ModalGestionTiposOferta({
                             title={`Editar nombre o condiciones de "${item.tof_nombre}"`}
                             aria-label={`Editar ${item.tof_nombre}`}
                             style={{
-                              background: "#F8FAFC",
-                              border: "1px solid #CBD5E1",
-                              color: "#334155",
+                              background: "#F8F7F4",
+                              border: "1px solid #D5CFC4",
+                              color: "#57524C",
                               padding: "6px 10px",
                               borderRadius: "8px",
                               fontSize: "0.74rem",
@@ -975,9 +975,9 @@ export function ModalGestionTiposOferta({
                               disabled
                               title={`No se puede eliminar: asignado a ${item.productos_conteo} producto(s)`}
                               style={{
-                                background: "#F1F5F9",
-                                border: "1px solid #E2E8F0",
-                                color: "#94A3B8",
+                                background: "#F4F2EE",
+                                border: "1px solid #E6E2DA",
+                                color: "#847D74",
                                 padding: "6px 10px",
                                 borderRadius: "8px",
                                 fontSize: "0.74rem",
@@ -999,9 +999,9 @@ export function ModalGestionTiposOferta({
                               title={`Eliminar tipo de oferta "${item.tof_nombre}"`}
                               aria-label={`Eliminar ${item.tof_nombre}`}
                               style={{
-                                background: "#FFF1F2",
-                                border: "1px solid #FECDD3",
-                                color: "#E11D48",
+                                background: "#FAF2F2",
+                                border: "1px solid #E5CACA",
+                                color: "#221E1B",
                                 padding: "6px 10px",
                                 borderRadius: "8px",
                                 fontSize: "0.74rem",
@@ -1030,8 +1030,8 @@ export function ModalGestionTiposOferta({
                     marginTop: "14px",
                     padding: "12px 14px",
                     borderRadius: "10px",
-                    background: "#FFF1F2",
-                    border: "1.5px solid #FDA4AF",
+                    background: "#FAF2F2",
+                    border: "1.5px solid #E5CACA",
                   }}
                 >
                   <div
@@ -1039,13 +1039,13 @@ export function ModalGestionTiposOferta({
                       display: "flex",
                       alignItems: "center",
                       gap: "8px",
-                      color: "#9F1239",
+                      color: "#8A2E2E",
                       fontSize: "0.82rem",
                       fontWeight: 700,
                       marginBottom: "8px",
                     }}
                   >
-                    <AlertTriangle size={16} color="#E11D48" />
+                    <AlertTriangle size={16} color="#221E1B" />
                     <span>¿Eliminar el tipo de oferta "{itemAEliminar.tof_nombre}"?</span>
                   </div>
                   <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
@@ -1054,8 +1054,8 @@ export function ModalGestionTiposOferta({
                       onClick={() => setItemAEliminar(null)}
                       style={{
                         background: "#FFFFFF",
-                        border: "1px solid #CBD5E1",
-                        color: "#334155",
+                        border: "1px solid #D5CFC4",
+                        color: "#57524C",
                         padding: "6px 12px",
                         borderRadius: "7px",
                         fontSize: "0.76rem",
@@ -1070,7 +1070,7 @@ export function ModalGestionTiposOferta({
                       onClick={confirmarEliminacion}
                       disabled={Boolean(eliminandoCodigo)}
                       style={{
-                        background: "#E11D48",
+                        background: "#221E1B",
                         border: "none",
                         color: "#FFFFFF",
                         padding: "6px 12px",
@@ -1102,8 +1102,8 @@ export function PanelCondicionesRentaProducto({ config, onChange }: PanelCondici
   return (
     <div
       style={{
-        background: "linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)",
-        border: "1.5px solid #F59E0B",
+        background: "linear-gradient(135deg, #FAF6EE 0%, #FAF6EE 100%)",
+        border: "1.5px solid #8F6A2E",
         borderRadius: "10px",
         padding: "12px 14px",
         marginBottom: "14px",
@@ -1119,7 +1119,7 @@ export function PanelCondicionesRentaProducto({ config, onChange }: PanelCondici
           marginBottom: "8px",
         }}
       >
-        <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "#92400E" }}>
+        <span style={{ fontSize: "0.8rem", fontWeight: 800, color: "#745622" }}>
           🪑 Condiciones de Renta de Mobiliario / Alquiler
         </span>
         <span
@@ -1127,8 +1127,8 @@ export function PanelCondicionesRentaProducto({ config, onChange }: PanelCondici
             fontSize: "0.7rem",
             fontWeight: 700,
             background: "#FFFFFF",
-            color: "#B45309",
-            border: "1px solid #FCD34D",
+            color: "#745622",
+            border: "1px solid #E5D7BC",
             padding: "2px 8px",
             borderRadius: "999px",
           }}
@@ -1151,7 +1151,7 @@ export function PanelCondicionesRentaProducto({ config, onChange }: PanelCondici
               display: "block",
               fontSize: "0.74rem",
               fontWeight: 700,
-              color: "#78350F",
+              color: "#745622",
               marginBottom: "3px",
             }}
           >
@@ -1167,7 +1167,7 @@ export function PanelCondicionesRentaProducto({ config, onChange }: PanelCondici
               width: "100%",
               padding: "7px 10px",
               borderRadius: "7px",
-              border: "1px solid #FCD34D",
+              border: "1px solid #E5D7BC",
               fontSize: "0.82rem",
               background: "#FFFFFF",
               boxSizing: "border-box",
@@ -1186,7 +1186,7 @@ export function PanelCondicionesRentaProducto({ config, onChange }: PanelCondici
               display: "block",
               fontSize: "0.74rem",
               fontWeight: 700,
-              color: "#78350F",
+              color: "#745622",
               marginBottom: "3px",
             }}
           >
@@ -1207,7 +1207,7 @@ export function PanelCondicionesRentaProducto({ config, onChange }: PanelCondici
               width: "100%",
               padding: "7px 10px",
               borderRadius: "7px",
-              border: "1px solid #FCD34D",
+              border: "1px solid #E5D7BC",
               fontSize: "0.82rem",
               background: "#FFFFFF",
               boxSizing: "border-box",
@@ -1224,7 +1224,7 @@ export function PanelCondicionesRentaProducto({ config, onChange }: PanelCondici
             gap: "7px",
             fontSize: "0.78rem",
             fontWeight: 700,
-            color: "#78350F",
+            color: "#745622",
             cursor: "pointer",
           }}
         >
@@ -1232,7 +1232,7 @@ export function PanelCondicionesRentaProducto({ config, onChange }: PanelCondici
             type="checkbox"
             checked={config.incluye_retiro}
             onChange={(e) => onChange({ ...config, incluye_retiro: e.target.checked })}
-            style={{ accentColor: "#D97706" }}
+            style={{ accentColor: "#8F6A2E" }}
           />
           <span>Coordinamos entrega en el lugar del evento y retiro posterior del mobiliario</span>
         </label>
@@ -1244,7 +1244,7 @@ export function PanelCondicionesRentaProducto({ config, onChange }: PanelCondici
             display: "block",
             fontSize: "0.74rem",
             fontWeight: 700,
-            color: "#78350F",
+            color: "#745622",
             marginBottom: "3px",
           }}
         >
@@ -1259,7 +1259,7 @@ export function PanelCondicionesRentaProducto({ config, onChange }: PanelCondici
             width: "100%",
             padding: "7px 10px",
             borderRadius: "7px",
-            border: "1px solid #FCD34D",
+            border: "1px solid #E5D7BC",
             fontSize: "0.8rem",
             background: "#FFFFFF",
             boxSizing: "border-box",

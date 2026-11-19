@@ -79,44 +79,44 @@ function badgeEstadoTaller(estado: EstadoOrdenTaller): {
     case "PENDIENTE_ENVIO":
       return {
         etiqueta: "Por enviar",
-        fondo: "#FEF3C7",
-        borde: "#FDE68A",
-        color: "#92400E",
+        fondo: "#FAF6EE",
+        borde: "#E5D7BC",
+        color: "#745622",
       };
     case "ENVIADO_TALLER":
       return {
         etiqueta: "En Taller",
-        fondo: "#E0F2FE",
-        borde: "#BAE6FD",
-        color: "#0369A1",
+        fondo: "#EFECE6",
+        borde: "#DDD8CE",
+        color: "#3A3530",
       };
     case "EN_PREPARACION":
       return {
         etiqueta: "En preparación",
-        fondo: "#FFEDD5",
-        borde: "#FED7AA",
-        color: "#C2410C",
+        fondo: "#F5EFE3",
+        borde: "#E5D7BC",
+        color: "#745622",
       };
     case "LISTO_ENTREGA":
       return {
         etiqueta: "Listo entrega",
-        fondo: "#DCFCE7",
-        borde: "#86EFAC",
-        color: "#15803D",
+        fondo: "#F2F6F3",
+        borde: "#CEDDD3",
+        color: "#2F4737",
       };
     case "ENTREGADO":
       return {
         etiqueta: "Confirmado",
-        fondo: "#E2E8F0",
-        borde: "#CBD5E1",
-        color: "#475569",
+        fondo: "#E6E2DA",
+        borde: "#D5CFC4",
+        color: "#57524C",
       };
     default:
       return {
         etiqueta: estado,
-        fondo: "#F1F5F9",
-        borde: "#E2E8F0",
-        color: "#64748B",
+        fondo: "#F4F2EE",
+        borde: "#E6E2DA",
+        color: "#847D74",
       };
   }
 }
@@ -331,7 +331,7 @@ export function CalendarioPedidosTaller({
             <strong
               style={{
                 fontSize: "0.81rem",
-                color: confirmada ? "#475569" : "#0F172A",
+                color: confirmada ? "#57524C" : "#1F1C19",
               }}
             >
               {o.codigo}
@@ -358,7 +358,7 @@ export function CalendarioPedidosTaller({
                 color: est.color,
               }}
             >
-              {confirmada && <CheckCircle2 size={11} color="#15803D" />}
+              {confirmada && <CheckCircle2 size={11} color="#2F4737" />}
               <span>{est.etiqueta}</span>
             </span>
           </div>
@@ -370,7 +370,7 @@ export function CalendarioPedidosTaller({
               gap: "4px",
               fontSize: "0.72rem",
               fontWeight: 700,
-              color: confirmada ? "#64748B" : "#334155",
+              color: confirmada ? "#847D74" : "#57524C",
             }}
           >
             <Clock size={11} />
@@ -388,7 +388,7 @@ export function CalendarioPedidosTaller({
           style={{
             fontSize: "0.83rem",
             fontWeight: 700,
-            color: confirmada ? "#475569" : "#1E293B",
+            color: confirmada ? "#57524C" : "#221E1B",
             textDecoration: confirmada ? "none" : "none",
           }}
         >
@@ -398,7 +398,7 @@ export function CalendarioPedidosTaller({
         <div
           style={{
             fontSize: "0.74rem",
-            color: confirmada ? "#64748B" : "#475569",
+            color: confirmada ? "#847D74" : "#57524C",
             lineHeight: 1.42,
             display: "flex",
             flexDirection: "column",
@@ -438,11 +438,11 @@ export function CalendarioPedidosTaller({
               alignSelf: "flex-start",
               padding: "2px 8px",
               borderRadius: "6px",
-              background: confirmada ? "#E2E8F0" : entregaDistinta ? "#EFF6FF" : "#F0FDF4",
+              background: confirmada ? "#E6E2DA" : entregaDistinta ? "#F4F2EE" : "#F2F6F3",
               border: `1px solid ${
-                confirmada ? "#CBD5E1" : entregaDistinta ? "#BFDBFE" : "#BBF7D0"
+                confirmada ? "#D5CFC4" : entregaDistinta ? "#DDD8CE" : "#CEDDD3"
               }`,
-              color: confirmada ? "#475569" : entregaDistinta ? "#1D4ED8" : "#15803D",
+              color: confirmada ? "#57524C" : entregaDistinta ? "#221E1B" : "#2F4737",
               fontSize: "0.7rem",
               fontWeight: 700,
             }}
@@ -466,15 +466,15 @@ export function CalendarioPedidosTaller({
                 gap: "5px",
                 padding: "4px 9px",
                 borderRadius: "6px",
-                border: "1px solid #94A3B8",
+                border: "1px solid #847D74",
                 background: "#FFFFFF",
-                color: "#334155",
+                color: "#57524C",
                 fontSize: "0.72rem",
                 fontWeight: 700,
                 cursor: "pointer",
               }}
             >
-              <Camera size={12} color="#0D9488" />
+              <Camera size={12} color="#2F4737" />
               <span>{o.evidenciaFotoUrl ? "Ver Foto" : "Detalle Entrega"}</span>
             </button>
           )}
@@ -496,7 +496,7 @@ export function CalendarioPedidosTaller({
                   padding: "5px 10px",
                   borderRadius: "7px",
                   border: "none",
-                  background: "#0F172A",
+                  background: "#1F1C19",
                   color: "#FFFFFF",
                   fontSize: "0.73rem",
                   fontWeight: 700,
@@ -524,10 +524,10 @@ export function CalendarioPedidosTaller({
                   borderRadius: "7px",
                   border:
                     o.estadoTaller === "EN_PREPARACION"
-                      ? "1.5px solid #C2410C"
-                      : "1px solid #CBD5E1",
-                  background: o.estadoTaller === "EN_PREPARACION" ? "#FFEDD5" : "#FFFFFF",
-                  color: o.estadoTaller === "EN_PREPARACION" ? "#9A3412" : "#334155",
+                      ? "1.5px solid #745622"
+                      : "1px solid #D5CFC4",
+                  background: o.estadoTaller === "EN_PREPARACION" ? "#F5EFE3" : "#FFFFFF",
+                  color: o.estadoTaller === "EN_PREPARACION" ? "#745622" : "#57524C",
                   fontSize: "0.73rem",
                   fontWeight: 700,
                   cursor: procesando ? "wait" : "pointer",
@@ -550,7 +550,7 @@ export function CalendarioPedidosTaller({
                   padding: "5px 10px",
                   borderRadius: "7px",
                   border: "none",
-                  background: o.estadoTaller === "LISTO_ENTREGA" ? "#15803D" : "#059669",
+                  background: o.estadoTaller === "LISTO_ENTREGA" ? "#2F4737" : "#2F4737",
                   color: "#FFFFFF",
                   fontSize: "0.73rem",
                   fontWeight: 700,
@@ -572,9 +572,9 @@ export function CalendarioPedidosTaller({
               style={{
                 padding: "4px 9px",
                 borderRadius: "6px",
-                border: "1px solid #CBD5E1",
-                background: "#F8FAFC",
-                color: "#334155",
+                border: "1px solid #D5CFC4",
+                background: "#F8F7F4",
+                color: "#57524C",
                 fontSize: "0.72rem",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -596,9 +596,9 @@ export function CalendarioPedidosTaller({
                 gap: "4px",
                 padding: "4px 9px",
                 borderRadius: "6px",
-                border: "1px solid #FECACA",
-                background: "#FEF2F2",
-                color: "#B91C1C",
+                border: "1px solid #E5CACA",
+                background: "#FAF2F2",
+                color: "#8A2E2E",
                 fontSize: "0.72rem",
                 fontWeight: 600,
                 cursor: "pointer",
@@ -647,43 +647,43 @@ export function CalendarioPedidosTaller({
       {
         id: "exeq",
         titulo: "Exequiales / Hora Puntual",
-        colorBorde: "#DDD6FE",
-        fondo: "#F5F3FF",
+        colorBorde: "#DDD8CE",
+        fondo: "#F4F2EE",
         items: exequiales,
       },
       {
         id: "a",
         titulo: "Franja A · 09:00 – 13:00",
-        colorBorde: "#BAE6FD",
-        fondo: "#F0F9FF",
+        colorBorde: "#DDD8CE",
+        fondo: "#F4F2EE",
         items: franjaA,
       },
       {
         id: "b",
         titulo: "Franja B · 13:00 – 17:00",
-        colorBorde: "#FDE68A",
-        fondo: "#FFFBEB",
+        colorBorde: "#E5D7BC",
+        fondo: "#FAF6EE",
         items: franjaB,
       },
       {
         id: "c",
         titulo: "Franja C · 17:00 – 20:00",
-        colorBorde: "#C7D2FE",
-        fondo: "#EEF2FF",
+        colorBorde: "#DDD8CE",
+        fondo: "#F4F2EE",
         items: franjaC,
       },
       {
         id: "fut",
         titulo: "Elaboración Anticipada (Entregas Futuras)",
-        colorBorde: "#A7F3D0",
-        fondo: "#ECFDF5",
+        colorBorde: "#CEDDD3",
+        fondo: "#F2F6F3",
         items: anticipadosFuturos,
       },
       {
         id: "conf",
         titulo: "Entregas Confirmadas en la Fecha",
-        colorBorde: "#CBD5E1",
-        fondo: "#F8FAFC",
+        colorBorde: "#D5CFC4",
+        fondo: "#F8F7F4",
         items: confirmadosDia,
       },
     ];
@@ -699,7 +699,7 @@ export function CalendarioPedidosTaller({
     <div
       style={{
         background: "#FFFFFF",
-        border: "1px solid #E2E8F0",
+        border: "1px solid #E6E2DA",
         borderRadius: "16px",
         padding: "16px",
         display: "flex",
@@ -718,8 +718,8 @@ export function CalendarioPedidosTaller({
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-          <Calendar size={18} color="#0D9488" />
-          <strong style={{ fontSize: "0.96rem", color: "#0F172A" }}>
+          <Calendar size={18} color="#2F4737" />
+          <strong style={{ fontSize: "0.96rem", color: "#1F1C19" }}>
             {vista === "hoy"
               ? `Agenda Operativa — ${formatearFechaEntregaHumana(fechaCursor, hoyYmd).etiquetaPrincipal}`
               : vista === "semana"
@@ -738,7 +738,7 @@ export function CalendarioPedidosTaller({
               style={{
                 padding: "6px 9px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid #D5CFC4",
                 background: "#FFFFFF",
                 cursor: "pointer",
                 display: "inline-flex",
@@ -755,9 +755,9 @@ export function CalendarioPedidosTaller({
               style={{
                 padding: "6px 11px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
-                background: fechaCursor === hoyYmd ? "#F0FDFA" : "#FFFFFF",
-                color: fechaCursor === hoyYmd ? "#115E59" : "#334155",
+                border: "1px solid #D5CFC4",
+                background: fechaCursor === hoyYmd ? "#F2F6F3" : "#FFFFFF",
+                color: fechaCursor === hoyYmd ? "#2B4A36" : "#57524C",
                 fontSize: "0.78rem",
                 fontWeight: 700,
                 cursor: "pointer",
@@ -773,7 +773,7 @@ export function CalendarioPedidosTaller({
               style={{
                 padding: "6px 9px",
                 borderRadius: "8px",
-                border: "1px solid #CBD5E1",
+                border: "1px solid #D5CFC4",
                 background: "#FFFFFF",
                 cursor: "pointer",
                 display: "inline-flex",
@@ -788,7 +788,7 @@ export function CalendarioPedidosTaller({
           <div
             style={{
               display: "inline-flex",
-              background: "#F1F5F9",
+              background: "#F4F2EE",
               padding: "3px",
               borderRadius: "10px",
               gap: "3px",
@@ -816,8 +816,8 @@ export function CalendarioPedidosTaller({
                     padding: "6px 12px",
                     borderRadius: "8px",
                     border: "none",
-                    background: activa ? "#0F172A" : "transparent",
-                    color: activa ? "#FFFFFF" : "#475569",
+                    background: activa ? "#1F1C19" : "transparent",
+                    color: activa ? "#FFFFFF" : "#57524C",
                     fontSize: "0.78rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -841,8 +841,8 @@ export function CalendarioPedidosTaller({
           flexWrap: "wrap",
           padding: "10px 12px",
           borderRadius: "12px",
-          background: "#F8FAFC",
-          border: "1px solid #E2E8F0",
+          background: "#F8F7F4",
+          border: "1px solid #E6E2DA",
         }}
       >
         <BarraFiltroClasificacionPedido
@@ -866,9 +866,9 @@ export function CalendarioPedidosTaller({
               padding: "4px 10px",
               borderRadius: "8px",
               background: "#FFFFFF",
-              border: "1px solid #E2E8F0",
+              border: "1px solid #E6E2DA",
               fontSize: "0.71rem",
-              color: "#475569",
+              color: "#57524C",
             }}
           >
             <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontWeight: 700 }}>
@@ -877,7 +877,7 @@ export function CalendarioPedidosTaller({
                   width: "9px",
                   height: "9px",
                   borderRadius: "3px",
-                  background: "#0D9488",
+                  background: "#2F4737",
                 }}
               />
               <span>Pendiente</span>
@@ -891,7 +891,7 @@ export function CalendarioPedidosTaller({
                 opacity: 0.75,
               }}
             >
-              <CheckCircle2 size={12} color="#475569" />
+              <CheckCircle2 size={12} color="#57524C" />
               <span>Confirmada (opaco)</span>
             </span>
           </div>
@@ -907,9 +907,9 @@ export function CalendarioPedidosTaller({
               gap: "5px",
               padding: "5px 10px",
               borderRadius: "8px",
-              border: mostrarConfirmadas ? "1px solid #94A3B8" : "1px solid #CBD5E1",
-              background: mostrarConfirmadas ? "#E2E8F0" : "#FFFFFF",
-              color: "#334155",
+              border: mostrarConfirmadas ? "1px solid #847D74" : "1px solid #D5CFC4",
+              background: mostrarConfirmadas ? "#E6E2DA" : "#FFFFFF",
+              color: "#57524C",
               fontSize: "0.73rem",
               fontWeight: 700,
               cursor: "pointer",
@@ -931,10 +931,10 @@ export function CalendarioPedidosTaller({
               style={{
                 padding: "24px",
                 borderRadius: "12px",
-                background: "#F8FAFC",
-                border: "1px dashed #CBD5E1",
+                background: "#F8F7F4",
+                border: "1px dashed #D5CFC4",
                 textAlign: "center",
-                color: "#64748B",
+                color: "#847D74",
                 fontSize: "0.85rem",
               }}
             >
@@ -971,7 +971,7 @@ export function CalendarioPedidosTaller({
                         gap: "6px",
                       }}
                     >
-                      <strong style={{ fontSize: "0.81rem", color: "#0F172A" }}>
+                      <strong style={{ fontSize: "0.81rem", color: "#1F1C19" }}>
                         {bloque.titulo}
                       </strong>
                       <span
@@ -979,10 +979,10 @@ export function CalendarioPedidosTaller({
                           padding: "2px 8px",
                           borderRadius: "999px",
                           background: "#FFFFFF",
-                          border: "1px solid #E2E8F0",
+                          border: "1px solid #E6E2DA",
                           fontSize: "0.71rem",
                           fontWeight: 800,
-                          color: "#0F172A",
+                          color: "#1F1C19",
                         }}
                       >
                         {bloque.items.length}
@@ -1022,15 +1022,15 @@ export function CalendarioPedidosTaller({
                 key={ymd}
                 style={{
                   background: esHoy
-                    ? "#F0FDFA"
+                    ? "#F2F6F3"
                     : todoConfirmado
-                      ? "#F8FAFC"
+                      ? "#F8F7F4"
                       : "#FFFFFF",
                   border: esHoy
-                    ? "2px solid #0D9488"
+                    ? "2px solid #2F4737"
                     : todoConfirmado
-                      ? "1px solid #CBD5E1"
-                      : "1px solid #E2E8F0",
+                      ? "1px solid #D5CFC4"
+                      : "1px solid #E6E2DA",
                   borderRadius: "12px",
                   padding: "10px",
                   display: "flex",
@@ -1050,7 +1050,7 @@ export function CalendarioPedidosTaller({
                     alignItems: "center",
                     cursor: "pointer",
                     paddingBottom: "6px",
-                    borderBottom: "1px solid #E2E8F0",
+                    borderBottom: "1px solid #E6E2DA",
                   }}
                 >
                   <div>
@@ -1058,13 +1058,13 @@ export function CalendarioPedidosTaller({
                       style={{
                         fontSize: "0.71rem",
                         fontWeight: 700,
-                        color: esHoy ? "#0F766E" : "#64748B",
+                        color: esHoy ? "#2F4737" : "#847D74",
                         textTransform: "uppercase",
                       }}
                     >
                       {NOMBRES_DIAS_CORTO[idx]} {esHoy ? "· HOY" : ""}
                     </div>
-                    <strong style={{ fontSize: "0.94rem", color: "#0F172A" }}>
+                    <strong style={{ fontSize: "0.94rem", color: "#1F1C19" }}>
                       {ymd.slice(8, 10)}/{ymd.slice(5, 7)}
                     </strong>
                   </div>
@@ -1077,7 +1077,7 @@ export function CalendarioPedidosTaller({
                           style={{
                             padding: "2px 7px",
                             borderRadius: "999px",
-                            background: "#0F172A",
+                            background: "#1F1C19",
                             color: "#FFFFFF",
                             fontSize: "0.7rem",
                             fontWeight: 800,
@@ -1095,13 +1095,13 @@ export function CalendarioPedidosTaller({
                             gap: "2px",
                             padding: "2px 6px",
                             borderRadius: "999px",
-                            background: "#E2E8F0",
-                            color: "#475569",
+                            background: "#E6E2DA",
+                            color: "#57524C",
                             fontSize: "0.68rem",
                             fontWeight: 800,
                           }}
                         >
-                          <CheckCircle2 size={10} color="#15803D" />
+                          <CheckCircle2 size={10} color="#2F4737" />
                           <span>{confirmadas}</span>
                         </span>
                       )}
@@ -1110,7 +1110,7 @@ export function CalendarioPedidosTaller({
                 </div>
 
                 {delDia.length === 0 ? (
-                  <span style={{ fontSize: "0.74rem", color: "#94A3B8" }}>Sin entregas</span>
+                  <span style={{ fontSize: "0.74rem", color: "#847D74" }}>Sin entregas</span>
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                     {delDia.map((o) => renderTarjetaCompacta(o, false))}
@@ -1141,7 +1141,7 @@ export function CalendarioPedidosTaller({
                   textAlign: "center",
                   fontSize: "0.73rem",
                   fontWeight: 800,
-                  color: "#475569",
+                  color: "#57524C",
                   padding: "4px 0",
                 }}
               >
@@ -1169,18 +1169,18 @@ export function CalendarioPedidosTaller({
                     padding: "6px",
                     borderRadius: "10px",
                     border: seleccionada
-                      ? "2px solid #0F172A"
+                      ? "2px solid #1F1C19"
                       : esHoy
-                        ? "2px solid #0D9488"
+                        ? "2px solid #2F4737"
                         : todoDiaConfirmado
-                          ? "1px solid #CBD5E1"
+                          ? "1px solid #D5CFC4"
                           : delDia.length > 0
-                            ? "1px solid #94A3B8"
-                            : "1px solid #E2E8F0",
+                            ? "1px solid #847D74"
+                            : "1px solid #E6E2DA",
                     background: !celda.enMesActual
-                      ? "#F8FAFC"
+                      ? "#F8F7F4"
                       : todoDiaConfirmado
-                        ? "#F8FAFC"
+                        ? "#F8F7F4"
                         : "#FFFFFF",
                     opacity: celda.enMesActual ? 1 : 0.48,
                     display: "flex",
@@ -1204,7 +1204,7 @@ export function CalendarioPedidosTaller({
                     <strong
                       style={{
                         fontSize: "0.78rem",
-                        color: esHoy ? "#0F766E" : todoDiaConfirmado ? "#64748B" : "#0F172A",
+                        color: esHoy ? "#2F4737" : todoDiaConfirmado ? "#847D74" : "#1F1C19",
                       }}
                     >
                       {celda.diaMes}
@@ -1217,7 +1217,7 @@ export function CalendarioPedidosTaller({
                             style={{
                               padding: "1px 5px",
                               borderRadius: "999px",
-                              background: "#0F172A",
+                              background: "#1F1C19",
                               color: "#FFFFFF",
                               fontSize: "0.63rem",
                               fontWeight: 800,
@@ -1234,8 +1234,8 @@ export function CalendarioPedidosTaller({
                               gap: "2px",
                               padding: "1px 5px",
                               borderRadius: "999px",
-                              background: "#E2E8F0",
-                              color: "#475569",
+                              background: "#E6E2DA",
+                              color: "#57524C",
                               fontSize: "0.62rem",
                               fontWeight: 800,
                             }}
@@ -1274,7 +1274,7 @@ export function CalendarioPedidosTaller({
                             {conf ? (
                               <CheckCircle2
                                 size={10}
-                                color="#475569"
+                                color="#57524C"
                                 style={{ flexShrink: 0 }}
                               />
                             ) : (
@@ -1302,7 +1302,7 @@ export function CalendarioPedidosTaller({
                         );
                       })}
                       {delDia.length > 3 && (
-                        <span style={{ fontSize: "0.61rem", color: "#64748B", fontWeight: 700 }}>
+                        <span style={{ fontSize: "0.61rem", color: "#847D74", fontWeight: 700 }}>
                           +{delDia.length - 3} más
                         </span>
                       )}
@@ -1318,8 +1318,8 @@ export function CalendarioPedidosTaller({
             style={{
               padding: "14px",
               borderRadius: "12px",
-              background: "#F8FAFC",
-              border: "1px solid #E2E8F0",
+              background: "#F8F7F4",
+              border: "1px solid #E6E2DA",
               display: "flex",
               flexDirection: "column",
               gap: "10px",
@@ -1334,21 +1334,21 @@ export function CalendarioPedidosTaller({
                 flexWrap: "wrap",
               }}
             >
-              <strong style={{ fontSize: "0.87rem", color: "#0F172A" }}>
+              <strong style={{ fontSize: "0.87rem", color: "#1F1C19" }}>
                 Pedidos del {formatearFechaEntregaHumana(fechaCursor, hoyYmd).etiquetaPrincipal} (
                 {ordenesFechaSeleccionadaMes.length})
               </strong>
               {ordenesFechaSeleccionadaMes.length > 0 && (
                 <div style={{ display: "flex", gap: "8px", fontSize: "0.74rem", fontWeight: 700 }}>
-                  <span style={{ color: "#0F766E" }}>Pendientes: {pendientesMesSel}</span>
-                  <span style={{ color: "#64748B" }}>·</span>
-                  <span style={{ color: "#475569" }}>Confirmadas: {confirmadasMesSel}</span>
+                  <span style={{ color: "#2F4737" }}>Pendientes: {pendientesMesSel}</span>
+                  <span style={{ color: "#847D74" }}>·</span>
+                  <span style={{ color: "#57524C" }}>Confirmadas: {confirmadasMesSel}</span>
                 </div>
               )}
             </div>
 
             {ordenesFechaSeleccionadaMes.length === 0 ? (
-              <span style={{ fontSize: "0.8rem", color: "#64748B" }}>
+              <span style={{ fontSize: "0.8rem", color: "#847D74" }}>
                 Selecciona cualquier fecha del calendario para consultar sus pedidos pendientes y
                 entregas confirmadas.
               </span>

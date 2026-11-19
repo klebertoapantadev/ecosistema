@@ -2,17 +2,17 @@ import type { CSSProperties } from "react";
 
 export const estiloTarjetaConfig: CSSProperties = {
   background: "#FFFFFF",
-  border: "1px solid #E5E7EB",
-  borderRadius: "14px",
-  boxShadow: "0 1px 3px rgba(15, 23, 42, 0.04)",
+  border: "1px solid #E6E2DA",
+  borderRadius: "12px",
+  boxShadow: "none",
   overflow: "hidden",
   width: "100%",
 };
 
 export const estiloCabeceraTarjeta: CSSProperties = {
-  padding: "clamp(14px, 3vw, 20px) clamp(14px, 3.5vw, 24px)",
-  background: "#FAFAFA",
-  borderBottom: "1px solid #E5E7EB",
+  padding: "clamp(12px, 2.5vw, 16px) clamp(14px, 3vw, 20px)",
+  background: "#F8F7F4",
+  borderBottom: "1px solid #E6E2DA",
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",
@@ -21,15 +21,15 @@ export const estiloCabeceraTarjeta: CSSProperties = {
 };
 
 export const estiloCajaIconoCabecera: CSSProperties = {
-  width: "40px",
-  height: "40px",
-  borderRadius: "10px",
+  width: "36px",
+  height: "36px",
+  borderRadius: "8px",
   background: "#FFFFFF",
-  border: "1px solid #E5E7EB",
+  border: "1px solid #E6E2DA",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  color: "#1F2937",
+  color: "#1F1C19",
   flexShrink: 0,
 };
 

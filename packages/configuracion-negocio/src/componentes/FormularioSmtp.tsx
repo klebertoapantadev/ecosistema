@@ -82,10 +82,10 @@ export function FormularioSmtp({ inicial, negocio }: { inicial: CfgSmtp | null; 
             <Mail size={19} />
           </div>
           <div>
-            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "#111827" }}>
+            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "#1F1C19" }}>
               Servidor de Correo Transaccional (SMTP)
             </div>
-            <div style={{ fontSize: "0.82rem", color: "#6B7280", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.82rem", color: "#847D74", marginTop: "2px" }}>
               Despacho de códigos de verificación, recuperación de clave y notificaciones de{" "}
               <strong>{negocio}</strong>.
             </div>
@@ -144,10 +144,10 @@ export function FormularioSmtp({ inicial, negocio }: { inicial: CfgSmtp | null; 
             style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
           />
           <div>
-            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#1F2937" }}>
+            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#2E2A26" }}>
               Conexión cifrada TLS implícita (puerto 465)
             </div>
-            <div style={{ fontSize: "0.78rem", color: "#6B7280", marginTop: "2px", lineHeight: 1.45 }}>
+            <div style={{ fontSize: "0.78rem", color: "#847D74", marginTop: "2px", lineHeight: 1.45 }}>
               Desmárcalo únicamente si tu proveedor de correo utiliza STARTTLS sobre el puerto 587.
             </div>
           </div>
@@ -211,8 +211,8 @@ export function FormularioSmtp({ inicial, negocio }: { inicial: CfgSmtp | null; 
         <label
           style={{
             ...estiloCajaToggle,
-            background: activo ? "#F0FDF4" : "#F9FAFB",
-            borderColor: activo ? "#BBF7D0" : "#E5E7EB",
+            background: activo ? "#F2F6F3" : "#F8F7F4",
+            borderColor: activo ? "#BBF7D0" : "#E6E2DA",
           }}
         >
           <input
@@ -222,10 +222,10 @@ export function FormularioSmtp({ inicial, negocio }: { inicial: CfgSmtp | null; 
             style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
           />
           <div>
-            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#111827" }}>
+            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#1F1C19" }}>
               Habilitar envío de correos transaccionales por este servidor
             </div>
-            <div style={{ fontSize: "0.78rem", color: "#6B7280", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.78rem", color: "#847D74", marginTop: "2px" }}>
               Mientras esté desmarcado, los correos salientes de este negocio permanecerán pausados.
             </div>
           </div>

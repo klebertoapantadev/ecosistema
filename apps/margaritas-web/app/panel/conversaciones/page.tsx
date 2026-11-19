@@ -34,10 +34,10 @@ export default async function PaginaConversacionesMargaritas() {
       }}
     >
       <div>
-        <h1 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 4px 0", color: "#111827" }}>
+        <h1 style={{ fontSize: "1.12rem", fontWeight: 600, margin: "0 0 4px 0", color: "#1F1C19" }}>
           Centro de Ventas y Monitoreo de Chat Web
         </h1>
-        <p style={{ margin: 0, fontSize: "13.5px", color: "#6B7280", lineHeight: 1.5 }}>
+        <p style={{ margin: 0, fontSize: "0.8rem", color: "#6E6861", lineHeight: 1.5 }}>
           Monitoreo multi-vendedor en tiempo real: Chat Web en vivo, trazabilidad IA (ARIA) vs
           humano, etiquetas, mensajes predeterminados, usuarios registrados y compras web.
         </p>

@@ -34,10 +34,10 @@ export default async function PaginaEntregaInmediataTinkay() {
       }}
     >
       <div>
-        <h1 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 4px 0", color: "#111827" }}>
+        <h1 style={{ fontSize: "1.12rem", fontWeight: 600, margin: "0 0 4px 0", color: "#1F1C19" }}>
           Galería de Disponibles para Entrega Inmediata (1 a 2 Horas)
         </h1>
-        <p style={{ margin: 0, fontSize: "13.5px", color: "#6B7280", lineHeight: 1.5 }}>
+        <p style={{ margin: 0, fontSize: "0.8rem", color: "#6E6861", lineHeight: 1.5 }}>
           Fotografía los arreglos conforme se elaboran en tienda con su precio especial de vitrina.
           Se muestran al instante en Web y Chat, y se descartan automáticamente si se venden online.
         </p>

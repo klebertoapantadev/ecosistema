@@ -228,7 +228,7 @@ export function ConsolaTestimoniosClientes({
           background: '#ffffff',
           padding: '24px',
           borderRadius: '16px',
-          border: '1px solid #E2E8F0',
+          border: '1px solid #E6E2DA',
           boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
         }}
       >
@@ -241,7 +241,7 @@ export function ConsolaTestimoniosClientes({
               fontSize: '0.74rem',
               fontWeight: 800,
               textTransform: 'uppercase',
-              color: '#D97706',
+              color: '#8F6A2E',
               letterSpacing: '0.06em',
               marginBottom: '6px',
             }}
@@ -251,16 +251,16 @@ export function ConsolaTestimoniosClientes({
           </div>
           <h1
             style={{
-              fontSize: '1.65rem',
+              fontSize: "0.92rem",
               fontWeight: 700,
-              color: '#0F172A',
+              color: '#1F1C19',
               margin: '0 0 6px 0',
               letterSpacing: '-0.02em',
             }}
           >
             Testimonios y Capturas de Clientes
           </h1>
-          <p style={{ margin: 0, fontSize: '0.92rem', color: '#64748B', maxWidth: '650px' }}>
+          <p style={{ margin: 0, fontSize: '0.92rem', color: '#847D74', maxWidth: '650px' }}>
             Gestiona los screenshots reales de WhatsApp, fotos de entregas y valoraciones visibles en el
             carrusel de la tienda pública y el enlace a tu álbum de Google Photos.
           </p>
@@ -279,15 +279,15 @@ export function ConsolaTestimoniosClientes({
               gap: '8px',
               padding: '10px 16px',
               borderRadius: '10px',
-              background: '#F1F5F9',
-              color: '#334155',
+              background: '#F4F2EE',
+              color: '#57524C',
               fontWeight: 600,
               fontSize: '0.84rem',
               textDecoration: 'none',
-              border: '1px solid #CBD5E1',
+              border: '1px solid #D5CFC4',
             }}
           >
-            <Camera size={16} color="#D97706" />
+            <Camera size={16} color="#8F6A2E" />
             <span>Álbum Google Photos</span>
             <ExternalLink size={14} />
           </a>
@@ -303,7 +303,7 @@ export function ConsolaTestimoniosClientes({
               gap: '8px',
               padding: '10px 20px',
               borderRadius: '10px',
-              background: '#0F172A',
+              background: '#1F1C19',
               color: '#ffffff',
               fontWeight: 700,
               fontSize: '0.86rem',
@@ -325,9 +325,9 @@ export function ConsolaTestimoniosClientes({
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            background: '#ECFDF5',
-            border: '1px solid #A7F3D0',
-            color: '#065F46',
+            background: '#F2F6F3',
+            border: '1px solid #CEDDD3',
+            color: '#2B4A36',
             padding: '12px 16px',
             borderRadius: '10px',
             fontSize: '0.88rem',
@@ -343,9 +343,9 @@ export function ConsolaTestimoniosClientes({
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            background: '#FEF2F2',
-            border: '1px solid #FECACA',
-            color: '#991B1B',
+            background: '#FAF2F2',
+            border: '1px solid #E5CACA',
+            color: '#8A2E2E',
             padding: '12px 16px',
             borderRadius: '10px',
             fontSize: '0.88rem',
@@ -358,7 +358,7 @@ export function ConsolaTestimoniosClientes({
 
       {/* Grid de Testimonios */}
       {cargando ? (
-        <div style={{ textAlign: 'center', padding: '48px', color: '#64748B', fontSize: '0.95rem' }}>
+        <div style={{ textAlign: 'center', padding: '48px', color: '#847D74', fontSize: '0.95rem' }}>
           Cargando testimonios y capturas reales...
         </div>
       ) : testimonios.length === 0 ? (
@@ -368,14 +368,14 @@ export function ConsolaTestimoniosClientes({
             padding: '48px 24px',
             background: '#ffffff',
             borderRadius: '16px',
-            border: '1px dashed #CBD5E1',
+            border: '1px dashed #D5CFC4',
           }}
         >
-          <Camera size={44} color="#94A3B8" style={{ marginBottom: '12px' }} />
-          <h3 style={{ margin: '0 0 6px 0', fontSize: '1.15rem', color: '#0F172A' }}>
+          <Camera size={44} color="#847D74" style={{ marginBottom: '12px' }} />
+          <h3 style={{ margin: '0 0 6px 0', fontSize: "0.94rem", color: '#1F1C19' }}>
             No hay testimonios registrados
           </h3>
-          <p style={{ margin: '0 0 16px 0', fontSize: '0.88rem', color: '#64748B' }}>
+          <p style={{ margin: '0 0 16px 0', fontSize: '0.88rem', color: '#847D74' }}>
             Sube tu primera captura de WhatsApp para comenzar a mostrar prueba social en el ecommerce.
           </p>
           <button
@@ -384,7 +384,7 @@ export function ConsolaTestimoniosClientes({
             style={{
               padding: '10px 20px',
               borderRadius: '999px',
-              background: '#0F172A',
+              background: '#1F1C19',
               color: '#fff',
               fontWeight: 700,
               fontSize: '0.85rem',
@@ -409,7 +409,7 @@ export function ConsolaTestimoniosClientes({
               style={{
                 background: '#ffffff',
                 borderRadius: '16px',
-                border: t.tes_activo ? '1px solid #E2E8F0' : '1px dashed #CBD5E1',
+                border: t.tes_activo ? '1px solid #E6E2DA' : '1px dashed #D5CFC4',
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
@@ -424,7 +424,7 @@ export function ConsolaTestimoniosClientes({
                   position: 'relative',
                   width: '100%',
                   height: '240px',
-                  background: '#0F172A',
+                  background: '#1F1C19',
                   overflow: 'hidden',
                 }}
               >
@@ -448,7 +448,7 @@ export function ConsolaTestimoniosClientes({
                     borderRadius: '999px',
                     fontSize: '0.72rem',
                     fontWeight: 700,
-                    color: '#0F172A',
+                    color: '#1F1C19',
                     boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
                   }}
                 >
@@ -460,8 +460,8 @@ export function ConsolaTestimoniosClientes({
                     position: 'absolute',
                     bottom: '12px',
                     right: '12px',
-                    background: t.tes_activo ? '#ECFDF5' : '#FEF2F2',
-                    color: t.tes_activo ? '#065F46' : '#991B1B',
+                    background: t.tes_activo ? '#F2F6F3' : '#FAF2F2',
+                    color: t.tes_activo ? '#2B4A36' : '#8A2E2E',
                     padding: '3px 8px',
                     borderRadius: '999px',
                     fontSize: '0.7rem',
@@ -469,7 +469,7 @@ export function ConsolaTestimoniosClientes({
                     display: 'inline-flex',
                     alignItems: 'center',
                     gap: '4px',
-                    border: t.tes_activo ? '1px solid #A7F3D0' : '1px solid #FECACA',
+                    border: t.tes_activo ? '1px solid #CEDDD3' : '1px solid #E5CACA',
                   }}
                 >
                   {t.tes_activo ? <Eye size={12} /> : <EyeOff size={12} />}
@@ -480,7 +480,7 @@ export function ConsolaTestimoniosClientes({
               {/* Contenido */}
               <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', flex: 1, gap: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', gap: '2px', color: '#D97706' }}>
+                  <div style={{ display: 'flex', gap: '2px', color: '#8F6A2E' }}>
                     {[...Array(t.tes_calificacion)].map((_, i) => (
                       <Star key={i} size={15} fill="currentColor" />
                     ))}
@@ -492,8 +492,8 @@ export function ConsolaTestimoniosClientes({
                       gap: '4px',
                       fontSize: '0.7rem',
                       fontWeight: 700,
-                      color: '#059669',
-                      background: '#ECFDF5',
+                      color: '#2F4737',
+                      background: '#F2F6F3',
                       padding: '2px 8px',
                       borderRadius: '999px',
                     }}
@@ -508,7 +508,7 @@ export function ConsolaTestimoniosClientes({
                     margin: 0,
                     fontSize: '0.86rem',
                     lineHeight: 1.5,
-                    color: '#334155',
+                    color: '#57524C',
                     fontStyle: 'italic',
                     flex: 1,
                   }}
@@ -522,14 +522,14 @@ export function ConsolaTestimoniosClientes({
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     paddingTop: '10px',
-                    borderTop: '1px solid #F1F5F9',
+                    borderTop: '1px solid #F4F2EE',
                     fontSize: '0.82rem',
                   }}
                 >
                   <div>
-                    <strong style={{ color: '#0F172A' }}>{t.tes_nombre_cliente}</strong>
-                    <span style={{ color: '#94A3B8', margin: '0 4px' }}>•</span>
-                    <span style={{ color: '#64748B' }}>{t.tes_ciudad}</span>
+                    <strong style={{ color: '#1F1C19' }}>{t.tes_nombre_cliente}</strong>
+                    <span style={{ color: '#847D74', margin: '0 4px' }}>•</span>
+                    <span style={{ color: '#847D74' }}>{t.tes_ciudad}</span>
                   </div>
                 </div>
 
@@ -551,9 +551,9 @@ export function ConsolaTestimoniosClientes({
                     style={{
                       padding: '6px 10px',
                       borderRadius: '8px',
-                      background: '#F8FAFC',
-                      border: '1px solid #E2E8F0',
-                      color: '#475569',
+                      background: '#F8F7F4',
+                      border: '1px solid #E6E2DA',
+                      color: '#57524C',
                       fontSize: '0.75rem',
                       fontWeight: 600,
                       cursor: 'pointer',
@@ -574,9 +574,9 @@ export function ConsolaTestimoniosClientes({
                     style={{
                       padding: '6px 10px',
                       borderRadius: '8px',
-                      background: '#F1F5F9',
-                      border: '1px solid #CBD5E1',
-                      color: '#0F172A',
+                      background: '#F4F2EE',
+                      border: '1px solid #D5CFC4',
+                      color: '#1F1C19',
                       fontSize: '0.75rem',
                       fontWeight: 600,
                       cursor: 'pointer',
@@ -597,9 +597,9 @@ export function ConsolaTestimoniosClientes({
                     style={{
                       padding: '6px 10px',
                       borderRadius: '8px',
-                      background: '#FEF2F2',
-                      border: '1px solid #FECACA',
-                      color: '#DC2626',
+                      background: '#FAF2F2',
+                      border: '1px solid #E5CACA',
+                      color: '#8A2E2E',
                       fontSize: '0.75rem',
                       fontWeight: 600,
                       cursor: 'pointer',
@@ -649,14 +649,14 @@ export function ConsolaTestimoniosClientes({
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
-              <h3 style={{ margin: 0, fontSize: '1.25rem', color: '#0F172A', fontWeight: 700 }}>
+              <h3 style={{ margin: 0, fontSize: "0.98rem", color: '#1F1C19', fontWeight: 700 }}>
                 {testimonioEnEdicion.tes_id ? 'Editar Testimonio' : 'Nueva Captura / Testimonio'}
               </h3>
               <button
                 type="button"
                 onClick={() => setModalAbierto(false)}
                 style={{
-                  background: '#F1F5F9',
+                  background: '#F4F2EE',
                   border: 'none',
                   borderRadius: '999px',
                   width: '32px',
@@ -665,7 +665,7 @@ export function ConsolaTestimoniosClientes({
                   alignItems: 'center',
                   justifyContent: 'center',
                   cursor: 'pointer',
-                  color: '#64748B',
+                  color: '#847D74',
                 }}
               >
                 <X size={18} />
@@ -675,12 +675,12 @@ export function ConsolaTestimoniosClientes({
             <form onSubmit={handleGuardar} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Carga de Imagen */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#57524C', marginBottom: '6px' }}>
                   Captura de Pantalla / Fotografía de Entrega *
                 </label>
 
                 {testimonioEnEdicion.tes_imagen_url ? (
-                  <div style={{ position: 'relative', width: '100%', height: '180px', borderRadius: '12px', overflow: 'hidden', background: '#0F172A', marginBottom: '8px' }}>
+                  <div style={{ position: 'relative', width: '100%', height: '180px', borderRadius: '12px', overflow: 'hidden', background: '#1F1C19', marginBottom: '8px' }}>
                     <img
                       src={testimonioEnEdicion.tes_imagen_url}
                       alt="Vista previa"
@@ -709,20 +709,20 @@ export function ConsolaTestimoniosClientes({
                   <div
                     onClick={() => inputFotoRef.current?.click()}
                     style={{
-                      border: '2px dashed #CBD5E1',
+                      border: '2px dashed #D5CFC4',
                       borderRadius: '12px',
                       padding: '24px',
                       textAlign: 'center',
                       cursor: 'pointer',
-                      background: '#F8FAFC',
+                      background: '#F8F7F4',
                       transition: 'border-color 0.2s',
                     }}
                   >
-                    <Upload size={32} color="#64748B" style={{ marginBottom: '8px' }} />
-                    <p style={{ margin: '0 0 4px 0', fontSize: '0.88rem', fontWeight: 600, color: '#0F172A' }}>
+                    <Upload size={32} color="#847D74" style={{ marginBottom: '8px' }} />
+                    <p style={{ margin: '0 0 4px 0', fontSize: '0.88rem', fontWeight: 600, color: '#1F1C19' }}>
                       {subiendoFoto ? 'Subiendo imagen a Supabase Storage...' : 'Haz clic o arrastra tu captura de WhatsApp'}
                     </p>
-                    <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#847D74' }}>
                       Formatos soportados: JPG, PNG o WebP (máx. 10MB)
                     </span>
                   </div>
@@ -749,7 +749,7 @@ export function ConsolaTestimoniosClientes({
                       padding: '8px 12px',
                       fontSize: '0.8rem',
                       borderRadius: '8px',
-                      border: '1px solid #E2E8F0',
+                      border: '1px solid #E6E2DA',
                       boxSizing: 'border-box',
                     }}
                   />
@@ -759,7 +759,7 @@ export function ConsolaTestimoniosClientes({
               {/* Nombre y Ciudad */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(200px, 100%), 1fr))', gap: '12px' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#57524C', marginBottom: '6px' }}>
                     Nombre del Cliente *
                   </label>
                   <input
@@ -777,14 +777,14 @@ export function ConsolaTestimoniosClientes({
                       padding: '10px 12px',
                       fontSize: '0.88rem',
                       borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
+                      border: '1px solid #D5CFC4',
                       boxSizing: 'border-box',
                     }}
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#57524C', marginBottom: '6px' }}>
                     Ciudad / Sector
                   </label>
                   <input
@@ -799,7 +799,7 @@ export function ConsolaTestimoniosClientes({
                       padding: '10px 12px',
                       fontSize: '0.88rem',
                       borderRadius: '8px',
-                      border: '1px solid #CBD5E1',
+                      border: '1px solid #D5CFC4',
                       boxSizing: 'border-box',
                     }}
                   />
@@ -808,7 +808,7 @@ export function ConsolaTestimoniosClientes({
 
               {/* Ocasión */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#57524C', marginBottom: '6px' }}>
                   Ocasión o Tipo de Entrega
                 </label>
                 <SelectConBuscador
@@ -821,7 +821,7 @@ export function ConsolaTestimoniosClientes({
                     padding: '10px 12px',
                     fontSize: '0.88rem',
                     borderRadius: '8px',
-                    border: '1px solid #CBD5E1',
+                    border: '1px solid #D5CFC4',
                     boxSizing: 'border-box',
                     background: '#fff',
                   }}
@@ -836,7 +836,7 @@ export function ConsolaTestimoniosClientes({
 
               {/* Comentario / Frase del Chat */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#57524C', marginBottom: '6px' }}>
                   Comentario / Frase Destacada del Chat *
                 </label>
                 <textarea
@@ -852,7 +852,7 @@ export function ConsolaTestimoniosClientes({
                     padding: '10px 12px',
                     fontSize: '0.88rem',
                     borderRadius: '8px',
-                    border: '1px solid #CBD5E1',
+                    border: '1px solid #D5CFC4',
                     boxSizing: 'border-box',
                     resize: 'vertical',
                   }}
@@ -861,7 +861,7 @@ export function ConsolaTestimoniosClientes({
 
               {/* Calificación */}
               <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#334155', marginBottom: '6px' }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: 700, color: '#57524C', marginBottom: '6px' }}>
                   Calificación (Estrellas)
                 </label>
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -877,7 +877,7 @@ export function ConsolaTestimoniosClientes({
                         border: 'none',
                         cursor: 'pointer',
                         padding: '4px',
-                        color: star <= testimonioEnEdicion.tes_calificacion ? '#D97706' : '#CBD5E1',
+                        color: star <= testimonioEnEdicion.tes_calificacion ? '#8F6A2E' : '#D5CFC4',
                       }}
                     >
                       <Star size={24} fill="currentColor" />
@@ -916,16 +916,16 @@ export function ConsolaTestimoniosClientes({
               </div>
 
               {/* Botones de Acción */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px', paddingTop: '14px', borderTop: '1px solid #F1F5F9' }}>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px', paddingTop: '14px', borderTop: '1px solid #F4F2EE' }}>
                 <button
                   type="button"
                   onClick={() => setModalAbierto(false)}
                   style={{
                     padding: '10px 18px',
                     borderRadius: '8px',
-                    background: '#F1F5F9',
-                    border: '1px solid #CBD5E1',
-                    color: '#334155',
+                    background: '#F4F2EE',
+                    border: '1px solid #D5CFC4',
+                    color: '#57524C',
                     fontWeight: 600,
                     fontSize: '0.86rem',
                     cursor: 'pointer',
@@ -939,7 +939,7 @@ export function ConsolaTestimoniosClientes({
                   style={{
                     padding: '10px 22px',
                     borderRadius: '8px',
-                    background: '#0F172A',
+                    background: '#1F1C19',
                     border: 'none',
                     color: '#ffffff',
                     fontWeight: 700,

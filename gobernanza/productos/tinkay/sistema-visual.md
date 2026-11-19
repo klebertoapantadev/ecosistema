@@ -133,3 +133,24 @@ Chips en versalita, 11 px, peso 800, fondo diluido del color — nunca el color 
   futuros, o si queda como uso exclusivo offline sin pretensión de ser "el color de Tinkay".
 - Maquetas de referencia navegables (`maquetas/`, mismo patrón que Tranqi) — pendientes,
   se crean al empezar la implementación en `apps/tinkay-web`.
+
+## 9. Panel operativo — Diseño sobrio y elegante (2026-11-19)
+
+Las vistas internas de operación (`/panel/*` y componentes compartidos de `@eco/comercio`,
+`@eco/configuracion-negocio`, `@eco/notificaciones`) aplican una disciplina visual
+estrictamente sobria y contenida, sin gradientes llamativos, sin múltiples colores
+saturados ni tipografías sobredimensionadas:
+
+- **Superficies y bordes**: lienzo `#F6F4F0`, tarjetas `#FFFFFF`, contenedores anidados
+  `#F8F7F4`, bordes `#E6E2DA` y controles `#D5CFC4`.
+- **Tintas**: principal `#1F1C19`, secundaria `#57524C`, metadatos `#847D74`.
+- **Acciones**: botón primario carbón `#221E1B` (texto `#FAF8F5`), confirmación/guardado
+  verde botánico sobrio `#2F4737`, acciones secundarias en blanco con borde `#D5CFC4`.
+- **Estados semánticos (siempre diluidos, nunca saturados)**:
+  - Éxito/Confirmado: fondo `#F2F6F3`, borde `#CEDDD3`, texto `#2B4A36`.
+  - Atención/Pendiente: fondo `#FAF6EE`, borde `#E5D7BC`, texto `#745622` (acento `#B8923F`).
+  - Destructivo/Error: fondo `#FAF2F2`, borde `#E5CACA`, texto `#8A2E2E`.
+  - Neutro/Información: fondo `#F4F2EE`, borde `#DDD8CE`, texto `#3A3530`.
+- **Escala tipográfica contenida en `.panel-contenido`**: tipografía **Inter** (reservando
+  Fraunces para vitrina pública y marca), `h1` en `1.12rem` (peso 600), `h2` en `0.92–0.94rem`,
+  `h3` en `0.86rem`, cuerpo y controles en `0.78–0.84rem`.

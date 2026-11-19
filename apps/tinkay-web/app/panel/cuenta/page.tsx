@@ -34,10 +34,10 @@ export default async function PaginaCuenta() {
       }}
     >
       <div>
-        <h1 style={{ margin: "0 0 6px 0", fontSize: "1.45rem", fontWeight: 800, color: "#111827" }}>
+        <h1 style={{ margin: "0 0 6px 0", fontSize: "1.12rem", fontWeight: 600, color: "#1F1C19" }}>
           Mi Cuenta y Comprobantes Electrónicos
         </h1>
-        <p style={{ margin: 0, fontSize: "0.86rem", color: "#6B7280" }}>
+        <p style={{ margin: 0, fontSize: "0.86rem", color: "#6E6861" }}>
           Administra tus datos tributarios para facturación electrónica SRI, descarga tus comprobantes RIDE y revisa tu seguridad de acceso.
         </p>
       </div>
@@ -52,7 +52,7 @@ export default async function PaginaCuenta() {
       <div
         style={{
           background: "#FFFFFF",
-          border: "1px solid #E5E7EB",
+          border: "1px solid #E6E2DA",
           borderRadius: "16px",
           padding: "clamp(14px, 3.5vw, 24px)",
         }}

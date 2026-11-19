@@ -14,10 +14,10 @@ export default async function PaginaPedidosMargaritas() {
   return (
     <div style={{ maxWidth: "1180px", margin: "0 auto", display: "flex", flexDirection: "column", gap: "20px" }}>
       <div>
-        <h1 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 4px 0", color: "#111827" }}>
+        <h1 style={{ fontSize: "1.12rem", fontWeight: 600, margin: "0 0 4px 0", color: "#1F1C19" }}>
           Pedidos de la Tienda y Despachos
         </h1>
-        <p style={{ margin: 0, fontSize: "13.5px", color: "#6B7280" }}>
+        <p style={{ margin: 0, fontSize: "0.8rem", color: "#6E6861" }}>
           Órdenes registradas con ubicación GPS y desglose interno de logística.
         </p>
       </div>

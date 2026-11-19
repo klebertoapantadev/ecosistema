@@ -331,10 +331,10 @@ export function FormularioAria({
             <Bot size={19} />
           </div>
           <div>
-            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "#111827" }}>
+            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "#1F1C19" }}>
               Agente Conversacional ARIA
             </div>
-            <div style={{ fontSize: "0.82rem", color: "#6B7280", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.82rem", color: "#847D74", marginTop: "2px" }}>
               Credenciales aisladas para el chat de <strong>{codigoNegocio}</strong> (cifradas en Supabase Vault).
             </div>
           </div>
@@ -438,7 +438,7 @@ export function FormularioAria({
         {/* Acordeón discreto para claves avanzadas opcionales */}
         <div
           style={{
-            border: "1px solid #E5E7EB",
+            border: "1px solid #E6E2DA",
             borderRadius: "10px",
             background: "#FFFFFF",
             overflow: "hidden",
@@ -450,7 +450,7 @@ export function FormularioAria({
             style={{
               width: "100%",
               padding: "12px 16px",
-              background: "#FAFAFA",
+              background: "#F8F7F4",
               border: "none",
               display: "flex",
               alignItems: "center",
@@ -459,7 +459,7 @@ export function FormularioAria({
               fontFamily: "inherit",
               fontSize: "0.84rem",
               fontWeight: 600,
-              color: "#374151",
+              color: "#57524C",
             }}
           >
             <span>Claves avanzadas de consola ARIA (opcionales)</span>
@@ -470,7 +470,7 @@ export function FormularioAria({
             <div
               style={{
                 padding: "16px",
-                borderTop: "1px solid #E5E7EB",
+                borderTop: "1px solid #E6E2DA",
                 ...estiloGrillaDosColumnas,
               }}
             >
@@ -521,8 +521,8 @@ export function FormularioAria({
         <label
           style={{
             ...estiloCajaToggle,
-            background: activo ? "#F0FDF4" : "#F9FAFB",
-            borderColor: activo ? "#BBF7D0" : "#E5E7EB",
+            background: activo ? "#F2F6F3" : "#F8F7F4",
+            borderColor: activo ? "#BBF7D0" : "#E6E2DA",
           }}
         >
           <input
@@ -532,10 +532,10 @@ export function FormularioAria({
             style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
           />
           <div>
-            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#111827" }}>
+            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#1F1C19" }}>
               Activar agente conversacional ARIA en este negocio
             </div>
-            <div style={{ fontSize: "0.78rem", color: "#6B7280", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.78rem", color: "#847D74", marginTop: "2px" }}>
               Cuando está activo, el chat público de la tienda consulta en tiempo real a este agente.
             </div>
           </div>
@@ -546,18 +546,18 @@ export function FormularioAria({
           style={{
             padding: "16px",
             borderRadius: "10px",
-            border: "1px solid #E5E7EB",
-            background: "#F9FAFB",
+            border: "1px solid #E6E2DA",
+            background: "#F8F7F4",
             display: "flex",
             flexDirection: "column",
             gap: "10px",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-            <span style={{ fontSize: "0.83rem", fontWeight: 600, color: "#1F2937" }}>
+            <span style={{ fontSize: "0.83rem", fontWeight: 600, color: "#2E2A26" }}>
               Verificación de respuesta en vivo
             </span>
-            <span style={{ fontSize: "0.75rem", color: "#6B7280" }}>
+            <span style={{ fontSize: "0.75rem", color: "#847D74" }}>
               Envía un mensaje corto para comprobar latencia y credenciales
             </span>
           </div>
@@ -606,13 +606,13 @@ export function FormularioAria({
                   fontWeight: 700,
                   fontSize: "0.8rem",
                   marginBottom: "4px",
-                  color: "#15803D",
+                  color: "#2F4737",
                 }}
               >
                 <CheckCircle2 size={15} />
                 <span>Respuesta recibida desde ARIA:</span>
               </div>
-              <p style={{ margin: 0, whiteSpace: "pre-wrap", color: "#1F2937" }}>{respuestaPrueba}</p>
+              <p style={{ margin: 0, whiteSpace: "pre-wrap", color: "#2E2A26" }}>{respuestaPrueba}</p>
             </div>
           )}
         </div>
@@ -666,18 +666,18 @@ export function FormularioAria({
           <div
             style={{
               ...estiloCajaIconoCabecera,
-              background: "#ECFDF5",
-              color: "#059669",
-              borderColor: "#A7F3D0",
+              background: "#F2F6F3",
+              color: "#2F4737",
+              borderColor: "#CEDDD3",
             }}
           >
             <MessageCircle size={19} />
           </div>
           <div>
-            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "#111827" }}>
+            <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "#1F1C19" }}>
               Canal WhatsApp Business (YCloud) — Ventas en Vivo & Tomar Control
             </div>
-            <div style={{ fontSize: "0.82rem", color: "#6B7280", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.82rem", color: "#847D74", marginTop: "2px" }}>
               Recibe mensajes de WhatsApp en <code>/panel/conversaciones</code>, responde con Mía (ARIA) y permite intervención humana directa.
             </div>
           </div>
@@ -707,8 +707,8 @@ export function FormularioAria({
           style={{
             padding: "14px 16px",
             borderRadius: "10px",
-            background: "#F0FDF4",
-            border: "1px solid #86EFAC",
+            background: "#F2F6F3",
+            border: "1px solid #CEDDD3",
             display: "flex",
             flexDirection: "column",
             gap: "8px",
@@ -738,9 +738,9 @@ export function FormularioAria({
                   gap: "5px",
                   padding: "5px 11px",
                   borderRadius: "8px",
-                  border: "1px solid #16A34A",
+                  border: "1px solid #2F4737",
                   background: "#FFFFFF",
-                  color: "#15803D",
+                  color: "#2F4737",
                   fontSize: "0.76rem",
                   fontWeight: 700,
                   cursor: "pointer",
@@ -759,14 +759,14 @@ export function FormularioAria({
               background: "#FFFFFF",
               border: "1px solid #BBF7D0",
               fontSize: "0.79rem",
-              color: "#0F172A",
+              color: "#1F1C19",
               wordBreak: "break-all",
             }}
           >
             {urlWebhookTinkay ||
               "Pulsa «Guardar WhatsApp» una vez tras ejecutar la migración SQL para generar tu URL única con token."}
           </code>
-          <span style={{ fontSize: "0.76rem", color: "#166534" }}>
+          <span style={{ fontSize: "0.76rem", color: "#2B4A36" }}>
             Importante: al activar este webhook en YCloud, apaga el switch <strong>«Habilitado»</strong> del canal <code>Tinkay-YCloud</code> en <code>consola.aria.midomo.site → Canales</code> (no lo borres, solo desactívalo) para que Mía no responda duplicado.
           </span>
         </div>
@@ -851,7 +851,7 @@ export function FormularioAria({
         {/* Acordeón opcional: Agente específico de WhatsApp y Signing Secret */}
         <div
           style={{
-            border: "1px solid #E5E7EB",
+            border: "1px solid #E6E2DA",
             borderRadius: "10px",
             background: "#FFFFFF",
             overflow: "hidden",
@@ -863,7 +863,7 @@ export function FormularioAria({
             style={{
               width: "100%",
               padding: "11px 16px",
-              background: "#FAFAFA",
+              background: "#F8F7F4",
               border: "none",
               display: "flex",
               alignItems: "center",
@@ -872,7 +872,7 @@ export function FormularioAria({
               fontFamily: "inherit",
               fontSize: "0.83rem",
               fontWeight: 600,
-              color: "#374151",
+              color: "#57524C",
             }}
           >
             <span>
@@ -885,7 +885,7 @@ export function FormularioAria({
             <div
               style={{
                 padding: "16px",
-                borderTop: "1px solid #E5E7EB",
+                borderTop: "1px solid #E6E2DA",
                 display: "flex",
                 flexDirection: "column",
                 gap: "12px",
@@ -950,8 +950,8 @@ export function FormularioAria({
         <label
           style={{
             ...estiloCajaToggle,
-            background: ycloudHabilitado ? "#F0FDF4" : "#F9FAFB",
-            borderColor: ycloudHabilitado ? "#BBF7D0" : "#E5E7EB",
+            background: ycloudHabilitado ? "#F2F6F3" : "#F8F7F4",
+            borderColor: ycloudHabilitado ? "#BBF7D0" : "#E6E2DA",
           }}
         >
           <input
@@ -961,10 +961,10 @@ export function FormularioAria({
             style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
           />
           <div>
-            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#111827" }}>
+            <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#1F1C19" }}>
               Habilitar respuesta automática de Mía (ARIA) en WhatsApp vía Tinkay
             </div>
-            <div style={{ fontSize: "0.78rem", color: "#6B7280", marginTop: "2px" }}>
+            <div style={{ fontSize: "0.78rem", color: "#847D74", marginTop: "2px" }}>
               Cuando una asesora pulsa «Tomar Control» en una conversación o responde desde el celular, Mía se silencia automáticamente en ese chat.
             </div>
           </div>
@@ -976,8 +976,8 @@ export function FormularioAria({
             style={{
               padding: "12px 14px",
               borderRadius: "10px",
-              background: "#FFFBEB",
-              border: "1px solid #FDE68A",
+              background: "#FAF6EE",
+              border: "1px solid #E5D7BC",
               display: "flex",
               flexDirection: "column",
               gap: "6px",
@@ -999,7 +999,7 @@ export function FormularioAria({
                   gap: "6px",
                   fontSize: "0.8rem",
                   fontWeight: 700,
-                  color: "#92400E",
+                  color: "#745622",
                 }}
               >
                 <RotateCcw size={14} />
@@ -1016,9 +1016,9 @@ export function FormularioAria({
                   gap: "5px",
                   padding: "4px 9px",
                   borderRadius: "7px",
-                  border: "1px solid #F59E0B",
+                  border: "1px solid #8F6A2E",
                   background: "#FFFFFF",
-                  color: "#92400E",
+                  color: "#745622",
                   fontSize: "0.74rem",
                   fontWeight: 700,
                   cursor: "pointer",
@@ -1028,10 +1028,10 @@ export function FormularioAria({
                 <span>{copiadoTipo === "anterior" ? "Copiado" : "Copiar Anterior"}</span>
               </button>
             </div>
-            <code style={{ fontSize: "0.75rem", color: "#78350F", wordBreak: "break-all" }}>
+            <code style={{ fontSize: "0.75rem", color: "#745622", wordBreak: "break-all" }}>
               {urlRespaldoAriaPrevio}
             </code>
-            <span style={{ fontSize: "0.74rem", color: "#92400E" }}>
+            <span style={{ fontSize: "0.74rem", color: "#745622" }}>
               Canal previo en <code>consola.aria.midomo.site → Canales</code>: <strong>Tinkay-YCloud</strong> · Emisor <code>+593 996438873</code> · Filtro prueba <code>+593 99 972 7844</code>. Para revertir: vuelve a pegar ese URL en YCloud y enciende «Habilitado» en ARIA.
             </span>
           </div>

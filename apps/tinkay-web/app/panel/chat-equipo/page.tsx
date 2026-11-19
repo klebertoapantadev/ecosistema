@@ -34,10 +34,10 @@ export default async function PaginaChatEquipoTinkay() {
       }}
     >
       <div>
-        <h1 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 4px 0", color: "#111827" }}>
+        <h1 style={{ fontSize: "1.12rem", fontWeight: 600, margin: "0 0 4px 0", color: "#1F1C19" }}>
           Chat de Trabajo del Equipo — Floristería Tinkay
         </h1>
-        <p style={{ margin: 0, fontSize: "13.5px", color: "#6B7280", lineHeight: 1.5 }}>
+        <p style={{ margin: 0, fontSize: "0.8rem", color: "#6E6861", lineHeight: 1.5 }}>
           Conversación interna en vivo entre Ventas, Taller, Delivery y Administración. Usa{" "}
           <strong>@nombre</strong> (ej. <code>@kleber</code>) o <code>@taller</code> /{" "}
           <code>@delivery</code> para consultar disponibilidad, compartir fotos y reenviar arreglos.
