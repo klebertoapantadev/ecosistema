@@ -61,6 +61,7 @@ export function BarraLanding() {
           <li><a href="#como" onClick={cerrar}>Cómo funciona</a></li>
           <li><a href="#beneficios" onClick={cerrar}>Beneficios</a></li>
           <li><a href="#red" onClick={cerrar}>Red profesional</a></li>
+          <li><a href="#tramites" onClick={cerrar}>Trámites</a></li>
           <li><a href="#nosotros" onClick={cerrar}>Nosotros</a></li>
           <li><a href="#contacto" onClick={cerrar}>Contacto</a></li>
           <li><a className="ingresar" href="/ingresar">Ingresar</a></li>

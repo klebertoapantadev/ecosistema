@@ -65,6 +65,8 @@ html:has(.landing) { scroll-behavior: smooth; scroll-padding-top: 72px; scroll-s
   .landing .barra .wrap { display: flex; align-items: center; justify-content: space-between; height: 68px; }
   .landing .barra .logo img { height: 30px; width: auto; }
   .landing .menu { display: flex; align-items: center; gap: 26px; list-style: none; }
+  /* Con «Trámites» el menú no cabe holgado entre 981 y 1180 px: se estrecha. */
+  @media (max-width: 1180px) { .landing .barra .wrap { gap: 20px; } .landing .menu { gap: 16px; } .landing .menu > li > a, .landing .menu > li > button { font-size: 0.88rem; } }
   .landing .menu > li > a, .landing .menu > li > button { color: var(--blanco); text-decoration: none; font: inherit; font-size: 0.93rem; font-weight: 500; background: none; border: 0; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
   .landing .menu > li > a:hover, .landing .menu > li > button:hover { color: var(--menta); }
   .landing .menu .ingresar { background: var(--amarillo); color: var(--negro); font-weight: 700; padding: 10px 22px; border-radius: 999px; }
@@ -315,3 +317,47 @@ html:has(.landing) { scroll-behavior: smooth; scroll-padding-top: 72px; scroll-s
 .landing #nosotros .carta h3 { margin-top: 16px; }
 .landing .pie-landing .enlaces a { color: inherit; }
 .landing .pie-landing .enlaces a:hover { color: var(--menta); }
+
+/* ---------- 07b TRÁMITES (TRQ-034): cliente → plataforma → gestor + abogado ---------- */
+.landing #tramites { background: var(--blanco); }
+.landing .tramites { margin-top: 44px; display: grid; grid-template-columns: 200px auto 230px auto 1fr; align-items: center; gap: 14px; }
+.landing .flecha-t { color: var(--violeta); display: grid; place-items: center; }
+.landing .flecha-t .ico { width: 30px; height: 30px; stroke-width: 2.2; }
+.landing .cliente-t { background: var(--papel); border-radius: 22px; overflow: hidden; text-align: center; }
+.landing .cliente-t img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; object-position: 40% center; }
+.landing .cliente-t b { display: block; background: var(--violeta); color: var(--blanco); font-size: 1.3rem; font-weight: 800; padding: 10px; }
+.landing .cliente-t p { padding: 12px 14px 16px; font-size: 0.95rem; line-height: 1.4; }
+.landing .plataforma-t { text-align: center; border: 2px solid rgba(120,102,255,.45); border-radius: 120px; padding: 18px 18px 30px; }
+.landing .plataforma-t img { width: 150px; height: 150px; margin: 0 auto; border-radius: 50%; object-fit: cover; }
+.landing .plataforma-t b { display: block; margin-top: 14px; font-size: 1.15rem; font-weight: 800; color: var(--violeta); }
+.landing .plataforma-t b::after { content: ""; display: block; width: 46px; height: 4px; border-radius: 4px; background: var(--amarillo); margin: 8px auto 0; }
+.landing .plataforma-t p { margin-top: 10px; font-size: 0.92rem; line-height: 1.4; }
+.landing .equipo { display: grid; gap: 12px; justify-items: center; }
+.landing .rol { width: 100%; display: grid; grid-template-columns: 140px 1fr; gap: 18px; align-items: center; background: var(--papel); border-radius: 22px; overflow: hidden; padding-right: 20px; }
+.landing .rol img { width: 100%; height: 100%; min-height: 160px; object-fit: cover; }
+.landing .rol img.gestor { object-position: 42% 35%; }
+.landing .rol h3 { font-size: 1.45rem; font-weight: 800; color: var(--violeta); border-left: 4px solid var(--amarillo); padding-left: 10px; line-height: 1.1; }
+.landing .rol p { margin-top: 8px; font-size: 0.95rem; line-height: 1.45; }
+.landing .coordinado { background: var(--amarillo); font-weight: 800; padding: 8px 22px; border-radius: 999px; }
+.landing .hacemos { margin-top: 36px; display: grid; grid-template-columns: 250px 1fr; border: 1.5px solid var(--linea); border-radius: 26px; overflow: hidden; }
+.landing .hacemos h3 { background: var(--violeta); color: var(--blanco); font-size: 1.7rem; font-weight: 800; padding: 26px 28px; display: flex; align-items: center; }
+.landing .hacemos ul { list-style: none; display: grid; grid-template-columns: repeat(3, 1fr); }
+.landing .hacemos li { display: flex; gap: 14px; align-items: flex-start; padding: 24px 22px; }
+.landing .hacemos li + li { border-left: 1.5px solid var(--linea); }
+.landing .hacemos li .ico { width: 34px; height: 34px; color: var(--violeta); }
+.landing .hacemos li b { display: block; color: var(--violeta); font-weight: 800; font-size: 1.08rem; line-height: 1.2; }
+.landing .hacemos li span { display: block; margin-top: 4px; font-size: 0.92rem; color: #33333A; }
+@media (max-width: 980px) {
+  .landing .tramites { grid-template-columns: 1fr; justify-items: center; }
+  /* Se gira el icono y no el span: la cascada (.aparece) pisa el transform del span. */
+  .landing .flecha-t .ico { transform: rotate(90deg); }
+  .landing .cliente-t, .landing .plataforma-t { width: 100%; max-width: 320px; }
+  .landing .cliente-t img { aspect-ratio: 16 / 10; }
+  .landing .hacemos, .landing .hacemos ul { grid-template-columns: 1fr; }
+  .landing .hacemos li + li { border-left: 0; border-top: 1.5px solid var(--linea); }
+}
+@media (max-width: 620px) {
+  .landing .rol { grid-template-columns: 110px 1fr; gap: 14px; padding-right: 14px; }
+  .landing .rol h3 { font-size: 1.25rem; }
+  .landing .rol p { font-size: 0.9rem; }
+}
