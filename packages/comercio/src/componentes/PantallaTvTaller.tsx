@@ -15,6 +15,7 @@ import {
   Flame,
   Gift,
   Layers,
+  Loader2,
   Maximize2,
   Minimize2,
   Monitor,
@@ -23,17 +24,22 @@ import {
   Play,
   QrCode,
   RefreshCw,
+  Search,
   Sparkles,
   Volume2,
   VolumeX,
   Wifi,
   WifiOff,
+  X,
   Zap,
 } from "lucide-react";
 import {
   actualizarEstadoOrdenTvAction,
+  buscarVideosYoutubeTvAction,
   extraerImagenesAlbumGoogleFotosAction,
+  guardarConfigTvTallerAction,
   obtenerTableroTvTallerAction,
+  type ResultadoBusquedaYoutubeTv,
 } from "../acciones-operaciones-taller";
 import {
   CONFIG_TV_TALLER_DEFECTO,
@@ -186,8 +192,17 @@ export function PantallaTvTaller({
   const [densidadLocal, setDensidadLocal] = useState<DensidadLayoutTv | null>(null);
   const [mostrarListosLocal, setMostrarListosLocal] = useState<boolean | null>(null);
   const [sonidoLocal, setSonidoLocal] = useState<boolean | null>(null);
+  const [youtubeUrlLocal, setYoutubeUrlLocal] = useState<string | null>(null);
   const [enPantallaCompleta, setEnPantallaCompleta] = useState<boolean>(false);
   const [hudVisible, setHudVisible] = useState<boolean>(true);
+
+  // Buscador y entrada directa de URL de YouTube en la TV
+  const [abiertoBuscadorYt, setAbiertoBuscadorYt] = useState<boolean>(false);
+  const [consultaYt, setConsultaYt] = useState<string>("");
+  const [buscandoYt, setBuscandoYt] = useState<boolean>(false);
+  const [errorYtBusqueda, setErrorYtBusqueda] = useState<string | null>(null);
+  const [resultadosYt, setResultadosYt] = useState<ResultadoBusquedaYoutubeTv[]>([]);
+  const [errorReproductorYt, setErrorReproductorYt] = useState<boolean>(false);
 
   // Navegación D-Pad / Control Remoto TV
   const [indiceFoco, setIndiceFoco] = useState<number>(0);
@@ -227,7 +242,56 @@ export function PantallaTvTaller({
   const mostrarFranjaListos: boolean = mostrarListosLocal ?? cfg.mostrarFranjaListos;
   const sonidoAlertas: boolean = sonidoLocal ?? cfg.sonidoAlertas;
   const youtubeUrlActual =
-    modoActivo === "EVENTOS" ? cfg.youtubeUrlEventosAudio : cfg.youtubeUrlTaller;
+    youtubeUrlLocal ??
+    (modoActivo === "EVENTOS" ? cfg.youtubeUrlEventosAudio : cfg.youtubeUrlTaller);
+
+  const aplicarNuevaUrlYoutube = useCallback(
+    async (nuevaUrl: string) => {
+      const limpia = nuevaUrl.trim();
+      if (!limpia) return;
+      setYoutubeUrlLocal(limpia);
+      setErrorReproductorYt(false);
+      setAbiertoBuscadorYt(false);
+      // Persistir en configuración del negocio si el usuario tiene sesión autenticada
+      if (tablero.modoAcceso === "AUTENTICADO") {
+        void guardarConfigTvTallerAction({
+          negocio: negNorm,
+          config:
+            modoActivo === "EVENTOS"
+              ? { youtubeUrlEventosAudio: limpia }
+              : { youtubeUrlTaller: limpia },
+        });
+      }
+    },
+    [modoActivo, negNorm, tablero.modoAcceso]
+  );
+
+  const ejecutarBusquedaOUrlYoutube = useCallback(
+    async (textoManual?: string) => {
+      const texto = String(textoManual ?? consultaYt).trim();
+      if (!texto) return;
+
+      // Si pegaron o digitaron una URL de YouTube (o ID de 11 caracteres), reproducir directo
+      const parsed = extraerYoutubeVideoOPlaylist(texto);
+      if (parsed.videoId || parsed.playlistId) {
+        await aplicarNuevaUrlYoutube(texto);
+        return;
+      }
+
+      // Caso contrario, buscar en YouTube por palabras clave
+      setBuscandoYt(true);
+      setErrorYtBusqueda(null);
+      const res = await buscarVideosYoutubeTvAction(texto);
+      setBuscandoYt(false);
+      if (!res.ok) {
+        setErrorYtBusqueda(res.error);
+        setResultadosYt([]);
+        return;
+      }
+      setResultadosYt(res.resultados);
+    },
+    [aplicarNuevaUrlYoutube, consultaYt]
+  );
 
   // Reloj en vivo cada 15s
   useEffect(() => {
@@ -319,6 +383,7 @@ export function PantallaTvTaller({
           setLadoLocal(null);
           setDensidadLocal(null);
           setMostrarListosLocal(null);
+          setYoutubeUrlLocal(null);
         }
         return res.datos;
       });
@@ -438,6 +503,7 @@ export function PantallaTvTaller({
         playerVars,
         events: {
           onReady: (ev) => {
+            setErrorReproductorYt(false);
             try {
               ev.target.setVolume?.(cfg.volumenYoutube);
               ev.target.playVideo?.();
@@ -446,8 +512,9 @@ export function PantallaTvTaller({
             }
           },
           onError: (ev) => {
-            // 101 / 150 = propietario bloqueó embed -> saltar automáticamente al siguiente video
-            if (ev.data === 101 || ev.data === 150 || ev.data === 2 || ev.data === 5) {
+            // 100 / 101 / 150 = video no disponible o bloqueado -> intentar siguiente o avisar
+            if (ev.data === 100 || ev.data === 101 || ev.data === 150 || ev.data === 2 || ev.data === 5) {
+              setErrorReproductorYt(true);
               try {
                 ev.target.nextVideo?.();
               } catch {
@@ -644,6 +711,23 @@ export function PantallaTvTaller({
   // Navegación con Control Remoto de Smart TV (D-Pad: Flechas + OK/Enter + Escape)
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      // No interceptar teclas mientras el usuario escribe en el buscador/URL de YouTube
+      const tag = (document.activeElement?.tagName || "").toUpperCase();
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") {
+        if (e.key === "Escape") {
+          setAbiertoBuscadorYt(false);
+        }
+        return;
+      }
+
+      if (abiertoBuscadorYt) {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          setAbiertoBuscadorYt(false);
+        }
+        return;
+      }
+
       if (e.key === "m" || e.key === "M" || e.key === "h" || e.key === "H") {
         despertarHud();
         return;
@@ -708,6 +792,7 @@ export function PantallaTvTaller({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [
+    abiertoBuscadorYt,
     avanzarEstadoDesdeTv,
     botonConfirmFoco,
     despertarHud,
@@ -897,6 +982,19 @@ export function PantallaTvTaller({
         >
           <button
             type="button"
+            onClick={() => {
+              setAbiertoBuscadorYt(true);
+              setErrorYtBusqueda(null);
+            }}
+            title="Buscar videos en YouTube o pegar una URL / playlist directamente"
+            style={hudBtnStyle("#DC2626")}
+          >
+            <Search size={14} />
+            YouTube / URL
+          </button>
+
+          <button
+            type="button"
             onClick={() => setModoLocal(modoActivo === "TALLER" ? "EVENTOS" : "TALLER")}
             title="Cambiar entre Modo Taller y Modo Showroom Eventos"
             style={hudBtnStyle(modoActivo === "EVENTOS" ? "#BE185D" : "#1E293B")}
@@ -1078,10 +1176,52 @@ export function PantallaTvTaller({
                     borderRadius: "6px",
                     opacity: 0.75,
                   }
-                : { width: "100%", height: "100%" }
+                : { width: "100%", height: "100%", position: "relative" }
             }
           >
             <div ref={ytContainerRef} style={{ width: "100%", height: "100%" }} />
+            {!esSoloAudio && errorReproductorYt && (
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "24px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  zIndex: 15,
+                  padding: "10px 16px",
+                  borderRadius: "12px",
+                  background: "rgba(15, 23, 42, 0.92)",
+                  border: "1.5px solid #F87171",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  boxShadow: "0 12px 30px rgba(0,0,0,0.6)",
+                }}
+              >
+                <span style={{ fontSize: "0.86rem", fontWeight: 700, color: "#FECACA" }}>
+                  Este video no está disponible para reproducir aquí.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setAbiertoBuscadorYt(true)}
+                  style={{
+                    padding: "7px 13px",
+                    borderRadius: "8px",
+                    border: "none",
+                    background: "#DC2626",
+                    color: "#FFFFFF",
+                    fontSize: "0.82rem",
+                    fontWeight: 800,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                  }}
+                >
+                  <Search size={14} /> Buscar otro video
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1814,6 +1954,251 @@ export function PantallaTvTaller({
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Modal Buscador / URL Directa de YouTube en Pantalla TV */}
+      {abiertoBuscadorYt && (
+        <div
+          onClick={() => setAbiertoBuscadorYt(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 140,
+            background: "rgba(2, 6, 23, 0.84)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: "860px",
+              maxHeight: "88vh",
+              borderRadius: "18px",
+              background: "#0F172A",
+              border: "1.5px solid rgba(148, 163, 184, 0.3)",
+              boxShadow: "0 24px 64px rgba(0,0,0,0.7)",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{
+                padding: "16px 20px",
+                borderBottom: "1px solid rgba(148,163,184,0.2)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "10px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "9px" }}>
+                <Search size={20} color="#F87171" />
+                <div>
+                  <div style={{ fontSize: "1.02rem", fontWeight: 800 }}>
+                    Buscar en YouTube o Pegar URL / Playlist
+                  </div>
+                  <div style={{ fontSize: "0.76rem", color: "#94A3B8" }}>
+                    Escribe un artista, género o pega directamente cualquier enlace de YouTube.
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAbiertoBuscadorYt(false)}
+                aria-label="Cerrar buscador YouTube"
+                style={{
+                  padding: "7px",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: "rgba(255,255,255,0.1)",
+                  color: "#F8FAFC",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: "12px", overflowY: "auto" }}>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void ejecutarBusquedaOUrlYoutube();
+                }}
+                style={{ display: "flex", gap: "8px" }}
+              >
+                <input
+                  type="text"
+                  autoFocus
+                  value={consultaYt}
+                  onChange={(e) => setConsultaYt(e.target.value)}
+                  placeholder="Ej: música alegre para trabajar, salsa romántica, o https://www.youtube.com/watch?v=..."
+                  style={{
+                    flex: 1,
+                    padding: "12px 14px",
+                    borderRadius: "10px",
+                    border: "1.5px solid #334155",
+                    background: "#020617",
+                    color: "#F8FAFC",
+                    fontSize: "0.95rem",
+                    outline: "none",
+                  }}
+                />
+                <button
+                  type="submit"
+                  disabled={buscandoYt}
+                  style={{
+                    padding: "12px 20px",
+                    borderRadius: "10px",
+                    border: "none",
+                    background: "#DC2626",
+                    color: "#FFFFFF",
+                    fontSize: "0.9rem",
+                    fontWeight: 800,
+                    cursor: buscandoYt ? "wait" : "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    flexShrink: 0,
+                  }}
+                >
+                  {buscandoYt ? <Loader2 size={16} /> : <Search size={16} />}
+                  {extraerYoutubeVideoOPlaylist(consultaYt).videoId ||
+                  extraerYoutubeVideoOPlaylist(consultaYt).playlistId
+                    ? "Reproducir URL"
+                    : "Buscar"}
+                </button>
+              </form>
+
+              {/* Sugerencias rápidas de 1 clic (ideales para control remoto TV) */}
+              <div style={{ display: "flex", gap: "7px", flexWrap: "wrap" }}>
+                {[
+                  "Música alegre para trabajar",
+                  "Salsa y cumbia mix",
+                  "Baladas en español 80s 90s",
+                  "Pop latino éxitos",
+                  "Jazz instrumental café",
+                  "Música piano elegante bodas",
+                ].map((sug) => (
+                  <button
+                    key={sug}
+                    type="button"
+                    onClick={() => {
+                      setConsultaYt(sug);
+                      void ejecutarBusquedaOUrlYoutube(sug);
+                    }}
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: "999px",
+                      border: "1px solid rgba(148,163,184,0.28)",
+                      background: "#1E293B",
+                      color: "#E2E8F0",
+                      fontSize: "0.78rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    🎵 {sug}
+                  </button>
+                ))}
+              </div>
+
+              {errorYtBusqueda && (
+                <div
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: "9px",
+                    background: "rgba(220, 38, 38, 0.16)",
+                    border: "1px solid rgba(248, 113, 113, 0.45)",
+                    color: "#FECACA",
+                    fontSize: "0.84rem",
+                  }}
+                >
+                  {errorYtBusqueda}
+                </div>
+              )}
+
+              {buscandoYt ? (
+                <div style={{ padding: "28px", textAlign: "center", color: "#94A3B8" }}>
+                  <Loader2 size={22} /> Buscando videos en YouTube...
+                </div>
+              ) : resultadosYt.length > 0 ? (
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))",
+                    gap: "12px",
+                  }}
+                >
+                  {resultadosYt.map((vid) => (
+                    <button
+                      key={vid.videoId}
+                      type="button"
+                      onClick={() => void aplicarNuevaUrlYoutube(vid.url)}
+                      style={{
+                        textAlign: "left",
+                        padding: "8px",
+                        borderRadius: "12px",
+                        border: "1px solid rgba(148,163,184,0.25)",
+                        background: "#1E293B",
+                        color: "#F8FAFC",
+                        cursor: "pointer",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "7px",
+                      }}
+                    >
+                      <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", borderRadius: "8px", overflow: "hidden", background: "#000" }}>
+                        <img
+                          src={vid.miniaturaUrl}
+                          alt={vid.titulo}
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        />
+                        {vid.duracion && (
+                          <span
+                            style={{
+                              position: "absolute",
+                              right: "6px",
+                              bottom: "6px",
+                              padding: "2px 6px",
+                              borderRadius: "5px",
+                              background: "rgba(0,0,0,0.82)",
+                              color: "#FFFFFF",
+                              fontSize: "0.7rem",
+                              fontWeight: 700,
+                            }}
+                          >
+                            {vid.duracion}
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "0.82rem",
+                          fontWeight: 700,
+                          lineHeight: 1.25,
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {vid.titulo}
+                      </div>
+                      <div style={{ fontSize: "0.72rem", color: "#94A3B8" }}>{vid.canal}</div>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </div>
         </div>
       )}
 

@@ -4387,5 +4387,152 @@ export async function extraerImagenesAlbumGoogleFotosAction(albumUrl: string): P
   }
 }
 
+export interface ResultadoBusquedaYoutubeTv {
+  videoId: string;
+  titulo: string;
+  canal: string;
+  duracion: string;
+  miniaturaUrl: string;
+  url: string;
+}
+
+const CACHE_BUSQUEDA_YOUTUBE_TV = new Map<
+  string,
+  { expiraEn: number; resultados: ResultadoBusquedaYoutubeTv[] }
+>();
+
+export async function buscarVideosYoutubeTvAction(consulta: string): Promise<
+  | { ok: true; resultados: ResultadoBusquedaYoutubeTv[] }
+  | { ok: false; error: string }
+> {
+  try {
+    const q = String(consulta || "").trim();
+    if (!q || q.length < 2) {
+      return { ok: false, error: "Escribe al menos 2 caracteres para buscar en YouTube." };
+    }
+
+    const clave = q.toLowerCase();
+    const ahora = Date.now();
+    const cached = CACHE_BUSQUEDA_YOUTUBE_TV.get(clave);
+    if (cached && cached.expiraEn > ahora) {
+      return { ok: true, resultados: cached.resultados };
+    }
+
+    const url = `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}&hl=es&gl=EC`;
+    const resp = await fetch(url, {
+      method: "GET",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+        "Accept-Language": "es-EC,es;q=0.9,en;q=0.8",
+      },
+      cache: "no-store",
+    });
+
+    if (!resp.ok) {
+      return { ok: false, error: `YouTube respondió HTTP ${resp.status}.` };
+    }
+
+    const html = await resp.text();
+    const resultados: ResultadoBusquedaYoutubeTv[] = [];
+    const vistos = new Set<string>();
+
+    // Extraer JSON ytInitialData de la página de resultados de YouTube
+    const marker = "var ytInitialData = ";
+    const idxInicio = html.indexOf(marker);
+    if (idxInicio >= 0) {
+      const resto = html.slice(idxInicio + marker.length);
+      const idxFin = resto.indexOf(";</script>");
+      if (idxFin > 0) {
+        try {
+          const data = JSON.parse(resto.slice(0, idxFin));
+          const recorrer = (nodo: any) => {
+            if (!nodo || typeof nodo !== "object" || resultados.length >= 12) return;
+            if (nodo.videoRenderer && typeof nodo.videoRenderer === "object") {
+              const vr = nodo.videoRenderer;
+              const videoId = String(vr.videoId || "").trim();
+              if (/^[a-zA-Z0-9_-]{11}$/.test(videoId) && !vistos.has(videoId)) {
+                vistos.add(videoId);
+                const titulo =
+                  vr.title?.runs?.map((r: any) => r.text).join("") ||
+                  vr.title?.simpleText ||
+                  "Video YouTube";
+                const canal =
+                  vr.ownerText?.runs?.map((r: any) => r.text).join("") ||
+                  vr.longBylineText?.runs?.map((r: any) => r.text).join("") ||
+                  "YouTube";
+                const duracion =
+                  vr.lengthText?.simpleText ||
+                  vr.lengthText?.runs?.map((r: any) => r.text).join("") ||
+                  "EN VIVO";
+                resultados.push({
+                  videoId,
+                  titulo,
+                  canal,
+                  duracion,
+                  miniaturaUrl: `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`,
+                  url: `https://www.youtube.com/watch?v=${videoId}`,
+                });
+              }
+              return;
+            }
+            if (Array.isArray(nodo)) {
+              for (const item of nodo) recorrer(item);
+            } else {
+              for (const val of Object.values(nodo)) {
+                if (val && typeof val === "object") recorrer(val);
+              }
+            }
+          };
+          recorrer(data);
+        } catch {
+          // Continuar con regex fallback
+        }
+      }
+    }
+
+    // Fallback regex si YouTube cambió el envoltorio de ytInitialData
+    if (resultados.length === 0) {
+      const regex = /"videoId":"([a-zA-Z0-9_-]{11})"/g;
+      let m: RegExpExecArray | null;
+      while ((m = regex.exec(html)) !== null && resultados.length < 12) {
+        const vid = m[1]!;
+        if (vistos.has(vid)) continue;
+        vistos.add(vid);
+        resultados.push({
+          videoId: vid,
+          titulo: `Video YouTube (${vid})`,
+          canal: "YouTube",
+          duracion: "",
+          miniaturaUrl: `https://i.ytimg.com/vi/${vid}/mqdefault.jpg`,
+          url: `https://www.youtube.com/watch?v=${vid}`,
+        });
+      }
+    }
+
+    if (resultados.length === 0) {
+      return {
+        ok: false,
+        error: "No se encontraron videos para esa búsqueda. Puedes pegar directamente la URL de YouTube.",
+      };
+    }
+
+    CACHE_BUSQUEDA_YOUTUBE_TV.set(clave, {
+      expiraEn: ahora + 15 * 60 * 1000, // 15 min
+      resultados,
+    });
+
+    return { ok: true, resultados };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error
+          ? `No se pudo buscar en YouTube: ${err.message}`
+          : "Error al buscar en YouTube",
+    };
+  }
+}
+
 
 
