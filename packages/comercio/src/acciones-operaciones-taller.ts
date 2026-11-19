@@ -32,6 +32,13 @@ import {
   type RepartidorDisponibleNegocio,
   type TipoOrigenEntrega,
 } from "./operaciones-taller";
+import {
+  CATALOGO_SEMILLA_VARIEDADES_ROSAS,
+  obtenerVariedadDefectoPorColor,
+  resolverVariedadDesdeCatalogo,
+  type ItemConteoVariedad,
+  type VariedadRosaCatalogo,
+} from "./catalogo-variedades-rosas";
 import { normalizarIdentificadorNegocio } from "./utils/negocio";
 import {
   generarTokenEdicionTarjetaServidor,
@@ -151,6 +158,228 @@ export async function obtenerInventarioRosasAction(negocio: string): Promise<
   }
 }
 
+async function asegurarCatalogoVariedadesInicializado(
+  supabase: any,
+  neg: string
+): Promise<{
+  ok: true;
+  items: VariedadRosaCatalogo[];
+  desdeSemilla?: boolean;
+  migracionPendiente?: boolean;
+} | { ok: false; error: string }> {
+  const { data, error } = await invocarRpcComercio(
+    supabase,
+    "com_fn_listar_variedades_rosa",
+    { p_negocio: neg }
+  );
+
+  if (error) {
+    if (esErrorMigracionPendiente(error.message)) {
+      return {
+        ok: true,
+        items: CATALOGO_SEMILLA_VARIEDADES_ROSAS,
+        desdeSemilla: true,
+        migracionPendiente: true,
+      };
+    }
+    return { ok: false, error: error.message };
+  }
+
+  if (data && data.ok === false) {
+    return { ok: false, error: String(data.error || "Acceso no autorizado") };
+  }
+
+  const existentes = Array.isArray(data?.items) ? (data.items as VariedadRosaCatalogo[]) : [];
+  if (existentes.length > 0) {
+    return { ok: true, items: existentes, desdeSemilla: false };
+  }
+
+  // Sembrar automáticamente las variedades Floraroma en la BDD para este negocio
+  const { data: dataInit, error: errInit } = await invocarRpcComercio(
+    supabase,
+    "com_fn_inicializar_variedades_rosa",
+    {
+      p_negocio: neg,
+      p_variedades: CATALOGO_SEMILLA_VARIEDADES_ROSAS.map((v) => ({
+        colorClave: v.colorClave,
+        nombre: v.nombre,
+        imagenUrl: v.imagenUrl,
+        esDefecto: v.esDefecto,
+        orden: v.orden,
+        esPersonalizada: false,
+      })),
+    }
+  );
+
+  if (!errInit && dataInit?.ok && Array.isArray(dataInit.items) && dataInit.items.length > 0) {
+    return { ok: true, items: dataInit.items as VariedadRosaCatalogo[], desdeSemilla: false };
+  }
+
+  return { ok: true, items: CATALOGO_SEMILLA_VARIEDADES_ROSAS, desdeSemilla: true };
+}
+
+export async function listarVariedadesRosaAction(negocio: string): Promise<
+  | {
+      ok: true;
+      items: VariedadRosaCatalogo[];
+      migracionPendiente?: boolean;
+    }
+  | { ok: false; error: string }
+> {
+  try {
+    const neg = normalizarNegocio(negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const res = await asegurarCatalogoVariedadesInicializado(supabase, neg);
+    if (!res.ok) return res;
+    return {
+      ok: true,
+      items: res.items,
+      migracionPendiente: res.migracionPendiente,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error al cargar el catálogo de variedades",
+    };
+  }
+}
+
+export async function guardarVariedadRosaAction(entrada: {
+  negocio: string;
+  colorClave: string;
+  nombre: string;
+  imagenUrl?: string;
+  esDefecto?: boolean;
+  id?: string | null;
+}): Promise<{ ok: true; item: VariedadRosaCatalogo; items: VariedadRosaCatalogo[] } | { ok: false; error: string }> {
+  try {
+    const neg = normalizarNegocio(entrada.negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+
+    const init = await asegurarCatalogoVariedadesInicializado(supabase, neg);
+    if (!init.ok) return init;
+    if (init.migracionPendiente) {
+      return {
+        ok: false,
+        error:
+          "Ejecuta la migración 20261119000005_catalogo_variedades_rosas_floraroma.sql en Supabase para guardar cambios del catálogo.",
+      };
+    }
+
+    const uuidValido =
+      entrada.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(entrada.id)
+        ? entrada.id
+        : null;
+
+    const { data, error } = await invocarRpcComercio(supabase, "com_fn_guardar_variedad_rosa", {
+      p_negocio: neg,
+      p_color_clave: entrada.colorClave,
+      p_nombre: entrada.nombre,
+      p_imagen_url: entrada.imagenUrl ?? null,
+      p_es_defecto: Boolean(entrada.esDefecto),
+      p_id: uuidValido,
+    });
+
+    if (error) return { ok: false, error: error.message };
+    if (!data?.ok) return { ok: false, error: String(data?.error || "No se pudo guardar la variedad") };
+
+    const lista = await asegurarCatalogoVariedadesInicializado(supabase, neg);
+    revalidarRutasTienda(neg);
+    return {
+      ok: true,
+      item: data.item as VariedadRosaCatalogo,
+      items: lista.ok ? lista.items : init.items,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error inesperado al guardar variedad",
+    };
+  }
+}
+
+export async function definirVariedadDefectoAction(entrada: {
+  negocio: string;
+  colorClave: string;
+  variedadId: string;
+}): Promise<{ ok: true; items: VariedadRosaCatalogo[] } | { ok: false; error: string }> {
+  try {
+    const neg = normalizarNegocio(entrada.negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+
+    const init = await asegurarCatalogoVariedadesInicializado(supabase, neg);
+    if (!init.ok) return init;
+    if (init.migracionPendiente) {
+      return {
+        ok: false,
+        error:
+          "Ejecuta la migración 20261119000005_catalogo_variedades_rosas_floraroma.sql en Supabase para guardar la variedad por defecto.",
+      };
+    }
+
+    const { data, error } = await invocarRpcComercio(supabase, "com_fn_definir_variedad_defecto", {
+      p_negocio: neg,
+      p_color_clave: entrada.colorClave,
+      p_variedad_id: entrada.variedadId,
+    });
+
+    if (error) return { ok: false, error: error.message };
+    if (!data?.ok) {
+      return { ok: false, error: String(data?.error || "No se pudo actualizar la variedad por defecto") };
+    }
+
+    const lista = await asegurarCatalogoVariedadesInicializado(supabase, neg);
+    revalidarRutasTienda(neg);
+    return { ok: true, items: lista.ok ? lista.items : init.items };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error inesperado al definir variedad por defecto",
+    };
+  }
+}
+
+export async function eliminarVariedadRosaAction(entrada: {
+  negocio: string;
+  variedadId: string;
+}): Promise<{ ok: true; items: VariedadRosaCatalogo[] } | { ok: false; error: string }> {
+  try {
+    const neg = normalizarNegocio(entrada.negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+
+    const init = await asegurarCatalogoVariedadesInicializado(supabase, neg);
+    if (!init.ok) return init;
+    if (init.migracionPendiente) {
+      return {
+        ok: false,
+        error:
+          "Ejecuta la migración 20261119000005_catalogo_variedades_rosas_floraroma.sql en Supabase para eliminar variedades.",
+      };
+    }
+
+    const { data, error } = await invocarRpcComercio(supabase, "com_fn_eliminar_variedad_rosa", {
+      p_negocio: neg,
+      p_variedad_id: entrada.variedadId,
+    });
+
+    if (error) return { ok: false, error: error.message };
+    if (!data?.ok) return { ok: false, error: String(data?.error || "No se pudo eliminar la variedad") };
+
+    const lista = await asegurarCatalogoVariedadesInicializado(supabase, neg);
+    revalidarRutasTienda(neg);
+    return { ok: true, items: lista.ok ? lista.items : init.items };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error inesperado al eliminar variedad",
+    };
+  }
+}
+
 export async function analizarFotoBonchesConAriaAction(
   negocio: string,
   imagenUrl: string
@@ -158,6 +387,7 @@ export async function analizarFotoBonchesConAriaAction(
   | {
       ok: true;
       conteoColores: Record<string, number>;
+      itemsVariedad: ItemConteoVariedad[];
       notaIa?: string;
     }
   | { ok: false; error: string }
@@ -178,26 +408,27 @@ export async function analizarFotoBonchesConAriaAction(
       data: { session },
     } = await supabase.auth.getSession();
 
+    const catRes = await asegurarCatalogoVariedadesInicializado(supabase, neg);
+    const catalogo = catRes.ok ? catRes.items : CATALOGO_SEMILLA_VARIEDADES_ROSAS;
+
+    const defectoTexto = (clave: string) =>
+      obtenerVariedadDefectoPorColor(catalogo, clave)?.nombre ?? clave;
+
     const { invocarAgentePorNegocio } = await import("@eco/agentes-ia");
 
     const promptVision =
       "[MODO_OPERATIVO_INVENTARIO] NO saludes, NO vendas ni uses herramientas de catálogo.\n" +
-      "Eres un contador visual de inventario de taller floral. Observa la fotografía adjunta de paquetes/bonches de rosas (cada paquete envuelto en cartón kraft, papel blanco o caja contiene ~25 tallos).\n" +
-      "INSTRUCCIONES DE CONTEO:\n" +
-      "1. Recorre la imagen sistemáticamente fila por fila (de arriba hacia abajo y de izquierda a derecha) para no omitir ni duplicar ningún paquete.\n" +
-      "2. Cuenta CADA paquete/bonche completo visible (NO cuentes tallos individuales).\n" +
-      "3. Clasifica cada paquete por su color principal usando ÚNICAMENTE estas claves exactas:\n" +
-      '   - "rojo": rosas rojas / rojo oscuro\n' +
-      '   - "blanco": blancas / crema / marfil\n' +
-      '   - "rosado": rosado claro, pastel o pálido\n' +
-      '   - "fucsia": fucsia intenso, magenta o hot pink\n' +
-      '   - "amarillo": amarillas\n' +
-      '   - "durazno": durazno, salmón, naranja o coral\n' +
-      '   - "bicolor": pétalos con dos tonos marcados\n' +
-      '   - "azul": azules, celestes o tinturadas\n' +
-      '   - "otro": lila, morado, lavanda u otro tono\n' +
-      "4. Verifica que la suma de los colores coincida con el total de paquetes visibles.\n" +
-      'Responde ÚNICAMENTE con un objeto JSON válido sin texto extra ni markdown: {"colores": {"rojo": 0, "blanco": 0, "rosado": 0, "fucsia": 0, "amarillo": 0, "durazno": 0, "bicolor": 0, "azul": 0, "otro": 0}, "total_paquetes": 0, "nota": "resumen breve en 1 línea"}. Omite colores con valor 0.';
+      "Eres un contador visual experto en floristería ecuatoriana (rosas de exportación estándar Floraroma y orquídeas Cymbidium).\n" +
+      "PRIMERO identifica qué aparece en la fotografía: paquetes/bonches de ROSAS, varas de ORQUÍDEA / CYMBIDIUM, o ambos.\n" +
+      "A) SI HAY PAQUETES/BONCHES DE ROSAS (~25 tallos envueltos en cartón, papel o caja):\n" +
+      "   1. Recorre la foto fila por fila (arriba→abajo, izquierda→derecha) contando CADA paquete completo (NO tallos sueltos).\n" +
+      "   2. Usa ÚNICAMENTE estas 11 claves de color exactas:\n" +
+      `      rojo (${defectoTexto("rojo")}), blanco (${defectoTexto("blanco")}), rosado (${defectoTexto("rosado")}), fucsia (${defectoTexto("fucsia")}), amarillo (${defectoTexto("amarillo")}), durazno (${defectoTexto("durazno")}), naranja (${defectoTexto("naranja")}), lavanda (${defectoTexto("lavanda")}), novedad (${defectoTexto("novedad")}), tinturado (${defectoTexto("tinturado")}), verde (${defectoTexto("verde")}).\n` +
+      "   3. Si reconoces una variedad exacta (ej. Explorer, Freedom, Mondial, Vendela, Frutteto, Pink Floyd, Kahala, Brighton, Cool Water), indícala en variedad; si no, déjala vacía.\n" +
+      "B) SI HAY ORQUÍDEAS / CYMBIDIUM (varas con varias flores/campanas en celofán o florero):\n" +
+      "   1. Identifica su color (amarillo, blanco, verde, rosado, vino, crema, naranja, bicolor).\n" +
+      "   2. Cuenta cuántas VARAS hay (`varas`) y con mucha precisión cuántas FLORES/CAMPANAS individuales tiene en total (`numero_flores`).\n" +
+      'Responde ÚNICAMENTE con un objeto JSON válido sin texto extra ni markdown: {"colores": {"rojo": 0}, "variedades": [{"tipo": "rosa", "color": "rojo", "variedad": "", "cantidad": 0}], "orquideas": [{"color": "amarillo", "variedad": "Cymbidium Amarillo", "varas": 1, "numero_flores": 9}], "nota": "resumen breve en 1 línea"}. Omite arreglos vacíos o valores 0.';
 
     const respuesta = await invocarAgentePorNegocio(neg, promptVision, {
       imageUrls: [urlLimpia],
@@ -206,9 +437,78 @@ export async function analizarFotoBonchesConAriaAction(
     });
 
     const extraido = extraerConteoJsonDesdeRespuestaAria(respuesta.response);
+
+    // Mapear cada detección a una variedad del catálogo (cayendo en la variedad por defecto si no se identificó específicamente)
+    const mapaItems = new Map<string, ItemConteoVariedad>();
+
+    if (extraido.variedadesDetectadas && extraido.variedadesDetectadas.length > 0) {
+      for (const det of extraido.variedadesDetectadas) {
+        const esOrq = det.tipoFlor === "orquidea";
+        if (esOrq) {
+          const nombreOrq =
+            det.variedad?.trim() ||
+            `Cymbidium ${det.colorClave.charAt(0).toUpperCase()}${det.colorClave.slice(1)}`;
+          const claveUnica = `orquidea::${det.colorClave}::${nombreOrq.toLowerCase()}`;
+          const prev = mapaItems.get(claveUnica);
+          if (prev) {
+            prev.cantidad += det.cantidad;
+            prev.numeroFlores = (prev.numeroFlores ?? 0) + (det.numeroFlores ?? 0);
+          } else {
+            mapaItems.set(claveUnica, {
+              id: `ia-orq-${det.colorClave}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+              tipoFlor: "orquidea",
+              colorClave: det.colorClave,
+              variedadNombre: nombreOrq,
+              cantidad: Math.max(1, det.cantidad),
+              numeroFlores: det.numeroFlores ?? 8,
+              origen: "ia",
+            });
+          }
+          continue;
+        }
+
+        const ref = resolverVariedadDesdeCatalogo(catalogo, det.colorClave, det.variedad);
+        const nombreFinal = ref?.nombre ?? det.variedad ?? det.colorClave;
+        const claveUnica = `rosa::${det.colorClave}::${nombreFinal.toLowerCase()}`;
+        const prev = mapaItems.get(claveUnica);
+        if (prev) {
+          prev.cantidad += det.cantidad;
+        } else {
+          mapaItems.set(claveUnica, {
+            id: `ia-${det.colorClave}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            tipoFlor: "rosa",
+            colorClave: det.colorClave,
+            variedadId: ref?.id,
+            variedadNombre: nombreFinal,
+            imagenUrl: ref?.imagenUrl,
+            cantidad: det.cantidad,
+            origen: "ia",
+          });
+        }
+      }
+    } else {
+      for (const [colorClave, cantidad] of Object.entries(extraido.conteoColores)) {
+        if (cantidad <= 0) continue;
+        const ref = obtenerVariedadDefectoPorColor(catalogo, colorClave);
+        const nombreFinal = ref?.nombre ?? colorClave;
+        mapaItems.set(`rosa::${colorClave}::${nombreFinal.toLowerCase()}`, {
+          id: `ia-${colorClave}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          tipoFlor: "rosa",
+          colorClave,
+          variedadId: ref?.id,
+          variedadNombre: nombreFinal,
+          imagenUrl: ref?.imagenUrl,
+          cantidad,
+          origen: "ia",
+        });
+      }
+    }
+
+    const itemsVariedad = Array.from(mapaItems.values());
     return {
       ok: true,
       conteoColores: extraido.conteoColores,
+      itemsVariedad,
       notaIa: extraido.notaIa,
     };
   } catch (err) {

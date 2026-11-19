@@ -25,6 +25,10 @@ import {
   parsearColoresPedido,
   resolverEstadoInicialHorario,
 } from "./operaciones-taller";
+import {
+  CATALOGO_SEMILLA_VARIEDADES_ROSAS,
+  obtenerVariedadDefectoPorColor,
+} from "./catalogo-variedades-rosas";
 import { generarPdfInformeQuincenalIess } from "./pdf-informe-iess";
 
 describe("operaciones-taller y pdf-informe-iess", () => {
@@ -37,8 +41,31 @@ describe("operaciones-taller y pdf-informe-iess", () => {
     expect(res.totalPaquetes).toBe(17);
     expect(res.resumenColores).toEqual({ rojo: 10, blanco: 5, rosado: 2 });
     expect(formatearResumenInventarioTexto(res.resumenColores)).toBe(
-      "10 rojos, 5 blancos, 2 rosados"
+      "10 rojo, 5 blanco & crema, 2 rosa"
     );
+  });
+
+  it("resuelve variedades por defecto Floraroma y extrae orquídeas Cymbidium con número de flores", () => {
+    expect(obtenerVariedadDefectoPorColor(CATALOGO_SEMILLA_VARIEDADES_ROSAS, "rojo")?.nombre).toBe(
+      "Explorer"
+    );
+    expect(obtenerVariedadDefectoPorColor(CATALOGO_SEMILLA_VARIEDADES_ROSAS, "rosado")?.nombre).toBe(
+      "Frutteto"
+    );
+    expect(obtenerVariedadDefectoPorColor(CATALOGO_SEMILLA_VARIEDADES_ROSAS, "lavanda")?.nombre).toBe(
+      "Cool Water"
+    );
+
+    const extraidoOrq = extraerConteoJsonDesdeRespuestaAria(
+      '{"orquideas": [{"color": "amarillo", "variedad": "Cymbidium Amarillo", "varas": 1, "numero_flores": 9}], "nota": "1 vara Cymbidium amarillo con 9 flores"}'
+    );
+    expect(extraidoOrq.variedadesDetectadas).toHaveLength(1);
+    expect(extraidoOrq.variedadesDetectadas?.[0]).toMatchObject({
+      tipoFlor: "orquidea",
+      colorClave: "amarillo",
+      cantidad: 1,
+      numeroFlores: 9,
+    });
   });
 
   it("extrae conteo desde JSON de ARIA o texto natural en español", () => {

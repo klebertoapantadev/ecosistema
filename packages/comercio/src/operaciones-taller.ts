@@ -4,6 +4,8 @@
 //   2. Galería de Disponibles para Entrega Inmediata (1 a 2 horas)
 //   3. Órdenes de Trabajo (Exequiales IESS), Confirmación Universal de Entregas e Informes Quincenales
 
+import type { ItemConteoVariedad } from "./catalogo-variedades-rosas";
+
 export interface DefinicionColorRosa {
   clave: string;
   etiqueta: string;
@@ -13,62 +15,76 @@ export interface DefinicionColorRosa {
 }
 
 export const COLORES_ROSAS_ESTANDAR: DefinicionColorRosa[] = [
-  { clave: "rojo", etiqueta: "Rojos", colorHex: "#DC2626", fondoHex: "#FEF2F2", textoHex: "#991B1B" },
+  { clave: "rojo", etiqueta: "Rojo", colorHex: "#DC2626", fondoHex: "#FEF2F2", textoHex: "#991B1B" },
   {
     clave: "blanco",
-    etiqueta: "Blancos",
+    etiqueta: "Blanco & Crema",
     colorHex: "#CBD5E1",
     fondoHex: "#F8FAFC",
     textoHex: "#334155",
   },
   {
     clave: "rosado",
-    etiqueta: "Rosados",
+    etiqueta: "Rosa",
     colorHex: "#F472B6",
     fondoHex: "#FDF2F8",
     textoHex: "#9D174D",
   },
   {
     clave: "fucsia",
-    etiqueta: "Fucsias",
+    etiqueta: "Rosa Intenso",
     colorHex: "#DB2777",
     fondoHex: "#FCE7F3",
     textoHex: "#831843",
   },
   {
     clave: "amarillo",
-    etiqueta: "Amarillos",
+    etiqueta: "Amarillo",
     colorHex: "#EAB308",
     fondoHex: "#FEFCE8",
     textoHex: "#854D0E",
   },
   {
     clave: "durazno",
-    etiqueta: "Durazno / Salmón",
+    etiqueta: "Durazno",
     colorHex: "#FB923C",
     fondoHex: "#FFF7ED",
     textoHex: "#9A3412",
   },
   {
-    clave: "bicolor",
-    etiqueta: "Bicolores",
+    clave: "naranja",
+    etiqueta: "Naranja",
+    colorHex: "#EA580C",
+    fondoHex: "#FFEDD5",
+    textoHex: "#9A3412",
+  },
+  {
+    clave: "lavanda",
+    etiqueta: "Lavanda",
+    colorHex: "#A855F7",
+    fondoHex: "#FAF5FF",
+    textoHex: "#6B21A8",
+  },
+  {
+    clave: "novedad",
+    etiqueta: "Novedad",
     colorHex: "#8B5CF6",
     fondoHex: "#F5F3FF",
     textoHex: "#5B21B6",
   },
   {
-    clave: "azul",
-    etiqueta: "Azules / Tinturados",
+    clave: "tinturado",
+    etiqueta: "Tinturado",
     colorHex: "#2563EB",
     fondoHex: "#EFF6FF",
     textoHex: "#1E40AF",
   },
   {
-    clave: "otro",
-    etiqueta: "Otros tonos",
-    colorHex: "#64748B",
-    fondoHex: "#F1F5F9",
-    textoHex: "#334155",
+    clave: "verde",
+    etiqueta: "Verde",
+    colorHex: "#16A34A",
+    fondoHex: "#F0FDF4",
+    textoHex: "#166534",
   },
 ];
 
@@ -77,8 +93,10 @@ export interface FotoConteoBonches {
   imagenUrl: string;
   nombreArchivo?: string;
   conteoColores: Record<string, number>;
+  itemsVariedad?: ItemConteoVariedad[];
   notaIa?: string;
   analizadoPorIa?: boolean;
+  esManual?: boolean;
 }
 
 export interface CorteInventarioRosas {
@@ -185,25 +203,49 @@ export function normalizarClaveColorRosa(texto: string): string {
     .replace(/[\u0300-\u036f]/g, "")
     .trim();
 
-  if (t.includes("roj") || t.includes("explorer") || t.includes("red")) return "rojo";
-  if (t.includes("blanc") || t.includes("mondial") || t.includes("playa") || t.includes("white"))
-    return "blanco";
-  if (t.includes("rosa") || t.includes("rozad") || t.includes("pink") && !t.includes("floyd"))
-    return "rosado";
-  if (t.includes("fucsia") || t.includes("floyd") || t.includes("cherry") || t.includes("magenta"))
-    return "fucsia";
-  if (t.includes("amarill") || t.includes("yellow") || t.includes("girasol")) return "amarillo";
+  if (t.includes("roj") || t.includes("explorer") || t.includes("freedom") || t.includes("red"))
+    return "rojo";
   if (
-    t.includes("durazn") ||
-    t.includes("kahala") ||
-    t.includes("salmon") ||
-    t.includes("naranja") ||
-    t.includes("coral")
+    t.includes("blanc") ||
+    t.includes("crema") ||
+    t.includes("mondial") ||
+    t.includes("playa") ||
+    t.includes("vendela") ||
+    t.includes("white")
   )
+    return "blanco";
+  if (
+    t.includes("fucsia") ||
+    t.includes("rosa intenso") ||
+    t.includes("hot pink") ||
+    t.includes("hotpink") ||
+    t.includes("floyd") ||
+    t.includes("cherry") ||
+    t.includes("magenta")
+  )
+    return "fucsia";
+  if (
+    t.includes("rosa") ||
+    t.includes("rozad") ||
+    t.includes("frutteto") ||
+    t.includes("hermosa") ||
+    t.includes("pink")
+  )
+    return "rosado";
+  if (t.includes("amarill") || t.includes("brighton") || t.includes("yellow") || t.includes("girasol"))
+    return "amarillo";
+  if (t.includes("naranj") || t.includes("orange") || t.includes("mandarin") || t.includes("high magic"))
+    return "naranja";
+  if (t.includes("durazn") || t.includes("kahala") || t.includes("salmon") || t.includes("peach") || t.includes("coral"))
     return "durazno";
-  if (t.includes("bicolor") || t.includes("matiz") || t.includes("magic")) return "bicolor";
-  if (t.includes("azul") || t.includes("celeste") || t.includes("tintur")) return "azul";
-  return "otro";
+  if (t.includes("lavand") || t.includes("lila") || t.includes("morad") || t.includes("purpl") || t.includes("cool water") || t.includes("ocean song"))
+    return "lavanda";
+  if (t.includes("verd") || t.includes("green") || t.includes("wasabi")) return "verde";
+  if (t.includes("tintur") || t.includes("azul") || t.includes("celeste") || t.includes("blue") || t.includes("rainbow") || t.includes("arcoiris"))
+    return "tinturado";
+  if (t.includes("novedad") || t.includes("novelty") || t.includes("bicolor") || t.includes("matiz") || t.includes("magic"))
+    return "novedad";
+  return "novedad";
 }
 
 export function formatearResumenInventarioTexto(resumenColores?: Record<string, number> | null): string {
@@ -230,8 +272,33 @@ export function formatearResumenInventarioTexto(resumenColores?: Record<string, 
  * Extrae el conteo por colores desde la respuesta del agente ARIA (JSON puro,
  * bloque ```json ... ``` o lenguaje natural tipo "10 rojos, 5 blancos, 2 rosados").
  */
+export function normalizarColorOrquideaCymbidium(texto: string): string {
+  const t = String(texto || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+  if (t.includes("amarill") || t.includes("yellow") || t.includes("dorad")) return "amarillo";
+  if (t.includes("blanc") || t.includes("white")) return "blanco";
+  if (t.includes("verd") || t.includes("green") || t.includes("limon")) return "verde";
+  if (t.includes("rosa") || t.includes("pink") || t.includes("fucsia")) return "rosado";
+  if (t.includes("vino") || t.includes("burdeo") || t.includes("roj") || t.includes("morad") || t.includes("burgundy"))
+    return "vino";
+  if (t.includes("crema") || t.includes("champagne") || t.includes("beige")) return "crema";
+  if (t.includes("naranj") || t.includes("bronce") || t.includes("durazn") || t.includes("orange"))
+    return "naranja";
+  return "bicolor";
+}
+
 export function extraerConteoJsonDesdeRespuestaAria(texto: string): {
   conteoColores: Record<string, number>;
+  variedadesDetectadas?: Array<{
+    tipoFlor?: "rosa" | "orquidea";
+    colorClave: string;
+    variedad?: string;
+    cantidad: number;
+    numeroFlores?: number;
+  }>;
   notaIa?: string;
 } {
   const limpio = String(texto || "").trim();
@@ -245,27 +312,110 @@ export function extraerConteoJsonDesdeRespuestaAria(texto: string): {
   if (bloqueJson) {
     try {
       const parsed = JSON.parse(bloqueJson) as Record<string, unknown>;
+      const conteo: Record<string, number> = {};
+      const variedadesDetectadas: Array<{
+        tipoFlor?: "rosa" | "orquidea";
+        colorClave: string;
+        variedad?: string;
+        cantidad: number;
+        numeroFlores?: number;
+      }> = [];
+
+      if (Array.isArray(parsed.orquideas)) {
+        for (const row of parsed.orquideas) {
+          if (!row || typeof row !== "object") continue;
+          const r = row as Record<string, unknown>;
+          const varas = Math.max(1, Math.round(Number(r.varas ?? r.cantidad ?? r.tallos ?? 1) || 1));
+          const numeroFlores = Math.max(
+            0,
+            Math.round(Number(r.numero_flores ?? r.flores ?? r.campanas ?? r.blooms ?? 0) || 0)
+          );
+          if (varas <= 0 && numeroFlores <= 0) continue;
+          const colorClave = normalizarColorOrquideaCymbidium(String(r.color ?? r.colorClave ?? ""));
+          const variedad =
+            typeof r.variedad === "string" && r.variedad.trim()
+              ? r.variedad.trim()
+              : `Cymbidium ${colorClave.charAt(0).toUpperCase()}${colorClave.slice(1)}`;
+          variedadesDetectadas.push({
+            tipoFlor: "orquidea",
+            colorClave,
+            variedad,
+            cantidad: varas,
+            numeroFlores: numeroFlores > 0 ? numeroFlores : undefined,
+          });
+          conteo[`orquidea_${colorClave}`] = (conteo[`orquidea_${colorClave}`] ?? 0) + varas;
+        }
+      }
+
+      if (Array.isArray(parsed.variedades)) {
+        for (const row of parsed.variedades) {
+          if (!row || typeof row !== "object") continue;
+          const r = row as Record<string, unknown>;
+          const tipoRaw = String(r.tipo ?? r.tipoFlor ?? r.tipo_flor ?? "").toLowerCase();
+          const esOrq = tipoRaw.includes("orquid") || tipoRaw.includes("cymbidium");
+          const cant = Math.round(Number(r.cantidad ?? r.paquetes ?? r.varas ?? r.count) || 0);
+          const numeroFlores = Math.max(
+            0,
+            Math.round(Number(r.numero_flores ?? r.flores ?? r.campanas ?? 0) || 0)
+          );
+          if (cant <= 0 && numeroFlores <= 0) continue;
+          const colorClave = esOrq
+            ? normalizarColorOrquideaCymbidium(String(r.color ?? r.colorClave ?? r.color_clave ?? ""))
+            : normalizarClaveColorRosa(String(r.color ?? r.colorClave ?? r.color_clave ?? ""));
+          const variedad =
+            typeof r.variedad === "string" && r.variedad.trim() ? r.variedad.trim() : undefined;
+          variedadesDetectadas.push({
+            tipoFlor: esOrq ? "orquidea" : "rosa",
+            colorClave,
+            variedad,
+            cantidad: Math.max(1, cant),
+            numeroFlores: esOrq && numeroFlores > 0 ? numeroFlores : undefined,
+          });
+          const claveConteo = esOrq ? `orquidea_${colorClave}` : colorClave;
+          conteo[claveConteo] = (conteo[claveConteo] ?? 0) + Math.max(1, cant);
+        }
+      }
+
       const origenColores =
         parsed.colores && typeof parsed.colores === "object"
           ? (parsed.colores as Record<string, unknown>)
-          : parsed;
-      const conteo: Record<string, number> = {};
-      for (const [k, v] of Object.entries(origenColores)) {
-        if (k === "nota" || k === "observacion" || k === "total" || k === "total_paquetes") continue;
-        const n = Math.round(Number(v) || 0);
-        if (n > 0) {
-          const clave = normalizarClaveColorRosa(k);
-          conteo[clave] = (conteo[clave] ?? 0) + n;
+          : variedadesDetectadas.length === 0
+            ? parsed
+            : null;
+
+      if (origenColores) {
+        for (const [k, v] of Object.entries(origenColores)) {
+          if (
+            k === "nota" ||
+            k === "observacion" ||
+            k === "total" ||
+            k === "total_paquetes" ||
+            k === "variedades" ||
+            k === "orquideas"
+          )
+            continue;
+          const n = Math.round(Number(v) || 0);
+          if (n > 0) {
+            const clave = normalizarClaveColorRosa(k);
+            if (variedadesDetectadas.length === 0) {
+              conteo[clave] = (conteo[clave] ?? 0) + n;
+            }
+          }
         }
       }
+
       const nota =
         typeof parsed.nota === "string"
           ? parsed.nota
           : typeof parsed.observacion === "string"
             ? parsed.observacion
             : undefined;
-      if (Object.keys(conteo).length > 0 || nota) {
-        return { conteoColores: conteo, notaIa: nota };
+      if (Object.keys(conteo).length > 0 || variedadesDetectadas.length > 0 || nota) {
+        return {
+          conteoColores: conteo,
+          variedadesDetectadas: variedadesDetectadas.length > 0 ? variedadesDetectadas : undefined,
+          notaIa: nota,
+        };
       }
     } catch {
       // Continuar con extracción por expresiones regulares en español
@@ -274,7 +424,7 @@ export function extraerConteoJsonDesdeRespuestaAria(texto: string): {
 
   const conteoRegex: Record<string, number> = {};
   const regexPares =
-    /(\d{1,3})\s+(?:paquetes?\s+(?:de\s+)?|bonches?\s+(?:de\s+)?)?(rojos?|rojas?|blancos?|blancas?|rosados?|rosadas?|rozados?|fucsias?|amarillos?|amarillas?|duraznos?|naranjas?|bicolore?s?|azules?)/gi;
+    /(\d{1,3})\s+(?:paquetes?\s+(?:de\s+)?|bonches?\s+(?:de\s+)?)?(rojos?|rojas?|blancos?|blancas?|rosados?|rosadas?|rozados?|fucsias?|amarillos?|amarillas?|duraznos?|naranjas?|lavandas?|lilas?|morados?|bicolore?s?|novedad(?:es)?|azules?|tinturados?|verdes?)/gi;
   let m: RegExpExecArray | null;
   while ((m = regexPares.exec(limpio)) !== null) {
     const n = Number(m[1]) || 0;
