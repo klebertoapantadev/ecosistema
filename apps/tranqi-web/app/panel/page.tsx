@@ -460,10 +460,8 @@ async function PanelCliente({ saludo, nombre, usuarioId }: { saludo: string | nu
               </Link>
             </header>
             {pagosRecientes.length === 0 ? (
-              <div style={{ padding: "10px 0 4px", fontSize: "0.84rem", color: "var(--texto-suave)" }}>
-                <p style={{ margin: "0 0 10px" }}>
-                  Consulta tus pagos realizados y descarga tus facturas electrónicas SRI.
-                </p>
+              <div className="cuerpo-seccion">
+                <p>Consulta tus pagos realizados y descarga tus facturas electrónicas SRI.</p>
                 <Link href="/panel/herramientas?widget=historial_pagos" className="btn btn-neutro btn-pequeno">
                   <Receipt size={15} aria-hidden="true" />
                   Ver mis pagos
