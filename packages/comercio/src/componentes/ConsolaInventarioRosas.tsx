@@ -89,6 +89,22 @@ export function ConsolaInventarioRosas({
   const cacheKey = `eco_inventario_rosas_${negNorm}`;
 
   const [pestanaActiva, setPestanaActiva] = useState<"conteo" | "catalogo">("conteo");
+  const [esMovil, setEsMovil] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    const mq = window.matchMedia("(max-width: 767px)");
+    const sincronizar = () => {
+      const movil = mq.matches;
+      setEsMovil(movil);
+      if (movil) {
+        setPestanaActiva("conteo");
+      }
+    };
+    sincronizar();
+    mq.addEventListener("change", sincronizar);
+    return () => mq.removeEventListener("change", sincronizar);
+  }, []);
   const [catalogoVariedades, setCatalogoVariedades] = useState<VariedadRosaCatalogo[]>(
     CATALOGO_SEMILLA_VARIEDADES_ROSAS
   );
@@ -652,52 +668,59 @@ export function ConsolaInventarioRosas({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
-      {/* BARRA DE PESTAÑAS: CONTEO E INVENTARIO | CATÁLOGO DE VARIEDADES */}
-      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
-        <button
-          type="button"
-          onClick={() => setPestanaActiva("conteo")}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "7px",
-            padding: "9px 15px",
-            borderRadius: "10px",
-            border: pestanaActiva === "conteo" ? "none" : "1px solid #CBD5E1",
-            background: pestanaActiva === "conteo" ? "#0F172A" : "#FFFFFF",
-            color: pestanaActiva === "conteo" ? "#FFFFFF" : "#334155",
-            fontSize: "0.84rem",
-            fontWeight: 700,
-            cursor: "pointer",
-          }}
-        >
-          <Camera size={15} />
-          <span>Conteo e Inventario</span>
-        </button>
+      <style>{`@media (max-width: 767px) { .eco-inv-tabs-desktop { display: none !important; } }`}</style>
 
-        <button
-          type="button"
-          onClick={() => setPestanaActiva("catalogo")}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "7px",
-            padding: "9px 15px",
-            borderRadius: "10px",
-            border: pestanaActiva === "catalogo" ? "none" : "1px solid #CBD5E1",
-            background: pestanaActiva === "catalogo" ? "#0F172A" : "#FFFFFF",
-            color: pestanaActiva === "catalogo" ? "#FFFFFF" : "#334155",
-            fontSize: "0.84rem",
-            fontWeight: 700,
-            cursor: "pointer",
-          }}
+      {/* BARRA DE PESTAÑAS SOLO EN ESCRITORIO/TABLET (>=768px). En móvil vista simple directa. */}
+      {!esMovil && (
+        <div
+          className="eco-inv-tabs-desktop"
+          style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}
         >
-          <BookOpen size={15} />
-          <span>Catálogo Variedades ({catalogoVariedades.length})</span>
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() => setPestanaActiva("conteo")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "7px",
+              padding: "9px 15px",
+              borderRadius: "10px",
+              border: pestanaActiva === "conteo" ? "none" : "1px solid #CBD5E1",
+              background: pestanaActiva === "conteo" ? "#0F172A" : "#FFFFFF",
+              color: pestanaActiva === "conteo" ? "#FFFFFF" : "#334155",
+              fontSize: "0.84rem",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            <Camera size={15} />
+            <span>Conteo e Inventario</span>
+          </button>
 
-      {pestanaActiva === "catalogo" ? (
+          <button
+            type="button"
+            onClick={() => setPestanaActiva("catalogo")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "7px",
+              padding: "9px 15px",
+              borderRadius: "10px",
+              border: pestanaActiva === "catalogo" ? "none" : "1px solid #CBD5E1",
+              background: pestanaActiva === "catalogo" ? "#0F172A" : "#FFFFFF",
+              color: pestanaActiva === "catalogo" ? "#FFFFFF" : "#334155",
+              fontSize: "0.84rem",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            <BookOpen size={15} />
+            <span>Catálogo Variedades ({catalogoVariedades.length})</span>
+          </button>
+        </div>
+      )}
+
+      {!esMovil && pestanaActiva === "catalogo" ? (
         <CatalogoVariedadesRosas
           negocio={negNorm}
           catalogo={catalogoVariedades}
