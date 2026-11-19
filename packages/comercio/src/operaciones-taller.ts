@@ -32,7 +32,7 @@ export const COLORES_ROSAS_ESTANDAR: DefinicionColorRosa[] = [
   },
   {
     clave: "fucsia",
-    etiqueta: "Rosa Intenso",
+    etiqueta: "Fucsia",
     colorHex: "#DB2777",
     fondoHex: "#FCE7F3",
     textoHex: "#831843",
