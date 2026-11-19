@@ -1,12 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { GestorPwaCliente } from "./componentes/GestorPwaCliente";
 
-// Inter: tipografía del brandbook de tranqi (antes Archivo).
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
+// Inter: tipografía del brandbook de tranqi (antes Archivo). Va en el repo
+// (TRQ-030) y no por next/font/google: en Vercel la descarga de Google falló
+// dos veces y tumbó el build de producción. Es la variable (100–900) con el
+// subconjunto latin que servía Google, el mismo que se usaba. Licencia OFL.
+const inter = localFont({
+  src: "./fuentes/inter-variable-latin.woff2",
+  weight: "100 900",
+  style: "normal",
+  display: "swap",
 });
 
 export const viewport: Viewport = {
