@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import {
+  AlertTriangle,
   Check,
   Copy,
   Download,
@@ -14,12 +15,13 @@ import {
   MessageCircle,
   Printer,
   Save,
+  Share2,
   Sliders,
   Sparkles,
   Upload,
   X,
 } from "lucide-react";
-import type { DisenoVisualTarjeta, OrdenTrabajoTaller } from "../operaciones-taller";
+import type { ClaveFuenteTarjeta, DisenoVisualTarjeta, OrdenTrabajoTaller } from "../operaciones-taller";
 import {
   buscarLyricsCancionAction,
   guardarEdicionPedidoYTarjetaAction,
@@ -27,8 +29,11 @@ import {
   subirAudioTarjetaAction,
 } from "../acciones-operaciones-taller";
 import {
+  esFirmaVisibleValida,
   LienzoDisenadorTarjeta,
+  normalizarClaveFuenteTarjeta,
   normalizarDisenoTarjeta,
+  renderizarTarjetaEnCanvasPng,
   resolverFontFamilyCss,
 } from "./LienzoDisenadorTarjeta";
 
@@ -87,17 +92,18 @@ function envolverLineasPdf(
 }
 
 function seleccionarFuentePdf(
-  fuente: "cursiva" | "serif" | "formal",
+  fuente: ClaveFuenteTarjeta | string | undefined,
   negrita: boolean,
   italica: boolean
 ) {
-  if (fuente === "formal") {
+  const clave = normalizarClaveFuenteTarjeta(fuente);
+  if (clave === "moderna") {
     if (negrita && italica) return StandardFonts.HelveticaBoldOblique;
     if (negrita) return StandardFonts.HelveticaBold;
     if (italica) return StandardFonts.HelveticaOblique;
     return StandardFonts.Helvetica;
   }
-  if (fuente === "cursiva") {
+  if (clave === "cursiva" || clave === "caligrafia" || clave === "manuscrita") {
     return negrita ? StandardFonts.TimesRomanBoldItalic : StandardFonts.TimesRomanItalic;
   }
   if (negrita && italica) return StandardFonts.TimesRomanBoldItalic;
@@ -184,6 +190,7 @@ export function ModalImprimirTarjetaTaller({
   const [subiendoMp3, setSubiendoMp3] = useState<boolean>(false);
   const [imprimiendo, setImprimiendo] = useState<boolean>(false);
   const [descargandoPdf, setDescargandoPdf] = useState<boolean>(false);
+  const [compartiendoDiseno, setCompartiendoDiseno] = useState<boolean>(false);
   const [avisoOk, setAvisoOk] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -447,13 +454,6 @@ export function ModalImprimirTarjetaTaller({
       const pdfDoc = await PDFDocument.create();
       const page = pdfDoc.addPage([pageW, pageH]);
 
-      const fontEnum = seleccionarFuentePdf(
-        disenoNorm.fuente,
-        disenoNorm.negrita,
-        disenoNorm.italica
-      );
-      const pdfFont = await pdfDoc.embedFont(fontEnum);
-
       if (soloQrEfectivo) {
         // DEDICATORIA SOLO QR: ÚNICAMENTE QR CENTRADO EN LA MITAD INFERIOR (SIN MENSAJE NI IMAGEN)
         if (qrDataUrl) {
@@ -468,10 +468,15 @@ export function ModalImprimirTarjetaTaller({
           }
         }
       } else {
-        // MODO MENSAJE (+ IMAGEN OPCIONAL) — NUNCA INCLUYE QR
-        if (disenoNorm.imagenUrl) {
+        // MODO MENSAJE (+ HASTA 3 IMÁGENES + MÚLTIPLES CUADROS DE TEXTO Y FIRMA) — SIN QR
+        const imgsOrdenadas = [
+          ...disenoNorm.imagenes.filter((im) => im.cubrirTarjeta),
+          ...disenoNorm.imagenes.filter((im) => !im.cubrirTarjeta),
+        ];
+
+        for (const im of imgsOrdenadas) {
           try {
-            const respImg = await fetch(disenoNorm.imagenUrl);
+            const respImg = await fetch(im.url);
             const arrBuf = await respImg.arrayBuffer();
             const bytesImg = new Uint8Array(arrBuf);
             const esPng =
@@ -483,84 +488,142 @@ export function ModalImprimirTarjetaTaller({
             const pdfImg = esPng
               ? await pdfDoc.embedPng(bytesImg)
               : await pdfDoc.embedJpg(bytesImg);
-            const imgW = disenoNorm.imagenAnchoMm * MM_TO_PT;
-            const imgH = imgW * (pdfImg.height / Math.max(1, pdfImg.width));
-            const imgX = (disenoNorm.imagenXPct / 100) * pageW - imgW / 2 + offsetX * MM_TO_PT;
-            const imgY =
-              pageH - (disenoNorm.imagenYPct / 100) * pageH - imgH / 2 - offsetY * MM_TO_PT;
-            page.drawImage(pdfImg, { x: imgX, y: imgY, width: imgW, height: imgH });
+            const opacidadImg = typeof im.opacidad === "number" ? im.opacidad : 1;
+
+            if (im.cubrirTarjeta) {
+              const ratioPage = pageW / pageH;
+              const ratioImg = pdfImg.width / Math.max(1, pdfImg.height);
+              let drawW = pageW;
+              let drawH = pageH;
+              let dx = 0;
+              let dy = 0;
+              if (ratioImg > ratioPage) {
+                drawH = pageH;
+                drawW = pageH * ratioImg;
+                dx = (pageW - drawW) / 2;
+              } else {
+                drawW = pageW;
+                drawH = pageW / ratioImg;
+                dy = (pageH - drawH) / 2;
+              }
+              page.drawImage(pdfImg, {
+                x: dx + offsetX * MM_TO_PT,
+                y: dy - offsetY * MM_TO_PT,
+                width: drawW,
+                height: drawH,
+                opacity: opacidadImg,
+              });
+            } else {
+              const imgW = Math.min(pageW, im.anchoMm * MM_TO_PT);
+              const imgH = imgW * (pdfImg.height / Math.max(1, pdfImg.width));
+              const imgX = (im.xPct / 100) * pageW - imgW / 2 + offsetX * MM_TO_PT;
+              const imgY = pageH - (im.yPct / 100) * pageH - imgH / 2 - offsetY * MM_TO_PT;
+              page.drawImage(pdfImg, {
+                x: imgX,
+                y: imgY,
+                width: imgW,
+                height: imgH,
+                opacity: opacidadImg,
+              });
+            }
           } catch {
-            // Si la imagen remota falla por CORS, continuar generando el PDF con el texto
+            // Continuar si una imagen remota no pudo incrustarse
           }
         }
 
-        const textoBase = limpiarCaracteresWinAnsi(
-          mensajeEditable.trim() ||
-            (esCondolencias
-              ? "Expresamos nuestras mas sentidas condolencias."
-              : "Con todo nuestro carino.")
-        );
+        const fuentesCache = new Map<string, any>();
+        const obtenerPdfFont = async (
+          f: ClaveFuenteTarjeta | undefined,
+          neg: boolean,
+          ita: boolean
+        ) => {
+          const enumF = seleccionarFuentePdf(f, neg, ita);
+          if (!fuentesCache.has(enumF)) {
+            fuentesCache.set(enumF, await pdfDoc.embedFont(enumF));
+          }
+          return fuentesCache.get(enumF);
+        };
 
-        const boxW = (disenoNorm.textoAnchoPct / 100) * pageW;
-        const boxCenterX = (disenoNorm.textoXPct / 100) * pageW + offsetX * MM_TO_PT;
-        const boxLeft = boxCenterX - boxW / 2;
+        for (const blk of disenoNorm.bloquesTexto) {
+          let textoRaw = "";
+          if (blk.rol === "mensaje") {
+            textoRaw =
+              mensajeEditable.trim() ||
+              (esCondolencias
+                ? "Expresamos nuestras mas sentidas condolencias."
+                : "Con todo nuestro carino.");
+          } else if (blk.rol === "firma") {
+            if (!disenoNorm.mostrarFirma || !esFirmaVisibleValida(deEditable)) continue;
+            textoRaw = deEditable.trim();
+          } else {
+            textoRaw = (blk.texto || "").trim();
+            if (!textoRaw) continue;
+          }
 
-        const sizePt = Math.max(9, Math.min(34, disenoNorm.tamanoPt));
-        const interlineado = sizePt * 1.38;
-        const lineas = envolverLineasPdf(textoBase, pdfFont, sizePt, boxW);
-        const altoBloque = lineas.length * interlineado;
-        const boxCenterY = pageH - (disenoNorm.textoYPct / 100) * pageH - offsetY * MM_TO_PT;
-        let cursorY = boxCenterY + altoBloque / 2 - sizePt * 0.82;
+          const textoBase = limpiarCaracteresWinAnsi(textoRaw);
+          const fontBlk = await obtenerPdfFont(blk.fuente, Boolean(blk.negrita), Boolean(blk.italica));
+          const boxW = (blk.anchoPct / 100) * pageW;
+          const boxCenterX = (blk.xPct / 100) * pageW + offsetX * MM_TO_PT;
+          const boxLeft = boxCenterX - boxW / 2;
 
-        for (const item of lineas) {
-          const lin = item.texto;
-          if (lin) {
-            const wLin = pdfFont.widthOfTextAtSize(lin, sizePt);
-            if (disenoNorm.alineacion === "justify" && !item.finParrafo) {
-              const palabras = lin.split(/\s+/).filter(Boolean);
-              if (palabras.length > 1) {
-                const anchoPalabras = palabras.reduce(
-                  (acc, p) => acc + pdfFont.widthOfTextAtSize(p, sizePt),
-                  0
-                );
-                const espacioExtra = Math.max(0, (boxW - anchoPalabras) / (palabras.length - 1));
-                let xPal = boxLeft;
-                for (const pal of palabras) {
-                  page.drawText(pal, {
-                    x: xPal,
+          const sizePt = Math.max(9, Math.min(38, blk.tamanoPt || 18));
+          const interlineado = sizePt * 1.36;
+          const lineas = envolverLineasPdf(textoBase, fontBlk, sizePt, boxW);
+          const altoBloque = lineas.length * interlineado;
+          const boxCenterY = pageH - (blk.yPct / 100) * pageH - offsetY * MM_TO_PT;
+          let cursorY = boxCenterY + altoBloque / 2 - sizePt * 0.82;
+          const alin = blk.alineacion || "center";
+
+          for (const item of lineas) {
+            const lin = item.texto;
+            if (lin) {
+              const wLin = fontBlk.widthOfTextAtSize(lin, sizePt);
+              if (alin === "justify" && !item.finParrafo) {
+                const palabras = lin.split(/\s+/).filter(Boolean);
+                if (palabras.length > 1) {
+                  const anchoPalabras = palabras.reduce(
+                    (acc, p) => acc + fontBlk.widthOfTextAtSize(p, sizePt),
+                    0
+                  );
+                  const espacioExtra = Math.max(0, (boxW - anchoPalabras) / (palabras.length - 1));
+                  let xPal = boxLeft;
+                  for (const pal of palabras) {
+                    page.drawText(pal, {
+                      x: xPal,
+                      y: cursorY,
+                      size: sizePt,
+                      font: fontBlk,
+                      color: rgb(0.09, 0.09, 0.11),
+                    });
+                    xPal += fontBlk.widthOfTextAtSize(pal, sizePt) + espacioExtra;
+                  }
+                } else {
+                  page.drawText(lin, {
+                    x: boxLeft,
                     y: cursorY,
                     size: sizePt,
-                    font: pdfFont,
+                    font: fontBlk,
                     color: rgb(0.09, 0.09, 0.11),
                   });
-                  xPal += pdfFont.widthOfTextAtSize(pal, sizePt) + espacioExtra;
                 }
               } else {
+                const xLinea =
+                  alin === "left" || alin === "justify"
+                    ? boxLeft
+                    : alin === "right"
+                      ? boxLeft + Math.max(0, boxW - wLin)
+                      : boxLeft + Math.max(0, (boxW - wLin) / 2);
                 page.drawText(lin, {
-                  x: boxLeft,
+                  x: xLinea,
                   y: cursorY,
                   size: sizePt,
-                  font: pdfFont,
+                  font: fontBlk,
                   color: rgb(0.09, 0.09, 0.11),
                 });
               }
-            } else {
-              const xLinea =
-                disenoNorm.alineacion === "left" || disenoNorm.alineacion === "justify"
-                  ? boxLeft
-                  : disenoNorm.alineacion === "right"
-                    ? boxLeft + Math.max(0, boxW - wLin)
-                    : boxLeft + Math.max(0, (boxW - wLin) / 2);
-              page.drawText(lin, {
-                x: xLinea,
-                y: cursorY,
-                size: sizePt,
-                font: pdfFont,
-                color: rgb(0.09, 0.09, 0.11),
-              });
             }
+            cursorY -= interlineado;
           }
-          cursorY -= interlineado;
         }
       }
 
@@ -579,6 +642,60 @@ export function ModalImprimirTarjetaTaller({
       setErrorMsg(err instanceof Error ? err.message : "Error generando PDF de la tarjeta.");
     } finally {
       setDescargandoPdf(false);
+    }
+  };
+
+  const handleCompartirDiseno = async () => {
+    setCompartiendoDiseno(true);
+    setErrorMsg(null);
+    try {
+      await persistirCambiosTarjeta(true);
+      const blob = await renderizarTarjetaEnCanvasPng({
+        esCondolencias,
+        soloQr: soloQrEfectivo,
+        mensaje: mensajeEditable,
+        firma: deEditable,
+        diseno: disenoNorm,
+        qrDataUrl,
+        anchoMm,
+        altoMm,
+      });
+      if (!blob) {
+        setErrorMsg("No se pudo generar la imagen del diseño final.");
+        return;
+      }
+      const nombreArchivo = `Tarjeta-${esCondolencias ? "Condolencias" : "Dedicatoria"}-${orden.codigo || "Pedido"}.png`;
+      const archivo = new File([blob], nombreArchivo, { type: "image/png" });
+
+      if (
+        typeof navigator !== "undefined" &&
+        typeof navigator.share === "function" &&
+        typeof navigator.canShare === "function" &&
+        navigator.canShare({ files: [archivo] })
+      ) {
+        await navigator.share({
+          title: `Diseño de Tarjeta — ${orden.codigo}`,
+          text: `Diseño final de la tarjeta para el pedido ${orden.codigo}`,
+          files: [archivo],
+        });
+        setAvisoOk("✅ Diseño compartido correctamente.");
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = nombreArchivo;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        setAvisoOk("🖼️ Imagen PNG del diseño final descargada lista para compartir por WhatsApp.");
+      }
+    } catch (err) {
+      if ((err as Error)?.name !== "AbortError") {
+        setErrorMsg(err instanceof Error ? err.message : "No se pudo compartir el diseño.");
+      }
+    } finally {
+      setCompartiendoDiseno(false);
     }
   };
 
@@ -688,7 +805,7 @@ export function ModalImprimirTarjetaTaller({
             )}
           </div>
         ) : (
-          // MODO MENSAJE + IMAGEN OPCIONAL (SIN QR EN ABSOLUTO)
+          // MODO MENSAJE + HASTA 3 IMÁGENES + MÚLTIPLES TEXTOS Y FIRMA (SIN QR EN ABSOLUTO)
           <div
             style={{
               width: "100%",
@@ -697,46 +814,84 @@ export function ModalImprimirTarjetaTaller({
               boxSizing: "border-box",
             }}
           >
-            {disenoNorm.imagenUrl && (
-              <img
-                src={disenoNorm.imagenUrl}
-                alt="Imagen tarjeta"
-                style={{
-                  position: "absolute",
-                  left: `${disenoNorm.imagenXPct}%`,
-                  top: `${disenoNorm.imagenYPct}%`,
-                  transform: "translate(-50%, -50%)",
-                  width: `${disenoNorm.imagenAnchoMm}mm`,
-                  height: "auto",
-                  objectFit: "contain",
-                  filter: disenoNorm.escalaGrisesImagen ? "grayscale(100%)" : "none",
-                }}
-              />
+            {disenoNorm.imagenes.map((im) =>
+              im.cubrirTarjeta ? (
+                <img
+                  key={im.id}
+                  src={im.url}
+                  alt="Fondo tarjeta"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    opacity: im.opacidad ?? 1,
+                    filter: im.escalaGrises ? "grayscale(100%)" : "none",
+                    zIndex: 1,
+                  }}
+                />
+              ) : (
+                <img
+                  key={im.id}
+                  src={im.url}
+                  alt="Imagen tarjeta"
+                  style={{
+                    position: "absolute",
+                    left: `${im.xPct}%`,
+                    top: `${im.yPct}%`,
+                    transform: "translate(-50%, -50%)",
+                    width: `${Math.min(anchoMm, im.anchoMm)}mm`,
+                    height: "auto",
+                    objectFit: "contain",
+                    opacity: im.opacidad ?? 1,
+                    filter: im.escalaGrises ? "grayscale(100%)" : "none",
+                    zIndex: 2,
+                  }}
+                />
+              )
             )}
 
-            <div
-              style={{
-                position: "absolute",
-                left: `${disenoNorm.textoXPct}%`,
-                top: `${disenoNorm.textoYPct}%`,
-                transform: "translate(-50%, -50%)",
-                width: `${disenoNorm.textoAnchoPct}%`,
-                fontFamily: resolverFontFamilyCss(disenoNorm.fuente),
-                fontSize: `${disenoNorm.tamanoPt}pt`,
-                fontWeight: disenoNorm.negrita ? 700 : 400,
-                fontStyle: disenoNorm.italica ? "italic" : "normal",
-                textAlign: disenoNorm.alineacion,
-                lineHeight: 1.38,
-                color: "#18181B",
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-              }}
-            >
-              {mensajeEditable ||
-                (esCondolencias
-                  ? "Expresamos nuestras más sentidas condolencias."
-                  : "Con todo mi cariño")}
-            </div>
+            {disenoNorm.bloquesTexto.map((blk) => {
+              if (blk.rol === "firma" && (!disenoNorm.mostrarFirma || !esFirmaVisibleValida(deEditable))) {
+                return null;
+              }
+              const contenido =
+                blk.rol === "mensaje"
+                  ? mensajeEditable ||
+                    (esCondolencias
+                      ? "Expresamos nuestras más sentidas condolencias."
+                      : "Con todo mi cariño")
+                  : blk.rol === "firma"
+                    ? deEditable.trim()
+                    : (blk.texto || "").trim();
+              if (!contenido) return null;
+
+              return (
+                <div
+                  key={blk.id}
+                  style={{
+                    position: "absolute",
+                    left: `${blk.xPct}%`,
+                    top: `${blk.yPct}%`,
+                    transform: "translate(-50%, -50%)",
+                    width: `${blk.anchoPct}%`,
+                    fontFamily: resolverFontFamilyCss(blk.fuente, esCondolencias),
+                    fontSize: `${blk.tamanoPt || 18}pt`,
+                    fontWeight: blk.negrita ? 700 : 400,
+                    fontStyle: blk.italica ? "italic" : "normal",
+                    textAlign: blk.alineacion || "center",
+                    lineHeight: 1.38,
+                    color: blk.colorHex || "#18181B",
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    zIndex: 5,
+                  }}
+                >
+                  {contenido}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -826,6 +981,31 @@ export function ModalImprimirTarjetaTaller({
             </button>
           </div>
 
+          {/* ALERTA PROMINENTE SI EL CLIENTE MODIFICÓ LA TARJETA */}
+          {fueEditadaPorCliente && (
+            <div
+              style={{
+                padding: "10px 20px",
+                background: "#FEF3C7",
+                borderBottom: "1px solid #F59E0B",
+                color: "#92400E",
+                display: "flex",
+                alignItems: "center",
+                gap: "9px",
+                fontSize: "0.78rem",
+              }}
+            >
+              <AlertTriangle size={17} style={{ flexShrink: 0, color: "#D97706" }} />
+              <div>
+                <strong>¡Atención! Tarjeta modificada por el cliente</strong>
+                {metaLocal?.ultima_edicion_cliente_en
+                  ? ` (${new Date(metaLocal.ultima_edicion_cliente_en).toLocaleString("es-EC")})`
+                  : ""}
+                : revisa el diseño final antes de imprimir y evita realizar cambios sin confirmar con el cliente.
+              </div>
+            </div>
+          )}
+
           {/* CUERPO: 2 COLUMNAS */}
           <div
             style={{
@@ -861,6 +1041,7 @@ export function ModalImprimirTarjetaTaller({
                 esCondolencias={esCondolencias}
                 soloQr={soloQrEfectivo}
                 mensaje={mensajeEditable}
+                firma={deEditable}
                 diseno={disenoNorm}
                 onCambiarDiseno={setDiseno}
                 qrDataUrl={qrDataUrl}
@@ -1671,6 +1852,30 @@ export function ModalImprimirTarjetaTaller({
             </button>
 
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                disabled={compartiendoDiseno}
+                onClick={() => void handleCompartirDiseno()}
+                title="Guardar y compartir imagen PNG del diseño final (WhatsApp / Descarga)"
+                aria-label="Compartir Diseño"
+                style={{
+                  padding: "9px 13px",
+                  borderRadius: "8px",
+                  border: "1px solid #16A34A",
+                  background: "#F0FDF4",
+                  color: "#15803D",
+                  fontWeight: 700,
+                  fontSize: "0.82rem",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                {compartiendoDiseno ? <Loader2 size={14} /> : <Share2 size={14} />}
+                <span>{compartiendoDiseno ? "Preparando..." : "Compartir"}</span>
+              </button>
+
               <button
                 type="button"
                 disabled={descargandoPdf}

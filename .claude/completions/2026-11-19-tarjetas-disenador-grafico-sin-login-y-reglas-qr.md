@@ -12,10 +12,12 @@
    - Eliminada la opción de incluir QR junto al mensaje impreso.
 3. **Condolencias sin QR, sin Música y sin Lyric:**
    - En **Condolencias** (`16,8 × 11,3 cm` horizontal) se ocultan y deshabilitan el modo QR, música, lyrics y enlace de vista digital; conserva el diseñador visual con imagen/logo opcional y el enlace de edición sin login.
-4. **Diseñador Gráfico WYSIWYG + Imagen Opcional (`LienzoDisenadorTarjeta.tsx`):**
-   - Arrastrar y posicionar bloque de texto e imagen/logo directamente sobre la cartulina.
-   - Herramientas de alineación (`left`, `center`, `right`, `justify`), fuente (`Cursiva`, `Serif`, `Formal`), tamaño (`10–34pt`), negrita/itálica, ancho de caja, subida de imagen/logo (`subirImagenTarjetaAction`), tamaño en `mm` y filtro blanco/negro (`B/N`).
-   - Replicado fielmente en vista previa, `@media print` (Canon PIXMA G3110), `Descargar PDF` (`pdf-lib`, incluyendo texto justificado e imagen PNG/JPG incrustada), `/tarjeta-editar/[tokenEdicion]` y `/dedicatoria/[tokenVista]`.
+4. **Diseñador Gráfico WYSIWYG Multi-Elemento (`LienzoDisenadorTarjeta.tsx`):**
+   - Hasta **3 imágenes independientes** por tarjeta, arrastrables y ampliables hasta el **100% del espacio de la tarjeta** (`Fondo 100%` + control de opacidad + filtro `B/N`).
+   - **Múltiples cuadros de texto**: mensaje principal + **cuadro de firma (`De parte de`)** + hasta 2 cuadros de texto adicionales (`+ Texto`), todos arrastrables e independientes.
+   - **6 tipografías curadas** (`Cursiva`, `Caligrafía`, `Manuscrita`, `Editorial`, `Clásica`, `Moderna`), alineación (`left`, `center`, `right`, `justify`), tamaño (`9–38pt`), negrita/itálica y ancho de caja.
+   - Botón **`Compartir`** que exporta el diseño final en PNG de alta resolución (`10 px/mm`) listo para WhatsApp / Web Share API.
+   - **Alerta de edición del cliente:** Notificación In-App + Push a todo el equipo al guardar cambios desde `/tarjeta-editar/[token]`, banner de alerta destacado en `ModalImprimirTarjetaTaller` e insignia `Tarjeta · Cliente` en `/panel/pedidos`.
 
 ## Verificación
 - `pnpm --filter @eco/comercio --filter tinkay-web --filter margaritas-web typecheck`: Exit code `0`.

@@ -797,8 +797,45 @@ export interface ItemOrdenTaller {
   tipoOferta?: string;
 }
 
+export type ClaveFuenteTarjeta =
+  | "cursiva"
+  | "caligrafia"
+  | "manuscrita"
+  | "editorial"
+  | "clasica"
+  | "moderna"
+  | "serif"
+  | "formal";
+
+export interface ImagenDisenoTarjeta {
+  id: string;
+  url: string;
+  xPct: number;
+  yPct: number;
+  anchoMm: number;
+  /** Cuando es true, la imagen cubre el 100% del espacio de la cartulina como fondo */
+  cubrirTarjeta?: boolean;
+  escalaGrises?: boolean;
+  opacidad?: number;
+}
+
+export interface BloqueTextoTarjeta {
+  id: string;
+  rol: "mensaje" | "firma" | "extra";
+  texto?: string;
+  fuente?: ClaveFuenteTarjeta;
+  tamanoPt?: number;
+  alineacion?: "left" | "center" | "right" | "justify";
+  negrita?: boolean;
+  italica?: boolean;
+  colorHex?: string;
+  xPct: number;
+  yPct: number;
+  anchoPct: number;
+}
+
 export interface DisenoVisualTarjeta {
-  fuente?: "cursiva" | "serif" | "formal";
+  fuente?: ClaveFuenteTarjeta;
   tamanoPt?: number;
   alineacion?: "left" | "center" | "right" | "justify";
   negrita?: boolean;
@@ -806,6 +843,13 @@ export interface DisenoVisualTarjeta {
   textoXPct?: number;
   textoYPct?: number;
   textoAnchoPct?: number;
+  /** Mostrar cuadro de firma ("De parte de") en la tarjeta impresa y digital */
+  mostrarFirma?: boolean;
+  /** Bloques de texto configurables (firma + cuadros adicionales arrastrables) */
+  bloquesTexto?: BloqueTextoTarjeta[];
+  /** Hasta 3 imágenes independientes (arrastrables y ampliables hasta 100% de la tarjeta) */
+  imagenes?: ImagenDisenoTarjeta[];
+  /** Campos legados conservados por retrocompatibilidad */
   imagenUrl?: string | null;
   imagenXPct?: number;
   imagenYPct?: number;

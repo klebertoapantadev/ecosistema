@@ -3533,6 +3533,19 @@ export async function editarTarjetaClienteAction(entrada: {
         revalidatePath(`/dedicatoria/${tokenVista}`);
         revalidatePath(`/tarjeta-editar/${entrada.token}`);
       } catch {}
+      try {
+        const infoTarj = await obtenerTarjetaPublicaAction(tokenVista);
+        const negNotif = infoTarj.ok && infoTarj.tarjeta?.negocio ? infoTarj.tarjeta.negocio : "tinkay";
+        const codNotif = infoTarj.ok && infoTarj.tarjeta?.codigo ? infoTarj.tarjeta.codigo : "PEDIDO";
+        await notificarPersonalTallerODespacho({
+          negocio: negNotif,
+          titulo: `✏️ Cliente modificó tarjeta (${codNotif})`,
+          contenidoHtml: `<p>El cliente actualizó el diseño/mensaje de la tarjeta del pedido <strong>${codNotif}</strong>. Revisa la tarjeta antes de imprimir y evita sobreescribir sus cambios.</p>`,
+          urlAccion: "/panel/pedidos",
+          roles: ["SUPERADMIN", "ADMINISTRADOR", "OPERADOR", "VENTAS", "TALLER"],
+          claveReferencia: `tarjeta-cliente-${tokenVista}-${Date.now()}`,
+        });
+      } catch {}
       return {
         ok: true,
         mensaje: String(resRpcEdit.mensaje || "Tarjeta actualizada correctamente."),
@@ -3817,6 +3830,20 @@ export async function editarTarjetaClienteAction(entrada: {
     try {
       revalidatePath(`/dedicatoria/${tokenVista}`);
       revalidatePath(`/tarjeta-editar/${entrada.token}`);
+    } catch {}
+
+    try {
+      const infoTarj = await obtenerTarjetaPublicaAction(tokenVista);
+      const negNotif = infoTarj.ok && infoTarj.tarjeta?.negocio ? infoTarj.tarjeta.negocio : "tinkay";
+      const codNotif = infoTarj.ok && infoTarj.tarjeta?.codigo ? infoTarj.tarjeta.codigo : "PEDIDO";
+      await notificarPersonalTallerODespacho({
+        negocio: negNotif,
+        titulo: `✏️ Cliente modificó tarjeta (${codNotif})`,
+        contenidoHtml: `<p>El cliente actualizó el diseño/mensaje de la tarjeta del pedido <strong>${codNotif}</strong>. Revisa la tarjeta antes de imprimir y evita sobreescribir sus cambios.</p>`,
+        urlAccion: "/panel/pedidos",
+        roles: ["SUPERADMIN", "ADMINISTRADOR", "OPERADOR", "VENTAS", "TALLER"],
+        claveReferencia: `tarjeta-cliente-${tokenVista}-${Date.now()}`,
+      });
     } catch {}
 
     return { ok: true, mensaje: "Tarjeta actualizada correctamente." };

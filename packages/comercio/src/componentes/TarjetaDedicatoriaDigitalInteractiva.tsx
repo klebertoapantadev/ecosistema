@@ -4,6 +4,8 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Heart, Play, Pause, Volume2, VolumeX, Sparkles } from "lucide-react";
 import type { DisenoVisualTarjeta } from "../operaciones-taller";
 import {
+  asegurarFuentesGoogleTarjetaCargadas,
+  esFirmaVisibleValida,
   normalizarDisenoTarjeta,
   resolverFontFamilyCss,
 } from "./LienzoDisenadorTarjeta";
@@ -41,6 +43,10 @@ function extraerYouTubeId(url?: string | null): string | null {
 export function TarjetaDedicatoriaDigitalInteractiva({
   datosIniciales,
 }: PropsTarjetaDedicatoriaDigitalInteractiva) {
+  useEffect(() => {
+    asegurarFuentesGoogleTarjetaCargadas();
+  }, []);
+
   const esCondolencias = datosIniciales.tipo === "CONDOLENCIAS_PLANA";
   const disenoNorm = useMemo(
     () =>
@@ -426,56 +432,111 @@ export function TarjetaDedicatoriaDigitalInteractiva({
               </>
             )}
 
-            {disenoNorm.imagenUrl && (
-              <img
-                src={disenoNorm.imagenUrl}
-                alt="Imagen de la tarjeta"
-                style={{
-                  maxWidth: `${Math.max(20, Math.min(72, (disenoNorm.imagenAnchoMm / (esCondolencias ? 168 : 113)) * 100))}%`,
-                  maxHeight: "140px",
-                  objectFit: "contain",
-                  marginBottom: "14px",
-                  filter: disenoNorm.escalaGrisesImagen ? "grayscale(100%)" : "none",
-                }}
-              />
+            {/* IMÁGENES (HASTA 3, CON SOPORTE FONDO 100%) */}
+            {disenoNorm.imagenes.map((im) =>
+              im.cubrirTarjeta ? (
+                <img
+                  key={im.id}
+                  src={im.url}
+                  alt="Fondo de la tarjeta"
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    opacity: im.opacidad ?? 1,
+                    filter: im.escalaGrises ? "grayscale(100%)" : "none",
+                    pointerEvents: "none",
+                    zIndex: 0,
+                  }}
+                />
+              ) : (
+                <img
+                  key={im.id}
+                  src={im.url}
+                  alt="Imagen de la tarjeta"
+                  style={{
+                    position: "relative",
+                    zIndex: 2,
+                    maxWidth: `${Math.max(20, Math.min(94, (im.anchoMm / (esCondolencias ? 168 : 113)) * 100))}%`,
+                    maxHeight: "150px",
+                    objectFit: "contain",
+                    marginBottom: "10px",
+                    opacity: im.opacidad ?? 1,
+                    filter: im.escalaGrises ? "grayscale(100%)" : "none",
+                  }}
+                />
+              )
             )}
 
-            <div
-              style={{
-                fontFamily: resolverFontFamilyCss(disenoNorm.fuente),
-                fontSize: esCondolencias ? "1.35rem" : "1.85rem",
-                fontWeight: disenoNorm.negrita ? 700 : 400,
-                fontStyle: disenoNorm.italica ? "italic" : "normal",
-                textAlign: disenoNorm.alineacion,
-                lineHeight: 1.4,
-                color: "#18181B",
-                whiteSpace: "pre-wrap",
-                wordBreak: "break-word",
-                width: `${disenoNorm.textoAnchoPct}%`,
-                maxWidth: "94%",
-              }}
-            >
-              {datosIniciales.dedicatoria ||
-                (esCondolencias
-                  ? "Expresamos nuestras más sentidas condolencias."
-                  : "Con todo mi cariño.")}
-            </div>
+            {/* BLOQUES DE TEXTO (MENSAJE + EXTRAS + FIRMA CON SUS FUENTES CURADAS) */}
+            {disenoNorm.bloquesTexto.map((blk) => {
+              if (blk.rol === "firma") {
+                if (!disenoNorm.mostrarFirma || !esFirmaVisibleValida(datosIniciales.remitente)) {
+                  return null;
+                }
+                return (
+                  <div
+                    key={blk.id}
+                    style={{
+                      position: "relative",
+                      zIndex: 3,
+                      marginTop: "14px",
+                      paddingTop: "8px",
+                      borderTop: "1px dashed rgba(120, 113, 108, 0.3)",
+                      fontFamily: resolverFontFamilyCss(blk.fuente, esCondolencias),
+                      fontSize: `${Math.max(13, (blk.tamanoPt || 15) * 0.95)}px`,
+                      fontWeight: blk.negrita ? 700 : 400,
+                      fontStyle: blk.italica ? "italic" : "normal",
+                      textAlign: blk.alineacion || "right",
+                      color: blk.colorHex || "#44403C",
+                      width: `${blk.anchoPct}%`,
+                      maxWidth: "94%",
+                    }}
+                  >
+                    {datosIniciales.remitente}
+                  </div>
+                );
+              }
+              const contenido =
+                blk.rol === "mensaje"
+                  ? datosIniciales.dedicatoria ||
+                    (esCondolencias
+                      ? "Expresamos nuestras más sentidas condolencias."
+                      : "Con todo mi cariño.")
+                  : (blk.texto || "").trim();
+              if (!contenido) return null;
 
-            {datosIniciales.remitente &&
-              datosIniciales.remitente !== "Pendiente" &&
-              datosIniciales.remitente !== "Cliente" && (
+              return (
                 <div
+                  key={blk.id}
                   style={{
-                    marginTop: "18px",
-                    paddingTop: "10px",
-                    borderTop: "1px dashed rgba(120, 113, 108, 0.3)",
-                    fontSize: "0.8rem",
-                    color: "#57534E",
+                    position: "relative",
+                    zIndex: 3,
+                    fontFamily: resolverFontFamilyCss(blk.fuente, esCondolencias),
+                    fontSize:
+                      blk.rol === "mensaje"
+                        ? esCondolencias
+                          ? "1.35rem"
+                          : "1.85rem"
+                        : `${Math.max(13, (blk.tamanoPt || 15) * 0.95)}px`,
+                    fontWeight: blk.negrita ? 700 : 400,
+                    fontStyle: blk.italica ? "italic" : "normal",
+                    textAlign: blk.alineacion || "center",
+                    lineHeight: 1.4,
+                    color: blk.colorHex || "#18181B",
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    width: `${blk.anchoPct}%`,
+                    maxWidth: "94%",
+                    marginTop: blk.rol === "extra" ? "6px" : 0,
                   }}
                 >
-                  {datosIniciales.remitente}
+                  {contenido}
                 </div>
-              )}
+              );
+            })}
 
             {/* CONTROL SUTIL DE AUDIO SOLO EN DEDICATORIA CON CANCIÓN */}
             {tieneCancion && (

@@ -320,6 +320,7 @@ export function EditorTarjetaPublicoCliente({
               esCondolencias={esCondolencias}
               soloQr={soloQrEfectivo}
               mensaje={mensaje}
+              firma={de}
               diseno={diseno}
               onCambiarDiseno={setDiseno}
               onError={(msg) => setErrorMsg(msg)}

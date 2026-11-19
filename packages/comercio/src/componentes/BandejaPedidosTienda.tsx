@@ -958,7 +958,11 @@ export function BandejaPedidosTienda({
                   <button
                     type="button"
                     onClick={() => setPedidoParaTarjeta(p)}
-                    title="Ver, editar, descargar PDF o imprimir la tarjeta dedicatoria vinculada a este pedido"
+                    title={
+                      editadaCliente
+                        ? "⚠️ El cliente modificó esta tarjeta — revisa el diseño final antes de imprimir"
+                        : "Ver, editar, descargar PDF o imprimir la tarjeta dedicatoria vinculada a este pedido"
+                    }
                     aria-label="Tarjeta Dedicatoria"
                     style={{
                       display: "inline-flex",
@@ -970,12 +974,12 @@ export function BandejaPedidosTienda({
                         impresiones > 0
                           ? "1px solid #F59E0B"
                           : editadaCliente
-                            ? "1px solid #16A34A"
+                            ? "1.5px solid #D97706"
                             : "1px solid #0284C7",
                       background:
-                        impresiones > 0 ? "#FEF3C7" : editadaCliente ? "#DCFCE7" : "#F0F9FF",
+                        impresiones > 0 ? "#FEF3C7" : editadaCliente ? "#FEF3C7" : "#F0F9FF",
                       color:
-                        impresiones > 0 ? "#92400E" : editadaCliente ? "#166534" : "#0369A1",
+                        impresiones > 0 ? "#92400E" : editadaCliente ? "#92400E" : "#0369A1",
                       fontSize: "0.7rem",
                       fontWeight: 700,
                       cursor: "pointer",
@@ -986,7 +990,7 @@ export function BandejaPedidosTienda({
                       {impresiones > 0
                         ? `Tarjeta (x${impresiones})`
                         : editadaCliente
-                          ? "Tarjeta ✨"
+                          ? "Tarjeta · Cliente"
                           : "Tarjeta"}
                     </span>
                   </button>
