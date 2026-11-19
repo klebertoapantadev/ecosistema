@@ -1325,6 +1325,14 @@ export interface AlbumGoogleFotosTv {
   categoria?: string;
 }
 
+export interface FavoritoYoutubeTv {
+  id: string;
+  titulo: string;
+  url: string;
+  canal?: string;
+  miniaturaUrl?: string;
+}
+
 export interface ConfiguracionTvTaller {
   modoActivo: ModoPantallaTv;
   youtubeUrlTaller: string;
@@ -1338,6 +1346,7 @@ export interface ConfiguracionTvTaller {
   mostrarPreciosEventos: boolean;
   segundosSlideEventos: number;
   albumesGoogleFotos: AlbumGoogleFotosTv[];
+  favoritosYoutube: FavoritoYoutubeTv[];
   kioscoActivo: boolean;
   permitirCambiarEstadoKiosco: boolean;
   tokenKiosco?: string;
@@ -1346,7 +1355,7 @@ export interface ConfiguracionTvTaller {
 
 export const CONFIG_TV_TALLER_DEFECTO: ConfiguracionTvTaller = {
   modoActivo: "TALLER",
-  youtubeUrlTaller: "https://www.youtube.com/watch?v=jfKfPfyJRdk",
+  youtubeUrlTaller: "https://www.youtube.com/watch?v=4xDzrJKXOOY",
   youtubeUrlEventosAudio: "https://www.youtube.com/watch?v=4oStw0r33so",
   posicionLateral: "derecha",
   densidadLayout: "AUTO",
@@ -1357,6 +1366,7 @@ export const CONFIG_TV_TALLER_DEFECTO: ConfiguracionTvTaller = {
   mostrarPreciosEventos: false,
   segundosSlideEventos: 10,
   albumesGoogleFotos: [],
+  favoritosYoutube: [],
   kioscoActivo: true,
   permitirCambiarEstadoKiosco: true,
 };
@@ -1373,6 +1383,18 @@ export function normalizarConfigTvTaller(raw?: Record<string, unknown> | null): 
       categoria: a.categoria ? String(a.categoria).trim() : undefined,
     }))
     .filter((a) => Boolean(a.url));
+
+  const favsRaw = Array.isArray(src.favoritosYoutube) ? src.favoritosYoutube : [];
+  const favoritosYoutube: FavoritoYoutubeTv[] = favsRaw
+    .filter((f): f is Record<string, unknown> => Boolean(f && typeof f === "object"))
+    .map((f, i) => ({
+      id: String(f.id || `fav-${i + 1}`),
+      titulo: String(f.titulo || `Favorito ${i + 1}`).trim(),
+      url: String(f.url || "").trim(),
+      canal: f.canal ? String(f.canal).trim() : undefined,
+      miniaturaUrl: f.miniaturaUrl ? String(f.miniaturaUrl).trim() : undefined,
+    }))
+    .filter((f) => Boolean(f.url));
 
   const modoRaw = String(src.modoActivo || "TALLER").toUpperCase();
   const modoActivo: ModoPantallaTv = modoRaw === "EVENTOS" ? "EVENTOS" : "TALLER";
@@ -1421,6 +1443,7 @@ export function normalizarConfigTvTaller(raw?: Record<string, unknown> | null): 
         ? Math.min(60, Math.round(src.segundosSlideEventos))
         : CONFIG_TV_TALLER_DEFECTO.segundosSlideEventos,
     albumesGoogleFotos: albumes,
+    favoritosYoutube,
     kioscoActivo:
       typeof src.kioscoActivo === "boolean" ? src.kioscoActivo : CONFIG_TV_TALLER_DEFECTO.kioscoActivo,
     permitirCambiarEstadoKiosco:

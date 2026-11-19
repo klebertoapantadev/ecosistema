@@ -15,6 +15,7 @@ import {
   Flame,
   Gift,
   Layers,
+  ListMusic,
   Loader2,
   Maximize2,
   Minimize2,
@@ -25,7 +26,11 @@ import {
   QrCode,
   RefreshCw,
   Search,
+  SkipBack,
+  SkipForward,
   Sparkles,
+  Star,
+  Trash2,
   Volume2,
   VolumeX,
   Wifi,
@@ -50,6 +55,7 @@ import {
   type ConfiguracionTvTaller,
   type DatosTableroTvTaller,
   type DensidadLayoutTv,
+  type FavoritoYoutubeTv,
   type ModoPantallaTv,
   type OrdenTvTaller,
   type PosicionLateralTv,
@@ -196,13 +202,23 @@ export function PantallaTvTaller({
   const [enPantallaCompleta, setEnPantallaCompleta] = useState<boolean>(false);
   const [hudVisible, setHudVisible] = useState<boolean>(true);
 
-  // Buscador y entrada directa de URL de YouTube en la TV
+  // Buscador, Cola ("A continuación"), Sugerencias y Favoritos de YouTube en la TV
   const [abiertoBuscadorYt, setAbiertoBuscadorYt] = useState<boolean>(false);
+  const [tabModalYt, setTabModalYt] = useState<"buscar" | "favoritos" | "cola">("buscar");
   const [consultaYt, setConsultaYt] = useState<string>("");
   const [buscandoYt, setBuscandoYt] = useState<boolean>(false);
   const [errorYtBusqueda, setErrorYtBusqueda] = useState<string | null>(null);
   const [resultadosYt, setResultadosYt] = useState<ResultadoBusquedaYoutubeTv[]>([]);
+  const [colaYt, setColaYt] = useState<ResultadoBusquedaYoutubeTv[]>([]);
+  const [indiceColaYt, setIndiceColaYt] = useState<number>(-1);
+  const [favoritosLocales, setFavoritosLocales] = useState<FavoritoYoutubeTv[]>(
+    datosIniciales?.configTv.favoritosYoutube ?? []
+  );
+  const [avisoSaltoYt, setAvisoSaltoYt] = useState<string | null>(null);
   const [errorReproductorYt, setErrorReproductorYt] = useState<boolean>(false);
+  const saltosConsecutivosRef = useRef<number>(0);
+  const colaYtRef = useRef<ResultadoBusquedaYoutubeTv[]>([]);
+  const indiceColaYtRef = useRef<number>(-1);
 
   // Navegación D-Pad / Control Remoto TV
   const [indiceFoco, setIndiceFoco] = useState<number>(0);
@@ -245,13 +261,24 @@ export function PantallaTvTaller({
     youtubeUrlLocal ??
     (modoActivo === "EVENTOS" ? cfg.youtubeUrlEventosAudio : cfg.youtubeUrlTaller);
 
+  useEffect(() => {
+    colaYtRef.current = colaYt;
+    indiceColaYtRef.current = indiceColaYt;
+  }, [colaYt, indiceColaYt]);
+
+  useEffect(() => {
+    if (Array.isArray(cfg.favoritosYoutube)) {
+      setFavoritosLocales(cfg.favoritosYoutube);
+    }
+  }, [cfg.favoritosYoutube]);
+
   const aplicarNuevaUrlYoutube = useCallback(
-    async (nuevaUrl: string) => {
+    async (nuevaUrl: string, cerrarModal = true) => {
       const limpia = nuevaUrl.trim();
       if (!limpia) return;
       setYoutubeUrlLocal(limpia);
       setErrorReproductorYt(false);
-      setAbiertoBuscadorYt(false);
+      if (cerrarModal) setAbiertoBuscadorYt(false);
       // Persistir en configuración del negocio si el usuario tiene sesión autenticada
       if (tablero.modoAcceso === "AUTENTICADO") {
         void guardarConfigTvTallerAction({
@@ -265,6 +292,103 @@ export function PantallaTvTaller({
     },
     [modoActivo, negNorm, tablero.modoAcceso]
   );
+
+  const reproducirDesdeListaYt = useCallback(
+    (lista: ResultadoBusquedaYoutubeTv[], indice: number, cerrarModal = true) => {
+      const item = lista[indice];
+      if (!item) return;
+      saltosConsecutivosRef.current = 0;
+      setColaYt(lista);
+      setIndiceColaYt(indice);
+      colaYtRef.current = lista;
+      indiceColaYtRef.current = indice;
+      void aplicarNuevaUrlYoutube(item.url, cerrarModal);
+    },
+    [aplicarNuevaUrlYoutube]
+  );
+
+  const siguienteCancionYt = useCallback(
+    (porBloqueo = false) => {
+      const lista = colaYtRef.current;
+      const idxActual = indiceColaYtRef.current;
+      if (lista.length > 1 && idxActual >= 0) {
+        if (porBloqueo) {
+          saltosConsecutivosRef.current += 1;
+          if (saltosConsecutivosRef.current >= Math.min(lista.length, 6)) {
+            setAvisoSaltoYt(null);
+            setErrorReproductorYt(true);
+            return;
+          }
+        } else {
+          saltosConsecutivosRef.current = 0;
+        }
+        const siguienteIdx = (idxActual + 1) % lista.length;
+        const nextItem = lista[siguienteIdx];
+        if (nextItem) {
+          setIndiceColaYt(siguienteIdx);
+          indiceColaYtRef.current = siguienteIdx;
+          if (porBloqueo) {
+            setAvisoSaltoYt(`Disquera bloqueó esa canción → Saltando a: ${nextItem.titulo}`);
+            setTimeout(() => setAvisoSaltoYt(null), 4500);
+          }
+          void aplicarNuevaUrlYoutube(nextItem.url, false);
+          return;
+        }
+      }
+      // Fallback: si es una playlist nativa de YouTube, avanzar en el player
+      try {
+        ytPlayerRef.current?.nextVideo?.();
+      } catch {
+        // Ignorar
+      }
+    },
+    [aplicarNuevaUrlYoutube]
+  );
+
+  const anteriorCancionYt = useCallback(() => {
+    const lista = colaYtRef.current;
+    const idxActual = indiceColaYtRef.current;
+    if (lista.length > 1 && idxActual >= 0) {
+      saltosConsecutivosRef.current = 0;
+      const prevIdx = (idxActual - 1 + lista.length) % lista.length;
+      const prevItem = lista[prevIdx];
+      if (prevItem) {
+        setIndiceColaYt(prevIdx);
+        indiceColaYtRef.current = prevIdx;
+        void aplicarNuevaUrlYoutube(prevItem.url, false);
+      }
+    }
+  }, [aplicarNuevaUrlYoutube]);
+
+  const toggleFavoritoYt = useCallback(
+    async (item: { titulo: string; url: string; canal?: string; miniaturaUrl?: string }) => {
+      const yaExiste = favoritosLocales.some((f) => f.url === item.url);
+      const nuevos: FavoritoYoutubeTv[] = yaExiste
+        ? favoritosLocales.filter((f) => f.url !== item.url)
+        : [
+            {
+              id: `fav-${Date.now()}`,
+              titulo: item.titulo || "Música favorita",
+              url: item.url,
+              canal: item.canal,
+              miniaturaUrl: item.miniaturaUrl,
+            },
+            ...favoritosLocales,
+          ];
+      setFavoritosLocales(nuevos);
+      if (tablero.modoAcceso === "AUTENTICADO") {
+        await guardarConfigTvTallerAction({
+          negocio: negNorm,
+          config: { favoritosYoutube: nuevos },
+        });
+      }
+    },
+    [favoritosLocales, negNorm, tablero.modoAcceso]
+  );
+
+  const cancionActualCola =
+    indiceColaYt >= 0 && colaYt[indiceColaYt] ? colaYt[indiceColaYt] : null;
+  const esActualFavorito = favoritosLocales.some((f) => f.url === youtubeUrlActual);
 
   const ejecutarBusquedaOUrlYoutube = useCallback(
     async (textoManual?: string) => {
@@ -511,14 +635,29 @@ export function PantallaTvTaller({
               // Autoplay puede esperar interacción
             }
           },
+          onStateChange: (ev) => {
+            // 1 = PLAYING -> resetear contador de saltos por bloqueo
+            if (ev.data === 1) {
+              saltosConsecutivosRef.current = 0;
+              setErrorReproductorYt(false);
+            }
+            // 0 = ENDED -> pasar automáticamente a la siguiente canción de la cola
+            if (ev.data === 0 && colaYtRef.current.length > 1) {
+              siguienteCancionYt(false);
+            }
+          },
           onError: (ev) => {
-            // 100 / 101 / 150 = video no disponible o bloqueado -> intentar siguiente o avisar
+            // 100 / 101 / 150 = video no disponible o bloqueado por disquera -> saltar automáticamente
             if (ev.data === 100 || ev.data === 101 || ev.data === 150 || ev.data === 2 || ev.data === 5) {
-              setErrorReproductorYt(true);
-              try {
-                ev.target.nextVideo?.();
-              } catch {
-                // Ignorar
+              if (colaYtRef.current.length > 1) {
+                setTimeout(() => siguienteCancionYt(true), 600);
+              } else {
+                setErrorReproductorYt(true);
+                try {
+                  ev.target.nextVideo?.();
+                } catch {
+                  // Ignorar
+                }
               }
             }
           },
@@ -544,7 +683,7 @@ export function PantallaTvTaller({
       prevCb?.();
       inicializarPlayer();
     };
-  }, [cfg.volumenYoutube, youtubeUrlActual]);
+  }, [cfg.volumenYoutube, siguienteCancionYt, youtubeUrlActual]);
 
   // Ajustar volumen cuando cambia en configuración
   useEffect(() => {
@@ -980,17 +1119,55 @@ export function PantallaTvTaller({
             transition: "opacity 0.3s ease",
           }}
         >
+          {colaYt.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={anteriorCancionYt}
+                title="Canción anterior en la cola"
+                style={hudBtnStyle("#1E293B")}
+              >
+                <SkipBack size={14} />
+              </button>
+              <button
+                type="button"
+                onClick={() => siguienteCancionYt(false)}
+                title="Siguiente canción en la cola"
+                style={hudBtnStyle("#1E293B")}
+              >
+                <SkipForward size={14} />
+              </button>
+            </>
+          )}
+
+          <button
+            type="button"
+            onClick={() =>
+              void toggleFavoritoYt({
+                titulo: cancionActualCola?.titulo || "Música Taller",
+                url: youtubeUrlActual,
+                canal: cancionActualCola?.canal,
+                miniaturaUrl: cancionActualCola?.miniaturaUrl,
+              })
+            }
+            title={esActualFavorito ? "Quitar de Mis Favoritos" : "Guardar canción actual en Favoritos"}
+            style={hudBtnStyle(esActualFavorito ? "#B45309" : "#1E293B")}
+          >
+            <Star size={14} fill={esActualFavorito ? "#FDE047" : "none"} color={esActualFavorito ? "#FDE047" : "#F8FAFC"} />
+          </button>
+
           <button
             type="button"
             onClick={() => {
+              setTabModalYt("buscar");
               setAbiertoBuscadorYt(true);
               setErrorYtBusqueda(null);
             }}
-            title="Buscar videos en YouTube o pegar una URL / playlist directamente"
+            title="Buscar en YouTube, ver Mis Favoritos, Cola o pegar URL"
             style={hudBtnStyle("#DC2626")}
           >
             <Search size={14} />
-            YouTube / URL
+            YouTube / Música
           </button>
 
           <button
@@ -1180,6 +1357,27 @@ export function PantallaTvTaller({
             }
           >
             <div ref={ytContainerRef} style={{ width: "100%", height: "100%" }} />
+            {!esSoloAudio && avisoSaltoYt && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "18px",
+                  left: "50%",
+                  transform: "translateX(-50%)",
+                  zIndex: 16,
+                  padding: "9px 16px",
+                  borderRadius: "10px",
+                  background: "rgba(15, 23, 42, 0.92)",
+                  border: "1px solid #38BDF8",
+                  color: "#E0F2FE",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  boxShadow: "0 10px 24px rgba(0,0,0,0.5)",
+                }}
+              >
+                ⏭ {avisoSaltoYt}
+              </div>
+            )}
             {!esSoloAudio && errorReproductorYt && (
               <div
                 style={{
@@ -2026,7 +2224,197 @@ export function PantallaTvTaller({
               </button>
             </div>
 
+            <div
+              style={{
+                padding: "0 20px",
+                borderBottom: "1px solid rgba(148,163,184,0.2)",
+                display: "flex",
+                gap: "8px",
+                background: "#0B1120",
+              }}
+            >
+              {(
+                [
+                  { id: "buscar", label: "🔍 Buscar / URL" },
+                  { id: "favoritos", label: `⭐ Mis Favoritos (${favoritosLocales.length})` },
+                  { id: "cola", label: `📋 Cola / Sugerencias (${colaYt.length})` },
+                ] as const
+              ).map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setTabModalYt(t.id)}
+                  style={{
+                    padding: "10px 14px",
+                    border: "none",
+                    borderBottom: tabModalYt === t.id ? "2.5px solid #F87171" : "2.5px solid transparent",
+                    background: "transparent",
+                    color: tabModalYt === t.id ? "#FFFFFF" : "#94A3B8",
+                    fontSize: "0.83rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+
             <div style={{ padding: "16px 20px", display: "flex", flexDirection: "column", gap: "12px", overflowY: "auto" }}>
+              {tabModalYt === "favoritos" ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                    <span style={{ fontSize: "0.84rem", color: "#CBD5E1" }}>
+                      Tu lista guardada de música y playlists que sí reproducen en el taller.
+                    </span>
+                    {favoritosLocales.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const comoCola: ResultadoBusquedaYoutubeTv[] = favoritosLocales.map((f) => {
+                            const p = extraerYoutubeVideoOPlaylist(f.url);
+                            return {
+                              videoId: p.videoId || f.id,
+                              titulo: f.titulo,
+                              canal: f.canal || "Favorito Taller",
+                              duracion: "",
+                              miniaturaUrl:
+                                f.miniaturaUrl ||
+                                (p.videoId ? `https://i.ytimg.com/vi/${p.videoId}/mqdefault.jpg` : ""),
+                              url: f.url,
+                            };
+                          });
+                          reproducirDesdeListaYt(comoCola, 0, true);
+                        }}
+                        style={{
+                          padding: "8px 14px",
+                          borderRadius: "9px",
+                          border: "none",
+                          background: "#059669",
+                          color: "#FFFFFF",
+                          fontSize: "0.82rem",
+                          fontWeight: 800,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "6px",
+                        }}
+                      >
+                        <Play size={14} /> Reproducir todos mis favoritos
+                      </button>
+                    )}
+                  </div>
+
+                  {favoritosLocales.length === 0 ? (
+                    <div style={{ padding: "28px", textAlign: "center", color: "#94A3B8", border: "1px dashed #334155", borderRadius: "12px" }}>
+                      Aún no tienes favoritos guardados. Busca música y toca la estrella ⭐ para guardar tus favoritos.
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      {favoritosLocales.map((fav, idx) => (
+                        <div
+                          key={fav.id}
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: "10px",
+                            padding: "9px 12px",
+                            borderRadius: "10px",
+                            background: "#1E293B",
+                            border: fav.url === youtubeUrlActual ? "1.5px solid #38BDF8" : "1px solid #334155",
+                          }}
+                        >
+                          <div style={{ minWidth: 0, flex: 1 }}>
+                            <div style={{ fontWeight: 700, fontSize: "0.86rem", color: "#F8FAFC" }}>
+                              {fav.titulo}
+                            </div>
+                            <div style={{ fontSize: "0.74rem", color: "#94A3B8" }}>
+                              {fav.canal || fav.url}
+                            </div>
+                          </div>
+                          <div style={{ display: "flex", gap: "6px" }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const comoCola: ResultadoBusquedaYoutubeTv[] = favoritosLocales.map((f) => {
+                                  const p = extraerYoutubeVideoOPlaylist(f.url);
+                                  return {
+                                    videoId: p.videoId || f.id,
+                                    titulo: f.titulo,
+                                    canal: f.canal || "Favorito",
+                                    duracion: "",
+                                    miniaturaUrl: f.miniaturaUrl || "",
+                                    url: f.url,
+                                  };
+                                });
+                                reproducirDesdeListaYt(comoCola, idx, true);
+                              }}
+                              style={hudBtnStyle("#0284C7")}
+                            >
+                              <Play size={13} /> Reproducir
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void toggleFavoritoYt(fav)}
+                              title="Quitar de favoritos"
+                              style={hudBtnStyle("#7F1D1D")}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : tabModalYt === "cola" ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <div style={{ fontSize: "0.82rem", color: "#CBD5E1" }}>
+                    <ListMusic size={15} style={{ verticalAlign: "middle", marginRight: "6px" }} />
+                    Si una canción es bloqueada por la disquera, la TV salta automáticamente a la siguiente de esta cola.
+                  </div>
+                  {colaYt.length === 0 ? (
+                    <div style={{ padding: "28px", textAlign: "center", color: "#94A3B8", border: "1px dashed #334155", borderRadius: "12px" }}>
+                      Busca un género o artista en la pestaña &quot;Buscar / URL&quot; para cargar una cola continua de sugerencias.
+                    </div>
+                  ) : (
+                    colaYt.map((vid, idx) => (
+                      <div
+                        key={`${vid.videoId}-${idx}`}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: "10px",
+                          padding: "8px 11px",
+                          borderRadius: "10px",
+                          background: idx === indiceColaYt ? "rgba(2, 132, 199, 0.25)" : "#1E293B",
+                          border: idx === indiceColaYt ? "1.5px solid #38BDF8" : "1px solid #334155",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+                          <span style={{ fontWeight: 800, color: idx === indiceColaYt ? "#38BDF8" : "#94A3B8", minWidth: "24px" }}>
+                            {idx === indiceColaYt ? "▶" : `#${idx + 1}`}
+                          </span>
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: 700, fontSize: "0.84rem", color: "#F8FAFC" }}>{vid.titulo}</div>
+                            <div style={{ fontSize: "0.73rem", color: "#94A3B8" }}>{vid.canal} {vid.duracion ? `· ${vid.duracion}` : ""}</div>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => reproducirDesdeListaYt(colaYt, idx, true)}
+                          style={hudBtnStyle("#0284C7")}
+                        >
+                          Reproducir
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+              ) : (
+                <>
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -2137,24 +2525,37 @@ export function PantallaTvTaller({
                     gap: "12px",
                   }}
                 >
-                  {resultadosYt.map((vid) => (
-                    <button
+                  {resultadosYt.map((vid, idx) => {
+                    const esFav = favoritosLocales.some((f) => f.url === vid.url);
+                    return (
+                    <div
                       key={vid.videoId}
-                      type="button"
-                      onClick={() => void aplicarNuevaUrlYoutube(vid.url)}
                       style={{
-                        textAlign: "left",
                         padding: "8px",
                         borderRadius: "12px",
                         border: "1px solid rgba(148,163,184,0.25)",
                         background: "#1E293B",
                         color: "#F8FAFC",
-                        cursor: "pointer",
                         display: "flex",
                         flexDirection: "column",
                         gap: "7px",
                       }}
                     >
+                      <button
+                        type="button"
+                        onClick={() => reproducirDesdeListaYt(resultadosYt, idx, true)}
+                        style={{
+                          textAlign: "left",
+                          padding: 0,
+                          border: "none",
+                          background: "transparent",
+                          color: "inherit",
+                          cursor: "pointer",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "7px",
+                        }}
+                      >
                       <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", borderRadius: "8px", overflow: "hidden", background: "#000" }}>
                         <img
                           src={vid.miniaturaUrl}
@@ -2193,10 +2594,31 @@ export function PantallaTvTaller({
                         {vid.titulo}
                       </div>
                       <div style={{ fontSize: "0.72rem", color: "#94A3B8" }}>{vid.canal}</div>
-                    </button>
-                  ))}
+                      </button>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "6px", paddingTop: "4px", borderTop: "1px solid rgba(148,163,184,0.16)" }}>
+                        <button
+                          type="button"
+                          onClick={() => reproducirDesdeListaYt(resultadosYt, idx, true)}
+                          style={hudBtnStyle("#0284C7")}
+                        >
+                          <Play size={12} /> Reproducir
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void toggleFavoritoYt(vid)}
+                          title={esFav ? "Quitar de favoritos" : "Guardar en Mis Favoritos"}
+                          style={hudBtnStyle(esFav ? "#B45309" : "#0F172A")}
+                        >
+                          <Star size={12} fill={esFav ? "#FDE047" : "none"} color={esFav ? "#FDE047" : "#F8FAFC"} />
+                          {esFav ? "Guardado" : "Favorito"}
+                        </button>
+                      </div>
+                    </div>
+                  );})}
                 </div>
               ) : null}
+                </>
+              )}
             </div>
           </div>
         </div>
