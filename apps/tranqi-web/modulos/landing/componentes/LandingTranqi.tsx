@@ -154,6 +154,41 @@ export function LandingTranqi() {
     };
   }, []);
 
+  // Paso entre secciones (TRQ-028): al entrar una sección, su contenido sube
+  // y aparece en cascada (títulos, luego tarjetas, fotos y pasos de uno en
+  // uno). Lo marca JS y no el HTML: sin JS todo se ve desde el principio. El
+  // hero queda fuera porque ya está en pantalla al cargar y parpadearía.
+  useEffect(() => {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const PIEZAS = [
+      ".wrap > h2", ".wrap > .sub", ".wrap > .sub2", ".oferta", ".comienza", ".centro", ".medios", ".remate",
+      ".pasos > .paso", ".beneficio", ".dona", ".bento > img", ".tarjeta", ".tira > img",
+      ".cabecera > *", ".respaldo > div", ".rejilla > *:not(.preguntas):not(.pilares)", ".preguntas > details",
+      ".pilares > *",
+    ].join(", ");
+    // Cada pieza se observa sola: en móvil una sección mide varias pantallas y,
+    // si se activara entera, lo de abajo ya habría aparecido al llegar. La
+    // cascada se arma con las piezas que entran juntas, en orden de lectura.
+    const piezas = [...document.querySelectorAll<HTMLElement>(".landing section:not(#hero)")].flatMap((s) => [
+      ...s.querySelectorAll<HTMLElement>(PIEZAS),
+    ]);
+    piezas.forEach((el) => el.classList.add("aparece"));
+    const vista = new IntersectionObserver(
+      (es) => {
+        const entran = es.filter((e) => e.isIntersecting).map((e) => e.target as HTMLElement);
+        entran.sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+        entran.forEach((el, i) => {
+          el.style.setProperty("--i", String(Math.min(i, 8)));
+          el.classList.add("es-visible");
+          vista.unobserve(el);
+        });
+      },
+      { threshold: 0.15, rootMargin: "0px 0px -6% 0px" }
+    );
+    piezas.forEach((el) => vista.observe(el));
+    return () => vista.disconnect();
+  }, []);
+
   const precio = formatearPrecio(precioDesde);
 
   return (
