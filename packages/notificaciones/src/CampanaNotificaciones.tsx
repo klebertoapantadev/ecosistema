@@ -11,9 +11,22 @@ interface Props {
   negocio: string;
   usuarioId?: string;
   variante?: "oscura" | "clara";
+  /**
+   * Si la app lo pasa, la alerta nueva se le entrega para que la muestre con
+   * sus propios avisos y la campana no pinta su ventana emergente (el estilo
+   * es de cada producto: tranqi usa su aviso 9A).
+   */
+  alAlertaEnVivo?: (notificacion: NotificacionItem) => void;
+  /** Cómo pinta la app el título y el cuerpo en la lista (ver WidgetNotificacionesCliente). */
+  presentar?: (notificacion: NotificacionItem) => { titulo: string; html: string };
 }
 
-export function CampanaNotificaciones({ negocio, variante = "oscura" }: Props) {
+export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEnVivo, presentar }: Props) {
+  const vista = (n: NotificacionItem) => (presentar ? presentar(n) : { titulo: n.not_titulo, html: n.not_contenido_html });
+  const alAlertaEnVivoRef = React.useRef(alAlertaEnVivo);
+  React.useEffect(() => {
+    alAlertaEnVivoRef.current = alAlertaEnVivo;
+  }, [alAlertaEnVivo]);
   const [abierto, setAbierto] = useState(false);
   const [filtro, setFiltro] = useState<"todas" | "no_leidas" | "eliminadas">("todas");
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
@@ -72,7 +85,8 @@ export function CampanaNotificaciones({ negocio, variante = "oscura" }: Props) {
             JSON.stringify(Array.from(setVistas).slice(-80))
           );
         } catch {}
-        setAlertaEmergente(candidataToast);
+        if (alAlertaEnVivoRef.current) alAlertaEnVivoRef.current(candidataToast);
+        else setAlertaEmergente(candidataToast);
 
         if ("Notification" in window && Notification.permission === "granted") {
           try {
@@ -842,7 +856,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura" }: Props) {
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px", marginBottom: "4px" }}>
                       <span style={{ fontWeight: 700, fontSize: "0.85rem", color: n.not_eliminada ? "#fca5a5" : n.not_leido_en ? "#c9d1d9" : "#58a6ff" }}>
-                        {n.not_titulo}
+                        {vista(n).titulo}
                       </span>
                       <span style={{ fontSize: "0.72rem", color: "#8b949e", whiteSpace: "nowrap" }}>
                         {new Date(n.not_creado_en).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
@@ -881,7 +895,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura" }: Props) {
                     </div>
                     <div
                       style={{ fontSize: "0.8rem", color: "#8b949e", lineHeight: 1.4 }}
-                      dangerouslySetInnerHTML={{ __html: n.not_contenido_html }}
+                      dangerouslySetInnerHTML={{ __html: vista(n).html }}
                     />
                     {n.not_url_accion && (
                       <a
