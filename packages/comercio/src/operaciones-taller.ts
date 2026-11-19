@@ -718,21 +718,6 @@ export interface DefinicionClasificacionPedido {
 
 export const CLASIFICACIONES_OPERATIVAS_PEDIDO: readonly DefinicionClasificacionPedido[] = [
   {
-    clave: "FLORISTERIA_OCASIONES",
-    etiqueta: "Floristería / Ocasiones",
-    etiquetaCorta: "Floristería / Ocasiones",
-    descripcion: "Ramos, box florales, cumpleaños, aniversarios y ocasiones especiales (domicilio o retiro)",
-    iconoClave: "Flower2",
-    acentoHex: "#3D5A45",
-    fondoHex: "#F3F6F3",
-    bordeHex: "#C9D6CC",
-    textoHex: "#2C4232",
-    acentoOpacoHex: "#6E655D",
-    fondoOpacoHex: "#F5F2EC",
-    bordeOpacoHex: "#DDD5C9",
-    textoOpacoHex: "#574E46",
-  },
-  {
     clave: "CONDOLENCIAS",
     etiqueta: "Condolencias",
     etiquetaCorta: "Condolencias",
@@ -777,22 +762,43 @@ export const CLASIFICACIONES_OPERATIVAS_PEDIDO: readonly DefinicionClasificacion
     bordeOpacoHex: "#D9D2DC",
     textoOpacoHex: "#594F5E",
   },
+  {
+    clave: "FLORISTERIA_OCASIONES",
+    etiqueta: "Pedido",
+    etiquetaCorta: "Pedido",
+    descripcion: "Ramos, box florales, cumpleaños, aniversarios y ocasiones especiales (domicilio o retiro)",
+    iconoClave: "Flower2",
+    acentoHex: "#3D5A45",
+    fondoHex: "#F3F6F3",
+    bordeHex: "#C9D6CC",
+    textoHex: "#2C4232",
+    acentoOpacoHex: "#6E655D",
+    fondoOpacoHex: "#F5F2EC",
+    bordeOpacoHex: "#DDD5C9",
+    textoOpacoHex: "#574E46",
+  },
 ] as const;
 
 export function obtenerDefinicionClasificacionPedido(
   clave?: string | null
 ): DefinicionClasificacionPedido {
   const norm = String(clave || "").trim().toUpperCase();
-  if (norm === "DOMICILIO" || norm === "LOCAL" || norm === "OCASIONES" || norm === "FLORISTERIA") {
-    return CLASIFICACIONES_OPERATIVAS_PEDIDO[0]!;
+  const defPedido = CLASIFICACIONES_OPERATIVAS_PEDIDO.find(
+    (c) => c.clave === "FLORISTERIA_OCASIONES"
+  )!;
+  if (
+    norm === "DOMICILIO" ||
+    norm === "LOCAL" ||
+    norm === "OCASIONES" ||
+    norm === "FLORISTERIA" ||
+    norm === "PEDIDO"
+  ) {
+    return defPedido;
   }
   if (norm === "MOBILIARIO" || norm === "RENTA") {
     return CLASIFICACIONES_OPERATIVAS_PEDIDO.find((c) => c.clave === "EVENTOS")!;
   }
-  return (
-    CLASIFICACIONES_OPERATIVAS_PEDIDO.find((c) => c.clave === norm) ??
-    CLASIFICACIONES_OPERATIVAS_PEDIDO[0]!
-  );
+  return CLASIFICACIONES_OPERATIVAS_PEDIDO.find((c) => c.clave === norm) ?? defPedido;
 }
 
 export function inferirClasificacionPedido(entrada: {
@@ -824,7 +830,13 @@ export function inferirClasificacionPedido(entrada: {
   ) {
     return exp;
   }
-  if (exp === "FLORISTERIA" || exp === "OCASIONES" || exp === "FLORISTERIA_OCACION" || exp === "FLORISTERIAOCACIONES") {
+  if (
+    exp === "FLORISTERIA" ||
+    exp === "OCASIONES" ||
+    exp === "FLORISTERIA_OCACION" ||
+    exp === "FLORISTERIAOCACIONES" ||
+    exp === "PEDIDO"
+  ) {
     return "FLORISTERIA_OCASIONES";
   }
   if (exp === "CONDOLENCIA" || exp === "FUNERARIO" || exp === "FUNEBRE" || exp === "FÚNEBRE") {

@@ -1816,10 +1816,10 @@ export function PantallaTvTaller({
 
                       <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                         {[
-                          { k: "FLORISTERIA_OCASIONES", label: "Floristería / Ocasiones", color: "#6F9A7B" },
                           { k: "CONDOLENCIAS", label: "Condolencias", color: "#A89D8F" },
                           { k: "EVENTOS", label: "Eventos", color: "#C97A94" },
                           { k: "EXEQUIALES", label: "Exequiales", color: "#9E89AD" },
+                          { k: "FLORISTERIA_OCASIONES", label: "Pedido", color: "#6F9A7B" },
                         ].map((item) => {
                           const val = Number(desglose[item.k] ?? 0);
                           return (

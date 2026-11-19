@@ -172,13 +172,16 @@ describe("operaciones-taller y pdf-informe-iess", () => {
     expect(bytes.byteLength).toBeGreaterThan(1500);
   });
 
-  it("distingue las 4 clasificaciones del negocio (Floristería/Ocasiones, Condolencias, Eventos, Exequiales) y gestiona rangos u hora exacta", () => {
+  it("distingue las 4 clasificaciones del negocio (Condolencias, Eventos, Exequiales, Pedido) y gestiona rangos u hora exacta", () => {
     expect(CLASIFICACIONES_OPERATIVAS_PEDIDO.map((c) => c.clave)).toEqual([
-      "FLORISTERIA_OCASIONES",
       "CONDOLENCIAS",
       "EVENTOS",
       "EXEQUIALES",
+      "FLORISTERIA_OCASIONES",
     ]);
+    expect(
+      CLASIFICACIONES_OPERATIVAS_PEDIDO.find((c) => c.clave === "FLORISTERIA_OCASIONES")?.etiqueta
+    ).toBe("Pedido");
 
     expect(
       inferirClasificacionPedido({

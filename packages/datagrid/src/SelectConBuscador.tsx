@@ -14,6 +14,10 @@ export interface SelectConBuscadorProps
   extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, "multiple" | "size"> {
   placeholderBusqueda?: string;
   tituloModal?: string;
+  /** Muestra el buscador solo cuando la cantidad de opciones supera este umbral (por defecto 6). */
+  umbralBuscador?: number;
+  /** Ordena alfabéticamente las opciones manteniendo las opciones placeholder (value="") arriba (por defecto true). */
+  ordenarAlfabeticamente?: boolean;
 }
 
 export function normalizarTextoBusquedaSelect(texto: string): string {
@@ -91,6 +95,66 @@ export function extraerOpcionesDeChildrenSelect(
   return resultado;
 }
 
+function claveOrdenAlfabeticoOpcion(texto: string): string {
+  const sinSimbolosIniciales = (texto || "").replace(/^[^\p{L}\p{N}]+/u, "").trim();
+  return sinSimbolosIniciales || (texto || "").trim();
+}
+
+function compararEtiquetasAlfabeticamente(a: string, b: string): number {
+  return claveOrdenAlfabeticoOpcion(a).localeCompare(claveOrdenAlfabeticoOpcion(b), "es", {
+    sensitivity: "base",
+    numeric: true,
+  });
+}
+
+export function ordenarOpcionesSelectAlfabeticamente(
+  opciones: OpcionSelectBuscador[]
+): OpcionSelectBuscador[] {
+  if (opciones.length <= 1) return opciones;
+
+  const fijas: OpcionSelectBuscador[] = [];
+  const restantes: OpcionSelectBuscador[] = [];
+
+  for (const op of opciones) {
+    if (!op.grupo && op.value === "") {
+      fijas.push(op);
+    } else {
+      restantes.push(op);
+    }
+  }
+
+  const tieneGrupos = restantes.some((op) => Boolean(op.grupo));
+  if (!tieneGrupos) {
+    restantes.sort((a, b) => compararEtiquetasAlfabeticamente(a.label, b.label));
+    return [...fijas, ...restantes];
+  }
+
+  const porGrupo = new Map<string, OpcionSelectBuscador[]>();
+  for (const op of restantes) {
+    const claveGrupo = op.grupo ?? "";
+    const lista = porGrupo.get(claveGrupo);
+    if (lista) {
+      lista.push(op);
+    } else {
+      porGrupo.set(claveGrupo, [op]);
+    }
+  }
+
+  const clavesGrupoOrdenadas = Array.from(porGrupo.keys()).sort((a, b) => {
+    if (a === "" && b !== "") return -1;
+    if (b === "" && a !== "") return 1;
+    return compararEtiquetasAlfabeticamente(a, b);
+  });
+
+  const ordenadas: OpcionSelectBuscador[] = [...fijas];
+  for (const claveGrupo of clavesGrupoOrdenadas) {
+    const items = porGrupo.get(claveGrupo) ?? [];
+    items.sort((a, b) => compararEtiquetasAlfabeticamente(a.label, b.label));
+    ordenadas.push(...items);
+  }
+  return ordenadas;
+}
+
 export function filtrarOpcionesSelectPorBusqueda(
   opciones: OpcionSelectBuscador[],
   termino: string
@@ -118,10 +182,19 @@ export function SelectConBuscador({
   title,
   placeholderBusqueda = "Buscar opción…",
   tituloModal,
+  umbralBuscador = 6,
+  ordenarAlfabeticamente = true,
   children,
   ...restProps
 }: SelectConBuscadorProps) {
-  const opciones = useMemo(() => extraerOpcionesDeChildrenSelect(children), [children]);
+  const opciones = useMemo(() => {
+    const extraidas = extraerOpcionesDeChildrenSelect(children);
+    return ordenarAlfabeticamente
+      ? ordenarOpcionesSelectAlfabeticamente(extraidas)
+      : extraidas;
+  }, [children, ordenarAlfabeticamente]);
+
+  const mostrarBuscador = opciones.length > umbralBuscador;
 
   const esControlado = value !== undefined;
   const [valorInterno, setValorInterno] = useState<string>(() => {
@@ -160,8 +233,8 @@ export function SelectConBuscador({
   );
 
   const opcionesFiltradas = useMemo(
-    () => filtrarOpcionesSelectPorBusqueda(opciones, busqueda),
-    [opciones, busqueda]
+    () => (mostrarBuscador ? filtrarOpcionesSelectPorBusqueda(opciones, busqueda) : opciones),
+    [mostrarBuscador, opciones, busqueda]
   );
 
   const recalcularPosicion = () => {
@@ -234,7 +307,11 @@ export function SelectConBuscador({
     recalcularPosicion();
     const t = window.setTimeout(() => {
       recalcularPosicion();
-      inputBusquedaRef.current?.focus({ preventScroll: true });
+      if (mostrarBuscador) {
+        inputBusquedaRef.current?.focus({ preventScroll: true });
+      } else {
+        listaRef.current?.focus({ preventScroll: true });
+      }
     }, 20);
 
     const alRedimensionar = () => recalcularPosicion();
@@ -245,7 +322,7 @@ export function SelectConBuscador({
       window.removeEventListener("resize", alRedimensionar);
       window.removeEventListener("scroll", alRedimensionar, true);
     };
-  }, [abierto]);
+  }, [abierto, mostrarBuscador]);
 
   useEffect(() => {
     setIndiceActivo(0);
@@ -277,7 +354,7 @@ export function SelectConBuscador({
     triggerRef.current?.focus({ preventScroll: true });
   };
 
-  const manejarTecladoBusqueda = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const manejarTecladoBusqueda = (e: React.KeyboardEvent<HTMLElement>) => {
     if (e.key === "Escape") {
       e.preventDefault();
       e.stopPropagation();
@@ -661,85 +738,89 @@ export function SelectConBuscador({
                 </div>
               )}
 
-              {/* Barra fija de búsqueda */}
-              <div
-                style={{
-                  padding: esMovil ? "8px 12px" : "8px",
-                  borderBottom: "1px solid #F4F4F5",
-                  background: "#FAFAFA",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "7px",
-                }}
-              >
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#71717A"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  style={{ flexShrink: 0 }}
-                  aria-hidden="true"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <input
-                  ref={inputBusquedaRef}
-                  type="search"
-                  value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
-                  onKeyDown={manejarTecladoBusqueda}
-                  placeholder={placeholderBusqueda}
-                  aria-label="Filtrar opciones"
+              {/* Barra fija de búsqueda (solo cuando hay más de 6 opciones) */}
+              {mostrarBuscador && (
+                <div
                   style={{
-                    flex: 1,
-                    minWidth: 0,
-                    border: "none",
-                    outline: "none",
-                    background: "transparent",
-                    color: "#18181B",
-                    fontSize: esMovil ? "16px" : "0.81rem",
-                    fontFamily: "inherit",
-                    padding: "2px 0",
+                    padding: esMovil ? "8px 12px" : "8px",
+                    borderBottom: "1px solid #F4F4F5",
+                    background: "#FAFAFA",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "7px",
                   }}
-                />
-                {busqueda && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setBusqueda("");
-                      inputBusquedaRef.current?.focus({ preventScroll: true });
-                    }}
-                    title="Limpiar búsqueda"
-                    aria-label="Limpiar búsqueda"
-                    style={{
-                      border: "none",
-                      background: "#E4E4E7",
-                      color: "#3F3F46",
-                      width: "20px",
-                      height: "20px",
-                      borderRadius: "999px",
-                      fontSize: "0.7rem",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
+                >
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#71717A"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ flexShrink: 0 }}
+                    aria-hidden="true"
                   >
-                    ✕
-                  </button>
-                )}
-              </div>
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
+                  <input
+                    ref={inputBusquedaRef}
+                    type="search"
+                    value={busqueda}
+                    onChange={(e) => setBusqueda(e.target.value)}
+                    onKeyDown={manejarTecladoBusqueda}
+                    placeholder={placeholderBusqueda}
+                    aria-label="Filtrar opciones"
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      border: "none",
+                      outline: "none",
+                      background: "transparent",
+                      color: "#18181B",
+                      fontSize: esMovil ? "16px" : "0.81rem",
+                      fontFamily: "inherit",
+                      padding: "2px 0",
+                    }}
+                  />
+                  {busqueda && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBusqueda("");
+                        inputBusquedaRef.current?.focus({ preventScroll: true });
+                      }}
+                      title="Limpiar búsqueda"
+                      aria-label="Limpiar búsqueda"
+                      style={{
+                        border: "none",
+                        background: "#E4E4E7",
+                        color: "#3F3F46",
+                        width: "20px",
+                        height: "20px",
+                        borderRadius: "999px",
+                        fontSize: "0.7rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Lista desplazable de opciones */}
               <div
                 ref={listaRef}
+                tabIndex={mostrarBuscador ? undefined : -1}
+                onKeyDown={mostrarBuscador ? undefined : manejarTecladoBusqueda}
                 style={{
                   overflowY: "auto",
                   overscrollBehavior: "contain",
@@ -748,6 +829,7 @@ export function SelectConBuscador({
                   display: "flex",
                   flexDirection: "column",
                   gap: "2px",
+                  outline: "none",
                 }}
               >
                 {renderListaOpciones()}

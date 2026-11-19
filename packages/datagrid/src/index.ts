@@ -5,5 +5,6 @@ export {
   extraerOpcionesDeChildrenSelect,
   filtrarOpcionesSelectPorBusqueda,
   normalizarTextoBusquedaSelect,
+  ordenarOpcionesSelectAlfabeticamente,
 } from "./SelectConBuscador";
 export type { OpcionSelectBuscador, SelectConBuscadorProps } from "./SelectConBuscador";
