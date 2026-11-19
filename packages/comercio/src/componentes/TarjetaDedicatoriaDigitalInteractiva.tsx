@@ -464,6 +464,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                     objectFit: "contain",
                     marginBottom: "10px",
                     opacity: im.opacidad ?? 1,
+                    transform: im.rotacionDeg ? `rotate(${im.rotacionDeg}deg)` : undefined,
                     filter: im.escalaGrises ? "grayscale(100%)" : "none",
                   }}
                 />

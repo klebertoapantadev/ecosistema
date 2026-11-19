@@ -975,6 +975,8 @@ export interface ImagenDisenoTarjeta {
   xPct: number;
   yPct: number;
   anchoMm: number;
+  /** Ángulo de rotación en grados (-180 a 180) */
+  rotacionDeg?: number;
   /** Cuando es true, la imagen cubre el 100% del espacio de la cartulina como fondo */
   cubrirTarjeta?: boolean;
   escalaGrises?: boolean;

@@ -2773,9 +2773,77 @@ export async function guardarEdicionPedidoYTarjetaAction(entrada: {
       // Conservar nombre de respaldo
     }
 
+    const esSoloEdicionTarjeta =
+      entrada.clasificacionPedido === undefined &&
+      entrada.direccionEntrega === undefined &&
+      entrada.enlaceMapa === undefined &&
+      entrada.retiroEnLocal === undefined &&
+      entrada.salaServicio === undefined &&
+      entrada.fechaEntrega === undefined &&
+      entrada.franjaHoraria === undefined &&
+      entrada.horaEspecifica === undefined &&
+      entrada.productoResumen === undefined &&
+      entrada.observaciones === undefined;
+
+    // 0. Vía principal transaccional SECURITY DEFINER para guardar diseño completo de tarjeta sin depender de GRANT UPDATE
+    if (esSoloEdicionTarjeta) {
+      const { data: resStaff, error: errStaff } = await invocarRpcComercio(
+        supabase,
+        "com_fn_guardar_tarjeta_staff",
+        {
+          p_negocio: neg,
+          p_payload: {
+            pedidoId: entrada.pedidoId,
+            ordenTallerId: entrada.ordenTallerId ?? null,
+            entregaId: entrada.entregaId ?? null,
+            compradorNombre: entrada.compradorNombre,
+            destinatarioNombre: entrada.destinatarioNombre,
+            dedicatoria: entrada.dedicatoria,
+            tarjetaTipo: entrada.tarjetaTipo,
+            tarjetaConfidencial: entrada.tarjetaConfidencial,
+            tarjetaDiseno: entrada.tarjetaDiseno ?? null,
+            tarjetaMusicaUrl: entrada.tarjetaMusicaUrl ?? null,
+            tarjetaMusicaTitulo: entrada.tarjetaMusicaTitulo ?? null,
+            tarjetaLyrics: entrada.tarjetaLyrics ?? [],
+          },
+        }
+      );
+
+      if (!errStaff && resStaff?.ok) {
+        const tokRes = resStaff.tarjetaToken ? String(resStaff.tarjetaToken) : undefined;
+        const tokEdRes = tokRes ? generarTokenEdicionTarjetaServidor(tokRes) : undefined;
+        revalidarRutasTienda(neg);
+        if (tokRes) {
+          try {
+            revalidatePath(`/dedicatoria/${tokRes}`);
+            if (tokEdRes) revalidatePath(`/tarjeta-editar/${tokEdRes}`);
+          } catch {}
+        }
+        return {
+          ok: true,
+          tarjetaToken: tokRes,
+          tarjetaTokenEdicion: tokEdRes,
+          tarjetaConfidencial: Boolean(resStaff.tarjetaConfidencial),
+          tarjetaMetadata:
+            resStaff.tarjetaMetadata && typeof resStaff.tarjetaMetadata === "object"
+              ? resStaff.tarjetaMetadata
+              : undefined,
+        };
+      }
+
+      if (!errStaff && resStaff && resStaff.ok === false) {
+        return {
+          ok: false,
+          error: String(resStaff.error || "No se pudo guardar la tarjeta."),
+        };
+      }
+    }
+
     const ahoraIso = new Date().toISOString();
     let tokenFinal: string | undefined;
     let metaFinal: Record<string, any> | undefined;
+    let actualizadoEnBdd = false;
+    let ultimoErrorDb: string | null = null;
 
     // 1. Intentar actualizar com_orden_taller si existe la tabla y la fila vinculada
     try {
@@ -2842,7 +2910,7 @@ export async function guardarEdicionPedidoYTarjetaAction(entrada: {
         const tokenOta =
           filaOta.ota_tarjeta_token || crypto.randomUUID().replace(/-/g, "").slice(0, 18);
 
-        await db
+        const { error: errOta } = await db
           .schema("comun_comercio")
           .from("com_orden_taller")
           .update({
@@ -2921,11 +2989,50 @@ export async function guardarEdicionPedidoYTarjetaAction(entrada: {
           })
           .eq("ota_id", filaOta.ota_id);
 
-        tokenFinal = tokenOta;
-        metaFinal = nuevaMeta;
+        if (!errOta) {
+          actualizadoEnBdd = true;
+          tokenFinal = tokenOta;
+          metaFinal = nuevaMeta;
+        } else {
+          ultimoErrorDb = errOta.message;
+          // Respaldo inmediato vía RPC SECURITY DEFINER ya desplegada (20261118000009) si falta GRANT UPDATE
+          const { data: resPubFb, error: errPubFb } = await invocarRpcComercio(
+            supabase,
+            "com_fn_editar_tarjeta_publica",
+            {
+              p_token: filaOta.ota_tarjeta_token || filaOta.ota_id,
+              p_payload: {
+                dedicatoria: dedNueva || "",
+                para:
+                  entrada.destinatarioNombre !== undefined
+                    ? entrada.destinatarioNombre.trim()
+                    : filaOta.ota_destinatario_fallecido,
+                de: entrada.compradorNombre?.trim() || filaOta.ota_cliente_solicita,
+                confidencial: confOta,
+                diseno: disenoOta ?? null,
+                musicaUrl: musNueva,
+                musicaTitulo: esCondolOta
+                  ? null
+                  : entrada.tarjetaMusicaTitulo !== undefined
+                    ? entrada.tarjetaMusicaTitulo?.trim() || null
+                    : filaOta.ota_tarjeta_musica_titulo,
+                lyrics: esCondolOta
+                  ? []
+                  : entrada.tarjetaLyrics !== undefined
+                    ? entrada.tarjetaLyrics
+                    : filaOta.ota_tarjeta_lyrics ?? [],
+              },
+            }
+          );
+          if (!errPubFb && resPubFb?.ok) {
+            actualizadoEnBdd = true;
+            tokenFinal = tokenOta;
+            metaFinal = nuevaMeta;
+          }
+        }
       }
-    } catch {
-      // Continuar con respaldo sobre com_proforma / com_entrega_evidencia
+    } catch (eOta) {
+      ultimoErrorDb = eOta instanceof Error ? eOta.message : ultimoErrorDb;
     }
 
     // 2. Sincronizar / actualizar com_proforma (Pedidos de Tienda y Pedidos Manuales híbridos)
@@ -3151,6 +3258,7 @@ export async function guardarEdicionPedidoYTarjetaAction(entrada: {
         if (errPrf) {
           return { ok: false, error: errPrf.message };
         }
+        actualizadoEnBdd = true;
         tokenFinal = tokenPrf;
         metaFinal = nuevaMetaPrf;
       }
@@ -3231,7 +3339,7 @@ export async function guardarEdicionPedidoYTarjetaAction(entrada: {
             ? entrada.destinatarioNombre.trim()
             : ent.ent_fallecido_destinatario || "";
 
-        await db
+        const { error: errEnt } = await db
           .schema("comun_comercio")
           .from("com_entrega_evidencia")
           .update({
@@ -3300,9 +3408,23 @@ export async function guardarEdicionPedidoYTarjetaAction(entrada: {
           })
           .eq("ent_id", ent.ent_id);
 
-        tokenFinal = tokenEnt;
-        metaFinal = nuevaMetaEnt;
+        if (!errEnt) {
+          actualizadoEnBdd = true;
+          tokenFinal = tokenEnt;
+          metaFinal = nuevaMetaEnt;
+        } else {
+          ultimoErrorDb = errEnt.message;
+        }
       }
+    }
+
+    if (!actualizadoEnBdd) {
+      return {
+        ok: false,
+        error:
+          ultimoErrorDb ||
+          "No se pudo persistir el diseño de la tarjeta en la base de datos. Ejecuta la migración 20261119000007 en Supabase.",
+      };
     }
 
     revalidarRutasTienda(neg);

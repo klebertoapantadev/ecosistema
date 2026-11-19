@@ -2,7 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, StandardFonts, degrees, rgb } from "pdf-lib";
 import {
   AlertTriangle,
   Check,
@@ -196,9 +196,20 @@ export function ModalImprimirTarjetaTaller({
 
   const [metaLocal, setMetaLocal] = useState<Record<string, any>>(orden?.tarjetaMetadata || {});
   const inputAudioRef = useRef<HTMLInputElement | null>(null);
+  const ultimoOrdenIdInicializadoRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!orden) return;
+    if (!abierto || !orden) {
+      ultimoOrdenIdInicializadoRef.current = null;
+      return;
+    }
+    // Solo reinicializar estado del diseñador cuando se abre un pedido diferente,
+    // evitando perder cambios o diseño guardado ante re-renders del componente padre.
+    if (ultimoOrdenIdInicializadoRef.current === orden.id) {
+      return;
+    }
+    ultimoOrdenIdInicializadoRef.current = orden.id;
+
     const esCondolInit = formatoInicial === "CONDOLENCIAS_PLANA";
     setFormato(formatoInicial);
     if (esCondolInit) {
@@ -229,7 +240,9 @@ export function ModalImprimirTarjetaTaller({
     setTokenVistaActual(orden.tarjetaToken || orden.proformaId || orden.id);
     setTokenEdicionActual(orden.tarjetaTokenEdicion || "");
     setMetaLocal(orden.tarjetaMetadata || {});
-  }, [orden, formatoInicial]);
+    setAvisoOk(null);
+    setErrorMsg(null);
+  }, [abierto, orden, formatoInicial]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !orden) return;
@@ -490,41 +503,49 @@ export function ModalImprimirTarjetaTaller({
               : await pdfDoc.embedJpg(bytesImg);
             const opacidadImg = typeof im.opacidad === "number" ? im.opacidad : 1;
 
+            const rotDeg = im.rotacionDeg || 0;
+            // En pdf-lib la rotación gira en sentido antihorario alrededor de (x, y) (esquina inferior izquierda).
+            // Para rotar exactamente alrededor del centro (cx, cy):
+            const dibujarRotada = (cx: number, cy: number, w: number, h: number) => {
+              const rad = (-rotDeg * Math.PI) / 180;
+              const cos = Math.cos(rad);
+              const sin = Math.sin(rad);
+              const x = cx - (w / 2) * cos + (h / 2) * sin;
+              const y = cy - (w / 2) * sin - (h / 2) * cos;
+              page.drawImage(pdfImg, {
+                x,
+                y,
+                width: w,
+                height: h,
+                opacity: opacidadImg,
+                ...(rotDeg !== 0 ? { rotate: degrees(-rotDeg) } : {}),
+              });
+            };
+
             if (im.cubrirTarjeta) {
               const ratioPage = pageW / pageH;
               const ratioImg = pdfImg.width / Math.max(1, pdfImg.height);
               let drawW = pageW;
               let drawH = pageH;
-              let dx = 0;
-              let dy = 0;
               if (ratioImg > ratioPage) {
                 drawH = pageH;
                 drawW = pageH * ratioImg;
-                dx = (pageW - drawW) / 2;
               } else {
                 drawW = pageW;
                 drawH = pageW / ratioImg;
-                dy = (pageH - drawH) / 2;
               }
-              page.drawImage(pdfImg, {
-                x: dx + offsetX * MM_TO_PT,
-                y: dy - offsetY * MM_TO_PT,
-                width: drawW,
-                height: drawH,
-                opacity: opacidadImg,
-              });
+              dibujarRotada(
+                pageW / 2 + offsetX * MM_TO_PT,
+                pageH / 2 - offsetY * MM_TO_PT,
+                drawW,
+                drawH
+              );
             } else {
               const imgW = Math.min(pageW, im.anchoMm * MM_TO_PT);
               const imgH = imgW * (pdfImg.height / Math.max(1, pdfImg.width));
-              const imgX = (im.xPct / 100) * pageW - imgW / 2 + offsetX * MM_TO_PT;
-              const imgY = pageH - (im.yPct / 100) * pageH - imgH / 2 - offsetY * MM_TO_PT;
-              page.drawImage(pdfImg, {
-                x: imgX,
-                y: imgY,
-                width: imgW,
-                height: imgH,
-                opacity: opacidadImg,
-              });
+              const cx = (im.xPct / 100) * pageW + offsetX * MM_TO_PT;
+              const cy = pageH - (im.yPct / 100) * pageH - offsetY * MM_TO_PT;
+              dibujarRotada(cx, cy, imgW, imgH);
             }
           } catch {
             // Continuar si una imagen remota no pudo incrustarse
@@ -827,6 +848,7 @@ export function ModalImprimirTarjetaTaller({
                     height: "100%",
                     objectFit: "cover",
                     opacity: im.opacidad ?? 1,
+                    transform: im.rotacionDeg ? `rotate(${im.rotacionDeg}deg)` : undefined,
                     filter: im.escalaGrises ? "grayscale(100%)" : "none",
                     zIndex: 1,
                   }}
@@ -840,7 +862,7 @@ export function ModalImprimirTarjetaTaller({
                     position: "absolute",
                     left: `${im.xPct}%`,
                     top: `${im.yPct}%`,
-                    transform: "translate(-50%, -50%)",
+                    transform: `translate(-50%, -50%) rotate(${im.rotacionDeg || 0}deg)`,
                     width: `${Math.min(anchoMm, im.anchoMm)}mm`,
                     height: "auto",
                     objectFit: "contain",

@@ -14,6 +14,7 @@ import {
   Move,
   Plus,
   RotateCcw,
+  RotateCw,
   Trash2,
 } from "lucide-react";
 import type {
@@ -168,9 +169,13 @@ export function normalizarDisenoTarjeta(
         xPct: typeof im.xPct === "number" ? im.xPct : 50,
         yPct: typeof im.yPct === "number" ? im.yPct : 24,
         anchoMm: typeof im.anchoMm === "number" ? im.anchoMm : 36,
+        rotacionDeg:
+          typeof im.rotacionDeg === "number"
+            ? Math.max(-180, Math.min(180, im.rotacionDeg))
+            : 0,
         cubrirTarjeta: Boolean(im.cubrirTarjeta),
         escalaGrises: Boolean(im.escalaGrises),
-        opacidad: typeof im.opacidad === "number" ? Math.max(0.15, Math.min(1, im.opacidad)) : 1,
+        opacidad: typeof im.opacidad === "number" ? Math.max(0.1, Math.min(1, im.opacidad)) : 1,
       }));
   } else if (diseno?.imagenUrl) {
     imagenes = [
@@ -180,6 +185,7 @@ export function normalizarDisenoTarjeta(
         xPct: typeof diseno.imagenXPct === "number" ? diseno.imagenXPct : 50,
         yPct: typeof diseno.imagenYPct === "number" ? diseno.imagenYPct : 24,
         anchoMm: typeof diseno.imagenAnchoMm === "number" ? diseno.imagenAnchoMm : 36,
+        rotacionDeg: 0,
         cubrirTarjeta: false,
         escalaGrises: Boolean(diseno.escalaGrisesImagen),
         opacidad: 1,
@@ -419,7 +425,13 @@ export async function renderizarTarjetaEnCanvasPng(params: {
         ctx.filter = "grayscale(100%)";
       }
       if (im.cubrirTarjeta) {
-        // object-fit: cover
+        // object-fit: cover (+ soporte rotación si fue girada)
+        const rotRad = ((im.rotacionDeg || 0) * Math.PI) / 180;
+        if (rotRad !== 0) {
+          ctx.translate(wPx / 2, hPx / 2);
+          ctx.rotate(rotRad);
+          ctx.translate(-wPx / 2, -hPx / 2);
+        }
         const ratioCanvas = wPx / hPx;
         const ratioImg = htmlImg.width / Math.max(1, htmlImg.height);
         let drawW = wPx;
@@ -439,9 +451,12 @@ export async function renderizarTarjetaEnCanvasPng(params: {
       } else {
         const imgW = Math.min(wPx, im.anchoMm * PX_PER_MM);
         const imgH = imgW * (htmlImg.height / Math.max(1, htmlImg.width));
-        const x = (im.xPct / 100) * wPx - imgW / 2;
-        const y = (im.yPct / 100) * hPx - imgH / 2;
-        ctx.drawImage(htmlImg, x, y, imgW, imgH);
+        const cx = (im.xPct / 100) * wPx;
+        const cy = (im.yPct / 100) * hPx;
+        const rotRad = ((im.rotacionDeg || 0) * Math.PI) / 180;
+        ctx.translate(cx, cy);
+        if (rotRad !== 0) ctx.rotate(rotRad);
+        ctx.drawImage(htmlImg, -imgW / 2, -imgH / 2, imgW, imgH);
       }
       ctx.restore();
     }
@@ -826,29 +841,101 @@ export function LienzoDisenadorTarjeta({
             gap: "7px",
           }}
         >
-          {/* Fila 1: Selector de elemento activo + Botones + Imagen (N/3) y + Texto */}
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "5px" }}>
-            <span style={{ fontSize: "0.68rem", fontWeight: 700, color: "#475569" }}>
-              Editando:
-            </span>
-            <span
+          {/* Fila 1: Chips rápidos de elementos (Mensaje, Firma, Extras, Imágenes) + Botones + Imagen y + Texto */}
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px" }}>
+            <button
+              type="button"
+              onClick={() => setSeleccion({ tipo: "texto", id: "mensaje" })}
               style={{
-                fontSize: "0.68rem",
-                fontWeight: 700,
                 padding: "2px 7px",
                 borderRadius: "999px",
-                background: seleccion.tipo === "imagen" ? "#EDE9FE" : "#E0F2FE",
-                color: seleccion.tipo === "imagen" ? "#5B21B6" : "#0369A1",
+                border:
+                  seleccion.tipo === "texto" && seleccion.id === "mensaje"
+                    ? "1.5px solid #0284C7"
+                    : "1px solid #CBD5E1",
+                background:
+                  seleccion.tipo === "texto" && seleccion.id === "mensaje" ? "#E0F2FE" : "#FFFFFF",
+                color:
+                  seleccion.tipo === "texto" && seleccion.id === "mensaje" ? "#0369A1" : "#475569",
+                fontSize: "0.67rem",
+                fontWeight: 700,
+                cursor: "pointer",
               }}
             >
-              {seleccion.tipo === "imagen"
-                ? `🖼️ Imagen ${Math.max(1, norm.imagenes.findIndex((x) => x.id === seleccion.id) + 1)}`
-                : bloqueSeleccionado.rol === "mensaje"
-                  ? "📝 Mensaje principal"
-                  : bloqueSeleccionado.rol === "firma"
-                    ? "✍️ Firma (De parte de)"
-                    : "🔤 Texto extra"}
-            </span>
+              📝 Mensaje
+            </button>
+
+            {firmaVisible && (
+              <button
+                type="button"
+                onClick={() => setSeleccion({ tipo: "texto", id: "firma" })}
+                style={{
+                  padding: "2px 7px",
+                  borderRadius: "999px",
+                  border:
+                    seleccion.tipo === "texto" && seleccion.id === "firma"
+                      ? "1.5px solid #0284C7"
+                      : "1px solid #CBD5E1",
+                  background:
+                    seleccion.tipo === "texto" && seleccion.id === "firma" ? "#E0F2FE" : "#FFFFFF",
+                  color:
+                    seleccion.tipo === "texto" && seleccion.id === "firma" ? "#0369A1" : "#475569",
+                  fontSize: "0.67rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                ✍️ Firma
+              </button>
+            )}
+
+            {norm.bloquesTexto
+              .filter((b) => b.rol === "extra")
+              .map((b, idx) => {
+                const act = seleccion.tipo === "texto" && seleccion.id === b.id;
+                return (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => setSeleccion({ tipo: "texto", id: b.id })}
+                    style={{
+                      padding: "2px 7px",
+                      borderRadius: "999px",
+                      border: act ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
+                      background: act ? "#E0F2FE" : "#FFFFFF",
+                      color: act ? "#0369A1" : "#475569",
+                      fontSize: "0.67rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    🔤 Texto {idx + 1}
+                  </button>
+                );
+              })}
+
+            {norm.imagenes.map((im, idx) => {
+              const act = seleccion.tipo === "imagen" && seleccion.id === im.id;
+              return (
+                <button
+                  key={im.id}
+                  type="button"
+                  onClick={() => setSeleccion({ tipo: "imagen", id: im.id })}
+                  style={{
+                    padding: "2px 7px",
+                    borderRadius: "999px",
+                    border: act ? "1.5px solid #7C3AED" : "1px solid #CBD5E1",
+                    background: act ? "#EDE9FE" : "#FFFFFF",
+                    color: act ? "#5B21B6" : "#475569",
+                    fontSize: "0.67rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  🖼️ Img {idx + 1}
+                </button>
+              );
+            })}
 
             <div style={{ marginLeft: "auto", display: "flex", gap: "5px", flexWrap: "wrap" }}>
               <button
@@ -935,146 +1022,319 @@ export function LienzoDisenadorTarjeta({
             </div>
           </div>
 
-          {/* CONTROLES CONTEXTUALES: SI HAY UNA IMAGEN SELECCIONADA */}
+          {/* CONTROLES CONTEXTUALES: SI HAY UNA IMAGEN SELECCIONADA (ROTACIÓN, TRANSPARENCIA, TAMAÑO 100%, B/N) */}
           {imagenSeleccionada ? (
             <div
               style={{
                 display: "flex",
-                flexWrap: "wrap",
-                alignItems: "center",
+                flexDirection: "column",
                 gap: "7px",
-                paddingTop: "5px",
+                paddingTop: "6px",
                 borderTop: "1px dashed #CBD5E1",
               }}
             >
-              <button
-                type="button"
-                onClick={() =>
-                  actualizarImagen(imagenSeleccionada.id, {
-                    cubrirTarjeta: !imagenSeleccionada.cubrirTarjeta,
-                    ...(imagenSeleccionada.cubrirTarjeta
-                      ? { anchoMm: Math.round(wMm * 0.6) }
-                      : { anchoMm: wMm, xPct: 50, yPct: 50 }),
-                  })
-                }
-                title="Ampliar imagen al 100% del espacio de la tarjeta"
-                aria-label="Fondo 100%"
-                style={{
-                  padding: "3px 8px",
-                  borderRadius: "6px",
-                  border: imagenSeleccionada.cubrirTarjeta
-                    ? "1.5px solid #7C3AED"
-                    : "1px solid #CBD5E1",
-                  background: imagenSeleccionada.cubrirTarjeta ? "#EDE9FE" : "#FFFFFF",
-                  color: imagenSeleccionada.cubrirTarjeta ? "#5B21B6" : "#334155",
-                  fontSize: "0.69rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                }}
-              >
-                <Maximize2 size={11} />
-                <span>Fondo 100%</span>
-              </button>
+              {/* Fila A: Fondo 100% + Tamaño + B/N + Quitar */}
+              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "7px" }}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    actualizarImagen(imagenSeleccionada.id, {
+                      cubrirTarjeta: !imagenSeleccionada.cubrirTarjeta,
+                      ...(imagenSeleccionada.cubrirTarjeta
+                        ? { anchoMm: Math.round(wMm * 0.6) }
+                        : { anchoMm: wMm, xPct: 50, yPct: 50 }),
+                    })
+                  }
+                  title="Ampliar imagen al 100% del espacio de la tarjeta"
+                  aria-label="Fondo 100%"
+                  style={{
+                    padding: "3px 8px",
+                    borderRadius: "6px",
+                    border: imagenSeleccionada.cubrirTarjeta
+                      ? "1.5px solid #7C3AED"
+                      : "1px solid #CBD5E1",
+                    background: imagenSeleccionada.cubrirTarjeta ? "#EDE9FE" : "#FFFFFF",
+                    color: imagenSeleccionada.cubrirTarjeta ? "#5B21B6" : "#334155",
+                    fontSize: "0.69rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                  }}
+                >
+                  <Maximize2 size={11} />
+                  <span>Fondo 100%</span>
+                </button>
 
-              {!imagenSeleccionada.cubrirTarjeta && (
+                {!imagenSeleccionada.cubrirTarjeta && (
+                  <label
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                      fontSize: "0.69rem",
+                      color: "#334155",
+                      fontWeight: 600,
+                      flex: 1,
+                      minWidth: "120px",
+                    }}
+                  >
+                    <span>Tamaño:</span>
+                    <input
+                      type="range"
+                      min="14"
+                      max={wMm}
+                      value={Math.min(wMm, imagenSeleccionada.anchoMm)}
+                      onChange={(e) =>
+                        actualizarImagen(imagenSeleccionada.id, { anchoMm: Number(e.target.value) })
+                      }
+                      style={{ flex: 1, cursor: "pointer" }}
+                    />
+                    <strong style={{ minWidth: "30px", textAlign: "right" }}>
+                      {Math.round((Math.min(wMm, imagenSeleccionada.anchoMm) / wMm) * 100)}%
+                    </strong>
+                  </label>
+                )}
+
                 <label
                   style={{
                     display: "inline-flex",
                     alignItems: "center",
-                    gap: "4px",
+                    gap: "3px",
                     fontSize: "0.69rem",
                     color: "#334155",
-                    fontWeight: 600,
-                    flex: 1,
-                    minWidth: "120px",
+                    cursor: "pointer",
                   }}
                 >
-                  <span>Tamaño:</span>
                   <input
-                    type="range"
-                    min="14"
-                    max={wMm}
-                    value={Math.min(wMm, imagenSeleccionada.anchoMm)}
+                    type="checkbox"
+                    checked={Boolean(imagenSeleccionada.escalaGrises)}
                     onChange={(e) =>
-                      actualizarImagen(imagenSeleccionada.id, { anchoMm: Number(e.target.value) })
+                      actualizarImagen(imagenSeleccionada.id, { escalaGrises: e.target.checked })
                     }
-                    style={{ flex: 1, cursor: "pointer" }}
                   />
-                  <strong>{Math.round((Math.min(wMm, imagenSeleccionada.anchoMm) / wMm) * 100)}%</strong>
+                  <span>B/N</span>
                 </label>
-              )}
 
-              <label
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  fontSize: "0.69rem",
-                  color: "#334155",
-                  fontWeight: 600,
-                }}
-              >
-                <span>Opacidad:</span>
-                <input
-                  type="range"
-                  min="20"
-                  max="100"
-                  value={Math.round((imagenSeleccionada.opacidad ?? 1) * 100)}
-                  onChange={(e) =>
+                <button
+                  type="button"
+                  onClick={() => handleEliminarImagen(imagenSeleccionada.id)}
+                  title="Quitar esta imagen"
+                  aria-label="Quitar Imagen"
+                  style={{
+                    marginLeft: "auto",
+                    padding: "3px 7px",
+                    borderRadius: "6px",
+                    border: "1px solid #FECACA",
+                    background: "#FEF2F2",
+                    color: "#B91C1C",
+                    fontSize: "0.69rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "3px",
+                  }}
+                >
+                  <Trash2 size={11} />
+                  <span>Quitar</span>
+                </button>
+              </div>
+
+              {/* Fila B: Rotación (-180° a +180° + botones rápidos) */}
+              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "5px" }}>
+                <span style={{ fontSize: "0.69rem", fontWeight: 700, color: "#334155" }}>
+                  Rotar:
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const actual = imagenSeleccionada.rotacionDeg || 0;
+                    const sig = actual - 90 < -180 ? actual + 270 : actual - 90;
+                    actualizarImagen(imagenSeleccionada.id, { rotacionDeg: sig });
+                  }}
+                  title="Girar 90° a la izquierda"
+                  aria-label="Rotar -90°"
+                  style={{
+                    padding: "2px 6px",
+                    borderRadius: "5px",
+                    border: "1px solid #CBD5E1",
+                    background: "#FFFFFF",
+                    color: "#334155",
+                    fontSize: "0.67rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "2px",
+                  }}
+                >
+                  <RotateCcw size={10} />
+                  <span>90°</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
                     actualizarImagen(imagenSeleccionada.id, {
-                      opacidad: Number(e.target.value) / 100,
+                      rotacionDeg: Math.max(-180, (imagenSeleccionada.rotacionDeg || 0) - 15),
                     })
                   }
-                  style={{ width: "60px", cursor: "pointer" }}
-                />
-                <strong>{Math.round((imagenSeleccionada.opacidad ?? 1) * 100)}%</strong>
-              </label>
-
-              <label
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "3px",
-                  fontSize: "0.69rem",
-                  color: "#334155",
-                  cursor: "pointer",
-                }}
-              >
+                  title="Girar -15°"
+                  style={{
+                    padding: "2px 5px",
+                    borderRadius: "5px",
+                    border: "1px solid #CBD5E1",
+                    background: "#FFFFFF",
+                    color: "#334155",
+                    fontSize: "0.67rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  -15°
+                </button>
                 <input
-                  type="checkbox"
-                  checked={Boolean(imagenSeleccionada.escalaGrises)}
+                  type="range"
+                  min="-180"
+                  max="180"
+                  value={imagenSeleccionada.rotacionDeg || 0}
                   onChange={(e) =>
-                    actualizarImagen(imagenSeleccionada.id, { escalaGrises: e.target.checked })
+                    actualizarImagen(imagenSeleccionada.id, { rotacionDeg: Number(e.target.value) })
                   }
+                  style={{ flex: 1, minWidth: "70px", cursor: "pointer" }}
                 />
-                <span>B/N</span>
-              </label>
+                <strong style={{ fontSize: "0.69rem", minWidth: "34px", textAlign: "right", color: "#0F172A" }}>
+                  {imagenSeleccionada.rotacionDeg || 0}°
+                </strong>
+                <button
+                  type="button"
+                  onClick={() =>
+                    actualizarImagen(imagenSeleccionada.id, {
+                      rotacionDeg: Math.min(180, (imagenSeleccionada.rotacionDeg || 0) + 15),
+                    })
+                  }
+                  title="Girar +15°"
+                  style={{
+                    padding: "2px 5px",
+                    borderRadius: "5px",
+                    border: "1px solid #CBD5E1",
+                    background: "#FFFFFF",
+                    color: "#334155",
+                    fontSize: "0.67rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  +15°
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const actual = imagenSeleccionada.rotacionDeg || 0;
+                    const sig = actual + 90 > 180 ? actual - 270 : actual + 90;
+                    actualizarImagen(imagenSeleccionada.id, { rotacionDeg: sig });
+                  }}
+                  title="Girar 90° a la derecha"
+                  aria-label="Rotar +90°"
+                  style={{
+                    padding: "2px 6px",
+                    borderRadius: "5px",
+                    border: "1px solid #CBD5E1",
+                    background: "#FFFFFF",
+                    color: "#334155",
+                    fontSize: "0.67rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "2px",
+                  }}
+                >
+                  <RotateCw size={10} />
+                  <span>90°</span>
+                </button>
+                {(imagenSeleccionada.rotacionDeg || 0) !== 0 && (
+                  <button
+                    type="button"
+                    onClick={() => actualizarImagen(imagenSeleccionada.id, { rotacionDeg: 0 })}
+                    style={{
+                      padding: "2px 5px",
+                      borderRadius: "5px",
+                      border: "1px solid #BAE6FD",
+                      background: "#F0F9FF",
+                      color: "#0369A1",
+                      fontSize: "0.66rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    0°
+                  </button>
+                )}
+              </div>
 
-              <button
-                type="button"
-                onClick={() => handleEliminarImagen(imagenSeleccionada.id)}
-                title="Quitar esta imagen"
-                aria-label="Quitar Imagen"
-                style={{
-                  padding: "3px 7px",
-                  borderRadius: "6px",
-                  border: "1px solid #FECACA",
-                  background: "#FEF2F2",
-                  color: "#B91C1C",
-                  fontSize: "0.69rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "3px",
-                }}
-              >
-                <Trash2 size={11} />
-                <span>Quitar</span>
-              </button>
+              {/* Fila C: Transparencia (0% opaca a 90% marca de agua + accesos rápidos) */}
+              {(() => {
+                const transpActual = Math.round((1 - (imagenSeleccionada.opacidad ?? 1)) * 100);
+                return (
+                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px" }}>
+                    <span style={{ fontSize: "0.69rem", fontWeight: 700, color: "#334155" }}>
+                      Transparencia:
+                    </span>
+                    <input
+                      type="range"
+                      min="0"
+                      max="90"
+                      value={transpActual}
+                      onChange={(e) => {
+                        const t = Number(e.target.value);
+                        actualizarImagen(imagenSeleccionada.id, {
+                          opacidad: Math.max(0.1, Math.min(1, Number((1 - t / 100).toFixed(2)))),
+                        });
+                      }}
+                      style={{ flex: 1, minWidth: "80px", cursor: "pointer" }}
+                    />
+                    <strong style={{ fontSize: "0.69rem", minWidth: "30px", textAlign: "right", color: "#0F172A" }}>
+                      {transpActual}%
+                    </strong>
+                    {(
+                      [
+                        { label: "0%", op: 1 },
+                        { label: "40%", op: 0.6 },
+                        { label: "70%", op: 0.3 },
+                      ] as const
+                    ).map((p) => (
+                      <button
+                        key={p.label}
+                        type="button"
+                        onClick={() => actualizarImagen(imagenSeleccionada.id, { opacidad: p.op })}
+                        style={{
+                          padding: "2px 6px",
+                          borderRadius: "5px",
+                          border:
+                            Math.abs((imagenSeleccionada.opacidad ?? 1) - p.op) < 0.05
+                              ? "1.5px solid #7C3AED"
+                              : "1px solid #CBD5E1",
+                          background:
+                            Math.abs((imagenSeleccionada.opacidad ?? 1) - p.op) < 0.05
+                              ? "#EDE9FE"
+                              : "#FFFFFF",
+                          color:
+                            Math.abs((imagenSeleccionada.opacidad ?? 1) - p.op) < 0.05
+                              ? "#5B21B6"
+                              : "#475569",
+                          fontSize: "0.66rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           ) : (
             /* CONTROLES CONTEXTUALES: SI HAY UN CUADRO DE TEXTO SELECCIONADO */
@@ -1202,17 +1462,24 @@ export function LienzoDisenadorTarjeta({
                 >
                   <Italic size={12} />
                 </button>
+              </div>
 
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "12px",
+                  alignItems: "center",
+                }}
+              >
                 <label
                   style={{
-                    display: "inline-flex",
+                    display: "flex",
                     alignItems: "center",
-                    gap: "4px",
+                    gap: "5px",
                     fontSize: "0.69rem",
                     color: "#334155",
                     fontWeight: 600,
-                    flex: 1,
-                    minWidth: "95px",
                   }}
                 >
                   <span>Pt:</span>
@@ -1224,21 +1491,21 @@ export function LienzoDisenadorTarjeta({
                     onChange={(e) =>
                       actualizarBloque(bloqueSeleccionado.id, { tamanoPt: Number(e.target.value) })
                     }
-                    style={{ flex: 1, cursor: "pointer" }}
+                    style={{ flex: 1, minWidth: "45px", cursor: "pointer" }}
                   />
-                  <strong>{bloqueSeleccionado.tamanoPt || 18}</strong>
+                  <strong style={{ minWidth: "24px", textAlign: "right" }}>
+                    {bloqueSeleccionado.tamanoPt || 18}
+                  </strong>
                 </label>
 
                 <label
                   style={{
-                    display: "inline-flex",
+                    display: "flex",
                     alignItems: "center",
-                    gap: "4px",
+                    gap: "5px",
                     fontSize: "0.69rem",
                     color: "#334155",
                     fontWeight: 600,
-                    flex: 1,
-                    minWidth: "95px",
                   }}
                 >
                   <span>Ancho:</span>
@@ -1250,9 +1517,11 @@ export function LienzoDisenadorTarjeta({
                     onChange={(e) =>
                       actualizarBloque(bloqueSeleccionado.id, { anchoPct: Number(e.target.value) })
                     }
-                    style={{ flex: 1, cursor: "pointer" }}
+                    style={{ flex: 1, minWidth: "45px", cursor: "pointer" }}
                   />
-                  <strong>{bloqueSeleccionado.anchoPct}%</strong>
+                  <strong style={{ minWidth: "30px", textAlign: "right" }}>
+                    {bloqueSeleccionado.anchoPct}%
+                  </strong>
                 </label>
               </div>
 
@@ -1514,7 +1783,7 @@ export function LienzoDisenadorTarjeta({
                             position: "absolute",
                             left: `${im.xPct}%`,
                             top: `${im.yPct}%`,
-                            transform: "translate(-50%, -50%)",
+                            transform: `translate(-50%, -50%) rotate(${im.rotacionDeg || 0}deg)`,
                             width: `${anchoPct}%`,
                             cursor: soloLectura
                               ? "default"
@@ -1543,6 +1812,10 @@ export function LienzoDisenadorTarjeta({
                         display: "block",
                         objectFit: im.cubrirTarjeta ? "cover" : "contain",
                         opacity: im.opacidad ?? 1,
+                        transform:
+                          im.cubrirTarjeta && (im.rotacionDeg || 0) !== 0
+                            ? `rotate(${im.rotacionDeg}deg)`
+                            : undefined,
                         filter: im.escalaGrises ? "grayscale(100%)" : "none",
                         pointerEvents: "none",
                       }}
