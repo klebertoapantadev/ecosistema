@@ -14,7 +14,7 @@ import { useEffect } from "react";
 import { Sparkles } from "lucide-react";
 
 const PRESENTACION =
-  "¡Hola! Soy tranqi, tu respaldo legal de confianza. Te acompaño mientras exploras — y si algo te da curiosidad, haz clic en mí y hablamos.";
+  "¡Hola! Soy Tranqi, tu respaldo legal de confianza. Te acompaño mientras exploras — y si algo te da curiosidad, haz clic en mí y hablamos.";
 
 // Respuesta de reserva por sección si ARIA no contesta. Las claves son los
 // `data-buddie` de LandingTranqi.
@@ -22,7 +22,7 @@ const FALLBACK: Record<string, string> = {
   como: "Afíliate, entra desde tu celular y consulta con un abogado. Así de simple.",
   beneficios: "Consultas con abogados, descuentos de hasta 20 % en honorarios y todo desde tu celular.",
   soluciones: "Lo legal no tiene por qué ser complicado ni caro. Para eso estamos.",
-  planes: "Desde $23 al año con IVA incluido: unos 6 centavos al día por vivir tranqi.",
+  planes: "Desde $23 al año con IVA incluido: unos 6 centavos al día por vivir Tranqi.",
   duda: "Cuéntame qué te pasa y te digo cómo te podemos ayudar.",
   red: "Abogados organizados por especialidad en todo el Ecuador, listos para orientarte.",
   abogado: "Si eres abogado, la red te da clientes, ingresos y capacitación constante.",
