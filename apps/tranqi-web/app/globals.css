@@ -664,6 +664,15 @@ p { line-height: 1.55; }
 
 @media (min-width: 861px) {
   .panel-nav { transition: width 0.45s var(--curva-rail), padding 0.45s var(--curva-rail); }
+  /* TRQ-027: el rail no se va con el scroll de la página. Sticky (no fixed)
+     para que siga ocupando su columna en el flex. Si el menú no cabe en la
+     pantalla, se desplaza el rail por dentro; x sigue oculto por la cinta. */
+  .panel-nav {
+    position: sticky; top: 0; align-self: flex-start;
+    height: 100vh; height: 100dvh;
+    overflow: hidden auto; overscroll-behavior: contain; scrollbar-width: none;
+  }
+  .panel-nav::-webkit-scrollbar { display: none; }
   .panel-nav-links a[aria-current="page"] { background: transparent; box-shadow: none; }
   .panel-nav-links a[aria-current="page"]:hover { background: transparent; }
   .etiqueta-nav, .panel-usuario { transition: opacity 0.2s; }
@@ -819,6 +828,18 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
 @keyframes ini-subir { from { opacity: 0; transform: translateY(18px); } }
 .ini-diapo { grid-area: 1 / 1; position: relative; display: flex; flex-direction: column; min-width: 0; opacity: 0; visibility: hidden; transition: opacity 0.9s ease, visibility 0.9s; }
 .ini-diapo.es-activa { opacity: 1; visibility: visible; z-index: 1; }
+/* TRQ-027 · transición entre diapositivas: la nueva entra barriendo desde el
+   lado hacia el que se avanza (clip-path) y la anterior se aparta y se apaga
+   por debajo. Antes solo se fundían y el cambio de plan no se sentía. */
+.ini-carrusel { --curva-diapo: cubic-bezier(0.65, 0, 0.35, 1); }
+.ini-diapo.es-entrante { z-index: 2; transition: none; animation: ini-barre-adelante 0.8s var(--curva-diapo) both; }
+.ini-carrusel[data-dir="-1"] .ini-diapo.es-entrante { animation-name: ini-barre-atras; }
+.ini-diapo.es-saliente { opacity: 1; visibility: visible; z-index: 1; transition: none; animation: ini-aparta-adelante 0.8s var(--curva-diapo) forwards; }
+.ini-carrusel[data-dir="-1"] .ini-diapo.es-saliente { animation-name: ini-aparta-atras; }
+@keyframes ini-barre-adelante { from { clip-path: inset(0 0 0 100%); } to { clip-path: inset(0 0 0 0); } }
+@keyframes ini-barre-atras { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+@keyframes ini-aparta-adelante { to { transform: translateX(-10%) scale(0.97); opacity: 0; } }
+@keyframes ini-aparta-atras { to { transform: translateX(10%) scale(0.97); opacity: 0; } }
 .ini-diapo.sin-foto { background: radial-gradient(circle at 85% 20%, rgba(120, 102, 255, 0.55), transparent 55%), rgb(var(--tono)); }
 .ini-fondo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scale(1.12); }
 .ini-diapo.es-activa .ini-fondo { animation: ini-acercar var(--dur, 12s) ease-out forwards; }
@@ -1031,6 +1052,7 @@ a.cifra-tarjeta:hover { border-color: var(--panel-gris); transform: translateY(-
   .ini-carrusel, .ini-carrusel *, .ini-carrusel *::after, .ini-producto, .ini-producto *, .aviso-legal, .aviso-legal-texto {
     animation: none !important; transition: none !important;
   }
+  .ini-diapo.es-saliente { opacity: 0; visibility: hidden; }
 }
 
 /* 7A · confirmación de compra (<dialog> nativo) */
@@ -2631,6 +2653,11 @@ div.tarjeta-acceso-icono { display: grid; place-items: center; padding: 0; }
 .notif-hora { font-size: 0.7rem; color: var(--panel-gris); white-space: nowrap; flex: none; }
 .notif-cuerpo { font-size: 0.82rem; color: var(--panel-gris); margin-top: 6px; line-height: 1.5; }
 .notif-cuerpo a { color: var(--violeta); }
+/* TRQ-027: NotificacionesPanel reduce cada cuerpo a líneas de texto y un enlace. */
+.notif-cuerpo p { margin: 0 0 2px; overflow-wrap: anywhere; }
+.notif-cuerpo .notif-enlace { margin-top: 6px; }
+.notif-cuerpo .notif-enlace a { font-weight: 700; text-decoration: none; }
+.notif-cuerpo .notif-enlace a:hover { text-decoration: underline; }
 .notif-acciones { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--panel-linea-suave); }
 .notif-eliminar { margin-left: auto; }
 

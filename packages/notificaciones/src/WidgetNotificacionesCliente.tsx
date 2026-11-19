@@ -36,13 +36,20 @@ interface Props {
    * es de cada producto (marco-de-trabajo): tranqi la muestra con su aviso 9A.
    */
   alAlertaEnVivo?: (notificacion: NotificacionItem) => void;
+  /**
+   * Cómo pinta la app el título y el cuerpo de cada notificación. Las guarda
+   * cada módulo con su propio HTML (correos de venta, cajas de color, emoji);
+   * la app lo adapta a su sistema visual sin tocar lo guardado.
+   */
+  presentar?: (notificacion: NotificacionItem) => { titulo: string; html: string };
 }
 
 const STORAGE_KEY_LEIDAS = "tranqi_notifs_leidas";
 const STORAGE_KEY_ELIMINADAS = "tranqi_notifs_eliminadas";
 const STORAGE_KEY_POSPUESTAS = "tranqi_notifs_pospuestas";
 
-export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = false, alAlertaEnVivo }: Props) {
+export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = false, alAlertaEnVivo, presentar }: Props) {
+  const vista = (n: NotificacionItem) => (presentar ? presentar(n) : { titulo: n.not_titulo, html: n.not_contenido_html });
   const [notificaciones, setNotificaciones] = useState<NotificacionItem[]>([]);
   const [alertaPushToast, setAlertaPushToast] = useState<NotificacionItem | null>(null);
   const [permisoPush, setPermisoPush] = useState<string>("default");
@@ -394,11 +401,11 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                 <span style={{ fontSize: "0.7rem", color: "#94a3b8" }}>Ahora</span>
               </div>
               <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "#ffffff", marginBottom: "4px" }}>
-                {alertaPushToast.not_titulo}
+                {vista(alertaPushToast).titulo}
               </div>
               <div
                 style={{ fontSize: "0.84rem", color: "#cbd5e1", lineHeight: 1.5 }}
-                dangerouslySetInnerHTML={{ __html: alertaPushToast.not_contenido_html }}
+                dangerouslySetInnerHTML={{ __html: vista(alertaPushToast).html }}
               />
             </div>
             <button
@@ -657,14 +664,14 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                    y lo pendiente lo dice el punto del título, no el envase. */
                 <article key={item.not_id} className="notif">
                   <div className="notif-cabeza">
-                    <span className="notif-titulo">{item.not_titulo}</span>
+                    <span className="notif-titulo">{vista(item).titulo}</span>
                     <time className="notif-hora">
                       {new Date(item.not_creado_en).toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit", timeZone: "America/Guayaquil" })}
                     </time>
                   </div>
                   <div
                     className="notif-cuerpo"
-                    dangerouslySetInnerHTML={{ __html: item.not_contenido_html }}
+                    dangerouslySetInnerHTML={{ __html: vista(item).html }}
                   />
 
                   {/* Barra de 3 acciones: Aceptar, Posponer, Eliminar.
@@ -784,14 +791,14 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
               historial.map(item => (
                 <article key={item.not_id} className="notif es-pasada">
                   <div className="notif-cabeza">
-                    <span className="notif-titulo">{item.not_titulo}</span>
+                    <span className="notif-titulo">{vista(item).titulo}</span>
                     <time className="notif-hora">
                       {new Date(item.not_creado_en).toLocaleDateString("es-EC", { day: "2-digit", month: "2-digit" })}
                     </time>
                   </div>
                   <div
                     className="notif-cuerpo"
-                    dangerouslySetInnerHTML={{ __html: item.not_contenido_html }}
+                    dangerouslySetInnerHTML={{ __html: vista(item).html }}
                   />
                   <div className="fila-acciones notif-acciones">
                     <span className="marca-leida">
@@ -825,7 +832,7 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                 eliminadas.map(item => (
                   <article key={item.not_id} className="notif es-pasada es-eliminada">
                     <div className="notif-cabeza">
-                      <span className="notif-titulo">{item.not_titulo}</span>
+                      <span className="notif-titulo">{vista(item).titulo}</span>
                       <time className="notif-hora">
                         {item.not_eliminada_en
                           ? new Date(item.not_eliminada_en).toLocaleDateString("es-EC", { day: "2-digit", month: "2-digit" })
@@ -834,7 +841,7 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
                     </div>
                     <div
                       className="notif-cuerpo"
-                      dangerouslySetInnerHTML={{ __html: item.not_contenido_html }}
+                      dangerouslySetInnerHTML={{ __html: vista(item).html }}
                     />
                     <div className="fila-acciones notif-acciones">
                       <span className="marca-eliminada">Eliminada</span>

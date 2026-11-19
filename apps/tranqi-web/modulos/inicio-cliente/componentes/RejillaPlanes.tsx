@@ -372,7 +372,10 @@ function Destacados({
   alContratarPlan: (p: ProductoCatalogo, v: VarianteCatalogo) => void;
   alContratarServicio: (p: ProductoCatalogo) => void;
 }) {
-  const [indice, setIndice] = useState(0);
+  // previa y dir son para la transición (TRQ-027): la diapositiva nueva entra
+  // barriendo desde el lado hacia el que se avanza y la anterior se aparta.
+  const [estado, setEstado] = useState({ indice: 0, previa: -1, dir: 1 });
+  const indice = estado.indice;
   const [pausado, setPausado] = useState(false);
   const [sinMovimiento, setSinMovimiento] = useState(false);
   const raiz = useRef<HTMLElement>(null);
@@ -381,13 +384,19 @@ function Destacados({
 
   useEffect(() => setSinMovimiento(prefiereSinMovimiento()), []);
 
-  const irA = (n: number) => setIndice(((n % total) + total) % total);
+  const irA = (n: number) =>
+    setEstado((e) => {
+      const nuevo = ((n % total) + total) % total;
+      if (nuevo === e.indice) return e;
+      return { indice: nuevo, previa: e.indice, dir: n > e.indice ? 1 : -1 };
+    });
   const detenido = pausado || sinMovimiento || total < 2;
 
   return (
     <section
       ref={raiz}
       className={`ini-carrusel${detenido ? " es-pausado" : ""}`}
+      data-dir={estado.dir}
       aria-roledescription="carrusel"
       aria-label="Destacados"
       tabIndex={0}
@@ -419,7 +428,7 @@ function Destacados({
         return (
           <article
             key={d.clave}
-            className={`ini-diapo${activa ? " es-activa" : ""}${foto ? "" : " sin-foto"}`}
+            className={`ini-diapo${activa ? " es-activa" : ""}${activa && estado.previa >= 0 ? " es-entrante" : ""}${k === estado.previa ? " es-saliente" : ""}${foto ? "" : " sin-foto"}`}
             style={d.tono ? ({ "--tono": d.tono } as React.CSSProperties) : undefined}
             role="group"
             aria-roledescription="diapositiva"
