@@ -1399,17 +1399,21 @@ begin
       pr.pro_slug as "slug",
       pr.pro_tipo as "tipo",
       coalesce(
+        (select m.med_url
+           from comun_comercio.com_media m
+          where m.med_producto_id = pr.pro_id
+          order by m.med_es_portada desc, m.med_orden asc, m.med_secuencial asc limit 1),
         pr.pro_detalle_producto->>'portada_url',
         (select v2.var_detalle_variante->>'portada_url'
            from comun_comercio.com_variante v2
-          where v2.var_producto_id = pr.pro_id and v2.var_activo = true and v2.var_eliminado_en is null
-          order by v2.var_orden asc limit 1),
+          where v2.var_producto_id = pr.pro_id and v2.var_activo = true
+          order by v2.var_secuencial asc limit 1),
         ''::text
       ) as "imagenUrl",
       coalesce(
         (select min(v3.var_precio)
            from comun_comercio.com_variante v3
-          where v3.var_producto_id = pr.pro_id and v3.var_activo = true and v3.var_eliminado_en is null),
+          where v3.var_producto_id = pr.pro_id and v3.var_activo = true),
         0::numeric
       ) as "precioDesde",
       coalesce(ctg.ctg_nombre, 'Eventos'::text) as "categoriaNombre"
@@ -1417,7 +1421,6 @@ begin
     left join comun_comercio.com_categoria ctg on ctg.ctg_id = pr.pro_categoria_principal_id
     where lower(pr.pro_negocio) = v_negocio
       and pr.pro_activo = true
-      and pr.pro_eliminado_en is null
       and (
         upper(coalesce(pr.pro_tipo, '')) = 'RENTA'
         or coalesce((pr.pro_detalle_producto->>'es_renta')::boolean, false) = true
