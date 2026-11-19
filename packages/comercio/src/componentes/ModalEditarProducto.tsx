@@ -581,7 +581,7 @@ export function ModalEditarProducto({
   };
 
   // Configuración Impositiva Global & Logística (Transporte / Delivery)
-  const [tarifaIvaMaster, setTarifaIvaMaster] = useState<number>(15);
+  const [tarifaIvaMaster, setTarifaIvaMaster] = useState<number>(esFloristeria ? 0 : 15);
   const [autoAplicarIvaVariantes, setAutoAplicarIvaVariantes] = useState<boolean>(true);
   const [mensajeFeedbackIva, setMensajeFeedbackIva] = useState<string | null>(null);
   const [configLogisticaNegocio, setConfigLogisticaNegocio] =
@@ -898,23 +898,34 @@ export function ModalEditarProducto({
       ];
 
 
-  // Propagación de IVA Master a todas las variantes
-  const aplicarIvaMasterATodos = (nuevaTarifa: number) => {
+  // Propagación de IVA Master a las variantes (respeta overrides explícitos salvo que se fuerce a todas)
+  const aplicarIvaMasterATodos = (nuevaTarifa: number, forzarTodas = false) => {
     setTarifaIvaMaster(nuevaTarifa);
     setVariantesLocales((prev) =>
       prev.map((v) => {
+        if (!forzarTodas && v.var_detalle_variante?.iva_personalizado === true) {
+          return v;
+        }
         const base = v.var_precio || 0;
         const montoIva = Number(((base * nuevaTarifa) / 100).toFixed(2));
         return {
           ...v,
           var_tarifa_iva_porcentaje: nuevaTarifa,
           var_codigo_impuesto_sri: nuevaTarifa > 0 ? "IVA_15" : "IVA_0",
+          var_detalle_variante: {
+            ...(v.var_detalle_variante || {}),
+            iva_personalizado: false,
+          },
           monto_iva: montoIva,
           precio_total: Number((base + montoIva).toFixed(2)),
         };
       })
     );
-    setMensajeFeedbackIva(`✓ Tarifa IVA ${nuevaTarifa}% aplicada a todas las variantes (${variantesLocales.length})`);
+    setMensajeFeedbackIva(
+      forzarTodas
+        ? `✓ Tarifa IVA ${nuevaTarifa}% aplicada a todas las variantes (${variantesLocales.length})`
+        : `✓ Tarifa IVA ${nuevaTarifa}% sincronizada con las variantes heredadas`
+    );
     setTimeout(() => {
       setMensajeFeedbackIva(null);
     }, 3500);
@@ -973,7 +984,13 @@ export function ModalEditarProducto({
       }
 
       // IVA Master y Logística
-      setTarifaIvaMaster(det.tarifa_iva_predeterminada !== undefined ? Number(det.tarifa_iva_predeterminada) : 15);
+      const tarifaMasterInicial =
+        det.tarifa_iva_predeterminada !== undefined && det.tarifa_iva_predeterminada !== null
+          ? Number(det.tarifa_iva_predeterminada)
+          : esFloristeria
+            ? 0
+            : 15;
+      setTarifaIvaMaster(tarifaMasterInicial);
       
       // Estado Activo y Temporalidad / Vigencia Estacional
       setProActivo(producto.pro_activo !== false);
@@ -1045,13 +1062,13 @@ export function ModalEditarProducto({
               var_nombre: "Estándar",
               var_precio: 20,
               var_precio_comparacion: null,
-              var_codigo_impuesto_sri: "IVA_15",
-              var_tarifa_iva_porcentaje: 15,
+              var_codigo_impuesto_sri: tarifaMasterInicial > 0 ? "IVA_15" : "IVA_0",
+              var_tarifa_iva_porcentaje: tarifaMasterInicial,
               var_tipo_oferta: "REGULAR",
               var_activo: true,
-              var_detalle_variante: { orden: 1 },
-              monto_iva: 3,
-              precio_total: 23,
+              var_detalle_variante: { orden: 1, iva_personalizado: false },
+              monto_iva: Number(((20 * tarifaMasterInicial) / 100).toFixed(2)),
+              precio_total: Number((20 + (20 * tarifaMasterInicial) / 100).toFixed(2)),
             },
           ];
 
@@ -1114,13 +1131,20 @@ export function ModalEditarProducto({
       if (campo === "var_precio") {
         const base = typeof valor === "number" ? valor : parseFloat(valor) || 0;
         target.var_precio = base;
-        const ivaPorc = target.var_tarifa_iva_porcentaje || 15;
+        const ivaPorc =
+          target.var_tarifa_iva_porcentaje !== undefined && target.var_tarifa_iva_porcentaje !== null
+            ? Number(target.var_tarifa_iva_porcentaje)
+            : tarifaIvaMaster;
         target.monto_iva = Number(((base * ivaPorc) / 100).toFixed(2));
         target.precio_total = Number((base + target.monto_iva).toFixed(2));
       } else if (campo === "var_tarifa_iva_porcentaje") {
         const ivaPorc = Number(valor);
         target.var_tarifa_iva_porcentaje = ivaPorc;
         target.var_codigo_impuesto_sri = ivaPorc > 0 ? "IVA_15" : "IVA_0";
+        target.var_detalle_variante = {
+          ...(target.var_detalle_variante || {}),
+          iva_personalizado: ivaPorc !== tarifaIvaMaster,
+        };
         const base = target.var_precio || 0;
         target.monto_iva = Number(((base * ivaPorc) / 100).toFixed(2));
         target.precio_total = Number((base + target.monto_iva).toFixed(2));
@@ -1139,7 +1163,7 @@ export function ModalEditarProducto({
 
   const agregarNuevaVariante = () => {
     const base = 25;
-    const ivaPorc = 15;
+    const ivaPorc = tarifaIvaMaster;
     const montoIva = Number(((base * ivaPorc) / 100).toFixed(2));
     const prodCode = (producto.pro_slug || producto.pro_nombre || "ITEM")
       .replace(/[^a-zA-Z0-9]/g, "")
@@ -1155,11 +1179,11 @@ export function ModalEditarProducto({
         : `Opción ${variantesLocales.length + 1}`,
       var_precio: base,
       var_precio_comparacion: null,
-      var_codigo_impuesto_sri: "IVA_15",
+      var_codigo_impuesto_sri: ivaPorc > 0 ? "IVA_15" : "IVA_0",
       var_tarifa_iva_porcentaje: ivaPorc,
       var_tipo_oferta: "REGULAR",
       var_activo: true,
-      var_detalle_variante: {},
+      var_detalle_variante: { iva_personalizado: false },
       monto_iva: montoIva,
       precio_total: Number((base + montoIva).toFixed(2)),
     };
@@ -2634,7 +2658,7 @@ export function ModalEditarProducto({
                   </div>
                   <button
                     type="button"
-                    onClick={() => aplicarIvaMasterATodos(tarifaIvaMaster)}
+                    onClick={() => aplicarIvaMasterATodos(tarifaIvaMaster, true)}
                     style={{
                       background: "#E0F2FE",
                       border: "1px solid #7DD3FC",
@@ -4444,7 +4468,7 @@ export function ModalEditarProducto({
                 {variantesLocales.map((v, idx) => {
                   const activa = idx === varianteActivaIndex;
                   const col = PALETA_COLORES_VARIANTES[idx % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
-                  const pvpCalculado = (Number(v.var_precio || 0) * (1 + (v.var_tarifa_iva_porcentaje ?? 15) / 100));
+                  const pvpCalculado = (Number(v.var_precio || 0) * (1 + (v.var_tarifa_iva_porcentaje ?? tarifaIvaMaster) / 100));
                   const tieneFotoPropia = Boolean(v.var_detalle_variante?.portada_url);
 
                   return (
@@ -4737,7 +4761,7 @@ export function ModalEditarProducto({
                         Tarifa IVA SRI
                       </label>
                       <SelectConBuscador
-                        value={varianteActual.var_tarifa_iva_porcentaje ?? 15}
+                        value={varianteActual.var_tarifa_iva_porcentaje ?? tarifaIvaMaster}
                         onChange={(e) => actualizarVarianteActual("var_tarifa_iva_porcentaje", e.target.value)}
                         style={{
                           width: "100%",
@@ -4804,19 +4828,19 @@ export function ModalEditarProducto({
                       <span style={{ color: "#64748B" }}>Base: </span>
                       <strong style={{ color: "#0F172A" }}>${Number(varianteActual.var_precio || 0).toFixed(2)}</strong>
                       <span style={{ margin: "0 6px", color: "#CBD5E1" }}>|</span>
-                      <span style={{ color: "#64748B" }}>IVA ({varianteActual.var_tarifa_iva_porcentaje ?? 15}%): </span>
+                      <span style={{ color: "#64748B" }}>IVA ({varianteActual.var_tarifa_iva_porcentaje ?? tarifaIvaMaster}%): </span>
                       <strong style={{ color: "#0F172A" }}>
-                        ${(Number(varianteActual.var_precio || 0) * (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100).toFixed(2)}
+                        ${(Number(varianteActual.var_precio || 0) * (varianteActual.var_tarifa_iva_porcentaje ?? tarifaIvaMaster) / 100).toFixed(2)}
                       </strong>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                       <span style={{ color: "#64748B" }}>PVP Total:</span>
                       <strong style={{ color: "#059669", fontSize: "0.95rem", fontWeight: 800 }}>
-                        ${(Number(varianteActual.var_precio || 0) * (1 + (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100)).toFixed(2)}
+                        ${(Number(varianteActual.var_precio || 0) * (1 + (varianteActual.var_tarifa_iva_porcentaje ?? tarifaIvaMaster) / 100)).toFixed(2)}
                       </strong>
                       {varianteActual.var_precio_comparacion &&
                         Number(varianteActual.var_precio_comparacion) >
-                          Number(varianteActual.var_precio || 0) * (1 + (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100) && (
+                          Number(varianteActual.var_precio || 0) * (1 + (varianteActual.var_tarifa_iva_porcentaje ?? tarifaIvaMaster) / 100) && (
                           <>
                             <span style={{ textDecoration: "line-through", color: "#94A3B8", fontSize: "0.85rem", fontWeight: 500 }} title="Precio regular tachado">
                               ${Number(varianteActual.var_precio_comparacion).toFixed(2)}
@@ -4833,7 +4857,7 @@ export function ModalEditarProducto({
                             >
                               🔥 -{Math.round(
                                 ((Number(varianteActual.var_precio_comparacion) -
-                                  Number(varianteActual.var_precio || 0) * (1 + (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100)) /
+                                  Number(varianteActual.var_precio || 0) * (1 + (varianteActual.var_tarifa_iva_porcentaje ?? tarifaIvaMaster) / 100)) /
                                   Number(varianteActual.var_precio_comparacion)) *
                                   100
                               )}% OFF
@@ -4868,7 +4892,7 @@ export function ModalEditarProducto({
                       escalas={normalizarEscalasVolumen(varianteActual?.var_detalle_variante?.escalas_volumen)}
                       pvpUnitarioNominal={
                         Number(varianteActual.var_precio || 0) *
-                        (1 + (varianteActual.var_tarifa_iva_porcentaje ?? 15) / 100)
+                        (1 + (varianteActual.var_tarifa_iva_porcentaje ?? tarifaIvaMaster) / 100)
                       }
                       onChange={(nuevasEscalas) =>
                         actualizarVarianteActual("var_detalle_variante", {

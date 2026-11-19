@@ -55,7 +55,7 @@ export function ModalDetalleProducto() {
       nombre: '',
       pvp: 0,
       baseImponible: 0,
-      tarifaIva: 15,
+      tarifaIva: 0,
     }
   );
 

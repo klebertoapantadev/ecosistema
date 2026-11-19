@@ -2819,7 +2819,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                             Base Imponible: ${currentVar.var_precio !== undefined ? currentVar.var_precio.toFixed(2) : "0.00"}
                           </div>
                           <div style={{ fontSize: "0.7rem", color: "#94A3B8" }}>
-                            + IVA ({currentVar.var_tarifa_iva_porcentaje ?? 15}%): ${currentVar.monto_iva !== undefined ? currentVar.monto_iva.toFixed(2) : "0.00"}
+                            + IVA ({currentVar.var_tarifa_iva_porcentaje ?? 0}%): ${currentVar.monto_iva !== undefined ? currentVar.monto_iva.toFixed(2) : "0.00"}
                           </div>
                         </div>
                         <div style={{ textAlign: "right" }}>

@@ -339,10 +339,22 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
           });
         }
 
-        const tarifaPredeterminada = Number(detalle.tarifa_iva_predeterminada ?? 0);
+        const tarifaPredeterminada =
+          detalle.tarifa_iva_predeterminada !== undefined &&
+          detalle.tarifa_iva_predeterminada !== null &&
+          Number.isFinite(Number(detalle.tarifa_iva_predeterminada))
+            ? Number(detalle.tarifa_iva_predeterminada)
+            : 0;
 
         const variantes: VarianteEcommerce[] = varsActivas.map((v) => {
-          const tarifaIva = Number(v.var_tarifa_iva_porcentaje ?? tarifaPredeterminada ?? 0);
+          const detVar = v.var_detalle_variante as Record<string, unknown> | undefined;
+          const esPersonalizada = detVar?.iva_personalizado === true;
+          const tarifaIva =
+            esPersonalizada && v.var_tarifa_iva_porcentaje !== undefined && v.var_tarifa_iva_porcentaje !== null
+              ? Number(v.var_tarifa_iva_porcentaje)
+              : v.var_tarifa_iva_porcentaje !== undefined && v.var_tarifa_iva_porcentaje !== null
+                ? Number(v.var_tarifa_iva_porcentaje)
+                : tarifaPredeterminada;
           const base = Number(v.var_precio ?? 0);
           const pvp = tarifaIva > 0 ? Number((base * (1 + tarifaIva / 100)).toFixed(2)) : base;
           const compRaw = v.var_precio_comparacion
@@ -634,8 +646,8 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
                     sku: 'DEF-1',
                     nombre: 'Presentación Única',
                     pvp: 40,
-                    baseImponible: 34.78,
-                    tarifaIva: 15,
+                    baseImponible: 40,
+                    tarifaIva: 0,
                   },
                 ],
           destacado:

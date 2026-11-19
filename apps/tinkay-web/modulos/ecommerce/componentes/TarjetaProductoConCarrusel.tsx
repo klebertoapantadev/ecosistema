@@ -29,8 +29,8 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
       sku: 'DEF',
       nombre: 'Estándar',
       pvp: 25,
-      baseImponible: 21.74,
-      tarifaIva: 15,
+      baseImponible: 25,
+      tarifaIva: 0,
     };
   const [varianteSeleccionada, setVarianteSeleccionada] = useState<VarianteEcommerce>(obtenerVarianteBase);
   const [favorito, setFavorito] = useState(false);

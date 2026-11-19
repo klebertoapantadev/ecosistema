@@ -2057,9 +2057,36 @@ export async function obtenerCatalogoProductosAction(
       return acc;
     }, {});
 
+    const esFloristeriaNeg = principal === "tinkay" || principal === "margaritas";
+    const mapaTarifaMasterPorProd = (prodsDb || []).reduce((acc: Record<string, number>, p: any) => {
+      const detProd = p.pro_detalle_producto || {};
+      const tMaster =
+        detProd.tarifa_iva_predeterminada !== undefined &&
+        detProd.tarifa_iva_predeterminada !== null &&
+        Number.isFinite(Number(detProd.tarifa_iva_predeterminada))
+          ? Number(detProd.tarifa_iva_predeterminada)
+          : esFloristeriaNeg
+            ? 0
+            : 15;
+      acc[p.pro_id] = tMaster;
+      return acc;
+    }, {});
+
     const mapaVariantes = (varsDb || []).reduce((acc: Record<string, VarianteCatalogo[]>, v: any) => {
       const base = Number(v.var_precio) || 0;
-      const tarifaIva = Number(v.var_tarifa_iva_porcentaje) || 15;
+      const tarifaMaster = mapaTarifaMasterPorProd[v.var_producto_id] ?? (esFloristeriaNeg ? 0 : 15);
+      const detVar = v.var_detalle_variante || {};
+      const tieneIvaExplicito =
+        detVar.iva_personalizado === true ||
+        (v.var_tarifa_iva_porcentaje !== null &&
+          v.var_tarifa_iva_porcentaje !== undefined &&
+          Number.isFinite(Number(v.var_tarifa_iva_porcentaje)));
+      const tarifaIva =
+        detVar.iva_personalizado === true
+          ? Number(v.var_tarifa_iva_porcentaje ?? tarifaMaster)
+          : tieneIvaExplicito
+            ? Number(v.var_tarifa_iva_porcentaje)
+            : tarifaMaster;
       const iva = Number(((base * tarifaIva) / 100).toFixed(4));
       const total = Number((base + iva).toFixed(2));
 
@@ -2070,13 +2097,13 @@ export async function obtenerCatalogoProductosAction(
         var_nombre: v.var_nombre,
         var_precio: base,
         var_precio_comparacion: v.var_precio_comparacion ? Number(v.var_precio_comparacion) : null,
-        var_codigo_impuesto_sri: v.var_codigo_impuesto_sri || "IVA_15",
+        var_codigo_impuesto_sri: tarifaIva > 0 ? "IVA_15" : "IVA_0",
         var_tarifa_iva_porcentaje: tarifaIva,
         var_tipo_oferta: v.var_tipo_oferta,
         var_frecuencia_recurrencia: v.var_frecuencia_recurrencia,
         var_activo: v.var_activo,
-        var_detalle_variante: v.var_detalle_variante || {},
-        monto_iva: iva,
+        var_detalle_variante: detVar,
+        monto_iva: Number(iva.toFixed(2)),
         precio_total: total,
       };
 
@@ -3570,7 +3597,13 @@ export async function crearProductoAction(datos: {
     const varId = `var-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
     const sku = datos.sku?.trim() || `TRQ-${generarSlug(nombre).toUpperCase().substring(0, 10)}`;
 
-    const tarifaIva = datos.tarifaIva ?? 15;
+    const esFloristeriaCrear = negocio === "tinkay" || negocio === "margaritas";
+    const tarifaIva =
+      datos.tarifaIva !== undefined && datos.tarifaIva !== null
+        ? Number(datos.tarifaIva)
+        : esFloristeriaCrear
+          ? 0
+          : 15;
     const base = Number(datos.precioBase.toFixed(2));
     const montoIva = Number(((base * tarifaIva) / 100).toFixed(2));
     const total = Number((base + montoIva).toFixed(2));
@@ -3984,6 +4017,17 @@ export async function editarProductoAction(datos: {
       );
     }
 
+    const esFloristeriaEdit = negocio === "tinkay" || negocio === "margaritas";
+    const tarifaIvaMasterFinal =
+      datos.tarifaIvaPredeterminada !== undefined && datos.tarifaIvaPredeterminada !== null
+        ? Number(datos.tarifaIvaPredeterminada)
+        : prodActual.pro_detalle_producto?.tarifa_iva_predeterminada !== undefined &&
+            prodActual.pro_detalle_producto?.tarifa_iva_predeterminada !== null
+          ? Number(prodActual.pro_detalle_producto.tarifa_iva_predeterminada)
+          : esFloristeriaEdit
+            ? 0
+            : 15;
+
     let variantesActualizadas: VarianteCatalogo[] = [];
 
     if (datos.variantes && datos.variantes.length > 0) {
@@ -3991,7 +4035,15 @@ export async function editarProductoAction(datos: {
       variantesActualizadas = await Promise.all(
         datos.variantes.map(async (v, idx) => {
           const base = Number(Number(v.var_precio || 0).toFixed(4));
-          const ivaPorc = v.var_tarifa_iva_porcentaje ?? 15;
+          const esPersonalizada = Boolean(v.var_detalle_variante?.iva_personalizado);
+          const ivaPorc =
+            esPersonalizada &&
+            v.var_tarifa_iva_porcentaje !== undefined &&
+            v.var_tarifa_iva_porcentaje !== null
+              ? Number(v.var_tarifa_iva_porcentaje)
+              : v.var_tarifa_iva_porcentaje !== undefined && v.var_tarifa_iva_porcentaje !== null
+                ? Number(v.var_tarifa_iva_porcentaje)
+                : tarifaIvaMasterFinal;
           const montoIva = Number(((base * ivaPorc) / 100).toFixed(2));
           const total = Number((base + montoIva).toFixed(2));
 
@@ -4018,6 +4070,7 @@ export async function editarProductoAction(datos: {
             var_detalle_variante: {
               ...(v.var_detalle_variante || {}),
               orden: idx + 1,
+              iva_personalizado: ivaPorc !== tarifaIvaMasterFinal,
               portada_url: varPortada || null,
               album_url: v.var_detalle_variante?.album_url ? String(v.var_detalle_variante.album_url).trim() || null : null,
               modalidad_pago: datos.modalidadPago || v.var_detalle_variante?.modalidad_pago,
@@ -4030,7 +4083,10 @@ export async function editarProductoAction(datos: {
     } else if (datos.precioBase !== undefined && datos.precioBase > 0) {
       // 2. Caso clásico: Se editó una tarifa base o una variante puntual
       const base = Number(datos.precioBase.toFixed(4));
-      const tarifaIva = datos.tarifaIva ?? 15;
+      const tarifaIva =
+        datos.tarifaIva !== undefined && datos.tarifaIva !== null
+          ? Number(datos.tarifaIva)
+          : tarifaIvaMasterFinal;
       const montoIva = Number(((base * tarifaIva) / 100).toFixed(2));
       const total = Number((base + montoIva).toFixed(2));
 
@@ -4046,6 +4102,7 @@ export async function editarProductoAction(datos: {
           var_codigo_impuesto_sri: tarifaIva > 0 ? "IVA_15" : "IVA_0",
           var_detalle_variante: {
             ...v.var_detalle_variante,
+            iva_personalizado: tarifaIva !== tarifaIvaMasterFinal,
             modalidad_pago: datos.modalidadPago || v.var_detalle_variante?.modalidad_pago,
           },
           monto_iva: montoIva,
@@ -4058,21 +4115,21 @@ export async function editarProductoAction(datos: {
 
     if (variantesActualizadas.length === 0) {
       const base = 10;
-      const tarifaIva = 15;
-      const montoIva = 1.5;
+      const tarifaIva = tarifaIvaMasterFinal;
+      const montoIva = Number(((base * tarifaIva) / 100).toFixed(2));
       variantesActualizadas.push({
         var_id: `var-${Date.now()}`,
         var_producto_id: datos.pro_id,
         var_sku: datos.sku?.trim() || `${negocio.toUpperCase().substring(0, 3)}-VAR-${Date.now()}`,
         var_nombre: `${nombre} (Estándar)`,
         var_precio: base,
-        var_codigo_impuesto_sri: "IVA_15",
+        var_codigo_impuesto_sri: tarifaIva > 0 ? "IVA_15" : "IVA_0",
         var_tarifa_iva_porcentaje: tarifaIva,
         var_tipo_oferta: "REGULAR",
         var_activo: true,
-        var_detalle_variante: { modalidad_pago: datos.modalidadPago },
+        var_detalle_variante: { modalidad_pago: datos.modalidadPago, iva_personalizado: false },
         monto_iva: montoIva,
-        precio_total: base + montoIva,
+        precio_total: Number((base + montoIva).toFixed(2)),
       });
     }
 
@@ -4116,8 +4173,8 @@ export async function editarProductoAction(datos: {
         tiempo_entrega: datos.tiempoEntrega !== undefined ? datos.tiempoEntrega.trim() : prodActual.pro_detalle_producto?.tiempo_entrega,
         requisitos: datos.requisitos !== undefined ? datos.requisitos : prodActual.pro_detalle_producto?.requisitos,
         modalidad_pago: datos.modalidadPago || prodActual.pro_detalle_producto?.modalidad_pago,
-        tarifa_iva_predeterminada: datos.tarifaIvaPredeterminada !== undefined ? datos.tarifaIvaPredeterminada : (prodActual.pro_detalle_producto?.tarifa_iva_predeterminada ?? 15),
-        codigo_impuesto_sri: datos.codigoImpuestoSri !== undefined ? datos.codigoImpuestoSri : (prodActual.pro_detalle_producto?.codigo_impuesto_sri || "IVA_15"),
+        tarifa_iva_predeterminada: tarifaIvaMasterFinal,
+        codigo_impuesto_sri: tarifaIvaMasterFinal > 0 ? "IVA_15" : "IVA_0",
         logistica: datos.logistica !== undefined ? datos.logistica : prodActual.pro_detalle_producto?.logistica,
         usos: datos.usos !== undefined ? datos.usos : (prodActual.pro_detalle_producto?.usos || prodActual.pro_detalle_producto?.ocasiones || []),
         etiquetas: datos.etiquetas !== undefined ? datos.etiquetas : (prodActual.pro_detalle_producto?.etiquetas || []),
