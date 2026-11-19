@@ -246,7 +246,9 @@ reescribe siguiendo la estructura de módulo obligatoria.
   pública de entonces, no una futura app nativa.
 - `landing-membresia-v2.html` — landing de la membresía (TRQ-024, 16-nov-2026) en 10 bloques,
   a partir del «Recorrido gráfico de la landing membresía», revisión 1. Es la landing web actual
-  (`apps/tranqi-web/modulos/landing`).
+  (`apps/tranqi-web/modulos/landing`). Desde TRQ-034 suma el bloque «Tus trámites, en nuestras
+  manos» (cliente → plataforma → gestor y abogado coordinados) tras la red de expertos; no está
+  en la maqueta.
 
 Las dos primeras maquetas son de las futuras apps nativas Cliente/Abogado — más ricas
 (buscador, notificaciones, mensajes, agenda) que el panel web de hoy, que no

@@ -25,6 +25,7 @@ const FALLBACK: Record<string, string> = {
   planes: "Desde $23 al año con IVA incluido: unos 6 centavos al día por vivir Tranqi.",
   duda: "Cuéntame qué te pasa y te digo cómo te podemos ayudar.",
   red: "Abogados organizados por especialidad en todo el Ecuador, listos para orientarte.",
+  tramites: "Un gestor hace tus trámites y un abogado te asesora; los dos trabajan coordinados.",
   abogado: "Si eres abogado, la red te da clientes, ingresos y capacitación constante.",
   contacto: "Este es el momento de dar el paso. Pregúntame cómo unirte.",
   faq: "¿Te quedó alguna duda? Pregúntame lo que quieras.",

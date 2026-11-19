@@ -165,7 +165,7 @@ export function LandingTranqi() {
       ".wrap > h2", ".wrap > .sub", ".wrap > .sub2", ".oferta", ".comienza", ".centro", ".medios", ".remate",
       ".pasos > .paso", ".beneficio", ".dona", ".bento > img", ".tarjeta", ".tira > img",
       ".cabecera > *", ".respaldo > div", ".rejilla > *:not(.preguntas):not(.pilares)", ".preguntas > details",
-      ".pilares > *",
+      ".pilares > *", ".tramites > *", ".hacemos",
     ].join(", ");
     // Cada pieza se observa sola: en móvil una sección mide varias pantallas y,
     // si se activara entera, lo de abajo ya habría aparecido al llegar. La
@@ -355,6 +355,48 @@ export function LandingTranqi() {
           </div>
           <div className="centro">
             <a className="btn btn-amarillo" href="#contacto" data-abrir-chat>Hablar con Tranqi ahora <Ico nombre="flecha" /></a>
+          </div>
+        </div>
+      </section>
+
+      {/* 07b · TRÁMITES (TRQ-034) — blanco. Cliente → plataforma → gestor y
+          abogado coordinados; pedido de negocio del 19-nov: la web no hablaba
+          de los gestores (tramitadores). */}
+      <section id="tramites" data-buddie="tramites">
+        <div className="wrap">
+          <h2>Tus trámites, en nuestras manos.<span>Te asesoramos, te ayudamos y gestionamos por ti.</span></h2>
+          <div className="tramites">
+            <div className="cliente-t">
+              <img src={`${FOTOS}/joven-celular.jpg`} alt="Cliente escribiendo desde su celular" />
+              <b>Cliente</b>
+              <p>Cuéntanos tu necesidad o trámite.</p>
+            </div>
+            <span className="flecha-t" aria-hidden="true"><Ico nombre="flecha" /></span>
+            <div className="plataforma-t">
+              <img src={`${FOTOS}/app-icono.jpg`} alt="La app de Tranqi en un celular" />
+              <b>Plataforma Tranqi</b>
+              <p>Coordinamos la asesoría, la gestión y el trámite por ti.</p>
+            </div>
+            <span className="flecha-t" aria-hidden="true"><Ico nombre="flecha" /></span>
+            <div className="equipo">
+              <article className="rol">
+                <img className="gestor" src={`${FOTOS}/gestores.jpg`} alt="Gestora de Tranqi revisando un trámite con una familia" />
+                <div><h3>Gestor</h3><p>Realiza por ti los trámites y gestiones administrativas ante entidades públicas y privadas.</p></div>
+              </article>
+              <span className="coordinado">Trabajo coordinado</span>
+              <article className="rol">
+                <img src={`${FOTOS}/abogados-firma.jpg`} alt="Abogados revisando un documento" />
+                <div><h3>Abogado</h3><p>Te asesora, revisa la documentación, elabora escritos y te representa cuando es necesario.</p></div>
+              </article>
+            </div>
+          </div>
+          <div className="hacemos">
+            <h3>¿Qué hacemos por ti?</h3>
+            <ul>
+              <li><Ico nombre="balanza" /><div><b>Te asesoramos</b><span>Orientación jurídica clara y oportuna.</span></div></li>
+              <li><Ico nombre="doc" /><div><b>Gestionamos tus trámites</b><span>Ante entidades públicas y privadas.</span></div></li>
+              <li><Ico nombre="apreton" /><div><b>Te representamos cuando corresponde</b><span>En tus gestiones legales y procesos.</span></div></li>
+            </ul>
           </div>
         </div>
       </section>
