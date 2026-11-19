@@ -34,13 +34,9 @@ export default async function PaginaInventarioRosasTinkay() {
       }}
     >
       <div>
-        <h1 style={{ fontSize: "22px", fontWeight: 700, margin: "0 0 4px 0", color: "#111827" }}>
+        <h1 style={{ fontSize: "22px", fontWeight: 700, margin: 0, color: "#111827" }}>
           Inventario de Rosas con Conteo IA (ARIA)
         </h1>
-        <p style={{ margin: 0, fontSize: "13.5px", color: "#6B7280", lineHeight: 1.5 }}>
-          Adjunta o fotografía los bonches de rosas en taller. ARIA cuenta los paquetes por color
-          en cada imagen y consolida el corte vigente para taller y ventas.
-        </p>
       </div>
 
       <ConsolaInventarioRosas

@@ -4,18 +4,23 @@ import React, { useMemo, useState } from "react";
 import { crearClienteNavegador } from "@eco/supabase/cliente";
 import {
   CheckCircle2,
+  CheckSquare,
+  Edit3,
   Flower2,
   Loader2,
   Plus,
   Search,
+  Square,
   Star,
   Trash2,
   Upload,
   X,
 } from "lucide-react";
 import {
+  actualizarCategoriaColorRosaAction,
   definirVariedadDefectoAction,
   eliminarVariedadRosaAction,
+  eliminarVariedadesRosaLoteAction,
   guardarVariedadRosaAction,
 } from "../acciones-operaciones-taller";
 import {
@@ -23,7 +28,7 @@ import {
   obtenerVariedadesPorColor,
   type VariedadRosaCatalogo,
 } from "../catalogo-variedades-rosas";
-import { COLORES_ROSAS_ESTANDAR } from "../operaciones-taller";
+import { COLORES_ROSAS_ESTANDAR, type DefinicionColorRosa } from "../operaciones-taller";
 import {
   comprimirYEstamparFotoArchivo,
   dataUrlABlob,
@@ -34,6 +39,8 @@ export interface PropsCatalogoVariedadesRosas {
   negocio: string;
   catalogo: VariedadRosaCatalogo[];
   onCatalogoActualizado: (nuevo: VariedadRosaCatalogo[]) => void;
+  categoriasColores?: DefinicionColorRosa[];
+  onCategoriasActualizadas?: (nuevas: DefinicionColorRosa[]) => void;
   migracionPendiente?: boolean;
 }
 
@@ -41,6 +48,8 @@ export function CatalogoVariedadesRosas({
   negocio,
   catalogo,
   onCatalogoActualizado,
+  categoriasColores = COLORES_ROSAS_ESTANDAR,
+  onCategoriasActualizadas,
   migracionPendiente = false,
 }: PropsCatalogoVariedadesRosas) {
   const negNorm = negocio.trim().toLowerCase();
@@ -59,9 +68,20 @@ export function CatalogoVariedadesRosas({
   const [mensajeOk, setMensajeOk] = useState<string | null>(null);
   const [mensajeError, setMensajeError] = useState<string | null>(null);
 
+  // Edición de categoría de color (ej. Rosa Intenso -> Fucsia)
+  const [editandoCategoria, setEditandoCategoria] = useState<boolean>(false);
+  const [nombreCategoriaEdit, setNombreCategoriaEdit] = useState<string>("");
+  const [colorHexCategoriaEdit, setColorHexCategoriaEdit] = useState<string>("#DB2777");
+  const [guardandoCategoria, setGuardandoCategoria] = useState<boolean>(false);
+
+  // Multiselección para eliminar variedades
+  const [modoSeleccion, setModoSeleccion] = useState<boolean>(false);
+  const [seleccionadosIds, setSeleccionadosIds] = useState<Set<string>>(new Set());
+  const [eliminandoLote, setEliminandoLote] = useState<boolean>(false);
+
   const defColorActivo = useMemo(
-    () => COLORES_ROSAS_ESTANDAR.find((c) => c.clave === colorActivo) ?? COLORES_ROSAS_ESTANDAR[0]!,
-    [colorActivo]
+    () => categoriasColores.find((c) => c.clave === colorActivo) ?? categoriasColores[0]!,
+    [categoriasColores, colorActivo]
   );
 
   const variedadesFiltradas = useMemo(() => {
@@ -151,8 +171,69 @@ export function CatalogoVariedadesRosas({
     }
     onCatalogoActualizado(res.items);
     const colLabel =
-      COLORES_ROSAS_ESTANDAR.find((c) => c.clave === v.colorClave)?.etiqueta ?? v.colorClave;
+      categoriasColores.find((c) => c.clave === v.colorClave)?.etiqueta ?? v.colorClave;
     setMensajeOk(`"${v.nombre}" fijada como variedad por defecto para ${colLabel}.`);
+  };
+
+  const handleGuardarCategoria = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nombreCategoriaEdit.trim()) {
+      setMensajeError("Escribe el nombre de la categoría.");
+      return;
+    }
+    setGuardandoCategoria(true);
+    setMensajeError(null);
+    setMensajeOk(null);
+    const res = await actualizarCategoriaColorRosaAction({
+      negocio: negNorm,
+      clave: defColorActivo.clave,
+      etiqueta: nombreCategoriaEdit.trim(),
+      colorHex: colorHexCategoriaEdit,
+    });
+    setGuardandoCategoria(false);
+    if (!res.ok) {
+      setMensajeError(res.error);
+      return;
+    }
+    onCategoriasActualizadas?.(res.categoriasColores);
+    setEditandoCategoria(false);
+    setMensajeOk(`Categoría renombrada a "${nombreCategoriaEdit.trim()}".`);
+  };
+
+  const toggleSeleccionVariedad = (id: string) => {
+    setSeleccionadosIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleEliminarLote = async () => {
+    if (seleccionadosIds.size === 0) return;
+    if (
+      !window.confirm(
+        `¿Eliminar las ${seleccionadosIds.size} variedades seleccionadas del catálogo?`
+      )
+    ) {
+      return;
+    }
+    setEliminandoLote(true);
+    setMensajeError(null);
+    setMensajeOk(null);
+    const res = await eliminarVariedadesRosaLoteAction({
+      negocio: negNorm,
+      variedadIds: Array.from(seleccionadosIds),
+    });
+    setEliminandoLote(false);
+    if (!res.ok) {
+      setMensajeError(res.error);
+      return;
+    }
+    onCatalogoActualizado(res.items);
+    setSeleccionadosIds(new Set());
+    setModoSeleccion(false);
+    setMensajeOk(`Se eliminaron ${res.eliminadas} variedades del catálogo.`);
   };
 
   const handleEliminar = async (v: VariedadRosaCatalogo) => {
@@ -200,10 +281,6 @@ export function CatalogoVariedadesRosas({
             <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#0F172A" }}>
               Catálogo Maestro de Variedades de Rosas ({catalogo.length})
             </h2>
-            <p style={{ margin: "4px 0 0", fontSize: "0.82rem", color: "#64748B" }}>
-              Configura la variedad por defecto de cada color (★). Cuando ARIA detecte un color sin
-              variedad específica, asignará automáticamente su variedad por defecto.
-            </p>
           </div>
 
           <button
@@ -313,7 +390,7 @@ export function CatalogoVariedadesRosas({
                   fontSize: "0.84rem",
                 }}
               >
-                {COLORES_ROSAS_ESTANDAR.map((c) => (
+                {categoriasColores.map((c) => (
                   <option key={c.clave} value={c.clave}>
                     {c.etiqueta}
                   </option>
@@ -431,7 +508,7 @@ export function CatalogoVariedadesRosas({
         {/* Selector de los 11 colores + buscador */}
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-            {COLORES_ROSAS_ESTANDAR.map((col) => {
+            {categoriasColores.map((col) => {
               const cant = catalogo.filter((v) => v.colorClave === col.clave).length;
               const def = obtenerVariedadDefectoPorColor(catalogo, col.clave);
               const activo = !busqueda.trim() && colorActivo === col.clave;
@@ -541,44 +618,266 @@ export function CatalogoVariedadesRosas({
           </div>
         </div>
 
-        {/* Título de categoría activa */}
+        {/* Título de categoría activa + edición de categoría + multiselección */}
         <div
           style={{
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            gap: "10px",
+            flexWrap: "wrap",
             borderTop: "1px solid #F1F5F9",
             paddingTop: "12px",
           }}
         >
-          <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "#0F172A", letterSpacing: "0.02em" }}>
-            {busqueda.trim()
-              ? `Resultados para "${busqueda.trim()}" (${variedadesFiltradas.length})`
-              : `${defColorActivo.etiqueta.toUpperCase()} (${variedadesFiltradas.length} variedades)`}
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+            <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "#0F172A", letterSpacing: "0.02em" }}>
+              {busqueda.trim()
+                ? `Resultados para "${busqueda.trim()}" (${variedadesFiltradas.length})`
+                : `${defColorActivo.etiqueta.toUpperCase()} (${variedadesFiltradas.length} variedades)`}
+            </div>
+            {!busqueda.trim() && (
+              <button
+                type="button"
+                onClick={() => {
+                  setNombreCategoriaEdit(defColorActivo.etiqueta);
+                  setColorHexCategoriaEdit(defColorActivo.colorHex);
+                  setEditandoCategoria((prev) => !prev);
+                }}
+                title="Renombrar esta categoría de flor"
+                aria-label="Renombrar categoría"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  padding: "4px 9px",
+                  borderRadius: "8px",
+                  border: "1px solid #CBD5E1",
+                  background: "#F8FAFC",
+                  color: "#334155",
+                  fontSize: "0.74rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                <Edit3 size={12} />
+                <span>Renombrar</span>
+              </button>
+            )}
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={() => {
+                setModoSeleccion((prev) => !prev);
+                if (modoSeleccion) setSeleccionadosIds(new Set());
+              }}
+              title="Activar multiselección para eliminar varias variedades"
+              aria-label="Seleccionar múltiples"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                padding: "5px 10px",
+                borderRadius: "8px",
+                border: modoSeleccion ? "1px solid #0F172A" : "1px solid #CBD5E1",
+                background: modoSeleccion ? "#0F172A" : "#FFFFFF",
+                color: modoSeleccion ? "#FFFFFF" : "#334155",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              <CheckSquare size={13} />
+              <span>{modoSeleccion ? "Cancelar selección" : "Seleccionar"}</span>
+            </button>
+
+            {(modoSeleccion || seleccionadosIds.size > 0) && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (seleccionadosIds.size === variedadesFiltradas.length) {
+                      setSeleccionadosIds(new Set());
+                    } else {
+                      setSeleccionadosIds(new Set(variedadesFiltradas.map((x) => x.id)));
+                    }
+                  }}
+                  style={{
+                    padding: "5px 10px",
+                    borderRadius: "8px",
+                    border: "1px solid #CBD5E1",
+                    background: "#F8FAFC",
+                    color: "#0F172A",
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  {seleccionadosIds.size === variedadesFiltradas.length
+                    ? "Deseleccionar"
+                    : `Todas (${variedadesFiltradas.length})`}
+                </button>
+
+                {seleccionadosIds.size > 0 && (
+                  <button
+                    type="button"
+                    disabled={eliminandoLote}
+                    onClick={() => void handleEliminarLote()}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                      padding: "5px 11px",
+                      borderRadius: "8px",
+                      border: "none",
+                      background: "#DC2626",
+                      color: "#FFFFFF",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
+                      cursor: eliminandoLote ? "wait" : "pointer",
+                    }}
+                  >
+                    {eliminandoLote ? <Loader2 size={13} /> : <Trash2 size={13} />}
+                    <span>Eliminar ({seleccionadosIds.size})</span>
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </div>
+
+        {editandoCategoria && !busqueda.trim() && (
+          <form
+            onSubmit={(e) => void handleGuardarCategoria(e)}
+            style={{
+              padding: "12px",
+              borderRadius: "10px",
+              background: "#F8FAFC",
+              border: "1px solid #CBD5E1",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "10px",
+              alignItems: "end",
+            }}
+          >
+            <label
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "4px",
+                fontSize: "0.76rem",
+                fontWeight: 700,
+                color: "#334155",
+                flex: "1 1 190px",
+              }}
+            >
+              Nombre de categoría
+              <input
+                type="text"
+                value={nombreCategoriaEdit}
+                onChange={(e) => setNombreCategoriaEdit(e.target.value)}
+                placeholder="Ej. Fucsia"
+                style={{
+                  padding: "7px 10px",
+                  borderRadius: "8px",
+                  border: "1px solid #CBD5E1",
+                  fontSize: "0.84rem",
+                  background: "#FFFFFF",
+                }}
+              />
+            </label>
+            <label
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "4px",
+                fontSize: "0.76rem",
+                fontWeight: 700,
+                color: "#334155",
+              }}
+            >
+              Color
+              <input
+                type="color"
+                value={colorHexCategoriaEdit}
+                onChange={(e) => setColorHexCategoriaEdit(e.target.value)}
+                style={{
+                  width: "44px",
+                  height: "34px",
+                  borderRadius: "6px",
+                  border: "1px solid #CBD5E1",
+                  padding: "2px",
+                  background: "#FFFFFF",
+                  cursor: "pointer",
+                }}
+              />
+            </label>
+            <div style={{ display: "flex", gap: "6px" }}>
+              <button
+                type="button"
+                onClick={() => setEditandoCategoria(false)}
+                style={{
+                  padding: "7px 12px",
+                  borderRadius: "8px",
+                  border: "1px solid #CBD5E1",
+                  background: "#FFFFFF",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={guardandoCategoria}
+                style={{
+                  padding: "7px 14px",
+                  borderRadius: "8px",
+                  border: "none",
+                  background: "#059669",
+                  color: "#FFFFFF",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  cursor: guardandoCategoria ? "wait" : "pointer",
+                }}
+              >
+                {guardandoCategoria ? "Guardando..." : "Guardar"}
+              </button>
+            </div>
+          </form>
+        )}
 
         {/* Grilla visual estilo Floraroma */}
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(175px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(150px, 100%), 1fr))",
             gap: "12px",
           }}
         >
           {variedadesFiltradas.map((v) => {
             const ocupada = procesandoId === v.id;
-            const colInfo = COLORES_ROSAS_ESTANDAR.find((c) => c.clave === v.colorClave);
+            const seleccionada = seleccionadosIds.has(v.id);
+            const colInfo = categoriasColores.find((c) => c.clave === v.colorClave);
             return (
               <div
                 key={v.id}
+                onClick={modoSeleccion ? () => toggleSeleccionVariedad(v.id) : undefined}
                 style={{
                   borderRadius: "14px",
-                  border: v.esDefecto ? "2px solid #F59E0B" : "1px solid #E2E8F0",
-                  background: "#FFFFFF",
+                  border: seleccionada
+                    ? "2px solid #DC2626"
+                    : v.esDefecto
+                      ? "2px solid #F59E0B"
+                      : "1px solid #E2E8F0",
+                  background: seleccionada ? "#FEF2F2" : "#FFFFFF",
                   overflow: "hidden",
                   display: "flex",
                   flexDirection: "column",
+                  cursor: modoSeleccion ? "pointer" : "default",
                   boxShadow: v.esDefecto
                     ? "0 6px 16px rgba(245, 158, 11, 0.14)"
                     : "0 2px 6px rgba(15, 23, 42, 0.04)",
@@ -628,6 +927,33 @@ export function CatalogoVariedadesRosas({
                       Defecto
                     </span>
                   )}
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleSeleccionVariedad(v.id);
+                    }}
+                    title={seleccionada ? "Quitar de selección" : "Seleccionar variedad"}
+                    aria-label={seleccionada ? `Deseleccionar ${v.nombre}` : `Seleccionar ${v.nombre}`}
+                    style={{
+                      position: "absolute",
+                      top: "8px",
+                      right: "8px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "26px",
+                      height: "26px",
+                      borderRadius: "7px",
+                      border: "none",
+                      background: seleccionada ? "#DC2626" : "rgba(15, 23, 42, 0.72)",
+                      color: "#FFFFFF",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {seleccionada ? <CheckSquare size={15} /> : <Square size={15} />}
+                  </button>
 
                   {busqueda.trim() && colInfo && (
                     <span

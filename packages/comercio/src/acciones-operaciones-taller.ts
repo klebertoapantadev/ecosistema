@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import {
+  COLORES_ROSAS_ESTANDAR,
   DATOS_PROVEEDOR_TINKAY_DEFECTO,
   esNombreFallecidoPendiente,
   extraerConteoJsonDesdeRespuestaAria,
@@ -16,6 +17,7 @@ import {
   type CorteInventarioRosas,
   type DatosProveedorInformeIess,
   type DatosTableroTvTaller,
+  type DefinicionColorRosa,
   type DisenoVisualTarjeta,
   type EmisoraRadioTv,
   type EstadoOrdenTaller,
@@ -218,10 +220,44 @@ async function asegurarCatalogoVariedadesInicializado(
   return { ok: true, items: CATALOGO_SEMILLA_VARIEDADES_ROSAS, desdeSemilla: true };
 }
 
+async function leerCategoriasColoresRosasConfig(
+  supabase: any,
+  negocio: string
+): Promise<DefinicionColorRosa[]> {
+  try {
+    const { crearClienteAdmin } = await import("@eco/supabase/servidor");
+    const db: any = crearClienteAdmin() ?? supabase;
+    const { data } = await db
+      .schema("comun_configuracion")
+      .from("cfg_negocio")
+      .select("cfg_detalle_configuracion")
+      .eq("cfg_negocio", negocio)
+      .maybeSingle();
+
+    const overrides = (data?.cfg_detalle_configuracion?.categorias_colores_rosas ?? {}) as Record<
+      string,
+      { etiqueta?: string; colorHex?: string }
+    >;
+
+    return COLORES_ROSAS_ESTANDAR.map((c) => {
+      const ov = overrides[c.clave];
+      if (!ov) return c;
+      return {
+        ...c,
+        etiqueta: ov.etiqueta?.trim() || c.etiqueta,
+        colorHex: ov.colorHex?.trim() || c.colorHex,
+      };
+    });
+  } catch {
+    return COLORES_ROSAS_ESTANDAR;
+  }
+}
+
 export async function listarVariedadesRosaAction(negocio: string): Promise<
   | {
       ok: true;
       items: VariedadRosaCatalogo[];
+      categoriasColores: DefinicionColorRosa[];
       migracionPendiente?: boolean;
     }
   | { ok: false; error: string }
@@ -230,17 +266,90 @@ export async function listarVariedadesRosaAction(negocio: string): Promise<
     const neg = normalizarNegocio(negocio);
     const { crearClienteServidor } = await import("@eco/supabase/servidor");
     const supabase = await crearClienteServidor();
-    const res = await asegurarCatalogoVariedadesInicializado(supabase, neg);
+    const [res, categoriasColores] = await Promise.all([
+      asegurarCatalogoVariedadesInicializado(supabase, neg),
+      leerCategoriasColoresRosasConfig(supabase, neg),
+    ]);
     if (!res.ok) return res;
     return {
       ok: true,
       items: res.items,
+      categoriasColores,
       migracionPendiente: res.migracionPendiente,
     };
   } catch (err) {
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Error al cargar el catálogo de variedades",
+    };
+  }
+}
+
+export async function actualizarCategoriaColorRosaAction(entrada: {
+  negocio: string;
+  clave: string;
+  etiqueta: string;
+  colorHex?: string;
+}): Promise<{ ok: true; categoriasColores: DefinicionColorRosa[] } | { ok: false; error: string }> {
+  try {
+    const neg = normalizarNegocio(entrada.negocio);
+    const claveLimpia = entrada.clave.trim().toLowerCase();
+    const etiquetaLimpia = entrada.etiqueta.trim();
+    if (!claveLimpia || !etiquetaLimpia) {
+      return { ok: false, error: "Escribe el nuevo nombre de la categoría." };
+    }
+
+    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { ok: false, error: "Debes iniciar sesión para editar categorías." };
+    }
+
+    const db: any = crearClienteAdmin() ?? supabase;
+    const { data: cfgActual, error: errRead } = await db
+      .schema("comun_configuracion")
+      .from("cfg_negocio")
+      .select("cfg_detalle_configuracion")
+      .eq("cfg_negocio", neg)
+      .maybeSingle();
+
+    if (errRead) return { ok: false, error: errRead.message };
+
+    const detPrevio = (cfgActual?.cfg_detalle_configuracion ?? {}) as Record<string, any>;
+    const catPrevias = (detPrevio.categorias_colores_rosas ?? {}) as Record<string, any>;
+    const nuevasCat = {
+      ...catPrevias,
+      [claveLimpia]: {
+        ...(catPrevias[claveLimpia] ?? {}),
+        etiqueta: etiquetaLimpia,
+        ...(entrada.colorHex?.trim() ? { colorHex: entrada.colorHex.trim() } : {}),
+      },
+    };
+
+    const { error: errUpd } = await db
+      .schema("comun_configuracion")
+      .from("cfg_negocio")
+      .update({
+        cfg_detalle_configuracion: {
+          ...detPrevio,
+          categorias_colores_rosas: nuevasCat,
+        },
+        cfg_actualizado_en: new Date().toISOString(),
+      })
+      .eq("cfg_negocio", neg);
+
+    if (errUpd) return { ok: false, error: errUpd.message };
+
+    const categoriasColores = await leerCategoriasColoresRosasConfig(supabase, neg);
+    revalidarRutasTienda(neg);
+    return { ok: true, categoriasColores };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error al actualizar la categoría",
     };
   }
 }
@@ -376,6 +485,71 @@ export async function eliminarVariedadRosaAction(entrada: {
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Error inesperado al eliminar variedad",
+    };
+  }
+}
+
+export async function eliminarVariedadesRosaLoteAction(entrada: {
+  negocio: string;
+  variedadIds: string[];
+}): Promise<
+  | { ok: true; items: VariedadRosaCatalogo[]; eliminadas: number }
+  | { ok: false; error: string }
+> {
+  try {
+    const neg = normalizarNegocio(entrada.negocio);
+    const idsLimpios = Array.from(
+      new Set(
+        (entrada.variedadIds || []).filter((id) =>
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(id || ""))
+        )
+      )
+    );
+    if (idsLimpios.length === 0) {
+      return { ok: false, error: "Selecciona al menos una variedad guardada para eliminar." };
+    }
+
+    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+
+    const init = await asegurarCatalogoVariedadesInicializado(supabase, neg);
+    if (!init.ok) return init;
+    if (init.migracionPendiente) {
+      return {
+        ok: false,
+        error:
+          "Ejecuta la migración 20261119000005_catalogo_variedades_rosas_floraroma.sql en Supabase para eliminar variedades.",
+      };
+    }
+
+    const db: any = crearClienteAdmin() ?? supabase;
+    const { error } = await db
+      .schema("comun_comercio")
+      .from("com_variedad_rosa")
+      .update({
+        vro_eliminado_en: new Date().toISOString(),
+        vro_activo: false,
+        vro_es_defecto: false,
+        vro_actualizado_en: new Date().toISOString(),
+      })
+      .eq("vro_negocio", neg)
+      .in("vro_id", idsLimpios);
+
+    if (error) {
+      return { ok: false, error: error.message };
+    }
+
+    const lista = await asegurarCatalogoVariedadesInicializado(supabase, neg);
+    revalidarRutasTienda(neg);
+    return {
+      ok: true,
+      items: lista.ok ? lista.items : init.items,
+      eliminadas: idsLimpios.length,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error inesperado al eliminar variedades",
     };
   }
 }

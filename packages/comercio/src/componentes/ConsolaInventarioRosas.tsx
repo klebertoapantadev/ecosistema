@@ -44,6 +44,7 @@ import {
   formatearFechaCorteInventario,
   formatearResumenInventarioTexto,
   type CorteInventarioRosas,
+  type DefinicionColorRosa,
   type FotoConteoBonches,
 } from "../operaciones-taller";
 import {
@@ -91,6 +92,9 @@ export function ConsolaInventarioRosas({
   const [catalogoVariedades, setCatalogoVariedades] = useState<VariedadRosaCatalogo[]>(
     CATALOGO_SEMILLA_VARIEDADES_ROSAS
   );
+  const [categoriasColores, setCategoriasColores] = useState<DefinicionColorRosa[]>(
+    COLORES_ROSAS_ESTANDAR
+  );
   const [migracionCatalogoPendiente, setMigracionCatalogoPendiente] = useState<boolean>(false);
 
   const [ultimoCorte, setUltimoCorte] = useState<CorteInventarioRosas | null>(ultimoCorteInicial);
@@ -126,6 +130,9 @@ export function ConsolaInventarioRosas({
     const res = await listarVariedadesRosaAction(negNorm);
     if (res.ok && res.items.length > 0) {
       setCatalogoVariedades(res.items);
+      if (Array.isArray(res.categoriasColores) && res.categoriasColores.length > 0) {
+        setCategoriasColores(res.categoriasColores);
+      }
       setMigracionCatalogoPendiente(Boolean(res.migracionPendiente));
     }
   }, [negNorm]);
@@ -695,6 +702,8 @@ export function ConsolaInventarioRosas({
           negocio={negNorm}
           catalogo={catalogoVariedades}
           onCatalogoActualizado={(nuevo) => setCatalogoVariedades(nuevo)}
+          categoriasColores={categoriasColores}
+          onCategoriasActualizadas={setCategoriasColores}
           migracionPendiente={migracionCatalogoPendiente}
         />
       ) : (
@@ -836,7 +845,7 @@ export function ConsolaInventarioRosas({
                   const colInfo =
                     item.tipoFlor === "orquidea"
                       ? COLORES_ORQUIDEA_CYMBIDIUM.find((c) => c.clave === item.colorClave)
-                      : COLORES_ROSAS_ESTANDAR.find((c) => c.clave === item.colorClave);
+                      : categoriasColores.find((c) => c.clave === item.colorClave);
                   return (
                     <span
                       key={`${item.tipoFlor}-${item.colorClave}-${item.variedadNombre}-${idx}`}
@@ -969,10 +978,6 @@ export function ConsolaInventarioRosas({
                 <h2 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, color: "#0F172A" }}>
                   Nuevo Conteo Fotográfico de Rosas y Orquídeas Cymbidium (ARIA)
                 </h2>
-                <p style={{ margin: "4px 0 0", fontSize: "0.82rem", color: "#64748B" }}>
-                  ARIA identifica colores, asigna la variedad por defecto (editable en cada fila) y
-                  en orquídeas Cymbidium cuenta varas y número de flores.
-                </p>
               </div>
 
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -1148,7 +1153,7 @@ export function ConsolaInventarioRosas({
                     >
                       {(manualTipoFlor === "orquidea"
                         ? COLORES_ORQUIDEA_CYMBIDIUM
-                        : COLORES_ROSAS_ESTANDAR
+                        : categoriasColores
                       ).map((c) => (
                         <option key={c.clave} value={c.clave}>
                           {c.etiqueta}
@@ -1273,18 +1278,27 @@ export function ConsolaInventarioRosas({
                       style={{
                         border: "1px solid #E2E8F0",
                         borderRadius: "14px",
-                        padding: "14px",
+                        padding: "12px",
                         background: "#F8FAFC",
-                        display: "grid",
-                        gridTemplateColumns: foto.imagenUrl
-                          ? "minmax(140px, 195px) minmax(0, 1fr)"
-                          : "minmax(0, 1fr)",
-                        gap: "16px",
-                        alignItems: "start",
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "14px",
+                        alignItems: "flex-start",
+                        maxWidth: "100%",
+                        boxSizing: "border-box",
                       }}
                     >
                       {foto.imagenUrl && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "6px",
+                            flex: "1 1 160px",
+                            maxWidth: "220px",
+                            minWidth: 0,
+                          }}
+                        >
                           <img
                             src={foto.imagenUrl}
                             alt={`Foto inventario ${idx + 1}`}
@@ -1325,7 +1339,16 @@ export function ConsolaInventarioRosas({
                         </div>
                       )}
 
-                      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "10px",
+                          flex: "999 1 250px",
+                          minWidth: 0,
+                          width: "100%",
+                        }}
+                      >
                         <div
                           style={{
                             display: "flex",
@@ -1423,15 +1446,16 @@ export function ConsolaInventarioRosas({
                           <div
                             style={{
                               display: "grid",
-                              gridTemplateColumns: "repeat(auto-fill, minmax(265px, 1fr))",
+                              gridTemplateColumns: "repeat(auto-fill, minmax(min(220px, 100%), 1fr))",
                               gap: "8px",
+                              minWidth: 0,
                             }}
                           >
                             {items.map((item) => {
                               const esOrq = item.tipoFlor === "orquidea";
                               const colDef = esOrq
                                 ? COLORES_ORQUIDEA_CYMBIDIUM.find((c) => c.clave === item.colorClave)
-                                : COLORES_ROSAS_ESTANDAR.find((c) => c.clave === item.colorClave);
+                                : categoriasColores.find((c) => c.clave === item.colorClave);
                               const opcionesVariedad = esOrq
                                 ? []
                                 : obtenerVariedadesPorColor(catalogoVariedades, item.colorClave);
@@ -1753,7 +1777,7 @@ export function ConsolaInventarioRosas({
                             >
                               {(inlineTipoFlor === "orquidea"
                                 ? COLORES_ORQUIDEA_CYMBIDIUM
-                                : COLORES_ROSAS_ESTANDAR
+                                : categoriasColores
                               ).map((c) => (
                                 <option key={c.clave} value={c.clave}>
                                   {c.etiqueta}
