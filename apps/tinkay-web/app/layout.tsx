@@ -1,18 +1,31 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  weight: ["500", "600"],
-  style: ["normal", "italic"],
+// Fuentes locales dentro del repo (evita fallos de descarga de Google Fonts en Vercel)
+const fraunces = localFont({
+  src: [
+    {
+      path: "./fuentes/fraunces-variable-latin.woff2",
+      weight: "500 600",
+      style: "normal",
+    },
+    {
+      path: "./fuentes/fraunces-italic-variable-latin.woff2",
+      weight: "500 600",
+      style: "italic",
+    },
+  ],
   variable: "--font-fraunces",
+  display: "swap",
 });
 
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+const inter = localFont({
+  src: "./fuentes/inter-variable-latin.woff2",
+  weight: "100 900",
+  style: "normal",
   variable: "--font-inter",
+  display: "swap",
 });
 
 export const viewport: Viewport = {
