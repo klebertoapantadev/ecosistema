@@ -27,9 +27,9 @@ function formatearPrecio(valor: number) {
 }
 
 /**
- * La cinta («churo»): UN hilo continuo. Cada tramo sale por y=900 y el
- * siguiente entra por y=0 en la misma x con tangente vertical, así el empalme
- * no se ve.
+ * La cinta («churo»). Desde las observaciones del 19-nov (TRQ-033) solo
+ * queda en el hero: en el resto de secciones atravesaba el contenido y
+ * competía con la lectura.
  */
 function Churo({ color, d }: { color: string; d: string }) {
   return (
@@ -41,10 +41,11 @@ function Churo({ color, d }: { color: string; d: string }) {
   );
 }
 
-function Quiero() {
+/** La marca se escribe «Tranqi» en los textos (el logotipo sigue siendo el suyo). */
+function Quiero({ a = "#planes" }: { a?: string }) {
   return (
-    <a className="btn btn-amarillo" href="#planes">
-      Quiero estar tranqi <Ico nombre="flecha" />
+    <a className="btn btn-amarillo" href={a}>
+      Quiero estar Tranqi <Ico nombre="flecha" />
     </a>
   );
 }
@@ -200,33 +201,38 @@ export function LandingTranqi() {
       <section id="hero" data-buddie="hero">
         <Churo color="#7866FF" d="M 1500 140 C 1260 140 1100 300 1150 470 C 1200 640 1420 600 1400 430 C 1380 270 1150 300 1110 520 C 1080 690 1370 760 1370 900" />
         <div className="wrap">
-          <img className="logo-grande" src="/assets/tranqi-white.svg" alt="tranqi®" />
+          <img className="logo-grande" src="/assets/tranqi-white.svg" alt="Tranqi®" />
+          <span className="sello">Tranqi · LegalTech + FinTech</span>
           <h1>Tu tranquilidad también necesita <i>respaldo legal</i>.</h1>
-          <p className="bajada">Accede a orientación jurídica profesional para ti y tu familia, y a servicios financieros, en un solo lugar.</p>
-          <span className="sello">LegalTech + FinTech</span>
+          <p className="bajada">Protege tus derechos, encuentra respaldo profesional y accede a soluciones financieras para ti y tu familia. Todo en un solo lugar.</p>
+          <p className="lema-hero">Una membresía. Múltiples soluciones.</p>
           <ul>
-            <li><Ico nombre="check" />Una membresía anual</li>
-            <li><Ico nombre="check" />Acceso a una red de abogados especializados</li>
-            <li><Ico nombre="check" />Opciones de financiamiento y planes de pago para honorarios y servicios</li>
-            <li><Ico nombre="check" />Plataforma disponible 24/7</li>
+            <li><Ico nombre="escudo" /><div><b>Membresía anual</b><span>Accede a beneficios y servicios según tu plan.</span></div></li>
+            <li><Ico nombre="balanza" /><div><b>Red de abogados especializados</b><span>Conecta con profesionales para recibir orientación y asistencia jurídica.</span></div></li>
+            <li><Ico nombre="billetera" /><div><b>Soluciones financieras</b><span>Opciones de financiamiento y planes de pago para honorarios y servicios legales.</span></div></li>
+            <li><Ico nombre="reloj" /><div><b>Plataforma digital 24/7</b><span>Accede a tu plataforma y gestiona tus solicitudes desde cualquier lugar.</span></div></li>
           </ul>
+          {/* Dos llamados a la acción: el precio lleva a los planes y «Quiero
+              estar Tranqi» a lo que incluye la membresía. */}
           <div className="oferta">
-            <div className="pvp"><small>Tu membresía anual</small><b>Desde {precio}</b><em>Valor incluye IVA</em></div>
-            <Quiero />
+            <a className="pvp" href="#planes">
+              <span><small>Conoce tu membresía anual</small><b>Desde {precio}</b><em>Valor incluye IVA</em></span>
+              <span className="ir"><Ico nombre="flecha" /></span>
+            </a>
+            <Quiero a="#beneficios" />
           </div>
         </div>
       </section>
 
-      {/* 02 · CÓMO FUNCIONA — blanco, sin curva (la cinta solo roza el borde) */}
+      {/* 02 · CÓMO FUNCIONA — blanco */}
       <section id="como" data-buddie="como">
-        <Churo color="#7866FF" d="M 1370 0 C 1370 250 1410 450 1395 620 C 1385 760 1370 800 1370 900" />
         <div className="wrap">
-          <h2>Estar tranqi<br />es así de fácil.</h2>
+          <h2>Estar <b className="marca">Tranqi</b><br />es así de fácil.</h2>
           <p className="sub">En solo 3 pasos accedes a protección jurídica y soluciones financieras.</p>
           <div className="pasos">
             <div className="paso"><Ico nombre="tarjeta" /><h3>1. Afíliate</h3><p>Elige tu membresía y realiza tu pago seguro.</p></div>
             <div className="chevron" aria-hidden="true"><Ico nombre="chevron" /></div>
-            <div className="paso"><Ico nombre="movil" /><h3>2. Accede</h3><p>Ingresa a tranqi desde tu dispositivo.</p></div>
+            <div className="paso"><Ico nombre="movil" /><h3>2. Accede</h3><p>Ingresa a Tranqi desde tu dispositivo.</p></div>
             <div className="chevron" aria-hidden="true"><Ico nombre="chevron" /></div>
             <div className="paso"><Ico nombre="chats" /><h3>3. Consulta</h3><p>Conecta con un abogado de la especialidad que necesitas.</p></div>
           </div>
@@ -240,7 +246,6 @@ export function LandingTranqi() {
 
       {/* 03 · QUÉ INCLUYE — blanco, íconos violeta, letras negras, media dona de fotos */}
       <section id="beneficios" data-buddie="beneficios">
-        <Churo color="#7866FF" d="M 1370 0 C 1370 200 1340 500 1380 700 C 1395 800 1370 840 1370 900" />
         <div className="dona" aria-hidden="true">
           <img src={`${FOTOS}/app-hola.jpg`} alt="" />
           <img src={`${FOTOS}/asesoria.jpg`} alt="" />
@@ -248,7 +253,7 @@ export function LandingTranqi() {
           <img src={`${FOTOS}/app-icono.jpg`} alt="" />
         </div>
         <div className="wrap">
-          <h2>El derecho a<br />estar tranqi.</h2>
+          <h2>El derecho a<br />estar <b className="marca">Tranqi</b>.</h2>
           <p className="sub2">Qué incluye tu membresía</p>
           <div className="beneficios">
             <div className="beneficio"><Ico nombre="familia" /><h3>Respaldo para tu familia</h3><p>Protección individual y familiar según tu cobertura.</p></div>
@@ -264,14 +269,13 @@ export function LandingTranqi() {
 
       {/* 04 · SOLUCIONES LEGALES — degradado lavanda → rosa, collage con la foto de gestores */}
       <section id="soluciones" data-buddie="soluciones">
-        <Churo color="#7866FF" d="M 1370 0 C 1370 180 1420 330 1400 520 C 1380 700 1220 760 1220 900" />
         <div className="wrap">
           <h2>Soluciones legales<span>al alcance de todos.</span></h2>
           <div className="bento">
             <img className="b1" src={`${FOTOS}/manos.jpg`} alt="Manos unidas en círculo" />
             <img className="b2" src={`${FOTOS}/familia.jpg`} alt="Madre con su bebé y un adulto mayor usando el celular" />
-            <img className="b3" src={`${FOTOS}/usuarios.jpg`} alt="Dos mujeres usando tranqi en el celular" />
-            <img className="b4" src={`${FOTOS}/gestores.jpg`} alt="Gestora de tranqi atendiendo a una familia" />
+            <img className="b3" src={`${FOTOS}/usuarios.jpg`} alt="Dos mujeres usando Tranqi en el celular" />
+            <img className="b4" src={`${FOTOS}/gestores.jpg`} alt="Gestora de Tranqi atendiendo a una familia" />
             <img className="b5" src={`${FOTOS}/joven-celular.jpg`} alt="Joven revisando su celular" />
             <img className="b6" src={`${FOTOS}/adulto-mayor.jpg`} alt="Adulto mayor frente a su computadora" />
           </div>
@@ -280,7 +284,6 @@ export function LandingTranqi() {
 
       {/* 05 · PLANES — amarillo, Personas + Empresas, logos de todas las tarjetas */}
       <section id="planes" data-buddie="planes">
-        <Churo color="#7866FF" d="M 1220 0 C 1220 140 1420 200 1400 420 C 1380 640 330 640 330 900" />
         <div className="wrap">
           <h2>Planes para<span>protección jurídica continua</span></h2>
           <div className="tarjetas">
@@ -313,30 +316,29 @@ export function LandingTranqi() {
             </article>
           </div>
           <div className="medios">
-            <span>Paga con todas las tarjetas</span>
+            <span className="medios-ico"><Ico nombre="tarjeta-escudo" /></span>
+            <p><span>Aceptamos todas</span><b>las tarjetas de crédito</b></p>
             <img src={`${FOTOS}/tarjetas.png`} alt="Visa, Mastercard, American Express, Alia, Discover y Diners Club" />
           </div>
         </div>
       </section>
 
-      {/* 06 · ¿TIENES UNA DUDA LEGAL? — rosa + curva naranja */}
+      {/* 06 · ¿TIENES UNA DUDA LEGAL? — blanco */}
       <section id="duda" data-buddie="duda">
-        <Churo color="#FE5800" d="M 330 0 C 330 200 600 230 900 270 C 1250 320 1340 450 1310 610 C 1290 760 1370 800 1370 900" />
         <div className="wrap">
           <h2>¿Tienes una duda legal?<span>No tienes que resolverla solo.</span></h2>
           <div className="tira">
             <img src={`${FOTOS}/manos.jpg`} alt="" />
             <img src={`${FOTOS}/consulta-video.jpg`} alt="Mujer en una videoconsulta" />
-            <img src={`${FOTOS}/app-cafe.jpg`} alt="Persona usando la app de tranqi" />
+            <img src={`${FOTOS}/app-cafe.jpg`} alt="Persona usando la app de Tranqi" />
             <img src={`${FOTOS}/familia.jpg`} alt="" />
           </div>
-          <p className="remate">Desde una consulta cotidiana hasta una situación legal más compleja, tranqi te conecta con profesionales que pueden orientarte.</p>
+          <p className="remate">Desde una consulta cotidiana hasta una situación legal más compleja, Tranqi te conecta con profesionales que pueden orientarte.</p>
         </div>
       </section>
 
       {/* 07 · RED DE EXPERTOS — confianza y respaldo */}
       <section id="red" data-buddie="red">
-        <Churo color="#5000BA" d="M 1370 0 C 1370 200 1340 500 1380 700 C 1395 800 1370 840 1370 900" />
         <div className="wrap">
           <div className="cabecera">
             <div className="foto"><img src={`${FOTOS}/abogados-firma.jpg`} alt="Abogados revisando un contrato" /></div>
@@ -352,14 +354,13 @@ export function LandingTranqi() {
             <div><Ico nombre="tarjeta-escudo" /><div><b>Pagos confiables</b><p>Procesamiento de pagos mediante una pasarela segura y confirmación de la transacción.</p></div></div>
           </div>
           <div className="centro">
-            <a className="btn btn-amarillo" href="#contacto" data-abrir-chat>Hablar con tranqi ahora <Ico nombre="flecha" /></a>
+            <a className="btn btn-amarillo" href="#contacto" data-abrir-chat>Hablar con Tranqi ahora <Ico nombre="flecha" /></a>
           </div>
         </div>
       </section>
 
       {/* 08 · ¿ERES ABOGADO? — lámina 9 del recorrido, en la posición 8 */}
       <section id="abogado" data-buddie="abogado">
-        <Churo color="#5000BA" d="M 1370 0 C 1370 250 1410 450 1395 620 C 1385 760 1370 800 1370 900" />
         <div className="wrap rejilla">
           <div>
             <div className="arco"><img src={`${FOTOS}/abogados-red.jpg`} alt="Abogados trabajando juntos" /></div>
@@ -375,15 +376,13 @@ export function LandingTranqi() {
             </ul>
             <div className="acciones">
               <a className="btn btn-amarillo" href="/abogados">Más información <Ico nombre="flecha" /></a>
-              <span className="logo-violeta" role="img" aria-label="tranqi" />
             </div>
           </div>
         </div>
       </section>
 
-      {/* 09 · CONTACTO — rosa + curva naranja; nunca fondo negro */}
+      {/* 09 · CONTACTO — blanco; nunca fondo negro */}
       <section id="contacto" data-buddie="contacto">
-        <Churo color="#FE5800" d="M 1370 0 C 1370 300 800 380 760 600 C 730 780 900 820 900 900" />
         <div className="wrap rejilla">
           <div className="izquierda">
             <h2>Estamos aquí<br />para ayudarte.</h2>
@@ -399,13 +398,12 @@ export function LandingTranqi() {
         </div>
       </section>
 
-      {/* 10 · FAQ — menta + curva negra */}
+      {/* 10 · FAQ — menta */}
       <section id="faq" data-buddie="faq">
-        <Churo color="#111111" d="M 900 0 C 900 200 1420 220 1400 500 C 1380 760 1250 780 1250 900" />
         <div className="wrap rejilla">
-          <div className="lado"><h2>FAQ</h2><p>Lo que más nos preguntan antes de estar tranqi.</p></div>
+          <div className="lado"><h2>FAQ</h2><p>Lo que más nos preguntan antes de estar Tranqi.</p></div>
           <div className="preguntas">
-            <details open><summary>¿Qué es la membresía tranqi? <Ico nombre="mas" /></summary><p>Un plan anual de protección jurídica: incluye consultas con abogados, acceso a la plataforma y descuentos en honorarios y trámites. Empieza el día que la compras y dura un año.</p></details>
+            <details open><summary>¿Qué es la membresía Tranqi? <Ico nombre="mas" /></summary><p>Un plan anual de protección jurídica: incluye consultas con abogados, acceso a la plataforma y descuentos en honorarios y trámites. Empieza el día que la compras y dura un año.</p></details>
             <details><summary>¿Cuánto cuesta y cómo pago? <Ico nombre="mas" /></summary><p>Desde {precio} al año con IVA incluido (unos $1,92 al mes). Pagas una vez, en línea, con cualquier tarjeta de crédito o débito.</p></details>
             <details><summary>¿Puedo incluir a mi familia? <Ico nombre="mas" /></summary><p>Sí. TRANQI +3 Familiar cubre a cuatro personas por $28,75 al año, y TRANQI +5 Familiar a seis personas por $34,99 al año.</p></details>
             <details><summary>¿Cómo son las consultas? <Ico nombre="mas" /></summary><p>Son telemáticas, de hasta 30 minutos, con un abogado asignado según la materia de tu caso. Tu plan incluye de 2 a 4 consultas al año.</p></details>
@@ -418,14 +416,13 @@ export function LandingTranqi() {
 
       {/* NOSOTROS — fuera de la revisión 1; sigue en el menú y va al final */}
       <section id="nosotros" data-buddie="nosotros">
-        <Churo color="#111111" d="M 1250 0 C 1250 300 700 260 640 560 C 600 760 900 780 900 960" />
         <div className="wrap rejilla">
           <div className="carta">
             <span className="etiqueta">Nosotros</span>
             <h3>El momento de transformar el mundo legal ha llegado.</h3>
-            <p>tranqi nace de una tradición jurídica de cuatro generaciones y de una convicción: frente a la corrupción, la inseguridad y la desconfianza, necesitamos elevar la calidad del servicio legal.</p>
+            <p>Tranqi nace de una tradición jurídica de cuatro generaciones y de una convicción: frente a la corrupción, la inseguridad y la desconfianza, necesitamos elevar la calidad del servicio legal.</p>
             <p>Impulsamos la corporativización del derecho: integrar abogados, tecnología y financiamiento mediante LegalTech y FinTech, con estándares de responsabilidad y transparencia. Nuestro propósito es que las personas encuentren soluciones y puedan ejercer sus derechos.</p>
-            <div className="firma"><span className="avatar">GC</span><div><b>Galo F. Chiriboga Pérez</b><small>Fundador y CEO de tranqi</small></div></div>
+            <div className="firma"><span className="avatar">GC</span><div><b>Galo F. Chiriboga Pérez</b><small>Fundador y CEO de Tranqi</small></div></div>
           </div>
           <div className="pilares">
             <h3>Nuestros pilares institucionales</h3>
@@ -440,8 +437,8 @@ export function LandingTranqi() {
 
       <footer className="pie-landing">
         <div className="wrap">
-          <img src="/assets/tranqi-white.svg" alt="tranqi" />
-          <span>© 2026 tranqi® · Todos los derechos reservados</span>
+          <img src="/assets/tranqi-white.svg" alt="Tranqi" />
+          <span>© 2026 Tranqi® · Todos los derechos reservados</span>
           <span className="enlaces">
             <a href="/terminos">Términos y privacidad</a> · <a href="/vacantes">Bolsa de empleo</a>
           </span>

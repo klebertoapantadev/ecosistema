@@ -21,8 +21,7 @@ componentes visuales.
 ## 1. Origen
 
 El sistema sale del brochure de marca. La landing pública lo usa en su forma
-más expresiva —color pleno por sección y una cinta continua que recorre la
-página—; las pantallas de trabajo lo usan en su forma sobria. Es el mismo
+más expresiva —color pleno por sección y la cinta en la portada—; las pantallas de trabajo lo usan en su forma sobria. Es el mismo
 sistema en dos registros, no dos sistemas. La bolsa de empleo (`/vacantes`)
 combina los dos: portada en violeta pleno con filtros en píldora, y vacantes en
 tarjetas blancas sobre `--papel-cliente` (TRQ-012; antes llevaba la paleta
@@ -165,7 +164,10 @@ el color pleno:
 ## 7. La cinta
 
 Es el elemento de marca más reconocible y el más fácil de arruinar. En la
-landing se dibuja al hacer scroll y ocupa la pantalla. **En pantallas de trabajo
+landing se dibuja al hacer scroll y **solo en la portada (hero)**: las
+observaciones de negocio del 19-nov-2026 la retiraron del resto de secciones
+porque atravesaba el contenido y competía con la lectura (TRQ-033). Las reglas
+de abajo sobre tramos y empalmes quedan como historia de la versión anterior. **En pantallas de trabajo
 es textura**: un solo trazo, entre 10 % y 35 % de opacidad, dentro del rail o de
 la superficie de color, nunca sobre texto y nunca en más de dos elementos por
 pantalla.
@@ -201,7 +203,11 @@ la tinta verde de «Nuestro equipo» daba un salvia `#7A9F73` que no está en la
 paleta y dejaba el titular blanco a 3:1; ahora ese tramo es `--esmeralda`.
 
 Ya no hay anclaje de scroll (una sección = una página): la landing de la
-membresía (TRQ-024) tiene bloques de alto variable y scroll normal. Su estilo
+membresía (TRQ-024) tiene bloques de alto variable y scroll normal. Desde
+TRQ-033 el fondo predominante es blanco: conservan color el hero (violeta),
+soluciones (degradado), planes (amarillo), FAQ (menta) y Nosotros (lila); los
+títulos de sección comparten tamaño y peso, y los párrafos van justificados con
+guiones. Su estilo
 vive en `modulos/landing/componentes/landing.css`, todo bajo `.landing`.
 
 ## 8. Accesibilidad
@@ -325,10 +331,12 @@ palabra**, como manda la norma del español (no *Title Case*): «El problema»,
 del 16-sep marcaron el menú y los titulares de la landing escritos enteros en
 minúscula («hola», «el problema»); se corrigió en TRQ-012.
 
-El logotipo sigue en minúscula, porque es imagen. El nombre dentro de una frase
-se escribe «tranqi» («vivir tranqi»); cuando abre oración o hace de título,
-«Tranqi». **Pendiente de confirmar por negocio:** si el nombre pasa a «Tranqi»
-también dentro de la frase.
+El logotipo sigue en minúscula, porque es imagen. En texto el nombre se escribe
+siempre «Tranqi», también dentro de la frase («Quiero estar Tranqi»): lo
+confirmó negocio en las observaciones de la página web del 19-nov-2026. En los
+titulares de la landing va además en violeta (`.marca`). Aplicado en la landing
+(TRQ-033); el resto de pantallas se corrige cuando se toquen. Los nombres de
+plan del catálogo («TRANQI +3 Familiar») no cambian aquí: son datos.
 
 ## 14. Subvistas del panel: en la URL y con «Volver»
 
