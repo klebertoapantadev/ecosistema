@@ -539,7 +539,10 @@ p { line-height: 1.55; }
    trazo, opacidad baja, dentro del rail, nunca sobre texto y en no más de dos
    elementos por pantalla. El 9% es el valor de la maqueta; por encima empieza
    a competir con la navegación. */
-.cinta-rail { position: absolute; inset: 0; pointer-events: none; opacity: 0.09; }
+/* width/height explícitos (TRQ-029): un <svg> con viewBox y alto automático
+   toma el de su proporción (236 × 900) aunque lleve inset: 0, y con el rail
+   fijo de 100vh la cinta se cortaba a media altura. */
+.cinta-rail { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0.09; }
 .cinta-rail path {
   fill: none; stroke: var(--rail-acento); stroke-width: 44; stroke-linecap: round;
 }
@@ -665,14 +668,15 @@ p { line-height: 1.55; }
 @media (min-width: 861px) {
   .panel-nav { transition: width 0.45s var(--curva-rail), padding 0.45s var(--curva-rail); }
   /* TRQ-027: el rail no se va con el scroll de la página. Sticky (no fixed)
-     para que siga ocupando su columna en el flex. Si el menú no cabe en la
-     pantalla, se desplaza el rail por dentro; x sigue oculto por la cinta. */
+     para que siga ocupando su columna en el flex. */
   .panel-nav {
     position: sticky; top: 0; align-self: flex-start;
     height: 100vh; height: 100dvh;
-    overflow: hidden auto; overscroll-behavior: contain; scrollbar-width: none;
+    /* clip y no auto/hidden (TRQ-029): un contenedor con scroll propio se
+       podía desplazar en horizontal y el contenido del rail salía corrido a
+       la izquierda. clip recorta sin crear contenedor de scroll. */
+    overflow: clip;
   }
-  .panel-nav::-webkit-scrollbar { display: none; }
   .panel-nav-links a[aria-current="page"] { background: transparent; box-shadow: none; }
   .panel-nav-links a[aria-current="page"]:hover { background: transparent; }
   .etiqueta-nav, .panel-usuario { transition: opacity 0.2s; }
