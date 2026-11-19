@@ -1522,13 +1522,13 @@ export function ModalImprimirTarjetaTaller({
                       marginBottom: "3px",
                     }}
                   >
-                    De parte de (Firma):
+                    De parte de (Firma interior):
                   </label>
                   <input
                     type="text"
                     value={deEditable}
                     onChange={(e) => setDeEditable(e.target.value)}
-                    placeholder="Quien envía"
+                    placeholder="Ej: Att: Kleber"
                     style={{
                       width: "100%",
                       padding: "6px 8px",
@@ -1540,6 +1540,41 @@ export function ModalImprimirTarjetaTaller({
                   />
                 </div>
               </div>
+
+              {!esCondolencias && (
+                <div>
+                  <label
+                    style={{
+                      fontSize: "0.74rem",
+                      fontWeight: 700,
+                      color: "#57524C",
+                      display: "block",
+                      marginBottom: "3px",
+                    }}
+                  >
+                    Remitente en portada digital (opcional):
+                  </label>
+                  <input
+                    type="text"
+                    value={disenoNorm.remitentePortada}
+                    onChange={(e) =>
+                      setDiseno({
+                        ...disenoNorm,
+                        remitentePortada: e.target.value,
+                      })
+                    }
+                    placeholder="Ej: El amor de tu vida (se muestra en la portada antes de abrir)"
+                    style={{
+                      width: "100%",
+                      padding: "6px 8px",
+                      borderRadius: "7px",
+                      border: "1px solid #D5CFC4",
+                      fontSize: "0.79rem",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              )}
 
               {/* 4. MENSAJE */}
               <div>

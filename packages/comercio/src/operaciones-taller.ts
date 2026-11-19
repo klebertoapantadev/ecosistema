@@ -1009,6 +1009,8 @@ export interface DisenoVisualTarjeta {
   textoAnchoPct?: number;
   /** Mostrar cuadro de firma ("De parte de") en la tarjeta impresa y digital */
   mostrarFirma?: boolean;
+  /** Texto opcional de remitente para mostrar en la portada cerrada de la tarjeta digital (ej. "El amor de tu vida") */
+  remitentePortada?: string;
   /** Bloques de texto configurables (firma + cuadros adicionales arrastrables) */
   bloquesTexto?: BloqueTextoTarjeta[];
   /** Hasta 3 imágenes independientes (arrastrables y ampliables hasta 100% de la tarjeta) */

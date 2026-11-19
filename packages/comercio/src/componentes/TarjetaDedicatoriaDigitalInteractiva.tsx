@@ -232,6 +232,8 @@ export function TarjetaDedicatoriaDigitalInteractiva({
 
   const contenedorLyricsRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
+  const playerListoRef = useRef<boolean>(false);
+  const pendienteReproducirRef = useRef<boolean>(false);
   const audioHtmlRef = useRef<HTMLAudioElement | null>(null);
 
   const negNorm = datosIniciales.negocio.trim().toLowerCase();
@@ -240,6 +242,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
 
   useEffect(() => {
     if (!youtubeId || esCondolencias || typeof window === "undefined") return;
+    playerListoRef.current = false;
 
     const inicializarPlayer = () => {
       if (!(window as any).YT || !(window as any).YT.Player) return;
@@ -259,11 +262,23 @@ export function TarjetaDedicatoriaDigitalInteractiva({
           },
           events: {
             onReady: (event: any) => {
-              event.target.setVolume(25);
+              playerListoRef.current = true;
+              event.target.setVolume(15);
+              if (pendienteReproducirRef.current) {
+                try {
+                  event.target.unMute();
+                  event.target.setVolume(15);
+                  event.target.playVideo();
+                  setReproduciendo(true);
+                } catch {}
+              }
             },
             onStateChange: (event: any) => {
               if (event.data === (window as any).YT.PlayerState.PLAYING) {
                 setReproduciendo(true);
+                try {
+                  event.target.setVolume(15);
+                } catch {}
               } else if (
                 event.data === (window as any).YT.PlayerState.PAUSED ||
                 event.data === (window as any).YT.PlayerState.ENDED
@@ -287,6 +302,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
     }
 
     return () => {
+      playerListoRef.current = false;
       if (playerRef.current?.destroy) {
         playerRef.current.destroy();
       }
@@ -339,18 +355,26 @@ export function TarjetaDedicatoriaDigitalInteractiva({
     if (abierta) return;
     setAbierta(true);
     if (!tieneCancion) return;
+    pendienteReproducirRef.current = true;
+
     if (esAudioDirecto && audioHtmlRef.current) {
-      audioHtmlRef.current.volume = 0.25;
+      audioHtmlRef.current.muted = false;
+      audioHtmlRef.current.volume = 0.15;
       audioHtmlRef.current
         .play()
-        .then(() => setReproduciendo(true))
+        .then(() => {
+          setSilenciado(false);
+          setReproduciendo(true);
+        })
         .catch(() => {});
       return;
     }
-    if (playerRef.current?.playVideo) {
+    if (playerRef.current?.playVideo && playerListoRef.current) {
       try {
+        playerRef.current.unMute();
+        playerRef.current.setVolume(15);
         playerRef.current.playVideo();
-        playerRef.current.setVolume(25);
+        setSilenciado(false);
         setReproduciendo(true);
       } catch {}
     }
@@ -363,9 +387,12 @@ export function TarjetaDedicatoriaDigitalInteractiva({
   const handleToggleReproduccion = () => {
     if (esAudioDirecto && audioHtmlRef.current) {
       if (reproduciendo) {
+        pendienteReproducirRef.current = false;
         audioHtmlRef.current.pause();
         setReproduciendo(false);
       } else {
+        pendienteReproducirRef.current = true;
+        audioHtmlRef.current.volume = 0.15;
         void audioHtmlRef.current.play();
         setReproduciendo(true);
       }
@@ -373,9 +400,12 @@ export function TarjetaDedicatoriaDigitalInteractiva({
     }
     if (!playerRef.current) return;
     if (reproduciendo) {
+      pendienteReproducirRef.current = false;
       playerRef.current.pauseVideo();
       setReproduciendo(false);
     } else {
+      pendienteReproducirRef.current = true;
+      playerRef.current.setVolume(15);
       playerRef.current.playVideo();
       setReproduciendo(true);
     }
@@ -384,13 +414,14 @@ export function TarjetaDedicatoriaDigitalInteractiva({
   const handleToggleSilencio = () => {
     if (esAudioDirecto && audioHtmlRef.current) {
       audioHtmlRef.current.muted = !silenciado;
+      if (silenciado) audioHtmlRef.current.volume = 0.15;
       setSilenciado(!silenciado);
       return;
     }
     if (!playerRef.current) return;
     if (silenciado) {
       playerRef.current.unMute();
-      playerRef.current.setVolume(25);
+      playerRef.current.setVolume(15);
       setSilenciado(false);
     } else {
       playerRef.current.mute();
@@ -426,6 +457,9 @@ export function TarjetaDedicatoriaDigitalInteractiva({
             @keyframes ecoPulsoSuaveTarjeta {
               0%, 100% { opacity: 0.78; transform: translateY(0px); }
               50% { opacity: 1; transform: translateY(-2px); }
+            }
+            .eco-lyrics-sobrio::-webkit-scrollbar {
+              display: none;
             }
           `,
         }}
@@ -762,15 +796,33 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                   {mostrarDestinatario && (
                     <div
                       style={{
-                        marginTop: "6px",
+                        marginTop: "4px",
                         fontFamily: "'Playfair Display', Georgia, serif",
-                        fontSize: "0.95rem",
+                        fontSize: "0.94rem",
                         fontStyle: "italic",
                         color: "#44403C",
                         letterSpacing: "0.02em",
                       }}
                     >
-                      Para: <strong style={{ fontStyle: "normal", color: "#1C1917" }}>{datosIniciales.destinatario}</strong>
+                      Para:{" "}
+                      <strong style={{ fontStyle: "normal", color: "#1C1917" }}>
+                        {datosIniciales.destinatario}
+                      </strong>
+                    </div>
+                  )}
+
+                  {disenoNorm.remitentePortada.trim() && (
+                    <div
+                      style={{
+                        marginTop: "2px",
+                        fontFamily: "'Playfair Display', Georgia, serif",
+                        fontSize: "0.8rem",
+                        fontStyle: "italic",
+                        color: "#57534E",
+                        letterSpacing: "0.02em",
+                      }}
+                    >
+                      De: {disenoNorm.remitentePortada.trim()}
                     </div>
                   )}
 
@@ -822,10 +874,10 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "10px",
-                  backgroundColor: "rgba(255, 255, 255, 0.1)",
-                  border: "1px solid rgba(255, 255, 255, 0.16)",
+                  backgroundColor: "rgba(245, 239, 230, 0.07)",
+                  border: "1px solid rgba(245, 239, 230, 0.14)",
                   backdropFilter: "blur(8px)",
-                  padding: "6px 14px",
+                  padding: "5px 13px 5px 6px",
                   borderRadius: "999px",
                 }}
               >
@@ -836,10 +888,10 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                   aria-label={reproduciendo ? "Pausar" : "Reproducir"}
                   style={{
                     border: "none",
-                    background: "#F8FAFC",
+                    background: "rgba(245, 239, 230, 0.9)",
                     color: "#0F172A",
-                    width: "28px",
-                    height: "28px",
+                    width: "26px",
+                    height: "26px",
                     borderRadius: "50%",
                     display: "flex",
                     alignItems: "center",
@@ -847,79 +899,114 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                     cursor: "pointer",
                   }}
                 >
-                  {reproduciendo ? <Pause size={13} /> : <Play size={13} />}
+                  {reproduciendo ? <Pause size={12} /> : <Play size={12} />}
                 </button>
 
                 <span
                   style={{
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    color: "#F1F5F9",
-                    maxWidth: "195px",
+                    fontSize: "0.73rem",
+                    fontWeight: 500,
+                    letterSpacing: "0.02em",
+                    color: "rgba(245, 239, 230, 0.84)",
+                    maxWidth: "200px",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
                   }}
                 >
-                  🎵 {datosIniciales.musicaTitulo || "Melodía"}
+                  {datosIniciales.musicaTitulo || "Melodía de fondo"}
                 </span>
 
                 <button
                   type="button"
                   onClick={handleToggleSilencio}
-                  title={silenciado ? "Activar sonido" : "Silenciar"}
+                  title={silenciado ? "Activar sonido (15%)" : "Silenciar"}
                   aria-label={silenciado ? "Activar sonido" : "Silenciar"}
                   style={{
                     border: "none",
                     background: "transparent",
-                    color: "#CBD5E1",
+                    color: "rgba(245, 239, 230, 0.65)",
                     cursor: "pointer",
                     padding: "2px",
                     display: "inline-flex",
                     alignItems: "center",
                   }}
                 >
-                  {silenciado ? <VolumeX size={15} /> : <Volume2 size={15} />}
+                  {silenciado ? <VolumeX size={14} /> : <Volume2 size={14} />}
                 </button>
               </div>
             )}
 
-            {/* PARTE INFERIOR: LYRIC DESLIZÁNDOSE (SOLO DEDICATORIA CON LETRA) */}
+            {/* PARTE INFERIOR: LYRIC EDITORIAL SOBRIO Y ELEGANTE (SIN CAJA PESADA NI SCROLLBAR) */}
             {tieneCancion && lyricsList.length > 0 && (
               <div
                 style={{
                   width: "100%",
-                  backgroundColor: "rgba(30, 41, 59, 0.65)",
-                  backdropFilter: "blur(10px)",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  borderRadius: "14px",
-                  padding: "14px 16px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "4px 6px 2px 6px",
                   boxSizing: "border-box",
                 }}
               >
                 <div
-                  ref={contenedorLyricsRef}
+                  aria-hidden="true"
                   style={{
-                    maxHeight: "150px",
+                    width: "64px",
+                    height: "1px",
+                    background:
+                      "linear-gradient(to right, transparent, rgba(226, 217, 202, 0.4), transparent)",
+                  }}
+                />
+                <div
+                  ref={contenedorLyricsRef}
+                  className="eco-lyrics-sobrio"
+                  style={{
+                    width: "100%",
+                    maxHeight: "126px",
                     overflowY: "auto",
+                    scrollbarWidth: "none",
+                    msOverflowStyle: "none",
                     display: "flex",
                     flexDirection: "column",
-                    gap: "10px",
-                    padding: "6px 0",
+                    gap: "9px",
+                    padding: "24px 8px",
+                    boxSizing: "border-box",
                     scrollBehavior: "smooth",
+                    maskImage:
+                      "linear-gradient(to bottom, transparent 0%, #000000 24%, #000000 76%, transparent 100%)",
+                    WebkitMaskImage:
+                      "linear-gradient(to bottom, transparent 0%, #000000 24%, #000000 76%, transparent 100%)",
                   }}
                 >
                   {lyricsList.map((linea, idx) => {
-                    const esActiva = idx === lineaActivaIndex;
+                    const indiceEfectivo =
+                      lineaActivaIndex >= 0 ? lineaActivaIndex : reproduciendo ? 0 : -1;
+                    const esActiva = idx === indiceEfectivo;
+                    const distancia =
+                      indiceEfectivo >= 0 ? Math.abs(idx - indiceEfectivo) : 2;
                     return (
                       <p
                         key={idx}
                         style={{
                           margin: 0,
-                          fontSize: esActiva ? "0.98rem" : "0.82rem",
-                          fontWeight: esActiva ? 700 : 400,
-                          color: esActiva ? "#FDE047" : "rgba(255, 255, 255, 0.42)",
-                          transition: "all 0.28s ease",
+                          fontFamily: "'Playfair Display', Georgia, 'Times New Roman', serif",
+                          fontStyle: esActiva ? "italic" : "normal",
+                          fontSize: esActiva ? "1.02rem" : "0.84rem",
+                          fontWeight: esActiva ? 500 : 400,
+                          letterSpacing: esActiva ? "0.015em" : "0.01em",
+                          lineHeight: 1.45,
+                          color: esActiva
+                            ? "#F5EFE6"
+                            : distancia === 1
+                              ? "rgba(245, 239, 230, 0.45)"
+                              : "rgba(245, 239, 230, 0.22)",
+                          textShadow: esActiva
+                            ? "0 1px 14px rgba(245, 239, 230, 0.22)"
+                            : "none",
+                          transform: esActiva ? "scale(1.02)" : "scale(1)",
+                          transition: "all 0.42s cubic-bezier(0.22, 1, 0.36, 1)",
                           textAlign: "center",
                         }}
                       >

@@ -125,6 +125,7 @@ export interface DisenoVisualNormalizado {
   textoYPct: number;
   textoAnchoPct: number;
   mostrarFirma: boolean;
+  remitentePortada: string;
   bloquesTexto: BloqueTextoTarjeta[];
   imagenes: ImagenDisenoTarjeta[];
   /** Campos legados sincronizados con la 1ra imagen */
@@ -292,6 +293,7 @@ export function normalizarDisenoTarjeta(
     textoYPct: bloqueMensaje.yPct,
     textoAnchoPct: bloqueMensaje.anchoPct,
     mostrarFirma: diseno?.mostrarFirma !== false,
+    remitentePortada: typeof diseno?.remitentePortada === "string" ? diseno.remitentePortada : "",
     bloquesTexto: [bloqueMensaje, bloqueFirma, ...bloquesExtra],
     imagenes,
     imagenUrl: primeraImg ? primeraImg.url : null,
@@ -623,6 +625,7 @@ export function LienzoDisenadorTarjeta({
       textoYPct: msgBlk?.yPct ?? siguiente.textoYPct,
       textoAnchoPct: msgBlk?.anchoPct ?? siguiente.textoAnchoPct,
       mostrarFirma: siguiente.mostrarFirma,
+      remitentePortada: siguiente.remitentePortada,
       bloquesTexto: siguiente.bloquesTexto,
       imagenes: siguiente.imagenes,
       imagenUrl: primImg ? primImg.url : null,

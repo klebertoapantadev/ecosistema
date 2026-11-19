@@ -426,13 +426,13 @@ export function EditorTarjetaPublicoCliente({
                       marginBottom: "4px",
                     }}
                   >
-                    De parte de (Firma):
+                    De parte de (Firma interior):
                   </label>
                   <input
                     type="text"
                     value={de}
                     onChange={(e) => setDe(e.target.value)}
-                    placeholder="Quien envía"
+                    placeholder="Ej: Att: Kleber"
                     style={{
                       width: "100%",
                       padding: "8px 10px",
@@ -444,6 +444,41 @@ export function EditorTarjetaPublicoCliente({
                   />
                 </div>
               </div>
+
+              {!esCondolencias && (
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.76rem",
+                      fontWeight: 700,
+                      color: "#334155",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    Remitente en portada digital (opcional):
+                  </label>
+                  <input
+                    type="text"
+                    value={diseno.remitentePortada || ""}
+                    onChange={(e) =>
+                      setDiseno((prev) => ({
+                        ...normalizarDisenoTarjeta(prev, esCondolencias, mensaje),
+                        remitentePortada: e.target.value,
+                      }))
+                    }
+                    placeholder="Ej: El amor de tu vida (se ve en la portada antes de abrir)"
+                    style={{
+                      width: "100%",
+                      padding: "8px 10px",
+                      borderRadius: "8px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.84rem",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              )}
 
               <div>
                 <label
