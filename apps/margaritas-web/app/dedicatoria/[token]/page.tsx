@@ -21,12 +21,15 @@ export async function generateMetadata({ params }: PropsPage): Promise<Metadata>
     };
   }
 
+  const remitenteVisible =
+    res.tarjeta.diseno?.remitentePortada?.trim() || res.tarjeta.remitente || "alguien especial";
+
   return {
     title: `💌 Dedicatoria para ${res.tarjeta.destinatario} — Margaritas`,
-    description: `Tienes un detalle especial enviado por ${res.tarjeta.remitente}. Escucha tu dedicatoria y melodía.`,
+    description: `Tienes un detalle especial de ${remitenteVisible}. Abre tu tarjeta digital.`,
     openGraph: {
       title: `💌 Dedicatoria para ${res.tarjeta.destinatario}`,
-      description: `Tienes un detalle floral especial. Abre tu dedicatoria y escucha tu canción de fondo.`,
+      description: `De: ${remitenteVisible}. Toca para abrir tu tarjeta digital.`,
     },
   };
 }
