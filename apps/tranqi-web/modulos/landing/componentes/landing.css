@@ -274,7 +274,20 @@ html:has(.landing) { scroll-behavior: smooth; scroll-padding-top: 72px; scroll-s
     /* La cinta corre por el borde derecho: que no roce el texto */
     .landing #como .wrap, .landing #beneficios .wrap, .landing #red .wrap, .landing #abogado .wrap { padding-right: 46px; }
   }
-  @media (prefers-reduced-motion: reduce) { html:has(.landing) { scroll-behavior: auto; } .landing .btn, .landing .churo path { transition: none; } .landing .churo path { stroke-dashoffset: 0; } }
+  /* ---------- Paso entre secciones (TRQ-028) ----------
+     LandingTranqi marca con .aparece las piezas de cada sección (no el hero) y
+     añade .es-visible a cada una al entrar en pantalla. Suben y se revelan en
+     cascada: --i es su orden entre las que entran a la vez (máx. 8). Las
+     fotos y tarjetas llegan además un poco más pequeñas y se asientan. */
+  .landing .aparece {
+    opacity: 0; transform: translateY(34px);
+    transition: opacity 0.7s ease, transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    transition-delay: calc(var(--i, 0) * 75ms);
+  }
+  .landing img.aparece, .landing .tarjeta.aparece, .landing .dona.aparece { transform: translateY(34px) scale(0.96); }
+  .landing .aparece.es-visible { opacity: 1; transform: none; }
+
+  @media (prefers-reduced-motion: reduce) { html:has(.landing) { scroll-behavior: auto; } .landing .btn, .landing .churo path { transition: none; } .landing .churo path { stroke-dashoffset: 0; } .landing .aparece { opacity: 1; transform: none; transition: none; } }
 
 /* ---------- Formulario: estados reales (la maqueta solo simulaba el envío) ---------- */
 .landing .formulario .tipo input { position: absolute; opacity: 0; pointer-events: none; }
