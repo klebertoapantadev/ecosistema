@@ -371,13 +371,12 @@ export function VitrinaCatalogoTinkay() {
               gap: '6px',
               padding: '8px 13px',
               borderRadius: '999px',
-              border: linkCatCopiado ? '1.5px solid #10B981' : '1px solid #E4E4E7',
-              background: linkCatCopiado ? '#ECFDF5' : '#FFFFFF',
-              color: linkCatCopiado ? '#047857' : '#27272A',
+              border: linkCatCopiado ? '1px solid var(--verde)' : '1px solid var(--linea)',
+              background: linkCatCopiado ? 'rgba(61, 90, 69, 0.1)' : 'var(--blanco)',
+              color: linkCatCopiado ? 'var(--verde)' : 'var(--tinta)',
               fontSize: '0.78rem',
-              fontWeight: 700,
+              fontWeight: 600,
               cursor: 'pointer',
-              boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
               flexShrink: 0,
             }}
           >
@@ -400,7 +399,7 @@ export function VitrinaCatalogoTinkay() {
                 setTerminoBusqueda('');
                 setFiltroPresupuesto('todos');
                 setSoloOfertas(false);
-                setCriterioOrden('precio-desc');
+                setCriterioOrden('recomendados');
               }}
             >
               Restablecer filtros

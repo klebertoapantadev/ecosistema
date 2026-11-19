@@ -1463,7 +1463,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
       {/* Grid de Productos */}
       {cargando ? (
         <div style={{ padding: "60px 20px", textAlign: "center", color: "#847D74" }}>
-          <RefreshCw size={32} className="animate-spin" style={{ margin: "0 auto 12px", color: "#221E1B" }} />
+          <RefreshCw size={32} className="eco-icono-girando" style={{ margin: "0 auto 12px", color: "#221E1B" }} />
           <div style={{ fontWeight: 600 }}>Cargando catálogo comercial unificado...</div>
         </div>
       ) : productosFiltrados.length === 0 ? (
@@ -1897,6 +1897,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                               <button
                                 key={fIdx}
                                 type="button"
+                                aria-label={`Ver imagen ${fIdx + 1}`}
+                                title={`Imagen ${fIdx + 1}`}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setFotoCarouselIndexPorProducto((prev) => ({ ...prev, [p.pro_id]: fIdx }));
@@ -1905,16 +1907,28 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                                   }
                                 }}
                                 style={{
-                                  width: isDotActive ? "16px" : "6px",
-                                  height: "6px",
-                                  borderRadius: "3px",
+                                  minWidth: "24px",
+                                  height: "24px",
                                   border: "none",
-                                  background: isDotActive ? (f.col ? f.col.border : "#C8A25A") : "rgba(255, 255, 255, 0.5)",
+                                  background: "transparent",
                                   cursor: "pointer",
                                   padding: 0,
-                                  transition: "all 0.2s ease",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
                                 }}
-                              />
+                              >
+                                <span
+                                  style={{
+                                    width: isDotActive ? "16px" : "6px",
+                                    height: "6px",
+                                    borderRadius: "3px",
+                                    background: isDotActive ? (f.col ? f.col.border : "#C8A25A") : "rgba(255, 255, 255, 0.5)",
+                                    transition: "all 0.2s ease",
+                                    display: "block",
+                                  }}
+                                />
+                              </button>
                             );
                           })}
                         </div>
@@ -2015,7 +2029,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       }}
                     >
                       {isSavingActivo ? (
-                        <RefreshCw size={12} className="animate-spin" />
+                        <RefreshCw size={12} className="eco-icono-girando" />
                       ) : estaActivoGeneral ? (
                         <Power size={12} color="#FFFFFF" />
                       ) : (
@@ -2074,7 +2088,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                         }}
                       >
                         {isSaving ? (
-                          <RefreshCw size={12} className="animate-spin" />
+                          <RefreshCw size={12} className="eco-icono-girando" />
                         ) : estaActivoEnCanal ? (
                           <CheckCircle2 size={13} color="#FFFFFF" />
                         ) : (
@@ -2126,7 +2140,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       }}
                     >
                       {guardandoDestacadoKey === p.pro_id ? (
-                        <RefreshCw size={10} className="animate-spin" />
+                        <RefreshCw size={10} className="eco-icono-girando" />
                       ) : (
                         <Sparkles size={11} color={p.pro_destacado ? "#FFFFFF" : "#E5D7BC"} />
                       )}
@@ -2535,7 +2549,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                             }}
                           >
                             {isSaving ? (
-                              <RefreshCw size={9} className="animate-spin" />
+                              <RefreshCw size={9} className="eco-icono-girando" />
                             ) : estaActivo ? (
                               <CheckCircle2 size={10} color="#2F4737" />
                             ) : (

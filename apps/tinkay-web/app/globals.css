@@ -27,9 +27,27 @@
 
 body {
   min-height: 100vh;
+  min-height: 100dvh;
   font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
   background: var(--crema);
   color: var(--tinta);
+}
+
+:focus-visible {
+  outline: 2px solid var(--verde);
+  outline-offset: 2px;
+}
+.panel-nav :focus-visible {
+  outline: 2px solid #E8D5AE;
+  outline-offset: 2px;
+}
+
+@keyframes eco-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.eco-spin {
+  animation: eco-spin 0.9s linear infinite;
 }
 
 button,
@@ -46,7 +64,7 @@ h1, h2, h3, .fuente-display { font-family: var(--font-fraunces), Georgia, serif;
 
 /* ═══════════ Auth (registro / ingresar) ═══════════ */
 .pagina-auth {
-  min-height: 100vh; background: var(--crema); color: var(--tinta);
+  min-height: 100vh; min-height: 100dvh; background: var(--crema); color: var(--tinta);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 18px; padding: 40px 20px; text-align: center;
 }
@@ -113,7 +131,7 @@ h1, h2, h3, .fuente-display { font-family: var(--font-fraunces), Georgia, serif;
 
 /* ═══════════ Bienvenida ═══════════ */
 .pagina-bienvenida {
-  min-height: 100vh; background: var(--crema); color: var(--tinta);
+  min-height: 100vh; min-height: 100dvh; background: var(--crema); color: var(--tinta);
   display: flex; align-items: center; justify-content: center; padding: 40px 20px;
 }
 .tarjeta-bienvenida { width: min(420px, 100%); display: flex; flex-direction: column; gap: 16px; }
@@ -121,7 +139,7 @@ h1, h2, h3, .fuente-display { font-family: var(--font-fraunces), Georgia, serif;
 
 /* ═══════════ Legal / Términos ═══════════ */
 .pagina-legal {
-  min-height: 100vh; max-width: 720px; margin: 0 auto; background: var(--blanco); color: var(--tinta);
+  min-height: 100vh; min-height: 100dvh; max-width: 720px; margin: 0 auto; background: var(--blanco); color: var(--tinta);
   padding: 40px 20px 80px; display: flex; flex-direction: column; gap: 14px;
 }
 .pagina-legal h1 { font-size: clamp(1.5rem, 3vw, 2rem); font-weight: 600; margin-top: 8px; }
@@ -581,72 +599,6 @@ h1, h2, h3, .fuente-display { font-family: var(--font-fraunces), Georgia, serif;
 .historial-negocio { opacity: 0.6; }
 .historial-fecha { color: var(--gris); }
 
-/* ═══════════ Muestra de dirección visual (temporal, sin funcionalidad) ═══════════
-   Preview de hacia dónde va tinkay-web como ecommerce -- ver
-   gobernanza/productos/tinkay/sistema-visual.md §5-6. Datos estáticos, no hay
-   catálogo real todavía (comun_comercio sin poblar para este negocio). */
-
-.muestra-encabezado {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 20px clamp(20px, 5vw, 48px); border-bottom: 1px solid var(--linea);
-}
-.muestra-encabezado-enlaces { display: flex; gap: 18px; align-items: center; font-size: 0.9rem; }
-.muestra-encabezado-enlaces a { color: var(--tinta); text-decoration: none; font-weight: 600; }
-.muestra-encabezado-enlaces a:hover { color: var(--rosa-oscuro); }
-
-.muestra-hero {
-  padding: clamp(48px, 8vw, 96px) clamp(20px, 5vw, 48px);
-  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 18px;
-  max-width: 720px; margin: 0 auto;
-}
-.muestra-hero h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); font-weight: 600; line-height: 1.1; }
-.muestra-hero p { font-size: 1.05rem; color: var(--gris); max-width: 480px; }
-.muestra-etiqueta {
-  font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--dorado); border: 1px solid var(--dorado); border-radius: 999px; padding: 5px 14px;
-}
-
-.muestra-seccion { padding: 40px clamp(20px, 5vw, 48px) 64px; max-width: 1200px; margin: 0 auto; }
-.muestra-seccion-titulo { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 24px; }
-.muestra-seccion-titulo h2 { font-size: 1.6rem; font-weight: 600; }
-.muestra-seccion-titulo span { font-size: 0.85rem; color: var(--gris); }
-
-.grid-productos { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 24px; }
-.tarjeta-producto {
-  display: flex; flex-direction: column; gap: 10px; background: var(--blanco);
-  border-radius: 20px; overflow: hidden; border: 1px solid var(--linea);
-}
-.tarjeta-producto-foto {
-  aspect-ratio: 4 / 5; background: linear-gradient(155deg, var(--crema), #EFE3D0);
-  display: flex; align-items: center; justify-content: center; font-size: 2.4rem; position: relative;
-}
-.tarjeta-producto-info { padding: 4px 18px 18px; display: flex; flex-direction: column; gap: 4px; }
-.tarjeta-producto-info strong { font-family: var(--font-fraunces), serif; font-size: 1.05rem; font-weight: 600; }
-.tarjeta-producto-info span { font-size: 0.85rem; color: var(--gris); }
-.tarjeta-producto-precio { font-weight: 700; margin-top: 4px; }
-
-.chip-estado {
-  position: absolute; top: 12px; left: 12px;
-  font-size: 0.62rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase;
-  padding: 4px 10px; border-radius: 999px;
-}
-.chip-disponible { background: rgba(61, 90, 69, 0.12); color: var(--verde); }
-.chip-agotado { background: rgba(34, 29, 26, 0.08); color: var(--gris); }
-.chip-urgente { background: rgba(217, 82, 75, 0.12); color: var(--coral-urgente); }
-.chip-nuevo { background: rgba(184, 146, 63, 0.14); color: var(--dorado); }
-
-.seccion-condolencias {
-  background: var(--blanco); border-top: 1px solid var(--linea); border-bottom: 1px solid var(--linea);
-  padding: 48px clamp(20px, 5vw, 48px); display: flex; flex-direction: column; align-items: center;
-  text-align: center; gap: 12px;
-}
-.seccion-condolencias h2 { font-size: 1.5rem; font-weight: 600; color: var(--verde); }
-.seccion-condolencias p { color: var(--gris); max-width: 480px; }
-.btn-condolencias { background: var(--verde); color: var(--blanco); }
-.btn-condolencias:hover { background: #2E4635; }
-
-.muestra-pie { text-align: center; padding: 32px 20px; font-size: 0.8rem; color: var(--gris); }
-
 /* Sello de versión en el pie del rail: fecha de compilación y commit.
    Deliberadamente discreto — es una herramienta de diagnóstico, no
    información para el usuario final. Oculto en versión móvil. */
@@ -657,4 +609,14 @@ h1, h2, h3, .fuente-display { font-family: var(--font-fraunces), Georgia, serif;
 .sello-compilacion:hover { opacity: 0.75; }
 @media (max-width: 860px) {
   .sello-compilacion { display: none !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .eco-spin {
+    animation: none !important;
+  }
 }

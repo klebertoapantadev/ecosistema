@@ -366,7 +366,7 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
               gap: "6px",
             }}
           >
-            <RefreshCw size={15} className={cargando ? "animate-spin" : ""} />
+            <RefreshCw size={15} className={cargando ? "eco-spin" : ""} />
             <span className="btn-texto-responsive">Actualizar</span>
           </button>
 
@@ -524,7 +524,7 @@ export function ConsolaGestionCatalogo({ negocio = "tranqi" }: Props) {
       {/* Lista Técnica de Gestión */}
       {cargando ? (
         <div style={{ padding: "40px", textAlign: "center", color: "#847D74" }}>
-          <RefreshCw size={28} className="animate-spin" style={{ margin: "0 auto 8px", color: "#221E1B" }} />
+          <RefreshCw size={28} className="eco-spin" style={{ margin: "0 auto 8px", color: "#221E1B" }} />
           <div>Cargando registros comerciales...</div>
         </div>
       ) : productosFiltrados.length === 0 ? (

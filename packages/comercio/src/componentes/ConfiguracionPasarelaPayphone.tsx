@@ -183,7 +183,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
   if (cargando) {
     return (
       <div style={{ padding: "60px 20px", textAlign: "center", color: "#847D74" }}>
-        <RefreshCw size={28} className="animate-spin" style={{ margin: "0 auto 12px" }} />
+        <RefreshCw size={28} className="eco-spin" style={{ margin: "0 auto 12px" }} />
         <div>Cargando parámetros de pasarela Payphone...</div>
       </div>
     );
@@ -700,7 +700,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                 gap: "8px",
               }}
             >
-              {guardando ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
+              {guardando ? <RefreshCw size={16} className="eco-spin" /> : <Save size={16} />}
               Guardar Configuración
             </button>
           </div>
@@ -1142,7 +1142,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                 gap: "8px",
               }}
             >
-              {guardandoCheckout ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
+              {guardandoCheckout ? <RefreshCw size={16} className="eco-spin" /> : <Save size={16} />}
               <span>Guardar Parámetros</span>
             </button>
           </div>

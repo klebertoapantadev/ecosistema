@@ -433,7 +433,7 @@ export function ModalGaleriaMedios({
                   display: "flex",
                 }}
               >
-                <RefreshCw size={14} className={cargando ? "animate-spin" : ""} />
+                <RefreshCw size={14} className={cargando ? "eco-spin" : ""} />
               </button>
             </div>
           )}
@@ -499,7 +499,7 @@ export function ModalGaleriaMedios({
             <div>
               {cargando ? (
                 <div style={{ padding: "60px 0", textAlign: "center", color: "#64748B" }}>
-                  <Loader2 size={32} className="animate-spin" style={{ margin: "0 auto 12px" }} />
+                  <Loader2 size={32} className="eco-spin" style={{ margin: "0 auto 12px" }} />
                   <p style={{ margin: 0, fontSize: "0.85rem", fontWeight: 600 }}>
                     Consultando biblioteca multimedia de {negocio.toUpperCase()}...
                   </p>
@@ -725,7 +725,7 @@ export function ModalGaleriaMedios({
                               }}
                             >
                               {eliminandoId === item.id ? (
-                                <Loader2 size={13} className="animate-spin" />
+                                <Loader2 size={13} className="eco-spin" />
                               ) : (
                                 <Trash2 size={13} />
                               )}
@@ -811,7 +811,7 @@ export function ModalGaleriaMedios({
                   >
                     {subiendoArchivos ? (
                       <>
-                        <Loader2 size={15} className="animate-spin" />
+                        <Loader2 size={15} className="eco-spin" />
                         <span>Subiendo archivos...</span>
                       </>
                     ) : (
@@ -868,7 +868,7 @@ export function ModalGaleriaMedios({
                         <span style={{ fontWeight: 600, color: "#334155" }}>{p.nombre}</span>
                         {p.estado === "subiendo" && (
                           <span style={{ color: "#0284C7", display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                            <Loader2 size={12} className="animate-spin" /> Subiendo...
+                            <Loader2 size={12} className="eco-spin" /> Subiendo...
                           </span>
                         )}
                         {p.estado === "listo" && (

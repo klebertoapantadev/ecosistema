@@ -592,9 +592,9 @@ export function CatalogoVariedadesRosas({
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar en todas las variedades..."
+              aria-label="Buscar variedades de rosas"
               style={{
                 border: "none",
-                outline: "none",
                 background: "transparent",
                 fontSize: "0.8rem",
                 width: "100%",
@@ -605,12 +605,16 @@ export function CatalogoVariedadesRosas({
               <button
                 type="button"
                 onClick={() => setBusqueda("")}
+                aria-label="Limpiar búsqueda"
+                title="Limpiar búsqueda"
                 style={{
                   border: "none",
                   background: "transparent",
                   cursor: "pointer",
                   color: "#847D74",
-                  padding: 0,
+                  padding: "4px",
+                  display: "inline-flex",
+                  alignItems: "center",
                 }}
               >
                 <X size={13} />

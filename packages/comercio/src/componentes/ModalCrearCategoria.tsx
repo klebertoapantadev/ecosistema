@@ -732,7 +732,7 @@ export function ModalCrearCategoria({
                   }}
                   title="Actualizar estado de uso"
                 >
-                  <RefreshCw size={13} className={cargandoLista ? "animate-spin" : ""} />
+                  <RefreshCw size={13} className={cargandoLista ? "eco-spin" : ""} />
                   <span>Refrescar</span>
                 </button>
               </div>
@@ -740,7 +740,7 @@ export function ModalCrearCategoria({
               {/* Lista de Categorías */}
               {cargandoLista ? (
                 <div style={{ padding: "28px", textAlign: "center", color: "#847D74", fontSize: "0.82rem" }}>
-                  <RefreshCw size={20} className="animate-spin" style={{ margin: "0 auto 8px" }} />
+                  <RefreshCw size={20} className="eco-spin" style={{ margin: "0 auto 8px" }} />
                   <span>Verificando categorías y uso de productos...</span>
                 </div>
               ) : categoriasFiltradas.length === 0 ? (
@@ -926,7 +926,7 @@ export function ModalCrearCategoria({
                             >
                               {eliminandoId === cat.ctg_id ? (
                                 <>
-                                  <Loader2 size={13} className="animate-spin" />
+                                  <Loader2 size={13} className="eco-spin" />
                                   <span>Eliminando...</span>
                                 </>
                               ) : (
@@ -1123,7 +1123,7 @@ export function ModalCrearCategoria({
               >
                 {eliminandoId ? (
                   <>
-                    <Loader2 size={15} className="animate-spin" />
+                    <Loader2 size={15} className="eco-spin" />
                     <span>Eliminando...</span>
                   </>
                 ) : (

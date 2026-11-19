@@ -3140,7 +3140,7 @@ export function ModalEditarProducto({
                     >
                       {subiendoImagenGlobal ? (
                         <>
-                          <Loader2 size={13} className="animate-spin" />
+                          <Loader2 size={13} className="eco-spin" />
                           <span>Subiendo fotos...</span>
                         </>
                       ) : (
@@ -4218,7 +4218,7 @@ export function ModalEditarProducto({
                             onMouseLeave={(e) => (e.currentTarget.style.color = "#847D74")}
                           >
                             {estaVerificando ? (
-                              <Loader2 size={12} className="animate-spin" />
+                              <Loader2 size={12} className="eco-spin" />
                             ) : (
                               <X size={12} />
                             )}
@@ -4999,7 +4999,7 @@ export function ModalEditarProducto({
                               title="Subir una o varias fotos desde tu PC para este tamaño"
                             >
                               {subiendoGaleriaVariante ? (
-                                <Loader2 size={13} className="animate-spin" />
+                                <Loader2 size={13} className="eco-spin" />
                               ) : (
                                 <Upload size={13} />
                               )}
@@ -5309,7 +5309,7 @@ export function ModalEditarProducto({
                                         gap: "4px",
                                       }}
                                     >
-                                      {resolviendoVarianteImg ? <Loader2 size={11} className="animate-spin" /> : <Wand2 size={11} />}
+                                      {resolviendoVarianteImg ? <Loader2 size={11} className="eco-spin" /> : <Wand2 size={11} />}
                                       <span>Auto-Convertir</span>
                                     </button>
                                   </div>
@@ -5884,7 +5884,7 @@ export function ModalEditarProducto({
                                         onMouseLeave={(e) => (e.currentTarget.style.color = "#847D74")}
                                       >
                                         {estaVerificando ? (
-                                          <Loader2 size={11} className="animate-spin" />
+                                          <Loader2 size={11} className="eco-spin" />
                                         ) : (
                                           <X size={11} />
                                         )}

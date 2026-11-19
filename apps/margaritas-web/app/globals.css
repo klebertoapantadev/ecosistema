@@ -61,6 +61,14 @@ body {
   .sello-compilacion { display: none !important; }
 }
 
+@keyframes eco-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.eco-spin {
+  animation: eco-spin 0.9s linear infinite;
+}
+
 .panel-contenido h1,
 .panel-contenido h2,
 .panel-contenido h3 {

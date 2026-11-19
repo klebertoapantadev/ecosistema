@@ -373,11 +373,44 @@ export function ModalCheckoutTinkay() {
     [estadoRegalo]
   );
 
-  const incluyeExtraObsequio = Boolean(
-    usuarioRegistradoTinkay && estadoRegalo?.aplicaRegalo && aceptoObsequioBienvenida
+  const carritoTieneCondolencias = useMemo(
+    () =>
+      items.some((it) =>
+        Boolean(
+          it.producto.esCondolencias ||
+            (it.producto.categoriaNombre || '').toLowerCase().includes('condol') ||
+            (it.producto.categoriaPrincipal || '').toLowerCase().includes('condol')
+        )
+      ),
+    [items]
   );
-  const mostrarInvitacionObsequio =
-    !verificandoEstadoCuenta && !usuarioRegistradoTinkay && !omitirInvitacionRegistro;
+
+  const incluyeExtraObsequio = Boolean(
+    !carritoTieneCondolencias &&
+      usuarioRegistradoTinkay &&
+      estadoRegalo?.aplicaRegalo &&
+      aceptoObsequioBienvenida
+  );
+  const mostrarBannerBeneficioRegistro =
+    !carritoTieneCondolencias &&
+    !verificandoEstadoCuenta &&
+    !usuarioRegistradoTinkay &&
+    !omitirInvitacionRegistro;
+
+  useEffect(() => {
+    if (!checkoutAbierto) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && paso !== 'procesando') {
+        setCheckoutAbierto(false);
+        setPaso('formulario');
+        setErrorPago(null);
+        setOrdenPluxPreparada(null);
+        setComprobanteSubido(null);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [checkoutAbierto, paso, setCheckoutAbierto]);
 
   const huellaActual = useMemo(
     () =>
@@ -719,6 +752,7 @@ export function ModalCheckoutTinkay() {
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
+        aria-label="Caja de pago rápido"
       >
         <button
           type="button"
@@ -995,288 +1029,106 @@ export function ModalCheckoutTinkay() {
           </div>
         )}
 
-        {paso === 'formulario' && mostrarInvitacionObsequio && (
-          <div
-            style={{
-              padding: '32px 26px',
-              maxWidth: '540px',
-              margin: '0 auto',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
-              gap: '16px',
-            }}
-          >
-            <div
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '5px 13px',
-                borderRadius: '999px',
-                background: '#FEF3C7',
-                border: '1px solid #FCD34D',
-                color: '#92400E',
-                fontSize: '0.75rem',
-                fontWeight: 800,
-              }}
-            >
-              <AlertTriangle size={14} />
-              <span>Aún no estás registrado en Tinkay</span>
-            </div>
-
-            <div>
-              <h2
-                style={{
-                  margin: '0 0 6px 0',
-                  fontSize: '1.38rem',
-                  lineHeight: 1.25,
-                  color: '#1F2937',
-                }}
-              >
-                ¡Recibe un Obsequio de Bienvenida en tu compra!
-              </h2>
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: '0.88rem',
-                  lineHeight: 1.5,
-                  color: '#4B5563',
-                }}
-              >
-                Regístrate ahora para completar tu primera compra y agregaremos{' '}
-                <strong>sin costo ($0.00)</strong> este extra promocional a tu pedido:
-              </p>
-            </div>
-
-            <div
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '16px',
-                padding: '14px',
-                borderRadius: '16px',
-                background: 'linear-gradient(135deg, #FDF2F8 0%, #FFFBEB 100%)',
-                border: '1.5px solid #FBCFE8',
-                textAlign: 'left',
-                boxShadow: '0 8px 20px -8px rgba(157, 23, 77, 0.18)',
-              }}
-            >
-              <div style={{ position: 'relative', flexShrink: 0 }}>
-                <img
-                  src={datosObsequio.imagenUrl}
-                  alt={datosObsequio.nombre}
-                  style={{
-                    width: '104px',
-                    height: '104px',
-                    borderRadius: '12px',
-                    objectFit: 'cover',
-                    display: 'block',
-                    border: '2px solid #FFFFFF',
-                    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
-                  }}
-                />
-                <span
-                  style={{
-                    position: 'absolute',
-                    top: '-6px',
-                    left: '-6px',
-                    padding: '2px 8px',
-                    borderRadius: '999px',
-                    background: '#BE185D',
-                    color: '#FFFFFF',
-                    fontSize: '0.66rem',
-                    fontWeight: 800,
-                    letterSpacing: '0.03em',
-                  }}
-                >
-                  PROMOCIÓN
-                </span>
-              </div>
-
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    color: '#9D174D',
-                    marginBottom: '3px',
-                  }}
-                >
-                  <Gift size={13} />
-                  <span>Extra por registro y 1ra compra</span>
-                </div>
-                <strong
-                  style={{
-                    display: 'block',
-                    fontSize: '1rem',
-                    color: '#111827',
-                    lineHeight: 1.3,
-                    marginBottom: '6px',
-                  }}
-                >
-                  {datosObsequio.nombre}
-                </strong>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap' }}>
-                  <span
-                    style={{
-                      fontSize: '0.8rem',
-                      color: '#9CA3AF',
-                      textDecoration: 'line-through',
-                    }}
-                  >
-                    ${datosObsequio.valorReferencia.toFixed(2)} USD
-                  </span>
-                  <span
-                    style={{
-                      fontSize: '1.05rem',
-                      fontWeight: 800,
-                      color: '#059669',
-                    }}
-                  >
-                    $0.00 GRATIS
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Beneficio 2: Zona de Cobertura con Entrega Gratuita */}
-            <div
-              style={{
-                width: '100%',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '12px 14px',
-                borderRadius: '14px',
-                background: '#F0FDF4',
-                border: '1px solid #BBF7D0',
-                textAlign: 'left',
-              }}
-            >
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  background: '#DCFCE7',
-                  color: '#15803D',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                }}
-              >
-                <Truck size={20} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <strong style={{ display: 'block', fontSize: '0.88rem', color: '#14532D' }}>
-                  + Zona de Cobertura con Entrega Gratuita ($0.00)
-                </strong>
-                <span style={{ fontSize: '0.76rem', color: '#166534', lineHeight: 1.35 }}>
-                  Los clientes registrados cuentan con <strong>Envío Gratis en {configLogistica.zonaGratisNombre || 'Centro-Norte de Quito'}</strong>. Sin registro se cobra tarifa mínima de ${(configLogistica.tarifaBaseNoRegistradoUsd ?? 1).toFixed(2)} + ${(configLogistica.tarifaPorKmNoRegistradoUsd ?? 0.5).toFixed(2)}/km.
-                </span>
-              </div>
-            </div>
-
-            <div
-              style={{
-                width: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px',
-                marginTop: '4px',
-              }}
-            >
-              <Link
-                href="/registro?destino=%2F%3Fcheckout%3D1%26obsequio%3D1&obsequio=1"
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    window.localStorage.setItem('tinkay_obsequio_bienvenida_aceptado', '1');
-                    document.cookie = `tranqi_destino=${encodeURIComponent(
-                      '/?checkout=1&obsequio=1'
-                    )}; path=/; max-age=86400`;
-                  }
-                }}
-                title="Aceptar promoción, registrarme y agregar el obsequio con valor $0.00 a mi pedido"
-                aria-label="Aceptar Obsequio"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  width: '100%',
-                  padding: '13px 18px',
-                  borderRadius: '999px',
-                  background: 'linear-gradient(90deg, #9D174D 0%, #BE185D 100%)',
-                  color: '#FFFFFF',
-                  fontSize: '0.92rem',
-                  fontWeight: 800,
-                  textDecoration: 'none',
-                  boxShadow: '0 6px 16px -4px rgba(190, 24, 93, 0.4)',
-                }}
-              >
-                <Gift size={17} />
-                <span>Aceptar Obsequio</span>
-              </Link>
-
-              <button
-                type="button"
-                onClick={() => setOmitirInvitacionRegistro(true)}
-                title="Continuar al pago como invitado sin registrarme ni agregar el obsequio"
-                aria-label="Pagar sin Registro"
-                style={{
-                  width: '100%',
-                  padding: '11px 16px',
-                  borderRadius: '999px',
-                  border: '1px solid #CBD5E1',
-                  background: '#FFFFFF',
-                  color: '#334155',
-                  fontSize: '0.84rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                }}
-              >
-                Pagar sin Registro
-              </button>
-
-              <div style={{ fontSize: '0.78rem', color: '#64748B', marginTop: '2px' }}>
-                ¿Ya tienes cuenta en Tinkay?{' '}
-                <Link
-                  href="/ingresar?destino=%2F%3Fcheckout%3D1%26obsequio%3D1"
-                  onClick={() => {
-                    if (typeof window !== 'undefined') {
-                      window.localStorage.setItem('tinkay_obsequio_bienvenida_aceptado', '1');
-                      document.cookie = `tranqi_destino=${encodeURIComponent(
-                        '/?checkout=1&obsequio=1'
-                      )}; path=/; max-age=86400`;
-                    }
-                  }}
-                  style={{ color: '#2D4734', fontWeight: 700, textDecoration: 'underline' }}
-                >
-                  Ingresar aquí
-                </Link>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {paso === 'formulario' && !verificandoEstadoCuenta && !mostrarInvitacionObsequio && (
+        {paso === 'formulario' && !verificandoEstadoCuenta && (
           <div className="grid-checkout-pasos">
             {/* Columna Izquierda: Entrega, Contacto/Factura y Pago */}
             <div className="columna-formulario-pago">
               <div className="cabecera-checkout">
-                <h2>Caja de Pago Rápido</h2>
+                <h2>{carritoTieneCondolencias ? 'Confirmación de Pedido' : 'Caja de Pago Rápido'}</h2>
                 <div className="sello-seguridad">
                   <ShieldCheck size={16} />
                   <span>Pago Seguro</span>
                 </div>
               </div>
+
+              {/* Aviso compacto no bloqueante de beneficio por registro (nunca en Condolencias) */}
+              {mostrarBannerBeneficioRegistro && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    flexWrap: 'wrap',
+                    padding: '10px 14px',
+                    marginBottom: '12px',
+                    borderRadius: '10px',
+                    background: '#F8F7F4',
+                    border: '1px solid #E6E2DA',
+                    fontSize: '0.8rem',
+                    color: '#3A3530',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1 1 240px', minWidth: 0 }}>
+                    <Gift size={16} color="var(--verde)" style={{ flexShrink: 0 }} />
+                    <span>
+                      <strong>¿Primera compra?</strong> Regístrate y recibe{' '}
+                      <strong>{datosObsequio.nombre}</strong> ($0.00) + envío gratis en{' '}
+                      {configLogistica.zonaGratisNombre || 'Centro-Norte de Quito'}.
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                    <Link
+                      href="/registro?destino=%2F%3Fcheckout%3D1%26obsequio%3D1&obsequio=1"
+                      onClick={() => {
+                        if (typeof window !== 'undefined') {
+                          window.localStorage.setItem('tinkay_obsequio_bienvenida_aceptado', '1');
+                          document.cookie = `tranqi_destino=${encodeURIComponent(
+                            '/?checkout=1&obsequio=1'
+                          )}; path=/; max-age=86400`;
+                        }
+                      }}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '999px',
+                        background: 'var(--verde)',
+                        color: '#FFFFFF',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      Crear cuenta
+                    </Link>
+                    <Link
+                      href="/ingresar?destino=%2F%3Fcheckout%3D1%26obsequio%3D1"
+                      onClick={() => {
+                        if (typeof window !== 'undefined') {
+                          window.localStorage.setItem('tinkay_obsequio_bienvenida_aceptado', '1');
+                          document.cookie = `tranqi_destino=${encodeURIComponent(
+                            '/?checkout=1&obsequio=1'
+                          )}; path=/; max-age=86400`;
+                        }
+                      }}
+                      style={{
+                        color: 'var(--verde)',
+                        fontSize: '0.75rem',
+                        fontWeight: 600,
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      Ingresar
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setOmitirInvitacionRegistro(true)}
+                      aria-label="Ocultar aviso de registro"
+                      title="Ocultar aviso"
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: '#847D74',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <form onSubmit={handleConfirmarTransferencia} className="form-checkout-flujo">
                 {/* 1. Modalidad de Recepción: Envío a Domicilio vs Retiro en Tienda */}

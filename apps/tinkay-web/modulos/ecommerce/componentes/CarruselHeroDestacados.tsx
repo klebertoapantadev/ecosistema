@@ -47,8 +47,8 @@ const SLIDES_HERO = [
     titulo: 'Visita Nuestro Taller Floral',
     subtitulo: 'Conoce nuestras instalaciones en Quito, retira tus pedidos o recibe asesoría personalizada.',
     imagen: '/img/logo/tinkay-tienda-neon.jpg',
-    precioDesde: 'Quito',
-    botonTexto: '📍 Abrir en Google Maps',
+    precioDesde: '',
+    botonTexto: 'Abrir en Google Maps',
     enlaceExterno: 'https://maps.app.goo.gl/D56gQohzuwha4sLf8',
   },
 ];
@@ -57,13 +57,22 @@ export function CarruselHeroDestacados() {
   const { setProductoSeleccionadoModal, navegarACategoria, productos } = useCarrito();
   const catalogo = productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY;
   const [slideActivo, setSlideActivo] = useState(0);
+  const [pausado, setPausado] = useState(false);
 
   useEffect(() => {
+    if (pausado) return;
+    if (
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    ) {
+      return;
+    }
     const timer = setInterval(() => {
       setSlideActivo((prev) => (prev + 1) % SLIDES_HERO.length);
     }, 6000);
     return () => clearInterval(timer);
-  }, []);
+  }, [pausado]);
 
   const slide = SLIDES_HERO[slideActivo] ?? SLIDES_HERO[0]!;
 
@@ -83,7 +92,13 @@ export function CarruselHeroDestacados() {
   };
 
   return (
-    <div className="hero-carrusel-contenedor">
+    <div
+      className="hero-carrusel-contenedor"
+      onMouseEnter={() => setPausado(true)}
+      onMouseLeave={() => setPausado(false)}
+      onFocusCapture={() => setPausado(true)}
+      onBlurCapture={() => setPausado(false)}
+    >
       {/* Fondo con imagen y degradado botánico */}
       <div
         className="hero-fondo-imagen"
@@ -113,10 +128,12 @@ export function CarruselHeroDestacados() {
             <ArrowRight size={18} />
           </button>
 
-          <div className="hero-precio-etiqueta">
-            <span className="precio-desde">Desde</span>
-            <span className="precio-cifra">{slide.precioDesde}</span>
-          </div>
+          {slide.precioDesde && !slide.enlaceExterno && (
+            <div className="hero-precio-etiqueta">
+              <span className="precio-desde">Desde</span>
+              <span className="precio-cifra">{slide.precioDesde}</span>
+            </div>
+          )}
         </div>
 
         {/* Pilares de Valor de Tinkay */}

@@ -469,7 +469,7 @@ export function SeccionCoberturaCliente({
                     }}
                   >
                     {consumiendo === der.concepto ? (
-                      <RefreshCw size={14} className="animate-spin" />
+                      <RefreshCw size={14} className="eco-spin" />
                     ) : (
                       <>Agendar Cita con Cupo ($0.00) <ArrowRight size={14} /></>
                     )}
@@ -498,7 +498,7 @@ export function SeccionCoberturaCliente({
                     }}
                   >
                     {consumiendo === der.concepto ? (
-                      <RefreshCw size={14} className="animate-spin" />
+                      <RefreshCw size={14} className="eco-spin" />
                     ) : (
                       <>Subir Contrato a Revisión ($0.00) <ArrowRight size={14} /></>
                     )}

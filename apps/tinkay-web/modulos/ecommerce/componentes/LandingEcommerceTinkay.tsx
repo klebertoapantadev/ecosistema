@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { construirUrlWhatsappTienda } from '@eco/comercio';
 import { ProveedorCarrito, useCarrito } from '../contexto-carrito';
 import type { CategoriaEcommerce, ProductoEcommerce } from '../tipos';
 import { EncabezadoEcommerce } from './EncabezadoEcommerce';
@@ -17,7 +18,12 @@ import { ChatAriaFlotante } from './ChatAriaFlotante';
 import { Sparkles, ShieldCheck, Heart, Truck, Phone, MapPin } from 'lucide-react';
 
 function ContenidoPaginaEcommerceTinkay() {
-  const { navegarACategoria } = useCarrito();
+  const { navegarACategoria, configTiendaCheckout } = useCarrito();
+  const telefonoTienda = configTiendaCheckout?.whatsappTienda || '+593 99 292 2343';
+  const urlWhatsappPie = construirUrlWhatsappTienda(
+    telefonoTienda,
+    'Hola Tinkay, deseo asesoría para elegir un arreglo floral.'
+  );
 
   const irAColeccion = (e: React.MouseEvent<HTMLAnchorElement>, catId: string) => {
     e.preventDefault();
@@ -101,6 +107,7 @@ function ContenidoPaginaEcommerceTinkay() {
                 src="/img/logo/tinkay-tienda-neon.jpg"
                 alt="Tinkay Flores y Eventos Tienda Física en Quito"
                 className="foto-tienda-neon-img"
+                loading="lazy"
               />
               <div className="badge-taller-en-vivo">
                 <span className="punto-verde-latente" />
@@ -169,6 +176,7 @@ function ContenidoPaginaEcommerceTinkay() {
                   src="/img/logo/tinkay-logo.jpg"
                   alt="Tinkay Flores y Eventos"
                   className="logo-tinkay-imagen-pie"
+                  loading="lazy"
                 />
               </Link>
               <p>
@@ -177,7 +185,14 @@ function ContenidoPaginaEcommerceTinkay() {
               </p>
               <div className="telefono-contacto-pie">
                 <Phone size={15} />
-                <span>Atención telefónica &amp; WhatsApp: +593 99 123 4567</span>
+                <a
+                  href={urlWhatsappPie}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="enlace-mapa-pie"
+                >
+                  Atención &amp; WhatsApp: {telefonoTienda}
+                </a>
               </div>
               <div className="ubicacion-contacto-pie">
                 <MapPin size={15} />

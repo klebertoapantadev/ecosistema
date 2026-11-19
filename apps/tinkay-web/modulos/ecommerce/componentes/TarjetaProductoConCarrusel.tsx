@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { describirEscalaVolumen } from '@eco/comercio';
 import { ProductoEcommerce, VarianteEcommerce } from '../tipos';
 import { useCarrito } from '../contexto-carrito';
-import { ChevronLeft, ChevronRight, Eye, ShoppingBag, FileText, Heart, Link2, Check, CreditCard } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, ShoppingBag, FileText, Heart, CreditCard } from 'lucide-react';
 
 interface Props {
   producto: ProductoEcommerce;
@@ -18,7 +18,6 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
     setProductoSeleccionadoModal,
     setDrawerAbierto,
     setCheckoutAbierto,
-    obtenerEnlaceProducto,
   } = useCarrito();
   const [fotoActualIndex, setFotoActualIndex] = useState(0);
   const obtenerVarianteBase = () =>
@@ -34,20 +33,7 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
     };
   const [varianteSeleccionada, setVarianteSeleccionada] = useState<VarianteEcommerce>(obtenerVarianteBase);
   const [favorito, setFavorito] = useState(false);
-  const [linkCopiado, setLinkCopiado] = useState(false);
   const [compradoReciente, setCompradoReciente] = useState(false);
-
-  const handleCopiarEnlaceProducto = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    const url = obtenerEnlaceProducto(producto, varianteSeleccionada.sku);
-    try {
-      await navigator.clipboard.writeText(url);
-      setLinkCopiado(true);
-      setTimeout(() => setLinkCopiado(false), 2000);
-    } catch {
-      // Fallback silencioso
-    }
-  };
 
   // Cálculo dinámico de Oferta y % de Descuento
   const tieneOferta = Boolean(
@@ -172,13 +158,72 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
     setCheckoutAbierto(true);
   };
 
+  const esCondolenciasSobrio = Boolean(
+    modoSobrio ||
+      (producto.esCondolencias &&
+        (!producto.categoriaNombre ||
+          producto.categoriaNombre.toLowerCase().includes('condol')))
+  );
+
+  // Máximo 1 chip por tarjeta (y ninguno promocional en modo Condolencias sobrio)
+  const chipPrincipal = (() => {
+    if (esCondolenciasSobrio) return null;
+    if (esProductoRenta) {
+      return {
+        clase: 'chip-etiqueta chip-renta',
+        texto: 'En renta',
+        titulo: producto.rentaConfig?.nota_condiciones || 'Mobiliario en calidad de renta para eventos',
+      };
+    }
+    if (esProductoEvento) {
+      return {
+        clase: 'chip-etiqueta chip-evento',
+        texto: 'Eventos',
+        titulo: 'Producto de Eventos y Ceremonias bajo proforma personalizada',
+      };
+    }
+    if (producto.esCombo) {
+      return {
+        clase: 'chip-etiqueta chip-oferta',
+        texto: tieneOferta && porcentajeDescuento > 0 ? `Set -${porcentajeDescuento}%` : 'Set evento',
+        titulo: tieneOferta ? `Set completo con ahorro de $${ahorroMonto.toFixed(2)}` : 'Set de eventos configurable',
+      };
+    }
+    if (tieneOferta && porcentajeDescuento > 0) {
+      return {
+        clase: 'chip-etiqueta chip-oferta',
+        texto: `-${porcentajeDescuento}%`,
+        titulo: `Oferta especial: ahorras $${ahorroMonto.toFixed(2)}`,
+      };
+    }
+    if (producto.entregaHoy) {
+      return {
+        clase: 'chip-etiqueta chip-entrega-hoy',
+        texto: 'Entrega hoy',
+        titulo: 'Disponible para entrega hoy en Quito',
+      };
+    }
+    if (producto.destacado) {
+      return {
+        clase: 'chip-etiqueta chip-destacado',
+        texto: 'Más pedido',
+        titulo: 'Arreglo destacado de Tinkay',
+      };
+    }
+    if (producto.nuevo) {
+      return {
+        clase: 'chip-etiqueta chip-nuevo',
+        texto: 'Nuevo',
+        titulo: 'Recién incorporado al catálogo',
+      };
+    }
+    return null;
+  })();
+
   return (
-    <div
-      className={`tarjeta-producto-ecommerce ${modoSobrio ? 'modo-sobrio' : ''}`}
+    <article
+      className={`tarjeta-producto-ecommerce ${esCondolenciasSobrio ? 'modo-sobrio' : ''}`}
       onClick={() => setProductoSeleccionadoModal(producto)}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && setProductoSeleccionadoModal(producto)}
     >
       {/* Carrusel de Fotos */}
       <div className="contenedor-foto-carrusel">
@@ -189,71 +234,14 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
           loading="lazy"
         />
 
-        {/* Chips de Estado */}
-        <div className="chips-contenedor">
-          {producto.esCombo ? (
-            <span
-              className="chip-etiqueta chip-oferta"
-              title={
-                tieneOferta
-                  ? `Set Completo con ahorro de $${ahorroMonto.toFixed(2)}`
-                  : 'Set de eventos configurable'
-              }
-            >
-              {tieneOferta && porcentajeDescuento > 0
-                ? `🎁 SET -${porcentajeDescuento}% OFF`
-                : '🎁 SET EVENTO'}
+        {/* Chip único sobrio */}
+        {chipPrincipal && (
+          <div className="chips-contenedor">
+            <span className={chipPrincipal.clase} title={chipPrincipal.titulo}>
+              {chipPrincipal.texto}
             </span>
-          ) : (
-            tieneOferta &&
-            porcentajeDescuento > 0 && (
-              <span
-                className="chip-etiqueta chip-oferta"
-                title={`¡Oferta Especial! Ahorras $${ahorroMonto.toFixed(2)}`}
-              >
-                🔥 -{porcentajeDescuento}% OFF
-              </span>
-            )
-          )}
-          {esProductoRenta ? (
-            <span
-              className="chip-etiqueta"
-              style={{
-                background: 'rgba(15, 23, 42, 0.88)',
-                color: '#FDE68A',
-                border: '1px solid rgba(251, 191, 36, 0.55)',
-              }}
-              title={
-                producto.rentaConfig?.nota_condiciones ||
-                'Mobiliario en calidad de renta para eventos'
-              }
-            >
-              🪑 EN RENTA
-            </span>
-          ) : esProductoEvento ? (
-            <span
-              className="chip-etiqueta"
-              style={{
-                background: 'rgba(45, 71, 52, 0.92)',
-                color: '#FEF3C7',
-                border: '1px solid rgba(253, 224, 71, 0.45)',
-              }}
-              title="Producto de Eventos y Ceremonias bajo proforma personalizada"
-            >
-              ✨ EVENTOS
-            </span>
-          ) : (
-            producto.entregaHoy && (
-              <span className="chip-etiqueta chip-entrega-hoy">⚡ Entrega Hoy</span>
-            )
-          )}
-          {producto.destacado && (
-            <span className="chip-etiqueta chip-destacado">★ Más Pedido</span>
-          )}
-          {producto.nuevo && (
-            <span className="chip-etiqueta chip-nuevo">Nuevo</span>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Botón Favorito */}
         <button
@@ -269,35 +257,7 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
           <Heart size={16} fill={favorito ? 'currentColor' : 'none'} />
         </button>
 
-        {/* Botón Copiar Link Directo del Producto (WhatsApp / Chat) */}
-        <button
-          type="button"
-          onClick={handleCopiarEnlaceProducto}
-          title={linkCopiado ? '¡Link copiado!' : 'Copiar link directo del producto para WhatsApp'}
-          aria-label="Copiar link del producto"
-          style={{
-            position: 'absolute',
-            top: '54px',
-            right: '12px',
-            zIndex: 7,
-            width: '34px',
-            height: '34px',
-            borderRadius: '50%',
-            border: linkCopiado ? '1.5px solid #10B981' : '1px solid rgba(255,255,255,0.65)',
-            background: linkCopiado ? '#ECFDF5' : 'rgba(255, 255, 255, 0.92)',
-            color: linkCopiado ? '#047857' : '#27272A',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-            transition: 'all 0.15s ease',
-          }}
-        >
-          {linkCopiado ? <Check size={15} /> : <Link2 size={15} />}
-        </button>
-
-        {/* Flechas de navegación en la foto */}
+        {/* Flechas de navegación en la foto (se revelan en hover/focus) */}
         {fotos.length > 1 && (
           <>
             <button
@@ -316,25 +276,6 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
             >
               <ChevronRight size={18} />
             </button>
-
-            {/* Contador discreto + Indicador de dots */}
-            <span
-              style={{
-                position: 'absolute',
-                bottom: '10px',
-                right: '10px',
-                zIndex: 6,
-                background: 'rgba(24, 24, 27, 0.62)',
-                color: '#FFFFFF',
-                fontSize: '0.68rem',
-                fontWeight: 700,
-                padding: '2px 7px',
-                borderRadius: '999px',
-                pointerEvents: 'none',
-              }}
-            >
-              {indiceSeguro + 1}/{fotos.length}
-            </span>
 
             <div className="dots-carrusel">
               {fotos.map((_, idx) => (
@@ -359,14 +300,32 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
       {/* Información del Producto */}
       <div className="info-producto-carrusel">
         <span className="categoria-rotulo">
-          {modoSobrio ||
-          (producto.esCondolencias &&
-            (!producto.categoriaNombre ||
-              producto.categoriaNombre.toLowerCase().includes('condol')))
-            ? '🕊️ Condolencias Solemnes'
+          {esCondolenciasSobrio
+            ? 'Condolencias'
             : (producto.categoriaNombre || producto.categoriaPrincipal.replace('cat-', '')).toUpperCase()}
         </span>
-        <h3 className="titulo-producto-carrusel">{producto.nombre}</h3>
+        <h3 className="titulo-producto-carrusel">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setProductoSeleccionadoModal(producto);
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              margin: 0,
+              font: 'inherit',
+              color: 'inherit',
+              textAlign: 'left',
+              cursor: 'pointer',
+              width: '100%',
+            }}
+          >
+            {producto.nombre}
+          </button>
+        </h3>
         <p className="descripcion-corta-carrusel">{producto.descripcionCorta}</p>
 
         {/* Selector de Variantes Rápidas (solo si el producto no está desplegado individualmente por variante) */}
@@ -408,12 +367,12 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
               <span className="precio-pvp-grande">
                 ${varianteSeleccionada.pvp.toFixed(2)}
               </span>
-              {tieneOferta && (
+              {!esCondolenciasSobrio && tieneOferta && (
                 <span className="precio-tachado-nominal" title={`Precio anterior: $${varianteSeleccionada.precioComparacion!.toFixed(2)}`}>
                   ${varianteSeleccionada.precioComparacion!.toFixed(2)}
                 </span>
               )}
-              {tieneOferta && porcentajeDescuento > 0 && (
+              {!esCondolenciasSobrio && tieneOferta && porcentajeDescuento > 0 && (
                 <span className="badge-ahorro-descuento">
                   -{porcentajeDescuento}%
                 </span>
@@ -436,14 +395,15 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
                   display: 'inline-block',
                   marginTop: '3px',
                   fontSize: '0.7rem',
-                  fontWeight: 700,
-                  color: '#BE185D',
+                  fontWeight: 600,
+                  color: 'var(--verde)',
                 }}
               >
-                ✨ Incluye {producto.comboComponentes.reduce((a, c) => a + c.cantidad_base, 0)} piezas • Personalizable
+                Incluye {producto.comboComponentes.reduce((a, c) => a + c.cantidad_base, 0)} piezas • Personalizable
               </span>
             )}
             {!producto.esCombo &&
+              !esCondolenciasSobrio &&
               varianteSeleccionada.escalasVolumen &&
               varianteSeleccionada.escalasVolumen[0] && (
                 <span
@@ -451,11 +411,11 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
                     display: 'inline-block',
                     marginTop: '3px',
                     fontSize: '0.7rem',
-                    fontWeight: 700,
-                    color: '#B45309',
+                    fontWeight: 600,
+                    color: 'var(--dorado)',
                   }}
                 >
-                  🏷️ {describirEscalaVolumen(
+                  {describirEscalaVolumen(
                     varianteSeleccionada.escalasVolumen[0],
                     varianteSeleccionada.pvpNominalSinVolumen ?? varianteSeleccionada.pvp
                   )}
@@ -470,16 +430,12 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
             {esProductoEvento ? (
               <button
                 type="button"
-                className="btn-agregar-rapido"
+                className="btn-agregar-rapido btn-agregar-rapido-sobrio"
                 onClick={handleAgregar}
                 title="Añadir este elemento a mi proforma de evento"
                 aria-label="Proforma"
-                style={{
-                  background: '#2D4734',
-                  color: '#FFFFFF',
-                }}
               >
-                <FileText size={16} />
+                <FileText size={15} />
                 <span>Proforma</span>
               </button>
             ) : compradoReciente ? (
@@ -491,25 +447,23 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
                   title="Seguir explorando más arreglos"
                   aria-label="Seguir comprando"
                   style={{
-                    background: '#FFFFFF',
-                    color: '#2D4734',
-                    border: '1.5px solid #2D4734',
-                    padding: '7px 10px',
+                    background: 'var(--blanco)',
+                    color: 'var(--verde)',
+                    border: '1px solid var(--verde)',
+                    padding: '7px 11px',
                     fontSize: '0.76rem',
                   }}
                 >
-                  <span>Seguir comprando</span>
+                  <span>Seguir</span>
                 </button>
                 <button
                   type="button"
-                  className="btn-agregar-rapido"
+                  className="btn-agregar-rapido btn-agregar-rapido-sobrio"
                   onClick={handlePagarDirecto}
                   title="Ir directamente al pago"
                   aria-label="Pagar ahora"
                   style={{
-                    background: '#065F46',
-                    color: '#FFFFFF',
-                    padding: '7px 11px',
+                    padding: '7px 12px',
                     fontSize: '0.76rem',
                   }}
                 >
@@ -520,7 +474,7 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
             ) : (
               <button
                 type="button"
-                className="btn-agregar-rapido"
+                className={`btn-agregar-rapido ${esCondolenciasSobrio ? 'btn-agregar-rapido-sobrio' : ''}`}
                 onClick={handleAgregar}
                 title="Comprar este arreglo floral"
                 aria-label="Comprar"
@@ -535,6 +489,6 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
           </div>
         </div>
       </div>
-    </div>
+    </article>
   );
 }

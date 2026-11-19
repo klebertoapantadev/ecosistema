@@ -125,6 +125,10 @@ export function ConsolaInventarioRosas({
   const [cargando, setCargando] = useState<boolean>(false);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [fotoEliminadaReciente, setFotoEliminadaReciente] = useState<{
+    foto: FotoConteoBonches;
+    indice: number;
+  } | null>(null);
 
   // Panel rápido para agregar paquetes / orquídeas manualmente (que no están en las fotos)
   const [mostrarPanelManual, setMostrarPanelManual] = useState<boolean>(false);
@@ -369,6 +373,13 @@ export function ConsolaInventarioRosas({
     );
   };
 
+  const handleFijarCantidadItem = (fotoId: string, itemId: string, valor: number) => {
+    const limpio = Math.max(0, Math.min(999, Math.round(Number(valor) || 0)));
+    actualizarItemsDeFoto(fotoId, (items) =>
+      items.map((it) => (it.id === itemId ? { ...it, cantidad: limpio } : it))
+    );
+  };
+
   const handleCambiarFloresOrquidea = (fotoId: string, itemId: string, delta: number) => {
     actualizarItemsDeFoto(fotoId, (items) =>
       items.map((it) =>
@@ -377,6 +388,30 @@ export function ConsolaInventarioRosas({
           : it
       )
     );
+  };
+
+  const handleFijarFloresOrquidea = (fotoId: string, itemId: string, valor: number) => {
+    const limpio = Math.max(0, Math.min(999, Math.round(Number(valor) || 0)));
+    actualizarItemsDeFoto(fotoId, (items) =>
+      items.map((it) => (it.id === itemId ? { ...it, numeroFlores: limpio } : it))
+    );
+  };
+
+  const handleQuitarFotoConDeshacer = (foto: FotoConteoBonches, indice: number) => {
+    setFotosActuales((prev) => prev.filter((x) => x.id !== foto.id));
+    setFotoEliminadaReciente({ foto, indice });
+  };
+
+  const handleDeshacerQuitarFoto = () => {
+    if (!fotoEliminadaReciente) return;
+    const { foto, indice } = fotoEliminadaReciente;
+    setFotosActuales((prev) => {
+      if (prev.some((f) => f.id === foto.id)) return prev;
+      const copia = [...prev];
+      copia.splice(Math.min(indice, copia.length), 0, foto);
+      return copia;
+    });
+    setFotoEliminadaReciente(null);
   };
 
   const handleCambiarVariedadItem = (fotoId: string, itemId: string, nuevaVariedadId: string) => {
@@ -951,6 +986,7 @@ export function ConsolaInventarioRosas({
 
           {errorMsg && (
             <div
+              role="alert"
               style={{
                 padding: "9px 12px",
                 borderRadius: "9px",
@@ -966,6 +1002,8 @@ export function ConsolaInventarioRosas({
 
           {mensajeExito && (
             <div
+              role="status"
+              aria-live="polite"
               style={{
                 padding: "9px 12px",
                 borderRadius: "9px",
@@ -980,6 +1018,65 @@ export function ConsolaInventarioRosas({
             >
               <CheckCircle2 size={15} />
               <span>{mensajeExito}</span>
+            </div>
+          )}
+
+          {fotoEliminadaReciente && (
+            <div
+              role="status"
+              aria-live="polite"
+              style={{
+                padding: "9px 12px",
+                borderRadius: "9px",
+                background: "#FAF6EE",
+                border: "1px solid #E5D7BC",
+                color: "#745622",
+                fontSize: "0.79rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "10px",
+                flexWrap: "wrap",
+              }}
+            >
+              <span>
+                Se quitó {fotoEliminadaReciente.foto.esManual || !fotoEliminadaReciente.foto.imagenUrl
+                  ? "el lote manual"
+                  : `la Foto #${fotoEliminadaReciente.indice + 1}`}.
+              </span>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <button
+                  type="button"
+                  onClick={handleDeshacerQuitarFoto}
+                  style={{
+                    padding: "4px 10px",
+                    borderRadius: "7px",
+                    border: "1px solid #745622",
+                    background: "#FFFFFF",
+                    color: "#745622",
+                    fontSize: "0.75rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Deshacer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFotoEliminadaReciente(null)}
+                  aria-label="Cerrar aviso"
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "#745622",
+                    cursor: "pointer",
+                    padding: "2px",
+                    display: "inline-flex",
+                  }}
+                >
+                  <X size={14} />
+                </button>
+              </div>
             </div>
           )}
 
@@ -1452,9 +1549,7 @@ export function ConsolaInventarioRosas({
 
                             <button
                               type="button"
-                              onClick={() =>
-                                setFotosActuales((prev) => prev.filter((x) => x.id !== foto.id))
-                              }
+                              onClick={() => handleQuitarFotoConDeshacer(foto, idx)}
                               title="Quitar esta foto o lote"
                               aria-label="Quitar"
                               style={{
@@ -1672,10 +1767,12 @@ export function ConsolaInventarioRosas({
                                       <button
                                         type="button"
                                         onClick={() => handleCambiarCantidadItem(foto.id, item.id, -1)}
+                                        aria-label={esOrq ? `Disminuir varas de ${item.variedadNombre}` : `Disminuir paquetes de ${item.variedadNombre}`}
+                                        title="Disminuir cantidad"
                                         style={{
-                                          width: "24px",
-                                          height: "24px",
-                                          borderRadius: "6px",
+                                          minWidth: "36px",
+                                          minHeight: "36px",
+                                          borderRadius: "8px",
                                           border: "1px solid #D5CFC4",
                                           background: "#FFFFFF",
                                           color: "#221E1B",
@@ -1685,26 +1782,38 @@ export function ConsolaInventarioRosas({
                                           cursor: "pointer",
                                         }}
                                       >
-                                        <Minus size={11} />
+                                        <Minus size={14} />
                                       </button>
-                                      <strong
+                                      <input
+                                        type="number"
+                                        min={0}
+                                        max={999}
+                                        inputMode="numeric"
+                                        value={item.cantidad}
+                                        onChange={(e) => handleFijarCantidadItem(foto.id, item.id, Number(e.target.value))}
+                                        aria-label={esOrq ? `Varas de ${item.variedadNombre}` : `Paquetes de ${item.variedadNombre}`}
                                         style={{
-                                          minWidth: "20px",
+                                          width: "48px",
+                                          height: "36px",
                                           textAlign: "center",
-                                          fontSize: "0.82rem",
+                                          fontSize: "0.84rem",
                                           fontWeight: 600,
                                           color: "#1F1C19",
+                                          borderRadius: "8px",
+                                          border: "1px solid #D5CFC4",
+                                          background: "#FFFFFF",
+                                          padding: "0 4px",
                                         }}
-                                      >
-                                        {item.cantidad}
-                                      </strong>
+                                      />
                                       <button
                                         type="button"
                                         onClick={() => handleCambiarCantidadItem(foto.id, item.id, 1)}
+                                        aria-label={esOrq ? `Aumentar varas de ${item.variedadNombre}` : `Aumentar paquetes de ${item.variedadNombre}`}
+                                        title="Aumentar cantidad"
                                         style={{
-                                          width: "24px",
-                                          height: "24px",
-                                          borderRadius: "6px",
+                                          minWidth: "36px",
+                                          minHeight: "36px",
+                                          borderRadius: "8px",
                                           border: "1px solid #D5CFC4",
                                           background: "#FFFFFF",
                                           color: "#221E1B",
@@ -1714,7 +1823,7 @@ export function ConsolaInventarioRosas({
                                           cursor: "pointer",
                                         }}
                                       >
-                                        <Plus size={11} />
+                                        <Plus size={14} />
                                       </button>
                                     </div>
 
@@ -1728,10 +1837,12 @@ export function ConsolaInventarioRosas({
                                           onClick={() =>
                                             handleCambiarFloresOrquidea(foto.id, item.id, -1)
                                           }
+                                          aria-label={`Disminuir flores de ${item.variedadNombre}`}
+                                          title="Disminuir número de flores"
                                           style={{
-                                            width: "24px",
-                                            height: "24px",
-                                            borderRadius: "6px",
+                                            minWidth: "36px",
+                                            minHeight: "36px",
+                                            borderRadius: "8px",
                                             border: "1px solid #E5D7BC",
                                             background: "#FFFFFF",
                                             color: "#745622",
@@ -1741,28 +1852,42 @@ export function ConsolaInventarioRosas({
                                             cursor: "pointer",
                                           }}
                                         >
-                                          <Minus size={11} />
+                                          <Minus size={14} />
                                         </button>
-                                        <strong
+                                        <input
+                                          type="number"
+                                          min={0}
+                                          max={999}
+                                          inputMode="numeric"
+                                          value={item.numeroFlores ?? 0}
+                                          onChange={(e) =>
+                                            handleFijarFloresOrquidea(foto.id, item.id, Number(e.target.value))
+                                          }
+                                          aria-label={`Número de flores de ${item.variedadNombre}`}
                                           style={{
-                                            minWidth: "20px",
+                                            width: "48px",
+                                            height: "36px",
                                             textAlign: "center",
-                                            fontSize: "0.82rem",
+                                            fontSize: "0.84rem",
                                             fontWeight: 600,
                                             color: "#745622",
+                                            borderRadius: "8px",
+                                            border: "1px solid #E5D7BC",
+                                            background: "#FFFFFF",
+                                            padding: "0 4px",
                                           }}
-                                        >
-                                          {item.numeroFlores ?? 0}
-                                        </strong>
+                                        />
                                         <button
                                           type="button"
                                           onClick={() =>
                                             handleCambiarFloresOrquidea(foto.id, item.id, 1)
                                           }
+                                          aria-label={`Aumentar flores de ${item.variedadNombre}`}
+                                          title="Aumentar número de flores"
                                           style={{
-                                            width: "24px",
-                                            height: "24px",
-                                            borderRadius: "6px",
+                                            minWidth: "36px",
+                                            minHeight: "36px",
+                                            borderRadius: "8px",
                                             border: "1px solid #E5D7BC",
                                             background: "#FFFFFF",
                                             color: "#745622",
@@ -1772,7 +1897,7 @@ export function ConsolaInventarioRosas({
                                             cursor: "pointer",
                                           }}
                                         >
-                                          <Plus size={11} />
+                                          <Plus size={14} />
                                         </button>
                                       </div>
                                     )}

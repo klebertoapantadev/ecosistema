@@ -1,7 +1,7 @@
 'use client';
 import { SelectConBuscador } from "@eco/comercio";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { SelectorUbicacionEntrega } from '@eco/comercio';
 import { useCarrito } from '../contexto-carrito';
 import { FRASES_DEDICATORIAS, PRODUCTOS_TINKAY } from '../datos-catalogo';
@@ -54,6 +54,17 @@ export function DrawerCarritoFloristeria() {
   const [itemEditandoDedicatoria, setItemEditandoDedicatoria] = useState<string | null>(null);
   const [itemEditandoEntrega, setItemEditandoEntrega] = useState<string | null>(null);
   const [avisoValidacionEntrega, setAvisoValidacionEntrega] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!drawerAbierto) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setDrawerAbierto(false);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [drawerAbierto, setDrawerAbierto]);
 
   if (!drawerAbierto) return null;
 
@@ -163,6 +174,7 @@ export function DrawerCarritoFloristeria() {
         className="drawer-panel-carrito"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
+        aria-modal="true"
         aria-label="Carrito de compras"
       >
         {/* Cabecera del Drawer */}
@@ -215,6 +227,7 @@ export function DrawerCarritoFloristeria() {
                         src={item.producto.fotos[0] || '/img/slide4_flores_amor.jpg'}
                         alt={item.producto.nombre}
                         className="miniatura-item-carrito"
+                        loading="lazy"
                       />
 
                       <div className="datos-principales-item">
