@@ -1,5 +1,5 @@
 -- ==============================================================================
--- Migración: 20261118000007_clasificacion_cuatro_tipos_pedidos_y_hora_entrega.sql
+-- Migración: 20261118000009_clasificacion_cuatro_tipos_pedidos_y_hora_entrega.sql
 -- Requerimientos: PLT-009 / TNK-002 / TNK-005 / MRG
 -- Descripción:
 --   1. Estandariza la clasificación de pedidos en Tinkay y Margaritas en los 4 tipos

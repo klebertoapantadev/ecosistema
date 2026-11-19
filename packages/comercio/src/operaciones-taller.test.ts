@@ -7,16 +7,20 @@ import {
   RANGOS_HORARIO_ENTREGA_TIENDA,
   SOLICITANTES_EXEQUIALES_FRECUENTES,
   consolidarFotosInventario,
+  construirValoresHorarioGuardar,
   esEntregaConfirmadaOrden,
+  esNombreFallecidoPendiente,
   esPedidoDeElaboracionEnFecha,
   extraerConteoJsonDesdeRespuestaAria,
   formatearFechaCorteInventario,
   formatearFechaEntregaHumana,
+  formatearHorarioEntregaOrden,
   formatearResumenInventarioTexto,
   generarCuadriculaMesCalendario,
   inferirClasificacionPedido,
   normalizarFranjaHorariaTienda,
   obtenerRangoSemanaLunesADomingo,
+  resolverEstadoInicialHorario,
 } from "./operaciones-taller";
 import { generarPdfInformeQuincenalIess } from "./pdf-informe-iess";
 
@@ -138,13 +142,12 @@ describe("operaciones-taller y pdf-informe-iess", () => {
     expect(bytes.byteLength).toBeGreaterThan(1500);
   });
 
-  it("clasifica los pedidos en las 5 categorías operativas y detecta entregas confirmadas para el calendario", () => {
+  it("distingue las 4 clasificaciones del negocio (Floristería/Ocasiones, Condolencias, Eventos, Exequiales) y gestiona rangos u hora exacta", () => {
     expect(CLASIFICACIONES_OPERATIVAS_PEDIDO.map((c) => c.clave)).toEqual([
-      "DOMICILIO",
-      "LOCAL",
-      "EXEQUIALES",
+      "FLORISTERIA_OCASIONES",
+      "CONDOLENCIAS",
       "EVENTOS",
-      "MOBILIARIO",
+      "EXEQUIALES",
     ]);
 
     expect(
@@ -157,10 +160,11 @@ describe("operaciones-taller y pdf-informe-iess", () => {
 
     expect(
       inferirClasificacionPedido({
-        retiroEnLocal: true,
-        productoResumen: "Bouquet 24 rosas",
+        origenTipo: "VENTA_TIENDA",
+        productoResumen: "Corona fúnebre blanca XL",
+        ubicacionEntrega: "Camposanto Monteolivo",
       })
-    ).toBe("LOCAL");
+    ).toBe("CONDOLENCIAS");
 
     expect(
       inferirClasificacionPedido({
@@ -173,14 +177,57 @@ describe("operaciones-taller y pdf-informe-iess", () => {
       inferirClasificacionPedido({
         productoResumen: "Juego de 3 pedestales dorados en renta",
       })
-    ).toBe("MOBILIARIO");
+    ).toBe("EVENTOS");
 
     expect(
       inferirClasificacionPedido({
-        productoResumen: "Box floral mediano",
+        retiroEnLocal: true,
+        productoResumen: "Bouquet 24 rosas cumpleaños",
+      })
+    ).toBe("FLORISTERIA_OCASIONES");
+
+    expect(
+      inferirClasificacionPedido({
+        productoResumen: "Box floral mediano aniversario",
         ubicacionEntrega: "Av. República del Salvador",
       })
-    ).toBe("DOMICILIO");
+    ).toBe("FLORISTERIA_OCASIONES");
+
+    // Horario por rango vs hora exacta
+    expect(
+      resolverEstadoInicialHorario({
+        franjaHoraria: "B) 13:00 - 17:00",
+        horaEspecifica: null,
+      })
+    ).toEqual({ modo: "B) 13:00 - 17:00", horaExacta: "" });
+
+    expect(
+      resolverEstadoInicialHorario({
+        franjaHoraria: "B) 13:00 - 17:00",
+        horaEspecifica: "15:30",
+      })
+    ).toEqual({ modo: "HORA_EXACTA", horaExacta: "15:30" });
+
+    expect(construirValoresHorarioGuardar("HORA_EXACTA", "15:30")).toEqual({
+      franjaHoraria: "B) 13:00 - 17:00",
+      horaEspecifica: "15:30",
+    });
+
+    expect(construirValoresHorarioGuardar("C) 17:00 - 20:00", "15:30")).toEqual({
+      franjaHoraria: "C) 17:00 - 20:00",
+      horaEspecifica: null,
+    });
+
+    expect(
+      formatearHorarioEntregaOrden({
+        franjaHoraria: "A) 09:00 - 13:00",
+        horaEspecifica: "10:45",
+      })
+    ).toBe("Hora exacta: 10:45");
+
+    expect(esNombreFallecidoPendiente("Por coordinar")).toBe(true);
+    expect(esNombreFallecidoPendiente("Por confirmar (Sala 2)")).toBe(true);
+    expect(esNombreFallecidoPendiente("Myrian Graciela Rodríguez")).toBe(false);
 
     expect(
       esEntregaConfirmadaOrden({
