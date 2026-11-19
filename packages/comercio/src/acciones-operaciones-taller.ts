@@ -5234,10 +5234,10 @@ export async function buscarVideosYoutubeTvAction(consulta: string): Promise<
     }
 
     const html = await resp.text();
-    const resultados: ResultadoBusquedaYoutubeTv[] = [];
+    const candidatos: ResultadoBusquedaYoutubeTv[] = [];
     const vistos = new Set<string>();
 
-    // Extraer JSON ytInitialData de la página de resultados de YouTube
+    // Extraer JSON ytInitialData de la página de resultados de YouTube (hasta 24 candidatos para filtrar bloqueados)
     const marker = "var ytInitialData = ";
     const idxInicio = html.indexOf(marker);
     if (idxInicio >= 0) {
@@ -5247,7 +5247,7 @@ export async function buscarVideosYoutubeTvAction(consulta: string): Promise<
         try {
           const data = JSON.parse(resto.slice(0, idxFin));
           const recorrer = (nodo: any) => {
-            if (!nodo || typeof nodo !== "object" || resultados.length >= 12) return;
+            if (!nodo || typeof nodo !== "object" || candidatos.length >= 24) return;
             if (nodo.videoRenderer && typeof nodo.videoRenderer === "object") {
               const vr = nodo.videoRenderer;
               const videoId = String(vr.videoId || "").trim();
@@ -5265,7 +5265,7 @@ export async function buscarVideosYoutubeTvAction(consulta: string): Promise<
                   vr.lengthText?.simpleText ||
                   vr.lengthText?.runs?.map((r: any) => r.text).join("") ||
                   "EN VIVO";
-                resultados.push({
+                candidatos.push({
                   videoId,
                   titulo,
                   canal,
@@ -5292,14 +5292,14 @@ export async function buscarVideosYoutubeTvAction(consulta: string): Promise<
     }
 
     // Fallback regex si YouTube cambió el envoltorio de ytInitialData
-    if (resultados.length === 0) {
+    if (candidatos.length === 0) {
       const regex = /"videoId":"([a-zA-Z0-9_-]{11})"/g;
       let m: RegExpExecArray | null;
-      while ((m = regex.exec(html)) !== null && resultados.length < 12) {
+      while ((m = regex.exec(html)) !== null && candidatos.length < 20) {
         const vid = m[1]!;
         if (vistos.has(vid)) continue;
         vistos.add(vid);
-        resultados.push({
+        candidatos.push({
           videoId: vid,
           titulo: `Video YouTube (${vid})`,
           canal: "YouTube",
@@ -5310,10 +5310,49 @@ export async function buscarVideosYoutubeTvAction(consulta: string): Promise<
       }
     }
 
-    if (resultados.length === 0) {
+    if (candidatos.length === 0) {
       return {
         ok: false,
         error: "No se encontraron videos para esa búsqueda. Puedes pegar directamente la URL de YouTube.",
+      };
+    }
+
+    // Verificar en paralelo cuáles candidatos permiten reproducción embebida ("playableInEmbed":true)
+    // para respetar el permiso oficial del dueño y evitar errores LatinAutor/UMPG en la TV
+    const verificados = await Promise.all(
+      candidatos.slice(0, 18).map(async (cand) => {
+        const ac = new AbortController();
+        const timer = setTimeout(() => ac.abort(), 2600);
+        try {
+          const r = await fetch(`https://www.youtube.com/watch?v=${cand.videoId}&hl=es`, {
+            method: "GET",
+            signal: ac.signal,
+            headers: {
+              "User-Agent":
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+            },
+            cache: "no-store",
+          });
+          if (!r.ok) return null;
+          const body = await r.text();
+          // YouTube incluye explícitamente "playableInEmbed":true solo cuando el propietario/disquera permite embed
+          const permiteEmbed = body.includes('"playableInEmbed":true');
+          return permiteEmbed ? cand : null;
+        } catch {
+          return null;
+        } finally {
+          clearTimeout(timer);
+        }
+      })
+    );
+
+    const resultados = verificados.filter((x): x is ResultadoBusquedaYoutubeTv => x !== null).slice(0, 12);
+
+    if (resultados.length === 0) {
+      return {
+        ok: false,
+        error:
+          "Las disqueras (LatinAutor/UMPG) bloquearon la inserción de los resultados para esa búsqueda. Prueba otra palabra clave (ej. 'mix dj', 'acústico', 'en vivo', 'instrumental'), usa Radio en Vivo o activa 'Flotar sobre YouTube.com'.",
       };
     }
 

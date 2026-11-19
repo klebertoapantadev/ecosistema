@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { crearClienteNavegador } from "@eco/supabase/cliente";
 import {
   ArrowLeftRight,
@@ -12,6 +13,7 @@ import {
   ChevronRight,
   Clock,
   DollarSign,
+  ExternalLink,
   Eye,
   EyeOff,
   Flame,
@@ -27,6 +29,7 @@ import {
   Package,
   PanelRight,
   Pause,
+  PictureInPicture2,
   Play,
   QrCode,
   Radio,
@@ -200,6 +203,10 @@ export function PantallaTvTaller({
   const [errorAcceso, setErrorAcceso] = useState<string | null>(null);
   const [conectado, setConectado] = useState<boolean>(true);
   const [reloj, setReloj] = useState<Date>(() => new Date());
+
+  // Ventana flotante SIEMPRE ENCIMA (Document Picture-in-Picture en Chrome/Edge) para usar sobre youtube.com real
+  const [pipWindow, setPipWindow] = useState<Window | null>(null);
+  const [pipContainer, setPipContainer] = useState<HTMLElement | null>(null);
 
   // Overrides locales rápidos en la TV (sin tener que abrir el celular)
   const [modoLocal, setModoLocal] = useState<ModoPantallaTv | null>(null);
@@ -459,6 +466,76 @@ export function PantallaTvTaller({
       setModoBarraLateral(true);
     }
   }, []);
+
+  const toggleFlotarSobreYoutube = useCallback(
+    async (abrirYoutubeUrl?: string) => {
+      if (typeof window === "undefined") return;
+      if (pipWindow && !pipWindow.closed) {
+        pipWindow.close();
+        setPipWindow(null);
+        setPipContainer(null);
+        return;
+      }
+
+      const dpip = (
+        window as unknown as {
+          documentPictureInPicture?: {
+            requestWindow: (opts?: { width?: number; height?: number }) => Promise<Window>;
+          };
+        }
+      ).documentPictureInPicture;
+
+      if (dpip?.requestWindow) {
+        try {
+          const win = await dpip.requestWindow({ width: 390, height: 820 });
+          win.document.title = `Pedidos Taller — ${nombreNegocio}`;
+          win.document.body.style.margin = "0";
+          win.document.body.style.padding = "0";
+          win.document.body.style.background = "#14110F";
+          win.document.body.style.color = "#F6F1E8";
+          win.document.body.style.fontFamily =
+            "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
+          const root = win.document.createElement("div");
+          root.style.width = "100%";
+          root.style.height = "100vh";
+          root.style.display = "flex";
+          root.style.flexDirection = "column";
+          win.document.body.appendChild(root);
+
+          win.addEventListener("pagehide", () => {
+            setPipWindow(null);
+            setPipContainer(null);
+          });
+
+          setPipWindow(win);
+          setPipContainer(root);
+
+          if (abrirYoutubeUrl) {
+            window.open(abrirYoutubeUrl, "_blank", "noopener,noreferrer");
+          }
+          return;
+        } catch {
+          // Si el navegador rechazó Document PiP, usar ventana acoplable
+        }
+      }
+
+      abrirVentanaBarraLateral();
+      if (abrirYoutubeUrl) {
+        window.open(abrirYoutubeUrl, "_blank", "noopener,noreferrer");
+      }
+    },
+    [abrirVentanaBarraLateral, nombreNegocio, pipWindow]
+  );
+
+  useEffect(() => {
+    return () => {
+      try {
+        if (pipWindow && !pipWindow.closed) pipWindow.close();
+      } catch {
+        // Ignorar
+      }
+    };
+  }, [pipWindow]);
 
   useEffect(() => {
     colaYtRef.current = colaYt;
@@ -1455,6 +1532,16 @@ export function PantallaTvTaller({
 
           <button
             type="button"
+            onClick={() => void toggleFlotarSobreYoutube()}
+            title="Flotar los pedidos SIEMPRE ENCIMA sobre youtube.com real (Chrome/Edge)"
+            style={hudBtnStyle(pipWindow ? "#B8923F" : "#26201C")}
+          >
+            <PictureInPicture2 size={14} />
+            {pipWindow ? "Cerrar Flotante" : "Flotar sobre YouTube"}
+          </button>
+
+          <button
+            type="button"
             onClick={() => setModoBarraLateral(!modoBarraLateral)}
             title="Modo Barra Lateral: solo pedidos para usar junto a youtube.com oficial en PC/Laptop"
             style={hudBtnStyle(modoBarraLateral ? "#8C6D2E" : "#26201C")}
@@ -2210,19 +2297,38 @@ export function PantallaTvTaller({
                   boxShadow: "0 12px 30px rgba(0,0,0,0.6)",
                 }}
               >
-                <span style={{ fontSize: "0.86rem", fontWeight: 700, color: "#FECACA" }}>
-                  Este video no está disponible para reproducir aquí.
+                <span style={{ fontSize: "0.84rem", fontWeight: 700, color: "#E5B4AC" }}>
+                  La disquera bloqueó este video fuera de youtube.com.
                 </span>
                 <button
                   type="button"
                   onClick={() => setAbiertoBuscadorYt(true)}
                   style={{
-                    padding: "7px 13px",
+                    padding: "7px 12px",
                     borderRadius: "8px",
                     border: "none",
-                    background: "#DC2626",
-                    color: "#FFFFFF",
-                    fontSize: "0.82rem",
+                    background: "#3D5A45",
+                    color: "#F6F1E8",
+                    fontSize: "0.8rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                  }}
+                >
+                  <Search size={14} /> Buscar otro
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void toggleFlotarSobreYoutube(youtubeUrlActual || "https://www.youtube.com")}
+                  style={{
+                    padding: "7px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(200,162,90,0.45)",
+                    background: "#B8923F",
+                    color: "#14110F",
+                    fontSize: "0.8rem",
                     fontWeight: 800,
                     cursor: "pointer",
                     display: "inline-flex",
@@ -2230,7 +2336,7 @@ export function PantallaTvTaller({
                     gap: "5px",
                   }}
                 >
-                  <Search size={14} /> Buscar otro video
+                  <PictureInPicture2 size={14} /> Ver en YouTube + Flotar Pedidos
                 </button>
               </div>
             )}
@@ -3953,6 +4059,197 @@ export function PantallaTvTaller({
           </div>
         );
       })()}
+
+      {/* Portal: Ventana Flotante SIEMPRE ENCIMA (Document Picture-in-Picture sobre youtube.com real) */}
+      {pipContainer &&
+        createPortal(
+          <div
+            style={{
+              width: "100%",
+              height: "100vh",
+              display: "flex",
+              flexDirection: "column",
+              background: "#14110F",
+              color: "#F6F1E8",
+              overflow: "hidden",
+            }}
+          >
+            {/* Cabecera Flotante */}
+            <div
+              style={{
+                padding: "10px 12px",
+                background: "#1C1714",
+                borderBottom: "1px solid rgba(214,195,165,0.18)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "8px",
+              }}
+            >
+              <div>
+                <div style={{ fontSize: "0.82rem", fontWeight: 800, color: "#E8C97E" }}>
+                  {nombreNegocio.toUpperCase()} · TALLER ({pendientes.length})
+                </div>
+                <div style={{ fontSize: "0.7rem", color: "#A89D8F" }}>
+                  {conectado ? "● En vivo" : "○ Reconectando"} · {formatearHoraEcuador(reloj)}
+                </div>
+              </div>
+              <a
+                href="https://www.youtube.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  padding: "5px 9px",
+                  borderRadius: "7px",
+                  background: "#3D5A45",
+                  color: "#F6F1E8",
+                  fontSize: "0.72rem",
+                  fontWeight: 700,
+                  textDecoration: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                YouTube <ExternalLink size={11} />
+              </a>
+            </div>
+
+            {/* Lista en vivo de pedidos pendientes */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "10px", display: "flex", flexDirection: "column", gap: "8px" }}>
+              {pendientes.length === 0 ? (
+                <div style={{ padding: "32px 12px", textAlign: "center", color: "#A89D8F", fontSize: "0.84rem" }}>
+                  ✓ Todo al día en taller. Los pedidos nuevos aparecerán aquí al instante.
+                </div>
+              ) : (
+                pendientes.map((o, idx) => {
+                  const chips = parsearColoresPedido(o.colores);
+                  const enPrep = o.estadoTaller === "EN_PREPARACION";
+                  const esExeq = o.clasificacionPedido === "EXEQUIALES" || o.origenTipo === "EXEQUIALES_LLAMADA";
+                  return (
+                    <div
+                      key={o.id}
+                      style={{
+                        padding: "10px 11px",
+                        borderRadius: "11px",
+                        background: "#211B17",
+                        border: enPrep ? "1.5px solid #C8A25A" : "1px solid rgba(214,195,165,0.2)",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "5px",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "6px" }}>
+                        <strong style={{ fontSize: "0.84rem", color: "#E8C97E" }}>
+                          #{idx + 1} {o.codigo}
+                        </strong>
+                        <span style={{ fontSize: "0.74rem", color: "#D6CEC2", fontWeight: 700 }}>
+                          {formatearHorarioEntregaOrden({
+                            franjaHoraria: o.franjaHoraria,
+                            horaEspecifica: o.horaEspecifica,
+                            esExequiales: esExeq,
+                          }).replace("Hora exacta: ", "")}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: "0.88rem", fontWeight: 800, color: "#FFFFFF" }}>
+                        {o.productoResumen}
+                      </div>
+                      {chips.length > 0 && (
+                        <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+                          {chips.map((c, ci) => (
+                            <span
+                              key={`${c.etiqueta}-${ci}`}
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                padding: "2px 7px",
+                                borderRadius: "999px",
+                                background: "#14110F",
+                                border: `1px solid ${c.bordeHex}`,
+                                fontSize: "0.7rem",
+                              }}
+                            >
+                              <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: c.hex }} />
+                              {c.etiqueta}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {o.extras && (
+                        <div style={{ fontSize: "0.74rem", color: "#E6C7D1" }}>
+                          🎁 {o.extras}
+                        </div>
+                      )}
+                      {o.observaciones && (
+                        <div style={{ fontSize: "0.74rem", color: "#E8C97E" }}>
+                          📝 {o.observaciones}
+                        </div>
+                      )}
+                      {tablero.puedeInteractuar && (
+                        <div style={{ display: "flex", gap: "6px", marginTop: "4px" }}>
+                          {!enPrep && (
+                            <button
+                              type="button"
+                              onClick={() => void avanzarEstadoDesdeTv(o, "EN_PREPARACION")}
+                              style={{
+                                flex: 1,
+                                padding: "6px 8px",
+                                borderRadius: "7px",
+                                border: "none",
+                                background: "#8C6D2E",
+                                color: "#FFFFFF",
+                                fontSize: "0.74rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                              }}
+                            >
+                              Iniciar
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => void avanzarEstadoDesdeTv(o, "LISTO_ENTREGA")}
+                            style={{
+                              flex: 1,
+                              padding: "6px 8px",
+                              borderRadius: "7px",
+                              border: "none",
+                              background: "#3D5A45",
+                              color: "#FFFFFF",
+                              fontSize: "0.74rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                            }}
+                          >
+                            ✓ Marcar Listo
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Franja inferior Listos / Entregados */}
+            <div
+              style={{
+                padding: "8px 12px",
+                background: "#1C1714",
+                borderTop: "1px solid rgba(214,195,165,0.18)",
+                fontSize: "0.74rem",
+                color: "#8AB597",
+                display: "flex",
+                justifyContent: "space-between",
+              }}
+            >
+              <span>✓ Listos: {tablero.ordenes.filter((o) => o.estadoTaller === "LISTO_ENTREGA").length}</span>
+              <span style={{ color: "#A89D8F" }}>✓✓ Entregados hoy: {totalEntregadosHoy}</span>
+            </div>
+          </div>,
+          pipContainer
+        )}
     </div>
   );
 }
