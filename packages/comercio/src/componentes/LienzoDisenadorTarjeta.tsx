@@ -2065,64 +2065,6 @@ export function LienzoDisenadorTarjeta({
             </>
           )}
 
-          {/* Sello de marca pequeño y sutil en el pie interior de toda tarjeta Dedicatoria */}
-          {!esCondolencias && !modoSoloQrActivo && (
-            <div
-              aria-hidden="true"
-              style={{
-                position: "absolute",
-                bottom: "1.4%",
-                left: "50%",
-                transform: "translateX(-50%)",
-                pointerEvents: "none",
-                zIndex: 3,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              {!negocio.trim().toLowerCase().includes("margarita") ? (
-                <div
-                  style={{
-                    width: "40px",
-                    aspectRatio: "16 / 8.8",
-                    overflow: "hidden",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    opacity: 0.26,
-                  }}
-                >
-                  <img
-                    src="/img/logo/tinkay-logo.jpg"
-                    alt=""
-                    draggable={false}
-                    style={{
-                      width: "160%",
-                      maxWidth: "none",
-                      height: "auto",
-                      mixBlendMode: "multiply",
-                      filter: "contrast(1.3) brightness(1.04)",
-                    }}
-                  />
-                </div>
-              ) : (
-                <span
-                  style={{
-                    fontFamily: "'Playfair Display', Georgia, serif",
-                    fontSize: "0.52rem",
-                    letterSpacing: "0.16em",
-                    textTransform: "uppercase",
-                    color: "#44403C",
-                    opacity: 0.36,
-                  }}
-                >
-                  Margaritas
-                </span>
-              )}
-            </div>
-          )}
-
           {modoSoloQrActivo ? (
             <div
               style={{

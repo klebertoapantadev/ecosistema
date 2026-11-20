@@ -2,7 +2,6 @@
 
 import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
-  ExternalLink,
   Pause,
   Play,
   RotateCcw,
@@ -66,14 +65,12 @@ function esDestinatarioVisibleValido(valor?: string | null): boolean {
 
 function ContenidoInteriorTarjeta({
   esCondolencias,
-  esMargaritas,
   disenoNorm,
   dedicatoria,
   remitente,
   escalaFuente,
 }: {
   esCondolencias: boolean;
-  esMargaritas: boolean;
   disenoNorm: DisenoVisualNormalizado;
   dedicatoria: string;
   remitente: string;
@@ -195,65 +192,6 @@ function ContenidoInteriorTarjeta({
             />
           </svg>
         </>
-      )}
-
-      {/* SELLO DE MARCA PEQUEÑO Y SUTIL EN EL INTERIOR (SIEMPRE PRESENTE EN TARJETAS DEDICATORIA) */}
-      {!esCondolencias && (
-        <div
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            bottom: "1.6%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            pointerEvents: "none",
-            zIndex: 3,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          {!esMargaritas ? (
-            <div
-              style={{
-                width: "48px",
-                aspectRatio: "16 / 8.8",
-                overflow: "hidden",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                opacity: 0.26,
-              }}
-            >
-              <img
-                src="/img/logo/tinkay-logo.jpg"
-                alt=""
-                draggable={false}
-                style={{
-                  width: "160%",
-                  maxWidth: "none",
-                  height: "auto",
-                  mixBlendMode: "multiply",
-                  filter: "contrast(1.3) brightness(1.04)",
-                  userSelect: "none",
-                }}
-              />
-            </div>
-          ) : (
-            <span
-              style={{
-                fontFamily: "'Playfair Display', Georgia, serif",
-                fontSize: "0.62rem",
-                letterSpacing: "0.18em",
-                textTransform: "uppercase",
-                color: "#44403C",
-                opacity: 0.36,
-              }}
-            >
-              Margaritas
-            </span>
-          )}
-        </div>
       )}
 
       {/* IMÁGENES DISEÑADAS (HASTA 3, CON SOPORTE FONDO 100%, ROTACIÓN Y TRANSPARENCIA) */}
@@ -743,7 +681,6 @@ export function TarjetaDedicatoriaDigitalInteractiva({
           >
             <ContenidoInteriorTarjeta
               esCondolencias={true}
-              esMargaritas={esMargaritas}
               disenoNorm={disenoNorm}
               dedicatoria={datosIniciales.dedicatoria}
               remitente={datosIniciales.remitente}
@@ -871,7 +808,6 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                   >
                     <ContenidoInteriorTarjeta
                       esCondolencias={false}
-                      esMargaritas={esMargaritas}
                       disenoNorm={disenoNorm}
                       dedicatoria={datosIniciales.dedicatoria}
                       remitente={datosIniciales.remitente}
@@ -936,23 +872,12 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                     cursor: "pointer",
                   }}
                 >
-                  {/* Filete editorial fino en la contraportada */}
-                  <div
-                    aria-hidden="true"
-                    style={{
-                      position: "absolute",
-                      inset: "10px",
-                      borderRadius: "5px",
-                      border: "1px solid rgba(87, 83, 78, 0.16)",
-                      pointerEvents: "none",
-                    }}
-                  />
-
+                  {/* Parte posterior minimalista: únicamente nuestro logo y www.tinkay.net debajo */}
                   {!esMargaritas ? (
                     <div
                       style={{
-                        width: "58%",
-                        maxWidth: "184px",
+                        width: "66%",
+                        maxWidth: "208px",
                         aspectRatio: "16 / 8.8",
                         overflow: "hidden",
                         display: "flex",
@@ -980,7 +905,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                       <div
                         style={{
                           fontFamily: "'Playfair Display', Georgia, serif",
-                          fontSize: "1.65rem",
+                          fontSize: "1.75rem",
                           fontWeight: 700,
                           letterSpacing: "0.04em",
                         }}
@@ -1001,48 +926,16 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                     </div>
                   )}
 
-                  <div
-                    aria-hidden="true"
-                    style={{
-                      width: "36px",
-                      height: "1px",
-                      backgroundColor: "rgba(87, 83, 78, 0.32)",
-                    }}
-                  />
-
                   <span
                     style={{
-                      fontFamily: "'Playfair Display', Georgia, serif",
-                      fontStyle: "italic",
-                      fontSize: "0.8rem",
+                      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+                      fontSize: "0.82rem",
+                      fontWeight: 500,
+                      letterSpacing: "0.06em",
                       color: "#44403C",
-                      textAlign: "center",
-                      maxWidth: "220px",
-                      lineHeight: 1.4,
                     }}
                   >
-                    {esMargaritas
-                      ? "Arreglos florales diseñados con arte"
-                      : "Flores con historia, para cada momento"}
-                  </span>
-
-                  <span
-                    style={{
-                      marginTop: "4px",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "5px",
-                      padding: "6px 14px",
-                      borderRadius: "999px",
-                      backgroundColor: "#292524",
-                      color: "#F5EFE6",
-                      fontSize: "0.72rem",
-                      fontWeight: 700,
-                      letterSpacing: "0.02em",
-                    }}
-                  >
-                    <span>{esMargaritas ? "Visitar Margaritas" : "Visitar Tinkay"}</span>
-                    <ExternalLink size={12} />
+                    {esMargaritas ? "www.margaritasfloristeria.com" : "www.tinkay.net"}
                   </span>
                 </a>
               </div>
@@ -1093,7 +986,6 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                   >
                     <ContenidoInteriorTarjeta
                       esCondolencias={false}
-                      esMargaritas={esMargaritas}
                       disenoNorm={disenoNorm}
                       dedicatoria={datosIniciales.dedicatoria}
                       remitente={datosIniciales.remitente}

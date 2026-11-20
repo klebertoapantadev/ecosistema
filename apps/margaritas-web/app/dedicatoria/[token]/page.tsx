@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: PropsPage): Promise<Metadata>
 
   return {
     title: `Dedicatoria para ${res.tarjeta.destinatario} — Margaritas`,
-    description: `Tienes un detalle especial de ${remitenteVisible}. Abre tu tarjeta digital.`,
+    description: `Tienes un detalle especial de ${remitenteVisible}. Abre tu tarjeta digital de Margaritas.`,
     openGraph: {
       title: `Dedicatoria para ${res.tarjeta.destinatario}`,
       description: `De: ${remitenteVisible}. Toca para abrir tu tarjeta digital.`,

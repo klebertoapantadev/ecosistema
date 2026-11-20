@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import QRCode from "qrcode";
 import {
   AlignLeft,
   Check,
@@ -222,8 +223,11 @@ export function EditorTarjetaPublicoCliente({
   const [exitoMsg, setExitoMsg] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [cambiosSinGuardar, setCambiosSinGuardar] = useState<boolean>(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string>("");
 
   const inputAudioRef = useRef<HTMLInputElement | null>(null);
+  const textareaMensajeRef = useRef<HTMLTextAreaElement | null>(null);
+  const cursorMensajeRef = useRef<{ start: number; end: number } | null>(null);
   const usuarioMovioDisenoRef = useRef<boolean>(false);
   const soloQrEfectivo = !esCondolencias && modoImpresion === "SOLO_QR";
   const incluirQrEnEsquina = !esCondolencias && modoImpresion === "MENSAJE_Y_QR";
@@ -231,6 +235,19 @@ export function EditorTarjetaPublicoCliente({
     () => (emojisIa.length > 0 ? emojisIa : sugerirEmojisPorMensaje(mensaje, ocasionIa)),
     [emojisIa, mensaje, ocasionIa]
   );
+
+  // Generar código QR real en vivo para el visualizador de impresión (Paso 8) y diseñador (Paso 4)
+  useEffect(() => {
+    if (esCondolencias || !datosIniciales.tokenVista || typeof window === "undefined") return;
+    const urlPublica = `${window.location.origin}/dedicatoria/${datosIniciales.tokenVista}`;
+    QRCode.toDataURL(urlPublica, {
+      width: 240,
+      margin: 1,
+      color: { dark: "#221E1B", light: "#FFFFFF" },
+    })
+      .then((dataUrl: string) => setQrDataUrl(dataUrl))
+      .catch(() => {});
+  }, [esCondolencias, datosIniciales.tokenVista]);
 
   const disenoNormalizado = useMemo(
     () => normalizarDisenoTarjeta(diseno, esCondolencias, mensaje),
@@ -435,12 +452,51 @@ export function EditorTarjetaPublicoCliente({
     if (res.emojisSugeridos.length > 0) setEmojisIa(res.emojisSugeridos);
   };
 
+  const sincronizarCursorMensaje = (el?: HTMLTextAreaElement | null) => {
+    const target = el ?? textareaMensajeRef.current;
+    if (!target) return;
+    if (typeof target.selectionStart === "number" && typeof target.selectionEnd === "number") {
+      cursorMensajeRef.current = {
+        start: target.selectionStart,
+        end: target.selectionEnd,
+      };
+    }
+  };
+
   const handleInsertarEmoji = (emoji: string) => {
-    setMensaje((prev) => {
-      const base = prev.trimEnd();
-      return base ? `${base} ${emoji}` : emoji;
-    });
+    const el = textareaMensajeRef.current;
+    const estaEnfocado = typeof document !== "undefined" && document.activeElement === el;
+    const posStart =
+      estaEnfocado && el && typeof el.selectionStart === "number"
+        ? el.selectionStart
+        : cursorMensajeRef.current?.start ?? mensaje.length;
+    const posEnd =
+      estaEnfocado && el && typeof el.selectionEnd === "number"
+        ? el.selectionEnd
+        : cursorMensajeRef.current?.end ?? posStart;
+
+    const inicioSeguro = Math.max(0, Math.min(posStart, mensaje.length));
+    const finSeguro = Math.max(inicioSeguro, Math.min(posEnd, mensaje.length));
+    const antes = mensaje.slice(0, inicioSeguro);
+    const despues = mensaje.slice(finSeguro);
+    const nuevoTexto = `${antes}${emoji}${despues}`;
+    const nuevaPos = inicioSeguro + emoji.length;
+
+    setMensaje(nuevoTexto);
+    cursorMensajeRef.current = { start: nuevaPos, end: nuevaPos };
     marcarCambio();
+
+    if (typeof window !== "undefined") {
+      window.requestAnimationFrame(() => {
+        const nodo = textareaMensajeRef.current;
+        if (nodo) {
+          nodo.focus();
+          try {
+            nodo.setSelectionRange(nuevaPos, nuevaPos);
+          } catch {}
+        }
+      });
+    }
   };
 
   const handleToggleIncluirAudio = (incluir: boolean) => {
@@ -1502,13 +1558,19 @@ export function EditorTarjetaPublicoCliente({
                   </span>
                 </div>
                 <textarea
+                  ref={textareaMensajeRef}
                   id="eco-campo-mensaje"
                   rows={6}
                   value={mensaje}
                   onChange={(e) => {
                     setMensaje(e.target.value);
+                    sincronizarCursorMensaje(e.currentTarget);
                     marcarCambio();
                   }}
+                  onSelect={(e) => sincronizarCursorMensaje(e.currentTarget)}
+                  onClick={(e) => sincronizarCursorMensaje(e.currentTarget)}
+                  onKeyUp={(e) => sincronizarCursorMensaje(e.currentTarget)}
+                  onBlur={(e) => sincronizarCursorMensaje(e.currentTarget)}
                   placeholder={
                     esCondolencias
                       ? "Escribe tu mensaje de condolencias..."
@@ -1750,9 +1812,10 @@ export function EditorTarjetaPublicoCliente({
                       <button
                         key={em}
                         type="button"
+                        onMouseDown={(e) => e.preventDefault()}
                         onClick={() => handleInsertarEmoji(em)}
-                        title={`Agregar ${em} al mensaje`}
-                        aria-label={`Agregar emoji ${em}`}
+                        title={`Insertar ${em} donde está el cursor`}
+                        aria-label={`Insertar emoji ${em}`}
                         style={{
                           padding: "6px 11px",
                           borderRadius: "999px",
@@ -1967,6 +2030,7 @@ export function EditorTarjetaPublicoCliente({
                 esCondolencias={esCondolencias}
                 soloQr={false}
                 incluirQrEnEsquina={incluirQrEnEsquina}
+                qrDataUrl={qrDataUrl}
                 mensaje={mensaje}
                 firma={incluirFirma ? de : ""}
                 diseno={diseno}
@@ -2632,55 +2696,60 @@ export function EditorTarjetaPublicoCliente({
                 </div>
               )}
 
-              {/* Resumen compacto antes de guardar */}
+              {/* Visualizador en vivo de la parte interior tal como se imprimirá en cartulina */}
               <div
                 style={{
-                  padding: "14px 16px",
-                  borderRadius: "12px",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                  padding: "14px",
+                  borderRadius: "14px",
                   backgroundColor: "#FAF8F5",
                   border: "1px solid #E6E2DA",
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
-                  gap: "10px",
-                  fontSize: "0.78rem",
                 }}
               >
-                <div>
-                  <span style={{ display: "block", color: "#78716C", fontSize: "0.72rem" }}>Para</span>
-                  <strong style={{ color: "#1F1C19" }}>{para.trim() || "Sin especificar"}</strong>
-                </div>
-                <div>
-                  <span style={{ display: "block", color: "#78716C", fontSize: "0.72rem" }}>Firma interior</span>
-                  <strong style={{ color: "#1F1C19" }}>
-                    {incluirFirma ? de.trim() || "Sin texto" : "Sin firma"}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "8px",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <strong style={{ fontSize: "0.82rem", color: "#1F1C19" }}>
+                    Así se imprimirá el interior de tu tarjeta
                   </strong>
-                </div>
-                <div>
-                  <span style={{ display: "block", color: "#78716C", fontSize: "0.72rem" }}>Imágenes</span>
-                  <strong style={{ color: "#1F1C19" }}>
-                    {disenoNormalizado.imagenes.length} de 3
-                  </strong>
-                </div>
-                <div>
-                  <span style={{ display: "block", color: "#78716C", fontSize: "0.72rem" }}>Audio y letra</span>
-                  <strong style={{ color: "#1F1C19" }}>
-                    {incluirAudio && musicaUrl.trim()
-                      ? lyrics.length > 0
-                        ? "Canción + letra"
-                        : "Canción lista"
-                      : "Sin audio"}
-                  </strong>
-                </div>
-                <div>
-                  <span style={{ display: "block", color: "#78716C", fontSize: "0.72rem" }}>Impresión</span>
-                  <strong style={{ color: "#1F1C19" }}>
+                  <span
+                    style={{
+                      fontSize: "0.7rem",
+                      fontWeight: 700,
+                      color: "#2F4737",
+                      backgroundColor: "#EEF4F0",
+                      padding: "3px 9px",
+                      borderRadius: "999px",
+                    }}
+                  >
                     {modoImpresion === "SOLO_QR"
                       ? "Solo QR (Digital)"
                       : modoImpresion === "MENSAJE_Y_QR"
                         ? "Mensaje + QR digital"
                         : "Solo mensaje impreso"}
-                  </strong>
+                  </span>
                 </div>
+
+                <LienzoDisenadorTarjeta
+                  negocio={negNorm}
+                  esCondolencias={esCondolencias}
+                  soloQr={soloQrEfectivo}
+                  incluirQrEnEsquina={incluirQrEnEsquina}
+                  qrDataUrl={qrDataUrl}
+                  mensaje={mensaje}
+                  firma={incluirFirma ? de : ""}
+                  diseno={disenoNormalizado}
+                  onCambiarDiseno={() => {}}
+                  soloLectura={true}
+                />
               </div>
             </>
           )}
