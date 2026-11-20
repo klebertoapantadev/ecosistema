@@ -5,15 +5,14 @@ import {
   ExternalLink,
   Pause,
   Play,
-  RefreshCw,
   RotateCcw,
-  RotateCw,
   Sparkles,
   Volume2,
   VolumeX,
 } from "lucide-react";
 import type { DisenoVisualTarjeta } from "../operaciones-taller";
 import {
+  ajustarTextoParaDoblezDiptico,
   asegurarFuentesGoogleTarjetaCargadas,
   esFirmaVisibleValida,
   normalizarDisenoTarjeta,
@@ -204,7 +203,7 @@ function ContenidoInteriorTarjeta({
           aria-hidden="true"
           style={{
             position: "absolute",
-            bottom: "2.4%",
+            bottom: "1.6%",
             left: "50%",
             transform: "translateX(-50%)",
             pointerEvents: "none",
@@ -217,13 +216,13 @@ function ContenidoInteriorTarjeta({
           {!esMargaritas ? (
             <div
               style={{
-                width: "58px",
+                width: "48px",
                 aspectRatio: "16 / 8.8",
                 overflow: "hidden",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                opacity: 0.3,
+                opacity: 0.26,
               }}
             >
               <img
@@ -302,7 +301,7 @@ function ContenidoInteriorTarjeta({
       {/* BLOQUES DE TEXTO DISEÑADOS (MENSAJE + FIRMA + EXTRAS EN SUS COORDENADAS EXACTAS) */}
       {disenoNorm.bloquesTexto.map((blk) => {
         if (blk.rol === "firma" && !firmaVisible) return null;
-        const contenido =
+        const contenidoBase =
           blk.rol === "mensaje"
             ? dedicatoria ||
               (esCondolencias
@@ -311,6 +310,16 @@ function ContenidoInteriorTarjeta({
             : blk.rol === "firma"
               ? remitente.trim()
               : (blk.texto || "").trim();
+        const contenido =
+          blk.rol === "mensaje"
+            ? ajustarTextoParaDoblezDiptico(
+                contenidoBase,
+                esCondolencias,
+                blk.yPct,
+                blk.tamanoPt || 18,
+                blk.anchoPct || 84
+              )
+            : contenidoBase;
         if (!contenido) return null;
 
         return (
@@ -366,11 +375,12 @@ export function TarjetaDedicatoriaDigitalInteractiva({
   const esAudioDirecto = Boolean(musicaActivaUrl && !youtubeId);
   const tieneCancion = Boolean(!esCondolencias && (youtubeId || esAudioDirecto));
 
-  // En Dedicatoria (díptico real), siempre inicia doblada para disfrutar la vista 360° y la apertura en 3D;
-  // en Condolencias (tarjeta plana sin doblez), se muestra abierta directamente.
+  // En Dedicatoria (díptico real), inicia doblada con un giro ceremonial de entrada (-360° -> 0°)
+  // antes de pedir clic para abrir; en Condolencias (tarjeta plana sin doblez), se muestra abierta directamente.
   const [abierta, setAbierta] = useState<boolean>(esCondolencias);
-  const [anguloY, setAnguloY] = useState<number>(0);
-  const [girando360, setGirando360] = useState<boolean>(false);
+  const [anguloY, setAnguloY] = useState<number>(esCondolencias ? 0 : -360);
+  const [entradaGirando, setEntradaGirando] = useState<boolean>(!esCondolencias);
+  const [entradaCompleta, setEntradaCompleta] = useState<boolean>(esCondolencias);
   const [arrastrando360, setArrastrando360] = useState<boolean>(false);
   const [reproduciendo, setReproduciendo] = useState<boolean>(false);
   const [silenciado, setSilenciado] = useState<boolean>(false);
@@ -386,7 +396,6 @@ export function TarjetaDedicatoriaDigitalInteractiva({
   const dragStartXRef = useRef<number | null>(null);
   const dragStartAngleRef = useRef<number>(0);
   const arrastroRecienteRef = useRef<boolean>(false);
-  const timerGiro360Ref = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const negNorm = datosIniciales.negocio.trim().toLowerCase();
   const esMargaritas = negNorm.includes("margarita");
@@ -394,11 +403,21 @@ export function TarjetaDedicatoriaDigitalInteractiva({
   const anguloNorm = ((anguloY % 360) + 360) % 360;
   const mostrandoReverso = !abierta && anguloNorm > 90 && anguloNorm < 270;
 
+  // Efecto de entrada girando automáticamente al abrir el enlace antes de pedir clic para abrir
   useEffect(() => {
+    if (esCondolencias) return;
+    const tInicio = setTimeout(() => {
+      setAnguloY(0);
+    }, 120);
+    const tFin = setTimeout(() => {
+      setEntradaGirando(false);
+      setEntradaCompleta(true);
+    }, 3150);
     return () => {
-      if (timerGiro360Ref.current) clearTimeout(timerGiro360Ref.current);
+      clearTimeout(tInicio);
+      clearTimeout(tFin);
     };
-  }, []);
+  }, [esCondolencias]);
 
   useEffect(() => {
     if (!youtubeId || esCondolencias || typeof window === "undefined") return;
@@ -513,18 +532,10 @@ export function TarjetaDedicatoriaDigitalInteractiva({
     }
   }, [lineaActivaIndex]);
 
-  const detenerGiro360 = () => {
-    if (timerGiro360Ref.current) {
-      clearTimeout(timerGiro360Ref.current);
-      timerGiro360Ref.current = null;
-    }
-    setGirando360(false);
-  };
-
   const handleAbrirTarjeta = () => {
     if (abierta) return;
-    detenerGiro360();
-    // Si estaba volteada hacia atrás o rotada, alinear de frente al desplegar el díptico
+    setEntradaGirando(false);
+    setEntradaCompleta(true);
     setAnguloY((prev) => Math.round(prev / 360) * 360);
     setAbierta(true);
     if (!tieneCancion) return;
@@ -554,39 +565,17 @@ export function TarjetaDedicatoriaDigitalInteractiva({
   };
 
   const handleDoblarTarjeta = () => {
-    detenerGiro360();
+    setEntradaGirando(false);
+    setEntradaCompleta(true);
     setAnguloY((prev) => Math.round(prev / 360) * 360);
     setAbierta(false);
-  };
-
-  const handleAlternarReverso = () => {
-    if (abierta) return;
-    detenerGiro360();
-    setAnguloY((prev) => {
-      const baseVuelta = Math.floor(prev / 360) * 360;
-      const mod = ((prev % 360) + 360) % 360;
-      return mod > 90 && mod < 270 ? baseVuelta : baseVuelta + 180;
-    });
-  };
-
-  const handleVista360 = () => {
-    if (abierta) return;
-    if (girando360) {
-      detenerGiro360();
-      return;
-    }
-    setGirando360(true);
-    setAnguloY((prev) => prev + 360);
-    timerGiro360Ref.current = setTimeout(() => {
-      setGirando360(false);
-      timerGiro360Ref.current = null;
-    }, 5650);
   };
 
   const handlePointerDownTarjeta = (e: React.PointerEvent<HTMLDivElement>) => {
     if (abierta || esCondolencias) return;
     if (e.button !== 0 && e.pointerType === "mouse") return;
-    detenerGiro360();
+    setEntradaGirando(false);
+    setEntradaCompleta(true);
     dragStartXRef.current = e.clientX;
     dragStartAngleRef.current = anguloY;
     arrastroRecienteRef.current = false;
@@ -832,8 +821,8 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                   : `translateY(-23%) rotateY(${anguloY}deg)`,
                 transition: arrastrando360
                   ? "none"
-                  : girando360
-                    ? "transform 5.6s cubic-bezier(0.35, 0, 0.25, 1)"
+                  : entradaGirando
+                    ? "transform 3.1s cubic-bezier(0.22, 0.85, 0.3, 1)"
                     : "transform 1.75s cubic-bezier(0.25, 0.9, 0.3, 1)",
                 cursor: abierta ? "default" : arrastrando360 ? "grabbing" : "pointer",
                 touchAction: abierta ? "auto" : "pan-y",
@@ -1257,7 +1246,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                     </div>
                   )}
 
-                  {/* Invitación sutil en la parte inferior de la portada real */}
+                  {/* Invitación sutil en la parte inferior de la portada real (aparece tras el giro de entrada) */}
                   <div
                     style={{
                       position: "absolute",
@@ -1272,7 +1261,12 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "5px",
-                      animation: "ecoPulsoSuaveTarjeta 2.4s ease-in-out infinite",
+                      opacity: entradaCompleta ? 1 : 0,
+                      transform: entradaCompleta ? "translateY(0px)" : "translateY(6px)",
+                      transition: "opacity 0.7s ease, transform 0.7s ease",
+                      animation: entradaCompleta
+                        ? "ecoPulsoSuaveTarjeta 2.4s ease-in-out infinite"
+                        : "none",
                     }}
                   >
                     <Sparkles size={12} />
@@ -1281,126 +1275,6 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                 </div>
               </div>
             </div>
-          </div>
-
-          {/* CONTROLES PRE-APERTURA: VISTA 360° Y PARTE POSTERIOR (SOLO CUANDO ESTÁ CERRADA) */}
-          <div
-            style={{
-              width: "100%",
-              maxWidth: "366px",
-              marginTop: abierta ? "0px" : "-82px",
-              maxHeight: abierta ? "0px" : "96px",
-              overflow: "hidden",
-              opacity: abierta ? 0 : 1,
-              pointerEvents: abierta ? "none" : "auto",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "8px",
-              position: "relative",
-              zIndex: 6,
-              transition:
-                "margin-top 1.45s cubic-bezier(0.25, 0.9, 0.3, 1), max-height 0.9s ease, opacity 0.55s ease",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "8px",
-                flexWrap: "wrap",
-              }}
-            >
-              <button
-                type="button"
-                onClick={handleVista360}
-                title="Ver recorrido giratorio 360° de la tarjeta"
-                aria-label="Vista 360 grados"
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "6px 13px",
-                  borderRadius: "999px",
-                  border: girando360
-                    ? "1px solid rgba(245, 239, 230, 0.55)"
-                    : "1px solid rgba(245, 239, 230, 0.2)",
-                  backgroundColor: girando360
-                    ? "rgba(245, 239, 230, 0.16)"
-                    : "rgba(245, 239, 230, 0.08)",
-                  color: "#F5EFE6",
-                  fontSize: "0.74rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  backdropFilter: "blur(6px)",
-                }}
-              >
-                <RefreshCw size={12} />
-                <span>{girando360 ? "Girando 360°" : "Vista 360°"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleAlternarReverso}
-                title={mostrandoReverso ? "Volver a la portada" : "Ver parte posterior de la tarjeta"}
-                aria-label={mostrandoReverso ? "Ver portada" : "Ver reverso"}
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "6px 13px",
-                  borderRadius: "999px",
-                  border: "1px solid rgba(245, 239, 230, 0.2)",
-                  backgroundColor: "rgba(245, 239, 230, 0.08)",
-                  color: "#F5EFE6",
-                  fontSize: "0.74rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  backdropFilter: "blur(6px)",
-                }}
-              >
-                <RotateCw size={12} />
-                <span>{mostrandoReverso ? "Ver portada" : "Ver reverso"}</span>
-              </button>
-
-              {mostrandoReverso && (
-                <button
-                  type="button"
-                  onClick={handleAbrirTarjeta}
-                  title="Girar y abrir la tarjeta"
-                  aria-label="Abrir tarjeta"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    padding: "6px 13px",
-                    borderRadius: "999px",
-                    border: "1px solid rgba(245, 239, 230, 0.35)",
-                    backgroundColor: "rgba(245, 239, 230, 0.92)",
-                    color: "#1C1917",
-                    fontSize: "0.74rem",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                  }}
-                >
-                  <Sparkles size={12} />
-                  <span>Abrir tarjeta</span>
-                </button>
-              )}
-            </div>
-
-            <span
-              style={{
-                fontSize: "0.69rem",
-                color: "rgba(245, 239, 230, 0.5)",
-                textAlign: "center",
-              }}
-            >
-              {mostrandoReverso
-                ? `Toca la tarjeta para visitar ${nombreMarca}`
-                : "Desliza para girar 360° · Toca para abrir"}
-            </span>
           </div>
 
           {/* CONTROLES POST-APERTURA: AUDIO SUTIL + LYRICS + DOBLAR TARJETA */}
@@ -1611,9 +1485,10 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                 flexDirection: "column",
                 alignItems: "center",
                 gap: "10px",
-                marginTop: "4px",
+                marginTop: abierta ? "4px" : "-72px",
                 position: "relative",
                 zIndex: 5,
+                transition: "margin-top 1.65s cubic-bezier(0.25, 0.9, 0.3, 1)",
               }}
             >
               {accionesInferiores}

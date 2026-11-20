@@ -29,6 +29,7 @@ import type {
   ClaveFuenteTarjeta,
   DisenoVisualTarjeta,
   ImagenDisenoTarjeta,
+  ModoImpresionTarjeta,
 } from "../operaciones-taller";
 import { subirImagenTarjetaAction } from "../acciones-operaciones-taller";
 
@@ -133,14 +134,106 @@ export interface DisenoVisualNormalizado {
   textoAnchoPct: number;
   mostrarFirma: boolean;
   remitentePortada: string;
+  modoImpresion?: ModoImpresionTarjeta;
   bloquesTexto: BloqueTextoTarjeta[];
   imagenes: ImagenDisenoTarjeta[];
-  /** Campos legados sincronizados con la 1ra imagen */
+  /** Campos legados conservados por retrocompatibilidad */
   imagenUrl: string | null;
   imagenXPct: number;
   imagenYPct: number;
   imagenAnchoMm: number;
   escalaGrisesImagen: boolean;
+}
+
+/**
+ * Determina si un mensaje es suficientemente corto como para vivir cómodamente
+ * en la mitad inferior de la tarjeta díptico (debajo del doblez 8,4 cm),
+ * dejando la mitad superior libre salvo que realmente se necesite.
+ */
+export function esMensajeCortoParaMitadInferior(mensaje: string): boolean {
+  const limpio = (mensaje || "").trim();
+  if (!limpio) return true;
+  const lineas = limpio.split(/\r?\n/).length;
+  return limpio.length <= 200 && lineas <= 6;
+}
+
+/**
+ * En tarjetas verticales de Dedicatoria (díptico 113 × 168 mm con doblez en 84 mm / 50%),
+ * si un bloque de texto cruza la franja crítica del doblez (78..90 mm), inserta saltos de línea
+ * de respiro justo en la línea que caería sobre el pliegue para que ninguna letra se distorsione
+ * al doblar o imprimir.
+ */
+export function ajustarTextoParaDoblezDiptico(
+  texto: string,
+  esCondolencias: boolean,
+  yPct: number,
+  tamanoPt: number,
+  anchoPct: number
+): string {
+  if (esCondolencias || !texto || !texto.trim()) return texto;
+
+  const hTarjetaMm = 168;
+  const wTarjetaMm = 113;
+  const ptToMm = 25.4 / 72;
+  const tamMm = Math.max(9, tamanoPt || 16) * ptToMm;
+  const altoLineaMm = tamMm * 1.36;
+  const anchoCajaMm = Math.max(30, (Math.max(25, Math.min(96, anchoPct || 84)) / 100) * wTarjetaMm);
+  const charsPorLinea = Math.max(12, Math.floor(anchoCajaMm / (tamMm * 0.54)));
+
+  // Descomponer el texto en líneas visuales aproximadas preservando párrafos explícitos
+  const lineasVisuales: Array<{ texto: string; esVacia: boolean }> = [];
+  for (const parrafo of texto.split(/\r?\n/)) {
+    const t = parrafo.trim();
+    if (!t) {
+      lineasVisuales.push({ texto: "", esVacia: true });
+      continue;
+    }
+    const palabras = t.split(/\s+/);
+    let actual = "";
+    for (const pal of palabras) {
+      const prueba = actual ? `${actual} ${pal}` : pal;
+      if (prueba.length <= charsPorLinea || !actual) {
+        actual = prueba;
+      } else {
+        lineasVisuales.push({ texto: actual, esVacia: false });
+        actual = pal;
+      }
+    }
+    if (actual) lineasVisuales.push({ texto: actual, esVacia: false });
+  }
+
+  if (lineasVisuales.length < 3) return texto;
+
+  const altoTotalMm = lineasVisuales.length * altoLineaMm;
+  const centroMm = (yPct / 100) * hTarjetaMm;
+  const inicioMm = centroMm - altoTotalMm / 2;
+  const finMm = inicioMm + altoTotalMm;
+
+  // Si todo el texto vive arriba del doblez (< 79 mm) o debajo del doblez (> 88 mm), no necesita ajuste
+  if (finMm <= 79 || inicioMm >= 88) return texto;
+
+  // Buscar la línea que intersecta el doblez central (84 mm)
+  const idxDoblez = Math.floor((84 - inicioMm) / altoLineaMm);
+  if (idxDoblez <= 0 || idxDoblez >= lineasVisuales.length) return texto;
+
+  // Si ya existe una línea en blanco justo alrededor del doblez, respetar el espacio existente
+  const yaTieneRespiro =
+    lineasVisuales[idxDoblez]?.esVacia ||
+    lineasVisuales[idxDoblez - 1]?.esVacia ||
+    lineasVisuales[idxDoblez + 1]?.esVacia;
+  if (yaTieneRespiro) return texto;
+
+  // Insertar salto de línea doble (dos líneas de respiro ~12-16mm) justo antes de la línea que cae sobre el doblez
+  const parteSuperior = lineasVisuales
+    .slice(0, idxDoblez)
+    .map((l) => l.texto)
+    .join("\n");
+  const parteInferior = lineasVisuales
+    .slice(idxDoblez)
+    .map((l) => l.texto)
+    .join("\n");
+
+  return `${parteSuperior}\n\n\n${parteInferior}`;
 }
 
 export function normalizarDisenoTarjeta(
@@ -156,8 +249,10 @@ export function normalizarDisenoTarjeta(
       ? diseno.tamanoPt
       : tamDefault;
   const alineacionPrincipal = diseno?.alineacion ?? "center";
+  const esCorto = esMensajeCortoParaMitadInferior(mensaje);
+  const defaultYPct = esCondolencias ? 48 : esCorto ? 68 : 49;
   const textoXPct = typeof diseno?.textoXPct === "number" ? diseno.textoXPct : 50;
-  const textoYPct = typeof diseno?.textoYPct === "number" ? diseno.textoYPct : 50;
+  const textoYPct = typeof diseno?.textoYPct === "number" ? diseno.textoYPct : defaultYPct;
   const textoAnchoPct =
     typeof diseno?.textoAnchoPct === "number"
       ? diseno.textoAnchoPct
@@ -279,7 +374,7 @@ export function normalizarDisenoTarjeta(
         ? bloqueFirmaEntrada.yPct
         : esCondolencias
           ? 84
-          : 86,
+          : 85,
     anchoPct:
       typeof bloqueFirmaEntrada?.anchoPct === "number"
         ? bloqueFirmaEntrada.anchoPct
@@ -289,6 +384,12 @@ export function normalizarDisenoTarjeta(
   };
 
   const primeraImg = imagenes[0] ?? null;
+  const modoImpresionNorm: ModoImpresionTarjeta | undefined =
+    diseno?.modoImpresion === "SOLO_MENSAJE" ||
+    diseno?.modoImpresion === "SOLO_QR" ||
+    diseno?.modoImpresion === "MENSAJE_Y_QR"
+      ? diseno.modoImpresion
+      : undefined;
 
   return {
     fuente: bloqueMensaje.fuente || fuentePrincipal,
@@ -301,6 +402,7 @@ export function normalizarDisenoTarjeta(
     textoAnchoPct: bloqueMensaje.anchoPct,
     mostrarFirma: diseno?.mostrarFirma !== false,
     remitentePortada: typeof diseno?.remitentePortada === "string" ? diseno.remitentePortada : "",
+    modoImpresion: modoImpresionNorm,
     bloquesTexto: [bloqueMensaje, bloqueFirma, ...bloquesExtra],
     imagenes,
     imagenUrl: primeraImg ? primeraImg.url : null,
@@ -475,11 +577,18 @@ export async function renderizarTarjetaEnCanvasPng(params: {
     for (const bloque of params.diseno.bloquesTexto) {
       let texto = "";
       if (bloque.rol === "mensaje") {
-        texto =
+        const textoBase =
           params.mensaje.trim() ||
           (params.esCondolencias
             ? "Expresamos nuestras más sentidas condolencias."
             : "Con todo mi cariño");
+        texto = ajustarTextoParaDoblezDiptico(
+          textoBase,
+          params.esCondolencias,
+          bloque.yPct,
+          bloque.tamanoPt || 18,
+          bloque.anchoPct || 84
+        );
       } else if (bloque.rol === "firma") {
         if (!params.diseno.mostrarFirma || !esFirmaVisibleValida(params.firma)) continue;
         texto = (params.firma || "").trim();
@@ -560,6 +669,20 @@ export async function renderizarTarjetaEnCanvasPng(params: {
       }
       ctx.restore();
     }
+
+    // 3. Si es modo Mensaje + QR digital en Dedicatoria, estampar QR compacto en esquina inferior derecha
+    if (!params.esCondolencias && params.diseno.modoImpresion === "MENSAJE_Y_QR" && params.qrDataUrl) {
+      const qrImg = await cargarImagenHtml(params.qrDataUrl);
+      if (qrImg) {
+        const qrPx = Math.round(16 * PX_PER_MM);
+        const margen = Math.round(4 * PX_PER_MM);
+        const qrX = wPx - qrPx - margen;
+        const qrY = hPx - qrPx - margen;
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fillRect(qrX - 6, qrY - 6, qrPx + 12, qrPx + 12);
+        ctx.drawImage(qrImg, qrX, qrY, qrPx, qrPx);
+      }
+    }
   }
 
   return new Promise<Blob | null>((resolve) => {
@@ -570,8 +693,10 @@ export async function renderizarTarjetaEnCanvasPng(params: {
 export interface PropsLienzoDisenadorTarjeta {
   negocio: string;
   esCondolencias: boolean;
-  /** En Dedicatoria, true = imprime SOLO QR (sin mensaje ni imagen); false = imprime Mensaje + Imágenes (sin QR). En Condolencias siempre es false. */
+  /** En Dedicatoria, true = imprime SOLO QR (sin mensaje ni imagen); false = imprime Mensaje + Imágenes. En Condolencias siempre es false. */
   soloQr: boolean;
+  /** En Dedicatoria, true = imprime el mensaje y añade un QR compacto en la esquina inferior derecha para ver la tarjeta digital. */
+  incluirQrEnEsquina?: boolean;
   mensaje: string;
   /** Texto de la firma ("De parte de"), renderizado como cuadro de texto independiente en la tarjeta */
   firma?: string;
@@ -588,6 +713,7 @@ export function LienzoDisenadorTarjeta({
   negocio,
   esCondolencias,
   soloQr,
+  incluirQrEnEsquina = false,
   mensaje,
   firma = "",
   diseno,
@@ -804,13 +930,18 @@ export function LienzoDisenadorTarjeta({
   };
 
   const resetearPosiciones = () => {
+    const esCorto = esMensajeCortoParaMitadInferior(mensaje);
     const bloquesReset = norm.bloquesTexto.map((b, idx) => {
       if (b.rol === "mensaje") {
         return {
           ...b,
           alineacion: "center" as const,
           xPct: 50,
-          yPct: norm.imagenes.some((im) => !im.cubrirTarjeta) ? 60 : 50,
+          yPct: esCondolencias
+            ? 48
+            : esCorto || norm.imagenes.some((im) => !im.cubrirTarjeta)
+              ? 68
+              : 49,
           anchoPct: esCondolencias ? 76 : 84,
         };
       }
@@ -819,7 +950,7 @@ export function LienzoDisenadorTarjeta({
           ...b,
           alineacion: "right" as const,
           xPct: 50,
-          yPct: esCondolencias ? 84 : 86,
+          yPct: esCondolencias ? 84 : 85,
           anchoPct: esCondolencias ? 74 : 82,
         };
       }
@@ -1940,7 +2071,7 @@ export function LienzoDisenadorTarjeta({
               aria-hidden="true"
               style={{
                 position: "absolute",
-                bottom: "2.4%",
+                bottom: "1.4%",
                 left: "50%",
                 transform: "translateX(-50%)",
                 pointerEvents: "none",
@@ -1953,13 +2084,13 @@ export function LienzoDisenadorTarjeta({
               {!negocio.trim().toLowerCase().includes("margarita") ? (
                 <div
                   style={{
-                    width: "46px",
+                    width: "40px",
                     aspectRatio: "16 / 8.8",
                     overflow: "hidden",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    opacity: 0.3,
+                    opacity: 0.26,
                   }}
                 >
                   <img
@@ -2123,7 +2254,7 @@ export function LienzoDisenadorTarjeta({
               {/* BLOQUES DE TEXTO (MENSAJE + FIRMA + EXTRAS) */}
               {norm.bloquesTexto.map((blk) => {
                 if (blk.rol === "firma" && !firmaVisible) return null;
-                const contenido =
+                const contenidoBase =
                   blk.rol === "mensaje"
                     ? mensaje ||
                       (esCondolencias
@@ -2132,6 +2263,16 @@ export function LienzoDisenadorTarjeta({
                     : blk.rol === "firma"
                       ? firma.trim()
                       : blk.texto || "Texto adicional";
+                const contenido =
+                  blk.rol === "mensaje"
+                    ? ajustarTextoParaDoblezDiptico(
+                        contenidoBase,
+                        esCondolencias,
+                        blk.yPct,
+                        blk.tamanoPt || 18,
+                        blk.anchoPct || 84
+                      )
+                    : contenidoBase;
 
                 const estaActivo = seleccion.tipo === "texto" && seleccion.id === blk.id;
                 return (
@@ -2182,6 +2323,55 @@ export function LienzoDisenadorTarjeta({
                   </div>
                 );
               })}
+
+              {/* QR COMPACTO EN ESQUINA INFERIOR DERECHA (SOLO SI MODO = MENSAJE + QR DIGITAL) */}
+              {!esCondolencias && !modoSoloQrActivo && incluirQrEnEsquina && (
+                <div
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    right: "3.5%",
+                    bottom: "2.4%",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "1px",
+                    backgroundColor: "rgba(255, 255, 255, 0.92)",
+                    padding: "2px",
+                    borderRadius: "4px",
+                    border: "1px solid rgba(132, 125, 116, 0.25)",
+                    pointerEvents: "none",
+                    zIndex: 7,
+                  }}
+                >
+                  {qrDataUrl ? (
+                    <img
+                      src={qrDataUrl}
+                      alt="QR Tarjeta Digital"
+                      style={{ width: "30px", height: "30px", display: "block" }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: "30px",
+                        height: "30px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "0.48rem",
+                        fontWeight: 700,
+                        color: "#57524C",
+                        border: "1px dashed #B5AEA4",
+                      }}
+                    >
+                      QR
+                    </div>
+                  )}
+                  <span style={{ fontSize: "0.38rem", color: "#57524C", fontWeight: 700 }}>
+                    Digital
+                  </span>
+                </div>
+              )}
             </>
           )}
         </div>

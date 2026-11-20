@@ -15,7 +15,7 @@ interface PropsPage {
 export const metadata: Metadata = {
   title: "Personaliza tu Tarjeta — Margaritas Floristería",
   description:
-    "Visualiza tu tarjeta en díptico 3D y personaliza destinatario, mensaje, firma, imágenes, música y modo de impresión.",
+    "Visualiza tu tarjeta en díptico 3D y personaliza tu mensaje con ayuda de IA, fotos, música y modo de impresión.",
   robots: { index: false, follow: false },
 };
 

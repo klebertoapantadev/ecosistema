@@ -998,6 +998,8 @@ export interface BloqueTextoTarjeta {
   anchoPct: number;
 }
 
+export type ModoImpresionTarjeta = "SOLO_MENSAJE" | "SOLO_QR" | "MENSAJE_Y_QR";
+
 export interface DisenoVisualTarjeta {
   fuente?: ClaveFuenteTarjeta;
   tamanoPt?: number;
@@ -1011,6 +1013,8 @@ export interface DisenoVisualTarjeta {
   mostrarFirma?: boolean;
   /** Texto opcional de remitente para mostrar en la portada cerrada de la tarjeta digital (ej. "El amor de tu vida") */
   remitentePortada?: string;
+  /** Modalidad de impresión física en cartulina para Dedicatoria: solo mensaje, solo QR o ambos */
+  modoImpresion?: ModoImpresionTarjeta;
   /** Bloques de texto configurables (firma + cuadros adicionales arrastrables) */
   bloquesTexto?: BloqueTextoTarjeta[];
   /** Hasta 3 imágenes independientes (arrastrables y ampliables hasta 100% de la tarjeta) */

@@ -25,7 +25,12 @@ import {
   Upload,
   X,
 } from "lucide-react";
-import type { ClaveFuenteTarjeta, DisenoVisualTarjeta, OrdenTrabajoTaller } from "../operaciones-taller";
+import type {
+  ClaveFuenteTarjeta,
+  DisenoVisualTarjeta,
+  ModoImpresionTarjeta,
+  OrdenTrabajoTaller,
+} from "../operaciones-taller";
 import {
   buscarLyricsCancionAction,
   guardarEdicionPedidoYTarjetaAction,
@@ -33,6 +38,7 @@ import {
   subirAudioTarjetaAction,
 } from "../acciones-operaciones-taller";
 import {
+  ajustarTextoParaDoblezDiptico,
   esFirmaVisibleValida,
   LienzoDisenadorTarjeta,
   normalizarClaveFuenteTarjeta,
@@ -313,7 +319,23 @@ export function ModalImprimirTarjetaTaller({
   if (!abierto || !orden) return null;
 
   const disenoNorm = normalizarDisenoTarjeta(diseno, esCondolencias, mensajeEditable);
-  const soloQrEfectivo = !esCondolencias && confidencialSoloQr;
+  const modoImpresionEfectivo: ModoImpresionTarjeta = esCondolencias
+    ? "SOLO_MENSAJE"
+    : confidencialSoloQr
+      ? "SOLO_QR"
+      : disenoNorm.modoImpresion === "MENSAJE_Y_QR"
+        ? "MENSAJE_Y_QR"
+        : "SOLO_MENSAJE";
+  const soloQrEfectivo = modoImpresionEfectivo === "SOLO_QR";
+  const incluirQrEnEsquina = !esCondolencias && modoImpresionEfectivo === "MENSAJE_Y_QR";
+
+  const seleccionarModoImpresion = (nuevoModo: ModoImpresionTarjeta) => {
+    setConfidencialSoloQr(nuevoModo === "SOLO_QR");
+    setDiseno((prev) => ({
+      ...normalizarDisenoTarjeta(prev, esCondolencias, mensajeEditable),
+      modoImpresion: nuevoModo,
+    }));
+  };
 
   const conteoImpresiones = Number(metaLocal?.impresiones ?? 0);
   const ultimoImpresoPor = metaLocal?.ultimo_impreso_por || null;
@@ -609,11 +631,18 @@ export function ModalImprimirTarjetaTaller({
         for (const blk of disenoNorm.bloquesTexto) {
           let textoRaw = "";
           if (blk.rol === "mensaje") {
-            textoRaw =
+            const rawMsg =
               mensajeEditable.trim() ||
               (esCondolencias
                 ? "Expresamos nuestras mas sentidas condolencias."
                 : "Con todo nuestro carino.");
+            textoRaw = ajustarTextoParaDoblezDiptico(
+              rawMsg,
+              esCondolencias,
+              blk.yPct,
+              blk.tamanoPt || 18,
+              blk.anchoPct || 84
+            );
           } else if (blk.rol === "firma") {
             if (!disenoNorm.mostrarFirma || !esFirmaVisibleValida(deEditable)) continue;
             textoRaw = deEditable.trim();
@@ -685,6 +714,20 @@ export function ModalImprimirTarjetaTaller({
               }
             }
             cursorY -= interlineado;
+          }
+        }
+
+        // Si es modo Mensaje + QR digital, estampar QR compacto en esquina inferior derecha
+        if (incluirQrEnEsquina && qrDataUrl) {
+          const base64Qr = qrDataUrl.split(",")[1];
+          if (base64Qr) {
+            const qrBytes = Uint8Array.from(atob(base64Qr), (c) => c.charCodeAt(0));
+            const qrImg = await pdfDoc.embedPng(qrBytes);
+            const qrDim = 16 * MM_TO_PT;
+            const margenPt = 4 * MM_TO_PT;
+            const qrX = pageW - qrDim - margenPt + offsetX * MM_TO_PT;
+            const qrY = margenPt - offsetY * MM_TO_PT;
+            page.drawImage(qrImg, { x: qrX, y: qrY, width: qrDim, height: qrDim });
           }
         }
       }
@@ -919,7 +962,7 @@ export function ModalImprimirTarjetaTaller({
               if (blk.rol === "firma" && (!disenoNorm.mostrarFirma || !esFirmaVisibleValida(deEditable))) {
                 return null;
               }
-              const contenido =
+              const contenidoBase =
                 blk.rol === "mensaje"
                   ? mensajeEditable ||
                     (esCondolencias
@@ -928,6 +971,16 @@ export function ModalImprimirTarjetaTaller({
                   : blk.rol === "firma"
                     ? deEditable.trim()
                     : (blk.texto || "").trim();
+              const contenido =
+                blk.rol === "mensaje"
+                  ? ajustarTextoParaDoblezDiptico(
+                      contenidoBase,
+                      esCondolencias,
+                      blk.yPct,
+                      blk.tamanoPt || 18,
+                      blk.anchoPct || 84
+                    )
+                  : contenidoBase;
               if (!contenido) return null;
 
               return (
@@ -955,6 +1008,28 @@ export function ModalImprimirTarjetaTaller({
                 </div>
               );
             })}
+
+            {incluirQrEnEsquina && qrDataUrl && (
+              <div
+                style={{
+                  position: "absolute",
+                  right: "4mm",
+                  bottom: "4mm",
+                  backgroundColor: "#FFFFFF",
+                  padding: "1mm",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  zIndex: 7,
+                }}
+              >
+                <img
+                  src={qrDataUrl}
+                  alt="QR Tarjeta Digital"
+                  style={{ width: "16mm", height: "16mm", display: "block" }}
+                />
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1318,7 +1393,11 @@ export function ModalImprimirTarjetaTaller({
                           fontWeight: 700,
                         }}
                       >
-                        {soloQrEfectivo ? "Solo QR (Sin texto)" : "Mensaje Impreso (Sin QR)"}
+                        {soloQrEfectivo
+                          ? "Solo QR (Sin texto)"
+                          : incluirQrEnEsquina
+                            ? "Mensaje + QR Digital"
+                            : "Mensaje Impreso (Sin QR)"}
                       </span>
                     </div>
 
@@ -1326,6 +1405,7 @@ export function ModalImprimirTarjetaTaller({
                       negocio={negNorm}
                       esCondolencias={esCondolencias}
                       soloQr={soloQrEfectivo}
+                      incluirQrEnEsquina={incluirQrEnEsquina}
                       mensaje={mensajeEditable}
                       firma={deEditable}
                       diseno={disenoNorm}
@@ -1726,7 +1806,7 @@ export function ModalImprimirTarjetaTaller({
                       </div>
                     </div>
 
-                    {/* 2. MODO DE IMPRESIÓN MUTUAMENTE EXCLUYENTE (SOLO DEDICATORIA: MENSAJE O QR, NUNCA AMBOS) */}
+                    {/* 2. MODO DE IMPRESIÓN (SOLO DEDICATORIA: MENSAJE, SOLO QR O AMBOS) */}
                     {!esCondolencias && (
                       <div>
                         <label
@@ -1738,55 +1818,85 @@ export function ModalImprimirTarjetaTaller({
                             marginBottom: "4px",
                           }}
                         >
-                          {esMovil ? "Modo de impresión" : "¿Qué se imprime en la cartulina? (Mutuamente excluyente):"}
+                          {esMovil ? "Modo de impresión" : "¿Qué se imprime en la cartulina?"}
                         </label>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "6px" }}>
                           <button
                             type="button"
-                            onClick={() => setConfidencialSoloQr(false)}
+                            onClick={() => seleccionarModoImpresion("SOLO_MENSAJE")}
+                            title="Imprimir solo mensaje y diseño"
+                            aria-label="Imprimir solo mensaje"
                             style={{
-                              padding: "8px 10px",
+                              padding: "8px 8px",
                               borderRadius: "8px",
-                              border: !soloQrEfectivo ? "2px solid #2F4737" : "1px solid #D5CFC4",
-                              background: !soloQrEfectivo ? "#F2F6F3" : "#FFFFFF",
-                              color: !soloQrEfectivo ? "#2F4737" : "#57524C",
+                              border: modoImpresionEfectivo === "SOLO_MENSAJE" ? "2px solid #2F4737" : "1px solid #D5CFC4",
+                              background: modoImpresionEfectivo === "SOLO_MENSAJE" ? "#F2F6F3" : "#FFFFFF",
+                              color: modoImpresionEfectivo === "SOLO_MENSAJE" ? "#2F4737" : "#57524C",
                               fontWeight: 700,
-                              fontSize: "0.76rem",
+                              fontSize: "0.73rem",
                               cursor: "pointer",
                               textAlign: "left",
                             }}
                           >
-                            Imprimir Mensaje
+                            Solo Mensaje
                             <span
                               className="eco-modal-tarjeta-ocultar-movil"
-                              style={{ display: "block", fontSize: "0.65rem", fontWeight: 400, color: "#847D74" }}
+                              style={{ display: "block", fontSize: "0.62rem", fontWeight: 400, color: "#847D74" }}
                             >
-                              Texto + imagen opcional (sin QR)
+                              Sin código QR
                             </span>
                           </button>
 
                           <button
                             type="button"
-                            onClick={() => setConfidencialSoloQr(true)}
+                            onClick={() => seleccionarModoImpresion("SOLO_QR")}
+                            title="Imprimir solo código QR confidencial"
+                            aria-label="Imprimir solo QR"
                             style={{
-                              padding: "8px 10px",
+                              padding: "8px 8px",
                               borderRadius: "8px",
-                              border: soloQrEfectivo ? "2px solid #221E1B" : "1px solid #D5CFC4",
-                              background: soloQrEfectivo ? "#F4F2EE" : "#FFFFFF",
-                              color: soloQrEfectivo ? "#1F1C19" : "#57524C",
+                              border: modoImpresionEfectivo === "SOLO_QR" ? "2px solid #221E1B" : "1px solid #D5CFC4",
+                              background: modoImpresionEfectivo === "SOLO_QR" ? "#F4F2EE" : "#FFFFFF",
+                              color: modoImpresionEfectivo === "SOLO_QR" ? "#1F1C19" : "#57524C",
                               fontWeight: 700,
-                              fontSize: "0.76rem",
+                              fontSize: "0.73rem",
                               cursor: "pointer",
                               textAlign: "left",
                             }}
                           >
-                            <Lock size={11} style={{ verticalAlign: "middle", marginRight: "4px" }} />
+                            <Lock size={11} style={{ verticalAlign: "middle", marginRight: "3px" }} />
                             Solo QR
                             <span
                               className="eco-modal-tarjeta-ocultar-movil"
-                              style={{ display: "block", fontSize: "0.65rem", fontWeight: 400, color: "#847D74" }}
+                              style={{ display: "block", fontSize: "0.62rem", fontWeight: 400, color: "#847D74" }}
                             >
-                              Confidencial · Mensaje y música en web
+                              Confidencial web
+                            </span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => seleccionarModoImpresion("MENSAJE_Y_QR")}
+                            title="Imprimir mensaje y añadir QR discreto para tarjeta digital"
+                            aria-label="Imprimir mensaje y QR"
+                            style={{
+                              padding: "8px 8px",
+                              borderRadius: "8px",
+                              border: modoImpresionEfectivo === "MENSAJE_Y_QR" ? "2px solid #2F4737" : "1px solid #D5CFC4",
+                              background: modoImpresionEfectivo === "MENSAJE_Y_QR" ? "#F2F6F3" : "#FFFFFF",
+                              color: modoImpresionEfectivo === "MENSAJE_Y_QR" ? "#2F4737" : "#57524C",
+                              fontWeight: 700,
+                              fontSize: "0.73rem",
+                              cursor: "pointer",
+                              textAlign: "left",
+                            }}
+                          >
+                            Mensaje + QR
+                            <span
+                              className="eco-modal-tarjeta-ocultar-movil"
+                              style={{ display: "block", fontSize: "0.62rem", fontWeight: 400, color: "#847D74" }}
+                            >
+                              Impreso y digital
                             </span>
                           </button>
                         </div>

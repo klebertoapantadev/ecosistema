@@ -10,6 +10,7 @@ import {
   Eye,
   FileText,
   Info,
+  Layers,
   Loader2,
   Lock,
   MessageSquare,
@@ -23,14 +24,19 @@ import {
   Trash2,
   Upload,
   User,
+  VolumeX,
+  Wand2,
 } from "lucide-react";
-import type { DisenoVisualTarjeta } from "../operaciones-taller";
+import type { DisenoVisualTarjeta, ModoImpresionTarjeta } from "../operaciones-taller";
 import {
+  asistirMensajeTarjetaIaAction,
   buscarLyricsCancionAction,
   editarTarjetaClienteAction,
   subirAudioTarjetaAction,
+  type OpcionMensajeTarjetaIa,
 } from "../acciones-operaciones-taller";
 import {
+  esMensajeCortoParaMitadInferior,
   LienzoDisenadorTarjeta,
   normalizarDisenoTarjeta,
 } from "./LienzoDisenadorTarjeta";
@@ -73,12 +79,36 @@ interface DefinicionPaso {
   opcional?: boolean;
 }
 
-const FRASES_DEDICATORIA = [
-  "Feliz cumpleaños. Que este nuevo año te regale salud, calma y motivos para sonreír.",
-  "Con todo mi amor, hoy y siempre. Gracias por iluminar cada uno de mis días.",
-  "Gracias por estar siempre. Este pequeño detalle lleva todo mi cariño y gratitud.",
-  "Celebrando tu vida y cada momento compartido. Te quiero muchísimo.",
+const OCASIONES_IA = [
+  "Cumpleaños",
+  "Amor / Pareja",
+  "Aniversario",
+  "Agradecimiento",
+  "Amistad",
+  "Perdón",
+  "Familia / Mamá",
+  "Felicitación",
 ];
+
+function sugerirEmojisPorMensaje(texto: string, ocasion?: string): string[] {
+  const src = `${texto} ${ocasion || ""}`.toLowerCase();
+  const out: string[] = [];
+  const add = (...list: string[]) => {
+    for (const item of list) {
+      if (!out.includes(item) && out.length < 7) out.push(item);
+    }
+  };
+  if (/cumple|años|anos|feliz d[ií]a|velita/.test(src)) add("🎂", "🎉", "💐", "✨", "🥂", "❤️");
+  if (/amor|enamor|te amo|te quiero|coraz[oó]n|vida|pareja|novi|espos/.test(src)) add("❤️", "🌹", "✨", "🥰", "💕", "💐");
+  if (/aniversario|bodas|juntos/.test(src)) add("🥂", "❤️", "🌹", "✨", "💍", "💕");
+  if (/gracia|agradec|apoyo|gratitud/.test(src)) add("🙏", "💐", "✨", "🤍", "🌸", "💛");
+  if (/perd[oó]n|disculp|reconcili|lo siento/.test(src)) add("🤍", "🌹", "✨", "🙏", "❤️");
+  if (/amig|amistad/.test(src)) add("🌸", "✨", "🥂", "💛", "🤗", "💐");
+  if (/mam[aá]|pap[aá]|familia/.test(src)) add("💐", "❤️", "🌸", "✨", "🤗", "🤍");
+  if (/felicita|logro|gradu|[eé]xito/.test(src)) add("🎉", "🥂", "✨", "🌟", "💐");
+  add("💐", "✨", "❤️", "🌹", "🌸", "🤍");
+  return out.slice(0, 7);
+}
 
 const FRASES_CONDOLENCIAS = [
   "Acompañamos su dolor con profundo respeto y solidaridad en este momento difícil.",
@@ -145,15 +175,21 @@ export function EditorTarjetaPublicoCliente({
   const [para, setPara] = useState<string>(datosIniciales.destinatario || "");
   const [de, setDe] = useState<string>(datosIniciales.remitente || "");
   const [mensaje, setMensaje] = useState<string>(datosIniciales.dedicatoria || "");
-  const [confidencial, setConfidencial] = useState<boolean>(
-    esCondolencias ? false : Boolean(datosIniciales.confidencial)
-  );
+  const [modoImpresion, setModoImpresion] = useState<ModoImpresionTarjeta>(() => {
+    if (esCondolencias) return "SOLO_MENSAJE";
+    if (datosIniciales.confidencial) return "SOLO_QR";
+    if (datosIniciales.diseno?.modoImpresion === "MENSAJE_Y_QR") return "MENSAJE_Y_QR";
+    return "SOLO_MENSAJE";
+  });
   const [diseno, setDiseno] = useState<DisenoVisualTarjeta>(() =>
     normalizarDisenoTarjeta(
       datosIniciales.diseno,
       esCondolencias,
       datosIniciales.dedicatoria || ""
     )
+  );
+  const [incluirAudio, setIncluirAudio] = useState<boolean>(
+    !esCondolencias && Boolean(datosIniciales.musicaUrl?.trim())
   );
   const [musicaUrl, setMusicaUrl] = useState<string>(
     esCondolencias ? "" : datosIniciales.musicaUrl || ""
@@ -170,6 +206,16 @@ export function EditorTarjetaPublicoCliente({
       : ""
   );
 
+  // Estado del asistente IA en el Paso 2 (Mensaje)
+  const [panelIaAbierto, setPanelIaAbierto] = useState<boolean>(false);
+  const [ocasionIa, setOcasionIa] = useState<string>("");
+  const [ideaIa, setIdeaIa] = useState<string>("");
+  const [cargandoIa, setCargandoIa] = useState<boolean>(false);
+  const [corrigiendoIa, setCorrigiendoIa] = useState<boolean>(false);
+  const [opcionesIa, setOpcionesIa] = useState<OpcionMensajeTarjetaIa[]>([]);
+  const [opcionIaSeleccionada, setOpcionIaSeleccionada] = useState<number | null>(null);
+  const [emojisIa, setEmojisIa] = useState<string[]>([]);
+
   const [subiendoMp3, setSubiendoMp3] = useState<boolean>(false);
   const [buscandoLyrics, setBuscandoLyrics] = useState<boolean>(false);
   const [guardando, setGuardando] = useState<boolean>(false);
@@ -178,7 +224,13 @@ export function EditorTarjetaPublicoCliente({
   const [cambiosSinGuardar, setCambiosSinGuardar] = useState<boolean>(false);
 
   const inputAudioRef = useRef<HTMLInputElement | null>(null);
-  const soloQrEfectivo = !esCondolencias && confidencial;
+  const usuarioMovioDisenoRef = useRef<boolean>(false);
+  const soloQrEfectivo = !esCondolencias && modoImpresion === "SOLO_QR";
+  const incluirQrEnEsquina = !esCondolencias && modoImpresion === "MENSAJE_Y_QR";
+  const emojisDisponibles = useMemo(
+    () => (emojisIa.length > 0 ? emojisIa : sugerirEmojisPorMensaje(mensaje, ocasionIa)),
+    [emojisIa, mensaje, ocasionIa]
+  );
 
   const disenoNormalizado = useMemo(
     () => normalizarDisenoTarjeta(diseno, esCondolencias, mensaje),
@@ -199,10 +251,10 @@ export function EditorTarjetaPublicoCliente({
       dedicatoria: mensaje.trim(),
       tipo: datosIniciales.tipo,
       confidencial: soloQrEfectivo,
-      diseno: disenoNormalizado,
-      musicaUrl: esCondolencias ? null : musicaUrl.trim() || null,
-      musicaTitulo: esCondolencias ? null : musicaTitulo.trim() || null,
-      lyrics: esCondolencias ? [] : lyrics,
+      diseno: { ...disenoNormalizado, modoImpresion },
+      musicaUrl: esCondolencias || !incluirAudio ? null : musicaUrl.trim() || null,
+      musicaTitulo: esCondolencias || !incluirAudio ? null : musicaTitulo.trim() || null,
+      lyrics: esCondolencias || !incluirAudio ? [] : lyrics,
       fechaEntrega: datosIniciales.fechaEntrega,
       bloqueadoEdicion: datosIniciales.bloqueadoEdicion,
     }),
@@ -213,8 +265,10 @@ export function EditorTarjetaPublicoCliente({
       incluirFirma,
       mensaje,
       soloQrEfectivo,
+      modoImpresion,
       disenoNormalizado,
       esCondolencias,
+      incluirAudio,
       musicaUrl,
       musicaTitulo,
       lyrics,
@@ -300,12 +354,132 @@ export function EditorTarjetaPublicoCliente({
     marcarCambio();
   };
 
+  const ajustarPosicionAutoPorLongitud = (textoActual: string) => {
+    if (esCondolencias || usuarioMovioDisenoRef.current) return;
+    const esCorto = esMensajeCortoParaMitadInferior(textoActual);
+    setDiseno((prev) => {
+      const norm = normalizarDisenoTarjeta(prev, false, textoActual);
+      const bloquesAjustados = norm.bloquesTexto.map((b) => {
+        if (b.rol === "mensaje") {
+          return {
+            ...b,
+            yPct: esCorto || norm.imagenes.some((im) => !im.cubrirTarjeta) ? 68 : 49,
+          };
+        }
+        if (b.rol === "firma") {
+          return { ...b, yPct: 85 };
+        }
+        return b;
+      });
+      return {
+        ...norm,
+        textoYPct: esCorto ? 68 : 49,
+        bloquesTexto: bloquesAjustados,
+      };
+    });
+  };
+
+  const handleGenerarOpcionesIa = async () => {
+    if (!mensaje.trim() && !ocasionIa.trim() && !ideaIa.trim()) {
+      setErrorMsg("Elige una ocasión o escribe una breve idea para generar las 2 opciones.");
+      return;
+    }
+    setCargandoIa(true);
+    setErrorMsg(null);
+    setExitoMsg(null);
+    const res = await asistirMensajeTarjetaIaAction({
+      modo: "sugerir_opciones",
+      mensajeBase: mensaje.trim(),
+      ocasion: ocasionIa.trim(),
+      destinatario: para.trim(),
+      ideaBreve: ideaIa.trim(),
+      negocio: datosIniciales.negocio,
+    });
+    setCargandoIa(false);
+    if (!res.ok) {
+      setErrorMsg(res.error);
+      return;
+    }
+    setOpcionesIa(res.opciones);
+    setOpcionIaSeleccionada(null);
+    if (res.emojisSugeridos.length > 0) setEmojisIa(res.emojisSugeridos);
+  };
+
+  const handleCorregirYEstructurarIa = async () => {
+    if (mensaje.trim().length < 3) {
+      setErrorMsg("Escribe primero tu mensaje para corregirlo y ordenarlo.");
+      return;
+    }
+    setCorrigiendoIa(true);
+    setErrorMsg(null);
+    setExitoMsg(null);
+    const res = await asistirMensajeTarjetaIaAction({
+      modo: "corregir_y_estructurar",
+      mensajeBase: mensaje.trim(),
+      ocasion: ocasionIa.trim(),
+      destinatario: para.trim(),
+      negocio: datosIniciales.negocio,
+    });
+    setCorrigiendoIa(false);
+    if (!res.ok) {
+      setErrorMsg(res.error);
+      return;
+    }
+    const mejorado = res.opciones[0]?.texto;
+    if (mejorado) {
+      setMensaje(mejorado);
+      ajustarPosicionAutoPorLongitud(mejorado);
+      marcarCambio();
+      setExitoMsg("Ortografía corregida y frases organizadas para tu tarjeta.");
+    }
+    if (res.emojisSugeridos.length > 0) setEmojisIa(res.emojisSugeridos);
+  };
+
+  const handleInsertarEmoji = (emoji: string) => {
+    setMensaje((prev) => {
+      const base = prev.trimEnd();
+      return base ? `${base} ${emoji}` : emoji;
+    });
+    marcarCambio();
+  };
+
+  const handleToggleIncluirAudio = (incluir: boolean) => {
+    setIncluirAudio(incluir);
+    marcarCambio();
+    if (!incluir) {
+      setMusicaUrl("");
+      setMusicaTitulo("");
+      setLyrics([]);
+      setTextoLyricsManual("");
+    }
+  };
+
+  const handleSeleccionarModoImpresion = (nuevoModo: ModoImpresionTarjeta) => {
+    setModoImpresion(nuevoModo);
+    setDiseno((prev) => ({
+      ...normalizarDisenoTarjeta(prev, esCondolencias, mensaje),
+      modoImpresion: nuevoModo,
+    }));
+    marcarCambio();
+  };
+
   const handleSiguientePaso = () => {
     setErrorMsg(null);
     setExitoMsg(null);
-    if (pasoActual.id === "mensaje" && !mensaje.trim()) {
-      setErrorMsg("Escribe un mensaje para continuar con tu tarjeta.");
-      return;
+    if (pasoActual.id === "mensaje") {
+      if (!mensaje.trim()) {
+        setErrorMsg("Escribe un mensaje para continuar con tu tarjeta.");
+        return;
+      }
+      ajustarPosicionAutoPorLongitud(mensaje);
+    }
+    if (pasoActual.id === "audio" && !incluirAudio) {
+      const idxVis = pasos.findIndex((p) => p.id === "visualizar");
+      if (idxVis >= 0) {
+        setPasoIdx(idxVis);
+        if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
     }
     if (pasoIdx < pasos.length - 1) {
       setPasoIdx(pasoIdx + 1);
@@ -316,6 +490,14 @@ export function EditorTarjetaPublicoCliente({
   const handlePasoAnterior = () => {
     setErrorMsg(null);
     setExitoMsg(null);
+    if (pasoActual.id === "visualizar" && !esCondolencias && !incluirAudio) {
+      const idxAudio = pasos.findIndex((p) => p.id === "audio");
+      if (idxAudio >= 0) {
+        setPasoIdx(idxAudio);
+        if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+    }
     if (pasoIdx > 0) {
       setPasoIdx(pasoIdx - 1);
       if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
@@ -333,12 +515,12 @@ export function EditorTarjetaPublicoCliente({
     setErrorMsg(null);
     setExitoMsg(null);
 
-    let lyricsFinales = esCondolencias ? [] : lyrics;
-    let tituloFinal = esCondolencias ? null : musicaTitulo.trim() || null;
+    const usaAudio = !esCondolencias && incluirAudio && Boolean(musicaUrl.trim());
+    let lyricsFinales = usaAudio ? lyrics : [];
+    let tituloFinal = usaAudio ? musicaTitulo.trim() || null : null;
 
     if (
-      !esCondolencias &&
-      musicaUrl.trim() &&
+      usaAudio &&
       musicaUrl.trim() !== (datosIniciales.musicaUrl || "") &&
       lyricsFinales.length === 0
     ) {
@@ -357,7 +539,10 @@ export function EditorTarjetaPublicoCliente({
       }
     }
 
-    const disenoFinal = normalizarDisenoTarjeta(diseno, esCondolencias, mensaje.trim());
+    const disenoFinal: DisenoVisualTarjeta = {
+      ...normalizarDisenoTarjeta(diseno, esCondolencias, mensaje.trim()),
+      modoImpresion: esCondolencias ? "SOLO_MENSAJE" : modoImpresion,
+    };
 
     const res = await editarTarjetaClienteAction({
       token: tokenEdicion,
@@ -366,7 +551,7 @@ export function EditorTarjetaPublicoCliente({
       de: incluirFirma ? de.trim() : "",
       confidencial: soloQrEfectivo,
       diseno: disenoFinal,
-      musicaUrl: esCondolencias ? null : musicaUrl.trim() || null,
+      musicaUrl: usaAudio ? musicaUrl.trim() : null,
       musicaTitulo: tituloFinal,
       lyrics: lyricsFinales,
     });
@@ -929,7 +1114,6 @@ export function EditorTarjetaPublicoCliente({
   // FASE 2B (DEDICATORIA): WIZARD GUIADO PASO A PASO (UX EDITORIAL CÁLIDO)
   // =========================================================================
   const porcentajeProgreso = Math.round(((pasoIdx + 1) / pasos.length) * 100);
-  const frasesRapidas = esCondolencias ? FRASES_CONDOLENCIAS : FRASES_DEDICATORIA;
 
   return (
     <div
@@ -1345,38 +1529,246 @@ export function EditorTarjetaPublicoCliente({
                 />
               </div>
 
-              {/* Sugerencias rápidas para evitar bloqueo creativo */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <span style={{ fontSize: "0.76rem", fontWeight: 600, color: "#57524C" }}>
-                  ¿Necesitas inspiración? Toca una frase para usarla:
-                </span>
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  {frasesRapidas.map((frase, i) => (
+              {/* Acciones IA: Ayuda con IA (2 opciones) + Corregir ortografía y saltos de línea */}
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPanelIaAbierto((prev) => !prev);
+                    setErrorMsg(null);
+                  }}
+                  title="Pedir ayuda con IA para redactar 2 opciones de mensaje"
+                  aria-label="Ayuda con IA"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "7px",
+                    padding: "9px 14px",
+                    borderRadius: "10px",
+                    border: panelIaAbierto ? "1px solid #2F4737" : "1px solid #C8D5CB",
+                    backgroundColor: panelIaAbierto ? "#2F4737" : "#EEF4F0",
+                    color: panelIaAbierto ? "#FFFFFF" : "#2F4737",
+                    fontSize: "0.8rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  <Sparkles size={14} />
+                  <span>Ayuda con IA</span>
+                </button>
+
+                {mensaje.trim().length >= 3 && (
+                  <button
+                    type="button"
+                    disabled={corrigiendoIa}
+                    onClick={() => void handleCorregirYEstructurarIa()}
+                    title="Corregir ortografía y ordenar en frases con saltos de línea"
+                    aria-label="Corregir texto"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "7px",
+                      padding: "9px 14px",
+                      borderRadius: "10px",
+                      border: "1px solid #D5CFC4",
+                      backgroundColor: "#FAF8F5",
+                      color: "#1F1C19",
+                      fontSize: "0.8rem",
+                      fontWeight: 600,
+                      cursor: corrigiendoIa ? "wait" : "pointer",
+                    }}
+                  >
+                    {corrigiendoIa ? <Loader2 size={14} /> : <Wand2 size={14} />}
+                    <span>{corrigiendoIa ? "Ordenando..." : "Corregir texto"}</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Panel interactivo de Ayuda con IA: usa mensaje base o pregunta la ocasión y crea 2 opciones */}
+              {panelIaAbierto && (
+                <div
+                  style={{
+                    padding: "16px",
+                    borderRadius: "14px",
+                    backgroundColor: "#FAF8F5",
+                    border: "1px solid #DFD9CE",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "12px",
+                  }}
+                >
+                  <div>
+                    <strong style={{ display: "block", fontSize: "0.84rem", color: "#1F1C19" }}>
+                      {mensaje.trim()
+                        ? "Mejoraremos tu mensaje actual en 2 opciones"
+                        : "¿Para qué ocasión necesitas el mensaje?"}
+                    </strong>
+                    <span style={{ fontSize: "0.75rem", color: "#57524C" }}>
+                      {mensaje.trim()
+                        ? "Puedes elegir también la ocasión o un detalle extra para afinar el tono."
+                        : "Selecciona la ocasión y crearemos 2 propuestas listas para tu tarjeta."}
+                    </span>
+                  </div>
+
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                    {OCASIONES_IA.map((oc) => {
+                      const seleccionada = ocasionIa === oc;
+                      return (
+                        <button
+                          key={oc}
+                          type="button"
+                          onClick={() => setOcasionIa(seleccionada ? "" : oc)}
+                          style={{
+                            padding: "6px 11px",
+                            borderRadius: "999px",
+                            border: seleccionada ? "1px solid #2F4737" : "1px solid #D5CFC4",
+                            backgroundColor: seleccionada ? "#2F4737" : "#FFFFFF",
+                            color: seleccionada ? "#FFFFFF" : "#3F3A34",
+                            fontSize: "0.75rem",
+                            fontWeight: 600,
+                            cursor: "pointer",
+                          }}
+                        >
+                          {oc}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <input
+                    type="text"
+                    value={ideaIa}
+                    onChange={(e) => setIdeaIa(e.target.value)}
+                    placeholder="Detalle opcional (ej: cumplimos 3 años, gracias por estar siempre...)"
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "10px",
+                      border: "1px solid #CFC8BC",
+                      backgroundColor: "#FFFFFF",
+                      color: "#1F1C19",
+                      fontSize: "16px",
+                      boxSizing: "border-box",
+                    }}
+                  />
+
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
                     <button
-                      key={i}
                       type="button"
-                      onClick={() => {
-                        setMensaje(frase);
-                        marcarCambio();
-                      }}
-                      title="Usar esta frase en tu tarjeta"
+                      disabled={cargandoIa}
+                      onClick={() => void handleGenerarOpcionesIa()}
+                      title="Generar 2 opciones de dedicatoria con IA"
+                      aria-label="Crear opciones"
                       style={{
-                        textAlign: "left",
-                        padding: "9px 12px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "7px",
+                        padding: "9px 16px",
                         borderRadius: "10px",
-                        border: "1px solid #E6E2DA",
-                        backgroundColor: "#FAF8F5",
-                        color: "#3F3A34",
+                        border: "none",
+                        backgroundColor: "#221E1B",
+                        color: "#FFFFFF",
                         fontSize: "0.8rem",
-                        lineHeight: 1.4,
-                        cursor: "pointer",
+                        fontWeight: 700,
+                        cursor: cargandoIa ? "wait" : "pointer",
                       }}
                     >
-                      “{frase}”
+                      {cargandoIa ? <Loader2 size={14} /> : <Sparkles size={14} />}
+                      <span>{cargandoIa ? "Creando opciones..." : "Crear 2 opciones"}</span>
                     </button>
-                  ))}
+                  </div>
+
+                  {opcionesIa.length > 0 && (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px", paddingTop: "2px" }}>
+                      <span style={{ fontSize: "0.76rem", fontWeight: 600, color: "#57524C" }}>
+                        Elige la opción que más te guste:
+                      </span>
+                      {opcionesIa.map((op, idx) => {
+                        const activa = opcionIaSeleccionada === idx;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setMensaje(op.texto);
+                              setOpcionIaSeleccionada(idx);
+                              ajustarPosicionAutoPorLongitud(op.texto);
+                              marcarCambio();
+                            }}
+                            style={{
+                              textAlign: "left",
+                              padding: "12px 14px",
+                              borderRadius: "12px",
+                              border: activa ? "2px solid #2F4737" : "1px solid #DDD7CD",
+                              backgroundColor: activa ? "#EEF4F0" : "#FFFFFF",
+                              color: "#1F1C19",
+                              cursor: "pointer",
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "5px",
+                            }}
+                          >
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                gap: "8px",
+                              }}
+                            >
+                              <strong style={{ fontSize: "0.78rem", color: "#2F4737" }}>
+                                Opción {idx + 1} · {op.titulo}
+                              </strong>
+                              {activa && <Check size={15} color="#2F4737" />}
+                            </div>
+                            <span
+                              style={{
+                                fontSize: "0.83rem",
+                                lineHeight: 1.5,
+                                color: "#292524",
+                                whiteSpace: "pre-wrap",
+                              }}
+                            >
+                              {op.texto}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
+
+              {/* Emojis sugeridos contextualmente según el mensaje u ocasión */}
+              {(mensaje.trim().length > 0 || emojisIa.length > 0) && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                  <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#57524C" }}>
+                    Emojis sugeridos para tu mensaje (toca para agregar):
+                  </span>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                    {emojisDisponibles.map((em) => (
+                      <button
+                        key={em}
+                        type="button"
+                        onClick={() => handleInsertarEmoji(em)}
+                        title={`Agregar ${em} al mensaje`}
+                        aria-label={`Agregar emoji ${em}`}
+                        style={{
+                          padding: "6px 11px",
+                          borderRadius: "999px",
+                          border: "1px solid #E2DDD4",
+                          backgroundColor: "#FAF8F5",
+                          fontSize: "1rem",
+                          lineHeight: 1,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {em}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
 
@@ -1574,10 +1966,12 @@ export function EditorTarjetaPublicoCliente({
                 negocio={negNorm}
                 esCondolencias={esCondolencias}
                 soloQr={false}
+                incluirQrEnEsquina={incluirQrEnEsquina}
                 mensaje={mensaje}
                 firma={incluirFirma ? de : ""}
                 diseno={diseno}
                 onCambiarDiseno={(nuevo) => {
+                  usuarioMovioDisenoRef.current = true;
                   setDiseno(nuevo);
                   marcarCambio();
                 }}
@@ -1587,7 +1981,7 @@ export function EditorTarjetaPublicoCliente({
           )}
 
           {/* ===================================================== */}
-          {/* PASO 5: AUDIO (OPCIONAL — SOLO DEDICATORIA)           */}
+          {/* PASO 5: AUDIO (PREGUNTAR PRIMERO SI DESEA INCLUIRLO)  */}
           {/* ===================================================== */}
           {pasoActual.id === "audio" && (
             <>
@@ -1601,14 +1995,81 @@ export function EditorTarjetaPublicoCliente({
                     letterSpacing: "-0.015em",
                   }}
                 >
-                  Añade una canción (opcional)
+                  ¿Deseas incluir una canción?
                 </h1>
                 <p style={{ margin: "6px 0 0 0", fontSize: "0.86rem", color: "#57524C", lineHeight: 1.5 }}>
                   Al abrir tu tarjeta digital, la melodía comenzará a sonar suavemente al 15% de volumen.
                 </p>
               </div>
 
-              <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                  gap: "10px",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => handleToggleIncluirAudio(true)}
+                  aria-pressed={incluirAudio}
+                  style={{
+                    padding: "14px 16px",
+                    borderRadius: "12px",
+                    border: incluirAudio ? "2px solid #2F4737" : "1px solid #DDD7CD",
+                    backgroundColor: incluirAudio ? "#EEF4F0" : "#FFFFFF",
+                    color: "#1F1C19",
+                    textAlign: "left",
+                    cursor: "pointer",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "5px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontWeight: 700, fontSize: "0.88rem" }}>
+                      <Music size={15} />
+                      <span>Sí, incluir audio</span>
+                    </span>
+                    {incluirAudio && <Check size={16} color="#2F4737" />}
+                  </div>
+                  <span style={{ fontSize: "0.76rem", color: "#57524C" }}>
+                    Pega un enlace de YouTube o sube tu archivo MP3.
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleToggleIncluirAudio(false)}
+                  aria-pressed={!incluirAudio}
+                  style={{
+                    padding: "14px 16px",
+                    borderRadius: "12px",
+                    border: !incluirAudio ? "2px solid #2F4737" : "1px solid #DDD7CD",
+                    backgroundColor: !incluirAudio ? "#EEF4F0" : "#FFFFFF",
+                    color: "#1F1C19",
+                    textAlign: "left",
+                    cursor: "pointer",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "5px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "6px", fontWeight: 700, fontSize: "0.88rem" }}>
+                      <VolumeX size={15} />
+                      <span>Sin audio</span>
+                    </span>
+                    {!incluirAudio && <Check size={16} color="#2F4737" />}
+                  </div>
+                  <span style={{ fontSize: "0.76rem", color: "#57524C" }}>
+                    Solo mensaje y diseño, sin música de fondo.
+                  </span>
+                </button>
+              </div>
+
+              {incluirAudio && (
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 <div>
                   <label
                     htmlFor="eco-campo-musica-url"
@@ -1767,6 +2228,7 @@ export function EditorTarjetaPublicoCliente({
                   </div>
                 )}
               </div>
+              )}
             </>
           )}
 
@@ -1983,7 +2445,7 @@ export function EditorTarjetaPublicoCliente({
           )}
 
           {/* ===================================================== */}
-          {/* PASO 8: IMPRIMIR MENSAJE COMPLETO O SOLO QR + GUARDAR */}
+          {/* PASO 8: IMPRIMIR MENSAJE, SOLO QR O AMBOS + GUARDAR   */}
           {/* ===================================================== */}
           {pasoActual.id === "imprimir" && (
             <>
@@ -2000,30 +2462,27 @@ export function EditorTarjetaPublicoCliente({
                   ¿Cómo imprimimos tu tarjeta física?
                 </h1>
                 <p style={{ margin: "6px 0 0 0", fontSize: "0.86rem", color: "#57524C", lineHeight: 1.5 }}>
-                  Elige una opción para la cartulina que acompañará tu arreglo floral.
+                  Elige cómo deseas entregar tu tarjeta junto al arreglo floral.
                 </p>
               </div>
 
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-                  gap: "12px",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                  gap: "10px",
                 }}
               >
-                {/* Opción 1: Mensaje completo */}
+                {/* Opción 1: Solo mensaje impreso */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setConfidencial(false);
-                    marcarCambio();
-                  }}
-                  aria-pressed={!soloQrEfectivo}
+                  onClick={() => handleSeleccionarModoImpresion("SOLO_MENSAJE")}
+                  aria-pressed={modoImpresion === "SOLO_MENSAJE"}
                   style={{
-                    padding: "18px 16px",
+                    padding: "16px 14px",
                     borderRadius: "14px",
-                    border: !soloQrEfectivo ? "2px solid #2F4737" : "1px solid #DDD7CD",
-                    backgroundColor: !soloQrEfectivo ? "#EEF4F0" : "#FFFFFF",
+                    border: modoImpresion === "SOLO_MENSAJE" ? "2px solid #2F4737" : "1px solid #DDD7CD",
+                    backgroundColor: modoImpresion === "SOLO_MENSAJE" ? "#EEF4F0" : "#FFFFFF",
                     color: "#1F1C19",
                     textAlign: "left",
                     cursor: "pointer",
@@ -2035,26 +2494,26 @@ export function EditorTarjetaPublicoCliente({
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <div
                       style={{
-                        width: "36px",
-                        height: "36px",
+                        width: "34px",
+                        height: "34px",
                         borderRadius: "10px",
-                        backgroundColor: !soloQrEfectivo ? "#2F4737" : "#F3EFE8",
-                        color: !soloQrEfectivo ? "#FFFFFF" : "#57524C",
+                        backgroundColor: modoImpresion === "SOLO_MENSAJE" ? "#2F4737" : "#F3EFE8",
+                        color: modoImpresion === "SOLO_MENSAJE" ? "#FFFFFF" : "#57524C",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                       }}
                     >
-                      <FileText size={18} />
+                      <FileText size={17} />
                     </div>
-                    {!soloQrEfectivo && <Check size={18} color="#2F4737" />}
+                    {modoImpresion === "SOLO_MENSAJE" && <Check size={17} color="#2F4737" />}
                   </div>
                   <div>
-                    <strong style={{ display: "block", fontSize: "0.94rem", marginBottom: "4px" }}>
-                      Mensaje completo
+                    <strong style={{ display: "block", fontSize: "0.9rem", marginBottom: "4px" }}>
+                      Solo mensaje impreso
                     </strong>
-                    <span style={{ fontSize: "0.78rem", color: "#57524C", lineHeight: 1.45, display: "block" }}>
-                      Imprimimos tu dedicatoria, firma y diseño directamente en la cartulina física (sin código QR).
+                    <span style={{ fontSize: "0.76rem", color: "#57524C", lineHeight: 1.45, display: "block" }}>
+                      Imprimimos tu dedicatoria, firma y diseño en la cartulina física (sin código QR).
                     </span>
                   </div>
                 </button>
@@ -2062,16 +2521,13 @@ export function EditorTarjetaPublicoCliente({
                 {/* Opción 2: Solo QR (Digital) */}
                 <button
                   type="button"
-                  onClick={() => {
-                    setConfidencial(true);
-                    marcarCambio();
-                  }}
-                  aria-pressed={soloQrEfectivo}
+                  onClick={() => handleSeleccionarModoImpresion("SOLO_QR")}
+                  aria-pressed={modoImpresion === "SOLO_QR"}
                   style={{
-                    padding: "18px 16px",
+                    padding: "16px 14px",
                     borderRadius: "14px",
-                    border: soloQrEfectivo ? "2px solid #2F4737" : "1px solid #DDD7CD",
-                    backgroundColor: soloQrEfectivo ? "#EEF4F0" : "#FFFFFF",
+                    border: modoImpresion === "SOLO_QR" ? "2px solid #2F4737" : "1px solid #DDD7CD",
+                    backgroundColor: modoImpresion === "SOLO_QR" ? "#EEF4F0" : "#FFFFFF",
                     color: "#1F1C19",
                     textAlign: "left",
                     cursor: "pointer",
@@ -2083,33 +2539,78 @@ export function EditorTarjetaPublicoCliente({
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <div
                       style={{
-                        width: "36px",
-                        height: "36px",
+                        width: "34px",
+                        height: "34px",
                         borderRadius: "10px",
-                        backgroundColor: soloQrEfectivo ? "#2F4737" : "#F3EFE8",
-                        color: soloQrEfectivo ? "#FFFFFF" : "#57524C",
+                        backgroundColor: modoImpresion === "SOLO_QR" ? "#2F4737" : "#F3EFE8",
+                        color: modoImpresion === "SOLO_QR" ? "#FFFFFF" : "#57524C",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                       }}
                     >
-                      <QrCode size={18} />
+                      <QrCode size={17} />
                     </div>
-                    {soloQrEfectivo && <Check size={18} color="#2F4737" />}
+                    {modoImpresion === "SOLO_QR" && <Check size={17} color="#2F4737" />}
                   </div>
                   <div>
-                    <strong style={{ display: "block", fontSize: "0.94rem", marginBottom: "4px" }}>
+                    <strong style={{ display: "block", fontSize: "0.9rem", marginBottom: "4px" }}>
                       Solo QR (Digital)
                     </strong>
-                    <span style={{ fontSize: "0.78rem", color: "#57524C", lineHeight: 1.45, display: "block" }}>
-                      Cartulina discreta solo con QR. Al escanearlo se abre el díptico digital con tus fotos, música y letra.
+                    <span style={{ fontSize: "0.76rem", color: "#57524C", lineHeight: 1.45, display: "block" }}>
+                      Cartulina discreta solo con QR. Al escanearlo se abre el díptico digital con tus fotos y música.
+                    </span>
+                  </div>
+                </button>
+
+                {/* Opción 3: Ambos — Tarjeta impresa + QR para tarjeta digital */}
+                <button
+                  type="button"
+                  onClick={() => handleSeleccionarModoImpresion("MENSAJE_Y_QR")}
+                  aria-pressed={modoImpresion === "MENSAJE_Y_QR"}
+                  style={{
+                    padding: "16px 14px",
+                    borderRadius: "14px",
+                    border: modoImpresion === "MENSAJE_Y_QR" ? "2px solid #2F4737" : "1px solid #DDD7CD",
+                    backgroundColor: modoImpresion === "MENSAJE_Y_QR" ? "#EEF4F0" : "#FFFFFF",
+                    color: "#1F1C19",
+                    textAlign: "left",
+                    cursor: "pointer",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "10px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <div
+                      style={{
+                        width: "34px",
+                        height: "34px",
+                        borderRadius: "10px",
+                        backgroundColor: modoImpresion === "MENSAJE_Y_QR" ? "#2F4737" : "#F3EFE8",
+                        color: modoImpresion === "MENSAJE_Y_QR" ? "#FFFFFF" : "#57524C",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Layers size={17} />
+                    </div>
+                    {modoImpresion === "MENSAJE_Y_QR" && <Check size={17} color="#2F4737" />}
+                  </div>
+                  <div>
+                    <strong style={{ display: "block", fontSize: "0.9rem", marginBottom: "4px" }}>
+                      Mensaje + QR digital
+                    </strong>
+                    <span style={{ fontSize: "0.76rem", color: "#57524C", lineHeight: 1.45, display: "block" }}>
+                      Imprimimos tu mensaje en la cartulina e incluimos un QR discreto para abrir la tarjeta digital.
                     </span>
                   </div>
                 </button>
               </div>
 
-              {/* Sugerencia inteligente si agregó música pero eligió mensaje impreso */}
-              {musicaUrl.trim() && !soloQrEfectivo && (
+              {/* Sugerencia inteligente si agregó música pero eligió solo mensaje impreso */}
+              {incluirAudio && musicaUrl.trim() && modoImpresion === "SOLO_MENSAJE" && (
                 <div
                   style={{
                     padding: "11px 14px",
@@ -2126,7 +2627,7 @@ export function EditorTarjetaPublicoCliente({
                 >
                   <Info size={15} style={{ flexShrink: 0, marginTop: "2px", color: "#2F4737" }} />
                   <span>
-                    Agregaste una canción a tu tarjeta. Si eliges <strong>Solo QR (Digital)</strong>, quien la reciba podrá escanear la cartulina y escucharla al abrir su díptico.
+                    Agregaste una canción a tu tarjeta. Si eliges <strong>Mensaje + QR digital</strong> o <strong>Solo QR</strong>, quien la reciba podrá escanear la cartulina y escucharla.
                   </span>
                 </div>
               )}
@@ -2163,11 +2664,21 @@ export function EditorTarjetaPublicoCliente({
                 <div>
                   <span style={{ display: "block", color: "#78716C", fontSize: "0.72rem" }}>Audio y letra</span>
                   <strong style={{ color: "#1F1C19" }}>
-                    {musicaUrl.trim()
+                    {incluirAudio && musicaUrl.trim()
                       ? lyrics.length > 0
                         ? "Canción + letra"
                         : "Canción lista"
                       : "Sin audio"}
+                  </strong>
+                </div>
+                <div>
+                  <span style={{ display: "block", color: "#78716C", fontSize: "0.72rem" }}>Impresión</span>
+                  <strong style={{ color: "#1F1C19" }}>
+                    {modoImpresion === "SOLO_QR"
+                      ? "Solo QR (Digital)"
+                      : modoImpresion === "MENSAJE_Y_QR"
+                        ? "Mensaje + QR digital"
+                        : "Solo mensaje impreso"}
                   </strong>
                 </div>
               </div>

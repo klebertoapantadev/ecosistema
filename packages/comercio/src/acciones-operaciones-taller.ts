@@ -5908,5 +5908,463 @@ export async function crearPedidoDesdeMensajeAriaAction(entrada: {
   }
 }
 
+export interface OpcionMensajeTarjetaIa {
+  titulo: string;
+  texto: string;
+}
+
+function sugerirEmojisLocalPorContexto(texto: string, ocasion?: string): string[] {
+  const fuente = `${texto} ${ocasion || ""}`.toLowerCase();
+  const res: string[] = [];
+  const agregar = (...items: string[]) => {
+    for (const it of items) {
+      if (!res.includes(it) && res.length < 8) res.push(it);
+    }
+  };
+
+  if (/cumple|años|anos|feliz d[ií]a|velita|celebr/.test(fuente)) {
+    agregar("🎂", "🎉", "💐", "✨", "🥂", "🎈", "❤️");
+  }
+  if (/amor|enamor|novi|espos|te amo|te quiero|coraz[oó]n|vida m[ií]a|mi amor|pareja/.test(fuente)) {
+    agregar("❤️", "🌹", "✨", "🥰", "💫", "💕", "💐");
+  }
+  if (/aniversario|bodas|juntos|meses|a[nñ]os juntos/.test(fuente)) {
+    agregar("🥂", "❤️", "🌹", "✨", "💍", "💕", "💐");
+  }
+  if (/gracia|agradec|apoyo|ayuda|gratitud/.test(fuente)) {
+    agregar("🙏", "💐", "✨", "🤍", "🌸", "💛");
+  }
+  if (/mam[aá]|madre|pap[aá]|familia|abuel|hermana|hermano/.test(fuente)) {
+    agregar("💐", "❤️", "🌸", "✨", "🤗", "🤍");
+  }
+  if (/perd[oó]n|disculp|reconcili|lo siento|volver/.test(fuente)) {
+    agregar("🤍", "🌹", "✨", "🙏", "❤️", "🕊️");
+  }
+  if (/amig|amistad|c[oó]mplice/.test(fuente)) {
+    agregar("🌸", "✨", "🥂", "💛", "🤗", "💐");
+  }
+  if (/gradu|logro|[eé]xito|felicita|ascenso|meta/.test(fuente)) {
+    agregar("🎉", "🥂", "✨", "🌟", "💐", "👏");
+  }
+
+  agregar("💐", "✨", "❤️", "🌸", "🌹", "🤍");
+  return res.slice(0, 7);
+}
+
+function corregirYEstructurarMensajeLocal(raw: string): string {
+  let texto = String(raw || "")
+    .replace(/\r\n/g, "\n")
+    .replace(/[ \t]+/g, " ")
+    .trim();
+  if (!texto) return "";
+
+  const correcciones: Array<[RegExp, string]> = [
+    [/\bcumpleanos\b/gi, "cumpleaños"],
+    [/\bcorazon\b/gi, "corazón"],
+    [/\bdia\b/gi, "día"],
+    [/\bdias\b/gi, "días"],
+    [/\btambien\b/gi, "también"],
+    [/\bmas\b/gi, "más"],
+    [/\bestas\b/gi, "estás"],
+    [/\baca\b/gi, "acá"],
+    [/\basi\b/gi, "así"],
+    [/\bmama\b/gi, "mamá"],
+    [/\bpapa\b/gi, "papá"],
+    [/\bperdon\b/gi, "perdón"],
+    [/\bexito\b/gi, "éxito"],
+    [/\bexitos\b/gi, "éxitos"],
+    [/\bbendicion\b/gi, "bendición"],
+    [/\bbendiciones\b/gi, "bendiciones"],
+    [/\bsueno\b/gi, "sueño"],
+    [/\bsuenos\b/gi, "sueños"],
+    [/\bcarino\b/gi, "cariño"],
+    [/\bcompanero\b/gi, "compañero"],
+    [/\bcompanera\b/gi, "compañera"],
+    [/\bincreible\b/gi, "increíble"],
+    [/\bunico\b/gi, "único"],
+    [/\bunica\b/gi, "única"],
+    [/\bmagico\b/gi, "mágico"],
+    [/\bmagica\b/gi, "mágica"],
+    [/\bfelicidad\b/gi, "felicidad"],
+  ];
+
+  for (const [rx, rep] of correcciones) {
+    texto = texto.replace(rx, (m) =>
+      m[0] && m[0] === m[0].toUpperCase()
+        ? rep.charAt(0).toUpperCase() + rep.slice(1)
+        : rep
+    );
+  }
+
+  // Limpiar espacios antes de puntuación y asegurar espacio después
+  texto = texto
+    .replace(/\s+([.,!?;:])/g, "$1")
+    .replace(/([.,!?;:])([^\s\n.,!?;:])/g, "$1 $2");
+
+  // Separar en frases limpias con saltos de línea equilibrados para la cartulina vertical
+  const oraciones = texto
+    .split(/\n+/)
+    .flatMap((bloque) => bloque.split(/(?<=[.!?])\s+/))
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((s) => s.charAt(0).toUpperCase() + s.slice(1));
+
+  const lineas: string[] = [];
+  for (const oracion of oraciones) {
+    if (oracion.length <= 58) {
+      lineas.push(oracion);
+    } else {
+      const partes = oracion.split(/,\s+/);
+      let actual = "";
+      for (let i = 0; i < partes.length; i++) {
+        const frag = partes[i]! + (i < partes.length - 1 ? "," : "");
+        if (!actual) {
+          actual = frag;
+        } else if ((actual + " " + frag).length <= 56) {
+          actual = `${actual} ${frag}`;
+        } else {
+          lineas.push(actual.trim());
+          actual = frag;
+        }
+      }
+      if (actual.trim()) lineas.push(actual.trim());
+    }
+  }
+
+  return lineas.join("\n");
+}
+
+function generarOpcionesLocales(params: {
+  mensajeBase: string;
+  ocasion: string;
+  destinatario: string;
+  ideaBreve: string;
+}): OpcionMensajeTarjetaIa[] {
+  const nombre = params.destinatario.trim();
+  const saludo = nombre ? `${nombre},\n` : "";
+  const baseLimpio = corregirYEstructurarMensajeLocal(params.mensajeBase);
+
+  if (baseLimpio.length >= 12) {
+    return [
+      {
+        titulo: "Natural y bien estructurada",
+        texto: baseLimpio,
+      },
+      {
+        titulo: "Más cálida y emotiva",
+        texto: `${saludo}${baseLimpio}\nGracias por hacer cada momento tan especial.`,
+      },
+    ];
+  }
+
+  const oc = `${params.ocasion} ${params.ideaBreve}`.toLowerCase();
+  if (/cumple/.test(oc)) {
+    return [
+      {
+        titulo: "Cálida y alegre",
+        texto: `${saludo}¡Feliz cumpleaños!\nQue este nuevo año te regale salud,\ncalma y mil motivos para sonreír.`,
+      },
+      {
+        titulo: "Emotiva y cercana",
+        texto: `${saludo}Hoy celebro tu vida y todo lo hermoso\nque compartes con quienes te rodean.\nQue se cumplan todos tus sueños.`,
+      },
+    ];
+  }
+  if (/aniversario/.test(oc)) {
+    return [
+      {
+        titulo: "Romántica y sincera",
+        texto: `${saludo}Feliz aniversario.\nGracias por cada risa, cada abrazo\ny por caminar a mi lado cada día.`,
+      },
+      {
+        titulo: "Poética",
+        texto: `${saludo}Un año más eligiendo compartir\nmi vida contigo.\nLo mejor de mi historia eres tú.`,
+      },
+    ];
+  }
+  if (/gracia|agradec/.test(oc)) {
+    return [
+      {
+        titulo: "Sincera y directa",
+        texto: `${saludo}Muchas gracias por tu apoyo\ny por estar siempre presente.\nEste detalle lleva toda mi gratitud.`,
+      },
+      {
+        titulo: "Cálida",
+        texto: `${saludo}Hay gestos que nunca se olvidan.\nGracias de corazón por tu tiempo,\ntu cariño y tu generosidad.`,
+      },
+    ];
+  }
+  if (/perd[oó]n|reconcili/.test(oc)) {
+    return [
+      {
+        titulo: "Honesta y cercana",
+        texto: `${saludo}Lo siento de corazón.\nValoro muchísimo lo que tenemos\ny quiero hacer las cosas bien contigo.`,
+      },
+      {
+        titulo: "Dulce y conciliadora",
+        texto: `${saludo}Estas flores llevan mis disculpas\ny todo el cariño que siento por ti.\nHablemos cuando estés lista.`,
+      },
+    ];
+  }
+  if (/amig|amistad/.test(oc)) {
+    return [
+      {
+        titulo: "Cercana y alegre",
+        texto: `${saludo}Gracias por ser una amistad\ntan genuina y luminosa.\nQué suerte tenerte en mi vida.`,
+      },
+      {
+        titulo: "Especial",
+        texto: `${saludo}Un pequeño detalle para recordarte\ncuánto te aprecio y lo valiosa\nque es nuestra amistad.`,
+      },
+    ];
+  }
+  if (/mam[aá]|familia/.test(oc)) {
+    return [
+      {
+        titulo: "Tierna y agradecida",
+        texto: `${saludo}Gracias por tu amor incondicional\ny por ser siempre mi mayor refugio.\nTe quiero con todo mi corazón.`,
+      },
+      {
+        titulo: "Cálida",
+        texto: `${saludo}Cada flor lleva un abrazo enorme\ny toda la gratitud por lo mucho\nque significas para mí.`,
+      },
+    ];
+  }
+  if (/felicita|logro|gradu/.test(oc)) {
+    return [
+      {
+        titulo: "Orgullosa y alegre",
+        texto: `${saludo}¡Muchas felicidades por este gran logro!\nTu esfuerzo y dedicación hoy brillan.\nQue vengan muchos éxitos más.`,
+      },
+      {
+        titulo: "Inspiradora",
+        texto: `${saludo}Celebro contigo este paso tan merecido.\nQue cada nueva meta te encuentre\ncon la misma pasión y alegría.`,
+      },
+    ];
+  }
+
+  return [
+    {
+      titulo: "Romántica y cercana",
+      texto: `${saludo}Estas flores llevan todo mi cariño.\nPensarte siempre me regala una sonrisa\ny hace mis días más bonitos.`,
+    },
+    {
+      titulo: "Profunda y emotiva",
+      texto: `${saludo}Con todo mi amor, hoy y siempre.\nGracias por llenar mi vida de luz\ny de momentos inolvidables.`,
+    },
+  ];
+}
+
+/**
+ * Asistente IA público para redactar 2 opciones de dedicatoria, corregir ortografía,
+ * estructurar saltos de línea estéticos para cartulina y sugerir emojis acordes al mensaje.
+ */
+export async function asistirMensajeTarjetaIaAction(entrada: {
+  modo: "sugerir_opciones" | "corregir_y_estructurar";
+  mensajeBase?: string;
+  ocasion?: string;
+  destinatario?: string;
+  ideaBreve?: string;
+  negocio?: string;
+}): Promise<
+  | {
+      ok: true;
+      opciones: OpcionMensajeTarjetaIa[];
+      emojisSugeridos: string[];
+      origenIa: "gemini" | "openai" | "local";
+    }
+  | { ok: false; error: string }
+> {
+  try {
+    const modo = entrada.modo === "corregir_y_estructurar" ? "corregir_y_estructurar" : "sugerir_opciones";
+    const mensajeBase = String(entrada.mensajeBase || "").trim().slice(0, 900);
+    const ocasion = String(entrada.ocasion || "").trim().slice(0, 120);
+    const destinatario = String(entrada.destinatario || "").trim().slice(0, 100);
+    const ideaBreve = String(entrada.ideaBreve || "").trim().slice(0, 260);
+
+    if (modo === "corregir_y_estructurar" && mensajeBase.length < 3) {
+      return { ok: false, error: "Escribe primero tu mensaje para poder corregirlo y ordenarlo." };
+    }
+    if (modo === "sugerir_opciones" && !mensajeBase && !ocasion && !ideaBreve) {
+      return { ok: false, error: "Elige una ocasión o escribe una breve idea para crear tus opciones." };
+    }
+
+    const prompt =
+      modo === "corregir_y_estructurar"
+        ? `Eres un editor experto en tarjetas de floristería en español (Ecuador/Latinoamérica).
+Tu tarea es tomar el siguiente mensaje escrito por un cliente, SIN cambiar su esencia ni inventar datos que no dijo:
+1. Corrige ortografía, tildes, mayúsculas y puntuación.
+2. Estructura el mensaje en frases cortas y armoniosas separadas con saltos de línea ("\\n") para que se vea elegante y balanceado impreso en una tarjeta vertical de 11x16 cm (máximo ~35-48 caracteres por línea donde suene natural).
+3. Sugiere entre 5 y 7 emojis apropiados y de buen gusto según el tono del mensaje (NO los metas a la fuerza en el texto si el cliente no los puso; devuélvelos aparte en emojisSugeridos).
+
+Responde EXCLUSIVAMENTE un JSON válido sin markdown:
+{
+  "opciones": [
+    { "titulo": "Texto corregido y estructurado", "texto": "..." }
+  ],
+  "emojisSugeridos": ["❤️", "✨", "..."]
+}
+
+Destinatario (referencia): "${destinatario || "No especificado"}"
+Mensaje original del cliente:
+"""
+${mensajeBase}
+"""`
+        : `Eres un redactor creativo de tarjetas florales en español natural y elegante (Ecuador/Latinoamérica).
+Crea EXACTAMENTE 2 opciones distintas de dedicatoria para una tarjeta impresa de 11x16 cm:
+- Si el cliente escribió un mensaje base, respeta su intención/sentimiento y crea 2 versiones pulidas (una más cercana/natural y otra un poco más emotiva/poética).
+- Si no escribió mensaje base, crea 2 opciones genuinas para la ocasión indicada (sin sonar robótico ni cliché).
+- Ortografía y tildes impecables en español.
+- Estructura cada opción con saltos de línea ("\\n") bien pensados por frases para que luzca estético y centrado en la tarjeta.
+- Longitud ideal por opción: 3 a 5 líneas breves (máximo ~220 caracteres). No incluyas "Para:" ni firma al final.
+- Sugiere entre 5 y 7 emojis útiles y de buen gusto según el mensaje en "emojisSugeridos" (sin saturar los textos).
+
+Responde EXCLUSIVAMENTE un JSON válido sin markdown:
+{
+  "opciones": [
+    { "titulo": "Cálida y cercana", "texto": "..." },
+    { "titulo": "Emotiva y poética", "texto": "..." }
+  ],
+  "emojisSugeridos": ["❤️", "🌹", "..."]
+}
+
+Ocasión: "${ocasion || "Especial"}"
+Destinatario (referencia): "${destinatario || "No especificado"}"
+Detalle o idea extra: "${ideaBreve || "Ninguno"}"
+Mensaje base del cliente:
+"""
+${mensajeBase || "(Sin mensaje base, redactar según la ocasión)"}
+"""`;
+
+    const geminiKey = (
+      process.env.GEMINI_API_KEY ||
+      process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
+      ""
+    ).trim();
+    const openaiKey = (process.env.OPENAI_API_KEY || "").trim();
+
+    let jsonIa: Record<string, any> | null = null;
+    let origenIa: "gemini" | "openai" | "local" = "local";
+
+    if (geminiKey) {
+      for (const modelo of ["gemini-2.5-flash", "gemini-2.0-flash"]) {
+        try {
+          const resp = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${encodeURIComponent(geminiKey)}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                  temperature: modo === "corregir_y_estructurar" ? 0.15 : 0.65,
+                  responseMimeType: "application/json",
+                },
+              }),
+              signal: AbortSignal.timeout(14000),
+            }
+          );
+          if (resp.ok) {
+            const payload: any = await resp.json().catch(() => null);
+            const rawTxt = String(payload?.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
+            const matchJson = rawTxt.match(/\{[\s\S]*\}/);
+            if (matchJson) {
+              jsonIa = JSON.parse(matchJson[0]) as Record<string, any>;
+              origenIa = "gemini";
+              break;
+            }
+          }
+        } catch {
+          // Intentar siguiente modelo o proveedor
+        }
+      }
+    }
+
+    if (!jsonIa && openaiKey) {
+      try {
+        const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${openaiKey}`,
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            temperature: modo === "corregir_y_estructurar" ? 0.15 : 0.65,
+            response_format: { type: "json_object" },
+            messages: [{ role: "user", content: prompt }],
+          }),
+          signal: AbortSignal.timeout(14000),
+        });
+        if (resp.ok) {
+          const payload: any = await resp.json().catch(() => null);
+          const rawTxt = String(payload?.choices?.[0]?.message?.content || "").trim();
+          const matchJson = rawTxt.match(/\{[\s\S]*\}/);
+          if (matchJson) {
+            jsonIa = JSON.parse(matchJson[0]) as Record<string, any>;
+            origenIa = "openai";
+          }
+        }
+      } catch {
+        // Respaldo determinístico local
+      }
+    }
+
+    if (jsonIa && Array.isArray(jsonIa.opciones) && jsonIa.opciones.length > 0) {
+      const opcionesLimpias: OpcionMensajeTarjetaIa[] = jsonIa.opciones
+        .map((op: any, idx: number) => ({
+          titulo: String(op?.titulo || (idx === 0 ? "Opción 1" : "Opción 2")).trim(),
+          texto: String(op?.texto || "").replace(/\\n/g, "\n").trim(),
+        }))
+        .filter((op: OpcionMensajeTarjetaIa) => op.texto.length > 0)
+        .slice(0, modo === "corregir_y_estructurar" ? 1 : 2);
+
+      if (opcionesLimpias.length > 0) {
+        const emojisIa = Array.isArray(jsonIa.emojisSugeridos)
+          ? jsonIa.emojisSugeridos
+              .map((em: any) => String(em || "").trim())
+              .filter((em: string) => em.length > 0 && em.length <= 8)
+              .slice(0, 7)
+          : [];
+        return {
+          ok: true,
+          opciones: opcionesLimpias,
+          emojisSugeridos:
+            emojisIa.length > 0
+              ? emojisIa
+              : sugerirEmojisLocalPorContexto(opcionesLimpias[0]!.texto, ocasion),
+          origenIa,
+        };
+      }
+    }
+
+    // Respaldo determinístico garantizado (nunca falla aunque no haya API key en el entorno)
+    const opcionesFallback =
+      modo === "corregir_y_estructurar"
+        ? [
+            {
+              titulo: "Texto corregido y estructurado",
+              texto: corregirYEstructurarMensajeLocal(mensajeBase),
+            },
+          ]
+        : generarOpcionesLocales({ mensajeBase, ocasion, destinatario, ideaBreve });
+
+    return {
+      ok: true,
+      opciones: opcionesFallback,
+      emojisSugeridos: sugerirEmojisLocalPorContexto(
+        mensajeBase || opcionesFallback[0]?.texto || "",
+        ocasion || ideaBreve
+      ),
+      origenIa: "local",
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "No se pudo consultar el asistente de redacción.",
+    };
+  }
+}
+
 
 
