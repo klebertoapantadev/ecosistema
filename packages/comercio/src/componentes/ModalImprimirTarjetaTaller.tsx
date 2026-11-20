@@ -9,14 +9,18 @@ import {
   Copy,
   Download,
   ExternalLink,
+  FileText,
   History,
   Loader2,
   Lock,
   MessageCircle,
+  Palette,
   Printer,
+  QrCode,
   Save,
   Share2,
   Sliders,
+  SlidersHorizontal,
   Sparkles,
   Upload,
   X,
@@ -57,6 +61,18 @@ function limpiarCaracteresWinAnsi(texto: string): string {
     .replace(/[“”]/g, '"')
     .replace(/[‘’]/g, "'")
     .replace(/—/g, "-");
+}
+
+function formatearFechaSegura(valor: unknown): string {
+  if (valor === null || valor === undefined || valor === "") return "";
+  const fecha = new Date(String(valor));
+  if (Number.isNaN(fecha.getTime())) return "";
+  return fecha.toLocaleString("es-EC", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function envolverLineasPdf(
@@ -195,8 +211,31 @@ export function ModalImprimirTarjetaTaller({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [metaLocal, setMetaLocal] = useState<Record<string, any>>(orden?.tarjetaMetadata || {});
+  const [esMovil, setEsMovil] = useState<boolean>(() =>
+    typeof window !== "undefined" ? window.matchMedia("(max-width: 767px)").matches : false
+  );
+  const [tabMovil, setTabMovil] = useState<"diseno" | "texto" | "ajustes">("diseno");
+  const [alertaClienteAbierta, setAlertaClienteAbierta] = useState<boolean>(false);
   const inputAudioRef = useRef<HTMLInputElement | null>(null);
   const ultimoOrdenIdInicializadoRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia("(max-width: 767px)");
+    const actualizar = () => setEsMovil(mql.matches);
+    actualizar();
+    mql.addEventListener("change", actualizar);
+    return () => mql.removeEventListener("change", actualizar);
+  }, []);
+
+  useEffect(() => {
+    if (!abierto || typeof window === "undefined") return;
+    const onKeyDown = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") onCerrar();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [abierto, onCerrar]);
 
   useEffect(() => {
     if (!abierto || !orden) {
@@ -242,6 +281,8 @@ export function ModalImprimirTarjetaTaller({
     setMetaLocal(orden.tarjetaMetadata || {});
     setAvisoOk(null);
     setErrorMsg(null);
+    setTabMovil("diseno");
+    setAlertaClienteAbierta(false);
   }, [abierto, orden, formatoInicial]);
 
   useEffect(() => {
@@ -919,54 +960,185 @@ export function ModalImprimirTarjetaTaller({
       </div>
 
       {/* MODAL INTERACTIVO */}
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          backgroundColor: "rgba(15, 23, 42, 0.65)",
-          backdropFilter: "blur(4px)",
-          zIndex: 99999,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          padding: "14px",
-          fontFamily: "system-ui, -apple-system, sans-serif",
-        }}
-        onClick={onCerrar}
-      >
+      <style>{`
+        .eco-modal-tarjeta-backdrop {
+          position: fixed;
+          inset: 0;
+          background-color: rgba(24, 21, 18, 0.62);
+          backdrop-filter: blur(4px);
+          z-index: 99999;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 14px;
+          font-family: system-ui, -apple-system, sans-serif;
+          box-sizing: border-box;
+        }
+        .eco-modal-tarjeta-panel {
+          background-color: #FFFFFF;
+          border-radius: 16px;
+          width: 100%;
+          max-width: 1040px;
+          max-height: 94dvh;
+          display: flex;
+          flex-direction: column;
+          box-shadow: 0 25px 50px -12px rgba(24, 21, 18, 0.28);
+          overflow: hidden;
+          border: 1px solid #E6E2DA;
+        }
+        .eco-modal-tarjeta-cuerpo {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(min(340px, 100%), 1fr));
+          gap: 18px;
+          padding: 16px 20px;
+          overflow-y: auto;
+          overflow-x: hidden;
+          flex: 1;
+          min-height: 0;
+        }
+        .eco-modal-tarjeta-tabs-movil {
+          display: none;
+        }
+        .eco-modal-tarjeta-footer {
+          padding: 12px 20px;
+          border-top: 1px solid #E6E2DA;
+          background: #F8F7F4;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+          flex-shrink: 0;
+        }
+        .eco-modal-tarjeta-footer-der {
+          display: flex;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+        .eco-modal-tarjeta-calibracion {
+          background: #F8F7F4;
+          padding: 9px 11px;
+          border-radius: 8px;
+          border: 1px solid #E6E2DA;
+          display: grid;
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+          gap: 8px;
+        }
+        @media (max-width: 767px) {
+          .eco-modal-tarjeta-backdrop {
+            padding: 0;
+            align-items: flex-end;
+          }
+          .eco-modal-tarjeta-panel {
+            height: 100dvh;
+            max-height: 100dvh;
+            border-radius: 0;
+            border: none;
+          }
+          .eco-modal-tarjeta-ocultar-movil {
+            display: none !important;
+          }
+          .eco-modal-tarjeta-tabs-movil {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 6px;
+            padding: 7px 12px;
+            background: #F8F7F4;
+            border-bottom: 1px solid #E6E2DA;
+            flex-shrink: 0;
+          }
+          .eco-modal-tarjeta-cuerpo {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 10px 12px 14px;
+          }
+          .eco-modal-tarjeta-footer {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+          }
+          .eco-modal-tarjeta-footer-der {
+            display: contents;
+          }
+          .eco-modal-tarjeta-footer-btn {
+            width: 100% !important;
+            min-height: 44px !important;
+            padding: 0 !important;
+            justify-content: center !important;
+          }
+          .eco-modal-tarjeta-txt-btn {
+            display: none !important;
+          }
+          .eco-modal-tarjeta-btn-ico-movil {
+            min-width: 36px !important;
+            min-height: 36px !important;
+            padding: 0 8px !important;
+            justify-content: center !important;
+          }
+          .eco-modal-tarjeta-calibracion {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+          }
+        }
+      `}</style>
+
+      <div className="eco-modal-tarjeta-backdrop" onClick={onCerrar}>
         <div
-          style={{
-            backgroundColor: "#FFFFFF",
-            borderRadius: "16px",
-            width: "100%",
-            maxWidth: "1040px",
-            maxHeight: "94vh",
-            display: "flex",
-            flexDirection: "column",
-            boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-            overflow: "hidden",
-          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${esCondolencias ? "Tarjeta de Condolencias" : "Tarjeta de Dedicatoria"} ${orden.codigo}`}
+          className="eco-modal-tarjeta-panel"
           onClick={(e) => e.stopPropagation()}
         >
           {/* ENCABEZADO */}
           <div
             style={{
-              padding: "13px 20px",
+              padding: esMovil ? "8px 12px" : "13px 20px",
               borderBottom: "1px solid #E6E2DA",
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
               background: "#F8F7F4",
-              gap: "10px",
+              gap: "8px",
+              flexShrink: 0,
             }}
           >
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
-                <span style={{ fontSize: "0.94rem" }}>{esCondolencias ? "🕊️" : "💌"}</span>
-                <h2 style={{ fontSize: "1.03rem", fontWeight: 700, color: "#1F1C19", margin: 0 }}>
-                  {esCondolencias ? "Tarjeta de Condolencias" : "Tarjeta de Dedicatoria"} — {orden.codigo}
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "7px", flexWrap: esMovil ? "nowrap" : "wrap" }}>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    width: "26px",
+                    height: "26px",
+                    borderRadius: "7px",
+                    background: esCondolencias ? "#EFECE6" : "#F2F6F3",
+                    color: esCondolencias ? "#3A3530" : "#2F4737",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  {soloQrEfectivo ? <QrCode size={14} /> : <FileText size={14} />}
+                </span>
+                <h2
+                  style={{
+                    fontSize: esMovil ? "0.9rem" : "1.03rem",
+                    fontWeight: 700,
+                    color: "#1F1C19",
+                    margin: 0,
+                    whiteSpace: esMovil ? "nowrap" : "normal",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                >
+                  {esMovil
+                    ? orden.codigo
+                    : `${esCondolencias ? "Tarjeta de Condolencias" : "Tarjeta de Dedicatoria"} — ${orden.codigo}`}
                 </h2>
                 <span
+                  className="eco-modal-tarjeta-ocultar-movil"
                   style={{
                     fontSize: "0.7rem",
                     fontWeight: 700,
@@ -979,917 +1151,1046 @@ export function ModalImprimirTarjetaTaller({
                   {esCondolencias ? "Horizontal 16,8 × 11,3 cm" : "Vertical 11,3 × 16,8 cm"}
                 </span>
               </div>
-              <p style={{ margin: "2px 0 0 0", fontSize: "0.75rem", color: "#847D74" }}>
+              <p
+                className="eco-modal-tarjeta-ocultar-movil"
+                style={{ margin: "2px 0 0 0", fontSize: "0.75rem", color: "#847D74" }}
+              >
                 {esCondolencias
                   ? "Diseñador visual para impresión en cartulina horizontal (sin QR ni música)."
                   : "Elige imprimir el mensaje (+ imagen opcional) o únicamente el QR para la tarjeta digital."}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={onCerrar}
-              title="Cerrar ventana"
-              aria-label="Cerrar"
-              style={{
-                border: "none",
-                background: "#F4F2EE",
-                cursor: "pointer",
-                color: "#57524C",
-                padding: "6px",
-                borderRadius: "8px",
-              }}
-            >
-              <X size={18} />
-            </button>
+
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+              {/* En móvil: indicador compacto solo ícono si el cliente editó la tarjeta (toca para ver detalle) */}
+              {esMovil && fueEditadaPorCliente && (
+                <button
+                  type="button"
+                  onClick={() => setAlertaClienteAbierta((v) => !v)}
+                  title={(() => {
+                    const f = formatearFechaSegura(metaLocal?.ultima_edicion_cliente_en);
+                    return `Editada por el cliente${f ? ` (${f})` : ""}. Toca para ver aviso.`;
+                  })()}
+                  aria-label="Aviso: tarjeta modificada por el cliente"
+                  aria-expanded={alertaClienteAbierta}
+                  style={{
+                    width: "34px",
+                    height: "34px",
+                    borderRadius: "8px",
+                    border: "1px solid #C8A56A",
+                    background: alertaClienteAbierta ? "#F4E8D1" : "#FAF6EE",
+                    color: "#8F6A2E",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                  }}
+                >
+                  <AlertTriangle size={16} />
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={onCerrar}
+                title="Cerrar ventana"
+                aria-label="Cerrar"
+                style={{
+                  border: "1px solid #E6E2DA",
+                  background: "#FFFFFF",
+                  cursor: "pointer",
+                  color: "#57524C",
+                  width: esMovil ? "34px" : "32px",
+                  height: esMovil ? "34px" : "32px",
+                  borderRadius: "8px",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <X size={17} />
+              </button>
+            </div>
           </div>
 
-          {/* ALERTA PROMINENTE SI EL CLIENTE MODIFICÓ LA TARJETA */}
-          {fueEditadaPorCliente && (
+          {/* ALERTA SI EL CLIENTE MODIFICÓ LA TARJETA (siempre visible en desktop; colapsable por ícono en móvil) */}
+          {fueEditadaPorCliente && (!esMovil || alertaClienteAbierta) && (
             <div
               style={{
-                padding: "10px 20px",
+                padding: esMovil ? "7px 12px" : "9px 20px",
                 background: "#FAF6EE",
-                borderBottom: "1px solid #8F6A2E",
+                borderBottom: "1px solid #D9C39A",
                 color: "#745622",
                 display: "flex",
                 alignItems: "center",
-                gap: "9px",
-                fontSize: "0.78rem",
+                gap: "8px",
+                fontSize: esMovil ? "0.73rem" : "0.77rem",
+                flexShrink: 0,
               }}
             >
-              <AlertTriangle size={17} style={{ flexShrink: 0, color: "#8F6A2E" }} />
-              <div>
-                <strong>¡Atención! Tarjeta modificada por el cliente</strong>
-                {metaLocal?.ultima_edicion_cliente_en
-                  ? ` (${new Date(metaLocal.ultima_edicion_cliente_en).toLocaleString("es-EC")})`
-                  : ""}
-                : revisa el diseño final antes de imprimir y evita realizar cambios sin confirmar con el cliente.
+              <AlertTriangle size={15} style={{ flexShrink: 0, color: "#8F6A2E" }} />
+              <div style={{ lineHeight: 1.35 }}>
+                <strong>Editada por el cliente</strong>
+                {(() => {
+                  const f = formatearFechaSegura(metaLocal?.ultima_edicion_cliente_en);
+                  return f ? ` (${f})` : "";
+                })()}
+                {esMovil
+                  ? ": revisa antes de imprimir."
+                  : ": revisa el diseño final antes de imprimir y evita realizar cambios sin confirmar con el cliente."}
               </div>
             </div>
           )}
 
-          {/* CUERPO: 2 COLUMNAS */}
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))",
-              gap: "18px",
-              padding: "16px 20px",
-              overflowY: "auto",
-            }}
-          >
-            {/* COLUMNA IZQUIERDA: DISEÑADOR VISUAL INTERACTIVO + TRAZABILIDAD + ENLACES */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "11px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#57524C" }}>
-                  Diseñador de tarjeta ({anchoMm} × {altoMm} mm)
-                </span>
-                <span
+          {/* BARRA DE PESTAÑAS SOLO ÍCONOS EN MÓVIL (Diseño | Texto | Ajustes y Enlaces) */}
+          <div className="eco-modal-tarjeta-tabs-movil" role="tablist" aria-label="Secciones del editor de tarjeta">
+            {(
+              [
+                { id: "diseno", icon: Palette, label: "Diseño visual de tarjeta" },
+                { id: "texto", icon: FileText, label: "Texto, destinatario y música" },
+                { id: "ajustes", icon: SlidersHorizontal, label: "Formato, enlaces y calibración" },
+              ] as const
+            ).map(({ id, icon: Icon, label }) => {
+              const activa = tabMovil === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  role="tab"
+                  aria-selected={activa}
+                  title={label}
+                  aria-label={label}
+                  onClick={() => setTabMovil(id)}
                   style={{
-                    fontSize: "0.69rem",
-                    color: soloQrEfectivo ? "#3A3530" : "#2B4A36",
-                    background: soloQrEfectivo ? "#EFECE6" : "#F2F6F3",
-                    padding: "2px 8px",
-                    borderRadius: "6px",
-                    fontWeight: 700,
+                    minHeight: "38px",
+                    borderRadius: "9px",
+                    border: activa ? "1.5px solid #221E1B" : "1px solid #E6E2DA",
+                    background: activa ? "#221E1B" : "#FFFFFF",
+                    color: activa ? "#FFFFFF" : "#57524C",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                    position: "relative",
                   }}
                 >
-                  {soloQrEfectivo ? "📱 Solo QR (Sin texto)" : "📝 Mensaje Impreso (Sin QR)"}
-                </span>
-              </div>
-
-              <LienzoDisenadorTarjeta
-                negocio={negNorm}
-                esCondolencias={esCondolencias}
-                soloQr={soloQrEfectivo}
-                mensaje={mensajeEditable}
-                firma={deEditable}
-                diseno={disenoNorm}
-                onCambiarDiseno={setDiseno}
-                qrDataUrl={qrDataUrl}
-                anchoMm={anchoMm}
-                altoMm={altoMm}
-                onError={(msg) => setErrorMsg(msg)}
-              />
-
-              {/* TRAZABILIDAD */}
-              <div
-                style={{
-                  background: "#F8F7F4",
-                  border: "1px solid #E6E2DA",
-                  borderRadius: "10px",
-                  padding: "9px 12px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "5px",
-                  fontSize: "0.74rem",
-                }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <strong style={{ color: "#57524C" }}>Estado y trazabilidad:</strong>
-                  <button
-                    type="button"
-                    onClick={() => setMostrarHistorial(!mostrarHistorial)}
-                    style={{
-                      border: "none",
-                      background: "transparent",
-                      color: "#221E1B",
-                      cursor: "pointer",
-                      fontSize: "0.72rem",
-                      fontWeight: 700,
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "3px",
-                    }}
-                  >
-                    <History size={12} />
-                    <span>{mostrarHistorial ? "Ocultar" : `Historial (${historial.length})`}</span>
-                  </button>
-                </div>
-
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
-                  <span
-                    style={{
-                      background: fueEditadaPorCliente
-                        ? "#F2F6F3"
-                        : fueEditadaPorStaff
-                          ? "#EFECE6"
-                          : "#F4F2EE",
-                      color: fueEditadaPorCliente
-                        ? "#2B4A36"
-                        : fueEditadaPorStaff
-                          ? "#3A3530"
-                          : "#57524C",
-                      padding: "2px 7px",
-                      borderRadius: "6px",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {fueEditadaPorCliente
-                      ? "✨ Editada por Cliente"
-                      : fueEditadaPorStaff
-                        ? `✏️ Editada (${metaLocal?.ultimo_editor_nombre || "Staff"})`
-                        : "🤖 Creada automática"}
-                  </span>
-                  {!esCondolencias && (
+                  <Icon size={17} />
+                  {id === "texto" && !mensajeEditable.trim() && (
                     <span
+                      aria-hidden="true"
                       style={{
-                        background: vistasCliente > 0 ? "#EFECE6" : "#F4F2EE",
-                        color: vistasCliente > 0 ? "#3A3530" : "#57524C",
-                        padding: "2px 7px",
-                        borderRadius: "6px",
-                        fontWeight: 600,
+                        position: "absolute",
+                        top: "7px",
+                        right: "calc(50% - 14px)",
+                        width: "6px",
+                        height: "6px",
+                        borderRadius: "999px",
+                        background: activa ? "#FAF6EE" : "#8F6A2E",
                       }}
-                    >
-                      👀 {vistasCliente > 0 ? `Vista ${vistasCliente}x` : "Sin abrir"}
-                    </span>
+                    />
                   )}
-                  <span
-                    style={{
-                      background: conteoImpresiones > 0 ? "#FAF6EE" : "#F4F2EE",
-                      color: conteoImpresiones > 0 ? "#745622" : "#57524C",
-                      padding: "2px 7px",
-                      borderRadius: "6px",
-                      fontWeight: 600,
-                    }}
-                  >
-                    🖨️{" "}
-                    {conteoImpresiones > 0
-                      ? `Impresa ${conteoImpresiones}x (${ultimoImpresoPor || "Taller"})`
-                      : "No impresa"}
-                  </span>
-                </div>
+                </button>
+              );
+            })}
+          </div>
 
-                {mostrarHistorial && (
-                  <div
-                    style={{
-                      marginTop: "4px",
-                      paddingTop: "5px",
-                      borderTop: "1px dashed #D5CFC4",
-                      maxHeight: "80px",
-                      overflowY: "auto",
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "3px",
-                    }}
-                  >
-                    {historial.length === 0 ? (
-                      <span style={{ color: "#847D74" }}>Sin ediciones posteriores.</span>
-                    ) : (
-                      historial.map((h: any, i: number) => (
-                        <div key={i} style={{ fontSize: "0.7rem", color: "#57524C" }}>
-                          • <strong>{h.autor || "Usuario"}</strong> ({h.rol || "STAFF"}):{" "}
-                          <span style={{ color: "#847D74" }}>
-                            {h.fecha ? new Date(h.fecha).toLocaleString("es-EC") : ""}
-                          </span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* ENLACES: EDICIÓN SIEMPRE DISPONIBLE (SIN LOGIN); VISTA DIGITAL QR SOLO EN DEDICATORIA */}
-              <div
-                style={{
-                  background: "#F8F7F4",
-                  border: "1px solid #D5CFC4",
-                  borderRadius: "10px",
-                  padding: "9px 11px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "8px",
-                }}
-              >
-                {urlEdicionTarjeta && (
-                  <div>
-                    <span
-                      style={{
-                        display: "block",
-                        fontSize: "0.72rem",
-                        fontWeight: 700,
-                        color: "#2F4737",
-                        marginBottom: "3px",
-                      }}
+          {/* CUERPO: 2 COLUMNAS EN DESKTOP / VISTA POR PESTAÑA LIMPIA EN MÓVIL */}
+          <div className="eco-modal-tarjeta-cuerpo">
+            {/* COLUMNA IZQUIERDA (Desktop: todo | Móvil: Lienzo en tab "diseno", Trazabilidad+Enlaces en tab "ajustes") */}
+            {(!esMovil || tabMovil === "diseno" || tabMovil === "ajustes") && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "11px", minWidth: 0 }}>
+                {(!esMovil || tabMovil === "diseno") && (
+                  <>
+                    <div
+                      className="eco-modal-tarjeta-ocultar-movil"
+                      style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" }}
                     >
-                      ✏️ Enlace para Editar Tarjeta (Cliente / Diseñador — sin login):
-                    </span>
-                    <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
-                      <input
-                        type="text"
-                        readOnly
-                        value={urlEdicionTarjeta}
+                      <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#57524C" }}>
+                        Diseñador de tarjeta ({anchoMm} × {altoMm} mm)
+                      </span>
+                      <span
                         style={{
-                          flex: 1,
-                          minWidth: "140px",
-                          padding: "5px 7px",
-                          fontSize: "0.7rem",
-                          color: "#57524C",
-                          background: "#FFFFFF",
-                          border: "1px solid #D5CFC4",
+                          fontSize: "0.69rem",
+                          color: soloQrEfectivo ? "#3A3530" : "#2B4A36",
+                          background: soloQrEfectivo ? "#EFECE6" : "#F2F6F3",
+                          padding: "2px 8px",
                           borderRadius: "6px",
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => handleCopiar(urlEdicionTarjeta, "edicion")}
-                        title="Copiar enlace de edición para el comprador"
-                        aria-label="Copiar Enlace Edición"
-                        style={{
-                          padding: "5px 9px",
-                          background: copiadoEdicion ? "#2F4737" : "#2F4737",
-                          color: "#FFFFFF",
-                          border: "none",
-                          borderRadius: "6px",
-                          fontSize: "0.7rem",
                           fontWeight: 700,
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px",
                         }}
                       >
-                        {copiadoEdicion ? <Check size={11} /> : <Copy size={11} />}
-                        <span>{copiadoEdicion ? "Copiado" : "Copiar"}</span>
-                      </button>
-                      {orden.clienteTelefono && (
-                        <a
-                          href={`https://wa.me/${orden.clienteTelefono.replace(/\D+/g, "")}?text=${encodeURIComponent(
-                            `Hola ${deEditable || orden.clienteSolicita} 🌸, aquí puedes revisar o diseñar el mensaje de tu tarjeta del pedido ${orden.codigo} antes de impresión: ${urlEdicionTarjeta}`
-                          )}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="Enviar enlace de edición por WhatsApp al comprador"
-                          aria-label="WhatsApp Edición"
+                        {soloQrEfectivo ? "Solo QR (Sin texto)" : "Mensaje Impreso (Sin QR)"}
+                      </span>
+                    </div>
+
+                    <LienzoDisenadorTarjeta
+                      negocio={negNorm}
+                      esCondolencias={esCondolencias}
+                      soloQr={soloQrEfectivo}
+                      mensaje={mensajeEditable}
+                      firma={deEditable}
+                      diseno={disenoNorm}
+                      onCambiarDiseno={setDiseno}
+                      qrDataUrl={qrDataUrl}
+                      anchoMm={anchoMm}
+                      altoMm={altoMm}
+                      onError={(msg) => setErrorMsg(msg)}
+                    />
+                  </>
+                )}
+
+                {(!esMovil || tabMovil === "ajustes") && (
+                  <>
+                    {/* TRAZABILIDAD */}
+                    <div
+                      style={{
+                        background: "#F8F7F4",
+                        border: "1px solid #E6E2DA",
+                        borderRadius: "10px",
+                        padding: "9px 12px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "6px",
+                        fontSize: "0.74rem",
+                        minWidth: 0,
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <strong style={{ color: "#57524C" }}>Estado y trazabilidad</strong>
+                        <button
+                          type="button"
+                          onClick={() => setMostrarHistorial(!mostrarHistorial)}
+                          title={mostrarHistorial ? "Ocultar historial" : `Ver historial (${historial.length})`}
+                          aria-label={mostrarHistorial ? "Ocultar historial" : `Historial (${historial.length})`}
                           style={{
-                            padding: "5px 8px",
-                            background: "#2F4737",
-                            color: "#FFFFFF",
-                            borderRadius: "6px",
-                            fontSize: "0.7rem",
+                            border: "none",
+                            background: "transparent",
+                            color: "#221E1B",
+                            cursor: "pointer",
+                            fontSize: "0.72rem",
                             fontWeight: 700,
-                            textDecoration: "none",
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "4px",
                           }}
                         >
-                          <MessageCircle size={11} />
-                          <span>WhatsApp</span>
-                        </a>
+                          <History size={13} />
+                          <span>{mostrarHistorial ? "Ocultar" : `(${historial.length})`}</span>
+                        </button>
+                      </div>
+
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "5px" }}>
+                        <span
+                          style={{
+                            background: fueEditadaPorCliente
+                              ? "#F2F6F3"
+                              : fueEditadaPorStaff
+                                ? "#EFECE6"
+                                : "#F4F2EE",
+                            color: fueEditadaPorCliente
+                              ? "#2B4A36"
+                              : fueEditadaPorStaff
+                                ? "#3A3530"
+                                : "#57524C",
+                            padding: "2px 7px",
+                            borderRadius: "6px",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {fueEditadaPorCliente
+                            ? "Editada cliente"
+                            : fueEditadaPorStaff
+                              ? `Editada (${metaLocal?.ultimo_editor_nombre || "Staff"})`
+                              : "Automática"}
+                        </span>
+                        {!esCondolencias && (
+                          <span
+                            style={{
+                              background: vistasCliente > 0 ? "#EFECE6" : "#F4F2EE",
+                              color: vistasCliente > 0 ? "#3A3530" : "#57524C",
+                              padding: "2px 7px",
+                              borderRadius: "6px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {vistasCliente > 0 ? `Vista ${vistasCliente}x` : "Sin abrir"}
+                          </span>
+                        )}
+                        <span
+                          style={{
+                            background: conteoImpresiones > 0 ? "#FAF6EE" : "#F4F2EE",
+                            color: conteoImpresiones > 0 ? "#745622" : "#57524C",
+                            padding: "2px 7px",
+                            borderRadius: "6px",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {conteoImpresiones > 0
+                            ? `Impresa ${conteoImpresiones}x (${ultimoImpresoPor || "Taller"})`
+                            : "No impresa"}
+                        </span>
+                      </div>
+
+                      {mostrarHistorial && (
+                        <div
+                          style={{
+                            marginTop: "4px",
+                            paddingTop: "5px",
+                            borderTop: "1px dashed #D5CFC4",
+                            maxHeight: "88px",
+                            overflowY: "auto",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "3px",
+                          }}
+                        >
+                          {historial.length === 0 ? (
+                            <span style={{ color: "#847D74" }}>Sin ediciones posteriores.</span>
+                          ) : (
+                            historial.map((h: any, i: number) => {
+                              const fechaFmt = formatearFechaSegura(h.fecha);
+                              return (
+                                <div key={i} style={{ fontSize: "0.7rem", color: "#57524C" }}>
+                                  • <strong>{h.autor || "Usuario"}</strong> ({h.rol || "STAFF"})
+                                  {fechaFmt ? (
+                                    <span style={{ color: "#847D74" }}> · {fechaFmt}</span>
+                                  ) : null}
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
                       )}
                     </div>
-                  </div>
-                )}
 
-                {!esCondolencias && urlSoloVistaDigital && (
-                  <div>
-                    <span
+                    {/* ENLACES: EDICIÓN SIEMPRE DISPONIBLE (SIN LOGIN); VISTA DIGITAL QR SOLO EN DEDICATORIA */}
+                    <div
                       style={{
-                        display: "block",
-                        fontSize: "0.72rem",
-                        fontWeight: 700,
-                        color: "#3A3530",
-                        marginBottom: "3px",
+                        background: "#F8F7F4",
+                        border: "1px solid #E6E2DA",
+                        borderRadius: "10px",
+                        padding: "9px 11px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "8px",
+                        minWidth: 0,
                       }}
                     >
-                      👁️ Tarjeta Digital Solo Lectura (URL del QR — sin login):
-                    </span>
-                    <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "wrap" }}>
-                      <input
-                        type="text"
-                        readOnly
-                        value={urlSoloVistaDigital}
+                      {urlEdicionTarjeta && (
+                        <div style={{ minWidth: 0 }}>
+                          <span
+                            style={{
+                              display: "block",
+                              fontSize: "0.72rem",
+                              fontWeight: 700,
+                              color: "#2F4737",
+                              marginBottom: "4px",
+                            }}
+                          >
+                            {esMovil
+                              ? "Enlace edición (cliente)"
+                              : "Enlace para Editar Tarjeta (Cliente / Diseñador — sin login):"}
+                          </span>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
+                            <input
+                              type="text"
+                              readOnly
+                              value={urlEdicionTarjeta}
+                              aria-label="Enlace para editar tarjeta"
+                              style={{
+                                flex: 1,
+                                minWidth: 0,
+                                padding: "6px 8px",
+                                fontSize: "0.72rem",
+                                color: "#57524C",
+                                background: "#FFFFFF",
+                                border: "1px solid #D5CFC4",
+                                borderRadius: "7px",
+                              }}
+                            />
+                            <button
+                              type="button"
+                              className="eco-modal-tarjeta-btn-ico-movil"
+                              onClick={() => handleCopiar(urlEdicionTarjeta, "edicion")}
+                              title="Copiar enlace de edición para el comprador"
+                              aria-label="Copiar enlace de edición"
+                              style={{
+                                padding: "6px 10px",
+                                background: "#2F4737",
+                                color: "#FFFFFF",
+                                border: "none",
+                                borderRadius: "7px",
+                                fontSize: "0.7rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                flexShrink: 0,
+                              }}
+                            >
+                              {copiadoEdicion ? <Check size={14} /> : <Copy size={14} />}
+                              <span className="eco-modal-tarjeta-txt-btn">
+                                {copiadoEdicion ? "Copiado" : "Copiar"}
+                              </span>
+                            </button>
+                            {orden.clienteTelefono && (
+                              <a
+                                className="eco-modal-tarjeta-btn-ico-movil"
+                                href={`https://wa.me/${orden.clienteTelefono.replace(/\D+/g, "")}?text=${encodeURIComponent(
+                                  `Hola ${deEditable || orden.clienteSolicita} 🌸, aquí puedes revisar o diseñar el mensaje de tu tarjeta del pedido ${orden.codigo} antes de impresión: ${urlEdicionTarjeta}`
+                                )}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                title="Enviar enlace de edición por WhatsApp al comprador"
+                                aria-label="Enviar enlace por WhatsApp"
+                                style={{
+                                  padding: "6px 9px",
+                                  background: "#2F4737",
+                                  color: "#FFFFFF",
+                                  borderRadius: "7px",
+                                  fontSize: "0.7rem",
+                                  fontWeight: 700,
+                                  textDecoration: "none",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "4px",
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <MessageCircle size={14} />
+                                <span className="eco-modal-tarjeta-txt-btn">WhatsApp</span>
+                              </a>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {!esCondolencias && urlSoloVistaDigital && (
+                        <div style={{ minWidth: 0 }}>
+                          <span
+                            style={{
+                              display: "block",
+                              fontSize: "0.72rem",
+                              fontWeight: 700,
+                              color: "#3A3530",
+                              marginBottom: "4px",
+                            }}
+                          >
+                            {esMovil
+                              ? "Tarjeta digital (QR)"
+                              : "Tarjeta Digital Solo Lectura (URL del QR — sin login):"}
+                          </span>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
+                            <input
+                              type="text"
+                              readOnly
+                              value={urlSoloVistaDigital}
+                              aria-label="URL de tarjeta digital"
+                              style={{
+                                flex: 1,
+                                minWidth: 0,
+                                padding: "6px 8px",
+                                fontSize: "0.72rem",
+                                color: "#57524C",
+                                background: "#FFFFFF",
+                                border: "1px solid #D5CFC4",
+                                borderRadius: "7px",
+                              }}
+                            />
+                            <button
+                              type="button"
+                              className="eco-modal-tarjeta-btn-ico-movil"
+                              onClick={() => handleCopiar(urlSoloVistaDigital, "vista")}
+                              title="Copiar enlace de visualización de la tarjeta digital"
+                              aria-label="Copiar enlace digital"
+                              style={{
+                                padding: "6px 10px",
+                                background: copiadoVista ? "#2F4737" : "#221E1B",
+                                color: "#FFFFFF",
+                                border: "none",
+                                borderRadius: "7px",
+                                fontSize: "0.7rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                flexShrink: 0,
+                              }}
+                            >
+                              {copiadoVista ? <Check size={14} /> : <Copy size={14} />}
+                              <span className="eco-modal-tarjeta-txt-btn">
+                                {copiadoVista ? "Copiado" : "Copiar"}
+                              </span>
+                            </button>
+                            <a
+                              className="eco-modal-tarjeta-btn-ico-movil"
+                              href={urlSoloVistaDigital}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              title="Abrir vista digital de solo lectura"
+                              aria-label="Abrir tarjeta digital"
+                              style={{
+                                padding: "6px 9px",
+                                background: "#FFFFFF",
+                                border: "1px solid #D5CFC4",
+                                color: "#1F1C19",
+                                borderRadius: "7px",
+                                fontSize: "0.7rem",
+                                fontWeight: 700,
+                                textDecoration: "none",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                flexShrink: 0,
+                              }}
+                            >
+                              <ExternalLink size={14} />
+                              <span className="eco-modal-tarjeta-txt-btn">Ver</span>
+                            </a>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* COLUMNA DERECHA (Desktop: todo | Móvil: Texto+Música en tab "texto", Formato+Modo+Calibración en tab "ajustes") */}
+            {(!esMovil || tabMovil === "texto" || tabMovil === "ajustes") && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px", minWidth: 0 }}>
+                {(!esMovil || tabMovil === "ajustes") && (
+                  <>
+                    {/* 1. TIPO DE TARJETA Y ORIENTACIÓN */}
+                    <div>
+                      <label
                         style={{
-                          flex: 1,
-                          minWidth: "140px",
-                          padding: "5px 7px",
-                          fontSize: "0.7rem",
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
                           color: "#57524C",
-                          background: "#FFFFFF",
-                          border: "1px solid #D5CFC4",
-                          borderRadius: "6px",
+                          display: "block",
+                          marginBottom: "4px",
+                        }}
+                      >
+                        {esMovil ? "Formato físico" : "Tipo de pedido y orientación física:"}
+                      </label>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                        <button
+                          type="button"
+                          onClick={() => cambiarFormatoTarjeta("DIPTICO")}
+                          style={{
+                            padding: "8px 10px",
+                            borderRadius: "8px",
+                            border: !esCondolencias ? "2px solid #221E1B" : "1px solid #D5CFC4",
+                            background: !esCondolencias ? "#F4F2EE" : "#FFFFFF",
+                            color: !esCondolencias ? "#1F1C19" : "#57524C",
+                            fontWeight: 700,
+                            fontSize: "0.77rem",
+                            cursor: "pointer",
+                            textAlign: "left",
+                          }}
+                        >
+                          Dedicatoria (Vertical)
+                          <span
+                            className="eco-modal-tarjeta-ocultar-movil"
+                            style={{ display: "block", fontSize: "0.66rem", fontWeight: 400, color: "#847D74" }}
+                          >
+                            11,3 × 16,8 cm · Se dobla
+                          </span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => cambiarFormatoTarjeta("CONDOLENCIAS_PLANA")}
+                          style={{
+                            padding: "8px 10px",
+                            borderRadius: "8px",
+                            border: esCondolencias ? "2px solid #221E1B" : "1px solid #D5CFC4",
+                            background: esCondolencias ? "#F4F2EE" : "#FFFFFF",
+                            color: esCondolencias ? "#1F1C19" : "#57524C",
+                            fontWeight: 700,
+                            fontSize: "0.77rem",
+                            cursor: "pointer",
+                            textAlign: "left",
+                          }}
+                        >
+                          Condolencias (Horiz.)
+                          <span
+                            className="eco-modal-tarjeta-ocultar-movil"
+                            style={{ display: "block", fontSize: "0.66rem", fontWeight: 400, color: "#847D74" }}
+                          >
+                            16,8 × 11,3 cm · Sin QR ni música
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* 2. MODO DE IMPRESIÓN MUTUAMENTE EXCLUYENTE (SOLO DEDICATORIA: MENSAJE O QR, NUNCA AMBOS) */}
+                    {!esCondolencias && (
+                      <div>
+                        <label
+                          style={{
+                            fontSize: "0.74rem",
+                            fontWeight: 700,
+                            color: "#57524C",
+                            display: "block",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          {esMovil ? "Modo de impresión" : "¿Qué se imprime en la cartulina? (Mutuamente excluyente):"}
+                        </label>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                          <button
+                            type="button"
+                            onClick={() => setConfidencialSoloQr(false)}
+                            style={{
+                              padding: "8px 10px",
+                              borderRadius: "8px",
+                              border: !soloQrEfectivo ? "2px solid #2F4737" : "1px solid #D5CFC4",
+                              background: !soloQrEfectivo ? "#F2F6F3" : "#FFFFFF",
+                              color: !soloQrEfectivo ? "#2F4737" : "#57524C",
+                              fontWeight: 700,
+                              fontSize: "0.76rem",
+                              cursor: "pointer",
+                              textAlign: "left",
+                            }}
+                          >
+                            Imprimir Mensaje
+                            <span
+                              className="eco-modal-tarjeta-ocultar-movil"
+                              style={{ display: "block", fontSize: "0.65rem", fontWeight: 400, color: "#847D74" }}
+                            >
+                              Texto + imagen opcional (sin QR)
+                            </span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setConfidencialSoloQr(true)}
+                            style={{
+                              padding: "8px 10px",
+                              borderRadius: "8px",
+                              border: soloQrEfectivo ? "2px solid #221E1B" : "1px solid #D5CFC4",
+                              background: soloQrEfectivo ? "#F4F2EE" : "#FFFFFF",
+                              color: soloQrEfectivo ? "#1F1C19" : "#57524C",
+                              fontWeight: 700,
+                              fontSize: "0.76rem",
+                              cursor: "pointer",
+                              textAlign: "left",
+                            }}
+                          >
+                            <Lock size={11} style={{ verticalAlign: "middle", marginRight: "4px" }} />
+                            Solo QR
+                            <span
+                              className="eco-modal-tarjeta-ocultar-movil"
+                              style={{ display: "block", fontSize: "0.65rem", fontWeight: 400, color: "#847D74" }}
+                            >
+                              Confidencial · Mensaje y música en web
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {(!esMovil || tabMovil === "texto") && (
+                  <>
+                    {/* 3. PARA Y DE */}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                      <div>
+                        <label
+                          style={{
+                            fontSize: "0.74rem",
+                            fontWeight: 700,
+                            color: "#57524C",
+                            display: "block",
+                            marginBottom: "3px",
+                          }}
+                        >
+                          {esCondolencias ? "En memoria" : "Para"}
+                        </label>
+                        <input
+                          type="text"
+                          value={paraEditable}
+                          onChange={(e) => setParaEditable(e.target.value)}
+                          placeholder="Quien recibe"
+                          style={{
+                            width: "100%",
+                            padding: esMovil ? "8px 10px" : "6px 8px",
+                            borderRadius: "7px",
+                            border: "1px solid #D5CFC4",
+                            fontSize: esMovil ? "16px" : "0.79rem",
+                            color: "#1F1C19",
+                            boxSizing: "border-box",
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label
+                          style={{
+                            fontSize: "0.74rem",
+                            fontWeight: 700,
+                            color: "#57524C",
+                            display: "block",
+                            marginBottom: "3px",
+                          }}
+                        >
+                          De parte de
+                        </label>
+                        <input
+                          type="text"
+                          value={deEditable}
+                          onChange={(e) => setDeEditable(e.target.value)}
+                          placeholder="Ej: Att: Kleber"
+                          style={{
+                            width: "100%",
+                            padding: esMovil ? "8px 10px" : "6px 8px",
+                            borderRadius: "7px",
+                            border: "1px solid #D5CFC4",
+                            fontSize: esMovil ? "16px" : "0.79rem",
+                            color: "#1F1C19",
+                            boxSizing: "border-box",
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {!esCondolencias && (
+                      <div>
+                        <label
+                          style={{
+                            fontSize: "0.74rem",
+                            fontWeight: 700,
+                            color: "#57524C",
+                            display: "block",
+                            marginBottom: "3px",
+                          }}
+                        >
+                          Remitente portada (opcional)
+                        </label>
+                        <input
+                          type="text"
+                          value={disenoNorm.remitentePortada}
+                          onChange={(e) =>
+                            setDiseno({
+                              ...disenoNorm,
+                              remitentePortada: e.target.value,
+                            })
+                          }
+                          placeholder="Ej: El amor de tu vida"
+                          style={{
+                            width: "100%",
+                            padding: esMovil ? "8px 10px" : "6px 8px",
+                            borderRadius: "7px",
+                            border: "1px solid #D5CFC4",
+                            fontSize: esMovil ? "16px" : "0.79rem",
+                            color: "#1F1C19",
+                            boxSizing: "border-box",
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    {/* 4. MENSAJE */}
+                    <div>
+                      <label
+                        style={{
+                          fontSize: "0.76rem",
+                          fontWeight: 700,
+                          color: "#1F1C19",
+                          display: "block",
+                          marginBottom: "3px",
+                        }}
+                      >
+                        Mensaje de la tarjeta
+                      </label>
+                      <textarea
+                        rows={esMovil ? 5 : 4}
+                        value={mensajeEditable}
+                        onChange={(e) => setMensajeEditable(e.target.value)}
+                        placeholder={
+                          esCondolencias
+                            ? "Escribe el mensaje de condolencias..."
+                            : "Escribe el mensaje de dedicatoria..."
+                        }
+                        style={{
+                          width: "100%",
+                          padding: "8px 10px",
+                          borderRadius: "8px",
+                          border: "1px solid #847D74",
+                          fontSize: esMovil ? "16px" : "0.83rem",
+                          lineHeight: 1.4,
+                          color: "#1F1C19",
+                          boxSizing: "border-box",
                         }}
                       />
+                    </div>
+
+                    {/* 5. MÚSICA Y LYRIC: EXCLUSIVO PARA DEDICATORIA */}
+                    {!esCondolencias && (
+                      <div
+                        style={{
+                          background: "#F8F7F4",
+                          border: "1px solid #E6E2DA",
+                          borderRadius: "9px",
+                          padding: "8px 10px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "6px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            gap: "6px",
+                          }}
+                        >
+                          <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#57524C" }}>
+                            {esMovil ? "Canción (YouTube / MP3)" : "Canción de fondo (YouTube o MP3 — para tarjeta digital):"}
+                          </span>
+                          <div style={{ display: "flex", gap: "5px", flexShrink: 0 }}>
+                            <button
+                              type="button"
+                              className="eco-modal-tarjeta-btn-ico-movil"
+                              disabled={subiendoMp3}
+                              onClick={() => inputAudioRef.current?.click()}
+                              title="Subir archivo MP3"
+                              aria-label="Subir MP3"
+                              style={{
+                                border: "1px solid #D5CFC4",
+                                background: "#FFFFFF",
+                                color: "#1F1C19",
+                                padding: "4px 8px",
+                                borderRadius: "7px",
+                                fontSize: "0.7rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              {subiendoMp3 ? <Loader2 size={13} className="eco-spin" /> : <Upload size={13} />}
+                              <span className="eco-modal-tarjeta-txt-btn">
+                                {subiendoMp3 ? "Subiendo..." : "Subir MP3"}
+                              </span>
+                            </button>
+                            <input
+                              ref={inputAudioRef}
+                              type="file"
+                              accept="audio/*,.mp3,.m4a,.wav,.ogg"
+                              onChange={handleSubirMp3}
+                              style={{ display: "none" }}
+                            />
+                            <button
+                              type="button"
+                              className="eco-modal-tarjeta-btn-ico-movil"
+                              disabled={buscandoLyrics}
+                              onClick={() => void handleBuscarLetra()}
+                              title="Generar letra sincronizada"
+                              aria-label="Cargar letra"
+                              style={{
+                                border: "1px solid #DDD8CE",
+                                background: "#EFECE6",
+                                color: "#3A3530",
+                                padding: "4px 8px",
+                                borderRadius: "7px",
+                                fontSize: "0.7rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                              }}
+                            >
+                              {buscandoLyrics ? <Loader2 size={13} className="eco-spin" /> : <Sparkles size={13} />}
+                              <span className="eco-modal-tarjeta-txt-btn">
+                                {buscandoLyrics ? "Buscando..." : "Cargar Letra"}
+                              </span>
+                            </button>
+                          </div>
+                        </div>
+
+                        <input
+                          type="text"
+                          value={musicaUrlEditable}
+                          onChange={(e) => setMusicaUrlEditable(e.target.value)}
+                          placeholder="https://www.youtube.com/watch?v=... o URL MP3"
+                          style={{
+                            width: "100%",
+                            padding: esMovil ? "8px 10px" : "6px 8px",
+                            borderRadius: "7px",
+                            border: "1px solid #D5CFC4",
+                            fontSize: esMovil ? "15px" : "0.76rem",
+                            background: "#FFFFFF",
+                            color: "#1F1C19",
+                            boxSizing: "border-box",
+                          }}
+                        />
+                        <input
+                          type="text"
+                          value={musicaTituloEditable}
+                          onChange={(e) => setMusicaTituloEditable(e.target.value)}
+                          placeholder="Artista - Canción"
+                          style={{
+                            width: "100%",
+                            padding: esMovil ? "8px 10px" : "6px 8px",
+                            borderRadius: "7px",
+                            border: "1px solid #D5CFC4",
+                            fontSize: esMovil ? "15px" : "0.76rem",
+                            background: "#FFFFFF",
+                            color: "#1F1C19",
+                            boxSizing: "border-box",
+                          }}
+                        />
+                        {lyricsEditables.length > 0 && (
+                          <span style={{ fontSize: "0.69rem", color: "#2F4737", fontWeight: 600 }}>
+                            ✓ {lyricsEditables.length} líneas de letra listas.
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* CALIBRACIÓN FINA DE IMPRESORA CANON G3110 */}
+                {(!esMovil || tabMovil === "ajustes") && (
+                  <>
+                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
                       <button
                         type="button"
-                        onClick={() => handleCopiar(urlSoloVistaDigital, "vista")}
-                        title="Copiar enlace de visualización de la tarjeta digital"
-                        aria-label="Copiar Enlace Digital"
+                        onClick={() => setMostrarCalibrador(!mostrarCalibrador)}
                         style={{
-                          padding: "5px 9px",
-                          background: copiadoVista ? "#2F4737" : "#221E1B",
-                          color: "#FFFFFF",
                           border: "none",
-                          borderRadius: "6px",
-                          fontSize: "0.7rem",
+                          background: "transparent",
+                          color: "#3A3530",
+                          fontSize: "0.72rem",
                           fontWeight: 700,
                           cursor: "pointer",
                           display: "inline-flex",
                           alignItems: "center",
                           gap: "4px",
+                          padding: 0,
                         }}
                       >
-                        {copiadoVista ? <Check size={11} /> : <Copy size={11} />}
-                        <span>{copiadoVista ? "Copiado" : "Copiar"}</span>
+                        <Sliders size={12} />
+                        <span>{mostrarCalibrador ? "Ocultar ajuste fino" : "Ajuste fino Canon G3110 (mm)"}</span>
                       </button>
-                      <a
-                        href={urlSoloVistaDigital}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Abrir vista digital de solo lectura"
-                        aria-label="Ver Digital"
-                        style={{
-                          padding: "5px 8px",
-                          background: "#FFFFFF",
-                          border: "1px solid #D5CFC4",
-                          color: "#1F1C19",
-                          borderRadius: "6px",
-                          fontSize: "0.7rem",
-                          fontWeight: 700,
-                          textDecoration: "none",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px",
-                        }}
-                      >
-                        <ExternalLink size={11} />
-                        <span>Ver</span>
-                      </a>
                     </div>
-                  </div>
+
+                    {mostrarCalibrador && (
+                      <div className="eco-modal-tarjeta-calibracion">
+                        <div>
+                          <label style={{ fontSize: "0.68rem", color: "#57524C", display: "block" }}>
+                            Ancho (mm)
+                          </label>
+                          <input
+                            type="number"
+                            value={anchoMm}
+                            onChange={(e) => setAnchoMm(Number(e.target.value))}
+                            style={{
+                              width: "100%",
+                              padding: "5px 6px",
+                              borderRadius: "6px",
+                              border: "1px solid #D5CFC4",
+                              fontSize: "0.78rem",
+                              boxSizing: "border-box",
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: "0.68rem", color: "#57524C", display: "block" }}>
+                            Alto (mm)
+                          </label>
+                          <input
+                            type="number"
+                            value={altoMm}
+                            onChange={(e) => setAltoMm(Number(e.target.value))}
+                            style={{
+                              width: "100%",
+                              padding: "5px 6px",
+                              borderRadius: "6px",
+                              border: "1px solid #D5CFC4",
+                              fontSize: "0.78rem",
+                              boxSizing: "border-box",
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: "0.68rem", color: "#57524C", display: "block" }}>
+                            Desfase X (mm)
+                          </label>
+                          <input
+                            type="number"
+                            value={offsetX}
+                            onChange={(e) => setOffsetX(Number(e.target.value))}
+                            style={{
+                              width: "100%",
+                              padding: "5px 6px",
+                              borderRadius: "6px",
+                              border: "1px solid #D5CFC4",
+                              fontSize: "0.78rem",
+                              boxSizing: "border-box",
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: "0.68rem", color: "#57524C", display: "block" }}>
+                            Desfase Y (mm)
+                          </label>
+                          <input
+                            type="number"
+                            value={offsetY}
+                            onChange={(e) => setOffsetY(Number(e.target.value))}
+                            style={{
+                              width: "100%",
+                              padding: "5px 6px",
+                              borderRadius: "6px",
+                              border: "1px solid #D5CFC4",
+                              fontSize: "0.78rem",
+                              boxSizing: "border-box",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
-            </div>
-
-            {/* COLUMNA DERECHA: TIPO, MODO DE IMPRESIÓN (MENSAJE O QR), TEXTO, MÚSICA Y CALIBRACIÓN */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              {/* 1. TIPO DE TARJETA Y ORIENTACIÓN */}
-              <div>
-                <label
-                  style={{
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    color: "#57524C",
-                    display: "block",
-                    marginBottom: "4px",
-                  }}
-                >
-                  Tipo de pedido y orientación física:
-                </label>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                  <button
-                    type="button"
-                    onClick={() => cambiarFormatoTarjeta("DIPTICO")}
-                    style={{
-                      padding: "8px 10px",
-                      borderRadius: "8px",
-                      border: !esCondolencias ? "2px solid #221E1B" : "1px solid #D5CFC4",
-                      background: !esCondolencias ? "#F4F2EE" : "#FFFFFF",
-                      color: !esCondolencias ? "#3A3530" : "#57524C",
-                      fontWeight: 700,
-                      fontSize: "0.77rem",
-                      cursor: "pointer",
-                      textAlign: "left",
-                    }}
-                  >
-                    💌 Dedicatoria (Vertical)
-                    <span style={{ display: "block", fontSize: "0.66rem", fontWeight: 400, color: "#847D74" }}>
-                      11,3 × 16,8 cm · Se dobla
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => cambiarFormatoTarjeta("CONDOLENCIAS_PLANA")}
-                    style={{
-                      padding: "8px 10px",
-                      borderRadius: "8px",
-                      border: esCondolencias ? "2px solid #221E1B" : "1px solid #D5CFC4",
-                      background: esCondolencias ? "#F4F2EE" : "#FFFFFF",
-                      color: esCondolencias ? "#3A3530" : "#57524C",
-                      fontWeight: 700,
-                      fontSize: "0.77rem",
-                      cursor: "pointer",
-                      textAlign: "left",
-                    }}
-                  >
-                    🕊️ Condolencias (Horizontal)
-                    <span style={{ display: "block", fontSize: "0.66rem", fontWeight: 400, color: "#847D74" }}>
-                      16,8 × 11,3 cm · Sin QR ni música
-                    </span>
-                  </button>
-                </div>
-              </div>
-
-              {/* 2. MODO DE IMPRESIÓN MUTUAMENTE EXCLUYENTE (SOLO DEDICATORIA: MENSAJE O QR, NUNCA AMBOS) */}
-              {!esCondolencias && (
-                <div>
-                  <label
-                    style={{
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                      color: "#57524C",
-                      display: "block",
-                      marginBottom: "4px",
-                    }}
-                  >
-                    ¿Qué se imprime en la cartulina? (Mutuamente excluyente):
-                  </label>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                    <button
-                      type="button"
-                      onClick={() => setConfidencialSoloQr(false)}
-                      style={{
-                        padding: "8px 10px",
-                        borderRadius: "8px",
-                        border: !soloQrEfectivo ? "2px solid #2F4737" : "1px solid #D5CFC4",
-                        background: !soloQrEfectivo ? "#F2F6F3" : "#FFFFFF",
-                        color: !soloQrEfectivo ? "#2F4737" : "#57524C",
-                        fontWeight: 700,
-                        fontSize: "0.76rem",
-                        cursor: "pointer",
-                        textAlign: "left",
-                      }}
-                    >
-                      📝 Imprimir Mensaje
-                      <span style={{ display: "block", fontSize: "0.65rem", fontWeight: 400, color: "#847D74" }}>
-                        Texto + imagen opcional (sin QR)
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setConfidencialSoloQr(true)}
-                      style={{
-                        padding: "8px 10px",
-                        borderRadius: "8px",
-                        border: soloQrEfectivo ? "2px solid #221E1B" : "1px solid #D5CFC4",
-                        background: soloQrEfectivo ? "#F4F2EE" : "#FFFFFF",
-                        color: soloQrEfectivo ? "#3A3530" : "#57524C",
-                        fontWeight: 700,
-                        fontSize: "0.76rem",
-                        cursor: "pointer",
-                        textAlign: "left",
-                      }}
-                    >
-                      <Lock size={11} style={{ verticalAlign: "middle", marginRight: "3px" }} />
-                      Imprimir Solo QR
-                      <span style={{ display: "block", fontSize: "0.65rem", fontWeight: 400, color: "#847D74" }}>
-                        Confidencial · Mensaje y música en web
-                      </span>
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* 3. PARA Y DE */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                <div>
-                  <label
-                    style={{
-                      fontSize: "0.74rem",
-                      fontWeight: 700,
-                      color: "#57524C",
-                      display: "block",
-                      marginBottom: "3px",
-                    }}
-                  >
-                    {esCondolencias ? "En memoria / Destinatario:" : "Para (Destinatario):"}
-                  </label>
-                  <input
-                    type="text"
-                    value={paraEditable}
-                    onChange={(e) => setParaEditable(e.target.value)}
-                    placeholder="Quien recibe"
-                    style={{
-                      width: "100%",
-                      padding: "6px 8px",
-                      borderRadius: "7px",
-                      border: "1px solid #D5CFC4",
-                      fontSize: "0.79rem",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                </div>
-                <div>
-                  <label
-                    style={{
-                      fontSize: "0.74rem",
-                      fontWeight: 700,
-                      color: "#57524C",
-                      display: "block",
-                      marginBottom: "3px",
-                    }}
-                  >
-                    De parte de (Firma interior):
-                  </label>
-                  <input
-                    type="text"
-                    value={deEditable}
-                    onChange={(e) => setDeEditable(e.target.value)}
-                    placeholder="Ej: Att: Kleber"
-                    style={{
-                      width: "100%",
-                      padding: "6px 8px",
-                      borderRadius: "7px",
-                      border: "1px solid #D5CFC4",
-                      fontSize: "0.79rem",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                </div>
-              </div>
-
-              {!esCondolencias && (
-                <div>
-                  <label
-                    style={{
-                      fontSize: "0.74rem",
-                      fontWeight: 700,
-                      color: "#57524C",
-                      display: "block",
-                      marginBottom: "3px",
-                    }}
-                  >
-                    Remitente en portada digital (opcional):
-                  </label>
-                  <input
-                    type="text"
-                    value={disenoNorm.remitentePortada}
-                    onChange={(e) =>
-                      setDiseno({
-                        ...disenoNorm,
-                        remitentePortada: e.target.value,
-                      })
-                    }
-                    placeholder="Ej: El amor de tu vida (se muestra en la portada antes de abrir)"
-                    style={{
-                      width: "100%",
-                      padding: "6px 8px",
-                      borderRadius: "7px",
-                      border: "1px solid #D5CFC4",
-                      fontSize: "0.79rem",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                </div>
-              )}
-
-              {/* 4. MENSAJE */}
-              <div>
-                <label
-                  style={{
-                    fontSize: "0.76rem",
-                    fontWeight: 700,
-                    color: "#1F1C19",
-                    display: "block",
-                    marginBottom: "3px",
-                  }}
-                >
-                  Mensaje de la tarjeta:
-                </label>
-                <textarea
-                  rows={4}
-                  value={mensajeEditable}
-                  onChange={(e) => setMensajeEditable(e.target.value)}
-                  placeholder={
-                    esCondolencias
-                      ? "Escribe el mensaje de condolencias..."
-                      : "Escribe el mensaje de dedicatoria..."
-                  }
-                  style={{
-                    width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "8px",
-                    border: "1px solid #847D74",
-                    fontSize: "0.83rem",
-                    lineHeight: 1.4,
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-
-              {/* 5. MÚSICA Y LYRIC: EXCLUSIVO PARA DEDICATORIA */}
-              {!esCondolencias && (
-                <div
-                  style={{
-                    background: "#F8F7F4",
-                    border: "1px solid #E6E2DA",
-                    borderRadius: "9px",
-                    padding: "8px 10px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "6px",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      gap: "6px",
-                      flexWrap: "wrap",
-                    }}
-                  >
-                    <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#57524C" }}>
-                      🎵 Canción de fondo (YouTube o MP3 — para tarjeta digital):
-                    </span>
-                    <div style={{ display: "flex", gap: "5px" }}>
-                      <button
-                        type="button"
-                        disabled={subiendoMp3}
-                        onClick={() => inputAudioRef.current?.click()}
-                        title="Subir archivo MP3"
-                        aria-label="Subir MP3"
-                        style={{
-                          border: "1px solid #D5CFC4",
-                          background: "#FFFFFF",
-                          color: "#1F1C19",
-                          padding: "3px 7px",
-                          borderRadius: "6px",
-                          fontSize: "0.7rem",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px",
-                        }}
-                      >
-                        {subiendoMp3 ? <Loader2 size={11} /> : <Upload size={11} />}
-                        <span>{subiendoMp3 ? "Subiendo..." : "Subir MP3"}</span>
-                      </button>
-                      <input
-                        ref={inputAudioRef}
-                        type="file"
-                        accept="audio/*,.mp3,.m4a,.wav,.ogg"
-                        onChange={handleSubirMp3}
-                        style={{ display: "none" }}
-                      />
-                      <button
-                        type="button"
-                        disabled={buscandoLyrics}
-                        onClick={() => void handleBuscarLetra()}
-                        title="Generar letra sincronizada"
-                        aria-label="Cargar Letra"
-                        style={{
-                          border: "1px solid #DDD8CE",
-                          background: "#EFECE6",
-                          color: "#3A3530",
-                          padding: "3px 7px",
-                          borderRadius: "6px",
-                          fontSize: "0.7rem",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "4px",
-                        }}
-                      >
-                        {buscandoLyrics ? <Loader2 size={11} /> : <Sparkles size={11} />}
-                        <span>{buscandoLyrics ? "Buscando..." : "Cargar Letra"}</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <input
-                    type="text"
-                    value={musicaUrlEditable}
-                    onChange={(e) => setMusicaUrlEditable(e.target.value)}
-                    placeholder="https://www.youtube.com/watch?v=... o URL MP3"
-                    style={{
-                      width: "100%",
-                      padding: "6px 8px",
-                      borderRadius: "6px",
-                      border: "1px solid #D5CFC4",
-                      fontSize: "0.76rem",
-                      background: "#FFFFFF",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                  <input
-                    type="text"
-                    value={musicaTituloEditable}
-                    onChange={(e) => setMusicaTituloEditable(e.target.value)}
-                    placeholder="Artista - Canción (para el lyric inferior)"
-                    style={{
-                      width: "100%",
-                      padding: "6px 8px",
-                      borderRadius: "6px",
-                      border: "1px solid #D5CFC4",
-                      fontSize: "0.76rem",
-                      background: "#FFFFFF",
-                      boxSizing: "border-box",
-                    }}
-                  />
-                  {lyricsEditables.length > 0 && (
-                    <span style={{ fontSize: "0.69rem", color: "#2F4737", fontWeight: 600 }}>
-                      ✓ {lyricsEditables.length} líneas de lyric listas para deslizarse abajo.
-                    </span>
-                  )}
-                </div>
-              )}
-
-              {/* CALIBRACIÓN FINA DE IMPRESORA CANON G3110 */}
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                <button
-                  type="button"
-                  onClick={() => setMostrarCalibrador(!mostrarCalibrador)}
-                  style={{
-                    border: "none",
-                    background: "transparent",
-                    color: "#3A3530",
-                    fontSize: "0.72rem",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    padding: 0,
-                  }}
-                >
-                  <Sliders size={12} />
-                  <span>{mostrarCalibrador ? "Ocultar ajuste fino" : "Ajuste fino Canon G3110 (mm)"}</span>
-                </button>
-              </div>
-
-              {mostrarCalibrador && (
-                <div
-                  style={{
-                    background: "#F8F7F4",
-                    padding: "9px 11px",
-                    borderRadius: "8px",
-                    border: "1px solid #E6E2DA",
-                    display: "grid",
-                    gridTemplateColumns: "repeat(4, 1fr)",
-                    gap: "8px",
-                  }}
-                >
-                  <div>
-                    <label style={{ fontSize: "0.68rem", color: "#57524C", display: "block" }}>
-                      Ancho (mm)
-                    </label>
-                    <input
-                      type="number"
-                      value={anchoMm}
-                      onChange={(e) => setAnchoMm(Number(e.target.value))}
-                      style={{
-                        width: "100%",
-                        padding: "4px 6px",
-                        borderRadius: "5px",
-                        border: "1px solid #D5CFC4",
-                        fontSize: "0.76rem",
-                        boxSizing: "border-box",
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: "0.68rem", color: "#57524C", display: "block" }}>
-                      Alto (mm)
-                    </label>
-                    <input
-                      type="number"
-                      value={altoMm}
-                      onChange={(e) => setAltoMm(Number(e.target.value))}
-                      style={{
-                        width: "100%",
-                        padding: "4px 6px",
-                        borderRadius: "5px",
-                        border: "1px solid #D5CFC4",
-                        fontSize: "0.76rem",
-                        boxSizing: "border-box",
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: "0.68rem", color: "#57524C", display: "block" }}>
-                      Desfase X (mm)
-                    </label>
-                    <input
-                      type="number"
-                      value={offsetX}
-                      onChange={(e) => setOffsetX(Number(e.target.value))}
-                      style={{
-                        width: "100%",
-                        padding: "4px 6px",
-                        borderRadius: "5px",
-                        border: "1px solid #D5CFC4",
-                        fontSize: "0.76rem",
-                        boxSizing: "border-box",
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label style={{ fontSize: "0.68rem", color: "#57524C", display: "block" }}>
-                      Desfase Y (mm)
-                    </label>
-                    <input
-                      type="number"
-                      value={offsetY}
-                      onChange={(e) => setOffsetY(Number(e.target.value))}
-                      style={{
-                        width: "100%",
-                        padding: "4px 6px",
-                        borderRadius: "5px",
-                        border: "1px solid #D5CFC4",
-                        fontSize: "0.76rem",
-                        boxSizing: "border-box",
-                      }}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {errorMsg && (
-                <div
-                  style={{
-                    padding: "8px 10px",
-                    borderRadius: "8px",
-                    background: "#F6E9E9",
-                    color: "#8A2E2E",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                  }}
-                >
-                  {errorMsg}
-                </div>
-              )}
-              {avisoOk && (
-                <div
-                  style={{
-                    padding: "8px 10px",
-                    borderRadius: "8px",
-                    background: "#F2F6F3",
-                    color: "#2B4A36",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                  }}
-                >
-                  {avisoOk}
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
-          {/* PIE DE ACCIONES */}
-          <div
-            style={{
-              padding: "12px 20px",
-              borderTop: "1px solid #E6E2DA",
-              background: "#F8F7F4",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: "8px",
-              flexWrap: "wrap",
-            }}
-          >
+          {/* MENSAJES DE ESTADO GLOBALES (siempre visibles desde cualquier pestaña móvil o desktop) */}
+          {(errorMsg || avisoOk) && (
+            <div
+              role="status"
+              style={{
+                padding: "7px 14px",
+                borderTop: "1px solid #E6E2DA",
+                background: errorMsg ? "#FAF2F2" : "#F2F6F3",
+                color: errorMsg ? "#8A2E2E" : "#2B4A36",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                flexShrink: 0,
+              }}
+            >
+              {errorMsg || avisoOk}
+            </div>
+          )}
+
+          {/* PIE DE ACCIONES (Desktop: con etiquetas concisas | Móvil: 1 sola fila de 4 botones solo ícono) */}
+          <div className="eco-modal-tarjeta-footer">
             <button
               type="button"
+              className="eco-modal-tarjeta-footer-btn"
               disabled={guardando}
               onClick={() => void persistirCambiosTarjeta(false)}
               title="Guardar cambios y diseño de la tarjeta"
-              aria-label="Guardar Tarjeta"
+              aria-label="Guardar tarjeta"
               style={{
                 padding: "9px 14px",
                 borderRadius: "8px",
@@ -1904,17 +2205,18 @@ export function ModalImprimirTarjetaTaller({
                 gap: "6px",
               }}
             >
-              {guardando ? <Loader2 size={14} /> : <Save size={14} />}
-              <span>{guardando ? "Guardando..." : "Guardar Tarjeta"}</span>
+              {guardando ? <Loader2 size={17} className="eco-spin" /> : <Save size={17} />}
+              <span className="eco-modal-tarjeta-txt-btn">{guardando ? "Guardando..." : "Guardar"}</span>
             </button>
 
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            <div className="eco-modal-tarjeta-footer-der">
               <button
                 type="button"
+                className="eco-modal-tarjeta-footer-btn"
                 disabled={compartiendoDiseno}
                 onClick={() => void handleCompartirDiseno()}
                 title="Guardar y compartir imagen PNG del diseño final (WhatsApp / Descarga)"
-                aria-label="Compartir Diseño"
+                aria-label="Compartir diseño"
                 style={{
                   padding: "9px 13px",
                   borderRadius: "8px",
@@ -1929,12 +2231,15 @@ export function ModalImprimirTarjetaTaller({
                   gap: "6px",
                 }}
               >
-                {compartiendoDiseno ? <Loader2 size={14} /> : <Share2 size={14} />}
-                <span>{compartiendoDiseno ? "Preparando..." : "Compartir"}</span>
+                {compartiendoDiseno ? <Loader2 size={17} className="eco-spin" /> : <Share2 size={17} />}
+                <span className="eco-modal-tarjeta-txt-btn">
+                  {compartiendoDiseno ? "Preparando..." : "Compartir"}
+                </span>
               </button>
 
               <button
                 type="button"
+                className="eco-modal-tarjeta-footer-btn"
                 disabled={descargandoPdf}
                 onClick={() => void handleDescargarPdf()}
                 title="Descargar tarjeta en PDF calibrada a medida exacta"
@@ -1953,16 +2258,19 @@ export function ModalImprimirTarjetaTaller({
                   gap: "6px",
                 }}
               >
-                {descargandoPdf ? <Loader2 size={14} /> : <Download size={14} />}
-                <span>{descargandoPdf ? "Generando..." : "Descargar PDF"}</span>
+                {descargandoPdf ? <Loader2 size={17} className="eco-spin" /> : <Download size={17} />}
+                <span className="eco-modal-tarjeta-txt-btn">
+                  {descargandoPdf ? "Generando..." : "Descargar PDF"}
+                </span>
               </button>
 
               <button
                 type="button"
+                className="eco-modal-tarjeta-footer-btn"
                 disabled={imprimiendo}
                 onClick={() => void handleLanzarImpresion()}
                 title="Mandar a imprimir directamente en Canon PIXMA G3110"
-                aria-label="Imprimir Tarjeta"
+                aria-label="Imprimir tarjeta"
                 style={{
                   padding: "9px 16px",
                   borderRadius: "8px",
@@ -1975,11 +2283,13 @@ export function ModalImprimirTarjetaTaller({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
-                  boxShadow: "0 4px 10px rgba(2, 132, 199, 0.25)",
+                  boxShadow: "0 4px 10px rgba(34, 30, 27, 0.18)",
                 }}
               >
-                {imprimiendo ? <Loader2 size={14} /> : <Printer size={14} />}
-                <span>{imprimiendo ? "Preparando..." : "Imprimir Tarjeta"}</span>
+                {imprimiendo ? <Loader2 size={17} className="eco-spin" /> : <Printer size={17} />}
+                <span className="eco-modal-tarjeta-txt-btn">
+                  {imprimiendo ? "Preparando..." : "Imprimir"}
+                </span>
               </button>
             </div>
           </div>

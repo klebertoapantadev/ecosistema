@@ -7,15 +7,22 @@ import {
   AlignLeft,
   AlignRight,
   Bold,
+  Contrast,
+  Droplets,
+  FileText,
+  Image as ImageIcon,
   ImagePlus,
   Italic,
   Loader2,
   Maximize2,
   Move,
+  MoveHorizontal,
+  PenLine,
   Plus,
   RotateCcw,
   RotateCw,
   Trash2,
+  Type,
 } from "lucide-react";
 import type {
   BloqueTextoTarjeta,
@@ -830,129 +837,333 @@ export function LienzoDisenadorTarjeta({
   const firmaVisible = norm.mostrarFirma && esFirmaVisibleValida(firma);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+    <div className="eco-disenador-wrap">
+      <style>{`
+        .eco-disenador-wrap {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
+        }
+        .eco-disenador-toolbar {
+          background: #F8F7F4;
+          border: 1px solid #E6E2DA;
+          border-radius: 10px;
+          padding: 8px 10px;
+          display: flex;
+          flex-direction: column;
+          gap: 7px;
+          width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
+        }
+        .eco-disenador-fila-capas {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 5px;
+          min-width: 0;
+        }
+        .eco-disenador-chips-scroll {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 4px;
+          min-width: 0;
+        }
+        .eco-disenador-acciones-top {
+          margin-left: auto;
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          flex-shrink: 0;
+        }
+        .eco-disenador-fuentes {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 4px;
+          align-items: center;
+          padding-top: 6px;
+          border-top: 1px dashed #D5CFC4;
+          min-width: 0;
+        }
+        .eco-disenador-formato-fila {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 5px;
+          align-items: center;
+          min-width: 0;
+        }
+        .eco-disenador-sliders {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          gap: 10px;
+          align-items: center;
+          min-width: 0;
+        }
+        .eco-disenador-slider-lbl {
+          display: flex;
+          align-items: center;
+          gap: 5px;
+          font-size: 0.69rem;
+          color: #57524C;
+          font-weight: 600;
+          min-width: 0;
+        }
+        .eco-disenador-slider-input {
+          flex: 1;
+          min-width: 0;
+          width: 100%;
+          cursor: pointer;
+          accent-color: #221E1B;
+        }
+        .eco-disenador-lienzo-box {
+          background: #F4F2EE;
+          border: 1px solid #E6E2DA;
+          border-radius: 12px;
+          padding: 12px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+          width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
+        }
+        .eco-disenador-solo-movil {
+          display: none;
+        }
+        .eco-disenador-firma-desktop {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 8px;
+          padding-top: 5px;
+          border-top: 1px solid #E6E2DA;
+          font-size: 0.69rem;
+          color: #57524C;
+        }
+        @media (max-width: 767px) {
+          .eco-disenador-wrap {
+            flex-direction: column-reverse;
+            gap: 8px;
+          }
+          .eco-disenador-toolbar {
+            padding: 8px;
+            gap: 8px;
+          }
+          .eco-disenador-fila-capas {
+            flex-wrap: nowrap;
+            gap: 6px;
+          }
+          .eco-disenador-chips-scroll {
+            flex: 1;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding-bottom: 1px;
+          }
+          .eco-disenador-chips-scroll::-webkit-scrollbar {
+            display: none;
+          }
+          .eco-disenador-fuentes {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding-bottom: 2px;
+          }
+          .eco-disenador-fuentes::-webkit-scrollbar {
+            display: none;
+          }
+          .eco-disenador-fuentes button {
+            flex-shrink: 0;
+            white-space: nowrap;
+          }
+          .eco-disenador-txt-btn {
+            display: none !important;
+          }
+          .eco-disenador-btn-ico {
+            min-width: 34px !important;
+            min-height: 34px !important;
+            padding: 0 7px !important;
+            justify-content: center !important;
+          }
+          .eco-disenador-formato-fila {
+            justify-content: space-between;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            scrollbar-width: none;
+          }
+          .eco-disenador-formato-fila::-webkit-scrollbar {
+            display: none;
+          }
+          .eco-disenador-solo-movil {
+            display: inline-flex;
+          }
+          .eco-disenador-firma-desktop,
+          .eco-disenador-tip-movil {
+            display: none !important;
+          }
+          .eco-disenador-lienzo-box {
+            padding: 8px;
+            border-radius: 10px;
+          }
+        }
+      `}</style>
+
       {/* BARRA DE HERRAMIENTAS DE DISEÑADOR GRÁFICO (solo cuando imprime mensaje) */}
       {!soloLectura && !modoSoloQrActivo && (
-        <div
-          style={{
-            background: "#F8FAFC",
-            border: "1px solid #CBD5E1",
-            borderRadius: "10px",
-            padding: "8px 10px",
-            display: "flex",
-            flexDirection: "column",
-            gap: "7px",
-          }}
-        >
-          {/* Fila 1: Chips rápidos de elementos (Mensaje, Firma, Extras, Imágenes) + Botones + Imagen y + Texto */}
-          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "4px" }}>
-            <button
-              type="button"
-              onClick={() => setSeleccion({ tipo: "texto", id: "mensaje" })}
-              style={{
-                padding: "2px 7px",
-                borderRadius: "999px",
-                border:
-                  seleccion.tipo === "texto" && seleccion.id === "mensaje"
-                    ? "1.5px solid #0284C7"
-                    : "1px solid #CBD5E1",
-                background:
-                  seleccion.tipo === "texto" && seleccion.id === "mensaje" ? "#E0F2FE" : "#FFFFFF",
-                color:
-                  seleccion.tipo === "texto" && seleccion.id === "mensaje" ? "#0369A1" : "#475569",
-                fontSize: "0.67rem",
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              📝 Mensaje
-            </button>
-
-            {firmaVisible && (
+        <div className="eco-disenador-toolbar">
+          {/* Fila 1: Chips rápidos de elementos (Mensaje, Firma, Extras, Imágenes) + Botones + Imagen, + Texto, Centrar */}
+          <div className="eco-disenador-fila-capas">
+            <div className="eco-disenador-chips-scroll">
               <button
                 type="button"
-                onClick={() => setSeleccion({ tipo: "texto", id: "firma" })}
+                className="eco-disenador-btn-ico"
+                onClick={() => setSeleccion({ tipo: "texto", id: "mensaje" })}
+                title="Seleccionar bloque de mensaje"
+                aria-label="Seleccionar mensaje"
                 style={{
-                  padding: "2px 7px",
+                  padding: "4px 8px",
                   borderRadius: "999px",
                   border:
-                    seleccion.tipo === "texto" && seleccion.id === "firma"
-                      ? "1.5px solid #0284C7"
-                      : "1px solid #CBD5E1",
+                    seleccion.tipo === "texto" && seleccion.id === "mensaje"
+                      ? "1.5px solid #221E1B"
+                      : "1px solid #D5CFC4",
                   background:
-                    seleccion.tipo === "texto" && seleccion.id === "firma" ? "#E0F2FE" : "#FFFFFF",
+                    seleccion.tipo === "texto" && seleccion.id === "mensaje" ? "#221E1B" : "#FFFFFF",
                   color:
-                    seleccion.tipo === "texto" && seleccion.id === "firma" ? "#0369A1" : "#475569",
-                  fontSize: "0.67rem",
+                    seleccion.tipo === "texto" && seleccion.id === "mensaje" ? "#FFFFFF" : "#57524C",
+                  fontSize: "0.68rem",
                   fontWeight: 700,
                   cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  flexShrink: 0,
                 }}
               >
-                ✍️ Firma
+                <FileText size={13} />
+                <span className="eco-disenador-txt-btn">Mensaje</span>
               </button>
-            )}
 
-            {norm.bloquesTexto
-              .filter((b) => b.rol === "extra")
-              .map((b, idx) => {
-                const act = seleccion.tipo === "texto" && seleccion.id === b.id;
+              {firmaVisible && (
+                <button
+                  type="button"
+                  className="eco-disenador-btn-ico"
+                  onClick={() => setSeleccion({ tipo: "texto", id: "firma" })}
+                  title="Seleccionar firma (De parte de)"
+                  aria-label="Seleccionar firma"
+                  style={{
+                    padding: "4px 8px",
+                    borderRadius: "999px",
+                    border:
+                      seleccion.tipo === "texto" && seleccion.id === "firma"
+                        ? "1.5px solid #221E1B"
+                        : "1px solid #D5CFC4",
+                    background:
+                      seleccion.tipo === "texto" && seleccion.id === "firma" ? "#221E1B" : "#FFFFFF",
+                    color:
+                      seleccion.tipo === "texto" && seleccion.id === "firma" ? "#FFFFFF" : "#57524C",
+                    fontSize: "0.68rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    flexShrink: 0,
+                  }}
+                >
+                  <PenLine size={13} />
+                  <span className="eco-disenador-txt-btn">Firma</span>
+                </button>
+              )}
+
+              {norm.bloquesTexto
+                .filter((b) => b.rol === "extra")
+                .map((b, idx) => {
+                  const act = seleccion.tipo === "texto" && seleccion.id === b.id;
+                  return (
+                    <button
+                      key={b.id}
+                      type="button"
+                      className="eco-disenador-btn-ico"
+                      onClick={() => setSeleccion({ tipo: "texto", id: b.id })}
+                      title={`Seleccionar texto adicional ${idx + 1}`}
+                      aria-label={`Texto adicional ${idx + 1}`}
+                      style={{
+                        padding: "4px 8px",
+                        borderRadius: "999px",
+                        border: act ? "1.5px solid #221E1B" : "1px solid #D5CFC4",
+                        background: act ? "#221E1B" : "#FFFFFF",
+                        color: act ? "#FFFFFF" : "#57524C",
+                        fontSize: "0.68rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "3px",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Type size={13} />
+                      <span className="eco-disenador-txt-btn">Texto</span>
+                      <span style={{ fontSize: "0.65rem" }}>{idx + 1}</span>
+                    </button>
+                  );
+                })}
+
+              {norm.imagenes.map((im, idx) => {
+                const act = seleccion.tipo === "imagen" && seleccion.id === im.id;
                 return (
                   <button
-                    key={b.id}
+                    key={im.id}
                     type="button"
-                    onClick={() => setSeleccion({ tipo: "texto", id: b.id })}
+                    className="eco-disenador-btn-ico"
+                    onClick={() => setSeleccion({ tipo: "imagen", id: im.id })}
+                    title={`Seleccionar imagen ${idx + 1}`}
+                    aria-label={`Imagen ${idx + 1}`}
                     style={{
-                      padding: "2px 7px",
+                      padding: "4px 8px",
                       borderRadius: "999px",
-                      border: act ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
-                      background: act ? "#E0F2FE" : "#FFFFFF",
-                      color: act ? "#0369A1" : "#475569",
-                      fontSize: "0.67rem",
+                      border: act ? "1.5px solid #2F4737" : "1px solid #D5CFC4",
+                      background: act ? "#2F4737" : "#FFFFFF",
+                      color: act ? "#FFFFFF" : "#57524C",
+                      fontSize: "0.68rem",
                       fontWeight: 700,
                       cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "3px",
+                      flexShrink: 0,
                     }}
                   >
-                    🔤 Texto {idx + 1}
+                    <ImageIcon size={13} />
+                    <span className="eco-disenador-txt-btn">Img</span>
+                    <span style={{ fontSize: "0.65rem" }}>{idx + 1}</span>
                   </button>
                 );
               })}
+            </div>
 
-            {norm.imagenes.map((im, idx) => {
-              const act = seleccion.tipo === "imagen" && seleccion.id === im.id;
-              return (
-                <button
-                  key={im.id}
-                  type="button"
-                  onClick={() => setSeleccion({ tipo: "imagen", id: im.id })}
-                  style={{
-                    padding: "2px 7px",
-                    borderRadius: "999px",
-                    border: act ? "1.5px solid #7C3AED" : "1px solid #CBD5E1",
-                    background: act ? "#EDE9FE" : "#FFFFFF",
-                    color: act ? "#5B21B6" : "#475569",
-                    fontSize: "0.67rem",
-                    fontWeight: 700,
-                    cursor: "pointer",
-                  }}
-                >
-                  🖼️ Img {idx + 1}
-                </button>
-              );
-            })}
-
-            <div style={{ marginLeft: "auto", display: "flex", gap: "5px", flexWrap: "wrap" }}>
+            <div className="eco-disenador-acciones-top">
               <button
                 type="button"
+                className="eco-disenador-btn-ico"
                 disabled={subiendoImg || norm.imagenes.length >= MAX_IMAGENES_TARJETA}
                 onClick={() => inputImgRef.current?.click()}
-                title="Agregar imagen o logotipo (máximo 3)"
-                aria-label="Agregar Imagen"
+                title={`Agregar imagen o logotipo (${norm.imagenes.length}/${MAX_IMAGENES_TARJETA})`}
+                aria-label={`Agregar imagen (${norm.imagenes.length} de ${MAX_IMAGENES_TARJETA})`}
                 style={{
-                  padding: "3px 8px",
-                  borderRadius: "6px",
-                  border: "1px solid #0284C7",
-                  background: norm.imagenes.length >= MAX_IMAGENES_TARJETA ? "#F1F5F9" : "#FFFFFF",
-                  color: norm.imagenes.length >= MAX_IMAGENES_TARJETA ? "#94A3B8" : "#0369A1",
+                  padding: "4px 8px",
+                  borderRadius: "7px",
+                  border: "1px solid #2F4737",
+                  background: norm.imagenes.length >= MAX_IMAGENES_TARJETA ? "#F4F2EE" : "#F2F6F3",
+                  color: norm.imagenes.length >= MAX_IMAGENES_TARJETA ? "#9C948A" : "#2F4737",
                   fontSize: "0.69rem",
                   fontWeight: 700,
                   cursor: norm.imagenes.length >= MAX_IMAGENES_TARJETA ? "not-allowed" : "pointer",
@@ -961,11 +1172,11 @@ export function LienzoDisenadorTarjeta({
                   gap: "4px",
                 }}
               >
-                {subiendoImg ? <Loader2 size={11} /> : <ImagePlus size={11} />}
-                <span>
+                {subiendoImg ? <Loader2 size={14} className="eco-spin" /> : <ImagePlus size={14} />}
+                <span className="eco-disenador-txt-btn">
                   {subiendoImg
                     ? "Subiendo..."
-                    : `+ Imagen (${norm.imagenes.length}/${MAX_IMAGENES_TARJETA})`}
+                    : `Imagen (${norm.imagenes.length}/${MAX_IMAGENES_TARJETA})`}
                 </span>
               </button>
               <input
@@ -978,16 +1189,17 @@ export function LienzoDisenadorTarjeta({
 
               <button
                 type="button"
+                className="eco-disenador-btn-ico"
                 disabled={extrasCount >= MAX_BLOQUES_EXTRA_TEXTO}
                 onClick={handleAgregarBloqueTexto}
                 title="Agregar cuadro de texto adicional"
-                aria-label="Agregar Texto"
+                aria-label="Agregar cuadro de texto"
                 style={{
-                  padding: "3px 8px",
-                  borderRadius: "6px",
-                  border: "1px solid #0F766E",
-                  background: extrasCount >= MAX_BLOQUES_EXTRA_TEXTO ? "#F1F5F9" : "#F0FDFA",
-                  color: extrasCount >= MAX_BLOQUES_EXTRA_TEXTO ? "#94A3B8" : "#0F766E",
+                  padding: "4px 8px",
+                  borderRadius: "7px",
+                  border: "1px solid #D5CFC4",
+                  background: extrasCount >= MAX_BLOQUES_EXTRA_TEXTO ? "#F4F2EE" : "#FFFFFF",
+                  color: extrasCount >= MAX_BLOQUES_EXTRA_TEXTO ? "#9C948A" : "#1F1C19",
                   fontSize: "0.69rem",
                   fontWeight: 700,
                   cursor: extrasCount >= MAX_BLOQUES_EXTRA_TEXTO ? "not-allowed" : "pointer",
@@ -996,21 +1208,22 @@ export function LienzoDisenadorTarjeta({
                   gap: "3px",
                 }}
               >
-                <Plus size={11} />
-                <span>Texto</span>
+                <Plus size={14} />
+                <span className="eco-disenador-txt-btn">Texto</span>
               </button>
 
               <button
                 type="button"
+                className="eco-disenador-btn-ico"
                 onClick={resetearPosiciones}
                 title="Restablecer centrado automático"
-                aria-label="Centrar"
+                aria-label="Restablecer centrado"
                 style={{
-                  padding: "3px 7px",
-                  borderRadius: "6px",
-                  border: "1px solid #CBD5E1",
+                  padding: "4px 8px",
+                  borderRadius: "7px",
+                  border: "1px solid #D5CFC4",
                   background: "#FFFFFF",
-                  color: "#475569",
+                  color: "#57524C",
                   fontSize: "0.69rem",
                   fontWeight: 700,
                   cursor: "pointer",
@@ -1019,8 +1232,8 @@ export function LienzoDisenadorTarjeta({
                   gap: "3px",
                 }}
               >
-                <RotateCcw size={11} />
-                <span>Centrar</span>
+                <RotateCcw size={14} />
+                <span className="eco-disenador-txt-btn">Centrar</span>
               </button>
             </div>
           </div>
@@ -1033,13 +1246,15 @@ export function LienzoDisenadorTarjeta({
                 flexDirection: "column",
                 gap: "7px",
                 paddingTop: "6px",
-                borderTop: "1px dashed #CBD5E1",
+                borderTop: "1px dashed #D5CFC4",
+                minWidth: 0,
               }}
             >
               {/* Fila A: Fondo 100% + Tamaño + B/N + Quitar */}
-              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "7px" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px", minWidth: 0 }}>
                 <button
                   type="button"
+                  className="eco-disenador-btn-ico"
                   onClick={() =>
                     actualizarImagen(imagenSeleccionada.id, {
                       cubrirTarjeta: !imagenSeleccionada.cubrirTarjeta,
@@ -1051,13 +1266,13 @@ export function LienzoDisenadorTarjeta({
                   title="Ampliar imagen al 100% del espacio de la tarjeta"
                   aria-label="Fondo 100%"
                   style={{
-                    padding: "3px 8px",
-                    borderRadius: "6px",
+                    padding: "4px 8px",
+                    borderRadius: "7px",
                     border: imagenSeleccionada.cubrirTarjeta
-                      ? "1.5px solid #7C3AED"
-                      : "1px solid #CBD5E1",
-                    background: imagenSeleccionada.cubrirTarjeta ? "#EDE9FE" : "#FFFFFF",
-                    color: imagenSeleccionada.cubrirTarjeta ? "#5B21B6" : "#334155",
+                      ? "1.5px solid #2F4737"
+                      : "1px solid #D5CFC4",
+                    background: imagenSeleccionada.cubrirTarjeta ? "#F2F6F3" : "#FFFFFF",
+                    color: imagenSeleccionada.cubrirTarjeta ? "#2F4737" : "#1F1C19",
                     fontSize: "0.69rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -1066,72 +1281,54 @@ export function LienzoDisenadorTarjeta({
                     gap: "4px",
                   }}
                 >
-                  <Maximize2 size={11} />
-                  <span>Fondo 100%</span>
+                  <Maximize2 size={13} />
+                  <span className="eco-disenador-txt-btn">Fondo 100%</span>
                 </button>
 
                 {!imagenSeleccionada.cubrirTarjeta && (
                   <label
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "5px",
-                      fontSize: "0.69rem",
-                      color: "#334155",
-                      fontWeight: 600,
-                      flex: 1,
-                      minWidth: "120px",
-                    }}
+                    className="eco-disenador-slider-lbl"
+                    style={{ flex: 1, minWidth: "90px" }}
+                    title="Tamaño de imagen"
                   >
-                    <span>Tamaño:</span>
+                    <MoveHorizontal size={13} className="eco-disenador-solo-movil" />
+                    <span className="eco-disenador-txt-btn">Tamaño:</span>
                     <input
                       type="range"
+                      aria-label="Tamaño de imagen"
                       min="14"
                       max={wMm}
                       value={Math.min(wMm, imagenSeleccionada.anchoMm)}
                       onChange={(e) =>
                         actualizarImagen(imagenSeleccionada.id, { anchoMm: Number(e.target.value) })
                       }
-                      style={{ flex: 1, cursor: "pointer" }}
+                      className="eco-disenador-slider-input"
                     />
-                    <strong style={{ minWidth: "30px", textAlign: "right" }}>
+                    <strong style={{ minWidth: "30px", textAlign: "right", color: "#1F1C19" }}>
                       {Math.round((Math.min(wMm, imagenSeleccionada.anchoMm) / wMm) * 100)}%
                     </strong>
                   </label>
                 )}
 
-                <label
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "3px",
-                    fontSize: "0.69rem",
-                    color: "#334155",
-                    cursor: "pointer",
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={Boolean(imagenSeleccionada.escalaGrises)}
-                    onChange={(e) =>
-                      actualizarImagen(imagenSeleccionada.id, { escalaGrises: e.target.checked })
-                    }
-                  />
-                  <span>B/N</span>
-                </label>
-
                 <button
                   type="button"
-                  onClick={() => handleEliminarImagen(imagenSeleccionada.id)}
-                  title="Quitar esta imagen"
-                  aria-label="Quitar Imagen"
+                  className="eco-disenador-btn-ico"
+                  onClick={() =>
+                    actualizarImagen(imagenSeleccionada.id, {
+                      escalaGrises: !imagenSeleccionada.escalaGrises,
+                    })
+                  }
+                  title="Blanco y negro"
+                  aria-label="Blanco y negro"
+                  aria-pressed={Boolean(imagenSeleccionada.escalaGrises)}
                   style={{
-                    marginLeft: "auto",
-                    padding: "3px 7px",
-                    borderRadius: "6px",
-                    border: "1px solid #FECACA",
-                    background: "#FEF2F2",
-                    color: "#B91C1C",
+                    padding: "4px 7px",
+                    borderRadius: "7px",
+                    border: imagenSeleccionada.escalaGrises
+                      ? "1.5px solid #221E1B"
+                      : "1px solid #D5CFC4",
+                    background: imagenSeleccionada.escalaGrises ? "#221E1B" : "#FFFFFF",
+                    color: imagenSeleccionada.escalaGrises ? "#FFFFFF" : "#57524C",
                     fontSize: "0.69rem",
                     fontWeight: 700,
                     cursor: "pointer",
@@ -1140,136 +1337,175 @@ export function LienzoDisenadorTarjeta({
                     gap: "3px",
                   }}
                 >
-                  <Trash2 size={11} />
-                  <span>Quitar</span>
+                  <Contrast size={13} />
+                  <span className="eco-disenador-txt-btn">B/N</span>
+                </button>
+
+                <button
+                  type="button"
+                  className="eco-disenador-btn-ico"
+                  onClick={() => handleEliminarImagen(imagenSeleccionada.id)}
+                  title="Quitar esta imagen"
+                  aria-label="Quitar imagen"
+                  style={{
+                    marginLeft: "auto",
+                    padding: "4px 7px",
+                    borderRadius: "7px",
+                    border: "1px solid #E5CACA",
+                    background: "#FAF2F2",
+                    color: "#8A2E2E",
+                    fontSize: "0.69rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "3px",
+                  }}
+                >
+                  <Trash2 size={13} />
+                  <span className="eco-disenador-txt-btn">Quitar</span>
                 </button>
               </div>
 
               {/* Fila B: Rotación (-180° a +180° + botones rápidos) */}
-              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "5px" }}>
-                <span style={{ fontSize: "0.69rem", fontWeight: 700, color: "#334155" }}>
+              <div style={{ display: "flex", flexWrap: "nowrap", alignItems: "center", gap: "5px", minWidth: 0 }}>
+                <span className="eco-disenador-txt-btn" style={{ fontSize: "0.69rem", fontWeight: 700, color: "#57524C" }}>
                   Rotar:
                 </span>
                 <button
                   type="button"
+                  className="eco-disenador-btn-ico"
                   onClick={() => {
                     const actual = imagenSeleccionada.rotacionDeg || 0;
                     const sig = actual - 90 < -180 ? actual + 270 : actual - 90;
                     actualizarImagen(imagenSeleccionada.id, { rotacionDeg: sig });
                   }}
                   title="Girar 90° a la izquierda"
-                  aria-label="Rotar -90°"
+                  aria-label="Rotar -90 grados"
                   style={{
-                    padding: "2px 6px",
-                    borderRadius: "5px",
-                    border: "1px solid #CBD5E1",
+                    padding: "3px 6px",
+                    borderRadius: "6px",
+                    border: "1px solid #D5CFC4",
                     background: "#FFFFFF",
-                    color: "#334155",
+                    color: "#1F1C19",
                     fontSize: "0.67rem",
                     fontWeight: 700,
                     cursor: "pointer",
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "2px",
+                    flexShrink: 0,
                   }}
                 >
-                  <RotateCcw size={10} />
-                  <span>90°</span>
+                  <RotateCcw size={12} />
+                  <span className="eco-disenador-txt-btn">90°</span>
                 </button>
                 <button
                   type="button"
+                  className="eco-disenador-txt-btn"
                   onClick={() =>
                     actualizarImagen(imagenSeleccionada.id, {
                       rotacionDeg: Math.max(-180, (imagenSeleccionada.rotacionDeg || 0) - 15),
                     })
                   }
                   title="Girar -15°"
+                  aria-label="Rotar -15 grados"
                   style={{
-                    padding: "2px 5px",
-                    borderRadius: "5px",
-                    border: "1px solid #CBD5E1",
+                    padding: "3px 5px",
+                    borderRadius: "6px",
+                    border: "1px solid #D5CFC4",
                     background: "#FFFFFF",
-                    color: "#334155",
+                    color: "#57524C",
                     fontSize: "0.67rem",
                     fontWeight: 700,
                     cursor: "pointer",
+                    flexShrink: 0,
                   }}
                 >
                   -15°
                 </button>
                 <input
                   type="range"
+                  aria-label="Rotación de imagen"
                   min="-180"
                   max="180"
                   value={imagenSeleccionada.rotacionDeg || 0}
                   onChange={(e) =>
                     actualizarImagen(imagenSeleccionada.id, { rotacionDeg: Number(e.target.value) })
                   }
-                  style={{ flex: 1, minWidth: "70px", cursor: "pointer" }}
+                  className="eco-disenador-slider-input"
                 />
-                <strong style={{ fontSize: "0.69rem", minWidth: "34px", textAlign: "right", color: "#0F172A" }}>
+                <strong style={{ fontSize: "0.69rem", minWidth: "32px", textAlign: "right", color: "#1F1C19", flexShrink: 0 }}>
                   {imagenSeleccionada.rotacionDeg || 0}°
                 </strong>
                 <button
                   type="button"
+                  className="eco-disenador-txt-btn"
                   onClick={() =>
                     actualizarImagen(imagenSeleccionada.id, {
                       rotacionDeg: Math.min(180, (imagenSeleccionada.rotacionDeg || 0) + 15),
                     })
                   }
                   title="Girar +15°"
+                  aria-label="Rotar +15 grados"
                   style={{
-                    padding: "2px 5px",
-                    borderRadius: "5px",
-                    border: "1px solid #CBD5E1",
+                    padding: "3px 5px",
+                    borderRadius: "6px",
+                    border: "1px solid #D5CFC4",
                     background: "#FFFFFF",
-                    color: "#334155",
+                    color: "#57524C",
                     fontSize: "0.67rem",
                     fontWeight: 700,
                     cursor: "pointer",
+                    flexShrink: 0,
                   }}
                 >
                   +15°
                 </button>
                 <button
                   type="button"
+                  className="eco-disenador-btn-ico"
                   onClick={() => {
                     const actual = imagenSeleccionada.rotacionDeg || 0;
                     const sig = actual + 90 > 180 ? actual - 270 : actual + 90;
                     actualizarImagen(imagenSeleccionada.id, { rotacionDeg: sig });
                   }}
                   title="Girar 90° a la derecha"
-                  aria-label="Rotar +90°"
+                  aria-label="Rotar +90 grados"
                   style={{
-                    padding: "2px 6px",
-                    borderRadius: "5px",
-                    border: "1px solid #CBD5E1",
+                    padding: "3px 6px",
+                    borderRadius: "6px",
+                    border: "1px solid #D5CFC4",
                     background: "#FFFFFF",
-                    color: "#334155",
+                    color: "#1F1C19",
                     fontSize: "0.67rem",
                     fontWeight: 700,
                     cursor: "pointer",
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "2px",
+                    flexShrink: 0,
                   }}
                 >
-                  <RotateCw size={10} />
-                  <span>90°</span>
+                  <RotateCw size={12} />
+                  <span className="eco-disenador-txt-btn">90°</span>
                 </button>
                 {(imagenSeleccionada.rotacionDeg || 0) !== 0 && (
                   <button
                     type="button"
                     onClick={() => actualizarImagen(imagenSeleccionada.id, { rotacionDeg: 0 })}
+                    title="Restablecer rotación a 0°"
+                    aria-label="Rotación 0 grados"
                     style={{
-                      padding: "2px 5px",
-                      borderRadius: "5px",
-                      border: "1px solid #BAE6FD",
-                      background: "#F0F9FF",
-                      color: "#0369A1",
+                      padding: "3px 6px",
+                      borderRadius: "6px",
+                      border: "1px solid #221E1B",
+                      background: "#F4F2EE",
+                      color: "#221E1B",
                       fontSize: "0.66rem",
                       fontWeight: 700,
                       cursor: "pointer",
+                      flexShrink: 0,
                     }}
                   >
                     0°
@@ -1281,12 +1517,14 @@ export function LienzoDisenadorTarjeta({
               {(() => {
                 const transpActual = Math.round((1 - (imagenSeleccionada.opacidad ?? 1)) * 100);
                 return (
-                  <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "6px" }}>
-                    <span style={{ fontSize: "0.69rem", fontWeight: 700, color: "#334155" }}>
+                  <div style={{ display: "flex", flexWrap: "nowrap", alignItems: "center", gap: "5px", minWidth: 0 }}>
+                    <Droplets size={13} className="eco-disenador-solo-movil" style={{ color: "#57524C", flexShrink: 0 }} />
+                    <span className="eco-disenador-txt-btn" style={{ fontSize: "0.69rem", fontWeight: 700, color: "#57524C" }}>
                       Transparencia:
                     </span>
                     <input
                       type="range"
+                      aria-label="Transparencia de imagen"
                       min="0"
                       max="90"
                       value={transpActual}
@@ -1296,9 +1534,9 @@ export function LienzoDisenadorTarjeta({
                           opacidad: Math.max(0.1, Math.min(1, Number((1 - t / 100).toFixed(2)))),
                         });
                       }}
-                      style={{ flex: 1, minWidth: "80px", cursor: "pointer" }}
+                      className="eco-disenador-slider-input"
                     />
-                    <strong style={{ fontSize: "0.69rem", minWidth: "30px", textAlign: "right", color: "#0F172A" }}>
+                    <strong style={{ fontSize: "0.69rem", minWidth: "30px", textAlign: "right", color: "#1F1C19", flexShrink: 0 }}>
                       {transpActual}%
                     </strong>
                     {(
@@ -1307,34 +1545,29 @@ export function LienzoDisenadorTarjeta({
                         { label: "40%", op: 0.6 },
                         { label: "70%", op: 0.3 },
                       ] as const
-                    ).map((p) => (
-                      <button
-                        key={p.label}
-                        type="button"
-                        onClick={() => actualizarImagen(imagenSeleccionada.id, { opacidad: p.op })}
-                        style={{
-                          padding: "2px 6px",
-                          borderRadius: "5px",
-                          border:
-                            Math.abs((imagenSeleccionada.opacidad ?? 1) - p.op) < 0.05
-                              ? "1.5px solid #7C3AED"
-                              : "1px solid #CBD5E1",
-                          background:
-                            Math.abs((imagenSeleccionada.opacidad ?? 1) - p.op) < 0.05
-                              ? "#EDE9FE"
-                              : "#FFFFFF",
-                          color:
-                            Math.abs((imagenSeleccionada.opacidad ?? 1) - p.op) < 0.05
-                              ? "#5B21B6"
-                              : "#475569",
-                          fontSize: "0.66rem",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                        }}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
+                    ).map((p) => {
+                      const activoOp = Math.abs((imagenSeleccionada.opacidad ?? 1) - p.op) < 0.05;
+                      return (
+                        <button
+                          key={p.label}
+                          type="button"
+                          onClick={() => actualizarImagen(imagenSeleccionada.id, { opacidad: p.op })}
+                          style={{
+                            padding: "3px 6px",
+                            borderRadius: "6px",
+                            border: activoOp ? "1.5px solid #2F4737" : "1px solid #D5CFC4",
+                            background: activoOp ? "#F2F6F3" : "#FFFFFF",
+                            color: activoOp ? "#2F4737" : "#57524C",
+                            fontSize: "0.66rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {p.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 );
               })()}
@@ -1342,17 +1575,8 @@ export function LienzoDisenadorTarjeta({
           ) : (
             /* CONTROLES CONTEXTUALES: SI HAY UN CUADRO DE TEXTO SELECCIONADO */
             <>
-              {/* 6 Fuentes curadas con vista previa real */}
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: "4px",
-                  alignItems: "center",
-                  paddingTop: "5px",
-                  borderTop: "1px dashed #CBD5E1",
-                }}
-              >
+              {/* 6 Fuentes curadas con vista previa real (scroll horizontal limpio en móvil) */}
+              <div className="eco-disenador-fuentes">
                 {CATALOGO_FUENTES_TARJETA.map((f) => {
                   const activa =
                     normalizarClaveFuenteTarjeta(bloqueSeleccionado.fuente, esCondolencias) === f.id;
@@ -1364,16 +1588,16 @@ export function LienzoDisenadorTarjeta({
                       title={`Tipografía ${f.etiqueta}`}
                       aria-label={`Fuente ${f.etiqueta}`}
                       style={{
-                        padding: "3px 8px",
-                        borderRadius: "6px",
-                        border: activa ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
-                        background: activa ? "#E0F2FE" : "#FFFFFF",
-                        color: activa ? "#0369A1" : "#334155",
+                        padding: "4px 9px",
+                        borderRadius: "7px",
+                        border: activa ? "1.5px solid #221E1B" : "1px solid #D5CFC4",
+                        background: activa ? "#221E1B" : "#FFFFFF",
+                        color: activa ? "#FFFFFF" : "#3A3530",
                         fontFamily: f.cssFamily,
                         fontSize:
                           f.id === "cursiva" || f.id === "caligrafia" || f.id === "manuscrita"
                             ? "0.86rem"
-                            : "0.72rem",
+                            : "0.73rem",
                         fontWeight: 700,
                         cursor: "pointer",
                       }}
@@ -1384,145 +1608,153 @@ export function LienzoDisenadorTarjeta({
                 })}
               </div>
 
-              {/* Alineación + B/I + Tamaño + Ancho */}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", alignItems: "center" }}>
-                {(
-                  [
-                    { id: "left", icon: AlignLeft, title: "Izquierda" },
-                    { id: "center", icon: AlignCenter, title: "Centrar" },
-                    { id: "right", icon: AlignRight, title: "Derecha" },
-                    { id: "justify", icon: AlignJustify, title: "Justificar" },
-                  ] as const
-                ).map(({ id, icon: Icon, title }) => (
+              {/* Alineación + B/I + Toggle Firma (móvil solo ícono) */}
+              <div className="eco-disenador-formato-fila">
+                <div style={{ display: "inline-flex", gap: "4px", alignItems: "center" }}>
+                  {(
+                    [
+                      { id: "left", icon: AlignLeft, title: "Alinear a la izquierda" },
+                      { id: "center", icon: AlignCenter, title: "Centrar texto" },
+                      { id: "right", icon: AlignRight, title: "Alinear a la derecha" },
+                      { id: "justify", icon: AlignJustify, title: "Justificar texto" },
+                    ] as const
+                  ).map(({ id, icon: Icon, title }) => {
+                    const activoAlign = (bloqueSeleccionado.alineacion || "center") === id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        className="eco-disenador-btn-ico"
+                        onClick={() => actualizarBloque(bloqueSeleccionado.id, { alineacion: id })}
+                        title={title}
+                        aria-label={title}
+                        aria-pressed={activoAlign}
+                        style={{
+                          padding: "5px 7px",
+                          borderRadius: "7px",
+                          border: activoAlign ? "1.5px solid #221E1B" : "1px solid #D5CFC4",
+                          background: activoAlign ? "#221E1B" : "#FFFFFF",
+                          color: activoAlign ? "#FFFFFF" : "#57524C",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                        }}
+                      >
+                        <Icon size={14} />
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div style={{ display: "inline-flex", gap: "4px", alignItems: "center" }}>
                   <button
-                    key={id}
                     type="button"
-                    onClick={() => actualizarBloque(bloqueSeleccionado.id, { alineacion: id })}
-                    title={title}
-                    aria-label={title}
+                    className="eco-disenador-btn-ico"
+                    onClick={() =>
+                      actualizarBloque(bloqueSeleccionado.id, {
+                        negrita: !bloqueSeleccionado.negrita,
+                      })
+                    }
+                    title="Negrita"
+                    aria-label="Negrita"
+                    aria-pressed={Boolean(bloqueSeleccionado.negrita)}
                     style={{
-                      padding: "4px 6px",
-                      borderRadius: "6px",
-                      border:
-                        (bloqueSeleccionado.alineacion || "center") === id
-                          ? "1.5px solid #0284C7"
-                          : "1px solid #CBD5E1",
-                      background:
-                        (bloqueSeleccionado.alineacion || "center") === id ? "#E0F2FE" : "#FFFFFF",
-                      color:
-                        (bloqueSeleccionado.alineacion || "center") === id ? "#0369A1" : "#334155",
+                      padding: "5px 7px",
+                      borderRadius: "7px",
+                      border: bloqueSeleccionado.negrita ? "1.5px solid #221E1B" : "1px solid #D5CFC4",
+                      background: bloqueSeleccionado.negrita ? "#221E1B" : "#FFFFFF",
+                      color: bloqueSeleccionado.negrita ? "#FFFFFF" : "#57524C",
                       cursor: "pointer",
                       display: "inline-flex",
                       alignItems: "center",
                     }}
                   >
-                    <Icon size={12} />
+                    <Bold size={14} />
                   </button>
-                ))}
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    actualizarBloque(bloqueSeleccionado.id, {
-                      negrita: !bloqueSeleccionado.negrita,
-                    })
-                  }
-                  title="Negrita"
-                  aria-label="Negrita"
-                  style={{
-                    padding: "4px 6px",
-                    borderRadius: "6px",
-                    border: bloqueSeleccionado.negrita ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
-                    background: bloqueSeleccionado.negrita ? "#E0F2FE" : "#FFFFFF",
-                    color: bloqueSeleccionado.negrita ? "#0369A1" : "#334155",
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <Bold size={12} />
-                </button>
+                  <button
+                    type="button"
+                    className="eco-disenador-btn-ico"
+                    onClick={() =>
+                      actualizarBloque(bloqueSeleccionado.id, {
+                        italica: !bloqueSeleccionado.italica,
+                      })
+                    }
+                    title="Itálica"
+                    aria-label="Itálica"
+                    aria-pressed={Boolean(bloqueSeleccionado.italica)}
+                    style={{
+                      padding: "5px 7px",
+                      borderRadius: "7px",
+                      border: bloqueSeleccionado.italica ? "1.5px solid #221E1B" : "1px solid #D5CFC4",
+                      background: bloqueSeleccionado.italica ? "#221E1B" : "#FFFFFF",
+                      color: bloqueSeleccionado.italica ? "#FFFFFF" : "#57524C",
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Italic size={14} />
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    actualizarBloque(bloqueSeleccionado.id, {
-                      italica: !bloqueSeleccionado.italica,
-                    })
-                  }
-                  title="Itálica"
-                  aria-label="Itálica"
-                  style={{
-                    padding: "4px 6px",
-                    borderRadius: "6px",
-                    border: bloqueSeleccionado.italica ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
-                    background: bloqueSeleccionado.italica ? "#E0F2FE" : "#FFFFFF",
-                    color: bloqueSeleccionado.italica ? "#0369A1" : "#334155",
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <Italic size={12} />
-                </button>
+                  {/* En móvil: botón solo ícono para incluir/ocultar firma sin párrafo largo */}
+                  <button
+                    type="button"
+                    className="eco-disenador-solo-movil eco-disenador-btn-ico"
+                    onClick={() => emitirCambio({ ...norm, mostrarFirma: !norm.mostrarFirma })}
+                    title={norm.mostrarFirma ? "Ocultar firma en tarjeta" : "Mostrar firma en tarjeta"}
+                    aria-label="Mostrar u ocultar firma en la tarjeta"
+                    aria-pressed={norm.mostrarFirma}
+                    style={{
+                      padding: "5px 7px",
+                      borderRadius: "7px",
+                      border: norm.mostrarFirma ? "1.5px solid #2F4737" : "1px solid #D5CFC4",
+                      background: norm.mostrarFirma ? "#F2F6F3" : "#FFFFFF",
+                      color: norm.mostrarFirma ? "#2F4737" : "#847D74",
+                      cursor: "pointer",
+                      alignItems: "center",
+                    }}
+                  >
+                    <PenLine size={14} />
+                  </button>
+                </div>
               </div>
 
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "12px",
-                  alignItems: "center",
-                }}
-              >
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    fontSize: "0.69rem",
-                    color: "#334155",
-                    fontWeight: 600,
-                  }}
-                >
-                  <span>Pt:</span>
+              <div className="eco-disenador-sliders">
+                <label className="eco-disenador-slider-lbl" title="Tamaño de letra (puntos)">
+                  <Type size={13} className="eco-disenador-solo-movil" style={{ flexShrink: 0 }} />
+                  <span className="eco-disenador-txt-btn">Pt:</span>
                   <input
                     type="range"
+                    aria-label="Tamaño de fuente en puntos"
                     min="9"
                     max="38"
                     value={bloqueSeleccionado.tamanoPt || 18}
                     onChange={(e) =>
                       actualizarBloque(bloqueSeleccionado.id, { tamanoPt: Number(e.target.value) })
                     }
-                    style={{ flex: 1, minWidth: "45px", cursor: "pointer" }}
+                    className="eco-disenador-slider-input"
                   />
-                  <strong style={{ minWidth: "24px", textAlign: "right" }}>
+                  <strong style={{ minWidth: "22px", textAlign: "right", color: "#1F1C19", flexShrink: 0 }}>
                     {bloqueSeleccionado.tamanoPt || 18}
                   </strong>
                 </label>
 
-                <label
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    fontSize: "0.69rem",
-                    color: "#334155",
-                    fontWeight: 600,
-                  }}
-                >
-                  <span>Ancho:</span>
+                <label className="eco-disenador-slider-lbl" title="Ancho del cuadro de texto">
+                  <MoveHorizontal size={13} className="eco-disenador-solo-movil" style={{ flexShrink: 0 }} />
+                  <span className="eco-disenador-txt-btn">Ancho:</span>
                   <input
                     type="range"
+                    aria-label="Ancho del cuadro de texto"
                     min="30"
                     max="96"
                     value={bloqueSeleccionado.anchoPct}
                     onChange={(e) =>
                       actualizarBloque(bloqueSeleccionado.id, { anchoPct: Number(e.target.value) })
                     }
-                    style={{ flex: 1, minWidth: "45px", cursor: "pointer" }}
+                    className="eco-disenador-slider-input"
                   />
-                  <strong style={{ minWidth: "30px", textAlign: "right" }}>
+                  <strong style={{ minWidth: "30px", textAlign: "right", color: "#1F1C19", flexShrink: 0 }}>
                     {bloqueSeleccionado.anchoPct}%
                   </strong>
                 </label>
@@ -1530,74 +1762,68 @@ export function LienzoDisenadorTarjeta({
 
               {/* Si el bloque seleccionado es un texto adicional, editar su contenido aquí */}
               {bloqueSeleccionado.rol === "extra" && (
-                <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                <div style={{ display: "flex", gap: "6px", alignItems: "center", minWidth: 0 }}>
                   <input
                     type="text"
                     value={bloqueSeleccionado.texto || ""}
                     onChange={(e) =>
                       actualizarBloque(bloqueSeleccionado.id, { texto: e.target.value })
                     }
-                    placeholder="Escribe el texto adicional..."
+                    placeholder="Texto adicional..."
                     style={{
                       flex: 1,
-                      padding: "5px 8px",
-                      borderRadius: "6px",
-                      border: "1px solid #94A3B8",
-                      fontSize: "0.76rem",
+                      minWidth: 0,
+                      padding: "6px 8px",
+                      borderRadius: "7px",
+                      border: "1px solid #D5CFC4",
+                      fontSize: "0.82rem",
                       background: "#FFFFFF",
+                      color: "#1F1C19",
                     }}
                   />
                   <button
                     type="button"
+                    className="eco-disenador-btn-ico"
                     onClick={() => handleEliminarBloqueExtra(bloqueSeleccionado.id)}
                     title="Eliminar cuadro de texto adicional"
-                    aria-label="Quitar Texto"
+                    aria-label="Quitar texto adicional"
                     style={{
-                      padding: "5px 8px",
-                      borderRadius: "6px",
-                      border: "1px solid #FECACA",
-                      background: "#FEF2F2",
-                      color: "#B91C1C",
+                      padding: "6px 8px",
+                      borderRadius: "7px",
+                      border: "1px solid #E5CACA",
+                      background: "#FAF2F2",
+                      color: "#8A2E2E",
                       fontSize: "0.7rem",
                       fontWeight: 700,
                       cursor: "pointer",
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "3px",
+                      flexShrink: 0,
                     }}
                   >
-                    <Trash2 size={11} />
-                    <span>Quitar</span>
+                    <Trash2 size={13} />
+                    <span className="eco-disenador-txt-btn">Quitar</span>
                   </button>
                 </div>
               )}
             </>
           )}
 
-          {/* Toggle de firma en tarjeta */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: "8px",
-              paddingTop: "4px",
-              borderTop: "1px solid #E2E8F0",
-              fontSize: "0.69rem",
-              color: "#475569",
-            }}
-          >
+          {/* Toggle de firma en tarjeta (desktop) */}
+          <div className="eco-disenador-firma-desktop">
             <label style={{ display: "inline-flex", alignItems: "center", gap: "5px", cursor: "pointer", fontWeight: 600 }}>
               <input
                 type="checkbox"
                 checked={norm.mostrarFirma}
                 onChange={(e) => emitirCambio({ ...norm, mostrarFirma: e.target.checked })}
+                style={{ accentColor: "#221E1B" }}
               />
               <span>Incluir firma (&ldquo;De parte de&rdquo;) en la tarjeta</span>
             </label>
             {norm.imagenes.length > 0 && (
-              <span style={{ color: "#64748B" }}>
-                Toca cualquier imagen o texto para editarlo
+              <span style={{ color: "#847D74" }}>
+                Toca imagen o texto para editar
               </span>
             )}
           </div>
@@ -1605,28 +1831,18 @@ export function LienzoDisenadorTarjeta({
       )}
 
       {/* LIENZO INTERACTIVO EN PROPORCIÓN REAL (113×168 mm VERTICAL O 168×113 mm HORIZONTAL) */}
-      <div
-        style={{
-          background: "#F1F5F9",
-          borderRadius: "12px",
-          padding: "12px",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "6px",
-        }}
-      >
+      <div className="eco-disenador-lienzo-box">
         <div
           ref={lienzoRef}
           onClick={() => setSeleccion({ tipo: "texto", id: "mensaje" })}
           style={{
-            width: esCondolencias ? "100%" : "244px",
+            width: esCondolencias ? "100%" : "min(238px, 68vw)",
             maxWidth: esCondolencias ? "400px" : "244px",
             aspectRatio: `${wMm} / ${hMm}`,
-            backgroundColor: "#F6F4EE",
-            border: "1.5px solid #CBD5E1",
+            backgroundColor: "#FAF8F4",
+            border: "1.5px solid #D5CFC4",
             borderRadius: "6px",
-            boxShadow: "0 10px 22px rgba(15, 23, 42, 0.12)",
+            boxShadow: "0 8px 20px rgba(31, 28, 25, 0.1)",
             position: "relative",
             overflow: "hidden",
             userSelect: "none",
@@ -1641,19 +1857,20 @@ export function LienzoDisenadorTarjeta({
                 top: "50%",
                 left: 0,
                 right: 0,
-                borderTop: "1px dashed rgba(148, 163, 184, 0.55)",
+                borderTop: "1px dashed rgba(132, 125, 116, 0.48)",
                 pointerEvents: "none",
                 zIndex: 5,
               }}
             >
               <span
+                className="eco-disenador-tip-movil"
                 style={{
                   position: "absolute",
                   right: "6px",
                   top: "-13px",
                   fontSize: "0.56rem",
-                  color: "#94A3B8",
-                  background: "rgba(246, 244, 238, 0.9)",
+                  color: "#847D74",
+                  background: "rgba(250, 248, 244, 0.9)",
                   padding: "0 3px",
                 }}
               >
@@ -1731,20 +1948,20 @@ export function LienzoDisenadorTarjeta({
                     width: "68px",
                     height: "68px",
                     background: "#FFFFFF",
-                    border: "1px dashed #94A3B8",
+                    border: "1px dashed #847D74",
                     borderRadius: "4px",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: "0.65rem",
-                    color: "#64748B",
+                    color: "#57524C",
                     fontWeight: 700,
                   }}
                 >
                   QR
                 </div>
               )}
-              <span style={{ fontSize: "0.55rem", color: "#64748B", fontWeight: 600 }}>
+              <span style={{ fontSize: "0.55rem", color: "#57524C", fontWeight: 600 }}>
                 Solo QR (mensaje en web)
               </span>
             </div>
@@ -1769,7 +1986,7 @@ export function LienzoDisenadorTarjeta({
                       soloLectura
                         ? undefined
                         : im.cubrirTarjeta
-                          ? "Imagen de fondo 100% (clic para ajustar opacidad o quitar)"
+                          ? "Imagen de fondo 100% (toca para ajustar opacidad o quitar)"
                           : "Arrastra para mover esta imagen"
                     }
                     style={
@@ -1779,7 +1996,7 @@ export function LienzoDisenadorTarjeta({
                             inset: 0,
                             zIndex: 1,
                             cursor: soloLectura ? "default" : "pointer",
-                            border: !soloLectura && estaActiva ? "2px dashed #7C3AED" : "none",
+                            border: !soloLectura && estaActiva ? "2px dashed #2F4737" : "none",
                             boxSizing: "border-box",
                           }
                         : {
@@ -1795,9 +2012,9 @@ export function LienzoDisenadorTarjeta({
                                 : "grab",
                             border:
                               !soloLectura && estaActiva
-                                ? "1.5px dashed #7C3AED"
+                                ? "1.5px dashed #2F4737"
                                 : !soloLectura
-                                  ? "1px dashed rgba(148, 163, 184, 0.35)"
+                                  ? "1px dashed rgba(132, 125, 116, 0.35)"
                                   : "none",
                             borderRadius: "4px",
                             zIndex: 2,
@@ -1875,9 +2092,9 @@ export function LienzoDisenadorTarjeta({
                           : "grab",
                       border:
                         !soloLectura && estaActivo
-                          ? "1.5px dashed #0284C7"
+                          ? "1.5px dashed #221E1B"
                           : !soloLectura
-                            ? "1px dashed rgba(148, 163, 184, 0.45)"
+                            ? "1px dashed rgba(132, 125, 116, 0.42)"
                             : "none",
                       borderRadius: "4px",
                       padding: "3px 5px",
@@ -1895,16 +2112,17 @@ export function LienzoDisenadorTarjeta({
 
         {!soloLectura && !modoSoloQrActivo && (
           <span
+            className="eco-disenador-tip-movil"
             style={{
               fontSize: "0.68rem",
-              color: "#64748B",
+              color: "#847D74",
               display: "inline-flex",
               alignItems: "center",
               gap: "4px",
             }}
           >
             <Move size={11} />
-            Haz clic en cada texto, firma o imagen para moverlo, cambiar fuente o ampliarlo al 100%.
+            Arrastra cada texto o imagen para moverlo, cambiar fuente o ampliarlo al 100%.
           </span>
         )}
       </div>
