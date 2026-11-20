@@ -11,6 +11,7 @@
     "./acciones": "./src/acciones.ts",
     "./acciones-smtp": "./src/acciones-smtp.ts",
     "./acciones-aria": "./src/acciones-aria.ts",
+    "./acciones-marketing-meta": "./src/acciones-marketing-meta.ts",
     "./acciones-tokens-mcp": "./src/acciones-tokens-mcp.ts"
   },
   "scripts": {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bot, Building2, CheckCircle2, CircleDashed, CreditCard, FileCheck2, KeyRound, Mail, SlidersHorizontal, Truck, type LucideIcon } from "lucide-react";
+import { Bot, Building2, CheckCircle2, CircleDashed, CreditCard, FileCheck2, KeyRound, Mail, Megaphone, SlidersHorizontal, Truck, type LucideIcon } from "lucide-react";
 import {
   ConfiguracionFacturacionSri,
   ConfiguracionPasarelaPayphone,
@@ -10,8 +10,10 @@ import {
 } from "@eco/comercio";
 import type { Tables } from "@eco/db";
 import type { ConfiguracionAriaVista } from "../esquema-aria";
+import type { ConfiguracionMarketingMetaVista } from "../esquema-marketing-meta";
 import { FormularioConfiguracionNegocio } from "./FormularioConfiguracionNegocio";
 import { FormularioAria } from "./FormularioAria";
+import { FormularioMarketingMeta } from "./FormularioMarketingMeta";
 import { FormularioSmtp } from "./FormularioSmtp";
 import { GestionTokensMcpWidget } from "./GestionTokensMcpWidget";
 import { estiloTarjetaConfig } from "./estilos-configuracion";
@@ -25,6 +27,7 @@ export type SeccionConfiguracion =
   | "logistica"
   | "pasarelas"
   | "aria"
+  | "marketing_meta"
   | "correo"
   | "tokens";
 
@@ -35,12 +38,14 @@ export interface PropsConsolaConfiguracionUnificada {
   configuracion: CfgNegocio | null;
   smtp: CfgSmtp | null;
   aria: ConfiguracionAriaVista | null;
+  marketingMeta?: ConfiguracionMarketingMetaVista | null;
   logistica?: ConfiguracionLogisticaNegocio | null;
   mostrarFacturacionSri?: boolean;
   mostrarLogistica?: boolean;
   mostrarPasarelas?: boolean;
   mostrarCorreo?: boolean;
   mostrarAria?: boolean;
+  mostrarMarketingMeta?: boolean;
   mostrarTokens?: boolean;
 }
 
@@ -83,6 +88,12 @@ const TABS_CONFIGURACION: DefinicionTab[] = [
     icono: Bot,
   },
   {
+    id: "marketing_meta",
+    etiqueta: "Marketing & Meta",
+    ruta: "/panel/marketing-meta",
+    icono: Megaphone,
+  },
+  {
     id: "correo",
     etiqueta: "Servidor de Correo",
     ruta: "/panel/correo",
@@ -103,12 +114,14 @@ export function ConsolaConfiguracionUnificada({
   configuracion,
   smtp,
   aria,
+  marketingMeta = null,
   logistica = null,
   mostrarFacturacionSri = true,
   mostrarLogistica = true,
   mostrarPasarelas = true,
   mostrarCorreo = true,
   mostrarAria = true,
+  mostrarMarketingMeta = true,
   mostrarTokens = true,
 }: PropsConsolaConfiguracionUnificada) {
   const [seccionActiva, setSeccionActiva] = useState<SeccionConfiguracion>(seccionInicial);
@@ -123,6 +136,7 @@ export function ConsolaConfiguracionUnificada({
     if (tab.id === "pasarelas" && !mostrarPasarelas) return false;
     if (tab.id === "correo" && !mostrarCorreo) return false;
     if (tab.id === "aria" && !mostrarAria) return false;
+    if (tab.id === "marketing_meta" && !mostrarMarketingMeta) return false;
     if (tab.id === "tokens" && !mostrarTokens) return false;
     return true;
   });
@@ -267,6 +281,20 @@ export function ConsolaConfiguracionUnificada({
               onClick={() => cambiarSeccionPorId("aria")}
             />
           )}
+          {mostrarMarketingMeta && (
+            <IndicadorResumen
+              etiqueta="Meta Pixel"
+              valor={
+                marketingMeta?.activo && marketingMeta?.pixelId
+                  ? "Activo"
+                  : marketingMeta?.pixelId
+                    ? "Pausado"
+                    : "Pendiente"
+              }
+              activo={Boolean(marketingMeta?.activo && marketingMeta?.pixelId)}
+              onClick={() => cambiarSeccionPorId("marketing_meta")}
+            />
+          )}
           {mostrarCorreo && (
             <IndicadorResumen
               etiqueta="Correo SMTP"
@@ -350,6 +378,10 @@ export function ConsolaConfiguracionUnificada({
 
         {seccionActiva === "aria" && mostrarAria && (
           <FormularioAria inicial={aria} negocio={negocio} />
+        )}
+
+        {seccionActiva === "marketing_meta" && mostrarMarketingMeta && (
+          <FormularioMarketingMeta inicial={marketingMeta} negocio={negocio} />
         )}
 
         {seccionActiva === "correo" && mostrarCorreo && (

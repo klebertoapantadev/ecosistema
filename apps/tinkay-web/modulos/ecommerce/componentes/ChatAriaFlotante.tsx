@@ -5,7 +5,9 @@ import {
   SelectorUbicacionEntrega,
   construirEnlaceCategoriaTienda,
   interpretarEnlaceTienda,
+  leerAtribucionNavegador,
   nombreCanalRealtimeOmnicanal,
+  obtenerSaludoInicialChatPorIntencion,
   type EventoBroadcastChatWeb,
   type EventoBroadcastIntervencionAsesor,
 } from '@eco/comercio';
@@ -152,11 +154,13 @@ type CanalRealtimeChat = ReturnType<ReturnType<typeof crearClienteNavegador>['ch
 export function ChatAriaFlotante() {
   const {
     agregarItem,
+    productoSeleccionadoModal,
     setProductoSeleccionadoModal,
     setDrawerAbierto,
     cantidadTotal,
     productos,
     categorias,
+    categoriaActiva,
     navegarACategoria,
     abrirProductoPorIdentificador,
     obtenerEnlaceProducto,
@@ -627,9 +631,41 @@ export function ChatAriaFlotante() {
     };
   };
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const catObj = categorias.find((c) => c.id === categoriaActiva || c.slug === categoriaActiva);
+    const attr = leerAtribucionNavegador('tinkay', {
+      categoriaActiva: catObj?.slug || catObj?.nombre || categoriaActiva,
+      productoVistoSlug: productoSeleccionadoModal?.slug || undefined,
+      productoVistoNombre: productoSeleccionadoModal?.nombre || undefined,
+      varianteSku: productoSeleccionadoModal?.variantes?.[0]?.sku || undefined,
+    });
+    const saludoContextual = obtenerSaludoInicialChatPorIntencion(attr.intencionDetectada, {
+      nombreAgente: 'Mía',
+      nombreNegocio: 'Tinkay',
+      productoNombre: attr.productoVistoNombre,
+    });
+    setMensajes((prev) => {
+      if (prev.length === 1 && prev[0]?.id === 'msg-init-1' && prev[0].texto !== saludoContextual) {
+        return [{ ...prev[0], texto: saludoContextual }];
+      }
+      return prev;
+    });
+  }, [categoriaActiva, categorias, productoSeleccionadoModal]);
+
   // Consulta a ARIA con 1 reintento automático ante micro-cortes o timeouts transitorios (502/504).
   const consultarAria = async (texto: string): Promise<ResultadoConsultaAria> => {
     let ultimaCotizacion: CotizacionChat | undefined;
+    const catObj = categorias.find((c) => c.id === categoriaActiva || c.slug === categoriaActiva);
+    const atribucionActual =
+      typeof window !== 'undefined'
+        ? leerAtribucionNavegador('tinkay', {
+            categoriaActiva: catObj?.slug || catObj?.nombre || categoriaActiva,
+            productoVistoSlug: productoSeleccionadoModal?.slug || undefined,
+            productoVistoNombre: productoSeleccionadoModal?.nombre || undefined,
+            varianteSku: productoSeleccionadoModal?.variantes?.[0]?.sku || undefined,
+          })
+        : undefined;
 
     for (let intento = 0; intento < 2; intento++) {
       try {
@@ -639,6 +675,7 @@ export function ChatAriaFlotante() {
           body: JSON.stringify({
             prompt: texto,
             conversation_id: conversacionId.current,
+            ...(atribucionActual ? { atribucion: atribucionActual } : {}),
             ...(perfilVisitante
               ? {
                   visitante: {

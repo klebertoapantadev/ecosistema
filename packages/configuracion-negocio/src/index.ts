@@ -4,17 +4,30 @@ export { esquemaSmtp } from "./esquema-smtp";
 export type { DatosSmtp } from "./esquema-smtp";
 export { esquemaAria, URL_ARIA_DEFECTO } from "./esquema-aria";
 export type { DatosAria, ConfiguracionAriaVista } from "./esquema-aria";
+export { esquemaMarketingMeta } from "./esquema-marketing-meta";
+export type {
+  DatosMarketingMeta,
+  ConfiguracionMarketingMetaVista,
+} from "./esquema-marketing-meta";
 export {
   obtenerConfiguracionNegocio,
   obtenerSmtpNegocio,
   obtenerAriaNegocio,
+  obtenerMarketingMetaNegocio,
 } from "./consultas";
 export { actualizarConfiguracionNegocio } from "./acciones";
 export { guardarSmtp, borrarContrasenaSmtp } from "./acciones-smtp";
 export { guardarAria, borrarClaveAria, probarConexionAria } from "./acciones-aria";
+export {
+  cargarMarketingMetaAction,
+  guardarMarketingMetaAction,
+  borrarTokenMarketingMetaAction,
+  probarEventoMetaCapiAction,
+} from "./acciones-marketing-meta";
 export { FormularioConfiguracionNegocio } from "./componentes/FormularioConfiguracionNegocio";
 export { FormularioSmtp } from "./componentes/FormularioSmtp";
 export { FormularioAria } from "./componentes/FormularioAria";
+export { FormularioMarketingMeta } from "./componentes/FormularioMarketingMeta";
 export { GestionTokensMcpWidget } from "./componentes/GestionTokensMcpWidget";
 export { ConsolaConfiguracionUnificada } from "./componentes/ConsolaConfiguracionUnificada";
 export type {

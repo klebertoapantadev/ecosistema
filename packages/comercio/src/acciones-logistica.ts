@@ -711,6 +711,17 @@ export interface EntradaPedidoTienda {
   } | null;
   comprobanteTransferencia?: ComprobanteTransferenciaSubido | null;
   conversacionWebId?: string;
+  atribucionPublicitaria?: {
+    utmSource?: string;
+    utmMedium?: string;
+    utmCampaign?: string;
+    utmContent?: string;
+    fbclid?: string;
+    fbc?: string;
+    fbp?: string;
+    intencionDetectada?: string;
+    eventSourceUrl?: string;
+  } | null;
 }
 
 export interface PedidoTiendaRegistrado {
@@ -903,6 +914,7 @@ const esquemaPedidoTienda = z.object({
     })
     .nullable()
     .optional(),
+  atribucionPublicitaria: z.record(z.string(), z.any()).nullable().optional(),
 });
 
 function enriquecerDestinoConAuditoriaInterna(
@@ -1324,10 +1336,16 @@ export async function registrarPedidoTiendaAction(
       },
     },
     items: itemsEnriquecidos,
+    ...(entrada.atribucionPublicitaria
+      ? { atribucion_publicitaria: entrada.atribucionPublicitaria }
+      : {}),
   };
 
   const payloadFinal = {
     ...payloadCompleto,
+    ...(entrada.atribucionPublicitaria
+      ? { atribucion_publicitaria: entrada.atribucionPublicitaria }
+      : {}),
     tipo_comprador: esUsuarioRegistradoNegocio ? "USUARIO_REGISTRADO" : "USUARIO_NO_AUTORIZADO",
     usuario_autorizado: esUsuarioRegistradoNegocio,
     ...(regaloVerificadoOrden
@@ -2867,6 +2885,90 @@ export async function actualizarEstadoPedidoTiendaAction(
     repartidorAsignadoId,
   });
 
+  // 4. Si el equipo aprueba un pedido por Transferencia / QR DeUna, disparar Purchase en Meta Conversions API
+  if (
+    ["ORDEN_CONFIRMADA", "APROBADA", "RESERVADA_70", "EN_PREPARACION"].includes(nuevoEstado) &&
+    /^[0-9a-f-]{36}$/i.test(pedidoId)
+  ) {
+    try {
+      const { data: filaPrfMeta } = await db
+        .schema("comun_comercio")
+        .from("com_proforma")
+        .select("prf_id, prf_cliente_id, prf_total, prf_detalle_proforma")
+        .eq("prf_id", pedidoId)
+        .eq("prf_negocio", negNorm)
+        .maybeSingle();
+
+      const detMeta = (filaPrfMeta?.prf_detalle_proforma ?? {}) as Record<string, any>;
+      const metodoPagoOrd = String(detMeta.metodo_pago || "").toLowerCase();
+      if (
+        filaPrfMeta &&
+        !detMeta.meta_capi_purchase_enviado &&
+        metodoPagoOrd !== "plux" &&
+        metodoPagoOrd !== "payphone"
+      ) {
+        const { enviarEventoConversionMetaServidorAction } = await import(
+          "./acciones-marketing-meta"
+        );
+        const itemsPrf: any[] = Array.isArray(detMeta.items) ? detMeta.items : [];
+        const skus: string[] = [];
+        const contents: Array<{ id: string; quantity: number; item_price?: number }> = [];
+        for (const it of itemsPrf) {
+          const sku = String(it?.variante_sku || it?.producto_id || "").trim();
+          if (sku && Number(it?.precio_unitario ?? 1) > 0) {
+            skus.push(sku);
+            contents.push({
+              id: sku,
+              quantity: Math.max(1, Number(it?.cantidad) || 1),
+              item_price: Number(it?.precio_unitario) || undefined,
+            });
+          }
+        }
+        const totalUsd = Number(detMeta.total_pagar ?? filaPrfMeta.prf_total ?? 0);
+        const comp = (detMeta.comprador ?? {}) as Record<string, any>;
+        const attr = (detMeta.atribucion_publicitaria ?? {}) as Record<string, any>;
+        const resCapi = await enviarEventoConversionMetaServidorAction({
+          negocio: negNorm,
+          eventName: "Purchase",
+          eventId: codigoOrden || filaPrfMeta.prf_id,
+          eventSourceUrl: typeof attr.eventSourceUrl === "string" ? attr.eventSourceUrl : undefined,
+          valorUsd: totalUsd,
+          moneda: "USD",
+          codigoOrden: codigoOrden || filaPrfMeta.prf_id,
+          contentIds: skus,
+          contents,
+          comprador: {
+            email: comp.correo || undefined,
+            telefono: comp.telefono || comp.whatsapp || undefined,
+            nombreCompleto: comp.nombreCompleto || compradorNombre,
+            usuarioId: filaPrfMeta.prf_cliente_id || clienteUsuarioId || undefined,
+          },
+          atribucion: {
+            fbc: typeof attr.fbc === "string" ? attr.fbc : undefined,
+            fbp: typeof attr.fbp === "string" ? attr.fbp : undefined,
+            ctwaClid: typeof attr.ctwaClid === "string" ? attr.ctwaClid : undefined,
+          },
+        });
+        if (resCapi.ok) {
+          await db
+            .schema("comun_comercio")
+            .from("com_proforma")
+            .update({
+              prf_detalle_proforma: {
+                ...detMeta,
+                meta_capi_purchase_enviado: true,
+                meta_capi_purchase_en: new Date().toISOString(),
+              },
+            })
+            .eq("prf_id", pedidoId)
+            .catch(() => {});
+        }
+      }
+    } catch {
+      // No interrumpir cambio de estado operativo
+    }
+  }
+
   revalidatePath("/panel/pedidos");
   revalidatePath("/panel/taller");
   revalidatePath("/panel/entregas");
@@ -2906,6 +3008,17 @@ export interface EntradaProformaEvento {
   totalPagar: number;
   vigenciaDias?: number;
   conversacionWebId?: string;
+  atribucionPublicitaria?: {
+    utmSource?: string;
+    utmMedium?: string;
+    utmCampaign?: string;
+    utmContent?: string;
+    fbclid?: string;
+    fbc?: string;
+    fbp?: string;
+    intencionDetectada?: string;
+    eventSourceUrl?: string;
+  } | null;
 }
 
 export interface ProformaEventoPublica {
@@ -3249,6 +3362,9 @@ export async function generarProformaEventoAction(
       },
     },
     items: itemsEnriquecidos,
+    ...(entrada.atribucionPublicitaria
+      ? { atribucion_publicitaria: entrada.atribucionPublicitaria }
+      : {}),
   };
 
   const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
@@ -3335,6 +3451,39 @@ export async function generarProformaEventoAction(
           });
         } catch (errStaff) {
           console.warn("Aviso al notificar proforma a staff:", errStaff);
+        }
+
+        // Disparar evento Lead en Meta Conversions API (deduplicado con lead-{codigoProforma})
+        try {
+          const { enviarEventoConversionMetaServidorAction } = await import(
+            "./acciones-marketing-meta"
+          );
+          const skusLead = itemsEnriquecidos
+            .map((it) => String(it.variante_sku || it.producto_id || "").trim())
+            .filter(Boolean);
+          await enviarEventoConversionMetaServidorAction({
+            negocio: negNorm,
+            eventName: "Lead",
+            eventId: `lead-${consultaNueva.proforma.codigoProforma}`,
+            eventSourceUrl: entrada.atribucionPublicitaria?.eventSourceUrl,
+            valorUsd: consultaNueva.proforma.total,
+            moneda: "USD",
+            codigoOrden: consultaNueva.proforma.codigoProforma,
+            contentIds: skusLead,
+            contentName: `Proforma ${consultaNueva.proforma.evento.tipoEvento}`,
+            comprador: {
+              email: consultaNueva.proforma.comprador.correo,
+              telefono: consultaNueva.proforma.comprador.whatsapp || undefined,
+              nombreCompleto: consultaNueva.proforma.comprador.nombreCompleto,
+              usuarioId: user?.id ?? null,
+            },
+            atribucion: {
+              fbc: entrada.atribucionPublicitaria?.fbc,
+              fbp: entrada.atribucionPublicitaria?.fbp,
+            },
+          });
+        } catch {
+          // No interrumpir emisión de proforma
         }
       }
     } catch {

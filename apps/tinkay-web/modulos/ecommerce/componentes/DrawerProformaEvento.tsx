@@ -7,7 +7,9 @@ import { useRouter } from 'next/navigation';
 import {
   SelectorUbicacionEntrega,
   construirUrlWhatsappTienda,
+  dispararEventoPixelNavegador,
   generarProformaEventoAction,
+  leerAtribucionNavegador,
 } from '@eco/comercio';
 import { ModalTerminosWhatsapp } from '@eco/identidad/componentes/ModalTerminosWhatsapp';
 import {
@@ -312,6 +314,13 @@ export function DrawerProformaEvento() {
         typeof window !== 'undefined'
           ? window.localStorage.getItem('eco_chat_conv_tinkay') || undefined
           : undefined,
+      atribucionPublicitaria:
+        typeof window !== 'undefined'
+          ? {
+              ...leerAtribucionNavegador('tinkay'),
+              eventSourceUrl: window.location.href,
+            }
+          : null,
     });
     setGenerando(false);
 
@@ -319,6 +328,18 @@ export function DrawerProformaEvento() {
       setErrorForm(res.error);
       return;
     }
+
+    dispararEventoPixelNavegador(
+      'Lead',
+      {
+        content_ids: itemsProforma.map((it) => it.variante.sku).filter(Boolean),
+        content_name: `Proforma ${datosEventoProforma.tipoEvento || 'Evento Especial'}`,
+        content_type: 'product',
+        value: totalProforma,
+        currency: 'USD',
+      },
+      `lead-${res.codigoProforma}`
+    );
 
     vaciarProforma();
     setDrawerProformaAbierto(false);

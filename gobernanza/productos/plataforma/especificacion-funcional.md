@@ -43,6 +43,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-022`** | **Tokens de Acceso MCP e Integraciones Agénticas por Negocio** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-023`** | **Convenios Corporativos B2B2C, Paquetes de Beneficios y Enlace de Afiliación** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-024`** | **Campañas Informativas, Alertas Institucionales y Paquete de Beneficios** | ✅ Implementado | **100%** | Kleber Toapanta |
+| **`PLT-025`** | **Marketing Digital, Meta Pixel + Conversions API (CAPI), Catálogo Facebook/WhatsApp y Atribución IA ARIA** *(Código 100% listo; pendiente conexión operativa en Meta Business Suite)* | 🟡 En Desarrollo | **85%** | Kleber Toapanta |
 
 ---
 
@@ -1675,6 +1676,44 @@ Módulo unificado y transversal para la gestión, publicación y visualización 
 6. **Persistencia & Gobernanza de Base de Datos:**
    - Tabla `comun_comercio.com_campana_informativa` con RLS habilitado (escritura restringida a Operadores y Administradores de la empresa).
    - Trigger de auditoría `comun_auditoria.aud_fn_auditar_tabla()` en cada inserción, edición o borrado.
+
+---
+
+## PLT-025 — Marketing Digital, Meta Pixel + Conversions API (CAPI), Catálogo Facebook/WhatsApp y Atribución de Intención para ARIA
+
+**Responsable:** Kleber Toapanta  
+**Módulos / Widgets:** `configuracion_marketing_meta` (`/panel/marketing-meta` y pestaña en `ConsolaConfiguracionUnificada`), `@eco/configuracion-negocio`, `@eco/comercio`  
+**Esquemas:** `comun_configuracion` (`cfg_marketing_meta` + Supabase Vault), `comun_comercio` (`com_producto`, `com_variante`, `com_proforma`, `com_transaccion_pago`)
+
+### 1. Descripción
+Infraestructura transversal multi-negocio (`tranqi`, `fastfix`, `tinkay`, `margaritas`) para sincronizar de forma híbrida eventos de comercio electrónico con Meta (Pixel de navegador + Conversions API servidor con deduplicación exacta), exponer feeds vivos de catálogo comercial hacia Meta Commerce Manager (Facebook Shop, Instagram Shopping y Catálogo de WhatsApp Business) e inyectar contexto de atribución publicitaria e intención del cliente hacia el agente conversacional ARIA (tanto en Chat Web como en anuncios Click-to-WhatsApp vía YCloud).
+
+### 2. Reglas de Negocio
+1. **Un Pixel y Configuración Aislada por Negocio (`cfg_marketing_meta` + Supabase Vault):**
+   - Cada negocio gestiona en `/panel/configuracion` → **Marketing & Meta** (`/panel/marketing-meta`) su propio `Meta Pixel ID`, código `facebook-domain-verification`, `Test Event Code` opcional y estado de activación.
+   - El token secreto de **Meta Conversions API (`CAPI Access Token`)** se almacena exclusivamente cifrado en `vault.secrets` (`meta_capi_token_{negocio}`) y se despacha desde el servidor (`pgsql-http` `SECURITY DEFINER` o entorno servidor), sin exponerse jamás en `NEXT_PUBLIC_*` ni en respuestas al navegador.
+2. **Embudo Estándar y Deduplicación Exacta (`event_id`):**
+   - Los eventos de producto (`ViewContent`, `AddToCart`, `InitiateCheckout`, `Purchase`, `Lead`) envían `content_ids` con el SKU exacto de variante (ej. `TIN-VAR-7`), `content_type: 'product'`, `value` y `currency: 'USD'`.
+   - **`Purchase` solo tras confirmación real de pago:**
+     - En pagos con tarjeta (`PLUX`), se dispara únicamente cuando la transacción queda `APROBADO` en servidor y cliente, compartiendo el mismo `event_id` para deduplicación 100% en Meta.
+     - En pagos por **Transferencia Bancaria / QR DeUna**, el pedido nace pendiente de verificación sin disparar `Purchase`; cuando el equipo operativo aprueba el pedido (`ORDEN_CONFIRMADA` / `APROBADA` / `EN_PREPARACION`), el servidor envía automáticamente `Purchase` por Conversions API con *Advanced Matching* SHA-256 (`em`, `ph`, `fn`, `ln`, `country: 'ec'`) y cookies capturadas (`_fbc`, `_fbp`).
+3. **Feed Dinámico de Catálogo para Facebook, Instagram y WhatsApp Business (`/api/catalogo/meta-feed.xml`):**
+   - Cada aplicación expone `/api/catalogo/meta-feed.xml` en formato RSS 2.0 + Google/Meta Commerce (`<g:*>`), leyendo en vivo desde `comun_comercio`.
+   - Incluye únicamente productos y variantes activos y vigentes en la fecha actual (`SIEMPRE`, `RANGO_FECHAS`, `ESTACIONAL_ANUAL`), agrupando variantes mediante `<g:item_group_id>` y asignando `<g:id>` idéntico al SKU enviado por el Pixel (`TIN-VAR-7`) con enlace profundo `?variante=SKU`.
+4. **Captura de Atribución Publicitaria e Intención Comercial para ARIA (Web y WhatsApp):**
+   - **Web (`utm_*`, `fbclid`, ruta de aterrizaje y vista actual):** El navegador persiste por 30 días la atribución de campaña, clasifica la intención inicial (`CONDOLENCIAS`, `EVENTOS`, `ROMANTICO`, `ENTREGA_INMEDIATA`, `PRODUCTO_PUNTUAL`, `SERVICIO_PROFESIONAL`, `GENERAL`), adapta el saludo/mensaje de WhatsApp y envía ese contexto a `/api/chat` para que ARIA ajuste su tono (ej. tono sereno y sin emojis festivos en Condolencias; enfoque de cotización/proforma en Eventos).
+   - **WhatsApp Click-to-WhatsApp Ads (`inboundWa.referral` en YCloud):** El webhook omnicanal extrae `headline`, `body`, `source_url` y `ctwa_clid` del anuncio de Meta, lo persiste en la conversación para visibilidad de las asesoras humanas y se lo inyecta a ARIA desde el primer mensaje del cliente.
+   - **Prioridad de la voz del cliente:** La atribución guía la apertura cuando el mensaje es general (*"Hola, precios"*), pero si el cliente expresa otra necesidad explícita, ARIA prioriza de inmediato lo solicitado por el cliente.
+
+### 3. Estado de Implementación y Pendientes de Conexión en Vivo con Meta
+
+| Ítem / Fase | Estado | Detalle |
+| :--- | :---: | :--- |
+| 1 · Motor en código (`@eco/comercio`, `@eco/configuracion-negocio` y 4 apps) | ✅ Implementado | Pixel + CAPI deduplicado, Feed XML `/api/catalogo/meta-feed.xml`, atribución web + `referral` YCloud para ARIA y widget `/panel/marketing-meta` |
+| 2 · Ejecución de migración SQL en Supabase remoto (`ecosistema`) | ⏳ Pendiente | Ejecutar `supabase/migrations/20261119000008_cfg_marketing_meta_capi_catalogo_y_widget.sql` en SQL Editor |
+| 3 · Conexión y configuración directa en Meta Business Suite (sin agencia externa) | ⏳ Pendiente | Crear/obtener `Pixel ID` + `Token CAPI`, verificar dominio, cargar credenciales en `/panel/marketing-meta` y validar con `Probar CAPI` |
+| 4 · Sincronización del Catálogo Facebook / Instagram / WhatsApp Business | ⏳ Pendiente | Conectar lista programada `/api/catalogo/meta-feed.xml` en Meta Commerce Manager y vincular el catálogo a la cuenta WABA de WhatsApp Business |
+| 5 · Plantilla de atribución UTM en anuncios activos / nuevos | ⏳ Pendiente | Configurar `utm_source={{site_source_name}}&utm_medium=paid_social&utm_campaign={{campaign.name}}&utm_content={{ad.name}}` en Meta Ads Manager |
 
 ---
 

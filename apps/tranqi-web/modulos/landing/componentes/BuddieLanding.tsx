@@ -12,6 +12,7 @@
 
 import { useEffect } from "react";
 import { Sparkles } from "lucide-react";
+import { leerAtribucionNavegador } from "@eco/comercio/marketing-meta";
 
 const PRESENTACION =
   "¡Hola! Soy Tranqi, tu respaldo legal de confianza. Te acompaño mientras exploras — y si algo te da curiosidad, haz clic en mí y hablamos.";
@@ -81,10 +82,11 @@ export function BuddieLanding() {
       s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
     async function askAgent(prompt: string): Promise<{ texto: string; modoHumano?: boolean; asesoraNombre?: string }> {
+      const atribucion = leerAtribucionNavegador("tranqi");
       const r = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, conversation_id: convId }),
+        body: JSON.stringify({ prompt, conversation_id: convId, atribucion }),
       });
       const data = await r.json();
       if (r.ok && data.modoHumano) {

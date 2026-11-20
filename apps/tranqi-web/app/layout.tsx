@@ -1,5 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import {
+  ProveedorMarketingMeta,
+  obtenerConfiguracionMarketingPublicaAction,
+} from "@eco/comercio";
 import "./globals.css";
 import { GestorPwaCliente } from "./componentes/GestorPwaCliente";
 
@@ -20,29 +24,36 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export const metadata: Metadata = {
-  title: "tranqi — Lo legal, para todos",
-  description:
-    "Plataforma digital de protección jurídica continua, agendamiento legal con ARIA y billetera de documentos.",
-  manifest: "/manifest.webmanifest",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "tranqi",
-  },
-  icons: {
-    icon: [
-      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
-    ],
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const mkm = await obtenerConfiguracionMarketingPublicaAction("tranqi").catch(() => null);
+  return {
+    title: "tranqi — Lo legal, para todos",
+    description:
+      "Plataforma digital de protección jurídica continua, agendamiento legal con ARIA y billetera de documentos.",
+    manifest: "/manifest.webmanifest",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "black-translucent",
+      title: "tranqi",
+    },
+    icons: {
+      icon: [
+        { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+        { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+      ],
+      apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    },
+    ...(mkm?.dominioVerificacion
+      ? { other: { "facebook-domain-verification": mkm.dominioVerificacion } }
+      : {}),
+  };
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
       <body className={inter.className}>
+        <ProveedorMarketingMeta negocio="tranqi" />
         {children}
         <GestorPwaCliente />
       </body>

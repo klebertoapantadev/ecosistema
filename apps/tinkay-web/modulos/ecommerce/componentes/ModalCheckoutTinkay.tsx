@@ -8,7 +8,9 @@ import {
   SelectorUbicacionEntrega,
   construirUrlWhatsappTienda,
   descargarArchivoFacturaRideSri,
+  dispararEventoPixelNavegador,
   imprimirFacturaRideSri,
+  leerAtribucionNavegador,
   obtenerConfiguracionTiendaCheckoutAction,
   obtenerEmisorDefectoPorNegocio,
   obtenerEmisorRideNegocioAction,
@@ -559,6 +561,13 @@ export function ModalCheckoutTinkay() {
         typeof window !== 'undefined'
           ? window.localStorage.getItem('eco_chat_conv_tinkay') || undefined
           : undefined,
+      atribucionPublicitaria:
+        typeof window !== 'undefined'
+          ? {
+              ...leerAtribucionNavegador('tinkay'),
+              eventSourceUrl: window.location.href,
+            }
+          : null,
     };
   };
 
@@ -1705,6 +1714,23 @@ export function ModalCheckoutTinkay() {
                           }}
                           etiqueta={`Pagar $${totalPagar.toFixed(2)}`}
                           alPagoAprobado={(_identificador: string, pago: PagoPluxConsultado) => {
+                            dispararEventoPixelNavegador(
+                              'Purchase',
+                              {
+                                content_ids: items.map((it) => it.variante.sku).filter(Boolean),
+                                contents: items.map((it) => ({
+                                  id: it.variante.sku,
+                                  quantity: it.cantidad,
+                                  item_price: it.variante.pvp,
+                                  title: it.producto.nombre,
+                                })),
+                                content_type: 'product',
+                                value: totalPagar,
+                                currency: 'USD',
+                                num_items: items.reduce((acc, it) => acc + it.cantidad, 0),
+                              },
+                              ordenPluxPreparada.codigoOrden
+                            );
                             setResumenExito({
                               totalPagado: totalPagar,
                               entregaTexto: entregaTextoConfirmado,

@@ -2,7 +2,11 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { construirUrlWhatsappTienda } from '@eco/comercio';
+import {
+  construirMensajeWhatsappContextual,
+  construirUrlWhatsappTienda,
+  leerAtribucionNavegador,
+} from '@eco/comercio';
 import { ProveedorCarrito, useCarrito } from '../contexto-carrito';
 import type { CategoriaEcommerce, ProductoEcommerce } from '../tipos';
 import { EncabezadoEcommerce } from './EncabezadoEcommerce';
@@ -18,12 +22,29 @@ import { ChatAriaFlotante } from './ChatAriaFlotante';
 import { Sparkles, ShieldCheck, Heart, Truck, Phone, MapPin } from 'lucide-react';
 
 function ContenidoPaginaEcommerceTinkay() {
-  const { navegarACategoria, configTiendaCheckout } = useCarrito();
+  const { navegarACategoria, configTiendaCheckout, categoriaActiva, productoSeleccionadoModal } =
+    useCarrito();
   const telefonoTienda = configTiendaCheckout?.whatsappTienda || '+593 99 292 2343';
-  const urlWhatsappPie = construirUrlWhatsappTienda(
-    telefonoTienda,
+  const [mensajeWaContextual, setMensajeWaContextual] = React.useState(
     'Hola Tinkay, deseo asesoría para elegir un arreglo floral.'
   );
+
+  React.useEffect(() => {
+    const attr = leerAtribucionNavegador('tinkay', {
+      categoriaActiva,
+      productoVistoNombre: productoSeleccionadoModal?.nombre,
+      varianteSku: productoSeleccionadoModal?.variantes?.[0]?.sku,
+    });
+    setMensajeWaContextual(
+      construirMensajeWhatsappContextual(attr.intencionDetectada, {
+        nombreNegocio: 'Tinkay',
+        productoNombre: attr.productoVistoNombre,
+        varianteSku: attr.varianteSku,
+      })
+    );
+  }, [categoriaActiva, productoSeleccionadoModal]);
+
+  const urlWhatsappPie = construirUrlWhatsappTienda(telefonoTienda, mensajeWaContextual);
 
   const irAColeccion = (e: React.MouseEvent<HTMLAnchorElement>, catId: string) => {
     e.preventDefault();

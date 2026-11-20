@@ -2287,6 +2287,12 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
       (entrada.payload as any)?.whatsappInboundMessage ??
       (entrada.payload as any)?.whatsappMessage ??
       null;
+    const {
+      construirBloqueReferralWhatsappParaAria,
+      etiquetaIntencionLegible,
+      extraerReferralMetaDePayloadYcloud,
+    } = await import("./marketing-meta");
+    const referralMeta = extraerReferralMetaDePayloadYcloud(entrada.payload);
 
     let imagenUrlCliente: string | null = rec.imagenUrl ? String(rec.imagenUrl) : null;
     let audioUrlCliente: string | null = rec.audioUrl
@@ -2651,8 +2657,32 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
       // Ignorar si la cotización tarda
     }
 
+    const bloqueReferralMeta = construirBloqueReferralWhatsappParaAria(referralMeta);
+    if (referralMeta && rec.conversacionId) {
+      const resumenRef = [
+        `📢 Meta Ads (${etiquetaIntencionLegible(referralMeta.intencionDetectada)})`,
+        referralMeta.headline ? `"${referralMeta.headline}"` : null,
+        referralMeta.ctwaClid ? `CTWA: ${referralMeta.ctwaClid.slice(0, 18)}…` : null,
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      await emitirBroadcastServidorOmnicanal(supabase, negocio, "actividad_chat_web", {
+        eventoId: `ref-meta-${rec.mensajeId || Date.now()}`,
+        claveHilo: String(rec.claveHilo || ""),
+        conversacionId: String(rec.conversacionId),
+        canal: "whatsapp",
+        fase: "NOTA_INTERNA",
+        contenido: resumenRef,
+        autorNombre: "Atribución Meta Ads",
+        remitenteNombre: String(rec.remitenteNombre || "Cliente WhatsApp"),
+        remitenteTelefono: tel || null,
+        estadoAtencion: (rec.estadoAtencion as EstadoAtencionOmnicanal) || "BOT_ACTIVO",
+        creadoEn: new Date().toISOString(),
+      });
+    }
+
     const promptCompleto =
-      `${encabezadoUsuario}\n${textoCliente}\n\n` +
+      `${encabezadoUsuario}${bloqueReferralMeta}\n${textoCliente}\n\n` +
       `[ENLACES DIRECTOS E-COMMERCE TINKAY: Categorías ${origenTienda}/categoria/{slug}, Entrega Inmediata ${origenTienda}/categoria/entrega-inmediata, Producto ${origenTienda}/producto/{slug}]` +
       bloqueInmediata +
       bloqueCotizacionGps;

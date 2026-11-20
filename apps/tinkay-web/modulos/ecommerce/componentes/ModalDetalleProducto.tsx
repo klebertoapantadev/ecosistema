@@ -3,7 +3,9 @@
 import React, { useState } from 'react';
 import {
   calcularPrecioPorVolumen,
+  capturarYPersistirAtribucionNavegador,
   describirEscalaVolumen,
+  dispararEventoPixelNavegador,
 } from '@eco/comercio';
 import { useCarrito } from '../contexto-carrito';
 import { PRODUCTOS_TINKAY, FRASES_DEDICATORIAS } from '../datos-catalogo';
@@ -100,6 +102,32 @@ export function ModalDetalleProducto() {
       setDedicatoria({ para: '', de: '', mensaje: '' });
     }
   }, [producto, productos]);
+
+  React.useEffect(() => {
+    if (!producto || !varianteSeleccionada?.sku) return;
+    capturarYPersistirAtribucionNavegador('tinkay', {
+      productoVistoSlug: producto.slug || producto.id,
+      productoVistoNombre: producto.nombre,
+      varianteSku: varianteSeleccionada.sku,
+      precioVista: varianteSeleccionada.pvp,
+    });
+    dispararEventoPixelNavegador('ViewContent', {
+      content_ids: [varianteSeleccionada.sku],
+      contents: [
+        {
+          id: varianteSeleccionada.sku,
+          quantity: 1,
+          item_price: varianteSeleccionada.pvp,
+          title: producto.nombre,
+        },
+      ],
+      content_name: `${producto.nombre} — ${varianteSeleccionada.nombre}`,
+      content_category: producto.categoriaNombre || producto.categoriaPrincipal,
+      content_type: 'product',
+      value: varianteSeleccionada.pvp,
+      currency: 'USD',
+    });
+  }, [producto, varianteSeleccionada.sku, varianteSeleccionada.nombre, varianteSeleccionada.pvp]);
 
   // Estado para la tarjeta de dedicatoria
   const [incluirDedicatoria, setIncluirDedicatoria] = useState(false);

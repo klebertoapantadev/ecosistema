@@ -6,7 +6,7 @@ import {
   LayoutGrid, Wrench, Shield, Users, Bell, UserCog, ClipboardList, FileText,
   Settings, ChevronRight, CircleUser, KeyRound, FileCheck, Folder, Calendar, type LucideIcon,
   Bot, ShoppingBag, CreditCard, Receipt, Share2, CheckCircle2, Sparkles, Building2, Scale, Gift,
-  ShieldCheck, Briefcase, Pencil, Coins, MapPin, MessageSquare, MessageSquareHeart
+  ShieldCheck, Briefcase, Pencil, Coins, MapPin, MessageSquare, MessageSquareHeart, Megaphone
 } from "lucide-react";
 import { ModalEditarWidget } from "../ModalEditarWidget";
 import { WidgetProximamente } from "../WidgetProximamente";
@@ -19,6 +19,7 @@ import { GestionTerminosConsentimientosWidget } from "@eco/identidad/componentes
 import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
 import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
 import { FormularioAria } from "@eco/configuracion-negocio/componentes/FormularioAria";
+import { FormularioMarketingMeta } from "@eco/configuracion-negocio/componentes/FormularioMarketingMeta";
 import { GestionTokensMcpWidget } from "@eco/configuracion-negocio/componentes/GestionTokensMcpWidget";
 import { FormularioPerfil } from "@eco/identidad/componentes/FormularioPerfil";
 import { WidgetConfiguracionMfa } from "@eco/identidad/componentes/WidgetConfiguracionMfa";
@@ -419,6 +420,13 @@ const INVENTARIO_GLOBAL_WIDGETS: Record<string, { titulo: string; subtitulo: str
     subtitulo: "Parámetros de conexión ARIA (ARIA_BASE, ARIA_AGENT_ID y claves en Vault) propios del negocio",
     icono: Bot,
     colorIcono: "var(--exito)",
+    categoria: "Seguridad & Integraciones"
+  },
+  configuracion_marketing_meta: {
+    titulo: "Marketing & Meta (Pixel / Catálogo)",
+    subtitulo: "Meta Pixel, Conversions API (CAPI) en Vault, feed de catálogo Facebook/WhatsApp y atribución ARIA",
+    icono: Megaphone,
+    colorIcono: "var(--acento)",
     categoria: "Seguridad & Integraciones"
   },
   configuracion_logistica: {
@@ -1034,6 +1042,9 @@ export function PanelDinamicoModular({ slug, negocio, rolInicial = "ADMINISTRADO
       case "configuracion_aria":
       case "aria":
         return <FormularioAria inicial={null} negocio={negocio} />;
+      case "configuracion_marketing_meta":
+      case "marketing_meta":
+        return <FormularioMarketingMeta inicial={null} negocio={negocio} />;
       case "configuracion_logistica":
       case "logistica":
         return <FormularioLogisticaCobertura negocio={negocio} />;

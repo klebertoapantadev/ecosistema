@@ -21,11 +21,13 @@ import {
 } from './filtrado-catalogo';
 import {
   calcularPrecioPorVolumen,
+  capturarYPersistirAtribucionNavegador,
   construirEnlaceCategoriaTienda,
   construirEnlaceProductoTienda,
   cotizarEnvioDesdeEntradaAction,
   crearConfiguracionLogisticaPorDefecto,
   crearConfiguracionTiendaCheckoutPorDefecto,
+  dispararEventoPixelNavegador,
   interpretarEnlaceTienda,
   obtenerConfiguracionLogisticaAction,
   obtenerConfiguracionTiendaCheckoutAction,
@@ -736,6 +738,26 @@ export function ProveedorCarrito({
     if (abrirDrawer) {
       setDrawerAbierto(true);
     }
+
+    if (variante.sku && variante.pvp > 0) {
+      dispararEventoPixelNavegador('AddToCart', {
+        content_ids: [variante.sku],
+        contents: [
+          {
+            id: variante.sku,
+            quantity: cantAgregar,
+            item_price: variante.pvp,
+            title: producto.nombre,
+          },
+        ],
+        content_name: `${producto.nombre} — ${variante.nombre}`,
+        content_category: producto.categoriaNombre || producto.categoriaPrincipal,
+        content_type: 'product',
+        value: Math.round(variante.pvp * cantAgregar * 100) / 100,
+        currency: 'USD',
+        num_items: cantAgregar,
+      });
+    }
   };
 
   const eliminarItem = (itemId: string) => {
@@ -995,6 +1017,33 @@ export function ProveedorCarrito({
       totalPagar: Math.round(total * 100) / 100,
     };
   }, [items, modalidadEntrega, entregaUnificada, configLogistica, usuarioRegistrado]);
+
+  useEffect(() => {
+    if (!cargado) return;
+    const catObj = categorias.find((c) => c.id === categoriaActiva || c.slug === categoriaActiva);
+    capturarYPersistirAtribucionNavegador('tinkay', {
+      categoriaActiva: catObj?.slug || catObj?.nombre || categoriaActiva,
+    });
+  }, [categoriaActiva, categorias, cargado]);
+
+  useEffect(() => {
+    if (!checkoutAbierto || items.length === 0) return;
+    const skus = items.map((it) => it.variante.sku).filter(Boolean);
+    dispararEventoPixelNavegador('InitiateCheckout', {
+      content_ids: skus,
+      contents: items.map((it) => ({
+        id: it.variante.sku,
+        quantity: it.cantidad,
+        item_price: it.variante.pvp,
+        title: it.producto.nombre,
+      })),
+      content_type: 'product',
+      value: totalPagar,
+      currency: 'USD',
+      num_items: cantidadTotal,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [checkoutAbierto]);
 
   return (
     <ContextoCarrito.Provider

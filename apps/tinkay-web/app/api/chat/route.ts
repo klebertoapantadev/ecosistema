@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ErrorSinConfiguracionAria, invocarAgentePorNegocio } from "@eco/agentes-ia";
 import {
+  construirBloqueAtribucionParaAria,
   cotizarEnvioDesdeEntradaAction,
   extraerCoordenadasDeTextoOUrl,
   extraerPrimeraUrlDeTexto,
@@ -8,6 +9,7 @@ import {
   obtenerConfiguracionLogisticaAction,
   registrarInteraccionChatWebAction,
   sincronizarHiloPublicoChatWebAction,
+  type AtribucionPublicitariaVisitante,
 } from "@eco/comercio";
 
 // Chat publico de la tienda (Mía). Pasa por packages/agentes-ia como exige el
@@ -60,12 +62,14 @@ export async function POST(req: NextRequest) {
   let prompt: unknown;
   let conversationId: unknown;
   let visitante: unknown;
+  let atribucion: unknown;
   let respuestaRespaldo: unknown;
   try {
     ({
       prompt,
       conversation_id: conversationId,
       visitante,
+      atribucion,
       respuesta_respaldo: respuestaRespaldo,
     } = await req.json());
   } catch {
@@ -161,7 +165,13 @@ export async function POST(req: NextRequest) {
     `Incluye el link directo cuando recomiendes una colección o arreglo específico.]` +
     bloqueEntregaInmediata;
 
-  let promptParaAria = `${textoLimpio}\n\n${guiaEnlacesTienda}`;
+  const atribucionVisitante =
+    atribucion && typeof atribucion === "object"
+      ? (atribucion as Partial<AtribucionPublicitariaVisitante>)
+      : null;
+  const bloqueAtribucion = construirBloqueAtribucionParaAria(atribucionVisitante);
+
+  let promptParaAria = `${textoLimpio}\n\n${guiaEnlacesTienda}${bloqueAtribucion}`;
 
   if (tieneUbicacionMapa) {
     try {
@@ -211,7 +221,8 @@ export async function POST(req: NextRequest) {
               : "NO menciones distancia en kilómetros."
           } ` +
           `NUNCA menciones fórmulas internas, tarifas por km ni descuentos absorbidos.]\n` +
-          guiaEnlacesTienda;
+          guiaEnlacesTienda +
+          bloqueAtribucion;
       }
     } catch {
       // Si falla la resolución externa de mapas no bloqueamos la conversación con ARIA
@@ -244,6 +255,7 @@ export async function POST(req: NextRequest) {
         ...(correoVisitante ? { correo: correoVisitante } : {}),
         ...(telefonoVisitante ? { telefono: telefonoVisitante } : {}),
         ...(cotizacionEnvio ? { cotizacion_envio: cotizacionEnvio } : {}),
+        ...(atribucionVisitante ? { atribucion_publicitaria: atribucionVisitante } : {}),
       },
     });
     silenciarAriaPorHumano = trazaEntrada.silenciarAria;

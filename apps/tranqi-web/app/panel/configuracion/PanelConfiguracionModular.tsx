@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Pencil, Lock, CreditCard, ShoppingBag, KeyRound, Bot, MapPin, FileCheck, MessageSquare, type LucideIcon } from "lucide-react";
+import { Settings, Mail, Bell, Star, ChevronRight, ShieldCheck, Sliders, Pencil, Lock, CreditCard, ShoppingBag, KeyRound, Bot, MapPin, FileCheck, MessageSquare, Megaphone, type LucideIcon } from "lucide-react";
 import { FormularioConfiguracionNegocio } from "@eco/configuracion-negocio/componentes/FormularioConfiguracionNegocio";
 import { FormularioSmtp } from "@eco/configuracion-negocio/componentes/FormularioSmtp";
 import { FormularioAria } from "@eco/configuracion-negocio/componentes/FormularioAria";
+import { FormularioMarketingMeta } from "@eco/configuracion-negocio/componentes/FormularioMarketingMeta";
 import type { ConfiguracionAriaVista } from "@eco/configuracion-negocio";
 import { GestionTokensMcpWidget } from "@eco/configuracion-negocio/componentes/GestionTokensMcpWidget";
 import { PreferenciasNotificacionWidget } from "@eco/notificaciones";
@@ -120,6 +121,15 @@ const TODOS_WIDGETS_CONFIG: WidgetConfigDef[] = [
     soloAdmin: true
   },
   {
+    id: "configuracion_marketing_meta",
+    titulo: "Marketing & Meta (Pixel / Catálogo)",
+    subtitulo: "Meta Pixel, Conversions API (CAPI) en Vault, feed de catálogo Facebook/WhatsApp y atribución ARIA",
+    icono: Megaphone,
+    colorIcono: "var(--acento)",
+    categoria: "Servicios de Despacho",
+    soloAdmin: true
+  },
+  {
     id: "configuracion_logistica",
     titulo: "Envíos, Zonas y Cobertura GPS",
     subtitulo: "Polígonos en Pichincha, zona de envío gratis por defecto, recargo por km vial y simulador GPS",
@@ -154,6 +164,10 @@ const ALIAS_WIDGET: Record<string, string> = {
   configuracion_aria: "configuracion_aria",
   "configuracion-aria": "configuracion_aria",
   aria: "configuracion_aria",
+  configuracion_marketing_meta: "configuracion_marketing_meta",
+  "configuracion-marketing-meta": "configuracion_marketing_meta",
+  "marketing-meta": "configuracion_marketing_meta",
+  marketing_meta: "configuracion_marketing_meta",
   configuracion_logistica: "configuracion_logistica",
   "configuracion-logistica": "configuracion_logistica",
   logistica: "configuracion_logistica",
@@ -406,6 +420,13 @@ export function PanelConfiguracionModular({ esAdmin, esSuperadmin = false, confi
             {widgetActivo === "configuracion_aria" && (
               <div style={{ maxWidth: "800px", margin: "0 auto" }}>
                 <FormularioAria inicial={aria} negocio={negocio} />
+              </div>
+            )}
+
+            {/* 9.B MARKETING & META (PIXEL, CAPI EN VAULT Y CATÁLOGO XML) */}
+            {widgetActivo === "configuracion_marketing_meta" && (
+              <div style={{ maxWidth: "880px", margin: "0 auto" }}>
+                <FormularioMarketingMeta inicial={null} negocio={negocio} />
               </div>
             )}
 

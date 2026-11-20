@@ -1,4 +1,5 @@
 import { URL_ARIA_DEFECTO, type ConfiguracionAriaVista } from "./esquema-aria";
+import type { ConfiguracionMarketingMetaVista } from "./esquema-marketing-meta";
 
 interface FilaCfgAria {
   ari_negocio: string;
@@ -106,4 +107,59 @@ export async function obtenerAriaNegocio(negocio: string): Promise<Configuracion
     tieneWhatsappAgenteKey: data.ari_whatsapp_agente_secreto_id != null,
     tieneSttApiKey: data.ari_stt_secreto_id != null,
   };
+}
+
+export async function obtenerMarketingMetaNegocio(
+  negocio: string
+): Promise<ConfiguracionMarketingMetaVista | null> {
+  const { crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase: any = await crearClienteServidor();
+  const negNorm = negocio.trim().toLowerCase();
+
+  try {
+    const { data, error } = await supabase
+      .schema("comun_configuracion")
+      .from("cfg_marketing_meta")
+      .select("*")
+      .eq("mkm_negocio", negNorm)
+      .maybeSingle();
+
+    if (!error && data) {
+      return {
+        negocio: String(data.mkm_negocio || negNorm),
+        pixelId: String(data.mkm_pixel_id || ""),
+        dominioVerificacion: String(data.mkm_dominio_verificacion || ""),
+        testEventCode: String(data.mkm_test_event_code || ""),
+        catalogoActivo: data.mkm_catalogo_activo !== false,
+        activo: Boolean(data.mkm_activo),
+        tieneCapiToken: data.mkm_capi_secreto_id != null,
+        actualizadoEn: data.mkm_actualizado_en ?? null,
+      };
+    }
+
+    const { data: filaNeg } = await supabase
+      .schema("comun_configuracion")
+      .from("cfg_negocio")
+      .select("cfg_detalle_configuracion")
+      .eq("cfg_negocio", negNorm)
+      .maybeSingle();
+
+    const mkm = (filaNeg?.cfg_detalle_configuracion as any)?.marketing_meta;
+    if (mkm && typeof mkm === "object") {
+      return {
+        negocio: negNorm,
+        pixelId: String(mkm.pixel_id || ""),
+        dominioVerificacion: String(mkm.dominio_verificacion || ""),
+        testEventCode: String(mkm.test_event_code || ""),
+        catalogoActivo: mkm.catalogo_activo !== false,
+        activo: Boolean(mkm.activo),
+        tieneCapiToken: false,
+        actualizadoEn: null,
+      };
+    }
+  } catch {
+    // Tabla aún no migrada o sin fila
+  }
+
+  return null;
 }

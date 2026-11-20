@@ -9,7 +9,7 @@ import {
   Palette, UserCheck, X, Sparkles, Trash2, Star, Move, Copy, Package, GripVertical,
   Home, User, Settings, Shield, Folder, Wrench, Building, Briefcase, Bell, Database,
   Activity, Globe, Lock, KeyRound, CheckSquare, Terminal, Zap, Pencil, LogOut, LogIn,
-  Forward, Inbox, FileText, Download, Printer, Share2, RotateCcw, Loader2, Scale, Bot, MapPin, ClipboardList, MessageSquare, MessageSquareHeart, type LucideIcon
+  Forward, Inbox, FileText, Download, Printer, Share2, RotateCcw, Loader2, Scale, Bot, MapPin, ClipboardList, MessageSquare, MessageSquareHeart, Megaphone, type LucideIcon
 } from "lucide-react";
 import {
   guardarPerfil,
@@ -449,7 +449,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_administrar: ["consola_chat", "chat_equipo", "envio_pedidos_taller", "taller_floral", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
-      panel_configuracion: ["configuracion_negocio", "configuracion_facturacion_sri", "configuracion_logistica", "configuracion_correo", "configuracion_aria", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
+      panel_configuracion: ["configuracion_negocio", "configuracion_facturacion_sri", "configuracion_logistica", "configuracion_correo", "configuracion_aria", "configuracion_marketing_meta", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
     },
     activo: true
   },
@@ -471,7 +471,7 @@ const PERFILES_INICIALES: PerfilDef[] = [
       panel_administrar: ["consola_chat", "chat_equipo", "envio_pedidos_taller", "taller_floral", "galeria_inmediata", "inventario_rosas", "confirmacion_entregas", "pedidos_tienda", "gestion_red_abogados", "gestion_informativos", "gestion_convenios_corporativos", "disponibilidad_abogados", "historial_pagos", "emision_notificaciones", "bitacora_notificaciones", "perfiles", "auditoria"],
       panel_cuenta: ["ver_como", "mi_cuenta", "datos_facturacion", "historial_pagos", "mfa_seguridad", "historial_accesos"],
       panel_herramientas: ["historial_pagos", "catalogo_productos", "disponibilidad_abogados", "firma_documentos_pdf", "billetera_documentos"],
-      panel_configuracion: ["configuracion_negocio", "configuracion_facturacion_sri", "configuracion_logistica", "configuracion_correo", "configuracion_aria", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
+      panel_configuracion: ["configuracion_negocio", "configuracion_facturacion_sri", "configuracion_logistica", "configuracion_correo", "configuracion_aria", "configuracion_marketing_meta", "pasarela_payphone", "perfiles", "agentes_ia", "notificaciones", "tokens_mcp"]
     },
     activo: true,
     esSuperAdmin: true
@@ -668,6 +668,17 @@ const WIDGETS_INVENTARIO_INICIALES: WidgetInventarioDef[] = [
     panelId: "panel_configuracion",
     activo: true,
     creadoEn: "2026-11-11"
+  },
+  {
+    clave: "configuracion_marketing_meta",
+    nombre: "Marketing & Meta (Pixel / Catálogo)",
+    descripcion: "Meta Pixel, Conversions API (CAPI) en Vault, verificación de dominio, feed de catálogo Facebook/WhatsApp y atribución ARIA.",
+    categoria: "Seguridad & Integraciones",
+    ruta: "/panel/marketing-meta",
+    rutaFisica: "/configuracion-negocio/componentes/FormularioMarketingMeta.tsx",
+    panelId: "panel_configuracion",
+    activo: true,
+    creadoEn: "2026-11-19"
   },
   {
     clave: "configuracion_logistica",
@@ -1245,6 +1256,21 @@ function RenderizadorWidgetReal({ clave, negocio }: { clave: string; negocio: st
           </p>
           <div style={{ padding: "12px", background: "#ECFDF5", borderRadius: "8px", border: "1px dashed #A7F3D0", textAlign: "center", fontSize: "0.82rem", color: "#065F46", fontWeight: 700 }}>
             ARIA_BASE · ARIA_AGENT_ID · Vault (ARIA_AGENT_KEY) · Prueba en Vivo
+          </div>
+        </div>
+      );
+
+    case "configuracion_marketing_meta":
+      return (
+        <div style={{ background: "#ffffff", padding: "18px", borderRadius: "12px", border: "1.5px solid #2563EB", boxShadow: "0 4px 12px rgba(37,99,235,0.08)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", fontWeight: 800, fontSize: "0.95rem", color: "#1D4ED8", marginBottom: "10px" }}>
+            <Megaphone size={18} /> Marketing & Meta (Pixel / Catálogo)
+          </div>
+          <p style={{ fontSize: "0.82rem", color: "#64748B", marginBottom: "12px" }}>
+            Meta Pixel, Conversions API (CAPI) en Vault, feed XML para Facebook/WhatsApp Business y atribución de campañas para ARIA.
+          </p>
+          <div style={{ padding: "12px", background: "#EFF6FF", borderRadius: "8px", border: "1px dashed #BFDBFE", textAlign: "center", fontSize: "0.82rem", color: "#1E40AF", fontWeight: 700 }}>
+            Pixel ID · Vault CAPI · Feed Catálogo XML · Intención ARIA
           </div>
         </div>
       );

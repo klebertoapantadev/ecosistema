@@ -751,6 +751,11 @@ export async function confirmarPagoPluxAction(entrada: {
   tokenAprobacion?: string;
   pagador?: PagadorPlux;
   modalidadCobro?: ModalidadCobroProforma;
+  atribucion?: {
+    fbc?: string;
+    fbp?: string;
+    eventSourceUrl?: string;
+  };
 }): Promise<Resultado<PagoPluxConsultado>> {
   const { identificador, respuestaPaybox } = entrada;
   const negocio = normalizarIdentificadorNegocio(entrada.negocio || "tranqi").principal;
@@ -1350,6 +1355,76 @@ export async function confirmarPagoPluxAction(entrada: {
         itemsResumen: itemsResumenNotif,
       }),
     ]);
+
+    // 5. Sincronización Meta Conversions API (Purchase servidor deduplicado por codigoVenta)
+    try {
+      const { enviarEventoConversionMetaServidorAction } = await import(
+        "./acciones-marketing-meta"
+      );
+      let skusOrden: string[] = [];
+      let contentsMeta: Array<{ id: string; quantity: number; item_price?: number }> = [];
+      let fbcGuardado = entrada.atribucion?.fbc;
+      let fbpGuardado = entrada.atribucion?.fbp;
+
+      const proformaIdCapi = detPrevio.proforma_id || ordenFirmada?.id;
+      if (proformaIdCapi) {
+        const { data: prfMeta } = await clienteDb
+          .schema("comun_comercio")
+          .from("com_proforma")
+          .select("prf_detalle_proforma")
+          .eq("prf_id", proformaIdCapi)
+          .maybeSingle();
+        const detMeta = (prfMeta?.prf_detalle_proforma ?? {}) as Record<string, any>;
+        const itemsPrf: any[] = Array.isArray(detMeta.items) ? detMeta.items : [];
+        for (const it of itemsPrf) {
+          const sku = String(it?.variante_sku || it?.producto_id || "").trim();
+          if (sku && Number(it?.precio_unitario ?? 1) > 0) {
+            skusOrden.push(sku);
+            contentsMeta.push({
+              id: sku,
+              quantity: Math.max(1, Number(it?.cantidad) || 1),
+              item_price: Number(it?.precio_unitario) || undefined,
+            });
+          }
+        }
+        if (!fbcGuardado && detMeta.atribucion_publicitaria?.fbc) {
+          fbcGuardado = String(detMeta.atribucion_publicitaria.fbc);
+        }
+        if (!fbpGuardado && detMeta.atribucion_publicitaria?.fbp) {
+          fbpGuardado = String(detMeta.atribucion_publicitaria.fbp);
+        }
+      }
+
+      if (skusOrden.length === 0 && varianteId) {
+        skusOrden = [String(varianteId)];
+        contentsMeta = [{ id: String(varianteId), quantity: 1, item_price: montoNotif }];
+      }
+
+      await enviarEventoConversionMetaServidorAction({
+        negocio,
+        eventName: "Purchase",
+        eventId: codigoVenta,
+        eventSourceUrl: entrada.atribucion?.eventSourceUrl,
+        valorUsd: montoNotif,
+        moneda: "USD",
+        codigoOrden: codigoVenta,
+        contentIds: skusOrden,
+        contents: contentsMeta,
+        contentName: productoNombre,
+        comprador: {
+          email: correoCompradorReal || undefined,
+          telefono: telefonoVenta,
+          nombreCompleto: pagadorNombre,
+          usuarioId: uidComprador,
+        },
+        atribucion: {
+          fbc: fbcGuardado,
+          fbp: fbpGuardado,
+        },
+      });
+    } catch {
+      // Nunca interrumpir confirmación de pago por telemetría externa
+    }
   } catch (errNotif) {
     console.warn("Aviso al notificar pago PLUX a cliente y staff:", errNotif);
   }

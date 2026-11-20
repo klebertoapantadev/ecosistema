@@ -13,6 +13,7 @@ import {
   KeyRound,
   Mail,
   MapPinCheck,
+  Megaphone,
   MessageSquare,
   Receipt,
   Send,
@@ -212,6 +213,15 @@ const MODULOS_TINKAY: Record<string, WidgetInfo> = {
     icono: Bot,
     grupo: "configuracion",
     etiqueta: "Vault / IA",
+  },
+  configuracion_marketing_meta: {
+    clave: "configuracion_marketing_meta",
+    nombre: "Marketing & Meta (Pixel / Catálogo)",
+    descripcion: "Meta Pixel, Conversions API (CAPI) en Vault, feed de catálogo Facebook/WhatsApp y atribución ARIA.",
+    ruta: "/panel/marketing-meta",
+    icono: Megaphone,
+    grupo: "configuracion",
+    etiqueta: "Meta Ads / Catálogo",
   },
   servidor_correo: {
     clave: "servidor_correo",

@@ -17,6 +17,7 @@ import {
   LayoutDashboard,
   Mail,
   MapPinCheck,
+  Megaphone,
   MessageSquare,
   MessagesSquare,
   Receipt,
@@ -51,6 +52,7 @@ export type IconoNavegacionPanel =
   | "logistica"
   | "pasarelas"
   | "aria"
+  | "marketing_meta"
   | "correo"
   | "tokens"
   | "cuenta";
@@ -82,6 +84,7 @@ const MAPA_ICONOS: Record<IconoNavegacionPanel, LucideIcon> = {
   logistica: Truck,
   pasarelas: CreditCard,
   aria: Bot,
+  marketing_meta: Megaphone,
   correo: Mail,
   tokens: KeyRound,
   cuenta: UserCircle,

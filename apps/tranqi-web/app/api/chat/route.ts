@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ErrorSinConfiguracionAria, invocarAgentePorNegocio } from "@eco/agentes-ia";
 import {
+  construirBloqueAtribucionParaAria,
   registrarInteraccionChatWebAction,
   sincronizarHiloPublicoChatWebAction,
+  type AtribucionPublicitariaVisitante,
 } from "@eco/comercio";
 
 const NEGOCIO = "tranqi";
@@ -32,12 +34,17 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, conversation_id: conversationId } = await req.json();
+    const { prompt, conversation_id: conversationId, atribucion } = await req.json();
     if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
       return NextResponse.json({ error: "prompt vacío" }, { status: 400 });
     }
     const textoLimpio = prompt.trim();
     const esContextoNavegacion = textoLimpio.startsWith("[CONTEXTO:");
+    const atribucionVisitante =
+      atribucion && typeof atribucion === "object"
+        ? (atribucion as Partial<AtribucionPublicitariaVisitante>)
+        : null;
+    const bloqueAtribucion = construirBloqueAtribucionParaAria(atribucionVisitante);
     const claveHilo =
       typeof conversationId === "string" && conversationId.trim()
         ? conversationId.trim()
@@ -52,6 +59,9 @@ export async function POST(req: NextRequest) {
           claveHilo,
           fase: "ENTRADA_CLIENTE",
           contenido: textoLimpio,
+          metadatos: atribucionVisitante
+            ? { atribucion_publicitaria: atribucionVisitante }
+            : undefined,
         });
         silenciarAria = traza.silenciarAria;
         asesoraNombre = traza.asesoraNombre ?? null;
@@ -68,7 +78,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const data = await invocarAgentePorNegocio(NEGOCIO, textoLimpio, {
+    const data = await invocarAgentePorNegocio(NEGOCIO, `${textoLimpio}${bloqueAtribucion}`, {
       conversationId: typeof conversationId === "string" ? conversationId : undefined,
     });
 

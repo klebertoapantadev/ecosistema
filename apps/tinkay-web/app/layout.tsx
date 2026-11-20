@@ -1,5 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
+import {
+  ProveedorMarketingMeta,
+  obtenerConfiguracionMarketingPublicaAction,
+} from "@eco/comercio";
 import "./globals.css";
 
 // Fuentes locales dentro del repo (evita fallos de descarga de Google Fonts en Vercel)
@@ -32,24 +36,37 @@ export const viewport: Viewport = {
   themeColor: "#1B2E22",
 };
 
-export const metadata: Metadata = {
-  title: "tinkay — Flores y Eventos",
-  manifest: "/manifest.webmanifest",
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "Tinkay",
-  },
-  icons: {
-    icon: "/icons/icon-192.png",
-    apple: "/icons/apple-touch-icon.png",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const mkm = await obtenerConfiguracionMarketingPublicaAction("tinkay").catch(() => null);
+  return {
+    title: "tinkay — Flores y Eventos",
+    manifest: "/manifest.webmanifest",
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "black-translucent",
+      title: "Tinkay",
+    },
+    icons: {
+      icon: "/icons/icon-192.png",
+      apple: "/icons/apple-touch-icon.png",
+    },
+    ...(mkm?.dominioVerificacion
+      ? {
+          other: {
+            "facebook-domain-verification": mkm.dominioVerificacion,
+          },
+        }
+      : {}),
+  };
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" className={`${fraunces.variable} ${inter.variable}`}>
-      <body>{children}</body>
+      <body>
+        <ProveedorMarketingMeta negocio="tinkay" />
+        {children}
+      </body>
     </html>
   );
 }

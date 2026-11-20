@@ -6,7 +6,7 @@ import {
   Sparkles, Shield, LayoutGrid, Pencil, Users, UserCheck, Eye,
   Settings, Mail, ShieldCheck, Bell, CircleUser, KeyRound, Sliders, Briefcase,
   Receipt, History, RotateCcw, FileCheck, Folder, ShoppingBag, CreditCard,
-  CalendarClock, CalendarPlus, CalendarCheck, Building2, Scale, Award, BellRing, Bot, MapPin, ClipboardList, MessageSquare, MessageSquareHeart, type LucideIcon
+  CalendarClock, CalendarPlus, CalendarCheck, Building2, Scale, Award, BellRing, Bot, MapPin, ClipboardList, MessageSquare, MessageSquareHeart, Megaphone, type LucideIcon
 } from "lucide-react";
 import { resetearSistemaSuperAdminAction } from "@eco/gestion-usuarios/acciones";
 import { ModalNotificacionPush } from "@eco/notificaciones";
@@ -128,6 +128,22 @@ export const CATALOGO_SUPERADMIN_TODOS: ModuloSuperAdminDef[] = [
     perfilesAsignados: ["ADMINISTRADOR", "SUPERADMIN"],
     estadoDuplicidad: "COMPARTIDO",
     fechaRegistro: "2026-11-11",
+  },
+  {
+    clave: "configuracion_marketing_meta",
+    nombre: "Marketing & Meta (Pixel / Catálogo)",
+    detalle: "Meta Pixel, Conversions API (CAPI) en Vault, feed de catálogo Facebook/WhatsApp y atribución ARIA",
+    ruta: "/panel/marketing-meta",
+    icono: Megaphone,
+    iconoKey: "Megaphone",
+    color: "var(--acento)",
+    rutaFisica: "packages/configuracion-negocio/src/componentes/FormularioMarketingMeta.tsx",
+    paquete: "@eco/configuracion-negocio",
+    panelDestino: "Configuración (/panel/marketing-meta)",
+    categoria: "Integraciones & IA",
+    perfilesAsignados: ["ADMINISTRADOR", "SUPERADMIN"],
+    estadoDuplicidad: "COMPARTIDO",
+    fechaRegistro: "2026-11-19",
   },
   {
     clave: "configuracion_logistica",

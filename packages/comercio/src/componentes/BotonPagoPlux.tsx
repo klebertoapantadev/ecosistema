@@ -17,6 +17,7 @@ import {
   type ModalidadCobroProforma,
   type PagoPluxConsultado,
 } from "../acciones-plux";
+import { leerAtribucionNavegador } from "../marketing-meta";
 import { SCRIPT_JQUERY, SCRIPT_PAYBOX, respuestaExitosa, type PagadorPlux } from "../plux";
 
 interface Props {
@@ -187,6 +188,7 @@ export function BotonPagoPlux({
       setFase("esperando");
 
       try {
+        const attr = leerAtribucionNavegador(negocio);
         const conf = await confirmarPagoPluxAction({
           negocio,
           identificador: idActual,
@@ -194,6 +196,11 @@ export function BotonPagoPlux({
           tokenAprobacion,
           pagador,
           modalidadCobro,
+          atribucion: {
+            fbc: attr.fbc,
+            fbp: attr.fbp,
+            eventSourceUrl: typeof window !== "undefined" ? window.location.href : undefined,
+          },
         });
         if (conf.ok && conf.data.estado === "APROBADO") {
           resuelto.current = true;

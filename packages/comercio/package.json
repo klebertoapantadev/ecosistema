@@ -16,6 +16,8 @@
     "./ride-sri": "./src/ride-sri.ts",
     "./pdf-proforma": "./src/pdf-proforma.ts",
     "./logistica": "./src/logistica.ts",
+    "./marketing-meta": "./src/marketing-meta.ts",
+    "./acciones-marketing-meta": "./src/acciones-marketing-meta.ts",
     "./plux": "./src/plux.ts",
     "./periodo-derecho": "./src/utils/periodoDerecho.ts"
   },

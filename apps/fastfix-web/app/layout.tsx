@@ -1,15 +1,28 @@
 import type { Metadata } from "next";
+import {
+  ProveedorMarketingMeta,
+  obtenerConfiguracionMarketingPublicaAction,
+} from "@eco/comercio";
 import "@eco/identidad/estilos-base.css";
 import "./globals.css";
 
-export const metadata: Metadata = {
-  title: "FastFix Home — Próximamente",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const mkm = await obtenerConfiguracionMarketingPublicaAction("fastfix").catch(() => null);
+  return {
+    title: "FastFix Home — Próximamente",
+    ...(mkm?.dominioVerificacion
+      ? { other: { "facebook-domain-verification": mkm.dominioVerificacion } }
+      : {}),
+  };
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body>
+        <ProveedorMarketingMeta negocio="fastfix" />
+        {children}
+      </body>
     </html>
   );
 }

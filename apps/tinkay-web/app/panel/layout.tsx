@@ -147,6 +147,13 @@ const CATALOGO_NAV_TINKAY: Array<ItemNavegacionPanel> = [
     grupo: "configuracion",
   },
   {
+    clave: "configuracion_marketing_meta",
+    nombre: "Marketing & Meta",
+    ruta: "/panel/marketing-meta",
+    icono: "marketing_meta",
+    grupo: "configuracion",
+  },
+  {
     clave: "servidor_correo",
     nombre: "Servidor de Correo",
     ruta: "/panel/correo",

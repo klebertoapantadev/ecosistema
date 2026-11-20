@@ -86,3 +86,6 @@ export * from "./componentes/ModalAdministrarEtiquetas";
 export * from "./componentes/PanelCamposVentaChat";
 export * from "./componentes/ModalSelectorCatalogoChat";
 export * from "./componentes/GestorPushChatsOmnicanal";
+export * from "./marketing-meta";
+export * from "./acciones-marketing-meta";
+export * from "./componentes/ProveedorMarketingMeta";

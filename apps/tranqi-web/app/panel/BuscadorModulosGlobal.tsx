@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   Search, X, Users, UserCog, UserCheck, Settings, Mail, Bell, Shield, ShieldCheck,
   CircleUser, ChevronRight, Sliders, Briefcase, FileText, BarChart2, FileCheck, Folder,
-  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard, Building2, Scale, KeyRound, Sparkles, Bot, MapPin, ClipboardList, MessageSquare, MessageSquareHeart
+  CalendarClock, CalendarPlus, CalendarCheck, Shuffle, ShoppingBag, CreditCard, Building2, Scale, KeyRound, Sparkles, Bot, MapPin, ClipboardList, MessageSquare, MessageSquareHeart, Megaphone
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCustomWidgets } from "./gestorTitulosWidgets";
@@ -161,6 +161,16 @@ const CATALOGO_MODULOS: ModuloInfoDef[] = [
     minNivel: 80,
     icono: Bot,
     colorIcono: "var(--exito)"
+  },
+  {
+    clave: "configuracion_marketing_meta",
+    nombre: "Marketing & Meta (Pixel / Catálogo)",
+    detalle: "Meta Pixel, Conversions API (CAPI) en Vault, feed de catálogo Facebook/WhatsApp y atribución ARIA",
+    ruta: "/panel/marketing-meta",
+    categoria: "Seguridad & Integraciones",
+    minNivel: 80,
+    icono: Megaphone,
+    colorIcono: "var(--acento)"
   },
   {
     clave: "configuracion_logistica",

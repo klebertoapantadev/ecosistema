@@ -5,6 +5,7 @@ import {
   ConsolaConfiguracionUnificada,
   obtenerAriaNegocio,
   obtenerConfiguracionNegocio,
+  obtenerMarketingMetaNegocio,
   obtenerSmtpNegocio,
 } from "@eco/configuracion-negocio";
 import { obtenerContextoAccesoTinkay } from "../acceso-tinkay";
@@ -19,10 +20,11 @@ export default async function PaginaConfiguracionNegocio() {
   if (!ctx.clavesAutorizadas.has("configuracion_negocio")) {
     redirect("/panel");
   }
-  const [configuracion, smtp, aria, logistica] = await Promise.all([
+  const [configuracion, smtp, aria, marketingMeta, logistica] = await Promise.all([
     obtenerConfiguracionNegocio(NEGOCIO),
     obtenerSmtpNegocio(NEGOCIO),
     obtenerAriaNegocio(NEGOCIO),
+    obtenerMarketingMetaNegocio(NEGOCIO),
     obtenerConfiguracionLogisticaAction(NEGOCIO),
   ]);
 
@@ -34,6 +36,7 @@ export default async function PaginaConfiguracionNegocio() {
       configuracion={configuracion}
       smtp={smtp}
       aria={aria}
+      marketingMeta={marketingMeta}
       logistica={logistica}
     />
   );
