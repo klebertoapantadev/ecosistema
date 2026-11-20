@@ -188,8 +188,8 @@ importers:
         specifier: 2.110.8
         version: 2.110.8
       lucide-react:
-        specifier: 1.27.0
-        version: 1.27.0(react@19.2.8)
+        specifier: 1.72.0
+        version: 1.72.0(@types/react@19.2.17)(react@19.2.8)
       next:
         specifier: 15.5.29
         version: 15.5.29(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -273,8 +273,8 @@ importers:
         specifier: ^9.7.1
         version: 9.7.1
       lucide-react:
-        specifier: 1.27.0
-        version: 1.27.0(react@19.2.8)
+        specifier: 1.72.0
+        version: 1.72.0(@types/react@19.2.17)(react@19.2.8)
       next:
         specifier: 15.5.29
         version: 15.5.29(@types/node@22.20.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -402,8 +402,8 @@ importers:
         specifier: workspace:*
         version: link:../supabase
       lucide-react:
-        specifier: 1.27.0
-        version: 1.27.0(react@19.2.8)
+        specifier: 1.72.0
+        version: 1.72.0(@types/react@19.2.17)(react@19.2.8)
       node-forge:
         specifier: 1.4.3
         version: 1.4.3
@@ -481,8 +481,8 @@ importers:
         specifier: workspace:*
         version: link:../supabase
       lucide-react:
-        specifier: 1.27.0
-        version: 1.27.0(react@19.2.8)
+        specifier: 1.72.0
+        version: 1.72.0(@types/react@19.2.17)(react@19.2.8)
       zod:
         specifier: 4.6.6
         version: 4.6.6
@@ -570,8 +570,8 @@ importers:
         specifier: workspace:*
         version: link:../supabase
       lucide-react:
-        specifier: 1.27.0
-        version: 1.27.0(react@19.2.8)
+        specifier: 1.72.0
+        version: 1.72.0(@types/react@19.2.17)(react@19.2.8)
     devDependencies:
       '@eco/config':
         specifier: workspace:*
@@ -616,8 +616,8 @@ importers:
         specifier: 1.13.9
         version: 1.13.9
       lucide-react:
-        specifier: 1.27.0
-        version: 1.27.0(react@19.2.8)
+        specifier: 1.72.0
+        version: 1.72.0(@types/react@19.2.17)(react@19.2.8)
       zod:
         specifier: 4.6.6
         version: 4.6.6
@@ -653,8 +653,8 @@ importers:
         specifier: workspace:*
         version: link:../supabase
       lucide-react:
-        specifier: 1.27.0
-        version: 1.27.0(react@19.2.8)
+        specifier: 1.72.0
+        version: 1.72.0(@types/react@19.2.17)(react@19.2.8)
     devDependencies:
       '@eco/config':
         specifier: workspace:*
@@ -1886,10 +1886,14 @@ packages:
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
 
-  lucide-react@1.27.0:
-    resolution: {integrity: sha512-rJicGl/3Fly/E0rOH1YmPZ6e49JCnKknh1ox1vpHnkfjujAkKA6sqUZvH3MTAaXXjgexyUwgNwTJzTtYuAFYJw==}
+  lucide-react@1.72.0:
+    resolution: {integrity: sha512-fbF5i1GU8GODETa3Q7rXqrJrcx3iPYrQtxthom103zGx+Z0BGwKYAW9s+9435ohYJ7hQm0av0PoZcqI1CRwNrg==}
     peerDependencies:
+      '@types/react': '*'
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
 
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
@@ -3393,9 +3397,11 @@ snapshots:
 
   lodash.merge@4.6.2: {}
 
-  lucide-react@1.27.0(react@19.2.8):
+  lucide-react@1.72.0(@types/react@19.2.17)(react@19.2.8):
     dependencies:
       react: 19.2.8
+    optionalDependencies:
+      '@types/react': 19.2.17
 
   magic-string@0.30.21:
     dependencies:
