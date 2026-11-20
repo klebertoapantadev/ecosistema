@@ -700,6 +700,10 @@ export interface PropsLienzoDisenadorTarjeta {
   mensaje: string;
   /** Texto de la firma ("De parte de"), renderizado como cuadro de texto independiente en la tarjeta */
   firma?: string;
+  /** Callback opcional para editar el mensaje directamente desde el diseñador (barra o inline sobre el gráfico) */
+  onCambiarMensaje?: (nuevo: string) => void;
+  /** Callback opcional para editar la firma directamente desde el diseñador (barra o inline sobre el gráfico) */
+  onCambiarFirma?: (nueva: string) => void;
   diseno: DisenoVisualTarjeta;
   onCambiarDiseno: (nuevo: DisenoVisualTarjeta) => void;
   qrDataUrl?: string;
@@ -716,6 +720,8 @@ export function LienzoDisenadorTarjeta({
   incluirQrEnEsquina = false,
   mensaje,
   firma = "",
+  onCambiarMensaje,
+  onCambiarFirma,
   diseno,
   onCambiarDiseno,
   qrDataUrl,
@@ -740,6 +746,7 @@ export function LienzoDisenadorTarjeta({
     tipo: "texto",
     id: "mensaje",
   });
+  const [editandoTextoId, setEditandoTextoId] = useState<string | null>(null);
   const [arrastrando, setArrastrando] = useState<{ tipo: "texto" | "imagen"; id: string } | null>(
     null
   );
@@ -759,6 +766,7 @@ export function LienzoDisenadorTarjeta({
       textoAnchoPct: msgBlk?.anchoPct ?? siguiente.textoAnchoPct,
       mostrarFirma: siguiente.mostrarFirma,
       remitentePortada: siguiente.remitentePortada,
+      modoImpresion: siguiente.modoImpresion,
       bloquesTexto: siguiente.bloquesTexto,
       imagenes: siguiente.imagenes,
       imagenUrl: primImg ? primImg.url : null,
@@ -767,6 +775,30 @@ export function LienzoDisenadorTarjeta({
       imagenAnchoMm: primImg ? primImg.anchoMm : 36,
       escalaGrisesImagen: primImg ? Boolean(primeraImgGrises(primImg)) : false,
     });
+  };
+
+  const puedeEditarBloqueTexto = (blk: BloqueTextoTarjeta): boolean => {
+    if (soloLectura) return false;
+    if (blk.rol === "extra") return true;
+    if (blk.rol === "mensaje") return Boolean(onCambiarMensaje);
+    if (blk.rol === "firma") return Boolean(onCambiarFirma);
+    return false;
+  };
+
+  const obtenerValorEditableBloque = (blk: BloqueTextoTarjeta): string => {
+    if (blk.rol === "mensaje") return mensaje;
+    if (blk.rol === "firma") return firma;
+    return blk.texto || "";
+  };
+
+  const handleCambiarValorBloque = (blk: BloqueTextoTarjeta, valor: string) => {
+    if (blk.rol === "mensaje") {
+      onCambiarMensaje?.(valor);
+    } else if (blk.rol === "firma") {
+      onCambiarFirma?.(valor);
+    } else {
+      actualizarBloque(blk.id, { texto: valor });
+    }
   };
 
   const primeraImgGrises = (im: ImagenDisenoTarjeta) => Boolean(im.escalaGrises);
@@ -1155,7 +1187,10 @@ export function LienzoDisenadorTarjeta({
               <button
                 type="button"
                 className="eco-disenador-btn-ico"
-                onClick={() => setSeleccion({ tipo: "texto", id: "mensaje" })}
+                onClick={() => {
+            setEditandoTextoId(null);
+            setSeleccion({ tipo: "texto", id: "mensaje" });
+          }}
                 title="Seleccionar bloque de mensaje"
                 aria-label="Seleccionar mensaje"
                 style={{
@@ -1891,51 +1926,88 @@ export function LienzoDisenadorTarjeta({
                 </label>
               </div>
 
-              {/* Si el bloque seleccionado es un texto adicional, editar su contenido aquí */}
-              {bloqueSeleccionado.rol === "extra" && (
-                <div style={{ display: "flex", gap: "6px", alignItems: "center", minWidth: 0 }}>
-                  <input
-                    type="text"
-                    value={bloqueSeleccionado.texto || ""}
-                    onChange={(e) =>
-                      actualizarBloque(bloqueSeleccionado.id, { texto: e.target.value })
-                    }
-                    placeholder="Texto adicional..."
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      padding: "6px 8px",
-                      borderRadius: "7px",
-                      border: "1px solid #D5CFC4",
-                      fontSize: "0.82rem",
-                      background: "#FFFFFF",
-                      color: "#1F1C19",
-                    }}
-                  />
-                  <button
-                    type="button"
-                    className="eco-disenador-btn-ico"
-                    onClick={() => handleEliminarBloqueExtra(bloqueSeleccionado.id)}
-                    title="Eliminar cuadro de texto adicional"
-                    aria-label="Quitar texto adicional"
-                    style={{
-                      padding: "6px 8px",
-                      borderRadius: "7px",
-                      border: "1px solid #E5CACA",
-                      background: "#FAF2F2",
-                      color: "#8A2E2E",
-                      fontSize: "0.7rem",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "3px",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Trash2 size={13} />
-                    <span className="eco-disenador-txt-btn">Quitar</span>
-                  </button>
+              {/* Control de edición directa del texto seleccionado (Mensaje, Firma o Texto extra) */}
+              {puedeEditarBloqueTexto(bloqueSeleccionado) && (
+                <div style={{ display: "flex", gap: "6px", alignItems: "flex-start", minWidth: 0 }}>
+                  {bloqueSeleccionado.rol === "mensaje" ? (
+                    <textarea
+                      rows={2}
+                      value={obtenerValorEditableBloque(bloqueSeleccionado)}
+                      onChange={(e) => handleCambiarValorBloque(bloqueSeleccionado, e.target.value)}
+                      placeholder={
+                        esCondolencias
+                          ? "Escribe el mensaje de condolencias..."
+                          : "Escribe el mensaje de tu tarjeta..."
+                      }
+                      aria-label="Editar texto del mensaje"
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                        padding: "7px 10px",
+                        borderRadius: "8px",
+                        border: "1px solid #CFC8BC",
+                        fontSize: "16px",
+                        lineHeight: 1.4,
+                        background: "#FFFFFF",
+                        color: "#1F1C19",
+                        resize: "vertical",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      value={obtenerValorEditableBloque(bloqueSeleccionado)}
+                      onChange={(e) => handleCambiarValorBloque(bloqueSeleccionado, e.target.value)}
+                      placeholder={
+                        bloqueSeleccionado.rol === "firma"
+                          ? "Firma (ej: Att: Kleber)"
+                          : "Texto adicional..."
+                      }
+                      aria-label={
+                        bloqueSeleccionado.rol === "firma"
+                          ? "Editar firma"
+                          : "Editar texto adicional"
+                      }
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                        padding: "7px 10px",
+                        borderRadius: "8px",
+                        border: "1px solid #CFC8BC",
+                        fontSize: "16px",
+                        background: "#FFFFFF",
+                        color: "#1F1C19",
+                        boxSizing: "border-box",
+                      }}
+                    />
+                  )}
+                  {bloqueSeleccionado.rol === "extra" && (
+                    <button
+                      type="button"
+                      className="eco-disenador-btn-ico"
+                      onClick={() => handleEliminarBloqueExtra(bloqueSeleccionado.id)}
+                      title="Eliminar cuadro de texto adicional"
+                      aria-label="Quitar texto adicional"
+                      style={{
+                        padding: "8px 9px",
+                        borderRadius: "8px",
+                        border: "1px solid #E5CACA",
+                        background: "#FAF2F2",
+                        color: "#8A2E2E",
+                        fontSize: "0.7rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "3px",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Trash2 size={13} />
+                      <span className="eco-disenador-txt-btn">Quitar</span>
+                    </button>
+                  )}
                 </div>
               )}
             </>
@@ -1965,7 +2037,10 @@ export function LienzoDisenadorTarjeta({
       <div className="eco-disenador-lienzo-box">
         <div
           ref={lienzoRef}
-          onClick={() => setSeleccion({ tipo: "texto", id: "mensaje" })}
+          onClick={() => {
+            setEditandoTextoId(null);
+            setSeleccion({ tipo: "texto", id: "mensaje" });
+          }}
           style={{
             width: esCondolencias ? "100%" : "min(238px, 68vw)",
             maxWidth: esCondolencias ? "400px" : "244px",
@@ -2217,18 +2292,42 @@ export function LienzoDisenadorTarjeta({
                     : contenidoBase;
 
                 const estaActivo = seleccion.tipo === "texto" && seleccion.id === blk.id;
+                const editable = puedeEditarBloqueTexto(blk);
+                const estaEditandoInline = editable && editandoTextoId === blk.id;
+                const fontSizeCss = `${Math.max(8, (blk.tamanoPt || 18) * 0.66)}pt`;
                 return (
                   <div
                     key={blk.id}
                     onClick={(e) => {
                       e.stopPropagation();
                       setSeleccion({ tipo: "texto", id: blk.id });
+                      if (editandoTextoId && editandoTextoId !== blk.id) {
+                        setEditandoTextoId(null);
+                      }
                     }}
-                    onPointerDown={(e) => iniciarArrastre("texto", blk.id, e)}
-                    onPointerMove={moverArrastre}
-                    onPointerUp={terminarArrastre}
-                    onPointerCancel={terminarArrastre}
-                    title={soloLectura ? undefined : "Arrastra para mover este cuadro de texto"}
+                    onDoubleClick={(e) => {
+                      if (!editable) return;
+                      e.stopPropagation();
+                      setSeleccion({ tipo: "texto", id: blk.id });
+                      setEditandoTextoId(blk.id);
+                    }}
+                    onPointerDown={(e) => {
+                      if (estaEditandoInline) {
+                        e.stopPropagation();
+                        return;
+                      }
+                      iniciarArrastre("texto", blk.id, e);
+                    }}
+                    onPointerMove={estaEditandoInline ? undefined : moverArrastre}
+                    onPointerUp={estaEditandoInline ? undefined : terminarArrastre}
+                    onPointerCancel={estaEditandoInline ? undefined : terminarArrastre}
+                    title={
+                      soloLectura
+                        ? undefined
+                        : editable
+                          ? "Arrastra para mover o haz doble clic para editar el texto aquí"
+                          : "Arrastra para mover este cuadro de texto"
+                    }
                     style={{
                       position: "absolute",
                       left: `${blk.xPct}%`,
@@ -2236,7 +2335,7 @@ export function LienzoDisenadorTarjeta({
                       transform: "translate(-50%, -50%)",
                       width: `${blk.anchoPct}%`,
                       fontFamily: resolverFontFamilyCss(blk.fuente, esCondolencias),
-                      fontSize: `${Math.max(8, (blk.tamanoPt || 18) * 0.66)}pt`,
+                      fontSize: fontSizeCss,
                       fontWeight: blk.negrita ? 700 : 400,
                       fontStyle: blk.italica ? "italic" : "normal",
                       textAlign: blk.alineacion || "center",
@@ -2246,22 +2345,101 @@ export function LienzoDisenadorTarjeta({
                       wordBreak: "break-word",
                       cursor: soloLectura
                         ? "default"
-                        : arrastrando?.id === blk.id
-                          ? "grabbing"
-                          : "grab",
-                      border:
-                        !soloLectura && estaActivo
+                        : estaEditandoInline
+                          ? "text"
+                          : arrastrando?.id === blk.id
+                            ? "grabbing"
+                            : "grab",
+                      border: estaEditandoInline
+                        ? "2px solid #2F4737"
+                        : !soloLectura && estaActivo
                           ? "1.5px dashed #221E1B"
                           : !soloLectura
                             ? "1px dashed rgba(132, 125, 116, 0.42)"
                             : "none",
+                      backgroundColor: estaEditandoInline ? "rgba(255, 255, 255, 0.92)" : "transparent",
                       borderRadius: "4px",
                       padding: "3px 5px",
                       boxSizing: "border-box",
-                      zIndex: 6,
+                      zIndex: estaEditandoInline ? 9 : 6,
                     }}
                   >
-                    {contenido}
+                    {estaEditandoInline ? (
+                      <textarea
+                        autoFocus
+                        rows={blk.rol === "mensaje" ? Math.max(2, Math.min(7, obtenerValorEditableBloque(blk).split(/\r?\n/).length + 1)) : 1}
+                        value={obtenerValorEditableBloque(blk)}
+                        onChange={(e) => handleCambiarValorBloque(blk, e.target.value)}
+                        onBlur={() => setEditandoTextoId(null)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Escape" || (blk.rol !== "mensaje" && e.key === "Enter")) {
+                            e.preventDefault();
+                            setEditandoTextoId(null);
+                          }
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        aria-label="Editar texto directamente en la tarjeta"
+                        style={{
+                          width: "100%",
+                          border: "none",
+                          outline: "none",
+                          background: "transparent",
+                          padding: 0,
+                          margin: 0,
+                          fontFamily: "inherit",
+                          fontSize: "inherit",
+                          fontWeight: "inherit",
+                          fontStyle: "inherit",
+                          textAlign: blk.alineacion || "center",
+                          lineHeight: 1.35,
+                          color: "inherit",
+                          resize: "none",
+                          boxSizing: "border-box",
+                          display: "block",
+                        }}
+                      />
+                    ) : (
+                      <>
+                        {contenido}
+                        {estaActivo && editable && (
+                          <button
+                            type="button"
+                            onPointerDown={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditandoTextoId(blk.id);
+                            }}
+                            title="Escribir texto directamente en la tarjeta"
+                            aria-label="Editar texto"
+                            style={{
+                              position: "absolute",
+                              top: "-20px",
+                              right: "-2px",
+                              padding: "2px 7px",
+                              borderRadius: "999px",
+                              border: "none",
+                              backgroundColor: "#221E1B",
+                              color: "#FFFFFF",
+                              fontFamily: "'Inter', sans-serif",
+                              fontSize: "9.5px",
+                              fontWeight: 700,
+                              fontStyle: "normal",
+                              lineHeight: 1.4,
+                              letterSpacing: "0.02em",
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "3px",
+                              boxShadow: "0 2px 6px rgba(0,0,0,0.22)",
+                            }}
+                          >
+                            <PenLine size={9} />
+                            <span>Editar</span>
+                          </button>
+                        )}
+                      </>
+                    )}
                   </div>
                 );
               })}

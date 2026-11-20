@@ -1446,6 +1446,8 @@ export function ModalImprimirTarjetaTaller({
                       incluirQrEnEsquina={incluirQrEnEsquina}
                       mensaje={mensajeEditable}
                       firma={deEditable}
+                      onCambiarMensaje={setMensajeEditable}
+                      onCambiarFirma={setDeEditable}
                       diseno={disenoNorm}
                       onCambiarDiseno={setDiseno}
                       qrDataUrl={qrDataUrl}

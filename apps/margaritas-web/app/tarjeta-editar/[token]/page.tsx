@@ -15,7 +15,7 @@ interface PropsPage {
 export const metadata: Metadata = {
   title: "Personaliza tu Tarjeta — Margaritas Floristería",
   description:
-    "Personaliza el interior de tu tarjeta impresa o incluye la experiencia digital 3D con audio, fotos y código QR.",
+    "Edita el texto, firma y diseño interior de tu tarjeta impresa o agrega la versión digital 3D con audio y QR.",
   robots: { index: false, follow: false },
 };
 

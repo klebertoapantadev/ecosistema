@@ -2429,6 +2429,14 @@ export function EditorTarjetaPublicoCliente({
                 qrDataUrl={qrDataUrl}
                 mensaje={mensaje}
                 firma={incluirFirma ? de : ""}
+                onCambiarMensaje={(nuevoTexto) => {
+                  setMensaje(nuevoTexto);
+                  marcarCambio();
+                }}
+                onCambiarFirma={(nuevaFirma) => {
+                  setDe(nuevaFirma);
+                  marcarCambio();
+                }}
                 diseno={diseno}
                 onCambiarDiseno={(nuevo) => {
                   usuarioMovioDisenoRef.current = true;
