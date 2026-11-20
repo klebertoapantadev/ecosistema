@@ -147,14 +147,27 @@ export function EditorTarjetaPublicoCliente({
     ? "Margaritas Floristería"
     : "Tinkay Flores y Eventos";
 
+  // Modalidad Básica (Impresa interior sin audio) vs Avanzada (Tarjeta digital interactiva con audio y QR)
+  const [modoDigitalAvanzado, setModoDigitalAvanzado] = useState<boolean>(() => {
+    if (esCondolencias) return false;
+    return Boolean(
+      datosIniciales.musicaUrl?.trim() ||
+        datosIniciales.confidencial ||
+        datosIniciales.diseno?.modoImpresion === "SOLO_QR" ||
+        datosIniciales.diseno?.modoImpresion === "MENSAJE_Y_QR" ||
+        datosIniciales.diseno?.remitentePortada?.trim()
+    );
+  });
+
   const pasos: DefinicionPaso[] = useMemo(() => {
     if (esCondolencias) {
+      return [{ id: "mensaje", etiqueta: "Mensaje" }];
+    }
+    if (!modoDigitalAvanzado) {
       return [
-        { id: "para", etiqueta: "En memoria" },
         { id: "mensaje", etiqueta: "Mensaje" },
         { id: "firma", etiqueta: "Firma" },
         { id: "diseno", etiqueta: "Diseño" },
-        { id: "visualizar", etiqueta: "Visualizar" },
       ];
     }
     return [
@@ -167,7 +180,7 @@ export function EditorTarjetaPublicoCliente({
       { id: "visualizar", etiqueta: "Visualizar" },
       { id: "imprimir", etiqueta: "Impresión" },
     ];
-  }, [esCondolencias]);
+  }, [esCondolencias, modoDigitalAvanzado]);
 
   // Fase inicial: vista 3D real del díptico (igual a /dedicatoria/[token]) con botón para editar
   const [modo, setModo] = useState<"vista" | "wizard">("vista");
@@ -229,8 +242,9 @@ export function EditorTarjetaPublicoCliente({
   const textareaMensajeRef = useRef<HTMLTextAreaElement | null>(null);
   const cursorMensajeRef = useRef<{ start: number; end: number } | null>(null);
   const usuarioMovioDisenoRef = useRef<boolean>(false);
-  const soloQrEfectivo = !esCondolencias && modoImpresion === "SOLO_QR";
-  const incluirQrEnEsquina = !esCondolencias && modoImpresion === "MENSAJE_Y_QR";
+  const soloQrEfectivo = !esCondolencias && modoDigitalAvanzado && modoImpresion === "SOLO_QR";
+  const incluirQrEnEsquina =
+    !esCondolencias && modoDigitalAvanzado && modoImpresion === "MENSAJE_Y_QR";
   const emojisDisponibles = useMemo(
     () => (emojisIa.length > 0 ? emojisIa : sugerirEmojisPorMensaje(mensaje, ocasionIa)),
     [emojisIa, mensaje, ocasionIa]
@@ -510,6 +524,34 @@ export function EditorTarjetaPublicoCliente({
     }
   };
 
+  const handleCambiarNivelTarjeta = (avanzada: boolean, irAWizard = false) => {
+    setErrorMsg(null);
+    setExitoMsg(null);
+    setModoDigitalAvanzado(avanzada);
+    marcarCambio();
+    if (!avanzada) {
+      setIncluirAudio(false);
+      setModoImpresion("SOLO_MENSAJE");
+      setDiseno((prev) => ({
+        ...normalizarDisenoTarjeta(prev, esCondolencias, mensaje),
+        modoImpresion: "SOLO_MENSAJE",
+      }));
+      setPasoIdx(0);
+    } else {
+      if (modoImpresion === "SOLO_MENSAJE") {
+        setModoImpresion("MENSAJE_Y_QR");
+        setDiseno((prev) => ({
+          ...normalizarDisenoTarjeta(prev, esCondolencias, mensaje),
+          modoImpresion: "MENSAJE_Y_QR",
+        }));
+      }
+      if (irAWizard) {
+        setPasoIdx(0);
+        setModo("wizard");
+      }
+    }
+  };
+
   const handleSeleccionarModoImpresion = (nuevoModo: ModoImpresionTarjeta) => {
     setModoImpresion(nuevoModo);
     setDiseno((prev) => ({
@@ -571,7 +613,8 @@ export function EditorTarjetaPublicoCliente({
     setErrorMsg(null);
     setExitoMsg(null);
 
-    const usaAudio = !esCondolencias && incluirAudio && Boolean(musicaUrl.trim());
+    const usaAudio =
+      !esCondolencias && modoDigitalAvanzado && incluirAudio && Boolean(musicaUrl.trim());
     let lyricsFinales = usaAudio ? lyrics : [];
     let tituloFinal = usaAudio ? musicaTitulo.trim() || null : null;
 
@@ -595,9 +638,11 @@ export function EditorTarjetaPublicoCliente({
       }
     }
 
+    const modoFinal: ModoImpresionTarjeta =
+      esCondolencias || !modoDigitalAvanzado ? "SOLO_MENSAJE" : modoImpresion;
     const disenoFinal: DisenoVisualTarjeta = {
       ...normalizarDisenoTarjeta(diseno, esCondolencias, mensaje.trim()),
-      modoImpresion: esCondolencias ? "SOLO_MENSAJE" : modoImpresion,
+      modoImpresion: modoFinal,
     };
 
     const res = await editarTarjetaClienteAction({
@@ -605,7 +650,7 @@ export function EditorTarjetaPublicoCliente({
       dedicatoria: mensaje.trim(),
       para: para.trim(),
       de: incluirFirma ? de.trim() : "",
-      confidencial: soloQrEfectivo,
+      confidencial: modoFinal === "SOLO_QR",
       diseno: disenoFinal,
       musicaUrl: usaAudio ? musicaUrl.trim() : null,
       musicaTitulo: tituloFinal,
@@ -646,6 +691,281 @@ export function EditorTarjetaPublicoCliente({
 
   // =========================================================================
   // FASE 1: VISUALIZACIÓN REAL EN DÍPTICO 3D (MISMO EFECTO QUE /dedicatoria)
+  // =========================================================================
+  // =========================================================================
+  // FASE 1A: VISTA INICIAL BÁSICA (TARJETA IMPRESA INTERIOR — SIN PORTADA EXTERIOR NI AUDIO)
+  // =========================================================================
+  if (modo === "vista" && !esCondolencias && !modoDigitalAvanzado) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          width: "100%",
+          backgroundColor: "#F6F4F0",
+          color: "#1F1C19",
+          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          padding: "18px 14px 36px 14px",
+          boxSizing: "border-box",
+        }}
+      >
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "540px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+          }}
+        >
+          {/* Barra superior */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "8px",
+              flexWrap: "wrap",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#1F1C19" }}>
+                Pedido {datosIniciales.codigo}
+              </span>
+              <span
+                style={{
+                  fontSize: "0.7rem",
+                  fontWeight: 600,
+                  padding: "3px 9px",
+                  borderRadius: "999px",
+                  backgroundColor: "#EAE5DC",
+                  color: "#57524C",
+                }}
+              >
+                Tarjeta impresa
+              </span>
+            </div>
+            <span style={{ fontSize: "0.74rem", color: "#78716C" }}>{nombreMarca}</span>
+          </div>
+
+          {exitoMsg && (
+            <div
+              role="status"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "10px 14px",
+                borderRadius: "12px",
+                backgroundColor: "#EEF4F0",
+                border: "1px solid #C8D5CB",
+                color: "#2F4737",
+                fontSize: "0.82rem",
+                fontWeight: 600,
+              }}
+            >
+              <Check size={16} />
+              <span>{exitoMsg}</span>
+            </div>
+          )}
+
+          {/* Tarjeta interior tal como se imprimirá */}
+          <div
+            style={{
+              backgroundColor: "#FFFFFF",
+              borderRadius: "18px",
+              border: "1px solid #E6E2DA",
+              boxShadow: "0 12px 32px rgba(31, 28, 25, 0.05)",
+              padding: "20px 18px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "14px",
+              alignItems: "center",
+            }}
+          >
+            <div style={{ textAlign: "center" }}>
+              <h1
+                style={{
+                  margin: 0,
+                  fontSize: "1.22rem",
+                  fontWeight: 700,
+                  color: "#1F1C19",
+                  letterSpacing: "-0.015em",
+                }}
+              >
+                Interior de tu tarjeta impresa
+              </h1>
+              <p style={{ margin: "4px 0 0 0", fontSize: "0.82rem", color: "#57524C" }}>
+                En la tarjeta física imprimimos únicamente la parte interior del díptico.
+              </p>
+            </div>
+
+            <div style={{ width: "100%" }}>
+              <LienzoDisenadorTarjeta
+                negocio={negNorm}
+                esCondolencias={false}
+                soloQr={false}
+                incluirQrEnEsquina={false}
+                mensaje={mensaje}
+                firma={incluirFirma ? de : ""}
+                diseno={disenoNormalizado}
+                onCambiarDiseno={() => {}}
+                soloLectura={true}
+              />
+            </div>
+
+            {datosIniciales.bloqueadoEdicion ? (
+              <div
+                style={{
+                  padding: "11px 16px",
+                  borderRadius: "12px",
+                  backgroundColor: "#FEF3C7",
+                  border: "1px solid #FDE68A",
+                  color: "#92400E",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                  width: "100%",
+                  boxSizing: "border-box",
+                }}
+              >
+                <Lock size={16} style={{ flexShrink: 0 }} />
+                <span>Tarjeta impresa en taller. Ya no admite modificaciones.</span>
+              </div>
+            ) : (
+              <div
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "10px",
+                  paddingTop: "4px",
+                }}
+              >
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", justifyContent: "center" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setErrorMsg(null);
+                      setExitoMsg(null);
+                      setPasoIdx(0);
+                      setModo("wizard");
+                    }}
+                    title="Editar texto, firma y diseño de tu tarjeta impresa"
+                    aria-label="Editar tarjeta"
+                    style={{
+                      flex: "1 1 170px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "7px",
+                      padding: "12px 18px",
+                      borderRadius: "12px",
+                      border: "none",
+                      backgroundColor: "#221E1B",
+                      color: "#FFFFFF",
+                      fontSize: "0.88rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Pencil size={15} />
+                    <span>Editar tarjeta</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setErrorMsg(null);
+                      setExitoMsg(null);
+                      setPasoIdx(2);
+                      setModo("wizard");
+                    }}
+                    title="Ir directo al diseñador visual para ajustar fotos, fuentes y posición"
+                    aria-label="Ir al diseñador"
+                    style={{
+                      flex: "1 1 150px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "7px",
+                      padding: "12px 16px",
+                      borderRadius: "12px",
+                      border: "1px solid #CFC8BC",
+                      backgroundColor: "#FAF8F5",
+                      color: "#1F1C19",
+                      fontSize: "0.86rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Palette size={15} />
+                    <span>Ir al diseñador</span>
+                  </button>
+                </div>
+
+                {/* Opción clara para activar la experiencia Avanzada: Tarjeta Digital + Audio */}
+                <button
+                  type="button"
+                  onClick={() => handleCambiarNivelTarjeta(true, true)}
+                  title="Activar tarjeta digital interactiva 3D con música, letra y QR"
+                  aria-label="Incluir tarjeta digital con audio"
+                  style={{
+                    width: "100%",
+                    padding: "13px 15px",
+                    borderRadius: "12px",
+                    border: "1px solid #C8D5CB",
+                    backgroundColor: "#EEF4F0",
+                    color: "#2F4737",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "10px",
+                    textAlign: "left",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <div
+                      style={{
+                        width: "34px",
+                        height: "34px",
+                        borderRadius: "9px",
+                        backgroundColor: "#2F4737",
+                        color: "#FFFFFF",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <Music size={16} />
+                    </div>
+                    <div>
+                      <strong style={{ display: "block", fontSize: "0.86rem", color: "#1F1C19" }}>
+                        Incluir tarjeta digital con audio
+                      </strong>
+                      <span style={{ fontSize: "0.75rem", color: "#57524C" }}>
+                        Agrega portada animada 3D, canción de fondo, letra y código QR
+                      </span>
+                    </div>
+                  </div>
+                  <ChevronRight size={17} color="#2F4737" style={{ flexShrink: 0 }} />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // FASE 1B: VISUALIZACIÓN REAL EN DÍPTICO 3D (AVANZADA DIGITAL) O CONDOLENCIAS
   // =========================================================================
   if (modo === "vista") {
     return (
@@ -866,8 +1186,28 @@ export function EditorTarjetaPublicoCliente({
                     >
                       {esCondolencias
                         ? "Puedes ajustar el mensaje antes de la impresión en taller"
-                        : "Así luce tu tarjeta ahora · Personaliza texto, fotos y música en pocos pasos"}
+                        : "Así luce tu tarjeta digital · Personaliza portada, texto, fotos y música"}
                     </span>
+                    {!esCondolencias && modoDigitalAvanzado && (
+                      <button
+                        type="button"
+                        onClick={() => handleCambiarNivelTarjeta(false)}
+                        title="Cambiar a tarjeta impresa básica sin audio ni QR"
+                        aria-label="Usar impresa básica"
+                        style={{
+                          marginTop: "2px",
+                          background: "transparent",
+                          border: "none",
+                          color: "rgba(245, 239, 230, 0.62)",
+                          fontSize: "0.74rem",
+                          fontWeight: 600,
+                          textDecoration: "underline",
+                          cursor: "pointer",
+                        }}
+                      >
+                        Cambiar a tarjeta impresa básica (sin audio)
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -1264,6 +1604,62 @@ export function EditorTarjetaPublicoCliente({
           </div>
         </div>
 
+        {/* Conmutador rápido entre Básica (Impresa interior) y Avanzada (Digital + Audio) */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "8px",
+            backgroundColor: "#EAE5DC",
+            padding: "4px",
+            borderRadius: "12px",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => handleCambiarNivelTarjeta(false)}
+            aria-pressed={!modoDigitalAvanzado}
+            title="Tarjeta impresa básica (solo interior, sin audio)"
+            style={{
+              padding: "8px 10px",
+              borderRadius: "9px",
+              border: "none",
+              backgroundColor: !modoDigitalAvanzado ? "#FFFFFF" : "transparent",
+              color: !modoDigitalAvanzado ? "#1F1C19" : "#57524C",
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              boxShadow: !modoDigitalAvanzado ? "0 2px 6px rgba(31, 28, 25, 0.08)" : "none",
+            }}
+          >
+            Impresa básica
+          </button>
+          <button
+            type="button"
+            onClick={() => handleCambiarNivelTarjeta(true)}
+            aria-pressed={modoDigitalAvanzado}
+            title="Incluir tarjeta digital interactiva con audio y QR"
+            style={{
+              padding: "8px 10px",
+              borderRadius: "9px",
+              border: "none",
+              backgroundColor: modoDigitalAvanzado ? "#2F4737" : "transparent",
+              color: modoDigitalAvanzado ? "#FFFFFF" : "#57524C",
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              boxShadow: modoDigitalAvanzado ? "0 2px 6px rgba(47, 71, 55, 0.2)" : "none",
+            }}
+          >
+            <Music size={13} />
+            <span>Digital + Audio</span>
+          </button>
+        </div>
+
         {/* Barra de progreso suave */}
         <div
           aria-hidden="true"
@@ -1428,7 +1824,7 @@ export function EditorTarjetaPublicoCliente({
               </div>
 
               {/* Mini vista previa real de portada kraft */}
-              {!esCondolencias && (
+              {!esCondolencias && modoDigitalAvanzado && (
                 <div
                   style={{
                     display: "flex",
@@ -1954,7 +2350,7 @@ export function EditorTarjetaPublicoCliente({
                 </div>
               )}
 
-              {!esCondolencias && (
+              {!esCondolencias && modoDigitalAvanzado && (
                 <div
                   style={{
                     padding: "14px 16px",

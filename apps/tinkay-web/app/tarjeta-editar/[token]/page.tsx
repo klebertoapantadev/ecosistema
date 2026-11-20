@@ -15,7 +15,7 @@ interface PropsPage {
 export const metadata: Metadata = {
   title: "Personaliza tu Tarjeta — Tinkay Flores y Eventos",
   description:
-    "Visualiza tu tarjeta en díptico 3D y personaliza tu mensaje con ayuda de IA, fotos, música y modo de impresión.",
+    "Personaliza el interior de tu tarjeta impresa o incluye la experiencia digital 3D con audio, fotos y código QR.",
   robots: { index: false, follow: false },
 };
 

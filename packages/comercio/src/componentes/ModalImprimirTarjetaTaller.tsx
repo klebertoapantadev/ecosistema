@@ -178,6 +178,18 @@ export function ModalImprimirTarjetaTaller({
   const [lyricsEditables, setLyricsEditables] = useState<Array<{ tiempo?: number; texto: string }>>(
     Array.isArray(orden?.tarjetaLyrics) ? orden.tarjetaLyrics : []
   );
+  const [modoDigitalAvanzado, setModoDigitalAvanzado] = useState<boolean>(() => {
+    if (formatoInicial === "CONDOLENCIAS_PLANA") return false;
+    const dInit = orden?.tarjetaDiseno ?? orden?.tarjetaMetadata?.diseno;
+    return Boolean(
+      orden?.tarjetaMusicaUrl?.trim() ||
+        orden?.tarjetaConfidencial ||
+        orden?.tarjetaMetadata?.confidencial_solo_qr ||
+        dInit?.modoImpresion === "SOLO_QR" ||
+        dInit?.modoImpresion === "MENSAJE_Y_QR" ||
+        dInit?.remitentePortada?.trim()
+    );
+  });
 
   // Medidas reales: Dedicatoria Vertical (113x168 mm) | Condolencias Horizontal (168x113 mm)
   const [anchoMm, setAnchoMm] = useState<number>(
@@ -267,14 +279,14 @@ export function ModalImprimirTarjetaTaller({
     setMensajeEditable(orden.dedicatoria || "");
     setParaEditable(orden.destinatarioFallecido || "");
     setDeEditable(orden.clienteSolicita || "");
-    setConfidencialSoloQr(
-      esCondolInit
-        ? false
-        : Boolean(orden.tarjetaConfidencial ?? orden.tarjetaMetadata?.confidencial_solo_qr)
-    );
+    const disenoInitRaw = orden.tarjetaDiseno ?? orden.tarjetaMetadata?.diseno;
+    const confidInit = esCondolInit
+      ? false
+      : Boolean(orden.tarjetaConfidencial ?? orden.tarjetaMetadata?.confidencial_solo_qr);
+    setConfidencialSoloQr(confidInit);
     setDiseno(
       normalizarDisenoTarjeta(
-        orden.tarjetaDiseno ?? orden.tarjetaMetadata?.diseno,
+        disenoInitRaw,
         esCondolInit,
         orden.dedicatoria || ""
       )
@@ -282,6 +294,16 @@ export function ModalImprimirTarjetaTaller({
     setMusicaUrlEditable(esCondolInit ? "" : orden.tarjetaMusicaUrl || "");
     setMusicaTituloEditable(esCondolInit ? "" : orden.tarjetaMusicaTitulo || "");
     setLyricsEditables(!esCondolInit && Array.isArray(orden.tarjetaLyrics) ? orden.tarjetaLyrics : []);
+    setModoDigitalAvanzado(
+      !esCondolInit &&
+        Boolean(
+          orden.tarjetaMusicaUrl?.trim() ||
+            confidInit ||
+            disenoInitRaw?.modoImpresion === "SOLO_QR" ||
+            disenoInitRaw?.modoImpresion === "MENSAJE_Y_QR" ||
+            disenoInitRaw?.remitentePortada?.trim()
+        )
+    );
     setTokenVistaActual(orden.tarjetaToken || orden.proformaId || orden.id);
     setTokenEdicionActual(orden.tarjetaTokenEdicion || "");
     setMetaLocal(orden.tarjetaMetadata || {});
@@ -319,13 +341,14 @@ export function ModalImprimirTarjetaTaller({
   if (!abierto || !orden) return null;
 
   const disenoNorm = normalizarDisenoTarjeta(diseno, esCondolencias, mensajeEditable);
-  const modoImpresionEfectivo: ModoImpresionTarjeta = esCondolencias
-    ? "SOLO_MENSAJE"
-    : confidencialSoloQr
-      ? "SOLO_QR"
-      : disenoNorm.modoImpresion === "MENSAJE_Y_QR"
-        ? "MENSAJE_Y_QR"
-        : "SOLO_MENSAJE";
+  const modoImpresionEfectivo: ModoImpresionTarjeta =
+    esCondolencias || !modoDigitalAvanzado
+      ? "SOLO_MENSAJE"
+      : confidencialSoloQr
+        ? "SOLO_QR"
+        : disenoNorm.modoImpresion === "MENSAJE_Y_QR"
+          ? "MENSAJE_Y_QR"
+          : "SOLO_MENSAJE";
   const soloQrEfectivo = modoImpresionEfectivo === "SOLO_QR";
   const incluirQrEnEsquina = !esCondolencias && modoImpresionEfectivo === "MENSAJE_Y_QR";
 
@@ -335,6 +358,19 @@ export function ModalImprimirTarjetaTaller({
       ...normalizarDisenoTarjeta(prev, esCondolencias, mensajeEditable),
       modoImpresion: nuevoModo,
     }));
+  };
+
+  const cambiarNivelTarjeta = (avanzada: boolean) => {
+    setModoDigitalAvanzado(avanzada);
+    if (!avanzada) {
+      setConfidencialSoloQr(false);
+      setDiseno((prev) => ({
+        ...normalizarDisenoTarjeta(prev, esCondolencias, mensajeEditable),
+        modoImpresion: "SOLO_MENSAJE",
+      }));
+    } else if (modoImpresionEfectivo === "SOLO_MENSAJE") {
+      seleccionarModoImpresion("MENSAJE_Y_QR");
+    }
   };
 
   const conteoImpresiones = Number(metaLocal?.impresiones ?? 0);
@@ -350,6 +386,7 @@ export function ModalImprimirTarjetaTaller({
       setAnchoMm(MEDIDAS_CONDOLENCIAS_HORIZONTAL.anchoMm);
       setAltoMm(MEDIDAS_CONDOLENCIAS_HORIZONTAL.altoMm);
       setConfidencialSoloQr(false);
+      setModoDigitalAvanzado(false);
       setDiseno((prev) => ({
         ...normalizarDisenoTarjeta(prev, true, mensajeEditable),
         fuente: "serif",
@@ -441,11 +478,12 @@ export function ModalImprimirTarjetaTaller({
     setErrorMsg(null);
     if (!silencioso) setAvisoOk(null);
 
-    let lyricsAGuardar = esCondolencias ? [] : lyricsEditables;
-    let tituloAGuardar = esCondolencias ? null : musicaTituloEditable.trim() || null;
+    const usaDigital = !esCondolencias && modoDigitalAvanzado;
+    let lyricsAGuardar = usaDigital ? lyricsEditables : [];
+    let tituloAGuardar = usaDigital ? musicaTituloEditable.trim() || null : null;
 
     if (
-      !esCondolencias &&
+      usaDigital &&
       musicaUrlEditable.trim() &&
       musicaUrlEditable.trim() !== (orden.tarjetaMusicaUrl || "") &&
       lyricsAGuardar.length === 0
@@ -474,8 +512,8 @@ export function ModalImprimirTarjetaTaller({
       dedicatoria: mensajeEditable.trim(),
       tarjetaTipo: formato,
       tarjetaConfidencial: soloQrEfectivo,
-      tarjetaDiseno: disenoNorm,
-      tarjetaMusicaUrl: esCondolencias ? null : musicaUrlEditable.trim() || null,
+      tarjetaDiseno: { ...disenoNorm, modoImpresion: modoImpresionEfectivo },
+      tarjetaMusicaUrl: usaDigital ? musicaUrlEditable.trim() || null : null,
       tarjetaMusicaTitulo: tituloAGuardar,
       tarjetaLyrics: lyricsAGuardar,
     });
@@ -1645,7 +1683,7 @@ export function ModalImprimirTarjetaTaller({
                         </div>
                       )}
 
-                      {!esCondolencias && urlSoloVistaDigital && (
+                      {!esCondolencias && modoDigitalAvanzado && urlSoloVistaDigital && (
                         <div style={{ minWidth: 0 }}>
                           <span
                             style={{
@@ -1806,8 +1844,78 @@ export function ModalImprimirTarjetaTaller({
                       </div>
                     </div>
 
-                    {/* 2. MODO DE IMPRESIÓN (SOLO DEDICATORIA: MENSAJE, SOLO QR O AMBOS) */}
+                    {/* 1B. MODALIDAD DE TARJETA: BÁSICA (IMPRESA INTERIOR) VS AVANZADA (DIGITAL + AUDIO) */}
                     {!esCondolencias && (
+                      <div>
+                        <label
+                          style={{
+                            fontSize: "0.74rem",
+                            fontWeight: 700,
+                            color: "#57524C",
+                            display: "block",
+                            marginBottom: "4px",
+                          }}
+                        >
+                          Tipo de experiencia
+                        </label>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                          <button
+                            type="button"
+                            onClick={() => cambiarNivelTarjeta(false)}
+                            title="Tarjeta simple impresa solo en el interior (sin audio ni QR)"
+                            aria-label="Tarjeta básica impresa"
+                            style={{
+                              padding: "8px 10px",
+                              borderRadius: "8px",
+                              border: !modoDigitalAvanzado ? "2px solid #2F4737" : "1px solid #D5CFC4",
+                              background: !modoDigitalAvanzado ? "#F2F6F3" : "#FFFFFF",
+                              color: !modoDigitalAvanzado ? "#2F4737" : "#57524C",
+                              fontWeight: 700,
+                              fontSize: "0.76rem",
+                              cursor: "pointer",
+                              textAlign: "left",
+                            }}
+                          >
+                            Básica (Impresa)
+                            <span
+                              className="eco-modal-tarjeta-ocultar-movil"
+                              style={{ display: "block", fontSize: "0.64rem", fontWeight: 400, color: "#847D74" }}
+                            >
+                              Solo interior · Sin audio
+                            </span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => cambiarNivelTarjeta(true)}
+                            title="Habilitar tarjeta digital interactiva con audio, portada y QR"
+                            aria-label="Tarjeta avanzada digital"
+                            style={{
+                              padding: "8px 10px",
+                              borderRadius: "8px",
+                              border: modoDigitalAvanzado ? "2px solid #221E1B" : "1px solid #D5CFC4",
+                              background: modoDigitalAvanzado ? "#F4F2EE" : "#FFFFFF",
+                              color: modoDigitalAvanzado ? "#1F1C19" : "#57524C",
+                              fontWeight: 700,
+                              fontSize: "0.76rem",
+                              cursor: "pointer",
+                              textAlign: "left",
+                            }}
+                          >
+                            Avanzada (Digital)
+                            <span
+                              className="eco-modal-tarjeta-ocultar-movil"
+                              style={{ display: "block", fontSize: "0.64rem", fontWeight: 400, color: "#847D74" }}
+                            >
+                              Con audio, portada y QR
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 2. MODO DE IMPRESIÓN (SOLO EN AVANZADA DIGITAL: MENSAJE, SOLO QR O AMBOS) */}
+                    {!esCondolencias && modoDigitalAvanzado && (
                       <div>
                         <label
                           style={{
@@ -1907,8 +2015,44 @@ export function ModalImprimirTarjetaTaller({
 
                 {(!esMovil || tabMovil === "texto") && (
                   <>
-                    {/* 3. PARA Y DE */}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                    {/* 3. PARA (solo Condolencias o Avanzada Digital) Y FIRMA INTERIOR ("De parte de") */}
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: esCondolencias || modoDigitalAvanzado ? "1fr 1fr" : "1fr",
+                        gap: "8px",
+                      }}
+                    >
+                      {(esCondolencias || modoDigitalAvanzado) && (
+                        <div>
+                          <label
+                            style={{
+                              fontSize: "0.74rem",
+                              fontWeight: 700,
+                              color: "#57524C",
+                              display: "block",
+                              marginBottom: "3px",
+                            }}
+                          >
+                            {esCondolencias ? "En memoria" : "Para (Portada digital)"}
+                          </label>
+                          <input
+                            type="text"
+                            value={paraEditable}
+                            onChange={(e) => setParaEditable(e.target.value)}
+                            placeholder="Quien recibe"
+                            style={{
+                              width: "100%",
+                              padding: esMovil ? "8px 10px" : "6px 8px",
+                              borderRadius: "7px",
+                              border: "1px solid #D5CFC4",
+                              fontSize: esMovil ? "16px" : "0.79rem",
+                              color: "#1F1C19",
+                              boxSizing: "border-box",
+                            }}
+                          />
+                        </div>
+                      )}
                       <div>
                         <label
                           style={{
@@ -1919,35 +2063,7 @@ export function ModalImprimirTarjetaTaller({
                             marginBottom: "3px",
                           }}
                         >
-                          {esCondolencias ? "En memoria" : "Para"}
-                        </label>
-                        <input
-                          type="text"
-                          value={paraEditable}
-                          onChange={(e) => setParaEditable(e.target.value)}
-                          placeholder="Quien recibe"
-                          style={{
-                            width: "100%",
-                            padding: esMovil ? "8px 10px" : "6px 8px",
-                            borderRadius: "7px",
-                            border: "1px solid #D5CFC4",
-                            fontSize: esMovil ? "16px" : "0.79rem",
-                            color: "#1F1C19",
-                            boxSizing: "border-box",
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <label
-                          style={{
-                            fontSize: "0.74rem",
-                            fontWeight: 700,
-                            color: "#57524C",
-                            display: "block",
-                            marginBottom: "3px",
-                          }}
-                        >
-                          De parte de
+                          De parte de (Firma interior)
                         </label>
                         <input
                           type="text"
@@ -1967,7 +2083,7 @@ export function ModalImprimirTarjetaTaller({
                       </div>
                     </div>
 
-                    {!esCondolencias && (
+                    {!esCondolencias && modoDigitalAvanzado && (
                       <div>
                         <label
                           style={{
@@ -2038,8 +2154,8 @@ export function ModalImprimirTarjetaTaller({
                       />
                     </div>
 
-                    {/* 5. MÚSICA Y LYRIC: EXCLUSIVO PARA DEDICATORIA */}
-                    {!esCondolencias && (
+                    {/* 5. MÚSICA Y LYRIC: EXCLUSIVO PARA DEDICATORIA AVANZADA (DIGITAL) */}
+                    {!esCondolencias && modoDigitalAvanzado && (
                       <div
                         style={{
                           background: "#F8F7F4",
