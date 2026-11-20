@@ -507,8 +507,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const totalInactivos = (productos || []).filter((p) => p && p.pro_activo === false).length;
   const totalActivos = (productos || []).filter((p) => p && p.pro_activo !== false).length;
 
-  // Filtrado
-  const productosFiltrados = (productos || []).filter((p) => {
+  // Filtrado y ordenamiento (en Configuración siempre muestra primero los productos más recientemente creados)
+  const productosFiltradosBase = (productos || []).filter((p) => {
     if (!p) return false;
 
     // En vista de cliente, ocultar productos inactivos o fuera de temporada
@@ -537,6 +537,19 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
 
     return cumpleBusqueda && cumpleCategoria && cumpleCanal;
   });
+
+  const productosFiltrados =
+    modoVista === "admin"
+      ? [...productosFiltradosBase].sort((a, b) => {
+          const tsA = a.pro_creado_en ? new Date(a.pro_creado_en).getTime() : 0;
+          const tsB = b.pro_creado_en ? new Date(b.pro_creado_en).getTime() : 0;
+          if (tsA !== tsB) return tsB - tsA;
+          const seqA = Number(a.pro_secuencial ?? 0);
+          const seqB = Number(b.pro_secuencial ?? 0);
+          if (seqA !== seqB) return seqB - seqA;
+          return 0;
+        })
+      : productosFiltradosBase;
 
   // Abrir checkout para variante específica
   const abrirCheckout = (prod: ProductoCatalogo, varId?: string) => {
@@ -3356,7 +3369,11 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         abierto={modalProdAbierto}
         onCerrar={() => setModalProdAbierto(false)}
         onProductoCreado={(nuevo) => {
-          setProductos((prev) => [nuevo, ...prev]);
+          const conFecha: ProductoCatalogo = {
+            ...nuevo,
+            pro_creado_en: nuevo.pro_creado_en || new Date().toISOString(),
+          };
+          setProductos((prev) => [conFecha, ...prev]);
         }}
         onCategoriaCreada={(nueva) => {
           setCategoriasLista((prev) => [...prev, nueva]);

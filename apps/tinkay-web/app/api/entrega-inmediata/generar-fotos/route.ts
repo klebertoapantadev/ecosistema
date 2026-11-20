@@ -278,7 +278,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: "No autorizado" }, { status: 401 });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY?.trim();
+    const apiKey =
+      process.env.GEMINI_API_KEY?.trim() ||
+      process.env.GOOGLE_GENERATIVE_AI_API_KEY?.trim();
     if (!apiKey) {
       return NextResponse.json(
         { ok: false, error: "Falta configurar GEMINI_API_KEY en el servidor" },

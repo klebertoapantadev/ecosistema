@@ -38,6 +38,7 @@ export interface CategoriaCatalogo {
 
 export interface ProductoCatalogo {
   pro_id: string;
+  pro_secuencial?: number;
   pro_negocio: string;
   pro_nombre: string;
   pro_slug: string;
@@ -45,6 +46,8 @@ export interface ProductoCatalogo {
   pro_tipo: "FISICO" | "SERVICIO" | "RENTA" | "SUSCRIPCION" | "DIGITAL" | string;
   pro_destacado: boolean;
   pro_activo?: boolean;
+  pro_creado_en?: string;
+  pro_actualizado_en?: string;
   pro_categoria_principal_id: string | null;
   pro_detalle_producto: any;
   canales_visibilidad?: CanalVisibilidad[];
@@ -1882,6 +1885,7 @@ export async function obtenerCatalogoProductosAction(
         if (!errRpc && Array.isArray(prodsRpc) && prodsRpc.length > 0) {
           const prodsList: ProductoCatalogo[] = prodsRpc.map((p: any) => ({
             pro_id: p.pro_id || p.id,
+            pro_secuencial: p.pro_secuencial != null ? Number(p.pro_secuencial) : undefined,
             pro_negocio: p.pro_negocio || principal,
             pro_nombre: p.pro_nombre || p.nombre,
             pro_slug: p.pro_slug || p.slug,
@@ -1889,6 +1893,8 @@ export async function obtenerCatalogoProductosAction(
             pro_tipo: p.pro_tipo || p.tipo || "FISICO",
             pro_destacado: p.pro_destacado ?? false,
             pro_activo: p.pro_activo !== false && p.pro_detalle_producto?.pro_activo !== false,
+            pro_creado_en: p.pro_creado_en || p.creado_en || undefined,
+            pro_actualizado_en: p.pro_actualizado_en || p.actualizado_en || undefined,
             pro_categoria_principal_id: p.pro_categoria_principal_id || p.categoria?.ctg_id || null,
             pro_detalle_producto: p.pro_detalle_producto || {},
             canales_visibilidad: Array.isArray(p.canales_visibilidad)
@@ -2002,7 +2008,13 @@ export async function obtenerCatalogoProductosAction(
       if (!incluirInactivos) {
         queryCom = queryCom.eq("pro_activo", true);
       }
-      let { data: pCom, error: errPCom } = await queryCom.order("pro_destacado", { ascending: false });
+      let { data: pCom, error: errPCom } = incluirInactivos
+        ? await queryCom
+            .order("pro_creado_en", { ascending: false })
+            .order("pro_secuencial", { ascending: false })
+        : await queryCom
+            .order("pro_destacado", { ascending: false })
+            .order("pro_creado_en", { ascending: false });
 
       if (errPCom || !pCom || pCom.length === 0) {
         let queryPub = clienteActivo
@@ -2013,7 +2025,13 @@ export async function obtenerCatalogoProductosAction(
         if (!incluirInactivos) {
           queryPub = queryPub.eq("pro_activo", true);
         }
-        const { data: pPub } = await queryPub.order("pro_destacado", { ascending: false });
+        const { data: pPub } = incluirInactivos
+          ? await queryPub
+              .order("pro_creado_en", { ascending: false })
+              .order("pro_secuencial", { ascending: false })
+          : await queryPub
+              .order("pro_destacado", { ascending: false })
+              .order("pro_creado_en", { ascending: false });
         pCom = pPub;
       }
 
@@ -2117,6 +2135,7 @@ export async function obtenerCatalogoProductosAction(
 
     listaFinal = prodsDb.map((p: any) => ({
       pro_id: p.pro_id,
+      pro_secuencial: p.pro_secuencial != null ? Number(p.pro_secuencial) : undefined,
       pro_negocio: p.pro_negocio,
       pro_nombre: p.pro_nombre,
       pro_slug: p.pro_slug,
@@ -2124,6 +2143,8 @@ export async function obtenerCatalogoProductosAction(
       pro_tipo: p.pro_tipo,
       pro_destacado: p.pro_destacado,
       pro_activo: p.pro_activo !== false && p.pro_detalle_producto?.pro_activo !== false,
+      pro_creado_en: p.pro_creado_en || undefined,
+      pro_actualizado_en: p.pro_actualizado_en || undefined,
       pro_categoria_principal_id: p.pro_categoria_principal_id,
       pro_detalle_producto: p.pro_detalle_producto || {},
       canales_visibilidad: Array.isArray(p.pro_detalle_producto?.canales_visibilidad)
