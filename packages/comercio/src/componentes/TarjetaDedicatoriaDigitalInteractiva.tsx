@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import { Play, Pause, Volume2, VolumeX, Sparkles, RotateCcw } from "lucide-react";
 import type { DisenoVisualTarjeta } from "../operaciones-taller";
 import {
@@ -31,6 +31,10 @@ export interface PropsTarjetaDedicatoriaDigitalInteractiva {
     vistas?: number;
   };
   token: string;
+  /** Cuando es true, se renderiza embebida dentro del editor/wizard sin forzar minHeight 100vh */
+  modoEmbebido?: boolean;
+  /** Contenido de acción opcional debajo de la tarjeta (ej. botón "Editar tarjeta" en /tarjeta-editar) */
+  accionesInferiores?: React.ReactNode;
 }
 
 // Textura sutil de fibra de cartulina reciclada/kraft similar a la tarjeta física real de Tinkay
@@ -203,6 +207,8 @@ function ContenidoInteriorTarjeta({
 
 export function TarjetaDedicatoriaDigitalInteractiva({
   datosIniciales,
+  modoEmbebido = false,
+  accionesInferiores,
 }: PropsTarjetaDedicatoriaDigitalInteractiva) {
   useEffect(() => {
     asegurarFuentesGoogleTarjetaCargadas();
@@ -230,6 +236,8 @@ export function TarjetaDedicatoriaDigitalInteractiva({
   const [silenciado, setSilenciado] = useState<boolean>(false);
   const [tiempoActual, setTiempoActual] = useState<number>(0);
 
+  const rawYtId = useId();
+  const ytContainerId = `yt-tarjeta-${rawYtId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const contenedorLyricsRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
   const playerListoRef = useRef<boolean>(false);
@@ -246,8 +254,10 @@ export function TarjetaDedicatoriaDigitalInteractiva({
 
     const inicializarPlayer = () => {
       if (!(window as any).YT || !(window as any).YT.Player) return;
+      const el = document.getElementById(ytContainerId);
+      if (!el) return;
       try {
-        playerRef.current = new (window as any).YT.Player("youtube-player-iframe", {
+        playerRef.current = new (window as any).YT.Player(ytContainerId, {
           videoId: youtubeId,
           playerVars: {
             autoplay: 0,
@@ -307,7 +317,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
         playerRef.current.destroy();
       }
     };
-  }, [youtubeId, esCondolencias]);
+  }, [youtubeId, esCondolencias, ytContainerId]);
 
   useEffect(() => {
     if (!reproduciendo) return;
@@ -434,18 +444,25 @@ export function TarjetaDedicatoriaDigitalInteractiva({
   return (
     <div
       style={{
-        minHeight: "100vh",
-        backgroundColor: esCondolencias ? "#18181B" : "#0F172A",
-        backgroundImage: esCondolencias
-          ? "radial-gradient(ellipse at top, #27272A, #18181B 75%)"
-          : "radial-gradient(ellipse at top, #1E293B, #0F172A 78%)",
+        minHeight: modoEmbebido ? "auto" : "100vh",
+        width: "100%",
+        backgroundColor: modoEmbebido
+          ? "transparent"
+          : esCondolencias
+            ? "#18181B"
+            : "#0F172A",
+        backgroundImage: modoEmbebido
+          ? "none"
+          : esCondolencias
+            ? "radial-gradient(ellipse at top, #27272A, #18181B 75%)"
+            : "radial-gradient(ellipse at top, #1E293B, #0F172A 78%)",
         color: "#FFFFFF",
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        padding: "24px 16px",
+        padding: modoEmbebido ? "12px 8px" : "24px 16px",
         boxSizing: "border-box",
         position: "relative",
         overflowX: "hidden",
@@ -467,7 +484,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
 
       {tieneCancion && youtubeId && (
         <div
-          id="youtube-player-iframe"
+          id={ytContainerId}
           style={{
             position: "fixed",
             bottom: "-9999px",
@@ -525,6 +542,11 @@ export function TarjetaDedicatoriaDigitalInteractiva({
           <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.38)", letterSpacing: "0.5px" }}>
             {nombreMarca}
           </span>
+          {accionesInferiores && (
+            <div style={{ width: "100%", display: "flex", justifyContent: "center", marginTop: "4px" }}>
+              {accionesInferiores}
+            </div>
+          )}
         </div>
       ) : (
         /* DÍPTICO REAL INTERACTIVO 3D (VERTICAL 11,3 × 16,8 cm QUE SE DOBLA POR LA MITAD 8,4 cm) */
@@ -568,7 +590,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                 position: "relative",
                 transformStyle: "preserve-3d",
                 transform: abierta ? "translateY(0%)" : "translateY(-23%)",
-                transition: "transform 1.05s cubic-bezier(0.22, 1, 0.36, 1)",
+                transition: "transform 1.75s cubic-bezier(0.25, 0.9, 0.3, 1)",
                 cursor: abierta ? "default" : "pointer",
               }}
             >
@@ -588,7 +610,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                   boxShadow: abierta
                     ? "0 28px 55px -12px rgba(0, 0, 0, 0.65)"
                     : "0 2px 0 #BDB6A8, 0 4px 0 #A8A092, 0 26px 52px -10px rgba(0, 0, 0, 0.72)",
-                  transition: "box-shadow 0.8s ease",
+                  transition: "box-shadow 1.45s ease",
                   zIndex: 1,
                 }}
               >
@@ -623,7 +645,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                     background:
                       "linear-gradient(to bottom, rgba(41, 37, 36, 0.14), rgba(41, 37, 36, 0.03) 45%, transparent)",
                     opacity: abierta ? 0.55 : 1,
-                    transition: "opacity 0.9s ease",
+                    transition: "opacity 1.5s ease",
                     pointerEvents: "none",
                     zIndex: 8,
                   }}
@@ -643,7 +665,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                   transformOrigin: "50% 100%",
                   transformStyle: "preserve-3d",
                   transform: abierta ? "rotateX(0deg)" : "rotateX(-180deg)",
-                  transition: "transform 1.08s cubic-bezier(0.22, 1, 0.36, 1)",
+                  transition: "transform 1.8s cubic-bezier(0.25, 0.9, 0.3, 1)",
                   zIndex: 3,
                 }}
               >
@@ -857,6 +879,8 @@ export function TarjetaDedicatoriaDigitalInteractiva({
             style={{
               width: "100%",
               maxWidth: "366px",
+              maxHeight: abierta ? "340px" : "0px",
+              overflow: "hidden",
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
@@ -864,7 +888,8 @@ export function TarjetaDedicatoriaDigitalInteractiva({
               opacity: abierta ? 1 : 0,
               transform: abierta ? "translateY(0px)" : "translateY(10px)",
               pointerEvents: abierta ? "auto" : "none",
-              transition: "opacity 0.6s ease 0.35s, transform 0.6s ease 0.35s",
+              transition:
+                "max-height 1.35s cubic-bezier(0.25, 0.9, 0.3, 1), opacity 0.9s ease 0.65s, transform 0.9s ease 0.65s",
             }}
           >
             {/* CONTROL SUTIL DE AUDIO SOLO EN DEDICATORIA CON CANCIÓN */}
@@ -1047,6 +1072,25 @@ export function TarjetaDedicatoriaDigitalInteractiva({
               </span>
             </div>
           </div>
+
+          {accionesInferiores && (
+            <div
+              style={{
+                width: "100%",
+                maxWidth: "380px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "10px",
+                marginTop: abierta ? "4px" : "-72px",
+                position: "relative",
+                zIndex: 5,
+                transition: "margin-top 1.65s cubic-bezier(0.25, 0.9, 0.3, 1)",
+              }}
+            >
+              {accionesInferiores}
+            </div>
+          )}
         </div>
       )}
     </div>

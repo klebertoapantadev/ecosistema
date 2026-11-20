@@ -13,8 +13,9 @@ interface PropsPage {
 }
 
 export const metadata: Metadata = {
-  title: "Editar Tarjeta Dedicatoria — Margaritas Floristería",
-  description: "Personaliza el mensaje y melodía de tu tarjeta antes de la impresión en taller.",
+  title: "Personaliza tu Tarjeta — Margaritas Floristería",
+  description:
+    "Visualiza tu tarjeta en díptico 3D y personaliza destinatario, mensaje, firma, imágenes, música y modo de impresión.",
   robots: { index: false, follow: false },
 };
 
