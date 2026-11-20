@@ -16,7 +16,9 @@ export const maxDuration = 60;
 
 const MAX_BYTES_FOTO = 6 * 1024 * 1024;
 const MIME_PERMITIDOS = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MODELO_POR_DEFECTO = "gemini-2.5-flash-image";
+const MODELO_GEMINI_POR_DEFECTO = "gemini-2.5-flash-image";
+const MODELO_OPENROUTER_POR_DEFECTO = "google/gemini-2.5-flash-image";
+const OPENROUTER_CHAT_URL = "https://openrouter.ai/api/v1/chat/completions";
 const MAX_INTENTOS_POR_MODO = 2;
 const ESPERA_REINTENTO_MS = 1500;
 
@@ -271,6 +273,190 @@ async function generarImagenModoGemini(params: {
   throw new Error(ultimoMotivo);
 }
 
+type ParteOpenRouter =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } };
+
+interface ImagenOpenRouter {
+  type?: string;
+  url?: string;
+  b64_json?: string;
+  image_url?: {
+    url?: string;
+  };
+}
+
+interface RespuestaOpenRouter {
+  choices?: Array<{
+    finish_reason?: string;
+    message?: {
+      content?:
+        | string
+        | Array<{
+            type?: string;
+            text?: string;
+            data?: string;
+            mime_type?: string;
+            image_url?: { url?: string };
+          }>;
+      images?: ImagenOpenRouter[];
+    };
+  }>;
+  error?: {
+    code?: number | string;
+    message?: string;
+  };
+}
+
+function extraerMimeDesdeDataUrl(dataUrl: string): string {
+  const match = dataUrl.match(/^data:(image\/[a-z0-9.+-]+);base64,/i);
+  return match?.[1]?.toLowerCase() || "image/png";
+}
+
+function extraerImagenDeRespuestaOpenRouter(
+  data: RespuestaOpenRouter
+): { dataUrl: string; mimeType: string } | null {
+  const msg = data.choices?.[0]?.message;
+  if (!msg) return null;
+
+  // 1. Formato oficial OpenRouter: choices[0].message.images[]
+  if (Array.isArray(msg.images)) {
+    for (const img of msg.images) {
+      const url = img.image_url?.url || img.url;
+      if (typeof url === "string" && url.startsWith("data:image/")) {
+        return { dataUrl: url, mimeType: extraerMimeDesdeDataUrl(url) };
+      }
+      if (typeof img.b64_json === "string" && img.b64_json.length > 0) {
+        return {
+          dataUrl: `data:image/png;base64,${img.b64_json}`,
+          mimeType: "image/png",
+        };
+      }
+    }
+  }
+
+  // 2. Respaldo: choices[0].message.content como arreglo multimodal
+  if (Array.isArray(msg.content)) {
+    for (const parte of msg.content) {
+      const url = parte.image_url?.url;
+      if (typeof url === "string" && url.startsWith("data:image/")) {
+        return { dataUrl: url, mimeType: extraerMimeDesdeDataUrl(url) };
+      }
+      if (parte.type === "image" && typeof parte.data === "string" && parte.data.length > 0) {
+        const mime = parte.mime_type || "image/png";
+        return { dataUrl: `data:${mime};base64,${parte.data}`, mimeType: mime };
+      }
+    }
+  }
+
+  // 3. Respaldo si vino una data URL incrustada en string
+  if (typeof msg.content === "string") {
+    const match = msg.content.match(/data:image\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+/i);
+    if (match?.[0]) {
+      return { dataUrl: match[0], mimeType: extraerMimeDesdeDataUrl(match[0]) };
+    }
+  }
+
+  return null;
+}
+
+async function generarImagenModoOpenRouter(params: {
+  modo: ModoEstudioIa;
+  opciones: OpcionesEstudioIa;
+  fotoBase: { mimeType: string; base64: string };
+  apiKey: string;
+  modelo: string;
+}): Promise<{ dataUrl: string; mimeType: string }> {
+  const { modo, opciones, fotoBase, apiKey, modelo } = params;
+
+  const promptCompleto = construirPromptCompletoEstudioIa(modo, opciones);
+  const referencias = obtenerReferenciasParaModo(modo, opciones);
+
+  const content: ParteOpenRouter[] = [
+    { type: "text", text: promptCompleto },
+    { type: "text", text: "FOTO DEL PRODUCTO:" },
+    {
+      type: "image_url",
+      image_url: {
+        url: `data:${fotoBase.mimeType};base64,${fotoBase.base64}`,
+      },
+    },
+  ];
+
+  for (const ref of referencias) {
+    const b64Ref = await leerReferenciaBase64(ref.archivo);
+    content.push(
+      { type: "text", text: `REFERENCIA ${ref.etiquetaPrompt}:` },
+      {
+        type: "image_url",
+        image_url: {
+          url: `data:image/jpeg;base64,${b64Ref}`,
+        },
+      }
+    );
+  }
+
+  const referer =
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://tinkay-web.vercel.app";
+  let ultimoMotivo = "OpenRouter no devolvió una imagen válida";
+
+  for (let intento = 1; intento <= MAX_INTENTOS_POR_MODO; intento++) {
+    try {
+      const res = await fetch(OPENROUTER_CHAT_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+          "HTTP-Referer": referer,
+          "X-Title": "Tinkay Floristeria - Estudio IA",
+        },
+        body: JSON.stringify({
+          model: modelo,
+          modalities: ["image", "text"],
+          image_config: { aspect_ratio: "3:4" },
+          messages: [{ role: "user", content }],
+        }),
+      });
+
+      const data = (await res.json().catch(() => ({}))) as RespuestaOpenRouter;
+
+      if (!res.ok) {
+        ultimoMotivo =
+          data.error?.message || `Error de OpenRouter (HTTP ${res.status})`;
+        const esTransitorio = res.status === 429 || res.status === 503 || res.status >= 500;
+        if (esTransitorio && intento < MAX_INTENTOS_POR_MODO) {
+          await esperar(ESPERA_REINTENTO_MS);
+          continue;
+        }
+        throw new Error(ultimoMotivo);
+      }
+
+      const imagenExtraida = extraerImagenDeRespuestaOpenRouter(data);
+      if (imagenExtraida) {
+        return imagenExtraida;
+      }
+
+      const finishReason = data.choices?.[0]?.finish_reason;
+      ultimoMotivo = finishReason
+        ? `OpenRouter finalizó sin imagen (${finishReason})`
+        : "OpenRouter respondió sin datos de imagen";
+
+      if (intento < MAX_INTENTOS_POR_MODO) {
+        await esperar(ESPERA_REINTENTO_MS);
+      }
+    } catch (err) {
+      ultimoMotivo = err instanceof Error ? err.message : "Error de conexión con OpenRouter";
+      if (intento < MAX_INTENTOS_POR_MODO) {
+        await esperar(ESPERA_REINTENTO_MS);
+      } else {
+        throw new Error(ultimoMotivo);
+      }
+    }
+  }
+
+  throw new Error(ultimoMotivo);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const ctx = await obtenerContextoAccesoTinkay();
@@ -278,12 +464,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: "No autorizado" }, { status: 401 });
     }
 
-    const apiKey =
+    const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
+    const geminiKey =
       process.env.GEMINI_API_KEY?.trim() ||
       process.env.GOOGLE_GENERATIVE_AI_API_KEY?.trim();
-    if (!apiKey) {
+
+    if (!openRouterKey && !geminiKey) {
       return NextResponse.json(
-        { ok: false, error: "Falta configurar GEMINI_API_KEY en el servidor" },
+        {
+          ok: false,
+          error: "Falta configurar OPENROUTER_API_KEY (o GEMINI_API_KEY) en el servidor",
+        },
         { status: 503 }
       );
     }
@@ -335,19 +526,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const modelo = process.env.GEMINI_IMAGE_MODEL?.trim() || MODELO_POR_DEFECTO;
+    const usarOpenRouter = Boolean(openRouterKey);
+    const modelo = usarOpenRouter
+      ? process.env.OPENROUTER_IMAGE_MODEL?.trim() || MODELO_OPENROUTER_POR_DEFECTO
+      : process.env.GEMINI_IMAGE_MODEL?.trim() || MODELO_GEMINI_POR_DEFECTO;
     const modosUnicos = Array.from(new Set(modos));
 
     const ejecuciones = await Promise.all(
       modosUnicos.map(async (modo) => {
         try {
-          const resultado = await generarImagenModoGemini({
-            modo,
-            opciones,
-            fotoBase,
-            apiKey,
-            modelo,
-          });
+          const resultado = usarOpenRouter
+            ? await generarImagenModoOpenRouter({
+                modo,
+                opciones,
+                fotoBase,
+                apiKey: openRouterKey!,
+                modelo,
+              })
+            : await generarImagenModoGemini({
+                modo,
+                opciones,
+                fotoBase,
+                apiKey: geminiKey!,
+                modelo,
+              });
           return { modo, ok: true as const, resultado };
         } catch (err) {
           return {
