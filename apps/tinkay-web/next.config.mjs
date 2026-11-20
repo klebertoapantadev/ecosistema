@@ -58,6 +58,9 @@ const nextConfig = {
     ];
   },
   outputFileTracingRoot: path.join(__dirname, "../../"),
+  outputFileTracingIncludes: {
+    "/api/entrega-inmediata/generar-fotos": ["./public/img/referencias-ia/**/*"],
+  },
   // Sin cache persistente de webpack en los builds de produccion (PLT-SEG-001).
   // Con Next 15.5.29 y zod >= 4.5, un build que reutiliza .next/cache (en local
   // o el que Vercel restaura entre despliegues) mezcla ids de modulo de la

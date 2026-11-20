@@ -47,6 +47,7 @@ export default async function PaginaEntregaInmediataTinkay() {
         negocio={NEGOCIO}
         itemsIniciales={res?.ok ? res.items : []}
         migracionPendienteInicial={Boolean(res?.ok && res.migracionPendiente)}
+        endpointEstudioIa="/api/entrega-inmediata/generar-fotos"
       />
     </div>
   );

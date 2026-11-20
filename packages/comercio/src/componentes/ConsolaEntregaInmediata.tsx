@@ -9,11 +9,14 @@ import {
   Check,
   CheckCircle2,
   Copy,
+  Download,
   ExternalLink,
   Loader2,
   Plus,
   RefreshCw,
   ShoppingBag,
+  Sparkles,
+  Star,
   Trash2,
   Upload,
   Zap,
@@ -34,12 +37,50 @@ export interface PropsConsolaEntregaInmediata {
   negocio: string;
   itemsIniciales?: ArregloEntregaInmediata[];
   migracionPendienteInicial?: boolean;
+  /** Endpoint opcional de servidor para generar fotos Estudio + Taller con IA (aislado por negocio). */
+  endpointEstudioIa?: string;
+}
+
+type ModoFotoIa = "estudio" | "taller";
+
+interface RespuestaEndpointEstudioIa {
+  ok?: boolean;
+  error?: string;
+  resultados?: Partial<Record<ModoFotoIa, { dataUrl: string; mimeType: string }>>;
+  errores?: Partial<Record<ModoFotoIa, string>>;
+}
+
+async function convertirDataUrlAJpegBlob(dataUrl: string): Promise<Blob> {
+  if (typeof window === "undefined" || dataUrl.startsWith("data:image/jpeg")) {
+    return dataUrlABlob(dataUrl);
+  }
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error("No se pudo decodificar la imagen IA"));
+      el.src = dataUrl;
+    });
+    const canvas = document.createElement("canvas");
+    canvas.width = img.naturalWidth || img.width;
+    canvas.height = img.naturalHeight || img.height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return dataUrlABlob(dataUrl);
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+    const jpegDataUrl = canvas.toDataURL("image/jpeg", 0.92);
+    return dataUrlABlob(jpegDataUrl);
+  } catch {
+    return dataUrlABlob(dataUrl);
+  }
 }
 
 export function ConsolaEntregaInmediata({
   negocio,
   itemsIniciales = [],
   migracionPendienteInicial = false,
+  endpointEstudioIa,
 }: PropsConsolaEntregaInmediata) {
   const negNorm = negocio.trim().toLowerCase();
   const cacheKey = `eco_entrega_inmediata_${negNorm}`;
@@ -62,6 +103,26 @@ export function ConsolaEntregaInmediata({
   const [procesandoId, setProcesandoId] = useState<string | null>(null);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Estados del generador Estudio IA (activos solo cuando endpointEstudioIa está definido)
+  const [tipoSoporteIa, setTipoSoporteIa] = useState<"mesa" | "piso" | "pedestal">("mesa");
+  const [coreanoIa, setCoreanoIa] = useState<boolean>(false);
+  const [geometriaIa, setGeometriaIa] = useState<"auto" | "con_frente" | "recto">("auto");
+  const [incluirTarjetaIa, setIncluirTarjetaIa] = useState<boolean>(true);
+  const [generandoIa, setGenerandoIa] = useState<{ estudio: boolean; taller: boolean }>({
+    estudio: false,
+    taller: false,
+  });
+  const [fotosIa, setFotosIa] = useState<{
+    estudio: { dataUrl: string; seleccionada: boolean } | null;
+    taller: { dataUrl: string; seleccionada: boolean } | null;
+  }>({ estudio: null, taller: null });
+  const [erroresIa, setErroresIa] = useState<{ estudio: string | null; taller: string | null }>({
+    estudio: null,
+    taller: null,
+  });
+  const [reemplazarOriginalIa, setReemplazarOriginalIa] = useState<boolean>(true);
+  const [aplicandoIa, setAplicandoIa] = useState<boolean>(false);
 
   const recargar = useCallback(async () => {
     setCargando(true);
@@ -148,6 +209,197 @@ export function ConsolaEntregaInmediata({
     }
   };
 
+  const handleDefinirPortada = (url: string) => {
+    setFotosSubidas((prev) => {
+      if (!prev.includes(url)) return prev;
+      return [url, ...prev.filter((item) => item !== url)];
+    });
+  };
+
+  const handleQuitarFotoSubida = (url: string) => {
+    setFotosSubidas((prev) => {
+      const restantes = prev.filter((x) => x !== url);
+      if (restantes.length === 0) {
+        setFotosIa({ estudio: null, taller: null });
+        setErroresIa({ estudio: null, taller: null });
+      }
+      return restantes;
+    });
+  };
+
+  const handleGenerarFotosIa = async (modosSolicitados: ModoFotoIa[]) => {
+    if (!endpointEstudioIa || fotosSubidas.length === 0) return;
+
+    const fotoBase = fotosSubidas[0];
+    if (!fotoBase) return;
+
+    setErrorMsg(null);
+    setMensajeExito(null);
+
+    setGenerandoIa((prev) => ({
+      estudio: modosSolicitados.includes("estudio") ? true : prev.estudio,
+      taller: modosSolicitados.includes("taller") ? true : prev.taller,
+    }));
+    setErroresIa((prev) => ({
+      estudio: modosSolicitados.includes("estudio") ? null : prev.estudio,
+      taller: modosSolicitados.includes("taller") ? null : prev.taller,
+    }));
+
+    try {
+      const res = await fetch(endpointEstudioIa, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fotoUrl: fotoBase,
+          modos: modosSolicitados,
+          opciones: {
+            tipoSoporte: tipoSoporteIa,
+            coreano: coreanoIa,
+            geometria: geometriaIa,
+            incluirTarjeta: incluirTarjetaIa,
+          },
+        }),
+      });
+
+      const data = (await res.json().catch(() => ({}))) as RespuestaEndpointEstudioIa;
+
+      if (!res.ok && !data.resultados) {
+        const detalleErr = data.error || `No se pudieron generar las fotos IA (HTTP ${res.status})`;
+        setErroresIa((prev) => ({
+          estudio: modosSolicitados.includes("estudio")
+            ? data.errores?.estudio || detalleErr
+            : prev.estudio,
+          taller: modosSolicitados.includes("taller")
+            ? data.errores?.taller || detalleErr
+            : prev.taller,
+        }));
+        setErrorMsg(detalleErr);
+        return;
+      }
+
+      setFotosIa((prev) => ({
+        estudio: data.resultados?.estudio?.dataUrl
+          ? { dataUrl: data.resultados.estudio.dataUrl, seleccionada: true }
+          : prev.estudio,
+        taller: data.resultados?.taller?.dataUrl
+          ? { dataUrl: data.resultados.taller.dataUrl, seleccionada: true }
+          : prev.taller,
+      }));
+
+      setErroresIa((prev) => ({
+        estudio: modosSolicitados.includes("estudio")
+          ? data.errores?.estudio || null
+          : prev.estudio,
+        taller: modosSolicitados.includes("taller")
+          ? data.errores?.taller || null
+          : prev.taller,
+      }));
+
+      if (!res.ok && data.error) {
+        setErrorMsg(data.error);
+      }
+    } catch (err) {
+      const detalleErr =
+        err instanceof Error ? err.message : "Error de conexión al generar fotos con IA";
+      setErroresIa((prev) => ({
+        estudio: modosSolicitados.includes("estudio") ? detalleErr : prev.estudio,
+        taller: modosSolicitados.includes("taller") ? detalleErr : prev.taller,
+      }));
+      setErrorMsg(detalleErr);
+    } finally {
+      setGenerandoIa((prev) => ({
+        estudio: modosSolicitados.includes("estudio") ? false : prev.estudio,
+        taller: modosSolicitados.includes("taller") ? false : prev.taller,
+      }));
+    }
+  };
+
+  const handleToggleSeleccionIa = (modo: ModoFotoIa) => {
+    setFotosIa((prev) => {
+      const actual = prev[modo];
+      if (!actual) return prev;
+      return {
+        ...prev,
+        [modo]: { ...actual, seleccionada: !actual.seleccionada },
+      };
+    });
+  };
+
+  const handleDescargarFotoIa = async (modo: ModoFotoIa) => {
+    const item = fotosIa[modo];
+    if (!item) return;
+    try {
+      const blob = await convertirDataUrlAJpegBlob(item.dataUrl);
+      const urlObj = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = urlObj;
+      a.download = `tinkay-${modo}-${new Date().toISOString().slice(0, 10)}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(urlObj), 1500);
+    } catch {
+      const a = document.createElement("a");
+      a.href = item.dataUrl;
+      a.download = `tinkay-${modo}.jpg`;
+      a.click();
+    }
+  };
+
+  const handleAplicarFotosIa = async () => {
+    const seleccionadas: Array<{ modo: ModoFotoIa; dataUrl: string }> = [];
+    if (fotosIa.estudio?.seleccionada) {
+      seleccionadas.push({ modo: "estudio", dataUrl: fotosIa.estudio.dataUrl });
+    }
+    if (fotosIa.taller?.seleccionada) {
+      seleccionadas.push({ modo: "taller", dataUrl: fotosIa.taller.dataUrl });
+    }
+    if (seleccionadas.length === 0) {
+      setErrorMsg("Selecciona al menos una fotografía generada (Estudio o Taller) para aplicarla.");
+      return;
+    }
+
+    setAplicandoIa(true);
+    setErrorMsg(null);
+    setMensajeExito(null);
+
+    try {
+      const supabase = crearClienteNavegador();
+      const urlsSubidasIa: string[] = [];
+
+      for (const item of seleccionadas) {
+        const blob = await convertirDataUrlAJpegBlob(item.dataUrl);
+        const resUp = await subirArchivoOperativoStorage(
+          supabase,
+          "entrega-inmediata",
+          negNorm,
+          blob,
+          "jpg",
+          "image/jpeg"
+        );
+        if (!resUp.ok) {
+          throw new Error(resUp.error || `No se pudo subir la foto de ${item.modo}`);
+        }
+        urlsSubidasIa.push(resUp.publicUrl);
+      }
+
+      setFotosSubidas((prev) =>
+        reemplazarOriginalIa ? [...urlsSubidasIa, ...prev.slice(1)] : [...urlsSubidasIa, ...prev]
+      );
+      setFotosIa({ estudio: null, taller: null });
+      setErroresIa({ estudio: null, taller: null });
+      setMensajeExito(
+        urlsSubidasIa.length === 2
+          ? "Fotos Estudio (portada) y Taller listas. Revisa el precio y pulsa Publicar Ahora."
+          : "Foto IA aplicada a tu publicación. Revisa los datos y pulsa Publicar Ahora."
+      );
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "No se pudieron guardar las fotos IA");
+    } finally {
+      setAplicandoIa(false);
+    }
+  };
+
   const handlePublicar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (fotosSubidas.length === 0) {
@@ -186,6 +438,8 @@ export function ConsolaEntregaInmediata({
     }
 
     setFotosSubidas([]);
+    setFotosIa({ estudio: null, taller: null });
+    setErroresIa({ estudio: null, taller: null });
     setNombre("");
     setPrecio("");
     setPrecioComparacion("");
@@ -642,9 +896,18 @@ export function ConsolaEntregaInmediata({
         </div>
 
         {fotosSubidas.length > 0 && (
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "flex-start" }}>
             {fotosSubidas.map((url, idx) => (
-              <div key={url} style={{ position: "relative" }}>
+              <div
+                key={url}
+                style={{
+                  position: "relative",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "5px",
+                }}
+              >
                 <img
                   src={url}
                   alt={`Vista previa ${idx + 1}`}
@@ -653,12 +916,30 @@ export function ConsolaEntregaInmediata({
                     height: "84px",
                     objectFit: "cover",
                     borderRadius: "10px",
-                    border: "2px solid #2F4737",
+                    border: idx === 0 ? "2px solid #2F4737" : "1px solid #D5CFC4",
                   }}
                 />
+                {endpointEstudioIa && idx === 0 && (
+                  <span
+                    style={{
+                      position: "absolute",
+                      bottom: fotosSubidas.length > 1 ? "28px" : "5px",
+                      left: "5px",
+                      padding: "2px 6px",
+                      borderRadius: "999px",
+                      background: "rgba(47, 71, 55, 0.92)",
+                      color: "#FFFFFF",
+                      fontSize: "0.62rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.02em",
+                    }}
+                  >
+                    Portada
+                  </span>
+                )}
                 <button
                   type="button"
-                  onClick={() => setFotosSubidas((prev) => prev.filter((x) => x !== url))}
+                  onClick={() => handleQuitarFotoSubida(url)}
                   title="Quitar foto"
                   aria-label="Quitar foto"
                   style={{
@@ -678,8 +959,640 @@ export function ConsolaEntregaInmediata({
                 >
                   ✕
                 </button>
+                {endpointEstudioIa && idx > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => handleDefinirPortada(url)}
+                    title="Usar esta fotografía como portada principal"
+                    aria-label="Portada"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "3px",
+                      padding: "3px 7px",
+                      borderRadius: "7px",
+                      border: "1px solid #D5CFC4",
+                      background: "#F8F7F4",
+                      color: "#57524C",
+                      fontSize: "0.68rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Star size={10} />
+                    <span>Portada</span>
+                  </button>
+                )}
               </div>
             ))}
+          </div>
+        )}
+
+        {/* PANEL ESTUDIO IA (ESTUDIO + TALLER) — SOLO CUANDO endpointEstudioIa ESTÁ CONFIGURADO */}
+        {endpointEstudioIa && fotosSubidas.length > 0 && (
+          <div
+            style={{
+              background: "#FAF6EE",
+              border: "1px solid #E5D7BC",
+              borderRadius: "12px",
+              padding: "14px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "10px",
+                flexWrap: "wrap",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div
+                  style={{
+                    width: "30px",
+                    height: "30px",
+                    borderRadius: "8px",
+                    background: "#FFFFFF",
+                    border: "1px solid #E5D7BC",
+                    color: "#8F6A2E",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Sparkles size={15} />
+                </div>
+                <div>
+                  <strong style={{ display: "block", fontSize: "0.84rem", color: "#1F1C19" }}>
+                    Estudio IA (Estudio + Taller)
+                  </strong>
+                  <span style={{ fontSize: "0.73rem", color: "#57524C" }}>
+                    Genera en paralelo la toma limpia de catálogo y el ambiente oficial de taller (3:4).
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                disabled={generandoIa.estudio || generandoIa.taller || aplicandoIa}
+                onClick={() => void handleGenerarFotosIa(["estudio", "taller"])}
+                title="Generar fotos de Estudio y Taller con IA"
+                aria-label="Generar IA"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "9px 14px",
+                  borderRadius: "9px",
+                  border: "none",
+                  background: "#8F6A2E",
+                  color: "#FFFFFF",
+                  fontSize: "0.81rem",
+                  fontWeight: 700,
+                  cursor:
+                    generandoIa.estudio || generandoIa.taller || aplicandoIa
+                      ? "wait"
+                      : "pointer",
+                  opacity: generandoIa.estudio || generandoIa.taller || aplicandoIa ? 0.72 : 1,
+                }}
+              >
+                {generandoIa.estudio || generandoIa.taller ? (
+                  <Loader2 size={14} className="eco-spin" />
+                ) : (
+                  <Sparkles size={14} />
+                )}
+                <span>
+                  {generandoIa.estudio || generandoIa.taller ? "Generando..." : "Generar IA"}
+                </span>
+              </button>
+            </div>
+
+            {/* Controles compactos de configuración del arreglo */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                flexWrap: "wrap",
+              }}
+            >
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  color: "#57524C",
+                }}
+              >
+                <span>Soporte</span>
+                <select
+                  value={tipoSoporteIa}
+                  onChange={(e) =>
+                    setTipoSoporteIa(e.target.value as "mesa" | "piso" | "pedestal")
+                  }
+                  disabled={generandoIa.estudio || generandoIa.taller}
+                  aria-label="Tipo de soporte del arreglo"
+                  style={{
+                    padding: "6px 9px",
+                    borderRadius: "8px",
+                    border: "1px solid #D5CFC4",
+                    background: "#FFFFFF",
+                    color: "#1F1C19",
+                    fontSize: "0.78rem",
+                    fontWeight: 600,
+                  }}
+                >
+                  <option value="mesa">Mesa</option>
+                  <option value="piso">Piso (Trípode)</option>
+                  <option value="pedestal">Pedestal</option>
+                </select>
+              </label>
+
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  color: "#57524C",
+                }}
+              >
+                <span>Geometría</span>
+                <select
+                  value={geometriaIa}
+                  onChange={(e) =>
+                    setGeometriaIa(e.target.value as "auto" | "con_frente" | "recto")
+                  }
+                  disabled={generandoIa.estudio || generandoIa.taller}
+                  aria-label="Geometría de copa del arreglo"
+                  style={{
+                    padding: "6px 9px",
+                    borderRadius: "8px",
+                    border: "1px solid #D5CFC4",
+                    background: "#FFFFFF",
+                    color: "#1F1C19",
+                    fontSize: "0.78rem",
+                    fontWeight: 600,
+                  }}
+                >
+                  <option value="auto">Auto</option>
+                  <option value="con_frente">Con frente</option>
+                  <option value="recto">Recto 360°</option>
+                </select>
+              </label>
+
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                  color: "#1F1C19",
+                  padding: "5px 10px",
+                  borderRadius: "8px",
+                  border: "1px solid #E5D7BC",
+                  background: "#FFFFFF",
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={coreanoIa}
+                  onChange={(e) => setCoreanoIa(e.target.checked)}
+                  disabled={generandoIa.estudio || generandoIa.taller}
+                  style={{ accentColor: "#2F4737", width: "15px", height: "15px" }}
+                />
+                <span>Estilo coreano</span>
+              </label>
+
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                  color: "#1F1C19",
+                  padding: "5px 10px",
+                  borderRadius: "8px",
+                  border: "1px solid #E5D7BC",
+                  background: "#FFFFFF",
+                  cursor: "pointer",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={incluirTarjetaIa}
+                  onChange={(e) => setIncluirTarjetaIa(e.target.checked)}
+                  disabled={generandoIa.estudio || generandoIa.taller}
+                  style={{ accentColor: "#2F4737", width: "15px", height: "15px" }}
+                />
+                <span>Tarjeta Tinkay</span>
+              </label>
+            </div>
+
+            {/* Previsualización en 2 columnas: Estudio y Taller */}
+            {(generandoIa.estudio ||
+              generandoIa.taller ||
+              fotosIa.estudio ||
+              fotosIa.taller ||
+              erroresIa.estudio ||
+              erroresIa.taller) && (
+              <>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+                    gap: "12px",
+                  }}
+                >
+                  {(
+                    [
+                      {
+                        modo: "estudio" as const,
+                        titulo: "Estudio",
+                        subtitulo: "Fondo limpio de catálogo",
+                      },
+                      {
+                        modo: "taller" as const,
+                        titulo: "Taller",
+                        subtitulo: "Ambiente oficial con neón Tinkay",
+                      },
+                    ] as const
+                  ).map(({ modo, titulo, subtitulo }) => {
+                    const resultado = fotosIa[modo];
+                    const cargandoModo = generandoIa[modo];
+                    const errorModo = erroresIa[modo];
+                    const seleccionada = Boolean(resultado?.seleccionada);
+
+                    return (
+                      <div
+                        key={modo}
+                        style={{
+                          background: "#FFFFFF",
+                          border: seleccionada
+                            ? "2px solid #2F4737"
+                            : errorModo
+                              ? "1px solid #E5CACA"
+                              : "1px solid #E6E2DA",
+                          borderRadius: "12px",
+                          padding: "10px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "9px",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: "6px",
+                          }}
+                        >
+                          <div>
+                            <strong style={{ fontSize: "0.82rem", color: "#1F1C19", display: "block" }}>
+                              {titulo}
+                            </strong>
+                            <span style={{ fontSize: "0.7rem", color: "#847D74" }}>
+                              {subtitulo}
+                            </span>
+                          </div>
+                          {cargandoModo ? (
+                            <span
+                              style={{
+                                fontSize: "0.68rem",
+                                fontWeight: 700,
+                                padding: "2px 8px",
+                                borderRadius: "999px",
+                                background: "#FAF6EE",
+                                color: "#8F6A2E",
+                                border: "1px solid #E5D7BC",
+                              }}
+                            >
+                              Generando
+                            </span>
+                          ) : resultado ? (
+                            <span
+                              style={{
+                                fontSize: "0.68rem",
+                                fontWeight: 700,
+                                padding: "2px 8px",
+                                borderRadius: "999px",
+                                background: seleccionada ? "#F2F6F3" : "#F4F2EE",
+                                color: seleccionada ? "#2B4A36" : "#57524C",
+                                border: seleccionada
+                                  ? "1px solid #CEDDD3"
+                                  : "1px solid #E6E2DA",
+                              }}
+                            >
+                              {seleccionada ? "Incluida" : "Omitida"}
+                            </span>
+                          ) : null}
+                        </div>
+
+                        <div
+                          style={{
+                            position: "relative",
+                            width: "100%",
+                            aspectRatio: "3 / 4",
+                            borderRadius: "9px",
+                            overflow: "hidden",
+                            background: "#F4F2EE",
+                            border: "1px solid #E6E2DA",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          {resultado ? (
+                            <>
+                              <img
+                                src={resultado.dataUrl}
+                                alt={`Foto IA ${titulo}`}
+                                style={{
+                                  width: "100%",
+                                  height: "100%",
+                                  objectFit: "cover",
+                                  opacity: seleccionada ? 1 : 0.45,
+                                  transition: "opacity 0.15s ease",
+                                }}
+                              />
+                              {cargandoModo && (
+                                <div
+                                  style={{
+                                    position: "absolute",
+                                    inset: 0,
+                                    background: "rgba(248, 247, 244, 0.78)",
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    gap: "8px",
+                                    color: "#8F6A2E",
+                                    fontSize: "0.78rem",
+                                    fontWeight: 700,
+                                  }}
+                                >
+                                  <Loader2 size={22} className="eco-spin" />
+                                  <span>Regenerando {titulo}...</span>
+                                </div>
+                              )}
+                            </>
+                          ) : cargandoModo ? (
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                gap: "8px",
+                                padding: "16px",
+                                textAlign: "center",
+                                color: "#8F6A2E",
+                              }}
+                            >
+                              <Loader2 size={24} className="eco-spin" />
+                              <span style={{ fontSize: "0.78rem", fontWeight: 700 }}>
+                                Creando foto {titulo}...
+                              </span>
+                              <span style={{ fontSize: "0.7rem", color: "#847D74" }}>
+                                Tomará ~15 a 30 segundos
+                              </span>
+                            </div>
+                          ) : errorModo ? (
+                            <div
+                              style={{
+                                padding: "14px",
+                                textAlign: "center",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                gap: "8px",
+                                color: "#8A2E2E",
+                              }}
+                            >
+                              <AlertTriangle size={20} />
+                              <span style={{ fontSize: "0.75rem", lineHeight: 1.4 }}>
+                                {errorModo}
+                              </span>
+                            </div>
+                          ) : (
+                            <span style={{ fontSize: "0.75rem", color: "#847D74" }}>
+                              Sin generar aún
+                            </span>
+                          )}
+                        </div>
+
+                        {errorModo && resultado && (
+                          <div
+                            style={{
+                              padding: "6px 8px",
+                              borderRadius: "7px",
+                              background: "#FAF2F2",
+                              border: "1px solid #E5CACA",
+                              color: "#8A2E2E",
+                              fontSize: "0.71rem",
+                            }}
+                          >
+                            {errorModo}
+                          </div>
+                        )}
+
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            flexWrap: "wrap",
+                          }}
+                        >
+                          {resultado && (
+                            <button
+                              type="button"
+                              className="btn-responsive-accion"
+                              onClick={() => handleToggleSeleccionIa(modo)}
+                              disabled={cargandoModo || aplicandoIa}
+                              title={
+                                seleccionada
+                                  ? `Quitar foto de ${titulo} de la publicación`
+                                  : `Incluir foto de ${titulo} en la publicación`
+                              }
+                              aria-label={seleccionada ? "Quitar" : "Incluir"}
+                              style={{
+                                flex: 1,
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: "5px",
+                                padding: "7px 9px",
+                                borderRadius: "8px",
+                                border: seleccionada
+                                  ? "1px solid #E5CACA"
+                                  : "1px solid #CEDDD3",
+                                background: seleccionada ? "#FAF2F2" : "#F2F6F3",
+                                color: seleccionada ? "#8A2E2E" : "#2B4A36",
+                                fontSize: "0.75rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                              }}
+                            >
+                              {seleccionada ? <Trash2 size={13} /> : <Check size={13} />}
+                              <span className="btn-texto-responsive">
+                                {seleccionada ? "Quitar" : "Incluir"}
+                              </span>
+                            </button>
+                          )}
+
+                          <button
+                            type="button"
+                            className="btn-responsive-accion"
+                            onClick={() => void handleGenerarFotosIa([modo])}
+                            disabled={cargandoModo || aplicandoIa}
+                            title={`Regenerar únicamente la foto de ${titulo}`}
+                            aria-label="Regenerar"
+                            style={{
+                              flex: resultado ? undefined : 1,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: "5px",
+                              padding: "7px 9px",
+                              borderRadius: "8px",
+                              border: "1px solid #D5CFC4",
+                              background: "#F8F7F4",
+                              color: "#1F1C19",
+                              fontSize: "0.75rem",
+                              fontWeight: 600,
+                              cursor: cargandoModo ? "wait" : "pointer",
+                            }}
+                          >
+                            {cargandoModo ? (
+                              <Loader2 size={13} className="eco-spin" />
+                            ) : (
+                              <RefreshCw size={13} />
+                            )}
+                            <span className="btn-texto-responsive">Regenerar</span>
+                          </button>
+
+                          {resultado && (
+                            <button
+                              type="button"
+                              className="btn-responsive-accion"
+                              onClick={() => void handleDescargarFotoIa(modo)}
+                              disabled={cargandoModo}
+                              title={`Descargar imagen de ${titulo} en formato JPG`}
+                              aria-label="Descargar"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: "5px",
+                                padding: "7px 9px",
+                                borderRadius: "8px",
+                                border: "1px solid #D5CFC4",
+                                background: "#FFFFFF",
+                                color: "#57524C",
+                                fontSize: "0.75rem",
+                                fontWeight: 600,
+                                cursor: "pointer",
+                              }}
+                            >
+                              <Download size={13} />
+                              <span className="btn-texto-responsive">Descargar</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Barra de confirmación para aplicar las fotos seleccionadas al formulario */}
+                {(fotosIa.estudio || fotosIa.taller) && (
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "10px",
+                      flexWrap: "wrap",
+                      paddingTop: "8px",
+                      borderTop: "1px solid #E5D7BC",
+                    }}
+                  >
+                    <label
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "7px",
+                        fontSize: "0.79rem",
+                        fontWeight: 600,
+                        color: "#1F1C19",
+                        cursor: "pointer",
+                      }}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={reemplazarOriginalIa}
+                        onChange={(e) => setReemplazarOriginalIa(e.target.checked)}
+                        disabled={aplicandoIa}
+                        style={{ accentColor: "#2F4737", width: "16px", height: "16px" }}
+                      />
+                      <span>Reemplazar foto original</span>
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={() => void handleAplicarFotosIa()}
+                      disabled={
+                        aplicandoIa ||
+                        generandoIa.estudio ||
+                        generandoIa.taller ||
+                        (!fotosIa.estudio?.seleccionada && !fotosIa.taller?.seleccionada)
+                      }
+                      title="Subir y aplicar las fotos IA seleccionadas al formulario"
+                      aria-label="Usar Fotos"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        padding: "9px 16px",
+                        borderRadius: "9px",
+                        border: "none",
+                        background: "#2F4737",
+                        color: "#FFFFFF",
+                        fontSize: "0.82rem",
+                        fontWeight: 700,
+                        cursor: aplicandoIa ? "wait" : "pointer",
+                        opacity:
+                          aplicandoIa ||
+                          generandoIa.estudio ||
+                          generandoIa.taller ||
+                          (!fotosIa.estudio?.seleccionada && !fotosIa.taller?.seleccionada)
+                            ? 0.6
+                            : 1,
+                      }}
+                    >
+                      {aplicandoIa ? (
+                        <Loader2 size={14} className="eco-spin" />
+                      ) : (
+                        <CheckCircle2 size={14} />
+                      )}
+                      <span>{aplicandoIa ? "Aplicando..." : "Usar Fotos"}</span>
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         )}
 
@@ -708,7 +1621,7 @@ export function ConsolaEntregaInmediata({
 
           <button
             type="submit"
-            disabled={publicando || subiendoImagen}
+            disabled={publicando || subiendoImagen || aplicandoIa}
             title="Publicar arreglo como disponible para entrega inmediata en web y chat"
             aria-label="Publicar ahora"
             style={{
