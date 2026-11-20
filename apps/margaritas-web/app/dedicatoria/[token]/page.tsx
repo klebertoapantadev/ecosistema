@@ -21,14 +21,25 @@ export async function generateMetadata({ params }: PropsPage): Promise<Metadata>
     };
   }
 
+  if (res.tarjeta.tipo === "CONDOLENCIAS_PLANA") {
+    return {
+      title: "Tarjeta de Condolencias — Margaritas Floristería",
+      description: "Mensaje de condolencias y acompañamiento.",
+      openGraph: {
+        title: "Tarjeta de Condolencias — Margaritas Floristería",
+        description: "Mensaje de condolencias y acompañamiento.",
+      },
+    };
+  }
+
   const remitenteVisible =
     res.tarjeta.diseno?.remitentePortada?.trim() || res.tarjeta.remitente || "alguien especial";
 
   return {
-    title: `💌 Dedicatoria para ${res.tarjeta.destinatario} — Margaritas`,
+    title: `Dedicatoria para ${res.tarjeta.destinatario} — Margaritas`,
     description: `Tienes un detalle especial de ${remitenteVisible}. Abre tu tarjeta digital.`,
     openGraph: {
-      title: `💌 Dedicatoria para ${res.tarjeta.destinatario}`,
+      title: `Dedicatoria para ${res.tarjeta.destinatario}`,
       description: `De: ${remitenteVisible}. Toca para abrir tu tarjeta digital.`,
     },
   };

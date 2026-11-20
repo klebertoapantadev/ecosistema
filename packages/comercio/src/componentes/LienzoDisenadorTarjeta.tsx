@@ -1879,41 +1879,117 @@ export function LienzoDisenadorTarjeta({
             </div>
           )}
 
-          {/* Arte preimpreso en esquinas diagonales (superior-izquierda e inferior-derecha) para Condolencias */}
+          {/* Arte sobrio lineal monocromático en esquinas diagonales para Condolencias */}
           {esCondolencias && (
             <>
               <div
                 aria-hidden="true"
                 style={{
                   position: "absolute",
-                  top: "6px",
-                  left: "8px",
-                  fontSize: "1.35rem",
-                  opacity: 0.35,
-                  filter: "grayscale(100%)",
+                  inset: "4.6%",
+                  border: "1px solid rgba(63, 63, 70, 0.24)",
+                  pointerEvents: "none",
+                  zIndex: 3,
+                }}
+              />
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 64 64"
+                fill="none"
+                style={{
+                  position: "absolute",
+                  top: "7%",
+                  left: "5.5%",
+                  width: "30px",
+                  height: "30px",
+                  opacity: 0.28,
                   pointerEvents: "none",
                   zIndex: 4,
                 }}
               >
-                🌿
-              </div>
-              <div
+                <path d="M8 54 C14 34, 28 18, 54 10" stroke="#3F3F46" strokeWidth="1.3" strokeLinecap="round" />
+                <path d="M22 33 C17 24, 21 15, 29 18 C27 25, 24 29, 22 33 Z" stroke="#3F3F46" strokeWidth="1.2" />
+                <path d="M34 22 C35 13, 44 10, 48 16 C42 20, 38 22, 34 22 Z" stroke="#3F3F46" strokeWidth="1.2" />
+              </svg>
+              <svg
                 aria-hidden="true"
+                viewBox="0 0 64 64"
+                fill="none"
                 style={{
                   position: "absolute",
-                  bottom: "6px",
-                  right: "8px",
-                  fontSize: "1.35rem",
-                  opacity: 0.35,
-                  filter: "grayscale(100%)",
+                  bottom: "7%",
+                  right: "5.5%",
+                  width: "30px",
+                  height: "30px",
+                  opacity: 0.28,
                   transform: "rotate(180deg)",
                   pointerEvents: "none",
                   zIndex: 4,
                 }}
               >
-                🌿
-              </div>
+                <path d="M8 54 C14 34, 28 18, 54 10" stroke="#3F3F46" strokeWidth="1.3" strokeLinecap="round" />
+                <path d="M22 33 C17 24, 21 15, 29 18 C27 25, 24 29, 22 33 Z" stroke="#3F3F46" strokeWidth="1.2" />
+                <path d="M34 22 C35 13, 44 10, 48 16 C42 20, 38 22, 34 22 Z" stroke="#3F3F46" strokeWidth="1.2" />
+              </svg>
             </>
+          )}
+
+          {/* Sello de marca pequeño y sutil en el pie interior de toda tarjeta Dedicatoria */}
+          {!esCondolencias && !modoSoloQrActivo && (
+            <div
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                bottom: "2.4%",
+                left: "50%",
+                transform: "translateX(-50%)",
+                pointerEvents: "none",
+                zIndex: 3,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {!negocio.trim().toLowerCase().includes("margarita") ? (
+                <div
+                  style={{
+                    width: "46px",
+                    aspectRatio: "16 / 8.8",
+                    overflow: "hidden",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: 0.3,
+                  }}
+                >
+                  <img
+                    src="/img/logo/tinkay-logo.jpg"
+                    alt=""
+                    draggable={false}
+                    style={{
+                      width: "160%",
+                      maxWidth: "none",
+                      height: "auto",
+                      mixBlendMode: "multiply",
+                      filter: "contrast(1.3) brightness(1.04)",
+                    }}
+                  />
+                </div>
+              ) : (
+                <span
+                  style={{
+                    fontFamily: "'Playfair Display', Georgia, serif",
+                    fontSize: "0.52rem",
+                    letterSpacing: "0.16em",
+                    textTransform: "uppercase",
+                    color: "#44403C",
+                    opacity: 0.36,
+                  }}
+                >
+                  Margaritas
+                </span>
+              )}
+            </div>
           )}
 
           {modoSoloQrActivo ? (

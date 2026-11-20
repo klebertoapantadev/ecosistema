@@ -1,7 +1,17 @@
 "use client";
 
 import React, { useEffect, useId, useMemo, useRef, useState } from "react";
-import { Play, Pause, Volume2, VolumeX, Sparkles, RotateCcw } from "lucide-react";
+import {
+  ExternalLink,
+  Pause,
+  Play,
+  RefreshCw,
+  RotateCcw,
+  RotateCw,
+  Sparkles,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import type { DisenoVisualTarjeta } from "../operaciones-taller";
 import {
   asegurarFuentesGoogleTarjetaCargadas,
@@ -57,12 +67,14 @@ function esDestinatarioVisibleValido(valor?: string | null): boolean {
 
 function ContenidoInteriorTarjeta({
   esCondolencias,
+  esMargaritas,
   disenoNorm,
   dedicatoria,
   remitente,
   escalaFuente,
 }: {
   esCondolencias: boolean;
+  esMargaritas: boolean;
   disenoNorm: DisenoVisualNormalizado;
   dedicatoria: string;
   remitente: string;
@@ -77,47 +89,172 @@ function ContenidoInteriorTarjeta({
         position: "relative",
         width: "100%",
         height: "100%",
-        backgroundColor: "#E8E3D9",
-        backgroundImage: `${TEXTURA_PAPEL_KRAFT_SVG}, radial-gradient(ellipse at center, rgba(255,255,255,0.34), rgba(180,170,154,0.14) 100%)`,
+        backgroundColor: esCondolencias ? "#F7F6F2" : "#E8E3D9",
+        backgroundImage: esCondolencias
+          ? `${TEXTURA_PAPEL_KRAFT_SVG}, linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(228,226,220,0.22) 100%)`
+          : `${TEXTURA_PAPEL_KRAFT_SVG}, radial-gradient(ellipse at center, rgba(255,255,255,0.34), rgba(180,170,154,0.14) 100%)`,
         overflow: "hidden",
         boxSizing: "border-box",
       }}
     >
-      {/* Decoración botánica sutil en esquinas diagonales solo para Condolencias Horizontal */}
+      {/* Diseño sobrio y solemne exclusivo para Condolencias: doble filete fino y detalle lineal monocromático */}
       {esCondolencias && (
         <>
           <div
             aria-hidden="true"
             style={{
               position: "absolute",
-              top: "10px",
-              left: "12px",
-              fontSize: "1.9rem",
-              opacity: 0.34,
-              filter: "grayscale(100%)",
+              inset: "4.6%",
+              border: "1px solid rgba(63, 63, 70, 0.24)",
               pointerEvents: "none",
-              zIndex: 4,
+              zIndex: 3,
             }}
-          >
-            🌿
-          </div>
+          />
           <div
             aria-hidden="true"
             style={{
               position: "absolute",
-              bottom: "10px",
-              right: "12px",
-              fontSize: "1.9rem",
-              opacity: 0.34,
-              filter: "grayscale(100%)",
+              inset: "6.4%",
+              border: "1px solid rgba(63, 63, 70, 0.09)",
+              pointerEvents: "none",
+              zIndex: 3,
+            }}
+          />
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 64 64"
+            fill="none"
+            style={{
+              position: "absolute",
+              top: "7.5%",
+              left: "5.5%",
+              width: "44px",
+              height: "44px",
+              opacity: 0.26,
+              pointerEvents: "none",
+              zIndex: 4,
+            }}
+          >
+            <path
+              d="M8 54 C14 34, 28 18, 54 10"
+              stroke="#3F3F46"
+              strokeWidth="1.2"
+              strokeLinecap="round"
+            />
+            <path
+              d="M22 33 C17 24, 21 15, 29 18 C27 25, 24 29, 22 33 Z"
+              stroke="#3F3F46"
+              strokeWidth="1.1"
+            />
+            <path
+              d="M34 22 C35 13, 44 10, 48 16 C42 20, 38 22, 34 22 Z"
+              stroke="#3F3F46"
+              strokeWidth="1.1"
+            />
+            <path
+              d="M15 44 C22 41, 29 44, 28 51 C21 50, 17 47, 15 44 Z"
+              stroke="#3F3F46"
+              strokeWidth="1.1"
+            />
+          </svg>
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 64 64"
+            fill="none"
+            style={{
+              position: "absolute",
+              bottom: "7.5%",
+              right: "5.5%",
+              width: "44px",
+              height: "44px",
+              opacity: 0.26,
               transform: "rotate(180deg)",
               pointerEvents: "none",
               zIndex: 4,
             }}
           >
-            🌿
-          </div>
+            <path
+              d="M8 54 C14 34, 28 18, 54 10"
+              stroke="#3F3F46"
+              strokeWidth="1.2"
+              strokeLinecap="round"
+            />
+            <path
+              d="M22 33 C17 24, 21 15, 29 18 C27 25, 24 29, 22 33 Z"
+              stroke="#3F3F46"
+              strokeWidth="1.1"
+            />
+            <path
+              d="M34 22 C35 13, 44 10, 48 16 C42 20, 38 22, 34 22 Z"
+              stroke="#3F3F46"
+              strokeWidth="1.1"
+            />
+            <path
+              d="M15 44 C22 41, 29 44, 28 51 C21 50, 17 47, 15 44 Z"
+              stroke="#3F3F46"
+              strokeWidth="1.1"
+            />
+          </svg>
         </>
+      )}
+
+      {/* SELLO DE MARCA PEQUEÑO Y SUTIL EN EL INTERIOR (SIEMPRE PRESENTE EN TARJETAS DEDICATORIA) */}
+      {!esCondolencias && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            bottom: "2.4%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            pointerEvents: "none",
+            zIndex: 3,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {!esMargaritas ? (
+            <div
+              style={{
+                width: "58px",
+                aspectRatio: "16 / 8.8",
+                overflow: "hidden",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                opacity: 0.3,
+              }}
+            >
+              <img
+                src="/img/logo/tinkay-logo.jpg"
+                alt=""
+                draggable={false}
+                style={{
+                  width: "160%",
+                  maxWidth: "none",
+                  height: "auto",
+                  mixBlendMode: "multiply",
+                  filter: "contrast(1.3) brightness(1.04)",
+                  userSelect: "none",
+                }}
+              />
+            </div>
+          ) : (
+            <span
+              style={{
+                fontFamily: "'Playfair Display', Georgia, serif",
+                fontSize: "0.62rem",
+                letterSpacing: "0.18em",
+                textTransform: "uppercase",
+                color: "#44403C",
+                opacity: 0.36,
+              }}
+            >
+              Margaritas
+            </span>
+          )}
+        </div>
       )}
 
       {/* IMÁGENES DISEÑADAS (HASTA 3, CON SOPORTE FONDO 100%, ROTACIÓN Y TRANSPARENCIA) */}
@@ -229,9 +366,12 @@ export function TarjetaDedicatoriaDigitalInteractiva({
   const esAudioDirecto = Boolean(musicaActivaUrl && !youtubeId);
   const tieneCancion = Boolean(!esCondolencias && (youtubeId || esAudioDirecto));
 
-  // En Dedicatoria (díptico real), siempre inicia doblada para disfrutar la apertura en 3D;
+  // En Dedicatoria (díptico real), siempre inicia doblada para disfrutar la vista 360° y la apertura en 3D;
   // en Condolencias (tarjeta plana sin doblez), se muestra abierta directamente.
   const [abierta, setAbierta] = useState<boolean>(esCondolencias);
+  const [anguloY, setAnguloY] = useState<number>(0);
+  const [girando360, setGirando360] = useState<boolean>(false);
+  const [arrastrando360, setArrastrando360] = useState<boolean>(false);
   const [reproduciendo, setReproduciendo] = useState<boolean>(false);
   const [silenciado, setSilenciado] = useState<boolean>(false);
   const [tiempoActual, setTiempoActual] = useState<number>(0);
@@ -243,10 +383,22 @@ export function TarjetaDedicatoriaDigitalInteractiva({
   const playerListoRef = useRef<boolean>(false);
   const pendienteReproducirRef = useRef<boolean>(false);
   const audioHtmlRef = useRef<HTMLAudioElement | null>(null);
+  const dragStartXRef = useRef<number | null>(null);
+  const dragStartAngleRef = useRef<number>(0);
+  const arrastroRecienteRef = useRef<boolean>(false);
+  const timerGiro360Ref = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const negNorm = datosIniciales.negocio.trim().toLowerCase();
   const esMargaritas = negNorm.includes("margarita");
   const nombreMarca = esMargaritas ? "Margaritas Floristería" : "Tinkay Flores y Eventos";
+  const anguloNorm = ((anguloY % 360) + 360) % 360;
+  const mostrandoReverso = !abierta && anguloNorm > 90 && anguloNorm < 270;
+
+  useEffect(() => {
+    return () => {
+      if (timerGiro360Ref.current) clearTimeout(timerGiro360Ref.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!youtubeId || esCondolencias || typeof window === "undefined") return;
@@ -361,8 +513,19 @@ export function TarjetaDedicatoriaDigitalInteractiva({
     }
   }, [lineaActivaIndex]);
 
+  const detenerGiro360 = () => {
+    if (timerGiro360Ref.current) {
+      clearTimeout(timerGiro360Ref.current);
+      timerGiro360Ref.current = null;
+    }
+    setGirando360(false);
+  };
+
   const handleAbrirTarjeta = () => {
     if (abierta) return;
+    detenerGiro360();
+    // Si estaba volteada hacia atrás o rotada, alinear de frente al desplegar el díptico
+    setAnguloY((prev) => Math.round(prev / 360) * 360);
     setAbierta(true);
     if (!tieneCancion) return;
     pendienteReproducirRef.current = true;
@@ -391,7 +554,65 @@ export function TarjetaDedicatoriaDigitalInteractiva({
   };
 
   const handleDoblarTarjeta = () => {
+    detenerGiro360();
+    setAnguloY((prev) => Math.round(prev / 360) * 360);
     setAbierta(false);
+  };
+
+  const handleAlternarReverso = () => {
+    if (abierta) return;
+    detenerGiro360();
+    setAnguloY((prev) => {
+      const baseVuelta = Math.floor(prev / 360) * 360;
+      const mod = ((prev % 360) + 360) % 360;
+      return mod > 90 && mod < 270 ? baseVuelta : baseVuelta + 180;
+    });
+  };
+
+  const handleVista360 = () => {
+    if (abierta) return;
+    if (girando360) {
+      detenerGiro360();
+      return;
+    }
+    setGirando360(true);
+    setAnguloY((prev) => prev + 360);
+    timerGiro360Ref.current = setTimeout(() => {
+      setGirando360(false);
+      timerGiro360Ref.current = null;
+    }, 5650);
+  };
+
+  const handlePointerDownTarjeta = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (abierta || esCondolencias) return;
+    if (e.button !== 0 && e.pointerType === "mouse") return;
+    detenerGiro360();
+    dragStartXRef.current = e.clientX;
+    dragStartAngleRef.current = anguloY;
+    arrastroRecienteRef.current = false;
+  };
+
+  const handlePointerMoveTarjeta = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (dragStartXRef.current === null || abierta) return;
+    const dx = e.clientX - dragStartXRef.current;
+    if (Math.abs(dx) > 8) {
+      arrastroRecienteRef.current = true;
+      setArrastrando360(true);
+      setAnguloY(dragStartAngleRef.current + dx * 0.72);
+    }
+  };
+
+  const handlePointerEndTarjeta = () => {
+    if (dragStartXRef.current === null) return;
+    dragStartXRef.current = null;
+    if (arrastroRecienteRef.current) {
+      setArrastrando360(false);
+      // Ajustar suavemente hacia la cara más cercana (portada 0° o reverso 180°)
+      setAnguloY((prev) => Math.round(prev / 180) * 180);
+      setTimeout(() => {
+        arrastroRecienteRef.current = false;
+      }, 120);
+    }
   };
 
   const handleToggleReproduccion = () => {
@@ -449,12 +670,12 @@ export function TarjetaDedicatoriaDigitalInteractiva({
         backgroundColor: modoEmbebido
           ? "transparent"
           : esCondolencias
-            ? "#18181B"
+            ? "#141416"
             : "#0F172A",
         backgroundImage: modoEmbebido
           ? "none"
           : esCondolencias
-            ? "radial-gradient(ellipse at top, #27272A, #18181B 75%)"
+            ? "radial-gradient(ellipse at top, #1F1F23, #141416 76%)"
             : "radial-gradient(ellipse at top, #1E293B, #0F172A 78%)",
         color: "#FFFFFF",
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
@@ -525,21 +746,29 @@ export function TarjetaDedicatoriaDigitalInteractiva({
             style={{
               width: "100%",
               aspectRatio: "168 / 113",
-              borderRadius: "8px",
-              boxShadow: "0 25px 55px -12px rgba(0, 0, 0, 0.7)",
+              borderRadius: "6px",
+              boxShadow: "0 24px 52px -14px rgba(0, 0, 0, 0.78)",
               overflow: "hidden",
-              border: "1px solid rgba(255,255,255,0.18)",
+              border: "1px solid rgba(255,255,255,0.12)",
             }}
           >
             <ContenidoInteriorTarjeta
               esCondolencias={true}
+              esMargaritas={esMargaritas}
               disenoNorm={disenoNorm}
               dedicatoria={datosIniciales.dedicatoria}
               remitente={datosIniciales.remitente}
               escalaFuente={1.18}
             />
           </div>
-          <span style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.38)", letterSpacing: "0.5px" }}>
+          <span
+            style={{
+              fontSize: "0.68rem",
+              color: "rgba(228, 228, 231, 0.42)",
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+            }}
+          >
             {nombreMarca}
           </span>
           {accionesInferiores && (
@@ -571,15 +800,24 @@ export function TarjetaDedicatoriaDigitalInteractiva({
             }}
           >
             {/* Contenedor de tarjeta completa 113 × 168 mm:
-                Cerrada se desplaza -24% hacia arriba para que la portada (mitad inferior) quede centrada;
-                al abrirse se desliza suavemente a 0% mostrando ambas caras desplegadas */}
+                Cerrada se desplaza -23% hacia arriba y soporta giro interactivo 360° (rotateY)
+                para admirar portada y parte posterior; al abrirse se alinea al frente y despliega ambas caras */}
             <div
-              onClick={!abierta ? handleAbrirTarjeta : undefined}
-              role={!abierta ? "button" : undefined}
-              tabIndex={!abierta ? 0 : undefined}
-              aria-label={!abierta ? "Toca para abrir tu tarjeta" : undefined}
+              onClick={() => {
+                if (!abierta && !mostrandoReverso && !arrastroRecienteRef.current) {
+                  handleAbrirTarjeta();
+                }
+              }}
+              onPointerDown={handlePointerDownTarjeta}
+              onPointerMove={handlePointerMoveTarjeta}
+              onPointerUp={handlePointerEndTarjeta}
+              onPointerCancel={handlePointerEndTarjeta}
+              onPointerLeave={handlePointerEndTarjeta}
+              role={!abierta && !mostrandoReverso ? "button" : undefined}
+              tabIndex={!abierta && !mostrandoReverso ? 0 : undefined}
+              aria-label={!abierta && !mostrandoReverso ? "Toca para abrir tu tarjeta" : undefined}
               onKeyDown={(e) => {
-                if (!abierta && (e.key === "Enter" || e.key === " ")) {
+                if (!abierta && !mostrandoReverso && (e.key === "Enter" || e.key === " ")) {
                   e.preventDefault();
                   handleAbrirTarjeta();
                 }
@@ -589,12 +827,20 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                 aspectRatio: "113 / 168",
                 position: "relative",
                 transformStyle: "preserve-3d",
-                transform: abierta ? "translateY(0%)" : "translateY(-23%)",
-                transition: "transform 1.75s cubic-bezier(0.25, 0.9, 0.3, 1)",
-                cursor: abierta ? "default" : "pointer",
+                transform: abierta
+                  ? "translateY(0%) rotateY(0deg)"
+                  : `translateY(-23%) rotateY(${anguloY}deg)`,
+                transition: arrastrando360
+                  ? "none"
+                  : girando360
+                    ? "transform 5.6s cubic-bezier(0.35, 0, 0.25, 1)"
+                    : "transform 1.75s cubic-bezier(0.25, 0.9, 0.3, 1)",
+                cursor: abierta ? "default" : arrastrando360 ? "grabbing" : "pointer",
+                touchAction: abierta ? "auto" : "pan-y",
+                userSelect: "none",
               }}
             >
-              {/* 1. CARA INFERIOR INTERNA FIJA (MITAD INFERIOR 50%..100% DEL DISEÑO) */}
+              {/* 1. MITAD INFERIOR FIJA (SIN overflow:hidden PARA PRESERVAR 3D DE CARA INTERNA 1A Y REVERSO 1B) */}
               <div
                 style={{
                   position: "absolute",
@@ -602,54 +848,214 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                   right: 0,
                   top: "50%",
                   height: "50%",
-                  overflow: "hidden",
-                  borderBottomLeftRadius: "8px",
-                  borderBottomRightRadius: "8px",
-                  borderTopLeftRadius: abierta ? "0px" : "6px",
-                  borderTopRightRadius: abierta ? "0px" : "6px",
-                  boxShadow: abierta
-                    ? "0 28px 55px -12px rgba(0, 0, 0, 0.65)"
-                    : "0 2px 0 #BDB6A8, 0 4px 0 #A8A092, 0 26px 52px -10px rgba(0, 0, 0, 0.72)",
-                  transition: "box-shadow 1.45s ease",
-                  zIndex: 1,
+                  transformStyle: "preserve-3d",
+                  zIndex: mostrandoReverso ? 4 : 1,
                 }}
               >
-                {/* Proyección de la mitad inferior del lienzo completo (200% alto desplazado -100%) */}
+                {/* 1A. CARA INTERNA INFERIOR (MITAD INFERIOR 50%..100% DEL DISEÑO) */}
                 <div
                   style={{
                     position: "absolute",
-                    left: 0,
-                    right: 0,
-                    top: "-100%",
-                    height: "200%",
+                    inset: 0,
+                    overflow: "hidden",
+                    backfaceVisibility: "hidden",
+                    WebkitBackfaceVisibility: "hidden",
+                    borderBottomLeftRadius: "8px",
+                    borderBottomRightRadius: "8px",
+                    borderTopLeftRadius: abierta ? "0px" : "6px",
+                    borderTopRightRadius: abierta ? "0px" : "6px",
+                    boxShadow: abierta
+                      ? "0 28px 55px -12px rgba(0, 0, 0, 0.65)"
+                      : "0 2px 0 #BDB6A8, 0 4px 0 #A8A092, 0 26px 52px -10px rgba(0, 0, 0, 0.72)",
+                    transition: "box-shadow 1.45s ease",
                   }}
                 >
-                  <ContenidoInteriorTarjeta
-                    esCondolencias={false}
-                    disenoNorm={disenoNorm}
-                    dedicatoria={datosIniciales.dedicatoria}
-                    remitente={datosIniciales.remitente}
-                    escalaFuente={1.08}
+                  {/* Proyección de la mitad inferior del lienzo completo (200% alto desplazado -100%) */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: 0,
+                      right: 0,
+                      top: "-100%",
+                      height: "200%",
+                    }}
+                  >
+                    <ContenidoInteriorTarjeta
+                      esCondolencias={false}
+                      esMargaritas={esMargaritas}
+                      disenoNorm={disenoNorm}
+                      dedicatoria={datosIniciales.dedicatoria}
+                      remitente={datosIniciales.remitente}
+                      escalaFuente={1.08}
+                    />
+                  </div>
+
+                  {/* Sombra realista del doblez central horizontal (8,4 cm) */}
+                  <div
+                    aria-hidden="true"
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: "22px",
+                      background:
+                        "linear-gradient(to bottom, rgba(41, 37, 36, 0.14), rgba(41, 37, 36, 0.03) 45%, transparent)",
+                      opacity: abierta ? 0.55 : 1,
+                      transition: "opacity 1.5s ease",
+                      pointerEvents: "none",
+                      zIndex: 8,
+                    }}
                   />
                 </div>
 
-                {/* Sombra realista del doblez central horizontal (8,4 cm) */}
-                <div
-                  aria-hidden="true"
+                {/* 1B. PARTE POSTERIOR / REVERSO REAL DE LA TARJETA (CLIC REDIRECCIONA A NUESTRA PÁGINA) */}
+                <a
+                  href="/"
+                  target={modoEmbebido ? "_blank" : undefined}
+                  rel={modoEmbebido ? "noopener noreferrer" : undefined}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (arrastroRecienteRef.current) {
+                      e.preventDefault();
+                    }
+                  }}
+                  title={`Visitar ${nombreMarca}`}
+                  aria-label={`Visitar página web de ${nombreMarca}`}
                   style={{
                     position: "absolute",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    height: "22px",
-                    background:
-                      "linear-gradient(to bottom, rgba(41, 37, 36, 0.14), rgba(41, 37, 36, 0.03) 45%, transparent)",
-                    opacity: abierta ? 0.55 : 1,
-                    transition: "opacity 1.5s ease",
-                    pointerEvents: "none",
-                    zIndex: 8,
+                    inset: 0,
+                    transform: "rotateY(180deg) translateZ(2px)",
+                    backfaceVisibility: "hidden",
+                    WebkitBackfaceVisibility: "hidden",
+                    pointerEvents: mostrandoReverso ? "auto" : "none",
+                    backgroundColor: "#DFD9CE",
+                    backgroundImage: `${TEXTURA_PAPEL_KRAFT_SVG}, linear-gradient(155deg, rgba(255,255,255,0.28) 0%, rgba(168,158,142,0.18) 100%)`,
+                    borderRadius: "8px",
+                    border: "1px solid rgba(168, 160, 146, 0.68)",
+                    boxShadow: "0 24px 50px -12px rgba(0, 0, 0, 0.72), inset 0 1px 0 rgba(255,255,255,0.5)",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "10px",
+                    padding: "20px 24px",
+                    boxSizing: "border-box",
+                    textDecoration: "none",
+                    color: "#292524",
+                    overflow: "hidden",
+                    cursor: "pointer",
                   }}
-                />
+                >
+                  {/* Filete editorial fino en la contraportada */}
+                  <div
+                    aria-hidden="true"
+                    style={{
+                      position: "absolute",
+                      inset: "10px",
+                      borderRadius: "5px",
+                      border: "1px solid rgba(87, 83, 78, 0.16)",
+                      pointerEvents: "none",
+                    }}
+                  />
+
+                  {!esMargaritas ? (
+                    <div
+                      style={{
+                        width: "58%",
+                        maxWidth: "184px",
+                        aspectRatio: "16 / 8.8",
+                        overflow: "hidden",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <img
+                        src="/img/logo/tinkay-logo.jpg"
+                        alt="Tinkay Flores y Eventos"
+                        draggable={false}
+                        style={{
+                          width: "160%",
+                          maxWidth: "none",
+                          height: "auto",
+                          mixBlendMode: "multiply",
+                          filter: "contrast(1.36) brightness(1.04)",
+                          userSelect: "none",
+                          pointerEvents: "none",
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div style={{ textAlign: "center", color: "#292524" }}>
+                      <div
+                        style={{
+                          fontFamily: "'Playfair Display', Georgia, serif",
+                          fontSize: "1.65rem",
+                          fontWeight: 700,
+                          letterSpacing: "0.04em",
+                        }}
+                      >
+                        Margaritas
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "0.62rem",
+                          letterSpacing: "0.26em",
+                          textTransform: "uppercase",
+                          color: "#57534E",
+                          marginTop: "3px",
+                        }}
+                      >
+                        FLORISTERÍA
+                      </div>
+                    </div>
+                  )}
+
+                  <div
+                    aria-hidden="true"
+                    style={{
+                      width: "36px",
+                      height: "1px",
+                      backgroundColor: "rgba(87, 83, 78, 0.32)",
+                    }}
+                  />
+
+                  <span
+                    style={{
+                      fontFamily: "'Playfair Display', Georgia, serif",
+                      fontStyle: "italic",
+                      fontSize: "0.8rem",
+                      color: "#44403C",
+                      textAlign: "center",
+                      maxWidth: "220px",
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    {esMargaritas
+                      ? "Arreglos florales diseñados con arte"
+                      : "Flores con historia, para cada momento"}
+                  </span>
+
+                  <span
+                    style={{
+                      marginTop: "4px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                      padding: "6px 14px",
+                      borderRadius: "999px",
+                      backgroundColor: "#292524",
+                      color: "#F5EFE6",
+                      fontSize: "0.72rem",
+                      fontWeight: 700,
+                      letterSpacing: "0.02em",
+                    }}
+                  >
+                    <span>{esMargaritas ? "Visitar Margaritas" : "Visitar Tinkay"}</span>
+                    <ExternalLink size={12} />
+                  </span>
+                </a>
               </div>
 
               {/* 2. SOLAPA SUPERIOR ARTICULADA EN 3D (BISAGRA EN EL DOBLEZ CENTRAL 8,4 cm)
@@ -666,7 +1072,8 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                   transformStyle: "preserve-3d",
                   transform: abierta ? "rotateX(0deg)" : "rotateX(-180deg)",
                   transition: "transform 1.8s cubic-bezier(0.25, 0.9, 0.3, 1)",
-                  zIndex: 3,
+                  pointerEvents: mostrandoReverso ? "none" : "auto",
+                  zIndex: mostrandoReverso ? 1 : 3,
                 }}
               >
                 {/* 2A. CARA INTERNA SUPERIOR (VISIBLE AL ABRIR EL DÍPTICO) */}
@@ -677,6 +1084,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                     backfaceVisibility: "hidden",
                     WebkitBackfaceVisibility: "hidden",
                     overflow: "hidden",
+                    opacity: mostrandoReverso && !abierta ? 0 : 1,
                     borderTopLeftRadius: "8px",
                     borderTopRightRadius: "8px",
                     boxShadow: abierta
@@ -696,6 +1104,7 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                   >
                     <ContenidoInteriorTarjeta
                       esCondolencias={false}
+                      esMargaritas={esMargaritas}
                       disenoNorm={disenoNorm}
                       dedicatoria={datosIniciales.dedicatoria}
                       remitente={datosIniciales.remitente}
@@ -721,12 +1130,12 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                 </div>
 
                 {/* 2B. PORTADA EXTERIOR REAL (VISIBLE CUANDO EL DÍPTICO ESTÁ CERRADO)
-                        rotateX(180deg) compensa el -180deg de la solapa cerrada para quedar 100% al derecho */}
+                        rotateX(180deg) translateZ(2px) compensa el -180deg de la solapa y la sitúa delante de 1A */}
                 <div
                   style={{
                     position: "absolute",
                     inset: 0,
-                    transform: "rotateX(180deg)",
+                    transform: "rotateX(180deg) translateZ(2px)",
                     backfaceVisibility: "hidden",
                     WebkitBackfaceVisibility: "hidden",
                     backgroundColor: "#DFD9CE",
@@ -872,6 +1281,126 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* CONTROLES PRE-APERTURA: VISTA 360° Y PARTE POSTERIOR (SOLO CUANDO ESTÁ CERRADA) */}
+          <div
+            style={{
+              width: "100%",
+              maxWidth: "366px",
+              marginTop: abierta ? "0px" : "-82px",
+              maxHeight: abierta ? "0px" : "96px",
+              overflow: "hidden",
+              opacity: abierta ? 0 : 1,
+              pointerEvents: abierta ? "none" : "auto",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "8px",
+              position: "relative",
+              zIndex: 6,
+              transition:
+                "margin-top 1.45s cubic-bezier(0.25, 0.9, 0.3, 1), max-height 0.9s ease, opacity 0.55s ease",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                type="button"
+                onClick={handleVista360}
+                title="Ver recorrido giratorio 360° de la tarjeta"
+                aria-label="Vista 360 grados"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "6px 13px",
+                  borderRadius: "999px",
+                  border: girando360
+                    ? "1px solid rgba(245, 239, 230, 0.55)"
+                    : "1px solid rgba(245, 239, 230, 0.2)",
+                  backgroundColor: girando360
+                    ? "rgba(245, 239, 230, 0.16)"
+                    : "rgba(245, 239, 230, 0.08)",
+                  color: "#F5EFE6",
+                  fontSize: "0.74rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  backdropFilter: "blur(6px)",
+                }}
+              >
+                <RefreshCw size={12} />
+                <span>{girando360 ? "Girando 360°" : "Vista 360°"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleAlternarReverso}
+                title={mostrandoReverso ? "Volver a la portada" : "Ver parte posterior de la tarjeta"}
+                aria-label={mostrandoReverso ? "Ver portada" : "Ver reverso"}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "6px 13px",
+                  borderRadius: "999px",
+                  border: "1px solid rgba(245, 239, 230, 0.2)",
+                  backgroundColor: "rgba(245, 239, 230, 0.08)",
+                  color: "#F5EFE6",
+                  fontSize: "0.74rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  backdropFilter: "blur(6px)",
+                }}
+              >
+                <RotateCw size={12} />
+                <span>{mostrandoReverso ? "Ver portada" : "Ver reverso"}</span>
+              </button>
+
+              {mostrandoReverso && (
+                <button
+                  type="button"
+                  onClick={handleAbrirTarjeta}
+                  title="Girar y abrir la tarjeta"
+                  aria-label="Abrir tarjeta"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "6px 13px",
+                    borderRadius: "999px",
+                    border: "1px solid rgba(245, 239, 230, 0.35)",
+                    backgroundColor: "rgba(245, 239, 230, 0.92)",
+                    color: "#1C1917",
+                    fontSize: "0.74rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                  }}
+                >
+                  <Sparkles size={12} />
+                  <span>Abrir tarjeta</span>
+                </button>
+              )}
+            </div>
+
+            <span
+              style={{
+                fontSize: "0.69rem",
+                color: "rgba(245, 239, 230, 0.5)",
+                textAlign: "center",
+              }}
+            >
+              {mostrandoReverso
+                ? `Toca la tarjeta para visitar ${nombreMarca}`
+                : "Desliza para girar 360° · Toca para abrir"}
+            </span>
           </div>
 
           {/* CONTROLES POST-APERTURA: AUDIO SUTIL + LYRICS + DOBLAR TARJETA */}
@@ -1082,10 +1611,9 @@ export function TarjetaDedicatoriaDigitalInteractiva({
                 flexDirection: "column",
                 alignItems: "center",
                 gap: "10px",
-                marginTop: abierta ? "4px" : "-72px",
+                marginTop: "4px",
                 position: "relative",
                 zIndex: 5,
-                transition: "margin-top 1.65s cubic-bezier(0.25, 0.9, 0.3, 1)",
               }}
             >
               {accionesInferiores}

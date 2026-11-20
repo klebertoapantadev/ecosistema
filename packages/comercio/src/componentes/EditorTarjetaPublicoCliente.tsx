@@ -412,9 +412,9 @@ export function EditorTarjetaPublicoCliente({
         style={{
           minHeight: "100vh",
           width: "100%",
-          backgroundColor: esCondolencias ? "#18181B" : "#0F172A",
+          backgroundColor: esCondolencias ? "#141416" : "#0F172A",
           backgroundImage: esCondolencias
-            ? "radial-gradient(ellipse at top, #27272A, #18181B 75%)"
+            ? "radial-gradient(ellipse at top, #1F1F23, #141416 76%)"
             : "radial-gradient(ellipse at top, #1E293B, #0F172A 78%)",
           color: "#FFFFFF",
           fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
@@ -443,12 +443,27 @@ export function EditorTarjetaPublicoCliente({
               style={{
                 fontSize: "0.74rem",
                 fontWeight: 600,
-                color: "rgba(245, 239, 230, 0.85)",
+                color: esCondolencias ? "rgba(228, 228, 231, 0.72)" : "rgba(245, 239, 230, 0.85)",
                 letterSpacing: "0.02em",
               }}
             >
               Pedido {datosIniciales.codigo}
             </span>
+            {esCondolencias && (
+              <span
+                style={{
+                  fontSize: "0.68rem",
+                  fontWeight: 500,
+                  padding: "2px 8px",
+                  borderRadius: "999px",
+                  backgroundColor: "rgba(255, 255, 255, 0.06)",
+                  color: "rgba(228, 228, 231, 0.7)",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                }}
+              >
+                Condolencias
+              </span>
+            )}
             {cambiosSinGuardar && (
               <span
                 style={{
@@ -466,7 +481,7 @@ export function EditorTarjetaPublicoCliente({
             )}
           </div>
 
-          {datosIniciales.tokenVista && (
+          {!esCondolencias && datosIniciales.tokenVista && (
             <a
               href={`/dedicatoria/${datosIniciales.tokenVista}`}
               target="_blank"
@@ -571,8 +586,12 @@ export function EditorTarjetaPublicoCliente({
                         setPasoIdx(0);
                         setModo("wizard");
                       }}
-                      title="Personalizar tu tarjeta paso a paso"
-                      aria-label="Editar tarjeta"
+                      title={
+                        esCondolencias
+                          ? "Editar mensaje de condolencias"
+                          : "Personalizar tu tarjeta paso a paso"
+                      }
+                      aria-label={esCondolencias ? "Editar mensaje" : "Editar tarjeta"}
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
@@ -580,8 +599,10 @@ export function EditorTarjetaPublicoCliente({
                         gap: "8px",
                         padding: "12px 26px",
                         borderRadius: "999px",
-                        border: "1px solid rgba(245, 239, 230, 0.25)",
-                        backgroundColor: "#F5EFE6",
+                        border: esCondolencias
+                          ? "1px solid rgba(228, 228, 231, 0.25)"
+                          : "1px solid rgba(245, 239, 230, 0.25)",
+                        backgroundColor: esCondolencias ? "#F4F3EF" : "#F5EFE6",
                         color: "#1F1C19",
                         fontSize: "0.9rem",
                         fontWeight: 700,
@@ -591,16 +612,20 @@ export function EditorTarjetaPublicoCliente({
                       }}
                     >
                       <Pencil size={16} />
-                      <span>Editar tarjeta</span>
+                      <span>{esCondolencias ? "Editar mensaje" : "Editar tarjeta"}</span>
                     </button>
                     <span
                       style={{
                         fontSize: "0.73rem",
-                        color: "rgba(245, 239, 230, 0.56)",
+                        color: esCondolencias
+                          ? "rgba(228, 228, 231, 0.52)"
+                          : "rgba(245, 239, 230, 0.56)",
                         textAlign: "center",
                       }}
                     >
-                      Así luce tu tarjeta ahora · Personaliza texto, fotos y música en pocos pasos
+                      {esCondolencias
+                        ? "Puedes ajustar el mensaje antes de la impresión en taller"
+                        : "Así luce tu tarjeta ahora · Personaliza texto, fotos y música en pocos pasos"}
                     </span>
                   </div>
                 )}
@@ -615,7 +640,293 @@ export function EditorTarjetaPublicoCliente({
   }
 
   // =========================================================================
-  // FASE 2: WIZARD GUIADO PASO A PASO (UX EDITORIAL CÁLIDO Y CLARO)
+  // FASE 2A (CONDOLENCIAS): EDICIÓN SOBRIA Y SERENA — ÚNICAMENTE EL MENSAJE
+  // =========================================================================
+  if (esCondolencias) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          width: "100%",
+          backgroundColor: "#F4F3EF",
+          color: "#27272A",
+          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          padding: "18px 14px 36px 14px",
+          boxSizing: "border-box",
+        }}
+      >
+        <div
+          style={{
+            width: "100%",
+            maxWidth: "660px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
+          }}
+        >
+          {/* Cabecera sobria */}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "10px",
+              flexWrap: "wrap",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setModo("vista")}
+              title="Volver a la vista de la tarjeta"
+              aria-label="Ver tarjeta"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "7px 13px",
+                borderRadius: "999px",
+                border: "1px solid #D4D4D8",
+                backgroundColor: "#FFFFFF",
+                color: "#27272A",
+                fontSize: "0.8rem",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              <ChevronLeft size={15} />
+              <span>Ver tarjeta</span>
+            </button>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span
+                style={{
+                  fontSize: "0.72rem",
+                  fontWeight: 600,
+                  color: "#52525B",
+                  padding: "3px 10px",
+                  borderRadius: "999px",
+                  backgroundColor: "#E4E4E7",
+                }}
+              >
+                Condolencias · {datosIniciales.codigo}
+              </span>
+            </div>
+          </div>
+
+          {/* Vista previa sobria en vivo */}
+          <div
+            style={{
+              borderRadius: "14px",
+              backgroundColor: "#141416",
+              backgroundImage: "radial-gradient(ellipse at top, #1F1F23, #141416 76%)",
+              padding: "18px 14px",
+              boxSizing: "border-box",
+            }}
+          >
+            <TarjetaDedicatoriaDigitalInteractiva
+              datosIniciales={datosVistaEnVivo}
+              token={datosIniciales.tokenVista}
+              modoEmbebido={true}
+            />
+          </div>
+
+          {/* Tarjeta única para editar exclusivamente el mensaje */}
+          <div
+            style={{
+              backgroundColor: "#FFFFFF",
+              borderRadius: "16px",
+              border: "1px solid #E4E4E7",
+              boxShadow: "0 10px 28px rgba(24, 24, 27, 0.04)",
+              padding: "22px 20px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "16px",
+              boxSizing: "border-box",
+            }}
+          >
+            <div>
+              <h1
+                style={{
+                  margin: 0,
+                  fontSize: "1.22rem",
+                  fontWeight: 600,
+                  color: "#18181B",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                Mensaje de condolencias
+              </h1>
+              <p
+                style={{
+                  margin: "5px 0 0 0",
+                  fontSize: "0.84rem",
+                  color: "#52525B",
+                  lineHeight: 1.5,
+                }}
+              >
+                Edita el texto que acompañará el arreglo floral antes de su impresión en taller.
+              </p>
+            </div>
+
+            <div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "6px",
+                }}
+              >
+                <label
+                  htmlFor="eco-campo-mensaje-condolencias"
+                  style={{ fontSize: "0.8rem", fontWeight: 600, color: "#27272A" }}
+                >
+                  Mensaje
+                </label>
+                <span style={{ fontSize: "0.74rem", color: "#71717A" }}>
+                  {mensaje.length} caracteres
+                </span>
+              </div>
+              <textarea
+                id="eco-campo-mensaje-condolencias"
+                rows={5}
+                value={mensaje}
+                onChange={(e) => {
+                  setMensaje(e.target.value);
+                  marcarCambio();
+                }}
+                placeholder="Escribe tu mensaje de condolencias..."
+                style={{
+                  width: "100%",
+                  padding: "13px 14px",
+                  borderRadius: "10px",
+                  border: "1px solid #D4D4D8",
+                  backgroundColor: "#FAFAFA",
+                  color: "#18181B",
+                  fontSize: "16px",
+                  lineHeight: 1.55,
+                  boxSizing: "border-box",
+                  resize: "vertical",
+                }}
+              />
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <span style={{ fontSize: "0.75rem", fontWeight: 600, color: "#52525B" }}>
+                Frases sobrias sugeridas:
+              </span>
+              {FRASES_CONDOLENCIAS.map((frase, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => {
+                    setMensaje(frase);
+                    marcarCambio();
+                  }}
+                  title="Usar esta frase en tu tarjeta"
+                  style={{
+                    textAlign: "left",
+                    padding: "9px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid #E4E4E7",
+                    backgroundColor: "#F9F9F8",
+                    color: "#3F3F46",
+                    fontSize: "0.8rem",
+                    lineHeight: 1.45,
+                    cursor: "pointer",
+                  }}
+                >
+                  “{frase}”
+                </button>
+              ))}
+            </div>
+
+            {errorMsg && (
+              <div
+                role="alert"
+                style={{
+                  padding: "10px 13px",
+                  borderRadius: "8px",
+                  backgroundColor: "#FEF2F2",
+                  border: "1px solid #FECACA",
+                  color: "#991B1B",
+                  fontSize: "0.8rem",
+                  fontWeight: 600,
+                }}
+              >
+                {errorMsg}
+              </div>
+            )}
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "10px",
+                paddingTop: "10px",
+                borderTop: "1px solid #ECECE9",
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setModo("vista")}
+                title="Volver sin guardar"
+                aria-label="Cancelar"
+                style={{
+                  padding: "11px 16px",
+                  borderRadius: "9px",
+                  border: "1px solid #D4D4D8",
+                  backgroundColor: "#FFFFFF",
+                  color: "#27272A",
+                  fontSize: "0.84rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                disabled={guardando}
+                onClick={() => void handleGuardar()}
+                title="Guardar mensaje de condolencias"
+                aria-label="Guardar mensaje"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "7px",
+                  padding: "11px 22px",
+                  borderRadius: "9px",
+                  border: "none",
+                  backgroundColor: "#27272A",
+                  color: "#FFFFFF",
+                  fontSize: "0.86rem",
+                  fontWeight: 600,
+                  cursor: guardando ? "wait" : "pointer",
+                }}
+              >
+                {guardando ? <Loader2 size={15} /> : <Save size={15} />}
+                <span>{guardando ? "Guardando..." : "Guardar mensaje"}</span>
+              </button>
+            </div>
+          </div>
+
+          <div style={{ textAlign: "center", fontSize: "0.72rem", color: "#71717A" }}>
+            {nombreMarca}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // FASE 2B (DEDICATORIA): WIZARD GUIADO PASO A PASO (UX EDITORIAL CÁLIDO)
   // =========================================================================
   const porcentajeProgreso = Math.round(((pasoIdx + 1) / pasos.length) * 100);
   const frasesRapidas = esCondolencias ? FRASES_CONDOLENCIAS : FRASES_DEDICATORIA;

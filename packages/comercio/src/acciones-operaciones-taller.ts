@@ -3572,6 +3572,102 @@ export async function registrarImpresionTarjetaAction(entrada: {
   }
 }
 
+function esPedidoCondolenciasPorContexto(params: {
+  clasificacion?: string | null;
+  productoResumen?: string | null;
+  ubicacion?: string | null;
+  items?: unknown;
+}): boolean {
+  const clasif = String(params.clasificacion || "").trim().toUpperCase();
+  if (
+    clasif === "CONDOLENCIAS" ||
+    clasif === "CONDOLENCIA" ||
+    clasif === "EXEQUIALES" ||
+    clasif === "FUNERARIO" ||
+    clasif === "FUNEBRE" ||
+    clasif === "FÚNEBRE"
+  ) {
+    return true;
+  }
+  const textoCombinado = [
+    String(params.productoResumen || ""),
+    String(params.ubicacion || ""),
+    Array.isArray(params.items) ? JSON.stringify(params.items) : String(params.items || ""),
+  ]
+    .join(" ")
+    .toLowerCase();
+
+  return (
+    textoCombinado.includes("condolencia") ||
+    textoCombinado.includes("corona") ||
+    textoCombinado.includes("fúnebre") ||
+    textoCombinado.includes("funebre") ||
+    textoCombinado.includes("cubre cofre") ||
+    textoCombinado.includes("cubrecofre") ||
+    textoCombinado.includes("trípode") ||
+    textoCombinado.includes("tripode") ||
+    textoCombinado.includes("sepelio") ||
+    textoCombinado.includes("camposanto") ||
+    textoCombinado.includes("monteolivo") ||
+    textoCombinado.includes("funeraria") ||
+    textoCombinado.includes("sala de velaci") ||
+    textoCombinado.includes("tanatorio") ||
+    textoCombinado.includes("cementerio") ||
+    textoCombinado.includes("jardines del valle")
+  );
+}
+
+async function verificarCondolenciasDesdePedidoDb(
+  db: any,
+  ordenId: string
+): Promise<boolean> {
+  if (!db || !ordenId) return false;
+  try {
+    const { data: ota } = await db
+      .schema("comun_comercio")
+      .from("com_orden_taller")
+      .select("ota_clasificacion_pedido, ota_producto_resumen, ota_ubicacion_entrega, ota_tarjeta_tipo")
+      .eq("ota_id", ordenId)
+      .maybeSingle();
+    if (ota) {
+      if (ota.ota_tarjeta_tipo === "CONDOLENCIAS_PLANA") return true;
+      if (
+        esPedidoCondolenciasPorContexto({
+          clasificacion: ota.ota_clasificacion_pedido,
+          productoResumen: ota.ota_producto_resumen,
+          ubicacion: ota.ota_ubicacion_entrega,
+        })
+      ) {
+        return true;
+      }
+    }
+    const { data: prf } = await db
+      .schema("comun_comercio")
+      .from("com_proforma")
+      .select("prf_detalle_proforma")
+      .eq("prf_id", ordenId)
+      .maybeSingle();
+    if (prf?.prf_detalle_proforma) {
+      const det = prf.prf_detalle_proforma as Record<string, any>;
+      const log = (det.logistica_entrega ?? {}) as Record<string, any>;
+      if (
+        det.tarjeta?.tipo === "CONDOLENCIAS_PLANA" ||
+        esPedidoCondolenciasPorContexto({
+          clasificacion: det.clasificacion_pedido,
+          productoResumen: det.producto_resumen,
+          ubicacion: [log.direccion, log.referencia, log.sector].filter(Boolean).join(" "),
+          items: det.items,
+        })
+      ) {
+        return true;
+      }
+    }
+  } catch {
+    // Silencioso si no hay acceso directo; se conserva el resultado de la RPC
+  }
+  return false;
+}
+
 function mapearTarjetaDesdeProformaRpc(
   f: any,
   tokenFallback: string
@@ -3613,12 +3709,17 @@ function mapearTarjetaDesdeProformaRpc(
     estadoPrf === "ENTREGADO" ||
     Number(meta.impresiones ?? 0) > 0;
   const clasif = String(det.clasificacion_pedido || "").toUpperCase();
-  const tipoRes: "DIPTICO" | "CONDOLENCIAS_PLANA" | "SOLO_DIGITAL" =
-    tar.tipo === "CONDOLENCIAS_PLANA" || tar.tipo === "SOLO_DIGITAL" || tar.tipo === "DIPTICO"
+  const inferidaCondolencias = esPedidoCondolenciasPorContexto({
+    clasificacion: clasif,
+    productoResumen: det.producto_resumen,
+    ubicacion: [log.direccion, log.referencia, log.sector].filter(Boolean).join(" "),
+    items,
+  });
+  const tipoRes: "DIPTICO" | "CONDOLENCIAS_PLANA" | "SOLO_DIGITAL" = inferidaCondolencias
+    ? "CONDOLENCIAS_PLANA"
+    : tar.tipo === "CONDOLENCIAS_PLANA" || tar.tipo === "SOLO_DIGITAL" || tar.tipo === "DIPTICO"
       ? tar.tipo
-      : clasif === "CONDOLENCIAS" || clasif === "EXEQUIALES"
-        ? "CONDOLENCIAS_PLANA"
-        : "DIPTICO";
+      : "DIPTICO";
   const esCondol = tipoRes === "CONDOLENCIAS_PLANA";
   const disenoRaw = tar.diseno ?? meta.diseno;
 
@@ -3695,7 +3796,15 @@ export async function obtenerTarjetaPublicaAction(token: string): Promise<{
     }
 
     if (!error && data?.ok) {
-      const esCondol = data.tipo === "CONDOLENCIAS_PLANA";
+      let tipoRes: "DIPTICO" | "CONDOLENCIAS_PLANA" | "SOLO_DIGITAL" =
+        data.tipo === "CONDOLENCIAS_PLANA" || data.tipo === "SOLO_DIGITAL"
+          ? data.tipo
+          : "DIPTICO";
+      if (tipoRes !== "CONDOLENCIAS_PLANA" && data.ordenId) {
+        const esCondolPedido = await verificarCondolenciasDesdePedidoDb(db, String(data.ordenId));
+        if (esCondolPedido) tipoRes = "CONDOLENCIAS_PLANA";
+      }
+      const esCondol = tipoRes === "CONDOLENCIAS_PLANA";
       return {
         ok: true,
         tarjeta: {
@@ -3705,7 +3814,7 @@ export async function obtenerTarjetaPublicaAction(token: string): Promise<{
           destinatario: data.destinatario,
           remitente: data.remitente,
           dedicatoria: data.dedicatoria,
-          tipo: data.tipo,
+          tipo: tipoRes,
           confidencial: esCondol ? false : Boolean(data.confidencial),
           diseno:
             data.diseno && typeof data.diseno === "object"
@@ -3919,10 +4028,14 @@ export async function obtenerTarjetaParaEdicionAction(tokenEdicion: string): Pro
     }
 
     if (!errPub && dataPub?.ok) {
-      const tipoRes: "DIPTICO" | "CONDOLENCIAS_PLANA" | "SOLO_DIGITAL" =
+      let tipoRes: "DIPTICO" | "CONDOLENCIAS_PLANA" | "SOLO_DIGITAL" =
         dataPub.tipo === "CONDOLENCIAS_PLANA" || dataPub.tipo === "SOLO_DIGITAL"
           ? dataPub.tipo
           : "DIPTICO";
+      if (tipoRes !== "CONDOLENCIAS_PLANA" && dataPub.ordenId) {
+        const esCondolPedido = await verificarCondolenciasDesdePedidoDb(db, String(dataPub.ordenId));
+        if (esCondolPedido) tipoRes = "CONDOLENCIAS_PLANA";
+      }
       const esCondol = tipoRes === "CONDOLENCIAS_PLANA";
       return {
         ok: true,
@@ -3979,9 +4092,15 @@ export async function obtenerTarjetaParaEdicionAction(tokenEdicion: string): Pro
         const bloqueado =
           ["EN_PREPARACION", "LISTO_ENTREGA", "ENTREGADO"].includes(est) ||
           Number(meta.impresiones ?? 0) > 0;
-        const tipoRes =
-          ota.ota_tarjeta_tipo === "CONDOLENCIAS_PLANA" ||
-          ota.ota_tarjeta_tipo === "SOLO_DIGITAL"
+        const inferidaCondolOta = esPedidoCondolenciasPorContexto({
+          clasificacion: ota.ota_clasificacion_pedido,
+          productoResumen: ota.ota_producto_resumen,
+          ubicacion: ota.ota_ubicacion_entrega,
+        });
+        const tipoRes: "DIPTICO" | "CONDOLENCIAS_PLANA" | "SOLO_DIGITAL" = inferidaCondolOta
+          ? "CONDOLENCIAS_PLANA"
+          : ota.ota_tarjeta_tipo === "CONDOLENCIAS_PLANA" ||
+              ota.ota_tarjeta_tipo === "SOLO_DIGITAL"
             ? ota.ota_tarjeta_tipo
             : "DIPTICO";
         const esCondol = tipoRes === "CONDOLENCIAS_PLANA";
