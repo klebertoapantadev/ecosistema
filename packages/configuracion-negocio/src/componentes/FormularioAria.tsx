@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   Bot,
+  Camera,
   Check,
   CheckCircle2,
   ChevronDown,
@@ -17,11 +18,20 @@ import {
 } from "lucide-react";
 import {
   borrarClaveAria,
+  borrarClaveEstudioIaAction,
   guardarAria,
+  guardarEstudioIaAction,
   guardarWhatsappYcloudAction,
   probarConexionAria,
+  probarEstudioIaAction,
 } from "../acciones-aria";
-import { URL_ARIA_DEFECTO, type ConfiguracionAriaVista } from "../esquema-aria";
+import {
+  MODELO_ESTUDIO_IA_DEFECTO_GEMINI,
+  MODELO_ESTUDIO_IA_DEFECTO_OPENROUTER,
+  URL_ARIA_DEFECTO,
+  type ConfiguracionAriaVista,
+  type ProveedorEstudioIa,
+} from "../esquema-aria";
 import {
   estiloAlertaMensaje,
   estiloBotonPeligroSuave,
@@ -132,6 +142,28 @@ export function FormularioAria({
   const [mensajeYcloud, setMensajeYcloud] = useState<{ tipo: "ok" | "error"; texto: string } | null>(
     null
   );
+
+  // Estado Estudio IA (Generador de Fotos Estudio + Taller vía OpenRouter / Gemini en Vault)
+  const [estudioIaProveedor, setEstudioIaProveedor] = useState<ProveedorEstudioIa>(
+    inicial?.estudioIaProveedor === "gemini" ? "gemini" : "openrouter"
+  );
+  const [estudioIaModelo, setEstudioIaModelo] = useState<string>(
+    inicial?.estudioIaModelo || MODELO_ESTUDIO_IA_DEFECTO_OPENROUTER
+  );
+  const [estudioIaApiKey, setEstudioIaApiKey] = useState<string>("");
+  const [estudioIaActivo, setEstudioIaActivo] = useState<boolean>(
+    inicial?.estudioIaActivo ?? true
+  );
+  const [tieneEstudioIaApiKey, setTieneEstudioIaApiKey] = useState<boolean>(
+    inicial?.tieneEstudioIaApiKey ?? false
+  );
+  const [guardandoEstudioIa, setGuardandoEstudioIa] = useState<boolean>(false);
+  const [probandoEstudioIa, setProbandoEstudioIa] = useState<boolean>(false);
+  const [borrandoEstudioIa, setBorrandoEstudioIa] = useState<boolean>(false);
+  const [mensajeEstudioIa, setMensajeEstudioIa] = useState<{
+    tipo: "ok" | "error";
+    texto: string;
+  } | null>(null);
   const [copiadoTipo, setCopiadoTipo] = useState<"nuevo" | "anterior" | null>(null);
   const [origenActual, setOrigenActual] = useState<string>(
     codigoNegocio === "tinkay" ? "https://tinkay-web.vercel.app" : ""
@@ -256,6 +288,103 @@ export function FormularioAria({
     setMensaje({
       tipo: "ok",
       texto: "Clave eliminada de Supabase Vault. El agente quedó desactivado.",
+    });
+  }
+
+  const ocupadoEstudioIa = guardandoEstudioIa || probandoEstudioIa || borrandoEstudioIa;
+  const tonoEstadoEstudioIa =
+    tieneEstudioIaApiKey && estudioIaActivo
+      ? "activo"
+      : tieneEstudioIaApiKey
+        ? "guardado"
+        : "pendiente";
+
+  function alCambiarProveedorEstudioIa(nuevo: ProveedorEstudioIa) {
+    setEstudioIaProveedor(nuevo);
+    const modeloActual = estudioIaModelo.trim();
+    if (
+      !modeloActual ||
+      modeloActual === MODELO_ESTUDIO_IA_DEFECTO_OPENROUTER ||
+      modeloActual === MODELO_ESTUDIO_IA_DEFECTO_GEMINI
+    ) {
+      setEstudioIaModelo(
+        nuevo === "gemini"
+          ? MODELO_ESTUDIO_IA_DEFECTO_GEMINI
+          : MODELO_ESTUDIO_IA_DEFECTO_OPENROUTER
+      );
+    }
+  }
+
+  async function alGuardarEstudioIa(e: React.FormEvent) {
+    e.preventDefault();
+    setMensajeEstudioIa(null);
+    setGuardandoEstudioIa(true);
+    const res = await guardarEstudioIaAction(
+      {
+        proveedor: estudioIaProveedor,
+        modelo: estudioIaModelo,
+        activo: estudioIaActivo,
+        apiKey: estudioIaApiKey,
+      },
+      codigoNegocio
+    );
+    setGuardandoEstudioIa(false);
+
+    if (!res.ok) {
+      setMensajeEstudioIa({ tipo: "error", texto: res.error });
+      return;
+    }
+
+    setTieneEstudioIaApiKey(res.data.tieneApiKey);
+    setEstudioIaProveedor(res.data.proveedor);
+    setEstudioIaModelo(res.data.modelo);
+    setEstudioIaActivo(res.data.activo);
+    setEstudioIaApiKey("");
+    setMensajeEstudioIa({
+      tipo: "ok",
+      texto: res.data.activo
+        ? `Estudio IA guardado y activo con ${res.data.proveedor === "openrouter" ? "OpenRouter" : "Google Gemini"} en Supabase Vault.`
+        : "Configuración de Estudio IA guardada en Supabase Vault (desactivada).",
+    });
+  }
+
+  async function alProbarEstudioIa() {
+    setMensajeEstudioIa(null);
+    setProbandoEstudioIa(true);
+    const res = await probarEstudioIaAction(
+      {
+        proveedor: estudioIaProveedor,
+        apiKey: estudioIaApiKey.trim() || undefined,
+      },
+      codigoNegocio
+    );
+    setProbandoEstudioIa(false);
+
+    if (!res.ok) {
+      setMensajeEstudioIa({ tipo: "error", texto: res.error });
+      return;
+    }
+
+    setMensajeEstudioIa({ tipo: "ok", texto: res.data.detalle });
+  }
+
+  async function alEliminarClaveEstudioIa() {
+    setMensajeEstudioIa(null);
+    setBorrandoEstudioIa(true);
+    const res = await borrarClaveEstudioIaAction(codigoNegocio);
+    setBorrandoEstudioIa(false);
+
+    if (!res.ok) {
+      setMensajeEstudioIa({ tipo: "error", texto: res.error });
+      return;
+    }
+
+    setTieneEstudioIaApiKey(false);
+    setEstudioIaActivo(false);
+    setEstudioIaApiKey("");
+    setMensajeEstudioIa({
+      tipo: "ok",
+      texto: "Clave de Estudio IA eliminada de Supabase Vault.",
     });
   }
 
@@ -1059,6 +1188,199 @@ export function FormularioAria({
         </button>
       </div>
     </form>
+
+    {/* ========================================================================
+        TARJETA 3: ESTUDIO IA — GENERADOR DE FOTOS (OPENROUTER / GEMINI EN VAULT)
+    ======================================================================== */}
+    {codigoNegocio === "tinkay" && (
+      <form id="estudio-ia" onSubmit={alGuardarEstudioIa} style={estiloTarjetaConfig}>
+        <div style={estiloCabeceraTarjeta}>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+            <div
+              style={{
+                ...estiloCajaIconoCabecera,
+                background: "#FAF6EE",
+                color: "#8F6A2E",
+                borderColor: "#E5D7BC",
+              }}
+            >
+              <Camera size={19} />
+            </div>
+            <div>
+              <div style={{ fontSize: "1.02rem", fontWeight: 700, color: "#1F1C19" }}>
+                Estudio IA — Generador de Fotos (OpenRouter / Gemini)
+              </div>
+              <div style={{ fontSize: "0.82rem", color: "#847D74", marginTop: "2px" }}>
+                Genera automáticamente fotografías de <strong>Estudio</strong> y <strong>Taller</strong> (3:4) desde <code>/panel/entrega-inmediata</code> con clave cifrada en Supabase Vault.
+              </div>
+            </div>
+          </div>
+
+          <span style={estiloPastillaEstado(tonoEstadoEstudioIa)}>
+            <KeyRound size={13} />
+            {tieneEstudioIaApiKey && estudioIaActivo
+              ? `Activo (${estudioIaProveedor === "openrouter" ? "OpenRouter" : "Gemini"})`
+              : tieneEstudioIaApiKey
+                ? "Clave en Vault"
+                : "Sin clave IA"}
+          </span>
+        </div>
+
+        <div style={estiloCuerpoTarjeta}>
+          <div style={estiloGrillaDosColumnas}>
+            <div style={estiloGrupoCampo}>
+              <label htmlFor={`estudio-ia-prov-${codigoNegocio}`} style={estiloEtiquetaCampo}>
+                <span>Proveedor de Generación IA</span>
+              </label>
+              <select
+                id={`estudio-ia-prov-${codigoNegocio}`}
+                style={estiloInputCampo}
+                value={estudioIaProveedor}
+                onChange={(e) =>
+                  alCambiarProveedorEstudioIa(e.target.value as ProveedorEstudioIa)
+                }
+                disabled={ocupadoEstudioIa}
+              >
+                <option value="openrouter">OpenRouter (Recomendado · tu cuenta openrouter.ai)</option>
+                <option value="gemini">Google AI Studio (Gemini directo)</option>
+              </select>
+              <span style={estiloTextoAyuda}>
+                Con OpenRouter usas tu saldo ya recargado y accedes a <code>google/gemini-2.5-flash-image</code>.
+              </span>
+            </div>
+
+            <div style={estiloGrupoCampo}>
+              <label htmlFor={`estudio-ia-modelo-${codigoNegocio}`} style={estiloEtiquetaCampo}>
+                <span>Modelo de Imagen</span>
+                <span style={estiloCodigoBadge}>3:4</span>
+              </label>
+              <input
+                id={`estudio-ia-modelo-${codigoNegocio}`}
+                style={estiloInputMonoespaciado}
+                value={estudioIaModelo}
+                onChange={(e) => setEstudioIaModelo(e.target.value)}
+                disabled={ocupadoEstudioIa}
+                placeholder={
+                  estudioIaProveedor === "gemini"
+                    ? MODELO_ESTUDIO_IA_DEFECTO_GEMINI
+                    : MODELO_ESTUDIO_IA_DEFECTO_OPENROUTER
+                }
+              />
+              <span style={estiloTextoAyuda}>
+                Por defecto: <code>{estudioIaProveedor === "gemini" ? MODELO_ESTUDIO_IA_DEFECTO_GEMINI : MODELO_ESTUDIO_IA_DEFECTO_OPENROUTER}</code>.
+              </span>
+            </div>
+          </div>
+
+          <div style={estiloGrupoCampo}>
+            <label htmlFor={`estudio-ia-key-${codigoNegocio}`} style={estiloEtiquetaCampo}>
+              <span>
+                API Key ({estudioIaProveedor === "openrouter" ? "OpenRouter" : "Google Gemini"})
+              </span>
+              <span style={estiloCodigoBadge}>Supabase Vault</span>
+            </label>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+              <input
+                id={`estudio-ia-key-${codigoNegocio}`}
+                style={{ ...estiloInputCampo, flex: "1 1 260px" }}
+                type="password"
+                autoComplete="new-password"
+                value={estudioIaApiKey}
+                onChange={(e) => setEstudioIaApiKey(e.target.value)}
+                disabled={ocupadoEstudioIa}
+                placeholder={
+                  tieneEstudioIaApiKey
+                    ? "Guardada y cifrada en Vault — escribe solo para reemplazarla"
+                    : estudioIaProveedor === "openrouter"
+                      ? "Pega tu clave de OpenRouter (sk-or-v1-...)"
+                      : "Pega tu clave de Google AI Studio (AIza...)"
+                }
+              />
+              <button
+                type="button"
+                className="btn-responsive-accion"
+                onClick={alProbarEstudioIa}
+                disabled={ocupadoEstudioIa}
+                title="Verificar conexión de la clave sin generar costo"
+                aria-label="Probar Clave"
+                style={{ ...estiloBotonSecundario, opacity: ocupadoEstudioIa ? 0.65 : 1 }}
+              >
+                <Sparkles size={15} />
+                <span className="btn-texto-responsive">
+                  {probandoEstudioIa ? "Verificando…" : "Probar Clave"}
+                </span>
+              </button>
+            </div>
+            <span style={estiloTextoAyuda}>
+              Se guarda cifrada en <strong>Supabase Vault</strong>. Jamás se expone al navegador ni requiere tocar variables de Vercel.
+            </span>
+          </div>
+
+          <label
+            style={{
+              ...estiloCajaToggle,
+              background: estudioIaActivo ? "#F2F6F3" : "#F8F7F4",
+              borderColor: estudioIaActivo ? "#BBF7D0" : "#E6E2DA",
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={estudioIaActivo}
+              onChange={(e) => setEstudioIaActivo(e.target.checked)}
+              disabled={ocupadoEstudioIa}
+              style={{ width: "16px", height: "16px", marginTop: "2px", flexShrink: 0 }}
+            />
+            <div>
+              <div style={{ fontSize: "0.86rem", fontWeight: 600, color: "#1F1C19" }}>
+                Activar Estudio IA en Entrega Inmediata
+              </div>
+              <div style={{ fontSize: "0.78rem", color: "#847D74", marginTop: "2px" }}>
+                Habilita el botón «Generar IA» en <code>/panel/entrega-inmediata</code> para producir las tomas Estudio y Taller en paralelo.
+              </div>
+            </div>
+          </label>
+
+          {mensajeEstudioIa && (
+            <div style={estiloAlertaMensaje(mensajeEstudioIa.tipo)}>{mensajeEstudioIa.texto}</div>
+          )}
+        </div>
+
+        <div style={estiloPieTarjeta}>
+          <div>
+            {tieneEstudioIaApiKey && (
+              <button
+                type="button"
+                className="btn-responsive-accion"
+                onClick={alEliminarClaveEstudioIa}
+                disabled={ocupadoEstudioIa}
+                title="Eliminar API Key de Estudio IA en Vault"
+                aria-label="Eliminar Clave"
+                style={{ ...estiloBotonPeligroSuave, opacity: ocupadoEstudioIa ? 0.65 : 1 }}
+              >
+                <Trash2 size={14} />
+                <span className="btn-texto-responsive">
+                  {borrandoEstudioIa ? "Eliminando…" : "Eliminar Clave"}
+                </span>
+              </button>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            className="btn-responsive-accion"
+            disabled={ocupadoEstudioIa}
+            title="Guardar configuración y clave de Estudio IA en Vault"
+            aria-label="Guardar Estudio IA"
+            style={{ ...estiloBotonPrimario, opacity: ocupadoEstudioIa ? 0.65 : 1 }}
+          >
+            <Save size={15} />
+            <span className="btn-texto-responsive">
+              {guardandoEstudioIa ? "Guardando…" : "Guardar Estudio IA"}
+            </span>
+          </button>
+        </div>
+      </form>
+    )}
     </div>
   );
 }

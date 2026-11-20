@@ -3,10 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { invocarAgente, invocarAgentePorNegocio } from "@eco/agentes-ia";
 import {
+  MODELO_ESTUDIO_IA_DEFECTO_GEMINI,
+  MODELO_ESTUDIO_IA_DEFECTO_OPENROUTER,
   URL_ARIA_DEFECTO,
   esquemaAria,
   faltaParaActivarAria,
   type DatosAria,
+  type ProveedorEstudioIa,
 } from "./esquema-aria";
 
 type Resultado<T = undefined> = { ok: true; data: T } | { ok: false; error: string };
@@ -284,6 +287,164 @@ export async function guardarWhatsappYcloudAction(
     return {
       ok: false,
       error: err instanceof Error ? err.message : "Error inesperado guardando canal WhatsApp YCloud",
+    };
+  }
+}
+
+export async function guardarEstudioIaAction(
+  datos: {
+    proveedor: ProveedorEstudioIa;
+    modelo: string;
+    activo: boolean;
+    apiKey?: string;
+  },
+  negocio: string,
+): Promise<
+  Resultado<{
+    tieneApiKey: boolean;
+    proveedor: ProveedorEstudioIa;
+    modelo: string;
+    activo: boolean;
+  }>
+> {
+  try {
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaCfg = supabase.schema("comun_configuracion") as any;
+    const codigoNegocio = negocio.trim().toLowerCase();
+
+    const proveedorNorm: ProveedorEstudioIa =
+      datos.proveedor === "gemini" ? "gemini" : "openrouter";
+    const modeloNorm =
+      datos.modelo.trim() ||
+      (proveedorNorm === "gemini"
+        ? MODELO_ESTUDIO_IA_DEFECTO_GEMINI
+        : MODELO_ESTUDIO_IA_DEFECTO_OPENROUTER);
+
+    const { data, error } = await esquemaCfg.rpc("cfg_fn_guardar_estudio_ia", {
+      p_negocio: codigoNegocio,
+      p_proveedor: proveedorNorm,
+      p_modelo: modeloNorm,
+      p_activo: Boolean(datos.activo),
+      p_api_key: datos.apiKey?.trim() || null,
+    });
+
+    if (error) {
+      return {
+        ok: false,
+        error: error.message.includes("cfg_fn_guardar_estudio_ia")
+          ? "Ejecuta primero la migración supabase/migrations/20261120000001_cfg_estudio_ia_vault.sql en el SQL Editor de Supabase."
+          : error.message,
+      };
+    }
+
+    if (!data?.ok) {
+      return {
+        ok: false,
+        error: String(data?.error || "No se pudo guardar la configuración de Estudio IA"),
+      };
+    }
+
+    revalidatePath("/panel/aria");
+    revalidatePath("/panel/configuracion");
+    revalidatePath("/panel/entrega-inmediata");
+
+    return {
+      ok: true,
+      data: {
+        tieneApiKey: Boolean(data.tieneApiKey),
+        proveedor: data.proveedor === "gemini" ? "gemini" : "openrouter",
+        modelo: String(data.modelo || modeloNorm),
+        activo: Boolean(data.activo),
+      },
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error inesperado guardando Estudio IA",
+    };
+  }
+}
+
+export async function borrarClaveEstudioIaAction(negocio: string): Promise<Resultado> {
+  try {
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaCfg = supabase.schema("comun_configuracion") as any;
+    const codigoNegocio = negocio.trim().toLowerCase();
+
+    const { data, error } = await esquemaCfg.rpc("cfg_fn_borrar_estudio_ia_clave", {
+      p_negocio: codigoNegocio,
+    });
+
+    if (error) {
+      return {
+        ok: false,
+        error: error.message.includes("cfg_fn_borrar_estudio_ia_clave")
+          ? "Ejecuta primero la migración supabase/migrations/20261120000001_cfg_estudio_ia_vault.sql en el SQL Editor de Supabase."
+          : error.message,
+      };
+    }
+
+    if (!data?.ok) {
+      return {
+        ok: false,
+        error: String(data?.error || "No se pudo eliminar la clave de Estudio IA"),
+      };
+    }
+
+    revalidatePath("/panel/aria");
+    revalidatePath("/panel/configuracion");
+    revalidatePath("/panel/entrega-inmediata");
+    return { ok: true, data: undefined };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error inesperado al eliminar clave de Estudio IA",
+    };
+  }
+}
+
+export async function probarEstudioIaAction(
+  datos: { proveedor: ProveedorEstudioIa; apiKey?: string },
+  negocio: string,
+): Promise<Resultado<{ detalle: string }>> {
+  try {
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquemaCfg = supabase.schema("comun_configuracion") as any;
+    const codigoNegocio = negocio.trim().toLowerCase();
+
+    const { data, error } = await esquemaCfg.rpc("cfg_fn_probar_estudio_ia", {
+      p_negocio: codigoNegocio,
+      p_proveedor: datos.proveedor === "gemini" ? "gemini" : "openrouter",
+      p_api_key: datos.apiKey?.trim() || null,
+    });
+
+    if (error) {
+      return {
+        ok: false,
+        error: error.message.includes("cfg_fn_probar_estudio_ia")
+          ? "Ejecuta primero la migración supabase/migrations/20261120000001_cfg_estudio_ia_vault.sql en el SQL Editor de Supabase."
+          : error.message,
+      };
+    }
+
+    if (!data?.ok) {
+      return {
+        ok: false,
+        error: String(data?.error || "No se pudo verificar la clave de Estudio IA"),
+      };
+    }
+
+    return {
+      ok: true,
+      data: { detalle: String(data.detalle || "Conexión verificada correctamente.") },
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error inesperado verificando Estudio IA",
     };
   }
 }

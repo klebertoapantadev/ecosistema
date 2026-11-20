@@ -31,8 +31,16 @@
 4. **Gobernanza:**
    - Actualizado `TNK-005` en [`gobernanza/productos/tinkay/especificacion-funcional.md`](file:///c:/IA/Ecosistema/gobernanza/productos/tinkay/especificacion-funcional.md).
 
+## Actualización posterior — Configuración directa en Tinkay + Supabase Vault (`OpenRouter / Gemini`)
+- Migración [`supabase/migrations/20261120000001_cfg_estudio_ia_vault.sql`](file:///c:/IA/Ecosistema/supabase/migrations/20261120000001_cfg_estudio_ia_vault.sql): columna `ari_estudio_ia_secreto_id` en `comun_configuracion.cfg_aria` y 4 RPCs `SECURITY DEFINER` (`cfg_fn_guardar_estudio_ia`, `cfg_fn_borrar_estudio_ia_clave`, `cfg_fn_probar_estudio_ia`, `cfg_fn_invocar_estudio_ia`) para guardar la API Key de OpenRouter/Gemini cifrada en Supabase Vault, verificarla sin costo (`$0`) y generar las imágenes sin exponer la clave fuera de PostgreSQL ni requerir variables en Vercel.
+- Tarjeta dedicada **`Estudio IA — Generador de Fotos (OpenRouter / Gemini)`** en [`FormularioAria.tsx`](file:///c:/IA/Ecosistema/packages/configuracion-negocio/src/componentes/FormularioAria.tsx) (`/panel/aria#estudio-ia`) e indicador de estado en [`ConsolaConfiguracionUnificada.tsx`](file:///c:/IA/Ecosistema/packages/configuracion-negocio/src/componentes/ConsolaConfiguracionUnificada.tsx), aislada exclusivamente para `tinkay`.
+- [`route.ts`](file:///c:/IA/Ecosistema/apps/tinkay-web/app/api/entrega-inmediata/generar-fotos/route.ts) prioriza la clave en Supabase Vault (`cfg_fn_invocar_estudio_ia`) y conserva respaldo opcional a env vars (`OPENROUTER_API_KEY` / `GEMINI_API_KEY`).
+
 ## Verificación
+- `pnpm --filter @eco/configuracion-negocio typecheck`
 - `pnpm --filter @eco/comercio typecheck`
 - `pnpm --filter tinkay-web typecheck`
 - `pnpm --filter margaritas-web typecheck`
+- `pnpm --filter tranqi-web typecheck`
+- `pnpm --filter fastfix-web typecheck`
 - `pnpm --filter tinkay-web build`

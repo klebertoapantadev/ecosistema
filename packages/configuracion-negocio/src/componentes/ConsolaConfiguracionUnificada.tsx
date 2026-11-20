@@ -154,9 +154,12 @@ export function ConsolaConfiguracionUnificada({
   }
 
   const etiquetaNegocio = nombreNegocioVisible ?? negocio.charAt(0).toUpperCase() + negocio.slice(1);
+  const negocioNorm = negocio.trim().toLowerCase();
   const negocioListo = Boolean(configuracion?.cfg_nombre_comercial || configuracion?.cfg_razon_social);
   const ariaActiva = Boolean(aria?.activo && aria?.tieneApiKey);
   const ariaEnVault = Boolean(aria?.tieneApiKey);
+  const estudioIaActivo = Boolean(aria?.estudioIaActivo && aria?.tieneEstudioIaApiKey);
+  const estudioIaEnVault = Boolean(aria?.tieneEstudioIaApiKey);
   const smtpActivo = Boolean(smtp?.smt_activo && smtp?.smt_secreto_id);
 
   return (
@@ -279,6 +282,29 @@ export function ConsolaConfiguracionUnificada({
               valor={ariaActiva ? "Activo" : ariaEnVault ? "En Vault (Inactivo)" : "Sin clave"}
               activo={ariaActiva}
               onClick={() => cambiarSeccionPorId("aria")}
+            />
+          )}
+          {mostrarAria && negocioNorm === "tinkay" && (
+            <IndicadorResumen
+              etiqueta="Estudio IA"
+              valor={
+                estudioIaActivo
+                  ? aria?.estudioIaProveedor === "gemini"
+                    ? "Activo (Gemini)"
+                    : "Activo (OpenRouter)"
+                  : estudioIaEnVault
+                    ? "En Vault (Inactivo)"
+                    : "Pendiente"
+              }
+              activo={estudioIaActivo}
+              onClick={() => {
+                cambiarSeccionPorId("aria");
+                setTimeout(() => {
+                  if (typeof document !== "undefined") {
+                    document.getElementById("estudio-ia")?.scrollIntoView({ behavior: "smooth" });
+                  }
+                }, 80);
+              }}
             />
           )}
           {mostrarMarketingMeta && (

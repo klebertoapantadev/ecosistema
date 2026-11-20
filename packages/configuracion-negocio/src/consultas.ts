@@ -1,4 +1,10 @@
-import { URL_ARIA_DEFECTO, type ConfiguracionAriaVista } from "./esquema-aria";
+import {
+  MODELO_ESTUDIO_IA_DEFECTO_GEMINI,
+  MODELO_ESTUDIO_IA_DEFECTO_OPENROUTER,
+  URL_ARIA_DEFECTO,
+  type ConfiguracionAriaVista,
+  type ProveedorEstudioIa,
+} from "./esquema-aria";
 import type { ConfiguracionMarketingMetaVista } from "./esquema-marketing-meta";
 
 interface FilaCfgAria {
@@ -13,6 +19,7 @@ interface FilaCfgAria {
   ari_ycloud_webhook_secreto_id?: string | null;
   ari_whatsapp_agente_secreto_id?: string | null;
   ari_stt_secreto_id?: string | null;
+  ari_estudio_ia_secreto_id?: string | null;
   ari_detalle_aria?: Record<string, unknown> | null;
   ari_activo: boolean;
   ari_actualizado_en: string | null;
@@ -68,6 +75,17 @@ export async function obtenerAriaNegocio(negocio: string): Promise<Configuracion
   if (!data) return null;
 
   const det = (data.ari_detalle_aria ?? {}) as Record<string, unknown>;
+  const est = (det.estudio_ia && typeof det.estudio_ia === "object"
+    ? det.estudio_ia
+    : {}) as Record<string, unknown>;
+  const estudioIaProveedor: ProveedorEstudioIa =
+    est.proveedor === "gemini" ? "gemini" : "openrouter";
+  const estudioIaModelo =
+    typeof est.modelo === "string" && est.modelo.trim()
+      ? est.modelo.trim()
+      : estudioIaProveedor === "gemini"
+        ? MODELO_ESTUDIO_IA_DEFECTO_GEMINI
+        : MODELO_ESTUDIO_IA_DEFECTO_OPENROUTER;
 
   return {
     negocio: data.ari_negocio,
@@ -106,6 +124,10 @@ export async function obtenerAriaNegocio(negocio: string): Promise<Configuracion
     tieneYcloudWebhookSecret: data.ari_ycloud_webhook_secreto_id != null,
     tieneWhatsappAgenteKey: data.ari_whatsapp_agente_secreto_id != null,
     tieneSttApiKey: data.ari_stt_secreto_id != null,
+    estudioIaProveedor,
+    estudioIaModelo,
+    estudioIaActivo: Boolean(est.activo),
+    tieneEstudioIaApiKey: data.ari_estudio_ia_secreto_id != null,
   };
 }
 

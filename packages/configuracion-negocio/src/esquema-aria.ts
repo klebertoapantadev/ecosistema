@@ -1,6 +1,9 @@
 import { z } from "zod";
 
 export const URL_ARIA_DEFECTO = "https://aria.midomo.site";
+export const MODELO_ESTUDIO_IA_DEFECTO_OPENROUTER = "google/gemini-2.5-flash-image";
+export const MODELO_ESTUDIO_IA_DEFECTO_GEMINI = "gemini-2.5-flash-image";
+export type ProveedorEstudioIa = "openrouter" | "gemini";
 
 /**
  * Vista segura (sin secretos) de la fila `comun_configuracion.cfg_aria`.
@@ -29,6 +32,11 @@ export interface ConfiguracionAriaVista {
   tieneYcloudWebhookSecret?: boolean;
   tieneWhatsappAgenteKey?: boolean;
   tieneSttApiKey?: boolean;
+  // Configuración Estudio IA (Generador de Fotos OpenRouter / Gemini en Vault)
+  estudioIaProveedor?: ProveedorEstudioIa;
+  estudioIaModelo?: string;
+  estudioIaActivo?: boolean;
+  tieneEstudioIaApiKey?: boolean;
 }
 
 export const esquemaAria = z.object({

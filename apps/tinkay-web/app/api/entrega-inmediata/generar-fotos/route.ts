@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { z } from "zod";
+import { crearClienteServidor } from "@eco/supabase/servidor";
 import { obtenerContextoAccesoTinkay } from "@/app/panel/acceso-tinkay";
 import {
   construirPromptCompletoEstudioIa,
@@ -457,6 +458,87 @@ async function generarImagenModoOpenRouter(params: {
   throw new Error(ultimoMotivo);
 }
 
+interface RespuestaRpcEstudioIa {
+  ok?: boolean;
+  codigo?: string;
+  error?: string;
+  dataUrl?: string;
+  mimeType?: string;
+  proveedor?: string;
+  modelo?: string;
+}
+
+async function generarImagenModoVault(params: {
+  supabase: Awaited<ReturnType<typeof crearClienteServidor>>;
+  modo: ModoEstudioIa;
+  opciones: OpcionesEstudioIa;
+  fotoBase: { mimeType: string; base64: string };
+  referer: string;
+}): Promise<{ dataUrl: string; mimeType: string }> {
+  const { supabase, modo, opciones, fotoBase, referer } = params;
+
+  const promptCompleto = construirPromptCompletoEstudioIa(modo, opciones);
+  const referencias = obtenerReferenciasParaModo(modo, opciones);
+
+  const imagenesPayload: Array<{ etiqueta: string; mimeType: string; base64: string }> = [
+    {
+      etiqueta: "FOTO DEL PRODUCTO:",
+      mimeType: fotoBase.mimeType,
+      base64: fotoBase.base64,
+    },
+  ];
+
+  for (const ref of referencias) {
+    const b64Ref = await leerReferenciaBase64(ref.archivo);
+    imagenesPayload.push({
+      etiqueta: `REFERENCIA ${ref.etiquetaPrompt}:`,
+      mimeType: "image/jpeg",
+      base64: b64Ref,
+    });
+  }
+
+  let ultimoMotivo = "No se pudo generar la fotografía mediante Estudio IA (Vault)";
+  const esquemaCfg = supabase.schema("comun_configuracion") as unknown as {
+    rpc(
+      nombre: string,
+      args: Record<string, unknown>
+    ): Promise<{ data: RespuestaRpcEstudioIa | null; error: { message: string } | null }>;
+  };
+
+  for (let intento = 1; intento <= MAX_INTENTOS_POR_MODO; intento++) {
+    const { data, error } = await esquemaCfg.rpc("cfg_fn_invocar_estudio_ia", {
+      p_negocio: "tinkay",
+      p_prompt: promptCompleto,
+      p_imagenes: imagenesPayload,
+      p_referer: referer,
+    });
+
+    if (error) {
+      ultimoMotivo = error.message.includes("cfg_fn_invocar_estudio_ia")
+        ? "Ejecuta primero la migración 20261120000001_cfg_estudio_ia_vault.sql en Supabase para usar la clave guardada en Configuración."
+        : error.message;
+      throw new Error(ultimoMotivo);
+    }
+
+    if (data?.ok && data.dataUrl) {
+      return {
+        dataUrl: data.dataUrl,
+        mimeType: data.mimeType || extraerMimeDesdeDataUrl(data.dataUrl),
+      };
+    }
+
+    ultimoMotivo = data?.error || ultimoMotivo;
+    const esTransitorio = data?.codigo === "TRANSITORIO" || data?.codigo === "SIN_IMAGEN";
+    if (esTransitorio && intento < MAX_INTENTOS_POR_MODO) {
+      await esperar(ESPERA_REINTENTO_MS);
+      continue;
+    }
+    throw new Error(ultimoMotivo);
+  }
+
+  throw new Error(ultimoMotivo);
+}
+
 export async function POST(request: NextRequest) {
   try {
     const ctx = await obtenerContextoAccesoTinkay();
@@ -464,16 +546,60 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: false, error: "No autorizado" }, { status: 401 });
     }
 
-    const openRouterKey = process.env.OPENROUTER_API_KEY?.trim();
-    const geminiKey =
+    const supabase = await crearClienteServidor();
+    const { data: filaAria } = await (
+      supabase.schema("comun_configuracion") as unknown as {
+        from(t: string): {
+          select(c: string): {
+            eq(k: string, v: string): {
+              maybeSingle(): Promise<{
+                data: {
+                  ari_estudio_ia_secreto_id?: string | null;
+                  ari_detalle_aria?: Record<string, unknown> | null;
+                } | null;
+                error: { message: string } | null;
+              }>;
+            };
+          };
+        };
+      }
+    )
+      .from("cfg_aria")
+      .select("ari_estudio_ia_secreto_id, ari_detalle_aria")
+      .eq("ari_negocio", "tinkay")
+      .maybeSingle();
+
+    const estDetalle =
+      filaAria?.ari_detalle_aria &&
+      typeof filaAria.ari_detalle_aria.estudio_ia === "object" &&
+      filaAria.ari_detalle_aria.estudio_ia !== null
+        ? (filaAria.ari_detalle_aria.estudio_ia as Record<string, unknown>)
+        : {};
+    const tieneClaveVault = Boolean(filaAria?.ari_estudio_ia_secreto_id);
+    const vaultActivo = Boolean(estDetalle.activo);
+
+    const openRouterKeyEnv = process.env.OPENROUTER_API_KEY?.trim();
+    const geminiKeyEnv =
       process.env.GEMINI_API_KEY?.trim() ||
       process.env.GOOGLE_GENERATIVE_AI_API_KEY?.trim();
 
-    if (!openRouterKey && !geminiKey) {
+    if (tieneClaveVault && !vaultActivo && !openRouterKeyEnv && !geminiKeyEnv) {
       return NextResponse.json(
         {
           ok: false,
-          error: "Falta configurar OPENROUTER_API_KEY (o GEMINI_API_KEY) en el servidor",
+          error:
+            "Estudio IA tiene clave guardada en Vault pero está desactivado. Actívalo en Configuración → Agente ARIA (/panel/aria#estudio-ia).",
+        },
+        { status: 503 }
+      );
+    }
+
+    if ((!tieneClaveVault || !vaultActivo) && !openRouterKeyEnv && !geminiKeyEnv) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "Configura tu API Key de OpenRouter en Configuración → Agente ARIA (/panel/aria#estudio-ia) → Estudio IA.",
         },
         { status: 503 }
       );
@@ -526,30 +652,43 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const usarOpenRouter = Boolean(openRouterKey);
-    const modelo = usarOpenRouter
+    const usarVault = tieneClaveVault && vaultActivo;
+    const usarOpenRouterEnv = Boolean(openRouterKeyEnv);
+    const modeloEnv = usarOpenRouterEnv
       ? process.env.OPENROUTER_IMAGE_MODEL?.trim() || MODELO_OPENROUTER_POR_DEFECTO
       : process.env.GEMINI_IMAGE_MODEL?.trim() || MODELO_GEMINI_POR_DEFECTO;
+    const referer =
+      process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+      request.headers.get("origin") ||
+      "https://tinkay-web.vercel.app";
     const modosUnicos = Array.from(new Set(modos));
 
     const ejecuciones = await Promise.all(
       modosUnicos.map(async (modo) => {
         try {
-          const resultado = usarOpenRouter
-            ? await generarImagenModoOpenRouter({
+          const resultado = usarVault
+            ? await generarImagenModoVault({
+                supabase,
                 modo,
                 opciones,
                 fotoBase,
-                apiKey: openRouterKey!,
-                modelo,
+                referer,
               })
-            : await generarImagenModoGemini({
-                modo,
-                opciones,
-                fotoBase,
-                apiKey: geminiKey!,
-                modelo,
-              });
+            : usarOpenRouterEnv
+              ? await generarImagenModoOpenRouter({
+                  modo,
+                  opciones,
+                  fotoBase,
+                  apiKey: openRouterKeyEnv!,
+                  modelo: modeloEnv,
+                })
+              : await generarImagenModoGemini({
+                  modo,
+                  opciones,
+                  fotoBase,
+                  apiKey: geminiKeyEnv!,
+                  modelo: modeloEnv,
+                });
           return { modo, ok: true as const, resultado };
         } catch (err) {
           return {

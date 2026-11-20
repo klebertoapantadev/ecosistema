@@ -673,9 +673,39 @@ export function ConsolaEntregaInmediata({
               border: "1px solid #E5CACA",
               color: "#8A2E2E",
               fontSize: "0.82rem",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "10px",
+              flexWrap: "wrap",
             }}
           >
-            {errorMsg}
+            <span>{errorMsg}</span>
+            {endpointEstudioIa &&
+              /\/panel\/aria|Estudio IA|OPENROUTER_API_KEY|GEMINI_API_KEY/i.test(errorMsg) && (
+                <a
+                  href="/panel/aria#estudio-ia"
+                  title="Abrir Configuración → Agente ARIA → Estudio IA"
+                  aria-label="Configurar IA"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "5px 10px",
+                    borderRadius: "8px",
+                    border: "1px solid #8A2E2E",
+                    background: "#FFFFFF",
+                    color: "#8A2E2E",
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    textDecoration: "none",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  <ExternalLink size={12} />
+                  <span>Configurar IA</span>
+                </a>
+              )}
           </div>
         )}
 

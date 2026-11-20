@@ -2,8 +2,17 @@ export { esquemaConfiguracionNegocio } from "./esquema";
 export type { DatosConfiguracionNegocio } from "./esquema";
 export { esquemaSmtp } from "./esquema-smtp";
 export type { DatosSmtp } from "./esquema-smtp";
-export { esquemaAria, URL_ARIA_DEFECTO } from "./esquema-aria";
-export type { DatosAria, ConfiguracionAriaVista } from "./esquema-aria";
+export {
+  esquemaAria,
+  URL_ARIA_DEFECTO,
+  MODELO_ESTUDIO_IA_DEFECTO_OPENROUTER,
+  MODELO_ESTUDIO_IA_DEFECTO_GEMINI,
+} from "./esquema-aria";
+export type {
+  DatosAria,
+  ConfiguracionAriaVista,
+  ProveedorEstudioIa,
+} from "./esquema-aria";
 export { esquemaMarketingMeta } from "./esquema-marketing-meta";
 export type {
   DatosMarketingMeta,
@@ -17,7 +26,14 @@ export {
 } from "./consultas";
 export { actualizarConfiguracionNegocio } from "./acciones";
 export { guardarSmtp, borrarContrasenaSmtp } from "./acciones-smtp";
-export { guardarAria, borrarClaveAria, probarConexionAria } from "./acciones-aria";
+export {
+  guardarAria,
+  borrarClaveAria,
+  probarConexionAria,
+  guardarEstudioIaAction,
+  borrarClaveEstudioIaAction,
+  probarEstudioIaAction,
+} from "./acciones-aria";
 export {
   cargarMarketingMetaAction,
   guardarMarketingMetaAction,
