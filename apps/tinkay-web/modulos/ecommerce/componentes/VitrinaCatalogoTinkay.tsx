@@ -264,47 +264,50 @@ export function VitrinaCatalogoTinkay() {
               )}
             </div>
 
-            {/* Selector de Ordenamiento por Precio / Relevancia */}
-            <div className="selector-orden-wrapper" title="Ordenar catálogo">
-              <ArrowUpDown size={15} />
-              <SelectConBuscador
-                value={criterioOrden}
-                onChange={(e) =>
-                  setCriterioOrden(
-                    e.target.value as
-                      | 'recomendados'
-                      | 'precio-desc'
-                      | 'precio-asc'
-                      | 'destacados'
-                      | 'nombre-asc'
-                  )
-                }
-                className="select-criterio-orden"
-                aria-label="Ordenar productos por recomendación, precio o destacados"
-              >
-                <option value="recomendados">Recomendados Tinkay</option>
-                <option value="destacados">Más Pedidos / Destacados</option>
-                <option value="precio-desc">Mayor a menor ($$$ → $)</option>
-                <option value="precio-asc">Menor a mayor ($ → $$$)</option>
-                <option value="nombre-asc">Nombre: A — Z</option>
-              </SelectConBuscador>
-            </div>
+            {/* Selectores compactos: en móvil se disponen en 2 columnas para ahorrar scroll */}
+            <div className="fila-selectores-vitrina">
+              {/* Selector de Ordenamiento por Precio / Relevancia */}
+              <div className="selector-orden-wrapper" title="Ordenar catálogo">
+                <ArrowUpDown size={15} />
+                <SelectConBuscador
+                  value={criterioOrden}
+                  onChange={(e) =>
+                    setCriterioOrden(
+                      e.target.value as
+                        | 'recomendados'
+                        | 'precio-desc'
+                        | 'precio-asc'
+                        | 'destacados'
+                        | 'nombre-asc'
+                    )
+                  }
+                  className="select-criterio-orden"
+                  aria-label="Ordenar productos por recomendación, precio o destacados"
+                >
+                  <option value="recomendados">Recomendados Tinkay</option>
+                  <option value="destacados">Más Pedidos / Destacados</option>
+                  <option value="precio-desc">Mayor a menor ($$$ → $)</option>
+                  <option value="precio-asc">Menor a mayor ($ → $$$)</option>
+                  <option value="nombre-asc">Nombre: A — Z</option>
+                </SelectConBuscador>
+              </div>
 
-            {/* Selector de Rango de Presupuesto */}
-            <div className="selector-presupuesto-wrapper" title="Filtrar por presupuesto">
-              <SlidersHorizontal size={15} />
-              <SelectConBuscador
-                value={filtroPresupuesto}
-                onChange={(e) => setFiltroPresupuesto(e.target.value)}
-                className="select-filtro-presupuesto"
-                aria-label="Filtrar por rango de presupuesto"
-              >
-                <option value="todos">Cualquier Presupuesto</option>
-                <option value="menor-30">Hasta $30.00</option>
-                <option value="30-50">$30.00 - $50.00</option>
-                <option value="50-80">$50.00 - $80.00</option>
-                <option value="mayor-80">Más de $80.00</option>
-              </SelectConBuscador>
+              {/* Selector de Rango de Presupuesto */}
+              <div className="selector-presupuesto-wrapper" title="Filtrar por presupuesto">
+                <SlidersHorizontal size={15} />
+                <SelectConBuscador
+                  value={filtroPresupuesto}
+                  onChange={(e) => setFiltroPresupuesto(e.target.value)}
+                  className="select-filtro-presupuesto"
+                  aria-label="Filtrar por rango de presupuesto"
+                >
+                  <option value="todos">Cualquier Presupuesto</option>
+                  <option value="menor-30">Hasta $30.00</option>
+                  <option value="30-50">$30.00 - $50.00</option>
+                  <option value="50-80">$50.00 - $80.00</option>
+                  <option value="mayor-80">Más de $80.00</option>
+                </SelectConBuscador>
+              </div>
             </div>
 
             {/* Botón Filtro Rápido de Ofertas con % de descuento */}
@@ -329,12 +332,13 @@ export function VitrinaCatalogoTinkay() {
 
         {/* Pestañas de Categorías Multidimensionales + Botón Copiar Link de Categoría */}
         <div
+          className="fila-categorias-y-enlace"
           style={{
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'flex-start',
             justifyContent: 'space-between',
-            gap: '10px',
-            flexWrap: 'wrap',
+            gap: '8px',
+            flexWrap: 'nowrap',
             marginBottom: '6px',
           }}
         >

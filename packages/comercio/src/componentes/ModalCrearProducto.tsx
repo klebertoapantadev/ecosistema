@@ -789,6 +789,7 @@ export function ModalCrearProducto({
 
   return (
     <div
+      className="modal-comercio-crear-overlay"
       style={{
         position: "fixed",
         inset: 0,
@@ -801,13 +802,36 @@ export function ModalCrearProducto({
         padding: "16px",
       }}
     >
+      <style>{`
+        @media (max-width: 640px) {
+          .modal-comercio-crear-overlay {
+            padding: 0 !important;
+            align-items: flex-end !important;
+          }
+          .modal-comercio-crear-dialog {
+            max-width: 100% !important;
+            max-height: 100dvh !important;
+            height: 100dvh !important;
+            border-radius: 0 !important;
+          }
+          .modal-comercio-crear-dialog input,
+          .modal-comercio-crear-dialog select,
+          .modal-comercio-crear-dialog textarea {
+            font-size: 16px !important;
+          }
+          .modal-comercio-crear-footer {
+            padding: 10px 14px max(12px, env(safe-area-inset-bottom)) !important;
+          }
+        }
+      `}</style>
       <div
+        className="modal-comercio-crear-dialog"
         style={{
           background: "#FFFFFF",
           borderRadius: "16px",
           width: "100%",
           maxWidth: "740px",
-          maxHeight: "92vh",
+          maxHeight: "92dvh",
           boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
           display: "flex",
           flexDirection: "column",
@@ -2779,6 +2803,7 @@ export function ModalCrearProducto({
 
           {/* Barra Inferior Fija de Navegación del Wizard */}
           <div
+            className="modal-comercio-crear-footer"
             style={{
               padding: "12px 20px",
               borderTop: "1px solid #E6E2DA",

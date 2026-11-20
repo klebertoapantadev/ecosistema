@@ -1,7 +1,7 @@
 "use client";
 import { SelectConBuscador } from "@eco/datagrid";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Plus, Trash2, Gift, Percent, AlertCircle, CheckCircle2, Minus } from "lucide-react";
 import type { ProductoCatalogo, VarianteCatalogo } from "../acciones";
 import {
@@ -305,47 +305,65 @@ export function EditorSetComboConfigurable({
   }, [catalogoProductos, productoActualId]);
 
   const [prodSeleccionadoId, setProdSeleccionadoId] = useState<string>("");
-  const [varSeleccionadaSku, setVarSeleccionadaSku] = useState<string>("");
+  const [varSeleccionadaClave, setVarSeleccionadaClave] = useState<string>("");
   const [cantidadAgregar, setCantidadAgregar] = useState<number>(1);
-  const [filtroBusqueda, setFiltroBusqueda] = useState<string>("");
 
-  const productosFiltrados = useMemo(() => {
-    const q = filtroBusqueda.trim().toLowerCase();
-    if (!q) return productosElegibles;
-    return productosElegibles.filter(
-      (p) =>
-        p.pro_nombre.toLowerCase().includes(q) ||
-        (p.pro_slug || "").toLowerCase().includes(q)
-    );
-  }, [productosElegibles, filtroBusqueda]);
+  const obtenerClaveVariante = (v: VarianteCatalogo) => v.var_id || v.var_sku || v.var_nombre;
 
   const prodActivoParaAgregar = useMemo(() => {
     return (
-      productosFiltrados.find((p) => p.pro_id === prodSeleccionadoId) ||
-      productosFiltrados[0] ||
+      productosElegibles.find((p) => p.pro_id === prodSeleccionadoId) ||
+      productosElegibles[0] ||
       null
     );
-  }, [productosFiltrados, prodSeleccionadoId]);
+  }, [productosElegibles, prodSeleccionadoId]);
 
   const varActivaParaAgregar = useMemo(() => {
     if (!prodActivoParaAgregar) return null;
     return (
-      prodActivoParaAgregar.variantes.find((v) => v.var_sku === varSeleccionadaSku) ||
+      prodActivoParaAgregar.variantes.find(
+        (v) =>
+          obtenerClaveVariante(v) === varSeleccionadaClave ||
+          v.var_id === varSeleccionadaClave ||
+          v.var_sku === varSeleccionadaClave
+      ) ||
       prodActivoParaAgregar.variantes[0] ||
       null
     );
-  }, [prodActivoParaAgregar, varSeleccionadaSku]);
+  }, [prodActivoParaAgregar, varSeleccionadaClave]);
+
+  useEffect(() => {
+    if (!prodActivoParaAgregar) return;
+    const existe = prodActivoParaAgregar.variantes.some(
+      (v) =>
+        obtenerClaveVariante(v) === varSeleccionadaClave ||
+        v.var_id === varSeleccionadaClave ||
+        v.var_sku === varSeleccionadaClave
+    );
+    if (!existe && prodActivoParaAgregar.variantes[0]) {
+      setVarSeleccionadaClave(obtenerClaveVariante(prodActivoParaAgregar.variantes[0]));
+    }
+  }, [prodActivoParaAgregar, varSeleccionadaClave]);
+
+  const valorCombinadoSeleccionado =
+    prodActivoParaAgregar && varActivaParaAgregar
+      ? `${prodActivoParaAgregar.pro_id}::${obtenerClaveVariante(varActivaParaAgregar)}`
+      : "";
 
   const handleAgregarComponente = () => {
     if (!prodActivoParaAgregar || !varActivaParaAgregar) return;
     const cant = Math.max(1, Math.floor(cantidadAgregar || 1));
 
-    const idxExistente = componentes.findIndex(
-      (c) =>
-        c.producto_id === prodActivoParaAgregar.pro_id &&
-        (c.variante_sku === varActivaParaAgregar.var_sku ||
-          c.variante_id === varActivaParaAgregar.var_id)
-    );
+    const idxExistente = componentes.findIndex((c) => {
+      if (c.producto_id !== prodActivoParaAgregar.pro_id) return false;
+      if (c.variante_id && varActivaParaAgregar.var_id) {
+        return c.variante_id === varActivaParaAgregar.var_id;
+      }
+      if (c.variante_sku && varActivaParaAgregar.var_sku) {
+        return c.variante_sku === varActivaParaAgregar.var_sku;
+      }
+      return true;
+    });
 
     let nuevos: ComponenteComboConfig[];
     if (idxExistente >= 0) {
@@ -463,10 +481,10 @@ export function EditorSetComboConfigurable({
           </div>
           <div>
             <div style={{ fontSize: "0.84rem", fontWeight: 800, color: "#0F172A" }}>
-              Set / Combo Compuesto para Eventos
+              Set / Combo Compuesto
             </div>
             <div style={{ fontSize: "0.72rem", color: "#64748B" }}>
-              Agrupa varios productos individuales (con o sin variantes) bajo un precio especial de Set o personalizable por el cliente.
+              Agrupa productos o variantes específicas bajo un precio especial de Set o personalizable por el cliente.
             </div>
           </div>
         </div>
@@ -515,125 +533,279 @@ export function EditorSetComboConfigurable({
                 Primero crea los productos individuales del catálogo (ej. Aro Floral, Cartel Bienvenida, Box Floral) para poder incluirlos aquí.
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                <input
-                  type="text"
-                  placeholder="🔍 Filtrar producto por nombre (ej. Aro, Cartel, Box)..."
-                  value={filtroBusqueda}
-                  onChange={(e) => setFiltroBusqueda(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "6px 10px",
-                    borderRadius: "6px",
-                    border: "1px solid #CBD5E1",
-                    fontSize: "0.78rem",
-                    boxSizing: "border-box",
-                  }}
-                />
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {/* Selector unificado Producto + Variante (busca por nombre de producto y también por nombre de variante/talla) */}
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.72rem",
+                      fontWeight: 700,
+                      color: "#475569",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    Producto o variante a incluir:
+                  </label>
+                  <SelectConBuscador
+                    value={valorCombinadoSeleccionado}
+                    umbralBuscador={0}
+                    ordenarAlfabeticamente={false}
+                    placeholderBusqueda="Buscar producto o variante (ej. Ferrero, Esfera, Box, Aro)…"
+                    tituloModal="Elegir producto o variante para el Set"
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      const sepIdx = raw.indexOf("::");
+                      if (sepIdx > 0) {
+                        const pId = raw.slice(0, sepIdx);
+                        const vClave = raw.slice(sepIdx + 2);
+                        setProdSeleccionadoId(pId);
+                        setVarSeleccionadaClave(vClave);
+                      } else {
+                        const nuevoProd = productosElegibles.find((p) => p.pro_id === raw);
+                        setProdSeleccionadoId(raw);
+                        setVarSeleccionadaClave(
+                          nuevoProd?.variantes[0] ? obtenerClaveVariante(nuevoProd.variantes[0]) : ""
+                        );
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      minHeight: "40px",
+                      padding: "8px 10px",
+                      borderRadius: "8px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.82rem",
+                      fontWeight: 600,
+                      background: "#FFFFFF",
+                    }}
+                  >
+                    {productosElegibles.map((p) => {
+                      if (p.variantes.length <= 1) {
+                        const v0 = p.variantes[0]!;
+                        const precioRef = obtenerPvpVariante(v0);
+                        return (
+                          <option
+                            key={`${p.pro_id}::${obtenerClaveVariante(v0)}`}
+                            value={`${p.pro_id}::${obtenerClaveVariante(v0)}`}
+                          >
+                            {p.pro_nombre} (${precioRef.toFixed(2)})
+                          </option>
+                        );
+                      }
+                      return (
+                        <optgroup
+                          key={p.pro_id}
+                          label={`${p.pro_nombre} (${p.variantes.length} variantes)`}
+                        >
+                          {p.variantes.map((v) => (
+                            <option
+                              key={`${p.pro_id}::${obtenerClaveVariante(v)}`}
+                              value={`${p.pro_id}::${obtenerClaveVariante(v)}`}
+                            >
+                              {p.pro_nombre} — {v.var_nombre} (${obtenerPvpVariante(v).toFixed(2)})
+                            </option>
+                          ))}
+                        </optgroup>
+                      );
+                    })}
+                  </SelectConBuscador>
+                </div>
 
+                {/* Selector táctil directo de variantes cuando el producto tiene > 1 variante */}
+                {prodActivoParaAgregar && prodActivoParaAgregar.variantes.length > 1 && (
+                  <div
+                    style={{
+                      background: "#F8FAFC",
+                      border: "1px solid #E2E8F0",
+                      borderRadius: "9px",
+                      padding: "8px 10px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontSize: "0.71rem",
+                        fontWeight: 700,
+                        color: "#334155",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      Variante seleccionada de {prodActivoParaAgregar.pro_nombre}:
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "6px",
+                      }}
+                    >
+                      {prodActivoParaAgregar.variantes.map((v) => {
+                        const claveV = obtenerClaveVariante(v);
+                        const esActiva =
+                          varActivaParaAgregar &&
+                          obtenerClaveVariante(varActivaParaAgregar) === claveV;
+                        const pvpV = obtenerPvpVariante(v);
+                        const miniV = obtenerMiniaturaProducto(prodActivoParaAgregar, v);
+                        return (
+                          <button
+                            key={claveV}
+                            type="button"
+                            onClick={() => setVarSeleccionadaClave(claveV)}
+                            title={`Elegir variante ${v.var_nombre} ($${pvpV.toFixed(2)})`}
+                            aria-label={`Elegir ${v.var_nombre}`}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              minHeight: "36px",
+                              padding: "5px 10px",
+                              borderRadius: "8px",
+                              border: esActiva ? "1.5px solid #BE185D" : "1px solid #CBD5E1",
+                              background: esActiva ? "#FDF2F8" : "#FFFFFF",
+                              color: esActiva ? "#9D174D" : "#334155",
+                              fontSize: "0.75rem",
+                              fontWeight: esActiva ? 800 : 600,
+                              cursor: "pointer",
+                              textAlign: "left",
+                            }}
+                          >
+                            {miniV && (
+                              <img
+                                src={miniV}
+                                alt=""
+                                style={{
+                                  width: "22px",
+                                  height: "22px",
+                                  borderRadius: "5px",
+                                  objectFit: "cover",
+                                  flexShrink: 0,
+                                }}
+                              />
+                            )}
+                            <span>{v.var_nombre}</span>
+                            <strong style={{ color: esActiva ? "#BE185D" : "#0F172A" }}>
+                              ${pvpV.toFixed(2)}
+                            </strong>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Fila Cantidad + Añadir Pieza (amplia y táctil en móvil) */}
                 <div
                   style={{
                     display: "flex",
                     flexWrap: "wrap",
                     gap: "8px",
                     alignItems: "center",
+                    justifyContent: "space-between",
                   }}
                 >
-                  <SelectConBuscador
-                    value={prodActivoParaAgregar?.pro_id || ""}
-                    onChange={(e) => {
-                      const nuevoProd = productosFiltrados.find((p) => p.pro_id === e.target.value);
-                      setProdSeleccionadoId(e.target.value);
-                      setVarSeleccionadaSku(nuevoProd?.variantes[0]?.var_sku || "");
-                    }}
-                    style={{
-                      flex: "2 1 190px",
-                      minWidth: 0,
-                      padding: "7px 8px",
-                      borderRadius: "6px",
-                      border: "1px solid #CBD5E1",
-                      fontSize: "0.8rem",
-                      fontWeight: 600,
-                      background: "#FFFFFF",
-                    }}
-                  >
-                    {productosFiltrados.map((p) => {
-                      const v0 = p.variantes[0];
-                      const precioRef = obtenerPvpVariante(v0);
-                      return (
-                        <option key={p.pro_id} value={p.pro_id}>
-                          {p.pro_nombre} (${precioRef.toFixed(2)}
-                          {p.variantes.length > 1 ? ` • ${p.variantes.length} tallas` : ""})
-                        </option>
-                      );
-                    })}
-                  </SelectConBuscador>
-
-                  {prodActivoParaAgregar && prodActivoParaAgregar.variantes.length > 1 && (
-                    <SelectConBuscador
-                      value={varActivaParaAgregar?.var_sku || ""}
-                      onChange={(e) => setVarSeleccionadaSku(e.target.value)}
-                      title="Tamaño / Variante predefinida en el Set Completo"
+                  <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                    <span style={{ fontSize: "0.74rem", fontWeight: 700, color: "#475569" }}>
+                      Cantidad:
+                    </span>
+                    <div
                       style={{
-                        flex: "1 1 140px",
-                        minWidth: 0,
-                        padding: "7px 8px",
-                        borderRadius: "6px",
+                        display: "inline-flex",
+                        alignItems: "center",
                         border: "1px solid #CBD5E1",
-                        fontSize: "0.78rem",
-                        fontWeight: 600,
-                        background: "#F8FAFC",
+                        borderRadius: "8px",
+                        background: "#FFFFFF",
+                        overflow: "hidden",
                       }}
                     >
-                      {prodActivoParaAgregar.variantes.map((v) => (
-                        <option key={v.var_sku} value={v.var_sku}>
-                          {v.var_nombre} (${obtenerPvpVariante(v).toFixed(2)})
-                        </option>
-                      ))}
-                    </SelectConBuscador>
-                  )}
-
-                  <input
-                    type="number"
-                    min={1}
-                    step={1}
-                    value={cantidadAgregar}
-                    onChange={(e) => setCantidadAgregar(Math.max(1, Math.floor(Number(e.target.value) || 1)))}
-                    title="Cantidad incluida en el Set"
-                    style={{
-                      width: "74px",
-                      padding: "7px 6px",
-                      borderRadius: "6px",
-                      border: "1px solid #CBD5E1",
-                      fontSize: "0.82rem",
-                      fontWeight: 800,
-                      textAlign: "center",
-                      boxSizing: "border-box",
-                    }}
-                  />
+                      <button
+                        type="button"
+                        onClick={() => setCantidadAgregar((c) => Math.max(1, c - 1))}
+                        title="Disminuir cantidad"
+                        aria-label="Disminuir cantidad"
+                        style={{
+                          width: "34px",
+                          height: "36px",
+                          border: "none",
+                          background: "#F8FAFC",
+                          color: "#334155",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Minus size={13} />
+                      </button>
+                      <input
+                        type="number"
+                        min={1}
+                        step={1}
+                        value={cantidadAgregar}
+                        onChange={(e) =>
+                          setCantidadAgregar(Math.max(1, Math.floor(Number(e.target.value) || 1)))
+                        }
+                        title="Cantidad incluida en el Set"
+                        aria-label="Cantidad incluida en el Set"
+                        style={{
+                          width: "54px",
+                          height: "36px",
+                          padding: "0 4px",
+                          border: "none",
+                          borderLeft: "1px solid #E2E8F0",
+                          borderRight: "1px solid #E2E8F0",
+                          fontSize: "0.86rem",
+                          fontWeight: 800,
+                          textAlign: "center",
+                          boxSizing: "border-box",
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setCantidadAgregar((c) => c + 1)}
+                        title="Aumentar cantidad"
+                        aria-label="Aumentar cantidad"
+                        style={{
+                          width: "34px",
+                          height: "36px",
+                          border: "none",
+                          background: "#F8FAFC",
+                          color: "#334155",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Plus size={13} />
+                      </button>
+                    </div>
+                  </div>
 
                   <button
                     type="button"
                     onClick={handleAgregarComponente}
-                    disabled={!prodActivoParaAgregar}
+                    disabled={!prodActivoParaAgregar || !varActivaParaAgregar}
                     title="Añadir pieza al Set"
                     aria-label="Añadir pieza al Set"
                     style={{
+                      flex: "1 1 140px",
+                      minHeight: "38px",
                       background: "#DB2777",
                       color: "#FFFFFF",
                       border: "none",
-                      borderRadius: "7px",
-                      padding: "7px 12px",
-                      fontSize: "0.76rem",
+                      borderRadius: "8px",
+                      padding: "8px 14px",
+                      fontSize: "0.8rem",
                       fontWeight: 800,
                       cursor: prodActivoParaAgregar ? "pointer" : "not-allowed",
                       display: "inline-flex",
                       alignItems: "center",
-                      gap: "4px",
+                      justifyContent: "center",
+                      gap: "5px",
                       whiteSpace: "nowrap",
                     }}
                   >
-                    <Plus size={14} />
+                    <Plus size={15} />
                     <span>Añadir Pieza</span>
                   </button>
                 </div>
@@ -719,41 +891,49 @@ export function EditorSetComboConfigurable({
                       </div>
 
                       {fila.prod && fila.prod.variantes.length > 1 ? (
-                        <SelectConBuscador
-                          value={fila.variante?.var_sku || ""}
-                          onChange={(e) => {
-                            const nuevaVar = fila.prod?.variantes.find(
-                              (v) => v.var_sku === e.target.value
-                            );
-                            if (!nuevaVar) return;
-                            const actualizados = componentes.map((c, i) =>
-                              i === idx
-                                ? {
-                                    ...c,
-                                    variante_id: nuevaVar.var_id,
-                                    variante_sku: nuevaVar.var_sku,
-                                    variante_nombre: nuevaVar.var_nombre,
-                                  }
-                                : c
-                            );
-                            onCambiarComponentes(actualizados);
-                          }}
-                          style={{
-                            marginTop: "3px",
-                            padding: "2px 6px",
-                            borderRadius: "5px",
-                            border: "1px solid #CBD5E1",
-                            fontSize: "0.72rem",
-                            fontWeight: 600,
-                            background: "#FFFFFF",
-                          }}
-                        >
-                          {fila.prod.variantes.map((v) => (
-                            <option key={v.var_sku} value={v.var_sku}>
-                              Variante Set: {v.var_nombre} (${obtenerPvpVariante(v).toFixed(2)})
-                            </option>
-                          ))}
-                        </SelectConBuscador>
+                        <div style={{ marginTop: "4px" }}>
+                          <SelectConBuscador
+                            key={`${fila.prod.pro_id}-${idx}`}
+                            value={fila.variante ? obtenerClaveVariante(fila.variante) : ""}
+                            ordenarAlfabeticamente={false}
+                            tituloModal={`Variante de ${fila.prod.pro_nombre}`}
+                            onChange={(e) => {
+                              const nuevaVar = fila.prod?.variantes.find(
+                                (v) =>
+                                  obtenerClaveVariante(v) === e.target.value ||
+                                  v.var_id === e.target.value ||
+                                  v.var_sku === e.target.value
+                              );
+                              if (!nuevaVar) return;
+                              const actualizados = componentes.map((c, i) =>
+                                i === idx
+                                  ? {
+                                      ...c,
+                                      variante_id: nuevaVar.var_id,
+                                      variante_sku: nuevaVar.var_sku,
+                                      variante_nombre: nuevaVar.var_nombre,
+                                    }
+                                  : c
+                              );
+                              onCambiarComponentes(actualizados);
+                            }}
+                            style={{
+                              width: "100%",
+                              padding: "4px 8px",
+                              borderRadius: "6px",
+                              border: "1px solid #CBD5E1",
+                              fontSize: "0.74rem",
+                              fontWeight: 600,
+                              background: "#FFFFFF",
+                            }}
+                          >
+                            {fila.prod.variantes.map((v) => (
+                              <option key={obtenerClaveVariante(v)} value={obtenerClaveVariante(v)}>
+                                {v.var_nombre} (${obtenerPvpVariante(v).toFixed(2)})
+                              </option>
+                            ))}
+                          </SelectConBuscador>
+                        </div>
                       ) : (
                         <div style={{ fontSize: "0.72rem", color: "#64748B" }}>
                           Precio individual: ${fila.pvpUnit.toFixed(2)} c/u

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 export interface OpcionSelectBuscador {
   value: string;
@@ -610,233 +611,241 @@ export function SelectConBuscador({
         )}
       </button>
 
-      {abierto && (
-        <div
-          ref={backdropRef}
-          onClick={(e) => {
-            e.stopPropagation();
-            cerrarMenu();
-          }}
-          onMouseDown={(e) => e.stopPropagation()}
-          style={
-            esMovil
-              ? {
-                  position: "fixed",
-                  inset: 0,
-                  zIndex: 10060,
-                  background: "rgba(24, 24, 27, 0.45)",
-                  backdropFilter: "blur(2px)",
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyContent: "flex-end",
-                }
-              : {
-                  position: "fixed",
-                  inset: 0,
-                  zIndex: 10055,
-                  background: "transparent",
-                }
-          }
-        >
+      {abierto &&
+        (() => {
+          const contenidoMenu = (
             <div
-              role="listbox"
-              aria-label={ariaLabelEfectivo}
-              onClick={(e) => e.stopPropagation()}
+              ref={backdropRef}
+              onClick={(e) => {
+                e.stopPropagation();
+                cerrarMenu();
+              }}
               onMouseDown={(e) => e.stopPropagation()}
               style={
                 esMovil
                   ? {
-                      width: "100%",
-                      maxHeight: "80dvh",
-                      background: "#FFFFFF",
-                      borderRadius: "18px 18px 0 0",
-                      borderTop: "1px solid #E4E4E7",
-                      boxShadow: "0 -14px 36px rgba(24, 24, 27, 0.22)",
+                      position: "fixed",
+                      inset: 0,
+                      zIndex: 10060,
+                      background: "rgba(24, 24, 27, 0.45)",
+                      backdropFilter: "blur(2px)",
                       display: "flex",
                       flexDirection: "column",
-                      paddingBottom: "calc(10px + env(safe-area-inset-bottom, 0px))",
-                      overflow: "hidden",
+                      justifyContent: "flex-end",
                     }
                   : {
                       position: "fixed",
-                      top: posicionPopover.top,
-                      bottom: posicionPopover.bottom,
-                      left: posicionPopover.left,
-                      width: `${posicionPopover.width}px`,
-                      maxWidth: "calc(100vw - 24px)",
-                      background: "#FFFFFF",
-                      border: "1px solid #D4D4D8",
-                      borderRadius: "12px",
-                      boxShadow: "0 14px 34px rgba(24, 24, 27, 0.16)",
-                      display: "flex",
-                      flexDirection: "column",
-                      overflow: "hidden",
-                      zIndex: 10060,
+                      inset: 0,
+                      zIndex: 10055,
+                      background: "transparent",
                     }
               }
             >
-              {esMovil && (
-                <div
-                  style={{
-                    padding: "10px 14px 6px",
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "6px",
-                    borderBottom: "1px solid #F4F4F5",
-                  }}
-                >
+              <div
+                role="listbox"
+                aria-label={ariaLabelEfectivo}
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                style={
+                  esMovil
+                    ? {
+                        width: "100%",
+                        maxHeight: "80dvh",
+                        background: "#FFFFFF",
+                        borderRadius: "18px 18px 0 0",
+                        borderTop: "1px solid #E4E4E7",
+                        boxShadow: "0 -14px 36px rgba(24, 24, 27, 0.22)",
+                        display: "flex",
+                        flexDirection: "column",
+                        paddingBottom: "calc(10px + env(safe-area-inset-bottom, 0px))",
+                        overflow: "hidden",
+                      }
+                    : {
+                        position: "fixed",
+                        top: posicionPopover.top,
+                        bottom: posicionPopover.bottom,
+                        left: posicionPopover.left,
+                        width: `${posicionPopover.width}px`,
+                        maxWidth: "calc(100vw - 24px)",
+                        background: "#FFFFFF",
+                        border: "1px solid #D4D4D8",
+                        borderRadius: "12px",
+                        boxShadow: "0 14px 34px rgba(24, 24, 27, 0.16)",
+                        display: "flex",
+                        flexDirection: "column",
+                        overflow: "hidden",
+                        zIndex: 10060,
+                      }
+                }
+              >
+                {esMovil && (
                   <div
                     style={{
-                      width: "38px",
-                      height: "4px",
-                      borderRadius: "999px",
-                      background: "#D4D4D8",
-                      margin: "0 auto",
+                      padding: "10px 14px 6px",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "6px",
+                      borderBottom: "1px solid #F4F4F5",
                     }}
-                  />
+                  >
+                    <div
+                      style={{
+                        width: "38px",
+                        height: "4px",
+                        borderRadius: "999px",
+                        background: "#D4D4D8",
+                        margin: "0 auto",
+                      }}
+                    />
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "8px",
+                      }}
+                    >
+                      <strong
+                        style={{
+                          fontSize: "0.88rem",
+                          color: "#18181B",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {ariaLabelEfectivo}
+                      </strong>
+                      <button
+                        type="button"
+                        onClick={cerrarMenu}
+                        aria-label="Cerrar selector"
+                        title="Cerrar"
+                        style={{
+                          width: "34px",
+                          height: "34px",
+                          borderRadius: "8px",
+                          border: "1px solid #E4E4E7",
+                          background: "#FAFAFA",
+                          color: "#3F3F46",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          cursor: "pointer",
+                          flexShrink: 0,
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Barra fija de búsqueda (solo cuando supera umbralBuscador) */}
+                {mostrarBuscador && (
                   <div
                     style={{
+                      padding: esMovil ? "8px 12px" : "8px",
+                      borderBottom: "1px solid #F4F4F5",
+                      background: "#FAFAFA",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "space-between",
-                      gap: "8px",
+                      gap: "7px",
                     }}
                   >
-                    <strong
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="#71717A"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      style={{ flexShrink: 0 }}
+                      aria-hidden="true"
+                    >
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input
+                      ref={inputBusquedaRef}
+                      type="text"
+                      inputMode="search"
+                      value={busqueda}
+                      onChange={(e) => setBusqueda(e.target.value)}
+                      onKeyDown={manejarTecladoBusqueda}
+                      placeholder={placeholderBusqueda}
+                      aria-label="Filtrar opciones"
                       style={{
-                        fontSize: "0.88rem",
+                        flex: 1,
+                        minWidth: 0,
+                        border: "none",
+                        outline: "none",
+                        background: "transparent",
                         color: "#18181B",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
+                        fontSize: esMovil ? "16px" : "0.81rem",
+                        fontFamily: "inherit",
+                        padding: "2px 0",
                       }}
-                    >
-                      {ariaLabelEfectivo}
-                    </strong>
-                    <button
-                      type="button"
-                      onClick={cerrarMenu}
-                      aria-label="Cerrar selector"
-                      title="Cerrar"
-                      style={{
-                        width: "30px",
-                        height: "30px",
-                        borderRadius: "8px",
-                        border: "1px solid #E4E4E7",
-                        background: "#FAFAFA",
-                        color: "#3F3F46",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        cursor: "pointer",
-                        flexShrink: 0,
-                      }}
-                    >
-                      ✕
-                    </button>
+                    />
+                    {busqueda && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBusqueda("");
+                          inputBusquedaRef.current?.focus({ preventScroll: true });
+                        }}
+                        title="Limpiar búsqueda"
+                        aria-label="Limpiar búsqueda"
+                        style={{
+                          border: "none",
+                          background: "#E4E4E7",
+                          color: "#3F3F46",
+                          width: "22px",
+                          height: "22px",
+                          borderRadius: "999px",
+                          fontSize: "0.7rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        ✕
+                      </button>
+                    )}
                   </div>
-                </div>
-              )}
+                )}
 
-              {/* Barra fija de búsqueda (solo cuando hay más de 6 opciones) */}
-              {mostrarBuscador && (
+                {/* Lista desplazable de opciones */}
                 <div
+                  ref={listaRef}
+                  tabIndex={mostrarBuscador ? undefined : -1}
+                  onKeyDown={mostrarBuscador ? undefined : manejarTecladoBusqueda}
                   style={{
-                    padding: esMovil ? "8px 12px" : "8px",
-                    borderBottom: "1px solid #F4F4F5",
-                    background: "#FAFAFA",
+                    overflowY: "auto",
+                    overscrollBehavior: "contain",
+                    maxHeight: esMovil ? "62dvh" : `${posicionPopover.maxHeight}px`,
+                    padding: "5px",
                     display: "flex",
-                    alignItems: "center",
-                    gap: "7px",
+                    flexDirection: "column",
+                    gap: "2px",
+                    outline: "none",
                   }}
                 >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#71717A"
-                    strokeWidth="2.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    style={{ flexShrink: 0 }}
-                    aria-hidden="true"
-                  >
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                  </svg>
-                  <input
-                    ref={inputBusquedaRef}
-                    type="search"
-                    value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
-                    onKeyDown={manejarTecladoBusqueda}
-                    placeholder={placeholderBusqueda}
-                    aria-label="Filtrar opciones"
-                    style={{
-                      flex: 1,
-                      minWidth: 0,
-                      border: "none",
-                      outline: "none",
-                      background: "transparent",
-                      color: "#18181B",
-                      fontSize: esMovil ? "16px" : "0.81rem",
-                      fontFamily: "inherit",
-                      padding: "2px 0",
-                    }}
-                  />
-                  {busqueda && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setBusqueda("");
-                        inputBusquedaRef.current?.focus({ preventScroll: true });
-                      }}
-                      title="Limpiar búsqueda"
-                      aria-label="Limpiar búsqueda"
-                      style={{
-                        border: "none",
-                        background: "#E4E4E7",
-                        color: "#3F3F46",
-                        width: "20px",
-                        height: "20px",
-                        borderRadius: "999px",
-                        fontSize: "0.7rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      ✕
-                    </button>
-                  )}
+                  {renderListaOpciones()}
                 </div>
-              )}
-
-              {/* Lista desplazable de opciones */}
-              <div
-                ref={listaRef}
-                tabIndex={mostrarBuscador ? undefined : -1}
-                onKeyDown={mostrarBuscador ? undefined : manejarTecladoBusqueda}
-                style={{
-                  overflowY: "auto",
-                  overscrollBehavior: "contain",
-                  maxHeight: esMovil ? "62dvh" : `${posicionPopover.maxHeight}px`,
-                  padding: "5px",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "2px",
-                  outline: "none",
-                }}
-              >
-                {renderListaOpciones()}
               </div>
             </div>
-        </div>
-      )}
+          );
+
+          return typeof document !== "undefined"
+            ? createPortal(contenidoMenu, document.body)
+            : contenidoMenu;
+        })()}
     </>
   );
 }

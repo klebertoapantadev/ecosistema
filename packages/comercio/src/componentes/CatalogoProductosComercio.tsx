@@ -37,6 +37,8 @@ import {
   Globe,
   Building2,
   Settings2,
+  Gift,
+  FileText,
 } from "lucide-react";
 import {
   ProductoCatalogo,
@@ -75,6 +77,11 @@ import {
   construirEnlaceProductoTienda,
 } from "../utils/enlacesTienda";
 import { esCodigoOfertaRenta, normalizarConfiguracionRenta } from "../utils/tiposOferta";
+import {
+  normalizarComponentesCombo,
+  normalizarEscalasVolumen,
+  describirEscalaVolumen,
+} from "../utils/combosVolumen";
 import { ModalGestionTiposOferta } from "./ModalGestionTiposOferta";
 
 interface Props {
@@ -1063,7 +1070,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           />
         </div>
 
-        {/* Filtro por Canal de Visibilidad */}
+        {/* Filtro por Canal de Visibilidad (solo en vista Administrador) */}
+        {modoVista === "admin" && (
         <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
           <SelectConBuscador
             value={canalSeleccionado}
@@ -1129,6 +1137,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             </button>
           )}
         </div>
+        )}
 
         {/* Filtro rápido de Estado (Todos / Activos / Inactivos) en vista Administrador */}
         {modoVista === "admin" && (
@@ -1205,17 +1214,29 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           </div>
         )}
 
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: "8px",
+            flexWrap: esModoMovil ? "nowrap" : "wrap",
+            overflowX: esModoMovil ? "auto" : "visible",
+            width: esModoMovil ? "100%" : "auto",
+            paddingBottom: esModoMovil ? "4px" : 0,
+            alignItems: "center",
+          }}
+        >
           <button
             type="button"
             onClick={() => setCategoriaSeleccionada("todas")}
             style={{
-              padding: "6px 14px",
+              padding: esModoMovil ? "8px 14px" : "6px 14px",
               borderRadius: "8px",
               fontSize: "0.8rem",
               fontWeight: 600,
               cursor: "pointer",
               border: "none",
+              flexShrink: 0,
+              whiteSpace: "nowrap",
               background: categoriaSeleccionada === "todas" ? "#1F1C19" : "#F4F2EE",
               color: categoriaSeleccionada === "todas" ? "#FFFFFF" : "#57524C",
             }}
@@ -1228,12 +1249,14 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               type="button"
               onClick={() => setCategoriaSeleccionada(c.ctg_slug)}
               style={{
-                padding: "6px 14px",
+                padding: esModoMovil ? "8px 14px" : "6px 14px",
                 borderRadius: "8px",
                 fontSize: "0.8rem",
                 fontWeight: 600,
                 cursor: "pointer",
                 border: "none",
+                flexShrink: 0,
+                whiteSpace: "nowrap",
                 background: categoriaSeleccionada === c.ctg_slug ? (esFloristeria ? "#221E1B" : "#221E1B") : "#F4F2EE",
                 color: categoriaSeleccionada === c.ctg_slug ? "#FFFFFF" : "#57524C",
               }}
@@ -1676,6 +1699,119 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             const estaActivoGeneral = p.pro_activo !== false;
             const isSavingActivo = guardandoActivoKey === p.pro_id;
 
+            // Datos comerciales exactos visibles para el cliente (Set/Combo, Renta, Eventos, Ofertas y Escalas)
+            const esRentaProd = esCodigoOfertaRenta(p.pro_tipo, p.pro_detalle_producto);
+            const catNombreLower = (p.categoria?.ctg_nombre || "").toLowerCase();
+            const catSlugLower = (p.categoria?.ctg_slug || "").toLowerCase();
+            const esEventoProd = Boolean(
+              esFloristeria &&
+                !esRentaProd &&
+                (catNombreLower.includes("evento") ||
+                  catNombreLower.includes("ceremonia") ||
+                  catSlugLower.includes("evento") ||
+                  (p.pro_tipo || "").toUpperCase() === "SERVICIO")
+            );
+            const pvpActual =
+              currentVar?.precio_total !== undefined && currentVar.precio_total > 0
+                ? Number(currentVar.precio_total)
+                : Number(
+                    (
+                      Number(currentVar?.var_precio || 0) *
+                      (1 + Number(currentVar?.var_tarifa_iva_porcentaje || 0) / 100)
+                    ).toFixed(2)
+                  );
+            const escalasVolumenVar = normalizarEscalasVolumen(
+              currentVar?.var_detalle_variante?.escalas_volumen
+            );
+            const componentesComboRaw = p.pro_detalle_producto?.es_combo
+              ? normalizarComponentesCombo(p.pro_detalle_producto?.combo_componentes)
+              : [];
+            const componentesComboVista = componentesComboRaw.map((comp) => {
+              const prodHijo = (productos || []).find(
+                (item) =>
+                  item.pro_id === comp.producto_id ||
+                  (comp.producto_slug && item.pro_slug === comp.producto_slug)
+              );
+              const varHijo =
+                prodHijo?.variantes.find(
+                  (v) =>
+                    (comp.variante_id && v.var_id === comp.variante_id) ||
+                    (comp.variante_sku && v.var_sku === comp.variante_sku)
+                ) || prodHijo?.variantes[0];
+              const pvpUnit = varHijo
+                ? varHijo.precio_total && varHijo.precio_total > 0
+                  ? Number(varHijo.precio_total)
+                  : Number(
+                      (
+                        Number(varHijo.var_precio || 0) *
+                        (1 + Number(varHijo.var_tarifa_iva_porcentaje || 0) / 100)
+                      ).toFixed(2)
+                    )
+                : 0;
+              const subtotalLinea = Number((pvpUnit * comp.cantidad_base).toFixed(2));
+              const miniatura =
+                varHijo?.var_detalle_variante?.portada_url ||
+                prodHijo?.pro_detalle_producto?.imagen_url ||
+                (Array.isArray(prodHijo?.pro_detalle_producto?.galeria_urls)
+                  ? prodHijo?.pro_detalle_producto?.galeria_urls[0]
+                  : "") ||
+                "";
+              const escalasHijo = normalizarEscalasVolumen(
+                varHijo?.var_detalle_variante?.escalas_volumen
+              );
+              return {
+                comp,
+                prodHijo,
+                varHijo,
+                nombreMostrar: prodHijo?.pro_nombre || comp.producto_nombre || "Pieza",
+                varianteMostrar:
+                  prodHijo && prodHijo.variantes.length > 1
+                    ? varHijo?.var_nombre || comp.variante_nombre || ""
+                    : "",
+                pvpUnit,
+                subtotalLinea,
+                miniatura,
+                escalasHijo,
+              };
+            });
+            const esComboActivo = Boolean(
+              p.pro_detalle_producto?.es_combo && componentesComboVista.length > 0
+            );
+            const totalPiezasCombo = componentesComboVista.reduce(
+              (acc, f) => acc + f.comp.cantidad_base,
+              0
+            );
+            const sumaSetNominal = Number(
+              componentesComboVista.reduce((acc, f) => acc + f.subtotalLinea, 0).toFixed(2)
+            );
+            const precioComparacionVar =
+              currentVar?.var_precio_comparacion && Number(currentVar.var_precio_comparacion) > pvpActual
+                ? Number(currentVar.var_precio_comparacion)
+                : undefined;
+            const precioTachadoEfectivo =
+              esComboActivo && sumaSetNominal > pvpActual
+                ? sumaSetNominal
+                : precioComparacionVar;
+            const ahorroEfectivo =
+              precioTachadoEfectivo && precioTachadoEfectivo > pvpActual
+                ? Number((precioTachadoEfectivo - pvpActual).toFixed(2))
+                : 0;
+            const pctDescuentoEfectivo =
+              precioTachadoEfectivo && ahorroEfectivo > 0
+                ? Math.round((ahorroEfectivo / precioTachadoEfectivo) * 100)
+                : 0;
+            const descripcionEfectiva =
+              (p.pro_descripcion && p.pro_descripcion.trim()) ||
+              (typeof p.pro_detalle_producto?.descripcion_corta === "string" &&
+                p.pro_detalle_producto.descripcion_corta.trim()) ||
+              "";
+            const urlTiendaPublica = construirEnlaceProductoTienda({
+              negocio,
+              slugProducto: p.pro_slug || p.pro_id,
+              skuVariante: variantesLista.length > 1 ? currentVar?.var_sku : undefined,
+              baseUrl: URL_TIENDA_POR_NEGOCIO[negocio],
+            });
+
             return (
               <div
                 key={p.pro_id}
@@ -1702,7 +1838,15 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               >
                 {/* Carrusel de Imágenes: Portada Master + Fotos de Variantes */}
                 {fotoMostrar && (
-                  <div style={{ position: "relative", width: "100%", aspectRatio: "1 / 1", background: "#1F1C19", overflow: "hidden" }}>
+                  <div
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      aspectRatio: esModoMovil ? "4 / 3.4" : "1 / 1",
+                      background: "#1F1C19",
+                      overflow: "hidden",
+                    }}
+                  >
                     {/* Fondo difuminado si el ajuste es contain */}
                     {ajusteActual === "contain" && (
                       <img
@@ -1775,8 +1919,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       </button>
                     )}
 
-                    {/* Etiqueta de la foto actual del carrusel */}
-                    {fotoActual && (
+                    {/* Etiqueta de la foto actual del carrusel (Admin) o Chips comerciales del cliente (Vista Cliente) */}
+                    {modoVista === "admin" && fotoActual && (
                       <div
                         style={{
                           position: "absolute",
@@ -1801,6 +1945,82 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           <div style={{ width: "6px", height: "6px", borderRadius: "50%", background: fotoActual.col.dot }} />
                         )}
                         <span>{fotoActual.etiqueta}</span>
+                      </div>
+                    )}
+
+                    {modoVista === "cliente" && (esComboActivo || pctDescuentoEfectivo > 0 || esRentaProd || esEventoProd) && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "10px",
+                          left: videoMostrar ? "105px" : "10px",
+                          display: "flex",
+                          flexWrap: "wrap",
+                          gap: "5px",
+                          zIndex: 2,
+                          maxWidth: "72%",
+                        }}
+                      >
+                        {esComboActivo ? (
+                          <span
+                            style={{
+                              background: "#5B21B6",
+                              color: "#FFFFFF",
+                              padding: "3px 9px",
+                              borderRadius: "999px",
+                              fontSize: "0.68rem",
+                              fontWeight: 800,
+                              boxShadow: "0 2px 6px rgba(0,0,0,0.22)",
+                            }}
+                          >
+                            {pctDescuentoEfectivo > 0
+                              ? `🎁 SET -${pctDescuentoEfectivo}% OFF`
+                              : "🎁 SET ESPECIAL"}
+                          </span>
+                        ) : pctDescuentoEfectivo > 0 ? (
+                          <span
+                            style={{
+                              background: "#BE123C",
+                              color: "#FFFFFF",
+                              padding: "3px 9px",
+                              borderRadius: "999px",
+                              fontSize: "0.68rem",
+                              fontWeight: 800,
+                              boxShadow: "0 2px 6px rgba(0,0,0,0.22)",
+                            }}
+                          >
+                            🔥 -{pctDescuentoEfectivo}% OFF
+                          </span>
+                        ) : null}
+                        {esRentaProd && (
+                          <span
+                            style={{
+                              background: "rgba(15, 23, 42, 0.88)",
+                              color: "#FDE68A",
+                              border: "1px solid rgba(251, 191, 36, 0.55)",
+                              padding: "3px 9px",
+                              borderRadius: "999px",
+                              fontSize: "0.68rem",
+                              fontWeight: 800,
+                            }}
+                          >
+                            🪑 EN RENTA
+                          </span>
+                        )}
+                        {esEventoProd && !esRentaProd && (
+                          <span
+                            style={{
+                              background: "rgba(45, 71, 52, 0.92)",
+                              color: "#FEF3C7",
+                              padding: "3px 9px",
+                              borderRadius: "999px",
+                              fontSize: "0.68rem",
+                              fontWeight: 800,
+                            }}
+                          >
+                            ✨ EVENTOS
+                          </span>
+                        )}
                       </div>
                     )}
 
@@ -2254,7 +2474,14 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   )}
                 </div>
 
-                <div style={{ padding: "18px 20px", display: "flex", flexDirection: "column", flex: 1 }}>
+                <div
+                  style={{
+                    padding: esModoMovil ? "14px 15px" : "18px 20px",
+                    display: "flex",
+                    flexDirection: "column",
+                    flex: 1,
+                  }}
+                >
                   {/* Badge de Inactivo o Vigencia Estacional */}
                   {!estaActivoGeneral ? (
                     <div
@@ -2369,17 +2596,18 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   </div>
 
                   {/* Descripción */}
-                  <p
-                    style={{
-                      margin: "0 0 14px",
-                      fontSize: "0.82rem",
-                      color: "#57524C",
-                      lineHeight: 1.45,
-                      flex: 1,
-                    }}
-                  >
-                    {p.pro_descripcion}
-                  </p>
+                  {descripcionEfectiva && (
+                    <p
+                      style={{
+                        margin: "0 0 12px",
+                        fontSize: "0.82rem",
+                        color: "#57524C",
+                        lineHeight: 1.45,
+                      }}
+                    >
+                      {descripcionEfectiva}
+                    </p>
+                  )}
 
                   {/* Badge de Modalidad / Logística */}
                   {esLegal ? (
@@ -2469,7 +2697,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   ) : null}
 
 
-                  {/* Canales de Visibilidad */}
+                  {/* Canales de Visibilidad (exclusivo de vista Administrador; oculto para el cliente) */}
+                  {modoVista === "admin" && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: "12px", alignItems: "center" }}>
                     {!productoTieneAlMenosUnaImagen(p) && (
                       <span
@@ -2499,95 +2728,219 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       const requiereImgYFalta = !productoTieneAlMenosUnaImagen(p) && CANALES_REQUIEREN_IMAGEN.includes(cid);
                       const isSaving = guardandoCanalKey === `${p.pro_id}_${cid}`;
 
-                      if (modoVista === "cliente" && !estaActivo) return null;
-
-                      if (modoVista === "admin") {
-                        return (
-                          <button
-                            key={cid}
-                            type="button"
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              await handleAlternarCanal(p.pro_id, cid);
-                            }}
-                            disabled={isSaving}
-                            title={
-                              requiereImgYFalta
-                                ? `⚠️ ${canalObj.nombre}: requiere al menos 1 foto para activarse en Web/App`
-                                : estaActivo
-                                ? `Activo en ${canalObj.nombre} (clic para desactivar)`
-                                : `Inactivo en ${canalObj.nombre} (clic para activar)`
-                            }
-                            aria-label={`Alternar ${canalObj.nombre}`}
-                            style={{
-                              fontSize: "0.66rem",
-                              fontWeight: 700,
-                              background: isSaving
-                                ? "#F4F2EE"
-                                : estaActivo
-                                ? "#F2F6F3"
-                                : "#F8F7F4",
-                              color: isSaving
-                                ? "#847D74"
-                                : estaActivo
-                                ? "#2B4A36"
-                                : "#847D74",
-                              border: isSaving
-                                ? "1px dashed #D5CFC4"
-                                : estaActivo
-                                ? "1px solid #2F4737"
-                                : "1px dashed #D5CFC4",
-                              borderRadius: "6px",
-                              padding: "2px 6px",
-                              display: "inline-flex",
-                              alignItems: "center",
-                              gap: "3px",
-                              cursor: isSaving ? "wait" : "pointer",
-                              textDecoration: requiereImgYFalta && estaActivo ? "line-through" : "none",
-                              opacity: estaActivo ? 1 : 0.65,
-                              transition: "all 0.15s ease",
-                            }}
-                          >
-                            {isSaving ? (
-                              <RefreshCw size={9} className="eco-icono-girando" />
-                            ) : estaActivo ? (
-                              <CheckCircle2 size={10} color="#2F4737" />
-                            ) : (
-                              <div style={{ width: "8px", height: "8px", borderRadius: "2px", border: "1.5px solid #847D74" }} />
-                            )}
-                            <span>{canalObj.nombre}</span>
-                          </button>
-                        );
-                      }
-
                       return (
-                        <span
+                        <button
                           key={cid}
+                          type="button"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            await handleAlternarCanal(p.pro_id, cid);
+                          }}
+                          disabled={isSaving}
                           title={
                             requiereImgYFalta
-                              ? `Oculto en ${canalObj.nombre}: requiere al menos 1 imagen configurada`
-                              : `Visible en canal: ${canalObj.nombre}`
+                              ? `⚠️ ${canalObj.nombre}: requiere al menos 1 foto para activarse en Web/App`
+                              : estaActivo
+                              ? `Activo en ${canalObj.nombre} (clic para desactivar)`
+                              : `Inactivo en ${canalObj.nombre} (clic para activar)`
                           }
+                          aria-label={`Alternar ${canalObj.nombre}`}
                           style={{
                             fontSize: "0.66rem",
                             fontWeight: 700,
-                            background: "#F4F2EE",
-                            color: requiereImgYFalta ? "#847D74" : "#57524C",
-                            border: `1px solid ${requiereImgYFalta ? "#D5CFC4" : "#E6E2DA"}`,
+                            background: isSaving
+                              ? "#F4F2EE"
+                              : estaActivo
+                              ? "#F2F6F3"
+                              : "#F8F7F4",
+                            color: isSaving
+                              ? "#847D74"
+                              : estaActivo
+                              ? "#2B4A36"
+                              : "#847D74",
+                            border: isSaving
+                              ? "1px dashed #D5CFC4"
+                              : estaActivo
+                              ? "1px solid #2F4737"
+                              : "1px dashed #D5CFC4",
                             borderRadius: "6px",
                             padding: "2px 6px",
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "3px",
-                            textDecoration: requiereImgYFalta ? "line-through" : "none",
-                            opacity: requiereImgYFalta ? 0.6 : 1,
+                            cursor: isSaving ? "wait" : "pointer",
+                            textDecoration: requiereImgYFalta && estaActivo ? "line-through" : "none",
+                            opacity: estaActivo ? 1 : 0.65,
+                            transition: "all 0.15s ease",
                           }}
                         >
+                          {isSaving ? (
+                            <RefreshCw size={9} className="eco-icono-girando" />
+                          ) : estaActivo ? (
+                            <CheckCircle2 size={10} color="#2F4737" />
+                          ) : (
+                            <div style={{ width: "8px", height: "8px", borderRadius: "2px", border: "1.5px solid #847D74" }} />
+                          )}
                           <span>{canalObj.nombre}</span>
-                        </span>
+                        </button>
                       );
                     })}
                   </div>
+                  )}
+
+                  {/* Composición de Set / Combo (visible fielmente igual que en la tienda para el cliente) */}
+                  {esComboActivo && (
+                    <div
+                      style={{
+                        background: "#FAF7FF",
+                        border: "1px solid #DDD6FE",
+                        borderRadius: "10px",
+                        padding: "10px 12px",
+                        marginBottom: "12px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "8px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: "6px",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "0.71rem",
+                            fontWeight: 800,
+                            color: "#5B21B6",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                          }}
+                        >
+                          <Gift size={13} color="#7C3AED" />
+                          <span>
+                            {esEventoProd ? "SET / COMBO PARA EVENTOS" : "SET / COMBO ESPECIAL"}
+                          </span>
+                        </span>
+                        <span
+                          style={{
+                            fontSize: "0.68rem",
+                            fontWeight: 700,
+                            color: "#BE185D",
+                          }}
+                        >
+                          ✨ Incluye {totalPiezasCombo} {totalPiezasCombo === 1 ? "pieza" : "piezas"} • Personalizable
+                        </span>
+                      </div>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                        {componentesComboVista.map((fila, fIdx) => (
+                          <div
+                            key={`${fila.comp.producto_id}-${fila.comp.variante_id || fila.comp.variante_sku || fIdx}`}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: "8px",
+                              background: "#FFFFFF",
+                              border: "1px solid #EDE9FE",
+                              borderRadius: "8px",
+                              padding: "6px 8px",
+                            }}
+                          >
+                            <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0, flex: 1 }}>
+                              {fila.miniatura && (
+                                <img
+                                  src={fila.miniatura}
+                                  alt={fila.nombreMostrar}
+                                  style={{
+                                    width: "34px",
+                                    height: "34px",
+                                    borderRadius: "6px",
+                                    objectFit: "cover",
+                                    flexShrink: 0,
+                                    border: "1px solid #E4E4E7",
+                                  }}
+                                />
+                              )}
+                              <div style={{ minWidth: 0, flex: 1 }}>
+                                <div style={{ fontSize: "0.76rem", fontWeight: 700, color: "#1F1C19", lineHeight: 1.25 }}>
+                                  <span
+                                    style={{
+                                      display: "inline-block",
+                                      background: "#EDE9FE",
+                                      color: "#5B21B6",
+                                      borderRadius: "5px",
+                                      padding: "0 5px",
+                                      fontSize: "0.7rem",
+                                      fontWeight: 800,
+                                      marginRight: "5px",
+                                    }}
+                                  >
+                                    {fila.comp.cantidad_base}×
+                                  </span>
+                                  {fila.nombreMostrar}
+                                </div>
+                                {fila.varianteMostrar && (
+                                  <div style={{ fontSize: "0.68rem", color: "#5B21B6", fontWeight: 600 }}>
+                                    {fila.varianteMostrar}
+                                  </div>
+                                )}
+                                <div style={{ fontSize: "0.68rem", color: "#57524C" }}>
+                                  Unitario: ${fila.pvpUnit.toFixed(2)}
+                                </div>
+                                {fila.escalasHijo[0] && (
+                                  <div style={{ fontSize: "0.66rem", color: "#2F4737", fontWeight: 700, marginTop: "2px" }}>
+                                    🏷️ {describirEscalaVolumen(fila.escalasHijo[0], fila.pvpUnit)}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <div style={{ textAlign: "right", flexShrink: 0 }}>
+                              <div style={{ fontSize: "0.78rem", fontWeight: 800, color: "#1F1C19" }}>
+                                ${fila.subtotalLinea.toFixed(2)}
+                              </div>
+                              {fila.comp.cantidad_base > 1 && (
+                                <div style={{ fontSize: "0.64rem", color: "#847D74" }}>
+                                  ({fila.comp.cantidad_base} × ${fila.pvpUnit.toFixed(2)})
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {sumaSetNominal > 0 && (
+                        <div
+                          style={{
+                            borderTop: "1px dashed #DDD6FE",
+                            paddingTop: "7px",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "3px",
+                            fontSize: "0.74rem",
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", color: "#57524C" }}>
+                            <span>Suma de elementos por separado:</span>
+                            <span style={{ textDecoration: sumaSetNominal > pvpActual ? "line-through" : "none" }}>
+                              ${sumaSetNominal.toFixed(2)}
+                            </span>
+                          </div>
+                          <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, color: "#5B21B6" }}>
+                            <span>
+                              Precio Set Completo{pctDescuentoEfectivo > 0 ? ` (-${pctDescuentoEfectivo}%)` : ""}:
+                            </span>
+                            <span>${pvpActual.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Beneficios / ¿Qué incluye? del Producto y Variante */}
                   {beneficiosLista.length > 0 && (
@@ -2816,64 +3169,170 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     </div>
                   )}
 
-                  {/* Detalle de Precios e Impuestos */}
+                  {/* Detalle de Precios: Vista Cliente fiel al E-Commerce vs Vista Admin tributaria */}
                   {currentVar && (
-                    <div
-                      style={{
-                        background: "#F8F7F4",
-                        borderRadius: "10px",
-                        padding: "12px",
-                        marginTop: "auto",
-                        border: "1px solid #E6E2DA",
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                        <div>
-                          <div style={{ fontSize: "0.75rem", color: "#847D74" }}>
-                            Base Imponible: ${currentVar.var_precio !== undefined ? currentVar.var_precio.toFixed(2) : "0.00"}
-                          </div>
-                          <div style={{ fontSize: "0.7rem", color: "#847D74" }}>
-                            + IVA ({currentVar.var_tarifa_iva_porcentaje ?? 0}%): ${currentVar.monto_iva !== undefined ? currentVar.monto_iva.toFixed(2) : "0.00"}
-                          </div>
+                    modoVista === "cliente" ? (
+                      <div
+                        style={{
+                          background: "#FAF8F5",
+                          borderRadius: "10px",
+                          padding: "12px",
+                          marginTop: "auto",
+                          border: "1px solid #EAE6DF",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "4px",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "baseline", flexWrap: "wrap", gap: "8px" }}>
+                          <span style={{ fontSize: "1.22rem", fontWeight: 800, color: "#1F1C19" }}>
+                            ${pvpActual.toFixed(2)}
+                          </span>
+                          {precioTachadoEfectivo && precioTachadoEfectivo > pvpActual && (
+                            <span
+                              style={{
+                                fontSize: "0.88rem",
+                                color: "#847D74",
+                                textDecoration: "line-through",
+                                fontWeight: 600,
+                              }}
+                            >
+                              ${precioTachadoEfectivo.toFixed(2)}
+                            </span>
+                          )}
+                          {pctDescuentoEfectivo > 0 && (
+                            <span
+                              style={{
+                                background: esComboActivo ? "#7C3AED" : "#BE123C",
+                                color: "#FFFFFF",
+                                fontSize: "0.68rem",
+                                fontWeight: 800,
+                                padding: "2px 7px",
+                                borderRadius: "999px",
+                              }}
+                            >
+                              {esComboActivo
+                                ? `Set -${pctDescuentoEfectivo}% OFF`
+                                : `-${pctDescuentoEfectivo}% OFF`}
+                            </span>
+                          )}
                         </div>
-                        <div style={{ textAlign: "right" }}>
-                          <div style={{ fontSize: "1.02rem", fontWeight: 800, color: "#1F1C19" }}>
-                            ${currentVar.precio_total !== undefined ? currentVar.precio_total.toFixed(2) : "0.00"}
-                          </div>
-                          <div style={{ fontSize: "0.65rem", color: "#2F4737", fontWeight: 700 }}>
-                            TOTAL FACTURABLE
-                          </div>
+                        <div style={{ fontSize: "0.72rem", color: "#57524C" }}>
+                          {esRentaProd
+                            ? `Renta (${normalizarConfiguracionRenta(p.pro_detalle_producto?.renta_config).periodo}) • ${
+                                (currentVar.var_tarifa_iva_porcentaje ?? 0) > 0
+                                  ? `IVA ${currentVar.var_tarifa_iva_porcentaje}%`
+                                  : "IVA 0%"
+                              }`
+                            : (currentVar.var_tarifa_iva_porcentaje ?? 0) > 0
+                            ? `PVP (Inc. IVA ${currentVar.var_tarifa_iva_porcentaje}%)`
+                            : "PVP (Tarifa IVA 0%)"}
                         </div>
+                        {!esComboActivo && escalasVolumenVar[0] && (
+                          <div style={{ fontSize: "0.72rem", fontWeight: 700, color: "#8F6A2E", marginTop: "2px" }}>
+                            🏷️ {describirEscalaVolumen(escalasVolumenVar[0], pvpActual)}
+                          </div>
+                        )}
                       </div>
-                    </div>
+                    ) : (
+                      <div
+                        style={{
+                          background: "#F8F7F4",
+                          borderRadius: "10px",
+                          padding: "12px",
+                          marginTop: "auto",
+                          border: "1px solid #E6E2DA",
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                          <div>
+                            <div style={{ fontSize: "0.75rem", color: "#847D74" }}>
+                              Base Imponible: ${currentVar.var_precio !== undefined ? currentVar.var_precio.toFixed(2) : "0.00"}
+                            </div>
+                            <div style={{ fontSize: "0.7rem", color: "#847D74" }}>
+                              + IVA ({currentVar.var_tarifa_iva_porcentaje ?? 0}%): ${currentVar.monto_iva !== undefined ? currentVar.monto_iva.toFixed(2) : "0.00"}
+                            </div>
+                          </div>
+                          <div style={{ textAlign: "right" }}>
+                            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: "6px" }}>
+                              {precioTachadoEfectivo && precioTachadoEfectivo > pvpActual && (
+                                <span style={{ fontSize: "0.78rem", color: "#847D74", textDecoration: "line-through" }}>
+                                  ${precioTachadoEfectivo.toFixed(2)}
+                                </span>
+                              )}
+                              <div style={{ fontSize: "1.02rem", fontWeight: 800, color: "#1F1C19" }}>
+                                ${pvpActual.toFixed(2)}
+                              </div>
+                            </div>
+                            <div style={{ fontSize: "0.65rem", color: "#2F4737", fontWeight: 700 }}>
+                              TOTAL FACTURABLE
+                            </div>
+                          </div>
+                        </div>
+                        {!esComboActivo && escalasVolumenVar[0] && (
+                          <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#8F6A2E", marginTop: "6px" }}>
+                            🏷️ {describirEscalaVolumen(escalasVolumenVar[0], pvpActual)}
+                          </div>
+                        )}
+                      </div>
+                    )
                   )}
 
-                  {/* Botón de Acción Directa Payphone */}
-                  <button
-                    type="button"
-                    onClick={() => abrirCheckout(p, currentVar?.var_id)}
-                    style={{
-                      marginTop: "16px",
-                      background: esFloristeria ? "#221E1B" : "#221E1B",
-                      color: "#FFFFFF",
-                      border: "none",
-                      padding: "10px 16px",
-                      borderRadius: "10px",
-                      fontSize: "0.85rem",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      gap: "8px",
-                      boxShadow: esFloristeria
-                        ? "0 2px 6px rgba(225, 29, 72, 0.25)"
-                        : "0 2px 6px rgba(2, 132, 199, 0.25)",
-                    }}
-                  >
-                    <CreditCard size={16} />
-                    {esFloristeria ? "Comprar Arreglo con Payphone" : "Contratar y Pagar con Payphone"}
-                  </button>
+                  {/* Botón de Acción Principal (fiel a la tienda en Vista Cliente) */}
+                  {modoVista === "cliente" && esFloristeria ? (
+                    <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
+                      <a
+                        href={urlTiendaPublica}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={`Abrir ficha interactiva de "${p.pro_nombre}" en la tienda`}
+                        aria-label={`Ver ${p.pro_nombre} en tienda`}
+                        style={{
+                          flex: 1,
+                          minHeight: "42px",
+                          background: esEventoProd ? "#2D4734" : "#221E1B",
+                          color: "#FFFFFF",
+                          border: "none",
+                          padding: "10px 14px",
+                          borderRadius: "10px",
+                          fontSize: "0.84rem",
+                          fontWeight: 700,
+                          textDecoration: "none",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "7px",
+                        }}
+                      >
+                        {esEventoProd ? <FileText size={15} /> : <ShoppingBag size={15} />}
+                        <span>{esEventoProd ? "Proforma" : esComboActivo ? "Personalizar / Comprar" : "Comprar"}</span>
+                      </a>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => abrirCheckout(p, currentVar?.var_id)}
+                      style={{
+                        marginTop: "14px",
+                        minHeight: "42px",
+                        background: "#221E1B",
+                        color: "#FFFFFF",
+                        border: "none",
+                        padding: "10px 16px",
+                        borderRadius: "10px",
+                        fontSize: "0.84rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "8px",
+                      }}
+                    >
+                      <CreditCard size={16} />
+                      <span>{esFloristeria ? "Vista Checkout" : "Contratar Servicio"}</span>
+                    </button>
+                  )}
                 </div>
               </div>
             );

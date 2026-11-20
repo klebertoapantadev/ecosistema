@@ -1853,6 +1853,7 @@ export function ModalEditarProducto({
 
   return (
     <div
+      className="modal-comercio-overlay"
       style={{
         position: "fixed",
         inset: 0,
@@ -1865,13 +1866,41 @@ export function ModalEditarProducto({
         padding: "16px",
       }}
     >
+      <style>{`
+        @media (max-width: 640px) {
+          .modal-comercio-overlay {
+            padding: 0 !important;
+            align-items: flex-end !important;
+          }
+          .modal-comercio-dialog {
+            max-width: 100% !important;
+            max-height: 100dvh !important;
+            height: 100dvh !important;
+            border-radius: 0 !important;
+            border-width: 0 !important;
+          }
+          .modal-comercio-dialog input,
+          .modal-comercio-dialog select,
+          .modal-comercio-dialog textarea {
+            font-size: 16px !important;
+          }
+          .modal-comercio-footer {
+            position: sticky !important;
+            bottom: 0 !important;
+            background: rgba(255, 255, 255, 0.97) !important;
+            padding: 10px 0 max(12px, env(safe-area-inset-bottom)) !important;
+            z-index: 8 !important;
+          }
+        }
+      `}</style>
       <div
+        className="modal-comercio-dialog"
         style={{
           background: "#FFFFFF",
           borderRadius: "16px",
           width: "100%",
-          maxWidth: "680px",
-          maxHeight: "92vh",
+          maxWidth: "700px",
+          maxHeight: "92dvh",
           boxShadow: `0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 3px ${colActiva.border}55`,
           border: `2.5px solid ${colActiva.border}`,
           display: "flex",
@@ -5956,6 +5985,7 @@ export function ModalEditarProducto({
 
           {/* Botones de Acción */}
           <div
+            className="modal-comercio-footer"
             style={{
               display: "flex",
               justifyContent: "space-between",

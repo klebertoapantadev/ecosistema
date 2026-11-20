@@ -94,36 +94,62 @@ export function BarraPasosWizardProducto({
   verTodo = false,
   onAlternarVerTodo,
 }: PropsBarraPasosWizardProducto) {
+  const indiceActivo = Math.max(
+    0,
+    PASOS_WIZARD_PRODUCTO.findIndex((p) => p.id === pasoActivo)
+  );
+  const porcentajeProgreso = verTodo
+    ? 100
+    : Math.round(((indiceActivo + 1) / PASOS_WIZARD_PRODUCTO.length) * 100);
+
   return (
     <div
       style={{
-        background: "#F8FAFC",
-        borderBottom: "1px solid #E2E8F0",
-        padding: "10px 16px",
+        background: "#F8F7F4",
+        borderBottom: "1px solid #E6E2DA",
+        padding: "10px 14px 8px",
         display: "flex",
         flexDirection: "column",
         gap: "8px",
+        flexShrink: 0,
       }}
     >
+      <style>{`
+        .barra-pasos-wizard-rail {
+          display: flex;
+          gap: 6px;
+          flex: 1;
+          min-width: 0;
+          overflow-x: auto;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          scroll-snap-type: x proximity;
+          -webkit-overflow-scrolling: touch;
+          padding-bottom: 2px;
+        }
+        .barra-pasos-wizard-rail::-webkit-scrollbar {
+          display: none;
+        }
+        .btn-paso-wizard-item {
+          flex: 0 0 auto;
+          scroll-snap-align: start;
+        }
+        @media (max-width: 640px) {
+          .subtitulo-paso-wizard {
+            display: none !important;
+          }
+        }
+      `}</style>
+
       <div
         style={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          gap: "6px",
-          flexWrap: "wrap",
+          gap: "8px",
         }}
       >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(5, minmax(112px, 1fr))",
-            gap: "6px",
-            flex: 1,
-            overflowX: "auto",
-            paddingBottom: "2px",
-          }}
-        >
+        <div className="barra-pasos-wizard-rail">
           {PASOS_WIZARD_PRODUCTO.map((paso) => {
             const esActivo = !verTodo && pasoActivo === paso.id;
             const listo = Boolean(completados[paso.id]);
@@ -132,33 +158,36 @@ export function BarraPasosWizardProducto({
               <button
                 key={paso.id}
                 type="button"
+                className="btn-paso-wizard-item"
                 onClick={() => {
                   if (verTodo && onAlternarVerTodo) onAlternarVerTodo();
                   onCambiarPaso(paso.id);
                 }}
                 title={`${paso.numero}. ${paso.tituloCorto} — ${paso.subtitulo}`}
                 aria-label={`Paso ${paso.numero}: ${paso.tituloCorto}`}
+                aria-current={esActivo ? "step" : undefined}
                 style={{
-                  display: "flex",
+                  display: "inline-flex",
                   alignItems: "center",
                   gap: "7px",
-                  padding: "8px 10px",
+                  padding: "7px 11px",
+                  minHeight: "40px",
                   borderRadius: "10px",
                   border: esActivo
                     ? `2px solid ${colorPrimario}`
                     : listo
                       ? "1px solid #86EFAC"
-                      : "1px solid #CBD5E1",
+                      : "1px solid #D5CFC4",
                   background: esActivo
                     ? "#FFFFFF"
                     : listo
                       ? "#F0FDF4"
                       : "#FFFFFF",
-                  color: esActivo ? "#0F172A" : "#334155",
+                  color: esActivo ? "#1F1C19" : "#3F3B36",
                   cursor: "pointer",
                   textAlign: "left",
                   boxShadow: esActivo ? `0 2px 8px ${colorPrimario}22` : "none",
-                  minWidth: 0,
+                  whiteSpace: "nowrap",
                 }}
               >
                 <span
@@ -170,8 +199,8 @@ export function BarraPasosWizardProducto({
                       ? colorPrimario
                       : listo
                         ? "#10B981"
-                        : "#E2E8F0",
-                    color: esActivo || listo ? "#FFFFFF" : "#475569",
+                        : "#E6E2DA",
+                    color: esActivo || listo ? "#FFFFFF" : "#57524C",
                     fontSize: "0.72rem",
                     fontWeight: 800,
                     display: "inline-flex",
@@ -183,7 +212,7 @@ export function BarraPasosWizardProducto({
                   {listo && !esActivo ? <Check size={12} /> : paso.numero}
                 </span>
 
-                <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ minWidth: 0 }}>
                   <div
                     style={{
                       display: "flex",
@@ -191,22 +220,19 @@ export function BarraPasosWizardProducto({
                       gap: "4px",
                       fontSize: "0.75rem",
                       fontWeight: esActivo ? 800 : 700,
-                      color: esActivo ? colorPrimario : "#1E293B",
+                      color: esActivo ? colorPrimario : "#1F1C19",
                       whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
                     }}
                   >
                     {iconoPaso(paso.id, 12)}
                     <span>{paso.tituloCorto}</span>
                   </div>
                   <div
+                    className="subtitulo-paso-wizard"
                     style={{
                       fontSize: "0.65rem",
-                      color: "#64748B",
+                      color: "#6B655E",
                       whiteSpace: "nowrap",
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
                     }}
                   >
                     {paso.subtitulo}
@@ -227,21 +253,45 @@ export function BarraPasosWizardProducto({
               display: "inline-flex",
               alignItems: "center",
               gap: "5px",
-              padding: "7px 10px",
+              padding: "8px 10px",
+              minHeight: "40px",
               borderRadius: "8px",
-              border: verTodo ? `1.5px solid ${colorPrimario}` : "1px solid #CBD5E1",
+              border: verTodo ? `1.5px solid ${colorPrimario}` : "1px solid #D5CFC4",
               background: verTodo ? `${colorPrimario}14` : "#FFFFFF",
-              color: verTodo ? colorPrimario : "#475569",
+              color: verTodo ? colorPrimario : "#57524C",
               fontSize: "0.72rem",
               fontWeight: 700,
               cursor: "pointer",
               flexShrink: 0,
+              whiteSpace: "nowrap",
             }}
           >
             <LayoutList size={13} />
-            <span>{verTodo ? "Modo Pasos" : "Ver Todo"}</span>
+            <span>{verTodo ? "Pasos" : "Ver Todo"}</span>
           </button>
         )}
+      </div>
+
+      {/* Barra de progreso del asistente */}
+      <div
+        aria-hidden="true"
+        style={{
+          height: "3px",
+          width: "100%",
+          borderRadius: "999px",
+          background: "#E6E2DA",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            height: "100%",
+            width: `${porcentajeProgreso}%`,
+            background: colorPrimario,
+            borderRadius: "999px",
+            transition: "width 0.2s ease",
+          }}
+        />
       </div>
     </div>
   );

@@ -867,11 +867,14 @@ export function ModalDetalleProducto() {
                   justifyContent: 'space-between',
                   gap: '8px',
                   flexWrap: 'wrap',
+                  paddingRight: '48px',
                 }}
               >
                 <span className="categoria-pill-modal">
                   {esComboActivo
-                    ? '🎁 Set / Combo para Eventos'
+                    ? esProductoEvento
+                      ? '🎁 Set / Combo para Eventos'
+                      : '🎁 Set / Combo Especial'
                     : producto.esCondolencias &&
                       (!producto.categoriaNombre ||
                         producto.categoriaNombre.toLowerCase().includes('condol'))
@@ -1378,20 +1381,23 @@ export function ModalDetalleProducto() {
                                   style={{
                                     border: 'none',
                                     background: 'transparent',
-                                    padding: '5px 8px',
+                                    minWidth: '36px',
+                                    minHeight: '36px',
+                                    padding: '6px 10px',
                                     cursor: 'pointer',
                                     display: 'inline-flex',
                                     alignItems: 'center',
+                                    justifyContent: 'center',
                                     color: '#27272A',
                                   }}
                                 >
-                                  <Minus size={13} />
+                                  <Minus size={14} />
                                 </button>
                                 <span
                                   style={{
-                                    minWidth: '24px',
+                                    minWidth: '26px',
                                     textAlign: 'center',
-                                    fontSize: '0.82rem',
+                                    fontSize: '0.84rem',
                                     fontWeight: 800,
                                     color: '#18181B',
                                   }}
@@ -1414,14 +1420,17 @@ export function ModalDetalleProducto() {
                                   style={{
                                     border: 'none',
                                     background: 'transparent',
-                                    padding: '5px 8px',
+                                    minWidth: '36px',
+                                    minHeight: '36px',
+                                    padding: '6px 10px',
                                     cursor: 'pointer',
                                     display: 'inline-flex',
                                     alignItems: 'center',
+                                    justifyContent: 'center',
                                     color: '#27272A',
                                   }}
                                 >
-                                  <Plus size={13} />
+                                  <Plus size={14} />
                                 </button>
                               </div>
                               <span
@@ -1468,14 +1477,15 @@ export function ModalDetalleProducto() {
                                     title={`Elegir ${vHijo.nombre} ($${vHijo.pvp.toFixed(2)})`}
                                     aria-label={`Elegir ${vHijo.nombre}`}
                                     style={{
-                                      padding: '4px 9px',
+                                      padding: '7px 12px',
+                                      minHeight: '34px',
                                       borderRadius: '999px',
                                       border: activaVar
                                         ? '1.5px solid #18181B'
                                         : '1px solid #E4E4E7',
                                       background: activaVar ? '#18181B' : '#FAFAFA',
                                       color: activaVar ? '#FFFFFF' : '#3F3F46',
-                                      fontSize: '0.73rem',
+                                      fontSize: '0.75rem',
                                       fontWeight: 600,
                                       cursor: 'pointer',
                                     }}
@@ -1766,20 +1776,23 @@ export function ModalDetalleProducto() {
                       style={{
                         border: 'none',
                         background: 'transparent',
+                        minWidth: '38px',
+                        minHeight: '38px',
                         padding: '6px 10px',
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
+                        justifyContent: 'center',
                         color: '#27272A',
                       }}
                     >
-                      <Minus size={14} />
+                      <Minus size={15} />
                     </button>
                     <span
                       style={{
-                        minWidth: '28px',
+                        minWidth: '30px',
                         textAlign: 'center',
-                        fontSize: '0.88rem',
+                        fontSize: '0.9rem',
                         fontWeight: 800,
                         color: '#18181B',
                       }}
@@ -1794,14 +1807,17 @@ export function ModalDetalleProducto() {
                       style={{
                         border: 'none',
                         background: 'transparent',
+                        minWidth: '38px',
+                        minHeight: '38px',
                         padding: '6px 10px',
                         cursor: 'pointer',
                         display: 'inline-flex',
                         alignItems: 'center',
+                        justifyContent: 'center',
                         color: '#27272A',
                       }}
                     >
-                      <Plus size={14} />
+                      <Plus size={15} />
                     </button>
                   </div>
                 </div>
@@ -2088,7 +2104,7 @@ export function ModalDetalleProducto() {
             )}
 
             {/* Botón Principal de Adición */}
-            <div className="fila-botones-modal-accion">
+            <div className="fila-botones-modal-accion pie-acciones-modal-sticky">
               {(() => {
                 const sumaExtras = complementosSeleccionados.reduce((acc, cId) => {
                   const c = productosComplementos.find((p) => p.id === cId);

@@ -828,6 +828,10 @@
   flex-wrap: wrap;
 }
 
+.fila-selectores-vitrina {
+  display: contents;
+}
+
 .campo-busqueda-icono {
   position: relative;
   display: flex;
@@ -4005,16 +4009,24 @@
 
   /* Vitrina */
   .seccion-vitrina-catalogo {
-    padding: 40px 16px 60px;
+    padding: 26px 14px 96px;
   }
   .cabecera-vitrina {
     flex-direction: column;
     align-items: stretch;
-    gap: 16px;
+    gap: 12px;
+    margin-bottom: 14px;
   }
   .barra-busqueda-vitrina {
     flex-direction: column;
     align-items: stretch;
+    gap: 8px;
+  }
+  .fila-selectores-vitrina {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
   }
   .campo-busqueda-icono {
     min-width: 100%;
@@ -4022,11 +4034,39 @@
   .selector-orden-wrapper,
   .selector-presupuesto-wrapper {
     width: 100%;
-    justify-content: space-between;
+    min-width: 0;
+    justify-content: flex-start;
+    padding: 4px 10px;
+    gap: 6px;
+  }
+  .selector-orden-wrapper svg,
+  .selector-presupuesto-wrapper svg {
+    flex-shrink: 0;
   }
   .btn-filtro-ofertas {
     width: 100%;
+    min-height: 40px;
     justify-content: center;
+  }
+  .pills-categorias-scroll {
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+  }
+  .pill-categoria {
+    scroll-snap-align: start;
+    min-height: 38px;
+    padding: 7px 14px;
+    font-size: 0.83rem;
+  }
+  .control-cantidad-pills button {
+    width: 36px;
+    height: 36px;
+  }
+  .flecha-carrusel {
+    width: 34px;
+    height: 34px;
   }
 
   /* Modales estilo Bottom Sheet en móviles */
@@ -4035,18 +4075,59 @@
     align-items: flex-end;
   }
   .modal-contenido-detalle-producto {
-    max-height: 92vh;
+    max-height: 94dvh;
     border-radius: 24px 24px 0 0;
-    padding: 20px 16px;
+    padding: 16px 14px 0;
+    overscroll-behavior: contain;
+  }
+  .modal-contenido-detalle-producto .btn-cerrar-modal {
+    top: 12px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(34, 29, 26, 0.1);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.16);
   }
   .modal-contenido-checkout {
-    max-height: 94vh;
+    max-height: 94dvh;
     border-radius: 24px 24px 0 0;
-    padding: 20px 16px;
+    padding: 18px 14px max(18px, env(safe-area-inset-bottom));
+    overscroll-behavior: contain;
   }
   .grid-detalle-producto {
     padding: 0;
-    gap: 20px;
+    gap: 16px;
+  }
+  .visor-foto-principal {
+    aspect-ratio: 4 / 3.2;
+    max-height: 38dvh;
+  }
+  .titulo-modal-producto {
+    font-size: 1.45rem;
+  }
+  .precio-pvp-destacado {
+    font-size: 1.55rem;
+  }
+  .columna-info-modal {
+    gap: 14px;
+  }
+  .pie-acciones-modal-sticky {
+    position: sticky;
+    bottom: 0;
+    z-index: 15;
+    margin: 4px -14px 0;
+    padding: 12px 14px max(14px, env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-top: 1px solid var(--linea);
+    box-shadow: 0 -6px 18px rgba(34, 29, 26, 0.08);
+  }
+  .pie-acciones-modal-sticky .btn-agregar-modal-grande {
+    padding: 13px 14px;
+    font-size: 0.92rem;
+    min-height: 46px;
   }
 
   /* Dedicatoria en Móvil */

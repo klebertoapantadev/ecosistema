@@ -185,8 +185,8 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
     if (producto.esCombo) {
       return {
         clase: 'chip-etiqueta chip-oferta',
-        texto: tieneOferta && porcentajeDescuento > 0 ? `Set -${porcentajeDescuento}%` : 'Set evento',
-        titulo: tieneOferta ? `Set completo con ahorro de $${ahorroMonto.toFixed(2)}` : 'Set de eventos configurable',
+        texto: tieneOferta && porcentajeDescuento > 0 ? `Set -${porcentajeDescuento}%` : 'Set especial',
+        titulo: tieneOferta ? `Set completo con ahorro de $${ahorroMonto.toFixed(2)}` : 'Set configurable',
       };
     }
     if (tieneOferta && porcentajeDescuento > 0) {
