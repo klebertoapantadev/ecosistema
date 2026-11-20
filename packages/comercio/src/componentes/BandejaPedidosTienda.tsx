@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DataGrid, SelectConBuscador, type ColumnaDataGrid } from "@eco/datagrid";
 import {
   Calendar,
@@ -20,6 +20,7 @@ import {
   RotateCcw,
   Save,
   Search,
+  SlidersHorizontal,
   Table2,
   Trash2,
   Truck,
@@ -309,9 +310,11 @@ export function BandejaPedidosTienda({
   const [pedidoAEliminar, setPedidoAEliminar] = useState<PedidoTiendaRegistrado | null>(null);
   const [motivoEliminacion, setMotivoEliminacion] = useState<string>("");
   const [procesandoEliminacion, setProcesandoEliminacion] = useState<boolean>(false);
-  const [modoVista, setModoVista] = useState<"tabla" | "kanban">("tabla");
+  const [modoVista, setModoVista] = useState<"tabla" | "kanban">("kanban");
   const [filtroFecha, setFiltroFecha] = useState<FiltroFechaPedidos>("HOY");
   const [busquedaKanban, setBusquedaKanban] = useState<string>("");
+  const [opcionesAbiertas, setOpcionesAbiertas] = useState<boolean>(false);
+  const opcionesContenedorRef = useRef<HTMLDivElement | null>(null);
   const [arrastrandoPedidoId, setArrastrandoPedidoId] = useState<string | null>(null);
   const [estadoHoverKanban, setEstadoHoverKanban] = useState<string | null>(null);
   const hoyEcuadorYmd = useMemo(() => obtenerFechaHoyEcuadorYmd(), []);
@@ -319,29 +322,47 @@ export function BandejaPedidosTienda({
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
-      const guardado = localStorage.getItem(`eco_pedidos_modo_vista_${negocio.trim().toLowerCase()}`);
+      const guardado = localStorage.getItem(
+        `eco_pedidos_modo_vista_v2_${negocio.trim().toLowerCase()}`
+      );
       if (guardado === "kanban" || guardado === "tabla") {
         setModoVista(guardado);
-      }
-      const fechaGuardada = localStorage.getItem(
-        `eco_pedidos_filtro_fecha_${negocio.trim().toLowerCase()}`
-      ) as FiltroFechaPedidos | null;
-      if (
-        fechaGuardada &&
-        TABS_FECHA_PEDIDOS.some((t) => t.clave === fechaGuardada)
-      ) {
-        setFiltroFecha(fechaGuardada);
       }
     } catch {
       // Ignorar
     }
   }, [negocio]);
 
-  const cambiarFiltroFecha = useCallback(
-    (nuevo: FiltroFechaPedidos) => {
-      setFiltroFecha(nuevo);
+  useEffect(() => {
+    if (!opcionesAbiertas || typeof window === "undefined") return;
+    const onKeyDown = (ev: KeyboardEvent) => {
+      if (ev.key === "Escape") setOpcionesAbiertas(false);
+    };
+    const onPointerDown = (ev: MouseEvent) => {
+      if (
+        opcionesContenedorRef.current &&
+        !opcionesContenedorRef.current.contains(ev.target as Node)
+      ) {
+        setOpcionesAbiertas(false);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    document.addEventListener("mousedown", onPointerDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.removeEventListener("mousedown", onPointerDown);
+    };
+  }, [opcionesAbiertas]);
+
+  const cambiarFiltroFecha = useCallback((nuevo: FiltroFechaPedidos) => {
+    setFiltroFecha(nuevo);
+  }, []);
+
+  const cambiarModoVista = useCallback(
+    (nuevo: "tabla" | "kanban") => {
+      setModoVista(nuevo);
       try {
-        localStorage.setItem(`eco_pedidos_filtro_fecha_${negocio.trim().toLowerCase()}`, nuevo);
+        localStorage.setItem(`eco_pedidos_modo_vista_v2_${negocio.trim().toLowerCase()}`, nuevo);
       } catch {
         // Ignorar
       }
@@ -349,17 +370,12 @@ export function BandejaPedidosTienda({
     [negocio]
   );
 
-  const cambiarModoVista = useCallback(
-    (nuevo: "tabla" | "kanban") => {
-      setModoVista(nuevo);
-      try {
-        localStorage.setItem(`eco_pedidos_modo_vista_${negocio.trim().toLowerCase()}`, nuevo);
-      } catch {
-        // Ignorar
-      }
-    },
-    [negocio]
-  );
+  const restablecerOpciones = useCallback(() => {
+    setFiltroFecha("HOY");
+    setFiltroClasificacion("TODOS");
+    setVerPapelera(false);
+    setBusquedaKanban("");
+  }, []);
 
   const abrirEdicionDatosPedido = useCallback((p: PedidoTiendaRegistrado) => {
     const primerDed = p.items.find((it) => it.dedicatoria?.mensaje)?.dedicatoria;
@@ -1274,259 +1290,606 @@ export function BandejaPedidosTienda({
     ]
   );
 
+  const etiquetaFechaActiva =
+    TABS_FECHA_PEDIDOS.find((t) => t.clave === filtroFecha)?.etiqueta ?? "Hoy";
+  const etiquetaClasificacionActiva =
+    filtroClasificacion === "TODOS"
+      ? "Todos"
+      : obtenerDefinicionClasificacionPedido(filtroClasificacion).etiqueta;
+  const cantidadFiltrosNoDefecto =
+    (filtroFecha !== "HOY" ? 1 : 0) +
+    (filtroClasificacion !== "TODOS" ? 1 : 0) +
+    (verPapelera ? 1 : 0);
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
       <style>{`
+        .eco-pedidos-barra-unica {
+          background: #FFFFFF;
+          border: 1px solid #E6E2DA;
+          border-radius: 12px;
+          padding: 8px 12px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+          position: relative;
+        }
+        .eco-pedidos-resumen-chips {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          flex-wrap: wrap;
+          min-width: 0;
+        }
+        .eco-pedidos-opciones-popover {
+          position: absolute;
+          top: calc(100% + 8px);
+          right: 0;
+          width: min(440px, calc(100vw - 24px));
+          background: #FFFFFF;
+          border: 1px solid #D5CFC4;
+          border-radius: 14px;
+          box-shadow: 0 20px 44px rgba(24, 21, 18, 0.16);
+          padding: 14px;
+          z-index: 60;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          box-sizing: border-box;
+        }
+        .eco-pedidos-opciones-backdrop-movil {
+          display: none;
+        }
         @media (max-width: 639px) {
           .eco-solo-escritorio-pedidos {
             display: none !important;
           }
-          .eco-barra-horizontal-movil {
-            flex-wrap: nowrap !important;
-            overflow-x: auto !important;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none;
+          .eco-pedidos-barra-unica {
+            padding: 8px 10px;
+            gap: 7px;
           }
-          .eco-barra-horizontal-movil::-webkit-scrollbar {
-            display: none;
+          .eco-pedidos-buscador-wrap {
+            flex: 1 1 0 !important;
+            min-width: 140px !important;
+            order: 1;
           }
-          .eco-barra-horizontal-movil > * {
-            flex-shrink: 0 !important;
+          .eco-pedidos-btn-opciones {
+            order: 2;
+            margin-left: 0 !important;
           }
-          .eco-barra-clasif-movil {
-            flex-wrap: nowrap !important;
-            flex-shrink: 0 !important;
+          .eco-pedidos-resumen-chips {
+            order: 3;
+            flex-basis: 100%;
           }
-          .eco-barra-clasif-movil > button {
-            flex-shrink: 0 !important;
-            white-space: nowrap !important;
+          .eco-pedidos-opciones-backdrop-movil {
+            display: block;
+            position: fixed;
+            inset: 0;
+            background: rgba(24, 21, 18, 0.45);
+            backdrop-filter: blur(2px);
+            z-index: 9998;
+          }
+          .eco-pedidos-opciones-popover {
+            position: fixed;
+            top: auto;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100%;
+            max-height: 86dvh;
+            overflow-y: auto;
+            border-radius: 16px 16px 0 0;
+            border-bottom: none;
+            padding: 14px 14px calc(16px + env(safe-area-inset-bottom, 0px));
+            z-index: 9999;
           }
         }
       `}</style>
 
-      {/* Barra de TABS por Fechas (Hoy / Ayer / Esta Semana / Semana ±3 días / Mes / Todos) */}
-      <div
-        role="tablist"
-        aria-label="Filtrar pedidos por fecha"
-        className="eco-barra-horizontal-movil"
-        style={{
-          background: "#FFFFFF",
-          border: "1px solid #E6E2DA",
-          borderRadius: "12px",
-          padding: "8px 14px",
-          display: "flex",
-          alignItems: "center",
-          gap: "6px",
-          flexWrap: "wrap",
-        }}
-      >
-        <span
-          className="eco-solo-escritorio-pedidos"
+      {/* BARRA ÚNICA COMPACTA: BUSCADOR / RESUMEN ACTIVO + BOTÓN "OPCIONES" */}
+      <div className="eco-pedidos-barra-unica" ref={opcionesContenedorRef}>
+        {modoVista === "kanban" && (
+          <div className="eco-pedidos-buscador-wrap" style={{ position: "relative", flex: "1 1 190px", minWidth: 0 }}>
+            <Search
+              size={14}
+              style={{
+                position: "absolute",
+                left: "10px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                color: "#847D74",
+                pointerEvents: "none",
+              }}
+            />
+            <input
+              type="search"
+              value={busquedaKanban}
+              onChange={(e) => setBusquedaKanban(e.target.value)}
+              placeholder="Buscar pedido, cliente o producto..."
+              aria-label="Buscar pedidos en tablero Kanban"
+              style={{
+                width: "100%",
+                padding: "7px 10px 7px 30px",
+                borderRadius: "9px",
+                border: "1px solid #D5CFC4",
+                background: "#F8F7F4",
+                fontSize: "0.82rem",
+                color: "#1F1C19",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+        )}
+
+        {/* Resumen discreto de filtros activos (clic abre Opciones) */}
+        <div
+          className="eco-pedidos-resumen-chips"
+          style={{ marginRight: modoVista === "tabla" ? "auto" : undefined }}
+        >
+          <button
+            type="button"
+            onClick={() => setOpcionesAbiertas((prev) => !prev)}
+            title="Filtros activos — abrir Opciones"
+            aria-label={`Filtros activos: ${etiquetaFechaActiva}, ${etiquetaClasificacionActiva}`}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              padding: "5px 10px",
+              borderRadius: "999px",
+              border: "1px solid #E6E2DA",
+              background: "#F8F7F4",
+              color: "#57524C",
+              fontSize: "0.74rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            <Calendar size={12} color="#2F4737" />
+            <span>{etiquetaFechaActiva}</span>
+            {filtroClasificacion !== "TODOS" && (
+              <>
+                <span style={{ color: "#C5BEB4" }}>·</span>
+                <span style={{ color: "#1F1C19" }}>{etiquetaClasificacionActiva}</span>
+              </>
+            )}
+            <span
+              style={{
+                minWidth: "18px",
+                height: "16px",
+                padding: "0 5px",
+                borderRadius: "999px",
+                background: "#E6E2DA",
+                color: "#1F1C19",
+                fontSize: "0.68rem",
+                fontWeight: 800,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {pedidosFiltrados.length}
+            </span>
+          </button>
+
+          {verPapelera && (
+            <button
+              type="button"
+              onClick={() => setVerPapelera(false)}
+              title="Salir de la Papelera y volver a pedidos activos"
+              aria-label="Salir de Papelera"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+                padding: "5px 9px",
+                borderRadius: "999px",
+                border: "1px solid #E5CACA",
+                background: "#FAF2F2",
+                color: "#8A2E2E",
+                fontSize: "0.72rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              <Trash2 size={11} />
+              <span>Papelera</span>
+              <X size={11} />
+            </button>
+          )}
+        </div>
+
+        {/* BOTÓN ÚNICO DE OPCIONES */}
+        <button
+          type="button"
+          className="eco-pedidos-btn-opciones"
+          onClick={() => setOpcionesAbiertas((prev) => !prev)}
+          aria-expanded={opcionesAbiertas}
+          aria-haspopup="dialog"
+          title="Abrir filtros, visualización y acciones"
+          aria-label="Opciones"
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: "5px",
-            fontSize: "0.75rem",
+            justifyContent: "center",
+            gap: "6px",
+            padding: "7px 12px",
+            minHeight: "34px",
+            borderRadius: "9px",
+            border: opcionesAbiertas ? "1px solid #1F1C19" : "1px solid #D5CFC4",
+            background: opcionesAbiertas ? "#1F1C19" : "#FFFFFF",
+            color: opcionesAbiertas ? "#FFFFFF" : "#1F1C19",
+            fontSize: "0.78rem",
             fontWeight: 700,
-            color: "#57524C",
-            marginRight: "4px",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+            flexShrink: 0,
+            marginLeft: modoVista === "kanban" ? "auto" : undefined,
           }}
         >
-          <Calendar size={14} color="#2F4737" />
-          <span>Fecha:</span>
-        </span>
-
-        {TABS_FECHA_PEDIDOS.map((tab) => {
-          const activo = filtroFecha === tab.clave;
-          const conteo = conteosFecha[tab.clave] ?? 0;
-          return (
-            <button
-              key={tab.clave}
-              type="button"
-              role="tab"
-              aria-selected={activo}
-              onClick={() => cambiarFiltroFecha(tab.clave)}
-              title={tab.descripcion}
-              aria-label={`${tab.etiqueta} (${conteo})`}
+          <SlidersHorizontal size={14} />
+          <span>Opciones</span>
+          {cantidadFiltrosNoDefecto > 0 && (
+            <span
               style={{
+                minWidth: "17px",
+                height: "17px",
+                padding: "0 5px",
+                borderRadius: "999px",
+                background: opcionesAbiertas ? "rgba(255,255,255,0.22)" : "#2F4737",
+                color: "#FFFFFF",
+                fontSize: "0.67rem",
+                fontWeight: 800,
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "6px",
-                padding: "6px 12px",
-                borderRadius: "999px",
-                border: activo ? "1px solid #1F1C19" : "1px solid #E6E2DA",
-                background: activo ? "#1F1C19" : "#F8F7F4",
-                color: activo ? "#FFFFFF" : "#57524C",
-                fontSize: "0.77rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                transition: "all 0.15s ease",
-                whiteSpace: "nowrap",
-                flexShrink: 0,
+                justifyContent: "center",
               }}
             >
-              <span>{tab.etiqueta}</span>
-              <span
+              {cantidadFiltrosNoDefecto}
+            </span>
+          )}
+        </button>
+
+        {/* PANEL DESPLEGABLE / HOJA INFERIOR DE OPCIONES */}
+        {opcionesAbiertas && (
+          <>
+            <div
+              className="eco-pedidos-opciones-backdrop-movil"
+              onClick={() => setOpcionesAbiertas(false)}
+              aria-hidden="true"
+            />
+            <div
+              role="dialog"
+              aria-label="Opciones de pedidos"
+              className="eco-pedidos-opciones-popover"
+            >
+              {/* Encabezado del panel */}
+              <div
                 style={{
-                  minWidth: "20px",
-                  height: "18px",
-                  padding: "0 6px",
-                  borderRadius: "999px",
-                  background: activo ? "rgba(255,255,255,0.2)" : "#E6E2DA",
-                  color: activo ? "#FFFFFF" : "#57524C",
-                  fontSize: "0.7rem",
-                  fontWeight: 800,
-                  display: "inline-flex",
+                  display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
+                  justifyContent: "space-between",
+                  paddingBottom: "8px",
+                  borderBottom: "1px solid #E6E2DA",
                 }}
               >
-                {conteo}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                  <SlidersHorizontal size={15} color="#2F4737" />
+                  <strong style={{ fontSize: "0.9rem", color: "#1F1C19" }}>Opciones</strong>
+                </div>
+                <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                  {(cantidadFiltrosNoDefecto > 0 || busquedaKanban.trim() !== "") && (
+                    <button
+                      type="button"
+                      onClick={restablecerOpciones}
+                      title="Volver a Hoy, Todos y pedidos activos"
+                      aria-label="Restablecer filtros"
+                      style={{
+                        border: "none",
+                        background: "transparent",
+                        color: "#2F4737",
+                        fontSize: "0.74rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        padding: "4px 6px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <RotateCcw size={12} />
+                      <span>Restablecer</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setOpcionesAbiertas(false)}
+                    title="Cerrar opciones"
+                    aria-label="Cerrar opciones"
+                    style={{
+                      width: "30px",
+                      height: "30px",
+                      borderRadius: "8px",
+                      border: "1px solid #E6E2DA",
+                      background: "#F8F7F4",
+                      color: "#57524C",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+              </div>
 
-      {/* Barra profesional de Clasificación Operativa */}
-      <div
-        className="eco-barra-horizontal-movil"
-        style={{
-          background: "#FFFFFF",
-          border: "1px solid #E6E2DA",
-          borderRadius: "12px",
-          padding: "10px 14px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: "10px",
-          flexWrap: "wrap",
-        }}
-      >
-        <BarraFiltroClasificacionPedido
-          seleccionada={filtroClasificacion}
-          onSeleccionar={setFiltroClasificacion}
-          conteos={conteosClasificacion}
-          totalGeneral={pedidosPorFecha.length}
-          ocultarSinPedidos
-          deslizableMovil
-        />
+              {/* 1. FILTROS: FECHA Y TIPO */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "11px" }}>
+                <div>
+                  <span
+                    style={{
+                      display: "block",
+                      fontSize: "0.71rem",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.04em",
+                      color: "#847D74",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Filtro de fecha
+                  </span>
+                  <div
+                    role="tablist"
+                    aria-label="Filtrar pedidos por fecha"
+                    style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}
+                  >
+                    {TABS_FECHA_PEDIDOS.map((tab) => {
+                      const activo = filtroFecha === tab.clave;
+                      const conteo = conteosFecha[tab.clave] ?? 0;
+                      return (
+                        <button
+                          key={tab.clave}
+                          type="button"
+                          role="tab"
+                          aria-selected={activo}
+                          onClick={() => cambiarFiltroFecha(tab.clave)}
+                          title={tab.descripcion}
+                          aria-label={`${tab.etiqueta} (${conteo})`}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            padding: "6px 11px",
+                            borderRadius: "999px",
+                            border: activo ? "1px solid #1F1C19" : "1px solid #E6E2DA",
+                            background: activo ? "#1F1C19" : "#F8F7F4",
+                            color: activo ? "#FFFFFF" : "#57524C",
+                            fontSize: "0.75rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <span>{tab.etiqueta}</span>
+                          <span
+                            style={{
+                              minWidth: "18px",
+                              height: "17px",
+                              padding: "0 5px",
+                              borderRadius: "999px",
+                              background: activo ? "rgba(255,255,255,0.2)" : "#E6E2DA",
+                              color: activo ? "#FFFFFF" : "#57524C",
+                              fontSize: "0.68rem",
+                              fontWeight: 800,
+                              display: "inline-flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {conteo}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-        <div
-          className="eco-barra-clasif-movil"
-          style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}
-        >
-          <div
-            role="group"
-            aria-label="Modo de visualización"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              padding: "3px",
-              borderRadius: "999px",
-              background: "#F4F2EE",
-              border: "1px solid #D5CFC4",
-              gap: "2px",
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => cambiarModoVista("tabla")}
-              title="Vista de tabla detallada con exportación Excel/CSV"
-              aria-label="Modo Tabla"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px",
-                padding: "5px 11px",
-                borderRadius: "999px",
-                border: "none",
-                background: modoVista === "tabla" ? "#1F1C19" : "transparent",
-                color: modoVista === "tabla" ? "#FFFFFF" : "#57524C",
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              <Table2 size={13} />
-              <span>Tabla</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => cambiarModoVista("kanban")}
-              title="Tablero Kanban por estado (oculta columnas vacías)"
-              aria-label="Modo Kanban"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px",
-                padding: "5px 11px",
-                borderRadius: "999px",
-                border: "none",
-                background: modoVista === "kanban" ? "#1F1C19" : "transparent",
-                color: modoVista === "kanban" ? "#FFFFFF" : "#57524C",
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              <Columns3 size={13} />
-              <span>Kanban</span>
-            </button>
-          </div>
+                <div>
+                  <span
+                    style={{
+                      display: "block",
+                      fontSize: "0.71rem",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.04em",
+                      color: "#847D74",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Tipo de pedido
+                  </span>
+                  <BarraFiltroClasificacionPedido
+                    seleccionada={filtroClasificacion}
+                    onSeleccionar={setFiltroClasificacion}
+                    conteos={conteosClasificacion}
+                    totalGeneral={pedidosPorFecha.length}
+                    ocultarSinPedidos
+                  />
+                </div>
+              </div>
 
-          {esAdminEstricto && (
-            <button
-              type="button"
-              onClick={() => setVerPapelera((prev) => !prev)}
-              title="Ver pedidos eliminados lógicamente por el equipo (solo Administrador)"
-              aria-label="Papelera de Pedidos"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "6px 12px",
-                borderRadius: "999px",
-                border: verPapelera ? "1px solid #8A2E2E" : "1px solid #E5CACA",
-                background: verPapelera ? "#8A2E2E" : "#FAF2F2",
-                color: verPapelera ? "#FFFFFF" : "#8A2E2E",
-                fontSize: "0.76rem",
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-            >
-              <Trash2 size={13} />
-              <span>
-                {verPapelera
-                  ? `Viendo Papelera (${pedidosEliminados.length}) · Volver`
-                  : `Papelera (${pedidosEliminados.length})`}
-              </span>
-            </button>
-          )}
+              {/* 2. VISUALIZACIÓN (Kanban por defecto / Tabla) */}
+              <div style={{ paddingTop: "10px", borderTop: "1px dashed #E6E2DA" }}>
+                <span
+                  style={{
+                    display: "block",
+                    fontSize: "0.71rem",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                    color: "#847D74",
+                    marginBottom: "6px",
+                  }}
+                >
+                  Visualización
+                </span>
+                <div
+                  role="group"
+                  aria-label="Modo de visualización"
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    padding: "3px",
+                    borderRadius: "10px",
+                    background: "#F4F2EE",
+                    border: "1px solid #E6E2DA",
+                    gap: "4px",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => cambiarModoVista("kanban")}
+                    title="Tablero Kanban por estado (por defecto)"
+                    aria-label="Modo Kanban"
+                    aria-pressed={modoVista === "kanban"}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      padding: "8px 10px",
+                      borderRadius: "8px",
+                      border: "none",
+                      background: modoVista === "kanban" ? "#1F1C19" : "transparent",
+                      color: modoVista === "kanban" ? "#FFFFFF" : "#57524C",
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Columns3 size={14} />
+                    <span>Kanban</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => cambiarModoVista("tabla")}
+                    title="Vista de tabla detallada con exportación Excel/CSV"
+                    aria-label="Modo Tabla"
+                    aria-pressed={modoVista === "tabla"}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      padding: "8px 10px",
+                      borderRadius: "8px",
+                      border: "none",
+                      background: modoVista === "tabla" ? "#1F1C19" : "transparent",
+                      color: modoVista === "tabla" ? "#FFFFFF" : "#57524C",
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Table2 size={14} />
+                    <span>Tabla</span>
+                  </button>
+                </div>
+              </div>
 
-          <button
-            type="button"
-            onClick={() => void cargarPedidos()}
-            disabled={cargando}
-            title="Actualizar pedidos"
-            aria-label="Actualizar"
-            className="eco-solo-escritorio-pedidos"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "32px",
-              height: "32px",
-              borderRadius: "999px",
-              border: "1px solid #D5CFC4",
-              background: "#FFFFFF",
-              color: "#221E1B",
-              cursor: cargando ? "wait" : "pointer",
-            }}
-          >
-            {cargando ? <Loader2 size={14} /> : <RefreshCw size={14} />}
-          </button>
-        </div>
+              {/* 3. ACCIONES EXTRA (Actualizar, Papelera) */}
+              <div
+                style={{
+                  paddingTop: "10px",
+                  borderTop: "1px dashed #E6E2DA",
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "8px",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => void cargarPedidos()}
+                  disabled={cargando}
+                  title="Recargar pedidos desde el servidor"
+                  aria-label="Actualizar pedidos"
+                  style={{
+                    flex: "1 1 130px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                    padding: "8px 12px",
+                    borderRadius: "9px",
+                    border: "1px solid #D5CFC4",
+                    background: "#FFFFFF",
+                    color: "#1F1C19",
+                    fontSize: "0.77rem",
+                    fontWeight: 700,
+                    cursor: cargando ? "wait" : "pointer",
+                  }}
+                >
+                  {cargando ? <Loader2 size={14} className="eco-spin" /> : <RefreshCw size={14} />}
+                  <span>{cargando ? "Actualizando..." : "Actualizar"}</span>
+                </button>
+
+                {esAdminEstricto && (
+                  <button
+                    type="button"
+                    onClick={() => setVerPapelera((prev) => !prev)}
+                    title="Ver pedidos eliminados lógicamente (solo Administrador)"
+                    aria-label="Papelera de pedidos"
+                    style={{
+                      flex: "1 1 140px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      padding: "8px 12px",
+                      borderRadius: "9px",
+                      border: verPapelera ? "1px solid #8A2E2E" : "1px solid #E5CACA",
+                      background: verPapelera ? "#8A2E2E" : "#FAF2F2",
+                      color: verPapelera ? "#FFFFFF" : "#8A2E2E",
+                      fontSize: "0.77rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Trash2 size={14} />
+                    <span>
+                      {verPapelera
+                        ? `Salir Papelera (${pedidosEliminados.length})`
+                        : `Papelera (${pedidosEliminados.length})`}
+                    </span>
+                  </button>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setOpcionesAbiertas(false)}
+                style={{
+                  width: "100%",
+                  padding: "9px 12px",
+                  borderRadius: "9px",
+                  border: "none",
+                  background: "#221E1B",
+                  color: "#FFFFFF",
+                  fontSize: "0.8rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                Ver {pedidosFiltrados.length}{" "}
+                {pedidosFiltrados.length === 1 ? "pedido" : "pedidos"}
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       {errorMsg && (
@@ -1607,52 +1970,17 @@ export function BandejaPedidosTienda({
         }}
       >
         {modoVista === "kanban" ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
             <div
+              className="eco-solo-escritorio-pedidos"
               style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
                 gap: "10px",
-                flexWrap: "wrap",
               }}
             >
-              <div
-                style={{
-                  position: "relative",
-                  flex: "1 1 260px",
-                  maxWidth: "420px",
-                }}
-              >
-                <Search
-                  size={14}
-                  style={{
-                    position: "absolute",
-                    left: "11px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    color: "#847D74",
-                    pointerEvents: "none",
-                  }}
-                />
-                <input
-                  type="search"
-                  value={busquedaKanban}
-                  onChange={(e) => setBusquedaKanban(e.target.value)}
-                  placeholder="Buscar en Kanban por código, cliente, fallecido, sala o producto..."
-                  style={{
-                    width: "100%",
-                    padding: "8px 12px 8px 32px",
-                    borderRadius: "9px",
-                    border: "1px solid #D5CFC4",
-                    fontSize: "0.81rem",
-                    color: "#1F1C19",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-
-              <span style={{ fontSize: "0.75rem", color: "#847D74", fontWeight: 600 }}>
+              <span style={{ fontSize: "0.74rem", color: "#847D74", fontWeight: 600 }}>
                 {columnasKanbanDisponibles.length}{" "}
                 {columnasKanbanDisponibles.length === 1 ? "estado activo" : "estados activos"} ·{" "}
                 {!verPapelera
@@ -1664,16 +1992,59 @@ export function BandejaPedidosTienda({
             {columnasKanbanDisponibles.length === 0 ? (
               <div
                 style={{
-                  padding: "36px 16px",
+                  padding: "32px 16px",
                   textAlign: "center",
                   color: "#847D74",
-                  fontSize: "0.86rem",
+                  fontSize: "0.85rem",
                   background: "#F8F7F4",
                   borderRadius: "10px",
                   border: "1px dashed #D5CFC4",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "10px",
                 }}
               >
-                No hay pedidos disponibles en esta vista o filtro.
+                <span>
+                  No hay pedidos en <strong>{etiquetaFechaActiva}</strong>
+                  {filtroClasificacion !== "TODOS" ? ` (${etiquetaClasificacionActiva})` : ""}.
+                </span>
+                <div style={{ display: "inline-flex", gap: "8px", flexWrap: "wrap", justifyContent: "center" }}>
+                  {filtroFecha !== "TODOS" && (
+                    <button
+                      type="button"
+                      onClick={() => cambiarFiltroFecha("TODOS")}
+                      style={{
+                        padding: "6px 12px",
+                        borderRadius: "8px",
+                        border: "1px solid #221E1B",
+                        background: "#221E1B",
+                        color: "#FFFFFF",
+                        fontSize: "0.76rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      Ver todos ({conteosFecha.TODOS ?? 0})
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setOpcionesAbiertas(true)}
+                    style={{
+                      padding: "6px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid #D5CFC4",
+                      background: "#FFFFFF",
+                      color: "#1F1C19",
+                      fontSize: "0.76rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Abrir Opciones
+                  </button>
+                </div>
               </div>
             ) : (
               <div
