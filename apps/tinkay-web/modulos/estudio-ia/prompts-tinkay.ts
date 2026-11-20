@@ -113,7 +113,7 @@ export function construirReglasComunes(opciones: OpcionesEstudioIa): string {
   if (opciones.incluirTarjeta) {
     lineas.push(
       "",
-      "TARJETA: Si el arreglo ya trae una tarjeta, estandarízala o consérvala sin duplicar. Si no tiene, inserta UNA SOLA tarjeta oficial Tinkay (~8x5 cm, cartulina marfil texturizada con logo 'Tinkay / FLORES Y EVENTOS', idéntica a la referencia TARJETA) en un clip de estrella dorado integrado entre las flores."
+      "TARJETA: Si el arreglo ya trae una tarjeta, estandarízala o consérvala sin duplicar. Si no tiene, inserta UNA SOLA tarjeta oficial Tinkay (~8x5 cm, cartulina marfil texturizada con logo 'Tinkay / FLORES Y EVENTOS', idéntica a la referencia TARJETA y respetando exactamente la tipografía sólida oficial de la referencia LOGO) en un clip de estrella dorado integrado entre las flores."
     );
   }
 
