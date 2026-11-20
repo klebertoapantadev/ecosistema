@@ -43,6 +43,10 @@ import {
 } from "./catalogo-variedades-rosas";
 import { normalizarIdentificadorNegocio } from "./utils/negocio";
 import {
+  parsearMensajePedidoDeterministico,
+  type ResultadoParseoPedidoAria,
+} from "./utils/parsearPedidoAria";
+import {
   generarTokenEdicionTarjetaServidor,
   verificarTokenEdicionTarjetaServidor,
 } from "./token-orden-firmada";
@@ -2085,6 +2089,14 @@ export async function enviarPedidosATallerAction(entrada: {
 
     const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
     const supabase = await crearClienteServidor();
+
+    const rol = await resolverRolOperativoUsuarioServidor(supabase, neg);
+    if (!["SUPERADMIN", "ADMINISTRADOR", "OPERADOR"].includes(rol)) {
+      return {
+        ok: false,
+        error: "Solo un Administrador u Operador puede enviar pedidos a Taller.",
+      };
+    }
 
     const { data, error } = await invocarRpcComercio(
       supabase,
@@ -5600,6 +5612,298 @@ export async function buscarEmisorasRadioTvAction(entrada: {
         err instanceof Error
           ? `Error buscando emisoras en vivo: ${err.message}`
           : "Error al buscar radios en vivo",
+    };
+  }
+}
+
+// =============================================================================
+// INGESTA DE PEDIDOS CON ARIA (TELEGRAM / MANYCHAT / CHAT GRUPAL)
+// =============================================================================
+
+export async function analizarMensajePedidoConAriaAction(entrada: {
+  negocio: string;
+  textoMensaje: string;
+}): Promise<
+  | { ok: true; datos: ResultadoParseoPedidoAria }
+  | { ok: false; error: string }
+> {
+  try {
+    const texto = String(entrada.textoMensaje || "").trim();
+    if (texto.length < 4) {
+      return { ok: false, error: "Escribe o pega el mensaje del pedido para que ARIA lo analice." };
+    }
+
+    const hoyYmd = obtenerFechaHoyEcuadorYmd();
+    const base = parsearMensajePedidoDeterministico(texto, hoyYmd);
+
+    const geminiKey = (
+      process.env.GEMINI_API_KEY ||
+      process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
+      ""
+    ).trim();
+    const openaiKey = (process.env.OPENAI_API_KEY || "").trim();
+
+    const promptAria = `Eres ARIA, asistente operativa de floristería Tinkay en Quito, Ecuador. Hoy es ${hoyYmd} (zona America/Guayaquil).
+Analiza el siguiente mensaje (puede venir de Telegram, ManyChat o texto libre corto como "Exequiales sala 4 , pedido por cristina") y responde EXCLUSIVAMENTE un objeto JSON válido sin markdown ni texto adicional con estas claves exactas:
+{
+  "clasificacionPedido": "FLORISTERIA_OCASIONES" | "CONDOLENCIAS" | "EVENTOS" | "EXEQUIALES",
+  "fechaEntrega": "YYYY-MM-DD",
+  "franjaHoraria": "A) 09:00 - 13:00" | "B) 13:00 - 17:00" | "C) 17:00 - 20:00" | null,
+  "horaEspecifica": "string o null (ej. 'De 12 pm a 2pm', 'Lo antes posible', '15:00')",
+  "productoResumen": "resumen claro del arreglo o set",
+  "items": [{"descripcion": "string", "cantidad": 1}],
+  "clienteSolicita": "quien pide o envia (ej. Oscar, Cristina, feliz)",
+  "clienteTelefono": "teléfono del remitente/comprador o ''",
+  "destinatarioFallecido": "quien recibe o nombre del fallecido (si es exequiales y no consta, 'Por confirmar (Sala X)')",
+  "salaServicio": "Sala 1..5 o null",
+  "ubicacionEntrega": "sector y dirección (sin URL) o 'Exequiales del IESS'",
+  "enlaceMapa": "URL de Google Maps si existe o null",
+  "retiroEnLocal": false,
+  "dedicatoria": "mensaje exacto de la tarjeta (sin Firma/De/Para duplicados si ya está claro) o ''",
+  "observaciones": "datos extra útiles (color faltante, teléfono de quien recibe, link ManyChat, sector)",
+  "totalUsd": 0,
+  "faltantes": ["lista corta de datos importantes que faltan o dicen FALTA, ej: 'Color del arreglo', 'Nombre del fallecido'"]
+}
+
+Mensaje del pedido:
+"""
+${texto}
+"""`;
+
+    let jsonIa: Record<string, any> | null = null;
+    let modeloIa: string | undefined;
+
+    if (geminiKey) {
+      for (const modelo of ["gemini-2.5-flash", "gemini-2.0-flash"]) {
+        try {
+          const resp = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${encodeURIComponent(geminiKey)}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: promptAria }] }],
+                generationConfig: {
+                  temperature: 0.1,
+                  responseMimeType: "application/json",
+                },
+              }),
+              signal: AbortSignal.timeout(15000),
+            }
+          );
+          if (resp.ok) {
+            const payload: any = await resp.json().catch(() => null);
+            const rawTxt = String(payload?.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
+            const matchJson = rawTxt.match(/\{[\s\S]*\}/);
+            if (matchJson) {
+              jsonIa = JSON.parse(matchJson[0]) as Record<string, any>;
+              modeloIa = modelo;
+              break;
+            }
+          }
+        } catch {
+          // Intentar siguiente modelo o proveedor
+        }
+      }
+    }
+
+    if (!jsonIa && openaiKey) {
+      try {
+        const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${openaiKey}`,
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            temperature: 0.1,
+            response_format: { type: "json_object" },
+            messages: [{ role: "user", content: promptAria }],
+          }),
+          signal: AbortSignal.timeout(15000),
+        });
+        if (resp.ok) {
+          const payload: any = await resp.json().catch(() => null);
+          const rawTxt = String(payload?.choices?.[0]?.message?.content || "").trim();
+          const matchJson = rawTxt.match(/\{[\s\S]*\}/);
+          if (matchJson) {
+            jsonIa = JSON.parse(matchJson[0]) as Record<string, any>;
+            modeloIa = "gpt-4o-mini";
+          }
+        }
+      } catch {
+        // Respaldo determinístico garantizado
+      }
+    }
+
+    if (!jsonIa) {
+      return { ok: true, datos: base };
+    }
+
+    const clasifIa = inferirClasificacionPedido({
+      clasificacionExplicita:
+        typeof jsonIa.clasificacionPedido === "string" ? jsonIa.clasificacionPedido : base.clasificacionPedido,
+      origenTipo: base.origenTipo,
+      retiroEnLocal: Boolean(jsonIa.retiroEnLocal ?? base.retiroEnLocal),
+      salaServicio: (jsonIa.salaServicio as string | null) ?? base.salaServicio,
+      productoResumen: String(jsonIa.productoResumen || base.productoResumen),
+      ubicacionEntrega: String(jsonIa.ubicacionEntrega || base.ubicacionEntrega),
+    });
+
+    const itemsIa =
+      Array.isArray(jsonIa.items) && jsonIa.items.length > 0
+        ? jsonIa.items
+            .map((it: any) => ({
+              descripcion: String(it?.descripcion || "").trim(),
+              cantidad: Math.max(1, Number(it?.cantidad || 1)),
+            }))
+            .filter((it) => Boolean(it.descripcion))
+        : base.items;
+
+    const fechaValida =
+      typeof jsonIa.fechaEntrega === "string" && /^\d{4}-\d{2}-\d{2}$/.test(jsonIa.fechaEntrega)
+        ? jsonIa.fechaEntrega
+        : base.fechaEntrega;
+
+    return {
+      ok: true,
+      datos: {
+        clasificacionPedido: clasifIa,
+        origenTipo: clasifIa === "EXEQUIALES" ? "EXEQUIALES_LLAMADA" : "MANUAL_ADMIN",
+        fechaEntrega: fechaValida,
+        franjaHoraria: jsonIa.franjaHoraria
+          ? normalizarFranjaHorariaTienda(String(jsonIa.franjaHoraria))
+          : base.franjaHoraria,
+        horaEspecifica:
+          jsonIa.horaEspecifica !== undefined
+            ? (jsonIa.horaEspecifica ? String(jsonIa.horaEspecifica).trim() : null)
+            : base.horaEspecifica,
+        productoResumen: String(jsonIa.productoResumen || "").trim() || base.productoResumen,
+        items: itemsIa,
+        clienteSolicita: String(jsonIa.clienteSolicita || "").trim() || base.clienteSolicita,
+        clienteTelefono: String(jsonIa.clienteTelefono || "").trim() || base.clienteTelefono,
+        destinatarioFallecido:
+          String(jsonIa.destinatarioFallecido || "").trim() || base.destinatarioFallecido,
+        salaServicio:
+          jsonIa.salaServicio ? String(jsonIa.salaServicio).trim() : base.salaServicio,
+        ubicacionEntrega:
+          String(jsonIa.ubicacionEntrega || "").trim() || base.ubicacionEntrega,
+        enlaceMapa:
+          jsonIa.enlaceMapa && String(jsonIa.enlaceMapa).startsWith("http")
+            ? String(jsonIa.enlaceMapa).trim()
+            : base.enlaceMapa,
+        retiroEnLocal: Boolean(jsonIa.retiroEnLocal ?? base.retiroEnLocal),
+        dedicatoria:
+          typeof jsonIa.dedicatoria === "string" && jsonIa.dedicatoria.trim()
+            ? jsonIa.dedicatoria.trim()
+            : base.dedicatoria,
+        observaciones:
+          typeof jsonIa.observaciones === "string" && jsonIa.observaciones.trim()
+            ? jsonIa.observaciones.trim()
+            : base.observaciones,
+        totalUsd: Number(jsonIa.totalUsd) > 0 ? Number(jsonIa.totalUsd) : base.totalUsd,
+        estadoInicial: "NUEVO_POR_CONFIRMAR",
+        faltantes:
+          Array.isArray(jsonIa.faltantes) && jsonIa.faltantes.length > 0
+            ? jsonIa.faltantes.map(String)
+            : base.faltantes,
+        usadoIa: true,
+        modeloIa,
+      },
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error analizando el pedido con ARIA",
+    };
+  }
+}
+
+export async function crearPedidoDesdeMensajeAriaAction(entrada: {
+  negocio: string;
+  datos?: ResultadoParseoPedidoAria;
+  textoMensaje?: string;
+}): Promise<
+  | {
+      ok: true;
+      ordenId: string;
+      codigo: string;
+      estado: string;
+      datos: ResultadoParseoPedidoAria;
+    }
+  | { ok: false; error: string }
+> {
+  try {
+    const neg = normalizarNegocio(entrada.negocio);
+    let datos = entrada.datos;
+    if (!datos && entrada.textoMensaje) {
+      const analizado = await analizarMensajePedidoConAriaAction({
+        negocio: neg,
+        textoMensaje: entrada.textoMensaje,
+      });
+      if (!analizado.ok) return analizado;
+      datos = analizado.datos;
+    }
+    if (!datos) {
+      return { ok: false, error: "Faltan datos estructurados del pedido." };
+    }
+
+    const estadoInicial = datos.estadoInicial || "NUEVO_POR_CONFIRMAR";
+    const resCrear = await crearOActualizarPedidoOperadorAction({
+      negocio: neg,
+      origenTipo: datos.origenTipo,
+      clasificacionPedido: datos.clasificacionPedido,
+      fechaEntrega: datos.fechaEntrega,
+      franjaHoraria: datos.franjaHoraria ?? undefined,
+      horaEspecifica: datos.horaEspecifica ?? undefined,
+      productoResumen: datos.productoResumen,
+      items: datos.items,
+      clienteSolicita: datos.clienteSolicita,
+      clienteTelefono: datos.clienteTelefono,
+      destinatarioFallecido: datos.destinatarioFallecido,
+      salaServicio: datos.salaServicio ?? undefined,
+      ubicacionEntrega: datos.ubicacionEntrega,
+      enlaceMapa: datos.enlaceMapa ?? undefined,
+      retiroEnLocal: datos.retiroEnLocal,
+      dedicatoria: datos.dedicatoria,
+      observaciones: datos.observaciones,
+      totalUsd: datos.totalUsd,
+      enviarATaller: false,
+    });
+
+    if (!resCrear.ok) return resCrear;
+
+    // Fijar el estado inicial (por defecto NUEVO_POR_CONFIRMAR) en com_orden_taller
+    try {
+      const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+      const supabase = await crearClienteServidor();
+      const db: any = crearClienteAdmin() ?? supabase;
+      await db
+        .schema("comun_comercio")
+        .from("com_orden_taller")
+        .update({
+          ota_estado_pago: estadoInicial,
+          ota_actualizado_en: new Date().toISOString(),
+        })
+        .eq("ota_id", resCrear.ordenId)
+        .eq("ota_negocio", neg);
+    } catch {
+      // No bloquear creación si falla el ajuste de etiqueta de estado
+    }
+
+    revalidarRutasTienda(neg);
+    return {
+      ok: true,
+      ordenId: resCrear.ordenId,
+      codigo: resCrear.codigo,
+      estado: estadoInicial,
+      datos: { ...datos, estadoInicial },
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error creando pedido con ARIA",
     };
   }
 }

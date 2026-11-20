@@ -21,6 +21,7 @@ import {
   Save,
   Search,
   SlidersHorizontal,
+  Sparkles,
   Table2,
   Trash2,
   Truck,
@@ -39,6 +40,7 @@ import {
 } from "../acciones-operaciones-taller";
 import {
   CLASIFICACIONES_OPERATIVAS_PEDIDO,
+  ESTADOS_PEDIDO_DEFECTO,
   OPCIONES_SALA_EXEQUIALES,
   RANGOS_HORARIO_ENTREGA_TIENDA,
   construirValoresHorarioGuardar,
@@ -49,6 +51,7 @@ import {
   obtenerFechaHoyEcuadorYmd,
   resolverEstadoInicialHorario,
   type ClasificacionOperativaPedido,
+  type EstadoPedidoConfig,
   type ModoSelectorHorarioEntrega,
   type OrdenTrabajoTaller,
 } from "../operaciones-taller";
@@ -58,34 +61,18 @@ import {
   ModalVisorEvidenciaEntrega,
   type DatosVisorEvidenciaModal,
 } from "./InsigniaClasificacionPedido";
+import { ModalAdminEstadosPedido } from "./ModalAdminEstadosPedido";
 import { ModalEditarVariacionProforma } from "./ModalEditarVariacionProforma";
 import { ModalImprimirTarjetaTaller } from "./ModalImprimirTarjetaTaller";
+import { ModalWizardPedidoAria } from "./ModalWizardPedidoAria";
 
 interface PropsBandejaPedidosTienda {
   negocio: string;
   pedidosIniciales?: PedidoTiendaRegistrado[];
 }
 
-const ESTADOS_PEDIDO: Array<{
-  valor: string;
-  etiqueta: string;
-  colorFondo: string;
-  colorTexto: string;
-}> = [
-  { valor: "ENVIADA", etiqueta: "Proforma Emitida", colorFondo: "#F4F2EE", colorTexto: "#3A3530" },
-  { valor: "PENDIENTE_PAGO", etiqueta: "Pendiente Pago", colorFondo: "#FAF6EE", colorTexto: "#745622" },
-  { valor: "ORDEN_CONFIRMADA", etiqueta: "Orden Confirmada", colorFondo: "#FAF6EE", colorTexto: "#745622" },
-  { valor: "RESERVADA_70", etiqueta: "Reserva 70%", colorFondo: "#EFECE6", colorTexto: "#221E1B" },
-  { valor: "APROBADA", etiqueta: "Confirmado", colorFondo: "#F2F6F3", colorTexto: "#2B4A36" },
-  { valor: "NO_ACEPTADA", etiqueta: "No Aceptada", colorFondo: "#F4F2EE", colorTexto: "#847D74" },
-  { valor: "EN_PREPARACION", etiqueta: "En Taller", colorFondo: "#EFECE6", colorTexto: "#3A3530" },
-  { valor: "EN_RUTA", etiqueta: "En Ruta", colorFondo: "#EFECE6", colorTexto: "#3A3530" },
-  { valor: "ENTREGADO", etiqueta: "Entregado", colorFondo: "#F2F6F3", colorTexto: "#2F4737" },
-  { valor: "CANCELADO", etiqueta: "Cancelado", colorFondo: "#FEE2F2", colorTexto: "#8A2E2E" },
-];
-
-function estiloEstado(estado: string) {
-  const encontrado = ESTADOS_PEDIDO.find((e) => e.valor === estado);
+function estiloEstado(estado: string, listaEstados: EstadoPedidoConfig[] = ESTADOS_PEDIDO_DEFECTO) {
+  const encontrado = listaEstados.find((e) => e.valor === estado);
   return (
     encontrado ?? {
       valor: estado,
@@ -317,6 +304,9 @@ export function BandejaPedidosTienda({
   const opcionesContenedorRef = useRef<HTMLDivElement | null>(null);
   const [arrastrandoPedidoId, setArrastrandoPedidoId] = useState<string | null>(null);
   const [estadoHoverKanban, setEstadoHoverKanban] = useState<string | null>(null);
+  const [estadosConfig, setEstadosConfig] = useState<EstadoPedidoConfig[]>(ESTADOS_PEDIDO_DEFECTO);
+  const [mostrarWizardAria, setMostrarWizardAria] = useState<boolean>(false);
+  const [mostrarAdminEstados, setMostrarAdminEstados] = useState<boolean>(false);
   const hoyEcuadorYmd = useMemo(() => obtenerFechaHoyEcuadorYmd(), []);
 
   useEffect(() => {
@@ -508,6 +498,9 @@ export function BandejaPedidosTienda({
     setPedidosEliminados(
       adminFlag && Array.isArray(res.pedidosEliminados) ? res.pedidosEliminados : []
     );
+    if (Array.isArray(res.estadosConfig) && res.estadosConfig.length > 0) {
+      setEstadosConfig(res.estadosConfig);
+    }
     try {
       localStorage.setItem(cacheKey, JSON.stringify(res.pedidos));
     } catch {
@@ -697,7 +690,7 @@ export function BandejaPedidosTienda({
       items: PedidoTiendaRegistrado[];
     }> = [];
 
-    for (const def of ESTADOS_PEDIDO) {
+    for (const def of estadosConfig) {
       const itemsCol = agrupados.get(def.valor);
       if (itemsCol && itemsCol.length > 0) {
         columnas.push({ ...def, items: itemsCol });
@@ -705,16 +698,16 @@ export function BandejaPedidosTienda({
       }
     }
 
-    // Cualquier estado adicional no listado en ESTADOS_PEDIDO que tenga pedidos
+    // Cualquier estado adicional no listado en estadosConfig que tenga pedidos
     for (const [valor, itemsCol] of agrupados.entries()) {
       if (itemsCol.length > 0) {
-        const est = estiloEstado(valor);
+        const est = estiloEstado(valor, estadosConfig);
         columnas.push({ ...est, items: itemsCol });
       }
     }
 
     return columnas;
-  }, [pedidosFiltrados, busquedaKanban, pedidoEnfocado]);
+  }, [pedidosFiltrados, busquedaKanban, pedidoEnfocado, estadosConfig]);
 
   const handleConfirmarEliminacion = useCallback(
     async (definitivo: boolean) => {
@@ -1067,7 +1060,7 @@ export function BandejaPedidosTienda({
       {
         id: "estado",
         encabezado: "Estado y Acciones",
-        valor: (p) => estiloEstado(p.estado).etiqueta,
+        valor: (p) => estiloEstado(p.estado, estadosConfig).etiqueta,
         render: (p) => {
           if (p.eliminadoEn) {
             if (!esAdminEstricto) return null;
@@ -1146,7 +1139,7 @@ export function BandejaPedidosTienda({
             );
           }
 
-          const est = estiloEstado(p.estado);
+          const est = estiloEstado(p.estado, estadosConfig);
           const esExeq = resolverClasificacionPedidoTienda(p) === "EXEQUIALES";
           const impresiones = Number(p.tarjeta?.metadata?.impresiones ?? 0);
           const editadaCliente = Boolean(p.tarjeta?.metadata?.editado_por_cliente);
@@ -1168,7 +1161,7 @@ export function BandejaPedidosTienda({
                   cursor: "pointer",
                 }}
               >
-                {ESTADOS_PEDIDO.map((op) => (
+                {estadosConfig.map((op) => (
                   <option key={op.valor} value={op.valor}>
                     {op.etiqueta}
                   </option>
@@ -1287,6 +1280,7 @@ export function BandejaPedidosTienda({
       esAdminEstricto,
       puedeEliminarLogico,
       handleRestaurarPedido,
+      estadosConfig,
     ]
   );
 
@@ -1502,34 +1496,61 @@ export function BandejaPedidosTienda({
           )}
         </div>
 
-        {/* BOTÓN ÚNICO DE OPCIONES */}
-        <button
-          type="button"
-          className="eco-pedidos-btn-opciones"
-          onClick={() => setOpcionesAbiertas((prev) => !prev)}
-          aria-expanded={opcionesAbiertas}
-          aria-haspopup="dialog"
-          title="Abrir filtros, visualización y acciones"
-          aria-label="Opciones"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "6px",
-            padding: "7px 12px",
-            minHeight: "34px",
-            borderRadius: "9px",
-            border: opcionesAbiertas ? "1px solid #1F1C19" : "1px solid #D5CFC4",
-            background: opcionesAbiertas ? "#1F1C19" : "#FFFFFF",
-            color: opcionesAbiertas ? "#FFFFFF" : "#1F1C19",
-            fontSize: "0.78rem",
-            fontWeight: 700,
-            cursor: "pointer",
-            whiteSpace: "nowrap",
-            flexShrink: 0,
-            marginLeft: modoVista === "kanban" ? "auto" : undefined,
-          }}
-        >
+        {/* BOTÓN NUEVO PEDIDO CON ARIA + OPCIONES */}
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginLeft: modoVista === "kanban" ? "auto" : undefined }}>
+          <button
+            type="button"
+            onClick={() => setMostrarWizardAria(true)}
+            title="Pegar mensaje de Telegram o texto corto para crear pedido con ARIA"
+            aria-label="Nuevo Pedido ARIA"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              padding: "7px 12px",
+              minHeight: "34px",
+              borderRadius: "9px",
+              border: "none",
+              background: "linear-gradient(135deg, #1F1C19 0%, #4338CA 100%)",
+              color: "#FFFFFF",
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+            }}
+          >
+            <Sparkles size={13} />
+            <span>Nuevo Pedido</span>
+          </button>
+
+          <button
+            type="button"
+            className="eco-pedidos-btn-opciones"
+            onClick={() => setOpcionesAbiertas((prev) => !prev)}
+            aria-expanded={opcionesAbiertas}
+            aria-haspopup="dialog"
+            title="Abrir filtros, visualización y acciones"
+            aria-label="Opciones"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              padding: "7px 12px",
+              minHeight: "34px",
+              borderRadius: "9px",
+              border: opcionesAbiertas ? "1px solid #1F1C19" : "1px solid #D5CFC4",
+              background: opcionesAbiertas ? "#1F1C19" : "#FFFFFF",
+              color: opcionesAbiertas ? "#FFFFFF" : "#1F1C19",
+              fontSize: "0.78rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+            }}
+          >
           <SlidersHorizontal size={14} />
           <span>Opciones</span>
           {cantidadFiltrosNoDefecto > 0 && (
@@ -1552,6 +1573,7 @@ export function BandejaPedidosTienda({
             </span>
           )}
         </button>
+        </div>
 
         {/* PANEL DESPLEGABLE / HOJA INFERIOR DE OPCIONES */}
         {opcionesAbiertas && (
@@ -1836,6 +1858,36 @@ export function BandejaPedidosTienda({
                   {cargando ? <Loader2 size={14} className="eco-spin" /> : <RefreshCw size={14} />}
                   <span>{cargando ? "Actualizando..." : "Actualizar"}</span>
                 </button>
+
+                {esAdminEstricto && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpcionesAbiertas(false);
+                      setMostrarAdminEstados(true);
+                    }}
+                    title="Crear, renombrar u ordenar estados de pedidos (solo Administrador)"
+                    aria-label="Administrar Estados"
+                    style={{
+                      flex: "1 1 130px",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "6px",
+                      padding: "8px 12px",
+                      borderRadius: "9px",
+                      border: "1px solid #D5CFC4",
+                      background: "#F8F7F4",
+                      color: "#1F1C19",
+                      fontSize: "0.77rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <SlidersHorizontal size={13} />
+                    <span>Estados</span>
+                  </button>
+                )}
 
                 {esAdminEstricto && (
                   <button
@@ -2290,7 +2342,7 @@ export function BandejaPedidosTienda({
                                     cursor: "pointer",
                                   }}
                                 >
-                                  {ESTADOS_PEDIDO.map((op) => (
+                                  {estadosConfig.map((op) => (
                                     <option key={op.valor} value={op.valor}>
                                       {op.etiqueta}
                                     </option>
@@ -4111,6 +4163,30 @@ export function BandejaPedidosTienda({
             </div>
           </div>
         </div>
+      )}
+      <ModalWizardPedidoAria
+        abierto={mostrarWizardAria}
+        negocio={negocio}
+        estadosDisponibles={estadosConfig}
+        onCerrar={() => setMostrarWizardAria(false)}
+        onPedidoCreado={({ codigo }) => {
+          setMostrarWizardAria(false);
+          setPedidoEnfocado(codigo);
+          setFiltroFecha("TODOS");
+          void cargarPedidos();
+        }}
+      />
+
+      {esAdminEstricto && (
+        <ModalAdminEstadosPedido
+          abierto={mostrarAdminEstados}
+          negocio={negocio}
+          estadosActuales={estadosConfig}
+          onCerrar={() => setMostrarAdminEstados(false)}
+          onEstadosActualizados={(nuevos) => {
+            setEstadosConfig(nuevos);
+          }}
+        />
       )}
     </div>
   );

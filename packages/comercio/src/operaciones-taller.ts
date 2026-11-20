@@ -1927,3 +1927,63 @@ export function ordenarPedidosPorPrioridadTaller<
     return hA.localeCompare(hB);
   });
 }
+
+export interface EstadoPedidoConfig {
+  valor: string;
+  etiqueta: string;
+  colorFondo: string;
+  colorTexto: string;
+  orden: number;
+  activo?: boolean;
+}
+
+export const ESTADOS_PEDIDO_DEFECTO: EstadoPedidoConfig[] = [
+  { valor: "NUEVO_POR_CONFIRMAR", etiqueta: "Nuevo - Por Confirmar", colorFondo: "#FEF3C7", colorTexto: "#B45309", orden: 5, activo: true },
+  { valor: "ENVIADA", etiqueta: "Proforma Emitida", colorFondo: "#F3E8FF", colorTexto: "#6B21A8", orden: 10, activo: true },
+  { valor: "PENDIENTE_PAGO", etiqueta: "Pendiente Pago", colorFondo: "#FEF3C7", colorTexto: "#92400E", orden: 20, activo: true },
+  { valor: "ORDEN_CONFIRMADA", etiqueta: "Orden Confirmada", colorFondo: "#FEF9C3", colorTexto: "#854D0E", orden: 30, activo: true },
+  { valor: "RESERVADA_70", etiqueta: "Reserva 70%", colorFondo: "#DBEAFE", colorTexto: "#1D4ED8", orden: 40, activo: true },
+  { valor: "APROBADA", etiqueta: "Confirmado", colorFondo: "#DCFCE7", colorTexto: "#166534", orden: 50, activo: true },
+  { valor: "EN_PREPARACION", etiqueta: "En Taller", colorFondo: "#E0F2FE", colorTexto: "#0369A1", orden: 60, activo: true },
+  { valor: "EN_RUTA", etiqueta: "En Ruta", colorFondo: "#E0E7FF", colorTexto: "#3730A3", orden: 70, activo: true },
+  { valor: "ENTREGADO", etiqueta: "Entregado", colorFondo: "#F0FDF4", colorTexto: "#15803D", orden: 80, activo: true },
+  { valor: "NO_ACEPTADA", etiqueta: "No Aceptada", colorFondo: "#F1F5F9", colorTexto: "#64748B", orden: 90, activo: true },
+  { valor: "CANCELADO", etiqueta: "Cancelado", colorFondo: "#FEE2F2", colorTexto: "#991B1B", orden: 100, activo: true },
+];
+
+export function normalizarEstadosPedidosConfig(
+  entrada?: unknown
+): EstadoPedidoConfig[] {
+  if (!Array.isArray(entrada) || entrada.length === 0) {
+    return ESTADOS_PEDIDO_DEFECTO;
+  }
+
+  const limpios: EstadoPedidoConfig[] = [];
+  const vistos = new Set<string>();
+
+  for (let i = 0; i < entrada.length; i++) {
+    const raw = (entrada[i] ?? {}) as Record<string, unknown>;
+    const valor = String(raw.valor || "")
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9_]+/g, "_")
+      .replace(/^_+|_+$/g, "");
+    const etiqueta = String(raw.etiqueta || "").trim();
+    if (!valor || !etiqueta || vistos.has(valor)) continue;
+    vistos.add(valor);
+    limpios.push({
+      valor,
+      etiqueta,
+      colorFondo: String(raw.colorFondo || "#F1F5F9").trim() || "#F1F5F9",
+      colorTexto: String(raw.colorTexto || "#1E293B").trim() || "#1E293B",
+      orden: Number.isFinite(Number(raw.orden)) ? Number(raw.orden) : (i + 1) * 10,
+      activo: raw.activo !== false,
+    });
+  }
+
+  if (!vistos.has("NUEVO_POR_CONFIRMAR")) {
+    limpios.unshift(ESTADOS_PEDIDO_DEFECTO[0]!);
+  }
+
+  return limpios.sort((a, b) => a.orden - b.orden);
+}

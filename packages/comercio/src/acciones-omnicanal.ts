@@ -3003,6 +3003,15 @@ export async function obtenerSalaChatEquipoAction(
   }
 }
 
+export interface PedidoCreadoDesdeChatEquipo {
+  ordenId: string;
+  codigo: string;
+  estado: string;
+  productoResumen: string;
+  clasificacionPedido: string;
+  faltantes: string[];
+}
+
 export async function enviarMensajeChatEquipoAction(entrada: {
   negocio: string;
   contenido: string;
@@ -3016,6 +3025,8 @@ export async function enviarMensajeChatEquipoAction(entrada: {
       mensaje: MensajeChatEquipo;
       mencionadosUsuariosIds: string[];
       handlesMencionados: string[];
+      pedidoCreado?: PedidoCreadoDesdeChatEquipo | null;
+      avisoPedidoError?: string | null;
     }
   | { ok: false; error: string }
 > {
@@ -3110,11 +3121,47 @@ export async function enviarMensajeChatEquipoAction(entrada: {
       });
     }
 
+    // 3. Si el mensaje inicia con "Nuevo Pedido:", ARIA estructura y crea el pedido en "Nuevo - Por Confirmar"
+    let pedidoCreado: PedidoCreadoDesdeChatEquipo | null = null;
+    let avisoPedidoError: string | null = null;
+    const matchNuevoPedido = String(entrada.contenido || "")
+      .trim()
+      .match(/^nuevo\s+pedido\s*:\s*([\s\S]+)$/i);
+
+    if (matchNuevoPedido && matchNuevoPedido[1]!.trim().length >= 4) {
+      try {
+        const { crearPedidoDesdeMensajeAriaAction } = await import(
+          "./acciones-operaciones-taller"
+        );
+        const resPed = await crearPedidoDesdeMensajeAriaAction({
+          negocio: neg,
+          textoMensaje: matchNuevoPedido[1]!.trim(),
+        });
+        if (resPed.ok) {
+          pedidoCreado = {
+            ordenId: resPed.ordenId,
+            codigo: resPed.codigo,
+            estado: "Nuevo - Por Confirmar",
+            productoResumen: resPed.datos.productoResumen,
+            clasificacionPedido: resPed.datos.clasificacionPedido,
+            faltantes: resPed.datos.faltantes,
+          };
+        } else {
+          avisoPedidoError = resPed.error;
+        }
+      } catch (errPed) {
+        avisoPedidoError =
+          errPed instanceof Error ? errPed.message : "No se pudo crear el pedido desde el chat.";
+      }
+    }
+
     return {
       ok: true,
       mensaje,
       mencionadosUsuariosIds: mencionadosIds,
       handlesMencionados: handles,
+      pedidoCreado,
+      avisoPedidoError,
     };
   } catch (err) {
     return {

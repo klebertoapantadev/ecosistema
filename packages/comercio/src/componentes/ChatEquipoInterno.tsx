@@ -14,6 +14,7 @@ import {
   RefreshCw,
   Reply,
   Send,
+  Sparkles,
   Users,
   X,
   ZoomIn,
@@ -22,6 +23,7 @@ import {
   enviarMensajeChatEquipoAction,
   obtenerSalaChatEquipoAction,
   type DatosSalaChatEquipo,
+  type PedidoCreadoDesdeChatEquipo,
 } from "../acciones-omnicanal";
 import {
   construirHrefRetornoChatCliente,
@@ -274,6 +276,8 @@ export function ChatEquipoInterno({
   const [sala, setSala] = useState<DatosSalaChatEquipo | null>(datosIniciales ?? null);
   const [cargando, setCargando] = useState<boolean>(!datosIniciales);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [ultimoPedidoCreado, setUltimoPedidoCreado] =
+    useState<PedidoCreadoDesdeChatEquipo | null>(null);
   const [avisoOk, setAvisoOk] = useState<string | null>(null);
   const [enVivo, setEnVivo] = useState<boolean>(false);
 
@@ -514,6 +518,12 @@ export function ChatEquipoInterno({
     if (!res.ok) {
       setErrorMsg(res.error);
       return;
+    }
+
+    if (res.pedidoCreado) {
+      setUltimoPedidoCreado(res.pedidoCreado);
+    } else if (res.avisoPedidoError) {
+      setErrorMsg(`Mensaje enviado, pero ARIA no pudo crear el pedido: ${res.avisoPedidoError}`);
     }
 
     setTexto("");
@@ -1345,6 +1355,50 @@ export function ChatEquipoInterno({
             </div>
           )}
 
+          {ultimoPedidoCreado && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "10px",
+                padding: "8px 12px",
+                borderRadius: "10px",
+                background: "#ECFDF5",
+                border: "1px solid #A7F3D0",
+                color: "#065F46",
+                fontSize: "0.78rem",
+                flexWrap: "wrap",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "7px", flexWrap: "wrap" }}>
+                <Sparkles size={14} />
+                <span>
+                  Pedido <strong>{ultimoPedidoCreado.codigo}</strong> creado en estado{" "}
+                  <strong>{ultimoPedidoCreado.estado}</strong> ({ultimoPedidoCreado.productoResumen})
+                </span>
+                <a
+                  href={`/panel/pedidos?pedido=${encodeURIComponent(ultimoPedidoCreado.codigo)}`}
+                  style={{
+                    color: "#047857",
+                    fontWeight: 800,
+                    textDecoration: "underline",
+                  }}
+                >
+                  Ver pedido
+                </a>
+              </div>
+              <button
+                type="button"
+                onClick={() => setUltimoPedidoCreado(null)}
+                aria-label="Cerrar aviso"
+                style={{ border: "none", background: "transparent", cursor: "pointer", color: "#065F46" }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
           <div style={{ display: "flex", gap: "8px", alignItems: "flex-end" }}>
             <input
               ref={fileInputRef}
@@ -1408,6 +1462,35 @@ export function ChatEquipoInterno({
             >
               <AtSign size={16} />
               <span className="btn-texto-responsive">Mencionar</span>
+            </button>
+
+            <button
+              type="button"
+              className="btn-responsive-accion"
+              onClick={() => {
+                if (!/^nuevo\s+pedido\s*:/i.test(texto.trim())) {
+                  setTexto((prev) => `Nuevo Pedido: ${prev}`.trimStart());
+                }
+                textareaRef.current?.focus();
+              }}
+              title="Iniciar mensaje con 'Nuevo Pedido:' para que ARIA cree el pedido en estado Nuevo - Por Confirmar"
+              aria-label="Nuevo Pedido"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+                padding: "9px 11px",
+                borderRadius: "10px",
+                border: "1px solid #C7D2FE",
+                background: "#EEF2FF",
+                color: "#312E81",
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              <Sparkles size={15} />
+              <span className="btn-texto-responsive">Pedido</span>
             </button>
 
             <textarea

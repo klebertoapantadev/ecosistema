@@ -26,9 +26,12 @@ import {
   type ZonaCoberturaLogistica,
 } from "./logistica";
 import {
+  ESTADOS_PEDIDO_DEFECTO,
   inferirClasificacionPedido,
+  normalizarEstadosPedidosConfig,
   type ClasificacionOperativaPedido,
   type DisenoVisualTarjeta,
+  type EstadoPedidoConfig,
 } from "./operaciones-taller";
 
 const esquemaZona = z.object({
@@ -1764,6 +1767,92 @@ export async function registrarPedidoTiendaAction(
  * Consulta los pedidos registrados en la tienda junto con su desglose logístico interno.
  * Protegido para operadores, administradores y superadmins del negocio.
  */
+export async function leerEstadosPedidosConfig(
+  negocio: string,
+  supabase: any
+): Promise<EstadoPedidoConfig[]> {
+  try {
+    const { crearClienteAdmin } = await import("@eco/supabase/servidor");
+    const db: any = crearClienteAdmin() ?? supabase;
+    const { data } = await db
+      .schema("comun_configuracion")
+      .from("cfg_negocio")
+      .select("cfg_detalle_configuracion")
+      .eq("cfg_negocio", negocio)
+      .maybeSingle();
+
+    return normalizarEstadosPedidosConfig(data?.cfg_detalle_configuracion?.estados_pedidos);
+  } catch {
+    return ESTADOS_PEDIDO_DEFECTO;
+  }
+}
+
+export async function guardarEstadosPedidosAdminAction(entrada: {
+  negocio: string;
+  estados: EstadoPedidoConfig[];
+}): Promise<
+  | { ok: true; estadosConfig: EstadoPedidoConfig[] }
+  | { ok: false; error: string }
+> {
+  try {
+    const negNorm = (entrada.negocio || "tinkay").trim().toLowerCase();
+    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return { ok: false, error: "Debes iniciar sesión para administrar estados." };
+    }
+
+    const resRol = await (supabase.schema("comun_seguridad") as any).rpc(
+      "seg_fn_obtener_rol_operativo_negocio",
+      { p_negocio: negNorm }
+    );
+    const rol = String(resRol?.data || "").toUpperCase();
+    if (rol !== "SUPERADMIN" && rol !== "ADMINISTRADOR") {
+      return {
+        ok: false,
+        error: "Solo el Administrador o SuperAdmin puede administrar los estados de pedidos.",
+      };
+    }
+
+    const estadosLimpios = normalizarEstadosPedidosConfig(entrada.estados);
+    const db: any = crearClienteAdmin() ?? supabase;
+    const { data: cfgActual, error: errRead } = await db
+      .schema("comun_configuracion")
+      .from("cfg_negocio")
+      .select("cfg_detalle_configuracion")
+      .eq("cfg_negocio", negNorm)
+      .maybeSingle();
+
+    if (errRead) return { ok: false, error: errRead.message };
+
+    const detPrevio = (cfgActual?.cfg_detalle_configuracion ?? {}) as Record<string, any>;
+    const { error: errUpd } = await db
+      .schema("comun_configuracion")
+      .from("cfg_negocio")
+      .update({
+        cfg_detalle_configuracion: {
+          ...detPrevio,
+          estados_pedidos: estadosLimpios,
+        },
+        cfg_actualizado_en: new Date().toISOString(),
+      })
+      .eq("cfg_negocio", negNorm);
+
+    if (errUpd) return { ok: false, error: errUpd.message };
+
+    revalidatePath("/panel/pedidos");
+    return { ok: true, estadosConfig: estadosLimpios };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Error al guardar estados de pedidos",
+    };
+  }
+}
+
 export async function obtenerPedidosTiendaAction(
   negocio: string
 ): Promise<
@@ -1773,6 +1862,7 @@ export async function obtenerPedidosTiendaAction(
       esAdminEstricto?: boolean;
       puedeEliminarLogico?: boolean;
       pedidosEliminados?: PedidoTiendaRegistrado[];
+      estadosConfig?: EstadoPedidoConfig[];
     }
   | { ok: false; error: string }
 > {
@@ -2062,6 +2152,9 @@ export async function obtenerPedidosTiendaAction(
           : undefined,
     };
   });
+
+  const estadosConfig = await leerEstadosPedidosConfig(negNorm, supabase);
+  const clavesEstadosConfig = new Set(estadosConfig.map((e) => e.valor));
 
   let esAdminEstricto = false;
   let puedeEliminarLogico = false;
@@ -2379,16 +2472,21 @@ export async function obtenerPedidosTiendaAction(
 
       const esExeq = String(o.origenTipo || "").toUpperCase() === "EXEQUIALES_LLAMADA";
       const estTaller = String(o.estadoTaller || "").toUpperCase();
+      const estPagoRaw = String(o.estadoPago || "").toUpperCase().trim();
       const estadoMapeado =
-        estTaller === "ENTREGADO"
-          ? "ENTREGADO"
-          : estTaller === "LISTO_ENTREGA"
-            ? "EN_RUTA"
-            : estTaller === "EN_PREPARACION" || estTaller === "ENVIADO_TALLER"
-              ? "EN_PREPARACION"
-              : estTaller === "ANULADO"
-                ? "CANCELADO"
-                : "ORDEN_CONFIRMADA";
+        estPagoRaw === "NUEVO_POR_CONFIRMAR"
+          ? "NUEVO_POR_CONFIRMAR"
+          : estTaller === "ENTREGADO"
+            ? "ENTREGADO"
+            : estTaller === "LISTO_ENTREGA"
+              ? "EN_RUTA"
+              : estTaller === "EN_PREPARACION" || estTaller === "ENVIADO_TALLER"
+                ? "EN_PREPARACION"
+                : estTaller === "ANULADO"
+                  ? "CANCELADO"
+                  : estPagoRaw && clavesEstadosConfig.has(estPagoRaw)
+                    ? estPagoRaw
+                    : "ORDEN_CONFIRMADA";
 
       const itemsOta = Array.isArray(o.items) && o.items.length > 0
         ? o.items
@@ -2744,6 +2842,7 @@ export async function obtenerPedidosTiendaAction(
     esAdminEstricto,
     puedeEliminarLogico,
     pedidosEliminados: esAdminEstricto ? pedidosEliminados : [],
+    estadosConfig,
   };
 }
 
@@ -2753,7 +2852,12 @@ export async function actualizarEstadoPedidoTiendaAction(
   nuevoEstado: string
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   const negNorm = (negocio || "tinkay").trim().toLowerCase();
-  const estadosPermitidos = [
+  const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+  const supabase = await crearClienteServidor();
+  const estadosConfig = await leerEstadosPedidosConfig(negNorm, supabase);
+  const estadosPermitidos = new Set([
+    ...estadosConfig.map((e) => e.valor),
+    "NUEVO_POR_CONFIRMAR",
     "ENVIADA",
     "PENDIENTE_PAGO",
     "ORDEN_CONFIRMADA",
@@ -2764,18 +2868,34 @@ export async function actualizarEstadoPedidoTiendaAction(
     "EN_RUTA",
     "ENTREGADO",
     "CANCELADO",
-  ];
-  if (!estadosPermitidos.includes(nuevoEstado)) {
+  ]);
+  if (!estadosPermitidos.has(nuevoEstado)) {
     return { ok: false, error: "Estado de pedido no válido" };
   }
 
-  const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
-  const supabase = await crearClienteServidor();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
     return { ok: false, error: "No autenticado" };
+  }
+
+  if (nuevoEstado === "EN_PREPARACION") {
+    try {
+      const resRol = await (supabase.schema("comun_seguridad") as any).rpc(
+        "seg_fn_obtener_rol_operativo_negocio",
+        { p_negocio: negNorm }
+      );
+      const rolOp = String(resRol?.data || "").toUpperCase();
+      if (!["SUPERADMIN", "ADMINISTRADOR", "OPERADOR"].includes(rolOp)) {
+        return {
+          ok: false,
+          error: "Solo un Administrador u Operador puede pasar pedidos a Taller.",
+        };
+      }
+    } catch {
+      // Continuar si la RPC no está disponible
+    }
   }
 
   const db: any = crearClienteAdmin() ?? supabase;
@@ -2823,6 +2943,17 @@ export async function actualizarEstadoPedidoTiendaAction(
     if (!rpcTallerErr && rpcTallerUpd?.ok) {
       codigoOrden = String(rpcTallerUpd.codigo || "PEDIDO");
       compradorNombre = String(rpcTallerUpd.productoResumen || "Cliente");
+      // Sincronizar también ota_estado_pago para conservar estados personalizados y NUEVO_POR_CONFIRMAR
+      try {
+        await db
+          .schema("comun_comercio")
+          .from("com_orden_taller")
+          .update({ ota_estado_pago: nuevoEstado, ota_actualizado_en: new Date().toISOString() })
+          .eq("ota_id", pedidoId)
+          .eq("ota_negocio", negNorm);
+      } catch {
+        // Opcional
+      }
     } else if (!rpcErr && rpcUpd && rpcUpd.ok === false && !String(rpcUpd.error || "").includes("no encontrado")) {
       return { ok: false, error: String(rpcUpd.error || "No se pudo actualizar el estado del pedido") };
     } else {
