@@ -105,6 +105,7 @@ import {
 import {
   BarraPasosWizardProducto,
   PASOS_WIZARD_PRODUCTO,
+  SelectorEncuadreFoto,
   type PasoWizardProducto,
 } from "./BarraPasosWizardProducto";
 
@@ -126,242 +127,6 @@ export const PALETA_COLORES_VARIANTES = [
   { nombre: "Azul Cielo", bg: "#F4F2EE", border: "#4A453F", text: "#3A3530", badge: "#EFECE6", dot: "#4A453F" },
   { nombre: "Índigo Profundo", bg: "#F4F2EE", border: "#4A453F", text: "#3A3530", badge: "#EFECE6", dot: "#4A453F" },
 ];
-
-/**
- * Selector interactivo de encuadre, posición y ajuste de imagen para catálogo cuadrado
- */
-function SelectorEncuadreFoto({
-  imagenUrl,
-  posicion = "center center",
-  ajuste = "cover",
-  zoom = 100,
-  onCambiarPosicion,
-  onCambiarAjuste,
-  onCambiarZoom,
-  titulo = "Encuadre & Posición en Catálogo (Cuadrado 1:1)",
-  colorTema = "#221E1B",
-}: {
-  imagenUrl: string;
-  posicion?: string;
-  ajuste?: "cover" | "contain";
-  zoom?: number;
-  onCambiarPosicion: (pos: string) => void;
-  onCambiarAjuste: (ajuste: "cover" | "contain") => void;
-  onCambiarZoom: (zoom: number) => void;
-  titulo?: string;
-  colorTema?: string;
-}) {
-  if (!imagenUrl) return null;
-
-  const scaleVal = zoom && zoom !== 100 ? zoom / 100 : 1;
-
-  const presetsPosicion = [
-    { label: "⬆️ Superior (Rostros / Flores Altas)", val: "center 15%" },
-    { label: "⏹️ Centro Equilibrado", val: "center center" },
-    { label: "⬇️ Inferior (Base / Florero)", val: "center 85%" },
-  ];
-
-  return (
-    <div
-      style={{
-        marginTop: "10px",
-        background: "#F8F7F4",
-        border: "1.5px dashed #D5CFC4",
-        borderRadius: "10px",
-        padding: "12px",
-      }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <Sparkles size={14} color={colorTema} />
-          <span style={{ fontSize: "0.74rem", fontWeight: 800, color: "#221E1B" }}>
-            {titulo}
-          </span>
-        </div>
-        <span style={{ fontSize: "0.68rem", color: "#847D74", fontWeight: 600 }}>
-          Proporción Cuadrada 1:1
-        </span>
-      </div>
-
-      <div style={{ display: "flex", gap: "14px", alignItems: "center", flexWrap: "wrap" }}>
-        {/* Vista previa cuadrada interactiva */}
-        <div
-          style={{
-            position: "relative",
-            width: "105px",
-            height: "105px",
-            borderRadius: "10px",
-            overflow: "hidden",
-            background: "#1F1C19",
-            border: `2px solid ${colorTema}`,
-            flexShrink: 0,
-            boxShadow: "0 3px 8px rgba(0,0,0,0.15)",
-          }}
-        >
-          {ajuste === "contain" && (
-            <img
-              src={imagenUrl}
-              alt=""
-              aria-hidden="true"
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                filter: "blur(12px) brightness(0.6)",
-                transform: "scale(1.2)",
-                pointerEvents: "none",
-              }}
-            />
-          )}
-          <img
-            src={imagenUrl}
-            alt="Preview Encuadre"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src =
-                obtenerImagenFallbackNegocio();
-            }}
-            style={{
-              position: "relative",
-              width: "100%",
-              height: "100%",
-              objectFit: ajuste,
-              objectPosition: posicion,
-              transform: scaleVal !== 1 ? `scale(${scaleVal})` : undefined,
-              transformOrigin: posicion,
-              transition: "all 0.2s ease",
-            }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              bottom: "4px",
-              left: "4px",
-              background: "rgba(0,0,0,0.7)",
-              color: "#FFF",
-              fontSize: "0.58rem",
-              fontWeight: 700,
-              padding: "1px 5px",
-              borderRadius: "4px",
-              backdropFilter: "blur(3px)",
-            }}
-          >
-            Vista Carrusel
-          </div>
-        </div>
-
-        {/* Controles de Encuadre */}
-        <div style={{ flex: 1, minWidth: "220px", display: "flex", flexDirection: "column", gap: "8px" }}>
-          {/* Posición / Enfoque */}
-          <div>
-            <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#57524C", marginBottom: "4px" }}>
-              Enfoque Vertical (¿Qué parte mostrar?):
-            </div>
-            <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
-              {presetsPosicion.map((pr) => {
-                const activo = posicion === pr.val;
-                return (
-                  <button
-                    key={pr.val}
-                    type="button"
-                    onClick={() => onCambiarPosicion(pr.val)}
-                    style={{
-                      padding: "4px 8px",
-                      borderRadius: "6px",
-                      fontSize: "0.68rem",
-                      fontWeight: activo ? 800 : 600,
-                      border: activo ? `1.5px solid ${colorTema}` : "1px solid #D5CFC4",
-                      background: activo ? "#FFFFFF" : "#F4F2EE",
-                      color: activo ? colorTema : "#57524C",
-                      cursor: "pointer",
-                      boxShadow: activo ? `0 1px 3px ${colorTema}33` : "none",
-                    }}
-                  >
-                    {pr.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Modo de Ajuste: Cover vs Contain */}
-          <div style={{ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
-            <div>
-              <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#57524C", marginBottom: "4px" }}>
-                Ajuste:
-              </div>
-              <div style={{ display: "flex", gap: "4px" }}>
-                <button
-                  type="button"
-                  onClick={() => onCambiarAjuste("cover")}
-                  style={{
-                    padding: "4px 8px",
-                    borderRadius: "6px",
-                    fontSize: "0.68rem",
-                    fontWeight: ajuste === "cover" ? 800 : 600,
-                    border: ajuste === "cover" ? `1.5px solid ${colorTema}` : "1px solid #D5CFC4",
-                    background: ajuste === "cover" ? "#FFFFFF" : "#F4F2EE",
-                    color: ajuste === "cover" ? colorTema : "#57524C",
-                    cursor: "pointer",
-                  }}
-                >
-                  🔲 Llenar (Cover)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onCambiarAjuste("contain")}
-                  style={{
-                    padding: "4px 8px",
-                    borderRadius: "6px",
-                    fontSize: "0.68rem",
-                    fontWeight: ajuste === "contain" ? 800 : 600,
-                    border: ajuste === "contain" ? `1.5px solid ${colorTema}` : "1px solid #D5CFC4",
-                    background: ajuste === "contain" ? "#FFFFFF" : "#F4F2EE",
-                    color: ajuste === "contain" ? colorTema : "#57524C",
-                    cursor: "pointer",
-                  }}
-                >
-                  🖼️ Completa (Contain)
-                </button>
-              </div>
-            </div>
-
-            {/* Escala / Zoom */}
-            {ajuste === "cover" && (
-              <div>
-                <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#57524C", marginBottom: "4px" }}>
-                  Escala: {zoom}%
-                </div>
-                <div style={{ display: "flex", gap: "3px" }}>
-                  {[100, 115, 130].map((z) => (
-                    <button
-                      key={z}
-                      type="button"
-                      onClick={() => onCambiarZoom(z)}
-                      style={{
-                        padding: "3px 6px",
-                        borderRadius: "4px",
-                        fontSize: "0.65rem",
-                        fontWeight: zoom === z ? 800 : 600,
-                        border: zoom === z ? `1.5px solid ${colorTema}` : "1px solid #D5CFC4",
-                        background: zoom === z ? "#FFFFFF" : "#F4F2EE",
-                        color: zoom === z ? colorTema : "#57524C",
-                        cursor: "pointer",
-                      }}
-                    >
-                      {z === 100 ? "1x" : `${z}%`}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 interface Props {
   abierto: boolean;
@@ -614,6 +379,28 @@ export function ModalEditarProducto({
   const [modoEdicion, setModoEdicion] = useState<"master" | "variante">("master");
   const [variantesLocales, setVariantesLocales] = useState<VarianteCatalogo[]>([]);
   const [varianteActivaIndex, setVarianteActivaIndex] = useState<number>(0);
+
+  // Control de secciones heredables colapsadas por defecto en la pestaña de variantes
+  type SeccionHeredableVariante =
+    | "iva"
+    | "fotos"
+    | "album"
+    | "tiempo_entrega"
+    | "beneficios"
+    | "usos";
+  const [seccionesHeredablesAbiertas, setSeccionesHeredablesAbiertas] = useState<
+    Partial<Record<SeccionHeredableVariante, boolean>>
+  >({});
+  const alternarSeccionHeredable = (clave: SeccionHeredableVariante, abrir?: boolean) => {
+    setSeccionesHeredablesAbiertas((prev) => ({
+      ...prev,
+      [clave]: abrir !== undefined ? abrir : !prev[clave],
+    }));
+  };
+
+  useEffect(() => {
+    setSeccionesHeredablesAbiertas({});
+  }, [varianteActivaIndex, producto?.pro_id, abierto]);
   const [esCombo, setEsCombo] = useState<boolean>(false);
   const [comboComponentes, setComboComponentes] = useState<ComponenteComboConfig[]>([]);
 
@@ -4789,22 +4576,112 @@ export function ModalEditarProducto({
                       <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "#57524C", marginBottom: "2px" }}>
                         Tarifa IVA SRI
                       </label>
-                      <SelectConBuscador
-                        value={varianteActual.var_tarifa_iva_porcentaje ?? tarifaIvaMaster}
-                        onChange={(e) => actualizarVarianteActual("var_tarifa_iva_porcentaje", e.target.value)}
-                        style={{
-                          width: "100%",
-                          padding: "7px 10px",
-                          borderRadius: "6px",
-                          border: "1px solid #D5CFC4",
-                          fontSize: "0.82rem",
-                          boxSizing: "border-box",
-                          background: "#FFFFFF",
-                        }}
-                      >
-                        <option value={15}>IVA 15%</option>
-                        <option value={0}>IVA 0%</option>
-                      </SelectConBuscador>
+                      {(() => {
+                        const ivaEsHeredado = varianteActual.var_detalle_variante?.iva_personalizado !== true;
+                        const editarIvaAbierto = !ivaEsHeredado || Boolean(seccionesHeredablesAbiertas.iva);
+                        const tarifaEfectiva = varianteActual.var_tarifa_iva_porcentaje ?? tarifaIvaMaster;
+
+                        if (!editarIvaAbierto) {
+                          return (
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                gap: "6px",
+                                padding: "6px 9px",
+                                borderRadius: "6px",
+                                border: "1px dashed #D5CFC4",
+                                background: "#F8F7F4",
+                                minHeight: "34px",
+                                boxSizing: "border-box",
+                              }}
+                            >
+                              <div style={{ display: "inline-flex", alignItems: "center", gap: "5px", minWidth: 0 }}>
+                                <strong style={{ fontSize: "0.8rem", color: "#1F1C19", whiteSpace: "nowrap" }}>
+                                  IVA {tarifaEfectiva}%
+                                </strong>
+                                <span
+                                  style={{
+                                    fontSize: "0.65rem",
+                                    fontWeight: 700,
+                                    color: "#57524C",
+                                    background: "#EFECE6",
+                                    padding: "1px 6px",
+                                    borderRadius: "999px",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                >
+                                  Heredado
+                                </span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => alternarSeccionHeredable("iva", true)}
+                                title="Editar tarifa IVA para esta variante"
+                                aria-label="Editar IVA"
+                                style={{
+                                  padding: "3px 8px",
+                                  borderRadius: "5px",
+                                  border: "1px solid #D5CFC4",
+                                  background: "#FFFFFF",
+                                  color: "#221E1B",
+                                  fontSize: "0.7rem",
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                Editar
+                              </button>
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                            <SelectConBuscador
+                              value={tarifaEfectiva}
+                              onChange={(e) => actualizarVarianteActual("var_tarifa_iva_porcentaje", e.target.value)}
+                              style={{
+                                flex: 1,
+                                width: "100%",
+                                padding: "7px 10px",
+                                borderRadius: "6px",
+                                border: "1px solid #D5CFC4",
+                                fontSize: "0.82rem",
+                                boxSizing: "border-box",
+                                background: "#FFFFFF",
+                              }}
+                            >
+                              <option value={15}>IVA 15%</option>
+                              <option value={0}>IVA 0%</option>
+                            </SelectConBuscador>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                actualizarVarianteActual("var_tarifa_iva_porcentaje", tarifaIvaMaster);
+                                alternarSeccionHeredable("iva", false);
+                              }}
+                              title={`Heredar tarifa IVA del Master (${tarifaIvaMaster}%)`}
+                              aria-label="Heredar IVA"
+                              style={{
+                                padding: "6px 8px",
+                                borderRadius: "6px",
+                                border: "1px solid #D5CFC4",
+                                background: "#F8F7F4",
+                                color: "#57524C",
+                                fontSize: "0.7rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {ivaEsHeredado ? "Ocultar" : "Heredar"}
+                            </button>
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     <div>
@@ -4932,7 +4809,7 @@ export function ModalEditarProducto({
                     />
                   </div>
 
-                  {/* 1. SECCIÓN UNIFICADA: GALERÍA DE FOTOS (1 A N) PARA ESTA VARIANTE */}
+                  {/* 1. SECCIÓN UNIFICADA: GALERÍA DE FOTOS (1 A N) PARA ESTA VARIANTE (COLAPSABLE SI HEREDA) */}
                   {(() => {
                     const rawGal = Array.isArray(varianteActual?.var_detalle_variante?.galeria_urls)
                       ? varianteActual.var_detalle_variante.galeria_urls.filter((u: any) => typeof u === "string" && u.trim().length > 0)
@@ -4943,6 +4820,102 @@ export function ModalEditarProducto({
                       : rawGal;
                     const fotoPortada = portActual || (fotosVariante.length > 0 ? fotosVariante[0] : null);
                     const tieneFotosPropias = fotosVariante.length > 0;
+                    const editarFotosAbierto = tieneFotosPropias || Boolean(seccionesHeredablesAbiertas.fotos);
+
+                    if (!editarFotosAbierto) {
+                      return (
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: "10px",
+                            background: "#F8F7F4",
+                            border: "1px dashed #D5CFC4",
+                            borderRadius: "8px",
+                            padding: "8px 10px",
+                            marginBottom: "10px",
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                            {imagenUrl ? (
+                              <div
+                                style={{
+                                  width: "36px",
+                                  height: "36px",
+                                  borderRadius: "6px",
+                                  overflow: "hidden",
+                                  background: "#1F1C19",
+                                  flexShrink: 0,
+                                  border: "1px solid #E6E2DA",
+                                }}
+                              >
+                                <img
+                                  src={imagenUrl}
+                                  alt="Foto heredada"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = obtenerImagenFallbackNegocio(producto?.pro_negocio);
+                                  }}
+                                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                />
+                              </div>
+                            ) : (
+                              <div
+                                style={{
+                                  width: "36px",
+                                  height: "36px",
+                                  borderRadius: "6px",
+                                  background: "#EFECE6",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  color: "#847D74",
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <ImageIcon size={16} />
+                              </div>
+                            )}
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#1F1C19" }}>
+                                Fotos del Tamaño
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: "0.7rem",
+                                  color: "#57524C",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                }}
+                              >
+                                Heredado: {imagenUrl ? "Portada del Master" : "Sin foto en Master"}
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => alternarSeccionHeredable("fotos", true)}
+                            title="Configurar fotos exclusivas para esta variante"
+                            aria-label="Editar fotos"
+                            style={{
+                              padding: "5px 10px",
+                              borderRadius: "6px",
+                              border: "1px solid #D5CFC4",
+                              background: "#FFFFFF",
+                              color: "#221E1B",
+                              fontSize: "0.72rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              whiteSpace: "nowrap",
+                              flexShrink: 0,
+                            }}
+                          >
+                            Editar
+                          </button>
+                        </div>
+                      );
+                    }
 
                     return (
                       <div
@@ -4951,36 +4924,36 @@ export function ModalEditarProducto({
                           border: "1.5px solid #E6E2DA",
                           borderRadius: "10px",
                           padding: "12px",
-                          marginBottom: "12px",
+                          marginBottom: "10px",
                         }}
                       >
                         {/* Cabecera del contenedor unificado */}
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "6px" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                            <ImageIcon size={16} color={colActiva.text} />
-                            <label style={{ fontSize: "0.8rem", fontWeight: 800, color: "#221E1B" }}>
-                              Galería de Fotos para "{varianteActual.var_nombre}"
+                            <ImageIcon size={15} color={colActiva.text} />
+                            <label style={{ fontSize: "0.78rem", fontWeight: 800, color: "#221E1B" }}>
+                              Fotos de "{varianteActual.var_nombre}"
                             </label>
                             <span
                               style={{
-                                fontSize: "0.7rem",
+                                fontSize: "0.68rem",
                                 fontWeight: 700,
                                 background: tieneFotosPropias ? colActiva.badge : "#F4F2EE",
                                 color: tieneFotosPropias ? colActiva.text : "#847D74",
-                                padding: "2px 8px",
+                                padding: "2px 7px",
                                 borderRadius: "12px",
                                 border: `1px solid ${tieneFotosPropias ? colActiva.border : "#D5CFC4"}`,
                               }}
                             >
                               {tieneFotosPropias
-                                ? `${fotosVariante.length} ${fotosVariante.length === 1 ? "foto añadida" : "fotos añadidas"}`
-                                : "⚪ Heredando del Master"}
+                                ? `${fotosVariante.length} ${fotosVariante.length === 1 ? "foto" : "fotos"}`
+                                : "Heredado"}
                             </span>
                           </div>
 
                           {/* Acciones principales */}
                           <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                            {tieneFotosPropias && (
+                            {tieneFotosPropias ? (
                               <button
                                 type="button"
                                 onClick={() => {
@@ -4990,13 +4963,14 @@ export function ModalEditarProducto({
                                     galeria_urls: [],
                                   };
                                   actualizarVarianteActual("var_detalle_variante", det);
+                                  alternarSeccionHeredable("fotos", false);
                                 }}
                                 style={{
                                   background: "#FFFFFF",
-                                  color: "#847D74",
+                                  color: "#57524C",
                                   border: "1px solid #D5CFC4",
                                   borderRadius: "6px",
-                                  padding: "5px 10px",
+                                  padding: "5px 9px",
                                   fontSize: "0.72rem",
                                   fontWeight: 600,
                                   cursor: "pointer",
@@ -5004,9 +4978,29 @@ export function ModalEditarProducto({
                                   alignItems: "center",
                                   gap: "4px",
                                 }}
-                                title="Eliminar fotos exclusivas y volver a heredar la imagen del producto principal"
+                                title="Eliminar fotos exclusivas y volver a heredar la imagen del Master"
+                                aria-label="Usar del Master"
                               >
-                                ⚪ Usar Foto del Master
+                                Usar Master
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => alternarSeccionHeredable("fotos", false)}
+                                title="Ocultar sección de fotos"
+                                aria-label="Ocultar fotos"
+                                style={{
+                                  background: "#FFFFFF",
+                                  color: "#57524C",
+                                  border: "1px solid #D5CFC4",
+                                  borderRadius: "6px",
+                                  padding: "5px 9px",
+                                  fontSize: "0.72rem",
+                                  fontWeight: 600,
+                                  cursor: "pointer",
+                                }}
+                              >
+                                Ocultar
                               </button>
                             )}
 
@@ -5071,108 +5065,39 @@ export function ModalEditarProducto({
                           </div>
                         </div>
 
-                        {/* Contenido: Si no tiene fotos propias -> estado heredado */}
-                        {!tieneFotosPropias ? (
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "space-between",
-                              background: "#FFFFFF",
-                              border: "1px dashed #D5CFC4",
-                              borderRadius: "8px",
-                              padding: "10px 14px",
-                              gap: "12px",
+                        {/* Contenido: subir, seleccionar de galería o pegar URLs */}
+                        <div>
+                          <textarea
+                            rows={2}
+                            placeholder={"Pegar URLs de fotos propias (una por línea) o usar Subir / Galería"}
+                            value={fotosVariante.join("\n")}
+                            onChange={(e) => {
+                              const urls = e.target.value
+                                .split("\n")
+                                .map((u) => u.trim())
+                                .filter((u) => u.length > 0);
+                              const portOk = urls.includes(fotoPortada || "");
+                              const det = {
+                                ...(varianteActual.var_detalle_variante || {}),
+                                galeria_urls: urls,
+                                portada_url: portOk ? fotoPortada : (urls[0] || null),
+                              };
+                              actualizarVarianteActual("var_detalle_variante", det);
                             }}
-                          >
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                              {imagenUrl ? (
-                                <div style={{ width: "42px", height: "42px", borderRadius: "6px", overflow: "hidden", background: "#1F1C19", flexShrink: 0, border: "1px solid #E6E2DA" }}>
-                                  <img
-                                    src={imagenUrl}
-                                    alt="Master Heredada"
-                                    onError={(e) => {
-                                      (e.target as HTMLImageElement).src = obtenerImagenFallbackNegocio(producto?.pro_negocio);
-                                    }}
-                                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                  />
-                                </div>
-                              ) : (
-                                <div style={{ width: "42px", height: "42px", borderRadius: "6px", background: "#E6E2DA", display: "flex", alignItems: "center", justifyContent: "center", color: "#847D74" }}>
-                                  <ImageIcon size={18} />
-                                </div>
-                              )}
-                              <div>
-                                <div style={{ fontSize: "0.76rem", color: "#221E1B", fontWeight: 700 }}>
-                                  ⚪ <strong>Foto Heredada del Master</strong>
-                                </div>
-                                <div style={{ fontSize: "0.7rem", color: "#847D74" }}>
-                                  Este tamaño muestra la imagen de portada global en la vitrina. Agrega 1 o más fotos exclusivas para personalizarlo (la foto #1 será la portada).
-                                </div>
-                              </div>
-                            </div>
+                            style={{
+                              width: "100%",
+                              padding: "6px 10px",
+                              borderRadius: "6px",
+                              border: "1px solid #D5CFC4",
+                              fontSize: "0.75rem",
+                              boxSizing: "border-box",
+                              background: "#FFFFFF",
+                              fontFamily: "monospace",
+                            }}
+                          />
 
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const det = {
-                                  ...(varianteActual.var_detalle_variante || {}),
-                                  portada_url: imagenUrl || "https://",
-                                  galeria_urls: imagenUrl ? [imagenUrl] : [],
-                                };
-                                actualizarVarianteActual("var_detalle_variante", det);
-                              }}
-                              style={{
-                                background: colActiva.badge,
-                                color: colActiva.text,
-                                border: `1px solid ${colActiva.border}`,
-                                padding: "6px 12px",
-                                borderRadius: "6px",
-                                fontSize: "0.72rem",
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                whiteSpace: "nowrap",
-                              }}
-                            >
-                              + Personalizar Fotos Propias
-                            </button>
-                          </div>
-                        ) : (
-                          <div>
-                            <p style={{ fontSize: "0.7rem", color: "#847D74", margin: "0 0 6px 0" }}>
-                              Ingresa varias URLs (una por línea) o selecciónalas desde la Galería. La foto marcada como <strong>★ Portada</strong> (#1) es la que se mostrará en la vitrina y tarjeta del producto.
-                            </p>
-
-                            <textarea
-                              rows={2}
-                              placeholder={"https://...foto1.jpg\nhttps://...foto2.jpg"}
-                              value={fotosVariante.join("\n")}
-                              onChange={(e) => {
-                                const urls = e.target.value
-                                  .split("\n")
-                                  .map((u) => u.trim())
-                                  .filter((u) => u.length > 0);
-                                const portOk = urls.includes(fotoPortada || "");
-                                const det = {
-                                  ...(varianteActual.var_detalle_variante || {}),
-                                  galeria_urls: urls,
-                                  portada_url: portOk ? fotoPortada : (urls[0] || null),
-                                };
-                                actualizarVarianteActual("var_detalle_variante", det);
-                              }}
-                              style={{
-                                width: "100%",
-                                padding: "6px 10px",
-                                borderRadius: "6px",
-                                border: "1px solid #D5CFC4",
-                                fontSize: "0.75rem",
-                                boxSizing: "border-box",
-                                background: "#FFFFFF",
-                                fontFamily: "monospace",
-                              }}
-                            />
-
-                            {/* Miniaturas de Fotos de la Galería de la Variante */}
+                          {/* Miniaturas de Fotos de la Galería de la Variante */}
+                          {fotosVariante.length > 0 && (
                             <div
                               style={{
                                 marginTop: "8px",
@@ -5289,8 +5214,9 @@ export function ModalEditarProducto({
                                 );
                               })}
                             </div>
+                          )}
 
-                            {/* Selector de encuadre específico para la foto de portada */}
+                          {/* Selector de encuadre específico para la foto de portada */}
                             {fotoPortada && (
                               <div style={{ marginTop: "10px" }}>
                                 <SelectorEncuadreFoto
@@ -5345,82 +5271,122 @@ export function ModalEditarProducto({
                                 )}
                               </div>
                             )}
-                          </div>
-                        )}
+                        </div>
                       </div>
                     );
                   })()}
 
-                  {/* 2. CONFIGURACIÓN DE ÁLBUM DE MUESTRAS REALES PARA ESTE TAMAÑO (HERENCIA VS PROPIO) */}
-                  <div
-                    style={{
-                      background: "#F8F7F4",
-                      border: "1px solid #E6E2DA",
-                      borderRadius: "8px",
-                      padding: "12px",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <Camera size={15} color={colActiva.dot} />
-                        <label style={{ fontSize: "0.75rem", fontWeight: 800, color: "#221E1B" }}>
-                          Álbum de Muestras Reales para "{varianteActual.var_nombre}"
-                        </label>
-                      </div>
+                  {/* 2. ÁLBUM DE MUESTRAS REALES (COLAPSABLE SI HEREDA) */}
+                  {(() => {
+                    const tieneAlbumPropio = Boolean(varianteActual.var_detalle_variante?.album_url);
+                    const editarAlbumAbierto = tieneAlbumPropio || Boolean(seccionesHeredablesAbiertas.album);
 
-                      {/* Selector de Herencia vs Álbum Propio */}
-                      <div style={{ display: "flex", gap: "4px" }}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const det = { ...(varianteActual.var_detalle_variante || {}), album_url: null };
-                            actualizarVarianteActual("var_detalle_variante", det);
-                          }}
+                    if (!editarAlbumAbierto) {
+                      return (
+                        <div
                           style={{
-                            padding: "3px 8px",
-                            borderRadius: "4px",
-                            fontSize: "0.68rem",
-                            fontWeight: 700,
-                            border: !varianteActual.var_detalle_variante?.album_url ? "1.5px solid #1F1C19" : "1px solid #D5CFC4",
-                            background: !varianteActual.var_detalle_variante?.album_url ? "#1F1C19" : "#FFFFFF",
-                            color: !varianteActual.var_detalle_variante?.album_url ? "#FFFFFF" : "#847D74",
-                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: "10px",
+                            background: "#F8F7F4",
+                            border: "1px dashed #D5CFC4",
+                            borderRadius: "8px",
+                            padding: "8px 10px",
+                            marginBottom: "10px",
                           }}
                         >
-                          ⚪ Usar Álbum del Master
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!varianteActual.var_detalle_variante?.album_url) {
-                              const det = { ...(varianteActual.var_detalle_variante || {}), album_url: albumFotosUrl || "https://" };
-                              actualizarVarianteActual("var_detalle_variante", det);
-                            }
-                          }}
-                          style={{
-                            padding: "3px 8px",
-                            borderRadius: "4px",
-                            fontSize: "0.68rem",
-                            fontWeight: 700,
-                            border: Boolean(varianteActual.var_detalle_variante?.album_url) ? `1.5px solid ${colActiva.border}` : "1px solid #D5CFC4",
-                            background: Boolean(varianteActual.var_detalle_variante?.album_url) ? colActiva.bg : "#FFFFFF",
-                            color: Boolean(varianteActual.var_detalle_variante?.album_url) ? colActiva.text : "#847D74",
-                            cursor: "pointer",
-                          }}
-                        >
-                          📸 Álbum Propio de este Tamaño
-                        </button>
-                      </div>
-                    </div>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                            <Camera size={15} color={colActiva.dot} style={{ flexShrink: 0 }} />
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#1F1C19" }}>
+                                Álbum de Muestras
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: "0.7rem",
+                                  color: "#57524C",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                }}
+                              >
+                                Heredado: {albumFotosUrl || "Sin álbum en Master"}
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => alternarSeccionHeredable("album", true)}
+                            title="Configurar álbum propio para este tamaño"
+                            aria-label="Editar álbum"
+                            style={{
+                              padding: "5px 10px",
+                              borderRadius: "6px",
+                              border: "1px solid #D5CFC4",
+                              background: "#FFFFFF",
+                              color: "#221E1B",
+                              fontSize: "0.72rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              whiteSpace: "nowrap",
+                              flexShrink: 0,
+                            }}
+                          >
+                            Editar
+                          </button>
+                        </div>
+                      );
+                    }
 
-                    {varianteActual.var_detalle_variante?.album_url ? (
-                      <div>
+                    return (
+                      <div
+                        style={{
+                          background: "#F8F7F4",
+                          border: "1px solid #E6E2DA",
+                          borderRadius: "8px",
+                          padding: "10px 12px",
+                          marginBottom: "10px",
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", marginBottom: "8px", flexWrap: "wrap" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <Camera size={14} color={colActiva.dot} />
+                            <label style={{ fontSize: "0.75rem", fontWeight: 800, color: "#221E1B" }}>
+                              Álbum de Muestras ("{varianteActual.var_nombre}")
+                            </label>
+                          </div>
+                          <div style={{ display: "flex", gap: "4px" }}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const det = { ...(varianteActual.var_detalle_variante || {}), album_url: null };
+                                actualizarVarianteActual("var_detalle_variante", det);
+                                alternarSeccionHeredable("album", false);
+                              }}
+                              title="Volver a heredar el álbum del Master"
+                              aria-label="Heredar álbum"
+                              style={{
+                                padding: "3px 8px",
+                                borderRadius: "5px",
+                                fontSize: "0.68rem",
+                                fontWeight: 700,
+                                border: "1px solid #D5CFC4",
+                                background: "#FFFFFF",
+                                color: "#57524C",
+                                cursor: "pointer",
+                              }}
+                            >
+                              {tieneAlbumPropio ? "Heredar Master" : "Ocultar"}
+                            </button>
+                          </div>
+                        </div>
+
                         <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
                           <input
                             type="url"
-                            placeholder="https://photos.app.goo.gl/... o enlace de fotos de este tamaño ➔"
-                            value={varianteActual.var_detalle_variante.album_url}
+                            placeholder="https://photos.app.goo.gl/..."
+                            value={varianteActual.var_detalle_variante?.album_url || ""}
                             onChange={(e) => {
                               const det = { ...(varianteActual.var_detalle_variante || {}), album_url: e.target.value.trim() || null };
                               actualizarVarianteActual("var_detalle_variante", det);
@@ -5435,11 +5401,12 @@ export function ModalEditarProducto({
                               background: "#FFFFFF",
                             }}
                           />
-                          {varianteActual.var_detalle_variante.album_url && (
+                          {varianteActual.var_detalle_variante?.album_url && (
                             <a
                               href={varianteActual.var_detalle_variante.album_url}
                               target="_blank"
                               rel="noreferrer"
+                              title="Probar enlace del álbum"
                               style={{
                                 background: colActiva.badge,
                                 color: colActiva.text,
@@ -5456,189 +5423,282 @@ export function ModalEditarProducto({
                               }}
                             >
                               <ExternalLink size={12} />
-                              <span>Probar Link</span>
+                              <span>Probar</span>
                             </a>
                           )}
                         </div>
-                        <div style={{ marginTop: "4px", fontSize: "0.68rem", color: "#847D74" }}>
-                          🟢 Este tamaño abrirá este álbum exclusivo cuando el cliente haga clic en "📸 Muestras Reales".
-                        </div>
                       </div>
-                    ) : (
+                    );
+                  })()}
+
+                  {/* 3. TIEMPO DE ENTREGA (COLAPSABLE SI HEREDA) */}
+                  {(() => {
+                    const tiempoPropio = varianteActual.var_detalle_variante?.tiempo_entrega || "";
+                    const tieneTiempoPropio = Boolean(tiempoPropio);
+                    const editarTiempoAbierto = tieneTiempoPropio || Boolean(seccionesHeredablesAbiertas.tiempo_entrega);
+
+                    if (!editarTiempoAbierto) {
+                      return (
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: "10px",
+                            background: "#F8F7F4",
+                            border: "1px dashed #D5CFC4",
+                            borderRadius: "8px",
+                            padding: "8px 10px",
+                            marginBottom: "10px",
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                            <Clock size={15} color={colActiva.dot} style={{ flexShrink: 0 }} />
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#1F1C19" }}>
+                                Tiempo de Entrega
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: "0.7rem",
+                                  color: "#57524C",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                }}
+                              >
+                                Heredado: {tiempoEntrega}
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => alternarSeccionHeredable("tiempo_entrega", true)}
+                            title="Editar tiempo de entrega específico para esta variante"
+                            aria-label="Editar tiempo entrega"
+                            style={{
+                              padding: "5px 10px",
+                              borderRadius: "6px",
+                              border: "1px solid #D5CFC4",
+                              background: "#FFFFFF",
+                              color: "#221E1B",
+                              fontSize: "0.72rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              whiteSpace: "nowrap",
+                              flexShrink: 0,
+                            }}
+                          >
+                            Editar
+                          </button>
+                        </div>
+                      );
+                    }
+
+                    return (
                       <div
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          background: "#FFFFFF",
-                          border: "1px dashed #D5CFC4",
-                          borderRadius: "6px",
-                          padding: "8px 12px",
+                          background: colActiva.bg,
+                          border: `1px solid ${colActiva.border}66`,
+                          borderRadius: "8px",
+                          padding: "10px",
+                          marginBottom: "10px",
                         }}
                       >
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                          <span style={{ fontSize: "0.75rem", color: "#221E1B", fontWeight: 700 }}>
-                            ⚪ Álbum Heredado del Master:
-                          </span>
-                          <span style={{ fontSize: "0.72rem", color: albumFotosUrl ? "#221E1B" : "#847D74", fontStyle: albumFotosUrl ? "normal" : "italic" }}>
-                            {albumFotosUrl || "Sin álbum global configurado en el master"}
-                          </span>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", marginBottom: "8px", flexWrap: "wrap" }}>
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                            <Clock size={14} color={colActiva.dot} />
+                            <label style={{ fontSize: "0.75rem", fontWeight: 800, color: colActiva.text }}>
+                              Tiempo de Entrega
+                            </label>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const det = { ...(varianteActual.var_detalle_variante || {}), tiempo_entrega: null };
+                              actualizarVarianteActual("var_detalle_variante", det);
+                              alternarSeccionHeredable("tiempo_entrega", false);
+                            }}
+                            title="Volver a heredar el tiempo de entrega global"
+                            aria-label="Heredar tiempo"
+                            style={{
+                              padding: "3px 8px",
+                              borderRadius: "5px",
+                              fontSize: "0.68rem",
+                              fontWeight: 700,
+                              border: "1px solid #D5CFC4",
+                              background: "#FFFFFF",
+                              color: "#57524C",
+                              cursor: "pointer",
+                            }}
+                          >
+                            {tieneTiempoPropio ? "Heredar Global" : "Ocultar"}
+                          </button>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const det = { ...(varianteActual.var_detalle_variante || {}), album_url: albumFotosUrl || "https://" };
-                            actualizarVarianteActual("var_detalle_variante", det);
-                          }}
-                          style={{
-                            background: colActiva.badge,
-                            color: colActiva.text,
-                            border: `1px solid ${colActiva.border}`,
-                            padding: "4px 9px",
-                            borderRadius: "4px",
-                            fontSize: "0.7rem",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          + Configurar Álbum Exclusivo
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 3. SUB-SECCIÓN: PERSONALIZACIÓN & SOBRESCRITURA DE ESTA VARIANTE */}
-                  <div
-                    style={{
-                      marginTop: "12px",
-                      borderTop: `1.5px solid ${colActiva.border}44`,
-                      paddingTop: "12px",
-                      background: colActiva.bg,
-                      borderRadius: "8px",
-                      padding: "10px",
-                      border: `1px solid ${colActiva.border}66`,
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <Sparkles size={14} color={colActiva.dot} />
-                        <span style={{ fontSize: "0.75rem", fontWeight: 800, color: colActiva.text, textTransform: "uppercase" }}>
-                          Tiempo de Entrega & Beneficios de este Tamaño
-                        </span>
-                      </div>
-                      <span style={{ fontSize: "0.68rem", color: "#847D74" }}>
-                        Si se deja vacío, hereda automáticamente los valores globales
-                      </span>
-                    </div>
-
-                    {/* Tiempo de Entrega Específico de esta variante */}
-                    <div style={{ marginBottom: "8px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "2px" }}>
-                        <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#57524C" }}>
-                          Tiempo de Entrega para este Tamaño:
-                        </label>
-                        <span style={{ fontSize: "0.68rem", color: varianteActual.var_detalle_variante?.tiempo_entrega ? colActiva.text : "#847D74", fontWeight: 700 }}>
-                          {varianteActual.var_detalle_variante?.tiempo_entrega ? "🟢 Tiempo Específico Activo" : `⚪ Hereda Global (${tiempoEntrega})`}
-                        </span>
-                      </div>
-                      <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "4px" }}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const det = { ...(varianteActual.var_detalle_variante || {}), tiempo_entrega: null };
-                            actualizarVarianteActual("var_detalle_variante", det);
-                          }}
-                          style={{
-                            padding: "3px 7px",
-                            borderRadius: "5px",
-                            fontSize: "0.68rem",
-                            fontWeight: 700,
-                            border: !varianteActual.var_detalle_variante?.tiempo_entrega ? `1.5px solid ${colActiva.border}` : "1px solid #D5CFC4",
-                            background: !varianteActual.var_detalle_variante?.tiempo_entrega ? colActiva.badge : "#FFFFFF",
-                            color: !varianteActual.var_detalle_variante?.tiempo_entrega ? colActiva.text : "#57524C",
-                            cursor: "pointer",
-                          }}
-                        >
-                          Heredar Global
-                        </button>
-                        {presetsEntrega.map((pr) => {
-                          const sel = varianteActual.var_detalle_variante?.tiempo_entrega === pr.val;
-                          return (
-                            <button
-                              key={pr.val}
-                              type="button"
-                              onClick={() => {
-                                const det = { ...(varianteActual.var_detalle_variante || {}), tiempo_entrega: pr.val };
-                                actualizarVarianteActual("var_detalle_variante", det);
-                              }}
-                              style={{
-                                padding: "3px 7px",
-                                borderRadius: "5px",
-                                fontSize: "0.68rem",
-                                fontWeight: 700,
-                                border: sel ? `1.5px solid ${colActiva.border}` : "1px solid #D5CFC4",
-                                background: sel ? colActiva.badge : "#FFFFFF",
-                                color: sel ? colActiva.text : "#57524C",
-                                cursor: "pointer",
-                              }}
-                            >
-                              {pr.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Beneficios / ¿Qué incluye? con Selector de Modo (Heredar / Anexar / Reemplazar) */}
-                    <div>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                        <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#57524C" }}>
-                          Beneficios & Contenido de este Tamaño:
-                        </label>
-                        <div style={{ display: "flex", gap: "4px" }}>
-                          {(["heredar", "anexar", "reemplazar"] as const).map((modo) => {
-                            const actualModo = varianteActual.var_detalle_variante?.beneficios_modo || "heredar";
-                            const activo = actualModo === modo;
+                        <div style={{ display: "flex", gap: "5px", flexWrap: "wrap" }}>
+                          {presetsEntrega.map((pr) => {
+                            const sel = tiempoPropio === pr.val;
                             return (
                               <button
-                                key={modo}
+                                key={pr.val}
                                 type="button"
                                 onClick={() => {
-                                  const det = { ...(varianteActual.var_detalle_variante || {}), beneficios_modo: modo };
+                                  const det = { ...(varianteActual.var_detalle_variante || {}), tiempo_entrega: pr.val };
                                   actualizarVarianteActual("var_detalle_variante", det);
                                 }}
                                 style={{
-                                  padding: "2px 6px",
-                                  borderRadius: "4px",
-                                  fontSize: "0.65rem",
+                                  padding: "4px 8px",
+                                  borderRadius: "6px",
+                                  fontSize: "0.7rem",
                                   fontWeight: 700,
-                                  textTransform: "capitalize",
-                                  border: activo ? `1.5px solid ${colActiva.border}` : "1px solid #D5CFC4",
-                                  background: activo ? colActiva.badge : "#FFFFFF",
-                                  color: activo ? colActiva.text : "#57524C",
+                                  border: sel ? `1.5px solid ${colActiva.border}` : "1px solid #D5CFC4",
+                                  background: sel ? colActiva.badge : "#FFFFFF",
+                                  color: sel ? colActiva.text : "#57524C",
                                   cursor: "pointer",
                                 }}
                               >
-                                {modo === "heredar" ? "Heredar" : modo === "anexar" ? "Anexar Extras" : "Reemplazar"}
+                                {pr.label}
                               </button>
                             );
                           })}
                         </div>
                       </div>
+                    );
+                  })()}
 
-                      {(!varianteActual.var_detalle_variante?.beneficios_modo || varianteActual.var_detalle_variante?.beneficios_modo === "heredar") ? (
-                        <div style={{ fontSize: "0.7rem", color: "#847D74", background: "#FFFFFF", padding: "6px 10px", borderRadius: "6px", border: "1px solid #E6E2DA" }}>
-                          <em>Hereda los beneficios generales definidos en el producto master.</em>
+                  {/* 4. BENEFICIOS Y CONTENIDO (COLAPSABLE SI HEREDA) */}
+                  {(() => {
+                    const actualModo = (varianteActual.var_detalle_variante?.beneficios_modo || "heredar") as
+                      | "heredar"
+                      | "anexar"
+                      | "reemplazar";
+                    const beneficiosHeredados = actualModo === "heredar";
+                    const editarBeneficiosAbierto =
+                      !beneficiosHeredados || Boolean(seccionesHeredablesAbiertas.beneficios);
+                    const lineasBeneficiosMaster = beneficiosTexto
+                      .split("\n")
+                      .map((l) => l.trim())
+                      .filter(Boolean);
+                    const resumenBeneficiosMaster =
+                      lineasBeneficiosMaster.length > 0
+                        ? `${lineasBeneficiosMaster[0]}${lineasBeneficiosMaster.length > 1 ? ` (+${lineasBeneficiosMaster.length - 1})` : ""}`
+                        : "Sin beneficios en Master";
+
+                    if (!editarBeneficiosAbierto) {
+                      return (
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: "10px",
+                            background: "#F8F7F4",
+                            border: "1px dashed #D5CFC4",
+                            borderRadius: "8px",
+                            padding: "8px 10px",
+                            marginBottom: "10px",
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                            <Sparkles size={15} color={colActiva.dot} style={{ flexShrink: 0 }} />
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#1F1C19" }}>
+                                Beneficios y Contenido
+                              </div>
+                              <div
+                                style={{
+                                  fontSize: "0.7rem",
+                                  color: "#57524C",
+                                  whiteSpace: "nowrap",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                }}
+                              >
+                                Heredado: {resumenBeneficiosMaster}
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => alternarSeccionHeredable("beneficios", true)}
+                            title="Editar o anexar beneficios para esta variante"
+                            aria-label="Editar beneficios"
+                            style={{
+                              padding: "5px 10px",
+                              borderRadius: "6px",
+                              border: "1px solid #D5CFC4",
+                              background: "#FFFFFF",
+                              color: "#221E1B",
+                              fontSize: "0.72rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              whiteSpace: "nowrap",
+                              flexShrink: 0,
+                            }}
+                          >
+                            Editar
+                          </button>
                         </div>
-                      ) : (
-                        <div>
+                      );
+                    }
+
+                    return (
+                      <div
+                        style={{
+                          background: colActiva.bg,
+                          border: `1px solid ${colActiva.border}66`,
+                          borderRadius: "8px",
+                          padding: "10px",
+                          marginBottom: "10px",
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "6px", marginBottom: "8px", flexWrap: "wrap" }}>
+                          <label style={{ fontSize: "0.75rem", fontWeight: 800, color: colActiva.text }}>
+                            Beneficios y Contenido
+                          </label>
+                          <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+                            {(["heredar", "anexar", "reemplazar"] as const).map((modo) => {
+                              const activo = actualModo === modo;
+                              return (
+                                <button
+                                  key={modo}
+                                  type="button"
+                                  onClick={() => {
+                                    const det = { ...(varianteActual.var_detalle_variante || {}), beneficios_modo: modo };
+                                    actualizarVarianteActual("var_detalle_variante", det);
+                                    if (modo === "heredar") {
+                                      alternarSeccionHeredable("beneficios", false);
+                                    }
+                                  }}
+                                  style={{
+                                    padding: "3px 7px",
+                                    borderRadius: "5px",
+                                    fontSize: "0.68rem",
+                                    fontWeight: 700,
+                                    border: activo ? `1.5px solid ${colActiva.border}` : "1px solid #D5CFC4",
+                                    background: activo ? colActiva.badge : "#FFFFFF",
+                                    color: activo ? colActiva.text : "#57524C",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  {modo === "heredar" ? "Heredar" : modo === "anexar" ? "Anexar Extras" : "Reemplazar"}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        {beneficiosHeredados ? (
+                          <div style={{ fontSize: "0.72rem", color: "#57524C", background: "#FFFFFF", padding: "7px 10px", borderRadius: "6px", border: "1px solid #E6E2DA" }}>
+                            Heredado: {resumenBeneficiosMaster}
+                          </div>
+                        ) : (
                           <textarea
                             rows={2}
                             placeholder={
-                              varianteActual.var_detalle_variante?.beneficios_modo === "anexar"
-                                ? "Escribe los extras exclusivos de este tamaño (ej. + Corona dorada de reina\n+ Mariposas 3D translúcidas)"
-                                : "Escribe la lista completa de beneficios que sustituye a la global..."
+                              actualModo === "anexar"
+                                ? "Extras exclusivos de este tamaño (uno por línea)"
+                                : "Lista completa de beneficios que sustituye al Master..."
                             }
                             value={
                               Array.isArray(varianteActual.var_detalle_variante?.beneficios_custom)
@@ -5660,324 +5720,292 @@ export function ModalEditarProducto({
                               background: "#FFFFFF",
                             }}
                           />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 4. Usos y Ocasiones Recomendadas por Variante (IA & Filtros) */}
-                  <div
-                    style={{
-                      background: "#F8F7F4",
-                      border: "1.5px solid #E6E2DA",
-                      borderRadius: "10px",
-                      padding: "12px",
-                      marginBottom: "12px",
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "6px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <Target size={15} color="#221E1B" />
-                        <label style={{ fontSize: "0.78rem", fontWeight: 800, color: "#221E1B" }}>
-                          {esFloristeria
-                            ? `Usos y Ocasiones para "${varianteActual.var_nombre}" (IA & Filtros)`
-                            : `Usos y Casos de Aplicación para "${varianteActual.var_nombre}"`}
-                        </label>
+                        )}
                       </div>
+                    );
+                  })()}
 
-                      {/* Selector Modo: Heredar vs Personalizar */}
-                      <div style={{ display: "flex", gap: "4px" }}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const det = { ...(varianteActual.var_detalle_variante || {}), usos_modo: "heredar" };
-                            actualizarVarianteActual("var_detalle_variante", det);
-                          }}
+                  {/* 5. USOS Y OCASIONES RECOMENDADAS POR VARIANTE (COLAPSABLE SI HEREDA) */}
+                  {(() => {
+                    const usosHeredados = (varianteActual.var_detalle_variante?.usos_modo || "heredar") === "heredar";
+                    const editarUsosAbierto = !usosHeredados || Boolean(seccionesHeredablesAbiertas.usos);
+
+                    if (!editarUsosAbierto) {
+                      return (
+                        <div
                           style={{
-                            padding: "3px 8px",
-                            borderRadius: "5px",
-                            fontSize: "0.7rem",
-                            fontWeight: 700,
-                            border:
-                              (varianteActual.var_detalle_variante?.usos_modo || "heredar") === "heredar"
-                                ? "1.5px solid #1F1C19"
-                                : "1px solid #D5CFC4",
-                            background:
-                              (varianteActual.var_detalle_variante?.usos_modo || "heredar") === "heredar"
-                                ? "#1F1C19"
-                                : "#FFFFFF",
-                            color:
-                              (varianteActual.var_detalle_variante?.usos_modo || "heredar") === "heredar"
-                                ? "#FFFFFF"
-                                : "#847D74",
-                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: "10px",
+                            background: "#F8F7F4",
+                            border: "1px dashed #D5CFC4",
+                            borderRadius: "8px",
+                            padding: "8px 10px",
+                            marginBottom: "10px",
                           }}
                         >
-                          Heredar Master ({usosSeleccionados.length})
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const actuales =
-                              Array.isArray(varianteActual.var_detalle_variante?.usos) &&
-                              varianteActual.var_detalle_variante.usos.length > 0
-                                ? varianteActual.var_detalle_variante.usos
-                                : [...usosSeleccionados];
-                            const det = {
-                              ...(varianteActual.var_detalle_variante || {}),
-                              usos_modo: "personalizado",
-                              usos: actuales,
-                            };
-                            actualizarVarianteActual("var_detalle_variante", det);
-                          }}
-                          style={{
-                            padding: "3px 8px",
-                            borderRadius: "5px",
-                            fontSize: "0.7rem",
-                            fontWeight: 700,
-                            border:
-                              varianteActual.var_detalle_variante?.usos_modo === "personalizado"
-                                ? `1.5px solid ${colActiva.border}`
-                                : "1px solid #D5CFC4",
-                            background:
-                              varianteActual.var_detalle_variante?.usos_modo === "personalizado"
-                                ? colActiva.bg
-                                : "#FFFFFF",
-                            color:
-                              varianteActual.var_detalle_variante?.usos_modo === "personalizado"
-                                ? colActiva.text
-                                : "#847D74",
-                            cursor: "pointer",
-                          }}
-                        >
-                          Usos Propios ({(varianteActual.var_detalle_variante?.usos || []).length})
-                        </button>
-                      </div>
-                    </div>
-
-                    {(varianteActual.var_detalle_variante?.usos_modo || "heredar") === "heredar" ? (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "space-between",
-                          background: "#FFFFFF",
-                          border: "1px dashed #D5CFC4",
-                          borderRadius: "6px",
-                          padding: "8px 12px",
-                        }}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                          <span style={{ fontSize: "0.72rem", color: "#847D74" }}>
-                            ⚪ Hereda las {usosSeleccionados.length} ocasiones configuradas en el Master:
-                          </span>
-                          {usosSeleccionados.length === 0 ? (
-                            <span style={{ fontSize: "0.72rem", color: "#847D74", fontStyle: "italic" }}>
-                              (Sin usos en el Master)
-                            </span>
-                          ) : (
-                            usosSeleccionados.slice(0, 4).map((u) => {
-                              const matchPreset = presetsUsosActivos.find((p) => p.clave === u);
-                              return (
-                                <span
-                                  key={u}
-                                  style={{
-                                    fontSize: "0.68rem",
-                                    background: "#F4F2EE",
-                                    color: "#57524C",
-                                    padding: "1px 6px",
-                                    borderRadius: "4px",
-                                    fontWeight: 600,
-                                  }}
-                                >
-                                  {matchPreset ? matchPreset.label : u.replace(/_/g, " ")}
-                                </span>
-                              );
-                            })
-                          )}
-                          {usosSeleccionados.length > 4 && (
-                            <span style={{ fontSize: "0.68rem", color: "#847D74", fontWeight: 700 }}>
-                              +{usosSeleccionados.length - 4} más
-                            </span>
-                          )}
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const actuales =
-                              Array.isArray(varianteActual.var_detalle_variante?.usos) &&
-                              varianteActual.var_detalle_variante.usos.length > 0
-                                ? varianteActual.var_detalle_variante.usos
-                                : [...usosSeleccionados];
-                            const det = {
-                              ...(varianteActual.var_detalle_variante || {}),
-                              usos_modo: "personalizado",
-                              usos: actuales,
-                            };
-                            actualizarVarianteActual("var_detalle_variante", det);
-                          }}
-                          style={{
-                            background: colActiva.badge,
-                            color: colActiva.text,
-                            border: `1px solid ${colActiva.border}`,
-                            padding: "4px 8px",
-                            borderRadius: "4px",
-                            fontSize: "0.7rem",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            whiteSpace: "nowrap",
-                            flexShrink: 0,
-                          }}
-                        >
-                          + Personalizar Usos
-                        </button>
-                      </div>
-                    ) : (
-                      <div>
-                        <p style={{ fontSize: "0.7rem", color: "#847D74", margin: "0 0 8px 0" }}>
-                          Configura para qué ocasiones la IA (Tranqi) y los filtros recomendarán específicamente este tamaño:
-                        </p>
-
-                        {/* Grid Unificado de Usos para la Variante (Presets + Personalizados) */}
-                        {(() => {
-                          const usosVar = Array.isArray(varianteActual.var_detalle_variante?.usos)
-                            ? varianteActual.var_detalle_variante.usos
-                            : [];
-                          const todosUsosVariante = todosUsosDisponibles;
-
-                          return (
-                            <div
-                              style={{
-                                display: "grid",
-                                gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
-                                gap: "5px",
-                                marginBottom: "8px",
-                              }}
-                            >
-                              {todosUsosVariante.map((u) => {
-                                const activo = usosVar.includes(u.clave);
-                                const estaVerificando = verificandoUsoClave === u.clave;
-
-                                return (
-                                  <button
-                                    key={u.clave}
-                                    type="button"
-                                    onClick={() => toggleUsoVariante(u.clave)}
-                                    style={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "space-between",
-                                      padding: "5px 8px",
-                                      borderRadius: "6px",
-                                      fontSize: "0.72rem",
-                                      fontWeight: activo ? 700 : 500,
-                                      border: activo ? `1.5px solid ${colActiva.border}` : "1px solid #D5CFC4",
-                                      background: activo ? colActiva.bg : "#FFFFFF",
-                                      color: activo ? colActiva.text : "#57524C",
-                                      cursor: "pointer",
-                                      textAlign: "left",
-                                      transition: "all 0.15s ease",
-                                      gap: "4px",
-                                      opacity: estaVerificando ? 0.6 : 1,
-                                    }}
-                                  >
-                                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1 }}>
-                                      {u.label}
-                                    </span>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0, flex: 1 }}>
+                            <Target size={15} color="#221E1B" style={{ flexShrink: 0 }} />
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#1F1C19", marginBottom: usosSeleccionados.length > 0 ? "3px" : 0 }}>
+                                {esFloristeria ? "Usos y Ocasiones" : "Usos y Aplicación"}
+                              </div>
+                              {usosSeleccionados.length === 0 ? (
+                                <div style={{ fontSize: "0.7rem", color: "#57524C" }}>
+                                  Heredado: Sin usos en Master
+                                </div>
+                              ) : (
+                                <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" }}>
+                                  <span style={{ fontSize: "0.68rem", color: "#847D74" }}>Heredado:</span>
+                                  {usosSeleccionados.slice(0, 3).map((u) => {
+                                    const matchPreset = presetsUsosActivos.find((p) => p.clave === u);
+                                    return (
                                       <span
-                                        role="button"
-                                        tabIndex={0}
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleSolicitarEliminarUso(u.clave, u.label);
-                                        }}
-                                        onKeyDown={(e) => {
-                                          if (e.key === "Enter" || e.key === " ") {
-                                            e.stopPropagation();
-                                            handleSolicitarEliminarUso(u.clave, u.label);
-                                          }
-                                        }}
-                                        title="Eliminar este uso del catálogo (validación estricta)"
+                                        key={u}
                                         style={{
-                                          color: "#847D74",
-                                          cursor: "pointer",
-                                          display: "inline-flex",
-                                          alignItems: "center",
-                                          padding: "1px",
-                                          borderRadius: "3px",
+                                          fontSize: "0.66rem",
+                                          background: "#EFECE6",
+                                          color: "#3A3530",
+                                          padding: "1px 6px",
+                                          borderRadius: "4px",
+                                          fontWeight: 600,
                                         }}
-                                        onMouseEnter={(e) => (e.currentTarget.style.color = "#8A2E2E")}
-                                        onMouseLeave={(e) => (e.currentTarget.style.color = "#847D74")}
                                       >
-                                        {estaVerificando ? (
-                                          <Loader2 size={11} className="eco-spin" />
-                                        ) : (
-                                          <X size={11} />
-                                        )}
+                                        {matchPreset ? matchPreset.label : u.replace(/_/g, " ")}
                                       </span>
-                                      <span
-                                        style={{
-                                          width: "7px",
-                                          height: "7px",
-                                          borderRadius: "50%",
-                                          background: activo ? colActiva.text : "#D5CFC4",
-                                          flexShrink: 0,
-                                        }}
-                                      />
-                                    </div>
-                                  </button>
-                                );
-                              })}
+                                    );
+                                  })}
+                                  {usosSeleccionados.length > 3 && (
+                                    <span style={{ fontSize: "0.66rem", color: "#847D74", fontWeight: 700 }}>
+                                      +{usosSeleccionados.length - 3}
+                                    </span>
+                                  )}
+                                </div>
+                              )}
                             </div>
-                          );
-                        })()}
-
-                        {/* Input para agregar uso personalizado a la variante */}
-                        <div style={{ display: "flex", gap: "6px" }}>
-                          <input
-                            type="text"
-                            placeholder="Escribir otro uso personalizado para este tamaño..."
-                            value={nuevoUsoVarianteTexto}
-                            onChange={(e) => setNuevoUsoVarianteTexto(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                handleAgregarUsoPersonalizadoVariante();
-                              }
-                            }}
-                            style={{
-                              flex: 1,
-                              padding: "6px 10px",
-                              borderRadius: "6px",
-                              border: "1px solid #D5CFC4",
-                              fontSize: "0.74rem",
-                              background: "#FFFFFF",
-                            }}
-                          />
+                          </div>
                           <button
                             type="button"
-                            onClick={handleAgregarUsoPersonalizadoVariante}
+                            onClick={() => {
+                              const actuales =
+                                Array.isArray(varianteActual.var_detalle_variante?.usos) &&
+                                varianteActual.var_detalle_variante.usos.length > 0
+                                  ? varianteActual.var_detalle_variante.usos
+                                  : [...usosSeleccionados];
+                              const det = {
+                                ...(varianteActual.var_detalle_variante || {}),
+                                usos_modo: "personalizado",
+                                usos: actuales,
+                              };
+                              actualizarVarianteActual("var_detalle_variante", det);
+                              alternarSeccionHeredable("usos", true);
+                            }}
+                            title="Personalizar usos y ocasiones para esta variante"
+                            aria-label="Editar usos"
                             style={{
-                              background: "#1F1C19",
-                              color: "#FFFFFF",
-                              border: "none",
-                              padding: "6px 12px",
+                              padding: "5px 10px",
                               borderRadius: "6px",
+                              border: "1px solid #D5CFC4",
+                              background: "#FFFFFF",
+                              color: "#221E1B",
                               fontSize: "0.72rem",
                               fontWeight: 700,
                               cursor: "pointer",
                               whiteSpace: "nowrap",
+                              flexShrink: 0,
                             }}
                           >
-                            + Agregar Uso
+                            Editar
                           </button>
                         </div>
+                      );
+                    }
+
+                    return (
+                      <div
+                        style={{
+                          background: "#F8F7F4",
+                          border: "1.5px solid #E6E2DA",
+                          borderRadius: "10px",
+                          padding: "10px 12px",
+                          marginBottom: "10px",
+                        }}
+                      >
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px", flexWrap: "wrap", gap: "6px" }}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                            <Target size={15} color="#221E1B" />
+                            <label style={{ fontSize: "0.76rem", fontWeight: 800, color: "#221E1B" }}>
+                              {esFloristeria
+                                ? `Usos para "${varianteActual.var_nombre}"`
+                                : `Usos de "${varianteActual.var_nombre}"`}
+                            </label>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const det = { ...(varianteActual.var_detalle_variante || {}), usos_modo: "heredar" };
+                              actualizarVarianteActual("var_detalle_variante", det);
+                              alternarSeccionHeredable("usos", false);
+                            }}
+                            title="Volver a heredar los usos del producto Master"
+                            aria-label="Heredar usos"
+                            style={{
+                              padding: "4px 9px",
+                              borderRadius: "5px",
+                              fontSize: "0.7rem",
+                              fontWeight: 700,
+                              border: "1px solid #D5CFC4",
+                              background: "#FFFFFF",
+                              color: "#57524C",
+                              cursor: "pointer",
+                            }}
+                          >
+                            Heredar Master ({usosSeleccionados.length})
+                          </button>
+                        </div>
+
+                        <div>
+                          {/* Grid Unificado de Usos para la Variante (Presets + Personalizados) */}
+                          {(() => {
+                            const usosVar = Array.isArray(varianteActual.var_detalle_variante?.usos)
+                              ? varianteActual.var_detalle_variante.usos
+                              : [];
+                            const todosUsosVariante = todosUsosDisponibles;
+
+                            return (
+                              <div
+                                style={{
+                                  display: "grid",
+                                  gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+                                  gap: "5px",
+                                  marginBottom: "8px",
+                                }}
+                              >
+                                {todosUsosVariante.map((u) => {
+                                  const activo = usosVar.includes(u.clave);
+                                  const estaVerificando = verificandoUsoClave === u.clave;
+
+                                  return (
+                                    <button
+                                      key={u.clave}
+                                      type="button"
+                                      onClick={() => toggleUsoVariante(u.clave)}
+                                      style={{
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "space-between",
+                                        padding: "5px 8px",
+                                        borderRadius: "6px",
+                                        fontSize: "0.72rem",
+                                        fontWeight: activo ? 700 : 500,
+                                        border: activo ? `1.5px solid ${colActiva.border}` : "1px solid #D5CFC4",
+                                        background: activo ? colActiva.bg : "#FFFFFF",
+                                        color: activo ? colActiva.text : "#57524C",
+                                        cursor: "pointer",
+                                        textAlign: "left",
+                                        transition: "all 0.15s ease",
+                                        gap: "4px",
+                                        opacity: estaVerificando ? 0.6 : 1,
+                                      }}
+                                    >
+                                      <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", flex: 1 }}>
+                                        {u.label}
+                                      </span>
+                                      <div style={{ display: "flex", alignItems: "center", gap: "4px", flexShrink: 0 }}>
+                                        <span
+                                          role="button"
+                                          tabIndex={0}
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleSolicitarEliminarUso(u.clave, u.label);
+                                          }}
+                                          onKeyDown={(e) => {
+                                            if (e.key === "Enter" || e.key === " ") {
+                                              e.stopPropagation();
+                                              handleSolicitarEliminarUso(u.clave, u.label);
+                                            }
+                                          }}
+                                          title="Eliminar este uso del catálogo (validación estricta)"
+                                          style={{
+                                            color: "#847D74",
+                                            cursor: "pointer",
+                                            display: "inline-flex",
+                                            alignItems: "center",
+                                            padding: "1px",
+                                            borderRadius: "3px",
+                                          }}
+                                          onMouseEnter={(e) => (e.currentTarget.style.color = "#8A2E2E")}
+                                          onMouseLeave={(e) => (e.currentTarget.style.color = "#847D74")}
+                                        >
+                                          {estaVerificando ? (
+                                            <Loader2 size={11} className="eco-spin" />
+                                          ) : (
+                                            <X size={11} />
+                                          )}
+                                        </span>
+                                        <span
+                                          style={{
+                                            width: "7px",
+                                            height: "7px",
+                                            borderRadius: "50%",
+                                            background: activo ? colActiva.text : "#D5CFC4",
+                                            flexShrink: 0,
+                                          }}
+                                        />
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            );
+                          })()}
+
+                          {/* Input para agregar uso personalizado a la variante */}
+                          <div style={{ display: "flex", gap: "6px" }}>
+                            <input
+                              type="text"
+                              placeholder="Otro uso personalizado..."
+                              value={nuevoUsoVarianteTexto}
+                              onChange={(e) => setNuevoUsoVarianteTexto(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  handleAgregarUsoPersonalizadoVariante();
+                                }
+                              }}
+                              style={{
+                                flex: 1,
+                                padding: "6px 10px",
+                                borderRadius: "6px",
+                                border: "1px solid #D5CFC4",
+                                fontSize: "0.74rem",
+                                background: "#FFFFFF",
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={handleAgregarUsoPersonalizadoVariante}
+                              style={{
+                                background: "#1F1C19",
+                                color: "#FFFFFF",
+                                border: "none",
+                                padding: "6px 12px",
+                                borderRadius: "6px",
+                                fontSize: "0.72rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              + Agregar
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                  </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>

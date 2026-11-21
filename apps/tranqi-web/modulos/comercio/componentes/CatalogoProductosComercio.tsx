@@ -37,7 +37,7 @@ import { ModalCrearCategoria } from "./ModalCrearCategoria";
 import { ModalEditarProducto, PALETA_COLORES_VARIANTES } from "./ModalEditarProducto";
 import { ManualConfiguracionCatalogoModal } from "./ManualConfiguracionCatalogoModal";
 import { TableroDisponibilidadOperativa } from "./TableroDisponibilidadOperativa";
-import { BookOpen, Activity, LayoutGrid } from "lucide-react";
+import { Activity, LayoutGrid } from "lucide-react";
 
 interface Props {
   negocio?: string;
@@ -225,8 +225,19 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           </p>
         </div>
 
-        {/* Selector de Modo: Administrador vs Vista Cliente */}
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+        {/* Selector de Modo: Administrador vs Vista Cliente (riel lineal deslizable; sin Guía ni Actualizar) */}
+        <div
+          style={{
+            display: "flex",
+            gap: "6px",
+            flexWrap: "nowrap",
+            overflowX: "auto",
+            WebkitOverflowScrolling: "touch",
+            scrollbarWidth: "none",
+            alignItems: "center",
+            maxWidth: "100%",
+          }}
+        >
           <div
             style={{
               display: "inline-flex",
@@ -234,7 +245,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               padding: "3px",
               borderRadius: "10px",
               border: "1px solid #CBD5E1",
-              marginRight: "4px",
+              flexShrink: 0,
             }}
           >
             <button
@@ -253,6 +264,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 display: "flex",
                 alignItems: "center",
                 gap: "5px",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
                 transition: "all 0.15s ease",
               }}
             >
@@ -276,6 +289,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 display: "flex",
                 alignItems: "center",
                 gap: "5px",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
                 transition: "all 0.15s ease",
               }}
             >
@@ -283,30 +298,6 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               <span>Vista Cliente</span>
             </button>
           </div>
-
-          <button
-            type="button"
-            onClick={() => setModalManualAbierto(true)}
-            className="btn-responsive-accion"
-            title="Ver Manual de Configuración"
-            aria-label="Ver Manual de Configuración"
-            style={{
-              background: "#F8FAFC",
-              color: "#334155",
-              border: "1.5px solid #CBD5E1",
-              padding: "8px 14px",
-              borderRadius: "8px",
-              fontSize: "0.85rem",
-              fontWeight: 700,
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-            }}
-          >
-            <BookOpen size={15} color={esFloristeria ? "#E11D48" : "#0284C7"} />
-            <span className="btn-texto-responsive">Manual de Uso</span>
-          </button>
 
           {modoVista === "admin" && (
             <>
@@ -328,7 +319,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
                 }}
               >
                 <Plus size={15} />
@@ -340,7 +332,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               <button
                 type="button"
                 onClick={() => setModalCatAbierto(true)}
-                className="btn-responsive-accion"
+                className="btn-responsive-accion ocultar-en-movil"
                 title="Crear Nueva Categoría"
                 aria-label="Crear Nueva Categoría"
                 style={{
@@ -355,6 +347,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: "6px",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
                 }}
               >
                 <FolderPlus size={15} />
@@ -362,114 +356,94 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               </button>
             </>
           )}
+        </div>
+      </div>
 
+      {/* Selector de Pestaña: oculto en móvil y eliminado en Floristería */}
+      {!esFloristeria && (
+        <div
+          className="ocultar-en-movil"
+          style={{
+            display: "flex",
+            flexWrap: "nowrap",
+            overflowX: "auto",
+            scrollbarWidth: "none",
+            gap: "8px",
+            borderBottom: "1px solid #E2E8F0",
+            marginBottom: "16px",
+            paddingBottom: "8px",
+          }}
+        >
           <button
             type="button"
-            onClick={cargarDatos}
-            className="btn-responsive-accion"
-            title="Actualizar Catálogo"
-            aria-label="Actualizar Catálogo"
+            onClick={() => setPestanaActiva("catalogo")}
             style={{
-              background: "#F1F5F9",
-              color: "#334155",
-              border: "1px solid #CBD5E1",
-              padding: "8px 14px",
+              background: pestanaActiva === "catalogo" ? "#0284C7" : "transparent",
+              color: pestanaActiva === "catalogo" ? "#FFFFFF" : "#64748B",
+              border: "none",
+              padding: "8px 16px",
               borderRadius: "8px",
               fontSize: "0.85rem",
-              fontWeight: 600,
+              fontWeight: 700,
               cursor: "pointer",
               display: "inline-flex",
               alignItems: "center",
               gap: "6px",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+              transition: "all 0.15s ease",
             }}
           >
-            <RefreshCw size={14} className={cargando ? "animate-spin" : ""} />
-            <span className="btn-texto-responsive">Actualizar</span>
+            <LayoutGrid size={15} />
+            <span>{esMantenimiento ? "Servicios y Tarifas" : "Honorarios y Planes"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setPestanaActiva("disponibilidad")}
+            style={{
+              background: pestanaActiva === "disponibilidad" ? "#0284C7" : "transparent",
+              color: pestanaActiva === "disponibilidad" ? "#FFFFFF" : "#64748B",
+              border: "none",
+              padding: "8px 16px",
+              borderRadius: "8px",
+              fontSize: "0.85rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+              transition: "all 0.15s ease",
+            }}
+          >
+            <Activity size={15} />
+            <span>
+              {esMantenimiento ? "Cuadrillas y Zonas en Vivo" : "Disponibilidad de Abogados"}
+            </span>
           </button>
         </div>
-      </div>
+      )}
 
-      {/* Selector de Pestaña: Catálogo vs Disponibilidad Operativa */}
-      <div
-        style={{
-          display: "flex",
-          gap: "8px",
-          borderBottom: "1px solid #E2E8F0",
-          marginBottom: "20px",
-          paddingBottom: "8px",
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => setPestanaActiva("catalogo")}
-          style={{
-            background: pestanaActiva === "catalogo" ? (esFloristeria ? "#E11D48" : "#0284C7") : "transparent",
-            color: pestanaActiva === "catalogo" ? "#FFFFFF" : "#64748B",
-            border: "none",
-            padding: "8px 16px",
-            borderRadius: "8px",
-            fontSize: "0.85rem",
-            fontWeight: 700,
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            transition: "all 0.15s ease",
-          }}
-        >
-          <LayoutGrid size={15} />
-          <span>{esFloristeria ? "Catálogo y Diseños" : esMantenimiento ? "Servicios y Tarifas" : "Honorarios y Planes"}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setPestanaActiva("disponibilidad")}
-          style={{
-            background: pestanaActiva === "disponibilidad" ? (esFloristeria ? "#E11D48" : "#0284C7") : "transparent",
-            color: pestanaActiva === "disponibilidad" ? "#FFFFFF" : "#64748B",
-            border: "none",
-            padding: "8px 16px",
-            borderRadius: "8px",
-            fontSize: "0.85rem",
-            fontWeight: 700,
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            transition: "all 0.15s ease",
-          }}
-        >
-          <Activity size={15} />
-          <span>
-            {esFloristeria
-              ? "Disponibilidad Taller (Rosas y Papel)"
-              : esMantenimiento
-              ? "Cuadrillas y Zonas en Vivo"
-              : "Disponibilidad de Abogados"}
-          </span>
-        </button>
-      </div>
-
-      {pestanaActiva === "disponibilidad" ? (
+      {pestanaActiva === "disponibilidad" && !esFloristeria ? (
         <TableroDisponibilidadOperativa negocio={negocio} />
       ) : (
         <>
-          {/* Barra de Búsqueda y Filtros de Categoría */}
+          {/* Barra de Búsqueda y Filtros de Categoría (riel lineal deslizable) */}
           <div
             style={{
               background: "#FFFFFF",
               border: "1px solid #E2E8F0",
-              borderRadius: "16px",
-              padding: "16px",
-              marginBottom: "24px",
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          gap: "12px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-        }}
-      >
-        <div style={{ flex: 1, minWidth: "240px", position: "relative" }}>
+              borderRadius: "14px",
+              padding: "12px",
+              marginBottom: "18px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+            }}
+          >
+        <div style={{ width: "100%", position: "relative" }}>
           <Search size={16} color="#94A3B8" style={{ position: "absolute", left: "12px", top: "11px" }} />
           <input
             type="text"
@@ -487,7 +461,18 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           />
         </div>
 
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: "6px",
+            flexWrap: "nowrap",
+            overflowX: "auto",
+            WebkitOverflowScrolling: "touch",
+            scrollbarWidth: "none",
+            alignItems: "center",
+            width: "100%",
+          }}
+        >
           <button
             type="button"
             onClick={() => setCategoriaSeleccionada("todas")}
@@ -498,6 +483,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               fontWeight: 600,
               cursor: "pointer",
               border: "none",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
               background: categoriaSeleccionada === "todas" ? "#0F172A" : "#F1F5F9",
               color: categoriaSeleccionada === "todas" ? "#FFFFFF" : "#475569",
             }}
@@ -516,6 +503,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 fontWeight: 600,
                 cursor: "pointer",
                 border: "none",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
                 background: categoriaSeleccionada === c.ctg_slug ? (esFloristeria ? "#E11D48" : "#0284C7") : "#F1F5F9",
                 color: categoriaSeleccionada === c.ctg_slug ? "#FFFFFF" : "#475569",
               }}

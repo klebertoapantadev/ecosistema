@@ -71,7 +71,7 @@ import { TableroDisponibilidadOperativa } from "./TableroDisponibilidadOperativa
 import { GestionConveniosCorporativos } from "./GestionConveniosCorporativos";
 import { VitrinaComercialVisual } from "./VitrinaComercialVisual";
 import { TarjetaBeneficiosCorporativosCliente } from "./TarjetaBeneficiosCorporativosCliente";
-import { BookOpen, Flower2, Wrench, Activity, LayoutGrid, Users, Calendar, Power, Link2 } from "lucide-react";
+import { Flower2, Wrench, Activity, LayoutGrid, Users, Calendar, Power, Link2 } from "lucide-react";
 import { detectarTipoNegocio, obtenerImagenFallbackNegocio } from "../utils/negocio";
 import {
   URL_TIENDA_POR_NEGOCIO,
@@ -581,14 +581,25 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   };
 
   return (
-    <div style={{ padding: "8px 0" }}>
-      {/* Estilos responsivos: ocultar acciones secundarias en modo móvil (<= 640px), visibles en tablet y PC */}
+    <div style={{ padding: esModoMovil ? "2px 0" : "6px 0" }}>
+      {/* Estilos responsivos y rieles horizontales deslizables */}
       <style>{`
         @media (max-width: 640px) {
           .catalogo-solo-pantalla-grande,
           .catalogo-solo-escritorio {
             display: none !important;
           }
+        }
+        .catalogo-riel-deslizable {
+          display: flex;
+          flex-wrap: nowrap;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          scroll-snap-type: x proximity;
+        }
+        .catalogo-riel-deslizable::-webkit-scrollbar {
+          display: none;
         }
         @keyframes ecoGiroCatalogo {
           to { transform: rotate(360deg); }
@@ -598,78 +609,52 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         }
       `}</style>
 
-      {/* Cabecera del Catálogo y Barra de Acciones */}
+      {/* Cabecera compacta del Catálogo y Barra Lineal Deslizable de Acciones */}
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "flex-start",
-          marginBottom: "24px",
+          alignItems: "center",
+          marginBottom: esModoMovil ? "10px" : "14px",
           flexWrap: "wrap",
-          gap: "16px",
+          gap: esModoMovil ? "8px" : "12px",
         }}
       >
-        <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
-            <span
-              style={{
-                background: "#EFECE6",
-                color: "#221E1B",
-                padding: "3px 10px",
-                borderRadius: "12px",
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
-              <Sparkles size={12} />
-              comun_comercio • PLT-009
-            </span>
-            <span
-              style={{
-                background: "#FAF6EE",
-                color: "#745622",
-                padding: "3px 10px",
-                borderRadius: "12px",
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
-              <CreditCard size={12} />
-              Payphone Botón de Pago
-            </span>
-          </div>
-          <h1 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 800, color: "#1F1C19" }}>
-            {esFloristeria
-              ? "Catálogo Comercial y Diseños Florales"
-              : esMantenimiento
-              ? "Catálogo de Servicios y Mantenimiento"
-              : "Catálogo Comercial y Honorarios Profesionales"}
-          </h1>
-          <p style={{ margin: "4px 0 0", fontSize: "0.85rem", color: "#847D74" }}>
-            {esFloristeria
-              ? "Arreglos florales, bouquets estilo coreano, complementos y suscripciones con entrega express y Payphone."
-              : esMantenimiento
-              ? "Servicios de mantenimiento, visitas de diagnóstico y reparaciones residenciales con cobro Payphone."
-              : "Contrata servicios jurídicos, liquida honorarios profesionales o activa planes legales con Payphone en modo simulado o real."}
-          </p>
-        </div>
+        <h1
+          style={{
+            margin: 0,
+            fontSize: esModoMovil ? "0.98rem" : "1.08rem",
+            fontWeight: 700,
+            color: "#1F1C19",
+            lineHeight: 1.25,
+          }}
+        >
+          {esFloristeria
+            ? "Catálogo Comercial"
+            : esMantenimiento
+            ? "Catálogo de Servicios"
+            : "Catálogo Comercial"}
+        </h1>
 
-        {/* Selector de Modo: Administrador vs Vista Cliente */}
-        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
+        {/* Barra de acciones en riel lineal deslizable (sin botones Guía ni Actualizar en ninguna pantalla) */}
+        <div
+          className="catalogo-riel-deslizable"
+          style={{
+            gap: "6px",
+            alignItems: "center",
+            maxWidth: "100%",
+            width: esModoMovil ? "100%" : "auto",
+            paddingBottom: "2px",
+          }}
+        >
           <div
             style={{
               display: "inline-flex",
               background: "#F4F2EE",
               padding: "3px",
-              borderRadius: "10px",
+              borderRadius: "9px",
               border: "1px solid #D5CFC4",
-              marginRight: "4px",
+              flexShrink: 0,
             }}
           >
             <button
@@ -677,7 +662,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               onClick={() => setModoVista("admin")}
               title="Modo Configuración (Crear y editar productos)"
               style={{
-                padding: "6px 12px",
+                padding: esModoMovil ? "6px 10px" : "6px 12px",
                 borderRadius: "7px",
                 border: "none",
                 background: modoVista === "admin" ? "#1F1C19" : "transparent",
@@ -685,9 +670,11 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 fontSize: "0.78rem",
                 fontWeight: 700,
                 cursor: "pointer",
-                display: "flex",
+                display: "inline-flex",
                 alignItems: "center",
                 gap: "5px",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
                 transition: "all 0.15s ease",
               }}
             >
@@ -700,17 +687,19 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
               onClick={() => setModoVista("cliente")}
               title="Vista de Cliente (Simulación de catálogo para comprador)"
               style={{
-                padding: "6px 12px",
+                padding: esModoMovil ? "6px 10px" : "6px 12px",
                 borderRadius: "7px",
                 border: "none",
-                background: modoVista === "cliente" ? (esFloristeria ? "#221E1B" : "#221E1B") : "transparent",
+                background: modoVista === "cliente" ? "#221E1B" : "transparent",
                 color: modoVista === "cliente" ? "#FFFFFF" : "#57524C",
                 fontSize: "0.78rem",
                 fontWeight: 700,
                 cursor: "pointer",
-                display: "flex",
+                display: "inline-flex",
                 alignItems: "center",
                 gap: "5px",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
                 transition: "all 0.15s ease",
               }}
             >
@@ -719,30 +708,6 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setModalManualAbierto(true)}
-            className="btn-responsive-accion"
-            title="Ver Manual de Configuración"
-            aria-label="Ver Manual de Configuración"
-            style={{
-              background: "#F8F7F4",
-              color: "#57524C",
-              border: "1.5px solid #D5CFC4",
-              padding: "8px 14px",
-              borderRadius: "8px",
-              fontSize: "0.85rem",
-              fontWeight: 700,
-              cursor: "pointer",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-            }}
-          >
-            <BookOpen size={15} color={esFloristeria ? "#221E1B" : "#221E1B"} />
-            <span className="btn-texto-responsive">Manual de Uso</span>
-          </button>
-
           {modoVista === "admin" && (
             <>
               <button
@@ -750,20 +715,21 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 onClick={() => setModalProdAbierto(true)}
                 className="btn-responsive-accion"
                 title={esFloristeria ? "Crear Nuevo Arreglo Floral" : "Crear Nuevo Producto"}
-                aria-label={esFloristeria ? "Crear Nuevo Arreglo Floral" : "Crear Nuevo Producto"}
+                aria-label={esFloristeria ? "Nuevo Arreglo" : "Nuevo Producto"}
                 style={{
-                  background: esFloristeria ? "#221E1B" : "#1F1C19",
+                  background: "#221E1B",
                   color: "#FFFFFF",
                   border: "none",
-                  padding: "8px 14px",
+                  padding: "7px 12px",
                   borderRadius: "8px",
-                  fontSize: "0.85rem",
+                  fontSize: "0.8rem",
                   fontWeight: 700,
                   cursor: "pointer",
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: "6px",
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
+                  gap: "5px",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
                 }}
               >
                 <Plus size={15} />
@@ -792,17 +758,19 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       background: "#FFFFFF",
                       color: "#57524C",
                       border: "1px solid #D5CFC4",
-                      padding: "8px 14px",
+                      padding: "7px 12px",
                       borderRadius: "8px",
-                      fontSize: "0.85rem",
+                      fontSize: "0.8rem",
                       fontWeight: 600,
                       cursor: "pointer",
                       display: "inline-flex",
                       alignItems: "center",
-                      gap: "6px",
+                      gap: "5px",
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
                     }}
                   >
-                    <FolderPlus size={15} />
+                    <FolderPlus size={14} />
                     <span className="btn-texto-responsive">
                       {esFloristeria ? "Colecciones" : "Categorías"}
                     </span>
@@ -818,17 +786,19 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       background: "#FAF6EE",
                       color: "#745622",
                       border: "1px solid #E5D7BC",
-                      padding: "8px 12px",
+                      padding: "7px 11px",
                       borderRadius: "8px",
-                      fontSize: "0.85rem",
+                      fontSize: "0.8rem",
                       fontWeight: 700,
                       cursor: "pointer",
                       display: "inline-flex",
                       alignItems: "center",
-                      gap: "6px",
+                      gap: "5px",
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
                     }}
                   >
-                    <Tag size={15} color="#8F6A2E" />
+                    <Tag size={14} color="#8F6A2E" />
                     <span className="btn-texto-responsive">Tipos Oferta</span>
                   </button>
 
@@ -846,17 +816,19 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       background: "#F2F6F3",
                       color: "#2F4737",
                       border: "1px solid #CEDDD3",
-                      padding: "8px 14px",
+                      padding: "7px 12px",
                       borderRadius: "8px",
-                      fontSize: "0.85rem",
+                      fontSize: "0.8rem",
                       fontWeight: 700,
                       cursor: "pointer",
                       display: "inline-flex",
                       alignItems: "center",
-                      gap: "6px",
+                      gap: "5px",
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
                     }}
                   >
-                    <Building2 size={15} />
+                    <Building2 size={14} />
                     <span className="btn-texto-responsive">Convenios B2B</span>
                   </button>
                 </>
@@ -865,457 +837,463 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           )}
 
           {!esModoMovil && (
-            <>
-              {/* Botón Compartir Parámetros de Consulta (solo PC y Tablet) */}
-              <button
-                type="button"
-                onClick={handleCompartirConsulta}
-                className="btn-responsive-accion catalogo-solo-pantalla-grande"
-                title="Copiar enlace con los filtros y parámetros de consulta del catálogo"
-                aria-label="Compartir"
-                style={{
-                  background: copiadoConsulta ? "#F2F6F3" : "#F8F7F4",
-                  color: copiadoConsulta ? "#2F4737" : "#57524C",
-                  border: copiadoConsulta ? "1.5px solid #2F4737" : "1.5px solid #D5CFC4",
-                  padding: "8px 14px",
-                  borderRadius: "8px",
-                  fontSize: "0.85rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  transition: "all 0.2s ease",
-                }}
-              >
-                {copiadoConsulta ? (
-                  <CheckCircle size={15} color="#2F4737" />
-                ) : (
-                  <Share2 size={15} color="#221E1B" />
-                )}
-                <span className="btn-texto-responsive">
-                  {copiadoConsulta ? "¡Copiado!" : "Compartir"}
-                </span>
-              </button>
-
-              {/* Botón Actualizar Catálogo (solo PC y Tablet) */}
-              <button
-                type="button"
-                onClick={cargarDatos}
-                className="btn-responsive-accion catalogo-solo-pantalla-grande"
-                title="Actualizar Catálogo"
-                aria-label="Actualizar"
-                style={{
-                  background: "#F4F2EE",
-                  color: "#57524C",
-                  border: "1px solid #D5CFC4",
-                  padding: "8px 14px",
-                  borderRadius: "8px",
-                  fontSize: "0.85rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                }}
-              >
-                <RefreshCw size={14} className={cargando ? "eco-icono-girando" : undefined} />
-                <span className="btn-texto-responsive">Actualizar</span>
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={handleCompartirConsulta}
+              className="btn-responsive-accion catalogo-solo-pantalla-grande"
+              title="Copiar enlace con los filtros y parámetros de consulta del catálogo"
+              aria-label="Compartir"
+              style={{
+                background: copiadoConsulta ? "#F2F6F3" : "#F8F7F4",
+                color: copiadoConsulta ? "#2F4737" : "#57524C",
+                border: copiadoConsulta ? "1px solid #2F4737" : "1px solid #D5CFC4",
+                padding: "7px 12px",
+                borderRadius: "8px",
+                fontSize: "0.8rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+                transition: "all 0.2s ease",
+              }}
+            >
+              {copiadoConsulta ? (
+                <CheckCircle size={14} color="#2F4737" />
+              ) : (
+                <Share2 size={14} color="#221E1B" />
+              )}
+              <span className="btn-texto-responsive">
+                {copiadoConsulta ? "¡Copiado!" : "Compartir"}
+              </span>
+            </button>
           )}
         </div>
       </div>
 
       {/* Banner Compacto de Beneficios Corporativos (si el cliente está vinculado a un convenio) */}
-      <div style={{ marginBottom: "18px" }}>
+      <div style={{ marginBottom: esModoMovil ? "8px" : "12px" }}>
         <TarjetaBeneficiosCorporativosCliente negocio={negocio} ocultarSiNoTiene={true} variante="banner_compacto" />
       </div>
 
-      {/* Selector de Pestaña: Catálogo vs Empresas vs Convenios vs Disponibilidad */}
-      <div
-        style={{
-          display: "flex",
-          gap: "8px",
-          borderBottom: "1px solid #E6E2DA",
-          marginBottom: "20px",
-          paddingBottom: "8px",
-          flexWrap: "wrap",
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => setPestanaActiva("catalogo")}
-          style={{
-            background: pestanaActiva === "catalogo" ? (esFloristeria ? "#221E1B" : "#221E1B") : "transparent",
-            color: pestanaActiva === "catalogo" ? "#FFFFFF" : "#847D74",
-            border: "none",
-            padding: "8px 16px",
-            borderRadius: "8px",
-            fontSize: "0.85rem",
-            fontWeight: 700,
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            transition: "all 0.15s ease",
-          }}
-        >
-          <LayoutGrid size={15} />
-          <span>{esFloristeria ? "Catálogo y Diseños" : esMantenimiento ? "Servicios y Tarifas" : "Honorarios y Planes (General)"}</span>
-        </button>
-
-        {esLegal && (
-          <>
-            <button
-              type="button"
-              onClick={() => setPestanaActiva("empresas")}
-              style={{
-                background: pestanaActiva === "empresas" ? "#5000BA" : "transparent",
-                color: pestanaActiva === "empresas" ? "#FFFFFF" : "#847D74",
-                border: "none",
-                padding: "8px 16px",
-                borderRadius: "8px",
-                fontSize: "0.85rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                transition: "all 0.15s ease",
-              }}
-            >
-              <Building2 size={15} />
-              <span>Oferta Corporativa & Empresas</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setPestanaActiva("convenios")}
-              style={{
-                background: pestanaActiva === "convenios" ? "#2F4737" : "transparent",
-                color: pestanaActiva === "convenios" ? "#FFFFFF" : "#847D74",
-                border: "none",
-                padding: "8px 16px",
-                borderRadius: "8px",
-                fontSize: "0.85rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                transition: "all 0.15s ease",
-              }}
-            >
-              <Users size={15} />
-              <span>Convenios B2B & SATCOM</span>
-            </button>
-          </>
-        )}
-
-        <button
-          type="button"
-          onClick={() => setPestanaActiva("disponibilidad")}
-          style={{
-            background: pestanaActiva === "disponibilidad" ? (esFloristeria ? "#221E1B" : "#221E1B") : "transparent",
-            color: pestanaActiva === "disponibilidad" ? "#FFFFFF" : "#847D74",
-            border: "none",
-            padding: "8px 16px",
-            borderRadius: "8px",
-            fontSize: "0.85rem",
-            fontWeight: 700,
-            cursor: "pointer",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            transition: "all 0.15s ease",
-          }}
-        >
-          <Activity size={15} />
-          <span>
-            {esFloristeria
-              ? "Disponibilidad Taller (Rosas y Papel)"
-              : esMantenimiento
-              ? "Cuadrillas y Zonas en Vivo"
-              : "Disponibilidad de Abogados"}
-          </span>
-        </button>
-      </div>
-
-      {pestanaActiva === "convenios" ? (
-        <div style={{ width: "100%" }}>
-          <GestionConveniosCorporativos negocio={negocio} />
-        </div>
-      ) : pestanaActiva === "empresas" ? (
-        <div style={{ width: "100%" }}>
-          <VitrinaComercialVisual negocio={negocio} filtroAudiencia="empresas" />
-        </div>
-      ) : pestanaActiva === "disponibilidad" ? (
-        <TableroDisponibilidadOperativa negocio={negocio} />
-      ) : (
-        <>
-          {/* Barra de Búsqueda y Filtros de Categoría */}
-          <div
-            style={{
-              background: "#FFFFFF",
-              border: "1px solid #E6E2DA",
-              borderRadius: "16px",
-              padding: "16px",
-              marginBottom: "24px",
-          display: "flex",
-          flexWrap: "wrap",
-          alignItems: "center",
-          gap: "12px",
-          boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-        }}
-      >
-        <div style={{ flex: 1, minWidth: "240px", position: "relative" }}>
-          <Search size={16} color="#847D74" style={{ position: "absolute", left: "12px", top: "11px" }} />
-          <input
-            type="text"
-            placeholder="Buscar por servicio, honorario, plan o palabra clave..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "8px 12px 8px 36px",
-              borderRadius: "8px",
-              border: "1px solid #D5CFC4",
-              fontSize: "0.85rem",
-              boxSizing: "border-box",
-            }}
-          />
-        </div>
-
-        {/* Filtro por Canal de Visibilidad (solo en vista Administrador) */}
-        {modoVista === "admin" && (
-        <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-          <SelectConBuscador
-            value={canalSeleccionado}
-            onChange={(e) => {
-              setCanalSeleccionado(e.target.value);
-              if (e.target.value === "todos") setVerTodosEnFiltroCanal(false);
-            }}
-            aria-label="Filtrar por canal de visibilidad"
-            style={{
-              padding: "7px 12px",
-              borderRadius: "8px",
-              border: canalSeleccionado !== "todos" ? "1.5px solid #221E1B" : "1px solid #D5CFC4",
-              fontSize: "0.8rem",
-              fontWeight: 700,
-              background: canalSeleccionado !== "todos" ? "#F4F2EE" : "#F8F7F4",
-              color: canalSeleccionado !== "todos" ? "#3A3530" : "#1F1C19",
-              cursor: "pointer",
-            }}
-          >
-            <option value="todos">🌐 Todos los canales ({productos.length})</option>
-            {CANALES_CATALOGO_OFICIALES.map((c) => {
-              const count = (productos || []).filter((p) =>
-                (p.canales_visibilidad || p.pro_detalle_producto?.canales_visibilidad || CANALES_POR_DEFECTO).includes(c.clave)
-              ).length;
-              return (
-                <option key={c.clave} value={c.clave}>
-                  {c.nombre} ({count})
-                </option>
-              );
-            })}
-          </SelectConBuscador>
-
-          {canalSeleccionado !== "todos" && modoVista === "admin" && (
-            <button
-              type="button"
-              onClick={() => setVerTodosEnFiltroCanal((prev) => !prev)}
-              className="btn-responsive-accion"
-              title={
-                verTodosEnFiltroCanal
-                  ? "Mostrando todos los productos para activar/desactivar con el check. Clic para volver a ver solo los activos."
-                  : "Clic para ver todos los productos y activar o desactivar su visibilidad en este canal usando el check de cada tarjeta."
-              }
-              aria-label="Alternar entre ver solo activos o todos los productos para activar/desactivar"
-              style={{
-                padding: "6px 11px",
-                borderRadius: "8px",
-                border: verTodosEnFiltroCanal ? "1.5px solid #221E1B" : "1px solid #D5CFC4",
-                background: verTodosEnFiltroCanal ? "#221E1B" : "#FFFFFF",
-                color: verTodosEnFiltroCanal ? "#FFFFFF" : "#57524C",
-                fontSize: "0.78rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "5px",
-                transition: "all 0.15s ease",
-              }}
-            >
-              {verTodosEnFiltroCanal ? <CheckSquare size={13} /> : <Eye size={13} />}
-              <span className="btn-texto-responsive">
-                {verTodosEnFiltroCanal ? `Ver Todos (${productos.length})` : "Ver Todos (Activar/Desactivar)"}
-              </span>
-            </button>
-          )}
-        </div>
-        )}
-
-        {/* Filtro rápido de Estado (Todos / Activos / Inactivos) en vista Administrador */}
-        {modoVista === "admin" && (
-          <div style={{ display: "inline-flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
-            <button
-              type="button"
-              onClick={() => setFiltroEstadoAdmin("todos")}
-              title="Mostrar productos activos e inactivos"
-              aria-label="Todos los estados"
-              style={{
-                padding: "6px 11px",
-                borderRadius: "8px",
-                fontSize: "0.76rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                border: filtroEstadoAdmin === "todos" ? "1.5px solid #1F1C19" : "1px solid #D5CFC4",
-                background: filtroEstadoAdmin === "todos" ? "#1F1C19" : "#FFFFFF",
-                color: filtroEstadoAdmin === "todos" ? "#FFFFFF" : "#57524C",
-              }}
-            >
-              Todos ({productos.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setFiltroEstadoAdmin("activos")}
-              title="Mostrar solo productos activos en tienda"
-              aria-label="Productos activos"
-              style={{
-                padding: "6px 11px",
-                borderRadius: "8px",
-                fontSize: "0.76rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                border: filtroEstadoAdmin === "activos" ? "1.5px solid #2F4737" : "1px solid #CEDDD3",
-                background: filtroEstadoAdmin === "activos" ? "#2F4737" : "#F2F6F3",
-                color: filtroEstadoAdmin === "activos" ? "#FFFFFF" : "#2B4A36",
-              }}
-            >
-              Activos ({totalActivos})
-            </button>
-            <button
-              type="button"
-              onClick={() => setFiltroEstadoAdmin("inactivos")}
-              title="Mostrar productos inactivos para volver a activarlos"
-              aria-label="Productos inactivos"
-              style={{
-                padding: "6px 11px",
-                borderRadius: "8px",
-                fontSize: "0.76rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                border:
-                  filtroEstadoAdmin === "inactivos"
-                    ? "1.5px solid #8A2E2E"
-                    : totalInactivos > 0
-                    ? "1.5px solid #8F6A2E"
-                    : "1px solid #D5CFC4",
-                background:
-                  filtroEstadoAdmin === "inactivos"
-                    ? "#8A2E2E"
-                    : totalInactivos > 0
-                    ? "#FAF6EE"
-                    : "#F8F7F4",
-                color:
-                  filtroEstadoAdmin === "inactivos"
-                    ? "#FFFFFF"
-                    : totalInactivos > 0
-                    ? "#745622"
-                    : "#847D74",
-              }}
-            >
-              Inactivos ({totalInactivos})
-            </button>
-          </div>
-        )}
-
+      {/* Selector de Pestaña: oculto en móvil y eliminado en Floristería (Catálogo / Disponibilidad ya tiene módulo propio) */}
+      {!esModoMovil && !esFloristeria && (
         <div
+          className="catalogo-solo-pantalla-grande catalogo-riel-deslizable"
           style={{
-            display: "flex",
-            gap: "8px",
-            flexWrap: esModoMovil ? "nowrap" : "wrap",
-            overflowX: esModoMovil ? "auto" : "visible",
-            width: esModoMovil ? "100%" : "auto",
-            paddingBottom: esModoMovil ? "4px" : 0,
+            gap: "6px",
+            borderBottom: "1px solid #E6E2DA",
+            marginBottom: "14px",
+            paddingBottom: "8px",
             alignItems: "center",
           }}
         >
           <button
             type="button"
-            onClick={() => setCategoriaSeleccionada("todas")}
+            onClick={() => setPestanaActiva("catalogo")}
             style={{
-              padding: esModoMovil ? "8px 14px" : "6px 14px",
-              borderRadius: "8px",
-              fontSize: "0.8rem",
-              fontWeight: 600,
-              cursor: "pointer",
+              background: pestanaActiva === "catalogo" ? "#221E1B" : "transparent",
+              color: pestanaActiva === "catalogo" ? "#FFFFFF" : "#847D74",
               border: "none",
-              flexShrink: 0,
+              padding: "7px 14px",
+              borderRadius: "8px",
+              fontSize: "0.82rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
               whiteSpace: "nowrap",
-              background: categoriaSeleccionada === "todas" ? "#1F1C19" : "#F4F2EE",
-              color: categoriaSeleccionada === "todas" ? "#FFFFFF" : "#57524C",
+              flexShrink: 0,
+              transition: "all 0.15s ease",
             }}
           >
-            Todas ({productos.length})
+            <LayoutGrid size={14} />
+            <span>{esMantenimiento ? "Servicios y Tarifas" : "Honorarios y Planes"}</span>
           </button>
-          {categoriasLista.map((c) => (
-            <button
-              key={c.ctg_id}
-              type="button"
-              onClick={() => setCategoriaSeleccionada(c.ctg_slug)}
-              style={{
-                padding: esModoMovil ? "8px 14px" : "6px 14px",
-                borderRadius: "8px",
-                fontSize: "0.8rem",
-                fontWeight: 600,
-                cursor: "pointer",
-                border: "none",
-                flexShrink: 0,
-                whiteSpace: "nowrap",
-                background: categoriaSeleccionada === c.ctg_slug ? (esFloristeria ? "#221E1B" : "#221E1B") : "#F4F2EE",
-                color: categoriaSeleccionada === c.ctg_slug ? "#FFFFFF" : "#57524C",
-              }}
-            >
-              {c.ctg_nombre}
-            </button>
-          ))}
 
-          {modoVista === "admin" && !esModoMovil && (
-            <button
-              type="button"
-              onClick={() => {
-                setCatModalTab("gestionar");
-                setModalCatAbierto(true);
-              }}
-              className="catalogo-solo-pantalla-grande"
-              title={
-                esFloristeria
-                  ? "Crear y gestionar colecciones florales"
-                  : "Crear y gestionar categorías"
-              }
-              aria-label={esFloristeria ? "Colecciones" : "Categorías"}
+          {esLegal && (
+            <>
+              <button
+                type="button"
+                onClick={() => setPestanaActiva("empresas")}
+                style={{
+                  background: pestanaActiva === "empresas" ? "#5000BA" : "transparent",
+                  color: pestanaActiva === "empresas" ? "#FFFFFF" : "#847D74",
+                  border: "none",
+                  padding: "7px 14px",
+                  borderRadius: "8px",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <Building2 size={14} />
+                <span>Oferta Corporativa</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPestanaActiva("convenios")}
+                style={{
+                  background: pestanaActiva === "convenios" ? "#2F4737" : "transparent",
+                  color: pestanaActiva === "convenios" ? "#FFFFFF" : "#847D74",
+                  border: "none",
+                  padding: "7px 14px",
+                  borderRadius: "8px",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <Users size={14} />
+                <span>Convenios B2B</span>
+              </button>
+            </>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setPestanaActiva("disponibilidad")}
+            style={{
+              background: pestanaActiva === "disponibilidad" ? "#221E1B" : "transparent",
+              color: pestanaActiva === "disponibilidad" ? "#FFFFFF" : "#847D74",
+              border: "none",
+              padding: "7px 14px",
+              borderRadius: "8px",
+              fontSize: "0.82rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+              transition: "all 0.15s ease",
+            }}
+          >
+            <Activity size={14} />
+            <span>
+              {esMantenimiento ? "Cuadrillas y Zonas" : "Disponibilidad"}
+            </span>
+          </button>
+        </div>
+      )}
+
+      {pestanaActiva === "convenios" && !esFloristeria ? (
+        <div style={{ width: "100%" }}>
+          <GestionConveniosCorporativos negocio={negocio} />
+        </div>
+      ) : pestanaActiva === "empresas" && !esFloristeria ? (
+        <div style={{ width: "100%" }}>
+          <VitrinaComercialVisual negocio={negocio} filtroAudiencia="empresas" />
+        </div>
+      ) : pestanaActiva === "disponibilidad" && !esFloristeria ? (
+        <TableroDisponibilidadOperativa negocio={negocio} />
+      ) : (
+        <>
+          {/* Barra de Búsqueda y Rieles Lineales Deslizables de Filtros */}
+          <div
+            style={{
+              background: "#FFFFFF",
+              border: "1px solid #E6E2DA",
+              borderRadius: "14px",
+              padding: esModoMovil ? "10px" : "14px",
+              marginBottom: esModoMovil ? "12px" : "18px",
+              display: "flex",
+              flexDirection: "column",
+              gap: esModoMovil ? "8px" : "10px",
+            }}
+          >
+            <div style={{ position: "relative", width: "100%" }}>
+              <Search size={15} color="#847D74" style={{ position: "absolute", left: "11px", top: "50%", transform: "translateY(-50%)" }} />
+              <input
+                type="text"
+                placeholder={
+                  esFloristeria
+                    ? "Buscar arreglo, flor, ocasión o SKU..."
+                    : esMantenimiento
+                    ? "Buscar servicio, tarifa o palabra clave..."
+                    : "Buscar servicio, honorario, plan o palabra clave..."
+                }
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                style={{
+                  width: "100%",
+                  minHeight: "38px",
+                  padding: "7px 12px 7px 34px",
+                  borderRadius: "9px",
+                  border: "1px solid #D5CFC4",
+                  fontSize: "0.84rem",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+
+            {/* Riel lineal deslizable: Estado (Todos / Activos / Inactivos) + Canal (vista Administrador) */}
+            {modoVista === "admin" && (
+              <div
+                className="catalogo-riel-deslizable"
+                style={{
+                  gap: "6px",
+                  alignItems: "center",
+                  width: "100%",
+                  paddingBottom: "2px",
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setFiltroEstadoAdmin("todos")}
+                  title="Mostrar productos activos e inactivos"
+                  aria-label="Todos los estados"
+                  style={{
+                    padding: "6px 11px",
+                    borderRadius: "8px",
+                    fontSize: "0.76rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    scrollSnapAlign: "start",
+                    border: filtroEstadoAdmin === "todos" ? "1.5px solid #1F1C19" : "1px solid #D5CFC4",
+                    background: filtroEstadoAdmin === "todos" ? "#1F1C19" : "#FFFFFF",
+                    color: filtroEstadoAdmin === "todos" ? "#FFFFFF" : "#57524C",
+                  }}
+                >
+                  Todos ({productos.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFiltroEstadoAdmin("activos")}
+                  title="Mostrar solo productos activos en tienda"
+                  aria-label="Productos activos"
+                  style={{
+                    padding: "6px 11px",
+                    borderRadius: "8px",
+                    fontSize: "0.76rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    scrollSnapAlign: "start",
+                    border: filtroEstadoAdmin === "activos" ? "1.5px solid #2F4737" : "1px solid #CEDDD3",
+                    background: filtroEstadoAdmin === "activos" ? "#2F4737" : "#F2F6F3",
+                    color: filtroEstadoAdmin === "activos" ? "#FFFFFF" : "#2B4A36",
+                  }}
+                >
+                  Activos ({totalActivos})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFiltroEstadoAdmin("inactivos")}
+                  title="Mostrar productos inactivos para volver a activarlos"
+                  aria-label="Productos inactivos"
+                  style={{
+                    padding: "6px 11px",
+                    borderRadius: "8px",
+                    fontSize: "0.76rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    scrollSnapAlign: "start",
+                    border:
+                      filtroEstadoAdmin === "inactivos"
+                        ? "1.5px solid #8A2E2E"
+                        : totalInactivos > 0
+                        ? "1.5px solid #8F6A2E"
+                        : "1px solid #D5CFC4",
+                    background:
+                      filtroEstadoAdmin === "inactivos"
+                        ? "#8A2E2E"
+                        : totalInactivos > 0
+                        ? "#FAF6EE"
+                        : "#F8F7F4",
+                    color:
+                      filtroEstadoAdmin === "inactivos"
+                        ? "#FFFFFF"
+                        : totalInactivos > 0
+                        ? "#745622"
+                        : "#847D74",
+                  }}
+                >
+                  Inactivos ({totalInactivos})
+                </button>
+
+                <div style={{ flexShrink: 0, scrollSnapAlign: "start" }}>
+                  <SelectConBuscador
+                    value={canalSeleccionado}
+                    onChange={(e) => {
+                      setCanalSeleccionado(e.target.value);
+                      if (e.target.value === "todos") setVerTodosEnFiltroCanal(false);
+                    }}
+                    aria-label="Filtrar por canal de visibilidad"
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: "8px",
+                      border: canalSeleccionado !== "todos" ? "1.5px solid #221E1B" : "1px solid #D5CFC4",
+                      fontSize: "0.76rem",
+                      fontWeight: 700,
+                      background: canalSeleccionado !== "todos" ? "#F4F2EE" : "#F8F7F4",
+                      color: canalSeleccionado !== "todos" ? "#3A3530" : "#1F1C19",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    <option value="todos">Canales ({productos.length})</option>
+                    {CANALES_CATALOGO_OFICIALES.map((c) => {
+                      const count = (productos || []).filter((p) =>
+                        (p.canales_visibilidad || p.pro_detalle_producto?.canales_visibilidad || CANALES_POR_DEFECTO).includes(c.clave)
+                      ).length;
+                      return (
+                        <option key={c.clave} value={c.clave}>
+                          {c.nombre} ({count})
+                        </option>
+                      );
+                    })}
+                  </SelectConBuscador>
+                </div>
+
+                {canalSeleccionado !== "todos" && (
+                  <button
+                    type="button"
+                    onClick={() => setVerTodosEnFiltroCanal((prev) => !prev)}
+                    className="btn-responsive-accion"
+                    title={
+                      verTodosEnFiltroCanal
+                        ? "Mostrando todos los productos para activar/desactivar con el check. Clic para volver a ver solo los activos."
+                        : "Clic para ver todos los productos y activar o desactivar su visibilidad en este canal usando el check de cada tarjeta."
+                    }
+                    aria-label="Ver todos en canal"
+                    style={{
+                      padding: "6px 10px",
+                      borderRadius: "8px",
+                      border: verTodosEnFiltroCanal ? "1.5px solid #221E1B" : "1px solid #D5CFC4",
+                      background: verTodosEnFiltroCanal ? "#221E1B" : "#FFFFFF",
+                      color: verTodosEnFiltroCanal ? "#FFFFFF" : "#57524C",
+                      fontSize: "0.76rem",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    {verTodosEnFiltroCanal ? <CheckSquare size={13} /> : <Eye size={13} />}
+                    <span className="btn-texto-responsive">
+                      {verTodosEnFiltroCanal ? `Todos (${productos.length})` : "Ver Todos"}
+                    </span>
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Riel lineal deslizable de categorías / colecciones */}
+            <div
+              className="catalogo-riel-deslizable"
               style={{
-                padding: "5px 12px",
-                borderRadius: "8px",
-                fontSize: "0.78rem",
-                fontWeight: 700,
-                cursor: "pointer",
-                border: "1.5px dashed #D5CFC4",
-                background: "#FFFFFF",
-                color: esFloristeria ? "#221E1B" : "#221E1B",
-                display: "inline-flex",
+                gap: "6px",
+                width: "100%",
+                paddingBottom: "2px",
                 alignItems: "center",
-                gap: "5px",
               }}
             >
-              <FolderPlus size={13} />
-              <span>{esFloristeria ? "Colecciones" : "Categorías"}</span>
-            </button>
-          )}
-        </div>
-      </div>
+              <button
+                type="button"
+                onClick={() => setCategoriaSeleccionada("todas")}
+                style={{
+                  padding: esModoMovil ? "7px 12px" : "6px 13px",
+                  borderRadius: "8px",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  border: "none",
+                  flexShrink: 0,
+                  whiteSpace: "nowrap",
+                  scrollSnapAlign: "start",
+                  background: categoriaSeleccionada === "todas" ? "#1F1C19" : "#F4F2EE",
+                  color: categoriaSeleccionada === "todas" ? "#FFFFFF" : "#57524C",
+                }}
+              >
+                Todas ({productos.length})
+              </button>
+              {categoriasLista.map((c) => (
+                <button
+                  key={c.ctg_id}
+                  type="button"
+                  onClick={() => setCategoriaSeleccionada(c.ctg_slug)}
+                  style={{
+                    padding: esModoMovil ? "7px 12px" : "6px 13px",
+                    borderRadius: "8px",
+                    fontSize: "0.78rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    border: "none",
+                    flexShrink: 0,
+                    whiteSpace: "nowrap",
+                    scrollSnapAlign: "start",
+                    background: categoriaSeleccionada === c.ctg_slug ? "#221E1B" : "#F4F2EE",
+                    color: categoriaSeleccionada === c.ctg_slug ? "#FFFFFF" : "#57524C",
+                  }}
+                >
+                  {c.ctg_nombre}
+                </button>
+              ))}
+
+              {modoVista === "admin" && !esModoMovil && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCatModalTab("gestionar");
+                    setModalCatAbierto(true);
+                  }}
+                  className="catalogo-solo-pantalla-grande"
+                  title={
+                    esFloristeria
+                      ? "Crear y gestionar colecciones florales"
+                      : "Crear y gestionar categorías"
+                  }
+                  aria-label={esFloristeria ? "Colecciones" : "Categorías"}
+                  style={{
+                    padding: "6px 11px",
+                    borderRadius: "8px",
+                    fontSize: "0.76rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    border: "1.5px dashed #D5CFC4",
+                    background: "#FFFFFF",
+                    color: "#221E1B",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    scrollSnapAlign: "start",
+                  }}
+                >
+                  <FolderPlus size={13} />
+                  <span>{esFloristeria ? "Colecciones" : "Categorías"}</span>
+                </button>
+              )}
+            </div>
+          </div>
 
       {/* Banner de Colección / Categoría con Recursos Digitales */}
       {categoriaSeleccionada !== "todas" && (() => {
@@ -1366,7 +1344,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
             </div>
 
             {/* Acciones de Recursos Digitales de la Categoría */}
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            <div className="catalogo-riel-deslizable" style={{ gap: "6px", maxWidth: "100%", alignItems: "center" }}>
               <button
                 type="button"
                 onClick={() => {
@@ -2801,9 +2779,12 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   ) : null}
 
 
-                  {/* Canales de Visibilidad (exclusivo de vista Administrador; oculto para el cliente) */}
+                  {/* Canales de Visibilidad (exclusivo de vista Administrador; riel lineal deslizable) */}
                   {modoVista === "admin" && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "5px", marginBottom: "12px", alignItems: "center" }}>
+                  <div
+                    className="catalogo-riel-deslizable"
+                    style={{ gap: "5px", marginBottom: "10px", alignItems: "center", width: "100%", paddingBottom: "2px" }}
+                  >
                     {!productoTieneAlMenosUnaImagen(p) && (
                       <span
                         title="Este producto no tiene fotos configuradas. Está oculto en E-Commerce Web y App Clientes hasta que agregues al menos una imagen."
@@ -2818,10 +2799,12 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           display: "inline-flex",
                           alignItems: "center",
                           gap: "4px",
+                          flexShrink: 0,
+                          whiteSpace: "nowrap",
                         }}
                       >
                         <AlertCircle size={11} color="#8A2E2E" />
-                        <span>Sin imagen (Oculto Web/App)</span>
+                        <span>Sin imagen</span>
                       </span>
                     )}
 
@@ -2843,7 +2826,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                           disabled={isSaving}
                           title={
                             requiereImgYFalta
-                              ? `⚠️ ${canalObj.nombre}: requiere al menos 1 foto para activarse en Web/App`
+                              ? `${canalObj.nombre}: requiere al menos 1 foto para activarse en Web/App`
                               : estaActivo
                               ? `Activo en ${canalObj.nombre} (clic para desactivar)`
                               : `Inactivo en ${canalObj.nombre} (clic para activar)`
@@ -2868,10 +2851,13 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                               ? "1px solid #2F4737"
                               : "1px dashed #D5CFC4",
                             borderRadius: "6px",
-                            padding: "2px 6px",
+                            padding: "3px 7px",
                             display: "inline-flex",
                             alignItems: "center",
                             gap: "3px",
+                            flexShrink: 0,
+                            whiteSpace: "nowrap",
+                            scrollSnapAlign: "start",
                             cursor: isSaving ? "wait" : "pointer",
                             textDecoration: requiereImgYFalta && estaActivo ? "line-through" : "none",
                             opacity: estaActivo ? 1 : 0.65,

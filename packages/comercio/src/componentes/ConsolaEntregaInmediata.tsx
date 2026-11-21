@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { DataGrid, type ColumnaDataGrid } from "@eco/datagrid";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DataGrid, SelectConBuscador, type ColumnaDataGrid } from "@eco/datagrid";
 import { crearClienteNavegador } from "@eco/supabase/cliente";
 import {
   AlertTriangle,
@@ -19,6 +19,7 @@ import {
   Star,
   Trash2,
   Upload,
+  X,
   Zap,
 } from "lucide-react";
 import {
@@ -27,7 +28,13 @@ import {
   listarEntregaInmediataAction,
   publicarEntregaInmediataAction,
 } from "../acciones-operaciones-taller";
-import type { ArregloEntregaInmediata } from "../operaciones-taller";
+import {
+  CLAVE_PRESET_ENTREGA_OTROS,
+  PRESETS_ENTREGA_INMEDIATA,
+  inferirUsosEntregaInmediata,
+  resolverPresetEntregaInmediataPorNombre,
+  type ArregloEntregaInmediata,
+} from "../operaciones-taller";
 import {
   comprimirYEstamparFotoArchivo,
   dataUrlABlob,
@@ -88,17 +95,19 @@ export function ConsolaEntregaInmediata({
 
   const [items, setItems] = useState<ArregloEntregaInmediata[]>(itemsIniciales);
   const [migracionPendiente, setMigracionPendiente] = useState<boolean>(migracionPendienteInicial);
-  const [cargando, setCargando] = useState<boolean>(false);
 
   // Formulario rápido de publicación
   const [fotosSubidas, setFotosSubidas] = useState<string[]>([]);
+  const [presetSeleccionado, setPresetSeleccionado] = useState<string>("");
   const [nombre, setNombre] = useState<string>("");
   const [precio, setPrecio] = useState<string>("");
+  const [precioDesdePreset, setPrecioDesdePreset] = useState<boolean>(false);
   const [precioComparacion, setPrecioComparacion] = useState<string>("");
   const [stock, setStock] = useState<string>("1");
   const [descripcion, setDescripcion] = useState<string>("");
   const [subiendoImagen, setSubiendoImagen] = useState<boolean>(false);
   const [publicando, setPublicando] = useState<boolean>(false);
+  const nombreInputRef = useRef<HTMLInputElement | null>(null);
 
   const [linkCopiadoId, setLinkCopiadoId] = useState<string | null>(null);
   const [procesandoId, setProcesandoId] = useState<string | null>(null);
@@ -127,9 +136,7 @@ export function ConsolaEntregaInmediata({
   const [aplicandoIa, setAplicandoIa] = useState<boolean>(false);
 
   const recargar = useCallback(async () => {
-    setCargando(true);
     const res = await listarEntregaInmediataAction(negNorm, true);
-    setCargando(false);
     if (!res.ok) {
       setErrorMsg(res.error);
       return;
@@ -142,6 +149,64 @@ export function ConsolaEntregaInmediata({
       // Ignorar cuota
     }
   }, [negNorm, cacheKey]);
+
+  const usosAutomaticos = useMemo(() => inferirUsosEntregaInmediata(nombre), [nombre]);
+  const asignaCondolencias = usosAutomaticos.includes("condolencias");
+
+  const handleCambiarPreset = (clave: string) => {
+    setPresetSeleccionado(clave);
+    if (!clave) return;
+
+    if (clave === CLAVE_PRESET_ENTREGA_OTROS) {
+      const eraPresetExacto = PRESETS_ENTREGA_INMEDIATA.some(
+        (p) => p.nombre.toLowerCase() === nombre.trim().toLowerCase()
+      );
+      if (eraPresetExacto) {
+        setNombre("");
+      }
+      if (precioDesdePreset) {
+        setPrecio("");
+        setPrecioDesdePreset(false);
+      }
+      if (typeof window !== "undefined") {
+        window.setTimeout(() => {
+          nombreInputRef.current?.focus();
+        }, 45);
+      }
+      return;
+    }
+
+    const preset = PRESETS_ENTREGA_INMEDIATA.find((p) => p.clave === clave);
+    if (!preset) return;
+
+    setNombre(preset.nombre);
+    if (preset.precioSugerido !== undefined) {
+      setPrecio(String(preset.precioSugerido));
+      setPrecioDesdePreset(true);
+    } else if (precioDesdePreset) {
+      setPrecio("");
+      setPrecioDesdePreset(false);
+    }
+
+    if (endpointEstudioIa) {
+      if (preset.tipoSoporteIaSugerido) {
+        setTipoSoporteIa(preset.tipoSoporteIaSugerido);
+      }
+      if (preset.coreanoIaSugerido !== undefined) {
+        setCoreanoIa(preset.coreanoIaSugerido);
+      }
+    }
+  };
+
+  const handleCambiarNombre = (valor: string) => {
+    setNombre(valor);
+    setPresetSeleccionado(resolverPresetEntregaInmediataPorNombre(valor));
+  };
+
+  const handleCambiarPrecio = (valor: string) => {
+    setPrecio(valor);
+    setPrecioDesdePreset(false);
+  };
 
   useEffect(() => {
     if (itemsIniciales.length === 0) {
@@ -442,13 +507,21 @@ export function ConsolaEntregaInmediata({
     setFotosSubidas([]);
     setFotosIa({ estudio: null, taller: null });
     setErroresIa({ estudio: null, taller: null });
+    setPresetSeleccionado("");
     setNombre("");
     setPrecio("");
+    setPrecioDesdePreset(false);
     setPrecioComparacion("");
     setStock("1");
     setDescripcion("");
+    if (res.advertenciaUso) {
+      setErrorMsg(res.advertenciaUso);
+    }
+    const tieneCondolencias = res.usos.includes("condolencias");
     setMensajeExito(
-      `Publicado "${nombreFinal}" ($${precioNum.toFixed(2)}) — ya aparece en la Tienda Web y en el Chat.`
+      tieneCondolencias
+        ? `Publicado "${nombreFinal}" ($${precioNum.toFixed(2)}) · Uso: Condolencias / Duelo.`
+        : `Publicado "${nombreFinal}" ($${precioNum.toFixed(2)}).`
     );
     await recargar();
   };
@@ -573,9 +646,9 @@ export function ConsolaEntregaInmediata({
               }}
             >
               {esWeb
-                ? `🛍️ Vendido Web (${x.ordenVentaCodigo || "Orden"})`
+                ? `Vendido Web (${x.ordenVentaCodigo || "Orden"})`
                 : x.motivoBaja === "VENDIDO_TIENDA"
-                  ? "🏪 Vendido en Tienda / Chat"
+                  ? "Vendido Tienda"
                   : "Retirado"}
             </span>
           );
@@ -666,165 +739,152 @@ export function ConsolaEntregaInmediata({
   );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
       {migracionPendiente && (
         <div
           style={{
-            padding: "11px 14px",
+            padding: "9px 12px",
             borderRadius: "10px",
             background: "#FAF6EE",
             border: "1px solid #E5D7BC",
             color: "#745622",
-            fontSize: "0.82rem",
+            fontSize: "0.78rem",
             display: "flex",
             alignItems: "center",
             gap: "8px",
           }}
         >
-          <AlertTriangle size={16} />
+          <AlertTriangle size={15} />
           <span>
-            Ejecuta la migración{" "}
-            <code>20261115000010_herramientas_taller_inventario_inmediata_y_entregas_iess.sql</code>{" "}
-            en Supabase para activar la publicación en catálogo en vivo.
+            Migración pendiente:{" "}
+            <code>20261115000010_herramientas_taller_inventario_inmediata_y_entregas_iess.sql</code>
           </span>
         </div>
       )}
 
-      {/* FORMULARIO ULTRARRÁPIDO DE TALLER */}
+      {/* FORMULARIO RÁPIDO DE PUBLICACIÓN */}
       <form
         onSubmit={(e) => void handlePublicar(e)}
         style={{
           background: "#FFFFFF",
           border: "1px solid #E6E2DA",
-          borderRadius: "16px",
-          padding: "20px",
+          borderRadius: "14px",
+          padding: "14px",
           display: "flex",
           flexDirection: "column",
-          gap: "14px",
-          boxShadow: "0 4px 14px rgba(15, 23, 42, 0.04)",
+          gap: "10px",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "12px",
-            flexWrap: "wrap",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div
-              style={{
-                width: "38px",
-                height: "38px",
-                borderRadius: "10px",
-                background: "#FAF6EE",
-                color: "#8F6A2E",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <Zap size={20} />
-            </div>
-            <div>
-              <h2 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700, color: "#1F1C19" }}>
-                Publicar Arreglo para Entrega Inmediata (1 a 2 Horas)
-              </h2>
-              <p style={{ margin: "2px 0 0", fontSize: "0.81rem", color: "#847D74" }}>
-                Sube la foto y su precio especial. Se publica al instante en Web y Chat, y se
-                descarta solo si se vende en línea.
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className="btn-responsive-accion"
-            onClick={() => void recargar()}
-            title="Sincronizar galería de disponibles"
-            aria-label="Actualizar"
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "8px 12px",
-              borderRadius: "9px",
-              border: "1px solid #D5CFC4",
-              background: "#FFFFFF",
-              color: "#1F1C19",
-              fontSize: "0.8rem",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            {cargando ? <Loader2 size={14} /> : <RefreshCw size={14} />}
-            <span className="btn-texto-responsive">Actualizar</span>
-          </button>
-        </div>
-
         {errorMsg && (
           <div
+            role="alert"
             style={{
-              padding: "10px 13px",
+              padding: "8px 11px",
               borderRadius: "9px",
               background: "#FAF2F2",
               border: "1px solid #E5CACA",
               color: "#8A2E2E",
-              fontSize: "0.82rem",
+              fontSize: "0.79rem",
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              gap: "10px",
+              gap: "8px",
               flexWrap: "wrap",
             }}
           >
-            <span>{errorMsg}</span>
-            {endpointEstudioIa &&
-              /\/panel\/aria|Estudio IA|OPENROUTER_API_KEY|GEMINI_API_KEY/i.test(errorMsg) && (
-                <a
-                  href="/panel/aria#estudio-ia"
-                  title="Abrir Configuración → Agente ARIA → Estudio IA"
-                  aria-label="Configurar IA"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "5px",
-                    padding: "5px 10px",
-                    borderRadius: "8px",
-                    border: "1px solid #8A2E2E",
-                    background: "#FFFFFF",
-                    color: "#8A2E2E",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    textDecoration: "none",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  <ExternalLink size={12} />
-                  <span>Configurar IA</span>
-                </a>
-              )}
+            <span style={{ flex: 1, minWidth: 0 }}>{errorMsg}</span>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+              {endpointEstudioIa &&
+                /\/panel\/aria|Estudio IA|OPENROUTER_API_KEY|GEMINI_API_KEY/i.test(errorMsg) && (
+                  <a
+                    href="/panel/aria#estudio-ia"
+                    title="Abrir Configuración → Agente ARIA → Estudio IA"
+                    aria-label="Configurar IA"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "5px",
+                      padding: "4px 9px",
+                      borderRadius: "7px",
+                      border: "1px solid #8A2E2E",
+                      background: "#FFFFFF",
+                      color: "#8A2E2E",
+                      fontSize: "0.73rem",
+                      fontWeight: 700,
+                      textDecoration: "none",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    <ExternalLink size={12} />
+                    <span>Configurar IA</span>
+                  </a>
+                )}
+              <button
+                type="button"
+                onClick={() => setErrorMsg(null)}
+                title="Cerrar aviso"
+                aria-label="Cerrar aviso"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "24px",
+                  height: "24px",
+                  borderRadius: "6px",
+                  border: "none",
+                  background: "transparent",
+                  color: "#8A2E2E",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                }}
+              >
+                <X size={14} />
+              </button>
+            </div>
           </div>
         )}
 
         {mensajeExito && (
           <div
+            role="status"
             style={{
-              padding: "10px 13px",
+              padding: "8px 11px",
               borderRadius: "9px",
               background: "#F2F6F3",
               border: "1px solid #CEDDD3",
               color: "#2B4A36",
-              fontSize: "0.83rem",
+              fontSize: "0.79rem",
               display: "flex",
               alignItems: "center",
+              justifyContent: "space-between",
               gap: "8px",
             }}
           >
-            <CheckCircle2 size={16} />
-            <span>{mensajeExito}</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "7px", minWidth: 0 }}>
+              <CheckCircle2 size={15} style={{ flexShrink: 0 }} />
+              <span>{mensajeExito}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setMensajeExito(null)}
+              title="Cerrar mensaje"
+              aria-label="Cerrar mensaje"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "24px",
+                height: "24px",
+                borderRadius: "6px",
+                border: "none",
+                background: "transparent",
+                color: "#2B4A36",
+                cursor: "pointer",
+                flexShrink: 0,
+              }}
+            >
+              <X size={14} />
+            </button>
           </div>
         )}
 
@@ -832,39 +892,42 @@ export function ConsolaEntregaInmediata({
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: "12px",
+            gap: "10px",
+            alignItems: "start",
           }}
         >
           <div>
             <label
               style={{
                 display: "block",
-                fontSize: "0.78rem",
+                fontSize: "0.75rem",
                 fontWeight: 700,
                 color: "#57524C",
-                marginBottom: "5px",
+                marginBottom: "4px",
               }}
             >
-              1. Fotografía del Arreglo *
+              Fotografía *
             </label>
-            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
               <label
-                title="Tomar foto con cámara del celular"
-                aria-label="Tomar foto"
+                title="Tomar foto con cámara"
+                aria-label="Cámara"
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
+                  justifyContent: "center",
                   gap: "6px",
-                  padding: "9px 13px",
+                  minHeight: "38px",
+                  padding: "8px 11px",
                   borderRadius: "9px",
-                  background: "#1F1C19",
-                  color: "#FFFFFF",
-                  fontSize: "0.81rem",
+                  background: "#221E1B",
+                  color: "#FAF8F5",
+                  fontSize: "0.8rem",
                   fontWeight: 700,
                   cursor: subiendoImagen ? "wait" : "pointer",
                 }}
               >
-                {subiendoImagen ? <Loader2 size={14} /> : <Camera size={14} />}
+                {subiendoImagen ? <Loader2 size={14} className="eco-spin" /> : <Camera size={14} />}
                 <span>Cámara</span>
                 <input
                   type="file"
@@ -877,18 +940,20 @@ export function ConsolaEntregaInmediata({
               </label>
 
               <label
-                title="Subir imagen desde el dispositivo"
-                aria-label="Subir imagen"
+                title="Subir imagen desde galería"
+                aria-label="Galería"
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
+                  justifyContent: "center",
                   gap: "6px",
-                  padding: "9px 13px",
+                  minHeight: "38px",
+                  padding: "8px 11px",
                   borderRadius: "9px",
                   border: "1px solid #D5CFC4",
                   background: "#F8F7F4",
                   color: "#1F1C19",
-                  fontSize: "0.81rem",
+                  fontSize: "0.8rem",
                   fontWeight: 600,
                   cursor: subiendoImagen ? "wait" : "pointer",
                 }}
@@ -908,117 +973,196 @@ export function ConsolaEntregaInmediata({
           </div>
 
           <div>
-            <label
+            <div
               style={{
-                display: "block",
-                fontSize: "0.78rem",
-                fontWeight: 700,
-                color: "#57524C",
-                marginBottom: "5px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "6px",
+                marginBottom: "4px",
               }}
             >
-              2. Nombre Corto (Opcional)
-            </label>
-            <input
-              type="text"
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              placeholder="Ej. Bouquet 24 Rosas Rojas Listo"
-              style={{
-                width: "100%",
-                padding: "9px 11px",
-                borderRadius: "9px",
-                border: "1px solid #D5CFC4",
-                fontSize: "0.85rem",
-              }}
-            />
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 90px", gap: "8px" }}>
-            <div>
               <label
+                htmlFor="entrega-inmediata-nombre"
                 style={{
-                  display: "block",
-                  fontSize: "0.78rem",
+                  fontSize: "0.75rem",
                   fontWeight: 700,
                   color: "#57524C",
-                  marginBottom: "5px",
                 }}
               >
-                Precio Hoy ($) *
+                Producto
+              </label>
+              {asignaCondolencias && (
+                <span
+                  title="Se asignará automáticamente al uso Condolencias / Duelo"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    padding: "1px 7px",
+                    borderRadius: "999px",
+                    background: "#F4F2EE",
+                    border: "1px solid #DDD8CE",
+                    color: "#3A3530",
+                    fontSize: "0.68rem",
+                    fontWeight: 700,
+                    lineHeight: 1.4,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  Condolencias / Duelo
+                </span>
+              )}
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+              <SelectConBuscador
+                value={presetSeleccionado}
+                onChange={(e) => handleCambiarPreset(e.target.value)}
+                ordenarAlfabeticamente={false}
+                tituloModal="Producto"
+                aria-label="Seleccionar producto rápido"
+                style={{
+                  width: "100%",
+                  minHeight: "38px",
+                  padding: "8px 10px",
+                  borderRadius: "9px",
+                  border: "1px solid #D5CFC4",
+                  background: "#F8F7F4",
+                  color: "#1F1C19",
+                  fontSize: "0.84rem",
+                  fontWeight: 600,
+                }}
+              >
+                <option value="">Elegir arreglo rápido...</option>
+                {PRESETS_ENTREGA_INMEDIATA.map((preset) => (
+                  <option key={preset.clave} value={preset.clave}>
+                    {preset.etiqueta}
+                  </option>
+                ))}
+                <option value={CLAVE_PRESET_ENTREGA_OTROS}>Otros</option>
+              </SelectConBuscador>
+
+              <input
+                ref={nombreInputRef}
+                id="entrega-inmediata-nombre"
+                type="text"
+                value={nombre}
+                onChange={(e) => handleCambiarNombre(e.target.value)}
+                placeholder="Nombre del producto (editable)"
+                style={{
+                  width: "100%",
+                  minHeight: "38px",
+                  padding: "8px 10px",
+                  borderRadius: "9px",
+                  border: "1px solid #D5CFC4",
+                  background: "#FFFFFF",
+                  color: "#1F1C19",
+                  fontSize: "0.84rem",
+                }}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 72px", gap: "8px" }}>
+            <div>
+              <label
+                htmlFor="entrega-inmediata-precio"
+                style={{
+                  display: "block",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  color: "#57524C",
+                  marginBottom: "4px",
+                }}
+              >
+                Precio ($) *
               </label>
               <input
+                id="entrega-inmediata-precio"
                 type="number"
+                inputMode="decimal"
                 step="0.01"
                 min="1"
                 required
                 value={precio}
-                onChange={(e) => setPrecio(e.target.value)}
-                placeholder="29.99"
+                onChange={(e) => handleCambiarPrecio(e.target.value)}
+                placeholder="45"
                 style={{
                   width: "100%",
-                  padding: "9px 10px",
+                  minHeight: "38px",
+                  padding: "8px 10px",
                   borderRadius: "9px",
                   border: "1px solid #D5CFC4",
                   fontSize: "0.85rem",
                   fontWeight: 700,
+                  fontVariantNumeric: "tabular-nums",
                 }}
               />
             </div>
 
             <div>
               <label
+                htmlFor="entrega-inmediata-antes"
                 style={{
                   display: "block",
-                  fontSize: "0.78rem",
+                  fontSize: "0.75rem",
                   fontWeight: 600,
-                  color: "#847D74",
-                  marginBottom: "5px",
+                  color: "#57524C",
+                  marginBottom: "4px",
                 }}
               >
                 Antes ($)
               </label>
               <input
+                id="entrega-inmediata-antes"
                 type="number"
+                inputMode="decimal"
                 step="0.01"
                 min="0"
                 value={precioComparacion}
                 onChange={(e) => setPrecioComparacion(e.target.value)}
-                placeholder="38.00"
+                placeholder="55"
                 style={{
                   width: "100%",
-                  padding: "9px 10px",
+                  minHeight: "38px",
+                  padding: "8px 10px",
                   borderRadius: "9px",
                   border: "1px solid #E6E2DA",
                   fontSize: "0.84rem",
+                  fontVariantNumeric: "tabular-nums",
                 }}
               />
             </div>
 
             <div>
               <label
+                htmlFor="entrega-inmediata-stock"
                 style={{
                   display: "block",
-                  fontSize: "0.78rem",
+                  fontSize: "0.75rem",
                   fontWeight: 600,
-                  color: "#847D74",
-                  marginBottom: "5px",
+                  color: "#57524C",
+                  marginBottom: "4px",
                 }}
               >
                 Cant.
               </label>
               <input
+                id="entrega-inmediata-stock"
                 type="number"
+                inputMode="numeric"
                 min="1"
                 max="50"
                 value={stock}
                 onChange={(e) => setStock(e.target.value)}
                 style={{
                   width: "100%",
-                  padding: "9px 10px",
+                  minHeight: "38px",
+                  padding: "8px 8px",
                   borderRadius: "9px",
                   border: "1px solid #D5CFC4",
                   fontSize: "0.84rem",
+                  fontVariantNumeric: "tabular-nums",
                 }}
               />
             </div>
@@ -1026,7 +1170,7 @@ export function ConsolaEntregaInmediata({
         </div>
 
         {fotosSubidas.length > 0 && (
-          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "flex-start" }}>
+          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "flex-start" }}>
             {fotosSubidas.map((url, idx) => (
               <div
                 key={url}
@@ -1035,17 +1179,17 @@ export function ConsolaEntregaInmediata({
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  gap: "5px",
+                  gap: "4px",
                 }}
               >
                 <img
                   src={url}
                   alt={`Vista previa ${idx + 1}`}
                   style={{
-                    width: "84px",
-                    height: "84px",
+                    width: "72px",
+                    height: "72px",
                     objectFit: "cover",
-                    borderRadius: "10px",
+                    borderRadius: "9px",
                     border: idx === 0 ? "2px solid #2F4737" : "1px solid #D5CFC4",
                   }}
                 />
@@ -1053,13 +1197,13 @@ export function ConsolaEntregaInmediata({
                   <span
                     style={{
                       position: "absolute",
-                      bottom: fotosSubidas.length > 1 ? "28px" : "5px",
-                      left: "5px",
+                      bottom: "4px",
+                      left: "4px",
                       padding: "2px 6px",
                       borderRadius: "999px",
                       background: "rgba(47, 71, 55, 0.92)",
                       color: "#FFFFFF",
-                      fontSize: "0.62rem",
+                      fontSize: "0.6rem",
                       fontWeight: 700,
                       letterSpacing: "0.02em",
                     }}
@@ -1082,12 +1226,13 @@ export function ConsolaEntregaInmediata({
                     border: "none",
                     background: "#8A2E2E",
                     color: "#FFFFFF",
-                    fontSize: "0.7rem",
-                    fontWeight: 700,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     cursor: "pointer",
                   }}
                 >
-                  ✕
+                  <X size={12} />
                 </button>
                 {endpointEstudioIa && idx > 0 && (
                   <button
@@ -1125,10 +1270,10 @@ export function ConsolaEntregaInmediata({
               background: "#FAF6EE",
               border: "1px solid #E5D7BC",
               borderRadius: "12px",
-              padding: "14px",
+              padding: "11px",
               display: "flex",
               flexDirection: "column",
-              gap: "12px",
+              gap: "10px",
             }}
           >
             <div
@@ -1136,16 +1281,16 @@ export function ConsolaEntregaInmediata({
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                gap: "10px",
+                gap: "8px",
                 flexWrap: "wrap",
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <div
                   style={{
-                    width: "30px",
-                    height: "30px",
-                    borderRadius: "8px",
+                    width: "28px",
+                    height: "28px",
+                    borderRadius: "7px",
                     background: "#FFFFFF",
                     border: "1px solid #E5D7BC",
                     color: "#8F6A2E",
@@ -1155,16 +1300,9 @@ export function ConsolaEntregaInmediata({
                     flexShrink: 0,
                   }}
                 >
-                  <Sparkles size={15} />
+                  <Sparkles size={14} />
                 </div>
-                <div>
-                  <strong style={{ display: "block", fontSize: "0.84rem", color: "#1F1C19" }}>
-                    Estudio IA (Estudio + Taller)
-                  </strong>
-                  <span style={{ fontSize: "0.73rem", color: "#57524C" }}>
-                    Genera en paralelo la toma limpia de catálogo y el ambiente oficial de taller (3:4).
-                  </span>
-                </div>
+                <strong style={{ fontSize: "0.82rem", color: "#1F1C19" }}>Estudio IA</strong>
               </div>
 
               <button
@@ -1350,15 +1488,13 @@ export function ConsolaEntregaInmediata({
                       {
                         modo: "estudio" as const,
                         titulo: "Estudio",
-                        subtitulo: "Fondo limpio de catálogo",
                       },
                       {
                         modo: "taller" as const,
                         titulo: "Taller",
-                        subtitulo: "Ambiente oficial con neón Tinkay",
                       },
                     ] as const
-                  ).map(({ modo, titulo, subtitulo }) => {
+                  ).map(({ modo, titulo }) => {
                     const resultado = fotosIa[modo];
                     const cargandoModo = generandoIa[modo];
                     const errorModo = erroresIa[modo];
@@ -1378,7 +1514,7 @@ export function ConsolaEntregaInmediata({
                           padding: "10px",
                           display: "flex",
                           flexDirection: "column",
-                          gap: "9px",
+                          gap: "8px",
                         }}
                       >
                         <div
@@ -1389,14 +1525,9 @@ export function ConsolaEntregaInmediata({
                             gap: "6px",
                           }}
                         >
-                          <div>
-                            <strong style={{ fontSize: "0.82rem", color: "#1F1C19", display: "block" }}>
-                              {titulo}
-                            </strong>
-                            <span style={{ fontSize: "0.7rem", color: "#847D74" }}>
-                              {subtitulo}
-                            </span>
-                          </div>
+                          <strong style={{ fontSize: "0.82rem", color: "#1F1C19" }}>
+                            {titulo}
+                          </strong>
                           {cargandoModo ? (
                             <span
                               style={{
@@ -1729,7 +1860,7 @@ export function ConsolaEntregaInmediata({
         <div
           style={{
             display: "flex",
-            gap: "12px",
+            gap: "8px",
             alignItems: "center",
             justifyContent: "space-between",
             flexWrap: "wrap",
@@ -1739,10 +1870,11 @@ export function ConsolaEntregaInmediata({
             type="text"
             value={descripcion}
             onChange={(e) => setDescripcion(e.target.value)}
-            placeholder="Detalle corto para vendedoras y web (ej. 24 rosas rojas + follaje eucalipto, caja blanca)..."
+            placeholder="Detalle corto (opcional)"
             style={{
-              flex: "1 1 320px",
-              padding: "9px 12px",
+              flex: "1 1 200px",
+              minHeight: "38px",
+              padding: "8px 10px",
               borderRadius: "9px",
               border: "1px solid #D5CFC4",
               fontSize: "0.84rem",
@@ -1752,23 +1884,25 @@ export function ConsolaEntregaInmediata({
           <button
             type="submit"
             disabled={publicando || subiendoImagen || aplicandoIa}
-            title="Publicar arreglo como disponible para entrega inmediata en web y chat"
-            aria-label="Publicar ahora"
+            title="Publicar arreglo disponible para entrega inmediata"
+            aria-label="Publicar Ahora"
             style={{
               display: "inline-flex",
               alignItems: "center",
-              gap: "7px",
-              padding: "10px 18px",
-              borderRadius: "10px",
+              justifyContent: "center",
+              gap: "6px",
+              minHeight: "38px",
+              padding: "9px 16px",
+              borderRadius: "9px",
               border: "none",
-              background: "#8F6A2E",
+              background: "#2F4737",
               color: "#FFFFFF",
-              fontSize: "0.86rem",
+              fontSize: "0.84rem",
               fontWeight: 700,
               cursor: publicando ? "wait" : "pointer",
             }}
           >
-            {publicando ? <Loader2 size={16} /> : <Plus size={16} />}
+            {publicando ? <Loader2 size={15} className="eco-spin" /> : <Plus size={15} />}
             <span>{publicando ? "Publicando..." : "Publicar Ahora"}</span>
           </button>
         </div>
@@ -1779,60 +1913,72 @@ export function ConsolaEntregaInmediata({
         style={{
           background: "#FFFFFF",
           border: "1px solid #E6E2DA",
-          borderRadius: "16px",
-          padding: "20px",
+          borderRadius: "14px",
+          padding: "14px",
           display: "flex",
           flexDirection: "column",
-          gap: "14px",
+          gap: "10px",
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "#1F1C19" }}>
-            ⚡ Disponibles Ahora Mismo en Vitrina y Chat ({disponiblesActivos.length})
+          <h3
+            style={{
+              margin: 0,
+              fontSize: "0.9rem",
+              fontWeight: 700,
+              color: "#1F1C19",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            <Zap size={15} color="#8F6A2E" />
+            <span>Disponibles ({disponiblesActivos.length})</span>
           </h3>
         </div>
 
         {disponiblesActivos.length === 0 ? (
           <div
             style={{
-              padding: "32px 16px",
+              padding: "16px 12px",
               textAlign: "center",
               color: "#847D74",
               background: "#F8F7F4",
-              borderRadius: "12px",
+              borderRadius: "10px",
               border: "1px dashed #D5CFC4",
-              fontSize: "0.86rem",
+              fontSize: "0.82rem",
             }}
           >
-            No hay arreglos publicados en entrega inmediata en este momento. Sube una fotografía
-            arriba conforme se elaboren en taller.
+            Sin arreglos disponibles.
           </div>
         ) : (
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(255px, 1fr))",
-              gap: "16px",
+              gridTemplateColumns: "repeat(auto-fill, minmax(245px, 1fr))",
+              gap: "12px",
             }}
           >
             {disponiblesActivos.map((item) => {
               const enProceso = procesandoId === item.productoId;
               const copiado = linkCopiadoId === item.productoId;
+              const esCondolenciasItem =
+                item.usos?.includes("condolencias") ||
+                inferirUsosEntregaInmediata(item.nombre).includes("condolencias");
 
               return (
                 <div
                   key={item.productoId}
                   style={{
                     border: "1px solid #E6E2DA",
-                    borderRadius: "14px",
+                    borderRadius: "12px",
                     overflow: "hidden",
                     background: "#FFFFFF",
                     display: "flex",
                     flexDirection: "column",
-                    boxShadow: "0 2px 8px rgba(15, 23, 42, 0.05)",
                   }}
                 >
-                  <div style={{ position: "relative", height: "210px", background: "#F4F2EE" }}>
+                  <div style={{ position: "relative", height: "196px", background: "#F4F2EE" }}>
                     <img
                       src={item.imagenUrl}
                       alt={item.nombre}
@@ -1841,26 +1987,32 @@ export function ConsolaEntregaInmediata({
                     <span
                       style={{
                         position: "absolute",
-                        top: "10px",
-                        left: "10px",
-                        padding: "4px 9px",
+                        top: "8px",
+                        left: "8px",
+                        padding: "3px 8px",
                         borderRadius: "999px",
-                        background: "rgba(15, 23, 42, 0.82)",
+                        background: "rgba(31, 28, 25, 0.84)",
                         color: "#E5D7BC",
-                        fontSize: "0.72rem",
+                        fontSize: "0.7rem",
                         fontWeight: 700,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
                       }}
                     >
-                      ⚡ {item.tiempoEntregaTexto} · Quedan {item.stockDisponible}
+                      <Zap size={11} />
+                      <span>
+                        {item.tiempoEntregaTexto} · {item.stockDisponible}
+                      </span>
                     </span>
                   </div>
 
                   <div
                     style={{
-                      padding: "14px",
+                      padding: "12px",
                       display: "flex",
                       flexDirection: "column",
-                      gap: "8px",
+                      gap: "7px",
                       flex: 1,
                     }}
                   >
@@ -1872,17 +2024,17 @@ export function ConsolaEntregaInmediata({
                         gap: "8px",
                       }}
                     >
-                      <strong style={{ fontSize: "0.94rem", color: "#1F1C19" }}>
+                      <strong style={{ fontSize: "0.9rem", color: "#1F1C19" }}>
                         {item.nombre}
                       </strong>
-                      <div style={{ textAlign: "right" }}>
-                        <strong style={{ fontSize: "0.9rem", color: "#2F4737" }}>
+                      <div style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
+                        <strong style={{ fontSize: "0.88rem", color: "#2F4737" }}>
                           ${Number(item.precio).toFixed(2)}
                         </strong>
                         {item.precioComparacion && item.precioComparacion > item.precio && (
                           <div
                             style={{
-                              fontSize: "0.73rem",
+                              fontSize: "0.72rem",
                               color: "#847D74",
                               textDecoration: "line-through",
                             }}
@@ -1893,17 +2045,39 @@ export function ConsolaEntregaInmediata({
                       </div>
                     </div>
 
-                    <p
-                      style={{
-                        margin: 0,
-                        fontSize: "0.79rem",
-                        color: "#847D74",
-                        lineHeight: 1.4,
-                        flex: 1,
-                      }}
-                    >
-                      {item.descripcion}
-                    </p>
+                    {esCondolenciasItem && (
+                      <div>
+                        <span
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            padding: "2px 7px",
+                            borderRadius: "999px",
+                            background: "#F4F2EE",
+                            border: "1px solid #DDD8CE",
+                            color: "#3A3530",
+                            fontSize: "0.68rem",
+                            fontWeight: 700,
+                          }}
+                        >
+                          Condolencias / Duelo
+                        </span>
+                      </div>
+                    )}
+
+                    {item.descripcion && (
+                      <p
+                        style={{
+                          margin: 0,
+                          fontSize: "0.77rem",
+                          color: "#847D74",
+                          lineHeight: 1.38,
+                          flex: 1,
+                        }}
+                      >
+                        {item.descripcion}
+                      </p>
+                    )}
 
                     <div
                       style={{
@@ -1917,7 +2091,7 @@ export function ConsolaEntregaInmediata({
                       <button
                         type="button"
                         onClick={() => handleCopiarEnlace(item)}
-                        title="Copiar link directo del producto para enviar por WhatsApp o Chat"
+                        title="Copiar link del producto"
                         aria-label="Copiar link"
                         style={{
                           flex: 1,
@@ -1925,12 +2099,12 @@ export function ConsolaEntregaInmediata({
                           alignItems: "center",
                           justifyContent: "center",
                           gap: "5px",
-                          padding: "7px 10px",
+                          padding: "7px 9px",
                           borderRadius: "8px",
                           border: "1px solid #D5CFC4",
                           background: "#F8F7F4",
                           color: "#1F1C19",
-                          fontSize: "0.76rem",
+                          fontSize: "0.75rem",
                           fontWeight: 600,
                           cursor: "pointer",
                         }}
@@ -1943,7 +2117,7 @@ export function ConsolaEntregaInmediata({
                         href={`/producto/${item.slug}`}
                         target="_blank"
                         rel="noreferrer"
-                        title="Ver publicación en la tienda web"
+                        title="Ver en tienda"
                         aria-label="Ver en tienda"
                         style={{
                           display: "inline-flex",
@@ -1963,20 +2137,20 @@ export function ConsolaEntregaInmediata({
                         type="button"
                         disabled={enProceso}
                         onClick={() => void handleDarDeBaja(item, "VENDIDO_TIENDA")}
-                        title="Marcar como vendido en mostrador o WhatsApp y retirar de disponibles"
-                        aria-label="Marcar vendido"
+                        title="Marcar como vendido"
+                        aria-label="Vendido"
                         style={{
                           flex: 1,
                           display: "inline-flex",
                           alignItems: "center",
                           justifyContent: "center",
                           gap: "5px",
-                          padding: "7px 10px",
+                          padding: "7px 9px",
                           borderRadius: "8px",
                           border: "none",
                           background: "#2F4737",
                           color: "#FFFFFF",
-                          fontSize: "0.76rem",
+                          fontSize: "0.75rem",
                           fontWeight: 700,
                           cursor: enProceso ? "wait" : "pointer",
                         }}
@@ -1989,8 +2163,8 @@ export function ConsolaEntregaInmediata({
                         type="button"
                         disabled={enProceso}
                         onClick={() => void handleDarDeBaja(item, "DESCARTADO")}
-                        title="Retirar o descartar este arreglo de los disponibles"
-                        aria-label="Descartar arreglo"
+                        title="Retirar arreglo"
+                        aria-label="Retirar"
                         style={{
                           display: "inline-flex",
                           alignItems: "center",
@@ -2020,15 +2194,15 @@ export function ConsolaEntregaInmediata({
           style={{
             background: "#FFFFFF",
             border: "1px solid #E6E2DA",
-            borderRadius: "16px",
-            padding: "18px",
+            borderRadius: "14px",
+            padding: "14px",
             display: "flex",
             flexDirection: "column",
-            gap: "12px",
+            gap: "10px",
           }}
         >
-          <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "#1F1C19" }}>
-            Historial de Arreglos Inmediatos Vendidos o Retirados
+          <h3 style={{ margin: 0, fontSize: "0.9rem", fontWeight: 700, color: "#1F1C19" }}>
+            Historial ({historialBajas.length})
           </h3>
           <DataGrid
             columnas={columnasHistorial}

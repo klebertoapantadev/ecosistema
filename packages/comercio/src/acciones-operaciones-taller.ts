@@ -4,9 +4,11 @@ import { revalidatePath } from "next/cache";
 import {
   COLORES_ROSAS_ESTANDAR,
   DATOS_PROVEEDOR_TINKAY_DEFECTO,
+  combinarUsosConInferidos,
   esNombreFallecidoPendiente,
   extraerConteoJsonDesdeRespuestaAria,
   inferirClasificacionPedido,
+  inferirUsosEntregaInmediata,
   normalizarConfigTvTaller,
   normalizarFranjaHorariaTienda,
   obtenerFechaHoyEcuadorYmd,
@@ -97,6 +99,8 @@ function revalidarRutasTienda(negocio: string) {
   try {
     revalidatePath("/");
     revalidatePath("/categoria/entrega-inmediata");
+    revalidatePath("/categoria/condolencias");
+    revalidatePath("/panel/catalogo-productos");
     revalidatePath("/panel/entrega-inmediata");
     revalidatePath("/panel/inventario-rosas");
     revalidatePath("/panel/entregas");
@@ -777,6 +781,9 @@ export async function listarEntregaInmediataAction(
               x.precioComparacion != null ? Number(x.precioComparacion) : null,
             stockDisponible: Number(x.stockDisponible) || 0,
             galeriaUrls: Array.isArray(x.galeriaUrls) ? x.galeriaUrls : [],
+            usos: Array.isArray(x.usos)
+              ? x.usos.map((u) => String(u).trim()).filter(Boolean)
+              : [],
           }))
         : [];
       return { ok: true, items };
@@ -807,7 +814,14 @@ export async function publicarEntregaInmediataAction(entrada: {
   descripcion?: string;
   productoId?: string | null;
 }): Promise<
-  | { ok: true; productoId: string; slug: string; sku: string }
+  | {
+      ok: true;
+      productoId: string;
+      slug: string;
+      sku: string;
+      usos: string[];
+      advertenciaUso?: string;
+    }
   | { ok: false; error: string }
 > {
   try {
@@ -844,12 +858,67 @@ export async function publicarEntregaInmediataAction(entrada: {
       return { ok: false, error: String(data?.error || "No se pudo publicar el arreglo") };
     }
 
+    const productoId = String(data.productoId);
+    const usosInferidos = inferirUsosEntregaInmediata(entrada.nombre);
+    let usosConfirmados: string[] = Array.isArray(data.usos)
+      ? data.usos.map((u: unknown) => String(u).trim()).filter(Boolean)
+      : [];
+    let advertenciaUso: string | undefined;
+
+    const faltanUsosInferidos = usosInferidos.some(
+      (u) => !usosConfirmados.map((x) => x.toLowerCase()).includes(u.toLowerCase())
+    );
+
+    // Respaldo resiliente: si el RPC remoto aún no tiene aplicada la migración 20261121000001,
+    // persistir los usos inferidos (ej. "condolencias") directamente en com_producto.
+    if (faltanUsosInferidos) {
+      const { data: prodRow, error: errRead } = await esquema
+        .from("com_producto")
+        .select("pro_detalle_producto")
+        .eq("pro_id", productoId)
+        .maybeSingle();
+
+      if (errRead || !prodRow) {
+        advertenciaUso = `Arreglo publicado, pero no se pudo asignar el uso Condolencias / Duelo (${errRead?.message || "permisos insuficientes en tabla"}). Ejecuta la migración 20261121000001_entrega_inmediata_usos_condolencias.sql.`;
+      } else {
+        const detActual =
+          prodRow.pro_detalle_producto && typeof prodRow.pro_detalle_producto === "object"
+            ? (prodRow.pro_detalle_producto as Record<string, unknown>)
+            : {};
+        const usosExistentes = Array.isArray(detActual.usos)
+          ? detActual.usos.map((u) => String(u))
+          : [];
+        const usosCombinados = combinarUsosConInferidos(usosExistentes, entrada.nombre);
+
+        const { data: updRow, error: errUpd } = await esquema
+          .from("com_producto")
+          .update({
+            pro_detalle_producto: {
+              ...detActual,
+              usos: usosCombinados,
+            },
+            pro_actualizado_en: new Date().toISOString(),
+          })
+          .eq("pro_id", productoId)
+          .select("pro_id")
+          .maybeSingle();
+
+        if (errUpd || !updRow) {
+          advertenciaUso = `Arreglo publicado, pero no se pudo asignar el uso Condolencias / Duelo (${errUpd?.message || "sin permisos de escritura directa"}). Ejecuta la migración 20261121000001_entrega_inmediata_usos_condolencias.sql.`;
+        } else {
+          usosConfirmados = usosCombinados;
+        }
+      }
+    }
+
     revalidarRutasTienda(neg);
     return {
       ok: true,
-      productoId: String(data.productoId),
+      productoId,
       slug: String(data.slug),
       sku: String(data.sku),
+      usos: usosConfirmados,
+      ...(advertenciaUso ? { advertenciaUso } : {}),
     };
   } catch (err) {
     return {

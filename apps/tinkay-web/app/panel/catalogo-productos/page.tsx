@@ -24,7 +24,10 @@ export default async function PaginaCatalogoProductosTinkay() {
 
   return (
     <div style={{ maxWidth: "1280px", margin: "0 auto", width: "100%" }}>
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "12px" }}>
+      <div
+        className="catalogo-solo-pantalla-grande"
+        style={{ display: "flex", justifyContent: "flex-end", marginBottom: "6px" }}
+      >
         <Link
           href="/panel"
           title="Cerrar y volver al panel"
@@ -34,17 +37,16 @@ export default async function PaginaCatalogoProductosTinkay() {
             border: "1px solid #D5CFC4",
             color: "#1F1C19",
             borderRadius: "50%",
-            width: "36px",
-            height: "36px",
+            width: "32px",
+            height: "32px",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             cursor: "pointer",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
             textDecoration: "none",
           }}
         >
-          <X size={18} />
+          <X size={16} />
         </Link>
       </div>
 

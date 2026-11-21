@@ -457,8 +457,99 @@ export interface ArregloEntregaInmediata {
   activo: boolean;
   motivoBaja?: string | null;
   ordenVentaCodigo?: string | null;
+  usos?: string[];
   creadoEn: string;
   actualizadoEn?: string;
+}
+
+export interface PresetEntregaInmediata {
+  clave: string;
+  nombre: string;
+  etiqueta: string;
+  precioSugerido?: number;
+  tipoSoporteIaSugerido?: "mesa" | "piso" | "pedestal";
+  coreanoIaSugerido?: boolean;
+}
+
+export const CLAVE_PRESET_ENTREGA_OTROS = "otros" as const;
+
+export const PRESETS_ENTREGA_INMEDIATA: readonly PresetEntregaInmediata[] = [
+  {
+    clave: "abanico_condolencias_xl",
+    nombre: "Abanico Condolencias XL",
+    etiqueta: "Abanico Condolencias XL ($45)",
+    precioSugerido: 45,
+    tipoSoporteIaSugerido: "piso",
+    coreanoIaSugerido: false,
+  },
+  {
+    clave: "pedestal_condolencias_xl",
+    nombre: "Pedestal Condolencias XL",
+    etiqueta: "Pedestal Condolencias XL ($50)",
+    precioSugerido: 50,
+    tipoSoporteIaSugerido: "pedestal",
+    coreanoIaSugerido: false,
+  },
+  {
+    clave: "bouquet_coreano_m",
+    nombre: "Bouquet Coreano M",
+    etiqueta: "Bouquet Coreano M",
+    tipoSoporteIaSugerido: "mesa",
+    coreanoIaSugerido: true,
+  },
+] as const;
+
+/**
+ * Infiere automáticamente los usos existentes del catálogo (`PRESETS_USOS_FLORISTERIA`)
+ * a partir del nombre del producto de entrega inmediata.
+ * Si contiene "condolencias" (o "condolencia"), asigna `"condolencias"` ("🕊️ Condolencias / Duelo").
+ */
+export function inferirUsosEntregaInmediata(nombre?: string | null): string[] {
+  const normalizado = String(nombre || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  if (normalizado.includes("condolencias") || normalizado.includes("condolencia")) {
+    return ["condolencias"];
+  }
+  return [];
+}
+
+/**
+ * Combina los usos existentes de un producto con los inferidos a partir de su nombre
+ * sin duplicar claves.
+ */
+export function combinarUsosConInferidos(
+  usosExistentes?: readonly string[] | null,
+  nombre?: string | null
+): string[] {
+  const resultado: string[] = [];
+  const vistos = new Set<string>();
+  const candidatos = [
+    ...(Array.isArray(usosExistentes) ? usosExistentes : []),
+    ...inferirUsosEntregaInmediata(nombre),
+  ];
+  for (const item of candidatos) {
+    const limpio = String(item || "").trim();
+    const clave = limpio.toLowerCase();
+    if (!clave || vistos.has(clave)) continue;
+    vistos.add(clave);
+    resultado.push(limpio);
+  }
+  return resultado;
+}
+
+/**
+ * Resuelve la clave de preset rápida correspondiente al nombre ingresado,
+ * o `"otros"` si el operador escribió un nombre personalizado.
+ */
+export function resolverPresetEntregaInmediataPorNombre(nombre?: string | null): string {
+  const limpio = String(nombre || "").trim().toLowerCase();
+  if (!limpio) return "";
+  const coincidencia = PRESETS_ENTREGA_INMEDIATA.find(
+    (p) => p.nombre.toLowerCase() === limpio
+  );
+  return coincidencia ? coincidencia.clave : CLAVE_PRESET_ENTREGA_OTROS;
 }
 
 // =============================================================================

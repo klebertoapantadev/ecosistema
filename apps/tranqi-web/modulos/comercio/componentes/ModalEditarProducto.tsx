@@ -19,6 +19,9 @@ import {
   Wand2,
   Truck,
   Percent,
+  Settings2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   editarProductoAction,
@@ -71,8 +74,22 @@ function SelectorEncuadreFoto({
   titulo?: string;
   colorTema?: string;
 }) {
-  if (!imagenUrl) return null;
+  const [abiertoAvanzado, setAbiertoAvanzado] = useState(false);
+  const [esMovil, setEsMovil] = useState(false);
 
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    const mq = window.matchMedia("(max-width: 640px)");
+    const actualizar = () => setEsMovil(mq.matches);
+    actualizar();
+    mq.addEventListener("change", actualizar);
+    return () => mq.removeEventListener("change", actualizar);
+  }, []);
+
+  if (!imagenUrl || esMovil) return null;
+
+  const tieneAjusteCustom =
+    posicion !== "center center" || ajuste !== "cover" || (Number(zoom) || 100) !== 100;
   const scaleVal = zoom && zoom !== 100 ? zoom / 100 : 1;
 
   const presetsPosicion = [
@@ -82,9 +99,67 @@ function SelectorEncuadreFoto({
   ];
 
   return (
+    <div className="ocultar-en-movil catalogo-solo-pantalla-grande" style={{ marginTop: "8px" }}>
+      {!abiertoAvanzado ? (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "8px",
+            padding: "6px 10px",
+            borderRadius: "8px",
+            border: "1px dashed #CBD5E1",
+            background: "#F8FAFC",
+          }}
+        >
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+            <Settings2 size={13} color="#475569" />
+            <span style={{ fontSize: "0.73rem", fontWeight: 600, color: "#475569" }}>
+              Encuadre de portada (1:1)
+            </span>
+            {tieneAjusteCustom && (
+              <span
+                style={{
+                  fontSize: "0.65rem",
+                  fontWeight: 700,
+                  padding: "1px 6px",
+                  borderRadius: "999px",
+                  background: "#FEF3C7",
+                  color: "#92400E",
+                }}
+              >
+                Personalizado
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setAbiertoAvanzado(true)}
+            aria-expanded={false}
+            aria-label="Avanzado"
+            title="Mostrar opciones avanzadas de encuadre"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              padding: "4px 9px",
+              borderRadius: "6px",
+              border: "1px solid #CBD5E1",
+              background: "#FFFFFF",
+              color: "#0F172A",
+              fontSize: "0.72rem",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            <span>Avanzado</span>
+            <ChevronDown size={13} />
+          </button>
+        </div>
+      ) : (
     <div
       style={{
-        marginTop: "10px",
         background: "#F8FAFC",
         border: "1.5px dashed #CBD5E1",
         borderRadius: "10px",
@@ -98,9 +173,29 @@ function SelectorEncuadreFoto({
             {titulo}
           </span>
         </div>
-        <span style={{ fontSize: "0.68rem", color: "#64748B", fontWeight: 600 }}>
-          Proporción Cuadrada 1:1
-        </span>
+        <button
+          type="button"
+          onClick={() => setAbiertoAvanzado(false)}
+          aria-expanded={true}
+          aria-label="Ocultar avanzado"
+          title="Ocultar opciones avanzadas de encuadre"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "4px",
+            padding: "3px 8px",
+            borderRadius: "6px",
+            border: "1px solid #CBD5E1",
+            background: "#FFFFFF",
+            color: "#475569",
+            fontSize: "0.7rem",
+            fontWeight: 700,
+            cursor: "pointer",
+          }}
+        >
+          <span>Ocultar</span>
+          <ChevronUp size={12} />
+        </button>
       </div>
 
       <div style={{ display: "flex", gap: "14px", alignItems: "center", flexWrap: "wrap" }}>
@@ -280,6 +375,8 @@ function SelectorEncuadreFoto({
         </div>
       </div>
     </div>
+      )}
+    </div>
   );
 }
 
@@ -347,6 +444,13 @@ export function ModalEditarProducto({
   const [modoEdicion, setModoEdicion] = useState<"master" | "variante">("master");
   const [variantesLocales, setVariantesLocales] = useState<VarianteCatalogo[]>([]);
   const [varianteActivaIndex, setVarianteActivaIndex] = useState<number>(0);
+  const [seccionesHeredablesAbiertas, setSeccionesHeredablesAbiertas] = useState<
+    Partial<Record<"tiempo_entrega" | "beneficios", boolean>>
+  >({});
+
+  useEffect(() => {
+    setSeccionesHeredablesAbiertas({});
+  }, [varianteActivaIndex, producto?.pro_id, abierto]);
 
   const [guardando, setGuardando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
@@ -2195,161 +2299,266 @@ export function ModalEditarProducto({
                     )}
                   </div>
 
-                  {/* 3. SUB-SECCIÓN: PERSONALIZACIÓN & SOBRESCRITURA DE ESTA VARIANTE */}
-                  <div
-                    style={{
-                      marginTop: "12px",
-                      borderTop: `1.5px solid ${colActiva.border}44`,
-                      paddingTop: "12px",
-                      background: colActiva.bg,
-                      borderRadius: "8px",
-                      padding: "10px",
-                      border: `1px solid ${colActiva.border}66`,
-                    }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                        <Sparkles size={14} color={colActiva.dot} />
-                        <span style={{ fontSize: "0.75rem", fontWeight: 800, color: colActiva.text, textTransform: "uppercase" }}>
-                          Tiempo de Entrega & Beneficios de este Tamaño
-                        </span>
-                      </div>
-                      <span style={{ fontSize: "0.68rem", color: "#64748B" }}>
-                        Si se deja vacío, hereda automáticamente los valores globales
-                      </span>
-                    </div>
+                  {/* 3. TIEMPO DE ENTREGA & BENEFICIOS (COLAPSABLES SI HEREDAN) */}
+                  <div style={{ marginTop: "10px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                    {(() => {
+                      const tiempoPropio = varianteActual.var_detalle_variante?.tiempo_entrega || "";
+                      const tieneTiempoPropio = Boolean(tiempoPropio);
+                      const editarTiempo = tieneTiempoPropio || Boolean(seccionesHeredablesAbiertas.tiempo_entrega);
 
-                    {/* Tiempo de Entrega Específico de esta variante */}
-                    <div style={{ marginBottom: "8px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: "2px" }}>
-                        <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
-                          Tiempo de Entrega para este Tamaño:
-                        </label>
-                        <span style={{ fontSize: "0.68rem", color: varianteActual.var_detalle_variante?.tiempo_entrega ? colActiva.text : "#64748B", fontWeight: 700 }}>
-                          {varianteActual.var_detalle_variante?.tiempo_entrega ? "🟢 Tiempo Específico Activo" : `⚪ Hereda Global (${tiempoEntrega})`}
-                        </span>
-                      </div>
-                      <div style={{ display: "flex", gap: "4px", flexWrap: "wrap", marginBottom: "4px" }}>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const det = { ...(varianteActual.var_detalle_variante || {}), tiempo_entrega: null };
-                            actualizarVarianteActual("var_detalle_variante", det);
-                          }}
+                      if (!editarTiempo) {
+                        return (
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: "8px",
+                              background: "#F8FAFC",
+                              border: "1px dashed #CBD5E1",
+                              borderRadius: "8px",
+                              padding: "8px 10px",
+                            }}
+                          >
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: "0.74rem", fontWeight: 700, color: "#0F172A" }}>
+                                Tiempo de Entrega
+                              </div>
+                              <div style={{ fontSize: "0.7rem", color: "#475569", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                Heredado: {tiempoEntrega}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSeccionesHeredablesAbiertas((prev) => ({ ...prev, tiempo_entrega: true }))
+                              }
+                              style={{
+                                padding: "4px 9px",
+                                borderRadius: "6px",
+                                border: "1px solid #CBD5E1",
+                                background: "#FFFFFF",
+                                color: "#0F172A",
+                                fontSize: "0.72rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                flexShrink: 0,
+                              }}
+                            >
+                              Editar
+                            </button>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div
                           style={{
-                            padding: "3px 7px",
-                            borderRadius: "5px",
-                            fontSize: "0.68rem",
-                            fontWeight: 700,
-                            border: !varianteActual.var_detalle_variante?.tiempo_entrega ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
-                            background: !varianteActual.var_detalle_variante?.tiempo_entrega ? colActiva.badge : "#FFFFFF",
-                            color: !varianteActual.var_detalle_variante?.tiempo_entrega ? colActiva.text : "#475569",
-                            cursor: "pointer",
+                            background: colActiva.bg,
+                            borderRadius: "8px",
+                            padding: "10px",
+                            border: `1px solid ${colActiva.border}66`,
                           }}
                         >
-                          Heredar Global
-                        </button>
-                        {presetsEntrega.map((pr) => {
-                          const sel = varianteActual.var_detalle_variante?.tiempo_entrega === pr.val;
-                          return (
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+                            <label style={{ fontSize: "0.74rem", fontWeight: 800, color: colActiva.text }}>
+                              Tiempo de Entrega
+                            </label>
                             <button
-                              key={pr.val}
                               type="button"
                               onClick={() => {
-                                const det = { ...(varianteActual.var_detalle_variante || {}), tiempo_entrega: pr.val };
+                                const det = { ...(varianteActual.var_detalle_variante || {}), tiempo_entrega: null };
                                 actualizarVarianteActual("var_detalle_variante", det);
+                                setSeccionesHeredablesAbiertas((prev) => ({ ...prev, tiempo_entrega: false }));
                               }}
                               style={{
-                                padding: "3px 7px",
+                                padding: "3px 8px",
                                 borderRadius: "5px",
                                 fontSize: "0.68rem",
                                 fontWeight: 700,
-                                border: sel ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
-                                background: sel ? colActiva.badge : "#FFFFFF",
-                                color: sel ? colActiva.text : "#475569",
+                                border: "1px solid #CBD5E1",
+                                background: "#FFFFFF",
+                                color: "#475569",
                                 cursor: "pointer",
                               }}
                             >
-                              {pr.label}
+                              {tieneTiempoPropio ? "Heredar Global" : "Ocultar"}
                             </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-
-                    {/* Beneficios / ¿Qué incluye? con Selector de Modo (Heredar / Anexar / Reemplazar) */}
-                    <div>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-                        <label style={{ fontSize: "0.72rem", fontWeight: 700, color: "#334155" }}>
-                          Beneficios & Contenido de este Tamaño:
-                        </label>
-                        <div style={{ display: "flex", gap: "4px" }}>
-                          {(["heredar", "anexar", "reemplazar"] as const).map((modo) => {
-                            const actualModo = varianteActual.var_detalle_variante?.beneficios_modo || "heredar";
-                            const activo = actualModo === modo;
-                            return (
-                              <button
-                                key={modo}
-                                type="button"
-                                onClick={() => {
-                                  const det = { ...(varianteActual.var_detalle_variante || {}), beneficios_modo: modo };
-                                  actualizarVarianteActual("var_detalle_variante", det);
-                                }}
-                                style={{
-                                  padding: "2px 6px",
-                                  borderRadius: "4px",
-                                  fontSize: "0.65rem",
-                                  fontWeight: 700,
-                                  textTransform: "capitalize",
-                                  border: activo ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
-                                  background: activo ? colActiva.badge : "#FFFFFF",
-                                  color: activo ? colActiva.text : "#475569",
-                                  cursor: "pointer",
-                                }}
-                              >
-                                {modo === "heredar" ? "Heredar" : modo === "anexar" ? "Anexar Extras" : "Reemplazar"}
-                              </button>
-                            );
-                          })}
+                          </div>
+                          <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+                            {presetsEntrega.map((pr) => {
+                              const sel = tiempoPropio === pr.val;
+                              return (
+                                <button
+                                  key={pr.val}
+                                  type="button"
+                                  onClick={() => {
+                                    const det = { ...(varianteActual.var_detalle_variante || {}), tiempo_entrega: pr.val };
+                                    actualizarVarianteActual("var_detalle_variante", det);
+                                  }}
+                                  style={{
+                                    padding: "4px 8px",
+                                    borderRadius: "5px",
+                                    fontSize: "0.68rem",
+                                    fontWeight: 700,
+                                    border: sel ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
+                                    background: sel ? colActiva.badge : "#FFFFFF",
+                                    color: sel ? colActiva.text : "#475569",
+                                    cursor: "pointer",
+                                  }}
+                                >
+                                  {pr.label}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </div>
+                      );
+                    })()}
 
-                      {(!varianteActual.var_detalle_variante?.beneficios_modo || varianteActual.var_detalle_variante?.beneficios_modo === "heredar") ? (
-                        <div style={{ fontSize: "0.7rem", color: "#64748B", background: "#FFFFFF", padding: "6px 10px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
-                          <em>Hereda los beneficios generales definidos en el producto master.</em>
-                        </div>
-                      ) : (
-                        <div>
-                          <textarea
-                            rows={2}
-                            placeholder={
-                              varianteActual.var_detalle_variante?.beneficios_modo === "anexar"
-                                ? "Escribe los extras exclusivos de este tamaño (ej. + Corona dorada de reina\n+ Mariposas 3D translúcidas)"
-                                : "Escribe la lista completa de beneficios que sustituye a la global..."
-                            }
-                            value={
-                              Array.isArray(varianteActual.var_detalle_variante?.beneficios_custom)
-                                ? varianteActual.var_detalle_variante.beneficios_custom.join("\n")
-                                : (varianteActual.var_detalle_variante?.beneficios_custom || "")
-                            }
-                            onChange={(e) => {
-                              const lineas = e.target.value.split("\n").filter((l) => l.trim().length > 0);
-                              const det = { ...(varianteActual.var_detalle_variante || {}), beneficios_custom: lineas };
-                              actualizarVarianteActual("var_detalle_variante", det);
-                            }}
+                    {(() => {
+                      const actualModo = (varianteActual.var_detalle_variante?.beneficios_modo || "heredar") as
+                        | "heredar"
+                        | "anexar"
+                        | "reemplazar";
+                      const beneficiosHeredados = actualModo === "heredar";
+                      const editarBeneficios =
+                        !beneficiosHeredados || Boolean(seccionesHeredablesAbiertas.beneficios);
+                      const lineasMaster = beneficiosTexto
+                        .split("\n")
+                        .map((l) => l.trim())
+                        .filter(Boolean);
+                      const resumenMaster =
+                        lineasMaster.length > 0
+                          ? `${lineasMaster[0]}${lineasMaster.length > 1 ? ` (+${lineasMaster.length - 1})` : ""}`
+                          : "Sin beneficios en Master";
+
+                      if (!editarBeneficios) {
+                        return (
+                          <div
                             style={{
-                              width: "100%",
-                              padding: "6px 10px",
-                              borderRadius: "6px",
-                              border: "1px solid #CBD5E1",
-                              fontSize: "0.75rem",
-                              boxSizing: "border-box",
-                              background: "#FFFFFF",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              gap: "8px",
+                              background: "#F8FAFC",
+                              border: "1px dashed #CBD5E1",
+                              borderRadius: "8px",
+                              padding: "8px 10px",
                             }}
-                          />
+                          >
+                            <div style={{ minWidth: 0 }}>
+                              <div style={{ fontSize: "0.74rem", fontWeight: 700, color: "#0F172A" }}>
+                                Beneficios y Contenido
+                              </div>
+                              <div style={{ fontSize: "0.7rem", color: "#475569", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                                Heredado: {resumenMaster}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setSeccionesHeredablesAbiertas((prev) => ({ ...prev, beneficios: true }))
+                              }
+                              style={{
+                                padding: "4px 9px",
+                                borderRadius: "6px",
+                                border: "1px solid #CBD5E1",
+                                background: "#FFFFFF",
+                                color: "#0F172A",
+                                fontSize: "0.72rem",
+                                fontWeight: 700,
+                                cursor: "pointer",
+                                flexShrink: 0,
+                              }}
+                            >
+                              Editar
+                            </button>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div
+                          style={{
+                            background: colActiva.bg,
+                            borderRadius: "8px",
+                            padding: "10px",
+                            border: `1px solid ${colActiva.border}66`,
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "6px", marginBottom: "6px", flexWrap: "wrap" }}>
+                            <label style={{ fontSize: "0.74rem", fontWeight: 800, color: colActiva.text }}>
+                              Beneficios y Contenido
+                            </label>
+                            <div style={{ display: "flex", gap: "4px" }}>
+                              {(["heredar", "anexar", "reemplazar"] as const).map((modo) => {
+                                const activo = actualModo === modo;
+                                return (
+                                  <button
+                                    key={modo}
+                                    type="button"
+                                    onClick={() => {
+                                      const det = { ...(varianteActual.var_detalle_variante || {}), beneficios_modo: modo };
+                                      actualizarVarianteActual("var_detalle_variante", det);
+                                      if (modo === "heredar") {
+                                        setSeccionesHeredablesAbiertas((prev) => ({ ...prev, beneficios: false }));
+                                      }
+                                    }}
+                                    style={{
+                                      padding: "2px 6px",
+                                      borderRadius: "4px",
+                                      fontSize: "0.66rem",
+                                      fontWeight: 700,
+                                      border: activo ? `1.5px solid ${colActiva.border}` : "1px solid #CBD5E1",
+                                      background: activo ? colActiva.badge : "#FFFFFF",
+                                      color: activo ? colActiva.text : "#475569",
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    {modo === "heredar" ? "Heredar" : modo === "anexar" ? "Anexar Extras" : "Reemplazar"}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {beneficiosHeredados ? (
+                            <div style={{ fontSize: "0.7rem", color: "#475569", background: "#FFFFFF", padding: "6px 10px", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
+                              Heredado: {resumenMaster}
+                            </div>
+                          ) : (
+                            <textarea
+                              rows={2}
+                              placeholder={
+                                actualModo === "anexar"
+                                  ? "Extras exclusivos de este tamaño (uno por línea)"
+                                  : "Lista completa de beneficios que sustituye a la global..."
+                              }
+                              value={
+                                Array.isArray(varianteActual.var_detalle_variante?.beneficios_custom)
+                                  ? varianteActual.var_detalle_variante.beneficios_custom.join("\n")
+                                  : (varianteActual.var_detalle_variante?.beneficios_custom || "")
+                              }
+                              onChange={(e) => {
+                                const lineas = e.target.value.split("\n").filter((l) => l.trim().length > 0);
+                                const det = { ...(varianteActual.var_detalle_variante || {}), beneficios_custom: lineas };
+                                actualizarVarianteActual("var_detalle_variante", det);
+                              }}
+                              style={{
+                                width: "100%",
+                                padding: "6px 10px",
+                                borderRadius: "6px",
+                                border: "1px solid #CBD5E1",
+                                fontSize: "0.75rem",
+                                boxSizing: "border-box",
+                                background: "#FFFFFF",
+                              }}
+                            />
+                          )}
                         </div>
-                      )}
-                    </div>
+                      );
+                    })()}
                   </div>
                 </div>
               )}

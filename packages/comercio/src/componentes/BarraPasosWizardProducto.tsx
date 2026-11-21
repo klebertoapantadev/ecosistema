@@ -1,11 +1,14 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Check,
+  ChevronDown,
+  ChevronUp,
   FileText,
   Image as ImageIcon,
   LayoutList,
+  Settings2,
   Share2,
   Sparkles,
   Tag,
@@ -321,8 +324,22 @@ export function SelectorEncuadreFoto({
   titulo?: string;
   colorTema?: string;
 }) {
-  if (!imagenUrl) return null;
+  const [abiertoAvanzado, setAbiertoAvanzado] = useState(false);
+  const [esMovil, setEsMovil] = useState(false);
 
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+    const mq = window.matchMedia("(max-width: 640px)");
+    const actualizar = () => setEsMovil(mq.matches);
+    actualizar();
+    mq.addEventListener("change", actualizar);
+    return () => mq.removeEventListener("change", actualizar);
+  }, []);
+
+  if (!imagenUrl || esMovil) return null;
+
+  const tieneAjusteCustom =
+    posicion !== "center center" || ajuste !== "cover" || (Number(zoom) || 100) !== 100;
   const scaleVal = zoom && zoom !== 100 ? zoom / 100 : 1;
 
   const presetsPosicion = [
@@ -332,11 +349,71 @@ export function SelectorEncuadreFoto({
   ];
 
   return (
+    <div className="ocultar-en-movil catalogo-solo-pantalla-grande" style={{ marginTop: "8px" }}>
+      {!abiertoAvanzado ? (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "8px",
+            padding: "6px 10px",
+            borderRadius: "8px",
+            border: "1px dashed #D5CFC4",
+            background: "#F8F7F4",
+          }}
+        >
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", minWidth: 0 }}>
+            <Settings2 size={13} color="#57524C" />
+            <span style={{ fontSize: "0.73rem", fontWeight: 600, color: "#57524C" }}>
+              Encuadre de portada (1:1)
+            </span>
+            {tieneAjusteCustom && (
+              <span
+                style={{
+                  fontSize: "0.65rem",
+                  fontWeight: 700,
+                  padding: "1px 6px",
+                  borderRadius: "999px",
+                  background: "#FAF6EE",
+                  border: "1px solid #E5D7BC",
+                  color: "#745622",
+                }}
+              >
+                Personalizado
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setAbiertoAvanzado(true)}
+            aria-expanded={false}
+            aria-label="Avanzado"
+            title="Mostrar opciones avanzadas de encuadre y posición"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              padding: "4px 9px",
+              borderRadius: "6px",
+              border: "1px solid #D5CFC4",
+              background: "#FFFFFF",
+              color: "#221E1B",
+              fontSize: "0.72rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            <span>Avanzado</span>
+            <ChevronDown size={13} />
+          </button>
+        </div>
+      ) : (
     <div
       style={{
-        marginTop: "10px",
-        background: "#F8FAFC",
-        border: "1.5px dashed #CBD5E1",
+        background: "#F8F7F4",
+        border: "1.5px dashed #D5CFC4",
         borderRadius: "10px",
         padding: "12px",
       }}
@@ -346,18 +423,40 @@ export function SelectorEncuadreFoto({
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
+          gap: "8px",
           marginBottom: "8px",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <Sparkles size={14} color={colorTema} />
-          <span style={{ fontSize: "0.74rem", fontWeight: 800, color: "#1E293B" }}>
+          <span style={{ fontSize: "0.74rem", fontWeight: 800, color: "#1F1C19" }}>
             {titulo}
           </span>
         </div>
-        <span style={{ fontSize: "0.68rem", color: "#64748B", fontWeight: 600 }}>
-          Proporción Cuadrada 1:1
-        </span>
+        <button
+          type="button"
+          onClick={() => setAbiertoAvanzado(false)}
+          aria-expanded={true}
+          aria-label="Ocultar avanzado"
+          title="Ocultar opciones avanzadas de encuadre"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "4px",
+            padding: "3px 8px",
+            borderRadius: "6px",
+            border: "1px solid #D5CFC4",
+            background: "#FFFFFF",
+            color: "#57524C",
+            fontSize: "0.7rem",
+            fontWeight: 700,
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+          }}
+        >
+          <span>Ocultar</span>
+          <ChevronUp size={12} />
+        </button>
       </div>
 
       <div style={{ display: "flex", gap: "14px", alignItems: "center", flexWrap: "wrap" }}>
@@ -562,6 +661,8 @@ export function SelectorEncuadreFoto({
           </div>
         </div>
       </div>
+    </div>
+      )}
     </div>
   );
 }

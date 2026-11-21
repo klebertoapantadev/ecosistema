@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   CLASIFICACIONES_OPERATIVAS_PEDIDO,
+  CLAVE_PRESET_ENTREGA_OTROS,
   DATOS_PROVEEDOR_TINKAY_DEFECTO,
   OPCIONES_DESCRIPCION_SERVICIO_EXEQUIALES,
   OPCIONES_SALA_EXEQUIALES,
+  PRESETS_ENTREGA_INMEDIATA,
   RANGOS_HORARIO_ENTREGA_TIENDA,
   SOLICITANTES_EXEQUIALES_FRECUENTES,
+  combinarUsosConInferidos,
   consolidarFotosInventario,
   construirValoresHorarioGuardar,
   esEntregaConfirmadaOrden,
@@ -19,11 +22,13 @@ import {
   formatearResumenInventarioTexto,
   generarCuadriculaMesCalendario,
   inferirClasificacionPedido,
+  inferirUsosEntregaInmediata,
   normalizarFranjaHorariaTienda,
   obtenerRangoSemanaLunesADomingo,
   ordenarPedidosPorPrioridadTaller,
   parsearColoresPedido,
   resolverEstadoInicialHorario,
+  resolverPresetEntregaInmediataPorNombre,
 } from "./operaciones-taller";
 import {
   CATALOGO_SEMILLA_VARIEDADES_ROSAS,
@@ -302,5 +307,46 @@ describe("operaciones-taller y pdf-informe-iess", () => {
       { id: "d", prioridadOrden: 2, clasificacionPedido: "FLORISTERIA_OCASIONES" },
     ]);
     expect(ordenados.map((o) => o.id)).toEqual(["b", "d", "a", "c"]);
+  });
+
+  it("expone presets rápidos de Entrega Inmediata y asigna automáticamente uso condolencias", () => {
+    expect(CLAVE_PRESET_ENTREGA_OTROS).toBe("otros");
+    expect(
+      PRESETS_ENTREGA_INMEDIATA.map((p) => ({
+        nombre: p.nombre,
+        precio: p.precioSugerido,
+      }))
+    ).toEqual([
+      { nombre: "Abanico Condolencias XL", precio: 45 },
+      { nombre: "Pedestal Condolencias XL", precio: 50 },
+      { nombre: "Bouquet Coreano M", precio: undefined },
+    ]);
+
+    expect(inferirUsosEntregaInmediata("Abanico Condolencias XL")).toEqual(["condolencias"]);
+    expect(inferirUsosEntregaInmediata("Pedestal Condolencias XL")).toEqual(["condolencias"]);
+    expect(inferirUsosEntregaInmediata("Corona de condolencias blanca")).toEqual(["condolencias"]);
+    expect(inferirUsosEntregaInmediata("ARREGLO CONDOLENCIA")).toEqual(["condolencias"]);
+    expect(inferirUsosEntregaInmediata("Bouquet Coreano M")).toEqual([]);
+    expect(inferirUsosEntregaInmediata("")).toEqual([]);
+
+    expect(combinarUsosConInferidos(["corporativo"], "Pedestal Condolencias XL")).toEqual([
+      "corporativo",
+      "condolencias",
+    ]);
+    expect(combinarUsosConInferidos(["condolencias"], "Abanico Condolencias XL")).toEqual([
+      "condolencias",
+    ]);
+
+    expect(resolverPresetEntregaInmediataPorNombre("Abanico Condolencias XL")).toBe(
+      "abanico_condolencias_xl"
+    );
+    expect(resolverPresetEntregaInmediataPorNombre("pedestal condolencias xl")).toBe(
+      "pedestal_condolencias_xl"
+    );
+    expect(resolverPresetEntregaInmediataPorNombre("Bouquet Coreano M")).toBe(
+      "bouquet_coreano_m"
+    );
+    expect(resolverPresetEntregaInmediataPorNombre("Caja 24 Rosas Rojas")).toBe("otros");
+    expect(resolverPresetEntregaInmediataPorNombre("")).toBe("");
   });
 });
