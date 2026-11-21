@@ -917,26 +917,81 @@ export function ModalEditarProducto({
             </h2>
           </div>
 
-          <button
-            type="button"
-            onClick={onCerrar}
-            title="Cerrar"
-            aria-label="Cerrar"
-            style={{
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              color: "#CBD5E1",
-              padding: "4px",
-              borderRadius: "7px",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <X size={18} />
-          </button>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={() => setAccionConfirmar("eliminar_producto")}
+              disabled={eliminando || guardando}
+              title="Desactivar producto"
+              aria-label="Desactivar producto"
+              style={{
+                background: "rgba(248, 113, 113, 0.16)",
+                color: "#FCA5A5",
+                border: "1px solid rgba(248, 113, 113, 0.3)",
+                width: "34px",
+                height: "34px",
+                borderRadius: "8px",
+                cursor: eliminando || guardando ? "not-allowed" : "pointer",
+                opacity: eliminando || guardando ? 0.5 : 1,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              {eliminando ? <Loader2 size={16} className="eco-spin" /> : <Trash2 size={16} />}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!validarAntesDeGuardar()) return;
+                setAccionConfirmar("guardar");
+              }}
+              disabled={guardando || eliminando}
+              title="Guardar cambios en el catálogo"
+              aria-label="Guardar cambios"
+              style={{
+                background: esFloristeria ? "#E11D48" : "#0284C7",
+                color: "#FFFFFF",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                width: "34px",
+                height: "34px",
+                borderRadius: "8px",
+                cursor: guardando || eliminando ? "not-allowed" : "pointer",
+                opacity: guardando || eliminando ? 0.6 : 1,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              {guardando ? <Loader2 size={16} className="eco-spin" /> : <Save size={16} />}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setAccionConfirmar("cancelar")}
+              disabled={guardando || eliminando}
+              title="Descartar cambios y cerrar"
+              aria-label="Descartar cambios y cerrar"
+              style={{
+                background: "rgba(255, 255, 255, 0.08)",
+                border: "none",
+                cursor: guardando || eliminando ? "not-allowed" : "pointer",
+                color: "#E2E8F0",
+                width: "34px",
+                height: "34px",
+                borderRadius: "8px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Riel lineal deslizable unificado: Master + Variantes + Agregar */}
@@ -2425,92 +2480,6 @@ export function ModalEditarProducto({
             </div>
           )}
 
-          {/* Botones de Acción (solo íconos en una sola línea, con popup de confirmación) */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              paddingTop: "10px",
-              borderTop: "1px solid #E2E8F0",
-              marginTop: "8px",
-              flexWrap: "nowrap",
-              gap: "8px",
-            }}
-          >
-            <button
-              type="button"
-              onClick={() => setAccionConfirmar("eliminar_producto")}
-              disabled={eliminando || guardando}
-              title="Desactivar producto"
-              aria-label="Desactivar producto"
-              style={{
-                background: "#FEF2F2",
-                color: "#DC2626",
-                border: "1px solid #FCA5A5",
-                width: "42px",
-                height: "42px",
-                borderRadius: "10px",
-                cursor: eliminando || guardando ? "not-allowed" : "pointer",
-                opacity: eliminando || guardando ? 0.5 : 1,
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
-              {eliminando ? <Loader2 size={18} className="eco-spin" /> : <Trash2 size={18} />}
-            </button>
-
-            <div style={{ display: "flex", gap: "8px", flexWrap: "nowrap", alignItems: "center" }}>
-              <button
-                type="button"
-                onClick={() => setAccionConfirmar("cancelar")}
-                disabled={guardando || eliminando}
-                title="Cancelar y cerrar sin guardar"
-                aria-label="Cancelar"
-                style={{
-                  background: "#F1F5F9",
-                  color: "#475569",
-                  border: "1px solid #CBD5E1",
-                  width: "42px",
-                  height: "42px",
-                  borderRadius: "10px",
-                  cursor: guardando || eliminando ? "not-allowed" : "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <X size={18} />
-              </button>
-
-              <button
-                type="submit"
-                disabled={guardando || eliminando}
-                title="Guardar cambios en el catálogo"
-                aria-label="Guardar cambios"
-                style={{
-                  background: esFloristeria ? "#E11D48" : "#0284C7",
-                  color: "#FFFFFF",
-                  border: "none",
-                  width: "42px",
-                  height: "42px",
-                  borderRadius: "10px",
-                  cursor: guardando || eliminando ? "not-allowed" : "pointer",
-                  opacity: guardando || eliminando ? 0.6 : 1,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.12)",
-                }}
-              >
-                {guardando ? <Loader2 size={18} className="eco-spin" /> : <Save size={18} />}
-              </button>
-            </div>
-          </div>
         </form>
       </div>
 

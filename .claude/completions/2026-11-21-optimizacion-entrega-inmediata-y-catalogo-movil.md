@@ -23,8 +23,9 @@
    - Ocultado el botón separado `Editar` (y flechas apiladas) en las variantes de las tarjetas: en modo `Configuración`, tocar cualquier variante abre directamente `ModalEditarProducto` sobre esa variante; en `Vista Cliente`, solo selecciona y previsualiza.
 
 3. **Configuración de Productos (`BarraPasosWizardProducto.tsx`, `ModalEditarProducto.tsx`, `apps/tranqi-web/.../ModalEditarProducto.tsx`):**
-   - Cabecera oscura de `ModalEditarProducto` compactada a 1 sola línea (título + `X`, sin `CAPA 2`, UUID/slug ni `Manual`), seguida de un **único riel lineal deslizable** (`.modal-riel-deslizable`) que unifica `Master`, cada variante con su PVP y `+ Variante` sin barras duplicadas ni tarjetas apiladas.
-   - Barra inferior de acciones de `ModalEditarProducto` simplificada a una sola fila con botones de **solo íconos** (`42×42px`: `Trash2`, `X`, `ArrowLeft`/`ArrowRight`, `Save`) con `title`/`aria-label`, solicitando **confirmación en popup** (`role="alertdialog"`) antes de guardar, descartar/salir o eliminar producto/variante.
+   - En `BarraPasosWizardProducto.tsx`, ocultado el botón `Ver Todo` en móviles (`<= 640px`, `.wizard-btn-ver-todo`) y forzado modo paso a paso en pantalla móvil.
+   - Cabecera oscura de `ModalEditarProducto` compactada a 1 sola línea con el título y los 3 botones de acción de **solo íconos** (`Trash2`, `Save`, `X`, con `title`/`aria-label`) que abren un **popup de confirmación** (`role="alertdialog"`) antes de guardar, descartar/salir o eliminar producto/variante.
+   - Eliminada por completo la barra inferior de acciones (`Cancelar`, `Anterior`, `Siguiente`, `Guardar`, `Eliminar`) para aprovechar el 100% del alto útil en móvil, seguida de un **único riel lineal deslizable** (`.modal-riel-deslizable`) que unifica `Master`, cada variante con su PVP y `+ Variante`.
    - `SelectorEncuadreFoto` oculto por completo en móviles (`<= 640px`) y colapsado por defecto en web tras un botón `Avanzado` (`Ocultar` al expandir).
    - Todas las opciones heredables en variantes (`Tarifa IVA SRI`, `Fotos del Tamaño`, `Álbum de Muestras`, `Tiempo de Entrega`, `Beneficios y Contenido`, `Usos y Ocasiones`) muestran su valor heredado efectivo en una fila compacta con botón `Editar`, permaneciendo colapsadas mientras heredan del Master.
 

@@ -101,6 +101,19 @@ export function BarraPasosWizardProducto({
     0,
     PASOS_WIZARD_PRODUCTO.findIndex((p) => p.id === pasoActivo)
   );
+
+  // En móvil (<= 640px) siempre operamos por pasos (sin vista "Ver Todo")
+  useEffect(() => {
+    if (!verTodo || !onAlternarVerTodo || typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 640px)");
+    const aplicar = () => {
+      if (mq.matches && verTodo) onAlternarVerTodo();
+    };
+    aplicar();
+    mq.addEventListener("change", aplicar);
+    return () => mq.removeEventListener("change", aplicar);
+  }, [verTodo, onAlternarVerTodo]);
+
   const porcentajeProgreso = verTodo
     ? 100
     : Math.round(((indiceActivo + 1) / PASOS_WIZARD_PRODUCTO.length) * 100);
@@ -141,6 +154,9 @@ export function BarraPasosWizardProducto({
           .subtitulo-paso-wizard {
             display: none !important;
           }
+          .wizard-btn-ver-todo {
+            display: none !important;
+          }
         }
       `}</style>
 
@@ -162,9 +178,10 @@ export function BarraPasosWizardProducto({
                 key={paso.id}
                 type="button"
                 className="btn-paso-wizard-item"
-                onClick={() => {
+                onClick={(e) => {
                   if (verTodo && onAlternarVerTodo) onAlternarVerTodo();
                   onCambiarPaso(paso.id);
+                  e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
                 }}
                 title={`${paso.numero}. ${paso.tituloCorto} — ${paso.subtitulo}`}
                 aria-label={`Paso ${paso.numero}: ${paso.tituloCorto}`}
@@ -249,6 +266,7 @@ export function BarraPasosWizardProducto({
         {permitirModoTodo && onAlternarVerTodo && (
           <button
             type="button"
+            className="wizard-btn-ver-todo"
             onClick={onAlternarVerTodo}
             title="Alternar entre asistente paso a paso o vista completa en una sola hoja"
             aria-label="Alternar vista completa"

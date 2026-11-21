@@ -26,8 +26,6 @@ import {
   FolderPlus,
   ChevronLeft,
   ChevronRight,
-  ArrowLeft,
-  ArrowRight,
   Share2,
   Target,
   Tag,
@@ -103,7 +101,6 @@ import {
 } from "./ModalGestionTiposOferta";
 import {
   BarraPasosWizardProducto,
-  PASOS_WIZARD_PRODUCTO,
   SelectorEncuadreFoto,
   type PasoWizardProducto,
 } from "./BarraPasosWizardProducto";
@@ -881,7 +878,6 @@ export function ModalEditarProducto({
   const colVariante = PALETA_COLORES_VARIANTES[varianteActivaIndex % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
   const colActiva = esModoMaster ? COLOR_PRODUCTO_MASTER : colVariante;
 
-  const indicePasoMaster = PASOS_WIZARD_PRODUCTO.findIndex((p) => p.id === pasoMaster);
   const beneficiosLineasMaster = beneficiosTexto
     .split("\n")
     .map((b) => b.trim())
@@ -1697,13 +1693,6 @@ export function ModalEditarProducto({
           .modal-comercio-dialog textarea {
             font-size: 16px !important;
           }
-          .modal-comercio-footer {
-            position: sticky !important;
-            bottom: 0 !important;
-            background: rgba(255, 255, 255, 0.97) !important;
-            padding: 10px 0 max(12px, env(safe-area-inset-bottom)) !important;
-            z-index: 8 !important;
-          }
         }
       `}</style>
       <div
@@ -1767,26 +1756,125 @@ export function ModalEditarProducto({
             </h2>
           </div>
 
-          <button
-            type="button"
-            onClick={onCerrar}
-            title="Cerrar"
-            aria-label="Cerrar"
-            style={{
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              color: "#D5CFC4",
-              padding: "4px",
-              borderRadius: "7px",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <X size={18} />
-          </button>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+            {esModoMaster ? (
+              <button
+                type="button"
+                onClick={() => setAccionConfirmar("eliminar_producto")}
+                disabled={eliminando || guardando}
+                title="Eliminar producto"
+                aria-label="Eliminar producto"
+                style={{
+                  background: "rgba(222, 186, 186, 0.14)",
+                  color: "#F2B8B5",
+                  border: "1px solid rgba(222, 186, 186, 0.28)",
+                  width: "34px",
+                  height: "34px",
+                  borderRadius: "8px",
+                  cursor: eliminando || guardando ? "not-allowed" : "pointer",
+                  opacity: eliminando || guardando ? 0.5 : 1,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                {eliminando ? <Loader2 size={16} className="eco-spin" /> : <Trash2 size={16} />}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  if (variantesLocales.length <= 1) {
+                    setError(
+                      esFloristeria
+                        ? "El producto debe conservar al menos un tamaño."
+                        : "El producto debe conservar al menos una variante de tarifa."
+                    );
+                    return;
+                  }
+                  setAccionConfirmar("eliminar_variante");
+                }}
+                disabled={variantesLocales.length <= 1 || eliminandoVariante || guardando}
+                title={
+                  variantesLocales.length <= 1
+                    ? esFloristeria
+                      ? "Debe existir al menos un tamaño en el producto"
+                      : "Debe existir al menos una variante en el producto"
+                    : esFloristeria
+                    ? "Eliminar tamaño"
+                    : "Eliminar variante"
+                }
+                aria-label={esFloristeria ? "Eliminar tamaño" : "Eliminar variante"}
+                style={{
+                  background: variantesLocales.length <= 1 ? "rgba(255, 255, 255, 0.06)" : "rgba(222, 186, 186, 0.14)",
+                  color: variantesLocales.length <= 1 ? "#847D74" : "#F2B8B5",
+                  border: variantesLocales.length <= 1 ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(222, 186, 186, 0.28)",
+                  width: "34px",
+                  height: "34px",
+                  borderRadius: "8px",
+                  cursor: variantesLocales.length <= 1 || eliminandoVariante || guardando ? "not-allowed" : "pointer",
+                  opacity: variantesLocales.length <= 1 || eliminandoVariante || guardando ? 0.45 : 1,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                {eliminandoVariante ? <Loader2 size={16} className="eco-spin" /> : <Trash2 size={16} />}
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                if (!validarAntesDeGuardar()) return;
+                setAccionConfirmar("guardar");
+              }}
+              disabled={guardando || eliminando || eliminandoVariante}
+              title="Guardar cambios en el catálogo"
+              aria-label="Guardar cambios"
+              style={{
+                background: "#2F4737",
+                color: "#FFFFFF",
+                border: "1px solid rgba(255, 255, 255, 0.18)",
+                width: "34px",
+                height: "34px",
+                borderRadius: "8px",
+                cursor: guardando || eliminando || eliminandoVariante ? "not-allowed" : "pointer",
+                opacity: guardando || eliminando || eliminandoVariante ? 0.6 : 1,
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              {guardando ? <Loader2 size={16} className="eco-spin" /> : <Save size={16} />}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setAccionConfirmar("cancelar")}
+              disabled={guardando || eliminando || eliminandoVariante}
+              title="Descartar cambios y cerrar"
+              aria-label="Descartar cambios y cerrar"
+              style={{
+                background: "rgba(255, 255, 255, 0.08)",
+                border: "none",
+                cursor: guardando || eliminando || eliminandoVariante ? "not-allowed" : "pointer",
+                color: "#E6E2DA",
+                width: "34px",
+                height: "34px",
+                borderRadius: "8px",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Riel lineal deslizable unificado: Master + Variantes + Agregar */}
@@ -1919,7 +2007,14 @@ export function ModalEditarProducto({
         )}
 
         {/* Formulario */}
-        <form onSubmit={handleGuardar} style={{ padding: "12px 14px", overflowY: "auto", flex: 1 }}>
+        <form
+          onSubmit={handleGuardar}
+          style={{
+            padding: "12px 14px max(22px, env(safe-area-inset-bottom))",
+            overflowY: "auto",
+            flex: 1,
+          }}
+        >
           {error && (
             <div
               style={{
@@ -5783,193 +5878,6 @@ export function ModalEditarProducto({
             </div>
           )}
 
-          {/* Botones de Acción (solo íconos en una sola línea, con popup de confirmación) */}
-          <div
-            className="modal-comercio-footer"
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              paddingTop: "10px",
-              borderTop: "1px solid #E6E2DA",
-              marginTop: "8px",
-              flexWrap: "nowrap",
-              gap: "8px",
-            }}
-          >
-            {esModoMaster ? (
-              <button
-                type="button"
-                onClick={() => setAccionConfirmar("eliminar_producto")}
-                disabled={eliminando || guardando}
-                title="Eliminar producto"
-                aria-label="Eliminar producto"
-                style={{
-                  background: "#FAF2F2",
-                  color: "#8A2E2E",
-                  border: "1px solid #DEBABA",
-                  width: "42px",
-                  height: "42px",
-                  borderRadius: "10px",
-                  cursor: eliminando || guardando ? "not-allowed" : "pointer",
-                  opacity: eliminando || guardando ? 0.5 : 1,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  transition: "all 0.15s ease",
-                }}
-              >
-                {eliminando ? <Loader2 size={18} className="eco-spin" /> : <Trash2 size={18} />}
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  if (variantesLocales.length <= 1) {
-                    setError(
-                      esFloristeria
-                        ? "El producto debe conservar al menos un tamaño."
-                        : "El producto debe conservar al menos una variante de tarifa."
-                    );
-                    return;
-                  }
-                  setAccionConfirmar("eliminar_variante");
-                }}
-                disabled={variantesLocales.length <= 1 || eliminandoVariante || guardando}
-                title={
-                  variantesLocales.length <= 1
-                    ? esFloristeria
-                      ? "Debe existir al menos un tamaño en el producto"
-                      : "Debe existir al menos una variante en el producto"
-                    : esFloristeria
-                    ? "Eliminar tamaño"
-                    : "Eliminar variante"
-                }
-                aria-label={esFloristeria ? "Eliminar tamaño" : "Eliminar variante"}
-                style={{
-                  background: variantesLocales.length <= 1 ? "#F4F2EE" : "#FAF2F2",
-                  color: variantesLocales.length <= 1 ? "#847D74" : "#8A2E2E",
-                  border: variantesLocales.length <= 1 ? "1px solid #E6E2DA" : "1px solid #DEBABA",
-                  width: "42px",
-                  height: "42px",
-                  borderRadius: "10px",
-                  cursor: variantesLocales.length <= 1 || eliminandoVariante || guardando ? "not-allowed" : "pointer",
-                  opacity: variantesLocales.length <= 1 || eliminandoVariante || guardando ? 0.5 : 1,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  transition: "all 0.15s ease",
-                }}
-              >
-                {eliminandoVariante ? <Loader2 size={18} className="eco-spin" /> : <Trash2 size={18} />}
-              </button>
-            )}
-
-            <div style={{ display: "flex", gap: "8px", flexWrap: "nowrap", alignItems: "center" }}>
-              <button
-                type="button"
-                onClick={() => setAccionConfirmar("cancelar")}
-                disabled={guardando || eliminando || eliminandoVariante}
-                title="Cancelar y cerrar sin guardar"
-                aria-label="Cancelar"
-                style={{
-                  background: "#F4F2EE",
-                  color: "#57524C",
-                  border: "1px solid #E6E2DA",
-                  width: "42px",
-                  height: "42px",
-                  borderRadius: "10px",
-                  cursor: guardando || eliminando || eliminandoVariante ? "not-allowed" : "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-              >
-                <X size={18} />
-              </button>
-
-              {esModoMaster && !verTodoMaster && indicePasoMaster > 0 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const prev = PASOS_WIZARD_PRODUCTO[indicePasoMaster - 1];
-                    if (prev) setPasoMaster(prev.id);
-                  }}
-                  title="Paso anterior"
-                  aria-label="Paso anterior"
-                  style={{
-                    background: "#FFFFFF",
-                    color: "#57524C",
-                    border: "1px solid #D5CFC4",
-                    width: "42px",
-                    height: "42px",
-                    borderRadius: "10px",
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <ArrowLeft size={18} />
-                </button>
-              )}
-
-              {esModoMaster && !verTodoMaster && indicePasoMaster < PASOS_WIZARD_PRODUCTO.length - 1 && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const sig = PASOS_WIZARD_PRODUCTO[indicePasoMaster + 1];
-                    if (sig) setPasoMaster(sig.id);
-                  }}
-                  title="Siguiente paso"
-                  aria-label="Siguiente paso"
-                  style={{
-                    background: "#FFFFFF",
-                    color: "#1F1C19",
-                    border: "1.5px solid #221E1B",
-                    width: "42px",
-                    height: "42px",
-                    borderRadius: "10px",
-                    cursor: "pointer",
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <ArrowRight size={18} />
-                </button>
-              )}
-
-              <button
-                type="submit"
-                disabled={guardando || eliminando || eliminandoVariante}
-                title="Guardar cambios en el catálogo"
-                aria-label="Guardar cambios"
-                style={{
-                  background: "#2F4737",
-                  color: "#FFFFFF",
-                  border: "none",
-                  width: "42px",
-                  height: "42px",
-                  borderRadius: "10px",
-                  cursor: guardando || eliminando || eliminandoVariante ? "not-allowed" : "pointer",
-                  opacity: guardando || eliminando || eliminandoVariante ? 0.6 : 1,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  boxShadow: "0 2px 6px rgba(47, 71, 55, 0.25)",
-                }}
-              >
-                {guardando ? <Loader2 size={18} className="eco-spin" /> : <Save size={18} />}
-              </button>
-            </div>
-          </div>
         </form>
       </div>
 
