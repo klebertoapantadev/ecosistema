@@ -74,8 +74,8 @@ export function FormularioBienvenida({
 
     setCargando(true);
     const resultado = await completarBienvenida({ nombres, apellidos, autorizaWhatsapp, whatsapp }, negocio);
-    setCargando(false);
     if (!resultado.ok) {
+      setCargando(false);
       setError(resultado.error);
       return;
     }
@@ -86,8 +86,11 @@ export function FormularioBienvenida({
     }
 
     const destinoTarget = destinoFinal || (esAbogado ? "/panel/solicitud-socio" : "/panel");
-    router.push(destinoTarget);
-    router.refresh();
+    if (typeof window !== "undefined") {
+      window.location.assign(destinoTarget);
+      return;
+    }
+    router.replace(destinoTarget);
   }
 
   return (

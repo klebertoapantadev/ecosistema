@@ -19,7 +19,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 
 | Código | Funcionalidad / Requerimiento | Estado | Avance (%) | Responsable Asignado |
 | :--- | :--- | :---: | :---: | :--- |
-| **`PLT-001`** | Identidad Base con Registro, Login, Consentimiento, Callback Google OAuth Resiliente y Perfil 100% Aislados por Negocio | ✅ Implementado | **96%** | Kleber Toapanta |
+| **`PLT-001`** | Identidad Base con Registro, Login, Consentimiento, Callback Google OAuth Resiliente, Activación Garantizada de Membresía y Perfil 100% Aislados por Negocio | ✅ Implementado | **97%** | Kleber Toapanta |
 | **`PLT-002`** | Autenticación Multifactor (MFA TOTP) & Expiración por Inactividad | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-003`** | Membresías, Jerarquía & Active Role Switcher | ✅ Implementado | **100%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-004`** | **Buddie Conversacional (Chat IA ARIA & OCR Multimodal)** | 🟡 En Desarrollo | **85%** | **Kleber Toapanta / Jesus Navarrete** |
@@ -89,10 +89,10 @@ Actualizado en cada PR que toque este requerimiento. `Parcial` significa que exi
 
 | Regla / Ítem | Estado | Dónde vive / Detalle de lo que falta |
 | :--- | :---: | :--- |
-| 1 · Registro Fluido (Google OAuth + Correo) | ✅ Implementado | `packages/identidad` (`FormularioRegistro.tsx`, `FormularioBienvenida.tsx`, preservación de `destino`) |
+| 1 · Registro Fluido (Google OAuth + Correo) | ✅ Implementado | `packages/identidad` (`FormularioRegistro.tsx`, `FormularioBienvenida.tsx`, `asegurarMembresiaCliente` con verificación activa + fallback `SECURITY DEFINER`, `20261120000003_fix_asegurar_membresia_cliente_y_oauth_onboarding.sql`) |
 | 2 · WhatsApp + Consentimiento LOPDP en Registro y Onboarding | ✅ Implementado | `usu_telefono_codigo_pais`, `usu_telefono_numero`, `usu_autoriza_whatsapp` y `ModalTerminosWhatsapp.tsx` |
 | 3 · Ubicación y Alcance Local | ✅ Implementado | Expuesto en onboarding y footer según catálogo `PLT-008` |
-| 4 · Aislamiento Estricto de Registro, Login, Perfil y Notificaciones por Negocio | ✅ Implementado | `packages/identidad/src/negocio.ts`, `seg_membresia`, `registros_negocio[negocio]`, `seg_usuario_consentimiento` y gating en `iniciarSesion` / `LayoutPanel` |
+| 4 · Aislamiento Estricto de Registro, Login, Perfil y Notificaciones por Negocio | ✅ Implementado | `packages/identidad/src/negocio.ts`, `seg_membresia`, `registros_negocio[negocio]`, `seg_usuario_consentimiento`, auto-reparación post-bienvenida y redirección con diagnóstico explícito en `iniciarSesion` / `LayoutPanel` |
 | 5 · Biometría (Face ID / Touch ID) y PIN Móvil | ⏳ Pendiente | Plugin `@capacitor-community/biometrics` en apps nativas Capacitor |
 | 6.a · Términos Globales del Ecosistema | ✅ Implementado | Checkbox obligatorio en correo, auto-registro en Google OAuth (`usu_terminos_version`) |
 | 6.b · Términos Específicos del Negocio en Markdown | 🟡 Parcial | El texto en `/terminos` es estático; falta renderizarlo dinámicamente desde Markdown (`PLT-008`) |

@@ -98,7 +98,7 @@ export function crearManejadorCallbackOAuth(negocio: string) {
         );
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await asegurarMembresiaCliente(supabase as any, data.user.id, negocioCanon);
+        const resMembresia = await asegurarMembresiaCliente(supabase as any, data.user.id, negocioCanon);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await asegurarTerminosAceptados(supabase as any, data.user.id);
 
@@ -133,7 +133,7 @@ export function crearManejadorCallbackOAuth(negocio: string) {
         }
 
         // Guardar únicamente columnas con GRANT UPDATE para authenticated (usu_correo_verificado_en se confirma vía RPC SECURITY DEFINER abajo)
-        await db
+        const { error: errUpdateUsuario } = await db
           .schema("comun_seguridad")
           .from("seg_usuario")
           .update({
@@ -144,19 +144,28 @@ export function crearManejadorCallbackOAuth(negocio: string) {
             usu_actualizado_en: ahoraIso,
           })
           .eq("usu_id", data.user.id);
+        if (errUpdateUsuario) {
+          console.error("[oauth-callback] Error actualizando seg_usuario:", errUpdateUsuario.message);
+        }
 
-        // Reclamar de forma atómica cualquier invitación de rol pendiente y confirmar correo verificado de OAuth en DB
+        // Reclamar de forma atómica cualquier invitación de rol pendiente, asegurar CLIENTE y confirmar correo verificado de OAuth en DB
+        let membresiaSincronizada = resMembresia.ok;
         try {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (supabase.schema("comun_seguridad") as any).rpc(
+          const { data: syncData, error: syncErr } = await (supabase.schema("comun_seguridad") as any).rpc(
             "seg_fn_sincronizar_acceso_rol_tinkay",
             {
               p_negocio: negocioCanon,
-              p_crear_cliente_si_no_existe: false,
+              p_crear_cliente_si_no_existe: true,
             }
           );
-        } catch {
-          // Ignorar si la migración aún no está desplegada
+          if (syncErr) {
+            console.error("[oauth-callback] seg_fn_sincronizar_acceso_rol_tinkay falló:", syncErr.message);
+          } else if (syncData?.tieneMembresia || syncData?.invitacionAplicada) {
+            membresiaSincronizada = true;
+          }
+        } catch (errSync) {
+          console.error("[oauth-callback] Excepción en seg_fn_sincronizar_acceso_rol_tinkay:", errSync);
         }
 
         // Si ya es SuperAdmin o tenía onboarding completo sin notificar aún en este negocio
@@ -178,6 +187,14 @@ export function crearManejadorCallbackOAuth(negocio: string) {
         if (faltaOnboarding) {
           return redirigirConCookies(
             `${origin}/bienvenida?destino=${encodeURIComponent(rutaDestinoSegura)}`
+          );
+        }
+        if (!membresiaSincronizada && !usuarioPrevio?.usu_superadmin_plataforma) {
+          const msgErr = !resMembresia.ok
+            ? resMembresia.error
+            : "No se pudo activar tu acceso en este portal. Intenta registrarte nuevamente.";
+          return redirigirConCookies(
+            `${origin}/ingresar?error=${encodeURIComponent(msgErr)}`
           );
         }
         return redirigirConCookies(`${origin}${rutaDestinoSegura}`);

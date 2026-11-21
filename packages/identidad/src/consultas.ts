@@ -1,7 +1,7 @@
 import { crearClienteServidor, crearClienteAdmin } from "@eco/supabase/servidor";
 import {
   claveNegocioCanonica,
-  codigosNegocio,
+  perteneceAlNegocio,
   proyectarPerfilPorNegocio,
 } from "./negocio";
 
@@ -18,18 +18,24 @@ export async function obtenerSesionActual() {
 export async function obtenerMembresia(usuarioId: string, negocio: string) {
   const supabase = await crearClienteServidor();
   const db = crearClienteAdmin() ?? supabase;
-  const { data } = await db
+  const negocioCanon = claveNegocioCanonica(negocio);
+  const { data, error } = await db
     .schema("comun_seguridad")
     .from("seg_membresia")
     .select("*")
     .eq("mem_usuario_id", usuarioId)
-    .in("mem_negocio", codigosNegocio(negocio))
     .eq("mem_estado", "ACTIVO")
-    .order("mem_creado_en", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+    .order("mem_creado_en", { ascending: true });
 
-  return data;
+  if (error) {
+    console.error("[identidad] obtenerMembresia falló:", error.message);
+    return null;
+  }
+
+  const filasNegocio = (data ?? []).filter((m) => perteneceAlNegocio(m.mem_negocio, negocioCanon));
+  if (filasNegocio.length === 0) return null;
+
+  return filasNegocio.find((m) => m.mem_negocio === negocioCanon) ?? filasNegocio[0] ?? null;
 }
 
 export async function obtenerPerfilActual(negocio?: string) {

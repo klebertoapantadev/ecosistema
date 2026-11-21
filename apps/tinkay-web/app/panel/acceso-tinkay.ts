@@ -1,4 +1,8 @@
-import { obtenerPerfilActual, type PerfilUsuario } from "@eco/identidad";
+import {
+  obtenerPerfilActual,
+  resolverOnboardingNegocio,
+  type PerfilUsuario,
+} from "@eco/identidad";
 import { sincronizarAccesoRolTinkayAction } from "@eco/gestion-usuarios";
 
 export type RolTinkayPortal =
@@ -139,9 +143,9 @@ export async function obtenerContextoAccesoTinkay(): Promise<ContextoAccesoTinka
   // Sincronizar primero cualquier invitación pendiente o normalización de rol en BDD
   // antes de leer el perfil y membresía actuales (evita condición de carrera al ingresar por primera vez).
   const sync = await sincronizarAccesoRolTinkayAction();
-  const perfil = await obtenerPerfilActual("tinkay");
+  const perfilBase = await obtenerPerfilActual("tinkay");
 
-  if (!perfil) {
+  if (!perfilBase) {
     return {
       perfil: null,
       rolPrincipal: "CLIENTE",
@@ -154,6 +158,15 @@ export async function obtenerContextoAccesoTinkay(): Promise<ContextoAccesoTinka
       clavesAutorizadas: new Set(MODULOS_POR_ROL.CLIENTE),
     };
   }
+
+  const perfil: PerfilUsuario =
+    !perfilBase.tiene_membresia_negocio && sync.tieneMembresia
+      ? {
+          ...perfilBase,
+          tiene_membresia_negocio: true,
+          usu_onboarding_completo: resolverOnboardingNegocio(perfilBase, true, "tinkay"),
+        }
+      : perfilBase;
 
   const rolPrincipal: RolTinkayPortal = sync.rolEfectivo || "CLIENTE";
   const esSuperAdmin = rolPrincipal === "SUPERADMIN";

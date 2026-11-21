@@ -2102,13 +2102,14 @@ export async function sincronizarAccesoRolTinkayAction(): Promise<{
     | "DELIVERY"
     | "DELIVERY_EXTERNO"
     | "CLIENTE";
+  tieneMembresia?: boolean;
 }> {
   try {
     const supabase = await crearClienteServidor();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) return { rolEfectivo: "CLIENTE" };
+    if (!user) return { rolEfectivo: "CLIENTE", tieneMembresia: false };
 
     const correo = (user.email || "").trim().toLowerCase();
     const esPropietarioTinkay =
@@ -2131,11 +2132,14 @@ export async function sincronizarAccesoRolTinkayAction(): Promise<{
           // Ignorar si se invoca durante render de Server Component
         }
       }
-      return { rolEfectivo: esPropietarioTinkay ? "SUPERADMIN" : rpcSync.rolEfectivo };
+      return {
+        rolEfectivo: esPropietarioTinkay ? "SUPERADMIN" : rpcSync.rolEfectivo,
+        tieneMembresia: Boolean(esPropietarioTinkay || rpcSync.tieneMembresia),
+      };
     }
 
     if (esPropietarioTinkay) {
-      return { rolEfectivo: "SUPERADMIN" };
+      return { rolEfectivo: "SUPERADMIN", tieneMembresia: true };
     }
 
     const db: any = crearClienteAdmin() ?? supabase;

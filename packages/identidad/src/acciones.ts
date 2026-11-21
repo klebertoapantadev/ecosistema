@@ -21,6 +21,7 @@ import {
   claveNegocioCanonica,
   codigosNegocio,
   obtenerRegistroNegocioDetalle,
+  perteneceAlNegocio,
 } from "./negocio";
 import {
   notificarNuevoUsuarioRegistrado,
@@ -50,11 +51,135 @@ export async function asegurarMembresiaCliente(
   supabase: Awaited<ReturnType<typeof crearClienteServidor>>,
   usuarioId: string,
   negocio: string,
-) {
+): Promise<Resultado> {
   const negocioCanon = claveNegocioCanonica(negocio);
-  await supabase
+  const adminDb = crearClienteAdmin();
+  const db = adminDb ?? supabase;
+  const errores: string[] = [];
+
+  const verificarMembresiaActiva = async (): Promise<boolean> => {
+    const { data, error } = await db
+      .schema("comun_seguridad")
+      .from("seg_membresia")
+      .select("mem_id, mem_negocio, mem_estado")
+      .eq("mem_usuario_id", usuarioId)
+      .eq("mem_estado", "ACTIVO");
+    if (error) {
+      console.error("[identidad] Error verificando seg_membresia activa:", error.message);
+      return false;
+    }
+    return (data ?? []).some((m) => perteneceAlNegocio(m.mem_negocio, negocioCanon));
+  };
+
+  // 1. Intento principal: RPC transaccional seg_fn_asegurar_membresia_cliente
+  const { error: errRpc } = await supabase
     .schema("comun_seguridad")
     .rpc("seg_fn_asegurar_membresia_cliente", { p_negocio: negocioCanon });
+  if (errRpc) {
+    console.error("[identidad] seg_fn_asegurar_membresia_cliente falló:", errRpc.message);
+    errores.push(`seg_fn_asegurar_membresia_cliente: ${errRpc.message}`);
+  }
+
+  if (!errRpc && (await verificarMembresiaActiva())) {
+    return { ok: true, data: undefined };
+  }
+
+  // 2. Respaldo SECURITY DEFINER: reclama invitación pendiente, reactiva/crea CLIENTE y confirma correo OAuth
+  let syncConfirmoMembresia = false;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: syncData, error: errSync } = await (supabase.schema("comun_seguridad") as any).rpc(
+      "seg_fn_sincronizar_acceso_rol_tinkay",
+      {
+        p_negocio: negocioCanon,
+        p_crear_cliente_si_no_existe: true,
+      },
+    );
+    if (errSync) {
+      console.error("[identidad] seg_fn_sincronizar_acceso_rol_tinkay falló:", errSync.message);
+      errores.push(`seg_fn_sincronizar_acceso_rol_tinkay: ${errSync.message}`);
+    } else if (syncData?.tieneMembresia) {
+      syncConfirmoMembresia = true;
+      if (await verificarMembresiaActiva()) {
+        return { ok: true, data: undefined };
+      }
+    }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[identidad] Excepción en seg_fn_sincronizar_acceso_rol_tinkay:", msg);
+    errores.push(msg);
+  }
+
+  // 3. Respaldo directo (RLS seg_membresia_propia_insert_cliente o adminDb)
+  const ahoraIso = new Date().toISOString();
+  if (adminDb) {
+    const { data: filasPrevias } = await adminDb
+      .schema("comun_seguridad")
+      .from("seg_membresia")
+      .select("mem_id, mem_negocio, mem_estado")
+      .eq("mem_usuario_id", usuarioId);
+    const filaExistente = (filasPrevias ?? []).find((m) =>
+      perteneceAlNegocio(m.mem_negocio, negocioCanon),
+    );
+    if (filaExistente?.mem_id) {
+      const { error: errAct } = await adminDb
+        .schema("comun_seguridad")
+        .from("seg_membresia")
+        .update({ mem_estado: "ACTIVO", mem_actualizado_en: ahoraIso })
+        .eq("mem_id", filaExistente.mem_id);
+      if (errAct) {
+        console.error("[identidad] adminDb reactivación seg_membresia falló:", errAct.message);
+        errores.push(`admin update seg_membresia: ${errAct.message}`);
+      }
+    } else {
+      const { error: errIns } = await adminDb
+        .schema("comun_seguridad")
+        .from("seg_membresia")
+        .insert({
+          mem_usuario_id: usuarioId,
+          mem_negocio: negocioCanon,
+          mem_rol: "CLIENTE",
+          mem_estado: "ACTIVO",
+        });
+      if (errIns && errIns.code !== "23505") {
+        console.error("[identidad] adminDb insert seg_membresia falló:", errIns.message);
+        errores.push(`admin insert seg_membresia: ${errIns.message}`);
+      }
+    }
+  } else {
+    const { error: errInsCliente } = await supabase
+      .schema("comun_seguridad")
+      .from("seg_membresia")
+      .insert({
+        mem_usuario_id: usuarioId,
+        mem_negocio: negocioCanon,
+        mem_rol: "CLIENTE",
+        mem_estado: "ACTIVO",
+      });
+    if (errInsCliente && errInsCliente.code !== "23505") {
+      console.error("[identidad] insert seg_membresia fallback falló:", errInsCliente.message);
+      errores.push(`insert seg_membresia: ${errInsCliente.message}`);
+    }
+  }
+
+  if (await verificarMembresiaActiva()) {
+    return { ok: true, data: undefined };
+  }
+
+  if (syncConfirmoMembresia) {
+    console.error(
+      "[identidad] ADVERTENCIA: RPC SECURITY DEFINER confirmó membresía activa pero SELECT directo no devolvió filas.",
+    );
+    return { ok: true, data: undefined };
+  }
+
+  return {
+    ok: false,
+    error:
+      errores.length > 0
+        ? `No se pudo activar tu membresía en ${negocioCanon}: ${errores.join(" | ")}`
+        : `No se pudo activar tu membresía en ${negocioCanon}. Intenta nuevamente.`,
+  };
 }
 
 // PLT-001 regla 6: registra la aceptacion de terminos para el camino de
@@ -187,7 +312,10 @@ export async function registrarUsuario(datos: DatosRegistro, negocio: string): P
     return { ok: false, error: "No se pudo crear el usuario" };
   }
 
-  await asegurarMembresiaCliente(supabase, usuarioId, negocioCanon);
+  const resMembresia = await asegurarMembresiaCliente(supabase, usuarioId, negocioCanon);
+  if (!resMembresia.ok) {
+    return { ok: false, error: resMembresia.error };
+  }
   await asegurarTerminosAceptados(supabase, usuarioId);
 
   let correoYaVerificado = false;
@@ -796,7 +924,7 @@ export async function completarBienvenida(
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, error: "Sesión no encontrada" };
 
-  await asegurarMembresiaCliente(supabase, user.id, negocioCanon);
+  const resMembresia = await asegurarMembresiaCliente(supabase, user.id, negocioCanon);
   await asegurarTerminosAceptados(supabase, user.id);
 
   const adminDb = crearClienteAdmin();
@@ -890,15 +1018,36 @@ export async function completarBienvenida(
 
   if (error) return { ok: false, error: error.message };
 
-  // Reclamar invitación pendiente de equipo tras confirmar bienvenida
+  // Reclamar invitación pendiente de equipo y asegurar membresía activa + correo OAuth tras confirmar bienvenida
+  let membresiaConfirmada = resMembresia.ok;
+  let errorSyncMembresia: string | null = null;
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase.schema("comun_seguridad") as any).rpc("seg_fn_sincronizar_acceso_rol_tinkay", {
-      p_negocio: negocioCanon,
-      p_crear_cliente_si_no_existe: false,
-    });
-  } catch {
-    // Ignorar si la migración aún no está desplegada
+    const { data: syncData, error: syncErr } = await (supabase.schema("comun_seguridad") as any).rpc(
+      "seg_fn_sincronizar_acceso_rol_tinkay",
+      {
+        p_negocio: negocioCanon,
+        p_crear_cliente_si_no_existe: true,
+      },
+    );
+    if (syncErr) {
+      errorSyncMembresia = syncErr.message;
+      console.error("[identidad] completarBienvenida sync falló:", syncErr.message);
+    } else if (syncData?.tieneMembresia || syncData?.invitacionAplicada) {
+      membresiaConfirmada = true;
+    }
+  } catch (errSync) {
+    errorSyncMembresia = errSync instanceof Error ? errSync.message : String(errSync);
+    console.error("[identidad] completarBienvenida sync excepción:", errorSyncMembresia);
+  }
+
+  if (!membresiaConfirmada) {
+    const detalleError = !resMembresia.ok
+      ? resMembresia.error
+      : errorSyncMembresia
+        ? `No se pudo activar tu cuenta en ${negocioCanon}: ${errorSyncMembresia}`
+        : `No se pudo confirmar tu membresía activa en ${negocioCanon}. Intenta nuevamente.`;
+    return { ok: false, error: detalleError };
   }
 
   if (adminDb) {

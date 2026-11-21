@@ -5,6 +5,8 @@ import { SelloCompilacion } from "@eco/primitivas";
 import {
   cerrarSesion,
   asegurarMembresiaCliente,
+  obtenerPerfilActual,
+  obtenerRegistroNegocioDetalle,
 } from "@eco/identidad";
 import {
   MarcoPanelLateral,
@@ -190,7 +192,6 @@ const COLOR_BADGE_ROL: Record<string, { bg: string; color: string }> = {
 export default async function LayoutPanel({ children }: { children: React.ReactNode }) {
   const ctx = await obtenerContextoAccesoTinkay();
   const {
-    perfil,
     rolPrincipal,
     etiquetaRol,
     rutaInicioRol,
@@ -199,11 +200,33 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
     esCliente,
     clavesAutorizadas,
   } = ctx;
+  let perfil = ctx.perfil;
   if (!perfil) redirect("/ingresar");
 
-  // Aislamiento estricto: si la sesión viene de otro negocio sin membresía en Tinkay, exigir ingreso/registro propio
+  // Aislamiento estricto: si la sesión viene de otro negocio sin membresía en Tinkay, exigir ingreso/registro propio.
+  // Si ya completó explícitamente la bienvenida de Tinkay pero quedó sin membresía por un fallo previo de RPC, auto-reparar una vez.
   if (!perfil.tiene_membresia_negocio && !esSuperAdmin) {
-    redirect("/ingresar");
+    const regTinkay = obtenerRegistroNegocioDetalle(perfil.usu_detalle_usuario, NEGOCIO);
+    if (regTinkay?.onboarding_completo) {
+      const supabase = await crearClienteServidor();
+      const resReparacion = await asegurarMembresiaCliente(supabase, perfil.usu_id, NEGOCIO);
+      if (resReparacion.ok) {
+        const perfilRevalidado = await obtenerPerfilActual(NEGOCIO);
+        if (perfilRevalidado?.tiene_membresia_negocio) {
+          perfil = perfilRevalidado;
+        }
+      } else {
+        redirect(`/ingresar?error=${encodeURIComponent(resReparacion.error)}`);
+      }
+    }
+
+    if (!perfil.tiene_membresia_negocio) {
+      redirect(
+        `/ingresar?error=${encodeURIComponent(
+          "Tu sesión no tiene una cuenta activa en Tinkay. Crea tu cuenta o continúa con Google para activar tu acceso."
+        )}`
+      );
+    }
   }
 
   // PLT-001 regla 2: confirmar identidad + WhatsApp en Tinkay antes de usar el panel.
