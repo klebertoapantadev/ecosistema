@@ -20,6 +20,7 @@ import {
   Settings2,
   ChevronDown,
   ChevronUp,
+  Save,
 } from "lucide-react";
 import {
   editarProductoAction,
@@ -453,7 +454,9 @@ export function ModalEditarProducto({
 
   const [guardando, setGuardando] = useState(false);
   const [eliminando, setEliminando] = useState(false);
-  const [confirmarEliminar, setConfirmarEliminar] = useState(false);
+  const [accionConfirmar, setAccionConfirmar] = useState<
+    "guardar" | "cancelar" | "eliminar_producto" | null
+  >(null);
   const [error, setError] = useState<string | null>(null);
 
   // Presets de tiempo de entrega según industria
@@ -556,7 +559,7 @@ export function ModalEditarProducto({
         setVarianteActivaIndex(0);
         setModoEdicion("master");
       }
-      setConfirmarEliminar(false);
+      setAccionConfirmar(null);
       setError(null);
     }
   }, [producto, varianteInicialId, categorias, negocio, esFloristeria, esLegal]);
@@ -673,29 +676,43 @@ export function ModalEditarProducto({
     }
   };
 
-  const handleGuardar = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const validarAntesDeGuardar = (): boolean => {
     setError(null);
 
     if (!nombre.trim()) {
       setError("Ingresa el nombre del producto.");
-      return;
+      return false;
     }
 
     if (variantesLocales.length === 0) {
       setError("Debes definir al menos una variante de precio.");
-      return;
+      return false;
     }
 
     for (const v of variantesLocales) {
       if (!v.var_nombre.trim()) {
         setError("Todas las modalidades deben tener un nombre (ej. Pequeño, Mediano, Grande).");
-        return;
+        return false;
       }
       if (v.var_precio <= 0) {
         setError(`El precio de "${v.var_nombre}" debe ser mayor a cero.`);
-        return;
+        return false;
       }
+    }
+
+    return true;
+  };
+
+  const handleGuardar = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validarAntesDeGuardar()) return;
+    setAccionConfirmar("guardar");
+  };
+
+  const ejecutarGuardar = async () => {
+    if (!validarAntesDeGuardar()) {
+      setAccionConfirmar(null);
+      return;
     }
 
     setGuardando(true);
@@ -712,6 +729,7 @@ export function ModalEditarProducto({
         setImagenUrl(imagenUrlFinal);
       } else {
         setGuardando(false);
+        setAccionConfirmar(null);
         setError(
           `⚠️ Advertencia de Imagen: La URL de portada principal es un visor web de Google Fotos que no pudo ser resuelto automáticamente (${resImg.error}). Copia la dirección de la imagen con clic derecho sobre la foto ('Copiar dirección de la imagen') o muévela al campo 'Álbum de Muestras'.`
         );
@@ -790,35 +808,36 @@ export function ModalEditarProducto({
       });
 
       if (res.ok && res.producto) {
+        setAccionConfirmar(null);
         onProductoEditado(res.producto);
         onCerrar();
       } else {
         setError(res.error || "No se pudo actualizar el producto.");
+        setAccionConfirmar(null);
       }
     } catch (err) {
       setError((err instanceof Error ? err.message : String(err)) || "Error al procesar la actualización.");
+      setAccionConfirmar(null);
     } finally {
       setGuardando(false);
     }
   };
 
-  const handleEliminar = async () => {
-    if (!confirmarEliminar) {
-      setConfirmarEliminar(true);
-      return;
-    }
-
+  const ejecutarEliminarProducto = async () => {
     setEliminando(true);
     try {
       const res = await eliminarProductoAction(producto.pro_id, negocio);
       if (res.ok) {
+        setAccionConfirmar(null);
         onProductoEliminado(producto.pro_id);
         onCerrar();
       } else {
         setError(res.error || "No se pudo eliminar el producto.");
+        setAccionConfirmar(null);
       }
     } catch (err) {
       setError((err instanceof Error ? err.message : String(err)) || "Error al eliminar el producto.");
+      setAccionConfirmar(null);
     } finally {
       setEliminando(false);
     }
@@ -2406,82 +2425,231 @@ export function ModalEditarProducto({
             </div>
           )}
 
-          {/* Botones de Acción */}
+          {/* Botones de Acción (solo íconos en una sola línea, con popup de confirmación) */}
           <div
             style={{
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              paddingTop: "14px",
+              paddingTop: "10px",
               borderTop: "1px solid #E2E8F0",
               marginTop: "8px",
+              flexWrap: "nowrap",
+              gap: "8px",
             }}
           >
             <button
               type="button"
-              onClick={handleEliminar}
-              disabled={eliminando}
+              onClick={() => setAccionConfirmar("eliminar_producto")}
+              disabled={eliminando || guardando}
+              title="Desactivar producto"
+              aria-label="Desactivar producto"
               style={{
-                background: confirmarEliminar ? "#DC2626" : "transparent",
-                color: confirmarEliminar ? "#FFFFFF" : "#EF4444",
-                border: confirmarEliminar ? "none" : "1px solid #FCA5A5",
-                padding: "8px 14px",
-                borderRadius: "8px",
-                fontSize: "0.82rem",
-                fontWeight: 700,
-                cursor: "pointer",
+                background: "#FEF2F2",
+                color: "#DC2626",
+                border: "1px solid #FCA5A5",
+                width: "42px",
+                height: "42px",
+                borderRadius: "10px",
+                cursor: eliminando || guardando ? "not-allowed" : "pointer",
+                opacity: eliminando || guardando ? 0.5 : 1,
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "6px",
+                justifyContent: "center",
+                flexShrink: 0,
               }}
             >
-              <Trash2 size={14} />
-              <span>{confirmarEliminar ? "Confirmar Desactivación" : "Desactivar"}</span>
+              {eliminando ? <Loader2 size={18} className="eco-spin" /> : <Trash2 size={18} />}
             </button>
 
-            <div style={{ display: "flex", gap: "8px" }}>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "nowrap", alignItems: "center" }}>
               <button
                 type="button"
-                onClick={onCerrar}
+                onClick={() => setAccionConfirmar("cancelar")}
+                disabled={guardando || eliminando}
+                title="Cancelar y cerrar sin guardar"
+                aria-label="Cancelar"
                 style={{
                   background: "#F1F5F9",
                   color: "#475569",
-                  border: "none",
-                  padding: "9px 16px",
-                  borderRadius: "8px",
-                  fontSize: "0.85rem",
-                  fontWeight: 600,
-                  cursor: "pointer",
+                  border: "1px solid #CBD5E1",
+                  width: "42px",
+                  height: "42px",
+                  borderRadius: "10px",
+                  cursor: guardando || eliminando ? "not-allowed" : "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
                 }}
               >
-                Cancelar
+                <X size={18} />
               </button>
 
               <button
                 type="submit"
-                disabled={guardando}
+                disabled={guardando || eliminando}
+                title="Guardar cambios en el catálogo"
+                aria-label="Guardar cambios"
                 style={{
                   background: esFloristeria ? "#E11D48" : "#0284C7",
                   color: "#FFFFFF",
                   border: "none",
-                  padding: "9px 20px",
-                  borderRadius: "8px",
-                  fontSize: "0.85rem",
-                  fontWeight: 700,
-                  cursor: "pointer",
+                  width: "42px",
+                  height: "42px",
+                  borderRadius: "10px",
+                  cursor: guardando || eliminando ? "not-allowed" : "pointer",
+                  opacity: guardando || eliminando ? 0.6 : 1,
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: "6px",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  boxShadow: "0 2px 4px rgba(0,0,0,0.12)",
                 }}
               >
-                <CheckCircle2 size={16} />
-                <span>{guardando ? "Guardando..." : "Actualizar Catálogo"}</span>
+                {guardando ? <Loader2 size={18} className="eco-spin" /> : <Save size={18} />}
               </button>
             </div>
           </div>
         </form>
       </div>
+
+      {/* Popup de confirmación previa a ejecutar acciones de edición */}
+      {accionConfirmar && (() => {
+        const procesando = guardando || eliminando;
+        const esEliminar = accionConfirmar === "eliminar_producto";
+        const esGuardar = accionConfirmar === "guardar";
+        const tituloPopup =
+          esGuardar ? "Guardar cambios" : esEliminar ? "Desactivar producto" : "Descartar cambios";
+        const mensajePopup =
+          esGuardar
+            ? `¿Confirmas actualizar "${nombre.trim() || producto.pro_nombre}" en el catálogo?`
+            : esEliminar
+            ? `¿Confirmas desactivar "${nombre || producto.pro_nombre}" del catálogo?`
+            : "¿Deseas salir de la edición sin guardar los cambios?";
+        const textoConfirmar = procesando
+          ? "Procesando..."
+          : esGuardar
+          ? "Guardar"
+          : esEliminar
+          ? "Desactivar"
+          : "Salir";
+        const colorBtnConfirmar = esEliminar ? "#DC2626" : esGuardar ? (esFloristeria ? "#E11D48" : "#0284C7") : "#0F172A";
+
+        return (
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="titulo-confirmar-accion-edicion-tranqi"
+            onClick={() => {
+              if (!procesando) setAccionConfirmar(null);
+            }}
+            style={{
+              position: "fixed",
+              inset: 0,
+              backgroundColor: "rgba(15, 23, 42, 0.55)",
+              backdropFilter: "blur(3px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 10050,
+              padding: "16px",
+            }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: "#FFFFFF",
+                borderRadius: "14px",
+                border: "1px solid #E2E8F0",
+                width: "100%",
+                maxWidth: "360px",
+                padding: "18px",
+                boxShadow: "0 20px 40px -12px rgba(0, 0, 0, 0.28)",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+                <div
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "10px",
+                    background: esEliminar ? "#FEF2F2" : esGuardar ? "#EFF6FF" : "#F1F5F9",
+                    color: colorBtnConfirmar,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  {esEliminar ? <Trash2 size={18} /> : esGuardar ? <Save size={18} /> : <X size={18} />}
+                </div>
+                <h3
+                  id="titulo-confirmar-accion-edicion-tranqi"
+                  style={{ margin: 0, fontSize: "0.95rem", fontWeight: 700, color: "#0F172A" }}
+                >
+                  {tituloPopup}
+                </h3>
+              </div>
+
+              <p style={{ margin: "0 0 16px", fontSize: "0.84rem", color: "#475569", lineHeight: 1.45 }}>
+                {mensajePopup}
+              </p>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px" }}>
+                <button
+                  type="button"
+                  disabled={procesando}
+                  onClick={() => setAccionConfirmar(null)}
+                  style={{
+                    background: "#F1F5F9",
+                    color: "#475569",
+                    border: "1px solid #CBD5E1",
+                    padding: "8px 14px",
+                    borderRadius: "8px",
+                    fontSize: "0.82rem",
+                    fontWeight: 600,
+                    cursor: procesando ? "not-allowed" : "pointer",
+                  }}
+                >
+                  Volver
+                </button>
+                <button
+                  type="button"
+                  disabled={procesando}
+                  onClick={() => {
+                    if (accionConfirmar === "guardar") {
+                      void ejecutarGuardar();
+                    } else if (accionConfirmar === "cancelar") {
+                      setAccionConfirmar(null);
+                      onCerrar();
+                    } else if (accionConfirmar === "eliminar_producto") {
+                      void ejecutarEliminarProducto();
+                    }
+                  }}
+                  style={{
+                    background: colorBtnConfirmar,
+                    color: "#FFFFFF",
+                    border: "none",
+                    padding: "8px 16px",
+                    borderRadius: "8px",
+                    fontSize: "0.82rem",
+                    fontWeight: 700,
+                    cursor: procesando ? "not-allowed" : "pointer",
+                    opacity: procesando ? 0.7 : 1,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  {procesando && <Loader2 size={14} className="eco-spin" />}
+                  <span>{textoConfirmar}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
