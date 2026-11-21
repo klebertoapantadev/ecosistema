@@ -76,7 +76,10 @@ export function obtenerReferenciasParaModo(
     lista.push(REFERENCIAS_IA_OFICIALES.tarjeta);
   }
 
-  lista.push(REFERENCIAS_IA_OFICIALES.logo);
+  // No adjuntamos logo-tinkay.jpg como imagen extra porque tarjeta-dedicatoria.jpg ya
+  // contiene el logo sólido oficial a escala real y fondo-taller*.jpg ya contiene el neón
+  // real. Enviar 4 imágenes diluye la atención sobre FOTO DEL PRODUCTO en Modo Taller y
+  // sesga al modelo a agrandar el logo en la tarjeta.
   return lista;
 }
 
@@ -100,11 +103,11 @@ export function construirReglasComunes(opciones: OpcionesEstudioIa): string {
   const lineas: string[] = [
     'Actúa como fotógrafo publicitario y director de arte para "Tinkay Flores y Eventos". Genera UNA fotografía publicitaria fotorrealista de alta gama.',
     "",
-    "REGLA SUPREMA – AISLAMIENTO TOTAL DEL PRODUCTO: La imagen etiquetada como FOTO DEL PRODUCTO es la ÚNICA fuente de flores, especies, colores, cantidad visible, follajes, contenedor, piedras/hidrogel, chocolates, envoltura y accesorios. Las demás imágenes de referencia son SOLO para fondo, tarjeta o logo. NUNCA copies flores de ellas.",
+    "REGLA SUPREMA – AISLAMIENTO Y FIDELIDAD PIXEL-A-PIXEL DEL PRODUCTO: La imagen etiquetada como FOTO DEL PRODUCTO es la ÚNICA fuente del arreglo floral. Conserva ÍNTEGRO y SIN REINTERPRETAR el arreglo exacto de FOTO DEL PRODUCTO: exactamente la misma cantidad y densidad de flores/rosas (si tiene 50–100+ rosas, conserva las 50–100+ rosas completas; PROHIBIDO reducirlo o simplificarlo a un ramo pequeño de 12–18 flores), exactamente las mismas especies y colores (PROHIBIDO inventar margaritas u otras flores que no estén en FOTO DEL PRODUCTO), exactamente las mismas hojas y follajes (forma, rayas, caída y ancho), la misma silueta/volumen y exactamente el mismo contenedor, canasta, caja, piedras/hidrogel, chocolates, envoltura y accesorios. Las demás imágenes de referencia son SOLO para el fondo o la tarjeta.",
     "",
     "LIMPIEZA: Elimina por completo cualquier marca de agua, texto sobrepuesto, fondo desordenado de tienda o mesa ajena de la foto original.",
     "",
-    "ESCALA REALISTA: Cada rosa ~5 cm. Conserva proporciones fieles del arreglo.",
+    "ESCALA REALISTA: Cada rosa ~5 cm. Conserva proporciones, densidad y ancho reales del arreglo (en arreglos grandes de 50–100+ rosas, copa amplia de 50–75 cm de ancho).",
     "",
     `BASE: ${textoBase}`,
     `GEOMETRÍA: ${textoGeometria}`,
@@ -113,7 +116,7 @@ export function construirReglasComunes(opciones: OpcionesEstudioIa): string {
   if (opciones.incluirTarjeta) {
     lineas.push(
       "",
-      "TARJETA: Si el arreglo ya trae una tarjeta, estandarízala o consérvala sin duplicar. Si no tiene, inserta UNA SOLA tarjeta oficial Tinkay (~8x5 cm, cartulina marfil texturizada) en un clip de estrella dorado integrado entre las flores. El logo 'Tinkay' (tipografía sólida de la referencia LOGO) con el subtítulo pequeño 'FLORES Y EVENTOS' debe ir centrado, discreto y delicado, ocupando únicamente ~40% a 45% del ancho de la tarjeta (con amplios márgenes limpios de cartulina marfil a los lados, arriba y abajo — nunca grande ni pegado a los bordes, exactamente con la escala pequeña y sutil de la referencia TARJETA)."
+      "TARJETA PEQUEÑA Y DISCRETA: Si el arreglo ya trae una tarjeta, estandarízala o consérvala sin duplicar. Si no tiene, inserta UNA SOLA tarjeta oficial Tinkay idéntica a REFERENCIA TARJETA (cartulina marfil texturizada en su clip de estrella dorado, derecha y vertical entre las flores superiores — nunca torcida ni gigante). ESCALA PEQUEÑA OBLIGATORIA: la tarjeta completa debe medir apenas ~1.5 rosas de ancho (pequeña y proporcionada al tamaño del arreglo), y el logo 'Tinkay / FLORES Y EVENTOS' impreso en el centro debe verse PEQUEÑO, FINO Y SUTIL — ocupando solo ~30% a 35% del ancho de la tarjeta (un 25% más pequeño que lo habitual, en tono gris topo/grafito suave, con amplios márgenes limpios de cartulina marfil alrededor)."
     );
   }
 
@@ -153,7 +156,7 @@ export function construirPromptModo(modo: ModoEstudioIa, opciones: OpcionesEstud
   const extraCoreanoTaller = opciones.coreano
     ? " En bouquet estilo coreano, se asienta erguido y de pie directamente sobre la mesa."
     : "";
-  return `MODO TALLER OFICIAL TINKAY (MESA): Fotomontaje fotorrealista usando la referencia FONDO TALLER. La pared de madera natural clara y el letrero neón cálido encendido 'Tinkay' (con lazo sobre la 'T' y detalle floral sobre 'a/y' en acrílico transparente) deben ser IDÉNTICOS a la referencia en escala, tipografía, proporción y posición. PROHIBIDO redibujar, deformar o agrandar el letrero. El arreglo reposa directamente centrado sobre la mesa rústica de madera del taller (SIN peana dorada).${extraCoreanoTaller} CERO PERSONAS.`;
+  return `MODO TALLER OFICIAL TINKAY (MESA): Fotomontaje fotorrealista colocando el arreglo COMPLETO, INTACTO E IDÉNTICO de FOTO DEL PRODUCTO (misma cantidad exacta de rosas, mismas flores, mismos follajes/hojas, misma silueta ancha y misma base — PROHIBIDO redibujar o achicar el arreglo) centrado sobre la mesa rústica de madera de REFERENCIA FONDO TALLER (SIN peana dorada).${extraCoreanoTaller} Mantén el encuadre suficientemente abierto para que quepa todo el ancho real del arreglo sin recortarlo ni simplificarlo. La pared de madera natural clara y el letrero neón cálido encendido 'Tinkay' (con lazo sobre la 'T' y detalle floral sobre 'a/y' en acrílico transparente) deben ser IDÉNTICOS a REFERENCIA FONDO TALLER en escala, tipografía, proporción y posición, quedando detrás y arriba del arreglo. PROHIBIDO redibujar, deformar o agrandar el letrero. CERO PERSONAS.`;
 }
 
 export function construirPromptCompletoEstudioIa(
