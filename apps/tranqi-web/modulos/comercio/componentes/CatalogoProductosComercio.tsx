@@ -1218,32 +1218,50 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
 
                   {/* Selector de Variantes / Tamaños con Colores Individuales */}
                   {p.variantes.length > 1 && (
-                    <div style={{ marginBottom: "14px" }}>
-                      <label
+                    <div style={{ marginBottom: "12px" }}>
+                      <span
                         style={{
                           display: "block",
-                          fontSize: "0.73rem",
+                          fontSize: "0.7rem",
                           fontWeight: 700,
-                          color: "#334155",
-                          marginBottom: "6px",
+                          color: "#64748B",
+                          marginBottom: "5px",
                         }}
                       >
-                        {esFloristeria ? "Selecciona el tamaño / cantidad de rosas:" : "Selecciona la variante / opción:"}
-                      </label>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                        {modoVista === "admin"
+                          ? esFloristeria
+                            ? "Tamaños (toca para editar):"
+                            : "Variantes (toca para editar):"
+                          : esFloristeria
+                          ? "Tamaño:"
+                          : "Opción:"}
+                      </span>
+                      <div
+                        style={{
+                          display: "flex",
+                          flexWrap: "nowrap",
+                          overflowX: "auto",
+                          WebkitOverflowScrolling: "touch",
+                          scrollbarWidth: "none",
+                          gap: "6px",
+                          alignItems: "center",
+                          paddingBottom: "2px",
+                        }}
+                      >
                         {p.variantes.map((v, vIdx) => {
                           const activa = currentVarId === v.var_id;
                           const colVar = PALETA_COLORES_VARIANTES[vIdx % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
+                          const precioTexto = v.precio_total.toFixed(2);
 
                           return (
-                            <div
+                            <button
                               key={v.var_id}
+                              type="button"
                               onClick={() => {
                                 setVarianteSeleccionadaPorProducto((prev) => ({
                                   ...prev,
                                   [p.pro_id]: v.var_id,
                                 }));
-                                // Sincronizar carrusel si la variante tiene su propia foto
                                 const fotoVarIdx = fotosDisponibles.findIndex(
                                   (f) => f.varianteId === v.var_id || (v.var_detalle_variante?.portada_url && f.url === v.var_detalle_variante.portada_url)
                                 );
@@ -1252,81 +1270,60 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                                 } else {
                                   setFotoCarouselIndexPorProducto((prev) => ({ ...prev, [p.pro_id]: 0 }));
                                 }
+                                if (modoVista === "admin") {
+                                  setProductoAEditar(p);
+                                  setVarianteAEditarId(v.var_id);
+                                  setModalEditarAbierto(true);
+                                }
                               }}
+                              title={
+                                modoVista === "admin"
+                                  ? `Editar ${v.var_nombre} ($${precioTexto})`
+                                  : `Seleccionar ${v.var_nombre} ($${precioTexto})`
+                              }
+                              aria-label={
+                                modoVista === "admin"
+                                  ? `Editar ${v.var_nombre}`
+                                  : `Seleccionar ${v.var_nombre}`
+                              }
                               style={{
-                                textAlign: "left",
-                                padding: "8px 12px",
+                                padding: "6px 10px",
                                 borderRadius: "8px",
                                 border: activa
-                                  ? `2px solid ${colVar.border}`
-                                  : `1.5px solid ${colVar.border}44`,
-                                background: activa
-                                  ? colVar.bg
-                                  : "#FFFFFF",
+                                  ? `1.5px solid ${colVar.border}`
+                                  : `1px solid ${colVar.border}55`,
+                                background: activa ? colVar.bg : "#FFFFFF",
+                                color: activa ? colVar.text : "#334155",
                                 cursor: "pointer",
-                                display: "flex",
-                                justifyContent: "space-between",
+                                display: "inline-flex",
                                 alignItems: "center",
+                                gap: "6px",
+                                fontSize: "0.76rem",
+                                fontWeight: activa ? 700 : 600,
+                                whiteSpace: "nowrap",
+                                flexShrink: 0,
                                 transition: "all 0.15s ease",
-                                boxShadow: activa ? `0 2px 6px ${colVar.border}22` : "none",
                               }}
                             >
-                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: colVar.dot, flexShrink: 0 }} />
-                                <div
-                                  style={{
-                                    fontSize: "0.8rem",
-                                    fontWeight: activa ? 800 : 600,
-                                    color: activa
-                                      ? colVar.text
-                                      : "#334155",
-                                  }}
-                                >
-                                  {v.var_nombre}
-                                </div>
-                                {v.var_detalle_variante?.portada_url && (
-                                  <span style={{ fontSize: "0.62rem", background: colVar.badge, color: colVar.text, padding: "1px 5px", borderRadius: "4px", fontWeight: 700 }}>
-                                    📸 Foto
-                                  </span>
-                                )}
-                              </div>
-
-                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <div style={{ fontSize: "0.85rem", fontWeight: 800, color: activa ? colVar.text : "#0F172A" }}>
-                                  ${v.precio_total.toFixed(2)}
-                                </div>
-
-                                {modoVista === "admin" && (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setProductoAEditar(p);
-                                      setVarianteAEditarId(v.var_id);
-                                      setModalEditarAbierto(true);
-                                    }}
-                                    title={`Editar variante ${v.var_nombre}`}
-                                    aria-label={`Editar variante ${v.var_nombre}`}
-                                    style={{
-                                      background: colVar.badge,
-                                      border: `1px solid ${colVar.border}`,
-                                      borderRadius: "6px",
-                                      padding: "3px 7px",
-                                      cursor: "pointer",
-                                      display: "inline-flex",
-                                      alignItems: "center",
-                                      gap: "3px",
-                                      fontSize: "0.7rem",
-                                      color: colVar.text,
-                                      fontWeight: 800,
-                                    }}
-                                  >
-                                    <Pencil size={11} />
-                                    <span className="btn-texto-responsive">Editar</span>
-                                  </button>
-                                )}
-                              </div>
-                            </div>
+                              <span
+                                style={{
+                                  width: "7px",
+                                  height: "7px",
+                                  borderRadius: "50%",
+                                  background: colVar.dot,
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <span>{v.var_nombre}</span>
+                              <strong
+                                style={{
+                                  color: activa ? colVar.text : "#0F172A",
+                                  fontVariantNumeric: "tabular-nums",
+                                }}
+                              >
+                                ${precioTexto}
+                              </strong>
+                            </button>
                           );
                         })}
                       </div>

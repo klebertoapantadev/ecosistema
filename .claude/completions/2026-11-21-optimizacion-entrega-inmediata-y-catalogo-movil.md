@@ -19,9 +19,11 @@
 2. **Catálogo Comercial (`CatalogoProductosComercio.tsx`, `tinkay-web/app/panel/catalogo-productos/page.tsx`, `tranqi-web/modulos/comercio/componentes/CatalogoProductosComercio.tsx`):**
    - Eliminados/ocultos los botones de pestañas `Catálogo y Diseños` / `Disponibilidad Taller (Rosas y Papel)` en móvil y floristería.
    - Ocultos en **todas las pantallas** (móvil, tablet y escritorio) los botones de `Guía / Manual de Uso` y `Actualizar`.
-   - Eliminadas etiquetas técnicas/leyendas superiores y priorizados **rieles de botones lineales deslizables** (`.catalogo-riel-deslizable`) para barra de acciones, filtro combinado estado/canal, colecciones y canales en tarjetas.
+   - Eliminadas etiquetas técnicas/leyendas superiores y priorizados **rieles de botones lineales deslizables** (`.catalogo-riel-deslizable`) para barra de acciones, filtro combinado estado/canal, colecciones, canales y **variantes/tamaños** en tarjetas.
+   - Ocultado el botón separado `Editar` (y flechas apiladas) en las variantes de las tarjetas: en modo `Configuración`, tocar cualquier variante abre directamente `ModalEditarProducto` sobre esa variante; en `Vista Cliente`, solo selecciona y previsualiza.
 
 3. **Configuración de Productos (`BarraPasosWizardProducto.tsx`, `ModalEditarProducto.tsx`, `apps/tranqi-web/.../ModalEditarProducto.tsx`):**
+   - Cabecera oscura de `ModalEditarProducto` compactada a 1 sola línea (título + `X`, sin `CAPA 2`, UUID/slug ni `Manual`), seguida de un **único riel lineal deslizable** (`.modal-riel-deslizable`) que unifica `Master`, cada variante con su PVP y `+ Variante` sin barras duplicadas ni tarjetas apiladas.
    - `SelectorEncuadreFoto` oculto por completo en móviles (`<= 640px`) y colapsado por defecto en web tras un botón `Avanzado` (`Ocultar` al expandir).
    - Todas las opciones heredables en variantes (`Tarifa IVA SRI`, `Fotos del Tamaño`, `Álbum de Muestras`, `Tiempo de Entrega`, `Beneficios y Contenido`, `Usos y Ocasiones`) muestran su valor heredado efectivo en una fila compacta con botón `Editar`, permaneciendo colapsadas mientras heredan del Master.
 

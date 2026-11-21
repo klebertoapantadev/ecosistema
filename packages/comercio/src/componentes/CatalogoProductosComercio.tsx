@@ -17,8 +17,6 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
-  ChevronUp,
-  ChevronDown,
   RefreshCw,
   Plus,
   FolderPlus,
@@ -48,7 +46,6 @@ import {
   obtenerCatalogoProductosAction,
   obtenerCategoriasAction,
   restaurarCatalogoEjemploAction,
-  editarProductoAction,
   eliminarProductoAction,
   alternarCanalVisibilidadProductoAction,
   alternarActivoProductoAction,
@@ -151,8 +148,6 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const [copiadoConsulta, setCopiadoConsulta] = useState(false);
   // Estado de feedback al copiar link público de tienda (categoría o producto)
   const [linkTiendaCopiadoKey, setLinkTiendaCopiadoKey] = useState<string | null>(null);
-  // Estado para indicar si se está guardando el orden de variantes de un producto
-  const [guardandoOrdenProdId, setGuardandoOrdenProdId] = useState<string | null>(null);
 
   const copiarLinkPublicoTienda = async (key: string, url: string) => {
     try {
@@ -311,67 +306,6 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
       alert(err.message || "Error al actualizar estado destacado.");
     } finally {
       setGuardandoDestacadoKey(null);
-    }
-  };
-
-  // Reordenar variantes de un producto directamente en la tarjeta con actualización optimista y persistencia en Supabase
-  const handleMoverVarianteEnTarjeta = async (
-    p: ProductoCatalogo,
-    variantesLista: VarianteCatalogo[],
-    vIdx: number,
-    direccion: "arriba" | "abajo",
-    e: React.MouseEvent
-  ) => {
-    e.stopPropagation();
-    const targetIdx = direccion === "arriba" ? vIdx - 1 : vIdx + 1;
-    if (targetIdx < 0 || targetIdx >= variantesLista.length) return;
-
-    const nuevas = [...variantesLista];
-    const temp = nuevas[vIdx]!;
-    nuevas[vIdx] = nuevas[targetIdx]!;
-    nuevas[targetIdx] = temp;
-
-    // Estampar orden secuencial 1..N
-    const nuevasConOrden = nuevas.map((v, i) => ({
-      ...v,
-      var_detalle_variante: {
-        ...(v.var_detalle_variante || {}),
-        orden: i + 1,
-      },
-    }));
-
-    // Actualización optimista inmediata en la UI
-    setProductos((prev) =>
-      prev.map((item) =>
-        item.pro_id === p.pro_id ? { ...item, variantes: nuevasConOrden } : item
-      )
-    );
-
-    setGuardandoOrdenProdId(p.pro_id);
-    try {
-      const res = await editarProductoAction({
-        pro_id: p.pro_id,
-        nombre: p.pro_nombre,
-        descripcion: p.pro_descripcion || "",
-        categoriaId: p.pro_categoria_principal_id || undefined,
-        tipo: p.pro_tipo,
-        destacado: p.pro_destacado,
-        pro_activo: p.pro_activo,
-        variantes: nuevasConOrden,
-        negocio,
-      });
-
-      if (res.ok && res.producto) {
-        setProductos((prev) =>
-          prev.map((item) =>
-            item.pro_id === p.pro_id ? res.producto! : item
-          )
-        );
-      }
-    } catch (err) {
-      console.error("Error al reordenar variantes en tarjeta:", err);
-    } finally {
-      setGuardandoOrdenProdId(null);
     }
   };
 
@@ -3086,34 +3020,44 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     </div>
                   )}
 
-                  {/* Selector de Variantes / Tamaños con Colores Individuales */}
+                  {/* Selector de Variantes / Tamaños en riel lineal deslizable */}
                   {variantesLista.length > 1 && (
-                    <div style={{ marginBottom: "14px" }}>
-                      <label
+                    <div style={{ marginBottom: "12px" }}>
+                      <span
                         style={{
                           display: "block",
-                          fontSize: "0.73rem",
+                          fontSize: "0.7rem",
                           fontWeight: 700,
-                          color: "#57524C",
-                          marginBottom: "6px",
+                          color: "#847D74",
+                          marginBottom: "5px",
                         }}
                       >
-                        {esFloristeria ? "Selecciona el tamaño / cantidad de rosas:" : "Selecciona la variante / opción:"}
-                      </label>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                        {modoVista === "admin"
+                          ? esFloristeria
+                            ? "Tamaños (toca para editar):"
+                            : "Variantes (toca para editar):"
+                          : esFloristeria
+                          ? "Tamaño:"
+                          : "Opción:"}
+                      </span>
+                      <div
+                        className="catalogo-riel-deslizable"
+                        style={{ gap: "6px", alignItems: "center", paddingBottom: "2px" }}
+                      >
                         {variantesLista.map((v, vIdx) => {
                           const activa = currentVarId === v.var_id;
                           const colVar = PALETA_COLORES_VARIANTES[vIdx % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
+                          const precioTexto = v.precio_total ? v.precio_total.toFixed(2) : "0.00";
 
                           return (
-                            <div
+                            <button
                               key={v.var_id}
+                              type="button"
                               onClick={() => {
                                 setVarianteSeleccionadaPorProducto((prev) => ({
                                   ...prev,
                                   [p.pro_id]: v.var_id,
                                 }));
-                                // Sincronizar carrusel si la variante tiene su propia foto
                                 const fotoVarIdx = fotosDisponibles.findIndex(
                                   (f) => f.varianteId === v.var_id || (v.var_detalle_variante?.portada_url && f.url === v.var_detalle_variante.portada_url)
                                 );
@@ -3122,137 +3066,61 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                                 } else {
                                   setFotoCarouselIndexPorProducto((prev) => ({ ...prev, [p.pro_id]: 0 }));
                                 }
+                                if (modoVista === "admin") {
+                                  setProductoAEditar(p);
+                                  setVarianteAEditarId(v.var_id);
+                                  setModalEditarAbierto(true);
+                                }
                               }}
+                              title={
+                                modoVista === "admin"
+                                  ? `Editar ${v.var_nombre} ($${precioTexto})`
+                                  : `Seleccionar ${v.var_nombre} ($${precioTexto})`
+                              }
+                              aria-label={
+                                modoVista === "admin"
+                                  ? `Editar ${v.var_nombre}`
+                                  : `Seleccionar ${v.var_nombre}`
+                              }
                               style={{
-                                textAlign: "left",
-                                padding: "8px 12px",
+                                padding: "6px 10px",
                                 borderRadius: "8px",
                                 border: activa
-                                  ? `2px solid ${colVar.border}`
-                                  : `1.5px solid ${colVar.border}44`,
-                                background: activa
-                                  ? colVar.bg
-                                  : "#FFFFFF",
+                                  ? `1.5px solid ${colVar.border}`
+                                  : `1px solid ${colVar.border}55`,
+                                background: activa ? colVar.bg : "#FFFFFF",
+                                color: activa ? colVar.text : "#57524C",
                                 cursor: "pointer",
-                                display: "flex",
-                                justifyContent: "space-between",
+                                display: "inline-flex",
                                 alignItems: "center",
+                                gap: "6px",
+                                fontSize: "0.76rem",
+                                fontWeight: activa ? 700 : 600,
+                                whiteSpace: "nowrap",
+                                flexShrink: 0,
+                                scrollSnapAlign: "start",
                                 transition: "all 0.15s ease",
-                                boxShadow: activa ? `0 2px 6px ${colVar.border}22` : "none",
                               }}
                             >
-                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: colVar.dot, flexShrink: 0 }} />
-                                <div
-                                  style={{
-                                    fontSize: "0.8rem",
-                                    fontWeight: activa ? 800 : 600,
-                                    color: activa
-                                      ? colVar.text
-                                      : "#57524C",
-                                  }}
-                                >
-                                  {v.var_nombre}
-                                </div>
-                                {v.var_detalle_variante?.portada_url && (
-                                  <span style={{ fontSize: "0.62rem", background: colVar.badge, color: colVar.text, padding: "1px 5px", borderRadius: "4px", fontWeight: 700 }}>
-                                    📸 Foto
-                                  </span>
-                                )}
-                                {v.var_detalle_variante?.album_url && (
-                                  <span
-                                    title={`Álbum exclusivo para ${v.var_nombre}`}
-                                    style={{ fontSize: "0.62rem", background: "#F4F2EE", color: "#221E1B", border: "1px solid #DDD8CE", padding: "1px 5px", borderRadius: "4px", fontWeight: 700 }}
-                                  >
-                                    📁 Álbum
-                                  </span>
-                                )}
-                              </div>
-
-                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                <div style={{ fontSize: "0.85rem", fontWeight: 800, color: activa ? colVar.text : "#1F1C19" }}>
-                                  ${v.precio_total ? v.precio_total.toFixed(2) : "0.00"}
-                                </div>
-
-                                {modoVista === "admin" && (
-                                  <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                                    {variantesLista.length > 1 && (
-                                      <div style={{ display: "flex", flexDirection: "column", gap: "1px" }}>
-                                        <button
-                                          type="button"
-                                          disabled={vIdx === 0 || guardandoOrdenProdId === p.pro_id}
-                                          onClick={(e) => handleMoverVarianteEnTarjeta(p, variantesLista, vIdx, "arriba", e)}
-                                          title="Mover variante arriba"
-                                          aria-label="Mover variante arriba"
-                                          style={{
-                                            background: colVar.badge,
-                                            border: `1px solid ${colVar.border}`,
-                                            borderRadius: "3px",
-                                            padding: "1px 4px",
-                                            cursor: vIdx === 0 || guardandoOrdenProdId === p.pro_id ? "not-allowed" : "pointer",
-                                            opacity: vIdx === 0 ? 0.3 : guardandoOrdenProdId === p.pro_id ? 0.6 : 1,
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                          }}
-                                        >
-                                          <ChevronUp size={10} color={colVar.text} />
-                                        </button>
-
-                                        <button
-                                          type="button"
-                                          disabled={vIdx === variantesLista.length - 1 || guardandoOrdenProdId === p.pro_id}
-                                          onClick={(e) => handleMoverVarianteEnTarjeta(p, variantesLista, vIdx, "abajo", e)}
-                                          title="Mover variante abajo"
-                                          aria-label="Mover variante abajo"
-                                          style={{
-                                            background: colVar.badge,
-                                            border: `1px solid ${colVar.border}`,
-                                            borderRadius: "3px",
-                                            padding: "1px 4px",
-                                            cursor: vIdx === variantesLista.length - 1 || guardandoOrdenProdId === p.pro_id ? "not-allowed" : "pointer",
-                                            opacity: vIdx === variantesLista.length - 1 ? 0.3 : guardandoOrdenProdId === p.pro_id ? 0.6 : 1,
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                          }}
-                                        >
-                                          <ChevronDown size={10} color={colVar.text} />
-                                        </button>
-                                      </div>
-                                    )}
-
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setProductoAEditar(p);
-                                        setVarianteAEditarId(v.var_id);
-                                        setModalEditarAbierto(true);
-                                      }}
-                                      title={`Editar variante ${v.var_nombre}`}
-                                      aria-label={`Editar variante ${v.var_nombre}`}
-                                      style={{
-                                        background: colVar.badge,
-                                        border: `1px solid ${colVar.border}`,
-                                        borderRadius: "6px",
-                                        padding: "3px 7px",
-                                        cursor: "pointer",
-                                        display: "inline-flex",
-                                        alignItems: "center",
-                                        gap: "3px",
-                                        fontSize: "0.7rem",
-                                        color: colVar.text,
-                                        fontWeight: 800,
-                                      }}
-                                    >
-                                      <Pencil size={11} />
-                                      <span className="btn-texto-responsive">Editar</span>
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
+                              <span
+                                style={{
+                                  width: "7px",
+                                  height: "7px",
+                                  borderRadius: "50%",
+                                  background: colVar.dot,
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <span>{v.var_nombre}</span>
+                              <strong
+                                style={{
+                                  color: activa ? colVar.text : "#1F1C19",
+                                  fontVariantNumeric: "tabular-nums",
+                                }}
+                              >
+                                ${precioTexto}
+                              </strong>
+                            </button>
                           );
                         })}
                       </div>

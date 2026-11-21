@@ -13,8 +13,6 @@ import {
   Trash2,
   CheckCircle2,
   AlertCircle,
-  Layers,
-  BookOpen,
   Loader2,
   Wand2,
   Truck,
@@ -406,6 +404,7 @@ export function ModalEditarProducto({
   const esFloristeria = negocio === "tinkay" || negocio === "margaritas";
   const esLegal = negocio === "tranqi";
   const esMantenimiento = negocio === "fastfix";
+  void onAbrirManual;
 
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
@@ -854,235 +853,187 @@ export function ModalEditarProducto({
           transition: "border-color 0.2s ease, box-shadow 0.2s ease",
         }}
       >
-        {/* Cabecera con Identidad Visual de Producto Master */}
+        {/* Cabecera compacta en una sola línea */}
         <div
           style={{
-            padding: "14px 20px",
+            padding: "10px 14px",
             borderBottom: `2px solid ${colActiva.border}`,
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            gap: "10px",
             background: "linear-gradient(135deg, #0F172A 0%, #1E293B 100%)",
             color: "#FFFFFF",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0, flex: 1 }}>
             <div
               style={{
-                width: "38px",
-                height: "38px",
-                borderRadius: "10px",
+                width: "28px",
+                height: "28px",
+                borderRadius: "7px",
                 background: "rgba(56, 189, 248, 0.15)",
                 color: "#38BDF8",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                border: "1px solid rgba(56, 189, 248, 0.3)",
+                flexShrink: 0,
               }}
             >
-              {esFloristeria ? <Flower2 size={20} /> : esMantenimiento ? <Wrench size={20} /> : <FileEdit size={20} />}
+              {esFloristeria ? <Flower2 size={15} /> : esMantenimiento ? <Wrench size={15} /> : <FileEdit size={15} />}
             </div>
-            <div>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                <span
-                  style={{
-                    background: "rgba(56, 189, 248, 0.2)",
-                    color: "#38BDF8",
-                    fontSize: "0.68rem",
-                    fontWeight: 800,
-                    padding: "2px 6px",
-                    borderRadius: "4px",
-                    border: "1px solid rgba(56, 189, 248, 0.4)",
-                  }}
-                >
-                  📦 CAPA 2: PRODUCTO MASTER
-                </span>
-                {esModoMaster ? (
-                  <span
-                    style={{
-                      background: "rgba(56, 189, 248, 0.12)",
-                      color: "#38BDF8",
-                      fontSize: "0.68rem",
-                      fontWeight: 700,
-                      padding: "2px 7px",
-                      borderRadius: "4px",
-                      border: "1px solid rgba(56, 189, 248, 0.3)",
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "4px",
-                    }}
-                  >
-                    🌐 Modo: Configuración Global Master
-                  </span>
-                ) : (
-                  <>
-                    <span
-                      style={{
-                        background: colVariante.bg,
-                        color: colVariante.text,
-                        fontSize: "0.68rem",
-                        fontWeight: 800,
-                        padding: "2px 7px",
-                        borderRadius: "4px",
-                        border: `1.5px solid ${colVariante.border}`,
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
-                      }}
-                    >
-                      <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: colVariante.dot }} />
-                      Editando: {varianteActual?.var_nombre || "Variante"}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setModoEdicion("master")}
-                      title="Volver al modo de configuración master"
-                      style={{
-                        background: "rgba(255, 255, 255, 0.15)",
-                        border: "1px solid rgba(255, 255, 255, 0.25)",
-                        color: "#FFFFFF",
-                        fontSize: "0.65rem",
-                        fontWeight: 700,
-                        padding: "2px 6px",
-                        borderRadius: "4px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      ⬅ Configurar Master
-                    </button>
-                  </>
-                )}
-              </div>
-              <h2 style={{ margin: "2px 0 0", fontSize: "1.02rem", fontWeight: 800, color: "#FFFFFF" }}>
-                {esModoMaster
-                  ? (esFloristeria
-                    ? "Configuración General del Arreglo Floral Master"
-                    : esMantenimiento
-                    ? "Configuración General del Servicio de Mantenimiento Master"
-                    : "Configuración General del Servicio Profesional Master")
-                  : `Editar Tarifa y Variación: ${varianteActual?.var_nombre || ""}`}
-              </h2>
-            </div>
+            <h2
+              style={{
+                margin: 0,
+                fontSize: "0.92rem",
+                fontWeight: 700,
+                color: "#FFFFFF",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                minWidth: 0,
+              }}
+            >
+              {nombre || producto.pro_nombre || "Editar Producto"}
+            </h2>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-            {onAbrirManual && (
-              <button
-                type="button"
-                onClick={onAbrirManual}
-                title="Ver Manual de Configuración Floral"
-                style={{
-                  background: "#F1F5F9",
-                  border: "1px solid #CBD5E1",
-                  color: "#334155",
-                  padding: "5px 10px",
-                  borderRadius: "6px",
-                  fontSize: "0.75rem",
-                  fontWeight: 700,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "4px",
-                  cursor: "pointer",
-                }}
-              >
-                <BookOpen size={13} />
-                <span>Manual</span>
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={onCerrar}
-              style={{
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
-                color: "#64748B",
-                padding: "6px",
-                borderRadius: "8px",
-              }}
-            >
-              <X size={20} />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={onCerrar}
+            title="Cerrar"
+            aria-label="Cerrar"
+            style={{
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+              color: "#CBD5E1",
+              padding: "4px",
+              borderRadius: "7px",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <X size={18} />
+          </button>
         </div>
 
-        {/* BARRA DE NAVEGACIÓN ENTRE CAPA MASTER Y CAPA VARIANTES */}
+        {/* Riel lineal deslizable unificado: Master + Variantes + Agregar */}
         <div
           style={{
             display: "flex",
+            flexWrap: "nowrap",
+            overflowX: "auto",
+            WebkitOverflowScrolling: "touch",
+            scrollbarWidth: "none",
             alignItems: "center",
-            justifyContent: "space-between",
             background: "#F8FAFC",
-            padding: "8px 18px",
+            padding: "7px 14px",
             borderBottom: "1px solid #E2E8F0",
-            flexWrap: "wrap",
-            gap: "8px",
+            gap: "6px",
           }}
         >
-          <div style={{ display: "flex", gap: "6px" }}>
-            <button
-              type="button"
-              onClick={() => setModoEdicion("master")}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "6px 14px",
-                borderRadius: "8px",
-                fontSize: "0.8rem",
-                fontWeight: esModoMaster ? 800 : 600,
-                border: esModoMaster ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
-                background: esModoMaster ? "#0284C7" : "#FFFFFF",
-                color: esModoMaster ? "#FFFFFF" : "#475569",
-                cursor: "pointer",
-                boxShadow: esModoMaster ? "0 2px 4px rgba(2, 132, 199, 0.25)" : "none",
-                transition: "all 0.15s ease",
-              }}
-            >
-              <PackagePlus size={14} />
-              <span>🌐 1. Producto Master (Global)</span>
-            </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              setModoEdicion("master");
+              e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+            }}
+            title="Configurar datos generales del producto"
+            aria-label={variantesLocales.length === 1 ? "Producto" : "Master"}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              padding: "6px 11px",
+              borderRadius: "8px",
+              fontSize: "0.76rem",
+              fontWeight: esModoMaster ? 700 : 600,
+              border: esModoMaster ? "1.5px solid #0284C7" : "1px solid #CBD5E1",
+              background: esModoMaster ? "#0284C7" : "#FFFFFF",
+              color: esModoMaster ? "#FFFFFF" : "#475569",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+              transition: "all 0.15s ease",
+            }}
+          >
+            <PackagePlus size={13} />
+            <span>{variantesLocales.length === 1 ? "Producto" : "Master"}</span>
+          </button>
 
-            <button
-              type="button"
-              onClick={() => {
-                setModoEdicion("variante");
-                if (varianteActivaIndex >= variantesLocales.length) setVarianteActivaIndex(0);
-              }}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "6px",
-                padding: "6px 14px",
-                borderRadius: "8px",
-                fontSize: "0.8rem",
-                fontWeight: !esModoMaster ? 800 : 600,
-                border: !esModoMaster ? `1.5px solid ${colVariante.border}` : "1px solid #CBD5E1",
-                background: !esModoMaster ? colVariante.bg : "#FFFFFF",
-                color: !esModoMaster ? colVariante.text : "#475569",
-                cursor: "pointer",
-                boxShadow: !esModoMaster ? `0 2px 4px ${colVariante.border}33` : "none",
-                transition: "all 0.15s ease",
-              }}
-            >
-              <Layers size={14} />
-              <span>{esFloristeria ? `🌸 2. Tamaños (${variantesLocales.length})` : `🏷️ 2. Variantes y Planes (${variantesLocales.length})`}</span>
-            </button>
-          </div>
+          {variantesLocales.map((v, idx) => {
+            const activa = !esModoMaster && idx === varianteActivaIndex;
+            const col = PALETA_COLORES_VARIANTES[idx % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
+            const pvpCalculado = Number(v.var_precio || 0) * (1 + (v.var_tarifa_iva_porcentaje ?? 15) / 100);
 
-          <div style={{ fontSize: "0.72rem", color: "#64748B" }}>
-            {esModoMaster ? (
-              <span>Modificando portada y atributos base globales</span>
-            ) : (
-              <span>
-                Editando variante: <strong style={{ color: colVariante.text }}>{varianteActual?.var_nombre}</strong>
-              </span>
-            )}
-          </div>
+            return (
+              <button
+                key={v.var_id || idx}
+                type="button"
+                onClick={(e) => {
+                  setModoEdicion("variante");
+                  setVarianteActivaIndex(idx);
+                  e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+                }}
+                title={`Editar ${v.var_nombre || `Variante ${idx + 1}`}`}
+                aria-label={`Editar ${v.var_nombre || `Variante ${idx + 1}`}`}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: "8px",
+                  border: activa ? `1.5px solid ${col.border}` : "1px solid #CBD5E1",
+                  background: activa ? col.bg : "#FFFFFF",
+                  color: activa ? col.text : "#475569",
+                  fontWeight: activa ? 700 : 600,
+                  fontSize: "0.76rem",
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                  transition: "all 0.15s ease",
+                }}
+              >
+                <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: col.dot, flexShrink: 0 }} />
+                <span>{v.var_nombre || `Variante ${idx + 1}`}</span>
+                <strong style={{ color: activa ? col.text : "#0F172A", fontVariantNumeric: "tabular-nums" }}>
+                  ${(v.precio_total || pvpCalculado).toFixed(2)}
+                </strong>
+              </button>
+            );
+          })}
+
+          <button
+            type="button"
+            onClick={agregarNuevaVariante}
+            title="Agregar nueva variante"
+            aria-label="Agregar variante"
+            style={{
+              background: "#0F172A",
+              color: "#FFFFFF",
+              border: "none",
+              borderRadius: "8px",
+              padding: "6px 10px",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+              flexShrink: 0,
+            }}
+          >
+            <Plus size={13} />
+            <span>Variante</span>
+          </button>
         </div>
 
         {/* Formulario */}
-        <form onSubmit={handleGuardar} style={{ padding: "18px 22px", overflowY: "auto", flex: 1 }}>
+        <form onSubmit={handleGuardar} style={{ padding: "12px 14px", overflowY: "auto", flex: 1 }}>
           {error && (
             <div
               style={{
@@ -1769,143 +1720,33 @@ export function ModalEditarProducto({
           {/* MODO 2: EDITOR DE VARIANTES Y TAMAÑOS CON HERENCIA Y FOTO INDIVIDUAL      */}
           {/* ========================================================================= */}
           {!esModoMaster && (
-            <div
-              style={{
-                background: "#F8FAFC",
-                border: "1.5px solid #CBD5E1",
-                borderRadius: "12px",
-                padding: "16px",
-                marginBottom: "16px",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <Layers size={17} color="#0F172A" />
-                  <span style={{ fontSize: "0.85rem", fontWeight: 800, color: "#0F172A", textTransform: "uppercase" }}>
-                    Selecciona el Tamaño / Variante para Personalizar ({variantesLocales.length})
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={agregarNuevaVariante}
-                  style={{
-                    background: "#0F172A",
-                    color: "#FFFFFF",
-                    border: "none",
-                    borderRadius: "6px",
-                    padding: "5px 12px",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "4px",
-                    cursor: "pointer",
-                    boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-                  }}
-                >
-                  <Plus size={13} />
-                  <span>+ Agregar Variante</span>
-                </button>
-              </div>
-
-              {/* Pestañas de Variantes con Código de Color Individual */}
-              <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "14px" }}>
-                {variantesLocales.map((v, idx) => {
-                  const activa = idx === varianteActivaIndex;
-                  const col = PALETA_COLORES_VARIANTES[idx % PALETA_COLORES_VARIANTES.length] || PALETA_COLORES_VARIANTES[0]!;
-                  const pvpCalculado = (Number(v.var_precio || 0) * (1 + (v.var_tarifa_iva_porcentaje ?? 15) / 100));
-                  const tieneFotoPropia = Boolean(v.var_detalle_variante?.portada_url);
-
-                  return (
-                    <button
-                      key={v.var_id || idx}
-                      type="button"
-                      onClick={() => {
-                        setVarianteActivaIndex(idx);
-                      }}
-                      style={{
-                        padding: "7px 12px",
-                        borderRadius: "8px",
-                        border: activa ? `2px solid ${col.border}` : `1.5px solid ${col.border}66`,
-                        background: activa ? col.bg : "#FFFFFF",
-                        color: activa ? col.text : "#475569",
-                        fontWeight: activa ? 800 : 600,
-                        fontSize: "0.78rem",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "6px",
-                        transition: "all 0.15s ease",
-                        boxShadow: activa ? `0 2px 8px ${col.border}33` : "none",
-                      }}
-                    >
-                      <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: col.dot, flexShrink: 0 }} />
-                      <span>{v.var_nombre}</span>
-                      <span style={{ fontWeight: 800, color: activa ? col.text : "#0F172A" }}>
-                        ${(v.precio_total || pvpCalculado).toFixed(2)}
-                      </span>
-                      {tieneFotoPropia ? (
-                        <span
-                          title="Tiene Foto Propia Exclusiva"
-                          style={{
-                            fontSize: "0.62rem",
-                            background: "#0284C7",
-                            color: "#FFFFFF",
-                            padding: "1px 5px",
-                            borderRadius: "4px",
-                            fontWeight: 800,
-                          }}
-                        >
-                          📸 Foto Propia
-                        </span>
-                      ) : (
-                        <span
-                          title="Hereda la Foto Global"
-                          style={{
-                            fontSize: "0.62rem",
-                            background: "#F1F5F9",
-                            color: "#64748B",
-                            padding: "1px 5px",
-                            borderRadius: "4px",
-                            fontWeight: 600,
-                          }}
-                        >
-                          ⚪ Heredada
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-
+            <div style={{ marginBottom: "12px" }}>
               {/* Formulario de la Variante Seleccionada con Indicador de Color */}
               {varianteActual && (
                 <div
                   style={{
                     background: "#FFFFFF",
                     borderRadius: "10px",
-                    padding: "14px",
-                    border: `2px solid ${colActiva.border}`,
-                    boxShadow: `0 3px 10px ${colActiva.border}22`,
+                    padding: "12px",
+                    border: `1.5px solid ${colActiva.border}`,
                   }}
                 >
-                  {/* Banner de Variante Activa */}
+                  {/* Barra compacta en una sola línea: Posición y PVP */}
                   <div
                     style={{
                       background: colActiva.bg,
                       borderRadius: "6px",
                       padding: "6px 10px",
-                      marginBottom: "12px",
+                      marginBottom: "10px",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", gap: "6px", color: colActiva.text, fontWeight: 800, fontSize: "0.75rem" }}>
-                      <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: colActiva.dot }} />
-                      <span>🏷️ EDITANDO: {varianteActual.var_nombre || "Nueva Variante"} (Tamaño #{varianteActivaIndex + 1})</span>
-                    </div>
-                    <span style={{ fontSize: "0.7rem", color: colActiva.text, fontWeight: 700 }}>
+                    <span style={{ fontSize: "0.73rem", color: colActiva.text, fontWeight: 700 }}>
+                      #{varianteActivaIndex + 1}/{variantesLocales.length}
+                    </span>
+                    <span style={{ fontSize: "0.76rem", color: colActiva.text, fontWeight: 800, fontVariantNumeric: "tabular-nums" }}>
                       PVP: ${(varianteActual.precio_total || 0).toFixed(2)}
                     </span>
                   </div>
