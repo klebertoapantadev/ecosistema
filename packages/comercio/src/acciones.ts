@@ -4621,68 +4621,83 @@ export async function alternarCanalVisibilidadProductoAction(params: {
 }
 
 /**
- * Elimina definitivamente un producto del catálogo (Borrado Físico Definitivo)
+ * Elimina definitivamente un producto del catálogo mediante RPC transaccional SECURITY DEFINER
+ * (`com_fn_eliminar_producto_catalogo`), habilitando a Administradores/SuperAdmins en todo el
+ * catálogo y a Operadores sobre productos de Entrega Inmediata ya vendidos o inactivos.
  */
 export async function eliminarProductoAction(
   pro_id: string,
   negocio = "tranqi"
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<{ ok: boolean; modo?: "fisico" | "logico"; error?: string }> {
   try {
     const { principal } = normalizarIdentificadorNegocio(negocio);
     const negocioNorm = principal;
-    const admin: any = crearClienteAdmin();
     const supabase: any = await crearClienteServidor();
-    const clienteActivo = admin || supabase;
+    const admin: any = crearClienteAdmin();
 
-    if (clienteActivo) {
-      // 1. Borrado físico definitivo en Supabase (las FK cascade borran variantes y relaciones)
-      let deleteOk = false;
-      try {
-        const { error: errDel } = await clienteActivo
+    // 1. Vía principal y segura: RPC transaccional SECURITY DEFINER (sin service_role en Next.js)
+    const { data: rpcData, error: rpcError } = await supabase
+      .schema("comun_comercio")
+      .rpc("com_fn_eliminar_producto_catalogo", {
+        p_negocio: negocioNorm,
+        p_producto_id: pro_id,
+      });
+
+    let modoFinal: "fisico" | "logico" = "fisico";
+
+    if (!rpcError && rpcData) {
+      if (!rpcData.ok) {
+        return {
+          ok: false,
+          error: String(rpcData.error || "No tienes permisos para eliminar este producto."),
+        };
+      }
+      modoFinal = rpcData.modo === "logico" ? "logico" : "fisico";
+    } else if (rpcError) {
+      const faltaRpc = /com_fn_eliminar_producto_catalogo|Could not find the function/i.test(
+        rpcError.message || ""
+      );
+
+      // Respaldo solo si la migración aún no corre y existe cliente admin (ej. entorno con service_role)
+      if (faltaRpc && admin) {
+        const { error: errDel } = await admin
           .schema("comun_comercio")
           .from("com_producto")
           .delete()
           .eq("pro_id", pro_id);
-        if (!errDel) deleteOk = true;
-      } catch {
-        // Intentar sobre esquema público/default
-      }
 
-      if (!deleteOk) {
-        try {
-          const { error: errDel2 } = await clienteActivo
-            .from("com_producto")
-            .delete()
-            .eq("pro_id", pro_id);
-          if (!errDel2) deleteOk = true;
-        } catch {
-          // Continuar
-        }
-      }
-
-      // Si existiese algún bloqueo de FK estricto no en cascada, desactivar y marcar eliminado
-      if (!deleteOk) {
-        try {
-          await clienteActivo
+        if (errDel) {
+          const { error: errSoft } = await admin
             .schema("comun_comercio")
             .from("com_producto")
             .update({ pro_activo: false, pro_eliminado_en: new Date().toISOString() })
             .eq("pro_id", pro_id);
-        } catch {
-          // Continuar
+          if (errSoft) {
+            return { ok: false, error: errSoft.message };
+          }
+          modoFinal = "logico";
         }
+      } else {
+        return {
+          ok: false,
+          error: faltaRpc
+            ? "Ejecuta primero la migración 20261120000002_rpc_eliminar_producto_y_entrega_inmediata.sql en el SQL Editor de Supabase para eliminar definitivamente productos."
+            : rpcError.message,
+        };
       }
     }
 
-    // 2. Almacén en memoria: purgar completamente el producto (sin tombstones)
+    // 2. Almacén en memoria: purgar completamente el producto
     const actuales = storeCustomProductos.get(negocioNorm) || [];
     const filtrados = actuales.filter((p) => p.pro_id !== pro_id);
     storeCustomProductos.set(negocioNorm, filtrados);
 
+    revalidatePath("/");
     revalidatePath("/panel/catalogo-productos");
+    revalidatePath("/panel/entrega-inmediata");
     revalidatePath("/panel/configuracion");
     revalidatePath("/panel/herramientas");
-    return { ok: true };
+    return { ok: true, modo: modoFinal };
   } catch (err: any) {
     return { ok: false, error: err.message || "Error al eliminar definitivamente el producto." };
   }

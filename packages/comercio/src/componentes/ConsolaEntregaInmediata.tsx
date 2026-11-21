@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import {
   descartarEntregaInmediataAction,
+  eliminarDefinitivoEntregaInmediataAction,
   listarEntregaInmediataAction,
   publicarEntregaInmediataAction,
 } from "../acciones-operaciones-taller";
@@ -101,6 +102,7 @@ export function ConsolaEntregaInmediata({
 
   const [linkCopiadoId, setLinkCopiadoId] = useState<string | null>(null);
   const [procesandoId, setProcesandoId] = useState<string | null>(null);
+  const [confirmarEliminarId, setConfirmarEliminarId] = useState<string | null>(null);
   const [mensajeExito, setMensajeExito] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -475,6 +477,36 @@ export function ConsolaEntregaInmediata({
     await recargar();
   };
 
+  const handleEliminarDefinitivo = useCallback(
+    async (item: ArregloEntregaInmediata) => {
+      if (confirmarEliminarId !== item.productoId) {
+        setConfirmarEliminarId(item.productoId);
+        return;
+      }
+
+      setConfirmarEliminarId(null);
+      setProcesandoId(item.productoId);
+      setErrorMsg(null);
+      setMensajeExito(null);
+
+      const res = await eliminarDefinitivoEntregaInmediataAction({
+        negocio: negNorm,
+        productoId: item.productoId,
+      });
+
+      setProcesandoId(null);
+      if (!res.ok) {
+        setErrorMsg(res.error);
+        return;
+      }
+
+      setItems((prev) => prev.filter((x) => x.productoId !== item.productoId));
+      setMensajeExito(`"${item.nombre}" eliminado definitivamente del catálogo.`);
+      await recargar();
+    },
+    [confirmarEliminarId, negNorm, recargar]
+  );
+
   const handleCopiarEnlace = (item: ArregloEntregaInmediata) => {
     const origen = typeof window !== "undefined" ? window.location.origin : "";
     const url = `${origen}/producto/${item.slug}`;
@@ -561,8 +593,76 @@ export function ConsolaEntregaInmediata({
             minute: "2-digit",
           }),
       },
+      {
+        id: "acciones",
+        encabezado: "Acciones",
+        valor: () => "",
+        render: (x) => {
+          const enProceso = procesandoId === x.productoId;
+          const confirmando = confirmarEliminarId === x.productoId;
+          return (
+            <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+              <button
+                type="button"
+                className="btn-responsive-accion"
+                disabled={enProceso}
+                onClick={() => void handleEliminarDefinitivo(x)}
+                title={
+                  confirmando
+                    ? `Confirmar eliminación definitiva de "${x.nombre}"`
+                    : `Eliminar definitivamente "${x.nombre}" del catálogo`
+                }
+                aria-label={confirmando ? "Confirmar eliminar" : "Eliminar definitivo"}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  padding: "6px 10px",
+                  borderRadius: "8px",
+                  border: confirmando ? "none" : "1px solid #E5CACA",
+                  background: confirmando ? "#8A2E2E" : "#FAF2F2",
+                  color: confirmando ? "#FFFFFF" : "#8A2E2E",
+                  fontSize: "0.75rem",
+                  fontWeight: 700,
+                  cursor: enProceso ? "wait" : "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {enProceso ? (
+                  <Loader2 size={13} className="eco-spin" />
+                ) : (
+                  <Trash2 size={13} />
+                )}
+                <span className="btn-texto-responsive">
+                  {enProceso ? "Eliminando..." : confirmando ? "Confirmar" : "Eliminar"}
+                </span>
+              </button>
+              {confirmando && !enProceso && (
+                <button
+                  type="button"
+                  onClick={() => setConfirmarEliminarId(null)}
+                  title="Cancelar eliminación"
+                  aria-label="Cancelar"
+                  style={{
+                    padding: "6px 8px",
+                    borderRadius: "8px",
+                    border: "1px solid #D5CFC4",
+                    background: "#FFFFFF",
+                    color: "#57524C",
+                    fontSize: "0.73rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          );
+        },
+      },
     ],
-    []
+    [procesandoId, confirmarEliminarId, handleEliminarDefinitivo]
   );
 
   return (

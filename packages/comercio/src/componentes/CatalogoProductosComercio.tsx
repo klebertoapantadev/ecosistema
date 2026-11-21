@@ -39,6 +39,7 @@ import {
   Settings2,
   Gift,
   FileText,
+  Trash2,
 } from "lucide-react";
 import {
   ProductoCatalogo,
@@ -48,6 +49,7 @@ import {
   obtenerCategoriasAction,
   restaurarCatalogoEjemploAction,
   editarProductoAction,
+  eliminarProductoAction,
   alternarCanalVisibilidadProductoAction,
   alternarActivoProductoAction,
   alternarDestacadoProductoAction,
@@ -117,6 +119,8 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const [guardandoCanalKey, setGuardandoCanalKey] = useState<string | null>(null);
   const [guardandoActivoKey, setGuardandoActivoKey] = useState<string | null>(null);
   const [guardandoDestacadoKey, setGuardandoDestacadoKey] = useState<string | null>(null);
+  const [confirmarEliminarProdId, setConfirmarEliminarProdId] = useState<string | null>(null);
+  const [eliminandoProdId, setEliminandoProdId] = useState<string | null>(null);
   const [mensajeErrorCanal, setMensajeErrorCanal] = useState<string | null>(null);
 
   // Estado de modales
@@ -2495,26 +2499,113 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                     flex: 1,
                   }}
                 >
-                  {/* Badge de Inactivo o Vigencia Estacional */}
+                  {/* Badge de Inactivo o Vigencia Estacional (+ Eliminar directo en Entrega Inmediata vendida/inactiva) */}
                   {!estaActivoGeneral ? (
                     <div
                       style={{
-                        background: "#FAF2F2",
-                        border: "1px solid #E5CACA",
-                        color: "#8A2E2E",
-                        padding: "3px 8px",
-                        borderRadius: "6px",
-                        fontSize: "0.7rem",
-                        fontWeight: 800,
-                        display: "inline-flex",
+                        display: "flex",
                         alignItems: "center",
-                        gap: "4px",
+                        justifyContent: "space-between",
+                        gap: "6px",
+                        flexWrap: "wrap",
                         marginBottom: "8px",
-                        alignSelf: "flex-start",
                       }}
                     >
-                      <AlertCircle size={12} color="#8A2E2E" />
-                      <span>⚪ INACTIVO — Oculto al público</span>
+                      <div
+                        style={{
+                          background: "#FAF2F2",
+                          border: "1px solid #E5CACA",
+                          color: "#8A2E2E",
+                          padding: "3px 8px",
+                          borderRadius: "6px",
+                          fontSize: "0.7rem",
+                          fontWeight: 800,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        <AlertCircle size={12} color="#8A2E2E" />
+                        <span>⚪ INACTIVO — Oculto al público</span>
+                      </div>
+
+                      {modoVista === "admin" &&
+                        (Boolean(p.pro_detalle_producto?.es_entrega_inmediata) ||
+                          (p.categoria?.ctg_slug || "").toLowerCase().includes("entrega-inmediata") ||
+                          (p.categoria?.ctg_nombre || "").toLowerCase().includes("entrega inmediata")) && (
+                          <button
+                            type="button"
+                            disabled={eliminandoProdId === p.pro_id}
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (confirmarEliminarProdId !== p.pro_id) {
+                                setConfirmarEliminarProdId(p.pro_id);
+                                return;
+                              }
+                              setConfirmarEliminarProdId(null);
+                              setEliminandoProdId(p.pro_id);
+                              setMensajeErrorCanal(null);
+                              try {
+                                const res = await eliminarProductoAction(p.pro_id, negocio);
+                                if (res.ok) {
+                                  setProductos((prev) =>
+                                    prev.filter((item) => item.pro_id !== p.pro_id)
+                                  );
+                                } else {
+                                  setMensajeErrorCanal(
+                                    res.error || "No se pudo eliminar definitivamente el producto."
+                                  );
+                                }
+                              } catch (err) {
+                                setMensajeErrorCanal(
+                                  err instanceof Error
+                                    ? err.message
+                                    : "Error al eliminar el producto."
+                                );
+                              } finally {
+                                setEliminandoProdId(null);
+                              }
+                            }}
+                            title={
+                              confirmarEliminarProdId === p.pro_id
+                                ? "Confirmar eliminación definitiva de este arreglo vendido"
+                                : "Eliminar definitivamente este arreglo de entrega inmediata vendido"
+                            }
+                            aria-label={
+                              confirmarEliminarProdId === p.pro_id
+                                ? "Confirmar eliminar"
+                                : "Eliminar definitivo"
+                            }
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "4px",
+                              padding: "3px 8px",
+                              borderRadius: "6px",
+                              border:
+                                confirmarEliminarProdId === p.pro_id
+                                  ? "none"
+                                  : "1px solid #E5CACA",
+                              background:
+                                confirmarEliminarProdId === p.pro_id ? "#8A2E2E" : "#FFFFFF",
+                              color:
+                                confirmarEliminarProdId === p.pro_id ? "#FFFFFF" : "#8A2E2E",
+                              fontSize: "0.7rem",
+                              fontWeight: 800,
+                              cursor: eliminandoProdId === p.pro_id ? "wait" : "pointer",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            <Trash2 size={11} />
+                            <span>
+                              {eliminandoProdId === p.pro_id
+                                ? "Eliminando..."
+                                : confirmarEliminarProdId === p.pro_id
+                                  ? "Confirmar"
+                                  : "Eliminar"}
+                            </span>
+                          </button>
+                        )}
                     </div>
                   ) : vigenciaInfo.vigenciaTipo !== "SIEMPRE" ? (
                     <div

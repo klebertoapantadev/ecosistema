@@ -891,6 +891,50 @@ export async function descartarEntregaInmediataAction(entrada: {
   }
 }
 
+export async function eliminarDefinitivoEntregaInmediataAction(entrada: {
+  negocio: string;
+  productoId: string;
+}): Promise<{ ok: true; modo: "fisico" | "logico" } | { ok: false; error: string }> {
+  try {
+    const neg = normalizarNegocio(entrada.negocio);
+    const { crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const esquema = supabase.schema("comun_comercio") as any;
+
+    const { data, error } = await esquema.rpc("com_fn_eliminar_producto_catalogo", {
+      p_negocio: neg,
+      p_producto_id: entrada.productoId,
+    });
+
+    if (error) {
+      return {
+        ok: false,
+        error: /com_fn_eliminar_producto_catalogo|Could not find the function/i.test(error.message)
+          ? "Ejecuta primero la migración 20261120000002_rpc_eliminar_producto_y_entrega_inmediata.sql en el SQL Editor de Supabase."
+          : error.message,
+      };
+    }
+
+    if (!data?.ok) {
+      return {
+        ok: false,
+        error: String(data?.error || "No se pudo eliminar definitivamente el arreglo."),
+      };
+    }
+
+    revalidarRutasTienda(neg);
+    return { ok: true, modo: data.modo === "logico" ? "logico" : "fisico" };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error
+          ? err.message
+          : "Error inesperado al eliminar definitivamente el arreglo",
+    };
+  }
+}
+
 // =============================================================================
 // 3. ÓRDENES DE TRABAJO (EXEQUIALES IESS), CONFIRMACIÓN DE ENTREGAS & INFORMES
 // =============================================================================
