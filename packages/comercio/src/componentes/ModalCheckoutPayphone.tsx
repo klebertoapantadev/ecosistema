@@ -198,6 +198,7 @@ export function ModalCheckoutPayphone({
 
   // Pasarela activa del negocio (PLUX o Payphone, nunca las dos a la vez).
   const [plux, setPlux] = useState<PasarelaCheckout | null>(null);
+  const [tarjetaDisponible, setTarjetaDisponible] = useState(true);
   const [cargandoPasarela, setCargandoPasarela] = useState(true);
   useEffect(() => {
     if (!abierto) return;
@@ -205,10 +206,17 @@ export function ModalCheckoutPayphone({
     setCargandoPasarela(true);
     obtenerPasarelasCheckoutAction(negocio)
       .then((r) => {
-        if (!cancelado) setPlux(r.ok ? r.data.find((p) => p.pasarela === "PLUX") ?? null : null);
+        if (!cancelado) {
+          const lista = r.ok ? r.data : [];
+          setPlux(lista.find((p) => p.pasarela === "PLUX") ?? null);
+          setTarjetaDisponible(lista.length > 0);
+        }
       })
       .catch(() => {
-        if (!cancelado) setPlux(null);
+        if (!cancelado) {
+          setPlux(null);
+          setTarjetaDisponible(false);
+        }
       })
       .finally(() => {
         if (!cancelado) setCargandoPasarela(false);
@@ -426,6 +434,11 @@ export function ModalCheckoutPayphone({
       return;
     }
     setTarjetaTitular(razonSocial.trim().toUpperCase());
+
+    if (!tarjetaDisponible) {
+      setErrorMsg("El procesamiento con tarjeta de crédito/débito está temporalmente deshabilitado para este negocio.");
+      return;
+    }
 
     if (plux) {
       if (guardarEnPerfil) {
@@ -813,8 +826,18 @@ export function ModalCheckoutPayphone({
                 />
               )}
 
+              {!cargandoPasarela && !tarjetaDisponible && (
+                <Alerta>
+                  El procesamiento con tarjeta de crédito/débito está temporalmente deshabilitado para este negocio.
+                </Alerta>
+              )}
+
               <div className="ckt-pie">
-                <button type="submit" className="ckt-btn ckt-btn-primario" disabled={procesando || cargandoPasarela || cargandoPerfil}>
+                <button
+                  type="submit"
+                  className="ckt-btn ckt-btn-primario"
+                  disabled={procesando || cargandoPasarela || cargandoPerfil || !tarjetaDisponible}
+                >
                   {(procesando || cargandoPasarela) && <RefreshCw size={18} className="ckt-girar" />}
                   Continuar {montoBoton}
                 </button>

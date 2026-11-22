@@ -50,6 +50,7 @@ interface PropsVistaProformaEventoCliente {
   variacionesIniciales: ProformaEventoPublica[];
   bloqueadaPorPagoInicial: boolean;
   ambientePlux: string;
+  tarjetaHabilitada?: boolean;
   usuarioRegistrado?: boolean;
 }
 
@@ -58,6 +59,7 @@ export function VistaProformaEventoCliente({
   variacionesIniciales,
   bloqueadaPorPagoInicial,
   ambientePlux,
+  tarjetaHabilitada = true,
   usuarioRegistrado = false,
 }: PropsVistaProformaEventoCliente) {
   const router = useRouter();
@@ -78,7 +80,9 @@ export function VistaProformaEventoCliente({
   }, [variaciones]);
 
   const [linkCopiado, setLinkCopiado] = useState(false);
-  const [metodoPago, setMetodoPago] = useState<'plux' | 'transferencia'>('plux');
+  const [metodoPago, setMetodoPago] = useState<'plux' | 'transferencia'>(
+    tarjetaHabilitada ? 'plux' : 'transferencia'
+  );
   const [modalidadCobro, setModalidadCobro] = useState<ModalidadCobroProforma>(() => {
     if (proformaActiva.estado === 'RESERVADA_70' && proformaActiva.saldoPendienteUsd > 0.01) {
       return 'SALDO_30';
@@ -107,13 +111,27 @@ export function VistaProformaEventoCliente({
   const [subiendoComprobante, setSubiendoComprobante] = useState(false);
   const [procesandoAccion, setProcesandoAccion] = useState(false);
 
+  const tarjetaDisponible =
+    tarjetaHabilitada && configCheckout.tarjetaCreditoHabilitada !== false;
+
   useEffect(() => {
     obtenerConfiguracionTiendaCheckoutAction('tinkay')
       .then((cfg) => {
-        if (cfg) setConfigCheckout(cfg);
+        if (cfg) {
+          setConfigCheckout(cfg);
+          if (cfg.tarjetaCreditoHabilitada === false) {
+            setMetodoPago('transferencia');
+          }
+        }
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!tarjetaDisponible && metodoPago === 'plux') {
+      setMetodoPago('transferencia');
+    }
+  }, [tarjetaDisponible, metodoPago]);
   const [mensajeFeedback, setMensajeFeedback] = useState<{
     tipo: 'ok' | 'error';
     texto: string;
@@ -1385,7 +1403,9 @@ export function VistaProformaEventoCliente({
                 }}
               >
                 <ShieldCheck size={15} />
-                <span>Pasarela Segura PLUX · Tinkay</span>
+                <span>
+                  {tarjetaDisponible ? 'Pasarela Segura PLUX · Tinkay' : 'Pago Verificado · Tinkay'}
+                </span>
               </div>
             </div>
 
@@ -1471,25 +1491,27 @@ export function VistaProformaEventoCliente({
 
             {/* Selector Método de Pago */}
             <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={() => setMetodoPago('plux')}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 16px',
-                  borderRadius: '10px',
-                  border: metodoPago === 'plux' ? '2px solid #2D4734' : '1px solid #D6D3D1',
-                  background: metodoPago === 'plux' ? '#F0FDF4' : '#FFFFFF',
-                  fontWeight: 700,
-                  fontSize: '0.84rem',
-                  cursor: 'pointer',
-                }}
-              >
-                <CreditCard size={17} />
-                <span>Tarjeta Crédito / Débito (PLUX)</span>
-              </button>
+              {tarjetaDisponible && (
+                <button
+                  type="button"
+                  onClick={() => setMetodoPago('plux')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '10px 16px',
+                    borderRadius: '10px',
+                    border: metodoPago === 'plux' ? '2px solid #2D4734' : '1px solid #D6D3D1',
+                    background: metodoPago === 'plux' ? '#F0FDF4' : '#FFFFFF',
+                    fontWeight: 700,
+                    fontSize: '0.84rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <CreditCard size={17} />
+                  <span>Tarjeta Crédito / Débito (PLUX)</span>
+                </button>
+              )}
 
               <button
                 type="button"
@@ -1513,7 +1535,7 @@ export function VistaProformaEventoCliente({
               </button>
             </div>
 
-            {metodoPago === 'plux' ? (
+            {tarjetaDisponible && metodoPago === 'plux' ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <div
                   style={{

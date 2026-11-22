@@ -139,7 +139,12 @@ export function ModalCheckoutTinkay() {
 
   const [configCheckoutLocal, setConfigCheckoutLocal] =
     useState<ConfiguracionTiendaCheckout>(configTiendaCheckout);
-  const [metodoPago, setMetodoPago] = useState<'plux' | 'transferencia'>('plux');
+  const [pasarelaPluxActiva, setPasarelaPluxActiva] = useState<boolean>(
+    configTiendaCheckout.tarjetaCreditoHabilitada !== false
+  );
+  const [metodoPago, setMetodoPago] = useState<'plux' | 'transferencia'>(
+    configTiendaCheckout.tarjetaCreditoHabilitada === false ? 'transferencia' : 'plux'
+  );
   const [ambientePlux, setAmbientePlux] = useState<string>('PRUEBAS');
   const [paso, setPaso] = useState<'formulario' | 'procesando' | 'exito'>('formulario');
   const [codigoOrdenGenerado, setCodigoOrdenGenerado] = useState<string>('');
@@ -189,9 +194,19 @@ export function ModalCheckoutTinkay() {
     telefono: '',
   });
 
+  const tarjetaHabilitada =
+    pasarelaPluxActiva && configCheckoutLocal.tarjetaCreditoHabilitada !== false;
+
   useEffect(() => {
     setConfigCheckoutLocal(configTiendaCheckout);
   }, [configTiendaCheckout]);
+
+  useEffect(() => {
+    if (!tarjetaHabilitada && metodoPago === 'plux') {
+      setMetodoPago('transferencia');
+      setOrdenPluxPreparada(null);
+    }
+  }, [tarjetaHabilitada, metodoPago]);
 
   useEffect(() => {
     if (!checkoutAbierto) return;
@@ -206,7 +221,14 @@ export function ModalCheckoutTinkay() {
 
     obtenerConfiguracionTiendaCheckoutAction('tinkay')
       .then((cfg) => {
-        if (!cancelado && cfg) setConfigCheckoutLocal(cfg);
+        if (!cancelado && cfg) {
+          setConfigCheckoutLocal(cfg);
+          if (cfg.tarjetaCreditoHabilitada === false) {
+            setPasarelaPluxActiva(false);
+            setMetodoPago('transferencia');
+            setOrdenPluxPreparada(null);
+          }
+        }
       })
       .catch(() => {});
 
@@ -214,7 +236,13 @@ export function ModalCheckoutTinkay() {
       .then((res) => {
         if (cancelado || !res.ok) return;
         const plux = res.data.find((p) => p.pasarela === 'PLUX');
+        const habilitada = Boolean(plux);
+        setPasarelaPluxActiva(habilitada);
         if (plux?.ambiente) setAmbientePlux(plux.ambiente);
+        if (!habilitada) {
+          setMetodoPago('transferencia');
+          setOrdenPluxPreparada(null);
+        }
       })
       .catch(() => {});
 
@@ -660,6 +688,10 @@ export function ModalCheckoutTinkay() {
 
   const handlePrepararOrdenPlux = async () => {
     setErrorPago(null);
+    if (!tarjetaHabilitada) {
+      setErrorPago('El procesamiento con tarjeta de crédito/débito está temporalmente deshabilitado.');
+      return;
+    }
     const errorValidacion = validarCheckout('plux');
     if (errorValidacion) {
       setErrorPago(errorValidacion);
@@ -1579,22 +1611,24 @@ export function ModalCheckoutTinkay() {
 
                 {/* 3. Selector de Método de Pago */}
                 <div className="pills-metodos-pago" style={{ marginBottom: '12px' }}>
-                  <button
-                    type="button"
-                    className={`btn-metodo-pago ${metodoPago === 'plux' ? 'activo' : ''}`}
-                    onClick={() => {
-                      setMetodoPago('plux');
-                      setErrorPago(null);
-                    }}
-                    title="Pagar en línea con tarjeta de crédito o débito mediante PLUX"
-                    aria-label="Tarjeta PLUX"
-                  >
-                    <CreditCard size={18} />
-                    <div>
-                      <strong>Tarjeta (PLUX)</strong>
-                      <small>Visa / Mastercard / Débito</small>
-                    </div>
-                  </button>
+                  {tarjetaHabilitada && (
+                    <button
+                      type="button"
+                      className={`btn-metodo-pago ${metodoPago === 'plux' ? 'activo' : ''}`}
+                      onClick={() => {
+                        setMetodoPago('plux');
+                        setErrorPago(null);
+                      }}
+                      title="Pagar en línea con tarjeta de crédito o débito mediante PLUX"
+                      aria-label="Tarjeta PLUX"
+                    >
+                      <CreditCard size={18} />
+                      <div>
+                        <strong>Tarjeta (PLUX)</strong>
+                        <small>Visa / Mastercard / Débito</small>
+                      </div>
+                    </button>
+                  )}
 
                   {transf.habilitada && (
                     <button
@@ -1617,7 +1651,49 @@ export function ModalCheckoutTinkay() {
                 </div>
 
                 {/* Sección según Método de Pago */}
-                {metodoPago === 'plux' ? (
+                {!tarjetaHabilitada && !transf.habilitada ? (
+                  <div
+                    className="grupo-campos-checkout"
+                    style={{
+                      background: '#FFFBEB',
+                      border: '1px solid #FDE68A',
+                      borderRadius: '14px',
+                      padding: '16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '10px',
+                      color: '#92400E',
+                      fontSize: '0.84rem',
+                    }}
+                  >
+                    <strong>Coordina el pago directamente con un asesor</strong>
+                    <span>
+                      Por el momento los medios de pago en línea no están habilitados. Escríbenos por
+                      WhatsApp para completar tu pedido de inmediato.
+                    </span>
+                    <a
+                      href={urlWhatsappComprobantePrevio}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Coordinar pago por WhatsApp"
+                      aria-label="Pagar por WhatsApp"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '8px',
+                        padding: '10px 16px',
+                        borderRadius: '10px',
+                        background: '#2F4737',
+                        color: '#FFFFFF',
+                        textDecoration: 'none',
+                        fontWeight: 700,
+                      }}
+                    >
+                      <span>Escribir por WhatsApp</span>
+                    </a>
+                  </div>
+                ) : tarjetaHabilitada && metodoPago === 'plux' ? (
                   <div
                     className="grupo-campos-checkout"
                     style={{

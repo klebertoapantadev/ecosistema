@@ -31,6 +31,8 @@ export interface ConfiguracionTiendaCheckout {
   whatsappTienda: string;
   /** Monto máximo en USD por debajo del cual se permite pagar sin nombre/identificación (Consumidor Final). Por defecto $50.00 */
   montoMaximoPagoSinDatosUsd: number;
+  /** Interruptor maestro de procesamiento con tarjeta de crédito / débito (PLUX / Payphone) */
+  tarjetaCreditoHabilitada: boolean;
   /** Datos bancarios, titular y código QR DeUna configurados para el negocio */
   transferencia: DatosTransferenciaTienda;
   actualizadoEn?: string | null;
@@ -66,6 +68,7 @@ export function crearConfiguracionTiendaCheckoutPorDefecto(
       negocio: "tinkay",
       whatsappTienda: "+593 99 292 2343",
       montoMaximoPagoSinDatosUsd: 50,
+      tarjetaCreditoHabilitada: true,
       transferencia: {
         habilitada: true,
         nombreTitular: "Kleber Toapanta",
@@ -97,6 +100,7 @@ export function crearConfiguracionTiendaCheckoutPorDefecto(
     negocio: neg,
     whatsappTienda: "+593 99 292 2343",
     montoMaximoPagoSinDatosUsd: 50,
+    tarjetaCreditoHabilitada: true,
     transferencia: {
       habilitada: true,
       nombreTitular: neg.includes("margarita")
@@ -213,10 +217,18 @@ export function normalizarConfiguracionTiendaCheckout(
       ? transferenciaRaw.avisoAcreditacion.trim()
       : base.transferencia.advertenciaAcreditacion;
 
+  const tarjetaHabilitadaRaw =
+    typeof raw.tarjetaCreditoHabilitada === "boolean"
+      ? raw.tarjetaCreditoHabilitada
+      : typeof raw.tarjetaHabilitada === "boolean"
+      ? raw.tarjetaHabilitada
+      : base.tarjetaCreditoHabilitada;
+
   return {
     negocio: base.negocio,
     whatsappTienda: whatsappRaw,
     montoMaximoPagoSinDatosUsd,
+    tarjetaCreditoHabilitada: tarjetaHabilitadaRaw,
     transferencia: {
       habilitada: habilitadaRaw,
       nombreTitular: nombreTitularRaw,

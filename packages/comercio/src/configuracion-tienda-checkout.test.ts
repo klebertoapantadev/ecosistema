@@ -60,4 +60,24 @@ describe("configuracion-tienda-checkout", () => {
     const url2 = construirUrlWhatsappTienda("0992922343", "");
     expect(url2).toBe("https://wa.me/593992922343");
   });
+
+  it("permite habilitar y deshabilitar tarjetaCreditoHabilitada manteniendo default true", () => {
+    const def = crearConfiguracionTiendaCheckoutPorDefecto("tinkay");
+    expect(def.tarjetaCreditoHabilitada).toBe(true);
+
+    const deshabilitada = normalizarConfiguracionTiendaCheckout("tinkay", {
+      tarjetaCreditoHabilitada: false,
+    });
+    expect(deshabilitada.tarjetaCreditoHabilitada).toBe(false);
+
+    const aliasLegacy = normalizarConfiguracionTiendaCheckout("tinkay", {
+      tarjetaHabilitada: false,
+    });
+    expect(aliasLegacy.tarjetaCreditoHabilitada).toBe(false);
+
+    const habilitada = normalizarConfiguracionTiendaCheckout("tinkay", {
+      tarjetaCreditoHabilitada: true,
+    });
+    expect(habilitada.tarjetaCreditoHabilitada).toBe(true);
+  });
 });

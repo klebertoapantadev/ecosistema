@@ -5052,56 +5052,225 @@ export async function guardarConfiguracionPasarelaAction(datos: {
     privPayload.token = datos.token.trim();
   }
 
-  if (clienteActivo) {
-    try {
+  const ahoraIso = new Date().toISOString();
+  const payloadPayphone: Record<string, any> = {
+    psc_negocio: negocio,
+    psc_pasarela: "PAYPHONE",
+    psc_nombre_visible: "Payphone (Tarjetas Visa / MasterCard / Diners y Saldo)",
+    psc_ambiente: datos.ambiente,
+    psc_activo: datos.activo,
+    psc_credenciales_publicas: pub,
+    psc_actualizado_en: ahoraIso,
+  };
+  if (datos.token && datos.token.trim().length > 0) {
+    payloadPayphone.psc_credenciales_privadas = privPayload;
+  }
+
+  try {
+    const { error: errUpsert } = await clienteActivo
+      .schema("comun_comercio")
+      .from("com_pasarela_configuracion")
+      .upsert(payloadPayphone, { onConflict: "psc_negocio, psc_pasarela" });
+
+    if (errUpsert) {
+      return { ok: false, error: `No se pudo guardar Payphone: ${errUpsert.message}` };
+    }
+
+    if (datos.activo) {
       await clienteActivo
         .schema("comun_comercio")
         .from("com_pasarela_configuracion")
-        .upsert(
-          {
-            psc_negocio: negocio,
-            psc_pasarela: "PAYPHONE",
-            psc_nombre_visible: "Payphone (Tarjetas Visa / MasterCard / Diners y Saldo)",
-            psc_ambiente: datos.ambiente,
-            psc_activo: datos.activo,
-            psc_credenciales_publicas: pub,
-            psc_credenciales_privadas: privPayload,
-            psc_actualizado_en: new Date().toISOString(),
-          },
-          { onConflict: "psc_negocio, psc_pasarela" }
-        );
+        .update({ psc_activo: false, psc_actualizado_en: ahoraIso })
+        .eq("psc_negocio", negocio)
+        .eq("psc_pasarela", "PLUX");
+    }
 
-      if (datos.activo) {
+    const { data: filasActivas } = await clienteActivo
+      .schema("comun_comercio")
+      .from("com_pasarela_configuracion")
+      .select("psc_pasarela")
+      .eq("psc_negocio", negocio)
+      .eq("psc_activo", true)
+      .is("psc_eliminado_en", null);
+
+    const algunaTarjetaActiva = datos.activo || (filasActivas ?? []).length > 0;
+    await sincronizarInterruptorTarjetaEnCfgNegocio(negocio, algunaTarjetaActiva);
+  } catch (err: any) {
+    console.error("Error al guardar pasarela Payphone:", err);
+    return { ok: false, error: err?.message || "No se pudo guardar la configuración de Payphone." };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/panel");
+  revalidatePath("/panel/pasarelas");
+  revalidatePath("/panel/configuracion");
+  return { ok: true };
+}
+
+async function sincronizarInterruptorTarjetaEnCfgNegocio(
+  negocio: string,
+  tarjetaCreditoHabilitada: boolean
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const {
+      obtenerConfiguracionTiendaCheckoutAction,
+      guardarConfiguracionTiendaCheckoutAction,
+    } = await import("./acciones-tienda-checkout");
+    const cfgActual = await obtenerConfiguracionTiendaCheckoutAction(negocio);
+    const resCfg = await guardarConfiguracionTiendaCheckoutAction(negocio, {
+      ...cfgActual,
+      tarjetaCreditoHabilitada,
+    });
+    if (!resCfg.ok) {
+      return { ok: false, error: resCfg.error };
+    }
+    return { ok: true };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || "No se pudo sincronizar el estado de tarjeta." };
+  }
+}
+
+/**
+ * Interruptor maestro del negocio para habilitar o deshabilitar el procesamiento
+ * con tarjeta de crédito / débito (PLUX / Payphone) de forma atómica.
+ */
+export async function cambiarEstadoTarjetaNegocioAction(datos: {
+  negocio?: string;
+  habilitado: boolean;
+  pasarelaPreferida?: "PLUX" | "PAYPHONE";
+}): Promise<{
+  ok: boolean;
+  tarjetaHabilitada?: boolean;
+  pasarelaActiva?: "PLUX" | "PAYPHONE" | null;
+  error?: string;
+}> {
+  const { principal } = normalizarIdentificadorNegocio(datos.negocio);
+  const negocio = principal;
+  const pasarelaObjetivo: "PLUX" | "PAYPHONE" =
+    datos.pasarelaPreferida || (negocio === "tranqi" || negocio === "tinkay" ? "PLUX" : "PAYPHONE");
+
+  const admin: any = crearClienteAdmin();
+  const supabase: any = await crearClienteServidor();
+  const clienteActivo = admin || supabase;
+  const ahoraIso = new Date().toISOString();
+
+  // 1. Intentar RPC transaccional SECURITY DEFINER (si la migración ya está aplicada)
+  let persistidoPorRpc = false;
+  try {
+    const { data: rpcRes, error: rpcErr } = await supabase
+      .schema("comun_comercio")
+      .rpc("com_fn_establecer_estado_tarjeta_negocio", {
+        p_negocio: negocio,
+        p_habilitado: datos.habilitado,
+        p_pasarela: pasarelaObjetivo,
+      });
+
+    if (!rpcErr && rpcRes?.ok) {
+      persistidoPorRpc = true;
+    } else if (rpcErr && !/com_fn_establecer_estado_tarjeta_negocio|Could not find the function/i.test(rpcErr.message)) {
+      return { ok: false, error: rpcErr.message };
+    } else if (rpcRes && rpcRes.ok === false) {
+      return { ok: false, error: rpcRes.error || "No se pudo actualizar el estado de tarjetas." };
+    }
+  } catch {
+    // Continuar con respaldo directo RLS
+  }
+
+  // 2. Respaldo directo si la migración RPC aún no está aplicada en el entorno remoto
+  if (!persistidoPorRpc) {
+    try {
+      if (!datos.habilitado) {
+        const { error: errOff } = await clienteActivo
+          .schema("comun_comercio")
+          .from("com_pasarela_configuracion")
+          .update({ psc_activo: false, psc_actualizado_en: ahoraIso })
+          .eq("psc_negocio", negocio)
+          .in("psc_pasarela", ["PLUX", "PAYPHONE"]);
+        if (errOff) {
+          console.error("[pasarelas] Error deshabilitando pasarelas:", errOff.message);
+        }
+      } else {
+        const otraPasarela = pasarelaObjetivo === "PLUX" ? "PAYPHONE" : "PLUX";
+        const { data: filaObj } = await clienteActivo
+          .schema("comun_comercio")
+          .from("com_pasarela_configuracion")
+          .select("psc_id")
+          .eq("psc_negocio", negocio)
+          .eq("psc_pasarela", pasarelaObjetivo)
+          .is("psc_eliminado_en", null)
+          .maybeSingle();
+
+        if (filaObj?.psc_id) {
+          const { error: errOn } = await clienteActivo
+            .schema("comun_comercio")
+            .from("com_pasarela_configuracion")
+            .update({ psc_activo: true, psc_actualizado_en: ahoraIso })
+            .eq("psc_id", filaObj.psc_id);
+          if (errOn) {
+            return { ok: false, error: `No se pudo habilitar ${pasarelaObjetivo}: ${errOn.message}` };
+          }
+        } else if (pasarelaObjetivo === "PLUX") {
+          const nombreDef =
+            negocio === "tinkay"
+              ? "Tinkay Floristería"
+              : negocio === "margaritas"
+              ? "Margaritas Floristería"
+              : negocio === "fastfix"
+              ? "FastFix Home"
+              : "Tranqi";
+          const { error: errIns } = await clienteActivo
+            .schema("comun_comercio")
+            .from("com_pasarela_configuracion")
+            .insert({
+              psc_negocio: negocio,
+              psc_pasarela: "PLUX",
+              psc_nombre_visible: "PLUX (Tarjeta de Crédito / Débito)",
+              psc_ambiente: "PRUEBAS",
+              psc_activo: true,
+              psc_orden_visual: 1,
+              psc_credenciales_publicas: {
+                remail: "admin.operaciones@tranqi24.com",
+                nombre_comercio: nombreDef,
+              },
+              psc_detalle_pasarela: { visibilidad: "TODOS", probadores: [] },
+              psc_actualizado_en: ahoraIso,
+            });
+          if (errIns) {
+            return { ok: false, error: `No se pudo activar PLUX: ${errIns.message}` };
+          }
+        }
+
         await clienteActivo
           .schema("comun_comercio")
           .from("com_pasarela_configuracion")
-          .update({ psc_activo: false, psc_actualizado_en: new Date().toISOString() })
+          .update({ psc_activo: false, psc_actualizado_en: ahoraIso })
           .eq("psc_negocio", negocio)
-          .eq("psc_pasarela", "PLUX");
+          .eq("psc_pasarela", otraPasarela);
       }
-    } catch {
-      try {
-        await clienteActivo.from("com_pasarela_configuracion").upsert(
-          {
-            psc_negocio: negocio,
-            psc_pasarela: "PAYPHONE",
-            psc_nombre_visible: "Payphone (Tarjetas Visa / MasterCard / Diners y Saldo)",
-            psc_ambiente: datos.ambiente,
-            psc_activo: datos.activo,
-            psc_credenciales_publicas: pub,
-            psc_credenciales_privadas: privPayload,
-            psc_actualizado_en: new Date().toISOString(),
-          },
-          { onConflict: "psc_negocio, psc_pasarela" }
-        );
-      } catch (err: any) {
-        console.error("Error al guardar pasarela:", err);
+
+      const resCfg = await sincronizarInterruptorTarjetaEnCfgNegocio(negocio, datos.habilitado);
+      if (!resCfg.ok) {
+        return { ok: false, error: resCfg.error };
       }
+    } catch (err: any) {
+      return {
+        ok: false,
+        error: err?.message || "No se pudo cambiar el estado del procesamiento con tarjeta.",
+      };
     }
   }
 
+  revalidatePath("/");
   revalidatePath("/panel");
-  return { ok: true };
+  revalidatePath("/panel/pasarelas");
+  revalidatePath("/panel/configuracion");
+  revalidatePath("/proforma/[token]", "page");
+
+  return {
+    ok: true,
+    tarjetaHabilitada: datos.habilitado,
+    pasarelaActiva: datos.habilitado ? pasarelaObjetivo : null,
+  };
 }
 
 /**
@@ -5129,6 +5298,7 @@ export async function guardarConfiguracionPluxAction(datos: {
     return { ok: false, error: "El correo del comercio en PLUX y el nombre comercial son obligatorios." };
   }
 
+  const ahoraIso = new Date().toISOString();
   const payload: Record<string, any> = {
     psc_negocio: negocio,
     psc_pasarela: "PLUX",
@@ -5144,7 +5314,7 @@ export async function guardarConfiguracionPluxAction(datos: {
       visibilidad: datos.visibilidad,
       probadores: (datos.probadores ?? []).map((c) => c.trim()).filter(Boolean),
     },
-    psc_actualizado_en: new Date().toISOString(),
+    psc_actualizado_en: ahoraIso,
   };
 
   if (datos.clienteId?.trim() && datos.claveSecreta?.trim()) {
@@ -5159,21 +5329,35 @@ export async function guardarConfiguracionPluxAction(datos: {
       .schema("comun_comercio")
       .from("com_pasarela_configuracion")
       .upsert(payload, { onConflict: "psc_negocio, psc_pasarela" });
-    if (error) return { ok: false, error: "No se pudo guardar la configuración de PLUX." };
+    if (error) return { ok: false, error: `No se pudo guardar la configuración de PLUX: ${error.message}` };
 
     if (datos.activo) {
       await clienteActivo
         .schema("comun_comercio")
         .from("com_pasarela_configuracion")
-        .update({ psc_activo: false, psc_actualizado_en: new Date().toISOString() })
+        .update({ psc_activo: false, psc_actualizado_en: ahoraIso })
         .eq("psc_negocio", negocio)
         .eq("psc_pasarela", "PAYPHONE");
     }
+
+    const { data: filasActivas } = await clienteActivo
+      .schema("comun_comercio")
+      .from("com_pasarela_configuracion")
+      .select("psc_pasarela")
+      .eq("psc_negocio", negocio)
+      .eq("psc_activo", true)
+      .is("psc_eliminado_en", null);
+
+    const algunaTarjetaActiva = datos.activo || (filasActivas ?? []).length > 0;
+    await sincronizarInterruptorTarjetaEnCfgNegocio(negocio, algunaTarjetaActiva);
   } catch (err: any) {
     return { ok: false, error: err?.message || "Error al guardar la configuración de PLUX." };
   }
 
+  revalidatePath("/");
   revalidatePath("/panel");
+  revalidatePath("/panel/pasarelas");
+  revalidatePath("/panel/configuracion");
   return { ok: true };
 }
 

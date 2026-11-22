@@ -77,6 +77,7 @@ export default async function PaginaProformaPublica({
   const pasarelaPlux = resPasarelas.ok
     ? resPasarelas.data.find((p) => p.pasarela === 'PLUX')
     : undefined;
+  const tarjetaHabilitada = Boolean(pasarelaPlux);
   const ambientePlux = pasarelaPlux?.ambiente || 'PRUEBAS';
   const usuarioRegistrado = Boolean(
     perfilActual?.tiene_membresia_negocio || resProforma.proforma.clienteId
@@ -88,6 +89,7 @@ export default async function PaginaProformaPublica({
       variacionesIniciales={resProforma.variaciones}
       bloqueadaPorPagoInicial={resProforma.bloqueadaPorPagoGrupo}
       ambientePlux={ambientePlux}
+      tarjetaHabilitada={tarjetaHabilitada}
       usuarioRegistrado={usuarioRegistrado}
     />
   );

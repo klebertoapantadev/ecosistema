@@ -2114,7 +2114,7 @@ function ContenidoEspacioCliente({
                 <button
                   type="button"
                   onClick={handleIrAPagarDesdeTabCarrito}
-                  title="Continuar a pago seguro con tarjeta PLUX o transferencia"
+                  title="Continuar al resumen y pago de tu pedido"
                   aria-label="Ir a Pagar"
                   style={{
                     width: '100%',

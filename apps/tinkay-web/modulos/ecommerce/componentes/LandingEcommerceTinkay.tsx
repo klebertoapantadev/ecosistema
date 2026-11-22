@@ -109,11 +109,23 @@ function ContenidoPaginaEcommerceTinkay() {
               <div className="icono-circulo-dorado">
                 <ShieldCheck size={24} />
               </div>
-              <h3>Pago 100% Seguro con PLUX</h3>
-              <p>
-                Aceptamos todas las tarjetas de crédito y débito Visa y Mastercard con facturación
-                electrónica avalada por el SRI y reserva de eventos en línea.
-              </p>
+              {configTiendaCheckout?.tarjetaCreditoHabilitada !== false ? (
+                <>
+                  <h3>Pago 100% Seguro con PLUX</h3>
+                  <p>
+                    Aceptamos todas las tarjetas de crédito y débito Visa y Mastercard con facturación
+                    electrónica avalada por el SRI y reserva de eventos en línea.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <h3>Pagos Seguros y Facturación SRI</h3>
+                  <p>
+                    Paga fácilmente mediante transferencia bancaria o QR DeUna con verificación rápida
+                    y facturación electrónica avalada por el SRI.
+                  </p>
+                </>
+              )}
             </div>
           </div>
         </div>

@@ -20,6 +20,7 @@ import {
   obtenerConfiguracionPasarelaAction,
   guardarConfiguracionPasarelaAction,
   guardarConfiguracionPluxAction,
+  cambiarEstadoTarjetaNegocioAction,
 } from "../acciones";
 import {
   crearConfiguracionTiendaCheckoutPorDefecto,
@@ -77,6 +78,8 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
   const [configCheckout, setConfigCheckout] = useState<ConfiguracionTiendaCheckout>(() =>
     crearConfiguracionTiendaCheckoutPorDefecto(negocio)
   );
+  const [tarjetaHabilitada, setTarjetaHabilitada] = useState(true);
+  const [cambiandoTarjeta, setCambiandoTarjeta] = useState(false);
   const [guardandoCheckout, setGuardandoCheckout] = useState(false);
   const [subiendoQr, setSubiendoQr] = useState(false);
 
@@ -90,6 +93,10 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
       ]);
 
       setConfigCheckout(cfgTienda);
+      const algunaPasarelaActiva = Boolean(cPlux.psc_activo || cPayphone.psc_activo);
+      const estadoMaestroTarjeta =
+        cfgTienda.tarjetaCreditoHabilitada !== false && algunaPasarelaActiva;
+      setTarjetaHabilitada(estadoMaestroTarjeta);
 
       const activa =
         pasarelaObjetivo ||
@@ -99,7 +106,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
       const c = activa === "PLUX" ? cPlux : cPayphone;
       setConfig(c);
       setAmbiente(c.psc_ambiente);
-      setActivo(c.psc_activo);
+      setActivo(cfgTienda.tarjetaCreditoHabilitada === false ? false : c.psc_activo);
 
       setStoreId(cPayphone.storeId);
       setToken(cPayphone.token || "");
@@ -123,6 +130,40 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
   const cambiarProcesador = async (nueva: "PLUX" | "PAYPHONE") => {
     setPasarelaSeleccionada(nueva);
     await cargarConfig(nueva);
+  };
+
+  const alternarTarjetaMaestro = async () => {
+    const nuevoEstado = !tarjetaHabilitada;
+    setCambiandoTarjeta(true);
+    setErrorMsg(null);
+    setMensajeExito(null);
+    try {
+      const res = await cambiarEstadoTarjetaNegocioAction({
+        negocio,
+        habilitado: nuevoEstado,
+        pasarelaPreferida: pasarelaSeleccionada,
+      });
+      if (!res.ok) {
+        setErrorMsg(res.error || "No se pudo cambiar el estado del procesamiento con tarjeta.");
+      } else {
+        setTarjetaHabilitada(nuevoEstado);
+        setActivo(nuevoEstado);
+        setConfigCheckout((prev) => ({
+          ...prev,
+          tarjetaCreditoHabilitada: nuevoEstado,
+        }));
+        setMensajeExito(
+          nuevoEstado
+            ? `Procesamiento con tarjeta habilitado (${pasarelaSeleccionada}).`
+            : "Procesamiento con tarjeta deshabilitado en tienda y proformas."
+        );
+        setTimeout(() => setMensajeExito(null), 4000);
+      }
+    } catch (err: any) {
+      setErrorMsg(err?.message || "No se pudo actualizar el procesamiento con tarjeta.");
+    } finally {
+      setCambiandoTarjeta(false);
+    }
   };
 
   const manejarGuardar = async (e: React.FormEvent) => {
@@ -153,7 +194,13 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
         } else {
           setClienteIdPlux("");
           setClaveSecretaPlux("");
-          setMensajeExito("¡Procesador PLUX guardado y activado como pasarela del negocio!");
+          setTarjetaHabilitada(activo);
+          setConfigCheckout((prev) => ({ ...prev, tarjetaCreditoHabilitada: activo }));
+          setMensajeExito(
+            activo
+              ? "Procesador PLUX guardado y habilitado en el checkout."
+              : "Configuración de PLUX guardada (procesamiento con tarjeta deshabilitado)."
+          );
           setTimeout(() => setMensajeExito(null), 4000);
         }
       } else {
@@ -169,7 +216,13 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
         if (!res.ok) {
           setErrorMsg(res.error || "No se pudo actualizar la configuración de Payphone.");
         } else {
-          setMensajeExito("¡Procesador Payphone guardado y activado como pasarela del negocio!");
+          setTarjetaHabilitada(activo);
+          setConfigCheckout((prev) => ({ ...prev, tarjetaCreditoHabilitada: activo }));
+          setMensajeExito(
+            activo
+              ? "Procesador Payphone guardado y habilitado en el checkout."
+              : "Configuración de Payphone guardada (procesamiento con tarjeta deshabilitado)."
+          );
           setTimeout(() => setMensajeExito(null), 4000);
         }
       }
@@ -275,6 +328,104 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
             Procesador Payphone
           </button>
         </div>
+      </div>
+
+      {/* Interruptor Maestro: Habilitar / Deshabilitar Procesamiento con Tarjeta de Crédito / Débito */}
+      <div
+        style={{
+          background: tarjetaHabilitada ? "#F2F6F3" : "#FAF2F2",
+          border: tarjetaHabilitada ? "1.5px solid #B7D4C1" : "1.5px solid #E5CACA",
+          borderRadius: "14px",
+          padding: "18px 20px",
+          marginBottom: "20px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: "14px",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "12px", flex: "1 1 260px" }}>
+          <div
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "10px",
+              background: tarjetaHabilitada ? "#2F4737" : "#8A2E2E",
+              color: "#FFFFFF",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            <CreditCard size={20} />
+          </div>
+          <div>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+              <strong style={{ fontSize: "0.95rem", color: "#1F1C19" }}>
+                Procesamiento con Tarjeta de Crédito / Débito
+              </strong>
+              <span
+                style={{
+                  background: tarjetaHabilitada ? "#2F4737" : "#8A2E2E",
+                  color: "#FFFFFF",
+                  padding: "2px 9px",
+                  borderRadius: "999px",
+                  fontSize: "0.7rem",
+                  fontWeight: 800,
+                  letterSpacing: "0.03em",
+                }}
+              >
+                {tarjetaHabilitada ? `HABILITADO (${pasarelaSeleccionada})` : "DESHABILITADO"}
+              </span>
+            </div>
+            <p style={{ margin: "4px 0 0", fontSize: "0.8rem", color: "#57524C", lineHeight: 1.45 }}>
+              {tarjetaHabilitada
+                ? "Los clientes pueden pagar en línea con tarjeta en la tienda y en los enlaces de proformas."
+                : "La opción de pago con tarjeta está oculta y bloqueada en tienda y proformas; solo quedan activos los medios habilitados (ej. Transferencia / DeUna)."}
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={alternarTarjetaMaestro}
+          disabled={cambiandoTarjeta}
+          title={
+            tarjetaHabilitada
+              ? "Deshabilitar el procesamiento con tarjeta de crédito y débito en este negocio"
+              : "Habilitar el procesamiento con tarjeta de crédito y débito en este negocio"
+          }
+          aria-label={tarjetaHabilitada ? "Deshabilitar Tarjeta" : "Habilitar Tarjeta"}
+          style={{
+            background: tarjetaHabilitada ? "#8A2E2E" : "#2F4737",
+            color: "#FFFFFF",
+            border: "none",
+            padding: "10px 18px",
+            borderRadius: "9px",
+            fontSize: "0.84rem",
+            fontWeight: 700,
+            cursor: cambiandoTarjeta ? "wait" : "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "7px",
+            flexShrink: 0,
+          }}
+        >
+          {cambiandoTarjeta ? (
+            <RefreshCw size={15} className="eco-spin" />
+          ) : (
+            <CreditCard size={15} />
+          )}
+          <span>
+            {cambiandoTarjeta
+              ? "Aplicando..."
+              : tarjetaHabilitada
+              ? "Deshabilitar Tarjeta"
+              : "Habilitar Tarjeta"}
+          </span>
+        </button>
       </div>
 
       {/* Alertas */}

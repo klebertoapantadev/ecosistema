@@ -319,8 +319,8 @@ Registra automáticamente todas las modificaciones de datos en las tablas de neg
 ### Descripción
 Unifica el procesamiento de pagos y la emisión de comprobantes electrónicos autorizados por el Servicio de Rentas Internas (SRI) de Ecuador.
 
-### Estado (15-nov-2026)
-- ✅ Datos de facturación por defecto y por compra (reglas 3-5) y pasarelas multiempresa PLUX / Payphone (regla 6).
+### Estado (22-nov-2026)
+- ✅ Datos de facturación por defecto y por compra (reglas 3-5), pasarelas multiempresa PLUX / Payphone e **interruptor maestro para habilitar/deshabilitar el procesamiento con tarjeta de crédito/débito por negocio** (`ConfiguracionPasarelaPayphone.tsx`, `cambiarEstadoTarjetaNegocioAction`, RPC `com_fn_establecer_estado_tarjeta_negocio`, bloqueo estricto en servidor y ocultamiento automático en tienda y proformas).
 - ✅ Emisión SRI, backend (regla 2): esquema `comun_facturacion`, factura automática al aprobarse un pago (incluyendo líneas detalladas de pedido + envío en `com_proforma`), firma XAdES-BES y envío al SRI desde la Edge Function `facturacion-sri`, RIDE y XML autorizado en Storage, correo al comprador con el SMTP del negocio (`PLT-008`). Ver [ADR-0007](../../arquitectura/adr/0007-facturacion-electronica-sri.md).
 - ✅ Widgets de panel transversales en `@eco/comercio`:
   - `configuracion_facturacion_sri` (`ConfiguracionFacturacionSri.tsx` en `/panel/facturacion-sri` y `/panel/configuracion?widget=configuracion_facturacion_sri`): parámetros tributarios del emisor por negocio (RUC, Razón Social, Nombre Comercial, Matriz, Establecimiento/Punto de Emisión `001-001`, Régimen `GENERAL` / `RIMPE_EMPRENDEDOR` / `RIMPE_NEGOCIO_POPULAR`, Contabilidad), numeración secuencial (`01` Facturas / `04` Notas de Crédito), ambiente `1 · Pruebas (CELCER)` / `2 · Producción (CEL)` con cerrojo SuperAdmin, carga validada de firma electrónica `.p12` en Supabase Vault y vista previa RIDE PDF en 1 clic.

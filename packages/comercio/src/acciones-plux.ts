@@ -16,6 +16,7 @@ import {
   type LineaFacturaSriResumen,
 } from "./ride-sri";
 import { verificarOrdenRespaldoServidor } from "./token-orden-firmada";
+import { obtenerConfiguracionTiendaCheckoutAction } from "./acciones-tienda-checkout";
 import { normalizarIdentificadorNegocio } from "./utils/negocio";
 
 type Resultado<T> = { ok: true; data: T } | { ok: false; error: string };
@@ -30,17 +31,30 @@ export interface PasarelaCheckout {
 export async function obtenerPasarelasCheckoutAction(negocio = "tranqi"): Promise<Resultado<PasarelaCheckout[]>> {
   const negPrincipal = normalizarIdentificadorNegocio(negocio).principal;
   const supabase: any = await crearClienteServidor();
-  const { data } = await supabase
-    .schema("comun_comercio")
-    .rpc("com_fn_obtener_pasarelas_activas", { p_negocio: negPrincipal });
+  const [cfgTienda, resRpc] = await Promise.all([
+    obtenerConfiguracionTiendaCheckoutAction(negPrincipal).catch(() => null),
+    supabase
+      .schema("comun_comercio")
+      .rpc("com_fn_obtener_pasarelas_activas", { p_negocio: negPrincipal }),
+  ]);
 
-  const lista: PasarelaCheckout[] = (data ?? []).map((p: any) => ({
+  // Interruptor maestro del negocio: si el procesamiento con tarjeta está deshabilitado, no exponer ninguna pasarela de tarjeta.
+  if (cfgTienda && cfgTienda.tarjetaCreditoHabilitada === false) {
+    return {
+      ok: true,
+      data: [],
+    };
+  }
+
+  const lista: PasarelaCheckout[] = (resRpc?.data ?? []).map((p: any) => ({
     pasarela: p.pasarela,
     nombreVisible: p.nombre_visible,
     ambiente: p.ambiente,
   }));
 
-  if (!lista.some((p) => p.pasarela === "PLUX")) {
+  // Respaldo solo si com_fn_obtener_pasarelas_activas no devolvió filas por visibilidad en pruebas,
+  // pero ÚNICAMENTE cuando la fila existe y está explícitamente activa (`psc_activo === true`).
+  if (lista.length === 0) {
     const admin: any = crearClienteAdmin();
     if (admin) {
       const { data: rowPlux } = await admin
@@ -49,28 +63,17 @@ export async function obtenerPasarelasCheckoutAction(negocio = "tranqi"): Promis
         .select("psc_pasarela, psc_nombre_visible, psc_ambiente, psc_activo")
         .eq("psc_negocio", negPrincipal)
         .eq("psc_pasarela", "PLUX")
+        .eq("psc_activo", true)
         .is("psc_eliminado_en", null)
         .maybeSingle();
 
-      if (rowPlux) {
+      if (rowPlux?.psc_activo) {
         lista.unshift({
           pasarela: "PLUX",
           nombreVisible: rowPlux.psc_nombre_visible || "PLUX (Tarjeta de Crédito / Débito)",
           ambiente: rowPlux.psc_ambiente || "PRUEBAS",
         });
-      } else {
-        lista.unshift({
-          pasarela: "PLUX",
-          nombreVisible: "PLUX (Tarjeta de Crédito / Débito)",
-          ambiente: "PRUEBAS",
-        });
       }
-    } else {
-      lista.unshift({
-        pasarela: "PLUX",
-        nombreVisible: "PLUX (Tarjeta de Crédito / Débito)",
-        ambiente: "PRUEBAS",
-      });
     }
   }
 
@@ -177,6 +180,13 @@ export async function prepararPagoPluxAction(
   if (!v.success) return { ok: false, error: v.error.issues[0]?.message || "Datos de facturación incompletos." };
 
   const negPrincipal = normalizarIdentificadorNegocio(v.data.negocio).principal;
+  const cfgTienda = await obtenerConfiguracionTiendaCheckoutAction(negPrincipal).catch(() => null);
+  if (cfgTienda && cfgTienda.tarjetaCreditoHabilitada === false) {
+    return {
+      ok: false,
+      error: "El procesamiento con tarjeta de crédito/débito está deshabilitado para este comercio.",
+    };
+  }
   const supabase: any = await crearClienteServidor();
   const { data, error } = await supabase.schema("comun_comercio").rpc("com_fn_preparar_pago_plux", {
     p_negocio: negPrincipal,
@@ -196,7 +206,7 @@ export async function prepararPagoPluxAction(
     };
   }
 
-  // Respaldo con service_role cuando la pasarela está en modo PRUEBAS y el usuario no figura en probadores
+  // Respaldo con service_role solo si la pasarela está explícitamente activa (ej. PRUEBAS con filtro probadores)
   const admin: any = crearClienteAdmin();
   if (admin) {
     const {
@@ -222,6 +232,13 @@ export async function prepararPagoPluxAction(
         .eq("var_id", v.data.varianteId)
         .maybeSingle(),
     ]);
+
+    if (!rowPlux?.psc_activo) {
+      return {
+        ok: false,
+        error: "El procesamiento con tarjeta de crédito/débito está deshabilitado para este comercio.",
+      };
+    }
 
     const esPresencialFallback = v.data.varianteId === "00000000-0000-4000-8000-000000000101";
     const precioBase = Number(rowVar?.var_precio ?? (esPresencialFallback ? 45 : 25));
@@ -319,6 +336,13 @@ export async function prepararPagoPluxProformaAction(
   }
 
   const negPrincipal = normalizarIdentificadorNegocio(v.data.negocio).principal;
+  const cfgTienda = await obtenerConfiguracionTiendaCheckoutAction(negPrincipal).catch(() => null);
+  if (cfgTienda && cfgTienda.tarjetaCreditoHabilitada === false) {
+    return {
+      ok: false,
+      error: "El procesamiento con tarjeta de crédito/débito está deshabilitado para este comercio.",
+    };
+  }
   const supabase: any = await crearClienteServidor();
 
   const { data, error } = await supabase.schema("comun_comercio").rpc("com_fn_preparar_pago_plux_proforma", {
@@ -341,6 +365,11 @@ export async function prepararPagoPluxProformaAction(
     };
   }
 
+  // Si la RPC respondió explícitamente que la pasarela está inactiva/deshabilitada, respetar sin fallback
+  if (!error && data?.ok === false && /no está activa|deshabilitad/i.test(String(data.error || ""))) {
+    return { ok: false, error: data.error };
+  }
+
   // Respaldo resiliente con service_role si la migración RPC aún no se aplicó en remoto
   const admin: any = crearClienteAdmin();
   if (admin) {
@@ -361,7 +390,7 @@ export async function prepararPagoPluxProformaAction(
       return { ok: false, error: "Esta proforma ya no se encuentra vigente." };
     }
 
-    // Buscar credenciales PLUX de la empresa actual; si aún no se sembraron, heredar temporalmente de tranqi con razón social propia
+    // Buscar credenciales PLUX de la empresa actual; si el negocio deshabilitó PLUX explícitamente, NO heredar de tranqi
     let { data: rowPlux } = await admin
       .schema("comun_comercio")
       .from("com_pasarela_configuracion")
@@ -371,6 +400,13 @@ export async function prepararPagoPluxProformaAction(
       .is("psc_eliminado_en", null)
       .maybeSingle();
 
+    if (rowPlux && rowPlux.psc_activo === false) {
+      return {
+        ok: false,
+        error: "El procesamiento con tarjeta de crédito/débito está deshabilitado para este comercio.",
+      };
+    }
+
     if (!rowPlux?.psc_credenciales_publicas?.remail) {
       const { data: rowPluxTranqi } = await admin
         .schema("comun_comercio")
@@ -378,6 +414,7 @@ export async function prepararPagoPluxProformaAction(
         .select("*")
         .eq("psc_negocio", "tranqi")
         .eq("psc_pasarela", "PLUX")
+        .eq("psc_activo", true)
         .is("psc_eliminado_en", null)
         .maybeSingle();
       if (rowPluxTranqi) {
@@ -389,6 +426,13 @@ export async function prepararPagoPluxProformaAction(
           },
         };
       }
+    }
+
+    if (!rowPlux?.psc_activo) {
+      return {
+        ok: false,
+        error: "El procesamiento con tarjeta de crédito/débito está deshabilitado para este comercio.",
+      };
     }
 
     const remail = rowPlux?.psc_credenciales_publicas?.remail;
@@ -529,30 +573,21 @@ export async function prepararPagoPluxProformaAction(
         .schema("comun_comercio")
         .rpc("com_fn_obtener_pasarelas_activas", { p_negocio: negPrincipal });
       pasarelaActiva = (pasarelasPropias ?? []).find((p: any) => p.pasarela === "PLUX") || null;
-
-      if (!pasarelaActiva?.credenciales_publicas?.remail && negPrincipal !== "tranqi") {
-        const { data: pasarelasBase } = await supabase
-          .schema("comun_comercio")
-          .rpc("com_fn_obtener_pasarelas_activas", { p_negocio: "tranqi" });
-        const pluxBase = (pasarelasBase ?? []).find((p: any) => p.pasarela === "PLUX");
-        if (pluxBase) {
-          pasarelaActiva = {
-            ...pluxBase,
-            credenciales_publicas: {
-              ...(pluxBase.credenciales_publicas || {}),
-              nombre_comercio: nombreComercioPorDefecto(negPrincipal),
-            },
-          };
-        }
-      }
     } catch {
-      // Continuar con valores por defecto de sandbox
+      pasarelaActiva = null;
     }
 
-    const remail = pasarelaActiva?.credenciales_publicas?.remail || "admin.operaciones@tranqi24.com";
-    const ambiente = pasarelaActiva?.ambiente || "PRUEBAS";
+    if (!pasarelaActiva?.credenciales_publicas?.remail) {
+      return {
+        ok: false,
+        error: "El procesamiento con tarjeta de crédito/débito está deshabilitado para este comercio.",
+      };
+    }
+
+    const remail = pasarelaActiva.credenciales_publicas.remail;
+    const ambiente = pasarelaActiva.ambiente || "PRUEBAS";
     const nombreComercio =
-      pasarelaActiva?.credenciales_publicas?.nombre_comercio || nombreComercioPorDefecto(negPrincipal);
+      pasarelaActiva.credenciales_publicas.nombre_comercio || nombreComercioPorDefecto(negPrincipal);
 
     const totalOrdenCentavos = Math.round(Number(ordenFirmada.tot || 0) * 100);
     const ivaOrdenCentavos = Math.round(Number(ordenFirmada.iva || 0) * 100);
