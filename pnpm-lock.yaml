@@ -51,8 +51,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/supabase
       '@supabase/ssr':
-        specifier: 0.12.3
-        version: 0.12.3(@supabase/supabase-js@2.110.8)
+        specifier: 0.12.7
+        version: 0.12.7(@supabase/supabase-js@2.110.8)
       '@supabase/supabase-js':
         specifier: 2.110.8
         version: 2.110.8
@@ -66,8 +66,8 @@ importers:
         specifier: 19.2.8
         version: 19.2.8(react@19.2.8)
       zod:
-        specifier: 4.6.6
-        version: 4.6.6
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@eco/config':
         specifier: workspace:*
@@ -115,8 +115,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/supabase
       '@supabase/ssr':
-        specifier: 0.12.3
-        version: 0.12.3(@supabase/supabase-js@2.110.8)
+        specifier: 0.12.7
+        version: 0.12.7(@supabase/supabase-js@2.110.8)
       '@supabase/supabase-js':
         specifier: 2.110.8
         version: 2.110.8
@@ -130,8 +130,8 @@ importers:
         specifier: 19.2.8
         version: 19.2.8(react@19.2.8)
       zod:
-        specifier: 4.6.6
-        version: 4.6.6
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@eco/config':
         specifier: workspace:*
@@ -182,8 +182,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/supabase
       '@supabase/ssr':
-        specifier: 0.12.3
-        version: 0.12.3(@supabase/supabase-js@2.110.8)
+        specifier: 0.12.7
+        version: 0.12.7(@supabase/supabase-js@2.110.8)
       '@supabase/supabase-js':
         specifier: 2.110.8
         version: 2.110.8
@@ -200,8 +200,8 @@ importers:
         specifier: 19.2.8
         version: 19.2.8(react@19.2.8)
       zod:
-        specifier: 4.6.6
-        version: 4.6.6
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@eco/config':
         specifier: workspace:*
@@ -261,8 +261,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/supabase
       '@supabase/ssr':
-        specifier: 0.12.3
-        version: 0.12.3(@supabase/supabase-js@2.110.8)
+        specifier: 0.12.7
+        version: 0.12.7(@supabase/supabase-js@2.110.8)
       '@supabase/supabase-js':
         specifier: 2.110.8
         version: 2.110.8
@@ -300,8 +300,8 @@ importers:
         specifier: 1.8.1
         version: 1.8.1
       zod:
-        specifier: 4.6.6
-        version: 4.6.6
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@eco/config':
         specifier: workspace:*
@@ -334,8 +334,8 @@ importers:
   packages/agenda:
     dependencies:
       zod:
-        specifier: 4.6.6
-        version: 4.6.6
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@eco/config':
         specifier: workspace:*
@@ -414,8 +414,8 @@ importers:
         specifier: 1.5.4
         version: 1.5.4
       zod:
-        specifier: 4.6.6
-        version: 4.6.6
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@eco/config':
         specifier: workspace:*
@@ -484,8 +484,8 @@ importers:
         specifier: 1.27.0
         version: 1.27.0(react@19.2.8)
       zod:
-        specifier: 4.6.6
-        version: 4.6.6
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@eco/config':
         specifier: workspace:*
@@ -613,17 +613,17 @@ importers:
         specifier: workspace:*
         version: link:../supabase
       '@supabase/ssr':
-        specifier: 0.12.3
-        version: 0.12.3(@supabase/supabase-js@2.110.8)
+        specifier: 0.12.7
+        version: 0.12.7(@supabase/supabase-js@2.110.8)
       libphonenumber-js:
-        specifier: 1.13.9
-        version: 1.13.9
+        specifier: 1.13.17
+        version: 1.13.17
       lucide-react:
         specifier: 1.27.0
         version: 1.27.0(react@19.2.8)
       zod:
-        specifier: 4.6.6
-        version: 4.6.6
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@eco/config':
         specifier: workspace:*
@@ -714,8 +714,8 @@ importers:
         specifier: workspace:*
         version: link:../db
       '@supabase/ssr':
-        specifier: 0.12.3
-        version: 0.12.3(@supabase/supabase-js@2.110.8)
+        specifier: 0.12.7
+        version: 0.12.7(@supabase/supabase-js@2.110.8)
       '@supabase/supabase-js':
         specifier: 2.110.8
         version: 2.110.8
@@ -1347,10 +1347,10 @@ packages:
     resolution: {integrity: sha512-mwX7ituX6O31fLf+0g65rpLlNxqgnMaPltPsQwzox6jfmbfVl3tCxXrfr3HEsQcCRjpjuJG1+A0vFzP1yVjKHA==}
     engines: {node: '>=22.0.0'}
 
-  '@supabase/ssr@0.12.3':
-    resolution: {integrity: sha512-qWXJ/dI7CiYDKyTgIPqJ4Qkh8y5edh2LdF/nkN48z47mmEVzAO2OE+YErYeQ/UemVfonn/F4kFz+lhLqoVMdpw==}
+  '@supabase/ssr@0.12.7':
+    resolution: {integrity: sha512-wiBtEie1KkRJi9RrZWY3R2imRhX1JY7qMyUCH2z9AUk15gQebNEplM+urbCKamdxaTJLXUU6LlpkJsaxhojCEg==}
     peerDependencies:
-      '@supabase/supabase-js': ^2.110.5
+      '@supabase/supabase-js': ^2.114.0
 
   '@supabase/storage-js@2.110.8':
     resolution: {integrity: sha512-CcfhkZFBLxsthgUabZKxwfsoXdrikIGsL3LsGoV3FZTqCMx/s1y49taT4jT/oya5+1IuB0sFFHw6pF0o0iJniQ==}
@@ -1872,8 +1872,8 @@ packages:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
 
-  libphonenumber-js@1.13.9:
-    resolution: {integrity: sha512-VNS5vWMM7r0P66BYv+TQJATxExEgLxN+34hfHDVhDkUsGAE4cRg0shCNSLTXNKm7nIUscC7AfB51TjxEeF7msQ==}
+  libphonenumber-js@1.13.17:
+    resolution: {integrity: sha512-V92dxRHhYTsHF5B6IjR8rtKW6qL7xKuERPFFqZt7XQl8A+NikbwEzjhxGpM+R6JnWjaL7/wokWSdTG/eyYAscQ==}
 
   lie@3.3.0:
     resolution: {integrity: sha512-UaiMJzeWRlEujzAuw5LokY1L5ecNQYZKfmyZ9L7wDHb/p5etKaxXhohBcrw0EYby+G/NA52vRSN4N39dxHAIwQ==}
@@ -2377,8 +2377,8 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  zod@4.6.6:
-    resolution: {integrity: sha512-4UmzQUF5fxvfcYHlbjBmejU+w+hbDnWFx4aS8kBx7nPBHcO2SqPbpAG8snbdg+Xse4pRefR98hgjFgIMCI/UhA==}
+  zod@4.6.7:
+    resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
 snapshots:
 
@@ -2810,7 +2810,7 @@ snapshots:
       '@supabase/phoenix': 0.4.5
       tslib: 2.8.1
 
-  '@supabase/ssr@0.12.3(@supabase/supabase-js@2.110.8)':
+  '@supabase/ssr@0.12.7(@supabase/supabase-js@2.110.8)':
     dependencies:
       '@supabase/supabase-js': 2.110.8
       cookie: 1.1.1
@@ -3380,7 +3380,7 @@ snapshots:
       prelude-ls: 1.2.1
       type-check: 0.4.0
 
-  libphonenumber-js@1.13.9: {}
+  libphonenumber-js@1.13.17: {}
 
   lie@3.3.0:
     dependencies:
@@ -3874,4 +3874,4 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  zod@4.6.6: {}
+  zod@4.6.7: {}
