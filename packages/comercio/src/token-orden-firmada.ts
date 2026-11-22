@@ -11,7 +11,7 @@ export interface OrdenFirmadaServidor {
   id: string;
   neg: string;
   cod: string;
-  ori: "PEDIDO_TIENDA" | "PROFORMA_EVENTO";
+  ori: "PEDIDO_TIENDA" | "PROFORMA_EVENTO" | "LINK_PAGO_CHAT";
   est: string;
   vig: number;
   sub: number;

@@ -9,12 +9,14 @@ import {
   ArrowLeft,
   BarChart3,
   Bot,
+  Building2,
   Calendar,
   Camera,
   Check,
   CheckCircle2,
   ClipboardList,
   Clock,
+  CreditCard,
   Download,
   ExternalLink,
   FileText,
@@ -22,6 +24,7 @@ import {
   Forward,
   ImagePlus,
   Inbox,
+  Link2,
   Loader2,
   MailWarning,
   MessageCircle,
@@ -75,9 +78,19 @@ import {
   type DatosTableroOmnicanal,
   type PedidoWebConTipoCliente,
 } from "../acciones-omnicanal";
+import { obtenerConfiguracionTiendaCheckoutAction } from "../acciones-tienda-checkout";
 import {
+  construirMensajeDatosPagoChat,
+  crearConfiguracionTiendaCheckoutPorDefecto,
+  detectarSolicitudPagoTarjetaEnMensaje,
+  parsearComandoChatPago,
+  type ConfiguracionTiendaCheckout,
+} from "../configuracion-tienda-checkout";
+import {
+  autoCompletarDatosVentaDesdeMensajes,
   calcularFechaRecordatorioRapido,
   calcularMetricasOmnicanal,
+  calcularTotalDatosVenta,
   emparejarComprasConConversacion,
   extraerSegmentosMultimediaMensaje,
   extraerTodasLasImagenesMensaje,
@@ -95,6 +108,7 @@ import {
   type ContextoReenvioChatEquipo,
   type ConversacionOmnicanal,
   type ConversacionWhatsappResumen,
+  type DatosVentaConversacion,
   type EstadoAtencionOmnicanal,
   type EtiquetaOmnicanal,
   type EventoBroadcastChatWeb,
@@ -109,6 +123,7 @@ import {
   IconoVectorCanal,
 } from "./IconoCanalOmnicanal";
 import { ModalAdministrarEtiquetas } from "./ModalAdministrarEtiquetas";
+import { ModalLinkPagoChat } from "./ModalLinkPagoChat";
 import {
   ModalSelectorCatalogoChat,
   type SeleccionProductoCatalogoChat,
@@ -868,6 +883,15 @@ export function ConsolaVentasOmnicanal({
   const [mostrarMenuAdjuntar, setMostrarMenuAdjuntar] = useState<boolean>(false);
   const [vistaMenuOpciones, setVistaMenuOpciones] = useState<"principal" | "asignar">("principal");
   const [modalCatalogoChatAbierto, setModalCatalogoChatAbierto] = useState<boolean>(false);
+  const [modalLinkPagoAbierto, setModalLinkPagoAbierto] = useState<boolean>(false);
+  const [montoLinkPagoOverride, setMontoLinkPagoOverride] = useState<number | null>(null);
+  const [configCheckoutTienda, setConfigCheckoutTienda] =
+    useState<ConfiguracionTiendaCheckout | null>(null);
+  const [cargandoDatosPago, setCargandoDatosPago] = useState<boolean>(false);
+  const [qrDeunaSugeridoUrl, setQrDeunaSugeridoUrl] = useState<string | null>(null);
+  const [solicitudTarjetaDescartadaMsgId, setSolicitudTarjetaDescartadaMsgId] = useState<
+    string | null
+  >(null);
   const [respuestaSeleccionadaId, setRespuestaSeleccionadaId] = useState<string | null>(null);
   const [imagenAdjuntaAsesorUrl, setImagenAdjuntaAsesorUrl] = useState<string | null>(null);
   const [documentoAdjuntoAsesor, setDocumentoAdjuntoAsesor] = useState<{
@@ -1761,6 +1785,142 @@ export function ConsolaVentasOmnicanal({
     );
   }, [textoRespuesta, mostrarMenuRespuestas, tablero.respuestasRapidas]);
 
+  const herramientasCobroPorAtajo = useMemo(() => {
+    const t = textoRespuesta.trim().toLowerCase();
+    if (!mostrarMenuRespuestas && !t.startsWith("/")) return [];
+    const comandoSolo = t.startsWith("/") ? t.split(/\s+/)[0] || "" : "";
+    const catalogoHerramientas = [
+      {
+        clave: "LINK_PAGO" as const,
+        atajo: "/LinkPago",
+        titulo: "Generar Link de Pago (Tarjeta / DeUna)",
+        descripcion:
+          "Toma el valor de los campos del chat (editable), genera el enlace seguro y lo envía al cliente.",
+        aliases: ["/linkpago", "/link", "/pago", "/tarjeta", "/plux", "/cobro"],
+      },
+      {
+        clave: "DATOS_PAGO" as const,
+        atajo: "/DatosPago",
+        titulo: "Datos de Pago (DeUna + Bancos + Tarjeta)",
+        descripcion:
+          "Incluye link DeUna, datos bancarios configurados y opción para que el cliente solicite pago con tarjeta.",
+        aliases: ["/datospago", "/datos", "/deuna", "/banco", "/cuentas", "/transferencia"],
+      },
+    ];
+    if (!comandoSolo || comandoSolo === "/") return catalogoHerramientas;
+    return catalogoHerramientas.filter(
+      (h) =>
+        h.atajo.toLowerCase().includes(comandoSolo) ||
+        h.titulo.toLowerCase().includes(comandoSolo.slice(1)) ||
+        h.aliases.some((a) => a.includes(comandoSolo) || comandoSolo.startsWith(a))
+    );
+  }, [textoRespuesta, mostrarMenuRespuestas]);
+
+  const solicitudTarjetaDetectada = useMemo(() => {
+    if (!conversacionActiva || mensajesActivos.length === 0) return null;
+    // Buscar el último mensaje del cliente posterior a cualquier link de pago ya enviado
+    let ultimoIdxLinkEnviado = -1;
+    for (let i = mensajesActivos.length - 1; i >= 0; i -= 1) {
+      const m = mensajesActivos[i];
+      if (
+        m &&
+        m.origen !== "CLIENTE" &&
+        m.origen !== "NOTA_INTERNA" &&
+        /\/pagar\/[a-z0-9_-]{8,}/i.test(m.contenido || "")
+      ) {
+        ultimoIdxLinkEnviado = i;
+        break;
+      }
+    }
+    for (let i = mensajesActivos.length - 1; i > ultimoIdxLinkEnviado; i -= 1) {
+      const m = mensajesActivos[i];
+      if (!m || m.origen !== "CLIENTE") continue;
+      if (m.id === solicitudTarjetaDescartadaMsgId) return null;
+      if (detectarSolicitudPagoTarjetaEnMensaje(m.contenido || "")) {
+        return m;
+      }
+      // Revisar hasta los 2 mensajes más recientes del cliente
+      break;
+    }
+    return null;
+  }, [conversacionActiva, mensajesActivos, solicitudTarjetaDescartadaMsgId]);
+
+  const abrirModalLinkPago = (montoOverride?: number | null) => {
+    setMostrarMenuRespuestas(false);
+    setMostrarMenuAdjuntar(false);
+    if (textoRespuesta.trim().startsWith("/")) {
+      setTextoRespuesta("");
+    }
+    setMontoLinkPagoOverride(
+      montoOverride != null && Number.isFinite(montoOverride) && montoOverride > 0
+        ? montoOverride
+        : null
+    );
+    setModalLinkPagoAbierto(true);
+  };
+
+  const aplicarComandoDatosPago = async () => {
+    if (!conversacionActiva || cargandoDatosPago) return;
+    setMostrarMenuRespuestas(false);
+    setMostrarMenuAdjuntar(false);
+    setModoNotaInterna(false);
+    setCargandoDatosPago(true);
+    setErrorMsg(null);
+    try {
+      let cfg = configCheckoutTienda;
+      try {
+        const fresca = await obtenerConfiguracionTiendaCheckoutAction(negNorm);
+        if (fresca) {
+          cfg = fresca;
+          setConfigCheckoutTienda(fresca);
+        }
+      } catch {
+        // Usar respaldo en caché o defecto si la red falla temporalmente
+      }
+      const cfgEfectiva = cfg ?? crearConfiguracionTiendaCheckoutPorDefecto(negNorm);
+      const datosAuto = autoCompletarDatosVentaDesdeMensajes(
+        conversacionActiva.datosVenta,
+        mensajesActivos,
+        conversacionActiva
+      );
+      const totalChat = calcularTotalDatosVenta(datosAuto);
+      const mensajeFormateado = construirMensajeDatosPagoChat(cfgEfectiva, {
+        montoTotal: totalChat > 0 ? totalChat : null,
+        concepto: datosAuto.producto?.trim() || null,
+      });
+
+      setTextoRespuesta(mensajeFormateado);
+      setRespuestaSeleccionadaId(null);
+
+      // Si hay imagen QR DeUna configurada, ofrecer adjuntarla en 1 clic
+      const qrRaw = cfgEfectiva.transferencia.qrDeunaUrl?.trim() || "";
+      if (qrRaw) {
+        const qrAbsoluta =
+          /^https?:\/\//i.test(qrRaw)
+            ? qrRaw
+            : typeof window !== "undefined" && window.location?.origin
+              ? `${window.location.origin}${qrRaw.startsWith("/") ? qrRaw : `/${qrRaw}`}`
+              : qrRaw;
+        setQrDeunaSugeridoUrl(qrAbsoluta);
+      } else {
+        setQrDeunaSugeridoUrl(null);
+      }
+
+      setTimeout(() => textareaCompositorRef.current?.focus(), 60);
+    } finally {
+      setCargandoDatosPago(false);
+    }
+  };
+
+  const handleSeleccionarHerramientaCobro = (clave: "LINK_PAGO" | "DATOS_PAGO") => {
+    if (clave === "LINK_PAGO") {
+      const parsed = parsearComandoChatPago(textoRespuesta.trim());
+      abrirModalLinkPago(parsed?.tipo === "LINK_PAGO" ? parsed.montoExplicito : null);
+      return;
+    }
+    void aplicarComandoDatosPago();
+  };
+
   const handleSeleccionarRespuestaRapida = (r: RespuestaRapidaOmnicanal) => {
     const interpolado = interpolarRespuestaRapida(r.contenido, {
       nombre: conversacionActiva?.remitenteNombre,
@@ -1882,6 +2042,20 @@ export function ConsolaVentasOmnicanal({
     }
 
     const textoLimpio = textoRespuesta.trim();
+
+    // Interceptar comandos de cobro integrados (`/LinkPago` y `/DatosPago`) al presionar Enter
+    if (!modoNotaInterna && !imagenAdjuntaAsesorUrl && !documentoAdjuntoAsesor) {
+      const cmdPago = parsearComandoChatPago(textoLimpio);
+      if (cmdPago?.tipo === "LINK_PAGO") {
+        abrirModalLinkPago(cmdPago.montoExplicito);
+        return;
+      }
+      if (cmdPago?.tipo === "DATOS_PAGO") {
+        void aplicarComandoDatosPago();
+        return;
+      }
+    }
+
     const cuerpoFinal = documentoAdjuntoAsesor
       ? `${textoLimpio ? `${textoLimpio}\n\n` : ""}📄 [${documentoAdjuntoAsesor.nombre}](${documentoAdjuntoAsesor.url})`
       : imagenAdjuntaAsesorUrl
@@ -1913,6 +2087,7 @@ export function ConsolaVentasOmnicanal({
     setTextoRespuesta("");
     setImagenAdjuntaAsesorUrl(null);
     setDocumentoAdjuntoAsesor(null);
+    setQrDeunaSugeridoUrl(null);
     setRespuestaSeleccionadaId(null);
     setMensajesActivos((prev) => [...prev, res.mensaje]);
     if (conversacionActiva.claveHilo) {
@@ -2018,6 +2193,86 @@ export function ConsolaVentasOmnicanal({
       ),
     }));
     setMensajeInfo(`🌸 Producto "${sel.nombreProducto}" enviado al cliente.`);
+  };
+
+  const handleInsertarLinkPagoEnCompositor = (
+    textoMensaje: string,
+    datosActualizados?: DatosVentaConversacion
+  ) => {
+    setModoNotaInterna(false);
+    setQrDeunaSugeridoUrl(null);
+    setTextoRespuesta(textoMensaje);
+    if (conversacionActiva && datosActualizados) {
+      setTablero((prev) => ({
+        ...prev,
+        conversaciones: prev.conversaciones.map((c) =>
+          c.id === conversacionActiva.id ? { ...c, datosVenta: datosActualizados } : c
+        ),
+      }));
+    }
+    setTimeout(() => textareaCompositorRef.current?.focus(), 60);
+  };
+
+  const handleEnviarLinkPagoDesdeModal = async (
+    textoMensaje: string,
+    datosActualizados?: DatosVentaConversacion
+  ) => {
+    if (!conversacionActiva || enviandoMensaje) return;
+    setEnviandoMensaje(true);
+    setErrorMsg(null);
+    const res = await enviarMensajeAsesorOmnicanalAction({
+      negocio: negNorm,
+      conversacionId: conversacionActiva.id,
+      contenido: textoMensaje,
+      esNotaInterna: false,
+    });
+    setEnviandoMensaje(false);
+
+    if (!res.ok) {
+      setErrorMsg(res.error);
+      return;
+    }
+    if (res.avisoWhatsApp) {
+      setErrorMsg(`Aviso de envío WhatsApp: ${res.avisoWhatsApp}`);
+    }
+
+    setQrDeunaSugeridoUrl(null);
+    setMensajesActivos((prev) => [...prev, res.mensaje]);
+    if (conversacionActiva.claveHilo) {
+      const buf = mensajesBufferLiveRef.current[conversacionActiva.claveHilo] ?? [];
+      mensajesBufferLiveRef.current[conversacionActiva.claveHilo] = [...buf, res.mensaje];
+    }
+
+    emitirBroadcastAsesor({
+      eventoId: res.mensaje.id,
+      claveHilo: conversacionActiva.claveHilo,
+      conversacionId: conversacionActiva.id,
+      estadoAtencion: res.estadoAtencion,
+      asesoraAsignadaId: res.asesoraAsignadaId ?? conversacionActiva.asesoraAsignadaId,
+      asesoraNombre: conversacionActiva.asesoraNombre ?? tablero.usuarioActualNombre,
+      esNotaInterna: false,
+      mensaje: res.mensaje,
+    });
+
+    setTablero((prev) => ({
+      ...prev,
+      conversaciones: prev.conversaciones.map((c) =>
+        c.id === conversacionActiva.id
+          ? {
+              ...c,
+              estadoAtencion: res.estadoAtencion,
+              asesoraAsignadaId: res.asesoraAsignadaId ?? c.asesoraAsignadaId,
+              asesoraNombre: c.asesoraNombre ?? tablero.usuarioActualNombre,
+              ultimoMensajeTexto: res.mensaje.contenido,
+              ultimoMensajeOrigen: "ASESORA_HUMANA",
+              ultimoMensajeEn: res.mensaje.creadoEn,
+              mensajesHumanoConteo: res.mensajesHumanoConteo,
+              datosVenta: datosActualizados ?? c.datosVenta,
+            }
+          : c
+      ),
+    }));
+    setMensajeInfo("💳 Link de pago generado y enviado al cliente.");
   };
 
   const handleProcesarNotaVozPanel = async (
@@ -5830,7 +6085,8 @@ export function ConsolaVentasOmnicanal({
                     />
                   )}
 
-                  {respuestasSugeridasPorAtajo.length > 0 && (
+                  {(herramientasCobroPorAtajo.length > 0 ||
+                    respuestasSugeridasPorAtajo.length > 0) && (
                     <div
                       style={{
                         position: "absolute",
@@ -5842,11 +6098,77 @@ export function ConsolaVentasOmnicanal({
                         border: "1px solid #D5CFC4",
                         borderRadius: "12px",
                         boxShadow: "0 12px 28px rgba(24, 24, 27, 0.12)",
-                        maxHeight: "230px",
+                        maxHeight: "260px",
                         overflowY: "auto",
                         zIndex: 25,
                       }}
                     >
+                      {herramientasCobroPorAtajo.map((h) => (
+                        <button
+                          key={h.clave}
+                          type="button"
+                          onClick={() => handleSeleccionarHerramientaCobro(h.clave)}
+                          style={{
+                            width: "100%",
+                            minHeight: "48px",
+                            padding: "9px 12px",
+                            border: "none",
+                            borderBottom: "1px solid #E6E2DA",
+                            background: h.clave === "LINK_PAGO" ? "#F4FAF6" : "#F8F7F4",
+                            textAlign: "left",
+                            cursor: "pointer",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "2px",
+                          }}
+                        >
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "6px" }}>
+                            <strong
+                              style={{
+                                fontSize: "0.8rem",
+                                color: "#1F1C19",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "6px",
+                              }}
+                            >
+                              {h.clave === "LINK_PAGO" ? (
+                                <Link2 size={13} color="#2F4737" />
+                              ) : (
+                                <Building2 size={13} color="#2F4737" />
+                              )}
+                              <code style={{ color: "#2F4737", fontWeight: 800 }}>{h.atajo}</code> ·{" "}
+                              {h.titulo}
+                            </strong>
+                            <span
+                              style={{
+                                fontSize: "0.66rem",
+                                fontWeight: 700,
+                                color: "#2F4737",
+                                background: "#EAF3ED",
+                                border: "1px solid #C6DEC9",
+                                borderRadius: "999px",
+                                padding: "1px 7px",
+                                flexShrink: 0,
+                              }}
+                            >
+                              Cobro
+                            </span>
+                          </div>
+                          <span
+                            style={{
+                              fontSize: "0.73rem",
+                              color: "#57524C",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              whiteSpace: "nowrap",
+                            }}
+                          >
+                            {h.descripcion}
+                          </span>
+                        </button>
+                      ))}
+
                       {respuestasSugeridasPorAtajo.map((r) => (
                         <button
                           key={r.id}
@@ -5887,6 +6209,132 @@ export function ConsolaVentasOmnicanal({
                           </span>
                         </button>
                       ))}
+                    </div>
+                  )}
+
+                  {solicitudTarjetaDetectada && (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "8px",
+                        padding: "7px 10px",
+                        borderRadius: "9px",
+                        background: "#F0FDF4",
+                        border: "1px solid #BBF7D0",
+                        color: "#166534",
+                        fontSize: "0.75rem",
+                        fontWeight: 600,
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                        <CreditCard size={15} />
+                        <span>El cliente solicitó pago con tarjeta</span>
+                      </span>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                        <button
+                          type="button"
+                          onClick={() => abrirModalLinkPago()}
+                          title="Generar y enviar link de pago con tarjeta (/LinkPago)"
+                          aria-label="Generar Link"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            padding: "5px 10px",
+                            borderRadius: "7px",
+                            border: "none",
+                            background: "#2F4737",
+                            color: "#FFFFFF",
+                            fontSize: "0.73rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          <Link2 size={13} />
+                          <span>Generar Link</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSolicitudTarjetaDescartadaMsgId(solicitudTarjetaDetectada.id)
+                          }
+                          title="Descartar sugerencia"
+                          aria-label="Descartar"
+                          style={{
+                            border: "none",
+                            background: "transparent",
+                            color: "#166534",
+                            cursor: "pointer",
+                            padding: "2px 4px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                          }}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {qrDeunaSugeridoUrl && !imagenAdjuntaAsesorUrl && !documentoAdjuntoAsesor && (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "8px",
+                        padding: "6px 10px",
+                        borderRadius: "9px",
+                        background: "#F5F3FF",
+                        border: "1px solid #DDD6FE",
+                        color: "#4C1D95",
+                        fontSize: "0.74rem",
+                        fontWeight: 600,
+                      }}
+                    >
+                      <span>¿Adjuntar también la imagen del QR DeUna?</span>
+                      <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setImagenAdjuntaAsesorUrl(qrDeunaSugeridoUrl);
+                            setQrDeunaSugeridoUrl(null);
+                          }}
+                          title="Adjuntar código QR DeUna al mensaje"
+                          aria-label="Adjuntar QR"
+                          style={{
+                            padding: "4px 9px",
+                            borderRadius: "7px",
+                            border: "none",
+                            background: "#5B21B6",
+                            color: "#FFFFFF",
+                            fontSize: "0.72rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          Adjuntar QR
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setQrDeunaSugeridoUrl(null)}
+                          title="Ocultar sugerencia QR"
+                          aria-label="Cerrar sugerencia QR"
+                          style={{
+                            border: "none",
+                            background: "transparent",
+                            color: "#4C1D95",
+                            cursor: "pointer",
+                            display: "inline-flex",
+                            alignItems: "center",
+                          }}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
                     </div>
                   )}
 
@@ -6228,6 +6676,29 @@ export function ConsolaVentasOmnicanal({
                               },
                             },
                             {
+                              clave: "link_pago",
+                              etiqueta: "Link Pago",
+                              titulo: "Generar y enviar link de pago (/LinkPago) con valor editable",
+                              esPeligro: false,
+                              icono: <Link2 size={20} color="#2F4737" />,
+                              visible: true,
+                              onAccion: () => {
+                                abrirModalLinkPago();
+                              },
+                            },
+                            {
+                              clave: "datos_pago",
+                              etiqueta: "Datos Pago",
+                              titulo:
+                                "Insertar /DatosPago (link DeUna, datos bancarios y opción de tarjeta)",
+                              esPeligro: false,
+                              icono: <Building2 size={20} color="#2F4737" />,
+                              visible: true,
+                              onAccion: () => {
+                                void aplicarComandoDatosPago();
+                              },
+                            },
+                            {
                               clave: "catalogo",
                               etiqueta: "Catálogo",
                               titulo:
@@ -6528,8 +6999,8 @@ export function ConsolaVentasOmnicanal({
                               modoNotaInterna
                                 ? "Nota interna…"
                                 : modoLayoutInbox === "movil"
-                                  ? "Mensaje o /atajo…"
-                                  : "Escribe al cliente, pega una foto (Ctrl+V) o usa /saludo, /transferencia…"
+                                  ? "Mensaje, /LinkPago o /DatosPago…"
+                                  : "Escribe al cliente, pega una foto (Ctrl+V) o usa /LinkPago, /DatosPago…"
                             }
                             style={{
                               flex: 1,
@@ -6735,6 +7206,9 @@ export function ConsolaVentasOmnicanal({
                     }}
                     onNotificar={(aviso) => {
                       setMensajeInfo(aviso);
+                    }}
+                    onAbrirLinkPago={(montoActual) => {
+                      abrirModalLinkPago(montoActual > 0 ? montoActual : null);
                     }}
                   />
 
@@ -7416,6 +7890,23 @@ export function ConsolaVentasOmnicanal({
         onCerrar={() => setModalCatalogoChatAbierto(false)}
         onInsertarEnCompositor={handleInsertarProductoCatalogoEnCompositor}
         onEnviarDirecto={(sel) => void handleEnviarProductoCatalogoDirecto(sel)}
+      />
+
+      {/* Modal generador de Link de Pago desde Chat (/LinkPago) */}
+      <ModalLinkPagoChat
+        abierto={modalLinkPagoAbierto}
+        negocio={negNorm}
+        conversacion={conversacionActiva}
+        mensajes={mensajesActivos}
+        montoInicialOverride={montoLinkPagoOverride}
+        esMovil={modoLayoutInbox === "movil"}
+        enviandoChat={enviandoMensaje}
+        onCerrar={() => {
+          setModalLinkPagoAbierto(false);
+          setMontoLinkPagoOverride(null);
+        }}
+        onEnviarLinkAlChat={handleEnviarLinkPagoDesdeModal}
+        onInsertarEnCompositor={handleInsertarLinkPagoEnCompositor}
       />
 
       {/* Modal de administración de etiquetas (restringido a Admin y Operador de la tienda) */}

@@ -1,6 +1,8 @@
 "use server";
 
 // Acciones del checkout con PLUX (TRQ-ADM-004).
+import { randomUUID } from "node:crypto";
+import { headers } from "next/headers";
 import { z } from "zod";
 import { crearClienteAdmin, crearClienteServidor } from "@eco/supabase/servidor";
 import {
@@ -15,7 +17,10 @@ import {
   type ConfiguracionEmisorSri,
   type LineaFacturaSriResumen,
 } from "./ride-sri";
-import { verificarOrdenRespaldoServidor } from "./token-orden-firmada";
+import {
+  firmarOrdenRespaldoServidor,
+  verificarOrdenRespaldoServidor,
+} from "./token-orden-firmada";
 import { obtenerConfiguracionTiendaCheckoutAction } from "./acciones-tienda-checkout";
 import { normalizarIdentificadorNegocio } from "./utils/negocio";
 
@@ -1513,6 +1518,364 @@ export async function confirmarPagoPluxAction(entrada: {
       ultimosDigitos,
       facturaElectronica: facturaEmitida,
       emisorFactura,
+    },
+  };
+}
+
+const esquemaCrearLinkPagoChat = z.object({
+  negocio: z.string().min(2).default("tinkay"),
+  montoTotal: z.coerce.number().min(0.5, "El valor mínimo es $0.50 USD.").max(50000, "El valor máximo es $50,000.00 USD."),
+  concepto: z.string().trim().min(2, "Ingresa un concepto o detalle del cobro.").max(240),
+  ivaPorcentaje: z.coerce.number().refine((v) => v === 0 || v === 15, {
+    message: "El IVA debe ser 0% o 15%.",
+  }).default(0),
+  clienteNombre: z.string().trim().max(160).optional().default(""),
+  clienteTelefono: z.string().trim().max(40).optional().default(""),
+  clienteCorreo: z.string().trim().max(160).optional().default(""),
+  conversacionId: z.string().uuid().optional().nullable(),
+  codigoPedido: z.string().trim().max(60).optional().nullable(),
+  originUrl: z.string().trim().max(300).optional().nullable(),
+});
+
+export interface LinkPagoChatCreado {
+  id: string;
+  codigo: string;
+  tokenAprobacion: string;
+  urlPago: string;
+  respaldoFirmado: string;
+  montoTotal: number;
+  subtotal: number;
+  iva: number;
+  concepto: string;
+  tarjetaHabilitada: boolean;
+}
+
+function resolverOrigenPublicoLink(negocio: string, originUrl?: string | null, hostHeader?: string | null, protoHeader?: string | null): string {
+  const candidato = (originUrl || "").trim().replace(/\/+$/, "");
+  if (/^https?:\/\/[^/\s]+$/i.test(candidato)) {
+    return candidato;
+  }
+
+  const host = (hostHeader || "").trim();
+  if (host) {
+    const proto = (protoHeader || (host.includes("localhost") ? "http" : "https")).split(",")[0]?.trim() || "https";
+    return `${proto}://${host}`;
+  }
+
+  const envUrl = (process.env.NEXT_PUBLIC_SITE_URL || "").trim().replace(/\/+$/, "");
+  if (/^https?:\/\/[^/\s]+$/i.test(envUrl)) {
+    return envUrl;
+  }
+
+  if (negocio === "tinkay") return "https://tinkay-web.vercel.app";
+  if (negocio === "margaritas") return "https://margaritas-web.vercel.app";
+  if (negocio === "fastfix") return "https://fastfix-web.vercel.app";
+  return "https://tranqi-web.vercel.app";
+}
+
+/**
+ * Crea un link de pago seguro (`/pagar/[token]`) desde el Chat Omnicanal (`/LinkPago`),
+ * persistido en `comun_comercio.com_proforma` + `com_proforma_item` con monto editable,
+ * listo para cobrar con PLUX (tarjeta de crédito/débito) o Transferencia / DeUna.
+ */
+export async function crearLinkPagoChatAction(
+  entrada: z.input<typeof esquemaCrearLinkPagoChat>,
+): Promise<Resultado<LinkPagoChatCreado>> {
+  const v = esquemaCrearLinkPagoChat.safeParse(entrada);
+  if (!v.success) {
+    return {
+      ok: false,
+      error: v.error.issues[0]?.message || "Verifica el valor y concepto del link de pago.",
+    };
+  }
+
+  const negPrincipal = normalizarIdentificadorNegocio(v.data.negocio).principal;
+  const supabase: any = await crearClienteServidor();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { ok: false, error: "Debes iniciar sesión como asesor u operador para generar links de pago." };
+  }
+
+  const montoTotal = Math.round(v.data.montoTotal * 100) / 100;
+  const ivaPct = v.data.ivaPorcentaje === 15 ? 15 : 0;
+  const subtotal = ivaPct > 0 ? Math.round((montoTotal / 1.15) * 100) / 100 : montoTotal;
+  const iva = ivaPct > 0 ? Math.max(0, Math.round((montoTotal - subtotal) * 100) / 100) : 0;
+  const baseGravadaCentavos = ivaPct > 0 ? Math.round(subtotal * 100) : 0;
+  const base0Centavos = ivaPct > 0 ? 0 : Math.round(montoTotal * 100);
+
+  const clienteNombre = v.data.clienteNombre || "Cliente Chat";
+  const clienteTelefono = v.data.clienteTelefono || "";
+  const clienteCorreo = v.data.clienteCorreo || "";
+  const concepto = v.data.concepto;
+
+  const [cfgTienda, pasarelasRes] = await Promise.all([
+    obtenerConfiguracionTiendaCheckoutAction(negPrincipal).catch(() => null),
+    obtenerPasarelasCheckoutAction(negPrincipal).catch(() => ({ ok: false as const, error: "" })),
+  ]);
+  const tarjetaHabilitada =
+    cfgTienda?.tarjetaCreditoHabilitada !== false &&
+    Boolean(pasarelasRes.ok && pasarelasRes.data.some((p) => p.pasarela === "PLUX"));
+
+  let idCreado = "";
+  let codigoCreado = "";
+  let tokenAprobacion = "";
+  let subtotalFinal = subtotal;
+  let ivaFinal = iva;
+  let totalFinal = montoTotal;
+  let base0Final = base0Centavos;
+  let baseGravFinal = baseGravadaCentavos;
+
+  // 1. Vía principal: RPC transaccional SECURITY DEFINER
+  const { data: resRpc, error: errRpc } = await supabase
+    .schema("comun_comercio")
+    .rpc("com_fn_crear_link_pago_chat", {
+      p_negocio: negPrincipal,
+      p_monto_total: montoTotal,
+      p_concepto: concepto,
+      p_iva_porcentaje: ivaPct,
+      p_cliente_nombre: clienteNombre,
+      p_cliente_telefono: clienteTelefono,
+      p_cliente_correo: clienteCorreo,
+      p_conversacion_id: v.data.conversacionId ?? null,
+      p_codigo_pedido: v.data.codigoPedido ?? null,
+      p_detalle_extra: {
+        generado_desde: "CHAT_OMNICANAL",
+      },
+    });
+
+  if (!errRpc && resRpc?.ok && resRpc?.token_aprobacion) {
+    idCreado = String(resRpc.id);
+    codigoCreado = String(resRpc.codigo);
+    tokenAprobacion = String(resRpc.token_aprobacion);
+    subtotalFinal = Number(resRpc.subtotal ?? subtotal);
+    ivaFinal = Number(resRpc.iva ?? iva);
+    totalFinal = Number(resRpc.total ?? montoTotal);
+    base0Final = Number(resRpc.base_iva_0_centavos ?? base0Centavos);
+    baseGravFinal = Number(resRpc.base_iva_gravada_centavos ?? baseGravadaCentavos);
+  } else if (!errRpc && resRpc?.ok === false) {
+    return {
+      ok: false,
+      error: String(resRpc.error || "No tienes permisos para crear un link de pago."),
+    };
+  } else {
+    // 2. Respaldo resiliente si la migración RPC aún no se aplicó en Supabase remoto
+    const admin: any = crearClienteAdmin();
+    if (!admin) {
+      return {
+        ok: false,
+        error:
+          errRpc?.message ||
+          "Aún no se ha ejecutado la migración SQL de links de pago en Supabase (`20261122000002_rpc_crear_link_pago_chat.sql`).",
+      };
+    }
+
+    // Verificar autorización del operador/admin antes de escribir vía cliente admin
+    const { data: esOp } = await supabase
+      .schema("comun_seguridad")
+      .rpc("seg_fn_es_operador_o_admin_negocio", { p_negocio: negPrincipal });
+    if (!esOp) {
+      return {
+        ok: false,
+        error: "No tienes permisos de operador o administrador en este negocio.",
+      };
+    }
+
+    const tokenNuevo = randomUUID().replace(/-/g, "");
+    const impuestoTag = ivaPct > 0 ? "IVA_15" : "IVA_0";
+    const compradorObj = {
+      nombreCompleto: clienteNombre,
+      identificacion: "9999999999999",
+      correo: clienteCorreo,
+      whatsapp: clienteTelefono,
+      telefono: clienteTelefono,
+      autorizaWhatsapp: true,
+    };
+
+    const { data: filaIns, error: errIns } = await admin
+      .schema("comun_comercio")
+      .from("com_proforma")
+      .insert({
+        prf_negocio: negPrincipal,
+        prf_cliente_nombre: clienteNombre,
+        prf_cliente_contacto: compradorObj,
+        prf_estado: "PENDIENTE_PAGO",
+        prf_subtotal: subtotal,
+        prf_descuento: 0,
+        prf_iva: iva,
+        prf_total: montoTotal,
+        prf_token_aprobacion: tokenNuevo,
+        prf_vigencia_dias: 7,
+        prf_observaciones: concepto,
+        prf_detalle_proforma: {
+          tipo_origen: "LINK_PAGO_CHAT",
+          estado: "PENDIENTE_PAGO",
+          concepto,
+          conversacion_id: v.data.conversacionId ?? null,
+          codigo_pedido_vinculado: v.data.codigoPedido || null,
+          creado_por: user.id,
+          generado_desde: "CHAT_OMNICANAL",
+          comprador: compradorObj,
+          subtotal_base_imponible: subtotal,
+          total_iva: iva,
+          total_flete: 0,
+          total_pagar: montoTotal,
+          base_iva_0_centavos: base0Centavos,
+          base_iva_gravada_centavos: baseGravadaCentavos,
+          monto_abonado_usd: 0,
+          saldo_pendiente_usd: montoTotal,
+          items: [
+            {
+              descripcion: concepto,
+              producto_nombre: concepto,
+              cantidad: 1,
+              precio_unitario: montoTotal,
+              impuesto: impuestoTag,
+              total_linea: montoTotal,
+            },
+          ],
+        },
+      })
+      .select("prf_id, prf_secuencial, prf_token_aprobacion")
+      .single();
+
+    if (errIns || !filaIns) {
+      return {
+        ok: false,
+        error: `No se pudo registrar el link de pago: ${errIns?.message || "Error inesperado"}`,
+      };
+    }
+
+    idCreado = String(filaIns.prf_id);
+    tokenAprobacion = String(filaIns.prf_token_aprobacion || tokenNuevo);
+    codigoCreado = `${prefijoPluxNegocio(negPrincipal)}-LNK-${String(filaIns.prf_secuencial || 1).padStart(4, "0")}`;
+
+    await admin
+      .schema("comun_comercio")
+      .from("com_proforma")
+      .update({
+        prf_detalle_proforma: {
+          tipo_origen: "LINK_PAGO_CHAT",
+          estado: "PENDIENTE_PAGO",
+          codigo_proforma: codigoCreado,
+          codigo_orden: codigoCreado,
+          grupo_proforma_id: idCreado,
+          concepto,
+          conversacion_id: v.data.conversacionId ?? null,
+          codigo_pedido_vinculado: v.data.codigoPedido || null,
+          creado_por: user.id,
+          generado_desde: "CHAT_OMNICANAL",
+          comprador: compradorObj,
+          subtotal_base_imponible: subtotal,
+          total_iva: iva,
+          total_flete: 0,
+          total_pagar: montoTotal,
+          base_iva_0_centavos: base0Centavos,
+          base_iva_gravada_centavos: baseGravadaCentavos,
+          monto_abonado_usd: 0,
+          saldo_pendiente_usd: montoTotal,
+          items: [
+            {
+              descripcion: concepto,
+              producto_nombre: concepto,
+              cantidad: 1,
+              precio_unitario: montoTotal,
+              impuesto: impuestoTag,
+              total_linea: montoTotal,
+            },
+          ],
+        },
+      })
+      .eq("prf_id", idCreado);
+
+    await admin
+      .schema("comun_comercio")
+      .from("com_proforma_item")
+      .insert({
+        pfi_negocio: negPrincipal,
+        pfi_proforma_id: idCreado,
+        pfi_es_item_libre: true,
+        pfi_descripcion: concepto,
+        pfi_cantidad: 1,
+        pfi_precio_unitario: montoTotal,
+        pfi_descuento: 0,
+        pfi_impuesto: impuestoTag,
+        pfi_total_linea: montoTotal,
+        pfi_detalle_item: { origen: "LINK_PAGO_CHAT", iva_porcentaje: ivaPct },
+      });
+  }
+
+  let hostHeader: string | null = null;
+  let protoHeader: string | null = null;
+  try {
+    const h = await headers();
+    hostHeader = h.get("x-forwarded-host") || h.get("host");
+    protoHeader = h.get("x-forwarded-proto");
+  } catch {
+    // headers() puede no estar disponible fuera de request HTTP
+  }
+
+  const origenPublico = resolverOrigenPublicoLink(
+    negPrincipal,
+    v.data.originUrl,
+    hostHeader,
+    protoHeader,
+  );
+  const urlPago = `${origenPublico}/pagar/${tokenAprobacion}`;
+
+  const respaldoFirmado = firmarOrdenRespaldoServidor({
+    v: 1,
+    id: idCreado,
+    neg: negPrincipal,
+    cod: codigoCreado,
+    ori: "LINK_PAGO_CHAT",
+    est: "PENDIENTE_PAGO",
+    vig: 7,
+    sub: subtotalFinal,
+    des: 0,
+    iva: ivaFinal,
+    fle: 0,
+    tot: totalFinal,
+    b0c: base0Final,
+    bgc: baseGravFinal,
+    iat: new Date().toISOString(),
+    cmp: {
+      nom: clienteNombre,
+      ide: "9999999999999",
+      cor: clienteCorreo,
+      tel: clienteTelefono,
+    },
+    ubi: {
+      ret: false,
+      dir: "Quito, Ecuador",
+      ref: "",
+    },
+    itm: [
+      {
+        dsc: concepto,
+        can: 1,
+        pun: totalFinal,
+        imp: ivaPct > 0 ? "IVA_15" : "IVA_0",
+        tot: totalFinal,
+      },
+    ],
+  });
+
+  return {
+    ok: true,
+    data: {
+      id: idCreado,
+      codigo: codigoCreado,
+      tokenAprobacion,
+      urlPago,
+      respaldoFirmado,
+      montoTotal: totalFinal,
+      subtotal: subtotalFinal,
+      iva: ivaFinal,
+      concepto,
+      tarjetaHabilitada,
     },
   };
 }

@@ -4887,6 +4887,7 @@ export async function confirmarOrdenTransferenciaProformaAction(entrada: {
       await persistirComprobanteEnDetalle();
       await notificarTransferenciaStaff();
       revalidatePath(`/proforma/${tokenLimpio}`);
+      revalidatePath(`/pagar/${tokenLimpio}`);
       revalidatePath("/panel");
       revalidatePath("/panel/pedidos");
       return { ok: true };

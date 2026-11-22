@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  construirMensajeDatosPagoChat,
   construirUrlWhatsappTienda,
   crearConfiguracionTiendaCheckoutPorDefecto,
+  detectarSolicitudPagoTarjetaEnMensaje,
   normalizarConfiguracionTiendaCheckout,
+  parsearComandoChatPago,
 } from "./configuracion-tienda-checkout";
 
 describe("configuracion-tienda-checkout", () => {
@@ -79,5 +82,77 @@ describe("configuracion-tienda-checkout", () => {
       tarjetaCreditoHabilitada: true,
     });
     expect(habilitada.tarjetaCreditoHabilitada).toBe(true);
+  });
+
+  it("normaliza linkDeuna y construye el mensaje /DatosPago con DeUna, bancos y opción de tarjeta", () => {
+    const cfg = normalizarConfiguracionTiendaCheckout("tinkay", {
+      tarjetaCreditoHabilitada: true,
+      transferencia: {
+        linkDeuna: "  https://deuna.app/pagar/tinkay-uio  ",
+      },
+    });
+    expect(cfg.transferencia.linkDeuna).toBe("https://deuna.app/pagar/tinkay-uio");
+
+    const msgConTarjeta = construirMensajeDatosPagoChat(cfg, {
+      montoTotal: 45.5,
+      concepto: "Bouquet 24 rosas",
+    });
+    expect(msgConTarjeta).toContain("$45.50 USD (Bouquet 24 rosas)");
+    expect(msgConTarjeta).toContain("https://deuna.app/pagar/tinkay-uio");
+    expect(msgConTarjeta).toContain("Banco Pichincha");
+    expect(msgConTarjeta).toContain("2211739080");
+    expect(msgConTarjeta).toContain('*"TARJETA"*');
+
+    const cfgSinTarjeta = normalizarConfiguracionTiendaCheckout("tinkay", {
+      tarjetaCreditoHabilitada: false,
+    });
+    const msgSinTarjeta = construirMensajeDatosPagoChat(cfgSinTarjeta);
+    expect(msgSinTarjeta).not.toContain('*"TARJETA"*');
+    expect(msgSinTarjeta).toContain("código QR");
+  });
+
+  it("parsea comandos /LinkPago (con monto opcional) y /DatosPago", () => {
+    expect(parsearComandoChatPago("/LinkPago")).toEqual({
+      tipo: "LINK_PAGO",
+      montoExplicito: null,
+    });
+    expect(parsearComandoChatPago("/linkpago 45")).toEqual({
+      tipo: "LINK_PAGO",
+      montoExplicito: 45,
+    });
+    expect(parsearComandoChatPago("/LinkPago $45.50")).toEqual({
+      tipo: "LINK_PAGO",
+      montoExplicito: 45.5,
+    });
+    expect(parsearComandoChatPago("/LinkPago 38,75")).toEqual({
+      tipo: "LINK_PAGO",
+      montoExplicito: 38.75,
+    });
+    expect(parsearComandoChatPago("/DatosPago")).toEqual({ tipo: "DATOS_PAGO" });
+    expect(parsearComandoChatPago("/datospago")).toEqual({ tipo: "DATOS_PAGO" });
+    expect(parsearComandoChatPago("Hola, buenos días")).toBeNull();
+  });
+
+  it("detecta solicitudes de pago con tarjeta sin confundirlas con tarjetas de dedicatoria floral", () => {
+    expect(detectarSolicitudPagoTarjetaEnMensaje("TARJETA")).toBe(true);
+    expect(detectarSolicitudPagoTarjetaEnMensaje("Con tarjeta por favor")).toBe(true);
+    expect(detectarSolicitudPagoTarjetaEnMensaje("Quiero pagar con tarjeta de crédito")).toBe(true);
+    expect(detectarSolicitudPagoTarjetaEnMensaje("Me envías el link de pago?")).toBe(true);
+    expect(detectarSolicitudPagoTarjetaEnMensaje("¿Me pasas el enlace de tarjeta?")).toBe(true);
+    expect(detectarSolicitudPagoTarjetaEnMensaje("Puedo pagar con Visa?")).toBe(true);
+
+    // Falsos positivos de floristería (tarjeta de dedicatoria)
+    expect(
+      detectarSolicitudPagoTarjetaEnMensaje("En la tarjeta pon Feliz Cumpleaños mamá")
+    ).toBe(false);
+    expect(
+      detectarSolicitudPagoTarjetaEnMensaje("Mensaje de la tarjeta: Con mucho cariño")
+    ).toBe(false);
+    expect(
+      detectarSolicitudPagoTarjetaEnMensaje("Firma de la tarjeta: Tu hijo Carlos")
+    ).toBe(false);
+    expect(
+      detectarSolicitudPagoTarjetaEnMensaje("Hola, cuánto cuesta el ramo de girasoles?")
+    ).toBe(false);
   });
 });

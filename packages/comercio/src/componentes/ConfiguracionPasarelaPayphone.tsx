@@ -1169,6 +1169,37 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
               ))}
             </div>
 
+            <div style={{ marginBottom: "14px" }}>
+              <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#57524C", marginBottom: "4px" }}>
+                Link de Pago Directo DeUna (URL)
+              </label>
+              <input
+                type="url"
+                placeholder="https://deuna.app/..."
+                value={configCheckout.transferencia.linkDeuna || ""}
+                onChange={(e) =>
+                  setConfigCheckout((prev) => ({
+                    ...prev,
+                    transferencia: {
+                      ...prev.transferencia,
+                      linkDeuna: e.target.value.trim() ? e.target.value : null,
+                    },
+                  }))
+                }
+                style={{
+                  width: "100%",
+                  padding: "8px 10px",
+                  borderRadius: "7px",
+                  border: "1px solid #D5CFC4",
+                  boxSizing: "border-box",
+                  fontSize: "0.83rem",
+                }}
+              />
+              <span style={{ display: "block", marginTop: "4px", fontSize: "0.72rem", color: "#847D74" }}>
+                Se incluye automáticamente al usar <code>/DatosPago</code> en el chat y como botón rápido en los enlaces <code>/pagar/...</code>.
+              </span>
+            </div>
+
             <div style={{ display: "flex", flexWrap: "wrap", gap: "14px", alignItems: "center", marginBottom: "14px" }}>
               <div>
                 <label style={{ display: "block", fontSize: "0.76rem", fontWeight: 700, color: "#57524C", marginBottom: "4px" }}>

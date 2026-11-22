@@ -28,7 +28,7 @@ Este documento describe el **comportamiento compartido por los 4 productos** (Tr
 | **`PLT-007`** | Catálogo Geográfico (Ecuador 24 Provincias) | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-008`** | Configuración de Negocio, WhatsApp Oficial de Tienda & SMTP en Vault | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-009`** | Catálogo Comercial Unificado (Productos, Pago Directo Floristería, Compra Rápida < $50, Transferencia + QR DeUna + Comprobantes, Sets/Combos, Proformas Eventos y Pasarela PLUX / Payphone) | ✅ Implementado | **100%** | Kleber Toapanta |
-| **`PLT-010`** | **Centro de Ventas Omnicanal & Reemplazo de ManyChat (Fase 1 100% Operativa con Chat Web HITL, Trazabilidad IA vs. Humano, Etiquetas, `/Atajos`, Usuarios y Compras/Proformas Web 360°; Fases 2-4 WhatsApp YCloud, Meta Graph API IG/FB y TikTok planificadas)** | 🟡 En Desarrollo | **80%** | Kleber Toapanta / Jesus Navarrete |
+| **`PLT-010`** | **Centro de Ventas Omnicanal & Reemplazo de ManyChat (Fase 1-2 Operativas con Chat Web HITL + WhatsApp YCloud, Trazabilidad IA vs. Humano, Etiquetas, `/Atajos`, Herramientas de Cobro `/LinkPago` y `/DatosPago` con Link DeUna + Bancos + Tarjeta PLUX, Campos de Venta a Taller, Usuarios y Compras/Proformas Web 360°; Meta Graph API IG/FB y TikTok planificadas)** | 🟡 En Desarrollo | **88%** | Kleber Toapanta / Jesus Navarrete |
 | **`PLT-011`** | Sistema de Widgets por Rol & DataGrids 2 Capas | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-012`** | **Baja de Cuenta y Derecho al Olvido** | ✅ Implementado | **100%** | Kleber Toapanta |
 | **`PLT-013`** | Notificaciones Multicanal (Push/Email/In-App) | ✅ Implementado | **100%** | Kleber Toapanta |
@@ -651,7 +651,11 @@ Ecosistema integral de atención conversacional y distribución comercial omnica
    - Dispone de 3 paneles:
      - **Bandeja de Entrada:** Filtros rápidos (*Requiere Atención / Escalados*, *Mis Chats*, *Bot Activo*, *Cerrados*), badges de no leídos y tiempo de espera.
      - **Visor de Conversación en Vivo:** Historial cronológico diferenciando burbujas del cliente, del bot ARIA y del operador humano; botones de acción rápida **[ Tomar Control ]** y **[ Reactivar Bot ]**; input para despacho de mensajes a WhatsApp; selector de respuestas rápidas (plantillas).
-     - **Ficha de Pedido y Operador:** Panel lateral con datos del contacto, asignación de asesora para comisiones netas, generación directa de link de pago (Payphone/Paymentez) y pase a operaciones/taller.
+     - **Ficha de Pedido y Operador:** Panel lateral con datos del contacto, asignación de asesora para comisiones netas, generación directa de link de pago (`/LinkPago` → `/pagar/[token]` vía PLUX o Transferencia/DeUna) y pase a operaciones/taller.
+   - **Comandos Rápidos de Cobro Integrados (`/LinkPago` y `/DatosPago`):**
+     - **`/LinkPago` (y botón `Link Pago` en `+ Opciones` / `Campos de Venta`):** Permite generar enlaces seguros de cobro (`/pagar/[token]`) respaldados transaccionalmente en `comun_comercio.com_proforma` vía `com_fn_crear_link_pago_chat`, prellenando automáticamente el valor desde los campos de venta del chat (o argumento inline `/LinkPago 45.50`) de forma 100% editable, enviando el link al cliente por Chat Web o WhatsApp YCloud, actualizando el estado de cobro a `PAGO_SOLICITADO` y respetando el interruptor maestro de tarjeta de crédito (`PLT-006`).
+     - **`/DatosPago` (y botón `Datos Pago` en `+ Opciones`):** Inserta los medios de pago vigentes del negocio desde `cfg_negocio.cfg_detalle_configuracion.tienda_checkout`: enlace directo **DeUna** (`linkDeuna`), imagen QR DeUna opcional, cuentas bancarias con titular/cédula/correo y la invitación para solicitar pago con tarjeta de crédito/débito (solo cuando `tarjetaCreditoHabilitada` está activo).
+     - **Detección Contextual de Solicitud de Tarjeta:** Cuando el cliente responde solicitando pago con tarjeta o enlace de pago (discriminando referencias a tarjetas de dedicatoria floral), la consola presenta un acceso directo de 1 clic (`Generar Link`) para abrir `/LinkPago` prellenado con el monto del chat.
 5. **Feed Automatizado para Meta Commerce Manager:**
    - Cada negocio expone un feed estructurado (XML/JSON) que Meta consulta periódicamente para sincronizar el catálogo de productos con WhatsApp Business, Facebook e Instagram.
 6. **Botón "Comprar por WhatsApp":**

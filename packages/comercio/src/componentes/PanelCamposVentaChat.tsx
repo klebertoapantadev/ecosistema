@@ -6,6 +6,7 @@ import {
   Check,
   ExternalLink,
   Hammer,
+  Link2,
   Loader2,
   MapPin,
   Save,
@@ -40,6 +41,7 @@ export interface PropsPanelCamposVentaChat {
   mensajes: MensajeOmnicanal[];
   onGuardado?: (datos: DatosVentaConversacion, remitenteNombre?: string) => void;
   onNotificar?: (mensaje: string) => void;
+  onAbrirLinkPago?: (montoActual: number, datosActuales: DatosVentaConversacion) => void;
 }
 
 function fechaIsoOffsetDias(dias: number): string {
@@ -54,6 +56,7 @@ export function PanelCamposVentaChat({
   mensajes,
   onGuardado,
   onNotificar,
+  onAbrirLinkPago,
 }: PropsPanelCamposVentaChat) {
   const [seccion, setSeccion] = useState<"pedido" | "entrega" | "tarjeta">("pedido");
   const [form, setForm] = useState<DatosVentaConversacion>(() =>
@@ -301,19 +304,45 @@ export function PanelCamposVentaChat({
         <strong style={{ fontSize: "0.79rem", color: "#221E1B" }}>
           Campos de Venta
         </strong>
-        <span
-          style={{
-            padding: "2px 8px",
-            borderRadius: "999px",
-            background: "#F4F2EE",
-            border: "1px solid #E6E2DA",
-            color: totalCalculado > 0 ? "#221E1B" : "#847D74",
-            fontSize: "0.74rem",
-            fontWeight: 700,
-          }}
-        >
-          Total: ${totalCalculado.toFixed(2)}
-        </span>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "5px" }}>
+          <span
+            style={{
+              padding: "2px 8px",
+              borderRadius: "999px",
+              background: "#F4F2EE",
+              border: "1px solid #E6E2DA",
+              color: totalCalculado > 0 ? "#221E1B" : "#847D74",
+              fontSize: "0.74rem",
+              fontWeight: 700,
+            }}
+          >
+            Total: ${totalCalculado.toFixed(2)}
+          </span>
+          {onAbrirLinkPago && (
+            <button
+              type="button"
+              onClick={() => onAbrirLinkPago(totalCalculado, form)}
+              title="Generar y enviar Link de Pago con este total (/LinkPago)"
+              aria-label="Link Pago"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+                padding: "3px 8px",
+                borderRadius: "999px",
+                border: "1px solid #C6DEC9",
+                background: "#EAF3ED",
+                color: "#1F352C",
+                fontSize: "0.71rem",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              <Link2 size={12} />
+              <span>Link Pago</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Pestañas compactas de las 3 secciones depuradas */}
