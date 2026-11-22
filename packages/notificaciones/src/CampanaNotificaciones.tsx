@@ -153,9 +153,24 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
   }, [negocio, dispararAlertaEmergenteSiNueva]);
 
   React.useEffect(() => {
+    let ultimaConsultaMs = Date.now();
     cargarNotificaciones();
-    const interval = setInterval(cargarNotificaciones, 8000);
-    const alRefrescar = () => cargarNotificaciones();
+    const consultarSiVisible = () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      ultimaConsultaMs = Date.now();
+      cargarNotificaciones();
+    };
+    const interval = setInterval(consultarSiVisible, 60000);
+    const alCambiarVisibilidad = () => {
+      if (document.visibilityState === "visible" && Date.now() - ultimaConsultaMs >= 10000) {
+        ultimaConsultaMs = Date.now();
+        cargarNotificaciones();
+      }
+    };
+    const alRefrescar = () => {
+      ultimaConsultaMs = Date.now();
+      cargarNotificaciones();
+    };
     const alMarcarLeidaExterna = (ev: Event) => {
       const det = (ev as CustomEvent<{ notId?: string }>).detail;
       const notIdExt = det?.notId?.trim();
@@ -182,6 +197,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
     if (typeof window !== "undefined") {
       window.addEventListener("eco:refrescar-notificaciones", alRefrescar);
       window.addEventListener("eco:marcar-notificacion-leida", alMarcarLeidaExterna);
+      document.addEventListener("visibilitychange", alCambiarVisibilidad);
 
       // Si el usuario ingresó haciendo clic en una notificación Push con ?not_id=..., marcarla como leída de inmediato
       try {
@@ -210,6 +226,7 @@ export function CampanaNotificaciones({ negocio, variante = "oscura", alAlertaEn
       if (typeof window !== "undefined") {
         window.removeEventListener("eco:refrescar-notificaciones", alRefrescar);
         window.removeEventListener("eco:marcar-notificacion-leida", alMarcarLeidaExterna);
+        document.removeEventListener("visibilitychange", alCambiarVisibilidad);
       }
     };
   }, [cargarNotificaciones, negocio]);

@@ -335,9 +335,35 @@ export function WidgetNotificacionesCliente({ negocio = "tranqi", esAdmin = fals
   };
 
   useEffect(() => {
+    let ultimaConsultaMs = Date.now();
     cargarNotificaciones();
-    const interval = setInterval(cargarNotificaciones, 6000);
-    return () => clearInterval(interval);
+    const consultarSiVisible = () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      ultimaConsultaMs = Date.now();
+      cargarNotificaciones();
+    };
+    const interval = setInterval(consultarSiVisible, 60000);
+    const alCambiarVisibilidad = () => {
+      if (document.visibilityState === "visible" && Date.now() - ultimaConsultaMs >= 10000) {
+        ultimaConsultaMs = Date.now();
+        cargarNotificaciones();
+      }
+    };
+    const alRefrescar = () => {
+      ultimaConsultaMs = Date.now();
+      cargarNotificaciones();
+    };
+    if (typeof window !== "undefined") {
+      document.addEventListener("visibilitychange", alCambiarVisibilidad);
+      window.addEventListener("eco:refrescar-notificaciones", alRefrescar);
+    }
+    return () => {
+      clearInterval(interval);
+      if (typeof window !== "undefined") {
+        document.removeEventListener("visibilitychange", alCambiarVisibilidad);
+        window.removeEventListener("eco:refrescar-notificaciones", alRefrescar);
+      }
+    };
   }, []);
 
   const ahora = Date.now();

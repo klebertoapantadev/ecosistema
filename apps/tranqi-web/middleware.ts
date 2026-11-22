@@ -12,5 +12,11 @@ export async function middleware(request: NextRequest) {
 // /recuperar, /restablecer-contrasena, /verificar-correo y /compartir (publica
 // por token).
 export const config = {
-  matcher: ["/panel/:path*", "/auth/:path*", "/api/:path*", "/bienvenida/:path*"],
+  matcher: [
+    "/panel/:path*",
+    "/auth/:path*",
+    "/api/:path*",
+    "/bienvenida/:path*",
+    { source: "/", has: [{ type: "query", key: "code" }] },
+  ],
 };

@@ -396,11 +396,32 @@ export function ChatAriaFlotante() {
       }
     };
 
-    sincronizarMensajesAsesora();
-    const intervalo = window.setInterval(sincronizarMensajesAsesora, 4500);
+    let ultimoRespaldoMs = Date.now();
+    void sincronizarMensajesAsesora();
+
+    // Realtime entrega mensajes humanos al instante; el polling actúa solo como
+    // respaldo (60 s si Realtime está conectado, 12 s si no) y se pausa si la pestaña está oculta.
+    const intervalo = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+      const intervaloObjetivoMs = realtimeConectadoRef.current ? 60000 : 12000;
+      if (Date.now() - ultimoRespaldoMs >= intervaloObjetivoMs) {
+        ultimoRespaldoMs = Date.now();
+        void sincronizarMensajesAsesora();
+      }
+    }, 12000);
+
+    const alCambiarVisibilidad = () => {
+      if (document.visibilityState === 'visible' && Date.now() - ultimoRespaldoMs >= 10000) {
+        ultimoRespaldoMs = Date.now();
+        void sincronizarMensajesAsesora();
+      }
+    };
+    document.addEventListener('visibilitychange', alCambiarVisibilidad);
+
     return () => {
       cancelado = true;
       window.clearInterval(intervalo);
+      document.removeEventListener('visibilitychange', alCambiarVisibilidad);
     };
   }, [abierto]);
 

@@ -812,6 +812,8 @@ export function PantallaTvTaller({
   // Suscripción Supabase Realtime (órdenes + config remota + broadcast) + respaldo 45s
   useEffect(() => {
     const supabase = crearClienteNavegador();
+    let realtimeActivo = false;
+    let ultimoRespaldoMs = Date.now();
     const canal = supabase
       .channel(`tv_taller_live_${negNorm}`)
       .on(
@@ -823,6 +825,7 @@ export function PantallaTvTaller({
           filter: `ota_negocio=eq.${negNorm}`,
         },
         () => {
+          ultimoRespaldoMs = Date.now();
           void recargarTablero(true);
         }
       )
@@ -834,6 +837,7 @@ export function PantallaTvTaller({
           table: "cfg_negocio",
         },
         () => {
+          ultimoRespaldoMs = Date.now();
           void recargarTablero(true);
         }
       )
@@ -846,23 +850,46 @@ export function PantallaTvTaller({
         },
         () => {
           if (esOperadorOAdmin) {
+            ultimoRespaldoMs = Date.now();
             void recargarTablero(true);
           }
         }
       )
       .on("broadcast", { event: "nuevo_pedido_taller" }, () => {
+        ultimoRespaldoMs = Date.now();
         void recargarTablero(true);
       })
       .subscribe((status) => {
-        setConectado(status === "SUBSCRIBED");
+        realtimeActivo = status === "SUBSCRIBED";
+        setConectado(realtimeActivo);
       });
 
+    // Respaldo adaptativo para TV/kiosco: Realtime entrega cambios al instante;
+    // cada 3 min si Realtime está activo, 45 s si se desconecta; pausado si la pestaña está oculta.
     const intervalo = setInterval(() => {
-      void recargarTablero(true);
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      const intervaloObjetivoMs = realtimeActivo ? 180000 : 45000;
+      if (Date.now() - ultimoRespaldoMs >= intervaloObjetivoMs) {
+        ultimoRespaldoMs = Date.now();
+        void recargarTablero(true);
+      }
     }, 45000);
+
+    const alCambiarVisibilidad = () => {
+      if (document.visibilityState === "visible" && Date.now() - ultimoRespaldoMs >= 20000) {
+        ultimoRespaldoMs = Date.now();
+        void recargarTablero(true);
+      }
+    };
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", alCambiarVisibilidad);
+    }
 
     return () => {
       clearInterval(intervalo);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", alCambiarVisibilidad);
+      }
       void supabase.removeChannel(canal);
     };
   }, [esOperadorOAdmin, negNorm, recargarTablero]);

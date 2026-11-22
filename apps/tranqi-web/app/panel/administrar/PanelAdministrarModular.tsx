@@ -291,9 +291,28 @@ export function SociosWidget() {
         setCargando(false);
       }
     }
+    let ultimaConsultaMs = Date.now();
     cargar();
-    const interval = setInterval(cargar, 8000);
-    return () => clearInterval(interval);
+    const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      ultimaConsultaMs = Date.now();
+      void cargar();
+    }, 60000);
+    const alCambiarVisibilidad = () => {
+      if (document.visibilityState === "visible" && Date.now() - ultimaConsultaMs >= 10000) {
+        ultimaConsultaMs = Date.now();
+        void cargar();
+      }
+    };
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", alCambiarVisibilidad);
+    }
+    return () => {
+      clearInterval(interval);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", alCambiarVisibilidad);
+      }
+    };
   }, []);
 
   const ETIQUETA_ESTADO: Record<string, string> = {
@@ -628,9 +647,28 @@ export function PanelAdministrarModular({ negocio = "TRANQ", esSuperAdmin = fals
         console.warn("Aviso al cargar conteos de socios:", errConteo);
       }
     }
+    let ultimaConsultaMs = Date.now();
     cargarEstadisticas();
-    const interval = setInterval(cargarEstadisticas, 8000);
-    return () => clearInterval(interval);
+    const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      ultimaConsultaMs = Date.now();
+      void cargarEstadisticas();
+    }, 60000);
+    const alCambiarVisibilidad = () => {
+      if (document.visibilityState === "visible" && Date.now() - ultimaConsultaMs >= 10000) {
+        ultimaConsultaMs = Date.now();
+        void cargarEstadisticas();
+      }
+    };
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", alCambiarVisibilidad);
+    }
+    return () => {
+      clearInterval(interval);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", alCambiarVisibilidad);
+      }
+    };
   }, []);
 
   // Cargar widgets dinámicamente desde la matriz de permisos para el perfil activo

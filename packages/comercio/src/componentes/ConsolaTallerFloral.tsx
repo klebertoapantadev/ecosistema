@@ -242,7 +242,9 @@ export function ConsolaTallerFloral({
       }
     }
 
-    // Suscripción en vivo (Broadcast + Postgres Changes) + refresco periódico cada 20s
+    // Suscripción en vivo (Broadcast + Postgres Changes) + respaldo adaptativo (2 min conectado / 30 s desconectado)
+    let realtimeActivo = false;
+    let ultimoRespaldoMs = Date.now();
     const supabase = crearClienteNavegador();
     const canal = supabase
       .channel(`eco-taller-${negNorm}`)
@@ -259,6 +261,7 @@ export function ConsolaTallerFloral({
           p.resumen || "Se envió un nuevo pedido para elaboración.",
           Boolean(p.esExequiales)
         );
+        ultimoRespaldoMs = Date.now();
         void recargarTaller(true);
       })
       .on(
@@ -269,17 +272,38 @@ export function ConsolaTallerFloral({
           table: "com_orden_taller",
         },
         () => {
+          ultimoRespaldoMs = Date.now();
           void recargarTaller(true);
         }
       )
-      .subscribe();
+      .subscribe((status: string) => {
+        realtimeActivo = status === "SUBSCRIBED";
+      });
 
     const intervalo = setInterval(() => {
-      void recargarTaller(true);
-    }, 20000);
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      const intervaloObjetivoMs = realtimeActivo ? 120000 : 30000;
+      if (Date.now() - ultimoRespaldoMs >= intervaloObjetivoMs) {
+        ultimoRespaldoMs = Date.now();
+        void recargarTaller(true);
+      }
+    }, 30000);
+
+    const alCambiarVisibilidad = () => {
+      if (document.visibilityState === "visible" && Date.now() - ultimoRespaldoMs >= 15000) {
+        ultimoRespaldoMs = Date.now();
+        void recargarTaller(true);
+      }
+    };
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", alCambiarVisibilidad);
+    }
 
     return () => {
       clearInterval(intervalo);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", alCambiarVisibilidad);
+      }
       void supabase.removeChannel(canal);
     };
   }, [datosIniciales, cacheKey, negNorm, recargarTaller, dispararAlertaVisualYSonora]);

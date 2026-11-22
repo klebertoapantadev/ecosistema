@@ -35,6 +35,16 @@ export async function actualizarSesion(request: NextRequest) {
 
   let response = NextResponse.next({ request });
 
+  // Si el navegador no envía ninguna cookie de sesión de Supabase (`sb-*`),
+  // no existe sesión que refrescar: evitamos crear el cliente y consumir CPU/red
+  // en webhooks, feeds públicos, bots y visitantes anónimos.
+  const tieneCookieSupabase = request.cookies
+    .getAll()
+    .some((cookie) => cookie.name.startsWith("sb-"));
+  if (!tieneCookieSupabase) {
+    return response;
+  }
+
   const corte = new AbortController();
   let temporizador: ReturnType<typeof setTimeout> | undefined;
 

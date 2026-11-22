@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { ProductoEcommerce, CategoriaEcommerce, VarianteEcommerce } from './tipos';
 import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from './datos-catalogo';
 import { normalizarTextoEcommerce } from './filtrado-catalogo';
@@ -204,8 +205,10 @@ function prioridadVisualCategoria(c: SupabaseCategoriaRaw): number {
 /**
  * Carga en tiempo real los productos, categorías y variantes configurados en Supabase
  * (`com_producto`, `com_variante`, `com_categoria`) para el negocio `tinkay`.
+ * Deduplicado por request con `React.cache` para evitar doble consulta entre
+ * `generateMetadata` y el componente de página en una misma petición SSR.
  */
-export async function cargarCatalogoDinamicoTinkay(): Promise<{
+export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoDinamicoTinkayInterno(): Promise<{
   productos: ProductoEcommerce[];
   categorias: CategoriaEcommerce[];
 }> {
@@ -727,4 +730,4 @@ export async function cargarCatalogoDinamicoTinkay(): Promise<{
     console.error('Error cargando catálogo dinámico desde Supabase:', error);
     return { productos: PRODUCTOS_TINKAY, categorias: CATEGORIAS_TINKAY };
   }
-}
+});

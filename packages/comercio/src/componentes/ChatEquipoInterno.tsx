@@ -347,6 +347,8 @@ export function ChatEquipoInterno({
   // Suscripción en tiempo real (<50ms Broadcast + Postgres INSERT de respaldo)
   useEffect(() => {
     const supabase = crearClienteNavegador();
+    let realtimeActivo = false;
+    let ultimoRespaldoMs = Date.now();
     const canal = supabase
       .channel(nombreCanalRealtimeChatEquipo(negNorm), {
         config: { broadcast: { self: false } },
@@ -364,17 +366,37 @@ export function ChatEquipoInterno({
         }
       )
       .subscribe((status: string) => {
-        setEnVivo(status === "SUBSCRIBED");
+        realtimeActivo = status === "SUBSCRIBED";
+        setEnVivo(realtimeActivo);
       });
 
     canalRef.current = canal;
 
+    // Respaldo adaptativo: 2 min cuando Realtime está conectado, 30 s si se desconecta; pausado en segundo plano.
     const timer = setInterval(() => {
-      void recargarSala(true);
-    }, 15000);
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      const intervaloObjetivoMs = realtimeActivo ? 120000 : 30000;
+      if (Date.now() - ultimoRespaldoMs >= intervaloObjetivoMs) {
+        ultimoRespaldoMs = Date.now();
+        void recargarSala(true);
+      }
+    }, 30000);
+
+    const alCambiarVisibilidad = () => {
+      if (document.visibilityState === "visible" && Date.now() - ultimoRespaldoMs >= 15000) {
+        ultimoRespaldoMs = Date.now();
+        void recargarSala(true);
+      }
+    };
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", alCambiarVisibilidad);
+    }
 
     return () => {
       clearInterval(timer);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", alCambiarVisibilidad);
+      }
       canalRef.current = null;
       void supabase.removeChannel(canal);
     };

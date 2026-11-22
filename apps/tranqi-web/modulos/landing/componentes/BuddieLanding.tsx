@@ -81,7 +81,9 @@ export function BuddieLanding() {
     const esc = (s: string) =>
       s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
+    let conversacionActiva = false;
     async function askAgent(prompt: string): Promise<{ texto: string; modoHumano?: boolean; asesoraNombre?: string }> {
+      conversacionActiva = true;
       const atribucion = leerAtribucionNavegador("tranqi");
       const r = await fetch("/api/chat", {
         method: "POST",
@@ -178,7 +180,14 @@ export function BuddieLanding() {
     input.addEventListener("keydown", onInputKeydown);
 
     const sincronizarAsesorHumano = async () => {
-      if (cancelado || !chat.classList.contains("open")) return;
+      if (
+        cancelado ||
+        !conversacionActiva ||
+        !chat.classList.contains("open") ||
+        document.visibilityState !== "visible"
+      ) {
+        return;
+      }
       try {
         const r = await fetch(`/api/chat?conversation_id=${encodeURIComponent(convId)}`, {
           method: "GET",
@@ -197,7 +206,7 @@ export function BuddieLanding() {
         // Silencioso ante cortes momentáneos
       }
     };
-    const syncHumanTimer = setInterval(sincronizarAsesorHumano, 4500);
+    const syncHumanTimer = setInterval(sincronizarAsesorHumano, 12000);
 
     // ── ojos: siguen el cursor + parpadeo ───────────────────────────────
     const ojos = document.querySelectorAll<HTMLElement>(".ojo");

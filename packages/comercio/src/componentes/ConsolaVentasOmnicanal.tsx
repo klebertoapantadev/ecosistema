@@ -1603,19 +1603,43 @@ export function ConsolaVentasOmnicanal({
       )
       .subscribe();
 
-    const timer = setInterval(() => {
-      if (pestana === "inbox") {
-        void recargarTablero(true);
-        const idActual = conversacionActivaIdRef.current;
-        if (idActual && !idActual.startsWith("rt-")) {
-          void cargarMensajesConversacion(idActual, true);
-        }
+    let ultimoRespaldoMs = Date.now();
+    const ejecutarRespaldoInbox = () => {
+      if (pestana !== "inbox") return;
+      ultimoRespaldoMs = Date.now();
+      void recargarTablero(true);
+      const idActual = conversacionActivaIdRef.current;
+      if (idActual && !idActual.startsWith("rt-")) {
+        void cargarMensajesConversacion(idActual, true);
       }
-    }, 12000);
+    };
+
+    // Realtime (Broadcast + Postgres Changes) entrega actualizaciones en vivo;
+    // el temporizador actúa solo como respaldo (cada 2 min si Realtime está activo,
+    // 30 s si está desconectado) y nunca consulta con la pestaña oculta.
+    const timer = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      const intervaloObjetivoMs = liveConectadoRef.current ? 120000 : 30000;
+      if (Date.now() - ultimoRespaldoMs >= intervaloObjetivoMs) {
+        ejecutarRespaldoInbox();
+      }
+    }, 30000);
+
+    const alCambiarVisibilidad = () => {
+      if (document.visibilityState === "visible" && Date.now() - ultimoRespaldoMs >= 15000) {
+        ejecutarRespaldoInbox();
+      }
+    };
+    if (typeof document !== "undefined") {
+      document.addEventListener("visibilitychange", alCambiarVisibilidad);
+    }
 
     return () => {
       if (debounceTimer) clearTimeout(debounceTimer);
       clearInterval(timer);
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", alCambiarVisibilidad);
+      }
       liveConectadoRef.current = false;
       canalLiveRef.current = null;
       void supabase.removeChannel(canalLive);
