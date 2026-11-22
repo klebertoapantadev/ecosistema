@@ -19,7 +19,7 @@
     "@eco/db": "workspace:*",
     "@eco/notificaciones": "workspace:*",
     "@eco/supabase": "workspace:*",
-    "lucide-react": "1.27.0"
+    "lucide-react": "1.76.0"
   },
   "devDependencies": {
     "@eco/config": "workspace:*",
