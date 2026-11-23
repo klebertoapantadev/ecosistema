@@ -935,12 +935,12 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
 
             <div>
               <label style={{ display: "block", fontSize: "0.82rem", fontWeight: 700, color: "#57524C", marginBottom: "6px" }}>
-                Monto Máximo sin Datos de Factura (USD) *
+                Restricción por Monto sin Datos de Factura (USD)
               </label>
               <input
                 type="number"
                 min={0}
-                max={500}
+                max={5000}
                 step="0.01"
                 required
                 value={configCheckout.montoMaximoPagoSinDatosUsd}
@@ -960,7 +960,7 @@ export function ConfiguracionPasarelaPayphone({ negocio = "tranqi" }: Props) {
                 }}
               />
               <span style={{ display: "block", marginTop: "4px", fontSize: "0.73rem", color: "#847D74" }}>
-                Si la compra es menor a este monto (ej. $50.00), nombre y cédula son opcionales.
+                En $0.00 no se aplica ningún control por monto (factura opcional). Si ingresas un valor mayor a 0 (ej. $50.00), nombre y cédula serán obligatorios desde ese monto.
               </span>
             </div>
           </div>

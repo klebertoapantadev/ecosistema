@@ -1,7 +1,7 @@
 'use client';
 import { SelectConBuscador } from "@eco/comercio";
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   BotonPagoPlux,
@@ -56,6 +56,12 @@ import {
   MessageCircle,
   Loader2,
   MapPin,
+  Trash2,
+  Plus,
+  Minus,
+  ChevronLeft,
+  ChevronRight,
+  ShoppingBag,
 } from 'lucide-react';
 
 async function comprimirImagenComprobanteSiNecesario(archivo: File): Promise<File> {
@@ -123,6 +129,8 @@ export function ModalCheckoutTinkay() {
     checkoutAbierto,
     setCheckoutAbierto,
     items,
+    actualizarCantidad,
+    eliminarItem,
     subtotalBaseImponible,
     totalIva,
     totalFlete,
@@ -150,9 +158,11 @@ export function ModalCheckoutTinkay() {
   );
   const [ambientePlux, setAmbientePlux] = useState<string>('PRUEBAS');
   const [paso, setPaso] = useState<'formulario' | 'procesando' | 'exito'>('formulario');
+  const [pasoWizard, setPasoWizard] = useState<1 | 2 | 3 | 4>(1);
   const [codigoOrdenGenerado, setCodigoOrdenGenerado] = useState<string>('');
   const [errorPago, setErrorPago] = useState<string | null>(null);
   const [preparandoOrdenPlux, setPreparandoOrdenPlux] = useState<boolean>(false);
+  const huellaAutoPluxRef = useRef<string | null>(null);
   const [ordenPluxPreparada, setOrdenPluxPreparada] = useState<{
     id: string;
     codigoOrden: string;
@@ -216,6 +226,9 @@ export function ModalCheckoutTinkay() {
   useEffect(() => {
     if (!checkoutAbierto) return;
     let cancelado = false;
+    setPasoWizard(1);
+    setErrorPago(null);
+    huellaAutoPluxRef.current = null;
     setVerificandoEstadoCuenta(true);
     setOmitirInvitacionRegistro(false);
 
@@ -359,19 +372,20 @@ export function ModalCheckoutTinkay() {
 
   const umbralSinDatosUsd = Math.max(
     0,
-    Number(configCheckoutLocal.montoMaximoPagoSinDatosUsd ?? 50)
+    Number(configCheckoutLocal.montoMaximoPagoSinDatosUsd ?? 0)
   );
-  const esMenorAlUmbral = totalPagar < umbralSinDatosUsd;
+  const tieneControlMontoFacturacion = umbralSinDatosUsd > 0;
+  const esMenorAlUmbral = !tieneControlMontoFacturacion || totalPagar < umbralSinDatosUsd;
   const esRetiroEnTienda =
     modalidadEntrega === 'unificada' && Boolean(entregaUnificada.retiroEnLocal);
 
   // Reglas de negocio exactas:
-  // 1. Si pago < $50 (umbral configurable): nombre, identificación y correo NO son obligatorios (Consumidor Final).
-  // 2. Si cliente NO está registrado y elige envío a domicilio: WhatsApp es OBLIGATORIO para coordinar entrega.
-  // 3. Si cliente retira en tienda: NINGUNA información de entrega/WhatsApp es requerida (y si < $50, cero campos requeridos).
-  const requiereDatosFacturacion = !esMenorAlUmbral;
+  // 1. Únicos requisitos obligatorios para pagar: al menos 1 producto en el carrito y número de WhatsApp para coordinar la entrega.
+  // 2. La restricción por monto (`montoMaximoPagoSinDatosUsd`) es configurable: si está en 0, NO se aplica ningún control de datos de factura.
+  // 3. Si es > 0 y totalPagar >= umbral, nombre y cédula/RUC son requeridos.
+  const requiereDatosFacturacion = tieneControlMontoFacturacion && totalPagar >= umbralSinDatosUsd;
   const mostrarCamposFacturacion = requiereDatosFacturacion || deseaFacturaConDatos;
-  const requiereWhatsappCoordinacion = !esRetiroEnTienda && !usuarioRegistradoTinkay;
+  const requiereWhatsappCoordinacion = true;
 
   const itemsPrincipales = useMemo(
     () => items.filter((it) => !it.producto.esComplemento && !it.producto.esExtra),
@@ -472,8 +486,42 @@ export function ModalCheckoutTinkay() {
   useEffect(() => {
     if (ordenPluxPreparada && ordenPluxPreparada.huella !== huellaActual) {
       setOrdenPluxPreparada(null);
+      huellaAutoPluxRef.current = null;
     }
   }, [huellaActual, ordenPluxPreparada]);
+
+  // Al seleccionar Tarjeta (PLUX) en el paso de Pago, preparar automáticamente la orden
+  // para visualizar directamente el botón oficial "Pagar ahora" de PLUX sin pasos intermedios.
+  useEffect(() => {
+    if (
+      !checkoutAbierto ||
+      paso !== 'formulario' ||
+      verificandoEstadoCuenta ||
+      pasoWizard !== 4 ||
+      metodoPago !== 'plux' ||
+      !tarjetaHabilitada ||
+      ordenPluxPreparada ||
+      preparandoOrdenPlux ||
+      items.length === 0
+    ) {
+      return;
+    }
+    if (huellaAutoPluxRef.current === huellaActual) return;
+    huellaAutoPluxRef.current = huellaActual;
+    void handlePrepararOrdenPlux();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    checkoutAbierto,
+    paso,
+    verificandoEstadoCuenta,
+    pasoWizard,
+    metodoPago,
+    tarjetaHabilitada,
+    ordenPluxPreparada,
+    preparandoOrdenPlux,
+    huellaActual,
+    items.length,
+  ]);
 
   if (!checkoutAbierto) return null;
 
@@ -604,22 +652,22 @@ export function ModalCheckoutTinkay() {
     };
   };
 
-  const validarCheckout = (metodo: 'plux' | 'transferencia'): string | null => {
-    if (!esRetiroEnTienda && modalidadEntrega === 'unificada') {
-      if (entregaUnificada.dentroCobertura === false) {
+  const validarPasoActual = (pasoObjetivo: 1 | 2 | 3): string | null => {
+    if (items.length === 0) {
+      return 'Debes tener al menos un producto en tu carrito para continuar.';
+    }
+    if (pasoObjetivo === 1) return null;
+
+    if (pasoObjetivo === 2) {
+      if (!esRetiroEnTienda && modalidadEntrega === 'unificada' && entregaUnificada.dentroCobertura === false) {
         return 'La ubicación seleccionada está fuera de nuestra cobertura de entrega.';
       }
-      if (!tieneUbicacionDomicilioConfirmada) {
-        setMostrarMapaEntrega(true);
-        return 'Selecciona tu ubicación de entrega a domicilio o elige Retiro en Tienda.';
-      }
+      return null;
     }
 
-    if (requiereWhatsappCoordinacion) {
-      const digitosTel = telefonoNormalizado.replace(/\D+/g, '');
-      if (digitosTel.length < 9) {
-        return 'Ingresa tu número de WhatsApp: es requerido para contactarte y coordinar la entrega de tu pedido.';
-      }
+    const digitosTel = telefonoNormalizado.replace(/\D+/g, '');
+    if (digitosTel.length < 9) {
+      return 'Ingresa tu número de WhatsApp: es obligatorio para coordinar la entrega de tu pedido.';
     }
 
     if (requiereDatosFacturacion) {
@@ -646,11 +694,39 @@ export function ModalCheckoutTinkay() {
       return 'Ingresa un correo electrónico válido.';
     }
 
+    return null;
+  };
+
+  const validarCheckout = (metodo: 'plux' | 'transferencia'): string | null => {
+    const errPaso1 = validarPasoActual(1);
+    if (errPaso1) return errPaso1;
+    const errPaso2 = validarPasoActual(2);
+    if (errPaso2) return errPaso2;
+    const errPaso3 = validarPasoActual(3);
+    if (errPaso3) return errPaso3;
+
     if (metodo === 'transferencia' && !comprobanteSubido?.url) {
       return 'Debes subir el comprobante de transferencia (imagen o PDF) para confirmar tu pedido.';
     }
 
     return null;
+  };
+
+  const irAlPaso = (destino: 1 | 2 | 3 | 4) => {
+    setErrorPago(null);
+    if (destino <= pasoWizard) {
+      setPasoWizard(destino);
+      return;
+    }
+    for (let p = 1; p < destino; p += 1) {
+      const err = validarPasoActual(p as 1 | 2 | 3);
+      if (err) {
+        setErrorPago(err);
+        setPasoWizard(p as 1 | 2 | 3);
+        return;
+      }
+    }
+    setPasoWizard(destino);
   };
 
   const handleSubirArchivoComprobante = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -770,8 +846,10 @@ export function ModalCheckoutTinkay() {
   const handleCerrar = () => {
     setCheckoutAbierto(false);
     setPaso('formulario');
+    setPasoWizard(1);
     setErrorPago(null);
     setOrdenPluxPreparada(null);
+    huellaAutoPluxRef.current = null;
     setComprobanteSubido(null);
   };
 
@@ -1076,121 +1154,499 @@ export function ModalCheckoutTinkay() {
         )}
 
         {paso === 'formulario' && !verificandoEstadoCuenta && (
-          <div className="grid-checkout-pasos">
-            {/* Columna Izquierda: Entrega, Contacto/Factura y Pago */}
-            <div className="columna-formulario-pago">
-              <div className="cabecera-checkout">
-                <h2>{carritoTieneCondolencias ? 'Confirmación de Pedido' : 'Caja de Pago Rápido'}</h2>
-                <div className="sello-seguridad">
-                  <ShieldCheck size={16} />
-                  <span>Pago Seguro</span>
-                </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <div className="cabecera-checkout" style={{ paddingRight: '38px', marginBottom: '12px' }}>
+              <h2>{carritoTieneCondolencias ? 'Confirmación de Pedido' : 'Caja de Pago Rápido'}</h2>
+              <div className="sello-seguridad">
+                <ShieldCheck size={16} />
+                <span>Pago Seguro</span>
               </div>
+            </div>
 
-              {/* Aviso compacto no bloqueante de beneficio por registro (nunca en Condolencias) */}
-              {mostrarBannerBeneficioRegistro && (
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '12px',
-                    flexWrap: 'wrap',
-                    padding: '10px 14px',
-                    marginBottom: '12px',
-                    borderRadius: '10px',
-                    background: '#F8F7F4',
-                    border: '1px solid #E6E2DA',
-                    fontSize: '0.8rem',
-                    color: '#3A3530',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1 1 240px', minWidth: 0 }}>
-                    <Gift size={16} color="var(--verde)" style={{ flexShrink: 0 }} />
-                    <span>
-                      <strong>¿Primera compra?</strong> Regístrate y recibe{' '}
-                      <strong>{datosObsequio.nombre}</strong> ($0.00) + envío gratis en{' '}
-                      {configLogistica.zonaGratisNombre || 'Centro-Norte de Quito'}.
+            {/* Indicador de 4 Pasos del Checkout */}
+            <nav className="checkout-stepper-pasos" aria-label="Pasos del proceso de pago">
+              {(
+                [
+                  { num: 1, label: 'Pedido' },
+                  { num: 2, label: 'Entrega' },
+                  { num: 3, label: 'Contacto' },
+                  { num: 4, label: 'Pago' },
+                ] as const
+              ).map((st) => {
+                const activo = pasoWizard === st.num;
+                const completado = pasoWizard > st.num;
+                return (
+                  <button
+                    key={st.num}
+                    type="button"
+                    disabled={items.length === 0 && st.num > 1}
+                    onClick={() => irAlPaso(st.num)}
+                    aria-current={activo ? 'step' : undefined}
+                    className={`checkout-step-item ${activo ? 'activo' : ''} ${
+                      completado ? 'completado' : ''
+                    }`}
+                  >
+                    <span className="checkout-step-num">
+                      {completado ? <Check size={12} /> : st.num}
                     </span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                    <Link
-                      href="/registro?destino=%2F%3Fcheckout%3D1%26obsequio%3D1&obsequio=1"
-                      onClick={() => {
-                        if (typeof window !== 'undefined') {
-                          window.localStorage.setItem('tinkay_obsequio_bienvenida_aceptado', '1');
-                          document.cookie = `tranqi_destino=${encodeURIComponent(
-                            '/?checkout=1&obsequio=1'
-                          )}; path=/; max-age=86400`;
-                        }
-                      }}
+                    <span>{st.label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+
+            <form
+              onSubmit={handleConfirmarTransferencia}
+              className="form-checkout-flujo"
+              style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
+            >
+              {/* ============================================================
+                  PASO 1: VISUALIZAR Y EDITAR PRODUCTOS DEL CARRITO
+                 ============================================================ */}
+              {pasoWizard === 1 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {/* Aviso compacto no bloqueante de beneficio por registro (nunca en Condolencias) */}
+                  {mostrarBannerBeneficioRegistro && (
+                    <div
                       style={{
-                        padding: '6px 12px',
-                        borderRadius: '999px',
-                        background: 'var(--verde)',
-                        color: '#FFFFFF',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        textDecoration: 'none',
-                      }}
-                    >
-                      Crear cuenta
-                    </Link>
-                    <Link
-                      href="/ingresar?destino=%2F%3Fcheckout%3D1%26obsequio%3D1"
-                      onClick={() => {
-                        if (typeof window !== 'undefined') {
-                          window.localStorage.setItem('tinkay_obsequio_bienvenida_aceptado', '1');
-                          document.cookie = `tranqi_destino=${encodeURIComponent(
-                            '/?checkout=1&obsequio=1'
-                          )}; path=/; max-age=86400`;
-                        }
-                      }}
-                      style={{
-                        color: 'var(--verde)',
-                        fontSize: '0.75rem',
-                        fontWeight: 600,
-                        textDecoration: 'underline',
-                      }}
-                    >
-                      Ingresar
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => setOmitirInvitacionRegistro(true)}
-                      aria-label="Ocultar aviso de registro"
-                      title="Ocultar aviso"
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: '#847D74',
-                        cursor: 'pointer',
-                        padding: '4px',
-                        display: 'inline-flex',
+                        display: 'flex',
                         alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '12px',
+                        flexWrap: 'wrap',
+                        padding: '10px 14px',
+                        borderRadius: '10px',
+                        background: '#F8F7F4',
+                        border: '1px solid #E6E2DA',
+                        fontSize: '0.8rem',
+                        color: '#3A3530',
                       }}
                     >
-                      <X size={14} />
-                    </button>
-                  </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1 1 220px', minWidth: 0 }}>
+                        <Gift size={16} color="var(--verde)" style={{ flexShrink: 0 }} />
+                        <span>
+                          <strong>¿Primera compra?</strong> Regístrate y recibe{' '}
+                          <strong>{datosObsequio.nombre}</strong> ($0.00) + envío gratis en{' '}
+                          {configLogistica.zonaGratisNombre || 'Centro-Norte de Quito'}.
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                        <Link
+                          href="/registro?destino=%2F%3Fcheckout%3D1%26obsequio%3D1&obsequio=1"
+                          onClick={() => {
+                            if (typeof window !== 'undefined') {
+                              window.localStorage.setItem('tinkay_obsequio_bienvenida_aceptado', '1');
+                              document.cookie = `tranqi_destino=${encodeURIComponent(
+                                '/?checkout=1&obsequio=1'
+                              )}; path=/; max-age=86400`;
+                            }
+                          }}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '999px',
+                            background: 'var(--verde)',
+                            color: '#FFFFFF',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            textDecoration: 'none',
+                          }}
+                        >
+                          Crear cuenta
+                        </Link>
+                        <Link
+                          href="/ingresar?destino=%2F%3Fcheckout%3D1%26obsequio%3D1"
+                          onClick={() => {
+                            if (typeof window !== 'undefined') {
+                              window.localStorage.setItem('tinkay_obsequio_bienvenida_aceptado', '1');
+                              document.cookie = `tranqi_destino=${encodeURIComponent(
+                                '/?checkout=1&obsequio=1'
+                              )}; path=/; max-age=86400`;
+                            }
+                          }}
+                          style={{
+                            color: 'var(--verde)',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            textDecoration: 'underline',
+                          }}
+                        >
+                          Ingresar
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => setOmitirInvitacionRegistro(true)}
+                          aria-label="Ocultar aviso de registro"
+                          title="Ocultar aviso"
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#847D74',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {items.length === 0 ? (
+                    <div
+                      style={{
+                        textAlign: 'center',
+                        padding: '32px 16px',
+                        borderRadius: '14px',
+                        background: '#FAF8F5',
+                        border: '1px dashed var(--linea)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '10px',
+                      }}
+                    >
+                      <ShoppingBag size={30} color="#94A3B8" />
+                      <strong style={{ fontSize: '0.96rem', color: 'var(--tinta)' }}>
+                        Tu carrito está vacío
+                      </strong>
+                      <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--gris)' }}>
+                        Agrega al menos un arreglo floral para continuar con el pago.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleCerrar}
+                        className="btn btn-primario"
+                        style={{ marginTop: '4px', padding: '9px 18px', fontSize: '0.84rem' }}
+                      >
+                        Volver a Tienda
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div
+                        style={{
+                          background: '#FAF8F5',
+                          border: '1px solid #E7E5E4',
+                          borderRadius: '14px',
+                          padding: '14px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '10px',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                          <label className="titulo-seccion-form" style={{ marginBottom: 0 }}>
+                            1. Revisa y edita tu pedido ({items.reduce((s, it) => s + it.cantidad, 0)})
+                          </label>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                          {items.map((it) => (
+                            <div
+                              key={it.id}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                padding: '10px',
+                                borderRadius: '12px',
+                                background: '#FFFFFF',
+                                border: '1px solid #E7E5E4',
+                              }}
+                            >
+                              <img
+                                src={it.producto.fotos[0]}
+                                alt={it.producto.nombre}
+                                className="foto-mini-resumen"
+                                style={{ flexShrink: 0 }}
+                              />
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <strong style={{ display: 'block', fontSize: '0.86rem', color: '#1C1917' }}>
+                                  {it.producto.nombre}
+                                </strong>
+                                <span style={{ display: 'block', fontSize: '0.75rem', color: '#57534E' }}>
+                                  {it.variante.nombre} · ${it.variante.pvp.toFixed(2)} c/u
+                                </span>
+                                {it.dedicatoria?.mensaje && (
+                                  <small className="mini-dedicatoria-preview" style={{ display: 'block', marginTop: '2px' }}>
+                                    💌 Tarjeta: &quot;{it.dedicatoria.mensaje.slice(0, 40)}&quot;
+                                  </small>
+                                )}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '7px' }}>
+                                  <div
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      border: '1px solid #D6D3D1',
+                                      borderRadius: '999px',
+                                      background: '#FAF8F5',
+                                      overflow: 'hidden',
+                                    }}
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={() => actualizarCantidad(it.id, it.cantidad - 1)}
+                                      title="Disminuir cantidad"
+                                      aria-label={`Disminuir cantidad de ${it.producto.nombre}`}
+                                      style={{
+                                        border: 'none',
+                                        background: 'transparent',
+                                        padding: '4px 8px',
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        color: '#1C1917',
+                                      }}
+                                    >
+                                      <Minus size={13} />
+                                    </button>
+                                    <span style={{ fontSize: '0.78rem', fontWeight: 800, minWidth: '22px', textAlign: 'center' }}>
+                                      {it.cantidad}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => actualizarCantidad(it.id, it.cantidad + 1)}
+                                      title="Aumentar cantidad"
+                                      aria-label={`Aumentar cantidad de ${it.producto.nombre}`}
+                                      style={{
+                                        border: 'none',
+                                        background: 'transparent',
+                                        padding: '4px 8px',
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        color: '#1C1917',
+                                      }}
+                                    >
+                                      <Plus size={13} />
+                                    </button>
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => eliminarItem(it.id)}
+                                    title="Eliminar producto del carrito"
+                                    aria-label={`Eliminar ${it.producto.nombre}`}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      padding: '4px 8px',
+                                      borderRadius: '8px',
+                                      border: '1px solid #FECACA',
+                                      background: '#FEF2F2',
+                                      color: '#B91C1C',
+                                      fontSize: '0.72rem',
+                                      fontWeight: 700,
+                                      cursor: 'pointer',
+                                    }}
+                                  >
+                                    <Trash2 size={12} />
+                                    <span>Eliminar</span>
+                                  </button>
+                                </div>
+                              </div>
+                              <strong style={{ fontSize: '0.92rem', color: '#1C1917', flexShrink: 0 }}>
+                                ${(it.variante.pvp * it.cantidad).toFixed(2)}
+                              </strong>
+                            </div>
+                          ))}
+
+                          {incluyeExtraObsequio && (
+                            <div
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                background: '#ECFDF5',
+                                border: '1px solid #A7F3D0',
+                                borderRadius: '12px',
+                                padding: '8px 10px',
+                              }}
+                            >
+                              <img
+                                src={datosObsequio.imagenUrl}
+                                alt={datosObsequio.nombre}
+                                className="foto-mini-resumen"
+                              />
+                              <div style={{ flex: 1, minWidth: 0 }}>
+                                <strong style={{ display: 'block', fontSize: '0.82rem', color: '#065F46' }}>
+                                  {datosObsequio.nombre}
+                                </strong>
+                                <span style={{ color: '#047857', fontWeight: 700, fontSize: '0.72rem' }}>
+                                  1x Obsequio por registro y primera compra
+                                </span>
+                              </div>
+                              <span style={{ color: '#059669', fontWeight: 800, fontSize: '0.86rem' }}>
+                                $0.00
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {usuarioRegistradoTinkay && estadoRegalo?.aplicaRegalo && (
+                          <div
+                            style={{
+                              padding: '8px 10px',
+                              borderRadius: '10px',
+                              background: incluyeExtraObsequio ? '#ECFDF5' : '#FFFFFF',
+                              border: incluyeExtraObsequio ? '1px solid #A7F3D0' : '1px solid #E2E8F0',
+                              color: incluyeExtraObsequio ? '#065F46' : '#475569',
+                              fontSize: '0.75rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '8px',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <Gift size={14} style={{ flexShrink: 0 }} />
+                              <span>
+                                {incluyeExtraObsequio
+                                  ? `Obsequio incluido ($0.00): ${datosObsequio.nombre}`
+                                  : 'Obsequio de bienvenida disponible sin costo'}
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const siguiente = !aceptoObsequioBienvenida;
+                                setAceptoObsequioBienvenida(siguiente);
+                                if (typeof window !== 'undefined') {
+                                  window.localStorage.setItem(
+                                    'tinkay_obsequio_bienvenida_aceptado',
+                                    siguiente ? '1' : '0'
+                                  );
+                                }
+                              }}
+                              style={{
+                                border: '1px solid currentColor',
+                                background: '#FFFFFF',
+                                color: 'inherit',
+                                borderRadius: '999px',
+                                padding: '3px 9px',
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                flexShrink: 0,
+                              }}
+                            >
+                              {incluyeExtraObsequio ? 'Quitar' : 'Agregar'}
+                            </button>
+                          </div>
+                        )}
+
+                        <div
+                          style={{
+                            padding: '10px 12px',
+                            borderRadius: '10px',
+                            background: 'rgba(61, 90, 69, 0.06)',
+                            border: '1px solid rgba(61, 90, 69, 0.16)',
+                            fontSize: '0.8rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Subtotal + IVA:</span>
+                            <span>${(subtotalBaseImponible + totalIva).toFixed(2)}</span>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
+                            <span>
+                              {esRetiroEnTienda
+                                ? 'Retiro en tienda:'
+                                : totalFlete > 0
+                                ? 'Envío estimado:'
+                                : 'Envío:'}
+                            </span>
+                            <span style={{ color: totalFlete === 0 ? 'var(--verde)' : 'inherit' }}>
+                              {totalFlete === 0 ? 'GRATIS ($0.00)' : `+$${totalFlete.toFixed(2)}`}
+                            </span>
+                          </div>
+                          {totalRecargoHorarioExacto > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span>Horario exacto:</span>
+                              <span>+${totalRecargoHorarioExacto.toFixed(2)}</span>
+                            </div>
+                          )}
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'baseline',
+                              marginTop: '4px',
+                              paddingTop: '6px',
+                              borderTop: '1px solid rgba(61, 90, 69, 0.16)',
+                              fontSize: '0.96rem',
+                            }}
+                          >
+                            <strong>Total a pagar:</strong>
+                            <strong style={{ color: '#2D4734' }}>${totalPagar.toFixed(2)} USD</strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="checkout-nav-pasos">
+                        <button
+                          type="button"
+                          onClick={handleCerrar}
+                          style={{
+                            padding: '10px 14px',
+                            borderRadius: '10px',
+                            border: '1px solid var(--linea)',
+                            background: '#FFFFFF',
+                            color: 'var(--tinta)',
+                            fontSize: '0.84rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Seguir comprando
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => irAlPaso(2)}
+                          className="btn btn-primario"
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '11px 20px',
+                            borderRadius: '12px',
+                            fontSize: '0.88rem',
+                            fontWeight: 700,
+                          }}
+                        >
+                          <span>Continuar</span>
+                          <ChevronRight size={16} />
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
-              <form onSubmit={handleConfirmarTransferencia} className="form-checkout-flujo">
-                {/* 1. Modalidad de Recepción: Envío a Domicilio vs Retiro en Tienda */}
-                {modalidadEntrega === 'unificada' && (
-                  <div
-                    className="grupo-campos-checkout"
-                    style={{
-                      background: '#FAF8F5',
-                      border: '1px solid #E7E5E4',
-                      borderRadius: '14px',
-                      padding: '14px',
-                    }}
-                  >
-                    <label className="titulo-seccion-form" style={{ marginBottom: '10px' }}>
-                      1. ¿Cómo deseas recibir tu pedido?
-                    </label>
+              {/* ============================================================
+                  PASO 2: MODALIDAD DE ENTREGA
+                 ============================================================ */}
+              {pasoWizard === 2 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {modalidadEntrega === 'unificada' && (
+                    <div
+                      className="grupo-campos-checkout"
+                      style={{
+                        background: '#FAF8F5',
+                        border: '1px solid #E7E5E4',
+                        borderRadius: '14px',
+                        padding: '14px',
+                      }}
+                    >
+                      <label className="titulo-seccion-form" style={{ marginBottom: '10px' }}>
+                        2. ¿Cómo deseas recibir tu pedido?
+                      </label>
                     <div className="grid-toggle-entrega">
                       <button
                         type="button"
@@ -1454,63 +1910,112 @@ export function ModalCheckoutTinkay() {
                       </div>
                     )}
                   </div>
-                )}
+                  )}
 
-                {/* 2. Contacto de Coordinación & Datos de Facturación según Monto (< $50) y Retiro */}
-                <div className="grupo-campos-checkout">
-                  <label className="titulo-seccion-form">
-                    2. Contacto y Facturación
-                  </label>
-
-                  {esRetiroEnTienda && esMenorAlUmbral && (
+                  {errorPago && (
                     <div
                       style={{
+                        background: '#FEF2F2',
+                        border: '1px solid #FECACA',
+                        color: '#B91C1C',
+                        borderRadius: '10px',
                         padding: '10px 12px',
-                        borderRadius: '10px',
-                        background: '#ECFDF5',
-                        border: '1px solid #A7F3D0',
-                        color: '#065F46',
-                        fontSize: '0.79rem',
-                        lineHeight: 1.45,
-                        marginBottom: '10px',
+                        fontSize: '0.82rem',
                       }}
                     >
-                      <strong>✓ Retiro en tienda y compra menor a ${umbralSinDatosUsd.toFixed(2)}:</strong>{' '}
-                      Ninguna información personal es requerida (se emite como Consumidor Final).
+                      {errorPago}
                     </div>
                   )}
 
-                  {!esRetiroEnTienda && esMenorAlUmbral && (
-                    <div
+                  <div className="checkout-nav-pasos">
+                    <button
+                      type="button"
+                      onClick={() => irAlPaso(1)}
                       style={{
-                        padding: '9px 12px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '10px 14px',
                         borderRadius: '10px',
-                        background: '#F0F9FF',
-                        border: '1px solid #BAE6FD',
-                        color: '#0C4A6E',
-                        fontSize: '0.78rem',
-                        lineHeight: 1.45,
-                        marginBottom: '10px',
+                        border: '1px solid var(--linea)',
+                        background: '#FFFFFF',
+                        color: 'var(--tinta)',
+                        fontSize: '0.84rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
                       }}
                     >
-                      <strong>Compra rápida (&lt; ${umbralSinDatosUsd.toFixed(2)} USD):</strong>{' '}
-                      No necesitas ingresar nombre ni cédula (Consumidor Final).
-                    </div>
-                  )}
+                      <ChevronLeft size={15} />
+                      <span>Atrás</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => irAlPaso(3)}
+                      className="btn btn-primario"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '11px 20px',
+                        borderRadius: '12px',
+                        fontSize: '0.88rem',
+                        fontWeight: 700,
+                      }}
+                    >
+                      <span>Continuar</span>
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
 
-                  {/* Campo WhatsApp: Obligatorio si NO está registrado y NO retira en tienda */}
-                  {!esRetiroEnTienda && (
-                    <div style={{ marginBottom: '10px' }}>
+              {/* ============================================================
+                  PASO 3: CONTACTO (WHATSAPP OBLIGATORIO) Y FACTURACIÓN
+                 ============================================================ */}
+              {pasoWizard === 3 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div
+                    className="grupo-campos-checkout"
+                    style={{
+                      background: '#FAF8F5',
+                      border: '1px solid #E7E5E4',
+                      borderRadius: '14px',
+                      padding: '14px',
+                    }}
+                  >
+                    <label className="titulo-seccion-form">
+                      3. Contacto y Facturación
+                    </label>
+
+                    {!requiereDatosFacturacion && (
+                      <div
+                        style={{
+                          padding: '9px 12px',
+                          borderRadius: '10px',
+                          background: '#ECFDF5',
+                          border: '1px solid #A7F3D0',
+                          color: '#065F46',
+                          fontSize: '0.78rem',
+                          lineHeight: 1.45,
+                          marginBottom: '10px',
+                        }}
+                      >
+                        <strong>✓ Compra rápida:</strong> Solo necesitamos tu WhatsApp para coordinar la entrega. Los datos de factura son opcionales.
+                      </div>
+                    )}
+
+                    {/* Campo WhatsApp: Único dato personal obligatorio para coordinar la entrega */}
+                    <div style={{ marginBottom: '12px' }}>
                       <label
                         style={{
                           display: 'block',
-                          fontSize: '0.78rem',
+                          fontSize: '0.79rem',
                           fontWeight: 700,
                           color: '#1E293B',
                           marginBottom: '4px',
                         }}
                       >
-                        Número de WhatsApp {requiereWhatsappCoordinacion ? '*' : '(opcional)'}
+                        Número de WhatsApp *
                       </label>
                       <div style={{ display: 'grid', gridTemplateColumns: '115px 1fr', gap: '8px' }}>
                         <SelectConBuscador
@@ -1530,130 +2035,239 @@ export function ModalCheckoutTinkay() {
                           placeholder="99 123 4567"
                           required={requiereWhatsappCoordinacion}
                           value={datosFactura.telefono}
-                          onChange={(e) =>
-                            setDatosFactura({ ...datosFactura, telefono: e.target.value })
-                          }
+                          onChange={(e) => {
+                            setErrorPago(null);
+                            setDatosFactura({ ...datosFactura, telefono: e.target.value });
+                          }}
                           className="input-checkout"
                         />
                       </div>
-                      {requiereWhatsappCoordinacion && (
-                        <small
-                          style={{
-                            display: 'block',
-                            marginTop: '4px',
-                            fontSize: '0.74rem',
-                            color: '#92400E',
-                            fontWeight: 600,
-                          }}
-                        >
-                          📲 Requerido para contactarte y coordinar la entrega de tu pedido.
-                        </small>
-                      )}
+                      <small
+                        style={{
+                          display: 'block',
+                          marginTop: '4px',
+                          fontSize: '0.74rem',
+                          color: '#92400E',
+                          fontWeight: 600,
+                        }}
+                      >
+                        📲 Requerido para contactarte y coordinar la entrega de tu pedido.
+                      </small>
+                    </div>
+
+                    {/* Toggle opcional para Factura con Datos (cuando no hay restricción de monto o es menor al umbral) */}
+                    {esMenorAlUmbral && (
+                      <label
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '7px',
+                          fontSize: '0.79rem',
+                          fontWeight: 600,
+                          color: '#334155',
+                          cursor: 'pointer',
+                          marginBottom: mostrarCamposFacturacion ? '10px' : '0',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={deseaFacturaConDatos}
+                          onChange={(e) => setDeseaFacturaConDatos(e.target.checked)}
+                        />
+                        <span>Deseo factura electrónica con mis datos (opcional)</span>
+                      </label>
+                    )}
+
+                    {mostrarCamposFacturacion && (
+                      <div className="grid-dos-columnas">
+                        <input
+                          type="text"
+                          placeholder="Nombre o Razón Social *"
+                          required={requiereDatosFacturacion || deseaFacturaConDatos}
+                          value={datosFactura.nombreCompleto}
+                          onChange={(e) =>
+                            setDatosFactura({ ...datosFactura, nombreCompleto: e.target.value })
+                          }
+                          className="input-checkout"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Cédula / RUC / Pasaporte *"
+                          required={requiereDatosFacturacion || deseaFacturaConDatos}
+                          value={datosFactura.identificacion}
+                          onChange={(e) =>
+                            setDatosFactura({
+                              ...datosFactura,
+                              identificacion: e.target.value.replace(/[\s-]/g, ''),
+                            })
+                          }
+                          className="input-checkout"
+                        />
+                        <input
+                          type="email"
+                          placeholder="Correo para factura (opcional)"
+                          value={datosFactura.correo}
+                          onChange={(e) =>
+                            setDatosFactura({ ...datosFactura, correo: e.target.value })
+                          }
+                          className="input-checkout"
+                          style={{ gridColumn: '1 / -1' }}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {errorPago && (
+                    <div
+                      style={{
+                        background: '#FEF2F2',
+                        border: '1px solid #FECACA',
+                        color: '#B91C1C',
+                        borderRadius: '10px',
+                        padding: '10px 12px',
+                        fontSize: '0.82rem',
+                      }}
+                    >
+                      {errorPago}
                     </div>
                   )}
 
-                  {/* Toggle opcional para Factura con Datos cuando el pago es < $50 */}
-                  {esMenorAlUmbral && (
-                    <label
+                  <div className="checkout-nav-pasos">
+                    <button
+                      type="button"
+                      onClick={() => irAlPaso(2)}
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '7px',
-                        fontSize: '0.79rem',
-                        fontWeight: 600,
-                        color: '#334155',
+                        gap: '5px',
+                        padding: '10px 14px',
+                        borderRadius: '10px',
+                        border: '1px solid var(--linea)',
+                        background: '#FFFFFF',
+                        color: 'var(--tinta)',
+                        fontSize: '0.84rem',
+                        fontWeight: 700,
                         cursor: 'pointer',
-                        marginBottom: mostrarCamposFacturacion ? '10px' : '0',
                       }}
                     >
-                      <input
-                        type="checkbox"
-                        checked={deseaFacturaConDatos}
-                        onChange={(e) => setDeseaFacturaConDatos(e.target.checked)}
-                      />
-                      <span>Deseo factura electrónica con mis datos (opcional)</span>
-                    </label>
-                  )}
+                      <ChevronLeft size={15} />
+                      <span>Atrás</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => irAlPaso(4)}
+                      className="btn btn-primario"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '11px 20px',
+                        borderRadius: '12px',
+                        fontSize: '0.88rem',
+                        fontWeight: 700,
+                      }}
+                    >
+                      <span>Ir al Pago</span>
+                      <ChevronRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              )}
 
-                  {mostrarCamposFacturacion && (
-                    <div className="grid-dos-columnas">
-                      <input
-                        type="text"
-                        placeholder="Nombre o Razón Social *"
-                        required={requiereDatosFacturacion || deseaFacturaConDatos}
-                        value={datosFactura.nombreCompleto}
-                        onChange={(e) =>
-                          setDatosFactura({ ...datosFactura, nombreCompleto: e.target.value })
-                        }
-                        className="input-checkout"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Cédula / RUC / Pasaporte *"
-                        required={requiereDatosFacturacion || deseaFacturaConDatos}
-                        value={datosFactura.identificacion}
-                        onChange={(e) =>
-                          setDatosFactura({
-                            ...datosFactura,
-                            identificacion: e.target.value.replace(/[\s-]/g, ''),
-                          })
-                        }
-                        className="input-checkout"
-                      />
-                      <input
-                        type="email"
-                        placeholder="Correo para factura (opcional)"
-                        value={datosFactura.correo}
-                        onChange={(e) =>
-                          setDatosFactura({ ...datosFactura, correo: e.target.value })
-                        }
-                        className="input-checkout"
-                        style={{ gridColumn: '1 / -1' }}
-                      />
+              {/* ============================================================
+                  PASO 4: MÉTODO DE PAGO (TRANSFERENCIA POR DEFECTO / PLUX DIRECTO)
+                 ============================================================ */}
+              {pasoWizard === 4 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {/* Barra compacta de resumen con acceso rápido a editar pedido */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '10px',
+                      flexWrap: 'wrap',
+                      padding: '10px 14px',
+                      borderRadius: '12px',
+                      background: '#FAF8F5',
+                      border: '1px solid #E7E5E4',
+                      fontSize: '0.82rem',
+                    }}
+                  >
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      <strong style={{ color: '#1C1917' }}>
+                        {items.reduce((s, it) => s + it.cantidad, 0)}{' '}
+                        {items.reduce((s, it) => s + it.cantidad, 0) === 1 ? 'producto' : 'productos'} ·{' '}
+                        <span style={{ color: '#2D4734' }}>${totalPagar.toFixed(2)} USD</span>
+                      </strong>
+                      <span style={{ fontSize: '0.73rem', color: '#57534E' }}>
+                        {esRetiroEnTienda
+                          ? 'Retiro en tienda ($0.00)'
+                          : totalFlete > 0
+                          ? `Envío incluido (+$${totalFlete.toFixed(2)})`
+                          : 'Envío gratis ($0.00)'}{' '}
+                        · WhatsApp: {telefonoNormalizado}
+                      </span>
                     </div>
-                  )}
-                </div>
-
-                {/* 3. Selector de Método de Pago (Transferencia por defecto) */}
-                <div className="pills-metodos-pago" style={{ marginBottom: '12px' }}>
-                  {transf.habilitada && (
                     <button
                       type="button"
-                      className={`btn-metodo-pago ${metodoPago === 'transferencia' ? 'activo' : ''}`}
-                      onClick={() => {
-                        setMetodoPago('transferencia');
-                        setErrorPago(null);
+                      onClick={() => irAlPaso(1)}
+                      style={{
+                        padding: '5px 10px',
+                        borderRadius: '8px',
+                        border: '1px solid #D6D3D1',
+                        background: '#FFFFFF',
+                        color: '#1C1917',
+                        fontSize: '0.74rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
                       }}
-                      title="Pagar mediante transferencia bancaria o QR DeUna"
-                      aria-label="Transferencia o QR"
                     >
-                      <Building2 size={18} />
-                      <div>
-                        <strong>Transferencia / DeUna</strong>
-                        <small>Pichincha · Produbanco · QR</small>
-                      </div>
+                      Editar pedido
                     </button>
-                  )}
+                  </div>
 
-                  {tarjetaHabilitada && (
-                    <button
-                      type="button"
-                      className={`btn-metodo-pago ${metodoPago === 'plux' ? 'activo' : ''}`}
-                      onClick={() => {
-                        setMetodoPago('plux');
-                        setErrorPago(null);
-                      }}
-                      title="Pagar en línea con tarjeta de crédito o débito mediante PLUX"
-                      aria-label="Tarjeta PLUX"
-                    >
-                      <CreditCard size={18} />
-                      <div>
-                        <strong>Tarjeta (PLUX)</strong>
-                        <small>Visa / Mastercard / Débito</small>
-                      </div>
-                    </button>
-                  )}
-                </div>
+                  {/* Selector de Método de Pago (Transferencia por defecto) */}
+                  <div className="pills-metodos-pago" style={{ marginBottom: '2px' }}>
+                    {transf.habilitada && (
+                      <button
+                        type="button"
+                        className={`btn-metodo-pago ${metodoPago === 'transferencia' ? 'activo' : ''}`}
+                        onClick={() => {
+                          setMetodoPago('transferencia');
+                          setErrorPago(null);
+                        }}
+                        title="Pagar mediante transferencia bancaria o QR DeUna"
+                        aria-label="Transferencia o QR"
+                      >
+                        <Building2 size={18} />
+                        <div>
+                          <strong>Transferencia / DeUna</strong>
+                          <small>Pichincha · Produbanco · QR</small>
+                        </div>
+                      </button>
+                    )}
+
+                    {tarjetaHabilitada && (
+                      <button
+                        type="button"
+                        className={`btn-metodo-pago ${metodoPago === 'plux' ? 'activo' : ''}`}
+                        onClick={() => {
+                          setMetodoPago('plux');
+                          setErrorPago(null);
+                          huellaAutoPluxRef.current = null;
+                        }}
+                        title="Pagar en línea con tarjeta de crédito o débito mediante PLUX"
+                        aria-label="Tarjeta PLUX"
+                      >
+                        <CreditCard size={18} />
+                        <div>
+                          <strong>Tarjeta (PLUX)</strong>
+                          <small>Visa / Mastercard / Débito</small>
+                        </div>
+                      </button>
+                    )}
+                  </div>
 
                 {/* Sección según Método de Pago */}
                 {!tarjetaHabilitada && !transf.habilitada ? (
@@ -1712,7 +2326,7 @@ export function ModalCheckoutTinkay() {
                     }}
                   >
                     <label className="titulo-seccion-form" style={{ marginBottom: 0 }}>
-                      3. Pago con Tarjeta (PagoPlux)
+                      Pago con Tarjeta (PagoPlux)
                     </label>
                     <p
                       style={{
@@ -1726,32 +2340,46 @@ export function ModalCheckoutTinkay() {
                       <strong>PLUX ({ambientePlux === 'PRODUCCION' ? 'Producción' : 'Sandbox'})</strong>.
                     </p>
 
-                    {!ordenPluxPreparada ? (
+                    {preparandoOrdenPlux ? (
+                      <div
+                        role="status"
+                        aria-live="polite"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '9px',
+                          padding: '13px 16px',
+                          borderRadius: '12px',
+                          background: '#F0FDF4',
+                          border: '1px solid #86EFAC',
+                          color: '#166534',
+                          fontSize: '0.86rem',
+                          fontWeight: 700,
+                        }}
+                      >
+                        <Loader2 size={18} className="icono-girar-checkout" />
+                        <span>Preparando botón seguro de PLUX…</span>
+                      </div>
+                    ) : !ordenPluxPreparada ? (
                       <button
                         type="button"
-                        onClick={handlePrepararOrdenPlux}
-                        disabled={preparandoOrdenPlux}
+                        onClick={() => {
+                          huellaAutoPluxRef.current = huellaActual;
+                          void handlePrepararOrdenPlux();
+                        }}
                         className="btn btn-primario btn-confirmar-pago-grande"
-                        title="Abrir formulario seguro de pago con tarjeta PLUX"
-                        aria-label="Pagar con PLUX"
+                        title="Cargar botón oficial de pago con tarjeta PLUX"
+                        aria-label="Cargar PLUX"
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: '8px',
-                          cursor: preparandoOrdenPlux ? 'wait' : 'pointer',
                         }}
                       >
-                        {preparandoOrdenPlux ? (
-                          <Loader2 size={17} className="icono-girar-checkout" />
-                        ) : (
-                          <Lock size={16} />
-                        )}
-                        <span>
-                          {preparandoOrdenPlux
-                            ? 'Conectando con PLUX…'
-                            : `Pagar con PLUX ($${totalPagar.toFixed(2)})`}
-                        </span>
+                        <Lock size={16} />
+                        <span>Cargar botón de PLUX (${totalPagar.toFixed(2)})</span>
                       </button>
                     ) : (
                       <div
@@ -1770,7 +2398,7 @@ export function ModalCheckoutTinkay() {
                           modalidadCobro="TOTAL_100"
                           ambiente={ambientePlux}
                           autoIniciar
-                          autoAbrirModal
+                          autoAbrirModal={false}
                           pagador={{
                             nombre: mostrarCamposFacturacion
                               ? datosFactura.nombreCompleto.trim()
@@ -1833,7 +2461,7 @@ export function ModalCheckoutTinkay() {
                     style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}
                   >
                     <label className="titulo-seccion-form" style={{ marginBottom: 0 }}>
-                      3. Datos para la Transferencia y QR DeUna
+                      Datos para la Transferencia y QR DeUna
                     </label>
 
                     {/* Advertencia de acreditación */}
@@ -2114,263 +2742,58 @@ export function ModalCheckoutTinkay() {
                   </div>
                 )}
 
-                {errorPago && (
-                  <div
-                    style={{
-                      background: '#FEF2F2',
-                      border: '1px solid #FECACA',
-                      color: '#B91C1C',
-                      borderRadius: '10px',
-                      padding: '10px 12px',
-                      fontSize: '0.82rem',
-                      marginBottom: '10px',
-                    }}
-                  >
-                    {errorPago}
-                  </div>
-                )}
-
-                {metodoPago === 'transferencia' && (
-                  <button
-                    type="submit"
-                    disabled={subiendoComprobante}
-                    className="btn btn-primario btn-confirmar-pago-grande"
-                    title={`Confirmar pedido con comprobante adjunto ($${totalPagar.toFixed(2)} USD)`}
-                    aria-label="Confirmar Pedido"
-                  >
-                    <span>Confirmar Pedido (${totalPagar.toFixed(2)})</span>
-                  </button>
-                )}
-              </form>
-            </div>
-
-            {/* Columna Derecha: Resumen de Orden */}
-            <div className="columna-resumen-lateral">
-              <h3>Resumen de tu Pedido</h3>
-              <div className="lista-mini-resumen-checkout">
-                {items.map((it) => (
-                  <div key={it.id} className="item-mini-resumen">
-                    <img
-                      src={it.producto.fotos[0]}
-                      alt={it.producto.nombre}
-                      className="foto-mini-resumen"
-                    />
-                    <div className="info-mini-resumen">
-                      <strong>{it.producto.nombre}</strong>
-                      <span>
-                        {it.cantidad}x {it.variante.nombre}
-                      </span>
-                      {it.dedicatoria?.mensaje && (
-                        <small className="mini-dedicatoria-preview">
-                          💌 Tarjeta: &quot;{it.dedicatoria.mensaje.slice(0, 35)}...&quot;
-                        </small>
-                      )}
-                    </div>
-                    <span className="precio-mini-resumen">
-                      ${(it.variante.pvp * it.cantidad).toFixed(2)}
-                    </span>
-                  </div>
-                ))}
-
-                {incluyeExtraObsequio && (
-                  <div
-                    className="item-mini-resumen"
-                    style={{
-                      background: '#ECFDF5',
-                      border: '1px solid #A7F3D0',
-                      borderRadius: '10px',
-                      padding: '8px',
-                    }}
-                  >
-                    <img
-                      src={datosObsequio.imagenUrl}
-                      alt={datosObsequio.nombre}
-                      className="foto-mini-resumen"
-                    />
-                    <div className="info-mini-resumen">
-                      <strong style={{ color: '#065F46' }}>{datosObsequio.nombre}</strong>
-                      <span style={{ color: '#047857', fontWeight: 700, fontSize: '0.73rem' }}>
-                        1x Extra por registro y primera compra
-                      </span>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <div
-                        style={{
-                          fontSize: '0.68rem',
-                          color: '#94A3B8',
-                          textDecoration: 'line-through',
-                        }}
-                      >
-                        ${datosObsequio.valorReferencia.toFixed(2)}
-                      </div>
-                      <span
-                        className="precio-mini-resumen"
-                        style={{ color: '#059669', fontWeight: 800 }}
-                      >
-                        $0.00
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div
-                style={{
-                  marginTop: '12px',
-                  padding: '10px 12px',
-                  borderRadius: '10px',
-                  background: 'rgba(61, 90, 69, 0.06)',
-                  border: '1px solid rgba(61, 90, 69, 0.16)',
-                  fontSize: '0.78rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '4px',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Subtotal + IVA:</span>
-                  <span>${(subtotalBaseImponible + totalIva).toFixed(2)}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 600 }}>
-                  <span>
-                    {esRetiroEnTienda
-                      ? 'Retiro en tienda:'
-                      : totalFlete > 0
-                      ? 'Valor adicional de envío:'
-                      : `Entrega gratuita (${
-                          (modalidadEntrega === 'unificada' && entregaUnificada.zonaDetectadaNombre) ||
-                          configLogistica.zonaGratisNombre
-                        }):`}
-                  </span>
-                  <span style={{ color: totalFlete === 0 ? 'var(--verde)' : 'inherit' }}>
-                    {totalFlete === 0 ? 'GRATIS ($0.00)' : `+$${totalFlete.toFixed(2)}`}
-                  </span>
-                </div>
-                {totalRecargoHorarioExacto > 0 && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span>Horario exacto:</span>
-                    <span>+${totalRecargoHorarioExacto.toFixed(2)}</span>
-                  </div>
-                )}
-                {!esRetiroEnTienda &&
-                  modalidadEntrega === 'unificada' &&
-                  entregaUnificada.enlaceMapa && (
-                    <a
-                      href={entregaUnificada.enlaceMapa}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                  {errorPago && (
+                    <div
                       style={{
-                        marginTop: '2px',
-                        color: 'var(--verde)',
-                        textDecoration: 'underline',
-                        fontWeight: 600,
+                        background: '#FEF2F2',
+                        border: '1px solid #FECACA',
+                        color: '#B91C1C',
+                        borderRadius: '10px',
+                        padding: '10px 12px',
+                        fontSize: '0.82rem',
                       }}
                     >
-                      📍 Ver ubicación GPS confirmada
-                    </a>
+                      {errorPago}
+                    </div>
                   )}
-              </div>
 
-              <div className="total-destacado-caja">
-                <span>Total a pagar:</span>
-                <strong>${totalPagar.toFixed(2)} USD</strong>
-              </div>
+                  {metodoPago === 'transferencia' && (
+                    <button
+                      type="submit"
+                      disabled={subiendoComprobante}
+                      className="btn btn-primario btn-confirmar-pago-grande"
+                      title={`Confirmar pedido con comprobante adjunto ($${totalPagar.toFixed(2)} USD)`}
+                      aria-label="Confirmar Pedido"
+                    >
+                      <span>Confirmar Pedido (${totalPagar.toFixed(2)})</span>
+                    </button>
+                  )}
 
-              {!usuarioRegistradoTinkay && omitirInvitacionRegistro && (
-                <div
-                  style={{
-                    marginTop: '10px',
-                    textAlign: 'center',
-                    fontSize: '0.75rem',
-                    color: '#64748B',
-                  }}
-                >
-                  Comprando como invitado.{' '}
-                  <button
-                    type="button"
-                    onClick={() => setOmitirInvitacionRegistro(false)}
-                    title="Ver promoción de obsequio por registrarme"
-                    aria-label="Ver Obsequio"
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      padding: 0,
-                      color: '#9D174D',
-                      fontWeight: 700,
-                      textDecoration: 'underline',
-                      cursor: 'pointer',
-                      fontSize: '0.75rem',
-                    }}
-                  >
-                    Ver obsequio de bienvenida
-                  </button>
-                </div>
-              )}
-
-              {usuarioRegistradoTinkay && estadoRegalo?.aplicaRegalo && (
-                <div
-                  style={{
-                    marginTop: '12px',
-                    padding: '10px 12px',
-                    borderRadius: '10px',
-                    background: incluyeExtraObsequio ? '#ECFDF5' : '#F8FAFC',
-                    border: incluyeExtraObsequio ? '1px solid #A7F3D0' : '1px solid #E2E8F0',
-                    color: incluyeExtraObsequio ? '#065F46' : '#475569',
-                    fontSize: '0.75rem',
-                    lineHeight: 1.45,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '8px',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-                    <Gift size={15} style={{ flexShrink: 0 }} />
-                    <span>
-                      {incluyeExtraObsequio ? (
-                        <>
-                          <strong>Obsequio agregado ($0.00):</strong> 1x {datosObsequio.nombre}
-                        </>
-                      ) : (
-                        <>Obsequio de bienvenida disponible sin costo</>
-                      )}
-                    </span>
+                  <div className="checkout-nav-pasos">
+                    <button
+                      type="button"
+                      onClick={() => irAlPaso(3)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '10px 14px',
+                        borderRadius: '10px',
+                        border: '1px solid var(--linea)',
+                        background: '#FFFFFF',
+                        color: 'var(--tinta)',
+                        fontSize: '0.84rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <ChevronLeft size={15} />
+                      <span>Atrás</span>
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const siguiente = !aceptoObsequioBienvenida;
-                      setAceptoObsequioBienvenida(siguiente);
-                      if (typeof window !== 'undefined') {
-                        window.localStorage.setItem(
-                          'tinkay_obsequio_bienvenida_aceptado',
-                          siguiente ? '1' : '0'
-                        );
-                      }
-                    }}
-                    title={
-                      incluyeExtraObsequio
-                        ? 'Quitar el obsequio gratuito del pedido'
-                        : 'Agregar el obsequio gratuito ($0.00) al pedido'
-                    }
-                    aria-label={incluyeExtraObsequio ? 'Quitar Obsequio' : 'Agregar Obsequio'}
-                    style={{
-                      border: '1px solid currentColor',
-                      background: '#FFFFFF',
-                      color: 'inherit',
-                      borderRadius: '999px',
-                      padding: '3px 9px',
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {incluyeExtraObsequio ? 'Quitar' : 'Agregar'}
-                  </button>
                 </div>
               )}
-            </div>
+            </form>
           </div>
         )}
       </div>

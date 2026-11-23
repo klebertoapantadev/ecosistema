@@ -9,10 +9,10 @@ import {
 } from "./configuracion-tienda-checkout";
 
 describe("configuracion-tienda-checkout", () => {
-  it("preconfigura Tinkay con WhatsApp +593 99 292 2343, umbral $50, Pichincha, Produbanco y QR DeUna", () => {
+  it("preconfigura Tinkay con WhatsApp +593 99 292 2343, umbral $0 (sin control), Pichincha, Produbanco y QR DeUna", () => {
     const def = crearConfiguracionTiendaCheckoutPorDefecto("tinkay");
     expect(def.whatsappTienda).toBe("+593 99 292 2343");
-    expect(def.montoMaximoPagoSinDatosUsd).toBe(50);
+    expect(def.montoMaximoPagoSinDatosUsd).toBe(0);
     expect(def.transferencia.habilitada).toBe(true);
     expect(def.transferencia.nombreTitular).toBe("Kleber Toapanta");
     expect(def.transferencia.identificacionTitular).toBe("1714898226");
