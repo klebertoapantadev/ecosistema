@@ -5,6 +5,7 @@ import { Palette, Sparkles, Check } from "lucide-react";
 import {
   COLORES_ROSAS_PERSONALIZACION,
   OPCIONES_COLOR_BASE_PAPEL,
+  OPCIONES_TIPO_ENVOLTORIO_FLORAL,
   type ColorBasePapelId,
   type ConfiguracionPersonalizacionFloral,
 } from "../utils/personalizacionFloral";
@@ -470,7 +471,7 @@ export function EditorPersonalizacionFloralProducto({ valor, onChange }: Props) 
             </div>
           </div>
 
-          {/* 4. Color Base / Papel Decorativo (únicamente Claros, Oscuros, Rosa) */}
+          {/* 4. Tipo de Envoltorio (Base / Papel Envoltorio) y Color (únicamente Claros, Oscuros, Rosa) */}
           <div
             style={{
               background: "#FFFFFF",
@@ -492,7 +493,7 @@ export function EditorPersonalizacionFloralProducto({ valor, onChange }: Props) 
               }}
             >
               <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#221E1B" }}>
-                4. Color Base / Papel Decorativo (3 alternativas exclusivas)
+                4. Tipo de Envoltorio (Base / Papel Envoltorio) y Color
               </span>
               <label
                 style={{
@@ -515,57 +516,122 @@ export function EditorPersonalizacionFloralProducto({ valor, onChange }: Props) 
             </div>
 
             {valor.mostrarColorBase && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                {OPCIONES_COLOR_BASE_PAPEL.map((op) => {
-                  const activa = valor.coloresBaseDisponibles.includes(op.id);
-                  return (
-                    <button
-                      key={op.id}
-                      type="button"
-                      onClick={() => toggleColorBase(op.id)}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "7px",
-                        padding: "6px 11px",
-                        borderRadius: "10px",
-                        border: activa ? "1.5px solid #2F4737" : "1px solid #D5CFC4",
-                        background: activa ? "#F2F6F3" : "#FAF8F5",
-                        color: activa ? "#1F1C19" : "#78716C",
-                        fontSize: "0.74rem",
-                        fontWeight: 700,
-                        cursor: "pointer",
-                      }}
-                    >
-                      <span style={{ display: "inline-flex", alignItems: "center" }}>
-                        <span
+              <>
+                <div>
+                  <span
+                    style={{
+                      display: "block",
+                      fontSize: "0.71rem",
+                      fontWeight: 700,
+                      color: "#57524C",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Tipo de envoltorio de este arreglo / variante:
+                  </span>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "7px" }}>
+                    {OPCIONES_TIPO_ENVOLTORIO_FLORAL.map((opEnv) => {
+                      const selEnv = valor.tipoEnvoltorio === opEnv.id;
+                      return (
+                        <button
+                          key={opEnv.id}
+                          type="button"
+                          onClick={() => actualizar({ tipoEnvoltorio: opEnv.id })}
+                          title={opEnv.descripcion}
                           style={{
-                            width: "12px",
-                            height: "12px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "6px",
+                            padding: "6px 11px",
                             borderRadius: "999px",
-                            background: op.coloresMuestra[0],
-                            border: "1px solid rgba(0,0,0,0.22)",
+                            border: selEnv ? "1.5px solid #2F4737" : "1px solid #D5CFC4",
+                            background: selEnv ? "#2F4737" : "#FAF8F5",
+                            color: selEnv ? "#FFFFFF" : "#3F3F46",
+                            fontSize: "0.74rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
                           }}
-                        />
-                        <span
+                        >
+                          {selEnv && <Check size={13} />}
+                          <span>
+                            {opEnv.id === "base"
+                              ? "📦 "
+                              : opEnv.id === "papel_envoltorio"
+                                ? "🎀 "
+                                : "✨ "}
+                            {opEnv.etiqueta}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <span
+                    style={{
+                      display: "block",
+                      fontSize: "0.71rem",
+                      fontWeight: 700,
+                      color: "#57524C",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Colores disponibles (3 alternativas exclusivas):
+                  </span>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                    {OPCIONES_COLOR_BASE_PAPEL.map((op) => {
+                      const activa = valor.coloresBaseDisponibles.includes(op.id);
+                      return (
+                        <button
+                          key={op.id}
+                          type="button"
+                          onClick={() => toggleColorBase(op.id)}
                           style={{
-                            width: "12px",
-                            height: "12px",
-                            borderRadius: "999px",
-                            background: op.coloresMuestra[1],
-                            border: "1px solid rgba(0,0,0,0.22)",
-                            marginLeft: "-4px",
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "7px",
+                            padding: "6px 11px",
+                            borderRadius: "10px",
+                            border: activa ? "1.5px solid #2F4737" : "1px solid #D5CFC4",
+                            background: activa ? "#F2F6F3" : "#FAF8F5",
+                            color: activa ? "#1F1C19" : "#78716C",
+                            fontSize: "0.74rem",
+                            fontWeight: 700,
+                            cursor: "pointer",
                           }}
-                        />
-                      </span>
-                      <span>
-                        {op.etiqueta}{" "}
-                        <small style={{ fontWeight: 500, opacity: 0.8 }}>({op.detalle})</small>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+                        >
+                          <span style={{ display: "inline-flex", alignItems: "center" }}>
+                            <span
+                              style={{
+                                width: "12px",
+                                height: "12px",
+                                borderRadius: "999px",
+                                background: op.coloresMuestra[0],
+                                border: "1px solid rgba(0,0,0,0.22)",
+                              }}
+                            />
+                            <span
+                              style={{
+                                width: "12px",
+                                height: "12px",
+                                borderRadius: "999px",
+                                background: op.coloresMuestra[1],
+                                border: "1px solid rgba(0,0,0,0.22)",
+                                marginLeft: "-4px",
+                              }}
+                            />
+                          </span>
+                          <span>
+                            {op.etiqueta}{" "}
+                            <small style={{ fontWeight: 500, opacity: 0.8 }}>({op.detalle})</small>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </>
             )}
 
             <div

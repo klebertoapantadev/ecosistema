@@ -20,6 +20,60 @@ export type ModoFlorPersonalizacion =
 
 export type ColorBasePapelId = "claros" | "oscuros" | "rosa";
 
+export type TipoEnvoltorioFloral = "base" | "papel_envoltorio" | "ambos";
+export type TipoEnvoltorioSeleccionado = "base" | "papel_envoltorio";
+
+export interface OpcionTipoEnvoltorioFloral {
+  id: TipoEnvoltorioFloral;
+  etiqueta: string;
+  descripcion: string;
+}
+
+export const OPCIONES_TIPO_ENVOLTORIO_FLORAL: readonly OpcionTipoEnvoltorioFloral[] = [
+  {
+    id: "base",
+    etiqueta: "Base",
+    descripcion: "Caja rígida, corazón, cesta, pedestal o base floral",
+  },
+  {
+    id: "papel_envoltorio",
+    etiqueta: "Papel Envoltorio",
+    descripcion: "Papel coreano, plisado o envoltura de bouquet",
+  },
+  {
+    id: "ambos",
+    etiqueta: "Base o Papel (cliente elige)",
+    descripcion: "El cliente selecciona si desea Base o Papel Envoltorio",
+  },
+] as const;
+
+export function obtenerEtiquetaTipoEnvoltorio(tipo?: TipoEnvoltorioFloral | null): string {
+  if (tipo === "base") return "Base";
+  if (tipo === "papel_envoltorio") return "Papel Envoltorio";
+  if (tipo === "ambos") return "Base / Papel Envoltorio";
+  return "Base / Papel Envoltorio";
+}
+
+/**
+ * Infiere un tipo de envoltorio inicial amigable cuando el producto aún no tiene uno explícito:
+ * arreglos en box, caja, corazón, florero, cilindro, cesta o pedestal -> "base";
+ * bouquets y ramos -> "papel_envoltorio".
+ */
+export function inferirTipoEnvoltorioPorNombre(
+  ...textos: Array<string | undefined | null>
+): TipoEnvoltorioSeleccionado {
+  const unido = textos
+    .filter(Boolean)
+    .join(" ")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  if (/\b(box|caja|corazon|florero|cilindro|cesta|canasta|pedestal|base|pecera|esfera|jarron)\b/.test(unido)) {
+    return "base";
+  }
+  return "papel_envoltorio";
+}
+
 export interface OpcionColorBasePapel {
   id: ColorBasePapelId;
   etiqueta: string;
@@ -82,8 +136,10 @@ export interface ConfiguracionPersonalizacionFloral {
   orquideasMin: number;
   /** Cantidad máxima de orquídeas (0 = no aplica / no disponible). */
   orquideasMax: number;
-  /** Mostrar selección de Color Base / Papel Decorativo (Claros / Oscuros / Rosa). */
+  /** Mostrar selección de Color de Base / Papel Envoltorio (Claros / Oscuros / Rosa). */
   mostrarColorBase: boolean;
+  /** Tipo de envoltorio configurado para este producto o variante: Base, Papel Envoltorio o Ambos. */
+  tipoEnvoltorio: TipoEnvoltorioFloral;
   /** Subconjunto de las 3 alternativas permitidas (por defecto las 3). */
   coloresBaseDisponibles: ColorBasePapelId[];
   /** Permitir campo libre de indicaciones adicionales del comprador. */
@@ -96,6 +152,9 @@ export interface SeleccionPersonalizacionFloral {
   modoFlores: ModoFlorPersonalizacion;
   coloresRosas: string[];
   cantidadOrquideas: number;
+  /** Tipo de envoltorio elegido o configurado para el arreglo: "base" o "papel_envoltorio". */
+  tipoEnvoltorio?: TipoEnvoltorioSeleccionado | null;
+  tipoEnvoltorioEtiqueta?: string;
   colorBasePapel?: ColorBasePapelId | null;
   colorBasePapelEtiqueta?: string;
   indicacionesAdicionales?: string;
@@ -103,7 +162,8 @@ export interface SeleccionPersonalizacionFloral {
 }
 
 export function crearConfiguracionPersonalizacionFloralPorDefecto(
-  habilitada = true
+  habilitada = true,
+  tipoEnvoltorio: TipoEnvoltorioFloral = "papel_envoltorio"
 ): ConfiguracionPersonalizacionFloral {
   return {
     habilitada,
@@ -115,6 +175,7 @@ export function crearConfiguracionPersonalizacionFloralPorDefecto(
     orquideasMin: 0,
     orquideasMax: 0,
     mostrarColorBase: true,
+    tipoEnvoltorio,
     coloresBaseDisponibles: ["claros", "oscuros", "rosa"],
     permitirIndicacionesAdicionales: true,
   };
@@ -122,6 +183,10 @@ export function crearConfiguracionPersonalizacionFloralPorDefecto(
 
 function esColorBasePapelValido(v: unknown): v is ColorBasePapelId {
   return v === "claros" || v === "oscuros" || v === "rosa";
+}
+
+function esTipoEnvoltorioValido(v: unknown): v is TipoEnvoltorioFloral {
+  return v === "base" || v === "papel_envoltorio" || v === "ambos";
 }
 
 function normalizarEnteroRango(valor: unknown, defecto: number, min: number, max: number): number {
@@ -132,10 +197,14 @@ function normalizarEnteroRango(valor: unknown, defecto: number, min: number, max
 
 export function normalizarConfiguracionPersonalizacionFloral(
   raw: unknown,
-  opciones?: { habilitadaPorDefecto?: boolean }
+  opciones?: {
+    habilitadaPorDefecto?: boolean;
+    tipoEnvoltorioPorDefecto?: TipoEnvoltorioFloral;
+  }
 ): ConfiguracionPersonalizacionFloral {
   const habilitadaDef = opciones?.habilitadaPorDefecto ?? true;
-  const base = crearConfiguracionPersonalizacionFloralPorDefecto(habilitadaDef);
+  const tipoEnvDef = opciones?.tipoEnvoltorioPorDefecto ?? "papel_envoltorio";
+  const base = crearConfiguracionPersonalizacionFloralPorDefecto(habilitadaDef, tipoEnvDef);
   if (!raw || typeof raw !== "object") {
     return base;
   }
@@ -184,6 +253,13 @@ export function normalizarConfiguracionPersonalizacionFloral(
   const mostrarColorBase =
     typeof mostrarColorBaseRaw === "boolean" ? mostrarColorBaseRaw : base.mostrarColorBase;
 
+  const tipoEnvoltorioRaw = String(r.tipoEnvoltorio ?? r.tipo_envoltorio ?? "")
+    .trim()
+    .toLowerCase();
+  const tipoEnvoltorio: TipoEnvoltorioFloral = esTipoEnvoltorioValido(tipoEnvoltorioRaw)
+    ? tipoEnvoltorioRaw
+    : base.tipoEnvoltorio;
+
   const baseRaw = Array.isArray(r.coloresBaseDisponibles ?? r.colores_base_disponibles)
     ? ((r.coloresBaseDisponibles ?? r.colores_base_disponibles) as unknown[])
     : [];
@@ -210,6 +286,7 @@ export function normalizarConfiguracionPersonalizacionFloral(
     orquideasMin,
     orquideasMax,
     mostrarColorBase,
+    tipoEnvoltorio,
     coloresBaseDisponibles,
     permitirIndicacionesAdicionales,
   };
@@ -353,7 +430,14 @@ export function formatearResumenPersonalizacionFloral(
     seleccion.colorBasePapelEtiqueta?.trim() ||
     obtenerEtiquetaColorBasePapel(seleccion.colorBasePapel);
   if (etiquetaBase) {
-    partes.push(`Base/Papel: ${etiquetaBase}`);
+    const rotuloEnvoltorio =
+      seleccion.tipoEnvoltorioEtiqueta?.trim() ||
+      (seleccion.tipoEnvoltorio === "base"
+        ? "Base"
+        : seleccion.tipoEnvoltorio === "papel_envoltorio"
+          ? "Papel Envoltorio"
+          : "Base/Papel");
+    partes.push(`${rotuloEnvoltorio}: ${etiquetaBase}`);
   }
 
   const notas = seleccion.indicacionesAdicionales?.trim();
@@ -434,15 +518,33 @@ export function validarSeleccionPersonalizacionFloral(
     };
   }
 
+  let tipoEnvoltorioFinal: TipoEnvoltorioSeleccionado | null = null;
+  let tipoEnvoltorioEtiqueta = "";
   let colorBasePapel: ColorBasePapelId | null = null;
   let colorBasePapelEtiqueta = "";
 
   if (config.mostrarColorBase) {
+    if (config.tipoEnvoltorio === "base") {
+      tipoEnvoltorioFinal = "base";
+    } else if (config.tipoEnvoltorio === "papel_envoltorio") {
+      tipoEnvoltorioFinal = "papel_envoltorio";
+    } else {
+      const elegido = seleccion.tipoEnvoltorio;
+      if (elegido !== "base" && elegido !== "papel_envoltorio") {
+        return {
+          ok: false,
+          error: "Selecciona el tipo de envoltorio (Base o Papel Envoltorio).",
+        };
+      }
+      tipoEnvoltorioFinal = elegido;
+    }
+    tipoEnvoltorioEtiqueta = obtenerEtiquetaTipoEnvoltorio(tipoEnvoltorioFinal);
+
     const elegida = seleccion.colorBasePapel;
     if (!elegida || !config.coloresBaseDisponibles.includes(elegida)) {
       return {
         ok: false,
-        error: "Selecciona el Color Base / papel decorativo (Claros, Oscuros o Rosa).",
+        error: `Selecciona el color de ${tipoEnvoltorioEtiqueta} (Claros, Oscuros o Rosa).`,
       };
     }
     colorBasePapel = elegida;
@@ -454,6 +556,8 @@ export function validarSeleccionPersonalizacionFloral(
     modoFlores: modoValido,
     coloresRosas: coloresLimpios,
     cantidadOrquideas,
+    tipoEnvoltorio: tipoEnvoltorioFinal,
+    tipoEnvoltorioEtiqueta: tipoEnvoltorioEtiqueta || undefined,
     colorBasePapel,
     colorBasePapelEtiqueta: colorBasePapelEtiqueta || undefined,
     indicacionesAdicionales: indicacionesAdicionales || undefined,
@@ -483,10 +587,12 @@ export function resolverPersonalizacionFloralEfectiva(params: {
   configVariante?: unknown;
   modoVariante?: unknown;
   habilitadaPorDefecto?: boolean;
+  tipoEnvoltorioPorDefecto?: TipoEnvoltorioFloral;
 }): ConfiguracionPersonalizacionFloral {
   const habilitadaDef = params.habilitadaPorDefecto ?? true;
   const masterNorm = normalizarConfiguracionPersonalizacionFloral(params.configMaster, {
     habilitadaPorDefecto: habilitadaDef,
+    tipoEnvoltorioPorDefecto: params.tipoEnvoltorioPorDefecto,
   });
 
   const modoRaw = String(params.modoVariante || "").trim().toLowerCase();
@@ -495,6 +601,7 @@ export function resolverPersonalizacionFloralEfectiva(params: {
   if (modoRaw === "personalizado" && tieneObjVariante) {
     return normalizarConfiguracionPersonalizacionFloral(params.configVariante, {
       habilitadaPorDefecto: masterNorm.habilitada,
+      tipoEnvoltorioPorDefecto: masterNorm.tipoEnvoltorio,
     });
   }
 
@@ -526,7 +633,7 @@ export function resumirConfiguracionPersonalizacionAdmin(
     partes.push(`${config.orquideasMin}–${config.orquideasMax} orquídeas`);
   }
   if (config.mostrarColorBase) {
-    partes.push("Base/Papel");
+    partes.push(obtenerEtiquetaTipoEnvoltorio(config.tipoEnvoltorio));
   }
   return partes.join(" · ") || "Activa";
 }

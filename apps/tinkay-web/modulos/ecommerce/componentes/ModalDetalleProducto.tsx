@@ -10,12 +10,14 @@ import {
   formatearResumenPersonalizacionFloral,
   modoRequiereColoresRosas,
   obtenerColoresRosasHabilitados,
+  obtenerEtiquetaTipoEnvoltorio,
   obtenerModosFlorDisponibles,
   resolverPersonalizacionFloralEfectiva,
   validarSeleccionPersonalizacionFloral,
   type ColorBasePapelId,
   type ModoFlorPersonalizacion,
   type SeleccionPersonalizacionFloral,
+  type TipoEnvoltorioSeleccionado,
 } from '@eco/comercio';
 import { useCarrito } from '../contexto-carrito';
 import { PRODUCTOS_TINKAY, FRASES_DEDICATORIAS } from '../datos-catalogo';
@@ -153,6 +155,11 @@ export function ModalDetalleProducto() {
       setModoFloresSel(modosDisp[0]?.id ?? 'solo_rosas');
       setColoresRosasSel([]);
       setCantidadOrquideasSel(cfgPers.orquideasMin);
+      setTipoEnvoltorioSel(
+        cfgPers.tipoEnvoltorio === 'base' || cfgPers.tipoEnvoltorio === 'papel_envoltorio'
+          ? cfgPers.tipoEnvoltorio
+          : null
+      );
       setColorBasePapelSel(null);
       setIndicacionesAdicionales('');
       setErrorPersonalizacion(null);
@@ -223,6 +230,9 @@ export function ModalDetalleProducto() {
   const [modoFloresSel, setModoFloresSel] = useState<ModoFlorPersonalizacion>('solo_rosas');
   const [coloresRosasSel, setColoresRosasSel] = useState<string[]>([]);
   const [cantidadOrquideasSel, setCantidadOrquideasSel] = useState<number>(0);
+  const [tipoEnvoltorioSel, setTipoEnvoltorioSel] = useState<TipoEnvoltorioSeleccionado | null>(
+    null
+  );
   const [colorBasePapelSel, setColorBasePapelSel] = useState<ColorBasePapelId | null>(null);
   const [indicacionesAdicionales, setIndicacionesAdicionales] = useState('');
   const [errorPersonalizacion, setErrorPersonalizacion] = useState<string | null>(null);
@@ -638,6 +648,12 @@ export function ModalDetalleProducto() {
       );
     });
     if (
+      configPersonalizacionFloral.tipoEnvoltorio === 'base' ||
+      configPersonalizacionFloral.tipoEnvoltorio === 'papel_envoltorio'
+    ) {
+      setTipoEnvoltorioSel(configPersonalizacionFloral.tipoEnvoltorio);
+    }
+    if (
       colorBasePapelSel &&
       !configPersonalizacionFloral.coloresBaseDisponibles.includes(colorBasePapelSel)
     ) {
@@ -684,6 +700,10 @@ export function ModalDetalleProducto() {
         modoFlores: modoFloresSel,
         coloresRosas: coloresRosasSel,
         cantidadOrquideas: cantidadOrquideasSel,
+        tipoEnvoltorio:
+          configPersonalizacionFloral.tipoEnvoltorio === 'ambos'
+            ? tipoEnvoltorioSel
+            : configPersonalizacionFloral.tipoEnvoltorio,
         colorBasePapel: colorBasePapelSel,
         indicacionesAdicionales,
       });
@@ -2136,11 +2156,20 @@ export function ModalDetalleProducto() {
               const opcionesBaseDisponibles = OPCIONES_COLOR_BASE_PAPEL.filter((op) =>
                 configPersonalizacionFloral.coloresBaseDisponibles.includes(op.id)
               );
+              const tipoEnvEfectivo: TipoEnvoltorioSeleccionado | null =
+                configPersonalizacionFloral.tipoEnvoltorio === 'ambos'
+                  ? tipoEnvoltorioSel
+                  : configPersonalizacionFloral.tipoEnvoltorio;
+              const rotuloTipoEnv = tipoEnvEfectivo
+                ? obtenerEtiquetaTipoEnvoltorio(tipoEnvEfectivo)
+                : 'Base / Papel Envoltorio';
               const resumenActual = formatearResumenPersonalizacionFloral({
                 mismosColoresFoto,
                 modoFlores: modoFloresSel,
                 coloresRosas: coloresRosasSel,
                 cantidadOrquideas: cantidadOrquideasSel,
+                tipoEnvoltorio: tipoEnvEfectivo,
+                tipoEnvoltorioEtiqueta: tipoEnvEfectivo ? rotuloTipoEnv : undefined,
                 colorBasePapel: colorBasePapelSel,
                 indicacionesAdicionales,
               });
@@ -2442,96 +2471,163 @@ export function ModalDetalleProducto() {
                         </div>
                       )}
 
-                      {/* Color Base / Papel Decorativo (únicamente Claros, Oscuros, Rosa) */}
+                      {/* Tipo de Envoltorio (Base / Papel Envoltorio) y Color (únicamente Claros, Oscuros, Rosa) */}
                       {configPersonalizacionFloral.mostrarColorBase &&
                         opcionesBaseDisponibles.length > 0 && (
-                          <div>
-                            <span
-                              style={{
-                                display: 'block',
-                                fontSize: '0.75rem',
-                                fontWeight: 800,
-                                color: '#221E1B',
-                                marginBottom: '6px',
-                              }}
-                            >
-                              Color Base / Papel Decorativo *
-                            </span>
-                            <div
-                              style={{
-                                display: 'grid',
-                                gridTemplateColumns:
-                                  'repeat(auto-fit, minmax(min(130px, 100%), 1fr))',
-                                gap: '8px',
-                              }}
-                            >
-                              {opcionesBaseDisponibles.map((op) => {
-                                const activo = colorBasePapelSel === op.id;
-                                return (
-                                  <button
-                                    key={op.id}
-                                    type="button"
-                                    onClick={() => {
-                                      setColorBasePapelSel(op.id);
-                                      setErrorPersonalizacion(null);
-                                    }}
-                                    aria-pressed={activo}
-                                    style={{
-                                      display: 'flex',
-                                      flexDirection: 'column',
-                                      alignItems: 'flex-start',
-                                      gap: '4px',
-                                      padding: '9px 10px',
-                                      borderRadius: '11px',
-                                      border: activo
-                                        ? '2px solid #2F4737'
-                                        : '1px solid #E4DDD4',
-                                      background: activo ? '#F2F6F3' : '#FFFFFF',
-                                      color: '#1F1C19',
-                                      cursor: 'pointer',
-                                      textAlign: 'left',
-                                    }}
-                                  >
-                                    <div
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {configPersonalizacionFloral.tipoEnvoltorio === 'ambos' && (
+                              <div>
+                                <span
+                                  style={{
+                                    display: 'block',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 800,
+                                    color: '#221E1B',
+                                    marginBottom: '6px',
+                                  }}
+                                >
+                                  Tipo de Envoltorio *
+                                </span>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                                  {(
+                                    [
+                                      { id: 'base' as const, icono: '📦', label: 'Base' },
+                                      {
+                                        id: 'papel_envoltorio' as const,
+                                        icono: '🎀',
+                                        label: 'Papel Envoltorio',
+                                      },
+                                    ] as const
+                                  ).map((opTipo) => {
+                                    const activoTipo = tipoEnvoltorioSel === opTipo.id;
+                                    return (
+                                      <button
+                                        key={opTipo.id}
+                                        type="button"
+                                        onClick={() => {
+                                          setTipoEnvoltorioSel(opTipo.id);
+                                          setErrorPersonalizacion(null);
+                                        }}
+                                        aria-pressed={activoTipo}
+                                        style={{
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '6px',
+                                          padding: '8px 13px',
+                                          borderRadius: '10px',
+                                          border: activoTipo
+                                            ? '2px solid #2F4737'
+                                            : '1px solid #D5CFC4',
+                                          background: activoTipo ? '#2F4737' : '#FFFFFF',
+                                          color: activoTipo ? '#FFFFFF' : '#1F1C19',
+                                          fontSize: '0.78rem',
+                                          fontWeight: 700,
+                                          cursor: 'pointer',
+                                        }}
+                                      >
+                                        {activoTipo && <Check size={13} />}
+                                        <span>
+                                          {opTipo.icono} {opTipo.label}
+                                        </span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+
+                            <div>
+                              <span
+                                style={{
+                                  display: 'block',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 800,
+                                  color: '#221E1B',
+                                  marginBottom: '6px',
+                                }}
+                              >
+                                {tipoEnvEfectivo === 'base'
+                                  ? 'Color de Base *'
+                                  : tipoEnvEfectivo === 'papel_envoltorio'
+                                    ? 'Color de Papel Envoltorio *'
+                                    : 'Color de Base / Papel Envoltorio *'}
+                              </span>
+                              <div
+                                style={{
+                                  display: 'grid',
+                                  gridTemplateColumns:
+                                    'repeat(auto-fit, minmax(min(130px, 100%), 1fr))',
+                                  gap: '8px',
+                                }}
+                              >
+                                {opcionesBaseDisponibles.map((op) => {
+                                  const activo = colorBasePapelSel === op.id;
+                                  return (
+                                    <button
+                                      key={op.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setColorBasePapelSel(op.id);
+                                        setErrorPersonalizacion(null);
+                                      }}
+                                      aria-pressed={activo}
                                       style={{
                                         display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'space-between',
-                                        width: '100%',
+                                        flexDirection: 'column',
+                                        alignItems: 'flex-start',
+                                        gap: '4px',
+                                        padding: '9px 10px',
+                                        borderRadius: '11px',
+                                        border: activo
+                                          ? '2px solid #2F4737'
+                                          : '1px solid #E4DDD4',
+                                        background: activo ? '#F2F6F3' : '#FFFFFF',
+                                        color: '#1F1C19',
+                                        cursor: 'pointer',
+                                        textAlign: 'left',
                                       }}
                                     >
-                                      <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                                        <span
-                                          style={{
-                                            width: '16px',
-                                            height: '16px',
-                                            borderRadius: '999px',
-                                            background: op.coloresMuestra[0],
-                                            border: '1px solid rgba(0,0,0,0.22)',
-                                          }}
-                                        />
-                                        <span
-                                          style={{
-                                            width: '16px',
-                                            height: '16px',
-                                            borderRadius: '999px',
-                                            background: op.coloresMuestra[1],
-                                            border: '1px solid rgba(0,0,0,0.22)',
-                                            marginLeft: '-5px',
-                                          }}
-                                        />
+                                      <div
+                                        style={{
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'space-between',
+                                          width: '100%',
+                                        }}
+                                      >
+                                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                          <span
+                                            style={{
+                                              width: '16px',
+                                              height: '16px',
+                                              borderRadius: '999px',
+                                              background: op.coloresMuestra[0],
+                                              border: '1px solid rgba(0,0,0,0.22)',
+                                            }}
+                                          />
+                                          <span
+                                            style={{
+                                              width: '16px',
+                                              height: '16px',
+                                              borderRadius: '999px',
+                                              background: op.coloresMuestra[1],
+                                              border: '1px solid rgba(0,0,0,0.22)',
+                                              marginLeft: '-5px',
+                                            }}
+                                          />
+                                        </span>
+                                        {activo && <Check size={14} color="#2F4737" />}
+                                      </div>
+                                      <strong style={{ fontSize: '0.78rem', lineHeight: 1.2 }}>
+                                        {op.etiqueta}
+                                      </strong>
+                                      <span style={{ fontSize: '0.7rem', color: '#57524C' }}>
+                                        {op.detalle}
                                       </span>
-                                      {activo && <Check size={14} color="#2F4737" />}
-                                    </div>
-                                    <strong style={{ fontSize: '0.78rem', lineHeight: 1.2 }}>
-                                      {op.etiqueta}
-                                    </strong>
-                                    <span style={{ fontSize: '0.7rem', color: '#57524C' }}>
-                                      {op.detalle}
-                                    </span>
-                                  </button>
-                                );
-                              })}
+                                    </button>
+                                  );
+                                })}
+                              </div>
                             </div>
                           </div>
                         )}

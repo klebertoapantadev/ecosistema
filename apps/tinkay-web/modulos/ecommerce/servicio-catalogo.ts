@@ -4,6 +4,7 @@ import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from './datos-catalogo';
 import { normalizarTextoEcommerce } from './filtrado-catalogo';
 import {
   esCodigoOfertaRenta,
+  inferirTipoEnvoltorioPorNombre,
   normalizarComponentesCombo,
   normalizarConfiguracionPersonalizacionFloral,
   normalizarConfiguracionRenta,
@@ -452,7 +453,14 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
               v.var_detalle_variante?.personalizacion_floral
                 ? normalizarConfiguracionPersonalizacionFloral(
                     v.var_detalle_variante.personalizacion_floral,
-                    { habilitadaPorDefecto: true }
+                    {
+                      habilitadaPorDefecto: true,
+                      tipoEnvoltorioPorDefecto: inferirTipoEnvoltorioPorNombre(
+                        v.var_nombre,
+                        p.pro_nombre,
+                        p.pro_slug
+                      ),
+                    }
                   )
                 : undefined,
             totalMeGusta: Math.max(0, Number(v.var_total_me_gusta ?? 0) || 0),
@@ -721,6 +729,12 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
             detalle.personalizacion_floral,
             {
               habilitadaPorDefecto: !esRentaProd && !esEventoProd && !esExtra,
+              tipoEnvoltorioPorDefecto: inferirTipoEnvoltorioPorNombre(
+                p.pro_nombre,
+                p.pro_slug,
+                catNombre,
+                catSlug
+              ),
             }
           ),
         };

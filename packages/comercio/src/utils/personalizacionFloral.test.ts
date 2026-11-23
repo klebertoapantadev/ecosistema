@@ -3,6 +3,7 @@ import {
   OPCIONES_COLOR_BASE_PAPEL,
   crearConfiguracionPersonalizacionFloralPorDefecto,
   describirConfiguracionPersonalizacionCliente,
+  inferirTipoEnvoltorioPorNombre,
   normalizarConfiguracionPersonalizacionFloral,
   obtenerModosFlorDisponibles,
   resolverPersonalizacionFloralEfectiva,
@@ -179,5 +180,72 @@ describe("personalizacionFloral", () => {
     expect(boxLConOrquideas.orquideasMax).toBe(5);
     expect(resumirConfiguracionPersonalizacionAdmin(boxLConOrquideas)).toContain("hasta 3 colores");
     expect(resumirConfiguracionPersonalizacionAdmin(boxLConOrquideas)).toContain("1–5 orquídeas");
+  });
+
+  it("permite configurar tipo de envoltorio Base, Papel Envoltorio o Ambos (cliente elige)", () => {
+    expect(inferirTipoEnvoltorioPorNombre("Box corazon", "Box Florales")).toBe("base");
+    expect(inferirTipoEnvoltorioPorNombre("Bouquet Estilo Coreano", "Estilo Coreano")).toBe(
+      "papel_envoltorio"
+    );
+
+    const cfgBase = normalizarConfiguracionPersonalizacionFloral({
+      habilitada: true,
+      tipoEnvoltorio: "base",
+    });
+    const resBase = validarSeleccionPersonalizacionFloral(cfgBase, {
+      modoFlores: "solo_rosas",
+      coloresRosas: ["Rojo"],
+      cantidadOrquideas: 0,
+      colorBasePapel: "claros",
+    });
+    expect(resBase.ok).toBe(true);
+    if (resBase.ok) {
+      expect(resBase.seleccionFinal.tipoEnvoltorio).toBe("base");
+      expect(resBase.seleccionFinal.resumenTexto).toContain("Base: Colores Claros (Blanco / Beige)");
+    }
+
+    const cfgPapel = normalizarConfiguracionPersonalizacionFloral({
+      habilitada: true,
+      tipoEnvoltorio: "papel_envoltorio",
+    });
+    const resPapel = validarSeleccionPersonalizacionFloral(cfgPapel, {
+      modoFlores: "solo_rosas",
+      coloresRosas: ["Rosado"],
+      cantidadOrquideas: 0,
+      colorBasePapel: "rosa",
+    });
+    expect(resPapel.ok).toBe(true);
+    if (resPapel.ok) {
+      expect(resPapel.seleccionFinal.tipoEnvoltorio).toBe("papel_envoltorio");
+      expect(resPapel.seleccionFinal.resumenTexto).toContain(
+        "Papel Envoltorio: Rosa (Rosado / Lila)"
+      );
+    }
+
+    const cfgAmbos = normalizarConfiguracionPersonalizacionFloral({
+      habilitada: true,
+      tipoEnvoltorio: "ambos",
+    });
+    const sinElegirTipo = validarSeleccionPersonalizacionFloral(cfgAmbos, {
+      modoFlores: "solo_rosas",
+      coloresRosas: ["Rojo"],
+      cantidadOrquideas: 0,
+      colorBasePapel: "oscuros",
+    });
+    expect(sinElegirTipo.ok).toBe(false);
+
+    const eligiendoBase = validarSeleccionPersonalizacionFloral(cfgAmbos, {
+      modoFlores: "solo_rosas",
+      coloresRosas: ["Rojo"],
+      cantidadOrquideas: 0,
+      tipoEnvoltorio: "base",
+      colorBasePapel: "oscuros",
+    });
+    expect(eligiendoBase.ok).toBe(true);
+    if (eligiendoBase.ok) {
+      expect(eligiendoBase.seleccionFinal.resumenTexto).toContain(
+        "Base: Colores Oscuros (Negro / Gris)"
+      );
+    }
   });
 });

@@ -108,6 +108,7 @@ import {
 import { EditorPersonalizacionFloralProducto } from "./EditorPersonalizacionFloralProducto";
 import {
   crearConfiguracionPersonalizacionFloralPorDefecto,
+  inferirTipoEnvoltorioPorNombre,
   normalizarConfiguracionPersonalizacionFloral,
   resolverPersonalizacionFloralEfectiva,
   resumirConfiguracionPersonalizacionAdmin,
@@ -751,6 +752,11 @@ export function ModalEditarProducto({
       setPersonalizacionFloral(
         normalizarConfiguracionPersonalizacionFloral(det.personalizacion_floral, {
           habilitadaPorDefecto: esFloristeria && !esRentaProdIni && !esExtraIni,
+          tipoEnvoltorioPorDefecto: inferirTipoEnvoltorioPorNombre(
+            producto.pro_nombre,
+            producto.pro_slug,
+            producto.categoria?.ctg_nombre
+          ),
         })
       );
       setImagenUrl(det.imagen_url || "");
