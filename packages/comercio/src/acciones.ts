@@ -46,6 +46,7 @@ export interface ProductoCatalogo {
   pro_tipo: "FISICO" | "SERVICIO" | "RENTA" | "SUSCRIPCION" | "DIGITAL" | string;
   pro_destacado: boolean;
   pro_activo?: boolean;
+  pro_total_me_gusta?: number;
   pro_creado_en?: string;
   pro_actualizado_en?: string;
   pro_categoria_principal_id: string | null;
@@ -71,6 +72,7 @@ export interface VarianteCatalogo {
   var_tipo_oferta: string;
   var_frecuencia_recurrencia?: string | null;
   var_activo: boolean;
+  var_total_me_gusta?: number;
   var_detalle_variante: any;
   // Calculados
   monto_iva: number;
@@ -1893,6 +1895,7 @@ export async function obtenerCatalogoProductosAction(
             pro_tipo: p.pro_tipo || p.tipo || "FISICO",
             pro_destacado: p.pro_destacado ?? false,
             pro_activo: p.pro_activo !== false && p.pro_detalle_producto?.pro_activo !== false,
+            pro_total_me_gusta: Math.max(0, Number(p.pro_total_me_gusta ?? 0) || 0),
             pro_creado_en: p.pro_creado_en || p.creado_en || undefined,
             pro_actualizado_en: p.pro_actualizado_en || p.actualizado_en || undefined,
             pro_categoria_principal_id: p.pro_categoria_principal_id || p.categoria?.ctg_id || null,
@@ -1927,6 +1930,7 @@ export async function obtenerCatalogoProductosAction(
                 var_tipo_oferta: v.var_tipo_oferta || "REGULAR",
                 var_frecuencia_recurrencia: v.var_frecuencia_recurrencia,
                 var_activo: v.var_activo !== false,
+                var_total_me_gusta: Math.max(0, Number(v.var_total_me_gusta ?? 0) || 0),
                 var_detalle_variante: v.var_detalle_variante || {},
                 monto_iva: Number(montoIva.toFixed(2)),
                 precio_total: Number(precioTotal.toFixed(2)),
@@ -2120,6 +2124,7 @@ export async function obtenerCatalogoProductosAction(
         var_tipo_oferta: v.var_tipo_oferta,
         var_frecuencia_recurrencia: v.var_frecuencia_recurrencia,
         var_activo: v.var_activo,
+        var_total_me_gusta: Math.max(0, Number(v.var_total_me_gusta ?? 0) || 0),
         var_detalle_variante: detVar,
         monto_iva: Number(iva.toFixed(2)),
         precio_total: total,
@@ -2143,6 +2148,7 @@ export async function obtenerCatalogoProductosAction(
       pro_tipo: p.pro_tipo,
       pro_destacado: p.pro_destacado,
       pro_activo: p.pro_activo !== false && p.pro_detalle_producto?.pro_activo !== false,
+      pro_total_me_gusta: Math.max(0, Number(p.pro_total_me_gusta ?? 0) || 0),
       pro_creado_en: p.pro_creado_en || undefined,
       pro_actualizado_en: p.pro_actualizado_en || undefined,
       pro_categoria_principal_id: p.pro_categoria_principal_id,
@@ -8852,5 +8858,142 @@ export async function verificarUsoEnCatalogoAction(params: {
   } catch (err: any) {
     console.error("Excepción en verificarUsoEnCatalogoAction:", err);
     return { enUso: false, totalProductos: 0, nombresProductos: [], error: err?.message };
+  }
+}
+
+export interface ResultadoMeGustaProducto {
+  ok: boolean;
+  pro_id?: string;
+  pro_slug?: string;
+  pro_total_me_gusta?: number;
+  var_sku?: string | null;
+  var_total_me_gusta?: number | null;
+  error?: string;
+}
+
+/**
+ * Incrementa atómicamente (+1 permanente) el contador global de "Me gusta" (corazones)
+ * de un producto y opcionalmente de su variante vía RPC SECURITY DEFINER.
+ * Nunca decrementa el contador aunque el usuario retire el producto de su lista personal.
+ */
+export async function registrarMeGustaProductoAction(params: {
+  negocio: string;
+  productoId?: string;
+  productoSlug?: string;
+  varianteSku?: string;
+}): Promise<ResultadoMeGustaProducto> {
+  try {
+    const supabase = await crearClienteServidor();
+    const { principal } = normalizarIdentificadorNegocio(params.negocio);
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const pProductoId =
+      params.productoId && uuidRegex.test(params.productoId.trim())
+        ? params.productoId.trim()
+        : null;
+    const pProductoSlug = (params.productoSlug || "").trim() || null;
+    const pVarianteSku = (params.varianteSku || "").trim() || null;
+
+    if (!pProductoId && !pProductoSlug) {
+      return { ok: false, error: "Identificador de producto requerido para registrar Me gusta." };
+    }
+
+    const args = {
+      p_negocio: principal,
+      p_producto_id: pProductoId,
+      p_producto_slug: pProductoSlug,
+      p_variante_sku: pVarianteSku,
+    };
+
+    const clienteRpc = supabase as any;
+    let res = await clienteRpc
+      .schema("comun_comercio")
+      .rpc("com_fn_registrar_me_gusta_producto", args);
+
+    if (res.error) {
+      res = await clienteRpc.rpc("com_fn_registrar_me_gusta_producto", args);
+    }
+
+    if (res.error) {
+      return { ok: false, error: res.error.message };
+    }
+
+    const data: any = res.data;
+    if (!data || data.ok === false) {
+      return { ok: false, error: data?.error || "No se pudo registrar el Me gusta." };
+    }
+
+    return {
+      ok: true,
+      pro_id: data.pro_id,
+      pro_slug: data.pro_slug,
+      pro_total_me_gusta: Math.max(0, Number(data.pro_total_me_gusta ?? 0) || 0),
+      var_sku: data.var_sku ?? null,
+      var_total_me_gusta:
+        data.var_total_me_gusta != null
+          ? Math.max(0, Number(data.var_total_me_gusta) || 0)
+          : null,
+    };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || "Error inesperado al registrar Me gusta." };
+  }
+}
+
+export interface ResumenMeGustaCatalogo {
+  ok: boolean;
+  total_global: number;
+  productos: Array<{
+    pro_id: string;
+    pro_slug: string;
+    pro_total_me_gusta: number;
+    variantes: Array<{ var_sku: string; var_total_me_gusta: number }>;
+  }>;
+  error?: string;
+}
+
+/**
+ * Consulta el acumulado global de "Me gusta" por producto/variante del negocio.
+ */
+export async function obtenerMeGustaCatalogoAction(
+  negocio: string
+): Promise<ResumenMeGustaCatalogo> {
+  try {
+    const supabase = await crearClienteServidor();
+    const { principal } = normalizarIdentificadorNegocio(negocio);
+
+    const clienteRpc = supabase as any;
+    let res = await clienteRpc
+      .schema("comun_comercio")
+      .rpc("com_fn_obtener_me_gusta_catalogo", { p_negocio: principal });
+
+    if (res.error) {
+      res = await clienteRpc.rpc("com_fn_obtener_me_gusta_catalogo", { p_negocio: principal });
+    }
+
+    if (res.error) {
+      return { ok: false, total_global: 0, productos: [], error: res.error.message };
+    }
+
+    const data: any = res.data;
+    if (!data || data.ok === false) {
+      return {
+        ok: false,
+        total_global: 0,
+        productos: [],
+        error: data?.error || "No se pudo consultar el contador de Me gusta.",
+      };
+    }
+
+    return {
+      ok: true,
+      total_global: Math.max(0, Number(data.total_global ?? 0) || 0),
+      productos: Array.isArray(data.productos) ? data.productos : [],
+    };
+  } catch (err: any) {
+    return {
+      ok: false,
+      total_global: 0,
+      productos: [],
+      error: err?.message || "Error consultando Me gusta del catálogo.",
+    };
   }
 }

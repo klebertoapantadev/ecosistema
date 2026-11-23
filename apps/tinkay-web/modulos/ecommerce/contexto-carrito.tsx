@@ -33,6 +33,7 @@ import {
   obtenerConfiguracionLogisticaAction,
   obtenerConfiguracionTiendaCheckoutAction,
   obtenerEstadoRegaloPrimeraCompraAction,
+  registrarMeGustaProductoAction,
   type ConfiguracionLogisticaNegocio,
   type ConfiguracionTiendaCheckout,
   type EstadoRegaloPrimeraCompra,
@@ -57,8 +58,10 @@ interface ContextoCarritoValor {
   estadoRegalo: EstadoRegaloPrimeraCompra | null;
   favoritosIds: string[];
   totalFavoritos: number;
+  totalMeGustaGlobalCatalogo: number;
   esFavorito: (productoId: string) => boolean;
-  toggleFavorito: (productoId: string) => void;
+  obtenerMeGustaProducto: (producto: ProductoEcommerce, varianteSku?: string) => number;
+  toggleFavorito: (producto: ProductoEcommerce, varianteSku?: string) => void;
 
   // Acciones
   setDrawerAbierto: (abierto: boolean) => void;
@@ -144,6 +147,7 @@ const ContextoCarrito = createContext<ContextoCarritoValor | undefined>(undefine
 const CLAVE_LOCALSTORAGE = 'tinkay_carrito_v1';
 const CLAVE_PROFORMA_LOCALSTORAGE = 'tinkay_proforma_evento_v1';
 const CLAVE_FAVORITOS_LOCALSTORAGE = 'tinkay_favoritos_v1';
+const CLAVE_LIKES_CONTABILIZADOS_LOCALSTORAGE = 'tinkay_likes_contabilizados_v1';
 
 const FECHA_EVENTO_POR_DEFECTO = () => {
   const futura = new Date();
@@ -233,6 +237,7 @@ export function ProveedorCarrito({
   const [terminoBusqueda, setTerminoBusqueda] = useState<string>('');
   const [favoritosIds, setFavoritosIds] = useState<string[]>([]);
   const [favoritosCargados, setFavoritosCargados] = useState<boolean>(false);
+  const [likesRegistradosIds, setLikesRegistradosIds] = useState<string[]>([]);
   const [configLogistica, setConfigLogistica] = useState<ConfiguracionLogisticaNegocio>(() =>
     crearConfiguracionLogisticaPorDefecto('tinkay')
   );
@@ -1068,6 +1073,21 @@ export function ProveedorCarrito({
           );
         }
       }
+      const contabilizados = window.localStorage.getItem(CLAVE_LIKES_CONTABILIZADOS_LOCALSTORAGE);
+      if (contabilizados) {
+        const parsedCont = JSON.parse(contabilizados);
+        if (Array.isArray(parsedCont)) {
+          setLikesRegistradosIds(
+            Array.from(
+              new Set(
+                parsedCont
+                  .map((v) => String(v ?? '').trim())
+                  .filter((v) => v.length > 0)
+              )
+            )
+          );
+        }
+      }
     } catch {
       // Ignorar errores de almacenamiento local
     } finally {
@@ -1084,18 +1104,144 @@ export function ProveedorCarrito({
     }
   }, [favoritosIds, favoritosCargados]);
 
+  useEffect(() => {
+    if (!favoritosCargados || typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(
+        CLAVE_LIKES_CONTABILIZADOS_LOCALSTORAGE,
+        JSON.stringify(likesRegistradosIds)
+      );
+    } catch {
+      // Ignorar errores de cuota de almacenamiento local
+    }
+  }, [likesRegistradosIds, favoritosCargados]);
+
   const esFavorito = React.useCallback(
     (productoId: string) => favoritosIds.includes(productoId),
     [favoritosIds]
   );
 
-  const toggleFavorito = React.useCallback((productoId: string) => {
-    const idLimpio = (productoId || '').trim();
-    if (!idLimpio) return;
-    setFavoritosIds((prev) =>
-      prev.includes(idLimpio) ? prev.filter((id) => id !== idLimpio) : [...prev, idLimpio]
-    );
-  }, []);
+  const obtenerMeGustaProducto = React.useCallback(
+    (producto: ProductoEcommerce, varianteSku?: string): number => {
+      const idRaiz = producto.id.split('__')[0] || producto.id;
+      const skuObjetivo = (varianteSku || producto.varianteInicialSku || '').trim();
+      const master = productos.find(
+        (item) =>
+          (producto.proIdUuid && item.proIdUuid === producto.proIdUuid) ||
+          item.id === idRaiz ||
+          item.slug === idRaiz
+      );
+      if (!master) {
+        return Math.max(0, Number(producto.totalMeGusta ?? 0) || 0);
+      }
+      if (master.variantes.length > 1 && skuObjetivo) {
+        const varMatch = master.variantes.find(
+          (v) => v.sku.toLowerCase() === skuObjetivo.toLowerCase()
+        );
+        const sumaVarLikes = master.variantes.reduce(
+          (acc, v) => acc + Math.max(0, Number(v.totalMeGusta ?? 0) || 0),
+          0
+        );
+        if (varMatch && sumaVarLikes > 0) {
+          return Math.max(0, Number(varMatch.totalMeGusta ?? 0) || 0);
+        }
+      }
+      const unicoVarLikes =
+        master.variantes.length === 1
+          ? Math.max(0, Number(master.variantes[0]?.totalMeGusta ?? 0) || 0)
+          : 0;
+      return Math.max(0, Number(master.totalMeGusta ?? 0) || 0, unicoVarLikes);
+    },
+    [productos]
+  );
+
+  const aplicarLikesAProductos = React.useCallback(
+    (
+      producto: ProductoEcommerce,
+      skuObjetivo: string | undefined,
+      datos?: { proTotal?: number; varTotal?: number | null; delta?: number }
+    ) => {
+      const idRaiz = producto.id.split('__')[0] || producto.id;
+      const skuLower = (skuObjetivo || '').trim().toLowerCase();
+      setProductos((prev) =>
+        prev.map((item) => {
+          const coincide =
+            (producto.proIdUuid && item.proIdUuid === producto.proIdUuid) ||
+            item.id === idRaiz ||
+            item.slug === idRaiz;
+          if (!coincide) return item;
+
+          const nuevoTotalProd =
+            typeof datos?.proTotal === 'number'
+              ? Math.max(Number(item.totalMeGusta ?? 0) || 0, datos.proTotal)
+              : Math.max(0, (Number(item.totalMeGusta ?? 0) || 0) + (datos?.delta ?? 0));
+
+          const nuevasVariantes = item.variantes.map((v) => {
+            if (!skuLower || v.sku.toLowerCase() !== skuLower) return v;
+            const nuevoTotalVar =
+              typeof datos?.varTotal === 'number'
+                ? Math.max(Number(v.totalMeGusta ?? 0) || 0, datos.varTotal)
+                : Math.max(0, (Number(v.totalMeGusta ?? 0) || 0) + (datos?.delta ?? 0));
+            return { ...v, totalMeGusta: nuevoTotalVar };
+          });
+
+          return {
+            ...item,
+            totalMeGusta: nuevoTotalProd,
+            variantes: nuevasVariantes,
+          };
+        })
+      );
+    },
+    []
+  );
+
+  const toggleFavorito = React.useCallback(
+    (producto: ProductoEcommerce, varianteSku?: string) => {
+      const idLimpio = (producto?.id || '').trim();
+      if (!idLimpio) return;
+
+      const yaEsFavorito = favoritosIds.includes(idLimpio);
+
+      // 1. Lista personal del cliente (permite agregar y quitar libremente)
+      setFavoritosIds((prev) =>
+        prev.includes(idLimpio) ? prev.filter((id) => id !== idLimpio) : [...prev, idLimpio]
+      );
+
+      // 2. Contador global persistente: incrementa +1 permanentemente al dar Me gusta
+      //    y NUNCA decrementa aunque el usuario retire el corazón luego.
+      if (!yaEsFavorito && !likesRegistradosIds.includes(idLimpio)) {
+        const idRaiz = idLimpio.split('__')[0] || producto.slug || idLimpio;
+        const skuObjetivo =
+          (varianteSku || producto.varianteInicialSku || producto.variantes?.[0]?.sku || '').trim() ||
+          undefined;
+
+        setLikesRegistradosIds((prev) => (prev.includes(idLimpio) ? prev : [...prev, idLimpio]));
+        aplicarLikesAProductos(producto, skuObjetivo, { delta: 1 });
+
+        registrarMeGustaProductoAction({
+          negocio: 'tinkay',
+          productoId: producto.proIdUuid,
+          productoSlug: idRaiz,
+          varianteSku: skuObjetivo,
+        })
+          .then((res) => {
+            if (res.ok) {
+              aplicarLikesAProductos(producto, skuObjetivo, {
+                proTotal: res.pro_total_me_gusta,
+                varTotal: res.var_total_me_gusta,
+              });
+            } else {
+              console.warn('No se pudo persistir Me gusta en Supabase:', res.error);
+            }
+          })
+          .catch((err) => {
+            console.warn('Error al registrar Me gusta en Supabase:', err);
+          });
+      }
+    },
+    [favoritosIds, likesRegistradosIds, aplicarLikesAProductos]
+  );
 
   const totalFavoritos = useMemo(() => {
     if (favoritosIds.length === 0) return 0;
@@ -1105,6 +1251,25 @@ export function ProveedorCarrito({
     const idsCatalogo = new Set(desplegados.map((p) => p.id));
     return favoritosIds.filter((id) => idsCatalogo.has(id)).length;
   }, [favoritosIds, productos]);
+
+  const totalMeGustaGlobalCatalogo = useMemo(() => {
+    return (productos || []).reduce((acc, p) => {
+      if (p.esExtra || p.esComplemento) return acc;
+      const likesProd = Math.max(0, Number(p.totalMeGusta ?? 0) || 0);
+      const sumaVars = (p.variantes || []).reduce(
+        (s, v) => s + Math.max(0, Number(v.totalMeGusta ?? 0) || 0),
+        0
+      );
+      return acc + Math.max(likesProd, sumaVars);
+    }, 0);
+  }, [productos]);
+
+  // Si el usuario estaba en la vista personal "Me gusta" y quita el último corazón, volver a catálogo
+  useEffect(() => {
+    if (favoritosCargados && categoriaActiva === 'grupo-favoritos' && totalFavoritos === 0) {
+      setCategoriaActiva('cat-todos');
+    }
+  }, [favoritosCargados, categoriaActiva, totalFavoritos, setCategoriaActiva]);
 
   return (
     <ContextoCarrito.Provider
@@ -1127,7 +1292,9 @@ export function ProveedorCarrito({
         estadoRegalo,
         favoritosIds,
         totalFavoritos,
+        totalMeGustaGlobalCatalogo,
         esFavorito,
+        obtenerMeGustaProducto,
         toggleFavorito,
         setDrawerAbierto,
         setProductoSeleccionadoModal,

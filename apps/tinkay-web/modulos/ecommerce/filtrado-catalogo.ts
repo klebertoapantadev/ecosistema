@@ -189,6 +189,14 @@ export function expandirProductosVitrina(
           new Set([...(v.beneficiosCustom || []), ...(p.beneficios || [])])
         );
 
+        const sumaVarLikes = p.variantes.reduce(
+          (acc, itemVar) => acc + Math.max(0, Number(itemVar.totalMeGusta ?? 0) || 0),
+          0
+        );
+        const likesVariante = Math.max(0, Number(v.totalMeGusta ?? 0) || 0);
+        const totalMeGustaCard =
+          sumaVarLikes > 0 ? likesVariante : Math.max(0, Number(p.totalMeGusta ?? 0) || 0);
+
         const productoIndividual: ProductoEcommerce = {
           ...p,
           id: `${p.id}__${v.sku}`,
@@ -204,6 +212,7 @@ export function expandirProductosVitrina(
           variantes: p.variantes,
           varianteInicialSku: v.sku,
           destacado: p.destacado,
+          totalMeGusta: totalMeGustaCard,
         };
         return productoIndividual;
       });
@@ -229,6 +238,11 @@ export function expandirProductosVitrina(
           beneficios: beneficiosCombinados,
           usos: usosUnico,
           varianteInicialSku: unica.sku,
+          totalMeGusta: Math.max(
+            0,
+            Number(p.totalMeGusta ?? 0) || 0,
+            Number(unica.totalMeGusta ?? 0) || 0
+          ),
         },
       ];
     }

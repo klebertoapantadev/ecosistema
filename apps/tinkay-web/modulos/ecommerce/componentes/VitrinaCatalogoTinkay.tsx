@@ -52,6 +52,8 @@ export function VitrinaCatalogoTinkay() {
     obtenerEnlaceCategoriaActual,
     favoritosIds,
     totalFavoritos,
+    totalMeGustaGlobalCatalogo,
+    obtenerMeGustaProducto,
   } = useCarrito();
 
   const [linkCatCopiado, setLinkCatCopiado] = useState(false);
@@ -72,7 +74,7 @@ export function VitrinaCatalogoTinkay() {
 
   const [filtroPresupuesto, setFiltroPresupuesto] = useState<string>('todos');
   const [criterioOrden, setCriterioOrden] = useState<
-    'recomendados' | 'precio-desc' | 'precio-asc' | 'destacados' | 'nombre-asc'
+    'recomendados' | 'mas-deseados' | 'precio-desc' | 'precio-asc' | 'destacados' | 'nombre-asc'
   >('recomendados');
   const [etiquetasActivas, setEtiquetasActivas] = useState<string[]>([]);
 
@@ -265,6 +267,13 @@ export function VitrinaCatalogoTinkay() {
     const lista = [...productosFiltrados];
 
     return lista.sort((a, b) => {
+      if (criterioOrden === 'mas-deseados') {
+        const likesA = obtenerMeGustaProducto(a, a.varianteInicialSku);
+        const likesB = obtenerMeGustaProducto(b, b.varianteInicialSku);
+        if (likesA !== likesB) return likesB - likesA;
+        return obtenerPvpProducto(b) - obtenerPvpProducto(a);
+      }
+
       // En "Todo el Catálogo" (vista general), preservar estrictamente los 5 niveles estructurales
       if (categoriaActiva === 'cat-todos') {
         const jA = obtenerJerarquiaCatalogoTinkay(a);
@@ -292,7 +301,7 @@ export function VitrinaCatalogoTinkay() {
         }
       }
     });
-  }, [productosFiltrados, criterioOrden, categoriaActiva]);
+  }, [productosFiltrados, criterioOrden, categoriaActiva, obtenerMeGustaProducto]);
 
   const clasifPrincipalObj = obtenerClasificacionPrincipalPorId(categoriaActiva);
   const subcategoriaActivaObj = subcategoriasActivas.find((s) => s.id === categoriaActiva);
@@ -363,19 +372,53 @@ export function VitrinaCatalogoTinkay() {
         {/* Cabecera de la vitrina */}
         <div className="cabecera-vitrina">
           <div className="titulos-vitrina">
-            <span className="etiqueta-pequena">
-              {esModoCondolencias ? (
-                <>
-                  <Feather size={13} />
-                  <span>Acompañamiento &amp; Respeto</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles size={13} />
-                  <span>Catálogo Floristería Tinkay</span>
-                </>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <span className="etiqueta-pequena">
+                {esModoCondolencias ? (
+                  <>
+                    <Feather size={13} />
+                    <span>Acompañamiento &amp; Respeto</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={13} />
+                    <span>Catálogo Floristería Tinkay</span>
+                  </>
+                )}
+              </span>
+              {totalMeGustaGlobalCatalogo > 0 && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCriterioOrden((prev) =>
+                      prev === 'mas-deseados' ? 'recomendados' : 'mas-deseados'
+                    )
+                  }
+                  aria-pressed={criterioOrden === 'mas-deseados'}
+                  title="Ver primero los productos más deseados según los Me gusta acumulados de todos los clientes"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '3px 10px',
+                    borderRadius: '999px',
+                    border:
+                      criterioOrden === 'mas-deseados'
+                        ? '1px solid #BE123C'
+                        : '1px solid #FBCFE8',
+                    background:
+                      criterioOrden === 'mas-deseados' ? '#BE123C' : '#FFF1F2',
+                    color: criterioOrden === 'mas-deseados' ? '#FFFFFF' : '#BE123C',
+                    fontSize: '0.73rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Heart size={12} fill="currentColor" />
+                  <span>{totalMeGustaGlobalCatalogo} Me gusta</span>
+                </button>
               )}
-            </span>
+            </div>
             <h2 className="titulo-seccion-vitrina">{tituloVitrinaActual}</h2>
             <p className="subtitulo-seccion-vitrina">{subtituloVitrinaActual}</p>
           </div>
@@ -416,6 +459,7 @@ export function VitrinaCatalogoTinkay() {
                     setCriterioOrden(
                       e.target.value as
                         | 'recomendados'
+                        | 'mas-deseados'
                         | 'precio-desc'
                         | 'precio-asc'
                         | 'destacados'
@@ -423,9 +467,10 @@ export function VitrinaCatalogoTinkay() {
                     )
                   }
                   className="select-criterio-orden"
-                  aria-label="Ordenar productos por recomendación, precio o destacados"
+                  aria-label="Ordenar productos por recomendación, más deseados, precio o destacados"
                 >
                   <option value="recomendados">Recomendados Tinkay</option>
+                  <option value="mas-deseados">Más deseados (❤️)</option>
                   <option value="destacados">Más Pedidos / Destacados</option>
                   <option value="precio-desc">Mayor a menor ($$$ → $)</option>
                   <option value="precio-asc">Menor a mayor ($ → $$$)</option>
@@ -471,6 +516,22 @@ export function VitrinaCatalogoTinkay() {
             role="tablist"
             aria-label="Primera clasificación de consulta y filtros rápidos"
           >
+            {totalFavoritos > 0 && (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={clasificacionActiva === 'grupo-favoritos'}
+                title={`Revisar mis ${totalFavoritos} productos marcados con Me gusta`}
+                className={`pill-categoria pill-favoritos con-likes ${
+                  clasificacionActiva === 'grupo-favoritos' ? 'pill-activa' : ''
+                }`}
+                onClick={() => handleSeleccionarCategoria('grupo-favoritos')}
+              >
+                <Heart size={14} fill="currentColor" />
+                <span>Me gusta</span>
+                <span className="badge-pill-contador">{totalFavoritos}</span>
+              </button>
+            )}
             {CLASIFICACIONES_PRINCIPALES_TINKAY.map((clasif) => {
               const estaActiva = clasificacionActiva === clasif.id;
               return (
@@ -524,24 +585,6 @@ export function VitrinaCatalogoTinkay() {
                 <span>Entrega Inmediata</span>
               </button>
             )}
-            <button
-              type="button"
-              role="tab"
-              aria-selected={clasificacionActiva === 'grupo-favoritos'}
-              title={
-                totalFavoritos > 0
-                  ? `Revisar mis ${totalFavoritos} productos marcados con Me gusta`
-                  : 'Productos que marques con Me gusta'
-              }
-              className={`pill-categoria pill-favoritos ${totalFavoritos > 0 ? 'con-likes' : ''} ${
-                clasificacionActiva === 'grupo-favoritos' ? 'pill-activa' : ''
-              }`}
-              onClick={() => handleSeleccionarCategoria('grupo-favoritos')}
-            >
-              <Heart size={14} fill={totalFavoritos > 0 ? 'currentColor' : 'none'} />
-              <span>Me gusta</span>
-              <span className="badge-pill-contador">{totalFavoritos}</span>
-            </button>
             <button
               type="button"
               role="tab"

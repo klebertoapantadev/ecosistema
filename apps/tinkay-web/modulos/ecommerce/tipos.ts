@@ -36,6 +36,7 @@ export interface VarianteEcommerce {
   escalasVolumen?: EscalaVolumenVariante[];
   usos?: string[];
   usosModo?: 'heredar' | 'personalizado';
+  totalMeGusta?: number;
 }
 
 export interface ProductoEcommerce {
@@ -83,6 +84,7 @@ export interface ProductoEcommerce {
   etiquetaTransporte?: string;
   coberturaTexto?: string;
   recargoLogisticoUsd?: number;
+  totalMeGusta?: number;
 }
 
 export interface DedicatoriaArreglo {

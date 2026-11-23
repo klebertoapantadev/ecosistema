@@ -201,6 +201,24 @@ export function EncabezadoEcommerce() {
         </div>
 
         <nav className="nav-enlaces-floristeria" aria-label="Clasificación principal de consulta">
+          {totalFavoritos > 0 && (
+            <a
+              href="/categoria/me-gusta"
+              onClick={(e) => handleSeleccionMenu(e, 'grupo-favoritos')}
+              aria-current={clasificacionActiva === 'grupo-favoritos' ? 'true' : undefined}
+              title={`Ver mis ${totalFavoritos} productos marcados con Me gusta`}
+              className={[
+                'enlace-filtro-especial-nav enlace-favoritos-nav con-likes',
+                clasificacionActiva === 'grupo-favoritos' ? 'enlace-categoria-activo' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              <Heart size={14} fill="currentColor" />
+              <span>Me gusta</span>
+              <span className="badge-nav-contador">{totalFavoritos}</span>
+            </a>
+          )}
           {CLASIFICACIONES_PRINCIPALES_TINKAY.map((clasif) => {
             const estaActiva = clasificacionActiva === clasif.id;
             return (
@@ -264,27 +282,6 @@ export function EncabezadoEcommerce() {
             </a>
           )}
           <a
-            href="/categoria/me-gusta"
-            onClick={(e) => handleSeleccionMenu(e, 'grupo-favoritos')}
-            aria-current={clasificacionActiva === 'grupo-favoritos' ? 'true' : undefined}
-            title={
-              totalFavoritos > 0
-                ? `Ver mis ${totalFavoritos} productos marcados con Me gusta`
-                : 'Productos que marques con Me gusta'
-            }
-            className={[
-              'enlace-filtro-especial-nav enlace-favoritos-nav',
-              totalFavoritos > 0 ? 'con-likes' : '',
-              clasificacionActiva === 'grupo-favoritos' ? 'enlace-categoria-activo' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-          >
-            <Heart size={14} fill={totalFavoritos > 0 ? 'currentColor' : 'none'} />
-            <span>Me gusta</span>
-            <span className="badge-nav-contador">{totalFavoritos}</span>
-          </a>
-          <a
             href="#catalogo"
             onClick={(e) => handleSeleccionMenu(e, 'cat-todos')}
             aria-current={clasificacionActiva === 'cat-todos' ? 'true' : undefined}
@@ -345,8 +342,25 @@ export function EncabezadoEcommerce() {
         </div>
       </div>
 
-      {/* Franja rápida de clasificación principal + Ofertas + Entrega Inmediata + Me gusta */}
+      {/* Franja rápida de clasificación principal + Ofertas + Entrega Inmediata (Me gusta al inicio solo si hay likes) */}
       <nav className="franja-categorias-movil" aria-label="Clasificación principal y filtros rápidos">
+        {totalFavoritos > 0 && (
+          <a
+            href="/categoria/me-gusta"
+            onClick={(e) => handleSeleccionMenu(e, 'grupo-favoritos')}
+            aria-current={clasificacionActiva === 'grupo-favoritos' ? 'true' : undefined}
+            className={[
+              'chip-cat-cabecera-movil favoritos con-likes',
+              clasificacionActiva === 'grupo-favoritos' ? 'activa' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            <Heart size={13} fill="currentColor" />
+            <span>Me gusta</span>
+            <span className="badge-chip-movil">{totalFavoritos}</span>
+          </a>
+        )}
         {CLASIFICACIONES_PRINCIPALES_TINKAY.map((clasif) => {
           const estaActiva = clasificacionActiva === clasif.id;
           return (
@@ -402,22 +416,6 @@ export function EncabezadoEcommerce() {
             <span>Entrega Inmediata</span>
           </a>
         )}
-        <a
-          href="/categoria/me-gusta"
-          onClick={(e) => handleSeleccionMenu(e, 'grupo-favoritos')}
-          aria-current={clasificacionActiva === 'grupo-favoritos' ? 'true' : undefined}
-          className={[
-            'chip-cat-cabecera-movil favoritos',
-            totalFavoritos > 0 ? 'con-likes' : '',
-            clasificacionActiva === 'grupo-favoritos' ? 'activa' : '',
-          ]
-            .filter(Boolean)
-            .join(' ')}
-        >
-          <Heart size={13} fill={totalFavoritos > 0 ? 'currentColor' : 'none'} />
-          <span>Me gusta</span>
-          <span className="badge-chip-movil">{totalFavoritos}</span>
-        </a>
         <a
           href="#catalogo"
           onClick={(e) => handleSeleccionMenu(e, 'cat-todos')}
@@ -493,6 +491,37 @@ export function EncabezadoEcommerce() {
               >
                 Clasificación Principal
               </span>
+              {totalFavoritos > 0 && (
+                <a
+                  href="/categoria/me-gusta"
+                  onClick={(e) => {
+                    handleSeleccionMenu(e, 'grupo-favoritos');
+                    setMenuMovilAbierto(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '8px',
+                    padding: '9px 12px',
+                    borderRadius: '10px',
+                    textDecoration: 'none',
+                    fontSize: '0.88rem',
+                    fontWeight: 700,
+                    background:
+                      clasificacionActiva === 'grupo-favoritos'
+                        ? 'rgba(190, 18, 60, 0.14)'
+                        : '#FFF1F2',
+                    color: '#BE123C',
+                  }}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                    <Heart size={15} fill="currentColor" />
+                    <span>Me gusta</span>
+                  </span>
+                  <span className="badge-nav-contador">{totalFavoritos}</span>
+                </a>
+              )}
               {CLASIFICACIONES_PRINCIPALES_TINKAY.map((clasif) => {
                 const estaActiva = clasificacionActiva === clasif.id;
                 return (
@@ -597,36 +626,6 @@ export function EncabezadoEcommerce() {
                   </span>
                 </a>
               )}
-
-              <a
-                href="/categoria/me-gusta"
-                onClick={(e) => {
-                  handleSeleccionMenu(e, 'grupo-favoritos');
-                  setMenuMovilAbierto(false);
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: '8px',
-                  padding: '9px 12px',
-                  borderRadius: '10px',
-                  textDecoration: 'none',
-                  fontSize: '0.88rem',
-                  fontWeight: clasificacionActiva === 'grupo-favoritos' ? 700 : 600,
-                  background:
-                    clasificacionActiva === 'grupo-favoritos'
-                      ? 'rgba(190, 18, 60, 0.14)'
-                      : 'transparent',
-                  color: totalFavoritos > 0 ? '#BE123C' : 'var(--tinta)',
-                }}
-              >
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                  <Heart size={15} fill={totalFavoritos > 0 ? 'currentColor' : 'none'} />
-                  <span>Me gusta</span>
-                </span>
-                <span className="badge-nav-contador">{totalFavoritos}</span>
-              </a>
 
               <a
                 href="#catalogo"

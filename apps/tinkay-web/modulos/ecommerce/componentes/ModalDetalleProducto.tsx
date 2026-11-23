@@ -33,6 +33,7 @@ import {
   Link2,
   FileText,
   CreditCard,
+  Heart,
 } from 'lucide-react';
 
 export function ModalDetalleProducto() {
@@ -46,6 +47,9 @@ export function ModalDetalleProducto() {
     productos,
     obtenerEnlaceProducto,
     configTiendaCheckout,
+    esFavorito,
+    obtenerMeGustaProducto,
+    toggleFavorito,
   } = useCarrito();
 
   const producto = productoSeleccionadoModal;
@@ -901,23 +905,64 @@ export function ModalDetalleProducto() {
                     : producto.categoriaNombre || 'Colección Tinkay'}
                 </span>
 
-                <button
-                  type="button"
-                  onClick={handleCopiarEnlaceModal}
-                  className="btn-responsive-accion"
-                  title="Copiar enlace directo a este producto para compartir por WhatsApp"
-                  aria-label="Copiar enlace del producto"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '5px',
-                    padding: '5px 11px',
-                    borderRadius: '999px',
-                    border: linkModalCopiado ? '1.5px solid #10B981' : '1px solid #E4E4E7',
-                    background: linkModalCopiado ? '#ECFDF5' : '#FFFFFF',
-                    color: linkModalCopiado ? '#047857' : '#3F3F46',
-                    fontSize: '0.75rem',
-                    fontWeight: 700,
+                <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                  {(() => {
+                    const idFavModal =
+                      producto.variantes.length > 1 && !producto.id.includes('__') && varianteSeleccionada.sku
+                        ? `${producto.id}__${varianteSeleccionada.sku}`
+                        : producto.id;
+                    const prodParaLike: ProductoEcommerce =
+                      idFavModal === producto.id ? producto : { ...producto, id: idFavModal };
+                    const esFavModal = esFavorito(idFavModal);
+                    const likesModal = obtenerMeGustaProducto(producto, varianteSeleccionada.sku);
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => toggleFavorito(prodParaLike, varianteSeleccionada.sku)}
+                        aria-pressed={esFavModal}
+                        aria-label={esFavModal ? 'Quitar de Me gusta' : 'Dar Me gusta'}
+                        title={
+                          likesModal > 0
+                            ? `${likesModal} personas han dado Me gusta a este arreglo`
+                            : 'Dar Me gusta y guardar en favoritos'
+                        }
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          padding: '5px 11px',
+                          borderRadius: '999px',
+                          border: esFavModal ? '1.5px solid #BE123C' : '1px solid #FBCFE8',
+                          background: esFavModal ? '#FFF1F2' : '#FFFFFF',
+                          color: esFavModal || likesModal > 0 ? '#BE123C' : '#3F3F46',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        <Heart size={13} fill={esFavModal ? 'currentColor' : 'none'} />
+                        <span>{likesModal > 0 ? likesModal : 'Me gusta'}</span>
+                      </button>
+                    );
+                  })()}
+
+                  <button
+                    type="button"
+                    onClick={handleCopiarEnlaceModal}
+                    className="btn-responsive-accion"
+                    title="Copiar enlace directo a este producto para compartir por WhatsApp"
+                    aria-label="Copiar enlace del producto"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      padding: '5px 11px',
+                      borderRadius: '999px',
+                      border: linkModalCopiado ? '1.5px solid #10B981' : '1px solid #E4E4E7',
+                      background: linkModalCopiado ? '#ECFDF5' : '#FFFFFF',
+                      color: linkModalCopiado ? '#047857' : '#3F3F46',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
                     cursor: 'pointer',
                   }}
                 >
@@ -926,6 +971,7 @@ export function ModalDetalleProducto() {
                     {linkModalCopiado ? 'Link copiado' : 'Copiar link'}
                   </span>
                 </button>
+                </div>
               </div>
               <h2 className="titulo-modal-producto">{tituloModal}</h2>
               {(() => {

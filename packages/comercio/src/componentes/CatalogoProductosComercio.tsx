@@ -39,6 +39,7 @@ import {
   Gift,
   FileText,
   Trash2,
+  Heart,
 } from "lucide-react";
 import {
   ProductoCatalogo,
@@ -446,6 +447,11 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
 
   const totalInactivos = (productos || []).filter((p) => p && p.pro_activo === false).length;
   const totalActivos = (productos || []).filter((p) => p && p.pro_activo !== false).length;
+  const totalMeGustaGlobal = (productos || []).reduce(
+    (acc, p) => acc + Math.max(0, Number(p?.pro_total_me_gusta ?? 0) || 0),
+    0
+  );
+  const [ordenarPorMeGusta, setOrdenarPorMeGusta] = useState<boolean>(false);
 
   // Filtrado y ordenamiento (en Configuración siempre muestra primero los productos más recientemente creados)
   const normalizarTextoFiltro = (valor: unknown): string =>
@@ -590,18 +596,26 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
           });
         });
 
-  const productosFiltrados =
-    modoVista === "admin"
-      ? [...productosFiltradosBase].sort((a, b) => {
-          const tsA = a.pro_creado_en ? new Date(a.pro_creado_en).getTime() : 0;
-          const tsB = b.pro_creado_en ? new Date(b.pro_creado_en).getTime() : 0;
-          if (tsA !== tsB) return tsB - tsA;
-          const seqA = Number(a.pro_secuencial ?? 0);
-          const seqB = Number(b.pro_secuencial ?? 0);
-          if (seqA !== seqB) return seqB - seqA;
-          return 0;
-        })
-      : productosFiltradosBase;
+  const productosFiltrados = ordenarPorMeGusta
+    ? [...productosFiltradosBase].sort((a, b) => {
+        const likesA = Math.max(0, Number(a.pro_total_me_gusta ?? 0) || 0);
+        const likesB = Math.max(0, Number(b.pro_total_me_gusta ?? 0) || 0);
+        if (likesA !== likesB) return likesB - likesA;
+        const tsA = a.pro_creado_en ? new Date(a.pro_creado_en).getTime() : 0;
+        const tsB = b.pro_creado_en ? new Date(b.pro_creado_en).getTime() : 0;
+        return tsB - tsA;
+      })
+    : modoVista === "admin"
+    ? [...productosFiltradosBase].sort((a, b) => {
+        const tsA = a.pro_creado_en ? new Date(a.pro_creado_en).getTime() : 0;
+        const tsB = b.pro_creado_en ? new Date(b.pro_creado_en).getTime() : 0;
+        if (tsA !== tsB) return tsB - tsA;
+        const seqA = Number(a.pro_secuencial ?? 0);
+        const seqB = Number(b.pro_secuencial ?? 0);
+        if (seqA !== seqB) return seqB - seqA;
+        return 0;
+      })
+    : productosFiltradosBase;
 
   // Abrir checkout para variante específica
   const abrirCheckout = (prod: ProductoCatalogo, varId?: string) => {
@@ -1180,6 +1194,34 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                   }}
                 >
                   Inactivos ({totalInactivos})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setOrdenarPorMeGusta((prev) => !prev)}
+                  title="Ordenar del producto más deseado (más Me gusta) al menos votado"
+                  aria-label="Ordenar por más deseados"
+                  aria-pressed={ordenarPorMeGusta}
+                  style={{
+                    padding: "6px 11px",
+                    borderRadius: "8px",
+                    border: ordenarPorMeGusta ? "1.5px solid #BE123C" : "1px solid #FBCFE8",
+                    background: ordenarPorMeGusta ? "#BE123C" : "#FFF1F2",
+                    color: ordenarPorMeGusta ? "#FFFFFF" : "#BE123C",
+                    fontSize: "0.76rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                    scrollSnapAlign: "start",
+                    transition: "all 0.15s ease",
+                  }}
+                >
+                  <Heart size={13} fill="currentColor" />
+                  <span>Más deseados ({totalMeGustaGlobal})</span>
                 </button>
 
                 <div style={{ flexShrink: 0, scrollSnapAlign: "start" }}>
@@ -2465,6 +2507,31 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       </button>
                     );
                   })()}
+
+                  {/* Contador Global de Me gusta (corazones acumulados de todos los clientes) */}
+                  {Math.max(0, Number(p.pro_total_me_gusta ?? 0) || 0) > 0 && (
+                    <div
+                      title={`${p.pro_total_me_gusta} Me gusta acumulados de clientes`}
+                      aria-label={`${p.pro_total_me_gusta} Me gusta globales`}
+                      style={{
+                        background: "rgba(255, 255, 255, 0.94)",
+                        border: "1.5px solid #F9A8D4",
+                        color: "#BE123C",
+                        padding: "3px 8px",
+                        borderRadius: "999px",
+                        fontSize: "0.72rem",
+                        fontWeight: 800,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.16)",
+                        backdropFilter: "blur(6px)",
+                      }}
+                    >
+                      <Heart size={11} fill="currentColor" />
+                      <span>{p.pro_total_me_gusta}</span>
+                    </div>
+                  )}
 
                   {/* Insignia / Switch Rápido de Producto Destacado */}
                   {modoVista === "admin" ? (

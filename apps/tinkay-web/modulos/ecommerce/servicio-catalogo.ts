@@ -21,6 +21,7 @@ interface SupabaseVarianteRaw {
   var_tarifa_iva_porcentaje?: number;
   var_precio_comparacion?: number;
   var_activo?: boolean;
+  var_total_me_gusta?: number;
   var_detalle_variante?: {
     orden?: number;
     pvp_nominal?: number;
@@ -48,6 +49,7 @@ interface SupabaseProductoRaw {
   pro_tipo?: string;
   pro_destacado?: boolean;
   pro_activo?: boolean;
+  pro_total_me_gusta?: number;
   pro_detalle_producto?: {
     imagen_url?: string;
     galeria_urls?: string[];
@@ -437,6 +439,7 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
             unidadesFlores: v.var_detalle_variante?.tallos || undefined,
             usos: usosVarRaw.length > 0 ? usosVarRaw : undefined,
             usosModo: v.var_detalle_variante?.usos_modo || 'heredar',
+            totalMeGusta: Math.max(0, Number(v.var_total_me_gusta ?? 0) || 0),
           };
         });
 
@@ -697,6 +700,7 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
           recargoLogisticoUsd: Number.isFinite(Number(detalle.logistica?.recargo_transporte_usd))
             ? Math.max(0, Number(detalle.logistica?.recargo_transporte_usd))
             : 0,
+          totalMeGusta: Math.max(0, Number(p.pro_total_me_gusta ?? 0) || 0),
         };
       });
 

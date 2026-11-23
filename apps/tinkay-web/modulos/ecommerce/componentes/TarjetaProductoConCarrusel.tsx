@@ -19,6 +19,7 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
     setDrawerAbierto,
     setCheckoutAbierto,
     esFavorito,
+    obtenerMeGustaProducto,
     toggleFavorito,
   } = useCarrito();
   const [fotoActualIndex, setFotoActualIndex] = useState(0);
@@ -35,6 +36,7 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
     };
   const [varianteSeleccionada, setVarianteSeleccionada] = useState<VarianteEcommerce>(obtenerVarianteBase);
   const favorito = esFavorito(producto.id);
+  const likesGlobales = obtenerMeGustaProducto(producto, varianteSeleccionada.sku);
   const [compradoReciente, setCompradoReciente] = useState(false);
 
   // Cálculo dinámico de Oferta y % de Descuento
@@ -245,19 +247,32 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
           </div>
         )}
 
-        {/* Botón Favorito */}
+        {/* Botón Favorito + Contador Global de Me gusta */}
         <button
           type="button"
-          className={`btn-favorito ${favorito ? 'activo' : ''}`}
-          aria-label={favorito ? 'Quitar de Me gusta' : 'Dar Me gusta'}
+          className={`btn-favorito ${favorito ? 'activo' : ''} ${likesGlobales > 0 ? 'con-contador' : ''}`}
+          aria-label={
+            favorito
+              ? `Quitar de Me gusta (${likesGlobales} Me gusta globales)`
+              : `Dar Me gusta (${likesGlobales} Me gusta globales)`
+          }
           aria-pressed={favorito}
-          title={favorito ? 'Quitar de Me gusta' : 'Guardar en Me gusta'}
+          title={
+            favorito
+              ? `Guardado en tus Me gusta · ${likesGlobales} personas han dado Me gusta`
+              : likesGlobales > 0
+              ? `Guardar en Me gusta · ${likesGlobales} personas han dado Me gusta`
+              : 'Guardar en Me gusta'
+          }
           onClick={(e) => {
             e.stopPropagation();
-            toggleFavorito(producto.id);
+            toggleFavorito(producto, varianteSeleccionada.sku);
           }}
         >
-          <Heart size={16} fill={favorito ? 'currentColor' : 'none'} />
+          <Heart size={15} fill={favorito ? 'currentColor' : 'none'} />
+          {likesGlobales > 0 && (
+            <span className="contador-me-gusta-tarjeta">{likesGlobales}</span>
+          )}
         </button>
 
         {/* Flechas de navegación en la foto (se revelan en hover/focus) */}
