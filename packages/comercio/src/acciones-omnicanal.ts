@@ -5,6 +5,7 @@ import {
   RESPUESTAS_RAPIDAS_POR_DEFECTO,
   esPedidoUsuarioRegistrado,
   extraerCodigoRefWebDeTexto,
+  formatearTelefonoEstandarOmnicanal,
   generarCodigoRefVisitanteWeb,
   generarCodigoRefWhatsapp,
   nombreCanalRealtimeChatEquipo,
@@ -3745,7 +3746,8 @@ export async function guardarFichaClienteOmnicanalAction(
       return { ok: false, error: "Ingresa un nombre válido para el registro del cliente." };
     }
 
-    const telefonoLimpio = String(entrada.telefono || "").trim().slice(0, 40) || null;
+    const telefonoLimpio =
+      formatearTelefonoEstandarOmnicanal(String(entrada.telefono || "").trim().slice(0, 40)) || null;
     const correoLimpio = String(entrada.correo || "").trim().toLowerCase().slice(0, 160) || null;
     const estrellas = normalizarEstrellasFicha(entrada.calificacionEstrellas);
     const notasLimpias = String(entrada.notasCliente || "").trim().slice(0, 2000) || null;

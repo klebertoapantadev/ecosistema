@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  agruparConversacionesPorClienteOmnicanal,
   anexarParametroRefUrl,
   autoCompletarDatosVentaDesdeMensajes,
   calcularFechaRecordatorioRapido,
@@ -14,6 +15,7 @@ import {
   extraerSegmentosMultimediaMensaje,
   extraerTodasLasImagenesMensaje,
   formatearEtiquetaEnlaceVisible,
+  formatearTelefonoEstandarOmnicanal,
   generarCodigoRefVisitanteWeb,
   generarCodigoRefWhatsapp,
   interpolarRespuestaRapida,
@@ -414,5 +416,69 @@ describe("omnicanal — normalización, plantillas y cruce cliente-compras", () 
 
     expect(describirCalificacionCliente(5)).toContain("VIP");
     expect(describirCalificacionCliente(1)).toContain("alerta");
+  });
+
+  it("agrupa conversaciones del mismo cliente con distinto formato telefónico (09... vs +593...) manteniendo canales diferenciados", () => {
+    expect(formatearTelefonoEstandarOmnicanal("0996438873")).toBe("+593996438873");
+    expect(formatearTelefonoEstandarOmnicanal("+593 99 643 8873")).toBe("+593996438873");
+
+    const baseConv = {
+      negocio: "tinkay",
+      remitenteId: "x",
+      estadoAtencion: "EN_ATENCION_ASESORA" as const,
+      mensajesClienteConteo: 1,
+      mensajesIaConteo: 0,
+      mensajesHumanoConteo: 2,
+      creadoEn: "2026-11-22T10:00:00.000Z",
+      etiquetasIds: [],
+    };
+
+    const convWa: ConversacionOmnicanal = {
+      ...baseConv,
+      id: "conv-wa-1",
+      canal: "whatsapp",
+      claveHilo: "wa:593996438873",
+      remitenteNombre: "Martín Sebastián",
+      remitenteTelefono: "+593996438873",
+      ultimoMensajeTexto: "Hola Martín, aquí tienes tu enlace",
+      ultimoMensajeEn: "2026-11-22T18:30:00.000Z",
+      noLeidosAsesora: 1,
+    };
+
+    const convWeb: ConversacionOmnicanal = {
+      ...baseConv,
+      id: "conv-web-1",
+      canal: "web",
+      claveHilo: "web:martin-1",
+      remitenteNombre: "Martin Toapanta",
+      remitenteTelefono: "0996438873",
+      remitenteCorreo: "tinkay.uio@gmail.com",
+      ultimoMensajeTexto: "Orden Web TNK-ORD-0012",
+      ultimoMensajeEn: "2026-11-22T14:00:00.000Z",
+      noLeidosAsesora: 2,
+    };
+
+    const convOtro: ConversacionOmnicanal = {
+      ...baseConv,
+      id: "conv-wa-2",
+      canal: "whatsapp",
+      claveHilo: "wa:593987654321",
+      remitenteNombre: "Jesús",
+      remitenteTelefono: "+593987654321",
+      ultimoMensajeTexto: "Hola",
+      ultimoMensajeEn: "2026-11-22T13:00:00.000Z",
+      noLeidosAsesora: 0,
+    };
+
+    const grupos = agruparConversacionesPorClienteOmnicanal([convWa, convWeb, convOtro]);
+    expect(grupos).toHaveLength(2);
+
+    const grupoMartin = grupos[0]!;
+    expect(grupoMartin.conversaciones).toHaveLength(2);
+    expect(grupoMartin.canalesActivos).toEqual(["whatsapp", "web"]);
+    expect(grupoMartin.telefonoEstandar).toBe("+593996438873");
+    expect(grupoMartin.correo).toBe("tinkay.uio@gmail.com");
+    expect(grupoMartin.noLeidosTotal).toBe(3);
+    expect(grupoMartin.conversacionPrincipal.id).toBe("conv-wa-1");
   });
 });

@@ -1519,3 +1519,231 @@ export function anexarParametroRefUrl(
     valLimpio
   )}${hashParte}`;
 }
+
+/**
+ * Estandariza números telefónicos de distintos formatos (`0996438873`, `996438873`,
+ * `593996438873`, `+593 99 643 8873`) a formato internacional uniforme (`+593996438873`).
+ */
+export function formatearTelefonoEstandarOmnicanal(telefono?: string | null): string | null {
+  const raw = String(telefono || "").trim();
+  if (!raw) return null;
+  const digitos = raw.replace(/\D+/g, "");
+  if (digitos.length === 10 && digitos.startsWith("09")) {
+    return `+593${digitos.slice(1)}`;
+  }
+  if (digitos.length === 9 && digitos.startsWith("9")) {
+    return `+593${digitos}`;
+  }
+  if (digitos.length === 12 && digitos.startsWith("5939")) {
+    return `+${digitos}`;
+  }
+  if (digitos.length >= 10) {
+    return `+${digitos}`;
+  }
+  return raw;
+}
+
+export interface GrupoClienteOmnicanal {
+  claveGrupo: string;
+  nombreMostrado: string;
+  telefonoEstandar: string | null;
+  correo: string | null;
+  conversacionPrincipal: ConversacionOmnicanal;
+  conversaciones: ConversacionOmnicanal[];
+  canalesActivos: CanalOmnicanal[];
+  noLeidosTotal: number;
+  calificacionEstrellas: number | null;
+  notasCliente: string | null;
+  etiquetasIds: string[];
+}
+
+const ORDEN_PRIORIDAD_CANAL: Record<string, number> = {
+  whatsapp: 0,
+  web: 1,
+  instagram: 2,
+  facebook: 3,
+  telegram: 4,
+  tiktok: 5,
+};
+
+function esNombreGenericoOmnicanal(nombre?: string | null): boolean {
+  const n = String(nombre || "").trim();
+  if (!n) return true;
+  return /^(whatsapp\s*\+?\d*|visitante\s+web.*|cliente(\s+web|\s+whatsapp)?)$/i.test(n);
+}
+
+/**
+ * Agrupa conversaciones que pertenecen al mismo cliente a través de distintos canales
+ * (teléfono normalizado sin importar formato `09...` vs `+593...`, correo electrónico,
+ * `usuarioId`, `clienteId` o puente Web <-> WhatsApp), conservando cada hilo/canal
+ * diferenciado dentro del grupo para alternar entre canales sin mezclar mensajes.
+ */
+export function agruparConversacionesPorClienteOmnicanal(
+  conversaciones: ConversacionOmnicanal[]
+): GrupoClienteOmnicanal[] {
+  const n = conversaciones.length;
+  if (n === 0) return [];
+
+  const padre = Array.from({ length: n }, (_, i) => i);
+  const encontrar = (x: number): number => {
+    let r = x;
+    while (padre[r] !== r) r = padre[r]!;
+    let cur = x;
+    while (padre[cur] !== r) {
+      const sig = padre[cur]!;
+      padre[cur] = r;
+      cur = sig;
+    }
+    return r;
+  };
+  const unir = (a: number, b: number) => {
+    const ra = encontrar(a);
+    const rb = encontrar(b);
+    if (ra !== rb) padre[rb] = ra;
+  };
+
+  const indicePorClave = new Map<string, number>();
+  const registrarClave = (clave: string, idx: number) => {
+    const prev = indicePorClave.get(clave);
+    if (prev !== undefined) {
+      unir(prev, idx);
+    } else {
+      indicePorClave.set(clave, idx);
+    }
+  };
+
+  for (let i = 0; i < n; i++) {
+    const c = conversaciones[i]!;
+    registrarClave(`id:${c.id}`, i);
+
+    const telNorm = normalizarTelefonoOmnicanal(c.remitenteTelefono);
+    if (telNorm.length >= 8) {
+      registrarClave(`tel:${telNorm}`, i);
+    }
+
+    const correoNorm = String(c.remitenteCorreo || "").trim().toLowerCase();
+    if (correoNorm && correoNorm.includes("@")) {
+      registrarClave(`mail:${correoNorm}`, i);
+    }
+
+    if (c.usuarioId) {
+      registrarClave(`usu:${c.usuarioId}`, i);
+    }
+
+    if (c.clienteId) {
+      registrarClave(`cli:${c.clienteId}`, i);
+    }
+
+    const refWeb = String(c.puenteOmnicanal?.refWeb || "").trim().toUpperCase();
+    if (refWeb) {
+      registrarClave(`ref:${refWeb}`, i);
+    }
+
+    if (c.puenteOmnicanal?.conversacionWebVinculadaId) {
+      registrarClave(`id:${c.puenteOmnicanal.conversacionWebVinculadaId}`, i);
+    }
+    if (c.puenteOmnicanal?.conversacionWhatsappVinculadaId) {
+      registrarClave(`id:${c.puenteOmnicanal.conversacionWhatsappVinculadaId}`, i);
+    }
+  }
+
+  const buckets = new Map<number, ConversacionOmnicanal[]>();
+  for (let i = 0; i < n; i++) {
+    const r = encontrar(i);
+    const lista = buckets.get(r);
+    if (lista) {
+      lista.push(conversaciones[i]!);
+    } else {
+      buckets.set(r, [conversaciones[i]!]);
+    }
+  }
+
+  const grupos: GrupoClienteOmnicanal[] = [];
+  for (const listaRaw of buckets.values()) {
+    const ordenadas = [...listaRaw].sort((a, b) => {
+      const aEsc = a.estadoAtencion === "ESCALADO_HUMANO" ? 0 : 1;
+      const bEsc = b.estadoAtencion === "ESCALADO_HUMANO" ? 0 : 1;
+      if (aEsc !== bEsc) return aEsc - bEsc;
+      return (
+        new Date(b.ultimoMensajeEn || 0).getTime() - new Date(a.ultimoMensajeEn || 0).getTime()
+      );
+    });
+
+    const principal = ordenadas[0]!;
+
+    // Nombre unificado: primero nombrePersonalizado de fichaCliente, luego primer nombre no genérico
+    const conFichaNombre = ordenadas
+      .filter((c) => Boolean(c.fichaCliente?.nombrePersonalizado?.trim()))
+      .sort((a, b) =>
+        String(b.fichaCliente?.actualizadoEn || "").localeCompare(
+          String(a.fichaCliente?.actualizadoEn || "")
+        )
+      );
+    const nombreMostrado =
+      conFichaNombre[0]?.fichaCliente?.nombrePersonalizado?.trim() ||
+      ordenadas.find((c) => !esNombreGenericoOmnicanal(c.remitenteNombre))?.remitenteNombre?.trim() ||
+      principal.remitenteNombre ||
+      "Cliente";
+
+    const telEstandar =
+      ordenadas
+        .map((c) => formatearTelefonoEstandarOmnicanal(c.remitenteTelefono))
+        .find((t): t is string => Boolean(t)) ?? null;
+
+    const correo =
+      ordenadas
+        .map((c) => String(c.remitenteCorreo || "").trim().toLowerCase())
+        .find((m) => Boolean(m && m.includes("@"))) ?? null;
+
+    const canalesSet = new Set<CanalOmnicanal>();
+    let noLeidosTotal = 0;
+    const etiquetasSet = new Set<string>();
+    let calificacionEstrellas: number | null = null;
+    let notasCliente: string | null = null;
+
+    for (const c of ordenadas) {
+      canalesSet.add(c.canal || "web");
+      noLeidosTotal += Number(c.noLeidosAsesora || 0);
+      for (const etqId of c.etiquetasIds ?? []) {
+        etiquetasSet.add(etqId);
+      }
+      if (calificacionEstrellas == null && c.fichaCliente?.calificacionEstrellas != null) {
+        calificacionEstrellas = c.fichaCliente.calificacionEstrellas;
+      }
+      if (!notasCliente && c.fichaCliente?.notasCliente?.trim()) {
+        notasCliente = c.fichaCliente.notasCliente.trim();
+      }
+    }
+
+    const canalesActivos = Array.from(canalesSet).sort(
+      (a, b) => (ORDEN_PRIORIDAD_CANAL[a] ?? 99) - (ORDEN_PRIORIDAD_CANAL[b] ?? 99)
+    );
+
+    const telClave = normalizarTelefonoOmnicanal(telEstandar);
+    const claveGrupo = telClave.length >= 8 ? `tel:${telClave}` : `cnv:${principal.id}`;
+
+    grupos.push({
+      claveGrupo,
+      nombreMostrado,
+      telefonoEstandar: telEstandar,
+      correo,
+      conversacionPrincipal: principal,
+      conversaciones: ordenadas,
+      canalesActivos,
+      noLeidosTotal,
+      calificacionEstrellas,
+      notasCliente,
+      etiquetasIds: Array.from(etiquetasSet),
+    });
+  }
+
+  return grupos.sort((a, b) => {
+    const aEsc = a.conversaciones.some((c) => c.estadoAtencion === "ESCALADO_HUMANO") ? 0 : 1;
+    const bEsc = b.conversaciones.some((c) => c.estadoAtencion === "ESCALADO_HUMANO") ? 0 : 1;
+    if (aEsc !== bEsc) return aEsc - bEsc;
+    return (
+      new Date(b.conversacionPrincipal.ultimoMensajeEn || 0).getTime() -
+      new Date(a.conversacionPrincipal.ultimoMensajeEn || 0).getTime()
+    );
+  });
+}

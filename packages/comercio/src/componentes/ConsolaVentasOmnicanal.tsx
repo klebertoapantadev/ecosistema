@@ -89,6 +89,7 @@ import {
   type ConfiguracionTiendaCheckout,
 } from "../configuracion-tienda-checkout";
 import {
+  agruparConversacionesPorClienteOmnicanal,
   autoCompletarDatosVentaDesdeMensajes,
   calcularFechaRecordatorioRapido,
   calcularMetricasOmnicanal,
@@ -125,6 +126,7 @@ import {
   AvatarConCanalOmnicanal,
   CANALES_OMNICANAL_DISPONIBLES,
   IconoVectorCanal,
+  nombreLegibleCanal,
 } from "./IconoCanalOmnicanal";
 import { ModalAdministrarEtiquetas } from "./ModalAdministrarEtiquetas";
 import { ModalFichaClienteOmnicanal } from "./ModalFichaClienteOmnicanal";
@@ -1763,6 +1765,25 @@ export function ConsolaVentasOmnicanal({
     () => tablero.conversaciones.find((c) => c.id === conversacionActivaId) ?? null,
     [tablero.conversaciones, conversacionActivaId]
   );
+
+  const gruposClientesFiltrados = useMemo(
+    () => agruparConversacionesPorClienteOmnicanal(conversacionesFiltradas),
+    [conversacionesFiltradas]
+  );
+
+  const todosGruposClientes = useMemo(
+    () => agruparConversacionesPorClienteOmnicanal(tablero.conversaciones),
+    [tablero.conversaciones]
+  );
+
+  const grupoClienteActivo = useMemo(() => {
+    if (!conversacionActiva) return null;
+    return (
+      todosGruposClientes.find((g) =>
+        g.conversaciones.some((c) => c.id === conversacionActiva.id)
+      ) ?? null
+    );
+  }, [todosGruposClientes, conversacionActiva]);
 
   const comprasDeConversacionActiva = useMemo(() => {
     if (!conversacionActiva) return [];
@@ -3977,19 +3998,25 @@ export function ConsolaVentasOmnicanal({
                     </p>
                   </div>
                 ) : (
-                  conversacionesFiltradas.map((conv) => {
-                    const seleccionada = conv.id === conversacionActivaId;
-                    const tieneNoLeidos = (conv.noLeidosAsesora || 0) > 0;
-                    const etiquetasVisibles = (conv.etiquetasIds ?? [])
+                  gruposClientesFiltrados.map((grupo) => {
+                    const conv = grupo.conversacionPrincipal;
+                    const seleccionada = grupo.conversaciones.some(
+                      (c) => c.id === conversacionActivaId
+                    );
+                    const convActivaEnGrupo =
+                      grupo.conversaciones.find((c) => c.id === conversacionActivaId) ?? conv;
+                    const tieneNoLeidos = grupo.noLeidosTotal > 0;
+                    const etiquetasVisibles = grupo.etiquetasIds
                       .map((etqId) => mapaEtiquetas.get(etqId))
                       .filter((etq): etq is EtiquetaOmnicanal => Boolean(etq))
                       .slice(0, 2);
+                    const esMulticanal = grupo.conversaciones.length > 1;
 
                     return (
                       <div
-                        key={conv.id}
+                        key={grupo.claveGrupo}
                         onClick={() => {
-                          setConversacionActivaId(conv.id);
+                          setConversacionActivaId(convActivaEnGrupo.id);
                           setMostrarFichaTablet(false);
                           setVistaMovilInbox("chat");
                         }}
@@ -3997,7 +4024,7 @@ export function ConsolaVentasOmnicanal({
                         tabIndex={0}
                         onKeyDown={(e) => {
                           if (e.key === "Enter" || e.key === " ") {
-                            setConversacionActivaId(conv.id);
+                            setConversacionActivaId(convActivaEnGrupo.id);
                             setMostrarFichaTablet(false);
                             setVistaMovilInbox("chat");
                           }
@@ -4022,8 +4049,8 @@ export function ConsolaVentasOmnicanal({
                         }}
                       >
                         <AvatarConCanalOmnicanal
-                          nombre={conv.remitenteNombre}
-                          canal={conv.canal}
+                          nombre={grupo.nombreMostrado}
+                          canal={convActivaEnGrupo.canal}
                           size={38}
                         />
 
@@ -4062,12 +4089,12 @@ export function ConsolaVentasOmnicanal({
                                   whiteSpace: "nowrap",
                                 }}
                               >
-                                {conv.remitenteNombre}
+                                {grupo.nombreMostrado}
                               </strong>
-                              {conv.fichaCliente?.calificacionEstrellas != null &&
-                                conv.fichaCliente.calificacionEstrellas > 0 && (
+                              {grupo.calificacionEstrellas != null &&
+                                grupo.calificacionEstrellas > 0 && (
                                   <span
-                                    title={`Calificación: ${conv.fichaCliente.calificacionEstrellas}/5`}
+                                    title={`Calificación: ${grupo.calificacionEstrellas}/5`}
                                     style={{
                                       display: "inline-flex",
                                       alignItems: "center",
@@ -4079,12 +4106,12 @@ export function ConsolaVentasOmnicanal({
                                     }}
                                   >
                                     <Star size={10} fill="#D97706" color="#D97706" />
-                                    <span>{conv.fichaCliente.calificacionEstrellas}</span>
+                                    <span>{grupo.calificacionEstrellas}</span>
                                   </span>
                                 )}
-                              {conv.fichaCliente?.notasCliente && (
+                              {grupo.notasCliente && (
                                 <span
-                                  title={`Nota del cliente: ${conv.fichaCliente.notasCliente}`}
+                                  title={`Nota del cliente: ${grupo.notasCliente}`}
                                   style={{
                                     display: "inline-flex",
                                     alignItems: "center",
@@ -4120,7 +4147,7 @@ export function ConsolaVentasOmnicanal({
                                     justifyContent: "center",
                                   }}
                                 >
-                                  {conv.noLeidosAsesora}
+                                  {grupo.noLeidosTotal}
                                 </span>
                               )}
                               <span style={{ fontSize: "0.69rem", color: "#847D74" }}>
@@ -4131,10 +4158,10 @@ export function ConsolaVentasOmnicanal({
                                   type="button"
                                   onClick={(ev) => {
                                     ev.stopPropagation();
-                                    setConversacionAEliminar(conv);
+                                    setConversacionAEliminar(convActivaEnGrupo);
                                   }}
-                                  title={`Eliminar conversación completa con ${conv.remitenteNombre}`}
-                                  aria-label={`Eliminar chat de ${conv.remitenteNombre}`}
+                                  title={`Eliminar conversación activa (${nombreLegibleCanal(convActivaEnGrupo.canal)}) de ${grupo.nombreMostrado}`}
+                                  aria-label={`Eliminar chat de ${grupo.nombreMostrado}`}
                                   style={{
                                     width: "22px",
                                     height: "22px",
@@ -4168,6 +4195,90 @@ export function ConsolaVentasOmnicanal({
                             {conv.ultimoMensajeOrigen === "BOT_ARIA" && "ARIA · "}
                             {limpiarVistaPreviaMensajeOmnicanal(conv.ultimoMensajeTexto)}
                           </div>
+
+                          {esMulticanal && (
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                flexWrap: "wrap",
+                                marginTop: "2px",
+                              }}
+                            >
+                              {grupo.canalesActivos.map((canalItem) => {
+                                const hilosCanal = grupo.conversaciones.filter(
+                                  (c) => (c.canal || "web") === canalItem
+                                );
+                                const hiloDestino = hilosCanal[0];
+                                if (!hiloDestino) return null;
+                                const activoEsteCanal =
+                                  seleccionada &&
+                                  (convActivaEnGrupo.canal || "web") === canalItem;
+                                const noLeidosCanal = hilosCanal.reduce(
+                                  (acc, h) => acc + Number(h.noLeidosAsesora || 0),
+                                  0
+                                );
+                                return (
+                                  <button
+                                    key={canalItem}
+                                    type="button"
+                                    onClick={(ev) => {
+                                      ev.stopPropagation();
+                                      setConversacionActivaId(hiloDestino.id);
+                                      setMostrarFichaTablet(false);
+                                      setVistaMovilInbox("chat");
+                                    }}
+                                    title={`Abrir canal ${nombreLegibleCanal(canalItem)} de ${grupo.nombreMostrado}`}
+                                    aria-label={`Canal ${nombreLegibleCanal(canalItem)}`}
+                                    style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "4px",
+                                      padding: "1px 6px",
+                                      borderRadius: "999px",
+                                      border: activoEsteCanal
+                                        ? "1px solid #221E1B"
+                                        : "1px solid #E6E2DA",
+                                      background: activoEsteCanal ? "#221E1B" : "#FFFFFF",
+                                      color: activoEsteCanal ? "#FFFFFF" : "#57524C",
+                                      fontSize: "0.64rem",
+                                      fontWeight: 700,
+                                      cursor: "pointer",
+                                    }}
+                                  >
+                                    <IconoVectorCanal canal={canalItem} size={11} />
+                                    <span>
+                                      {canalItem === "whatsapp"
+                                        ? "WhatsApp"
+                                        : canalItem === "web"
+                                          ? "Web"
+                                          : nombreLegibleCanal(canalItem)}
+                                      {hilosCanal.length > 1 ? ` (${hilosCanal.length})` : ""}
+                                    </span>
+                                    {noLeidosCanal > 0 && !activoEsteCanal && (
+                                      <span
+                                        style={{
+                                          minWidth: "13px",
+                                          height: "13px",
+                                          padding: "0 3px",
+                                          borderRadius: "999px",
+                                          background: "#221E1B",
+                                          color: "#FFFFFF",
+                                          fontSize: "0.58rem",
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          justifyContent: "center",
+                                        }}
+                                      >
+                                        {noLeidosCanal}
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
 
                           {(conv.estadoAtencion === "ESCALADO_HUMANO" ||
                             conv.estadoAtencion === "EN_ATENCION_ASESORA" ||
@@ -4507,7 +4618,7 @@ export function ConsolaVentasOmnicanal({
                                 whiteSpace: "nowrap",
                               }}
                             >
-                              {conversacionActiva.remitenteNombre}
+                              {grupoClienteActivo?.nombreMostrado || conversacionActiva.remitenteNombre}
                             </strong>
                             <Pencil
                               size={12}
@@ -6041,6 +6152,110 @@ export function ConsolaVentasOmnicanal({
                       </span>
                     </div>
                   )}
+
+                {/* Selector de Canales del mismo Cliente (sin mezclar historiales entre canales) */}
+                {grupoClienteActivo && grupoClienteActivo.conversaciones.length > 1 && (
+                  <div
+                    role="tablist"
+                    aria-label="Canales del cliente"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: modoLayoutInbox === "movil" ? "6px 10px" : "6px 14px",
+                      background: "#FAF8F5",
+                      borderBottom: "1px solid #E6E2DA",
+                      overflowX: "auto",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "0.69rem",
+                        fontWeight: 700,
+                        color: "#847D74",
+                        whiteSpace: "nowrap",
+                        marginRight: "2px",
+                      }}
+                    >
+                      Canales ({grupoClienteActivo.conversaciones.length}):
+                    </span>
+                    {(() => {
+                      const conteoPorCanal: Record<string, number> = {};
+                      const totalesPorCanal: Record<string, number> = {};
+                      for (const h of grupoClienteActivo.conversaciones) {
+                        const ch = h.canal || "web";
+                        totalesPorCanal[ch] = (totalesPorCanal[ch] || 0) + 1;
+                      }
+                      return grupoClienteActivo.conversaciones.map((hilo) => {
+                        const ch = hilo.canal || "web";
+                        conteoPorCanal[ch] = (conteoPorCanal[ch] || 0) + 1;
+                        const idxCanal = conteoPorCanal[ch]!;
+                        const hayMultiplesMismoCanal = (totalesPorCanal[ch] || 0) > 1;
+                        const esActivo = hilo.id === conversacionActiva.id;
+                        const noLeidosHilo = Number(hilo.noLeidosAsesora || 0);
+                        const etiquetaBase =
+                          ch === "whatsapp"
+                            ? "WhatsApp"
+                            : ch === "web"
+                              ? "Chat Web"
+                              : nombreLegibleCanal(ch);
+
+                        return (
+                          <button
+                            key={hilo.id}
+                            type="button"
+                            role="tab"
+                            aria-selected={esActivo}
+                            onClick={() => setConversacionActivaId(hilo.id)}
+                            title={`Ver chat de ${etiquetaBase}${
+                              hayMultiplesMismoCanal ? ` #${idxCanal}` : ""
+                            } (${formatearTiempoCorto(hilo.ultimoMensajeEn)})`}
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              padding: "4px 10px",
+                              borderRadius: "999px",
+                              border: esActivo ? "1px solid #221E1B" : "1px solid #E6E2DA",
+                              background: esActivo ? "#221E1B" : "#FFFFFF",
+                              color: esActivo ? "#FFFFFF" : "#3A3530",
+                              fontSize: "0.72rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              whiteSpace: "nowrap",
+                              flexShrink: 0,
+                            }}
+                          >
+                            <IconoVectorCanal canal={ch} size={13} />
+                            <span>
+                              {etiquetaBase}
+                              {hayMultiplesMismoCanal ? ` #${idxCanal}` : ""}
+                            </span>
+                            {noLeidosHilo > 0 && !esActivo && (
+                              <span
+                                style={{
+                                  minWidth: "16px",
+                                  height: "16px",
+                                  padding: "0 4px",
+                                  borderRadius: "999px",
+                                  background: "#221E1B",
+                                  color: "#FFFFFF",
+                                  fontSize: "0.62rem",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                }}
+                              >
+                                {noLeidosHilo}
+                              </span>
+                            )}
+                          </button>
+                        );
+                      });
+                    })()}
+                  </div>
+                )}
 
                 {/* Línea de Tiempo de Mensajes — Paleta Limpia y Sobria */}
                 <div
