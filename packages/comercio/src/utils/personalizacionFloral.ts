@@ -468,6 +468,69 @@ export function validarSeleccionPersonalizacionFloral(
   };
 }
 
+export type ModoPersonalizacionFloralVariante = "heredar" | "personalizado";
+
+/**
+ * Resuelve la configuración efectiva de personalización floral combinando la configuración
+ * global del producto Master con un posible ajuste específico por variante/tamaño.
+ *
+ * - Si la variante tiene `modoVariante === "personalizado"` (o configuración propia explícita
+ *   sin modo `"heredar"`), prevalece la configuración de la variante.
+ * - En caso contrario, hereda la configuración global del producto Master.
+ */
+export function resolverPersonalizacionFloralEfectiva(params: {
+  configMaster?: unknown;
+  configVariante?: unknown;
+  modoVariante?: unknown;
+  habilitadaPorDefecto?: boolean;
+}): ConfiguracionPersonalizacionFloral {
+  const habilitadaDef = params.habilitadaPorDefecto ?? true;
+  const masterNorm = normalizarConfiguracionPersonalizacionFloral(params.configMaster, {
+    habilitadaPorDefecto: habilitadaDef,
+  });
+
+  const modoRaw = String(params.modoVariante || "").trim().toLowerCase();
+  const tieneObjVariante = Boolean(params.configVariante && typeof params.configVariante === "object");
+
+  if (modoRaw === "personalizado" && tieneObjVariante) {
+    return normalizarConfiguracionPersonalizacionFloral(params.configVariante, {
+      habilitadaPorDefecto: masterNorm.habilitada,
+    });
+  }
+
+  return masterNorm;
+}
+
+export function resumirConfiguracionPersonalizacionAdmin(
+  config?: ConfiguracionPersonalizacionFloral | null
+): string {
+  if (!config || !config.habilitada) {
+    return "Desactivada en tienda";
+  }
+  const partes: string[] = [];
+  const modos: string[] = [];
+  if (config.permiteSoloRosas) modos.push("Rosas");
+  if (config.permiteSoloGirasoles) modos.push("Girasoles");
+  if (config.permiteGirasolesYRosas) modos.push("Girasoles + Rosas");
+  if (modos.length > 0) {
+    partes.push(modos.join(" / "));
+  }
+  if (config.permiteSoloRosas || config.permiteGirasolesYRosas) {
+    partes.push(
+      config.maxColoresRosas === 1
+        ? "1 color"
+        : `hasta ${config.maxColoresRosas} colores`
+    );
+  }
+  if (config.orquideasMax > 0) {
+    partes.push(`${config.orquideasMin}–${config.orquideasMax} orquídeas`);
+  }
+  if (config.mostrarColorBase) {
+    partes.push("Base/Papel");
+  }
+  return partes.join(" · ") || "Activa";
+}
+
 export function describirConfiguracionPersonalizacionCliente(
   config?: ConfiguracionPersonalizacionFloral | null
 ): string {

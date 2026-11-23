@@ -8,6 +8,7 @@ import {
   FileText,
   Image as ImageIcon,
   LayoutList,
+  Palette,
   Settings2,
   Share2,
   Sparkles,
@@ -18,6 +19,7 @@ import { obtenerImagenFallbackNegocio } from "../utils/negocio";
 
 export type PasoWizardProducto =
   | "identidad_precio"
+  | "colores_flores"
   | "caracteristicas"
   | "imagenes"
   | "logistica"
@@ -63,10 +65,56 @@ export const PASOS_WIZARD_PRODUCTO: DefinicionPasoWizardProducto[] = [
   },
 ];
 
+export function obtenerPasosWizardProducto(
+  mostrarPasoColoresFlores = false
+): DefinicionPasoWizardProducto[] {
+  if (!mostrarPasoColoresFlores) return PASOS_WIZARD_PRODUCTO;
+  return [
+    {
+      id: "identidad_precio",
+      numero: 1,
+      tituloCorto: "Nombre y Precio",
+      subtitulo: "Categoría, oferta, IVA y PVP",
+    },
+    {
+      id: "colores_flores",
+      numero: 2,
+      tituloCorto: "Colores y Flores",
+      subtitulo: "Rosas 1..N, girasoles, orquídeas y papel",
+    },
+    {
+      id: "caracteristicas",
+      numero: 3,
+      tituloCorto: "Características",
+      subtitulo: "Descripción, qué incluye y entrega",
+    },
+    {
+      id: "imagenes",
+      numero: 4,
+      tituloCorto: "Imágenes y Galería",
+      subtitulo: "Portada, fotos, encuadre y video",
+    },
+    {
+      id: "logistica",
+      numero: 5,
+      tituloCorto: "Logística y Vigencia",
+      subtitulo: "Envío, temporada y estado",
+    },
+    {
+      id: "canales_ia",
+      numero: 6,
+      tituloCorto: "Canales y Búsqueda",
+      subtitulo: "Web, WhatsApp IA, usos y tags",
+    },
+  ];
+}
+
 function iconoPaso(id: PasoWizardProducto, size = 14) {
   switch (id) {
     case "identidad_precio":
       return <Tag size={size} />;
+    case "colores_flores":
+      return <Palette size={size} />;
     case "caracteristicas":
       return <FileText size={size} />;
     case "imagenes":
@@ -86,6 +134,7 @@ export interface PropsBarraPasosWizardProducto {
   permitirModoTodo?: boolean;
   verTodo?: boolean;
   onAlternarVerTodo?: () => void;
+  mostrarPasoColoresFlores?: boolean;
 }
 
 export function BarraPasosWizardProducto({
@@ -96,10 +145,12 @@ export function BarraPasosWizardProducto({
   permitirModoTodo = false,
   verTodo = false,
   onAlternarVerTodo,
+  mostrarPasoColoresFlores = false,
 }: PropsBarraPasosWizardProducto) {
+  const pasosVisibles = obtenerPasosWizardProducto(mostrarPasoColoresFlores);
   const indiceActivo = Math.max(
     0,
-    PASOS_WIZARD_PRODUCTO.findIndex((p) => p.id === pasoActivo)
+    pasosVisibles.findIndex((p) => p.id === pasoActivo)
   );
 
   // En móvil (<= 640px) siempre operamos por pasos (sin vista "Ver Todo")
@@ -116,7 +167,7 @@ export function BarraPasosWizardProducto({
 
   const porcentajeProgreso = verTodo
     ? 100
-    : Math.round(((indiceActivo + 1) / PASOS_WIZARD_PRODUCTO.length) * 100);
+    : Math.round(((indiceActivo + 1) / pasosVisibles.length) * 100);
 
   return (
     <div
@@ -169,7 +220,7 @@ export function BarraPasosWizardProducto({
         }}
       >
         <div className="barra-pasos-wizard-rail">
-          {PASOS_WIZARD_PRODUCTO.map((paso) => {
+          {pasosVisibles.map((paso) => {
             const esActivo = !verTodo && pasoActivo === paso.id;
             const listo = Boolean(completados[paso.id]);
 

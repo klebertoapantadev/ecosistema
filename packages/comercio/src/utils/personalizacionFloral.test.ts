@@ -5,6 +5,8 @@ import {
   describirConfiguracionPersonalizacionCliente,
   normalizarConfiguracionPersonalizacionFloral,
   obtenerModosFlorDisponibles,
+  resolverPersonalizacionFloralEfectiva,
+  resumirConfiguracionPersonalizacionAdmin,
   validarSeleccionPersonalizacionFloral,
 } from "./personalizacionFloral";
 
@@ -141,5 +143,41 @@ describe("personalizacionFloral", () => {
         "Mismos colores de la foto · Nota: Con lazo dorado si es posible"
       );
     }
+  });
+
+  it("resuelve configuración heredada de Master vs personalizada por variante/tamaño", () => {
+    const master = normalizarConfiguracionPersonalizacionFloral({
+      habilitada: true,
+      maxColoresRosas: 1,
+      permiteSoloRosas: true,
+      orquideasMax: 0,
+    });
+
+    const boxM = resolverPersonalizacionFloralEfectiva({
+      configMaster: master,
+      modoVariante: "heredar",
+      configVariante: { maxColoresRosas: 3 },
+    });
+    expect(boxM.maxColoresRosas).toBe(1);
+    expect(boxM.orquideasMax).toBe(0);
+
+    const boxLConOrquideas = resolverPersonalizacionFloralEfectiva({
+      configMaster: master,
+      modoVariante: "personalizado",
+      configVariante: {
+        habilitada: true,
+        maxColoresRosas: 3,
+        permiteSoloRosas: true,
+        permiteGirasolesYRosas: true,
+        orquideasMin: 1,
+        orquideasMax: 5,
+      },
+    });
+    expect(boxLConOrquideas.maxColoresRosas).toBe(3);
+    expect(boxLConOrquideas.permiteGirasolesYRosas).toBe(true);
+    expect(boxLConOrquideas.orquideasMin).toBe(1);
+    expect(boxLConOrquideas.orquideasMax).toBe(5);
+    expect(resumirConfiguracionPersonalizacionAdmin(boxLConOrquideas)).toContain("hasta 3 colores");
+    expect(resumirConfiguracionPersonalizacionAdmin(boxLConOrquideas)).toContain("1–5 orquídeas");
   });
 });

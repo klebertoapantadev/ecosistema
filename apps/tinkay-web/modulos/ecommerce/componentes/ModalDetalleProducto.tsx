@@ -9,9 +9,9 @@ import {
   dispararEventoPixelNavegador,
   formatearResumenPersonalizacionFloral,
   modoRequiereColoresRosas,
-  normalizarConfiguracionPersonalizacionFloral,
   obtenerColoresRosasHabilitados,
   obtenerModosFlorDisponibles,
+  resolverPersonalizacionFloralEfectiva,
   validarSeleccionPersonalizacionFloral,
   type ColorBasePapelId,
   type ModoFlorPersonalizacion,
@@ -141,13 +141,13 @@ export function ModalDetalleProducto() {
             (producto.categoriaNombre || '').toLowerCase().includes('evento') ||
             (producto.tipoOferta || '').toUpperCase() === 'SERVICIO')
       );
-      const cfgPers = normalizarConfiguracionPersonalizacionFloral(
-        producto.personalizacionFloral,
-        {
-          habilitadaPorDefecto:
-            !esRentaTmp && !esEventoTmp && !producto.esExtra && !producto.esComplemento,
-        }
-      );
+      const cfgPers = resolverPersonalizacionFloralEfectiva({
+        configMaster: producto.personalizacionFloral,
+        configVariante: varInicial.personalizacionFloral,
+        modoVariante: varInicial.personalizacionFloralModo,
+        habilitadaPorDefecto:
+          !esRentaTmp && !esEventoTmp && !producto.esExtra && !producto.esComplemento,
+      });
       const modosDisp = obtenerModosFlorDisponibles(cfgPers);
       setMismosColoresFoto(false);
       setModoFloresSel(modosDisp[0]?.id ?? 'solo_rosas');
@@ -609,10 +609,43 @@ export function ModalDetalleProducto() {
     if (!producto) return null;
     const habilitadaDef =
       !esProductoRenta && !esProductoEvento && !producto.esExtra && !producto.esComplemento;
-    return normalizarConfiguracionPersonalizacionFloral(producto.personalizacionFloral, {
+    return resolverPersonalizacionFloralEfectiva({
+      configMaster: producto.personalizacionFloral,
+      configVariante: varianteSeleccionada.personalizacionFloral,
+      modoVariante: varianteSeleccionada.personalizacionFloralModo,
       habilitadaPorDefecto: habilitadaDef,
     });
-  }, [producto, esProductoRenta, esProductoEvento]);
+  }, [producto, varianteSeleccionada, esProductoRenta, esProductoEvento]);
+
+  // Al cambiar de tamaño/variante, ajustar límites de colores, modo y orquídeas automáticamente
+  React.useEffect(() => {
+    if (!configPersonalizacionFloral) return;
+    const modos = obtenerModosFlorDisponibles(configPersonalizacionFloral);
+    if (!modos.some((m) => m.id === modoFloresSel)) {
+      setModoFloresSel(modos[0]?.id ?? 'solo_rosas');
+    }
+    if (
+      configPersonalizacionFloral.maxColoresRosas > 0 &&
+      coloresRosasSel.length > configPersonalizacionFloral.maxColoresRosas
+    ) {
+      setColoresRosasSel((prev) => prev.slice(0, configPersonalizacionFloral.maxColoresRosas));
+    }
+    setCantidadOrquideasSel((prev) => {
+      if (configPersonalizacionFloral.orquideasMax <= 0) return 0;
+      return Math.max(
+        configPersonalizacionFloral.orquideasMin,
+        Math.min(configPersonalizacionFloral.orquideasMax, prev)
+      );
+    });
+    if (
+      colorBasePapelSel &&
+      !configPersonalizacionFloral.coloresBaseDisponibles.includes(colorBasePapelSel)
+    ) {
+      setColorBasePapelSel(null);
+    }
+    setErrorPersonalizacion(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [varianteSeleccionada.sku, configPersonalizacionFloral]);
 
   const personalizacionFloralActiva = Boolean(
     configPersonalizacionFloral?.habilitada &&

@@ -38,6 +38,8 @@ export interface VarianteEcommerce {
   escalasVolumen?: EscalaVolumenVariante[];
   usos?: string[];
   usosModo?: 'heredar' | 'personalizado';
+  personalizacionFloral?: ConfiguracionPersonalizacionFloral;
+  personalizacionFloralModo?: 'heredar' | 'personalizado';
   totalMeGusta?: number;
 }
 

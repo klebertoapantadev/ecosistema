@@ -37,6 +37,8 @@ interface SupabaseVarianteRaw {
     usos?: string[];
     ocasiones?: string[];
     usos_modo?: 'heredar' | 'personalizado';
+    personalizacion_floral_modo?: 'heredar' | 'personalizado';
+    personalizacion_floral?: unknown;
     escalas_volumen?: unknown;
   };
 }
@@ -441,6 +443,18 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
             unidadesFlores: v.var_detalle_variante?.tallos || undefined,
             usos: usosVarRaw.length > 0 ? usosVarRaw : undefined,
             usosModo: v.var_detalle_variante?.usos_modo || 'heredar',
+            personalizacionFloralModo:
+              v.var_detalle_variante?.personalizacion_floral_modo === 'personalizado'
+                ? 'personalizado'
+                : 'heredar',
+            personalizacionFloral:
+              v.var_detalle_variante?.personalizacion_floral_modo === 'personalizado' &&
+              v.var_detalle_variante?.personalizacion_floral
+                ? normalizarConfiguracionPersonalizacionFloral(
+                    v.var_detalle_variante.personalizacion_floral,
+                    { habilitadaPorDefecto: true }
+                  )
+                : undefined,
             totalMeGusta: Math.max(0, Number(v.var_total_me_gusta ?? 0) || 0),
           };
         });

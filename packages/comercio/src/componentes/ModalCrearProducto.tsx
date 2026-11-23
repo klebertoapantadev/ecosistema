@@ -89,7 +89,7 @@ import {
 } from "./ModalGestionTiposOferta";
 import {
   BarraPasosWizardProducto,
-  PASOS_WIZARD_PRODUCTO,
+  obtenerPasosWizardProducto,
   SelectorEncuadreFoto,
   type PasoWizardProducto,
 } from "./BarraPasosWizardProducto";
@@ -375,9 +375,16 @@ export function ModalCrearProducto({
   const montoIvaCalc = Number(((baseNum * tarifaIva) / 100).toFixed(2));
   const totalCalc = Number((baseNum + montoIvaCalc).toFixed(2));
 
+  const mostrarPasoColoresFlores = esFloristeria && !esOfertaRentaActiva;
+  const pasosWizardActivos = useMemo(
+    () => obtenerPasosWizardProducto(mostrarPasoColoresFlores),
+    [mostrarPasoColoresFlores]
+  );
+
   const completadosPorPaso = useMemo<Partial<Record<PasoWizardProducto, boolean>>>(
     () => ({
       identidad_precio: Boolean(nombre.trim() && baseNum > 0),
+      colores_flores: Boolean(personalizacionFloral.habilitada),
       caracteristicas: Boolean(descripcion.trim() || listaViñetasPreview.length > 0),
       imagenes: tieneAlMenosUnaImagen,
       logistica: Boolean(proActivo || vigenciaTipo !== "SIEMPRE"),
@@ -386,6 +393,7 @@ export function ModalCrearProducto({
     [
       nombre,
       baseNum,
+      personalizacionFloral.habilitada,
       descripcion,
       listaViñetasPreview.length,
       tieneAlMenosUnaImagen,
@@ -416,7 +424,10 @@ export function ModalCrearProducto({
 
   if (!abierto) return null;
 
-  const indicePaso = PASOS_WIZARD_PRODUCTO.findIndex((p) => p.id === pasoActivo);
+  const indicePaso = Math.max(
+    0,
+    pasosWizardActivos.findIndex((p) => p.id === pasoActivo)
+  );
 
   const irPasoSiguiente = () => {
     setError(null);
@@ -430,13 +441,13 @@ export function ModalCrearProducto({
         return;
       }
     }
-    const sig = PASOS_WIZARD_PRODUCTO[indicePaso + 1];
+    const sig = pasosWizardActivos[indicePaso + 1];
     if (sig) setPasoActivo(sig.id);
   };
 
   const irPasoAnterior = () => {
     setError(null);
-    const ant = PASOS_WIZARD_PRODUCTO[indicePaso - 1];
+    const ant = pasosWizardActivos[indicePaso - 1];
     if (ant) setPasoActivo(ant.id);
   };
 
@@ -891,7 +902,7 @@ export function ModalCrearProducto({
                     : "Asistente de Nuevo Producto / Servicio"}
               </h2>
               <span style={{ fontSize: "0.74rem", color: "#847D74" }}>
-                Paso {indicePaso + 1} de {PASOS_WIZARD_PRODUCTO.length} ·{" "}
+                Paso {indicePaso + 1} de {pasosWizardActivos.length} ·{" "}
                 {nombre.trim() ? `${nombre} ($${totalCalc.toFixed(2)})` : "Configuración guiada"}
               </span>
             </div>
@@ -914,7 +925,7 @@ export function ModalCrearProducto({
           </button>
         </div>
 
-        {/* Barra de 5 Pasos del Wizard */}
+        {/* Barra de Pasos del Wizard */}
         <BarraPasosWizardProducto
           pasoActivo={pasoActivo}
           onCambiarPaso={(nuevo) => {
@@ -923,6 +934,7 @@ export function ModalCrearProducto({
           }}
           completados={completadosPorPaso}
           colorPrimario={colorTema}
+          mostrarPasoColoresFlores={mostrarPasoColoresFlores}
         />
 
         {/* Contenido del Paso Activo */}
@@ -1416,6 +1428,15 @@ export function ModalCrearProducto({
             {/* ===============================================================
                 PASO 2: CARACTERÍSTICAS (DESCRIPCIÓN, QUÉ INCLUYE Y ENTREGA)
             =============================================================== */}
+            {mostrarPasoColoresFlores && pasoActivo === "colores_flores" && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <EditorPersonalizacionFloralProducto
+                  valor={personalizacionFloral}
+                  onChange={setPersonalizacionFloral}
+                />
+              </div>
+            )}
+
             {pasoActivo === "caracteristicas" && (
               <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div
@@ -1686,13 +1707,6 @@ export function ModalCrearProducto({
                     }}
                   />
                 </div>
-
-                {esFloristeria && !esOfertaRentaActiva && (
-                  <EditorPersonalizacionFloralProducto
-                    valor={personalizacionFloral}
-                    onChange={setPersonalizacionFloral}
-                  />
-                )}
               </div>
             )}
 
@@ -2878,7 +2892,7 @@ export function ModalCrearProducto({
             </div>
 
             <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-              {indicePaso < PASOS_WIZARD_PRODUCTO.length - 1 && (
+              {indicePaso < pasosWizardActivos.length - 1 && (
                 <button
                   type="button"
                   onClick={irPasoSiguiente}
@@ -2903,7 +2917,7 @@ export function ModalCrearProducto({
                 </button>
               )}
 
-              {(indicePaso === PASOS_WIZARD_PRODUCTO.length - 1 ||
+              {(indicePaso === pasosWizardActivos.length - 1 ||
                 Boolean(nombre.trim() && baseNum > 0)) && (
                 <button
                   type="submit"

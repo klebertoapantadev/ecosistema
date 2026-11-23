@@ -35,6 +35,7 @@ import {
   Calendar,
   Power,
   Camera,
+  Palette,
   Settings2,
   Save,
 } from "lucide-react";
@@ -108,6 +109,8 @@ import { EditorPersonalizacionFloralProducto } from "./EditorPersonalizacionFlor
 import {
   crearConfiguracionPersonalizacionFloralPorDefecto,
   normalizarConfiguracionPersonalizacionFloral,
+  resolverPersonalizacionFloralEfectiva,
+  resumirConfiguracionPersonalizacionAdmin,
   type ConfiguracionPersonalizacionFloral,
 } from "../utils/personalizacionFloral";
 
@@ -389,6 +392,7 @@ export function ModalEditarProducto({
   // Control de secciones heredables colapsadas por defecto en la pestaña de variantes
   type SeccionHeredableVariante =
     | "iva"
+    | "colores_flores"
     | "fotos"
     | "album"
     | "tiempo_entrega"
@@ -915,6 +919,7 @@ export function ModalEditarProducto({
       nombre.trim().length > 0 &&
       variantesLocales.length > 0 &&
       variantesLocales.every((v) => v.var_precio > 0),
+    colores_flores: Boolean(personalizacionFloral.habilitada),
     caracteristicas:
       descripcion.trim().length > 0 || beneficiosLineasMaster.length > 0,
     imagenes: fotosMasterCount > 0,
@@ -1539,6 +1544,18 @@ export function ModalEditarProducto({
           ? v.var_detalle_variante.usos.filter((u: string) => typeof u === "string" && u.trim().length > 0)
           : [];
 
+        const modoColoresVar =
+          v.var_detalle_variante?.personalizacion_floral_modo === "personalizado"
+            ? "personalizado"
+            : "heredar";
+        const persVarFinal =
+          esFloristeria && !esOfertaRentaActiva && modoColoresVar === "personalizado"
+            ? normalizarConfiguracionPersonalizacionFloral(
+                v.var_detalle_variante?.personalizacion_floral,
+                { habilitadaPorDefecto: personalizacionFloral.habilitada }
+              )
+            : null;
+
         return {
           ...v,
           var_detalle_variante: {
@@ -1549,6 +1566,8 @@ export function ModalEditarProducto({
             galeria_urls: galeriaFinal,
             usos: usosFinal,
             usos_modo: v.var_detalle_variante?.usos_modo || "heredar",
+            personalizacion_floral_modo: modoColoresVar,
+            personalizacion_floral: persVarFinal,
             escalas_volumen: normalizarEscalasVolumen(v.var_detalle_variante?.escalas_volumen),
           },
         };
@@ -2022,6 +2041,7 @@ export function ModalEditarProducto({
             permitirModoTodo={true}
             verTodo={verTodoMaster}
             onAlternarVerTodo={() => setVerTodoMaster((prev) => !prev)}
+            mostrarPasoColoresFlores={esFloristeria && !esOfertaRentaActiva}
           />
         )}
 
@@ -3311,7 +3331,31 @@ export function ModalEditarProducto({
                 </div>
               )}
 
-              {/* PASO 2: CARACTERÍSTICAS, DESCRIPCIÓN, BENEFICIOS Y PROMESA DE ENTREGA */}
+              {/* PASO 2 (FLORISTERÍA): COLORES, FLORES Y BASE/PAPEL (GLOBAL MASTER) */}
+              {esFloristeria && !esOfertaRentaActiva && (verTodoMaster || pasoMaster === "colores_flores") && (
+                <div>
+                  <div
+                    style={{
+                      background: "#FDF2F8",
+                      border: "1px solid #FBCFE8",
+                      borderRadius: "10px",
+                      padding: "9px 12px",
+                      marginBottom: "8px",
+                      fontSize: "0.75rem",
+                      color: "#831843",
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    <strong>Configuración global (Master):</strong> todas las variantes/tamaños heredan estos colores automáticamente. Si un tamaño más grande permite más colores u orquídeas, también puedes personalizarlo desde la pestaña de cada variante arriba.
+                  </div>
+                  <EditorPersonalizacionFloralProducto
+                    valor={personalizacionFloral}
+                    onChange={setPersonalizacionFloral}
+                  />
+                </div>
+              )}
+
+              {/* PASO 3: CARACTERÍSTICAS, DESCRIPCIÓN, BENEFICIOS Y PROMESA DE ENTREGA */}
               {(verTodoMaster || pasoMaster === "caracteristicas") && (
                 <div>
                   <div style={{ marginBottom: "14px" }}>
@@ -3552,13 +3596,6 @@ export function ModalEditarProducto({
                       />
                     </div>
                   </div>
-
-                  {esFloristeria && !esOfertaRentaActiva && (
-                    <EditorPersonalizacionFloralProducto
-                      valor={personalizacionFloral}
-                      onChange={setPersonalizacionFloral}
-                    />
-                  )}
                 </div>
               )}
 
@@ -4701,6 +4738,186 @@ export function ModalEditarProducto({
                       }
                     />
                   </div>
+
+                  {/* 0. PERSONALIZACIÓN DE COLORES, FLORES Y BASE/PAPEL POR VARIANTE (HEREDA DE MASTER O PERSONALIZADA) */}
+                  {esFloristeria && !esOfertaRentaActiva && (() => {
+                    const modoColoresVar =
+                      varianteActual.var_detalle_variante?.personalizacion_floral_modo ===
+                      "personalizado"
+                        ? "personalizado"
+                        : "heredar";
+                    const coloresHeredados = modoColoresVar === "heredar";
+                    const configEfectivaVar = resolverPersonalizacionFloralEfectiva({
+                      configMaster: personalizacionFloral,
+                      configVariante: varianteActual.var_detalle_variante?.personalizacion_floral,
+                      modoVariante: modoColoresVar,
+                      habilitadaPorDefecto: personalizacionFloral.habilitada,
+                    });
+                    const editarColoresAbierto =
+                      !coloresHeredados || Boolean(seccionesHeredablesAbiertas.colores_flores);
+
+                    if (!editarColoresAbierto) {
+                      return (
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: "10px",
+                            background: "#FDF2F8",
+                            border: "1px dashed #F472B6",
+                            borderRadius: "10px",
+                            padding: "9px 11px",
+                            marginBottom: "12px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              minWidth: 0,
+                              flex: 1,
+                            }}
+                          >
+                            <Palette size={16} color="#BE185D" style={{ flexShrink: 0 }} />
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div
+                                style={{
+                                  fontSize: "0.76rem",
+                                  fontWeight: 800,
+                                  color: "#831843",
+                                }}
+                              >
+                                Colores, Flores y Base/Papel (este tamaño)
+                              </div>
+                              <div style={{ fontSize: "0.71rem", color: "#57524C" }}>
+                                <strong>Heredado de Master:</strong>{" "}
+                                {resumirConfiguracionPersonalizacionAdmin(personalizacionFloral)}
+                              </div>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const det = {
+                                ...(varianteActual.var_detalle_variante || {}),
+                                personalizacion_floral_modo: "personalizado",
+                                personalizacion_floral: { ...personalizacionFloral },
+                              };
+                              actualizarVarianteActual("var_detalle_variante", det);
+                              alternarSeccionHeredable("colores_flores", true);
+                            }}
+                            title="Definir número de colores, girasoles u orquídeas específico para esta variante"
+                            aria-label="Personalizar colores para esta variante"
+                            style={{
+                              padding: "6px 11px",
+                              borderRadius: "7px",
+                              border: "1px solid #BE185D",
+                              background: "#FFFFFF",
+                              color: "#BE185D",
+                              fontSize: "0.73rem",
+                              fontWeight: 700,
+                              cursor: "pointer",
+                              whiteSpace: "nowrap",
+                              flexShrink: 0,
+                            }}
+                          >
+                            Personalizar
+                          </button>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div
+                        style={{
+                          marginBottom: "12px",
+                          padding: "10px 12px",
+                          borderRadius: "12px",
+                          background: "#FFFDFB",
+                          border: coloresHeredados
+                            ? "1px dashed #D5CFC4"
+                            : "1.5px solid #BE185D",
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            gap: "8px",
+                            flexWrap: "wrap",
+                            marginBottom: "6px",
+                          }}
+                        >
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                            <Palette size={15} color="#BE185D" />
+                            <strong style={{ fontSize: "0.78rem", color: "#1F1C19" }}>
+                              Colores y Flores · {varianteActual.var_nombre || "Variante"}
+                            </strong>
+                            <span
+                              style={{
+                                fontSize: "0.66rem",
+                                fontWeight: 700,
+                                padding: "2px 7px",
+                                borderRadius: "999px",
+                                background: coloresHeredados ? "#EFECE6" : "#FDF2F8",
+                                color: coloresHeredados ? "#57524C" : "#9D174D",
+                                border: coloresHeredados
+                                  ? "1px solid #D5CFC4"
+                                  : "1px solid #FBCFE8",
+                              }}
+                            >
+                              {coloresHeredados ? "Hereda de Master" : "Propio de esta variante"}
+                            </span>
+                          </div>
+
+                          <div style={{ display: "inline-flex", gap: "6px" }}>
+                            {!coloresHeredados && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const det = {
+                                    ...(varianteActual.var_detalle_variante || {}),
+                                    personalizacion_floral_modo: "heredar",
+                                    personalizacion_floral: null,
+                                  };
+                                  actualizarVarianteActual("var_detalle_variante", det);
+                                  alternarSeccionHeredable("colores_flores", false);
+                                }}
+                                title="Volver a heredar la configuración global del Master"
+                                style={{
+                                  padding: "4px 9px",
+                                  borderRadius: "6px",
+                                  border: "1px solid #D5CFC4",
+                                  background: "#FFFFFF",
+                                  color: "#57524C",
+                                  fontSize: "0.7rem",
+                                  fontWeight: 700,
+                                  cursor: "pointer",
+                                }}
+                              >
+                                Heredar de Master
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        <EditorPersonalizacionFloralProducto
+                          valor={configEfectivaVar}
+                          onChange={(nuevaCfg) => {
+                            const det = {
+                              ...(varianteActual.var_detalle_variante || {}),
+                              personalizacion_floral_modo: "personalizado",
+                              personalizacion_floral: nuevaCfg,
+                            };
+                            actualizarVarianteActual("var_detalle_variante", det);
+                          }}
+                        />
+                      </div>
+                    );
+                  })()}
 
                   {/* 1. SECCIÓN UNIFICADA: GALERÍA DE FOTOS (1 A N) PARA ESTA VARIANTE (COLAPSABLE SI HEREDA) */}
                   {(() => {

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import {
   describirConfiguracionPersonalizacionCliente,
   describirEscalaVolumen,
-  normalizarConfiguracionPersonalizacionFloral,
+  resolverPersonalizacionFloralEfectiva,
 } from '@eco/comercio';
 import { ProductoEcommerce, VarianteEcommerce } from '../tipos';
 import { useCarrito } from '../contexto-carrito';
@@ -131,13 +131,13 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
         (producto.tipoOferta || '').toUpperCase() === 'SERVICIO')
   );
 
-  const configPersonalizacion = normalizarConfiguracionPersonalizacionFloral(
-    producto.personalizacionFloral,
-    {
-      habilitadaPorDefecto:
-        !esProductoRenta && !esProductoEvento && !producto.esExtra && !producto.esComplemento,
-    }
-  );
+  const configPersonalizacion = resolverPersonalizacionFloralEfectiva({
+    configMaster: producto.personalizacionFloral,
+    configVariante: varianteSeleccionada.personalizacionFloral,
+    modoVariante: varianteSeleccionada.personalizacionFloralModo,
+    habilitadaPorDefecto:
+      !esProductoRenta && !esProductoEvento && !producto.esExtra && !producto.esComplemento,
+  });
   const requierePersonalizacionFloral = Boolean(
     configPersonalizacion.habilitada &&
       !esProductoRenta &&
