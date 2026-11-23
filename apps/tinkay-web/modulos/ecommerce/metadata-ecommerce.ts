@@ -95,6 +95,49 @@ export async function generarMetadataEcommerceTinkay(opciones: {
       const clasifPrincipal = obtenerClasificacionPrincipalPorId(catId);
       const catObj = categorias.find((c) => c.id === catId || c.slug === catId);
 
+      if (
+        catId === 'grupo-ofertas' ||
+        catId === 'grupo-entrega-inmediata' ||
+        catId === 'grupo-favoritos'
+      ) {
+        const metaEspecial = {
+          'grupo-ofertas': {
+            titulo: 'Ofertas y Descuentos Activos | Tinkay Flores y Eventos',
+            desc: 'Arreglos florales y detalles seleccionados con descuento especial vigente en Quito y Valles.',
+          },
+          'grupo-entrega-inmediata': {
+            titulo: 'Entrega Inmediata | Tinkay Flores y Eventos',
+            desc: 'Arreglos florales listos para entrega rápida el mismo día en Quito y Valles.',
+          },
+          'grupo-favoritos': {
+            titulo: 'Mis Favoritos | Tinkay Flores y Eventos',
+            desc: 'Revisa los arreglos florales que marcaste con Me gusta en Tinkay Floristería.',
+          },
+        } as const;
+        const elegido = metaEspecial[catId];
+        const primerProdCat = productos.find((p) =>
+          productoCoincideConCategoria(p, catId, categorias)
+        );
+        const fotoCat = normalizarUrlImagenAbsoluta(primerProdCat?.fotos?.[0]);
+
+        return {
+          title: elegido.titulo,
+          description: elegido.desc,
+          openGraph: {
+            title: elegido.titulo,
+            description: elegido.desc,
+            type: 'website',
+            images: [fotoCat],
+          },
+          twitter: {
+            card: 'summary_large_image',
+            title: elegido.titulo,
+            description: elegido.desc,
+            images: [fotoCat],
+          },
+        };
+      }
+
       if (clasifPrincipal) {
         const primerProdCat = productos.find((p) =>
           productoCoincideConCategoria(p, clasifPrincipal.id, categorias)

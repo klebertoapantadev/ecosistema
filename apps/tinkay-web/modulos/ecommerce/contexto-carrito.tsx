@@ -55,6 +55,10 @@ interface ContextoCarritoValor {
   configTiendaCheckout: ConfiguracionTiendaCheckout;
   usuarioRegistrado: boolean;
   estadoRegalo: EstadoRegaloPrimeraCompra | null;
+  favoritosIds: string[];
+  totalFavoritos: number;
+  esFavorito: (productoId: string) => boolean;
+  toggleFavorito: (productoId: string) => void;
 
   // Acciones
   setDrawerAbierto: (abierto: boolean) => void;
@@ -139,6 +143,7 @@ const ContextoCarrito = createContext<ContextoCarritoValor | undefined>(undefine
 
 const CLAVE_LOCALSTORAGE = 'tinkay_carrito_v1';
 const CLAVE_PROFORMA_LOCALSTORAGE = 'tinkay_proforma_evento_v1';
+const CLAVE_FAVORITOS_LOCALSTORAGE = 'tinkay_favoritos_v1';
 
 const FECHA_EVENTO_POR_DEFECTO = () => {
   const futura = new Date();
@@ -226,6 +231,8 @@ export function ProveedorCarrito({
   );
   const [categoriaActiva, setCategoriaActivaInterna] = useState<string>('cat-todos');
   const [terminoBusqueda, setTerminoBusqueda] = useState<string>('');
+  const [favoritosIds, setFavoritosIds] = useState<string[]>([]);
+  const [favoritosCargados, setFavoritosCargados] = useState<boolean>(false);
   const [configLogistica, setConfigLogistica] = useState<ConfiguracionLogisticaNegocio>(() =>
     crearConfiguracionLogisticaPorDefecto('tinkay')
   );
@@ -1043,6 +1050,62 @@ export function ProveedorCarrito({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkoutAbierto]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const guardado = window.localStorage.getItem(CLAVE_FAVORITOS_LOCALSTORAGE);
+      if (guardado) {
+        const parsed = JSON.parse(guardado);
+        if (Array.isArray(parsed)) {
+          setFavoritosIds(
+            Array.from(
+              new Set(
+                parsed
+                  .map((v) => String(v ?? '').trim())
+                  .filter((v) => v.length > 0)
+              )
+            )
+          );
+        }
+      }
+    } catch {
+      // Ignorar errores de almacenamiento local
+    } finally {
+      setFavoritosCargados(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!favoritosCargados || typeof window === 'undefined') return;
+    try {
+      window.localStorage.setItem(CLAVE_FAVORITOS_LOCALSTORAGE, JSON.stringify(favoritosIds));
+    } catch {
+      // Ignorar errores de cuota de almacenamiento local
+    }
+  }, [favoritosIds, favoritosCargados]);
+
+  const esFavorito = React.useCallback(
+    (productoId: string) => favoritosIds.includes(productoId),
+    [favoritosIds]
+  );
+
+  const toggleFavorito = React.useCallback((productoId: string) => {
+    const idLimpio = (productoId || '').trim();
+    if (!idLimpio) return;
+    setFavoritosIds((prev) =>
+      prev.includes(idLimpio) ? prev.filter((id) => id !== idLimpio) : [...prev, idLimpio]
+    );
+  }, []);
+
+  const totalFavoritos = useMemo(() => {
+    if (favoritosIds.length === 0) return 0;
+    const desplegados = expandirProductosVitrina(
+      productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY
+    );
+    const idsCatalogo = new Set(desplegados.map((p) => p.id));
+    return favoritosIds.filter((id) => idsCatalogo.has(id)).length;
+  }, [favoritosIds, productos]);
+
   return (
     <ContextoCarrito.Provider
       value={{
@@ -1062,6 +1125,10 @@ export function ProveedorCarrito({
         configTiendaCheckout,
         usuarioRegistrado,
         estadoRegalo,
+        favoritosIds,
+        totalFavoritos,
+        esFavorito,
+        toggleFavorito,
         setDrawerAbierto,
         setProductoSeleccionadoModal,
         setCheckoutAbierto,

@@ -126,6 +126,45 @@
   opacity: 1;
 }
 
+.nav-enlaces-floristeria .enlace-filtro-especial-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.nav-enlaces-floristeria .enlace-ofertas-nav {
+  color: #BE123C;
+}
+.nav-enlaces-floristeria .enlace-ofertas-nav:hover,
+.nav-enlaces-floristeria .enlace-ofertas-nav.enlace-categoria-activo {
+  color: #9F1239;
+  border-bottom-color: #E11D48;
+}
+.nav-enlaces-floristeria .enlace-favoritos-nav {
+  color: var(--gris);
+}
+.nav-enlaces-floristeria .enlace-favoritos-nav.con-likes,
+.nav-enlaces-floristeria .enlace-favoritos-nav:hover,
+.nav-enlaces-floristeria .enlace-favoritos-nav.enlace-categoria-activo {
+  color: #BE123C;
+}
+.badge-nav-contador {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(190, 18, 60, 0.12);
+  color: #9F1239;
+  font-size: 0.7rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
 .acciones-usuario-cabecera {
   display: flex;
   align-items: center;
@@ -1143,6 +1182,85 @@
   background: var(--verde);
   border-color: var(--verde);
   box-shadow: 0 4px 12px rgba(61, 90, 69, 0.3);
+}
+
+.pill-categoria.pill-ofertas {
+  background: #FFF1F2;
+  border-color: #FECDD3;
+  color: #BE123C;
+}
+.pill-categoria.pill-ofertas:hover {
+  background: #FFE4E6;
+  border-color: #FDA4AF;
+}
+.pill-categoria.pill-ofertas.pill-activa {
+  background: #E11D48;
+  border-color: #BE123C;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(225, 29, 72, 0.32);
+}
+
+.pill-categoria.pill-inmediata {
+  background: #FFFBEB;
+  border-color: #FDE68A;
+  color: #92400E;
+}
+.pill-categoria.pill-inmediata:hover {
+  background: #FEF3C7;
+  border-color: #FCD34D;
+}
+.pill-categoria.pill-inmediata.pill-activa {
+  background: #D97706;
+  border-color: #B45309;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+}
+
+.pill-categoria.pill-favoritos {
+  border-color: #FBCFE8;
+  color: #9D174D;
+}
+.pill-categoria.pill-favoritos.con-likes {
+  background: #FDF2F8;
+  border-color: #F9A8D4;
+  color: #BE123C;
+}
+.pill-categoria.pill-favoritos.pill-activa {
+  background: #BE123C;
+  border-color: #9F1239;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(190, 18, 60, 0.32);
+}
+
+.badge-pill-contador {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(190, 18, 60, 0.14);
+  color: #9F1239;
+  font-size: 0.72rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.pill-categoria.pill-activa .badge-pill-contador {
+  background: rgba(255, 255, 255, 0.28);
+  color: #FFFFFF;
+}
+
+@keyframes giroCheckoutTinkay {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.icono-girar-checkout {
+  animation: giroCheckoutTinkay 0.85s linear infinite;
 }
 
 .grid-productos-vitrina {
@@ -2826,50 +2944,72 @@
    ============================================================================== */
 .btn-flotante-chat-tinkay {
   position: fixed;
-  bottom: 24px;
-  right: 24px;
+  bottom: 20px;
+  right: 18px;
   z-index: 80;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: var(--tinta);
-  color: var(--blanco);
-  border: 2px solid var(--dorado);
-  border-radius: 999px;
-  padding: 10px 20px 10px 12px;
-  cursor: pointer;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  animation: floatBounce 4s ease-in-out infinite;
-}
-.btn-flotante-chat-tinkay:hover {
-  transform: scale(1.05);
-}
-
-.chispa-badge-chat {
-  position: absolute;
-  top: -6px;
-  right: -4px;
-  background: var(--dorado);
-  color: var(--tinta);
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
+  width: 54px;
+  height: 54px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: var(--tinta);
+  color: var(--blanco);
+  border: 2px solid var(--dorado);
+  border-radius: 50% 50% 8px 50%;
+  padding: 0;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+  animation: floatBounce 4s ease-in-out infinite;
+}
+.btn-flotante-chat-tinkay:hover {
+  transform: scale(1.06);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.32);
+}
+.btn-flotante-chat-tinkay.arrastrando {
+  cursor: grabbing;
+  animation: none;
+  transform: scale(1.08);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.35);
+}
+
+.btn-ocultar-flotante-chat {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  border: 1.5px solid #FFFFFF;
+  background: #3F3A35;
+  color: #FFFFFF;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.28);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+.btn-ocultar-flotante-chat:hover {
+  background: #18181B;
+  transform: scale(1.1);
 }
 
 .icono-avatar-chat {
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
   background: #FFF;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.3rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  font-size: 1.15rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
+  pointer-events: none;
 }
 
 .texto-boton-flotante {
@@ -3885,7 +4025,7 @@
 }
 
 .btn-menu-movil-ecommerce {
-  display: none;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 38px;
@@ -3938,6 +4078,44 @@
 .chip-cat-cabecera-movil.condolencias.activa {
   background: var(--verde);
   border-color: var(--verde);
+}
+.chip-cat-cabecera-movil.ofertas {
+  background: #FFF1F2;
+  border-color: #FECDD3;
+  color: #BE123C;
+}
+.chip-cat-cabecera-movil.ofertas.activa {
+  background: #E11D48;
+  border-color: #BE123C;
+  color: #FFFFFF;
+}
+.chip-cat-cabecera-movil.favoritos.con-likes {
+  background: #FDF2F8;
+  border-color: #F9A8D4;
+  color: #BE123C;
+}
+.chip-cat-cabecera-movil.favoritos.activa {
+  background: #BE123C;
+  border-color: #9F1239;
+  color: #FFFFFF;
+}
+.badge-chip-movil {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(190, 18, 60, 0.14);
+  color: #9F1239;
+  font-size: 0.68rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.chip-cat-cabecera-movil.activa .badge-chip-movil {
+  background: rgba(255, 255, 255, 0.28);
+  color: #FFFFFF;
 }
 
 .backdrop-menu-movil-ecommerce {
@@ -4331,13 +4509,13 @@
   .btn-flotante-chat-tinkay {
     bottom: max(16px, env(safe-area-inset-bottom));
     right: 14px;
-    padding: 8px 14px 8px 10px;
+    width: 50px;
+    height: 50px;
   }
-  .estado-en-linea {
-    display: none;
-  }
-  .nombre-agente {
-    font-size: 0.82rem;
+  .icono-avatar-chat {
+    width: 34px;
+    height: 34px;
+    font-size: 1.08rem;
   }
 
   /* Touch Safe Area */

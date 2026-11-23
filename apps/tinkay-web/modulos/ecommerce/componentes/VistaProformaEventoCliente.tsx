@@ -80,9 +80,7 @@ export function VistaProformaEventoCliente({
   }, [variaciones]);
 
   const [linkCopiado, setLinkCopiado] = useState(false);
-  const [metodoPago, setMetodoPago] = useState<'plux' | 'transferencia'>(
-    tarjetaHabilitada ? 'plux' : 'transferencia'
-  );
+  const [metodoPago, setMetodoPago] = useState<'plux' | 'transferencia'>('transferencia');
   const [modalidadCobro, setModalidadCobro] = useState<ModalidadCobroProforma>(() => {
     if (proformaActiva.estado === 'RESERVADA_70' && proformaActiva.saldoPendienteUsd > 0.01) {
       return 'SALDO_30';
@@ -1489,8 +1487,29 @@ export function VistaProformaEventoCliente({
               )}
             </div>
 
-            {/* Selector Método de Pago */}
+            {/* Selector Método de Pago (Transferencia por defecto) */}
             <div style={{ display: 'flex', gap: '10px', marginBottom: '16px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => setMetodoPago('transferencia')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 16px',
+                  borderRadius: '10px',
+                  border:
+                    metodoPago === 'transferencia' ? '2px solid #2D4734' : '1px solid #D6D3D1',
+                  background: metodoPago === 'transferencia' ? '#F0FDF4' : '#FFFFFF',
+                  fontWeight: 700,
+                  fontSize: '0.84rem',
+                  cursor: 'pointer',
+                }}
+              >
+                <Building2 size={17} />
+                <span>Transferencia Bancaria</span>
+              </button>
+
               {tarjetaDisponible && (
                 <button
                   type="button"
@@ -1512,27 +1531,6 @@ export function VistaProformaEventoCliente({
                   <span>Tarjeta Crédito / Débito (PLUX)</span>
                 </button>
               )}
-
-              <button
-                type="button"
-                onClick={() => setMetodoPago('transferencia')}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 16px',
-                  borderRadius: '10px',
-                  border:
-                    metodoPago === 'transferencia' ? '2px solid #2D4734' : '1px solid #D6D3D1',
-                  background: metodoPago === 'transferencia' ? '#F0FDF4' : '#FFFFFF',
-                  fontWeight: 700,
-                  fontSize: '0.84rem',
-                  cursor: 'pointer',
-                }}
-              >
-                <Building2 size={17} />
-                <span>Transferencia Bancaria</span>
-              </button>
             </div>
 
             {tarjetaDisponible && metodoPago === 'plux' ? (
@@ -1604,6 +1602,7 @@ export function VistaProformaEventoCliente({
                     tokenAprobacion={proformaActiva.tokenAprobacion}
                     modalidadCobro={modalidadCobro}
                     ambiente={ambientePlux}
+                    autoAbrirModal
                     pagador={{
                       nombre: datosPagador.nombre.trim(),
                       identificacion: datosPagador.identificacion.trim(),

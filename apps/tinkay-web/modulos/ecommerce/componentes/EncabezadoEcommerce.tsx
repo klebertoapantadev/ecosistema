@@ -16,10 +16,12 @@ import {
 import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from '../datos-catalogo';
 import {
   CLASIFICACIONES_PRINCIPALES_TINKAY,
+  esProductoEntregaInmediata,
   expandirProductosVitrina,
   obtenerCategoriasVisibles,
   obtenerClasificacionPrincipalDeCategoria,
   obtenerSubcategoriasDeClasificacion,
+  productoTieneOferta,
 } from '../filtrado-catalogo';
 import {
   ShoppingBag,
@@ -31,8 +33,10 @@ import {
   MapPin,
   Package,
   Gift,
-  ChevronDown,
   ShoppingCart,
+  Heart,
+  Flame,
+  Zap,
 } from 'lucide-react';
 
 export function EncabezadoEcommerce() {
@@ -49,11 +53,11 @@ export function EncabezadoEcommerce() {
     configTiendaCheckout,
     productoSeleccionadoModal,
     obtenerEnlaceProducto,
+    totalFavoritos,
   } = useCarrito();
 
   const [estadoRegalo, setEstadoRegalo] = useState<EstadoRegaloPrimeraCompra | null>(null);
   const [menuMovilAbierto, setMenuMovilAbierto] = useState<boolean>(false);
-  const [menuClienteAbierto, setMenuClienteAbierto] = useState<boolean>(false);
 
   useEffect(() => {
     if (!menuMovilAbierto) return;
@@ -116,7 +120,12 @@ export function EncabezadoEcommerce() {
     };
   }, []);
 
-  const { categoriasVisibles, subcategoriasFlorales } = useMemo(() => {
+  const {
+    categoriasVisibles,
+    subcategoriasFlorales,
+    totalOfertas,
+    totalEntregaInmediata,
+  } = useMemo(() => {
     const prodsBase = expandirProductosVitrina(
       productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY
     );
@@ -127,7 +136,14 @@ export function EncabezadoEcommerce() {
       visibles,
       prodsBase
     );
-    return { categoriasVisibles: visibles, subcategoriasFlorales: subFlorales };
+    const ofertas = prodsBase.filter((p) => productoTieneOferta(p)).length;
+    const inmediata = prodsBase.filter((p) => esProductoEntregaInmediata(p)).length;
+    return {
+      categoriasVisibles: visibles,
+      subcategoriasFlorales: subFlorales,
+      totalOfertas: ofertas,
+      totalEntregaInmediata: inmediata,
+    };
   }, [productos, categorias]);
 
   const clasificacionActiva = useMemo(
@@ -212,6 +228,62 @@ export function EncabezadoEcommerce() {
               </a>
             );
           })}
+          {totalOfertas > 0 && (
+            <a
+              href="/categoria/ofertas"
+              onClick={(e) => handleSeleccionMenu(e, 'grupo-ofertas')}
+              aria-current={clasificacionActiva === 'grupo-ofertas' ? 'true' : undefined}
+              title={`Ver ${totalOfertas} productos en oferta`}
+              className={[
+                'enlace-filtro-especial-nav enlace-ofertas-nav',
+                clasificacionActiva === 'grupo-ofertas' ? 'enlace-categoria-activo' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              <Flame size={14} />
+              <span>Ofertas</span>
+              <span className="badge-nav-contador">{totalOfertas}</span>
+            </a>
+          )}
+          {totalEntregaInmediata > 0 && (
+            <a
+              href="/categoria/entrega-inmediata"
+              onClick={(e) => handleSeleccionMenu(e, 'grupo-entrega-inmediata')}
+              aria-current={clasificacionActiva === 'grupo-entrega-inmediata' ? 'true' : undefined}
+              title="Arreglos listos para entrega inmediata (1–2h)"
+              className={[
+                'enlace-filtro-especial-nav',
+                clasificacionActiva === 'grupo-entrega-inmediata' ? 'enlace-categoria-activo' : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              <Zap size={14} />
+              <span>Entrega Inmediata</span>
+            </a>
+          )}
+          <a
+            href="/categoria/me-gusta"
+            onClick={(e) => handleSeleccionMenu(e, 'grupo-favoritos')}
+            aria-current={clasificacionActiva === 'grupo-favoritos' ? 'true' : undefined}
+            title={
+              totalFavoritos > 0
+                ? `Ver mis ${totalFavoritos} productos marcados con Me gusta`
+                : 'Productos que marques con Me gusta'
+            }
+            className={[
+              'enlace-filtro-especial-nav enlace-favoritos-nav',
+              totalFavoritos > 0 ? 'con-likes' : '',
+              clasificacionActiva === 'grupo-favoritos' ? 'enlace-categoria-activo' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            <Heart size={14} fill={totalFavoritos > 0 ? 'currentColor' : 'none'} />
+            <span>Me gusta</span>
+            <span className="badge-nav-contador">{totalFavoritos}</span>
+          </a>
           <a
             href="#catalogo"
             onClick={(e) => handleSeleccionMenu(e, 'cat-todos')}
@@ -229,243 +301,6 @@ export function EncabezadoEcommerce() {
         </nav>
 
         <div className="acciones-usuario-cabecera">
-          <button
-            type="button"
-            onClick={() =>
-              abrirWhatsappTiendaConPuenteOmnicanal({
-                whatsappTienda: configTiendaCheckout?.whatsappTienda,
-                productoNombre: productoSeleccionadoModal?.nombre || null,
-                productoSlug:
-                  productoSeleccionadoModal?.slug || productoSeleccionadoModal?.id || null,
-                varianteNombre: productoSeleccionadoModal?.variantes?.[0]?.nombre || null,
-                precioUsd: productoSeleccionadoModal?.variantes?.[0]?.pvp ?? null,
-                urlProducto: productoSeleccionadoModal
-                  ? obtenerEnlaceProducto(
-                      productoSeleccionadoModal,
-                      productoSeleccionadoModal.variantes?.[0]?.sku
-                    )
-                  : null,
-              })
-            }
-            className="enlace-ingresar-discreto btn-responsive-accion"
-            title="Contactar directo a nuestro WhatsApp"
-            aria-label="WhatsApp"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '7px 12px',
-              borderRadius: '999px',
-              border: '1px solid #86EFAC',
-              background: '#F0FDF4',
-              color: '#15803D',
-              fontWeight: 700,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-            }}
-          >
-            <IconoWhatsappVector size={17} color="#16A34A" />
-            <span className="btn-texto-responsive">WhatsApp</span>
-          </button>
-
-          {estadoRegalo?.autenticado ? (
-            <>
-              <CampanaNotificaciones negocio="tinkay" variante="clara" />
-              <div style={{ position: 'relative' }}>
-                <button
-                  type="button"
-                  onClick={() => setMenuClienteAbierto((v) => !v)}
-                  className="enlace-ingresar-discreto btn-responsive-accion"
-                  title="Ver mis pedidos, carrito, proformas, promociones y cuenta"
-                  aria-label="Mi Espacio"
-                  aria-expanded={menuClienteAbierto}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    border: '1px solid rgba(61, 90, 69, 0.28)',
-                    background: 'rgba(61, 90, 69, 0.08)',
-                    color: '#2D4734',
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  <User size={17} />
-                  <span className="btn-texto-responsive">Mi Espacio</span>
-                  <ChevronDown size={14} />
-                </button>
-
-                {menuClienteAbierto && (
-                  <>
-                    <div
-                      onClick={() => setMenuClienteAbierto(false)}
-                      style={{ position: 'fixed', inset: 0, zIndex: 70 }}
-                    />
-                    <div
-                      role="menu"
-                      aria-label="Opciones de cliente Tinkay"
-                      style={{
-                        position: 'absolute',
-                        right: 0,
-                        top: 'calc(100% + 8px)',
-                        zIndex: 80,
-                        width: '250px',
-                        background: '#FFFFFF',
-                        borderRadius: '16px',
-                        border: '1px solid var(--linea)',
-                        boxShadow: '0 16px 36px rgba(34, 29, 26, 0.14)',
-                        padding: '8px',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '3px',
-                      }}
-                    >
-                      <Link
-                        href="/panel"
-                        onClick={() => setMenuClienteAbierto(false)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '9px',
-                          padding: '9px 11px',
-                          borderRadius: '10px',
-                          textDecoration: 'none',
-                          background: 'rgba(61, 90, 69, 0.1)',
-                          color: '#2D4734',
-                          fontSize: '0.85rem',
-                          fontWeight: 700,
-                        }}
-                      >
-                        <User size={16} color="#2D4734" />
-                        <span>Abrir Mi Portal</span>
-                      </Link>
-                      <Link
-                        href="/panel?vista=pedidos"
-                        onClick={() => setMenuClienteAbierto(false)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '9px',
-                          padding: '9px 11px',
-                          borderRadius: '10px',
-                          textDecoration: 'none',
-                          color: 'var(--tinta)',
-                          fontSize: '0.85rem',
-                          fontWeight: 600,
-                        }}
-                      >
-                        <Package size={16} color="#3D5A45" />
-                        <span>Mis Pedidos y Facturas</span>
-                      </Link>
-                      <Link
-                        href="/panel?vista=carrito"
-                        onClick={() => setMenuClienteAbierto(false)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: '9px',
-                          padding: '9px 11px',
-                          borderRadius: '10px',
-                          textDecoration: 'none',
-                          color: 'var(--tinta)',
-                          fontSize: '0.85rem',
-                          fontWeight: 600,
-                        }}
-                      >
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '9px' }}>
-                          <ShoppingCart size={16} color="#3D5A45" />
-                          <span>Ver / Editar Carrito</span>
-                        </span>
-                        {cantidadTotal > 0 && (
-                          <span
-                            style={{
-                              padding: '1px 7px',
-                              borderRadius: '999px',
-                              background: '#EC7FA7',
-                              color: '#FFFFFF',
-                              fontSize: '0.72rem',
-                              fontWeight: 800,
-                            }}
-                          >
-                            {cantidadTotal}
-                          </span>
-                        )}
-                      </Link>
-                      <Link
-                        href="/panel?vista=proformas"
-                        onClick={() => setMenuClienteAbierto(false)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '9px',
-                          padding: '9px 11px',
-                          borderRadius: '10px',
-                          textDecoration: 'none',
-                          color: 'var(--tinta)',
-                          fontSize: '0.85rem',
-                          fontWeight: 600,
-                        }}
-                      >
-                        <FileText size={16} color="#3D5A45" />
-                        <span>Mis Proformas</span>
-                      </Link>
-                      <Link
-                        href="/panel?vista=promociones"
-                        onClick={() => setMenuClienteAbierto(false)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '9px',
-                          padding: '9px 11px',
-                          borderRadius: '10px',
-                          textDecoration: 'none',
-                          background: 'rgba(236, 127, 167, 0.12)',
-                          color: '#9D174D',
-                          fontSize: '0.85rem',
-                          fontWeight: 700,
-                        }}
-                      >
-                        <Gift size={16} color="#BE185D" />
-                        <span>Promociones Exclusivas</span>
-                      </Link>
-                      <div style={{ height: '1px', background: 'var(--linea)', margin: '4px 0' }} />
-                      <Link
-                        href="/panel/cuenta"
-                        onClick={() => setMenuClienteAbierto(false)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '9px',
-                          padding: '9px 11px',
-                          borderRadius: '10px',
-                          textDecoration: 'none',
-                          color: 'var(--tinta)',
-                          fontSize: '0.84rem',
-                          fontWeight: 600,
-                        }}
-                      >
-                        <User size={16} color="#6B7280" />
-                        <span>Mi Cuenta y Datos SRI</span>
-                      </Link>
-                    </div>
-                  </>
-                )}
-              </div>
-            </>
-          ) : (
-            <Link
-              href="/ingresar"
-              className="enlace-ingresar-discreto btn-responsive-accion"
-              title="Iniciar sesión en Tinkay"
-              aria-label="Ingresar"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-            >
-              <User size={17} />
-              <span className="btn-texto-responsive">Ingresar</span>
-            </Link>
-          )}
-
           {(cantidadTotalProforma > 0 ||
             clasificacionActiva === 'grupo-eventos' ||
             (categoriaActiva || '').toLowerCase().includes('evento')) && (
@@ -510,8 +345,8 @@ export function EncabezadoEcommerce() {
         </div>
       </div>
 
-      {/* Franja rápida de clasificación principal deslizable en móvil / tablet */}
-      <nav className="franja-categorias-movil" aria-label="Clasificación principal">
+      {/* Franja rápida de clasificación principal + Ofertas + Entrega Inmediata + Me gusta */}
+      <nav className="franja-categorias-movil" aria-label="Clasificación principal y filtros rápidos">
         {CLASIFICACIONES_PRINCIPALES_TINKAY.map((clasif) => {
           const estaActiva = clasificacionActiva === clasif.id;
           return (
@@ -534,6 +369,55 @@ export function EncabezadoEcommerce() {
             </a>
           );
         })}
+        {totalOfertas > 0 && (
+          <a
+            href="/categoria/ofertas"
+            onClick={(e) => handleSeleccionMenu(e, 'grupo-ofertas')}
+            aria-current={clasificacionActiva === 'grupo-ofertas' ? 'true' : undefined}
+            className={[
+              'chip-cat-cabecera-movil ofertas',
+              clasificacionActiva === 'grupo-ofertas' ? 'activa' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            <Flame size={13} />
+            <span>Ofertas</span>
+            <span className="badge-chip-movil">{totalOfertas}</span>
+          </a>
+        )}
+        {totalEntregaInmediata > 0 && (
+          <a
+            href="/categoria/entrega-inmediata"
+            onClick={(e) => handleSeleccionMenu(e, 'grupo-entrega-inmediata')}
+            aria-current={clasificacionActiva === 'grupo-entrega-inmediata' ? 'true' : undefined}
+            className={[
+              'chip-cat-cabecera-movil',
+              clasificacionActiva === 'grupo-entrega-inmediata' ? 'activa' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            <Zap size={13} />
+            <span>Entrega Inmediata</span>
+          </a>
+        )}
+        <a
+          href="/categoria/me-gusta"
+          onClick={(e) => handleSeleccionMenu(e, 'grupo-favoritos')}
+          aria-current={clasificacionActiva === 'grupo-favoritos' ? 'true' : undefined}
+          className={[
+            'chip-cat-cabecera-movil favoritos',
+            totalFavoritos > 0 ? 'con-likes' : '',
+            clasificacionActiva === 'grupo-favoritos' ? 'activa' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          <Heart size={13} fill={totalFavoritos > 0 ? 'currentColor' : 'none'} />
+          <span>Me gusta</span>
+          <span className="badge-chip-movil">{totalFavoritos}</span>
+        </a>
         <a
           href="#catalogo"
           onClick={(e) => handleSeleccionMenu(e, 'cat-todos')}
@@ -651,6 +535,99 @@ export function EncabezadoEcommerce() {
                 );
               })}
 
+              {totalOfertas > 0 && (
+                <a
+                  href="/categoria/ofertas"
+                  onClick={(e) => {
+                    handleSeleccionMenu(e, 'grupo-ofertas');
+                    setMenuMovilAbierto(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '8px',
+                    padding: '9px 12px',
+                    borderRadius: '10px',
+                    textDecoration: 'none',
+                    fontSize: '0.88rem',
+                    fontWeight: clasificacionActiva === 'grupo-ofertas' ? 700 : 600,
+                    background:
+                      clasificacionActiva === 'grupo-ofertas'
+                        ? 'rgba(225, 29, 72, 0.14)'
+                        : 'transparent',
+                    color: '#BE123C',
+                  }}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                    <Flame size={15} />
+                    <span>Ofertas</span>
+                  </span>
+                  <span className="badge-nav-contador">{totalOfertas}</span>
+                </a>
+              )}
+
+              {totalEntregaInmediata > 0 && (
+                <a
+                  href="/categoria/entrega-inmediata"
+                  onClick={(e) => {
+                    handleSeleccionMenu(e, 'grupo-entrega-inmediata');
+                    setMenuMovilAbierto(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '8px',
+                    padding: '9px 12px',
+                    borderRadius: '10px',
+                    textDecoration: 'none',
+                    fontSize: '0.88rem',
+                    fontWeight: clasificacionActiva === 'grupo-entrega-inmediata' ? 700 : 600,
+                    background:
+                      clasificacionActiva === 'grupo-entrega-inmediata'
+                        ? 'rgba(217, 119, 6, 0.14)'
+                        : 'transparent',
+                    color: '#92400E',
+                  }}
+                >
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                    <Zap size={15} />
+                    <span>Entrega Inmediata</span>
+                  </span>
+                </a>
+              )}
+
+              <a
+                href="/categoria/me-gusta"
+                onClick={(e) => {
+                  handleSeleccionMenu(e, 'grupo-favoritos');
+                  setMenuMovilAbierto(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '8px',
+                  padding: '9px 12px',
+                  borderRadius: '10px',
+                  textDecoration: 'none',
+                  fontSize: '0.88rem',
+                  fontWeight: clasificacionActiva === 'grupo-favoritos' ? 700 : 600,
+                  background:
+                    clasificacionActiva === 'grupo-favoritos'
+                      ? 'rgba(190, 18, 60, 0.14)'
+                      : 'transparent',
+                  color: totalFavoritos > 0 ? '#BE123C' : 'var(--tinta)',
+                }}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                  <Heart size={15} fill={totalFavoritos > 0 ? 'currentColor' : 'none'} />
+                  <span>Me gusta</span>
+                </span>
+                <span className="badge-nav-contador">{totalFavoritos}</span>
+              </a>
+
               <a
                 href="#catalogo"
                 onClick={(e) => {
@@ -733,6 +710,67 @@ export function EncabezadoEcommerce() {
                 type="button"
                 onClick={() => {
                   setMenuMovilAbierto(false);
+                  abrirWhatsappTiendaConPuenteOmnicanal({
+                    whatsappTienda: configTiendaCheckout?.whatsappTienda,
+                    productoNombre: productoSeleccionadoModal?.nombre || null,
+                    productoSlug:
+                      productoSeleccionadoModal?.slug || productoSeleccionadoModal?.id || null,
+                    varianteNombre: productoSeleccionadoModal?.variantes?.[0]?.nombre || null,
+                    precioUsd: productoSeleccionadoModal?.variantes?.[0]?.pvp ?? null,
+                    urlProducto: productoSeleccionadoModal
+                      ? obtenerEnlaceProducto(
+                          productoSeleccionadoModal,
+                          productoSeleccionadoModal.variantes?.[0]?.sku
+                        )
+                      : null,
+                  });
+                }}
+                title="Contactar directo a nuestro WhatsApp"
+                aria-label="WhatsApp"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '11px 14px',
+                  borderRadius: '12px',
+                  border: '1px solid #86EFAC',
+                  background: '#F0FDF4',
+                  color: '#15803D',
+                  fontSize: '0.86rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                <IconoWhatsappVector size={17} color="#16A34A" />
+                <span>WhatsApp Directo</span>
+              </button>
+
+              {estadoRegalo?.autenticado && (
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '10px',
+                    padding: '8px 12px',
+                    borderRadius: '12px',
+                    border: '1px solid var(--linea)',
+                    background: '#FFFFFF',
+                  }}
+                >
+                  <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--tinta)' }}>
+                    Alertas y Notificaciones
+                  </span>
+                  <CampanaNotificaciones negocio="tinkay" variante="clara" />
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuMovilAbierto(false);
                   setDrawerProformaAbierto(true);
                 }}
                 title="Cotizar arreglos para bodas y eventos"
@@ -769,6 +807,25 @@ export function EncabezadoEcommerce() {
                   >
                     Mi Espacio Cliente
                   </span>
+                  <Link
+                    href="/panel"
+                    onClick={() => setMenuMovilAbierto(false)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      textDecoration: 'none',
+                      fontSize: '0.86rem',
+                      fontWeight: 700,
+                      background: 'rgba(61, 90, 69, 0.12)',
+                      color: '#2D4734',
+                    }}
+                  >
+                    <User size={16} />
+                    <span>Abrir Mi Portal</span>
+                  </Link>
                   <Link
                     href="/panel?vista=pedidos"
                     onClick={() => setMenuMovilAbierto(false)}

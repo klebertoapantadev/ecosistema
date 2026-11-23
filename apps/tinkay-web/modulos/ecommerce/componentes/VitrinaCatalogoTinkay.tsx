@@ -7,6 +7,7 @@ import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from '../datos-catalogo';
 import {
   CLASIFICACIONES_PRINCIPALES_TINKAY,
   esIdentificadorClasificacionVirtual,
+  esProductoEntregaInmediata,
   expandirProductosVitrina,
   obtenerCategoriasVisibles,
   obtenerClasificacionPrincipalDeCategoria,
@@ -33,6 +34,9 @@ import {
   Tag,
   Hash,
   X,
+  Flame,
+  Zap,
+  Heart,
 } from 'lucide-react';
 
 export { obtenerNombreProductoIndividual, obtenerPvpProducto, productoTieneOferta };
@@ -46,6 +50,8 @@ export function VitrinaCatalogoTinkay() {
     terminoBusqueda,
     setTerminoBusqueda,
     obtenerEnlaceCategoriaActual,
+    favoritosIds,
+    totalFavoritos,
   } = useCarrito();
 
   const [linkCatCopiado, setLinkCatCopiado] = useState(false);
@@ -68,7 +74,6 @@ export function VitrinaCatalogoTinkay() {
   const [criterioOrden, setCriterioOrden] = useState<
     'recomendados' | 'precio-desc' | 'precio-asc' | 'destacados' | 'nombre-asc'
   >('recomendados');
-  const [soloOfertas, setSoloOfertas] = useState<boolean>(false);
   const [etiquetasActivas, setEtiquetasActivas] = useState<string[]>([]);
 
   // 1. Expandir todas las variaciones como productos individuales (excepto categoría Extras)
@@ -110,10 +115,23 @@ export function VitrinaCatalogoTinkay() {
     }
   }, [categoriasVisibles, categoriaActiva, setCategoriaActiva]);
 
-  // Conteo reactivo de cuántos productos tienen oferta activa
+  // Conteo reactivo de productos en oferta y entrega inmediata
   const totalOfertasDisponibles = useMemo(() => {
     return productosBaseDesplegados.filter((p) => productoTieneOferta(p)).length;
   }, [productosBaseDesplegados]);
+
+  const totalEntregaInmediata = useMemo(() => {
+    return productosBaseDesplegados.filter((p) => esProductoEntregaInmediata(p)).length;
+  }, [productosBaseDesplegados]);
+
+  const coincideConCategoriaActiva = (
+    p: (typeof productosBaseDesplegados)[number],
+    catId: string
+  ) => {
+    if (catId === 'cat-todos') return true;
+    if (catId === 'grupo-favoritos') return favoritosIds.includes(p.id);
+    return productoCoincideConCategoria(p, catId, catalogoCategorias);
+  };
 
   const handleCambioBusqueda = (nuevoValor: string) => {
     setTerminoBusqueda(nuevoValor);
@@ -122,8 +140,7 @@ export function VitrinaCatalogoTinkay() {
 
     const hayEnAmbitoActual = productosBaseDesplegados.some(
       (p) =>
-        (categoriaActiva === 'cat-todos' ||
-          productoCoincideConCategoria(p, categoriaActiva, catalogoCategorias)) &&
+        coincideConCategoriaActiva(p, categoriaActiva) &&
         productoCoincideConEtiquetas(p, etiquetasActivas) &&
         productoCoincideConBusqueda(p, limpio, catalogoCategorias)
     );
@@ -132,8 +149,7 @@ export function VitrinaCatalogoTinkay() {
     if (etiquetasActivas.length > 0) {
       const haySinEtiquetas = productosBaseDesplegados.some(
         (p) =>
-          (categoriaActiva === 'cat-todos' ||
-            productoCoincideConCategoria(p, categoriaActiva, catalogoCategorias)) &&
+          coincideConCategoriaActiva(p, categoriaActiva) &&
           productoCoincideConBusqueda(p, limpio, catalogoCategorias)
       );
       if (haySinEtiquetas) {
@@ -160,7 +176,7 @@ export function VitrinaCatalogoTinkay() {
     if (catId !== 'cat-todos' && terminoBusqueda.trim()) {
       const hayConBusqueda = productosBaseDesplegados.some(
         (p) =>
-          productoCoincideConCategoria(p, catId, catalogoCategorias) &&
+          coincideConCategoriaActiva(p, catId) &&
           productoCoincideConBusqueda(p, terminoBusqueda, catalogoCategorias)
       );
       if (!hayConBusqueda) {
@@ -170,7 +186,7 @@ export function VitrinaCatalogoTinkay() {
     if (etiquetasActivas.length > 0) {
       const hayConEtiquetas = productosBaseDesplegados.some(
         (p) =>
-          (catId === 'cat-todos' || productoCoincideConCategoria(p, catId, catalogoCategorias)) &&
+          coincideConCategoriaActiva(p, catId) &&
           productoCoincideConEtiquetas(p, etiquetasActivas)
       );
       if (!hayConEtiquetas) {
@@ -190,11 +206,9 @@ export function VitrinaCatalogoTinkay() {
   // Productos base del ámbito actual (antes del filtro por chips de etiquetas) para listar etiquetas útiles
   const productosAmbitoActual = useMemo(() => {
     return productosBaseDesplegados.filter((p) => {
-      if (soloOfertas && !productoTieneOferta(p)) {
-        return false;
-      }
-
-      if (categoriaActiva !== 'cat-todos') {
+      if (categoriaActiva === 'grupo-favoritos') {
+        if (!favoritosIds.includes(p.id)) return false;
+      } else if (categoriaActiva !== 'cat-todos') {
         if (!productoCoincideConCategoria(p, categoriaActiva, catalogoCategorias)) {
           return false;
         }
@@ -220,7 +234,7 @@ export function VitrinaCatalogoTinkay() {
     categoriaActiva,
     terminoBusqueda,
     filtroPresupuesto,
-    soloOfertas,
+    favoritosIds,
     productosBaseDesplegados,
     catalogoCategorias,
   ]);
@@ -291,31 +305,54 @@ export function VitrinaCatalogoTinkay() {
       productosFinales.length > 0 &&
       productosFinales.every((p) => p.esCondolencias));
 
-  const tituloVitrinaActual = esModoCondolencias
-    ? 'Arreglos de Condolencias & Respeto'
-    : clasifPrincipalObj
-    ? clasifPrincipalObj.tituloVitrina
-    : subcategoriaActivaObj
-    ? subcategoriaActivaObj.nombre
-    : categoriaActivaObj && categoriaActiva !== 'cat-todos'
-    ? categoriaActivaObj.nombre
-    : 'Flores con Historia, Para Cada Momento';
+  const tituloVitrinaActual =
+    categoriaActiva === 'grupo-ofertas'
+      ? 'Ofertas y Descuentos Activos'
+      : categoriaActiva === 'grupo-entrega-inmediata'
+      ? 'Arreglos con Entrega Inmediata'
+      : categoriaActiva === 'grupo-favoritos'
+      ? 'Mis Productos Favoritos'
+      : esModoCondolencias
+      ? 'Arreglos de Condolencias & Respeto'
+      : clasifPrincipalObj
+      ? clasifPrincipalObj.tituloVitrina
+      : subcategoriaActivaObj
+      ? subcategoriaActivaObj.nombre
+      : categoriaActivaObj && categoriaActiva !== 'cat-todos'
+      ? categoriaActivaObj.nombre
+      : 'Flores con Historia, Para Cada Momento';
 
-  const subtituloVitrinaActual = esModoCondolencias
-    ? 'Composiciones solemnes en blanco y follajes andinos para acompañar en los momentos más difíciles con entrega puntual en velaciones e iglesias.'
-    : clasifPrincipalObj
-    ? clasifPrincipalObj.descripcionVitrina
-    : categoriaActivaObj && categoriaActiva !== 'cat-todos' && categoriaActivaObj.descripcion
-    ? categoriaActivaObj.descripcion
-    : 'Explora nuestros arreglos florales para toda ocasión, eventos y condolencias preparados con rosas frescas de exportación.';
+  const subtituloVitrinaActual =
+    categoriaActiva === 'grupo-ofertas'
+      ? 'Aprovecha nuestros arreglos seleccionados con descuento especial vigente.'
+      : categoriaActiva === 'grupo-entrega-inmediata'
+      ? 'Diseños florales frescos listos para despachar el mismo día en 1 a 2 horas en Quito y Valles.'
+      : categoriaActiva === 'grupo-favoritos'
+      ? totalFavoritos > 0
+        ? `Tienes ${totalFavoritos} ${totalFavoritos === 1 ? 'arreglo guardado' : 'arreglos guardados'} con Me gusta para revisar o pedir cuando desees.`
+        : 'Pulsa el ícono de corazón en cualquier arreglo para guardarlo en tu lista personal.'
+      : esModoCondolencias
+      ? 'Composiciones solemnes en blanco y follajes andinos para acompañar en los momentos más difíciles con entrega puntual en velaciones e iglesias.'
+      : clasifPrincipalObj
+      ? clasifPrincipalObj.descripcionVitrina
+      : categoriaActivaObj && categoriaActiva !== 'cat-todos' && categoriaActivaObj.descripcion
+      ? categoriaActivaObj.descripcion
+      : 'Explora nuestros arreglos florales para toda ocasión, eventos y condolencias preparados con rosas frescas de exportación.';
 
-  const nombreEnlaceActual = clasifPrincipalObj
-    ? clasifPrincipalObj.nombre
-    : subcategoriaActivaObj
-    ? subcategoriaActivaObj.nombre
-    : categoriaActivaObj && categoriaActiva !== 'cat-todos'
-    ? categoriaActivaObj.nombre
-    : '';
+  const nombreEnlaceActual =
+    categoriaActiva === 'grupo-ofertas'
+      ? 'Ofertas'
+      : categoriaActiva === 'grupo-entrega-inmediata'
+      ? 'Entrega Inmediata'
+      : categoriaActiva === 'grupo-favoritos'
+      ? 'Me gusta'
+      : clasifPrincipalObj
+      ? clasifPrincipalObj.nombre
+      : subcategoriaActivaObj
+      ? subcategoriaActivaObj.nombre
+      : categoriaActivaObj && categoriaActiva !== 'cat-todos'
+      ? categoriaActivaObj.nombre
+      : '';
 
   return (
     <section
@@ -413,28 +450,10 @@ export function VitrinaCatalogoTinkay() {
                 </SelectConBuscador>
               </div>
             </div>
-
-            {/* Botón Filtro Rápido de Ofertas con % de descuento */}
-            <button
-              type="button"
-              className={`btn-filtro-ofertas ${soloOfertas ? 'activo' : ''}`}
-              onClick={() => setSoloOfertas(!soloOfertas)}
-              title={
-                soloOfertas
-                  ? 'Mostrar todo el catálogo'
-                  : 'Filtrar únicamente productos con oferta o descuento'
-              }
-              aria-pressed={soloOfertas}
-            >
-              <span>🔥 Solo Ofertas</span>
-              {totalOfertasDisponibles > 0 && (
-                <span className="badge-contador-ofertas">{totalOfertasDisponibles}</span>
-              )}
-            </button>
           </div>
         </div>
 
-        {/* Nivel 1: Primera Clasificación de Consulta (Arreglos Florales, Eventos, Condolencias) + Copiar link */}
+        {/* Nivel 1: Primera Clasificación + Ofertas + Entrega Inmediata + Me gusta + Copiar link */}
         <div
           className="fila-categorias-y-enlace"
           style={{
@@ -450,7 +469,7 @@ export function VitrinaCatalogoTinkay() {
             className="pills-categorias-scroll pills-clasificacion-principal"
             style={{ flex: 1, minWidth: 0 }}
             role="tablist"
-            aria-label="Primera clasificación de consulta"
+            aria-label="Primera clasificación de consulta y filtros rápidos"
           >
             {CLASIFICACIONES_PRINCIPALES_TINKAY.map((clasif) => {
               const estaActiva = clasificacionActiva === clasif.id;
@@ -474,6 +493,55 @@ export function VitrinaCatalogoTinkay() {
                 </button>
               );
             })}
+            {totalOfertasDisponibles > 0 && (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={clasificacionActiva === 'grupo-ofertas'}
+                title={`Filtrar ${totalOfertasDisponibles} productos en oferta`}
+                className={`pill-categoria pill-ofertas ${
+                  clasificacionActiva === 'grupo-ofertas' ? 'pill-activa' : ''
+                }`}
+                onClick={() => handleSeleccionarCategoria('grupo-ofertas')}
+              >
+                <Flame size={14} />
+                <span>Ofertas</span>
+                <span className="badge-pill-contador">{totalOfertasDisponibles}</span>
+              </button>
+            )}
+            {totalEntregaInmediata > 0 && (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={clasificacionActiva === 'grupo-entrega-inmediata'}
+                title="Filtrar arreglos con entrega inmediata"
+                className={`pill-categoria pill-inmediata ${
+                  clasificacionActiva === 'grupo-entrega-inmediata' ? 'pill-activa' : ''
+                }`}
+                onClick={() => handleSeleccionarCategoria('grupo-entrega-inmediata')}
+              >
+                <Zap size={14} />
+                <span>Entrega Inmediata</span>
+              </button>
+            )}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={clasificacionActiva === 'grupo-favoritos'}
+              title={
+                totalFavoritos > 0
+                  ? `Revisar mis ${totalFavoritos} productos marcados con Me gusta`
+                  : 'Productos que marques con Me gusta'
+              }
+              className={`pill-categoria pill-favoritos ${totalFavoritos > 0 ? 'con-likes' : ''} ${
+                clasificacionActiva === 'grupo-favoritos' ? 'pill-activa' : ''
+              }`}
+              onClick={() => handleSeleccionarCategoria('grupo-favoritos')}
+            >
+              <Heart size={14} fill={totalFavoritos > 0 ? 'currentColor' : 'none'} />
+              <span>Me gusta</span>
+              <span className="badge-pill-contador">{totalFavoritos}</span>
+            </button>
             <button
               type="button"
               role="tab"
@@ -484,7 +552,7 @@ export function VitrinaCatalogoTinkay() {
               }`}
               onClick={() => handleSeleccionarCategoria('cat-todos')}
             >
-              <span>Todo el Catálogo</span>
+              <span>Todo</span>
             </button>
           </div>
 
@@ -607,7 +675,11 @@ export function VitrinaCatalogoTinkay() {
         {/* Grid de Productos con Carruseles Fotográficos */}
         {productosFinales.length === 0 ? (
           <div className="vacio-catalogo-alerta">
-            <p>No encontramos arreglos con los filtros seleccionados.</p>
+            <p>
+              {categoriaActiva === 'grupo-favoritos'
+                ? 'Aún no has marcado productos con Me gusta. Pulsa el corazón en cualquier arreglo para guardarlo aquí.'
+                : 'No encontramos arreglos con los filtros seleccionados.'}
+            </p>
             <button
               type="button"
               className="btn btn-mini"
@@ -616,11 +688,10 @@ export function VitrinaCatalogoTinkay() {
                 setTerminoBusqueda('');
                 setEtiquetasActivas([]);
                 setFiltroPresupuesto('todos');
-                setSoloOfertas(false);
                 setCriterioOrden('recomendados');
               }}
             >
-              Restablecer filtros
+              {categoriaActiva === 'grupo-favoritos' ? 'Explorar catálogo' : 'Restablecer filtros'}
             </button>
           </div>
         ) : (

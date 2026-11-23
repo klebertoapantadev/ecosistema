@@ -39,6 +39,8 @@ interface Props {
   etiqueta?: React.ReactNode;
   /** Prepara y despliega de inmediato el botón oficial PLUX sin requerir un clic intermedio. */
   autoIniciar?: boolean;
+  /** Tras inyectarse #ButtonPaybox, dispara automáticamente su apertura mostrando spinner. */
+  autoAbrirModal?: boolean;
   /** Evita generar factura electrónica SRI automática (usado en links de pago rápidos desde chat). */
   omitirFacturaAutomatica?: boolean;
 }
@@ -81,6 +83,26 @@ async function esperarEntornoPlux(): Promise<void> {
   throw new Error("PLUX no terminó de cargar");
 }
 
+// Detecta si PLUX ya pintó visible su ventana/iframe de tarjeta en el DOM.
+function existeModalPluxVisible(): boolean {
+  if (typeof document === "undefined") return false;
+  const candidatos = document.querySelectorAll<HTMLElement>(
+    'iframe[src*="pagoplux" i], iframe[src*="paybox" i], #modalPaybox, .pbox-modal, [id*="paybox" i]:not(#ButtonPaybox)'
+  );
+  for (const el of candidatos) {
+    const style = window.getComputedStyle(el);
+    if (
+      style.display !== "none" &&
+      style.visibility !== "hidden" &&
+      el.offsetWidth > 0 &&
+      el.offsetHeight > 0
+    ) {
+      return true;
+    }
+  }
+  return false;
+}
+
 export function BotonPagoPlux({
   negocio,
   varianteId,
@@ -94,14 +116,39 @@ export function BotonPagoPlux({
   alCambiarFase,
   etiqueta,
   autoIniciar = false,
+  autoAbrirModal = false,
   omitirFacturaAutomatica = false,
 }: Props) {
-  const [fase, setFase] = useState<Fase>("inicio");
+  const [fase, setFase] = useState<Fase>(autoIniciar ? "preparando" : "inicio");
   const [mensaje, setMensaje] = useState<string | null>(null);
+  const [abriendoFormulario, setAbriendoFormulario] = useState<boolean>(false);
   const identificador = useRef<string | null>(null);
   const resuelto = useRef(false);
   const motivo = useRef<string | null>(null);
   const autoIniciadoRef = useRef(false);
+  const autoAbiertoRef = useRef(false);
+  const esperaModalTimerRef = useRef<number | null>(null);
+
+  const limpiarEsperaModal = () => {
+    if (esperaModalTimerRef.current !== null && typeof window !== "undefined") {
+      window.clearInterval(esperaModalTimerRef.current);
+      esperaModalTimerRef.current = null;
+    }
+  };
+
+  const iniciarEsperaAperturaFormulario = () => {
+    if (typeof window === "undefined") return;
+    limpiarEsperaModal();
+    setAbriendoFormulario(true);
+    let ticks = 0;
+    esperaModalTimerRef.current = window.setInterval(() => {
+      ticks += 1;
+      if (existeModalPluxVisible() || ticks >= 30) {
+        limpiarEsperaModal();
+        setAbriendoFormulario(false);
+      }
+    }, 150);
+  };
 
   const avisar = useRef(alCambiarFase);
   avisar.current = alCambiarFase;
@@ -111,21 +158,56 @@ export function BotonPagoPlux({
 
   // Con #ButtonPaybox ya en el DOM se dispara el `load` que espera PLUX para
   // inyectar su botón. En un efecto y no tras el setState: así es seguro que
-  // React ya pintó el contenedor.
+  // React ya pintó el contenedor. Si `autoAbrirModal` está activo, se abre
+  // automáticamente la ventana segura de PLUX mientras se muestra el spinner.
   useEffect(() => {
-    if (fase === "listo") (window as any).jQuery?.(window).trigger("load");
-  }, [fase]);
+    if (fase !== "listo") {
+      limpiarEsperaModal();
+      setAbriendoFormulario(false);
+      return;
+    }
+    (window as any).jQuery?.(window).trigger("load");
+
+    if (!autoAbrirModal || autoAbiertoRef.current) return;
+    setAbriendoFormulario(true);
+    let intentos = 0;
+    const intervalo = window.setInterval(() => {
+      intentos += 1;
+      const contenedor = document.getElementById("ButtonPaybox");
+      const botonInyectado = contenedor?.querySelector<HTMLElement>(
+        'button, input[type="button"], input[type="submit"], a'
+      );
+      if (botonInyectado) {
+        window.clearInterval(intervalo);
+        autoAbiertoRef.current = true;
+        botonInyectado.click();
+        iniciarEsperaAperturaFormulario();
+        return;
+      }
+      if (intentos >= 35) {
+        window.clearInterval(intervalo);
+        setAbriendoFormulario(false);
+      }
+    }, 100);
+
+    return () => {
+      window.clearInterval(intervalo);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fase, autoAbrirModal]);
 
   // Si cambian los datos de facturación o modalidad con el botón ya preparado,
   // el pago preparado lleva los viejos: se vuelve a empezar.
   const claveDatos = JSON.stringify([varianteId, proformaId, tokenAprobacion, modalidadCobro, pagador]);
   useEffect(() => {
     autoIniciadoRef.current = false;
+    autoAbiertoRef.current = false;
     setFase((f) => (f === "listo" ? "inicio" : f));
   }, [claveDatos]);
 
   useEffect(() => {
-    if (!autoIniciar || fase !== "inicio" || autoIniciadoRef.current) return;
+    if (!autoIniciar || autoIniciadoRef.current) return;
+    if (fase !== "inicio" && fase !== "preparando") return;
     autoIniciadoRef.current = true;
     void preparar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -136,6 +218,7 @@ export function BotonPagoPlux({
   useEffect(
     () => () => {
       resuelto.current = true;
+      limpiarEsperaModal();
       delete (window as any).onAuthorize;
       delete (window as any).data;
     },
@@ -170,6 +253,7 @@ export function BotonPagoPlux({
   }
 
   async function preparar() {
+    autoAbiertoRef.current = false;
     setFase("preparando");
     setMensaje(null);
     motivo.current = null;
@@ -277,11 +361,34 @@ export function BotonPagoPlux({
           }}
         >
           {preparando ? <RefreshCw size={18} className="ckt-girar" /> : <Lock size={18} />}
-          {preparando ? "Preparando…" : fase === "inicio" ? etiqueta ?? "Pagar con PLUX" : "Reintentar"}
+          {preparando ? "Conectando con PLUX…" : fase === "inicio" ? etiqueta ?? "Pagar con PLUX" : "Reintentar"}
         </button>
       )}
 
-      {fase === "listo" && (
+      {fase === "listo" && abriendoFormulario && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "9px",
+            padding: "12px 14px",
+            borderRadius: "12px",
+            background: "#F0FDF4",
+            border: "1px solid #86EFAC",
+            color: "#166534",
+            fontSize: "0.85rem",
+            fontWeight: 700,
+          }}
+        >
+          <RefreshCw size={17} className="ckt-girar" />
+          <span>Abriendo formulario seguro de PLUX…</span>
+        </div>
+      )}
+
+      {fase === "listo" && !abriendoFormulario && (
         <p
           className="ckt-nota"
           style={{
@@ -296,7 +403,7 @@ export function BotonPagoPlux({
             textAlign: "center",
           }}
         >
-          Pulsa el botón oficial de PLUX abajo e ingresa tu tarjeta en su ventana segura.
+          Pulsa el botón oficial de PLUX abajo para ingresar tu tarjeta.
         </p>
       )}
 
@@ -313,14 +420,28 @@ export function BotonPagoPlux({
             fontSize: "0.83rem",
             fontWeight: 600,
             textAlign: "center",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "8px",
           }}
         >
-          Verificando autorización bancaria con PLUX…
+          <RefreshCw size={16} className="ckt-girar" />
+          <span>Verificando autorización bancaria con PLUX…</span>
         </p>
       )}
 
       {/* PLUX inyecta aquí su botón "Pagar ahora" y, al pulsarlo, su modal. */}
-      {(fase === "listo" || fase === "esperando" || fase === "sin_confirmar") && <div id="ButtonPaybox" />}
+      {(fase === "listo" || fase === "esperando" || fase === "sin_confirmar") && (
+        <div
+          id="ButtonPaybox"
+          onClickCapture={() => {
+            if (fase === "listo") {
+              iniciarEsperaAperturaFormulario();
+            }
+          }}
+        />
+      )}
 
       {mensaje && (fase === "error" || fase === "rechazado" || fase === "sin_confirmar") && (
         <p

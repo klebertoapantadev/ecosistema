@@ -242,6 +242,11 @@ export type IdClasificacionPrincipalTinkay =
   | 'grupo-eventos'
   | 'grupo-condolencias';
 
+export type IdFiltroEspecialTinkay =
+  | 'grupo-ofertas'
+  | 'grupo-entrega-inmediata'
+  | 'grupo-favoritos';
+
 export interface ClasificacionPrincipalTinkay {
   id: IdClasificacionPrincipalTinkay;
   slug: string;
@@ -306,10 +311,25 @@ const IDS_CLASIFICACION_VIRTUAL = new Set<string>([
   'grupo-arreglos-florales',
   'grupo-eventos',
   'grupo-condolencias',
+  'grupo-ofertas',
+  'grupo-entrega-inmediata',
+  'grupo-favoritos',
   'sub-eventos-decoracion',
   'sub-eventos-mobiliario',
   'col-arreglos-florales',
 ]);
+
+export function esProductoEntregaInmediata(p: ProductoEcommerce): boolean {
+  if (esProductoExtraOComplemento(p)) return false;
+  const catPrin = normalizarTextoEcommerce(p.categoriaPrincipal);
+  const catNom = normalizarTextoEcommerce(p.categoriaNombre);
+  if (catPrin.includes('entrega inmediata') || catNom.includes('entrega inmediata')) {
+    return true;
+  }
+  return (p.categoriasSecundarias || []).some((s) =>
+    normalizarTextoEcommerce(s).includes('entrega inmediata')
+  );
+}
 
 export function esIdentificadorClasificacionVirtual(catId: string): boolean {
   return IDS_CLASIFICACION_VIRTUAL.has(catId);
@@ -329,6 +349,9 @@ export function obtenerSlugCategoriaPublico(
   if (catId === 'grupo-arreglos-florales') return 'arreglos-florales';
   if (catId === 'grupo-eventos') return 'eventos';
   if (catId === 'grupo-condolencias') return 'condolencias';
+  if (catId === 'grupo-ofertas') return 'ofertas';
+  if (catId === 'grupo-entrega-inmediata') return 'entrega-inmediata';
+  if (catId === 'grupo-favoritos') return 'me-gusta';
   if (catId === 'sub-eventos-decoracion') return 'eventos-decoracion';
   if (catId === 'sub-eventos-mobiliario') return 'eventos-mobiliario';
   if (catId === 'col-arreglos-florales') return 'col-arreglos-florales';
@@ -354,8 +377,11 @@ export function esProductoArregloTodaOcasion(p: ProductoEcommerce): boolean {
 export function obtenerClasificacionPrincipalDeCategoria(
   catId: string,
   categorias: CategoriaEcommerce[] = []
-): IdClasificacionPrincipalTinkay | 'cat-todos' {
+): IdClasificacionPrincipalTinkay | IdFiltroEspecialTinkay | 'cat-todos' {
   if (!catId || catId === 'cat-todos' || catId === 'todos') return 'cat-todos';
+  if (catId === 'grupo-ofertas') return 'grupo-ofertas';
+  if (catId === 'grupo-entrega-inmediata') return 'grupo-entrega-inmediata';
+  if (catId === 'grupo-favoritos') return 'grupo-favoritos';
   if (catId === 'grupo-arreglos-florales' || catId === 'col-arreglos-florales') {
     return 'grupo-arreglos-florales';
   }
@@ -399,10 +425,18 @@ export function obtenerClasificacionPrincipalDeCategoria(
  * Devuelve las sub-colecciones visibles correspondientes a una clasificación principal.
  */
 export function obtenerSubcategoriasDeClasificacion(
-  clasificacion: IdClasificacionPrincipalTinkay | 'cat-todos',
+  clasificacion: IdClasificacionPrincipalTinkay | IdFiltroEspecialTinkay | 'cat-todos',
   categoriasVisibles: CategoriaEcommerce[],
   productosBaseDesplegados: ProductoEcommerce[]
 ): SubcategoriaVisualTinkay[] {
+  if (
+    clasificacion === 'grupo-ofertas' ||
+    clasificacion === 'grupo-entrega-inmediata' ||
+    clasificacion === 'grupo-favoritos'
+  ) {
+    return [];
+  }
+
   if (clasificacion === 'grupo-eventos') {
     const tieneDecoracion = productosBaseDesplegados.some(
       (p) => !esProductoExtraOComplemento(p) && esProductoEvento(p)
@@ -462,6 +496,15 @@ export function productoCoincideConCategoria(
 
   if (catId === 'grupo-arreglos-florales') {
     return esProductoArregloTodaOcasion(p);
+  }
+  if (catId === 'grupo-ofertas') {
+    return productoTieneOferta(p);
+  }
+  if (catId === 'grupo-entrega-inmediata') {
+    return esProductoEntregaInmediata(p);
+  }
+  if (catId === 'grupo-favoritos') {
+    return true;
   }
   if (catId === 'grupo-eventos') {
     return esProductoEvento(p) || esProductoMobiliario(p);
@@ -587,6 +630,31 @@ export function resolverCategoriaPorIdentificador(
   }
 
   const norm = normalizarTextoEcommerce(identificador);
+
+  if (
+    identificador === 'grupo-ofertas' ||
+    norm === 'ofertas' ||
+    norm === 'solo ofertas' ||
+    norm === 'promociones'
+  ) {
+    return 'grupo-ofertas';
+  }
+
+  if (
+    identificador === 'grupo-entrega-inmediata' ||
+    norm === 'entrega inmediata'
+  ) {
+    return 'grupo-entrega-inmediata';
+  }
+
+  if (
+    identificador === 'grupo-favoritos' ||
+    norm === 'me gusta' ||
+    norm === 'favoritos' ||
+    norm === 'likes'
+  ) {
+    return 'grupo-favoritos';
+  }
 
   if (
     identificador === 'grupo-arreglos-florales' ||

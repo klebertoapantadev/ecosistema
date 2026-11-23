@@ -178,6 +178,9 @@ export function ChatAriaFlotante() {
   const catalogo = productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY;
 
   const [abierto, setAbierto] = useState(false);
+  const [ocultoHastaRecarga, setOcultoHastaRecarga] = useState(false);
+  const [posicionFlotante, setPosicionFlotante] = useState<{ x: number; y: number } | null>(null);
+  const [arrastrandoFlotante, setArrastrandoFlotante] = useState(false);
   const [mensajes, setMensajes] = useState<MensajeChat[]>(MENSAJES_INICIALES);
   const [inputTexto, setInputTexto] = useState('');
   const [escribiendo, setEscribiendo] = useState(false);
@@ -196,6 +199,64 @@ export function ChatAriaFlotante() {
   const idsHumanosVistos = useRef<Set<string>>(new Set());
   const canalRealtimeRef = useRef<CanalRealtimeChat | null>(null);
   const realtimeConectadoRef = useRef<boolean>(false);
+  const dragRef = useRef<{
+    pointerId: number;
+    inicioX: number;
+    inicioY: number;
+    origX: number;
+    origY: number;
+    seMovio: boolean;
+  } | null>(null);
+
+  const iniciarArrastreFlotante = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    dragRef.current = {
+      pointerId: e.pointerId,
+      inicioX: e.clientX,
+      inicioY: e.clientY,
+      origX: rect.left,
+      origY: rect.top,
+      seMovio: false,
+    };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const moverArrastreFlotante = (e: React.PointerEvent<HTMLDivElement>) => {
+    const estado = dragRef.current;
+    if (!estado || estado.pointerId !== e.pointerId) return;
+    const dx = e.clientX - estado.inicioX;
+    const dy = e.clientY - estado.inicioY;
+    if (!estado.seMovio && Math.hypot(dx, dy) > 6) {
+      estado.seMovio = true;
+      setArrastrandoFlotante(true);
+    }
+    if (!estado.seMovio) return;
+    const tam = 58;
+    const maxX = Math.max(8, window.innerWidth - tam - 8);
+    const maxY = Math.max(8, window.innerHeight - tam - 8);
+    const nuevoX = Math.min(maxX, Math.max(8, estado.origX + dx));
+    const nuevoY = Math.min(maxY, Math.max(8, estado.origY + dy));
+    setPosicionFlotante({ x: nuevoX, y: nuevoY });
+  };
+
+  const finalizarArrastreFlotante = (e: React.PointerEvent<HTMLDivElement>) => {
+    const estado = dragRef.current;
+    if (!estado || estado.pointerId !== e.pointerId) return;
+    const fueArrastre = estado.seMovio;
+    dragRef.current = null;
+    setArrastrandoFlotante(false);
+    try {
+      if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+    } catch {
+      // Ignorar si ya fue liberado
+    }
+    if (!fueArrastre) {
+      setAbierto(true);
+    }
+  };
 
   const emitirEventoRealtimeCliente = (payload: EventoBroadcastChatWeb) => {
     try {
@@ -1103,25 +1164,58 @@ export function ChatAriaFlotante() {
 
   return (
     <>
-      {/* Botón Flotante para Abrir Chat */}
-      {!abierto && (
-        <button
-          type="button"
-          className="btn-flotante-chat-tinkay"
-          onClick={() => setAbierto(true)}
-          aria-label="Abrir asistente floral Mía"
+      {/* Botón Flotante Compacto de Mía: rosa redonda en burbuja de chat, movible y cerrable hasta recargar */}
+      {!abierto && !ocultoHastaRecarga && (
+        <div
+          className={`btn-flotante-chat-tinkay ${arrastrandoFlotante ? 'arrastrando' : ''}`}
+          role="button"
+          tabIndex={0}
+          aria-label="Abrir chat con Mía — Asesora Floral (arrastra para mover)"
+          title="Hablar con Mía (arrastra para mover)"
+          onPointerDown={iniciarArrastreFlotante}
+          onPointerMove={moverArrastreFlotante}
+          onPointerUp={finalizarArrastreFlotante}
+          onPointerCancel={() => {
+            dragRef.current = null;
+            setArrastrandoFlotante(false);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              setAbierto(true);
+            }
+          }}
+          style={
+            posicionFlotante
+              ? {
+                  left: `${posicionFlotante.x}px`,
+                  top: `${posicionFlotante.y}px`,
+                  right: 'auto',
+                  bottom: 'auto',
+                  animation: 'none',
+                }
+              : undefined
+          }
         >
-          <div className="chispa-badge-chat">
-            <Sparkles size={13} />
-          </div>
+          <button
+            type="button"
+            className="btn-ocultar-flotante-chat"
+            aria-label="Ocultar chat flotante hasta recargar la página"
+            title="Cerrar hasta recargar"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              setOcultoHastaRecarga(true);
+            }}
+          >
+            <X size={11} strokeWidth={2.6} />
+          </button>
           <div className="icono-avatar-chat">
-            <span role="img" aria-label="Flores">🌹</span>
+            <span role="img" aria-label="Mía Asesora Floral">
+              🌹
+            </span>
           </div>
-          <div className="texto-boton-flotante">
-            <span className="nombre-agente">Mía — Asesora Floral</span>
-            <small className="estado-en-linea">En línea • Consulta y pide aquí</small>
-          </div>
-        </button>
+        </div>
       )}
 
       {/* Ventana de Chat de ARIA */}

@@ -143,7 +143,10 @@ export function ModalCheckoutTinkay() {
     configTiendaCheckout.tarjetaCreditoHabilitada !== false
   );
   const [metodoPago, setMetodoPago] = useState<'plux' | 'transferencia'>(
-    configTiendaCheckout.tarjetaCreditoHabilitada === false ? 'transferencia' : 'plux'
+    configTiendaCheckout.transferencia?.habilitada === false &&
+      configTiendaCheckout.tarjetaCreditoHabilitada !== false
+      ? 'plux'
+      : 'transferencia'
   );
   const [ambientePlux, setAmbientePlux] = useState<string>('PRUEBAS');
   const [paso, setPaso] = useState<'formulario' | 'procesando' | 'exito'>('formulario');
@@ -205,8 +208,10 @@ export function ModalCheckoutTinkay() {
     if (!tarjetaHabilitada && metodoPago === 'plux') {
       setMetodoPago('transferencia');
       setOrdenPluxPreparada(null);
+    } else if (!configCheckoutLocal.transferencia?.habilitada && tarjetaHabilitada && metodoPago === 'transferencia') {
+      setMetodoPago('plux');
     }
-  }, [tarjetaHabilitada, metodoPago]);
+  }, [tarjetaHabilitada, configCheckoutLocal.transferencia?.habilitada, metodoPago]);
 
   useEffect(() => {
     if (!checkoutAbierto) return;
@@ -1609,27 +1614,8 @@ export function ModalCheckoutTinkay() {
                   )}
                 </div>
 
-                {/* 3. Selector de Método de Pago */}
+                {/* 3. Selector de Método de Pago (Transferencia por defecto) */}
                 <div className="pills-metodos-pago" style={{ marginBottom: '12px' }}>
-                  {tarjetaHabilitada && (
-                    <button
-                      type="button"
-                      className={`btn-metodo-pago ${metodoPago === 'plux' ? 'activo' : ''}`}
-                      onClick={() => {
-                        setMetodoPago('plux');
-                        setErrorPago(null);
-                      }}
-                      title="Pagar en línea con tarjeta de crédito o débito mediante PLUX"
-                      aria-label="Tarjeta PLUX"
-                    >
-                      <CreditCard size={18} />
-                      <div>
-                        <strong>Tarjeta (PLUX)</strong>
-                        <small>Visa / Mastercard / Débito</small>
-                      </div>
-                    </button>
-                  )}
-
                   {transf.habilitada && (
                     <button
                       type="button"
@@ -1645,6 +1631,25 @@ export function ModalCheckoutTinkay() {
                       <div>
                         <strong>Transferencia / DeUna</strong>
                         <small>Pichincha · Produbanco · QR</small>
+                      </div>
+                    </button>
+                  )}
+
+                  {tarjetaHabilitada && (
+                    <button
+                      type="button"
+                      className={`btn-metodo-pago ${metodoPago === 'plux' ? 'activo' : ''}`}
+                      onClick={() => {
+                        setMetodoPago('plux');
+                        setErrorPago(null);
+                      }}
+                      title="Pagar en línea con tarjeta de crédito o débito mediante PLUX"
+                      aria-label="Tarjeta PLUX"
+                    >
+                      <CreditCard size={18} />
+                      <div>
+                        <strong>Tarjeta (PLUX)</strong>
+                        <small>Visa / Mastercard / Débito</small>
                       </div>
                     </button>
                   )}
@@ -1727,20 +1732,25 @@ export function ModalCheckoutTinkay() {
                         onClick={handlePrepararOrdenPlux}
                         disabled={preparandoOrdenPlux}
                         className="btn btn-primario btn-confirmar-pago-grande"
-                        title="Habilitar pasarela de pago con tarjeta PLUX"
-                        aria-label="Pagar Ahora"
+                        title="Abrir formulario seguro de pago con tarjeta PLUX"
+                        aria-label="Pagar con PLUX"
                         style={{
                           display: 'inline-flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: '8px',
+                          cursor: preparandoOrdenPlux ? 'wait' : 'pointer',
                         }}
                       >
-                        <Lock size={16} />
+                        {preparandoOrdenPlux ? (
+                          <Loader2 size={17} className="icono-girar-checkout" />
+                        ) : (
+                          <Lock size={16} />
+                        )}
                         <span>
                           {preparandoOrdenPlux
-                            ? 'Preparando...'
-                            : `Continuar ($${totalPagar.toFixed(2)})`}
+                            ? 'Conectando con PLUX…'
+                            : `Pagar con PLUX ($${totalPagar.toFixed(2)})`}
                         </span>
                       </button>
                     ) : (
@@ -1749,23 +1759,9 @@ export function ModalCheckoutTinkay() {
                           display: 'flex',
                           flexDirection: 'column',
                           gap: '10px',
-                          paddingTop: '4px',
+                          paddingTop: '2px',
                         }}
                       >
-                        <div
-                          style={{
-                            fontSize: '0.78rem',
-                            color: '#166534',
-                            background: '#DCFCE7',
-                            border: '1px solid #BBF7D0',
-                            padding: '8px 12px',
-                            borderRadius: '8px',
-                            fontWeight: 600,
-                          }}
-                        >
-                          Orden lista ({ordenPluxPreparada.codigoOrden}) · Total:{' '}
-                          <strong>${totalPagar.toFixed(2)} USD</strong>
-                        </div>
                         <BotonPagoPlux
                           negocio="tinkay"
                           proformaId={ordenPluxPreparada.id}
@@ -1773,6 +1769,8 @@ export function ModalCheckoutTinkay() {
                           respaldoFirmado={ordenPluxPreparada.respaldoFirmado}
                           modalidadCobro="TOTAL_100"
                           ambiente={ambientePlux}
+                          autoIniciar
+                          autoAbrirModal
                           pagador={{
                             nombre: mostrarCamposFacturacion
                               ? datosFactura.nombreCompleto.trim()
@@ -1788,7 +1786,7 @@ export function ModalCheckoutTinkay() {
                               (modalidadEntrega === 'unificada' && entregaUnificada.direccion) ||
                               'Quito, Ecuador',
                           }}
-                          etiqueta={`Pagar $${totalPagar.toFixed(2)}`}
+                          etiqueta={`Pagar con PLUX ($${totalPagar.toFixed(2)})`}
                           alPagoAprobado={(_identificador: string, pago: PagoPluxConsultado) => {
                             dispararEventoPixelNavegador(
                               'Purchase',

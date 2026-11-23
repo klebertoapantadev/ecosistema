@@ -18,6 +18,8 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
     setProductoSeleccionadoModal,
     setDrawerAbierto,
     setCheckoutAbierto,
+    esFavorito,
+    toggleFavorito,
   } = useCarrito();
   const [fotoActualIndex, setFotoActualIndex] = useState(0);
   const obtenerVarianteBase = () =>
@@ -32,7 +34,7 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
       tarifaIva: 0,
     };
   const [varianteSeleccionada, setVarianteSeleccionada] = useState<VarianteEcommerce>(obtenerVarianteBase);
-  const [favorito, setFavorito] = useState(false);
+  const favorito = esFavorito(producto.id);
   const [compradoReciente, setCompradoReciente] = useState(false);
 
   // Cálculo dinámico de Oferta y % de Descuento
@@ -247,11 +249,12 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
         <button
           type="button"
           className={`btn-favorito ${favorito ? 'activo' : ''}`}
-          aria-label="Guardar en favoritos"
-          title="Guardar en favoritos"
+          aria-label={favorito ? 'Quitar de Me gusta' : 'Dar Me gusta'}
+          aria-pressed={favorito}
+          title={favorito ? 'Quitar de Me gusta' : 'Guardar en Me gusta'}
           onClick={(e) => {
             e.stopPropagation();
-            setFavorito(!favorito);
+            toggleFavorito(producto.id);
           }}
         >
           <Heart size={16} fill={favorito ? 'currentColor' : 'none'} />
