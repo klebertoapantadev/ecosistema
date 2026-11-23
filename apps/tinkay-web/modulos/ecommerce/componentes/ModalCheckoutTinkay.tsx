@@ -175,7 +175,6 @@ export function ModalCheckoutTinkay() {
   const [verificandoEstadoCuenta, setVerificandoEstadoCuenta] = useState<boolean>(true);
   const [omitirInvitacionRegistro, setOmitirInvitacionRegistro] = useState<boolean>(false);
   const [aceptoObsequioBienvenida, setAceptoObsequioBienvenida] = useState<boolean>(true);
-  const [deseaFacturaConDatos, setDeseaFacturaConDatos] = useState<boolean>(false);
   const [mostrarMapaEntrega, setMostrarMapaEntrega] = useState<boolean>(false);
   const [datoCopiado, setDatoCopiado] = useState<string | null>(null);
 
@@ -375,16 +374,15 @@ export function ModalCheckoutTinkay() {
     Number(configCheckoutLocal.montoMaximoPagoSinDatosUsd ?? 0)
   );
   const tieneControlMontoFacturacion = umbralSinDatosUsd > 0;
-  const esMenorAlUmbral = !tieneControlMontoFacturacion || totalPagar < umbralSinDatosUsd;
   const esRetiroEnTienda =
     modalidadEntrega === 'unificada' && Boolean(entregaUnificada.retiroEnLocal);
 
   // Reglas de negocio exactas:
   // 1. Únicos requisitos obligatorios para pagar: al menos 1 producto en el carrito y número de WhatsApp para coordinar la entrega.
   // 2. La restricción por monto (`montoMaximoPagoSinDatosUsd`) es configurable: si está en 0, NO se aplica ningún control de datos de factura.
-  // 3. Si es > 0 y totalPagar >= umbral, nombre y cédula/RUC son requeridos.
+  // 3. Facturación electrónica se gestiona manualmente de momento (sin checkbox opcional en checkout).
   const requiereDatosFacturacion = tieneControlMontoFacturacion && totalPagar >= umbralSinDatosUsd;
-  const mostrarCamposFacturacion = requiereDatosFacturacion || deseaFacturaConDatos;
+  const mostrarCamposFacturacion = requiereDatosFacturacion;
   const requiereWhatsappCoordinacion = true;
 
   const itemsPrincipales = useMemo(
@@ -676,13 +674,6 @@ export function ModalCheckoutTinkay() {
       }
       if (!/^[A-Za-z0-9]{5,20}$/.test(datosFactura.identificacion.trim())) {
         return 'Ingresa una Cédula, RUC o Pasaporte válido (sin espacios ni guiones).';
-      }
-    } else if (deseaFacturaConDatos) {
-      if (datosFactura.nombreCompleto.trim().length < 3) {
-        return 'Ingresa el nombre o razón social para tu factura (o desmarca la opción para Consumidor Final).';
-      }
-      if (!/^[A-Za-z0-9]{5,20}$/.test(datosFactura.identificacion.trim())) {
-        return 'Ingresa una Cédula, RUC o Pasaporte válido para tu factura.';
       }
     }
 
@@ -1984,7 +1975,7 @@ export function ModalCheckoutTinkay() {
                     }}
                   >
                     <label className="titulo-seccion-form">
-                      3. Contacto y Facturación
+                      3. Contacto
                     </label>
 
                     {!requiereDatosFacturacion && (
@@ -2000,7 +1991,7 @@ export function ModalCheckoutTinkay() {
                           marginBottom: '10px',
                         }}
                       >
-                        <strong>✓ Compra rápida:</strong> Solo necesitamos tu WhatsApp para coordinar la entrega. Los datos de factura son opcionales.
+                        <strong>✓ Compra rápida:</strong> Solo necesitamos tu WhatsApp para coordinar la entrega.
                       </div>
                     )}
 
@@ -2055,35 +2046,12 @@ export function ModalCheckoutTinkay() {
                       </small>
                     </div>
 
-                    {/* Toggle opcional para Factura con Datos (cuando no hay restricción de monto o es menor al umbral) */}
-                    {esMenorAlUmbral && (
-                      <label
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '7px',
-                          fontSize: '0.79rem',
-                          fontWeight: 600,
-                          color: '#334155',
-                          cursor: 'pointer',
-                          marginBottom: mostrarCamposFacturacion ? '10px' : '0',
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={deseaFacturaConDatos}
-                          onChange={(e) => setDeseaFacturaConDatos(e.target.checked)}
-                        />
-                        <span>Deseo factura electrónica con mis datos (opcional)</span>
-                      </label>
-                    )}
-
                     {mostrarCamposFacturacion && (
                       <div className="grid-dos-columnas">
                         <input
                           type="text"
                           placeholder="Nombre o Razón Social *"
-                          required={requiereDatosFacturacion || deseaFacturaConDatos}
+                          required={requiereDatosFacturacion}
                           value={datosFactura.nombreCompleto}
                           onChange={(e) =>
                             setDatosFactura({ ...datosFactura, nombreCompleto: e.target.value })
@@ -2093,7 +2061,7 @@ export function ModalCheckoutTinkay() {
                         <input
                           type="text"
                           placeholder="Cédula / RUC / Pasaporte *"
-                          required={requiereDatosFacturacion || deseaFacturaConDatos}
+                          required={requiereDatosFacturacion}
                           value={datosFactura.identificacion}
                           onChange={(e) =>
                             setDatosFactura({
@@ -2399,6 +2367,7 @@ export function ModalCheckoutTinkay() {
                           ambiente={ambientePlux}
                           autoIniciar
                           autoAbrirModal={false}
+                          omitirFacturaAutomatica={true}
                           pagador={{
                             nombre: mostrarCamposFacturacion
                               ? datosFactura.nombreCompleto.trim()

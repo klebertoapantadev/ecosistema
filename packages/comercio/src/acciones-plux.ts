@@ -1062,6 +1062,19 @@ export async function confirmarPagoPluxAction(entrada: {
               : "APROBADA";
           const pagosPluxPrevios = Array.isArray(detPrfActual.pagos_plux) ? detPrfActual.pagos_plux : [];
 
+          const evidenciaPluxCompleta = {
+            pago_id: pago.pag_id,
+            identificador,
+            autorizacion,
+            marca_tarjeta: marcaTarjeta,
+            ultimos_digitos: ultimosDigitos,
+            monto_usd: Number(pago.pag_monto_total || 0),
+            modalidad_cobro: detPrevio.modalidad_cobro || "TOTAL_100",
+            estado: "APROBADO",
+            confirmado_en: new Date().toISOString(),
+            respuesta_raw: raw,
+          };
+
           await clienteDb
             .schema("comun_comercio")
             .from("com_proforma")
@@ -1075,24 +1088,24 @@ export async function confirmarPagoPluxAction(entrada: {
                 monto_abonado_usd: nuevoAbonado,
                 saldo_pendiente_usd: saldoPendiente,
                 aprobada_en: new Date().toISOString(),
-                ultimo_pago_plux: {
-                  pago_id: pago.pag_id,
-                  identificador,
-                  autorizacion,
-                  marca_tarjeta: marcaTarjeta,
-                  ultimos_digitos: ultimosDigitos,
-                  monto_usd: Number(pago.pag_monto_total || 0),
-                  modalidad_cobro: detPrevio.modalidad_cobro || "TOTAL_100",
-                  confirmado_en: new Date().toISOString(),
+                ultimo_pago_plux: evidenciaPluxCompleta,
+                evidencias: {
+                  ...(detPrfActual.evidencias && typeof detPrfActual.evidencias === "object"
+                    ? detPrfActual.evidencias
+                    : {}),
+                  respuesta_plux: evidenciaPluxCompleta,
                 },
                 pagos_plux: [
                   ...pagosPluxPrevios,
                   {
                     identificador,
                     autorizacion,
+                    marca_tarjeta: marcaTarjeta,
+                    ultimos_digitos: ultimosDigitos,
                     monto_usd: Number(pago.pag_monto_total || 0),
                     modalidad_cobro: detPrevio.modalidad_cobro || "TOTAL_100",
                     fecha: new Date().toISOString(),
+                    respuesta_raw: raw,
                   },
                 ],
                 variacion_aceptada: true,
@@ -1100,6 +1113,44 @@ export async function confirmarPagoPluxAction(entrada: {
               prf_actualizado_en: new Date().toISOString(),
             })
             .eq("prf_id", proformaIdDestino);
+
+          // Espejar evidencia PLUX también en com_orden_taller vinculada (si existe)
+          try {
+            const { data: otaVinc } = await clienteDb
+              .schema("comun_comercio")
+              .from("com_orden_taller")
+              .select("ota_id, ota_detalle_orden")
+              .eq("ota_proforma_id", proformaIdDestino)
+              .is("ota_eliminado_en", null)
+              .maybeSingle();
+            if (otaVinc?.ota_id) {
+              const detOta =
+                otaVinc.ota_detalle_orden && typeof otaVinc.ota_detalle_orden === "object"
+                  ? otaVinc.ota_detalle_orden
+                  : {};
+              await clienteDb
+                .schema("comun_comercio")
+                .from("com_orden_taller")
+                .update({
+                  ota_estado_pago: saldoPendiente <= 0.01 ? "PAGADO" : "ABONADO",
+                  ota_metodo_pago: "plux",
+                  ota_detalle_orden: {
+                    ...detOta,
+                    ultimo_pago_plux: evidenciaPluxCompleta,
+                    evidencias: {
+                      ...(detOta.evidencias && typeof detOta.evidencias === "object"
+                        ? detOta.evidencias
+                        : {}),
+                      respuesta_plux: evidenciaPluxCompleta,
+                    },
+                  },
+                  ota_actualizado_en: new Date().toISOString(),
+                })
+                .eq("ota_id", otaVinc.ota_id);
+            }
+          } catch {
+            // No bloquear confirmación PLUX si falla el espejo en taller
+          }
 
           const grupoIdPrf = String(detPrfActual.grupo_proforma_id || "");
           if (grupoIdPrf) {

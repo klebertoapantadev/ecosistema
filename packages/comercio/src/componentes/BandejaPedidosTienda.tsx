@@ -25,13 +25,18 @@ import {
   Table2,
   Trash2,
   Truck,
+  Upload,
+  CreditCard,
+  User,
   X,
 } from "lucide-react";
 import {
   actualizarEstadoPedidoTiendaAction,
+  adjuntarComprobantePedidoAction,
   obtenerPedidosTiendaAction,
   type PedidoTiendaRegistrado,
 } from "../acciones-logistica";
+import { subirComprobanteTransferenciaAction } from "../acciones-tienda-checkout";
 import {
   actualizarClasificacionPedidoAction,
   eliminarPedidoOperativoAction,
@@ -307,7 +312,53 @@ export function BandejaPedidosTienda({
   const [estadosConfig, setEstadosConfig] = useState<EstadoPedidoConfig[]>(ESTADOS_PEDIDO_DEFECTO);
   const [mostrarWizardAria, setMostrarWizardAria] = useState<boolean>(false);
   const [mostrarAdminEstados, setMostrarAdminEstados] = useState<boolean>(false);
+  const [subiendoEvidenciaPedidoId, setSubiendoEvidenciaPedidoId] = useState<string | null>(null);
   const hoyEcuadorYmd = useMemo(() => obtenerFechaHoyEcuadorYmd(), []);
+
+  const handleSubirComprobantePedido = async (
+    pedido: PedidoTiendaRegistrado,
+    archivo: File
+  ) => {
+    setErrorMsg(null);
+    setSubiendoEvidenciaPedidoId(pedido.id);
+    try {
+      const fd = new FormData();
+      fd.set("negocio", negocio);
+      fd.set("archivo", archivo);
+      const resSubida = await subirComprobanteTransferenciaAction(fd);
+      if (!resSubida.ok) {
+        setErrorMsg(resSubida.error);
+        return;
+      }
+      const resAdj = await adjuntarComprobantePedidoAction({
+        negocio,
+        pedidoId: pedido.id,
+        ordenTallerId: pedido.ordenTallerId ?? null,
+        comprobante: resSubida.comprobante,
+      });
+      if (!resAdj.ok) {
+        setErrorMsg(resAdj.error);
+        return;
+      }
+      setPedidos((prev) => {
+        const actualizado = prev.map((it) =>
+          it.id === pedido.id
+            ? { ...it, comprobanteTransferencia: resAdj.comprobante }
+            : it
+        );
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify(actualizado));
+        } catch {
+          // Ignorar cuota localStorage
+        }
+        return actualizado;
+      });
+    } catch (err: any) {
+      setErrorMsg(err?.message || "No se pudo adjuntar el recibo al pedido.");
+    } finally {
+      setSubiendoEvidenciaPedidoId(null);
+    }
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1037,22 +1088,39 @@ export function BandejaPedidosTienda({
               <span style={{ fontSize: "0.69rem", color: "#847D74", textTransform: "uppercase" }}>
                 {p.metodoPago}
               </span>
-              {p.comprobanteTransferencia?.url && (
-                <span
-                  style={{
-                    fontSize: "0.66rem",
-                    fontWeight: 700,
-                    color: "#2B4A36",
-                    background: "#F2F6F3",
-                    border: "1px solid #CEDDD3",
-                    borderRadius: "6px",
-                    padding: "1px 6px",
-                    alignSelf: "flex-start",
-                  }}
-                >
-                  Comprobante
-                </span>
-              )}
+              <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+                {p.comprobanteTransferencia?.url && (
+                  <span
+                    style={{
+                      fontSize: "0.66rem",
+                      fontWeight: 700,
+                      color: "#2B4A36",
+                      background: "#F2F6F3",
+                      border: "1px solid #CEDDD3",
+                      borderRadius: "6px",
+                      padding: "1px 6px",
+                    }}
+                  >
+                    Recibo
+                  </span>
+                )}
+                {p.respuestaPlux && (
+                  <span
+                    title={`Autorización PLUX: ${p.respuestaPlux.autorizacion || p.respuestaPlux.identificador || "Aprobado"}`}
+                    style={{
+                      fontSize: "0.66rem",
+                      fontWeight: 700,
+                      color: "#1E40AF",
+                      background: "#EFF6FF",
+                      border: "1px solid #BFDBFE",
+                      borderRadius: "6px",
+                      padding: "1px 6px",
+                    }}
+                  >
+                    PLUX ✓
+                  </span>
+                )}
+              </div>
             </div>
           );
         },
@@ -2401,6 +2469,70 @@ export function BandejaPedidosTienda({
                                   </>
                                 ) : (
                                   <>
+                                    {p.creadoPor?.nombre && (
+                                      <span
+                                        title={`Creado por: ${p.creadoPor.nombre}${p.creadoPor.origen ? ` (${p.creadoPor.origen})` : ""}`}
+                                        style={{
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          gap: "4px",
+                                          padding: "3px 7px",
+                                          borderRadius: "6px",
+                                          border: "1px solid #E7E5E4",
+                                          background: "#FAF8F5",
+                                          color: "#57534E",
+                                          fontSize: "0.68rem",
+                                          fontWeight: 600,
+                                        }}
+                                      >
+                                        <User size={10} />
+                                        <span>{p.creadoPor.nombre}</span>
+                                      </span>
+                                    )}
+                                    {p.comprobanteTransferencia?.url && (
+                                      <a
+                                        href={p.comprobanteTransferencia.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        title="Ver recibo de pago adjunto"
+                                        style={{
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          gap: "4px",
+                                          padding: "4px 8px",
+                                          borderRadius: "6px",
+                                          border: "1px solid #CEDDD3",
+                                          background: "#F2F6F3",
+                                          color: "#2B4A36",
+                                          fontSize: "0.7rem",
+                                          fontWeight: 700,
+                                          textDecoration: "none",
+                                        }}
+                                      >
+                                        <ExternalLink size={11} />
+                                        <span>Recibo</span>
+                                      </a>
+                                    )}
+                                    {p.respuestaPlux && (
+                                      <span
+                                        title={`PLUX Aut: ${p.respuestaPlux.autorizacion || p.respuestaPlux.identificador || "Aprobado"}`}
+                                        style={{
+                                          display: "inline-flex",
+                                          alignItems: "center",
+                                          gap: "4px",
+                                          padding: "4px 8px",
+                                          borderRadius: "6px",
+                                          border: "1px solid #BFDBFE",
+                                          background: "#EFF6FF",
+                                          color: "#1E40AF",
+                                          fontSize: "0.7rem",
+                                          fontWeight: 700,
+                                        }}
+                                      >
+                                        <CreditCard size={11} />
+                                        <span>PLUX ✓</span>
+                                      </span>
+                                    )}
                                     {fotoEvidencia && (
                                       <button
                                         type="button"
@@ -3018,78 +3150,304 @@ export function BandejaPedidosTienda({
 
                     {!esExeq && (
                       <div>
-                        <strong>Facturación SRI:</strong> {p.compradorNombre} · ID:{" "}
-                        {p.compradorIdentificacion || "—"} · {p.compradorCorreo || "—"}
+                        <strong>Contacto / Facturación:</strong> {p.compradorNombre}
+                        {p.compradorTelefono ? ` · WhatsApp: ${p.compradorTelefono}` : ""}
+                        {p.compradorIdentificacion && p.compradorIdentificacion !== "9999999999999"
+                          ? ` · ID: ${p.compradorIdentificacion}`
+                          : ""}
+                        {p.compradorCorreo ? ` · ${p.compradorCorreo}` : ""}
                         {p.autorizaWhatsapp ? " · ✓ LOPDP WhatsApp" : ""}
                       </div>
                     )}
 
-                    {p.comprobanteTransferencia?.url && (
+                    {/* Trazabilidad: Quién creó el pedido (manual / web / exequiales) */}
+                    {p.creadoPor?.nombre && (
                       <div
                         style={{
-                          padding: "9px 11px",
-                          borderRadius: "8px",
-                          background: "#F2F6F3",
-                          border: "1px solid #CEDDD3",
-                          color: "#2B4A36",
-                          display: "flex",
-                          flexDirection: "column",
+                          display: "inline-flex",
+                          alignItems: "center",
                           gap: "6px",
+                          flexWrap: "wrap",
+                          fontSize: "0.75rem",
+                          color: "#44403C",
+                          background: "#FAF8F5",
+                          border: "1px solid #E7E5E4",
+                          borderRadius: "8px",
+                          padding: "5px 9px",
                         }}
                       >
+                        <User size={13} color="#57534E" />
+                        <span>
+                          <strong>Creado por:</strong> {p.creadoPor.nombre}
+                          {p.creadoPor.correo && p.creadoPor.correo !== p.creadoPor.nombre
+                            ? ` (${p.creadoPor.correo})`
+                            : ""}
+                          {p.creadoPor.origen ? ` · ${p.creadoPor.origen.replace(/_/g, " ")}` : ""}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Evidencias consolidadas del pedido: Recibo manual, Respuesta PLUX, Confirmación de Entrega */}
+                    <div
+                      style={{
+                        padding: "10px 12px",
+                        borderRadius: "10px",
+                        background: "#F8FAF8",
+                        border: "1px solid #DCE7DF",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "8px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          gap: "8px",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <strong style={{ fontSize: "0.76rem", color: "#1F352C" }}>
+                          Evidencias del Pedido
+                        </strong>
+                        <label
+                          title="Subir o reemplazar recibo / comprobante de pago (imagen o PDF)"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: "5px",
+                            padding: "4px 9px",
+                            borderRadius: "7px",
+                            border: "1px solid #2F4737",
+                            background: "#FFFFFF",
+                            color: "#2F4737",
+                            fontSize: "0.71rem",
+                            fontWeight: 700,
+                            cursor: subiendoEvidenciaPedidoId === p.id ? "wait" : "pointer",
+                          }}
+                        >
+                          {subiendoEvidenciaPedidoId === p.id ? (
+                            <Loader2 size={12} />
+                          ) : (
+                            <Upload size={12} />
+                          )}
+                          <span>
+                            {subiendoEvidenciaPedidoId === p.id
+                              ? "Subiendo..."
+                              : p.comprobanteTransferencia?.url
+                                ? "Cambiar Recibo"
+                                : "Subir Recibo"}
+                          </span>
+                          <input
+                            type="file"
+                            accept="image/*,application/pdf"
+                            disabled={subiendoEvidenciaPedidoId === p.id}
+                            onChange={(ev) => {
+                              const f = ev.target.files?.[0];
+                              ev.target.value = "";
+                              if (f) void handleSubirComprobantePedido(p, f);
+                            }}
+                            style={{ display: "none" }}
+                          />
+                        </label>
+                      </div>
+
+                      {/* 1. Recibo / Comprobante subido */}
+                      {p.comprobanteTransferencia?.url && (
                         <div
                           style={{
+                            padding: "8px 10px",
+                            borderRadius: "8px",
+                            background: "#F2F6F3",
+                            border: "1px solid #CEDDD3",
+                            color: "#2B4A36",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "6px",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center",
+                              gap: "8px",
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            <span style={{ fontSize: "0.75rem" }}>
+                              <strong>Recibo de pago:</strong>{" "}
+                              {p.comprobanteTransferencia.nombreArchivo || "Archivo"}
+                              {p.comprobanteTransferencia.subidoPorNombre
+                                ? ` · Subido por ${p.comprobanteTransferencia.subidoPorNombre}`
+                                : ""}
+                            </span>
+                            <a
+                              href={p.comprobanteTransferencia.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              download={p.comprobanteTransferencia.nombreArchivo || "comprobante"}
+                              title="Ver o descargar recibo de pago"
+                              aria-label="Ver Comprobante"
+                              style={{
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "5px",
+                                padding: "4px 9px",
+                                borderRadius: "6px",
+                                background: "#2F4737",
+                                color: "#FFFFFF",
+                                textDecoration: "none",
+                                fontSize: "0.72rem",
+                                fontWeight: 700,
+                              }}
+                            >
+                              <span>Ver Recibo</span>
+                              <ExternalLink size={12} />
+                            </a>
+                          </div>
+                          {p.comprobanteTransferencia.mimeType?.startsWith("image/") && (
+                            <img
+                              src={p.comprobanteTransferencia.url}
+                              alt="Comprobante de pago"
+                              style={{
+                                maxWidth: "220px",
+                                maxHeight: "150px",
+                                objectFit: "contain",
+                                borderRadius: "6px",
+                                border: "1px solid #CEDDD3",
+                                background: "#FFFFFF",
+                              }}
+                            />
+                          )}
+                        </div>
+                      )}
+
+                      {/* 2. Respuesta oficial de PagoPlux (PLUX) */}
+                      {p.respuestaPlux && (
+                        <div
+                          style={{
+                            padding: "8px 10px",
+                            borderRadius: "8px",
+                            background: "#EFF6FF",
+                            border: "1px solid #BFDBFE",
+                            color: "#1E3A8A",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: "4px",
+                            fontSize: "0.74rem",
+                          }}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                            <CreditCard size={13} />
+                            <strong>Respuesta PLUX ({p.respuestaPlux.estado || "APROBADO"})</strong>
+                            {p.respuestaPlux.autorizacion && (
+                              <span>· Aut: <code>{p.respuestaPlux.autorizacion}</code></span>
+                            )}
+                            {p.respuestaPlux.marcaTarjeta && (
+                              <span>
+                                · {p.respuestaPlux.marcaTarjeta}
+                                {p.respuestaPlux.ultimosDigitos ? ` ****${p.respuestaPlux.ultimosDigitos}` : ""}
+                              </span>
+                            )}
+                            {p.respuestaPlux.montoUsd != null && (
+                              <span>· ${Number(p.respuestaPlux.montoUsd).toFixed(2)} USD</span>
+                            )}
+                          </div>
+                          {p.respuestaPlux.identificador && (
+                            <div style={{ fontSize: "0.7rem", color: "#3B82F6" }}>
+                              ID Transacción: <code>{p.respuestaPlux.identificador}</code>
+                              {p.respuestaPlux.confirmadoEn
+                                ? ` · ${new Date(p.respuestaPlux.confirmadoEn).toLocaleString("es-EC")}`
+                                : ""}
+                            </div>
+                          )}
+                          {p.respuestaPlux.respuestaRaw ? (
+                            <details style={{ marginTop: "2px" }}>
+                              <summary style={{ cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
+                                Ver respuesta completa PLUX
+                              </summary>
+                              <pre
+                                style={{
+                                  margin: "4px 0 0",
+                                  padding: "6px 8px",
+                                  borderRadius: "6px",
+                                  background: "#FFFFFF",
+                                  border: "1px solid #DBEAFE",
+                                  fontSize: "0.67rem",
+                                  maxHeight: "150px",
+                                  overflow: "auto",
+                                  whiteSpace: "pre-wrap",
+                                  wordBreak: "break-word",
+                                  color: "#1E293B",
+                                }}
+                              >
+                                {JSON.stringify(p.respuestaPlux.respuestaRaw, null, 2)}
+                              </pre>
+                            </details>
+                          ) : null}
+                        </div>
+                      )}
+
+                      {/* 3. Confirmación de Entrega (foto + GPS) */}
+                      {(p.evidenciaEntrega?.confirmada || p.evidenciaEntrega?.fotoUrl) && (
+                        <div
+                          style={{
+                            padding: "8px 10px",
+                            borderRadius: "8px",
+                            background: "#ECFDF5",
+                            border: "1px solid #A7F3D0",
+                            color: "#065F46",
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
                             gap: "8px",
                             flexWrap: "wrap",
+                            fontSize: "0.74rem",
                           }}
                         >
-                          <strong>
-                            Comprobante adjunto:{" "}
-                            {p.comprobanteTransferencia.nombreArchivo || "Archivo"}
-                          </strong>
-                          <a
-                            href={p.comprobanteTransferencia.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            download={p.comprobanteTransferencia.nombreArchivo || "comprobante"}
-                            title="Ver o descargar comprobante de transferencia subido por el cliente"
-                            aria-label="Ver Comprobante"
+                          <div>
+                            <strong>✓ Confirmación de Entrega</strong>
+                            {p.evidenciaEntrega.entregadorNombre
+                              ? ` · Por: ${p.evidenciaEntrega.entregadorNombre}`
+                              : ""}
+                            {p.evidenciaEntrega.capturadoEn
+                              ? ` · ${new Date(p.evidenciaEntrega.capturadoEn).toLocaleString("es-EC")}`
+                              : ""}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => abrirModalEvidencia(p)}
                             style={{
                               display: "inline-flex",
                               alignItems: "center",
                               gap: "5px",
-                              padding: "5px 10px",
+                              padding: "4px 9px",
                               borderRadius: "6px",
-                              background: "#2F4737",
+                              border: "none",
+                              background: "#065F46",
                               color: "#FFFFFF",
-                              textDecoration: "none",
-                              fontSize: "0.73rem",
+                              fontSize: "0.72rem",
                               fontWeight: 700,
+                              cursor: "pointer",
                             }}
                           >
-                            <span>Ver Comprobante</span>
-                            <ExternalLink size={12} />
-                          </a>
+                            <Camera size={12} />
+                            <span>Ver Entrega</span>
+                          </button>
                         </div>
-                        {p.comprobanteTransferencia.mimeType?.startsWith("image/") && (
-                          <img
-                            src={p.comprobanteTransferencia.url}
-                            alt="Comprobante de pago"
-                            style={{
-                              maxWidth: "220px",
-                              maxHeight: "150px",
-                              objectFit: "contain",
-                              borderRadius: "6px",
-                              border: "1px solid #CEDDD3",
-                              background: "#FFFFFF",
-                            }}
-                          />
+                      )}
+
+                      {!p.comprobanteTransferencia?.url &&
+                        !p.respuestaPlux &&
+                        !p.evidenciaEntrega?.confirmada &&
+                        !p.evidenciaEntrega?.fotoUrl && (
+                          <span style={{ fontSize: "0.73rem", color: "#64748B" }}>
+                            Aún sin evidencias adjuntas. Puedes subir el recibo de pago manualmente aquí.
+                          </span>
                         )}
-                      </div>
-                    )}
+                    </div>
 
                     <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
                       {p.tipoOrigen === "PROFORMA_EVENTO" && (

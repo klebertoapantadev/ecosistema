@@ -1837,6 +1837,13 @@ export async function crearOActualizarPedidoOperadorAction(entrada: {
   totalUsd?: number;
   estadoPago?: string;
   metodoPago?: string;
+  comprobanteTransferencia?: {
+    url: string;
+    nombreArchivo: string;
+    mimeType: string;
+    subidoEn?: string;
+    referenciaOpcional?: string;
+  } | null;
 }): Promise<
   | {
       ok: true;
@@ -1874,6 +1881,59 @@ export async function crearOActualizarPedidoOperadorAction(entrada: {
 
     const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
     const supabase = await crearClienteServidor();
+    const dbMeta: any = crearClienteAdmin() ?? supabase;
+
+    // Resolver siempre quién creó el pedido manual / operador para auditoría y trazabilidad
+    let creadorPedidoSnap: {
+      usuario_id: string | null;
+      nombre: string;
+      correo: string | null;
+      origen: string;
+      creado_en: string;
+    } = {
+      usuario_id: null,
+      nombre: "Operador",
+      correo: null,
+      origen: entrada.origenTipo || "MANUAL_ADMIN",
+      creado_en: new Date().toISOString(),
+    };
+    try {
+      const { data: authRes } = await supabase.auth.getUser();
+      const usr = authRes?.user;
+      if (usr?.id) {
+        let nomUsr = usr.email || "Operador";
+        const { data: segUsu } = await dbMeta
+          .schema("comun_seguridad")
+          .from("seg_usuario")
+          .select("usu_nombres, usu_apellidos, usu_correo")
+          .eq("usu_id", usr.id)
+          .maybeSingle();
+        const full = [segUsu?.usu_nombres, segUsu?.usu_apellidos].filter(Boolean).join(" ").trim();
+        if (full) nomUsr = full;
+        else if (segUsu?.usu_correo) nomUsr = String(segUsu.usu_correo);
+        creadorPedidoSnap = {
+          usuario_id: usr.id,
+          nombre: nomUsr,
+          correo: (segUsu?.usu_correo ? String(segUsu.usu_correo) : usr.email) || null,
+          origen: entrada.origenTipo || "MANUAL_ADMIN",
+          creado_en: new Date().toISOString(),
+        };
+      }
+    } catch {
+      // Continuar con respaldo seguro
+    }
+
+    const comprobanteManualSnap = entrada.comprobanteTransferencia?.url
+      ? {
+          url: entrada.comprobanteTransferencia.url,
+          nombre_archivo: entrada.comprobanteTransferencia.nombreArchivo || "comprobante",
+          mime_type: entrada.comprobanteTransferencia.mimeType || "image/jpeg",
+          subido_en: entrada.comprobanteTransferencia.subidoEn || new Date().toISOString(),
+          referencia_opcional: entrada.comprobanteTransferencia.referenciaOpcional || "",
+          subido_por_id: creadorPedidoSnap.usuario_id,
+          subido_por_nombre: creadorPedidoSnap.nombre,
+        }
+      : null;
 
     const enviar = entrada.enviarATaller ?? entrada.origenTipo === "EXEQUIALES_LLAMADA";
 
@@ -1890,6 +1950,49 @@ export async function crearOActualizarPedidoOperadorAction(entrada: {
     );
 
     if (!error && data?.ok) {
+      // Persistir siempre quién creó el pedido (y comprobante manual si aplica) en ota_detalle_orden
+      try {
+        const otaIdCreado = String(data.ordenId || "");
+        if (otaIdCreado && /^[0-9a-f-]{36}$/i.test(otaIdCreado)) {
+          const { data: otaActual } = await dbMeta
+            .schema("comun_comercio")
+            .from("com_orden_taller")
+            .select("ota_id, ota_detalle_orden")
+            .eq("ota_id", otaIdCreado)
+            .maybeSingle();
+          if (otaActual?.ota_id) {
+            const detPrev =
+              otaActual.ota_detalle_orden && typeof otaActual.ota_detalle_orden === "object"
+                ? otaActual.ota_detalle_orden
+                : {};
+            const detNuevo: Record<string, any> = {
+              ...detPrev,
+              creado_por: detPrev.creado_por || creadorPedidoSnap,
+              ...(comprobanteManualSnap
+                ? {
+                    comprobante_transferencia: comprobanteManualSnap,
+                    evidencias: {
+                      ...(detPrev.evidencias && typeof detPrev.evidencias === "object"
+                        ? detPrev.evidencias
+                        : {}),
+                      comprobante_pago: comprobanteManualSnap,
+                    },
+                  }
+                : {}),
+            };
+            await dbMeta
+              .schema("comun_comercio")
+              .from("com_orden_taller")
+              .update({
+                ota_detalle_orden: detNuevo,
+                ota_actualizado_en: new Date().toISOString(),
+              })
+              .eq("ota_id", otaIdCreado);
+          }
+        }
+      } catch {
+        // No bloquear el guardado principal si falla el enriquecimiento de metadata
+      }
       if (enviar) {
         const esExeq = entrada.origenTipo === "EXEQUIALES_LLAMADA";
         const { despacharPushCambioEstadoPedidoTodosLosRoles } = await import(
@@ -2096,6 +2199,13 @@ export async function crearOActualizarPedidoOperadorAction(entrada: {
           tipo_origen: "MANUAL_ADMIN",
           clasificacion_pedido: entrada.clasificacionPedido,
           codigo_orden: codigoManual,
+          creado_por: creadorPedidoSnap,
+          ...(comprobanteManualSnap
+            ? {
+                comprobante_transferencia: comprobanteManualSnap,
+                evidencias: { comprobante_pago: comprobanteManualSnap },
+              }
+            : {}),
           estado_taller: estTaller,
           fecha_elaboracion: enviar ? obtenerFechaHoyEcuadorYmd() : entrada.fechaElaboracion,
           enviado_taller_en: enviar ? new Date().toISOString() : null,

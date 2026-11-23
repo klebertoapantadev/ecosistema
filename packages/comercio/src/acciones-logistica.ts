@@ -712,7 +712,28 @@ export interface EntradaPedidoTienda {
     imagenUrl?: string;
     productoId?: string;
   } | null;
-  comprobanteTransferencia?: ComprobanteTransferenciaSubido | null;
+  comprobanteTransferencia?: (ComprobanteTransferenciaSubido & {
+    subidoPorNombre?: string | null;
+  }) | null;
+  respuestaPlux?: {
+    pagoId?: string | null;
+    identificador?: string | null;
+    autorizacion?: string | null;
+    marcaTarjeta?: string | null;
+    ultimosDigitos?: string | null;
+    montoUsd?: number | null;
+    modalidadCobro?: string | null;
+    estado?: string | null;
+    confirmadoEn?: string | null;
+    respuestaRaw?: unknown;
+  } | null;
+  creadoPor?: {
+    usuarioId?: string | null;
+    nombre: string;
+    correo?: string | null;
+    origen?: string | null;
+    creadoEn?: string | null;
+  } | null;
   conversacionWebId?: string;
   atribucionPublicitaria?: {
     utmSource?: string;
@@ -831,7 +852,28 @@ export interface PedidoTiendaRegistrado {
     imagenUrl?: string;
     productoId?: string;
   } | null;
-  comprobanteTransferencia?: ComprobanteTransferenciaSubido | null;
+  comprobanteTransferencia?: (ComprobanteTransferenciaSubido & {
+    subidoPorNombre?: string | null;
+  }) | null;
+  respuestaPlux?: {
+    pagoId?: string | null;
+    identificador?: string | null;
+    autorizacion?: string | null;
+    marcaTarjeta?: string | null;
+    ultimosDigitos?: string | null;
+    montoUsd?: number | null;
+    modalidadCobro?: string | null;
+    estado?: string | null;
+    confirmadoEn?: string | null;
+    respuestaRaw?: unknown;
+  } | null;
+  creadoPor?: {
+    usuarioId?: string | null;
+    nombre: string;
+    correo?: string | null;
+    origen?: string | null;
+    creadoEn?: string | null;
+  } | null;
   conversacionWebId?: string;
   ordenTallerId?: string | null;
   entregaId?: string | null;
@@ -1156,14 +1198,16 @@ export async function registrarPedidoTiendaAction(
   } = await supabase.auth.getUser();
 
   const configCheckout = await obtenerConfiguracionTiendaCheckoutAction(negNorm);
-  const umbralSinDatos = Math.max(0, Number(configCheckout.montoMaximoPagoSinDatosUsd ?? 50));
-  const esMenorAlUmbral = Number(entrada.totalPagar) < umbralSinDatos;
+  const umbralSinDatos = Math.max(0, Number(configCheckout.montoMaximoPagoSinDatosUsd ?? 0));
+  const esMenorAlUmbral = umbralSinDatos <= 0 || Number(entrada.totalPagar) < umbralSinDatos;
   const esRetiroEnTienda =
     entrada.modalidadEntrega === "unificada"
       ? Boolean(logisticaPrincipal.retiro_en_local)
       : itemsEnriquecidos.every((it) => Boolean(it.entrega_individual?.retiro_en_local));
 
   let esUsuarioRegistradoNegocio = false;
+  let creadorNombreAuth = "";
+  let creadorCorreoAuth = user?.email ? String(user.email).trim() : "";
   if (user?.id) {
     try {
       const dbVerif: any = crearClienteAdmin() ?? supabase;
@@ -1188,11 +1232,17 @@ export async function registrarPedidoTiendaAction(
         dbVerif
           .schema("comun_seguridad")
           .from("seg_usuario")
-          .select("usu_superadmin_plataforma")
+          .select("usu_nombres, usu_apellidos, usu_correo, usu_superadmin_plataforma")
           .eq("usu_id", user.id)
           .maybeSingle(),
       ]);
       esUsuarioRegistradoNegocio = Boolean(mem?.mem_id || usu?.usu_superadmin_plataforma);
+      const nombreCompletoUsu = [usu?.usu_nombres, usu?.usu_apellidos]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+      creadorNombreAuth = nombreCompletoUsu || usu?.usu_correo || creadorCorreoAuth;
+      if (usu?.usu_correo) creadorCorreoAuth = String(usu.usu_correo).trim();
     } catch {
       esUsuarioRegistradoNegocio = Boolean(user);
     }
@@ -1219,7 +1269,7 @@ export async function registrarPedidoTiendaAction(
     }
   }
 
-  if (!esRetiroEnTienda && !esUsuarioRegistradoNegocio && digitosTel.length < 7) {
+  if (digitosTel.length < 7) {
     return {
       ok: false,
       error:
@@ -1301,21 +1351,40 @@ export async function registrarPedidoTiendaAction(
     }
   }
 
+  const comprobanteNormalizado = entrada.comprobanteTransferencia
+    ? {
+        url: entrada.comprobanteTransferencia.url,
+        nombre_archivo: entrada.comprobanteTransferencia.nombreArchivo,
+        mime_type: entrada.comprobanteTransferencia.mimeType,
+        subido_en: entrada.comprobanteTransferencia.subidoEn || new Date().toISOString(),
+        referencia_opcional: entrada.comprobanteTransferencia.referenciaOpcional || "",
+        subido_por_nombre:
+          creadorNombreAuth || nombreIngresado || (telIngresado ? `Cliente (${telIngresado})` : "Cliente Web"),
+      }
+    : null;
+
+  const creadorPedidoSnap = {
+    usuario_id: user?.id || null,
+    nombre:
+      creadorNombreAuth ||
+      nombreIngresado ||
+      (telIngresado ? `Cliente Web (${telIngresado})` : "Cliente Web"),
+    correo: creadorCorreoAuth || correoIngresado || null,
+    origen: esUsuarioRegistradoNegocio ? "CLIENTE_WEB_REGISTRADO" : "CLIENTE_WEB_INVITADO",
+    creado_en: new Date().toISOString(),
+  };
+
   const payloadCompleto = {
     tipo_origen: "PEDIDO_TIENDA",
     estado: estadoInicial,
     metodo_pago: entrada.metodoPago,
     comprador: compradorEfectivo,
     es_consumidor_final: !idIngresada,
-    comprobante_transferencia: entrada.comprobanteTransferencia
-      ? {
-          url: entrada.comprobanteTransferencia.url,
-          nombre_archivo: entrada.comprobanteTransferencia.nombreArchivo,
-          mime_type: entrada.comprobanteTransferencia.mimeType,
-          subido_en: entrada.comprobanteTransferencia.subidoEn || new Date().toISOString(),
-          referencia_opcional: entrada.comprobanteTransferencia.referenciaOpcional || "",
-        }
-      : null,
+    creado_por: creadorPedidoSnap,
+    comprobante_transferencia: comprobanteNormalizado,
+    evidencias: {
+      ...(comprobanteNormalizado ? { comprobante_pago: comprobanteNormalizado } : {}),
+    },
     subtotal_base_imponible: entrada.subtotalBaseImponible,
     total_iva: entrada.totalIva,
     total_flete: entrada.totalFlete,
@@ -2088,28 +2157,72 @@ export async function obtenerPedidosTiendaAction(
         dedicatoria: it.dedicatoria ?? undefined,
         entregaIndividual: it.entrega_individual ?? undefined,
       })),
-      comprobanteTransferencia:
-        det.comprobante_transferencia && typeof det.comprobante_transferencia === "object"
-          ? {
-              url: String(det.comprobante_transferencia.url || ""),
-              nombreArchivo: String(
-                det.comprobante_transferencia.nombre_archivo ||
-                  det.comprobante_transferencia.nombreArchivo ||
-                  "comprobante"
-              ),
-              mimeType: String(
-                det.comprobante_transferencia.mime_type ||
-                  det.comprobante_transferencia.mimeType ||
-                  "image/jpeg"
-              ),
-              subidoEn: det.comprobante_transferencia.subido_en
-                ? String(det.comprobante_transferencia.subido_en)
-                : undefined,
-              referenciaOpcional: det.comprobante_transferencia.referencia_opcional
-                ? String(det.comprobante_transferencia.referencia_opcional)
-                : undefined,
-            }
-          : null,
+      comprobanteTransferencia: (() => {
+        const comp = det.comprobante_transferencia || det.evidencias?.comprobante_pago;
+        if (!comp || typeof comp !== "object" || !comp.url) return null;
+        return {
+          url: String(comp.url || ""),
+          nombreArchivo: String(
+            comp.nombre_archivo || comp.nombreArchivo || "comprobante"
+          ),
+          mimeType: String(
+            comp.mime_type || comp.mimeType || "image/jpeg"
+          ),
+          subidoEn: comp.subido_en
+            ? String(comp.subido_en)
+            : comp.subidoEn
+              ? String(comp.subidoEn)
+              : undefined,
+          referenciaOpcional: comp.referencia_opcional
+            ? String(comp.referencia_opcional)
+            : comp.referenciaOpcional
+              ? String(comp.referenciaOpcional)
+              : undefined,
+          subidoPorNombre: comp.subido_por_nombre
+            ? String(comp.subido_por_nombre)
+            : comp.subidoPorNombre
+              ? String(comp.subidoPorNombre)
+              : null,
+        };
+      })(),
+      respuestaPlux: (() => {
+        const plx = det.ultimo_pago_plux || det.evidencias?.respuesta_plux;
+        if (!plx || typeof plx !== "object") return null;
+        return {
+          pagoId: plx.pago_id ? String(plx.pago_id) : null,
+          identificador: plx.identificador ? String(plx.identificador) : null,
+          autorizacion: plx.autorizacion ? String(plx.autorizacion) : null,
+          marcaTarjeta: plx.marca_tarjeta ? String(plx.marca_tarjeta) : null,
+          ultimosDigitos: plx.ultimos_digitos ? String(plx.ultimos_digitos) : null,
+          montoUsd: plx.monto_usd != null ? Number(plx.monto_usd) : null,
+          modalidadCobro: plx.modalidad_cobro ? String(plx.modalidad_cobro) : null,
+          estado: plx.estado ? String(plx.estado) : "APROBADO",
+          confirmadoEn: plx.confirmado_en ? String(plx.confirmado_en) : null,
+          respuestaRaw: plx.respuesta_raw ?? null,
+        };
+      })(),
+      creadoPor: (() => {
+        const cp = det.creado_por;
+        if (cp && typeof cp === "object" && (cp.nombre || cp.correo)) {
+          return {
+            usuarioId: cp.usuario_id ? String(cp.usuario_id) : null,
+            nombre: String(cp.nombre || cp.correo || "Sistema"),
+            correo: cp.correo ? String(cp.correo) : null,
+            origen: cp.origen ? String(cp.origen) : String(det.tipo_origen || "PEDIDO_TIENDA"),
+            creadoEn: cp.creado_en ? String(cp.creado_en) : String(f.prf_creado_en || ""),
+          };
+        }
+        if (det.tarjeta?.metadata?.creado_por) {
+          return {
+            usuarioId: null,
+            nombre: String(det.tarjeta.metadata.creado_por),
+            correo: null,
+            origen: String(det.tipo_origen || "MANUAL_ADMIN"),
+            creadoEn: String(f.prf_creado_en || ""),
+          };
+        }
+        return null;
+      })(),
       tarjeta:
         det.tarjeta && typeof det.tarjeta === "object"
           ? {
@@ -2313,6 +2426,11 @@ export async function obtenerPedidosTiendaAction(
             o.ota_tarjeta_metadata && typeof o.ota_tarjeta_metadata === "object"
               ? o.ota_tarjeta_metadata
               : {},
+          detalleOrden:
+            o.ota_detalle_orden && typeof o.ota_detalle_orden === "object"
+              ? o.ota_detalle_orden
+              : {},
+          enviadoNombre: o.ota_enviado_nombre ? String(o.ota_enviado_nombre) : null,
         }));
       }
     }
@@ -2398,6 +2516,62 @@ export async function obtenerPedidosTiendaAction(
             salaServicio: p.salaServicio,
             numeroInforme: oVinc.numeroInforme ? String(oVinc.numeroInforme) : null,
           };
+        }
+        const detOtaVinc =
+          (oVinc.detalleOrden && typeof oVinc.detalleOrden === "object"
+            ? oVinc.detalleOrden
+            : oVinc.detalle && typeof oVinc.detalle === "object"
+              ? oVinc.detalle
+              : {}) as Record<string, any>;
+        if (!p.comprobanteTransferencia?.url) {
+          const compOta = detOtaVinc.comprobante_transferencia || detOtaVinc.evidencias?.comprobante_pago;
+          if (compOta && typeof compOta === "object" && compOta.url) {
+            p.comprobanteTransferencia = {
+              url: String(compOta.url),
+              nombreArchivo: String(compOta.nombre_archivo || compOta.nombreArchivo || "comprobante"),
+              mimeType: String(compOta.mime_type || compOta.mimeType || "image/jpeg"),
+              subidoEn: compOta.subido_en ? String(compOta.subido_en) : undefined,
+              referenciaOpcional: compOta.referencia_opcional ? String(compOta.referencia_opcional) : undefined,
+              subidoPorNombre: compOta.subido_por_nombre ? String(compOta.subido_por_nombre) : null,
+            };
+          }
+        }
+        if (!p.respuestaPlux) {
+          const plxOta = detOtaVinc.ultimo_pago_plux || detOtaVinc.evidencias?.respuesta_plux;
+          if (plxOta && typeof plxOta === "object") {
+            p.respuestaPlux = {
+              pagoId: plxOta.pago_id ? String(plxOta.pago_id) : null,
+              identificador: plxOta.identificador ? String(plxOta.identificador) : null,
+              autorizacion: plxOta.autorizacion ? String(plxOta.autorizacion) : null,
+              marcaTarjeta: plxOta.marca_tarjeta ? String(plxOta.marca_tarjeta) : null,
+              ultimosDigitos: plxOta.ultimos_digitos ? String(plxOta.ultimos_digitos) : null,
+              montoUsd: plxOta.monto_usd != null ? Number(plxOta.monto_usd) : null,
+              modalidadCobro: plxOta.modalidad_cobro ? String(plxOta.modalidad_cobro) : null,
+              estado: plxOta.estado ? String(plxOta.estado) : "APROBADO",
+              confirmadoEn: plxOta.confirmado_en ? String(plxOta.confirmado_en) : null,
+              respuestaRaw: plxOta.respuesta_raw ?? null,
+            };
+          }
+        }
+        if (!p.creadoPor) {
+          const cpOta = detOtaVinc.creado_por;
+          if (cpOta && typeof cpOta === "object" && (cpOta.nombre || cpOta.correo)) {
+            p.creadoPor = {
+              usuarioId: cpOta.usuario_id ? String(cpOta.usuario_id) : null,
+              nombre: String(cpOta.nombre || cpOta.correo),
+              correo: cpOta.correo ? String(cpOta.correo) : null,
+              origen: cpOta.origen ? String(cpOta.origen) : String(oVinc.origenTipo || p.tipoOrigen || "MANUAL_ADMIN"),
+              creadoEn: cpOta.creado_en ? String(cpOta.creado_en) : p.creadoEn,
+            };
+          } else if (oVinc.tarjetaMetadata?.creado_por || oVinc.enviadoNombre) {
+            p.creadoPor = {
+              usuarioId: null,
+              nombre: String(oVinc.tarjetaMetadata?.creado_por || oVinc.enviadoNombre),
+              correo: null,
+              origen: String(oVinc.origenTipo || p.tipoOrigen || "MANUAL_ADMIN"),
+              creadoEn: p.creadoEn,
+            };
+          }
         }
         const msgVinc = String(oVinc.dedicatoria ?? p.tarjeta?.mensaje ?? primerDed?.mensaje ?? "");
         p.tarjeta = {
@@ -2612,7 +2786,74 @@ export async function obtenerPedidosTiendaAction(
                 }
               : undefined,
         })),
-        comprobanteTransferencia: null,
+        comprobanteTransferencia: (() => {
+          const detO =
+            (o.detalleOrden && typeof o.detalleOrden === "object"
+              ? o.detalleOrden
+              : o.detalle && typeof o.detalle === "object"
+                ? o.detalle
+                : {}) as Record<string, any>;
+          const comp = detO.comprobante_transferencia || detO.evidencias?.comprobante_pago;
+          if (!comp || typeof comp !== "object" || !comp.url) return null;
+          return {
+            url: String(comp.url),
+            nombreArchivo: String(comp.nombre_archivo || comp.nombreArchivo || "comprobante"),
+            mimeType: String(comp.mime_type || comp.mimeType || "image/jpeg"),
+            subidoEn: comp.subido_en ? String(comp.subido_en) : undefined,
+            referenciaOpcional: comp.referencia_opcional ? String(comp.referencia_opcional) : undefined,
+            subidoPorNombre: comp.subido_por_nombre ? String(comp.subido_por_nombre) : null,
+          };
+        })(),
+        respuestaPlux: (() => {
+          const detO =
+            (o.detalleOrden && typeof o.detalleOrden === "object"
+              ? o.detalleOrden
+              : o.detalle && typeof o.detalle === "object"
+                ? o.detalle
+                : {}) as Record<string, any>;
+          const plx = detO.ultimo_pago_plux || detO.evidencias?.respuesta_plux;
+          if (!plx || typeof plx !== "object") return null;
+          return {
+            pagoId: plx.pago_id ? String(plx.pago_id) : null,
+            identificador: plx.identificador ? String(plx.identificador) : null,
+            autorizacion: plx.autorizacion ? String(plx.autorizacion) : null,
+            marcaTarjeta: plx.marca_tarjeta ? String(plx.marca_tarjeta) : null,
+            ultimosDigitos: plx.ultimos_digitos ? String(plx.ultimos_digitos) : null,
+            montoUsd: plx.monto_usd != null ? Number(plx.monto_usd) : null,
+            modalidadCobro: plx.modalidad_cobro ? String(plx.modalidad_cobro) : null,
+            estado: plx.estado ? String(plx.estado) : "APROBADO",
+            confirmadoEn: plx.confirmado_en ? String(plx.confirmado_en) : null,
+            respuestaRaw: plx.respuesta_raw ?? null,
+          };
+        })(),
+        creadoPor: (() => {
+          const detO =
+            (o.detalleOrden && typeof o.detalleOrden === "object"
+              ? o.detalleOrden
+              : o.detalle && typeof o.detalle === "object"
+                ? o.detalle
+                : {}) as Record<string, any>;
+          const cp = detO.creado_por;
+          if (cp && typeof cp === "object" && (cp.nombre || cp.correo)) {
+            return {
+              usuarioId: cp.usuario_id ? String(cp.usuario_id) : null,
+              nombre: String(cp.nombre || cp.correo),
+              correo: cp.correo ? String(cp.correo) : null,
+              origen: cp.origen ? String(cp.origen) : String(o.origenTipo || "MANUAL_ADMIN"),
+              creadoEn: cp.creado_en ? String(cp.creado_en) : String(o.fechaPedido || ""),
+            };
+          }
+          if (o.tarjetaMetadata?.creado_por || o.enviadoNombre) {
+            return {
+              usuarioId: null,
+              nombre: String(o.tarjetaMetadata?.creado_por || o.enviadoNombre),
+              correo: null,
+              origen: String(o.origenTipo || "MANUAL_ADMIN"),
+              creadoEn: String(o.fechaPedido || ""),
+            };
+          }
+          return null;
+        })(),
         ordenTallerId: String(o.id),
         entregaId: o.entregaId ? String(o.entregaId) : null,
         salaServicio: o.salaServicio ? String(o.salaServicio) : null,
@@ -2779,6 +3020,24 @@ export async function obtenerPedidosTiendaAction(
           },
         ],
         comprobanteTransferencia: null,
+        respuestaPlux: null,
+        creadoPor: detEnt.creado_por && typeof detEnt.creado_por === "object"
+          ? {
+              usuarioId: detEnt.creado_por.usuario_id ? String(detEnt.creado_por.usuario_id) : null,
+              nombre: String(detEnt.creado_por.nombre || detEnt.creado_por.correo || "Operador"),
+              correo: detEnt.creado_por.correo ? String(detEnt.creado_por.correo) : null,
+              origen: String(detEnt.creado_por.origen || "EXEQUIALES_LLAMADA"),
+              creadoEn: String(detEnt.creado_por.creado_en || e.ent_creado_en || ""),
+            }
+          : e.ent_coordinador_nombre
+            ? {
+                usuarioId: null,
+                nombre: String(e.ent_coordinador_nombre),
+                correo: null,
+                origen: "EXEQUIALES_LLAMADA",
+                creadoEn: String(e.ent_creado_en || ""),
+              }
+            : null,
         ordenTallerId: e.ent_orden_taller_id ? String(e.ent_orden_taller_id) : null,
         entregaId: entId,
         salaServicio: sala || null,
@@ -6334,6 +6593,165 @@ export async function actualizarProformaEventoClienteAction(
     total: totalPagar,
     montoReserva70Usd: reserva70,
   };
+}
+
+/**
+ * Adjunta o reemplaza el comprobante/recibo de pago (imagen o PDF subido manualmente)
+ * directamente como evidencia persistente del pedido (`com_proforma` y/o `com_orden_taller`).
+ */
+export async function adjuntarComprobantePedidoAction(entrada: {
+  negocio: string;
+  pedidoId: string;
+  ordenTallerId?: string | null;
+  comprobante: ComprobanteTransferenciaSubido;
+}): Promise<
+  | {
+      ok: true;
+      comprobante: ComprobanteTransferenciaSubido & { subidoPorNombre?: string | null };
+    }
+  | { ok: false; error: string }
+> {
+  try {
+    if (!entrada.comprobante?.url) {
+      return { ok: false, error: "Falta la URL del comprobante subido." };
+    }
+    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user?.id) {
+      return { ok: false, error: "Debes iniciar sesión para adjuntar evidencias al pedido." };
+    }
+
+    const db: any = crearClienteAdmin() ?? supabase;
+    let subidoPorNombre = user.email || "Operador";
+    try {
+      const { data: usu } = await db
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_nombres, usu_apellidos, usu_correo")
+        .eq("usu_id", user.id)
+        .maybeSingle();
+      const nomComp = [usu?.usu_nombres, usu?.usu_apellidos].filter(Boolean).join(" ").trim();
+      if (nomComp) subidoPorNombre = nomComp;
+      else if (usu?.usu_correo) subidoPorNombre = String(usu.usu_correo);
+    } catch {
+      // Fallback al correo de auth
+    }
+
+    const ahoraIso = new Date().toISOString();
+    const compPersistir = {
+      url: entrada.comprobante.url,
+      nombre_archivo: entrada.comprobante.nombreArchivo || "comprobante",
+      mime_type: entrada.comprobante.mimeType || "image/jpeg",
+      subido_en: entrada.comprobante.subidoEn || ahoraIso,
+      referencia_opcional: entrada.comprobante.referenciaOpcional || "",
+      subido_por_id: user.id,
+      subido_por_nombre: subidoPorNombre,
+    };
+
+    let actualizado = false;
+
+    // 1. Actualizar com_proforma si existe con ese ID
+    if (entrada.pedidoId && /^[0-9a-f-]{36}$/i.test(entrada.pedidoId)) {
+      const { data: prf } = await db
+        .schema("comun_comercio")
+        .from("com_proforma")
+        .select("prf_id, prf_detalle_proforma")
+        .eq("prf_id", entrada.pedidoId)
+        .maybeSingle();
+      if (prf?.prf_id) {
+        const detPrev =
+          prf.prf_detalle_proforma && typeof prf.prf_detalle_proforma === "object"
+            ? prf.prf_detalle_proforma
+            : {};
+        const { error: errPrf } = await db
+          .schema("comun_comercio")
+          .from("com_proforma")
+          .update({
+            prf_detalle_proforma: {
+              ...detPrev,
+              comprobante_transferencia: compPersistir,
+              evidencias: {
+                ...(detPrev.evidencias && typeof detPrev.evidencias === "object"
+                  ? detPrev.evidencias
+                  : {}),
+                comprobante_pago: compPersistir,
+              },
+            },
+            prf_actualizado_en: ahoraIso,
+          })
+          .eq("prf_id", prf.prf_id);
+        if (errPrf) {
+          return { ok: false, error: errPrf.message };
+        }
+        actualizado = true;
+      }
+    }
+
+    // 2. Actualizar com_orden_taller (por ota_id o por ota_proforma_id)
+    const idOtaBuscar = entrada.ordenTallerId || entrada.pedidoId;
+    if (idOtaBuscar && /^[0-9a-f-]{36}$/i.test(idOtaBuscar)) {
+      const { data: otaRows } = await db
+        .schema("comun_comercio")
+        .from("com_orden_taller")
+        .select("ota_id, ota_detalle_orden")
+        .or(`ota_id.eq.${idOtaBuscar},ota_proforma_id.eq.${entrada.pedidoId}`)
+        .is("ota_eliminado_en", null)
+        .limit(2);
+
+      if (Array.isArray(otaRows) && otaRows.length > 0) {
+        for (const ota of otaRows) {
+          const detOta =
+            ota.ota_detalle_orden && typeof ota.ota_detalle_orden === "object"
+              ? ota.ota_detalle_orden
+              : {};
+          const { error: errOta } = await db
+            .schema("comun_comercio")
+            .from("com_orden_taller")
+            .update({
+              ota_detalle_orden: {
+                ...detOta,
+                comprobante_transferencia: compPersistir,
+                evidencias: {
+                  ...(detOta.evidencias && typeof detOta.evidencias === "object"
+                    ? detOta.evidencias
+                    : {}),
+                  comprobante_pago: compPersistir,
+                },
+              },
+              ota_actualizado_en: ahoraIso,
+            })
+            .eq("ota_id", ota.ota_id);
+          if (errOta) {
+            return { ok: false, error: errOta.message };
+          }
+          actualizado = true;
+        }
+      }
+    }
+
+    if (!actualizado) {
+      return { ok: false, error: "No se encontró el pedido para guardar el comprobante." };
+    }
+
+    revalidatePath("/panel/pedidos");
+    revalidatePath("/panel");
+    return {
+      ok: true,
+      comprobante: {
+        url: compPersistir.url,
+        nombreArchivo: compPersistir.nombre_archivo,
+        mimeType: compPersistir.mime_type,
+        subidoEn: compPersistir.subido_en,
+        referenciaOpcional: compPersistir.referencia_opcional,
+        subidoPorNombre: compPersistir.subido_por_nombre,
+      },
+    };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || "No se pudo adjuntar el comprobante al pedido." };
+  }
 }
 
 
