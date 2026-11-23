@@ -10,6 +10,7 @@ import {
 } from "./token-orden-firmada";
 import { obtenerConfiguracionTiendaCheckoutAction } from "./acciones-tienda-checkout";
 import type { ComprobanteTransferenciaSubido } from "./configuracion-tienda-checkout";
+import type { SeleccionPersonalizacionFloral } from "./utils/personalizacionFloral";
 import {
   buscarDireccionesPichincha,
   calcularRutaVialOsrm,
@@ -685,6 +686,7 @@ export interface ItemPedidoTiendaInput {
     de: string;
     mensaje: string;
   };
+  personalizacionFloral?: SeleccionPersonalizacionFloral;
   entregaIndividual?: DestinoEntregaPedidoInput;
 }
 
@@ -843,6 +845,7 @@ export interface PedidoTiendaRegistrado {
     impuesto?: string;
     totalLinea: number;
     dedicatoria?: { para: string; de: string; mensaje: string };
+    personalizacionFloral?: SeleccionPersonalizacionFloral;
     entregaIndividual?: Record<string, unknown>;
   }>;
   regaloPrimeraCompra?: {
@@ -1102,6 +1105,7 @@ export async function registrarPedidoTiendaAction(
       impuesto: it.tarifaIva > 0 ? `IVA_${it.tarifaIva}` : "IVA_0",
       total_linea: totalLinea,
       dedicatoria: it.dedicatoria ?? null,
+      personalizacion_floral: it.personalizacionFloral ?? null,
       entrega_individual: entregaInd,
     };
   });
@@ -1346,6 +1350,7 @@ export async function registrarPedidoTiendaAction(
         impuesto: "IVA_0",
         total_linea: 0,
         dedicatoria: null,
+        personalizacion_floral: null,
         entrega_individual: null,
       });
     }
@@ -1396,7 +1401,13 @@ export async function registrarPedidoTiendaAction(
     logistica_entrega: {
       modalidad_entrega: entrada.modalidadEntrega,
       ...logisticaPrincipal,
-      colores: entrada.entregaUnificada?.colores?.trim() || undefined,
+      colores:
+        entrada.entregaUnificada?.colores?.trim() ||
+        itemsEnriquecidos
+          .map((it) => it.personalizacion_floral?.resumenTexto)
+          .filter(Boolean)
+          .join(" | ") ||
+        undefined,
       extras: entrada.entregaUnificada?.extras?.trim() || undefined,
       recargo_horario_exacto_usd: entrada.totalRecargoHorarioExacto,
       parametros_tarifarios_snapshot: {
@@ -2155,6 +2166,8 @@ export async function obtenerPedidosTiendaAction(
         impuesto: String(it.impuesto || "IVA_0"),
         totalLinea: Number(it.total_linea ?? 0),
         dedicatoria: it.dedicatoria ?? undefined,
+        personalizacionFloral:
+          it.personalizacion_floral ?? it.personalizacionFloral ?? undefined,
         entregaIndividual: it.entrega_individual ?? undefined,
       })),
       comprobanteTransferencia: (() => {
@@ -5600,6 +5613,7 @@ export interface ItemExpedientePedidoCliente {
     de?: string;
     mensaje?: string;
   } | null;
+  personalizacionFloral?: SeleccionPersonalizacionFloral | null;
 }
 
 export interface ExpedientePedidoClienteCompleto {
@@ -6019,6 +6033,8 @@ export async function obtenerExpedientePedidosClienteAction(
         subtotal: subtotalItem,
         imagen: detIt.imagen ? String(detIt.imagen) : undefined,
         dedicatoria,
+        personalizacionFloral:
+          detIt.personalizacion_floral ?? detIt.personalizacionFloral ?? null,
       };
     });
 

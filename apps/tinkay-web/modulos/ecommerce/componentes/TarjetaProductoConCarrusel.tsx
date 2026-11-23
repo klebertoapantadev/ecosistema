@@ -1,10 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { describirEscalaVolumen } from '@eco/comercio';
+import {
+  describirConfiguracionPersonalizacionCliente,
+  describirEscalaVolumen,
+  normalizarConfiguracionPersonalizacionFloral,
+} from '@eco/comercio';
 import { ProductoEcommerce, VarianteEcommerce } from '../tipos';
 import { useCarrito } from '../contexto-carrito';
-import { ChevronLeft, ChevronRight, Eye, ShoppingBag, FileText, Heart, CreditCard } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, ShoppingBag, FileText, Heart, CreditCard, Palette } from 'lucide-react';
 
 interface Props {
   producto: ProductoEcommerce;
@@ -16,6 +20,7 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
     agregarItem,
     agregarItemProforma,
     setProductoSeleccionadoModal,
+    abrirProductoParaPersonalizar,
     setDrawerAbierto,
     setCheckoutAbierto,
     esFavorito,
@@ -126,8 +131,30 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
         (producto.tipoOferta || '').toUpperCase() === 'SERVICIO')
   );
 
+  const configPersonalizacion = normalizarConfiguracionPersonalizacionFloral(
+    producto.personalizacionFloral,
+    {
+      habilitadaPorDefecto:
+        !esProductoRenta && !esProductoEvento && !producto.esExtra && !producto.esComplemento,
+    }
+  );
+  const requierePersonalizacionFloral = Boolean(
+    configPersonalizacion.habilitada &&
+      !esProductoRenta &&
+      !esProductoEvento &&
+      !producto.esExtra &&
+      !producto.esComplemento
+  );
+  const textoColoresPreferencia = requierePersonalizacionFloral
+    ? describirConfiguracionPersonalizacionCliente(configPersonalizacion)
+    : '';
+
   const handleAgregar = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (requierePersonalizacionFloral) {
+      abrirProductoParaPersonalizar(producto, varianteSeleccionada.sku);
+      return;
+    }
     const prodParaCarrito: ProductoEcommerce = {
       ...producto,
       nombre: producto.nombre,
@@ -345,6 +372,38 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
           </button>
         </h3>
         <p className="descripcion-corta-carrusel">{producto.descripcionCorta}</p>
+
+        {requierePersonalizacionFloral && (
+          <div
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
+              marginTop: '4px',
+              marginBottom: '6px',
+              padding: '3px 8px',
+              borderRadius: '999px',
+              background: esCondolenciasSobrio ? '#F4F4F5' : '#FDF2F8',
+              border: esCondolenciasSobrio ? '1px solid #E4E4E7' : '1px solid #FBCFE8',
+              color: esCondolenciasSobrio ? '#3F3F46' : '#9D174D',
+              fontSize: '0.69rem',
+              fontWeight: 600,
+              maxWidth: '100%',
+            }}
+            title="Al comprar podrás elegir tus colores de preferencia o los mismos colores de la foto"
+          >
+            <Palette size={12} style={{ flexShrink: 0 }} />
+            <span
+              style={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {textoColoresPreferencia || 'Elaborado en los colores de tu preferencia'}
+            </span>
+          </div>
+        )}
 
         {/* Selector de Variantes Rápidas (solo si el producto no está desplegado individualmente por variante) */}
         {!producto.varianteInicialSku && producto.variantes.length > 1 && (

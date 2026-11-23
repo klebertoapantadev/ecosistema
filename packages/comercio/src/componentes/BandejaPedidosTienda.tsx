@@ -2876,6 +2876,22 @@ export function BandejaPedidosTienda({
                         </strong>
                         {it.totalLinea > 0 && <span>${it.totalLinea.toFixed(2)}</span>}
                       </div>
+                      {it.personalizacionFloral?.resumenTexto && (
+                        <div
+                          style={{
+                            marginTop: "3px",
+                            fontSize: "0.73rem",
+                            color: "#831843",
+                            background: "#FDF2F8",
+                            border: "1px solid #FBCFE8",
+                            borderRadius: "6px",
+                            padding: "5px 8px",
+                          }}
+                        >
+                          <strong>🎨 Personalización floral:</strong>{" "}
+                          {it.personalizacionFloral.resumenTexto}
+                        </div>
+                      )}
                       {it.dedicatoria?.mensaje && (
                         <div
                           style={{

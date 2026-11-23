@@ -93,6 +93,11 @@ import {
   SelectorEncuadreFoto,
   type PasoWizardProducto,
 } from "./BarraPasosWizardProducto";
+import { EditorPersonalizacionFloralProducto } from "./EditorPersonalizacionFloralProducto";
+import {
+  crearConfiguracionPersonalizacionFloralPorDefecto,
+  type ConfiguracionPersonalizacionFloral,
+} from "../utils/personalizacionFloral";
 
 interface Props {
   abierto: boolean;
@@ -146,6 +151,10 @@ export function ModalCrearProducto({
   const [rentaConfig, setRentaConfig] = useState<ConfiguracionRentaProducto>(() =>
     normalizarConfiguracionRenta()
   );
+  const [personalizacionFloral, setPersonalizacionFloral] =
+    useState<ConfiguracionPersonalizacionFloral>(() =>
+      crearConfiguracionPersonalizacionFloralPorDefecto(esFloristeria)
+    );
   const [precioBase, setPrecioBase] = useState<number | "">("");
   const [precioComparacion, setPrecioComparacion] = useState<number | "">("");
   const [tarifaIva, setTarifaIva] = useState<number>(esFloristeria ? 0 : 15);
@@ -771,6 +780,8 @@ export function ModalCrearProducto({
         esCombo: esComboCrear,
         comboComponentes: esComboCrear ? normalizarComponentesCombo(comboComponentesCrear) : [],
         escalasVolumen: normalizarEscalasVolumen(escalasVolumenCrear),
+        personalizacionFloral:
+          esFloristeria && !esOfertaRentaActiva ? personalizacionFloral : null,
         negocio,
       });
 
@@ -1675,6 +1686,13 @@ export function ModalCrearProducto({
                     }}
                   />
                 </div>
+
+                {esFloristeria && !esOfertaRentaActiva && (
+                  <EditorPersonalizacionFloralProducto
+                    valor={personalizacionFloral}
+                    onChange={setPersonalizacionFloral}
+                  />
+                )}
               </div>
             )}
 

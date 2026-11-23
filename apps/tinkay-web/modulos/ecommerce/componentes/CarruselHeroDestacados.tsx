@@ -149,11 +149,15 @@ export function CarruselHeroDestacados() {
           </div>
           <div className="pilar-item">
             <ShieldCheck size={16} />
-            <span>Rosas de exportación garantizadas</span>
+            <span>Rosas Ecuatorianas recién cosechadas</span>
           </div>
           <div className="pilar-item">
             <Heart size={16} />
-            <span>Tarjeta caligráfica personalizada</span>
+            <span>Tarjeta dedicatoria Impresa y/o Digital</span>
+          </div>
+          <div className="pilar-item">
+            <Sparkles size={16} />
+            <span>Decoración floral de eventos</span>
           </div>
         </div>
       </div>

@@ -5,6 +5,7 @@ import { normalizarTextoEcommerce } from './filtrado-catalogo';
 import {
   esCodigoOfertaRenta,
   normalizarComponentesCombo,
+  normalizarConfiguracionPersonalizacionFloral,
   normalizarConfiguracionRenta,
   normalizarEscalasVolumen,
   obtenerEtiquetaCortaTipoOferta,
@@ -67,6 +68,7 @@ interface SupabaseProductoRaw {
     es_renta?: boolean;
     tipo_oferta_etiqueta?: string;
     renta_config?: unknown;
+    personalizacion_floral?: unknown;
     canales_visibilidad?: string[];
     vigencia_tipo?: 'SIEMPRE' | 'RANGO_FECHAS' | 'ESTACIONAL_ANUAL';
     fecha_inicio?: string;
@@ -701,6 +703,12 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
             ? Math.max(0, Number(detalle.logistica?.recargo_transporte_usd))
             : 0,
           totalMeGusta: Math.max(0, Number(p.pro_total_me_gusta ?? 0) || 0),
+          personalizacionFloral: normalizarConfiguracionPersonalizacionFloral(
+            detalle.personalizacion_floral,
+            {
+              habilitadaPorDefecto: !esRentaProd && !esEventoProd && !esExtra,
+            }
+          ),
         };
       });
 

@@ -4349,10 +4349,10 @@
 
   /* Hero */
   .hero-carrusel-contenedor {
-    min-height: 460px;
+    min-height: 490px;
   }
   .hero-contenido-editorial {
-    padding: 40px 18px;
+    padding: 36px 18px 82px;
     max-width: 100%;
   }
   .hero-titulo-display {

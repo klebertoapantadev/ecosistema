@@ -1,11 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
+  OPCIONES_COLOR_BASE_PAPEL,
   calcularPrecioPorVolumen,
   capturarYPersistirAtribucionNavegador,
   describirEscalaVolumen,
   dispararEventoPixelNavegador,
+  formatearResumenPersonalizacionFloral,
+  modoRequiereColoresRosas,
+  normalizarConfiguracionPersonalizacionFloral,
+  obtenerColoresRosasHabilitados,
+  obtenerModosFlorDisponibles,
+  validarSeleccionPersonalizacionFloral,
+  type ColorBasePapelId,
+  type ModoFlorPersonalizacion,
+  type SeleccionPersonalizacionFloral,
 } from '@eco/comercio';
 import { useCarrito } from '../contexto-carrito';
 import { PRODUCTOS_TINKAY, FRASES_DEDICATORIAS } from '../datos-catalogo';
@@ -34,12 +44,16 @@ import {
   FileText,
   CreditCard,
   Heart,
+  Palette,
+  Camera,
 } from 'lucide-react';
 
 export function ModalDetalleProducto() {
   const {
     productoSeleccionadoModal,
     setProductoSeleccionadoModal,
+    focoPersonalizacionModal,
+    setFocoPersonalizacionModal,
     setDrawerAbierto,
     setCheckoutAbierto,
     agregarItem,
@@ -53,6 +67,7 @@ export function ModalDetalleProducto() {
   } = useCarrito();
 
   const producto = productoSeleccionadoModal;
+  const personalizacionRef = useRef<HTMLDivElement | null>(null);
 
   const [fotoActivaIndex, setFotoActivaIndex] = useState(0);
   const [linkModalCopiado, setLinkModalCopiado] = useState(false);
@@ -110,8 +125,51 @@ export function ModalDetalleProducto() {
       setComplementosSeleccionados([]);
       setIncluirDedicatoria(false);
       setDedicatoria({ para: '', de: '', mensaje: '' });
+
+      // Reiniciar personalización floral según la configuración del producto
+      const esRentaTmp = Boolean(
+        producto.esRenta ||
+          producto.tipoOferta?.toUpperCase().includes('RENTA') ||
+          producto.tipoOferta?.toUpperCase().includes('ALQUILER')
+      );
+      const esEventoTmp = Boolean(
+        !esRentaTmp &&
+          !producto.esExtra &&
+          !producto.esComplemento &&
+          (producto.esEvento === true ||
+            (producto.categoriaPrincipal || '').toLowerCase().includes('evento') ||
+            (producto.categoriaNombre || '').toLowerCase().includes('evento') ||
+            (producto.tipoOferta || '').toUpperCase() === 'SERVICIO')
+      );
+      const cfgPers = normalizarConfiguracionPersonalizacionFloral(
+        producto.personalizacionFloral,
+        {
+          habilitadaPorDefecto:
+            !esRentaTmp && !esEventoTmp && !producto.esExtra && !producto.esComplemento,
+        }
+      );
+      const modosDisp = obtenerModosFlorDisponibles(cfgPers);
+      setMismosColoresFoto(false);
+      setModoFloresSel(modosDisp[0]?.id ?? 'solo_rosas');
+      setColoresRosasSel([]);
+      setCantidadOrquideasSel(cfgPers.orquideasMin);
+      setColorBasePapelSel(null);
+      setIndicacionesAdicionales('');
+      setErrorPersonalizacion(null);
     }
   }, [producto, productos]);
+
+  // Cuando el cliente hace clic en "Comprar" desde la tarjeta, enfocar suavemente la personalización floral
+  React.useEffect(() => {
+    if (!producto || !focoPersonalizacionModal) return;
+    const timer = window.setTimeout(() => {
+      if (personalizacionRef.current) {
+        personalizacionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      setFocoPersonalizacionModal(false);
+    }, 180);
+    return () => window.clearTimeout(timer);
+  }, [producto, focoPersonalizacionModal, setFocoPersonalizacionModal]);
 
   React.useEffect(() => {
     if (!producto || !varianteSeleccionada?.sku) return;
@@ -159,6 +217,15 @@ export function ModalDetalleProducto() {
     de: '',
     mensaje: '',
   });
+
+  // Estado para personalización floral (colores de rosas, combinación de flores, orquídeas, base/papel e indicaciones)
+  const [mismosColoresFoto, setMismosColoresFoto] = useState(false);
+  const [modoFloresSel, setModoFloresSel] = useState<ModoFlorPersonalizacion>('solo_rosas');
+  const [coloresRosasSel, setColoresRosasSel] = useState<string[]>([]);
+  const [cantidadOrquideasSel, setCantidadOrquideasSel] = useState<number>(0);
+  const [colorBasePapelSel, setColorBasePapelSel] = useState<ColorBasePapelId | null>(null);
+  const [indicacionesAdicionales, setIndicacionesAdicionales] = useState('');
+  const [errorPersonalizacion, setErrorPersonalizacion] = useState<string | null>(null);
 
   // Estado para complementos rápidos seleccionados
   const [complementosSeleccionados, setComplementosSeleccionados] = useState<string[]>([]);
@@ -538,8 +605,65 @@ export function ModalDetalleProducto() {
     });
   }, [varianteSeleccionada, cantidadModal]);
 
+  const configPersonalizacionFloral = React.useMemo(() => {
+    if (!producto) return null;
+    const habilitadaDef =
+      !esProductoRenta && !esProductoEvento && !producto.esExtra && !producto.esComplemento;
+    return normalizarConfiguracionPersonalizacionFloral(producto.personalizacionFloral, {
+      habilitadaPorDefecto: habilitadaDef,
+    });
+  }, [producto, esProductoRenta, esProductoEvento]);
+
+  const personalizacionFloralActiva = Boolean(
+    configPersonalizacionFloral?.habilitada &&
+      !esProductoRenta &&
+      !esProductoEvento &&
+      !producto?.esExtra &&
+      !producto?.esComplemento
+  );
+
+  const toggleColorRosaCliente = (etiquetaColor: string) => {
+    if (!configPersonalizacionFloral) return;
+    setErrorPersonalizacion(null);
+    setMismosColoresFoto(false);
+    const maxCol = Math.max(1, configPersonalizacionFloral.maxColoresRosas);
+    setColoresRosasSel((prev) => {
+      if (prev.includes(etiquetaColor)) {
+        return prev.filter((c) => c !== etiquetaColor);
+      }
+      if (maxCol === 1) {
+        return [etiquetaColor];
+      }
+      if (prev.length >= maxCol) {
+        return [...prev.slice(1), etiquetaColor];
+      }
+      return [...prev, etiquetaColor];
+    });
+  };
+
   const handleAgregarAlCarrito = (irDirectoAlPago = false) => {
     if (!producto) return;
+
+    let personalizacionFinal: SeleccionPersonalizacionFloral | undefined;
+    if (personalizacionFloralActiva && configPersonalizacionFloral) {
+      const validacion = validarSeleccionPersonalizacionFloral(configPersonalizacionFloral, {
+        mismosColoresFoto,
+        modoFlores: modoFloresSel,
+        coloresRosas: coloresRosasSel,
+        cantidadOrquideas: cantidadOrquideasSel,
+        colorBasePapel: colorBasePapelSel,
+        indicacionesAdicionales,
+      });
+      if (!validacion.ok) {
+        setErrorPersonalizacion(validacion.error);
+        if (personalizacionRef.current) {
+          personalizacionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+      setErrorPersonalizacion(null);
+      personalizacionFinal = validacion.seleccionFinal;
+    }
 
     const abrirDrawerCarrito = !irDirectoAlPago;
     const dedicatoriaActiva =
@@ -581,7 +705,8 @@ export function ModalDetalleProducto() {
             dedicatoriaActiva,
             undefined,
             1,
-            abrirDrawerCarrito
+            abrirDrawerCarrito,
+            personalizacionFinal
           );
         }
       } else {
@@ -609,7 +734,8 @@ export function ModalDetalleProducto() {
               !dedicatoriaAsignada ? dedicatoriaActiva : undefined,
               undefined,
               fila.cantidadElegida,
-              abrirDrawerCarrito
+              abrirDrawerCarrito,
+              !dedicatoriaAsignada ? personalizacionFinal : undefined
             );
             dedicatoriaAsignada = true;
           }
@@ -623,7 +749,7 @@ export function ModalDetalleProducto() {
         fotos: varianteSeleccionada.foto ? [varianteSeleccionada.foto] : producto.fotos,
       };
 
-      // 1. Agregar el arreglo principal con su variante, cantidad y dedicatoria (o a la Proforma si es Evento)
+      // 1. Agregar el arreglo principal con su variante, cantidad, personalización floral y dedicatoria (o a la Proforma si es Evento)
       if (esProductoEvento) {
         agregarItemProforma(productoParaCarrito, varianteSeleccionada, cantidadModal);
       } else {
@@ -633,7 +759,8 @@ export function ModalDetalleProducto() {
           dedicatoriaActiva,
           undefined,
           cantidadModal,
-          abrirDrawerCarrito
+          abrirDrawerCarrito,
+          personalizacionFinal
         );
       }
     }
@@ -1966,6 +2093,606 @@ export function ModalDetalleProducto() {
               </div>
             )}
 
+            {/* Personalización Floral Obligatoria al Comprar (Colores, Combinación de Flores, Orquídeas, Base/Papel e Indicaciones) */}
+            {personalizacionFloralActiva && configPersonalizacionFloral && (() => {
+              const modosFlor = obtenerModosFlorDisponibles(configPersonalizacionFloral);
+              const coloresHabilitados = obtenerColoresRosasHabilitados(configPersonalizacionFloral);
+              const pideColoresRosas =
+                !mismosColoresFoto &&
+                modoRequiereColoresRosas(modoFloresSel, configPersonalizacionFloral);
+              const opcionesBaseDisponibles = OPCIONES_COLOR_BASE_PAPEL.filter((op) =>
+                configPersonalizacionFloral.coloresBaseDisponibles.includes(op.id)
+              );
+              const resumenActual = formatearResumenPersonalizacionFloral({
+                mismosColoresFoto,
+                modoFlores: modoFloresSel,
+                coloresRosas: coloresRosasSel,
+                cantidadOrquideas: cantidadOrquideasSel,
+                colorBasePapel: colorBasePapelSel,
+                indicacionesAdicionales,
+              });
+
+              return (
+                <div
+                  ref={personalizacionRef}
+                  id="bloque-personalizacion-floral-modal"
+                  style={{
+                    marginBottom: '16px',
+                    padding: '14px',
+                    borderRadius: '14px',
+                    background: '#FFFDFB',
+                    border: errorPersonalizacion
+                      ? '2px solid #DC2626'
+                      : '1.5px solid #F3D6E0',
+                    boxShadow: errorPersonalizacion
+                      ? '0 0 0 3px rgba(220, 38, 38, 0.12)'
+                      : '0 4px 14px rgba(190, 24, 93, 0.06)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                  }}
+                >
+                  {/* Encabezado y aviso de elaboración a medida */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '8px',
+                        flexWrap: 'wrap',
+                      }}
+                    >
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          fontSize: '0.88rem',
+                          fontWeight: 800,
+                          color: '#1F1C19',
+                        }}
+                      >
+                        <Palette size={16} color="#BE185D" />
+                        <span>1. Personaliza tu Arreglo</span>
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          color: '#9D174D',
+                          background: '#FDF2F8',
+                          border: '1px solid #FBCFE8',
+                          padding: '2px 8px',
+                          borderRadius: '999px',
+                        }}
+                      >
+                        Requerido para comprar
+                      </span>
+                    </div>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: '0.78rem',
+                        color: '#57524C',
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      ✨ <strong>Este arreglo se elabora en los colores de tu preferencia.</strong>{' '}
+                      Elige tu combinación ideal o solicita los mismos colores de la foto.
+                    </p>
+                  </div>
+
+                  {/* Opción rápida: Mismos colores de la foto vs Elegir colores */}
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(155px, 100%), 1fr))',
+                      gap: '8px',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMismosColoresFoto(true);
+                        setErrorPersonalizacion(null);
+                      }}
+                      title="Mantener exactamente los mismos colores y papel de la foto"
+                      aria-pressed={mismosColoresFoto}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '7px',
+                        padding: '10px 12px',
+                        borderRadius: '11px',
+                        border: mismosColoresFoto
+                          ? '2px solid #2F4737'
+                          : '1.5px solid #D5CFC4',
+                        background: mismosColoresFoto ? '#2F4737' : '#FFFFFF',
+                        color: mismosColoresFoto ? '#FFFFFF' : '#1F1C19',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {mismosColoresFoto ? <Check size={15} /> : <Camera size={15} />}
+                      <span>Mismos colores de la foto</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMismosColoresFoto(false);
+                        setErrorPersonalizacion(null);
+                      }}
+                      title="Elegir colores de rosas, flores y color base/papel"
+                      aria-pressed={!mismosColoresFoto}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '7px',
+                        padding: '10px 12px',
+                        borderRadius: '11px',
+                        border: !mismosColoresFoto
+                          ? '2px solid #BE185D'
+                          : '1.5px solid #D5CFC4',
+                        background: !mismosColoresFoto ? '#FDF2F8' : '#FFFFFF',
+                        color: !mismosColoresFoto ? '#9D174D' : '#1F1C19',
+                        fontSize: '0.8rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Palette size={15} />
+                      <span>Elegir mis colores</span>
+                    </button>
+                  </div>
+
+                  {mismosColoresFoto ? (
+                    <div
+                      style={{
+                        padding: '9px 12px',
+                        borderRadius: '10px',
+                        background: '#F0FDF4',
+                        border: '1px solid #BBF7D0',
+                        color: '#166534',
+                        fontSize: '0.78rem',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '7px',
+                      }}
+                    >
+                      <Check size={15} style={{ flexShrink: 0 }} />
+                      <span>
+                        Elaboraremos tu arreglo respetando los mismos colores de flores y papel mostrados en la foto.
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Combinación de flores (si el producto tiene >1 modalidad) */}
+                      {modosFlor.length > 1 && (
+                        <div>
+                          <span
+                            style={{
+                              display: 'block',
+                              fontSize: '0.75rem',
+                              fontWeight: 800,
+                              color: '#221E1B',
+                              marginBottom: '6px',
+                            }}
+                          >
+                            Combinación de flores *
+                          </span>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
+                            {modosFlor.map((modo) => {
+                              const activo = modoFloresSel === modo.id;
+                              return (
+                                <button
+                                  key={modo.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setModoFloresSel(modo.id);
+                                    setErrorPersonalizacion(null);
+                                  }}
+                                  aria-pressed={activo}
+                                  style={{
+                                    padding: '8px 12px',
+                                    borderRadius: '10px',
+                                    border: activo
+                                      ? '1.5px solid #2F4737'
+                                      : '1px solid #D5CFC4',
+                                    background: activo ? '#2F4737' : '#FFFFFF',
+                                    color: activo ? '#FFFFFF' : '#221E1B',
+                                    fontSize: '0.78rem',
+                                    fontWeight: 700,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '5px',
+                                  }}
+                                >
+                                  {activo && <Check size={13} />}
+                                  <span>
+                                    {modo.id === 'solo_girasoles'
+                                      ? '🌻 '
+                                      : modo.id === 'girasoles_y_rosas'
+                                      ? '🌻🌹 '
+                                      : '🌹 '}
+                                    {modo.etiqueta}
+                                  </span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Selector de Colores de Rosas */}
+                      {pideColoresRosas && (
+                        <div>
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '6px',
+                              marginBottom: '6px',
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontSize: '0.75rem',
+                                fontWeight: 800,
+                                color: '#221E1B',
+                              }}
+                            >
+                              {configPersonalizacionFloral.maxColoresRosas === 1
+                                ? 'Color de rosas (elige 1 color) *'
+                                : `Colores de rosas (elige hasta ${configPersonalizacionFloral.maxColoresRosas} colores) *`}
+                            </span>
+                            <span
+                              style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 700,
+                                color: coloresRosasSel.length > 0 ? '#2F4737' : '#BE185D',
+                              }}
+                            >
+                              {coloresRosasSel.length}/{configPersonalizacionFloral.maxColoresRosas}
+                            </span>
+                          </div>
+
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
+                            {coloresHabilitados.map((col) => {
+                              const activo = coloresRosasSel.includes(col.etiqueta);
+                              return (
+                                <button
+                                  key={col.clave}
+                                  type="button"
+                                  onClick={() => toggleColorRosaCliente(col.etiqueta)}
+                                  aria-pressed={activo}
+                                  title={`Seleccionar color ${col.etiqueta}`}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '6px 11px',
+                                    borderRadius: '999px',
+                                    border: activo
+                                      ? '2px solid #BE185D'
+                                      : '1px solid #E4DDD4',
+                                    background: activo ? '#FDF2F8' : '#FFFFFF',
+                                    color: activo ? '#831843' : '#27272A',
+                                    fontSize: '0.76rem',
+                                    fontWeight: activo ? 800 : 600,
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      width: '13px',
+                                      height: '13px',
+                                      borderRadius: '999px',
+                                      background: col.colorHex,
+                                      border: `1px solid ${col.bordeHex || 'rgba(0,0,0,0.2)'}`,
+                                      flexShrink: 0,
+                                    }}
+                                  />
+                                  <span>{col.etiqueta}</span>
+                                  {activo && <Check size={12} color="#BE185D" />}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Color Base / Papel Decorativo (únicamente Claros, Oscuros, Rosa) */}
+                      {configPersonalizacionFloral.mostrarColorBase &&
+                        opcionesBaseDisponibles.length > 0 && (
+                          <div>
+                            <span
+                              style={{
+                                display: 'block',
+                                fontSize: '0.75rem',
+                                fontWeight: 800,
+                                color: '#221E1B',
+                                marginBottom: '6px',
+                              }}
+                            >
+                              Color Base / Papel Decorativo *
+                            </span>
+                            <div
+                              style={{
+                                display: 'grid',
+                                gridTemplateColumns:
+                                  'repeat(auto-fit, minmax(min(130px, 100%), 1fr))',
+                                gap: '8px',
+                              }}
+                            >
+                              {opcionesBaseDisponibles.map((op) => {
+                                const activo = colorBasePapelSel === op.id;
+                                return (
+                                  <button
+                                    key={op.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setColorBasePapelSel(op.id);
+                                      setErrorPersonalizacion(null);
+                                    }}
+                                    aria-pressed={activo}
+                                    style={{
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      alignItems: 'flex-start',
+                                      gap: '4px',
+                                      padding: '9px 10px',
+                                      borderRadius: '11px',
+                                      border: activo
+                                        ? '2px solid #2F4737'
+                                        : '1px solid #E4DDD4',
+                                      background: activo ? '#F2F6F3' : '#FFFFFF',
+                                      color: '#1F1C19',
+                                      cursor: 'pointer',
+                                      textAlign: 'left',
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        width: '100%',
+                                      }}
+                                    >
+                                      <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                        <span
+                                          style={{
+                                            width: '16px',
+                                            height: '16px',
+                                            borderRadius: '999px',
+                                            background: op.coloresMuestra[0],
+                                            border: '1px solid rgba(0,0,0,0.22)',
+                                          }}
+                                        />
+                                        <span
+                                          style={{
+                                            width: '16px',
+                                            height: '16px',
+                                            borderRadius: '999px',
+                                            background: op.coloresMuestra[1],
+                                            border: '1px solid rgba(0,0,0,0.22)',
+                                            marginLeft: '-5px',
+                                          }}
+                                        />
+                                      </span>
+                                      {activo && <Check size={14} color="#2F4737" />}
+                                    </div>
+                                    <strong style={{ fontSize: '0.78rem', lineHeight: 1.2 }}>
+                                      {op.etiqueta}
+                                    </strong>
+                                    <span style={{ fontSize: '0.7rem', color: '#57524C' }}>
+                                      {op.detalle}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                    </>
+                  )}
+
+                  {/* Orquídeas (desde orquideasMin hasta orquideasMax) */}
+                  {configPersonalizacionFloral.orquideasMax > 0 && (
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '10px',
+                        flexWrap: 'wrap',
+                        padding: '9px 11px',
+                        borderRadius: '10px',
+                        background: '#FAF5FF',
+                        border: '1px solid #E9D5FF',
+                      }}
+                    >
+                      <div>
+                        <strong
+                          style={{
+                            display: 'block',
+                            fontSize: '0.78rem',
+                            color: '#581C87',
+                          }}
+                        >
+                          🌺 Cantidad de Orquídeas ({configPersonalizacionFloral.orquideasMin} a{' '}
+                          {configPersonalizacionFloral.orquideasMax})
+                        </strong>
+                        <span style={{ fontSize: '0.71rem', color: '#6B21A8' }}>
+                          {cantidadOrquideasSel === 0
+                            ? '0 orquídeas (sin orquídeas)'
+                            : `${cantidadOrquideasSel} ${
+                                cantidadOrquideasSel === 1 ? 'orquídea' : 'orquídeas'
+                              } en tu combinación`}
+                        </span>
+                      </div>
+
+                      <div
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          border: '1px solid #D8B4FE',
+                          borderRadius: '999px',
+                          background: '#FFFFFF',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCantidadOrquideasSel((prev) =>
+                              Math.max(configPersonalizacionFloral.orquideasMin, prev - 1)
+                            )
+                          }
+                          disabled={cantidadOrquideasSel <= configPersonalizacionFloral.orquideasMin}
+                          aria-label="Disminuir orquídeas"
+                          style={{
+                            border: 'none',
+                            background: 'transparent',
+                            minWidth: '34px',
+                            minHeight: '34px',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#581C87',
+                            opacity:
+                              cantidadOrquideasSel <= configPersonalizacionFloral.orquideasMin
+                                ? 0.4
+                                : 1,
+                          }}
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span
+                          style={{
+                            minWidth: '28px',
+                            textAlign: 'center',
+                            fontWeight: 800,
+                            fontSize: '0.84rem',
+                            color: '#581C87',
+                          }}
+                        >
+                          {cantidadOrquideasSel}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCantidadOrquideasSel((prev) =>
+                              Math.min(configPersonalizacionFloral.orquideasMax, prev + 1)
+                            )
+                          }
+                          disabled={cantidadOrquideasSel >= configPersonalizacionFloral.orquideasMax}
+                          aria-label="Aumentar orquídeas"
+                          style={{
+                            border: 'none',
+                            background: 'transparent',
+                            minWidth: '34px',
+                            minHeight: '34px',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#581C87',
+                            opacity:
+                              cantidadOrquideasSel >= configPersonalizacionFloral.orquideasMax
+                                ? 0.4
+                                : 1,
+                          }}
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Indicaciones adicionales */}
+                  {configPersonalizacionFloral.permitirIndicacionesAdicionales && (
+                    <div>
+                      <label
+                        style={{
+                          display: 'block',
+                          fontSize: '0.75rem',
+                          fontWeight: 700,
+                          color: '#57524C',
+                          marginBottom: '4px',
+                        }}
+                      >
+                        Indicaciones adicionales (opcional)
+                      </label>
+                      <textarea
+                        rows={2}
+                        maxLength={500}
+                        placeholder="Ej. Girasoles con 1 rosa roja al centro, tono pastel suave, cinta dorada..."
+                        value={indicacionesAdicionales}
+                        onChange={(e) => setIndicacionesAdicionales(e.target.value)}
+                        className="textarea-dedicatoria"
+                        style={{
+                          width: '100%',
+                          padding: '8px 11px',
+                          borderRadius: '10px',
+                          border: '1px solid #D5CFC4',
+                          fontSize: '0.82rem',
+                          background: '#FFFFFF',
+                          boxSizing: 'border-box',
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Vista previa de selección o alerta de validación */}
+                  {errorPersonalizacion ? (
+                    <div
+                      role="alert"
+                      style={{
+                        padding: '8px 11px',
+                        borderRadius: '9px',
+                        background: '#FEF2F2',
+                        border: '1px solid #FECACA',
+                        color: '#B91C1C',
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                      }}
+                    >
+                      ⚠️ {errorPersonalizacion}
+                    </div>
+                  ) : (
+                    (mismosColoresFoto ||
+                      coloresRosasSel.length > 0 ||
+                      modoFloresSel === 'solo_girasoles' ||
+                      colorBasePapelSel) && (
+                      <div
+                        style={{
+                          fontSize: '0.74rem',
+                          color: '#2F4737',
+                          background: '#F4F7F5',
+                          border: '1px solid #D6E4DA',
+                          borderRadius: '9px',
+                          padding: '7px 10px',
+                          lineHeight: 1.4,
+                        }}
+                      >
+                        <strong>Tu selección:</strong> {resumenActual}
+                      </div>
+                    )
+                  )}
+                </div>
+              );
+            })()}
+
             {/* Tarjeta de Dedicatoria Personalizada Opcional (solo para ramos/arreglos retail, nunca en renta ni en eventos bajo proforma) */}
             {!esProductoRenta && !esProductoEvento && (
               <div className="bloque-dedicatoria-modal">
@@ -1976,7 +2703,11 @@ export function ModalDetalleProducto() {
                       checked={incluirDedicatoria}
                       onChange={(e) => setIncluirDedicatoria(e.target.checked)}
                     />
-                    <span>1. Agregar Tarjeta de Dedicatoria Impresa (Gratis)</span>
+                    <span>
+                      {personalizacionFloralActiva
+                        ? '2. Agregar Tarjeta Dedicatoria Impresa y/o Digital (Gratis)'
+                        : '1. Agregar Tarjeta Dedicatoria Impresa y/o Digital (Gratis)'}
+                    </span>
                   </label>
                 </div>
 
@@ -2063,6 +2794,8 @@ export function ModalDetalleProducto() {
                       ? '¿Deseas agregar otro mobiliario o artículo en renta para tu evento?'
                       : esProductoEvento
                       ? '¿Deseas cotizar otros elementos decorativos para tu evento?'
+                      : personalizacionFloralActiva
+                      ? '3. ¿Deseas acompañar tu arreglo con algún detalle?'
                       : '2. ¿Deseas acompañar tu arreglo con algún detalle?'}
                   </label>
                   <span className="subtitulo-seccion-complementos">

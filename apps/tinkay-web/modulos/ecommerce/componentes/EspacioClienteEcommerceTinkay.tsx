@@ -1061,6 +1061,22 @@ function ContenidoEspacioCliente({
                               </span>
                               <strong>${it.subtotal.toFixed(2)}</strong>
                             </div>
+                            {it.personalizacionFloral?.resumenTexto && (
+                              <span
+                                style={{
+                                  fontSize: '0.72rem',
+                                  color: '#831843',
+                                  background: '#FDF2F8',
+                                  border: '1px solid #FBCFE8',
+                                  borderRadius: '6px',
+                                  padding: '3px 7px',
+                                  display: 'inline-block',
+                                  marginTop: '2px',
+                                }}
+                              >
+                                🎨 {it.personalizacionFloral.resumenTexto}
+                              </span>
+                            )}
                             {it.dedicatoria?.mensaje && (
                               <span style={{ fontSize: '0.72rem', color: '#6B746C', fontStyle: 'italic' }}>
                                 💌 Para {it.dedicatoria.para || 'Destinatario'}: &ldquo;
@@ -1537,6 +1553,22 @@ function ContenidoEspacioCliente({
                                 {item.variante.nombre}
                               </span>
                             )}
+                          {item.personalizacionFloral?.resumenTexto && (
+                            <div
+                              style={{
+                                marginTop: '4px',
+                                fontSize: '0.75rem',
+                                color: '#831843',
+                                background: '#FDF2F8',
+                                border: '1px solid #FBCFE8',
+                                borderRadius: '8px',
+                                padding: '4px 8px',
+                                display: 'inline-block',
+                              }}
+                            >
+                              🎨 {item.personalizacionFloral.resumenTexto}
+                            </div>
+                          )}
 
                           <div
                             style={{
@@ -3460,6 +3492,22 @@ function ContenidoEspacioCliente({
                       </span>
                     </div>
                   </div>
+
+                  {it.personalizacionFloral?.resumenTexto && (
+                    <div
+                      style={{
+                        padding: '8px 10px',
+                        borderRadius: '8px',
+                        background: '#FDF2F8',
+                        border: '1px solid #FBCFE8',
+                        fontSize: '0.78rem',
+                        color: '#831843',
+                      }}
+                    >
+                      <strong>🎨 Personalización floral:</strong>{' '}
+                      {it.personalizacionFloral.resumenTexto}
+                    </div>
+                  )}
 
                   {it.dedicatoria &&
                     (it.dedicatoria.para || it.dedicatoria.de || it.dedicatoria.mensaje) && (

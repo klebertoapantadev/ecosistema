@@ -606,6 +606,7 @@ export function ModalCheckoutTinkay() {
               mensaje: it.dedicatoria.mensaje,
             }
           : undefined,
+        personalizacionFloral: it.personalizacionFloral ?? undefined,
         entregaIndividual: it.entregaIndividual
           ? {
               retiroEnLocal: it.entregaIndividual.retiroEnLocal,
@@ -1360,6 +1361,23 @@ export function ModalCheckoutTinkay() {
                                 <span style={{ display: 'block', fontSize: '0.75rem', color: '#57534E' }}>
                                   {it.variante.nombre} · ${it.variante.pvp.toFixed(2)} c/u
                                 </span>
+                                {it.personalizacionFloral?.resumenTexto && (
+                                  <small
+                                    style={{
+                                      display: 'inline-block',
+                                      marginTop: '3px',
+                                      fontSize: '0.71rem',
+                                      lineHeight: 1.35,
+                                      color: '#831843',
+                                      background: '#FDF2F8',
+                                      border: '1px solid #FBCFE8',
+                                      borderRadius: '6px',
+                                      padding: '3px 7px',
+                                    }}
+                                  >
+                                    🎨 {it.personalizacionFloral.resumenTexto}
+                                  </small>
+                                )}
                                 {it.dedicatoria?.mensaje && (
                                   <small className="mini-dedicatoria-preview" style={{ display: 'block', marginTop: '2px' }}>
                                     💌 Tarjeta: &quot;{it.dedicatoria.mensaje.slice(0, 40)}&quot;

@@ -21,6 +21,10 @@ import {
   normalizarConfiguracionRenta,
   type ConfiguracionRentaProducto,
 } from "./utils/tiposOferta";
+import {
+  normalizarConfiguracionPersonalizacionFloral,
+  type ConfiguracionPersonalizacionFloral,
+} from "./utils/personalizacionFloral";
 import { obtenerEmisorRideNegocioAction } from "./acciones-facturacion-sri";
 import type { ConfiguracionEmisorSri, LineaFacturaSriResumen } from "./ride-sri";
 
@@ -3606,6 +3610,7 @@ export async function crearProductoAction(datos: {
   esCombo?: boolean;
   comboComponentes?: ComponenteComboConfig[];
   escalasVolumen?: EscalaVolumenVariante[];
+  personalizacionFloral?: Partial<ConfiguracionPersonalizacionFloral> | null;
   negocio?: string;
 }): Promise<{ ok: boolean; producto?: ProductoCatalogo; error?: string }> {
   try {
@@ -3756,6 +3761,11 @@ export async function crearProductoAction(datos: {
           datos.esRenta || esCodigoOfertaRenta(datos.tipo)
             ? normalizarConfiguracionRenta(datos.rentaConfig)
             : null,
+        personalizacion_floral: datos.personalizacionFloral
+          ? normalizarConfiguracionPersonalizacionFloral(datos.personalizacionFloral, {
+              habilitadaPorDefecto: negocio === "tinkay" || negocio === "margaritas",
+            })
+          : null,
         creado_desde_panel: true,
       },
       categoria: cat
@@ -3947,6 +3957,7 @@ export async function editarProductoAction(datos: {
   pro_activo?: boolean;
   esCombo?: boolean;
   comboComponentes?: ComponenteComboConfig[];
+  personalizacionFloral?: Partial<ConfiguracionPersonalizacionFloral> | null;
   varianteId?: string;
   variantes?: Array<{
     var_id?: string;
@@ -4234,6 +4245,14 @@ export async function editarProductoAction(datos: {
                 datos.rentaConfig || prodActual.pro_detalle_producto?.renta_config
               )
             : null,
+        personalizacion_floral:
+          datos.personalizacionFloral !== undefined
+            ? datos.personalizacionFloral
+              ? normalizarConfiguracionPersonalizacionFloral(datos.personalizacionFloral, {
+                  habilitadaPorDefecto: esFloristeriaEdit,
+                })
+              : null
+            : prodActual.pro_detalle_producto?.personalizacion_floral ?? null,
         editado_en: new Date().toISOString(),
       },
 

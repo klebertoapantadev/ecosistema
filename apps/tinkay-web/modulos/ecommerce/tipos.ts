@@ -1,7 +1,9 @@
 import type {
   ComponenteComboConfig,
+  ConfiguracionPersonalizacionFloral,
   ConfiguracionRentaProducto,
   EscalaVolumenVariante,
+  SeleccionPersonalizacionFloral,
 } from '@eco/comercio';
 
 export type TipoCategoria = 'FORMATO' | 'COLECCION' | 'OCASION' | 'COMPLEMENTO' | 'EVENTO';
@@ -85,6 +87,7 @@ export interface ProductoEcommerce {
   coberturaTexto?: string;
   recargoLogisticoUsd?: number;
   totalMeGusta?: number;
+  personalizacionFloral?: ConfiguracionPersonalizacionFloral;
 }
 
 export interface DedicatoriaArreglo {
@@ -141,6 +144,7 @@ export interface ItemCarrito {
   variante: VarianteEcommerce;
   cantidad: number;
   dedicatoria?: DedicatoriaArreglo;
+  personalizacionFloral?: SeleccionPersonalizacionFloral;
   entregaIndividual?: DatosEntrega;
 }
 

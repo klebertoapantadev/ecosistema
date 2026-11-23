@@ -37,6 +37,7 @@ import {
   type ConfiguracionLogisticaNegocio,
   type ConfiguracionTiendaCheckout,
   type EstadoRegaloPrimeraCompra,
+  type SeleccionPersonalizacionFloral,
 } from '@eco/comercio';
 
 interface ContextoCarritoValor {
@@ -66,6 +67,9 @@ interface ContextoCarritoValor {
   // Acciones
   setDrawerAbierto: (abierto: boolean) => void;
   setProductoSeleccionadoModal: (producto: ProductoEcommerce | null) => void;
+  focoPersonalizacionModal: boolean;
+  setFocoPersonalizacionModal: (activo: boolean) => void;
+  abrirProductoParaPersonalizar: (producto: ProductoEcommerce, varianteSku?: string) => void;
   setCheckoutAbierto: (abierto: boolean) => void;
   setModalidadEntrega: (modalidad: ModalidadEntrega) => void;
   setOrdenConfirmadaId: (id: string | null) => void;
@@ -82,7 +86,8 @@ interface ContextoCarritoValor {
     dedicatoria?: DedicatoriaArreglo,
     entregaIndividual?: DatosEntrega,
     cantidadInicial?: number,
-    abrirDrawer?: boolean
+    abrirDrawer?: boolean,
+    personalizacionFloral?: SeleccionPersonalizacionFloral
   ) => void;
   eliminarItem: (itemId: string) => void;
   actualizarCantidad: (itemId: string, cantidad: number) => void;
@@ -234,6 +239,7 @@ export function ProveedorCarrito({
     categoriasIniciales && categoriasIniciales.length > 0 ? categoriasIniciales : CATEGORIAS_TINKAY
   );
   const [categoriaActiva, setCategoriaActivaInterna] = useState<string>('cat-todos');
+  const [focoPersonalizacionModal, setFocoPersonalizacionModal] = useState<boolean>(false);
   const [terminoBusqueda, setTerminoBusqueda] = useState<string>('');
   const [favoritosIds, setFavoritosIds] = useState<string[]>([]);
   const [favoritosCargados, setFavoritosCargados] = useState<boolean>(false);
@@ -315,6 +321,9 @@ export function ProveedorCarrito({
 
   const setProductoSeleccionadoModal = React.useCallback(
     (nuevoProd: ProductoEcommerce | null) => {
+      if (!nuevoProd) {
+        setFocoPersonalizacionModal(false);
+      }
       setProductoSeleccionadoModalInterno(nuevoProd);
       if (typeof window === 'undefined') return;
       if (nuevoProd) {
@@ -328,6 +337,20 @@ export function ProveedorCarrito({
       }
     },
     [categoriaActiva, obtenerEnlaceCategoriaActual, obtenerEnlaceProducto, sincronizarRutaNavegador]
+  );
+
+  const abrirProductoParaPersonalizar = React.useCallback(
+    (prod: ProductoEcommerce, varianteSku?: string) => {
+      const prodConVariante: ProductoEcommerce = varianteSku
+        ? { ...prod, varianteInicialSku: varianteSku }
+        : prod;
+      setFocoPersonalizacionModal(true);
+      setProductoSeleccionadoModalInterno(prodConVariante);
+      if (typeof window !== 'undefined') {
+        sincronizarRutaNavegador(obtenerEnlaceProducto(prodConVariante, varianteSku));
+      }
+    },
+    [obtenerEnlaceProducto, sincronizarRutaNavegador]
   );
 
   const navegarACategoria = React.useCallback(
@@ -702,15 +725,21 @@ export function ProveedorCarrito({
     dedicatoria?: DedicatoriaArreglo,
     entregaIndividual?: DatosEntrega,
     cantidadInicial = 1,
-    abrirDrawer = true
+    abrirDrawer = true,
+    personalizacionFloral?: SeleccionPersonalizacionFloral
   ) => {
     const cantAgregar = Math.max(1, Math.floor(cantidadInicial || 1));
 
     setItems((prev) => {
-      // Si el producto no tiene dedicatoria específica y ya existe la misma variante, podemos sumar cantidad
+      const clavePersNueva = personalizacionFloral?.resumenTexto?.trim() || '';
+      // Solo unir cantidades si no hay dedicatoria ni entrega individual y coinciden exactamente en personalización floral
       if (!dedicatoria && !entregaIndividual) {
         const indexExistente = prev.findIndex(
-          (i) => i.producto.id === producto.id && i.variante.sku === variante.sku && !i.dedicatoria?.mensaje
+          (i) =>
+            i.producto.id === producto.id &&
+            i.variante.sku === variante.sku &&
+            !i.dedicatoria?.mensaje &&
+            (i.personalizacionFloral?.resumenTexto?.trim() || '') === clavePersNueva
         );
         if (indexExistente >= 0) {
           const clon = [...prev];
@@ -727,7 +756,7 @@ export function ProveedorCarrito({
         }
       }
 
-      // Si tiene dedicatoria o entrega personalizada, es una línea individual
+      // Si tiene dedicatoria, personalización distinta o entrega personalizada, es una línea individual
       const nuevoId = `${producto.id}-${variante.sku}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
       const nuevoItem: ItemCarrito = {
         id: nuevoId,
@@ -739,6 +768,7 @@ export function ProveedorCarrito({
           de: '',
           mensaje: '',
         },
+        personalizacionFloral,
         entregaIndividual: entregaIndividual || { ...ENTREGA_INICIAL },
       };
       return [...prev, nuevoItem];
@@ -1298,6 +1328,9 @@ export function ProveedorCarrito({
         toggleFavorito,
         setDrawerAbierto,
         setProductoSeleccionadoModal,
+        focoPersonalizacionModal,
+        setFocoPersonalizacionModal,
+        abrirProductoParaPersonalizar,
         setCheckoutAbierto,
         setModalidadEntrega,
         setOrdenConfirmadaId,

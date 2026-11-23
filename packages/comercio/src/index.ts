@@ -39,6 +39,7 @@ export * from "./utils/usosCatalogo";
 export * from "./utils/combosVolumen";
 export * from "./utils/enlacesTienda";
 export * from "./utils/tiposOferta";
+export * from "./utils/personalizacionFloral";
 export * from "./acciones-tipos-oferta";
 export * from "./componentes/ModalGestionTiposOferta";
 export * from "./componentes/ModalesValidacionUso";

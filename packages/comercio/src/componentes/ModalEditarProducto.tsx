@@ -104,6 +104,12 @@ import {
   SelectorEncuadreFoto,
   type PasoWizardProducto,
 } from "./BarraPasosWizardProducto";
+import { EditorPersonalizacionFloralProducto } from "./EditorPersonalizacionFloralProducto";
+import {
+  crearConfiguracionPersonalizacionFloralPorDefecto,
+  normalizarConfiguracionPersonalizacionFloral,
+  type ConfiguracionPersonalizacionFloral,
+} from "../utils/personalizacionFloral";
 
 
 export const COLOR_PRODUCTO_MASTER = {
@@ -238,6 +244,10 @@ export function ModalEditarProducto({
   const [tiempoEntrega, setTiempoEntrega] = useState("");
   const [beneficiosTexto, setBeneficiosTexto] = useState("");
   const [requisitosTexto, setRequisitosTexto] = useState("");
+  const [personalizacionFloral, setPersonalizacionFloral] =
+    useState<ConfiguracionPersonalizacionFloral>(() =>
+      crearConfiguracionPersonalizacionFloralPorDefecto(esFloristeria)
+    );
 
   // Estado Activo y Temporalidad / Vigencia Estacional
   const [proActivo, setProActivo] = useState(true);
@@ -732,6 +742,13 @@ export function ModalEditarProducto({
 
       const det = producto.pro_detalle_producto || {};
       setRentaConfig(normalizarConfiguracionRenta(det.renta_config));
+      const esRentaProdIni = Boolean(det.es_renta) || esCodigoOfertaRenta(producto.pro_tipo, det);
+      const esExtraIni = Boolean(det.es_complemento);
+      setPersonalizacionFloral(
+        normalizarConfiguracionPersonalizacionFloral(det.personalizacion_floral, {
+          habilitadaPorDefecto: esFloristeria && !esRentaProdIni && !esExtraIni,
+        })
+      );
       setImagenUrl(det.imagen_url || "");
       setFotoPosicionMaster(det.foto_posicion || "center center");
       setFotoAjusteMaster(det.foto_ajuste || "cover");
@@ -1609,6 +1626,8 @@ export function ModalEditarProducto({
         canales_visibilidad: canalesSeleccionados,
         esCombo,
         comboComponentes: esCombo ? normalizarComponentesCombo(comboComponentes) : [],
+        personalizacionFloral:
+          esFloristeria && !esOfertaRentaActiva ? personalizacionFloral : null,
         variantes: variantesParaGuardar,
         negocio,
       });
@@ -3533,6 +3552,13 @@ export function ModalEditarProducto({
                       />
                     </div>
                   </div>
+
+                  {esFloristeria && !esOfertaRentaActiva && (
+                    <EditorPersonalizacionFloralProducto
+                      valor={personalizacionFloral}
+                      onChange={setPersonalizacionFloral}
+                    />
+                  )}
                 </div>
               )}
 

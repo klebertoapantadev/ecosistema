@@ -1596,15 +1596,23 @@ export async function obtenerConsolaTallerYDespachoAction(
 
       const log = (det.logistica_entrega ?? {}) as Record<string, any>;
       const itemsRaw = Array.isArray(det.items) ? det.items : [];
-      const items: ItemOrdenTaller[] = itemsRaw.map((it: any) => ({
-        sku: it.sku ? String(it.sku) : undefined,
-        descripcion: String(it.producto_nombre || it.descripcion || it.nombre || "Arreglo"),
-        cantidad: Number(it.cantidad ?? 1),
-        precioUnitario: Number(it.pvp_unitario ?? it.precio_unitario ?? 0),
-        dedicatoria: it.dedicatoria?.mensaje
-          ? `Para: ${it.dedicatoria.para || "-"} | De: ${it.dedicatoria.de || "-"} — "${it.dedicatoria.mensaje}"`
-          : undefined,
-      }));
+      const items: ItemOrdenTaller[] = itemsRaw.map((it: any) => {
+        const pers = it.personalizacion_floral ?? it.personalizacionFloral;
+        const resumenPers =
+          pers && typeof pers === "object" && pers.resumenTexto
+            ? String(pers.resumenTexto)
+            : "";
+        const descBase = String(it.producto_nombre || it.descripcion || it.nombre || "Arreglo");
+        return {
+          sku: it.sku ? String(it.sku) : undefined,
+          descripcion: resumenPers ? `${descBase} [${resumenPers}]` : descBase,
+          cantidad: Number(it.cantidad ?? 1),
+          precioUnitario: Number(it.pvp_unitario ?? it.precio_unitario ?? 0),
+          dedicatoria: it.dedicatoria?.mensaje
+            ? `Para: ${it.dedicatoria.para || "-"} | De: ${it.dedicatoria.de || "-"} — "${it.dedicatoria.mensaje}"`
+            : undefined,
+        };
+      });
 
       const estTaller: EstadoOrdenTaller = (det.estado_taller as EstadoOrdenTaller) ||
         (estadoPrf === "ENTREGADO" || det.entrega_confirmada

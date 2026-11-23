@@ -256,6 +256,23 @@ export function DrawerCarritoFloristeria() {
                               {item.variante.nombre}
                             </span>
                           )}
+                          {item.personalizacionFloral?.resumenTexto && (
+                            <span
+                              style={{
+                                display: 'inline-block',
+                                fontSize: '0.72rem',
+                                lineHeight: 1.35,
+                                color: '#831843',
+                                background: '#FDF2F8',
+                                border: '1px solid #FBCFE8',
+                                borderRadius: '8px',
+                                padding: '4px 8px',
+                                marginTop: '4px',
+                              }}
+                            >
+                              🎨 {item.personalizacionFloral.resumenTexto}
+                            </span>
+                          )}
                         </div>
 
                         <div className="precio-y-cantidad-fila">
