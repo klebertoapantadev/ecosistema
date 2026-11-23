@@ -4,9 +4,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
-  Building2,
   Check,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   Copy,
   CreditCard,
   Download,
@@ -81,8 +82,8 @@ export function VistaLinkPagoCliente({
     tarjetaHabilitada && configCheckout.tarjetaCreditoHabilitada !== false;
   const transferenciaDisponible = configCheckout.transferencia.habilitada !== false;
 
-  const [metodoPago, setMetodoPago] = useState<"plux" | "transferencia">(
-    tarjetaDisponible ? "plux" : "transferencia"
+  const [mostrarPagoTarjeta, setMostrarPagoTarjeta] = useState<boolean>(
+    !transferenciaDisponible && tarjetaDisponible
   );
 
   const requiereFacturaObligatoria =
@@ -131,7 +132,7 @@ export function VistaLinkPagoCliente({
         if (cfg) {
           setConfigCheckout(cfg);
           if (cfg.tarjetaCreditoHabilitada === false) {
-            setMetodoPago("transferencia");
+            setMostrarPagoTarjeta(false);
           }
         }
       })
@@ -139,10 +140,10 @@ export function VistaLinkPagoCliente({
   }, [proforma.negocio, configCheckoutInicial]);
 
   useEffect(() => {
-    if (!tarjetaDisponible && metodoPago === "plux" && transferenciaDisponible) {
-      setMetodoPago("transferencia");
+    if (!tarjetaDisponible && mostrarPagoTarjeta) {
+      setMostrarPagoTarjeta(false);
     }
-  }, [tarjetaDisponible, transferenciaDisponible, metodoPago]);
+  }, [tarjetaDisponible, mostrarPagoTarjeta]);
 
   useEffect(() => {
     if (proforma.total >= configCheckout.montoMaximoPagoSinDatosUsd) {
@@ -722,286 +723,11 @@ export function VistaLinkPagoCliente({
                 Este enlace de pago ya no se encuentra vigente. Solicita uno nuevo a tu asesor por WhatsApp.
               </div>
             ) : (
-              <>
-                {/* Selector de método de pago (solo si ambos están activos) */}
-                {tarjetaDisponible && transferenciaDisponible && (
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "1fr 1fr",
-                      gap: "8px",
-                      padding: "4px",
-                      borderRadius: "12px",
-                      background: "#F5F2EC",
-                      border: "1px solid #E7E5E4",
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setMetodoPago("plux")}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "6px",
-                        padding: "10px 8px",
-                        borderRadius: "9px",
-                        border: "none",
-                        background: metodoPago === "plux" ? "#FFFFFF" : "transparent",
-                        color: metodoPago === "plux" ? "#1C1917" : "#57534E",
-                        boxShadow: metodoPago === "plux" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
-                        fontWeight: 700,
-                        fontSize: "0.84rem",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <CreditCard size={16} color={metodoPago === "plux" ? "#2D4734" : "#57534E"} />
-                      <span>Tarjeta</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setMetodoPago("transferencia")}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "6px",
-                        padding: "10px 8px",
-                        borderRadius: "9px",
-                        border: "none",
-                        background: metodoPago === "transferencia" ? "#FFFFFF" : "transparent",
-                        color: metodoPago === "transferencia" ? "#1C1917" : "#57534E",
-                        boxShadow:
-                          metodoPago === "transferencia" ? "0 2px 6px rgba(0,0,0,0.08)" : "none",
-                        fontWeight: 700,
-                        fontSize: "0.84rem",
-                        cursor: "pointer",
-                      }}
-                    >
-                      <Building2
-                        size={16}
-                        color={metodoPago === "transferencia" ? "#2D4734" : "#57534E"}
-                      />
-                      <span>DeUna / Banco</span>
-                    </button>
-                  </div>
-                )}
-
-                {/* OPCIÓN 1: TARJETA DE CRÉDITO / DÉBITO (PLUX) */}
-                {metodoPago === "plux" && tarjetaDisponible && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                {/* 1. PRIORIDAD: TRANSFERENCIA / DEPÓSITO BANCARIO Y QR DEUNA */}
+                {transferenciaDisponible && (
                   <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                    {!requiereFacturaObligatoria && (
-                      <label
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          padding: "10px 12px",
-                          borderRadius: "10px",
-                          background: "#FAF8F5",
-                          border: "1px solid #E7E5E4",
-                          fontSize: "0.83rem",
-                          color: "#44403C",
-                          fontWeight: 600,
-                          cursor: "pointer",
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={deseaFacturaConDatos}
-                          onChange={(e) => setDeseaFacturaConDatos(e.target.checked)}
-                          style={{ width: "16px", height: "16px", accentColor: "#2D4734" }}
-                        />
-                        <span>Deseo factura con mis datos (Cédula / RUC)</span>
-                      </label>
-                    )}
-
-                    {(requiereFacturaObligatoria || deseaFacturaConDatos) ? (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                        <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "#57534E" }}>
-                          Datos para tu factura electrónica
-                        </div>
-                        <input
-                          type="text"
-                          placeholder="Nombre completo o Razón social *"
-                          value={datosPagador.nombre}
-                          onChange={(e) =>
-                            setDatosPagador((p) => ({ ...p, nombre: e.target.value }))
-                          }
-                          style={estiloInput}
-                        />
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                          <input
-                            type="text"
-                            placeholder="Cédula o RUC *"
-                            value={datosPagador.identificacion}
-                            onChange={(e) =>
-                              setDatosPagador((p) => ({ ...p, identificacion: e.target.value }))
-                            }
-                            style={estiloInput}
-                          />
-                          <input
-                            type="tel"
-                            placeholder="Celular / WhatsApp"
-                            value={datosPagador.telefono}
-                            onChange={(e) =>
-                              setDatosPagador((p) => ({ ...p, telefono: e.target.value }))
-                            }
-                            style={estiloInput}
-                          />
-                        </div>
-                        <input
-                          type="email"
-                          placeholder="Correo electrónico para tu factura *"
-                          value={datosPagador.email}
-                          onChange={(e) =>
-                            setDatosPagador((p) => ({ ...p, email: e.target.value }))
-                          }
-                          style={estiloInput}
-                        />
-                      </div>
-                    ) : (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                        <input
-                          type="email"
-                          placeholder="Tu correo electrónico (opcional, para comprobante)"
-                          value={datosPagador.email}
-                          onChange={(e) =>
-                            setDatosPagador((p) => ({ ...p, email: e.target.value }))
-                          }
-                          style={estiloInput}
-                        />
-                      </div>
-                    )}
-
-                    {datosFacturacionValidos ? (
-                      <BotonPagoPlux
-                        negocio={proforma.negocio}
-                        proformaId={proforma.id}
-                        tokenAprobacion={proforma.tokenAprobacion}
-                        modalidadCobro="TOTAL_100"
-                        pagador={pagadorPlux}
-                        ambiente={ambientePlux}
-                        etiqueta={`Pagar $${proforma.total.toFixed(2)} con Tarjeta`}
-                        alPagoAprobado={handlePagoPluxAprobado}
-                      />
-                    ) : (
-                      <div
-                        style={{
-                          padding: "11px 13px",
-                          borderRadius: "10px",
-                          background: "#FFFBEB",
-                          border: "1px solid #FDE68A",
-                          color: "#92400E",
-                          fontSize: "0.8rem",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Completa tu nombre, cédula/RUC (mín. 10 dígitos) y correo electrónico para habilitar el botón de pago.
-                      </div>
-                    )}
-
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "6px",
-                        fontSize: "0.75rem",
-                        color: "#78716C",
-                      }}
-                    >
-                      <ShieldCheck size={14} color="#2D4734" />
-                      <span>Pago encriptado procesado por PLUX · Visa, Mastercard, Diners</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* OPCIÓN 2: DEUNA Y TRANSFERENCIA BANCARIA */}
-                {(metodoPago === "transferencia" || !tarjetaDisponible) && transferenciaDisponible && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                    {/* Link directo DeUna */}
-                    {configCheckout.transferencia.linkDeuna && (
-                      <div
-                        style={{
-                          padding: "14px",
-                          borderRadius: "14px",
-                          background: "#F5F3FF",
-                          border: "1px solid #DDD6FE",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "10px",
-                        }}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#4C1D95" }}>
-                          <Smartphone size={18} />
-                          <strong style={{ fontSize: "0.9rem" }}>Pago rápido con DeUna</strong>
-                        </div>
-                        <a
-                          href={configCheckout.transferencia.linkDeuna}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "8px",
-                            padding: "11px 14px",
-                            borderRadius: "10px",
-                            background: "#5B21B6",
-                            color: "#FFFFFF",
-                            textDecoration: "none",
-                            fontWeight: 700,
-                            fontSize: "0.88rem",
-                          }}
-                        >
-                          <span>Abrir DeUna</span>
-                          <ExternalLink size={15} />
-                        </a>
-                      </div>
-                    )}
-
-                    {/* QR DeUna */}
-                    {configCheckout.transferencia.qrDeunaUrl && (
-                      <div
-                        style={{
-                          padding: "14px",
-                          borderRadius: "14px",
-                          background: "#FAF8F5",
-                          border: "1px solid #E7E5E4",
-                          textAlign: "center",
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "center",
-                          gap: "8px",
-                        }}
-                      >
-                        <strong style={{ fontSize: "0.82rem", color: "#44403C" }}>
-                          Escanea el código QR DeUna
-                        </strong>
-                        <img
-                          src={configCheckout.transferencia.qrDeunaUrl}
-                          alt="Código QR DeUna"
-                          style={{
-                            width: "168px",
-                            height: "168px",
-                            objectFit: "contain",
-                            borderRadius: "10px",
-                            background: "#FFFFFF",
-                            border: "1px solid #E7E5E4",
-                            padding: "6px",
-                          }}
-                        />
-                        {configCheckout.transferencia.qrDeunaTitular && (
-                          <span style={{ fontSize: "0.75rem", color: "#57534E", fontWeight: 600 }}>
-                            Titular: {configCheckout.transferencia.qrDeunaTitular}
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Datos bancarios */}
+                    {/* Datos bancarios primero */}
                     <div
                       style={{
                         padding: "14px",
@@ -1013,10 +739,18 @@ export function VistaLinkPagoCliente({
                         gap: "8px",
                       }}
                     >
-                      <strong style={{ fontSize: "0.85rem", color: "#1C1917" }}>
+                      <strong style={{ fontSize: "0.86rem", color: "#1C1917" }}>
                         Transferencia / Depósito Bancario
                       </strong>
-                      <div style={{ fontSize: "0.82rem", color: "#44403C", display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <div
+                        style={{
+                          fontSize: "0.82rem",
+                          color: "#44403C",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "4px",
+                        }}
+                      >
                         <div>
                           <strong>Titular:</strong> {configCheckout.transferencia.nombreTitular}
                         </div>
@@ -1031,6 +765,7 @@ export function VistaLinkPagoCliente({
                               void copiarTexto("id", configCheckout.transferencia.identificacionTitular)
                             }
                             title="Copiar identificación"
+                            aria-label="Copiar identificación"
                             style={{
                               border: "1px solid #D6D3D1",
                               background: "#FFFFFF",
@@ -1082,6 +817,7 @@ export function VistaLinkPagoCliente({
                                 type="button"
                                 onClick={() => void copiarTexto(`cta-${i}`, cta.numeroCuenta)}
                                 title="Copiar número de cuenta"
+                                aria-label={`Copiar cuenta ${cta.banco}`}
                                 style={{
                                   border: "1px solid #D6D3D1",
                                   background: "#FAF8F5",
@@ -1107,6 +843,81 @@ export function VistaLinkPagoCliente({
                         </div>
                       )}
                     </div>
+
+                    {/* Link directo DeUna */}
+                    {configCheckout.transferencia.linkDeuna && (
+                      <div
+                        style={{
+                          padding: "14px",
+                          borderRadius: "14px",
+                          background: "#F5F3FF",
+                          border: "1px solid #DDD6FE",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "10px",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#4C1D95" }}>
+                          <Smartphone size={18} />
+                          <strong style={{ fontSize: "0.9rem" }}>Pago rápido con DeUna</strong>
+                        </div>
+                        <a
+                          href={configCheckout.transferencia.linkDeuna}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "8px",
+                            padding: "11px 14px",
+                            borderRadius: "10px",
+                            background: "#5B21B6",
+                            color: "#FFFFFF",
+                            textDecoration: "none",
+                            fontWeight: 700,
+                            fontSize: "0.88rem",
+                          }}
+                        >
+                          <span>Abrir DeUna</span>
+                          <ExternalLink size={15} />
+                        </a>
+                      </div>
+                    )}
+
+                    {/* QR DeUna (sin nombres visibles) */}
+                    {configCheckout.transferencia.qrDeunaUrl && (
+                      <div
+                        style={{
+                          padding: "14px",
+                          borderRadius: "14px",
+                          background: "#FAF8F5",
+                          border: "1px solid #E7E5E4",
+                          textAlign: "center",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <strong style={{ fontSize: "0.82rem", color: "#44403C" }}>
+                          Escanea el código QR DeUna
+                        </strong>
+                        <img
+                          src={configCheckout.transferencia.qrDeunaUrl}
+                          alt="Código QR DeUna"
+                          style={{
+                            width: "168px",
+                            height: "168px",
+                            objectFit: "contain",
+                            borderRadius: "10px",
+                            background: "#FFFFFF",
+                            border: "1px solid #E7E5E4",
+                            padding: "6px",
+                          }}
+                        />
+                      </div>
+                    )}
 
                     {/* Subir comprobante */}
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
@@ -1198,7 +1009,178 @@ export function VistaLinkPagoCliente({
                     </div>
                   </div>
                 )}
-              </>
+
+                {/* 2. ÚLTIMA OPCIÓN AL FINAL: PAGO CON TARJETA (DÉBITO / CRÉDITO) */}
+                {tarjetaDisponible && (
+                  <div
+                    style={{
+                      paddingTop: transferenciaDisponible ? "14px" : "0",
+                      borderTop: transferenciaDisponible ? "1px solid #E7E5E4" : "none",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "12px",
+                    }}
+                  >
+                    {transferenciaDisponible && (
+                      <button
+                        type="button"
+                        onClick={() => setMostrarPagoTarjeta((prev) => !prev)}
+                        title="Pagar con tarjeta de débito o crédito"
+                        aria-label="Pagar con tarjeta"
+                        aria-expanded={mostrarPagoTarjeta}
+                        style={{
+                          width: "100%",
+                          padding: "11px 14px",
+                          borderRadius: "12px",
+                          border: "1px solid #D6D3D1",
+                          background: mostrarPagoTarjeta ? "#FAF8F5" : "#FFFFFF",
+                          color: "#44403C",
+                          fontWeight: 700,
+                          fontSize: "0.84rem",
+                          cursor: "pointer",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "8px",
+                        }}
+                      >
+                        <CreditCard size={16} color="#57534E" />
+                        <span>Pagar con Tarjeta (Débito / Crédito)</span>
+                        {mostrarPagoTarjeta ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+                      </button>
+                    )}
+
+                    {mostrarPagoTarjeta && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                        {!requiereFacturaObligatoria && (
+                          <label
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              padding: "10px 12px",
+                              borderRadius: "10px",
+                              background: "#FAF8F5",
+                              border: "1px solid #E7E5E4",
+                              fontSize: "0.83rem",
+                              color: "#44403C",
+                              fontWeight: 600,
+                              cursor: "pointer",
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={deseaFacturaConDatos}
+                              onChange={(e) => setDeseaFacturaConDatos(e.target.checked)}
+                              style={{ width: "16px", height: "16px", accentColor: "#2D4734" }}
+                            />
+                            <span>Deseo factura con mis datos (Cédula / RUC)</span>
+                          </label>
+                        )}
+
+                        {requiereFacturaObligatoria || deseaFacturaConDatos ? (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                            <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "#57534E" }}>
+                              Datos para tu factura electrónica
+                            </div>
+                            <input
+                              type="text"
+                              placeholder="Nombre completo o Razón social *"
+                              value={datosPagador.nombre}
+                              onChange={(e) =>
+                                setDatosPagador((p) => ({ ...p, nombre: e.target.value }))
+                              }
+                              style={estiloInput}
+                            />
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                              <input
+                                type="text"
+                                placeholder="Cédula o RUC *"
+                                value={datosPagador.identificacion}
+                                onChange={(e) =>
+                                  setDatosPagador((p) => ({ ...p, identificacion: e.target.value }))
+                                }
+                                style={estiloInput}
+                              />
+                              <input
+                                type="tel"
+                                placeholder="Celular / WhatsApp"
+                                value={datosPagador.telefono}
+                                onChange={(e) =>
+                                  setDatosPagador((p) => ({ ...p, telefono: e.target.value }))
+                                }
+                                style={estiloInput}
+                              />
+                            </div>
+                            <input
+                              type="email"
+                              placeholder="Correo electrónico para tu factura *"
+                              value={datosPagador.email}
+                              onChange={(e) =>
+                                setDatosPagador((p) => ({ ...p, email: e.target.value }))
+                              }
+                              style={estiloInput}
+                            />
+                          </div>
+                        ) : (
+                          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                            <input
+                              type="email"
+                              placeholder="Tu correo electrónico (opcional, para comprobante)"
+                              value={datosPagador.email}
+                              onChange={(e) =>
+                                setDatosPagador((p) => ({ ...p, email: e.target.value }))
+                              }
+                              style={estiloInput}
+                            />
+                          </div>
+                        )}
+
+                        {datosFacturacionValidos ? (
+                          <BotonPagoPlux
+                            negocio={proforma.negocio}
+                            proformaId={proforma.id}
+                            tokenAprobacion={proforma.tokenAprobacion}
+                            modalidadCobro="TOTAL_100"
+                            pagador={pagadorPlux}
+                            ambiente={ambientePlux}
+                            etiqueta={`Pagar $${proforma.total.toFixed(2)} con Tarjeta`}
+                            alPagoAprobado={handlePagoPluxAprobado}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              padding: "11px 13px",
+                              borderRadius: "10px",
+                              background: "#FFFBEB",
+                              border: "1px solid #FDE68A",
+                              color: "#92400E",
+                              fontSize: "0.8rem",
+                              fontWeight: 600,
+                            }}
+                          >
+                            Completa tu nombre, cédula/RUC (mín. 10 dígitos) y correo electrónico para habilitar el botón de pago.
+                          </div>
+                        )}
+
+                        <div
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            gap: "6px",
+                            fontSize: "0.75rem",
+                            color: "#78716C",
+                          }}
+                        >
+                          <ShieldCheck size={14} color="#2D4734" />
+                          <span>Pago encriptado procesado por PLUX · Visa, Mastercard, Diners</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </section>
