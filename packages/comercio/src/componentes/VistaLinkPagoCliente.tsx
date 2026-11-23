@@ -86,29 +86,21 @@ export function VistaLinkPagoCliente({
     !transferenciaDisponible && tarjetaDisponible
   );
 
-  const requiereFacturaObligatoria =
-    proforma.total >= configCheckout.montoMaximoPagoSinDatosUsd;
-  const [deseaFacturaConDatos, setDeseaFacturaConDatos] = useState<boolean>(
-    requiereFacturaObligatoria
+  const [emailOpcionalInput, setEmailOpcionalInput] = useState(
+    proformaInicial.comprador.correo || ""
   );
-
-  const [datosPagador, setDatosPagador] = useState({
-    nombre:
-      proformaInicial.comprador.nombreCompleto &&
-      !/^(cliente|cliente chat|consumidor final)/i.test(
-        proformaInicial.comprador.nombreCompleto.trim()
-      )
-        ? proformaInicial.comprador.nombreCompleto
-        : "",
-    identificacion:
-      proformaInicial.comprador.identificacion &&
-      !/^9{10,13}$/.test(proformaInicial.comprador.identificacion.trim())
-        ? proformaInicial.comprador.identificacion
-        : "",
-    email: proformaInicial.comprador.correo || "",
-    telefono: proformaInicial.comprador.whatsapp || "",
-    direccion: proformaInicial.ubicacion?.direccion || "Quito, Ecuador",
-  });
+  const [emailConfirmadoPlux, setEmailConfirmadoPlux] = useState(
+    proformaInicial.comprador.correo || ""
+  );
+  const [telefonoOpcionalInput, setTelefonoOpcionalInput] = useState(
+    proformaInicial.comprador.whatsapp || ""
+  );
+  const [telefonoConfirmadoPlux, setTelefonoConfirmadoPlux] = useState(
+    proformaInicial.comprador.whatsapp || ""
+  );
+  const tieneTelefonoInicial = Boolean(
+    (proformaInicial.comprador.whatsapp || "").replace(/\D+/g, "").length >= 7
+  );
 
   const [comprobanteSubido, setComprobanteSubido] =
     useState<ComprobanteTransferenciaSubido | null>(null);
@@ -145,12 +137,6 @@ export function VistaLinkPagoCliente({
     }
   }, [tarjetaDisponible, mostrarPagoTarjeta]);
 
-  useEffect(() => {
-    if (proforma.total >= configCheckout.montoMaximoPagoSinDatosUsd) {
-      setDeseaFacturaConDatos(true);
-    }
-  }, [proforma.total, configCheckout.montoMaximoPagoSinDatosUsd]);
-
   const estaPagado =
     ESTADOS_PAGADOS.has(proforma.estado) ||
     (proforma.montoAbonadoUsd >= proforma.total - 0.01 && proforma.total > 0);
@@ -165,39 +151,34 @@ export function VistaLinkPagoCliente({
   }, [proforma]);
 
   const pagadorPlux = useMemo(() => {
-    const usarDatos = requiereFacturaObligatoria || deseaFacturaConDatos;
-    const nombre = usarDatos
-      ? datosPagador.nombre.trim() || "Cliente"
-      : datosPagador.nombre.trim() || "CONSUMIDOR FINAL";
-    const identificacion = usarDatos
-      ? datosPagador.identificacion.replace(/\D+/g, "") || "9999999999"
-      : "9999999999";
+    const nombreBase =
+      proforma.comprador.nombreCompleto &&
+      !/^(cliente chat|consumidor final)$/i.test(proforma.comprador.nombreCompleto.trim())
+        ? proforma.comprador.nombreCompleto.trim()
+        : "Cliente";
     const email =
-      datosPagador.email.trim() ||
+      emailConfirmadoPlux.trim() ||
       configCheckout.transferencia.correoTitular ||
       "clientes@tinkay.com";
     const telefono =
-      datosPagador.telefono.replace(/\D+/g, "") || "0999999999";
+      telefonoConfirmadoPlux.replace(/\D+/g, "") ||
+      (proforma.comprador.whatsapp || "").replace(/\D+/g, "") ||
+      "0999999999";
     return {
-      nombre,
-      identificacion,
+      nombre: nombreBase,
+      identificacion: "9999999999",
       email,
       telefono,
-      direccion: datosPagador.direccion.trim() || "Quito, Ecuador",
+      direccion: proforma.ubicacion?.direccion?.trim() || "Quito, Ecuador",
     };
   }, [
-    requiereFacturaObligatoria,
-    deseaFacturaConDatos,
-    datosPagador,
+    proforma.comprador.nombreCompleto,
+    proforma.comprador.whatsapp,
+    proforma.ubicacion?.direccion,
+    emailConfirmadoPlux,
+    telefonoConfirmadoPlux,
     configCheckout.transferencia.correoTitular,
   ]);
-
-  const datosFacturacionValidos = useMemo(() => {
-    if (!requiereFacturaObligatoria && !deseaFacturaConDatos) return true;
-    const idLimpia = datosPagador.identificacion.replace(/\D+/g, "");
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(datosPagador.email.trim());
-    return datosPagador.nombre.trim().length >= 3 && idLimpia.length >= 10 && emailOk;
-  }, [requiereFacturaObligatoria, deseaFacturaConDatos, datosPagador]);
 
   const copiarTexto = async (clave: string, valor: string) => {
     try {
@@ -1051,117 +1032,39 @@ export function VistaLinkPagoCliente({
                     )}
 
                     {mostrarPagoTarjeta && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                        {!requiereFacturaObligatoria && (
-                          <label
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px",
-                              padding: "10px 12px",
-                              borderRadius: "10px",
-                              background: "#FAF8F5",
-                              border: "1px solid #E7E5E4",
-                              fontSize: "0.83rem",
-                              color: "#44403C",
-                              fontWeight: 600,
-                              cursor: "pointer",
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={deseaFacturaConDatos}
-                              onChange={(e) => setDeseaFacturaConDatos(e.target.checked)}
-                              style={{ width: "16px", height: "16px", accentColor: "#2D4734" }}
-                            />
-                            <span>Deseo factura con mis datos (Cédula / RUC)</span>
-                          </label>
-                        )}
-
-                        {requiereFacturaObligatoria || deseaFacturaConDatos ? (
-                          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                            <div style={{ fontSize: "0.78rem", fontWeight: 700, color: "#57534E" }}>
-                              Datos para tu factura electrónica
-                            </div>
-                            <input
-                              type="text"
-                              placeholder="Nombre completo o Razón social *"
-                              value={datosPagador.nombre}
-                              onChange={(e) =>
-                                setDatosPagador((p) => ({ ...p, nombre: e.target.value }))
-                              }
-                              style={estiloInput}
-                            />
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                              <input
-                                type="text"
-                                placeholder="Cédula o RUC *"
-                                value={datosPagador.identificacion}
-                                onChange={(e) =>
-                                  setDatosPagador((p) => ({ ...p, identificacion: e.target.value }))
-                                }
-                                style={estiloInput}
-                              />
-                              <input
-                                type="tel"
-                                placeholder="Celular / WhatsApp"
-                                value={datosPagador.telefono}
-                                onChange={(e) =>
-                                  setDatosPagador((p) => ({ ...p, telefono: e.target.value }))
-                                }
-                                style={estiloInput}
-                              />
-                            </div>
-                            <input
-                              type="email"
-                              placeholder="Correo electrónico para tu factura *"
-                              value={datosPagador.email}
-                              onChange={(e) =>
-                                setDatosPagador((p) => ({ ...p, email: e.target.value }))
-                              }
-                              style={estiloInput}
-                            />
-                          </div>
-                        ) : (
-                          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                            <input
-                              type="email"
-                              placeholder="Tu correo electrónico (opcional, para comprobante)"
-                              value={datosPagador.email}
-                              onChange={(e) =>
-                                setDatosPagador((p) => ({ ...p, email: e.target.value }))
-                              }
-                              style={estiloInput}
-                            />
-                          </div>
-                        )}
-
-                        {datosFacturacionValidos ? (
-                          <BotonPagoPlux
-                            negocio={proforma.negocio}
-                            proformaId={proforma.id}
-                            tokenAprobacion={proforma.tokenAprobacion}
-                            modalidadCobro="TOTAL_100"
-                            pagador={pagadorPlux}
-                            ambiente={ambientePlux}
-                            etiqueta={`Pagar $${proforma.total.toFixed(2)} con Tarjeta`}
-                            alPagoAprobado={handlePagoPluxAprobado}
+                      <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                        {!tieneTelefonoInicial && (
+                          <input
+                            type="tel"
+                            placeholder="Tu teléfono / WhatsApp (opcional)"
+                            value={telefonoOpcionalInput}
+                            onChange={(e) => setTelefonoOpcionalInput(e.target.value)}
+                            onBlur={() => setTelefonoConfirmadoPlux(telefonoOpcionalInput.trim())}
+                            style={estiloInput}
                           />
-                        ) : (
-                          <div
-                            style={{
-                              padding: "11px 13px",
-                              borderRadius: "10px",
-                              background: "#FFFBEB",
-                              border: "1px solid #FDE68A",
-                              color: "#92400E",
-                              fontSize: "0.8rem",
-                              fontWeight: 600,
-                            }}
-                          >
-                            Completa tu nombre, cédula/RUC (mín. 10 dígitos) y correo electrónico para habilitar el botón de pago.
-                          </div>
                         )}
+
+                        <input
+                          type="email"
+                          placeholder="Correo electrónico (opcional, para recibo)"
+                          value={emailOpcionalInput}
+                          onChange={(e) => setEmailOpcionalInput(e.target.value)}
+                          onBlur={() => setEmailConfirmadoPlux(emailOpcionalInput.trim())}
+                          style={estiloInput}
+                        />
+
+                        <BotonPagoPlux
+                          negocio={proforma.negocio}
+                          proformaId={proforma.id}
+                          tokenAprobacion={proforma.tokenAprobacion}
+                          modalidadCobro="TOTAL_100"
+                          pagador={pagadorPlux}
+                          ambiente={ambientePlux}
+                          autoIniciar={true}
+                          omitirFacturaAutomatica={true}
+                          etiqueta={`Pagar $${proforma.total.toFixed(2)} con Tarjeta`}
+                          alPagoAprobado={handlePagoPluxAprobado}
+                        />
 
                         <div
                           style={{

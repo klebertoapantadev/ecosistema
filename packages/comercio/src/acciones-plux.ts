@@ -791,6 +791,7 @@ export async function confirmarPagoPluxAction(entrada: {
   tokenAprobacion?: string;
   pagador?: PagadorPlux;
   modalidadCobro?: ModalidadCobroProforma;
+  omitirFacturaAutomatica?: boolean;
   atribucion?: {
     fbc?: string;
     fbp?: string;
@@ -802,6 +803,8 @@ export async function confirmarPagoPluxAction(entrada: {
   const ordenFirmada = entrada.tokenAprobacion
     ? verificarOrdenRespaldoServidor(entrada.tokenAprobacion)
     : null;
+  const omitirFactura =
+    Boolean(entrada.omitirFacturaAutomatica) || ordenFirmada?.ori === "LINK_PAGO_CHAT";
 
   if (!REGEX_IDENTIFICADOR_PLUX.test(identificador)) {
     return { ok: false, error: "Pago desconocido." };
@@ -833,19 +836,26 @@ export async function confirmarPagoPluxAction(entrada: {
     .eq("pag_identificador_cliente", identificador)
     .maybeSingle();
 
+  const esLinkPagoChat =
+    omitirFactura ||
+    String((pago?.pag_detalle_transaccion as Record<string, any> | null)?.tipo_origen || "") ===
+      "LINK_PAGO_CHAT";
+
   // Sin revalidatePath("/panel"): Next aplicaría la recarga en el cliente en
   // cuanto termina esta acción, con el checkout aún abierto. El panel se
   // reordena (plan activo) y desmonta el modal antes del recibo. El checkout
   // refresca la página cuando el cliente cierra el recibo.
   if (pago?.pag_estado === "APROBADO") {
     let facturaPrevia: FacturaElectronicaResumen | null = null;
-    try {
-      facturaPrevia = await asegurarFacturaElectronicaParaPago(clienteDb, {
-        identificador,
-        negocio,
-      });
-    } catch {
-      // Continuar
+    if (!esLinkPagoChat) {
+      try {
+        facturaPrevia = await asegurarFacturaElectronicaParaPago(clienteDb, {
+          identificador,
+          negocio,
+        });
+      } catch {
+        // Continuar
+      }
     }
     return {
       ok: true,
@@ -1181,8 +1191,9 @@ export async function confirmarPagoPluxAction(entrada: {
   }
 
   // 3.5. Emitir y sincronizar automáticamente la Factura Electrónica SRI para este pago con tarjeta
-  let facturaEmitida: FacturaElectronicaResumen | null = facturaDesdeRpc;
-  if (!facturaEmitida) {
+  // (en Links de Pago desde chat no se genera factura automáticamente al pagar)
+  let facturaEmitida: FacturaElectronicaResumen | null = esLinkPagoChat ? null : facturaDesdeRpc;
+  if (!esLinkPagoChat && !facturaEmitida) {
     try {
       facturaEmitida = await asegurarFacturaElectronicaParaPago(clienteDb, {
         identificador,
@@ -1195,7 +1206,7 @@ export async function confirmarPagoPluxAction(entrada: {
 
   // Respaldo determinístico de Factura Electrónica SRI cuando el comprador es invitado con orden firmada
   // y la fila com_transaccion_pago aún no es legible por RLS antes de ejecutar la migración SQL
-  if (!facturaEmitida && emisorFactura.activo !== false) {
+  if (!esLinkPagoChat && !facturaEmitida && emisorFactura.activo !== false) {
     const ahoraIso = new Date().toISOString();
     const factorModalidad =
       entrada.modalidadCobro === "RESERVA_70"

@@ -37,6 +37,10 @@ interface Props {
   alCambiarFase?: (fase: FasePlux, mensaje: string | null, motivo: string | null) => void;
   /** Texto del botón principal, p. ej. el importe. */
   etiqueta?: React.ReactNode;
+  /** Prepara y despliega de inmediato el botón oficial PLUX sin requerir un clic intermedio. */
+  autoIniciar?: boolean;
+  /** Evita generar factura electrónica SRI automática (usado en links de pago rápidos desde chat). */
+  omitirFacturaAutomatica?: boolean;
 }
 
 export type FasePlux = "inicio" | "preparando" | "listo" | "esperando" | "sin_confirmar" | "aprobado" | "rechazado" | "error";
@@ -89,12 +93,15 @@ export function BotonPagoPlux({
   alPagoAprobado,
   alCambiarFase,
   etiqueta,
+  autoIniciar = false,
+  omitirFacturaAutomatica = false,
 }: Props) {
   const [fase, setFase] = useState<Fase>("inicio");
   const [mensaje, setMensaje] = useState<string | null>(null);
   const identificador = useRef<string | null>(null);
   const resuelto = useRef(false);
   const motivo = useRef<string | null>(null);
+  const autoIniciadoRef = useRef(false);
 
   const avisar = useRef(alCambiarFase);
   avisar.current = alCambiarFase;
@@ -113,8 +120,16 @@ export function BotonPagoPlux({
   // el pago preparado lleva los viejos: se vuelve a empezar.
   const claveDatos = JSON.stringify([varianteId, proformaId, tokenAprobacion, modalidadCobro, pagador]);
   useEffect(() => {
+    autoIniciadoRef.current = false;
     setFase((f) => (f === "listo" ? "inicio" : f));
   }, [claveDatos]);
+
+  useEffect(() => {
+    if (!autoIniciar || fase !== "inicio" || autoIniciadoRef.current) return;
+    autoIniciadoRef.current = true;
+    void preparar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoIniciar, fase, claveDatos]);
 
   // Al desmontar se quitan los globales (data lleva los datos del pagador):
   // el siguiente checkout empieza limpio.
@@ -196,6 +211,7 @@ export function BotonPagoPlux({
           tokenAprobacion,
           pagador,
           modalidadCobro,
+          omitirFacturaAutomatica,
           atribucion: {
             fbc: attr.fbc,
             fbp: attr.fbp,
