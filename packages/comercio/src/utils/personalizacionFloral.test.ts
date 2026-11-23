@@ -182,7 +182,7 @@ describe("personalizacionFloral", () => {
     expect(resumirConfiguracionPersonalizacionAdmin(boxLConOrquideas)).toContain("1–5 orquídeas");
   });
 
-  it("permite configurar tipo de envoltorio Base, Papel Envoltorio o Ambos (cliente elige)", () => {
+  it("permite configurar tipo de envoltorio Base, Papel o No aplica (sin selección al cliente)", () => {
     expect(inferirTipoEnvoltorioPorNombre("Box corazon", "Box Florales")).toBe("base");
     expect(inferirTipoEnvoltorioPorNombre("Bouquet Estilo Coreano", "Estilo Coreano")).toBe(
       "papel_envoltorio"
@@ -218,34 +218,28 @@ describe("personalizacionFloral", () => {
     if (resPapel.ok) {
       expect(resPapel.seleccionFinal.tipoEnvoltorio).toBe("papel_envoltorio");
       expect(resPapel.seleccionFinal.resumenTexto).toContain(
-        "Papel Envoltorio: Rosa (Rosado / Lila)"
+        "Papel: Rosa (Rosado / Lila)"
       );
     }
 
-    const cfgAmbos = normalizarConfiguracionPersonalizacionFloral({
+    const cfgNoAplica = normalizarConfiguracionPersonalizacionFloral({
       habilitada: true,
-      tipoEnvoltorio: "ambos",
+      tipoEnvoltorio: "no_aplica",
     });
-    const sinElegirTipo = validarSeleccionPersonalizacionFloral(cfgAmbos, {
-      modoFlores: "solo_rosas",
-      coloresRosas: ["Rojo"],
-      cantidadOrquideas: 0,
-      colorBasePapel: "oscuros",
-    });
-    expect(sinElegirTipo.ok).toBe(false);
+    expect(cfgNoAplica.mostrarColorBase).toBe(false);
+    expect(resumirConfiguracionPersonalizacionAdmin(cfgNoAplica)).toContain("No aplica");
 
-    const eligiendoBase = validarSeleccionPersonalizacionFloral(cfgAmbos, {
+    const resNoAplica = validarSeleccionPersonalizacionFloral(cfgNoAplica, {
       modoFlores: "solo_rosas",
       coloresRosas: ["Rojo"],
       cantidadOrquideas: 0,
-      tipoEnvoltorio: "base",
-      colorBasePapel: "oscuros",
+      colorBasePapel: null,
     });
-    expect(eligiendoBase.ok).toBe(true);
-    if (eligiendoBase.ok) {
-      expect(eligiendoBase.seleccionFinal.resumenTexto).toContain(
-        "Base: Colores Oscuros (Negro / Gris)"
-      );
+    expect(resNoAplica.ok).toBe(true);
+    if (resNoAplica.ok) {
+      expect(resNoAplica.seleccionFinal.tipoEnvoltorio).toBeNull();
+      expect(resNoAplica.seleccionFinal.colorBasePapel).toBeNull();
+      expect(resNoAplica.seleccionFinal.resumenTexto).toBe("Rosas (Rojo)");
     }
   });
 });

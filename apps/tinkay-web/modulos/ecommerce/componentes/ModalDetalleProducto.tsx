@@ -155,11 +155,6 @@ export function ModalDetalleProducto() {
       setModoFloresSel(modosDisp[0]?.id ?? 'solo_rosas');
       setColoresRosasSel([]);
       setCantidadOrquideasSel(cfgPers.orquideasMin);
-      setTipoEnvoltorioSel(
-        cfgPers.tipoEnvoltorio === 'base' || cfgPers.tipoEnvoltorio === 'papel_envoltorio'
-          ? cfgPers.tipoEnvoltorio
-          : null
-      );
       setColorBasePapelSel(null);
       setIndicacionesAdicionales('');
       setErrorPersonalizacion(null);
@@ -230,9 +225,6 @@ export function ModalDetalleProducto() {
   const [modoFloresSel, setModoFloresSel] = useState<ModoFlorPersonalizacion>('solo_rosas');
   const [coloresRosasSel, setColoresRosasSel] = useState<string[]>([]);
   const [cantidadOrquideasSel, setCantidadOrquideasSel] = useState<number>(0);
-  const [tipoEnvoltorioSel, setTipoEnvoltorioSel] = useState<TipoEnvoltorioSeleccionado | null>(
-    null
-  );
   const [colorBasePapelSel, setColorBasePapelSel] = useState<ColorBasePapelId | null>(null);
   const [indicacionesAdicionales, setIndicacionesAdicionales] = useState('');
   const [errorPersonalizacion, setErrorPersonalizacion] = useState<string | null>(null);
@@ -648,14 +640,10 @@ export function ModalDetalleProducto() {
       );
     });
     if (
-      configPersonalizacionFloral.tipoEnvoltorio === 'base' ||
-      configPersonalizacionFloral.tipoEnvoltorio === 'papel_envoltorio'
-    ) {
-      setTipoEnvoltorioSel(configPersonalizacionFloral.tipoEnvoltorio);
-    }
-    if (
-      colorBasePapelSel &&
-      !configPersonalizacionFloral.coloresBaseDisponibles.includes(colorBasePapelSel)
+      configPersonalizacionFloral.tipoEnvoltorio === 'no_aplica' ||
+      !configPersonalizacionFloral.mostrarColorBase ||
+      (colorBasePapelSel &&
+        !configPersonalizacionFloral.coloresBaseDisponibles.includes(colorBasePapelSel))
     ) {
       setColorBasePapelSel(null);
     }
@@ -701,10 +689,15 @@ export function ModalDetalleProducto() {
         coloresRosas: coloresRosasSel,
         cantidadOrquideas: cantidadOrquideasSel,
         tipoEnvoltorio:
-          configPersonalizacionFloral.tipoEnvoltorio === 'ambos'
-            ? tipoEnvoltorioSel
-            : configPersonalizacionFloral.tipoEnvoltorio,
-        colorBasePapel: colorBasePapelSel,
+          configPersonalizacionFloral.mostrarColorBase &&
+          configPersonalizacionFloral.tipoEnvoltorio !== 'no_aplica'
+            ? configPersonalizacionFloral.tipoEnvoltorio
+            : null,
+        colorBasePapel:
+          configPersonalizacionFloral.mostrarColorBase &&
+          configPersonalizacionFloral.tipoEnvoltorio !== 'no_aplica'
+            ? colorBasePapelSel
+            : null,
         indicacionesAdicionales,
       });
       if (!validacion.ok) {
@@ -2157,12 +2150,13 @@ export function ModalDetalleProducto() {
                 configPersonalizacionFloral.coloresBaseDisponibles.includes(op.id)
               );
               const tipoEnvEfectivo: TipoEnvoltorioSeleccionado | null =
-                configPersonalizacionFloral.tipoEnvoltorio === 'ambos'
-                  ? tipoEnvoltorioSel
-                  : configPersonalizacionFloral.tipoEnvoltorio;
+                configPersonalizacionFloral.mostrarColorBase &&
+                configPersonalizacionFloral.tipoEnvoltorio !== 'no_aplica'
+                  ? configPersonalizacionFloral.tipoEnvoltorio
+                  : null;
               const rotuloTipoEnv = tipoEnvEfectivo
                 ? obtenerEtiquetaTipoEnvoltorio(tipoEnvEfectivo)
-                : 'Base / Papel Envoltorio';
+                : '';
               const resumenActual = formatearResumenPersonalizacionFloral({
                 mismosColoresFoto,
                 modoFlores: modoFloresSel,
@@ -2170,7 +2164,7 @@ export function ModalDetalleProducto() {
                 cantidadOrquideas: cantidadOrquideasSel,
                 tipoEnvoltorio: tipoEnvEfectivo,
                 tipoEnvoltorioEtiqueta: tipoEnvEfectivo ? rotuloTipoEnv : undefined,
-                colorBasePapel: colorBasePapelSel,
+                colorBasePapel: tipoEnvEfectivo ? colorBasePapelSel : null,
                 indicacionesAdicionales,
               });
 
@@ -2471,87 +2465,22 @@ export function ModalDetalleProducto() {
                         </div>
                       )}
 
-                      {/* Tipo de Envoltorio (Base / Papel Envoltorio) y Color (únicamente Claros, Oscuros, Rosa) */}
-                      {configPersonalizacionFloral.mostrarColorBase &&
-                        opcionesBaseDisponibles.length > 0 && (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            {configPersonalizacionFloral.tipoEnvoltorio === 'ambos' && (
-                              <div>
-                                <span
-                                  style={{
-                                    display: 'block',
-                                    fontSize: '0.75rem',
-                                    fontWeight: 800,
-                                    color: '#221E1B',
-                                    marginBottom: '6px',
-                                  }}
-                                >
-                                  Tipo de Envoltorio *
-                                </span>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                                  {(
-                                    [
-                                      { id: 'base' as const, icono: '📦', label: 'Base' },
-                                      {
-                                        id: 'papel_envoltorio' as const,
-                                        icono: '🎀',
-                                        label: 'Papel Envoltorio',
-                                      },
-                                    ] as const
-                                  ).map((opTipo) => {
-                                    const activoTipo = tipoEnvoltorioSel === opTipo.id;
-                                    return (
-                                      <button
-                                        key={opTipo.id}
-                                        type="button"
-                                        onClick={() => {
-                                          setTipoEnvoltorioSel(opTipo.id);
-                                          setErrorPersonalizacion(null);
-                                        }}
-                                        aria-pressed={activoTipo}
-                                        style={{
-                                          display: 'inline-flex',
-                                          alignItems: 'center',
-                                          gap: '6px',
-                                          padding: '8px 13px',
-                                          borderRadius: '10px',
-                                          border: activoTipo
-                                            ? '2px solid #2F4737'
-                                            : '1px solid #D5CFC4',
-                                          background: activoTipo ? '#2F4737' : '#FFFFFF',
-                                          color: activoTipo ? '#FFFFFF' : '#1F1C19',
-                                          fontSize: '0.78rem',
-                                          fontWeight: 700,
-                                          cursor: 'pointer',
-                                        }}
-                                      >
-                                        {activoTipo && <Check size={13} />}
-                                        <span>
-                                          {opTipo.icono} {opTipo.label}
-                                        </span>
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            )}
-
-                            <div>
-                              <span
-                                style={{
-                                  display: 'block',
-                                  fontSize: '0.75rem',
-                                  fontWeight: 800,
-                                  color: '#221E1B',
-                                  marginBottom: '6px',
-                                }}
-                              >
-                                {tipoEnvEfectivo === 'base'
-                                  ? 'Color de Base *'
-                                  : tipoEnvEfectivo === 'papel_envoltorio'
-                                    ? 'Color de Papel Envoltorio *'
-                                    : 'Color de Base / Papel Envoltorio *'}
-                              </span>
+                      {/* Color de Base o Papel (solo si el envoltorio configurado es Base o Papel; oculto si es No aplica) */}
+                      {tipoEnvEfectivo && opcionesBaseDisponibles.length > 0 && (
+                        <div>
+                          <span
+                            style={{
+                              display: 'block',
+                              fontSize: '0.75rem',
+                              fontWeight: 800,
+                              color: '#221E1B',
+                              marginBottom: '6px',
+                            }}
+                          >
+                            {tipoEnvEfectivo === 'base'
+                              ? 'Color de Base *'
+                              : 'Color de Papel *'}
+                          </span>
                               <div
                                 style={{
                                   display: 'grid',
@@ -2629,7 +2558,6 @@ export function ModalDetalleProducto() {
                                 })}
                               </div>
                             </div>
-                          </div>
                         )}
                     </>
                   )}

@@ -471,7 +471,7 @@ export function EditorPersonalizacionFloralProducto({ valor, onChange }: Props) 
             </div>
           </div>
 
-          {/* 4. Tipo de Envoltorio (Base / Papel Envoltorio) y Color (únicamente Claros, Oscuros, Rosa) */}
+          {/* 4. Tipo de Envoltorio (Base / Papel / No aplica) y Color (únicamente Claros, Oscuros, Rosa) */}
           <div
             style={{
               background: "#FFFFFF",
@@ -483,155 +483,152 @@ export function EditorPersonalizacionFloralProducto({ valor, onChange }: Props) 
               gap: "8px",
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: "8px",
-                flexWrap: "wrap",
-              }}
-            >
-              <span style={{ fontSize: "0.75rem", fontWeight: 800, color: "#221E1B" }}>
-                4. Tipo de Envoltorio (Base / Papel Envoltorio) y Color
-              </span>
-              <label
+            <div>
+              <span
                 style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "5px",
-                  fontSize: "0.72rem",
-                  fontWeight: 700,
-                  color: "#57524C",
-                  cursor: "pointer",
+                  display: "block",
+                  fontSize: "0.75rem",
+                  fontWeight: 800,
+                  color: "#221E1B",
+                  marginBottom: "6px",
                 }}
               >
-                <input
-                  type="checkbox"
-                  checked={valor.mostrarColorBase}
-                  onChange={(e) => actualizar({ mostrarColorBase: e.target.checked })}
-                />
-                <span>Solicitar al comprar</span>
-              </label>
+                4. Tipo de Envoltorio (Base / Papel / No aplica)
+              </span>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "7px" }}>
+                {OPCIONES_TIPO_ENVOLTORIO_FLORAL.map((opEnv) => {
+                  const selEnv =
+                    valor.tipoEnvoltorio === opEnv.id ||
+                    (!valor.mostrarColorBase && opEnv.id === "no_aplica");
+                  return (
+                    <button
+                      key={opEnv.id}
+                      type="button"
+                      onClick={() =>
+                        actualizar({
+                          tipoEnvoltorio: opEnv.id,
+                          mostrarColorBase: opEnv.id !== "no_aplica",
+                        })
+                      }
+                      title={opEnv.descripcion}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        padding: "6px 12px",
+                        borderRadius: "999px",
+                        border: selEnv
+                          ? opEnv.id === "no_aplica"
+                            ? "1.5px solid #57524C"
+                            : "1.5px solid #2F4737"
+                          : "1px solid #D5CFC4",
+                        background: selEnv
+                          ? opEnv.id === "no_aplica"
+                            ? "#57524C"
+                            : "#2F4737"
+                          : "#FAF8F5",
+                        color: selEnv ? "#FFFFFF" : "#3F3F46",
+                        fontSize: "0.74rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {selEnv && <Check size={13} />}
+                      <span>
+                        {opEnv.id === "base"
+                          ? "📦 "
+                          : opEnv.id === "papel_envoltorio"
+                            ? "🎀 "
+                            : "🚫 "}
+                        {opEnv.etiqueta}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
-            {valor.mostrarColorBase && (
-              <>
-                <div>
-                  <span
-                    style={{
-                      display: "block",
-                      fontSize: "0.71rem",
-                      fontWeight: 700,
-                      color: "#57524C",
-                      marginBottom: "6px",
-                    }}
-                  >
-                    Tipo de envoltorio de este arreglo / variante:
-                  </span>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "7px" }}>
-                    {OPCIONES_TIPO_ENVOLTORIO_FLORAL.map((opEnv) => {
-                      const selEnv = valor.tipoEnvoltorio === opEnv.id;
-                      return (
-                        <button
-                          key={opEnv.id}
-                          type="button"
-                          onClick={() => actualizar({ tipoEnvoltorio: opEnv.id })}
-                          title={opEnv.descripcion}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "6px",
-                            padding: "6px 11px",
-                            borderRadius: "999px",
-                            border: selEnv ? "1.5px solid #2F4737" : "1px solid #D5CFC4",
-                            background: selEnv ? "#2F4737" : "#FAF8F5",
-                            color: selEnv ? "#FFFFFF" : "#3F3F46",
-                            fontSize: "0.74rem",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                          }}
-                        >
-                          {selEnv && <Check size={13} />}
-                          <span>
-                            {opEnv.id === "base"
-                              ? "📦 "
-                              : opEnv.id === "papel_envoltorio"
-                                ? "🎀 "
-                                : "✨ "}
-                            {opEnv.etiqueta}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
+            {valor.mostrarColorBase && valor.tipoEnvoltorio !== "no_aplica" ? (
+              <div>
+                <span
+                  style={{
+                    display: "block",
+                    fontSize: "0.71rem",
+                    fontWeight: 700,
+                    color: "#57524C",
+                    marginBottom: "6px",
+                  }}
+                >
+                  Colores disponibles para{" "}
+                  <strong>{valor.tipoEnvoltorio === "base" ? "Base" : "Papel"}</strong> (3
+                  alternativas exclusivas):
+                </span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                  {OPCIONES_COLOR_BASE_PAPEL.map((op) => {
+                    const activa = valor.coloresBaseDisponibles.includes(op.id);
+                    return (
+                      <button
+                        key={op.id}
+                        type="button"
+                        onClick={() => toggleColorBase(op.id)}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "7px",
+                          padding: "6px 11px",
+                          borderRadius: "10px",
+                          border: activa ? "1.5px solid #2F4737" : "1px solid #D5CFC4",
+                          background: activa ? "#F2F6F3" : "#FAF8F5",
+                          color: activa ? "#1F1C19" : "#78716C",
+                          fontSize: "0.74rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <span style={{ display: "inline-flex", alignItems: "center" }}>
+                          <span
+                            style={{
+                              width: "12px",
+                              height: "12px",
+                              borderRadius: "999px",
+                              background: op.coloresMuestra[0],
+                              border: "1px solid rgba(0,0,0,0.22)",
+                            }}
+                          />
+                          <span
+                            style={{
+                              width: "12px",
+                              height: "12px",
+                              borderRadius: "999px",
+                              background: op.coloresMuestra[1],
+                              border: "1px solid rgba(0,0,0,0.22)",
+                              marginLeft: "-4px",
+                            }}
+                          />
+                        </span>
+                        <span>
+                          {op.etiqueta}{" "}
+                          <small style={{ fontWeight: 500, opacity: 0.8 }}>({op.detalle})</small>
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
-
-                <div>
-                  <span
-                    style={{
-                      display: "block",
-                      fontSize: "0.71rem",
-                      fontWeight: 700,
-                      color: "#57524C",
-                      marginBottom: "6px",
-                    }}
-                  >
-                    Colores disponibles (3 alternativas exclusivas):
-                  </span>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                    {OPCIONES_COLOR_BASE_PAPEL.map((op) => {
-                      const activa = valor.coloresBaseDisponibles.includes(op.id);
-                      return (
-                        <button
-                          key={op.id}
-                          type="button"
-                          onClick={() => toggleColorBase(op.id)}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: "7px",
-                            padding: "6px 11px",
-                            borderRadius: "10px",
-                            border: activa ? "1.5px solid #2F4737" : "1px solid #D5CFC4",
-                            background: activa ? "#F2F6F3" : "#FAF8F5",
-                            color: activa ? "#1F1C19" : "#78716C",
-                            fontSize: "0.74rem",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                          }}
-                        >
-                          <span style={{ display: "inline-flex", alignItems: "center" }}>
-                            <span
-                              style={{
-                                width: "12px",
-                                height: "12px",
-                                borderRadius: "999px",
-                                background: op.coloresMuestra[0],
-                                border: "1px solid rgba(0,0,0,0.22)",
-                              }}
-                            />
-                            <span
-                              style={{
-                                width: "12px",
-                                height: "12px",
-                                borderRadius: "999px",
-                                background: op.coloresMuestra[1],
-                                border: "1px solid rgba(0,0,0,0.22)",
-                                marginLeft: "-4px",
-                              }}
-                            />
-                          </span>
-                          <span>
-                            {op.etiqueta}{" "}
-                            <small style={{ fontWeight: 500, opacity: 0.8 }}>({op.detalle})</small>
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </>
+              </div>
+            ) : (
+              <div
+                style={{
+                  fontSize: "0.72rem",
+                  color: "#57524C",
+                  background: "#F8F7F4",
+                  border: "1px dashed #D5CFC4",
+                  borderRadius: "8px",
+                  padding: "7px 10px",
+                }}
+              >
+                <strong>No aplica:</strong> al comprar este arreglo no se mostrará la opción de
+                seleccionar color de base ni papel al cliente.
+              </div>
             )}
 
             <div
