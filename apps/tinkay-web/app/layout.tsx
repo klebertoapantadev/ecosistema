@@ -4,6 +4,7 @@ import {
   ProveedorMarketingMeta,
   obtenerConfiguracionMarketingPublicaAction,
 } from "@eco/comercio";
+import { SplashAnimadoTinkay } from "../componentes/SplashAnimadoTinkay";
 import "./globals.css";
 
 // Fuentes locales dentro del repo (evita fallos de descarga de Google Fonts en Vercel)
@@ -47,8 +48,8 @@ export async function generateMetadata(): Promise<Metadata> {
       title: "Tinkay",
     },
     icons: {
-      icon: "/icons/icon-192.png",
-      apple: "/icons/apple-touch-icon.png",
+      icon: "/icons/icon-192.png?v=2",
+      apple: "/icons/apple-touch-icon.png?v=2",
     },
     ...(mkm?.dominioVerificacion
       ? {
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es" className={`${fraunces.variable} ${inter.variable}`}>
       <body>
+        <SplashAnimadoTinkay />
         <ProveedorMarketingMeta negocio="tinkay" />
         {children}
       </body>

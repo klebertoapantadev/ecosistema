@@ -1,8 +1,9 @@
 // Service Worker PWA + Web Push Estilo WhatsApp para Tinkay (/panel, /panel/conversaciones, /panel/chat-equipo, /panel/entregas, /panel/taller)
-const CACHE_NAME = "eco-portal-operaciones-v6";
+const CACHE_NAME = "eco-portal-operaciones-v7";
 const RUTAS_PRECACHE = [
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
+  "/icons/icon-192.png?v=2",
+  "/icons/icon-512.png?v=2",
+  "/img/logo/tinkay-logo.png?v=2",
 ];
 
 self.addEventListener("install", (event) => {
@@ -32,8 +33,8 @@ self.addEventListener("push", (event) => {
     notId: null,
     negocio: "tinkay",
     tag: "tinkay-alerta",
-    icon: "/icons/icon-192.png",
-    badge: "/icons/icon-192.png",
+    icon: "/icons/icon-192.png?v=2",
+    badge: "/icons/icon-192.png?v=2",
   };
 
   if (event.data) {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  construirMensajeConfianzaChat,
   construirMensajeDatosPagoChat,
   construirUrlWhatsappTienda,
   crearConfiguracionTiendaCheckoutPorDefecto,
@@ -130,7 +131,21 @@ describe("configuracion-tienda-checkout", () => {
     });
     expect(parsearComandoChatPago("/DatosPago")).toEqual({ tipo: "DATOS_PAGO" });
     expect(parsearComandoChatPago("/datospago")).toEqual({ tipo: "DATOS_PAGO" });
+    expect(parsearComandoChatPago("/Confianza")).toEqual({ tipo: "CONFIANZA" });
+    expect(parsearComandoChatPago("/confianza")).toEqual({ tipo: "CONFIANZA" });
     expect(parsearComandoChatPago("Hola, buenos días")).toBeNull();
+  });
+
+  it("construye el mensaje de respuesta rápida /Confianza con link a testimonios de clientes", () => {
+    const msgTinkay = construirMensajeConfianzaChat("tinkay");
+    expect(msgTinkay).toContain("https://tinkay-web.vercel.app/#testimonios");
+    expect(msgTinkay).toContain("https://photos.app.goo.gl/pARRDFJCASyUW4vRA");
+    expect(msgTinkay).toContain("Tinkay");
+
+    const msgCustom = construirMensajeConfianzaChat("tinkay", {
+      urlBase: "https://tinkay.ec/",
+    });
+    expect(msgCustom).toContain("https://tinkay.ec/#testimonios");
   });
 
   it("detecta solicitudes de pago con tarjeta sin confundirlas con tarjetas de dedicatoria floral", () => {

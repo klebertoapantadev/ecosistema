@@ -82,6 +82,7 @@ import {
 } from "../acciones-omnicanal";
 import { obtenerConfiguracionTiendaCheckoutAction } from "../acciones-tienda-checkout";
 import {
+  construirMensajeConfianzaChat,
   construirMensajeDatosPagoChat,
   crearConfiguracionTiendaCheckoutPorDefecto,
   detectarSolicitudPagoTarjetaEnMensaje,
@@ -1836,6 +1837,14 @@ export function ConsolaVentasOmnicanal({
           "Incluye link DeUna, datos bancarios configurados y opción para que el cliente solicite pago con tarjeta.",
         aliases: ["/datospago", "/datos", "/deuna", "/banco", "/cuentas", "/transferencia"],
       },
+      {
+        clave: "CONFIANZA" as const,
+        atajo: "/Confianza",
+        titulo: "Testimonios de Nuestros Clientes",
+        descripcion:
+          "Envía el enlace directo a los testimonios verificados y entregas reales de clientes.",
+        aliases: ["/confianza", "/testimonios", "/clientes", "/resenas", "/reseñas"],
+      },
     ];
     if (!comandoSolo || comandoSolo === "/") return catalogoHerramientas;
     return catalogoHerramientas.filter(
@@ -1942,10 +1951,35 @@ export function ConsolaVentasOmnicanal({
     }
   };
 
-  const handleSeleccionarHerramientaCobro = (clave: "LINK_PAGO" | "DATOS_PAGO") => {
+  const aplicarComandoConfianza = () => {
+    if (!conversacionActiva) return;
+    setMostrarMenuRespuestas(false);
+    setMostrarMenuAdjuntar(false);
+    setModoNotaInterna(false);
+    setErrorMsg(null);
+    const origenActual =
+      typeof window !== "undefined" &&
+      window.location?.origin &&
+      !/localhost|127\.0\.0\.1/i.test(window.location.origin)
+        ? window.location.origin
+        : null;
+    const mensajeConfianza = construirMensajeConfianzaChat(negNorm, {
+      urlBase: origenActual,
+    });
+    setTextoRespuesta(mensajeConfianza);
+    setRespuestaSeleccionadaId(null);
+    setQrDeunaSugeridoUrl(null);
+    setTimeout(() => textareaCompositorRef.current?.focus(), 60);
+  };
+
+  const handleSeleccionarHerramientaCobro = (clave: "LINK_PAGO" | "DATOS_PAGO" | "CONFIANZA") => {
     if (clave === "LINK_PAGO") {
       const parsed = parsearComandoChatPago(textoRespuesta.trim());
       abrirModalLinkPago(parsed?.tipo === "LINK_PAGO" ? parsed.montoExplicito : null);
+      return;
+    }
+    if (clave === "CONFIANZA") {
+      aplicarComandoConfianza();
       return;
     }
     void aplicarComandoDatosPago();
@@ -2073,7 +2107,7 @@ export function ConsolaVentasOmnicanal({
 
     const textoLimpio = textoRespuesta.trim();
 
-    // Interceptar comandos de cobro integrados (`/LinkPago` y `/DatosPago`) al presionar Enter
+    // Interceptar comandos rápidos integrados (`/LinkPago`, `/DatosPago`, `/Confianza`) al presionar Enter
     if (!modoNotaInterna && !imagenAdjuntaAsesorUrl && !documentoAdjuntoAsesor) {
       const cmdPago = parsearComandoChatPago(textoLimpio);
       if (cmdPago?.tipo === "LINK_PAGO") {
@@ -2082,6 +2116,10 @@ export function ConsolaVentasOmnicanal({
       }
       if (cmdPago?.tipo === "DATOS_PAGO") {
         void aplicarComandoDatosPago();
+        return;
+      }
+      if (cmdPago?.tipo === "CONFIANZA") {
+        aplicarComandoConfianza();
         return;
       }
     }
@@ -6582,7 +6620,12 @@ export function ConsolaVentasOmnicanal({
                             padding: "9px 12px",
                             border: "none",
                             borderBottom: "1px solid #E6E2DA",
-                            background: h.clave === "LINK_PAGO" ? "#F4FAF6" : "#F8F7F4",
+                            background:
+                              h.clave === "LINK_PAGO"
+                                ? "#F4FAF6"
+                                : h.clave === "CONFIANZA"
+                                  ? "#FFFBEB"
+                                  : "#F8F7F4",
                             textAlign: "left",
                             cursor: "pointer",
                             display: "flex",
@@ -6602,25 +6645,27 @@ export function ConsolaVentasOmnicanal({
                             >
                               {h.clave === "LINK_PAGO" ? (
                                 <Link2 size={13} color="#2F4737" />
+                              ) : h.clave === "CONFIANZA" ? (
+                                <Star size={13} color="#92400E" />
                               ) : (
                                 <Building2 size={13} color="#2F4737" />
                               )}
-                              <code style={{ color: "#2F4737", fontWeight: 800 }}>{h.atajo}</code> ·{" "}
+                              <code style={{ color: h.clave === "CONFIANZA" ? "#92400E" : "#2F4737", fontWeight: 800 }}>{h.atajo}</code> ·{" "}
                               {h.titulo}
                             </strong>
                             <span
                               style={{
                                 fontSize: "0.66rem",
                                 fontWeight: 700,
-                                color: "#2F4737",
-                                background: "#EAF3ED",
-                                border: "1px solid #C6DEC9",
+                                color: h.clave === "CONFIANZA" ? "#92400E" : "#2F4737",
+                                background: h.clave === "CONFIANZA" ? "#FEF3C7" : "#EAF3ED",
+                                border: h.clave === "CONFIANZA" ? "1px solid #FDE68A" : "1px solid #C6DEC9",
                                 borderRadius: "999px",
                                 padding: "1px 7px",
                                 flexShrink: 0,
                               }}
                             >
-                              Cobro
+                              {h.clave === "CONFIANZA" ? "Testimonios" : "Cobro"}
                             </span>
                           </div>
                           <span
@@ -7164,6 +7209,18 @@ export function ConsolaVentasOmnicanal({
                               visible: true,
                               onAccion: () => {
                                 void aplicarComandoDatosPago();
+                              },
+                            },
+                            {
+                              clave: "confianza",
+                              etiqueta: "Confianza",
+                              titulo:
+                                "Insertar /Confianza con el enlace a testimonios y entregas reales",
+                              esPeligro: false,
+                              icono: <Star size={20} color="#92400E" />,
+                              visible: true,
+                              onAccion: () => {
+                                aplicarComandoConfianza();
                               },
                             },
                             {

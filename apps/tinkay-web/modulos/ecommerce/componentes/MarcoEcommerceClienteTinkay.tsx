@@ -189,7 +189,7 @@ function CabeceraYMenuClienteInterno({
 
           <Link href="/" className="logo-tinkay-marca" aria-label="Tinkay Flores y Eventos">
             <img
-              src="/img/logo/tinkay-logo.jpg"
+              src="/img/logo/tinkay-logo.png?v=2"
               alt="Tinkay Flores y Eventos"
               className="logo-tinkay-imagen-cabecera"
             />
@@ -596,7 +596,7 @@ export function MarcoEcommerceClienteTinkay(props: PropsMarcoEcommerceClienteTin
               <div className="columna-pie-marca">
                 <Link href="/" className="logo-tinkay-pie-link">
                   <img
-                    src="/img/logo/tinkay-logo.jpg"
+                    src="/img/logo/tinkay-logo.png?v=2"
                     alt="Tinkay Flores y Eventos"
                     className="logo-tinkay-imagen-pie"
                   />

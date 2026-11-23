@@ -192,7 +192,7 @@ export function EncabezadoEcommerce() {
 
           <Link href="/" className="logo-tinkay-marca" aria-label="Tinkay Flores y Eventos">
             <img
-              src="/img/logo/tinkay-logo.jpg"
+              src="/img/logo/tinkay-logo.png?v=2"
               alt="Tinkay Flores y Eventos"
               className="logo-tinkay-imagen-cabecera"
             />

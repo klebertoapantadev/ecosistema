@@ -4302,8 +4302,7 @@
     max-width: 128px;
   }
   .barra-superior-anuncio {
-    font-size: 0.72rem;
-    padding: 5px 10px;
+    display: none !important;
   }
   .enlace-tienda-maps-top {
     display: none;
@@ -4333,6 +4332,10 @@
 
 /* Teléfonos y Tablets Pequeñas (<768px) */
 @media (max-width: 768px) {
+  /* Barra superior oculta en versión móvil para despejar el encabezado */
+  .barra-superior-anuncio {
+    display: none !important;
+  }
   /* Cabecera */
   .nav-enlaces-floristeria {
     display: none;

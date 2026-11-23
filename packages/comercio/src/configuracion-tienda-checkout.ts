@@ -362,11 +362,68 @@ export function construirMensajeDatosPagoChat(
 
 export type ComandoChatPagoDetectado =
   | { tipo: "LINK_PAGO"; montoExplicito: number | null }
-  | { tipo: "DATOS_PAGO" };
+  | { tipo: "DATOS_PAGO" }
+  | { tipo: "CONFIANZA" };
 
 /**
- * Detecta si el texto del compositor invoca uno de los comandos de cobro integrados:
- * `/LinkPago` (con monto opcional, ej. `/LinkPago 45.50`) o `/DatosPago`.
+ * Construye un mensaje listo para enviar al cliente (comando `/Confianza`) con el enlace
+ * directo a la sección de testimonios verificados y, en el caso de Tinkay, al álbum oficial
+ * de entregas reales.
+ */
+export function construirMensajeConfianzaChat(
+  negocio: string,
+  opciones?: {
+    urlBase?: string | null;
+    urlAlbumFotos?: string | null;
+  }
+): string {
+  const neg = (negocio || "tinkay").trim().toLowerCase();
+  const basePorDefecto: Record<string, string> = {
+    tinkay: "https://tinkay-web.vercel.app",
+    margaritas: "https://margaritas-web.vercel.app",
+    fastfix: "https://fastfix-web.vercel.app",
+    tranqi: "https://tranqi-web.vercel.app",
+  };
+  const nombresMarca: Record<string, string> = {
+    tinkay: "Tinkay",
+    margaritas: "Margaritas Floristería",
+    fastfix: "FastFix Home",
+    tranqi: "Tranqi",
+  };
+
+  const baseRaw = opciones?.urlBase?.trim() || basePorDefecto[neg] || "https://tinkay-web.vercel.app";
+  const baseLimpia = baseRaw.replace(/\/+$/, "");
+  const urlTestimonios = `${baseLimpia}/#testimonios`;
+  const marca = nombresMarca[neg] || negocio || "Tinkay";
+
+  if (neg === "tinkay") {
+    const urlAlbum =
+      opciones?.urlAlbumFotos?.trim() || "https://photos.app.goo.gl/pARRDFJCASyUW4vRA";
+    return [
+      `🌸 *Conoce la experiencia de nuestros clientes en ${marca}*`,
+      "",
+      "Cada entrega cuenta una historia real. Aquí puedes revisar testimonios verificados, capturas y calificaciones de quienes ya confiaron en nosotros:",
+      `⭐ *Testimonios de clientes:* ${urlTestimonios}`,
+      `📸 *Álbum de entregas reales:* ${urlAlbum}`,
+      "",
+      "✨ Más de 1,200 arreglos entregados puntualmente en Quito y los Valles (4.9/5 ⭐).",
+      "Si deseas, con gusto te asesoramos para elegir tu arreglo ideal.",
+    ].join("\n");
+  }
+
+  return [
+    `⭐ *Testimonios y experiencias de clientes en ${marca}*`,
+    "",
+    "Aquí puedes revisar opiniones y reseñas reales de quienes ya confían en nuestro servicio:",
+    `🔗 ${urlTestimonios}`,
+    "",
+    "Quedamos atentos para asesorarte en lo que necesites.",
+  ].join("\n");
+}
+
+/**
+ * Detecta si el texto del compositor invoca uno de los comandos rápidos integrados:
+ * `/LinkPago` (con monto opcional, ej. `/LinkPago 45.50`), `/DatosPago` o `/Confianza`.
  */
 export function parsearComandoChatPago(texto: string): ComandoChatPagoDetectado | null {
   const limpio = String(texto || "").trim();
@@ -386,6 +443,10 @@ export function parsearComandoChatPago(texto: string): ComandoChatPagoDetectado 
 
   if (/^\/datospago$/i.test(limpio)) {
     return { tipo: "DATOS_PAGO" };
+  }
+
+  if (/^\/confianza$/i.test(limpio)) {
+    return { tipo: "CONFIANZA" };
   }
 
   return null;

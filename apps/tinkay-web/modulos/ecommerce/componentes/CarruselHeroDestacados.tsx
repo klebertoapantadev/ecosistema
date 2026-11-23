@@ -48,8 +48,8 @@ const SLIDES_HERO = [
     subtitulo: 'Conoce nuestras instalaciones en Quito, retira tus pedidos o recibe asesoría personalizada.',
     imagen: '/img/logo/tinkay-tienda-neon.jpg',
     precioDesde: '',
-    botonTexto: 'Abrir en Google Maps',
-    enlaceExterno: 'https://maps.app.goo.gl/D56gQohzuwha4sLf8',
+    botonTexto: 'Nuestros Clientes',
+    seccionDestinoId: 'testimonios',
   },
 ];
 
@@ -77,8 +77,13 @@ export function CarruselHeroDestacados() {
   const slide = SLIDES_HERO[slideActivo] ?? SLIDES_HERO[0]!;
 
   const handleVerProducto = () => {
-    if (slide.enlaceExterno) {
-      window.open(slide.enlaceExterno, '_blank', 'noopener,noreferrer');
+    if ('seccionDestinoId' in slide && slide.seccionDestinoId) {
+      const destino = document.getElementById(slide.seccionDestinoId);
+      if (destino) {
+        destino.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        window.location.hash = `#${slide.seccionDestinoId}`;
+      }
       return;
     }
     if (slide.categoriaId) {
@@ -128,7 +133,7 @@ export function CarruselHeroDestacados() {
             <ArrowRight size={18} />
           </button>
 
-          {slide.precioDesde && !slide.enlaceExterno && (
+          {slide.precioDesde && !('seccionDestinoId' in slide && slide.seccionDestinoId) && (
             <div className="hero-precio-etiqueta">
               <span className="precio-desde">Desde</span>
               <span className="precio-cifra">{slide.precioDesde}</span>

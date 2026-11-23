@@ -338,8 +338,33 @@ export default async function LayoutPanel({ children }: { children: React.ReactN
                   alignItems: "center",
                 }}
               >
-                <span className="panel-marca-completo">tinkay</span>
-                <span className="panel-marca-monograma">t</span>
+                <span className="panel-marca-completo">
+                  <img
+                    src="/img/logo/tinkay-logo.png?v=2"
+                    alt="Tinkay"
+                    style={{
+                      height: "30px",
+                      width: "auto",
+                      maxWidth: "118px",
+                      objectFit: "contain",
+                      filter: "brightness(0) invert(1)",
+                      display: "block",
+                    }}
+                  />
+                </span>
+                <span className="panel-marca-monograma">
+                  <img
+                    src="/img/logo/tinkay-isotipo.png?v=2"
+                    alt="Tinkay"
+                    style={{
+                      height: "28px",
+                      width: "28px",
+                      objectFit: "contain",
+                      filter: "brightness(0) invert(1)",
+                      display: "block",
+                    }}
+                  />
+                </span>
               </Link>
               <CampanaNotificaciones negocio={NEGOCIO} usuarioId={perfil.usu_id} />
             </div>

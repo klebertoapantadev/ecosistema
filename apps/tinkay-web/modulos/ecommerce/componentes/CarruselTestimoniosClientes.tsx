@@ -183,8 +183,28 @@ export function CarruselTestimoniosClientes() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [testimonioSeleccionado, listaTestimonios]);
 
+  // Permitir enlaces directos (#testimonios o #nuestros-clientes) enviados desde /Confianza
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const hash = window.location.hash.toLowerCase();
+    if (hash === '#testimonios' || hash === '#nuestros-clientes') {
+      const timer = setTimeout(() => {
+        const el = document.getElementById('testimonios');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 250);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   return (
-    <section className="seccion-testimonios-tinkay" aria-label="Testimonios de Clientes Tinkay">
+    <section
+      id="testimonios"
+      className="seccion-testimonios-tinkay"
+      aria-label="Testimonios de Clientes Tinkay"
+      style={{ scrollMarginTop: '96px' }}
+    >
       <div className="contenedor-maximo">
         {/* Cabecera Editorial */}
         <div className="cabecera-seccion-testimonios">
