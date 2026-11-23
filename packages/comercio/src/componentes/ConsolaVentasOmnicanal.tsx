@@ -33,6 +33,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
   Pause,
+  Pencil,
   Play,
   Plus,
   RefreshCw,
@@ -43,6 +44,7 @@ import {
   Share2,
   ShoppingBag,
   Sparkles,
+  Star,
   StickyNote,
   Store,
   Tag,
@@ -95,10 +97,12 @@ import {
   extraerSegmentosMultimediaMensaje,
   extraerTodasLasImagenesMensaje,
   formatearEtiquetaEnlaceVisible,
+  generarCodigoRefWhatsapp,
   interpolarRespuestaRapida,
   limpiarVistaPreviaMensajeOmnicanal,
   MOTIVOS_CIERRE_OMNICANAL,
   nombreCanalRealtimeOmnicanal,
+  normalizarTelefonoOmnicanal,
   OPCIONES_RECORDATORIO_RAPIDO_OMNICANAL,
   resolverConversacionPorContextoReenvio,
   type CanalOmnicanal,
@@ -123,6 +127,7 @@ import {
   IconoVectorCanal,
 } from "./IconoCanalOmnicanal";
 import { ModalAdministrarEtiquetas } from "./ModalAdministrarEtiquetas";
+import { ModalFichaClienteOmnicanal } from "./ModalFichaClienteOmnicanal";
 import { ModalLinkPagoChat } from "./ModalLinkPagoChat";
 import {
   ModalSelectorCatalogoChat,
@@ -938,6 +943,10 @@ export function ConsolaVentasOmnicanal({
     useState<ConversacionOmnicanal | null>(null);
   const [eliminandoConversacion, setEliminandoConversacion] = useState<boolean>(false);
   const esAdminAplicacion = Boolean(tablero.esAdminAplicacion);
+  const [modalFichaClienteContexto, setModalFichaClienteContexto] = useState<{
+    conversacion?: ConversacionOmnicanal | null;
+    contactoDirectorio?: ContactoUnificadoOmnicanal | null;
+  } | null>(null);
 
   const [formRespuesta, setFormRespuesta] = useState<{
     id?: string | null;
@@ -2995,13 +3004,67 @@ export function ConsolaVentasOmnicanal({
       {
         id: "nombre",
         encabezado: "Cliente / Usuario Web",
-        valor: (u) => `${u.nombre} ${u.correo || ""} ${u.telefono || ""}`,
+        valor: (u) => `${u.nombre} ${u.correo || ""} ${u.telefono || ""} ${u.notasCliente || ""}`,
         render: (u) => (
           <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-            <strong style={{ fontSize: "0.84rem", color: "#1F1C19" }}>{u.nombre}</strong>
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={() => setModalFichaClienteContexto({ contactoDirectorio: u })}
+                title="Ver y editar ficha del cliente"
+                aria-label={`Editar ficha de ${u.nombre}`}
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  padding: 0,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  color: "#1F1C19",
+                  fontWeight: 700,
+                  fontSize: "0.84rem",
+                  textAlign: "left",
+                }}
+              >
+                <span>{u.nombre}</span>
+                <Pencil size={11} style={{ color: "#847D74", flexShrink: 0 }} />
+              </button>
+              {u.calificacionEstrellas != null && u.calificacionEstrellas > 0 && (
+                <span
+                  title={`Calificación: ${u.calificacionEstrellas}/5 estrellas`}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "2px",
+                    padding: "1px 6px",
+                    borderRadius: "999px",
+                    background: "#FFFBEB",
+                    border: "1px solid #E8DEC6",
+                    color: "#B45309",
+                    fontSize: "0.68rem",
+                    fontWeight: 700,
+                  }}
+                >
+                  <Star size={10} fill="#D97706" color="#D97706" />
+                  <span>{u.calificacionEstrellas}</span>
+                </span>
+              )}
+            </div>
             <span style={{ fontSize: "0.73rem", color: "#847D74" }}>
               {u.correo || "Sin correo"} {u.telefono ? `· ${u.telefono}` : ""}
             </span>
+            {u.notasCliente && (
+              <span
+                style={{
+                  fontSize: "0.71rem",
+                  color: "#745622",
+                  fontWeight: 600,
+                }}
+              >
+                📝 {u.notasCliente}
+              </span>
+            )}
           </div>
         ),
       },
@@ -3105,37 +3168,63 @@ export function ConsolaVentasOmnicanal({
         encabezado: "Acción",
         valor: (u) => u.nombre,
         render: (u) => (
-          <button
-            type="button"
-            className="btn-responsive-accion"
-            title={`Abrir hilo de conversación con ${u.nombre}`}
-            aria-label={`Abrir chat con ${u.nombre}`}
-            onClick={() =>
-              void handleIniciarSeguimiento({
-                nombre: u.nombre,
-                correo: u.correo,
-                telefono: u.telefono,
-                usuarioId: u.usuarioId,
-                clienteId: u.clienteId,
-              })
-            }
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              padding: "6px 10px",
-              borderRadius: "8px",
-              border: "1px solid #D5CFC4",
-              background: "#FFFFFF",
-              color: "#1F1C19",
-              fontSize: "0.76rem",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
-            <MessageCircle size={14} />
-            <span className="btn-texto-responsive">Abrir Chat</span>
-          </button>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+            <button
+              type="button"
+              className="btn-responsive-accion"
+              title={`Editar ficha y notas de ${u.nombre}`}
+              aria-label={`Editar ficha de ${u.nombre}`}
+              onClick={() => setModalFichaClienteContexto({ contactoDirectorio: u })}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                padding: "6px 9px",
+                borderRadius: "8px",
+                border: "1px solid #E6E2DA",
+                background: "#FAF8F5",
+                color: "#3A3530",
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              <Pencil size={13} />
+              <span className="btn-texto-responsive">Ficha</span>
+            </button>
+
+            <button
+              type="button"
+              className="btn-responsive-accion"
+              title={`Abrir hilo de conversación con ${u.nombre}`}
+              aria-label={`Abrir chat con ${u.nombre}`}
+              onClick={() =>
+                void handleIniciarSeguimiento({
+                  nombre: u.nombre,
+                  correo: u.correo,
+                  telefono: u.telefono,
+                  usuarioId: u.usuarioId,
+                  clienteId: u.clienteId,
+                })
+              }
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "6px 10px",
+                borderRadius: "8px",
+                border: "1px solid #D5CFC4",
+                background: "#FFFFFF",
+                color: "#1F1C19",
+                fontSize: "0.76rem",
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              <MessageCircle size={14} />
+              <span className="btn-texto-responsive">Abrir Chat</span>
+            </button>
+          </div>
         ),
       },
     ],
@@ -3955,18 +4044,58 @@ export function ConsolaVentasOmnicanal({
                               gap: "6px",
                             }}
                           >
-                            <strong
+                            <div
                               style={{
-                                fontSize: "0.83rem",
-                                fontWeight: tieneNoLeidos ? 800 : 600,
-                                color: "#221E1B",
-                                overflow: "hidden",
-                                textOverflow: "ellipsis",
-                                whiteSpace: "nowrap",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "5px",
+                                minWidth: 0,
                               }}
                             >
-                              {conv.remitenteNombre}
-                            </strong>
+                              <strong
+                                style={{
+                                  fontSize: "0.83rem",
+                                  fontWeight: tieneNoLeidos ? 800 : 600,
+                                  color: "#221E1B",
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {conv.remitenteNombre}
+                              </strong>
+                              {conv.fichaCliente?.calificacionEstrellas != null &&
+                                conv.fichaCliente.calificacionEstrellas > 0 && (
+                                  <span
+                                    title={`Calificación: ${conv.fichaCliente.calificacionEstrellas}/5`}
+                                    style={{
+                                      display: "inline-flex",
+                                      alignItems: "center",
+                                      gap: "2px",
+                                      fontSize: "0.66rem",
+                                      fontWeight: 700,
+                                      color: "#B45309",
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    <Star size={10} fill="#D97706" color="#D97706" />
+                                    <span>{conv.fichaCliente.calificacionEstrellas}</span>
+                                  </span>
+                                )}
+                              {conv.fichaCliente?.notasCliente && (
+                                <span
+                                  title={`Nota del cliente: ${conv.fichaCliente.notasCliente}`}
+                                  style={{
+                                    display: "inline-flex",
+                                    alignItems: "center",
+                                    color: "#745622",
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  <StickyNote size={11} />
+                                </span>
+                              )}
+                            </div>
                             <div
                               style={{
                                 display: "inline-flex",
@@ -4316,26 +4445,108 @@ export function ConsolaVentasOmnicanal({
                         </button>
                       )}
 
-                      <AvatarConCanalOmnicanal
-                        nombre={conversacionActiva.remitenteNombre}
-                        canal={conversacionActiva.canal}
-                        size={34}
-                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setModalFichaClienteContexto({
+                            conversacion: conversacionActiva,
+                            contactoDirectorio: contactoVinculadoActivo,
+                          })
+                        }
+                        title="Clic para abrir y editar ficha del cliente (nombre, WhatsApp, estrellas y notas)"
+                        aria-label={`Ver información de ${conversacionActiva.remitenteNombre}`}
+                        style={{
+                          border: "none",
+                          background: "transparent",
+                          padding: 0,
+                          cursor: "pointer",
+                          flexShrink: 0,
+                          display: "inline-flex",
+                          borderRadius: "999px",
+                        }}
+                      >
+                        <AvatarConCanalOmnicanal
+                          nombre={conversacionActiva.remitenteNombre}
+                          canal={conversacionActiva.canal}
+                          size={34}
+                        />
+                      </button>
 
                       <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: "2px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "5px", flexWrap: "nowrap", minWidth: 0 }}>
-                          <strong
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setModalFichaClienteContexto({
+                                conversacion: conversacionActiva,
+                                contactoDirectorio: contactoVinculadoActivo,
+                              })
+                            }
+                            title="Clic para abrir y editar ficha del cliente (nombre, WhatsApp, estrellas y notas)"
+                            aria-label={`Editar ficha de ${conversacionActiva.remitenteNombre}`}
                             style={{
-                              fontSize: "0.88rem",
-                              color: "#1F1C19",
-                              overflow: "hidden",
-                              textOverflow: "ellipsis",
-                              whiteSpace: "nowrap",
-                              maxWidth: modoLayoutInbox === "movil" ? "165px" : "260px",
+                              border: "none",
+                              background: "transparent",
+                              padding: "1px 4px",
+                              marginLeft: "-4px",
+                              borderRadius: "6px",
+                              cursor: "pointer",
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "5px",
+                              minWidth: 0,
+                              maxWidth: modoLayoutInbox === "movil" ? "180px" : "290px",
                             }}
                           >
-                            {conversacionActiva.remitenteNombre}
-                          </strong>
+                            <strong
+                              style={{
+                                fontSize: "0.88rem",
+                                color: "#1F1C19",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              {conversacionActiva.remitenteNombre}
+                            </strong>
+                            <Pencil
+                              size={12}
+                              style={{ color: "#847D74", flexShrink: 0 }}
+                            />
+                          </button>
+
+                          {conversacionActiva.fichaCliente?.calificacionEstrellas != null &&
+                            conversacionActiva.fichaCliente.calificacionEstrellas > 0 && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setModalFichaClienteContexto({
+                                    conversacion: conversacionActiva,
+                                    contactoDirectorio: contactoVinculadoActivo,
+                                  })
+                                }
+                                title={`Calificación: ${conversacionActiva.fichaCliente.calificacionEstrellas}/5 estrellas (clic para editar)`}
+                                aria-label={`${conversacionActiva.fichaCliente.calificacionEstrellas} estrellas`}
+                                style={{
+                                  padding: "1px 6px",
+                                  borderRadius: "999px",
+                                  border: "1px solid #E8DEC6",
+                                  background: "#FFFBEB",
+                                  color: "#B45309",
+                                  fontSize: "0.66rem",
+                                  fontWeight: 700,
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: "2px",
+                                  cursor: "pointer",
+                                  flexShrink: 0,
+                                }}
+                              >
+                                <Star size={10} fill="#D97706" color="#D97706" />
+                                <span>{conversacionActiva.fichaCliente.calificacionEstrellas}</span>
+                              </button>
+                            )}
+
                           {(() => {
                             const b = badgeEstadoAtencion(conversacionActiva.estadoAtencion);
                             return (
@@ -4402,6 +4613,48 @@ export function ConsolaVentasOmnicanal({
                                 : "Sin asignar"}
                             </span>
                           </button>
+
+                          {conversacionActiva.fichaCliente?.notasCliente && (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setModalFichaClienteContexto({
+                                  conversacion: conversacionActiva,
+                                  contactoDirectorio: contactoVinculadoActivo,
+                                })
+                              }
+                              title={`Nota interna del cliente: ${conversacionActiva.fichaCliente.notasCliente} (clic para editar)`}
+                              aria-label="Ver notas del cliente"
+                              style={{
+                                fontSize: "0.66rem",
+                                fontWeight: 600,
+                                padding: "1px 7px",
+                                borderRadius: "999px",
+                                background: "#FAF6EC",
+                                color: "#745622",
+                                border: "1px solid #E8DEC6",
+                                cursor: "pointer",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "4px",
+                                maxWidth: modoLayoutInbox === "movil" ? "170px" : "260px",
+                                overflow: "hidden",
+                                textOverflow: "ellipsis",
+                                whiteSpace: "nowrap",
+                              }}
+                            >
+                              <StickyNote size={10} style={{ flexShrink: 0 }} />
+                              <span
+                                style={{
+                                  overflow: "hidden",
+                                  textOverflow: "ellipsis",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {conversacionActiva.fichaCliente.notasCliente}
+                              </span>
+                            </button>
+                          )}
 
                           {conversacionActiva.recordatorioEn && (() => {
                             const vencido =
@@ -7212,8 +7465,25 @@ export function ConsolaVentasOmnicanal({
                     }}
                   />
 
-                  {/* Perfil compacto y sobrio del contacto */}
+                  {/* Perfil compacto y sobrio del contacto (clic para abrir Ficha 360°) */}
                   <div
+                    onClick={() =>
+                      setModalFichaClienteContexto({
+                        conversacion: conversacionActiva,
+                        contactoDirectorio: contactoVinculadoActivo,
+                      })
+                    }
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        setModalFichaClienteContexto({
+                          conversacion: conversacionActiva,
+                          contactoDirectorio: contactoVinculadoActivo,
+                        });
+                      }
+                    }}
+                    title="Clic para ver y editar ficha completa del cliente"
                     style={{
                       padding: "10px 11px",
                       borderRadius: "11px",
@@ -7221,7 +7491,8 @@ export function ConsolaVentasOmnicanal({
                       border: "1px solid #E6E2DA",
                       display: "flex",
                       flexDirection: "column",
-                      gap: "4px",
+                      gap: "5px",
+                      cursor: "pointer",
                     }}
                   >
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "6px" }}>
@@ -7243,16 +7514,46 @@ export function ConsolaVentasOmnicanal({
                             ? "Comprador invitado"
                             : "Contacto directo"}
                       </span>
-                      <span style={{ fontSize: "0.68rem", color: "#847D74", fontWeight: 500 }}>
-                        IA {conversacionActiva.mensajesIaConteo} · Hum. {conversacionActiva.mensajesHumanoConteo}
+                      <span
+                        style={{
+                          fontSize: "0.68rem",
+                          color: "#57524C",
+                          fontWeight: 600,
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "4px",
+                        }}
+                      >
+                        <Pencil size={11} />
+                        <span>Editar ficha</span>
                       </span>
                     </div>
-                    <strong style={{ fontSize: "0.84rem", color: "#221E1B" }}>
-                      {conversacionActiva.remitenteNombre}
-                    </strong>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                      <strong style={{ fontSize: "0.84rem", color: "#221E1B" }}>
+                        {conversacionActiva.remitenteNombre}
+                      </strong>
+                      {conversacionActiva.fichaCliente?.calificacionEstrellas != null &&
+                        conversacionActiva.fichaCliente.calificacionEstrellas > 0 && (
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              alignItems: "center",
+                              gap: "2px",
+                              fontSize: "0.68rem",
+                              fontWeight: 700,
+                              color: "#B45309",
+                            }}
+                          >
+                            <Star size={11} fill="#D97706" color="#D97706" />
+                            <span>{conversacionActiva.fichaCliente.calificacionEstrellas}/5</span>
+                          </span>
+                        )}
+                    </div>
+
                     {conversacionActiva.remitenteTelefono && (
                       <span style={{ fontSize: "0.74rem", color: "#6E6861" }}>
-                        {conversacionActiva.remitenteTelefono}
+                        WhatsApp: {conversacionActiva.remitenteTelefono}
                       </span>
                     )}
                     {conversacionActiva.remitenteCorreo && (
@@ -7260,6 +7561,45 @@ export function ConsolaVentasOmnicanal({
                         {conversacionActiva.remitenteCorreo}
                       </span>
                     )}
+                    {conversacionActiva.fichaCliente?.notasCliente && (
+                      <div
+                        style={{
+                          marginTop: "2px",
+                          padding: "5px 8px",
+                          borderRadius: "7px",
+                          background: "#FAF6EC",
+                          border: "1px solid #E8DEC6",
+                          color: "#745622",
+                          fontSize: "0.72rem",
+                          lineHeight: 1.38,
+                        }}
+                      >
+                        📝 {conversacionActiva.fichaCliente.notasCliente}
+                      </div>
+                    )}
+                    {conversacionActiva.puenteOmnicanal?.ultimoProductoVistoWeb?.productoNombre && (
+                      <div
+                        style={{
+                          marginTop: "2px",
+                          padding: "5px 8px",
+                          borderRadius: "7px",
+                          background: "#F2F6F3",
+                          border: "1px solid #CEDDD3",
+                          color: "#2B4A36",
+                          fontSize: "0.71rem",
+                          lineHeight: 1.35,
+                        }}
+                      >
+                        🛍️ Vio en Web:{" "}
+                        <strong>
+                          {conversacionActiva.puenteOmnicanal.ultimoProductoVistoWeb.productoNombre}
+                        </strong>
+                      </div>
+                    )}
+                    <span style={{ fontSize: "0.67rem", color: "#847D74" }}>
+                      Mensajes IA: {conversacionActiva.mensajesIaConteo} · Humanos:{" "}
+                      {conversacionActiva.mensajesHumanoConteo}
+                    </span>
                   </div>
 
                   {/* Historial de Compras y Proformas Web de este contacto */}
@@ -7885,11 +8225,85 @@ export function ConsolaVentasOmnicanal({
       <ModalSelectorCatalogoChat
         abierto={modalCatalogoChatAbierto}
         negocio={negNorm}
+        wref={
+          conversacionActiva &&
+          conversacionActiva.canal === "whatsapp" &&
+          /^[0-9a-f-]{36}$/i.test(conversacionActiva.id)
+            ? generarCodigoRefWhatsapp(conversacionActiva.id)
+            : null
+        }
         esMovil={modoLayoutInbox === "movil"}
         enviandoDirecto={enviandoMensaje}
         onCerrar={() => setModalCatalogoChatAbierto(false)}
         onInsertarEnCompositor={handleInsertarProductoCatalogoEnCompositor}
         onEnviarDirecto={(sel) => void handleEnviarProductoCatalogoDirecto(sel)}
+      />
+
+      {/* Modal de Ficha Unificada del Cliente (Nombre editable, WhatsApp, Estrellas 1-5 y Notas) */}
+      <ModalFichaClienteOmnicanal
+        abierto={Boolean(modalFichaClienteContexto)}
+        negocio={negNorm}
+        esMovil={modoLayoutInbox === "movil"}
+        conversacion={modalFichaClienteContexto?.conversacion ?? null}
+        contactoDirectorio={modalFichaClienteContexto?.contactoDirectorio ?? null}
+        todasConversaciones={tablero.conversaciones}
+        pedidosWeb={tablero.pedidosWeb}
+        onCerrar={() => setModalFichaClienteContexto(null)}
+        onSeleccionarConversacion={(convDestinoId) => {
+          setPestana("inbox");
+          setEstadoAperturaFiltro("todos");
+          setCanalFiltro("todos");
+          setConversacionActivaId(convDestinoId);
+          setVistaMovilInbox("chat");
+        }}
+        onGuardado={(resultado) => {
+          const idsSet = new Set(resultado.conversacionesActualizadasIds);
+          const telRes = normalizarTelefonoOmnicanal(resultado.remitenteTelefono);
+          const mailRes = String(resultado.remitenteCorreo || "").trim().toLowerCase();
+
+          setTablero((prev) => ({
+            ...prev,
+            conversaciones: prev.conversaciones.map((c) => {
+              const telC = normalizarTelefonoOmnicanal(c.remitenteTelefono);
+              const mailC = String(c.remitenteCorreo || "").trim().toLowerCase();
+              const coincide =
+                idsSet.has(c.id) ||
+                (telRes && telRes.length >= 8 && telC === telRes) ||
+                (mailRes && mailC && mailC === mailRes);
+              if (!coincide) return c;
+              const esPrincipal = modalFichaClienteContexto?.conversacion?.id === c.id;
+              return {
+                ...c,
+                remitenteNombre: resultado.remitenteNombre,
+                remitenteTelefono: esPrincipal
+                  ? resultado.remitenteTelefono
+                  : c.remitenteTelefono || resultado.remitenteTelefono,
+                remitenteCorreo: esPrincipal
+                  ? resultado.remitenteCorreo
+                  : c.remitenteCorreo || resultado.remitenteCorreo,
+                fichaCliente: resultado.fichaCliente,
+              };
+            }),
+            usuariosYClientes: prev.usuariosYClientes.map((u) => {
+              const telU = normalizarTelefonoOmnicanal(u.telefono);
+              const mailU = String(u.correo || "").trim().toLowerCase();
+              const esMismoContacto =
+                modalFichaClienteContexto?.contactoDirectorio?.claveUnica === u.claveUnica ||
+                (telRes && telRes.length >= 8 && telU === telRes) ||
+                (mailRes && mailU && mailU === mailRes);
+              if (!esMismoContacto) return u;
+              return {
+                ...u,
+                nombre: resultado.remitenteNombre,
+                telefono: resultado.remitenteTelefono || u.telefono,
+                correo: resultado.remitenteCorreo || u.correo,
+                calificacionEstrellas: resultado.fichaCliente.calificacionEstrellas ?? null,
+                notasCliente: resultado.fichaCliente.notasCliente ?? null,
+              };
+            }),
+          }));
+          setMensajeInfo("Ficha del cliente guardada y sincronizada en todos sus canales.");
+        }}
       />
 
       {/* Modal generador de Link de Pago desde Chat (/LinkPago) */}

@@ -85,6 +85,7 @@ export * from "./componentes/IconoCanalOmnicanal";
 export * from "./componentes/ModalAdministrarEtiquetas";
 export * from "./componentes/PanelCamposVentaChat";
 export * from "./componentes/ModalSelectorCatalogoChat";
+export * from "./componentes/ModalFichaClienteOmnicanal";
 export * from "./componentes/ModalLinkPagoChat";
 export * from "./componentes/VistaLinkPagoCliente";
 export * from "./componentes/GestorPushChatsOmnicanal";

@@ -1,4 +1,4 @@
-import { CategoriaEcommerce, ProductoEcommerce, VarianteEcommerce } from './tipos';
+import type { CategoriaEcommerce, ProductoEcommerce, VarianteEcommerce } from './tipos';
 
 const CONECTORES_BUSQUEDA = new Set([
   'de',
@@ -237,12 +237,220 @@ export function expandirProductosVitrina(
   });
 }
 
+export type IdClasificacionPrincipalTinkay =
+  | 'grupo-arreglos-florales'
+  | 'grupo-eventos'
+  | 'grupo-condolencias';
+
+export interface ClasificacionPrincipalTinkay {
+  id: IdClasificacionPrincipalTinkay;
+  slug: string;
+  nombre: string;
+  subtitulo: string;
+  tituloVitrina: string;
+  descripcionVitrina: string;
+  modoVisualSobrio?: boolean;
+}
+
+export interface SubcategoriaVisualTinkay {
+  id: string;
+  slug: string;
+  nombre: string;
+  modoVisualSobrio?: boolean;
+}
+
+export interface EtiquetaBusquedaResumen {
+  clave: string;
+  etiqueta: string;
+  cantidad: number;
+}
+
 /**
- * Evalúa si un producto pertenece a la categoría seleccionada.
- * - Para categorías de formato o colección (ej. Box Florales, Estilo Coreano, Para Florero, Eventos),
- *   aplica coincidencia exacta de categoría principal o secundaria para evitar mezclas indebidas.
- * - Para categorías de ocasión (ej. Condolencias & Funerarios, Cumpleaños, Aniversario, Amor),
- *   además evalúa los usos recomendados configurados en el producto/variante.
+ * Primera clasificación de consulta de la tienda Tinkay:
+ * 1. Arreglos Florales (para toda ocasión)
+ * 2. Eventos
+ * 3. Condolencias
+ */
+export const CLASIFICACIONES_PRINCIPALES_TINKAY: ClasificacionPrincipalTinkay[] = [
+  {
+    id: 'grupo-arreglos-florales',
+    slug: 'arreglos-florales',
+    nombre: 'Arreglos Florales',
+    subtitulo: 'Para toda ocasión',
+    tituloVitrina: 'Arreglos Florales — Para Toda Ocasión',
+    descripcionVitrina:
+      'Bouquets estilo coreano, box florales, ramos para florero, orquídeas y diseños de entrega inmediata preparados con rosas frescas de exportación.',
+  },
+  {
+    id: 'grupo-eventos',
+    slug: 'eventos',
+    nombre: 'Eventos',
+    subtitulo: 'Bodas, ceremonias y mobiliario',
+    tituloVitrina: 'Eventos, Ceremonias & Mobiliario',
+    descripcionVitrina:
+      'Arcos florales, backings, bienvenidas de gala, decoración con globos y mobiliario en renta bajo proforma personalizada.',
+  },
+  {
+    id: 'grupo-condolencias',
+    slug: 'condolencias',
+    nombre: 'Condolencias',
+    subtitulo: 'Acompañamiento y respeto',
+    tituloVitrina: 'Arreglos de Condolencias & Respeto',
+    descripcionVitrina:
+      'Composiciones solemnes en blanco y follajes andinos para acompañar en los momentos más difíciles con entrega puntual en velaciones e iglesias.',
+    modoVisualSobrio: true,
+  },
+];
+
+const IDS_CLASIFICACION_VIRTUAL = new Set<string>([
+  'grupo-arreglos-florales',
+  'grupo-eventos',
+  'grupo-condolencias',
+  'sub-eventos-decoracion',
+  'sub-eventos-mobiliario',
+  'col-arreglos-florales',
+]);
+
+export function esIdentificadorClasificacionVirtual(catId: string): boolean {
+  return IDS_CLASIFICACION_VIRTUAL.has(catId);
+}
+
+export function obtenerClasificacionPrincipalPorId(
+  id: string
+): ClasificacionPrincipalTinkay | undefined {
+  return CLASIFICACIONES_PRINCIPALES_TINKAY.find((c) => c.id === id || c.slug === id);
+}
+
+export function obtenerSlugCategoriaPublico(
+  catId: string,
+  categorias: CategoriaEcommerce[] = []
+): string {
+  if (!catId || catId === 'cat-todos' || catId === 'todos') return 'todos';
+  if (catId === 'grupo-arreglos-florales') return 'arreglos-florales';
+  if (catId === 'grupo-eventos') return 'eventos';
+  if (catId === 'grupo-condolencias') return 'condolencias';
+  if (catId === 'sub-eventos-decoracion') return 'eventos-decoracion';
+  if (catId === 'sub-eventos-mobiliario') return 'eventos-mobiliario';
+  if (catId === 'col-arreglos-florales') return 'col-arreglos-florales';
+  const catObj = categorias.find((c) => c.id === catId || c.slug === catId);
+  return catObj?.slug || catId;
+}
+
+/**
+ * Determina a cuál de las 3 clasificaciones principales pertenece un producto
+ * cuando corresponde a Arreglos Florales para toda ocasión.
+ */
+export function esProductoArregloTodaOcasion(p: ProductoEcommerce): boolean {
+  if (esProductoExtraOComplemento(p)) return false;
+  if (esProductoMobiliario(p) || esProductoEvento(p) || esProductoCondolencias(p)) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Mapea cualquier categoría (principal o sub-colección) a su clasificación principal.
+ */
+export function obtenerClasificacionPrincipalDeCategoria(
+  catId: string,
+  categorias: CategoriaEcommerce[] = []
+): IdClasificacionPrincipalTinkay | 'cat-todos' {
+  if (!catId || catId === 'cat-todos' || catId === 'todos') return 'cat-todos';
+  if (catId === 'grupo-arreglos-florales' || catId === 'col-arreglos-florales') {
+    return 'grupo-arreglos-florales';
+  }
+  if (
+    catId === 'grupo-eventos' ||
+    catId === 'sub-eventos-decoracion' ||
+    catId === 'sub-eventos-mobiliario'
+  ) {
+    return 'grupo-eventos';
+  }
+  if (catId === 'grupo-condolencias' || catId === 'cat-ocas-condol') {
+    return 'grupo-condolencias';
+  }
+
+  const catObj = categorias.find((c) => c.id === catId || c.slug === catId);
+  const textoRef = normalizarTextoEcommerce(
+    `${catId} ${catObj?.slug || ''} ${catObj?.nombre || ''}`
+  );
+
+  if (
+    catObj?.modoVisualSobrio ||
+    textoRef.includes('condol') ||
+    textoRef.includes('funer')
+  ) {
+    return 'grupo-condolencias';
+  }
+  if (
+    catObj?.tipo === 'EVENTO' ||
+    textoRef.includes('evento') ||
+    textoRef.includes('ceremonia') ||
+    textoRef.includes('mobiliario') ||
+    textoRef.includes('renta')
+  ) {
+    return 'grupo-eventos';
+  }
+
+  return 'grupo-arreglos-florales';
+}
+
+/**
+ * Devuelve las sub-colecciones visibles correspondientes a una clasificación principal.
+ */
+export function obtenerSubcategoriasDeClasificacion(
+  clasificacion: IdClasificacionPrincipalTinkay | 'cat-todos',
+  categoriasVisibles: CategoriaEcommerce[],
+  productosBaseDesplegados: ProductoEcommerce[]
+): SubcategoriaVisualTinkay[] {
+  if (clasificacion === 'grupo-eventos') {
+    const tieneDecoracion = productosBaseDesplegados.some(
+      (p) => !esProductoExtraOComplemento(p) && esProductoEvento(p)
+    );
+    const tieneMobiliario = productosBaseDesplegados.some(
+      (p) => !esProductoExtraOComplemento(p) && esProductoMobiliario(p)
+    );
+    if (!tieneDecoracion || !tieneMobiliario) return [];
+    return [
+      {
+        id: 'sub-eventos-decoracion',
+        slug: 'eventos-decoracion',
+        nombre: 'Decoración y Ceremonias',
+      },
+      {
+        id: 'sub-eventos-mobiliario',
+        slug: 'eventos-mobiliario',
+        nombre: 'Mobiliario en Renta',
+      },
+    ];
+  }
+
+  if (clasificacion === 'grupo-condolencias') {
+    return [];
+  }
+
+  // Para 'grupo-arreglos-florales' (o 'cat-todos'), exponer las colecciones florales de toda ocasión
+  const subFlorales = categoriasVisibles.filter((cat) => {
+    if (cat.id === 'cat-todos' || cat.slug === 'todos') return false;
+    return (
+      obtenerClasificacionPrincipalDeCategoria(cat.id, categoriasVisibles) ===
+      'grupo-arreglos-florales'
+    );
+  });
+
+  return subFlorales.map((cat) => {
+    const esSlugArreglos = normalizarTextoEcommerce(cat.slug) === 'arreglos florales';
+    return {
+      id: esSlugArreglos ? 'col-arreglos-florales' : cat.id,
+      slug: esSlugArreglos ? 'col-arreglos-florales' : cat.slug,
+      nombre: cat.nombre,
+      modoVisualSobrio: cat.modoVisualSobrio,
+    };
+  });
+}
+
+/**
+ * Evalúa si un producto pertenece a la categoría o clasificación seleccionada.
  */
 export function productoCoincideConCategoria(
   p: ProductoEcommerce,
@@ -252,9 +460,34 @@ export function productoCoincideConCategoria(
   if (esProductoExtraOComplemento(p)) return false;
   if (!catId || catId === 'cat-todos' || catId === 'todos') return true;
 
-  const catObj = categorias.find((c) => c.id === catId || c.slug === catId);
+  if (catId === 'grupo-arreglos-florales') {
+    return esProductoArregloTodaOcasion(p);
+  }
+  if (catId === 'grupo-eventos') {
+    return esProductoEvento(p) || esProductoMobiliario(p);
+  }
+  if (catId === 'sub-eventos-decoracion') {
+    return esProductoEvento(p);
+  }
+  if (catId === 'sub-eventos-mobiliario') {
+    return esProductoMobiliario(p);
+  }
+  if (catId === 'grupo-condolencias') {
+    const usosNorm = (p.usos || []).map((u) => expandirTerminosUso(u)).join(' ');
+    return (
+      esProductoCondolencias(p) ||
+      Boolean(p.esCondolencias) ||
+      usosNorm.includes('condolenc') ||
+      usosNorm.includes('duelo') ||
+      usosNorm.includes('pesame')
+    );
+  }
+
+  const catIdReal = catId === 'col-arreglos-florales' ? 'arreglos-florales' : catId;
+
+  const catObj = categorias.find((c) => c.id === catIdReal || c.slug === catIdReal);
   const idsEquivalentes = new Set<string>(
-    [catId, catObj?.id, catObj?.slug]
+    [catIdReal, catObj?.id, catObj?.slug]
       .filter((x): x is string => Boolean(x))
       .map((x) => normalizarTextoEcommerce(x))
   );
@@ -279,7 +512,7 @@ export function productoCoincideConCategoria(
 
   // Si la categoría es de tipo OCASION (o un identificador de ocasión como condolencias/amor/aniv/cumple),
   // cruzar también con los usos configurados en el producto.
-  const textoCatRef = `${normalizarTextoEcommerce(catId)} ${nombreCatObjetivoNorm}`.trim();
+  const textoCatRef = `${normalizarTextoEcommerce(catIdReal)} ${nombreCatObjetivoNorm}`.trim();
   const esCategoriaOcasion =
     catObj?.tipo === 'OCASION' ||
     Boolean(catObj?.modoVisualSobrio) ||
@@ -353,12 +586,64 @@ export function resolverCategoriaPorIdentificador(
     return 'cat-todos';
   }
 
+  const norm = normalizarTextoEcommerce(identificador);
+
+  if (
+    identificador === 'grupo-arreglos-florales' ||
+    norm === 'arreglos florales' ||
+    norm === 'arreglos florales toda ocasion' ||
+    norm === 'para toda ocasion' ||
+    norm === 'toda ocasion'
+  ) {
+    return 'grupo-arreglos-florales';
+  }
+
+  if (identificador === 'col-arreglos-florales' || norm === 'col arreglos florales') {
+    return 'col-arreglos-florales';
+  }
+
+  if (
+    identificador === 'sub-eventos-decoracion' ||
+    norm === 'eventos decoracion' ||
+    norm === 'decoracion y ceremonias'
+  ) {
+    return 'sub-eventos-decoracion';
+  }
+
+  if (
+    identificador === 'sub-eventos-mobiliario' ||
+    norm === 'eventos mobiliario' ||
+    norm === 'mobiliario en renta'
+  ) {
+    return 'sub-eventos-mobiliario';
+  }
+
+  if (
+    identificador === 'grupo-eventos' ||
+    norm === 'eventos' ||
+    norm === 'eventos y ceremonias' ||
+    norm === 'ceremonias' ||
+    norm === 'bodas'
+  ) {
+    return 'grupo-eventos';
+  }
+
+  if (
+    identificador === 'grupo-condolencias' ||
+    identificador === 'cat-ocas-condol' ||
+    norm === 'condolencias' ||
+    norm === 'condolencias y funerarios' ||
+    norm === 'condolencias y respeto' ||
+    norm.includes('condol')
+  ) {
+    return 'grupo-condolencias';
+  }
+
   const exacta = categorias.find(
     (c) => c.id === identificador || c.slug === identificador
   );
   if (exacta) return exacta.id;
 
-  const norm = normalizarTextoEcommerce(identificador);
   const porNorm = categorias.find((c) => {
     const idNorm = normalizarTextoEcommerce(c.id);
     const slugNorm = normalizarTextoEcommerce(c.slug);
@@ -369,14 +654,10 @@ export function resolverCategoriaPorIdentificador(
       nomNorm === norm ||
       nomNorm.includes(norm) ||
       norm.includes(nomNorm) ||
-      (norm.includes('condol') && (Boolean(c.modoVisualSobrio) || nomNorm.includes('condol'))) ||
       (norm.includes('corean') && (slugNorm.includes('corean') || nomNorm.includes('corean'))) ||
       (norm.includes('florero') && (slugNorm.includes('florero') || nomNorm.includes('florero'))) ||
       (norm.includes('box') && (slugNorm.includes('box') || nomNorm.includes('box'))) ||
-      ((norm.includes('evento') || norm.includes('ceremonia') || norm.includes('boda')) &&
-        (slugNorm.includes('evento') ||
-          nomNorm.includes('evento') ||
-          nomNorm.includes('ceremonia')))
+      (norm.includes('entrega') && (slugNorm.includes('entrega') || nomNorm.includes('entrega')))
     );
   });
 
@@ -536,6 +817,7 @@ export function construirCorpusBusquedaProducto(
     p.descripcionLarga,
     ...(p.beneficios || []),
     ...(p.etiquetas || []),
+    ...(p.etiquetasBusqueda || []),
     p.etiquetaTemporada,
     ...(p.requisitos || []),
     p.coberturaTexto,
@@ -546,9 +828,123 @@ export function construirCorpusBusquedaProducto(
 }
 
 /**
+ * Comprueba si un token normalizado coincide en el corpus aplicando tolerancia
+ * de plural/singular en español (ej. "orquidea" <-> "orquideas", "floreros" <-> "florero",
+ * "girasoles" <-> "girasol", "luces" <-> "luz").
+ */
+export function tokenCoincideEnCorpus(token: string, corpus: string): boolean {
+  if (!token) return true;
+  if (corpus.includes(token)) return true;
+
+  if (token.endsWith('ces') && token.length > 4) {
+    if (corpus.includes(`${token.slice(0, -3)}z`)) return true;
+  }
+  if (token.endsWith('es') && token.length > 4) {
+    if (corpus.includes(token.slice(0, -2))) return true;
+  }
+  if (token.endsWith('s') && token.length > 3) {
+    if (corpus.includes(token.slice(0, -1))) return true;
+  }
+
+  return false;
+}
+
+/**
+ * Retorna las etiquetas semánticas de búsqueda configuradas en el producto
+ * (Keywords IA de `pro_detalle_producto.etiquetas`).
+ */
+export function obtenerEtiquetasBusquedaProducto(p: ProductoEcommerce): string[] {
+  const fuente = Array.isArray(p.etiquetasBusqueda)
+    ? p.etiquetasBusqueda
+    : Array.isArray(p.etiquetas)
+    ? p.etiquetas
+    : [];
+  return fuente
+    .map((e) => String(e).replace(/^#+/, '').trim())
+    .filter((e) => e.length > 0);
+}
+
+/**
+ * Extrae las etiquetas semánticas de búsqueda disponibles en un conjunto de productos,
+ * deduplicadas por forma normalizada (tildes/mayúsculas) y ordenadas por frecuencia.
+ */
+export function obtenerEtiquetasBusquedaDisponibles(
+  productos: ProductoEcommerce[]
+): EtiquetaBusquedaResumen[] {
+  const mapa = new Map<
+    string,
+    { etiqueta: string; productosUnicos: Set<string>; prioridadCapital: number }
+  >();
+
+  for (const p of productos) {
+    const idConteo = p.proIdUuid || p.id.split('__')[0] || p.id;
+    const etiquetas = obtenerEtiquetasBusquedaProducto(p);
+    for (const raw of etiquetas) {
+      const clave = normalizarTextoEcommerce(raw);
+      if (!clave) continue;
+      const tieneTildeOMayus = /[A-ZÁÉÍÓÚÑáéíóúñ]/.test(raw) ? 1 : 0;
+      const actual = mapa.get(clave);
+      if (!actual) {
+        mapa.set(clave, {
+          etiqueta: raw,
+          productosUnicos: new Set([idConteo]),
+          prioridadCapital: tieneTildeOMayus,
+        });
+      } else {
+        actual.productosUnicos.add(idConteo);
+        if (tieneTildeOMayus > actual.prioridadCapital) {
+          actual.etiqueta = raw;
+          actual.prioridadCapital = tieneTildeOMayus;
+        }
+      }
+    }
+  }
+
+  return Array.from(mapa.entries())
+    .map(([clave, info]) => ({
+      clave,
+      etiqueta: info.etiqueta,
+      cantidad: info.productosUnicos.size,
+    }))
+    .sort((a, b) => {
+      if (b.cantidad !== a.cantidad) return b.cantidad - a.cantidad;
+      return a.etiqueta.localeCompare(b.etiqueta, 'es');
+    });
+}
+
+/**
+ * Verifica si un producto cumple con TODAS las etiquetas de búsqueda seleccionadas.
+ */
+export function productoCoincideConEtiquetas(
+  p: ProductoEcommerce,
+  clavesEtiquetasActivas: string[]
+): boolean {
+  if (!clavesEtiquetasActivas || clavesEtiquetasActivas.length === 0) return true;
+  const etiquetasProd = Array.from(
+    new Set([...obtenerEtiquetasBusquedaProducto(p), ...(p.etiquetas || [])])
+  )
+    .map((e) => normalizarTextoEcommerce(e))
+    .filter(Boolean);
+
+  if (etiquetasProd.length === 0) return false;
+
+  return clavesEtiquetasActivas.every((claveActiva) => {
+    const claveNorm = normalizarTextoEcommerce(claveActiva);
+    if (!claveNorm) return true;
+    const tokensClave = claveNorm.split(' ').filter(Boolean);
+    return etiquetasProd.some(
+      (etNorm) =>
+        etNorm === claveNorm ||
+        tokenCoincideEnCorpus(claveNorm, etNorm) ||
+        (tokensClave.length > 0 && tokensClave.every((tok) => tokenCoincideEnCorpus(tok, etNorm)))
+    );
+  });
+}
+
+/**
  * Evalúa si un producto coincide con la consulta de búsqueda del cliente.
- * Soporta búsquedas parciales ("condole"), múltiples palabras en cualquier orden
- * ("corona rosas", "box orquidea"), sinónimos de usos ("pesame", "cumpleaños") y sin tildes.
+ * Soporta búsquedas parciales ("condole"), etiquetas ("#orquídeas"), múltiples palabras en cualquier orden
+ * ("corona rosas", "box orquidea"), plural/singular en español y sinónimos de usos ("pesame", "cumpleaños").
  */
 export function productoCoincideConBusqueda(
   p: ProductoEcommerce,
@@ -559,7 +955,7 @@ export function productoCoincideConBusqueda(
   if (!queryNorm) return true;
 
   const corpus = construirCorpusBusquedaProducto(p, categorias);
-  if (corpus.includes(queryNorm)) return true;
+  if (tokenCoincideEnCorpus(queryNorm, corpus)) return true;
 
   const palabrasRaw = queryNorm.split(' ').filter(Boolean);
   const palabrasSignificativas = palabrasRaw.filter(
@@ -568,7 +964,7 @@ export function productoCoincideConBusqueda(
   const tokens =
     palabrasSignificativas.length > 0 ? palabrasSignificativas : palabrasRaw;
 
-  return tokens.every((token) => corpus.includes(token));
+  return tokens.every((token) => tokenCoincideEnCorpus(token, corpus));
 }
 
 /**

@@ -12,6 +12,11 @@ import { PRODUCTOS_TINKAY, FRASES_DEDICATORIAS } from '../datos-catalogo';
 import { ProductoEcommerce, VarianteEcommerce, DedicatoriaArreglo } from '../tipos';
 import { obtenerNombreProductoIndividual } from './VitrinaCatalogoTinkay';
 import {
+  IconoWhatsappVector,
+  abrirWhatsappTiendaConPuenteOmnicanal,
+  notificarVisitaProductoDesdeWhatsapp,
+} from '../puente-omnicanal-cliente';
+import {
   X,
   ChevronLeft,
   ChevronRight,
@@ -40,6 +45,7 @@ export function ModalDetalleProducto() {
     agregarItemProforma,
     productos,
     obtenerEnlaceProducto,
+    configTiendaCheckout,
   } = useCarrito();
 
   const producto = productoSeleccionadoModal;
@@ -127,7 +133,20 @@ export function ModalDetalleProducto() {
       value: varianteSeleccionada.pvp,
       currency: 'USD',
     });
-  }, [producto, varianteSeleccionada.sku, varianteSeleccionada.nombre, varianteSeleccionada.pvp]);
+    notificarVisitaProductoDesdeWhatsapp({
+      productoNombre: producto.nombre,
+      productoSlug: producto.slug || producto.id,
+      varianteNombre: varianteSeleccionada.nombre,
+      pvp: varianteSeleccionada.pvp,
+      urlPagina: obtenerEnlaceProducto(producto, varianteSeleccionada.sku),
+    });
+  }, [
+    producto,
+    varianteSeleccionada.sku,
+    varianteSeleccionada.nombre,
+    varianteSeleccionada.pvp,
+    obtenerEnlaceProducto,
+  ]);
 
   // Estado para la tarjeta de dedicatoria
   const [incluirDedicatoria, setIncluirDedicatoria] = useState(false);
@@ -2133,82 +2152,185 @@ export function ModalDetalleProducto() {
                   modoCompraCombo === 'personalizado' &&
                   resumenFinancieroCombo.totalPiezasPersonalizadas <= 0;
 
+                const handleMasInfoWhatsappProducto = () => {
+                  const urlProd = obtenerEnlaceProducto(producto, varianteSeleccionada.sku);
+                  abrirWhatsappTiendaConPuenteOmnicanal({
+                    whatsappTienda: configTiendaCheckout?.whatsappTienda,
+                    productoNombre: producto.nombre,
+                    productoSlug: producto.slug || producto.id,
+                    varianteNombre: varianteSeleccionada.nombre,
+                    precioUsd: totalBoton,
+                    urlProducto: urlProd,
+                  });
+                };
+
                 if (esProductoEvento) {
                   const etiquetaProforma = sinPiezasCombo
                     ? 'Elige 1 pieza'
-                    : `Agregar a Proforma — $${totalBoton.toFixed(2)}`;
+                    : `Agregar a Proforma · $${totalBoton.toFixed(2)}`;
                   return (
-                    <button
-                      type="button"
-                      className="btn btn-primario btn-agregar-modal-grande"
-                      onClick={() => handleAgregarAlCarrito(false)}
-                      disabled={sinPiezasCombo}
-                      title="Agregar este elemento a mi proforma de evento"
-                      aria-label="Agregar a proforma"
-                      style={
-                        sinPiezasCombo
-                          ? { opacity: 0.55, cursor: 'not-allowed' }
-                          : { background: '#2D4734', borderColor: '#2D4734', color: '#FFFFFF' }
-                      }
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '8px',
+                        width: '100%',
+                      }}
                     >
-                      <FileText size={20} />
-                      <span>{etiquetaProforma}</span>
-                    </button>
+                      <button
+                        type="button"
+                        className="btn btn-primario btn-agregar-modal-grande"
+                        onClick={() => handleAgregarAlCarrito(false)}
+                        disabled={sinPiezasCombo}
+                        title="Agregar este elemento a mi proforma de evento"
+                        aria-label="Agregar a proforma"
+                        style={{
+                          width: '100%',
+                          justifyContent: 'center',
+                          ...(sinPiezasCombo
+                            ? { opacity: 0.55, cursor: 'not-allowed' }
+                            : { background: '#2D4734', borderColor: '#2D4734', color: '#FFFFFF' }),
+                        }}
+                      >
+                        <FileText size={19} />
+                        <span>{etiquetaProforma}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleMasInfoWhatsappProducto}
+                        title="Consultar disponibilidad y personalización por WhatsApp"
+                        aria-label="Más info WhatsApp"
+                        style={{
+                          width: '100%',
+                          minHeight: '42px',
+                          padding: '9px 14px',
+                          borderRadius: '999px',
+                          border: '1.5px solid #22C55E',
+                          background: '#F0FDF4',
+                          color: '#15803D',
+                          fontSize: '0.84rem',
+                          fontWeight: 700,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '7px',
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                        }}
+                      >
+                        <IconoWhatsappVector size={17} color="#16A34A" />
+                        <span>Más info WhatsApp</span>
+                      </button>
+                    </div>
                   );
                 }
 
-                const etiquetaAgregar = sinPiezasCombo
+                const etiquetaCompraDirecta = sinPiezasCombo
                   ? 'Elige 1 pieza'
-                  : esComboActivo
+                  : `Comprar ahora · $${totalBoton.toFixed(2)}`;
+
+                const etiquetaCarrito = esComboActivo
                   ? usarSetCerradoBtn
-                    ? 'Comprar Set'
-                    : 'Comprar Selección'
-                  : 'Comprar';
+                    ? 'Agregar set'
+                    : 'Agregar selección'
+                  : 'Agregar al carrito';
 
                 return (
                   <div
                     style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(min(155px, 100%), 1fr))',
-                      gap: '10px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
                       width: '100%',
                     }}
                   >
-                    <button
-                      type="button"
-                      className="btn btn-agregar-modal-grande"
-                      onClick={() => handleAgregarAlCarrito(false)}
-                      disabled={sinPiezasCombo}
-                      title="Comprar y seguir explorando la tienda"
-                      aria-label="Comprar"
-                      style={{
-                        background: '#FFFFFF',
-                        color: '#2D4734',
-                        border: '2px solid #2D4734',
-                        opacity: sinPiezasCombo ? 0.55 : 1,
-                        cursor: sinPiezasCombo ? 'not-allowed' : 'pointer',
-                      }}
-                    >
-                      <ShoppingBag size={18} />
-                      <span>{etiquetaAgregar}</span>
-                    </button>
-
+                    {/* 1. Botón grande principal: Compra Directa inmediata */}
                     <button
                       type="button"
                       className="btn btn-primario btn-agregar-modal-grande"
                       onClick={() => handleAgregarAlCarrito(true)}
                       disabled={sinPiezasCombo}
-                      title={`Pagar este pedido directamente ($${totalBoton.toFixed(2)} USD)`}
-                      aria-label="Pagar directo"
-                      style={
-                        sinPiezasCombo
-                          ? { opacity: 0.55, cursor: 'not-allowed' }
-                          : undefined
-                      }
+                      title={`Comprar directamente este arreglo ($${totalBoton.toFixed(2)} USD)`}
+                      aria-label="Comprar ahora"
+                      style={{
+                        width: '100%',
+                        minHeight: '48px',
+                        fontSize: '0.95rem',
+                        fontWeight: 700,
+                        justifyContent: 'center',
+                        ...(sinPiezasCombo ? { opacity: 0.55, cursor: 'not-allowed' } : {}),
+                      }}
                     >
                       <CreditCard size={19} />
-                      <span>Pagar Directo (${totalBoton.toFixed(2)})</span>
+                      <span>{etiquetaCompraDirecta}</span>
                     </button>
+
+                    {/* 2. Fila secundaria simétrica: Agregar al carrito + Más info WhatsApp */}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '8px',
+                        width: '100%',
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleAgregarAlCarrito(false)}
+                        disabled={sinPiezasCombo}
+                        title="Agregar al carrito de compras y seguir viendo arreglos"
+                        aria-label="Agregar al carrito"
+                        style={{
+                          minHeight: '42px',
+                          padding: '8px 10px',
+                          borderRadius: '999px',
+                          border: '1.5px solid #2D4734',
+                          background: '#FFFFFF',
+                          color: '#2D4734',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          opacity: sinPiezasCombo ? 0.55 : 1,
+                          cursor: sinPiezasCombo ? 'not-allowed' : 'pointer',
+                          fontFamily: 'inherit',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        <ShoppingBag size={16} />
+                        <span>{etiquetaCarrito}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleMasInfoWhatsappProducto}
+                        title="Pedir más información o personalizar este arreglo por WhatsApp"
+                        aria-label="Más info WhatsApp"
+                        style={{
+                          minHeight: '42px',
+                          padding: '8px 10px',
+                          borderRadius: '999px',
+                          border: '1.5px solid #22C55E',
+                          background: '#F0FDF4',
+                          color: '#15803D',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px',
+                          cursor: 'pointer',
+                          fontFamily: 'inherit',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        <IconoWhatsappVector size={16} color="#16A34A" />
+                        <span>Más info WhatsApp</span>
+                      </button>
+                    </div>
                   </div>
                 );
               })()}

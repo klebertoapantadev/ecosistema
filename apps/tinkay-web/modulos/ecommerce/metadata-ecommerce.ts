@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { cargarCatalogoDinamicoTinkay } from './servicio-catalogo';
 import {
+  obtenerClasificacionPrincipalPorId,
   obtenerNombreProductoIndividual,
   obtenerVarianteActivaProducto,
   productoCoincideConCategoria,
@@ -91,7 +92,35 @@ export async function generarMetadataEcommerceTinkay(opciones: {
 
     if (opciones.categoriaSlug) {
       const catId = resolverCategoriaPorIdentificador(opciones.categoriaSlug, categorias);
+      const clasifPrincipal = obtenerClasificacionPrincipalPorId(catId);
       const catObj = categorias.find((c) => c.id === catId || c.slug === catId);
+
+      if (clasifPrincipal) {
+        const primerProdCat = productos.find((p) =>
+          productoCoincideConCategoria(p, clasifPrincipal.id, categorias)
+        );
+        const tituloCat = `${clasifPrincipal.tituloVitrina} | Tinkay Flores y Eventos`;
+        const descCat = clasifPrincipal.descripcionVitrina;
+        const fotoCat = normalizarUrlImagenAbsoluta(primerProdCat?.fotos?.[0]);
+
+        return {
+          title: tituloCat,
+          description: descCat,
+          openGraph: {
+            title: tituloCat,
+            description: descCat,
+            type: 'website',
+            images: [fotoCat],
+          },
+          twitter: {
+            card: 'summary_large_image',
+            title: tituloCat,
+            description: descCat,
+            images: [fotoCat],
+          },
+        };
+      }
+
       if (catObj && catObj.id !== 'cat-todos') {
         const primerProdCat = productos.find((p) =>
           productoCoincideConCategoria(p, catObj.id, categorias)

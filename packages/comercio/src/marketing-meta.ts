@@ -390,17 +390,17 @@ export function obtenerSaludoInicialChatPorIntencion(
     case "EVENTOS":
       return `¡Hola! Soy ${agente} 🌿, asesora de eventos y diseño floral de ${negocio}. Cuéntame qué celebración estás planeando (boda, evento corporativo o ceremonia) y la fecha aproximada para ayudarte con ideas o armar tu proforma.`;
     case "ENTREGA_INMEDIATA":
-      return `¡Hola! Soy ${agente} 🌿 de ${negocio}. Tenemos arreglos frescos listos para entrega inmediata en 1 a 2 horas. Si deseas, compárteme tu ubicación de Google Maps 📍 y te confirmo envío al instante.`;
+      return `¡Hola! Soy ${agente} 🌿 de ${negocio}. Tenemos arreglos frescos listos para entrega inmediata en 1 a 2 horas. Escríbeme aquí o toca el botón de WhatsApp para coordinar tu envío al instante.`;
     case "PRODUCTO_PUNTUAL":
       if (opciones?.productoNombre) {
-        return `¡Hola! Soy ${agente} 🌿 de ${negocio}. Veo que estás revisando "${opciones.productoNombre}". ¿Te ayudo con disponibilidad para hoy, personalización o cálculo de envío a domicilio?`;
+        return `¡Hola! Soy ${agente} 🌿 de ${negocio}. Veo que estás revisando "${opciones.productoNombre}". ¿Te ayudo aquí o prefieres continuar directo por WhatsApp?`;
       }
       break;
     default:
       break;
   }
 
-  return `¡Hola! Soy ${agente} 🌿, sommelier floral de ${negocio}. ¿Para qué ocasión o evento especial buscamos flores hoy? También puedes pegarme tu link de Google Maps / Waze o usar el pin 📍 para cotizar el envío exacto.`;
+  return `¡Hola! Soy ${agente} 🌿, sommelier floral de ${negocio}. ¿Para qué ocasión o evento especial buscamos flores hoy? Puedo asesorarte aquí en vivo o toca el ícono de WhatsApp para hablar directo con nuestra tienda.`;
 }
 
 export function construirMensajeWhatsappContextual(

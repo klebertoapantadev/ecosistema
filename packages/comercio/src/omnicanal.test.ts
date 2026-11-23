@@ -1,15 +1,21 @@
 import { describe, expect, it } from "vitest";
 import {
+  anexarParametroRefUrl,
   autoCompletarDatosVentaDesdeMensajes,
   calcularFechaRecordatorioRapido,
   calcularMetricasOmnicanal,
   calcularTotalDatosVenta,
   construirHrefRetornoChatCliente,
   construirMensajeProductoCatalogoOmnicanal,
+  describirCalificacionCliente,
   emparejarComprasConConversacion,
+  extraerCodigoRefWebDeTexto,
+  extraerCodigoRefWhatsappDeUrl,
   extraerSegmentosMultimediaMensaje,
   extraerTodasLasImagenesMensaje,
   formatearEtiquetaEnlaceVisible,
+  generarCodigoRefVisitanteWeb,
+  generarCodigoRefWhatsapp,
   interpolarRespuestaRapida,
   limpiarVistaPreviaMensajeOmnicanal,
   normalizarHandleMencion,
@@ -371,5 +377,42 @@ describe("omnicanal — normalización, plantillas y cruce cliente-compras", () 
     expect(ficha.cuerpoConMarkdown).toContain(
       "![Bouquet Coreano Real (24 Rosas)](https://tinkay-web.vercel.app/imagenes/catalogo/coreano.jpg)"
     );
+  });
+
+  it("correlaciona bidireccionalmente clientes Web <-> WhatsApp y describe calificación con estrellas", () => {
+    const refWeb = generarCodigoRefVisitanteWeb("conv-web-uuid-987654", "tinkay");
+    expect(refWeb).toMatch(/^TNK-[A-Z0-9]{6}$/);
+    expect(generarCodigoRefVisitanteWeb("conv-web-uuid-987654", "tinkay")).toBe(refWeb);
+
+    const urlConRef = anexarParametroRefUrl(
+      "https://tinkay-web.vercel.app/producto/arreglo-frutal?variante=CANASTA",
+      "ref",
+      refWeb
+    );
+    expect(urlConRef).toBe(
+      `https://tinkay-web.vercel.app/producto/arreglo-frutal?variante=CANASTA&ref=${refWeb}`
+    );
+    expect(
+      extraerCodigoRefWebDeTexto(
+        `Hola Tinkay, vengo de la web y deseo más información: ${urlConRef}`
+      )
+    ).toBe(refWeb);
+
+    const wref = generarCodigoRefWhatsapp("39fb7c10-1234-4a5b-9999-abcdef012345");
+    expect(wref).toMatch(/^WA-[A-Z0-9]{6}$/);
+
+    const fichaConWref = construirMensajeProductoCatalogoOmnicanal({
+      negocio: "tinkay",
+      nombreProducto: "Arreglo Frutal",
+      slugProducto: "arreglo-frutal",
+      skuVariante: "CANASTA",
+      precioUsd: 40,
+      wref,
+    });
+    expect(fichaConWref.urlWebProducto).toContain(`wref=${wref}`);
+    expect(extraerCodigoRefWhatsappDeUrl(fichaConWref.urlWebProducto)).toBe(wref);
+
+    expect(describirCalificacionCliente(5)).toContain("VIP");
+    expect(describirCalificacionCliente(1)).toContain("alerta");
   });
 });

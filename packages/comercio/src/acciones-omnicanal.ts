@@ -4,6 +4,9 @@ import {
   ETIQUETAS_OMNICANAL_POR_DEFECTO,
   RESPUESTAS_RAPIDAS_POR_DEFECTO,
   esPedidoUsuarioRegistrado,
+  extraerCodigoRefWebDeTexto,
+  generarCodigoRefVisitanteWeb,
+  generarCodigoRefWhatsapp,
   nombreCanalRealtimeChatEquipo,
   nombreCanalRealtimeOmnicanal,
   normalizarTelefonoOmnicanal,
@@ -19,10 +22,13 @@ import {
   type EtiquetaOmnicanal,
   type EventoBroadcastChatEquipo,
   type EventoBroadcastChatWeb,
+  type FichaClienteOmnicanal,
   type MensajeChatEquipo,
   type MensajeOmnicanal,
   type MiembroChatEquipo,
   type MiembroEquipoOmnicanal,
+  type PuenteOmnicanalCliente,
+  type RegistroVisitaWebOmnicanal,
   type RespuestaRapidaOmnicanal,
 } from "./omnicanal";
 import { obtenerPedidosTiendaAction, type PedidoTiendaRegistrado } from "./acciones-logistica";
@@ -730,7 +736,7 @@ export async function obtenerTableroOmnicanalAction(
             etiquetasIds: Array.isArray(u?.etiquetasIds) ? u.etiquetasIds : [],
           }))
         : [];
-      const conversacionesNormalizadas: ConversacionOmnicanal[] = Array.isArray(
+      let conversacionesNormalizadas: ConversacionOmnicanal[] = Array.isArray(
         rpcTablero.conversaciones
       )
         ? rpcTablero.conversaciones.map((c: any) => ({
@@ -744,15 +750,73 @@ export async function obtenerTableroOmnicanalAction(
               c?.cierre && typeof c.cierre === "object"
                 ? (c.cierre as DatosCierreConversacion)
                 : null,
+            fichaCliente:
+              c?.fichaCliente && typeof c.fichaCliente === "object"
+                ? (c.fichaCliente as FichaClienteOmnicanal)
+                : null,
+            puenteOmnicanal:
+              c?.puenteOmnicanal && typeof c.puenteOmnicanal === "object"
+                ? (c.puenteOmnicanal as PuenteOmnicanalCliente)
+                : null,
           }))
         : [];
+
+      // Enriquecimiento resiliente de fichaCliente y puenteOmnicanal incluso antes de aplicar migración SQL
+      if (
+        conversacionesNormalizadas.length > 0 &&
+        conversacionesNormalizadas.every((c) => !c.fichaCliente && !c.puenteOmnicanal)
+      ) {
+        try {
+          const dbAux: any = crearClienteAdmin() ?? supabase;
+          const idsUuid = conversacionesNormalizadas
+            .map((c) => c.id)
+            .filter((id) => /^[0-9a-f-]{36}$/i.test(id));
+          if (idsUuid.length > 0) {
+            const { data: filasDet } = await dbAux
+              .schema("comun_agentes")
+              .from("agc_conversacion")
+              .select("cnv_id, cnv_detalle_conversacion")
+              .in("cnv_id", idsUuid);
+            if (Array.isArray(filasDet) && filasDet.length > 0) {
+              const mapaDet = new Map<string, Record<string, any>>();
+              for (const f of filasDet) {
+                if (f?.cnv_id && f.cnv_detalle_conversacion && typeof f.cnv_detalle_conversacion === "object") {
+                  mapaDet.set(String(f.cnv_id), f.cnv_detalle_conversacion as Record<string, any>);
+                }
+              }
+              conversacionesNormalizadas = conversacionesNormalizadas.map((c) => {
+                const det = mapaDet.get(c.id);
+                if (!det) return c;
+                return {
+                  ...c,
+                  fichaCliente:
+                    det.ficha_cliente && typeof det.ficha_cliente === "object"
+                      ? (det.ficha_cliente as FichaClienteOmnicanal)
+                      : c.fichaCliente ?? null,
+                  puenteOmnicanal:
+                    det.puente_omnicanal && typeof det.puente_omnicanal === "object"
+                      ? (det.puente_omnicanal as PuenteOmnicanalCliente)
+                      : c.puenteOmnicanal ?? null,
+                };
+              });
+            }
+          }
+        } catch {
+          // Ignorar si falla enriquecimiento opcional
+        }
+      }
+
+      conversacionesNormalizadas = propagarFichaClienteEntreCanales(conversacionesNormalizadas);
 
       const pedidosWeb: PedidoWebConTipoCliente[] = pedidosBase.map((p) => ({
         ...p,
         esUsuarioRegistrado: esPedidoUsuarioRegistrado(p, contactos),
       }));
 
-      const contactosEnriquecidos = enriquecerContactosConPedidos(contactos, pedidosWeb);
+      const contactosEnriquecidos = enriquecerContactosConFichaCliente(
+        enriquecerContactosConPedidos(contactos, pedidosWeb),
+        conversacionesNormalizadas
+      );
       const miembroActual = Array.isArray(rpcTablero.equipo)
         ? rpcTablero.equipo.find((m: any) => m?.usuarioId === user.id)
         : null;
@@ -1005,8 +1069,20 @@ export async function obtenerTableroOmnicanalAction(
                 typeof c.cnv_detalle_conversacion.cierre === "object"
                   ? (c.cnv_detalle_conversacion.cierre as DatosCierreConversacion)
                   : null,
+              fichaCliente:
+                c.cnv_detalle_conversacion?.ficha_cliente &&
+                typeof c.cnv_detalle_conversacion.ficha_cliente === "object"
+                  ? (c.cnv_detalle_conversacion.ficha_cliente as FichaClienteOmnicanal)
+                  : null,
+              puenteOmnicanal:
+                c.cnv_detalle_conversacion?.puente_omnicanal &&
+                typeof c.cnv_detalle_conversacion.puente_omnicanal === "object"
+                  ? (c.cnv_detalle_conversacion.puente_omnicanal as PuenteOmnicanalCliente)
+                  : null,
             }))
         : almacen.conversaciones;
+
+    const conversacionesPropagadas = propagarFichaClienteEntreCanales(conversacionesFinales);
 
     for (const miembro of equipo) {
       miembro.chatsActivos = conversacionesFinales.filter(
@@ -1103,11 +1179,14 @@ export async function obtenerTableroOmnicanalAction(
         usuarioActualNombre,
         esAdminEtiquetas: esAdminEtiquetasFallback,
         esAdminAplicacion: esAdminAplicacionFallback,
-        conversaciones: conversacionesFinales,
+        conversaciones: conversacionesPropagadas,
         etiquetas: etiquetasFinales,
         respuestasRapidas: respuestasFinales,
         equipo,
-        usuariosYClientes: enriquecerContactosConPedidos(contactosBase, pedidosWeb),
+        usuariosYClientes: enriquecerContactosConFichaCliente(
+          enriquecerContactosConPedidos(contactosBase, pedidosWeb),
+          conversacionesPropagadas
+        ),
         pedidosWeb,
         usandoRespaldoHibrido: convsTabla === null,
         avisoMigracionSql: convsTabla === null && errRpc ? errRpc.message : null,
@@ -1122,6 +1201,101 @@ export async function obtenerTableroOmnicanalAction(
           : "No se pudo cargar el tablero de monitoreo de conversaciones.",
     };
   }
+}
+
+function claveIdentidadCruzadaConversacion(c: ConversacionOmnicanal): string[] {
+  const claves: string[] = [];
+  if (c.usuarioId) claves.push(`usu:${c.usuarioId}`);
+  const tel = normalizarTelefonoOmnicanal(c.remitenteTelefono);
+  if (tel.length >= 9) claves.push(`tel:${tel.slice(-9)}`);
+  const cor = (c.remitenteCorreo || "").trim().toLowerCase();
+  if (cor) claves.push(`cor:${cor}`);
+  const refWeb = (c.puenteOmnicanal?.refWeb || "").trim().toUpperCase();
+  if (refWeb) claves.push(`ref:${refWeb}`);
+  return claves;
+}
+
+function propagarFichaClienteEntreCanales(
+  conversaciones: ConversacionOmnicanal[]
+): ConversacionOmnicanal[] {
+  if (conversaciones.length <= 1) return conversaciones;
+  const mejorFichaPorClave = new Map<string, FichaClienteOmnicanal>();
+
+  for (const c of conversaciones) {
+    const fc = c.fichaCliente;
+    if (!fc || (!fc.calificacionEstrellas && !fc.notasCliente && !fc.nombrePersonalizado)) {
+      continue;
+    }
+    for (const k of claveIdentidadCruzadaConversacion(c)) {
+      const prev = mejorFichaPorClave.get(k);
+      if (
+        !prev ||
+        String(fc.actualizadoEn || "") >= String(prev.actualizadoEn || "")
+      ) {
+        mejorFichaPorClave.set(k, fc);
+      }
+    }
+  }
+
+  if (mejorFichaPorClave.size === 0) return conversaciones;
+
+  return conversaciones.map((c) => {
+    const tienePropia = Boolean(
+      c.fichaCliente &&
+        (c.fichaCliente.calificacionEstrellas ||
+          c.fichaCliente.notasCliente ||
+          c.fichaCliente.nombrePersonalizado)
+    );
+    if (tienePropia) {
+      if (
+        c.fichaCliente?.nombrePersonalizado &&
+        c.fichaCliente.nombrePersonalizado.trim() &&
+        c.remitenteNombre !== c.fichaCliente.nombrePersonalizado.trim()
+      ) {
+        return { ...c, remitenteNombre: c.fichaCliente.nombrePersonalizado.trim() };
+      }
+      return c;
+    }
+
+    for (const k of claveIdentidadCruzadaConversacion(c)) {
+      const compartida = mejorFichaPorClave.get(k);
+      if (compartida) {
+        return {
+          ...c,
+          remitenteNombre:
+            compartida.nombrePersonalizado?.trim() || c.remitenteNombre,
+          fichaCliente: compartida,
+        };
+      }
+    }
+    return c;
+  });
+}
+
+function enriquecerContactosConFichaCliente(
+  contactos: ContactoUnificadoOmnicanal[],
+  conversaciones: ConversacionOmnicanal[]
+): ContactoUnificadoOmnicanal[] {
+  if (contactos.length === 0 || conversaciones.length === 0) return contactos;
+  return contactos.map((ct) => {
+    const telCt = normalizarTelefonoOmnicanal(ct.telefono);
+    const corCt = (ct.correo || "").trim().toLowerCase();
+    const convMatch = conversaciones.find((cv) => {
+      if (!cv.fichaCliente) return false;
+      if (ct.usuarioId && cv.usuarioId === ct.usuarioId) return true;
+      if (corCt && (cv.remitenteCorreo || "").trim().toLowerCase() === corCt) return true;
+      const telCv = normalizarTelefonoOmnicanal(cv.remitenteTelefono);
+      return telCt.length >= 9 && telCv.length >= 9 && telCt.slice(-9) === telCv.slice(-9);
+    });
+    if (!convMatch?.fichaCliente) return ct;
+    const fc = convMatch.fichaCliente;
+    return {
+      ...ct,
+      nombre: fc.nombrePersonalizado?.trim() || ct.nombre,
+      calificacionEstrellas: fc.calificacionEstrellas ?? ct.calificacionEstrellas ?? null,
+      notasCliente: fc.notasCliente ?? ct.notasCliente ?? null,
+    };
+  });
 }
 
 function enriquecerContactosConPedidos(
@@ -2559,6 +2733,28 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
       }
     }
 
+    // 5.5. Puente Bidireccional Web -> WhatsApp: si el mensaje trae código `TNK-XXXXXX`, vincular identidad y producto visto en la web
+    let bloquePuenteWeb = "";
+    const textoBrutoEntrante = String(rec.caption || contenidoCliente || transcripcionNotaVoz || "");
+    const codigoRefWebDetectado = extraerCodigoRefWebDeTexto(textoBrutoEntrante);
+    if (codigoRefWebDetectado && rec.conversacionId && accion !== "ECO_MOVIL_REGISTRADO") {
+      try {
+        const ctxPuente = await vincularConversacionWhatsappConRefWebInterno({
+          supabase,
+          negocio,
+          conversacionWhatsappId: String(rec.conversacionId),
+          claveHiloWhatsapp: String(rec.claveHilo || ""),
+          telefonoCliente: String(rec.remitenteTelefono || ""),
+          refWeb: codigoRefWebDetectado,
+        });
+        if (ctxPuente?.bloquePromptAria) {
+          bloquePuenteWeb = ctxPuente.bloquePromptAria;
+        }
+      } catch {
+        // Nunca bloquear webhook por enlace auxiliar
+      }
+    }
+
     if (accion !== "INVOCAR_ARIA") {
       return { ok: true, status: 200, accion };
     }
@@ -2566,6 +2762,10 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
     // Construir prompt para Mía (ARIA) con el formato exacto de WhatsApp + Entrega Inmediata + Cotización GPS
     const tel = String(rec.remitenteTelefono || "");
     const nombreCorto = String(rec.remitenteNombre || "Cliente").slice(0, 48);
+    const wrefActual = rec.conversacionId
+      ? generarCodigoRefWhatsapp(String(rec.conversacionId))
+      : null;
+    const sufijoWref = wrefActual ? `?wref=${encodeURIComponent(wrefActual)}` : "";
     const textoCliente = transcripcionNotaVoz
       ? `[NOTA DE VOZ ENVIADA POR EL CLIENTE — TRANSCRIPCIÓN]: ${transcripcionNotaVoz}`
       : audioUrlCliente
@@ -2591,10 +2791,10 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
                 i.imagenUrl && /^https?:\/\//i.test(i.imagenUrl)
                   ? `, foto markdown para adjuntar: ![${i.nombre}](${i.imagenUrl})`
                   : ""
-              }, link tienda: ${origenTienda}/producto/${i.slug})`
+              }, link tienda: ${origenTienda}/producto/${i.slug}${sufijoWref})`
           )
           .join("; ");
-        bloqueInmediata = `\n[ARREGLOS LISTOS EN TIENDA PARA ENTREGA INMEDIATA 1-2h: ${lista}. Cuando recomiendes uno en WhatsApp incluye su foto markdown ![Nombre](url) para que el cliente vea la fotografía real. Catálogo inmediato: ${origenTienda}/categoria/entrega-inmediata]`;
+        bloqueInmediata = `\n[ARREGLOS LISTOS EN TIENDA PARA ENTREGA INMEDIATA 1-2h: ${lista}. Cuando recomiendes uno en WhatsApp incluye su foto markdown ![Nombre](url) para que el cliente vea la fotografía real. Catálogo inmediato: ${origenTienda}/categoria/entrega-inmediata${sufijoWref}]`;
       }
     } catch {
       // Ignorar
@@ -2682,8 +2882,8 @@ export async function procesarWebhookYcloudOmnicanalAction(entrada: {
     }
 
     const promptCompleto =
-      `${encabezadoUsuario}${bloqueReferralMeta}\n${textoCliente}\n\n` +
-      `[ENLACES DIRECTOS E-COMMERCE TINKAY: Categorías ${origenTienda}/categoria/{slug}, Entrega Inmediata ${origenTienda}/categoria/entrega-inmediata, Producto ${origenTienda}/producto/{slug}]` +
+      `${encabezadoUsuario}${bloqueReferralMeta}${bloquePuenteWeb}\n${textoCliente}\n\n` +
+      `[ENLACES DIRECTOS E-COMMERCE TINKAY: Categorías ${origenTienda}/categoria/{slug}${sufijoWref}, Entrega Inmediata ${origenTienda}/categoria/entrega-inmediata${sufijoWref}, Producto ${origenTienda}/producto/{slug}${sufijoWref}]` +
       bloqueInmediata +
       bloqueCotizacionGps;
 
@@ -3203,3 +3403,943 @@ export async function reenviarMensajeAClienteWhatsappAction(entrada: {
 
   return { ok: true, avisoWhatsApp: res.avisoWhatsApp };
 }
+
+// =============================================================================
+// FICHA UNIFICADA DEL CLIENTE (ESTRELLAS + NOTAS + NOMBRE EDITABLE) Y PUENTE
+// BIDIRECCIONAL WEB <-> WHATSAPP
+// =============================================================================
+
+interface SnapshotPuenteWebCfg {
+  refWeb: string;
+  claveHiloWeb?: string | null;
+  productoNombre?: string | null;
+  productoSlug?: string | null;
+  varianteNombre?: string | null;
+  pvp?: number | null;
+  urlPagina?: string | null;
+  visitanteNombre?: string | null;
+  visitanteCorreo?: string | null;
+  visitanteTelefono?: string | null;
+  registradoEn: string;
+}
+
+function normalizarEstrellasFicha(valor?: number | null): number | null {
+  if (valor == null) return null;
+  const num = Math.round(Number(valor));
+  if (!Number.isFinite(num) || num < 1 || num > 5) return null;
+  return num;
+}
+
+async function vincularConversacionWhatsappConRefWebInterno(params: {
+  supabase: any;
+  negocio: string;
+  conversacionWhatsappId: string;
+  claveHiloWhatsapp: string;
+  telefonoCliente: string;
+  refWeb: string;
+}): Promise<{ bloquePromptAria: string } | null> {
+  const { crearClienteAdmin } = await import("@eco/supabase/servidor");
+  const adminDb: any = crearClienteAdmin() ?? params.supabase;
+  const refWeb = String(params.refWeb || "").trim().toUpperCase();
+  if (!refWeb) return null;
+
+  const ahoraIso = new Date().toISOString();
+
+  // 1. Buscar snapshot temporal registrado al pulsar el botón WhatsApp en la Web
+  let snap: SnapshotPuenteWebCfg | null = null;
+  try {
+    const { data: cfgRow } = await adminDb
+      .schema("comun_configuracion")
+      .from("cfg_negocio")
+      .select("cfg_detalle_configuracion")
+      .eq("cfg_negocio", params.negocio)
+      .maybeSingle();
+    const mapa = (cfgRow?.cfg_detalle_configuracion?.omnicanal_puentes_web ?? {}) as Record<
+      string,
+      SnapshotPuenteWebCfg
+    >;
+    if (mapa && mapa[refWeb]) {
+      snap = mapa[refWeb] ?? null;
+    }
+  } catch {
+    // Continuar con búsqueda directa en conversaciones Web
+  }
+
+  // 2. Buscar conversación Web existente vinculada al mismo `claveHiloWeb` o `refWeb`
+  let convWeb: any = null;
+  try {
+    if (snap?.claveHiloWeb) {
+      const { data } = await adminDb
+        .schema("comun_agentes")
+        .from("agc_conversacion")
+        .select(
+          "cnv_id, cnv_clave_hilo, cnv_remitente_nombre, cnv_remitente_correo, cnv_remitente_telefono, cnv_usuario_id, cnv_cliente_id, cnv_detalle_conversacion"
+        )
+        .eq("cnv_negocio", params.negocio)
+        .eq("cnv_canal", "web")
+        .eq("cnv_clave_hilo", snap.claveHiloWeb)
+        .is("cnv_eliminado_en", null)
+        .maybeSingle();
+      convWeb = data ?? null;
+    }
+    if (!convWeb) {
+      const { data: candidatasWeb } = await adminDb
+        .schema("comun_agentes")
+        .from("agc_conversacion")
+        .select(
+          "cnv_id, cnv_clave_hilo, cnv_remitente_nombre, cnv_remitente_correo, cnv_remitente_telefono, cnv_usuario_id, cnv_cliente_id, cnv_detalle_conversacion"
+        )
+        .eq("cnv_negocio", params.negocio)
+        .eq("cnv_canal", "web")
+        .is("cnv_eliminado_en", null)
+        .order("cnv_ultimo_mensaje_en", { ascending: false })
+        .limit(80);
+      if (Array.isArray(candidatasWeb)) {
+        convWeb =
+          candidatasWeb.find((cw: any) => {
+            const pRef = cw?.cnv_detalle_conversacion?.puente_omnicanal?.refWeb;
+            const genRef = generarCodigoRefVisitanteWeb(String(cw?.cnv_clave_hilo || ""), params.negocio);
+            return pRef === refWeb || genRef === refWeb;
+          }) ?? null;
+      }
+    }
+  } catch {
+    // Ignorar si tabla aún no existe
+  }
+
+  // 3. Cargar conversación WhatsApp actual y fusionar puente + ficha + producto de interés
+  const { data: convWa } = await adminDb
+    .schema("comun_agentes")
+    .from("agc_conversacion")
+    .select(
+      "cnv_id, cnv_remitente_nombre, cnv_remitente_correo, cnv_usuario_id, cnv_cliente_id, cnv_detalle_conversacion"
+    )
+    .eq("cnv_id", params.conversacionWhatsappId)
+    .maybeSingle();
+
+  if (!convWa) return null;
+
+  const detalleWa = (convWa.cnv_detalle_conversacion ?? {}) as Record<string, any>;
+  const puentePrevio = (detalleWa.puente_omnicanal ?? {}) as PuenteOmnicanalCliente;
+  const yaVinculadoMismoRef = puentePrevio.refWeb === refWeb && Boolean(puentePrevio.vinculadoEn);
+
+  const visitaProducto: RegistroVisitaWebOmnicanal | null =
+    snap?.productoNombre || snap?.urlPagina
+      ? {
+          productoNombre: snap.productoNombre ?? null,
+          productoSlug: snap.productoSlug ?? null,
+          varianteNombre: snap.varianteNombre ?? null,
+          pvp: snap.pvp != null ? Number(snap.pvp) : null,
+          urlPagina: snap.urlPagina ?? null,
+          vistoEn: snap.registradoEn || ahoraIso,
+        }
+      : (convWeb?.cnv_detalle_conversacion?.puente_omnicanal?.ultimoProductoVistoWeb ?? null);
+
+  const historialPrevio = Array.isArray(puentePrevio.historialVisitasWeb)
+    ? puentePrevio.historialVisitasWeb
+    : [];
+  const nuevoHistorial = visitaProducto
+    ? [
+        visitaProducto,
+        ...historialPrevio.filter(
+          (h) =>
+            !(
+              h.productoSlug &&
+              visitaProducto.productoSlug &&
+              h.productoSlug === visitaProducto.productoSlug
+            )
+        ),
+      ].slice(0, 15)
+    : historialPrevio;
+
+  const nuevoPuenteWa: PuenteOmnicanalCliente = {
+    ...puentePrevio,
+    refWeb,
+    wref: generarCodigoRefWhatsapp(params.conversacionWhatsappId),
+    claveHiloWebVinculado: convWeb?.cnv_clave_hilo ?? snap?.claveHiloWeb ?? puentePrevio.claveHiloWebVinculado ?? null,
+    conversacionWebVinculadaId: convWeb?.cnv_id ? String(convWeb.cnv_id) : (puentePrevio.conversacionWebVinculadaId ?? null),
+    origenInicial: puentePrevio.origenInicial || "WEB_A_WHATSAPP",
+    ultimoProductoVistoWeb: visitaProducto ?? puentePrevio.ultimoProductoVistoWeb ?? null,
+    historialVisitasWeb: nuevoHistorial,
+    vinculadoEn: puentePrevio.vinculadoEn || ahoraIso,
+  };
+
+  const fichaWeb = (convWeb?.cnv_detalle_conversacion?.ficha_cliente ?? null) as FichaClienteOmnicanal | null;
+  const fichaWaPrevia = (detalleWa.ficha_cliente ?? null) as FichaClienteOmnicanal | null;
+  const fichaCombinada = fichaWaPrevia ?? fichaWeb ?? undefined;
+
+  const datosVentaPrev = (detalleWa.datos_venta ?? {}) as DatosVentaConversacion;
+  const datosVentaActualizados: DatosVentaConversacion = {
+    ...datosVentaPrev,
+    ...(visitaProducto?.productoNombre && !datosVentaPrev.producto
+      ? {
+          producto: visitaProducto.varianteNombre
+            ? `${visitaProducto.productoNombre} (${visitaProducto.varianteNombre})`
+            : visitaProducto.productoNombre,
+        }
+      : {}),
+    ...(visitaProducto?.pvp != null && !datosVentaPrev.precioProducto
+      ? { precioProducto: Number(visitaProducto.pvp) }
+      : {}),
+  };
+
+  const nombreWaActual = String(convWa.cnv_remitente_nombre || "");
+  const nombreVisitanteCandidato =
+    fichaCombinada?.nombrePersonalizado ||
+    (convWeb?.cnv_remitente_nombre && !/^Visitante Web/i.test(String(convWeb.cnv_remitente_nombre))
+      ? String(convWeb.cnv_remitente_nombre)
+      : null) ||
+    snap?.visitanteNombre ||
+    null;
+
+  const patchWa: Record<string, any> = {
+    cnv_detalle_conversacion: {
+      ...detalleWa,
+      puente_omnicanal: nuevoPuenteWa,
+      datos_venta: datosVentaActualizados,
+      ...(fichaCombinada ? { ficha_cliente: fichaCombinada } : {}),
+    },
+    cnv_actualizado_en: ahoraIso,
+  };
+
+  if (nombreVisitanteCandidato && /^WhatsApp \+/i.test(nombreWaActual)) {
+    patchWa.cnv_remitente_nombre = nombreVisitanteCandidato;
+  }
+  if (!convWa.cnv_remitente_correo && (convWeb?.cnv_remitente_correo || snap?.visitanteCorreo)) {
+    patchWa.cnv_remitente_correo = convWeb?.cnv_remitente_correo || snap?.visitanteCorreo;
+  }
+  if (!convWa.cnv_usuario_id && convWeb?.cnv_usuario_id) {
+    patchWa.cnv_usuario_id = convWeb.cnv_usuario_id;
+  }
+  if (!convWa.cnv_cliente_id && convWeb?.cnv_cliente_id) {
+    patchWa.cnv_cliente_id = convWeb.cnv_cliente_id;
+  }
+
+  await adminDb
+    .schema("comun_agentes")
+    .from("agc_conversacion")
+    .update(patchWa)
+    .eq("cnv_id", params.conversacionWhatsappId);
+
+  // 4. Vincular de vuelta en la conversación Web (si existe)
+  if (convWeb?.cnv_id) {
+    const detWeb = (convWeb.cnv_detalle_conversacion ?? {}) as Record<string, any>;
+    const puenteWebPrev = (detWeb.puente_omnicanal ?? {}) as PuenteOmnicanalCliente;
+    const patchWeb: Record<string, any> = {
+      cnv_detalle_conversacion: {
+        ...detWeb,
+        puente_omnicanal: {
+          ...puenteWebPrev,
+          refWeb,
+          wref: generarCodigoRefWhatsapp(params.conversacionWhatsappId),
+          conversacionWhatsappVinculadaId: params.conversacionWhatsappId,
+          origenInicial: puenteWebPrev.origenInicial || "WEB_A_WHATSAPP",
+          vinculadoEn: puenteWebPrev.vinculadoEn || ahoraIso,
+        },
+      },
+      cnv_actualizado_en: ahoraIso,
+    };
+    if (!convWeb.cnv_remitente_telefono && params.telefonoCliente) {
+      patchWeb.cnv_remitente_telefono = params.telefonoCliente;
+    }
+    await adminDb
+      .schema("comun_agentes")
+      .from("agc_conversacion")
+      .update(patchWeb)
+      .eq("cnv_id", convWeb.cnv_id);
+  }
+
+  // 5. Registrar nota interna de trazabilidad (solo la primera vez que se enlaza este refWeb)
+  if (!yaVinculadoMismoRef) {
+    const descProd = visitaProducto?.productoNombre
+      ? ` · Viendo en tienda: ${visitaProducto.productoNombre}${
+          visitaProducto.varianteNombre ? ` (${visitaProducto.varianteNombre})` : ""
+        }${visitaProducto.pvp != null ? ` — $${Number(visitaProducto.pvp).toFixed(2)}` : ""}`
+      : "";
+    const notaPuente = `🔗 Cliente vinculado desde la Tienda Web (${refWeb})${descProd}`;
+
+    try {
+      await adminDb
+        .schema("comun_agentes")
+        .from("agc_mensaje")
+        .insert({
+          msg_conversacion_id: params.conversacionWhatsappId,
+          msg_negocio: params.negocio,
+          msg_origen: "SISTEMA",
+          msg_autor_nombre: "Puente Web ↔ WhatsApp",
+          msg_contenido: notaPuente,
+          msg_es_nota_interna: true,
+          msg_detalle_mensaje: {
+            tipo: "puente_web_whatsapp",
+            refWeb,
+            producto: visitaProducto,
+          },
+        });
+    } catch {
+      // Ignorar si esquema varía
+    }
+
+    await emitirBroadcastServidorOmnicanal(params.supabase, params.negocio, "actividad_chat_web", {
+      eventoId: `puente-web-${refWeb}-${Date.now()}`,
+      claveHilo: params.claveHiloWhatsapp,
+      conversacionId: params.conversacionWhatsappId,
+      canal: "whatsapp",
+      fase: "NOTA_INTERNA",
+      contenido: notaPuente,
+      autorNombre: "Puente Web ↔ WhatsApp",
+      remitenteNombre: patchWa.cnv_remitente_nombre || convWa.cnv_remitente_nombre || "Cliente WhatsApp",
+      remitenteTelefono: params.telefonoCliente || null,
+      estadoAtencion: "BOT_ACTIVO",
+      creadoEn: ahoraIso,
+    });
+  }
+
+  const resumenProductoAria = visitaProducto?.productoNombre
+    ? `Estaba revisando en la web el arreglo "${visitaProducto.productoNombre}"${
+        visitaProducto.varianteNombre ? ` (variante: ${visitaProducto.varianteNombre})` : ""
+      }${visitaProducto.pvp != null ? ` con precio $${Number(visitaProducto.pvp).toFixed(2)} USD` : ""}${
+        visitaProducto.urlPagina ? ` (${visitaProducto.urlPagina})` : ""
+      }.`
+    : "Viene directamente desde nuestra tienda web oficial.";
+
+  return {
+    bloquePromptAria: `\n[CONTEXTO OMNICANAL WEB → WHATSAPP (${refWeb}): ${resumenProductoAria} Atiéndelo con continuidad inmediata sin pedirle repetir qué arreglo vio.]`,
+  };
+}
+
+export interface EntradaGuardarFichaClienteOmnicanal {
+  negocio: string;
+  conversacionId?: string | null;
+  clienteId?: string | null;
+  usuarioId?: string | null;
+  nombre: string;
+  telefono?: string | null;
+  correo?: string | null;
+  calificacionEstrellas?: number | null;
+  notasCliente?: string | null;
+}
+
+export interface RespuestaGuardarFichaClienteOmnicanal {
+  fichaCliente: FichaClienteOmnicanal;
+  remitenteNombre: string;
+  remitenteTelefono: string | null;
+  remitenteCorreo: string | null;
+  conversacionesActualizadasIds: string[];
+}
+
+/**
+ * Guarda la Ficha Unificada del Cliente (nombre editable para registro interno,
+ * WhatsApp/teléfono, correo, calificación de 1 a 5 estrellas y notas operativas)
+ * y la sincroniza automáticamente en todos los canales asociados al mismo cliente.
+ */
+export async function guardarFichaClienteOmnicanalAction(
+  entrada: EntradaGuardarFichaClienteOmnicanal
+): Promise<
+  | ({ ok: true } & RespuestaGuardarFichaClienteOmnicanal)
+  | { ok: false; error: string }
+> {
+  try {
+    const neg = normalizarNegocioComercio(entrada.negocio);
+    const nombreLimpio = String(entrada.nombre || "").trim().slice(0, 140);
+    if (!nombreLimpio) {
+      return { ok: false, error: "Ingresa un nombre válido para el registro del cliente." };
+    }
+
+    const telefonoLimpio = String(entrada.telefono || "").trim().slice(0, 40) || null;
+    const correoLimpio = String(entrada.correo || "").trim().toLowerCase().slice(0, 160) || null;
+    const estrellas = normalizarEstrellasFicha(entrada.calificacionEstrellas);
+    const notasLimpias = String(entrada.notasCliente || "").trim().slice(0, 2000) || null;
+
+    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase = await crearClienteServidor();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return { ok: false, error: "Sesión expirada. Vuelve a iniciar sesión." };
+    }
+
+    const adminDb: any = crearClienteAdmin() ?? supabase;
+    const codigosNeg = variantesCodigoNegocio(neg);
+
+    // Verificar pertenencia al equipo del negocio (Ventas / Operador / Admin / Superadmin)
+    const [resUsu, resMem] = await Promise.all([
+      adminDb
+        .schema("comun_seguridad")
+        .from("seg_usuario")
+        .select("usu_nombres, usu_apellidos, usu_correo, usu_superadmin_plataforma")
+        .eq("usu_id", user.id)
+        .maybeSingle(),
+      adminDb
+        .schema("comun_seguridad")
+        .from("seg_membresia")
+        .select("mem_rol, seg_membresia_perfil(seg_perfil(per_clave))")
+        .eq("mem_usuario_id", user.id)
+        .eq("mem_estado", "ACTIVO")
+        .in("mem_negocio", codigosNeg),
+    ]);
+
+    const uActor = resUsu?.data;
+    const actorNombre =
+      [uActor?.usu_nombres, uActor?.usu_apellidos].filter(Boolean).join(" ").trim() ||
+      uActor?.usu_correo ||
+      user.email ||
+      "Equipo";
+
+    const esSuper =
+      Boolean(uActor?.usu_superadmin_plataforma) ||
+      (neg === "tinkay" &&
+        String(uActor?.usu_correo || user.email || "")
+          .trim()
+          .toLowerCase() === "tinkay.uio@gmail.com");
+
+    const rolesPermitidos = new Set([
+      "SUPERADMIN",
+      "ADMINISTRADOR",
+      "ADMIN",
+      "VENTAS",
+      "VENDEDOR",
+      "ASESOR",
+      "OPERADOR",
+    ]);
+    const mems = Array.isArray(resMem?.data) ? resMem.data : [];
+    const tieneRolStaff =
+      esSuper ||
+      mems.some((m: any) => {
+        const rolDirecto = String(m?.mem_rol || "").toUpperCase();
+        if (rolesPermitidos.has(rolDirecto)) return true;
+        const perfiles = Array.isArray(m?.seg_membresia_perfil) ? m.seg_membresia_perfil : [];
+        return perfiles.some((mp: any) =>
+          rolesPermitidos.has(String(mp?.seg_perfil?.per_clave || "").toUpperCase())
+        );
+      });
+
+    if (!tieneRolStaff) {
+      return { ok: false, error: "Acceso restringido al equipo comercial y administrativo." };
+    }
+
+    const ahoraIso = new Date().toISOString();
+    const fichaCliente: FichaClienteOmnicanal = {
+      nombrePersonalizado: nombreLimpio,
+      calificacionEstrellas: estrellas,
+      notasCliente: notasLimpias,
+      actualizadoEn: ahoraIso,
+      actualizadoPorNombre: actorNombre,
+    };
+
+    const convId = String(entrada.conversacionId || "").trim();
+    const esUuidConv = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(convId);
+
+    // 1. Intentar primero RPC transaccional en BD (si la migración 20261122000003 ya está aplicada)
+    if (esUuidConv) {
+      try {
+        const esquemaComercio = supabase.schema("comun_comercio") as any;
+        const { data: rpcData, error: rpcErr } = await esquemaComercio.rpc(
+          "com_fn_omnicanal_guardar_ficha_cliente",
+          {
+            p_negocio: neg,
+            p_conversacion_id: convId,
+            p_nombre: nombreLimpio,
+            p_telefono: telefonoLimpio,
+            p_correo: correoLimpio,
+            p_calificacion_estrellas: estrellas,
+            p_notas_cliente: notasLimpias,
+          }
+        );
+        if (!rpcErr && rpcData?.ok) {
+          const idsRpc = Array.isArray(rpcData.conversacionesActualizadasIds)
+            ? rpcData.conversacionesActualizadasIds.map((x: unknown) => String(x))
+            : [convId];
+          return {
+            ok: true,
+            fichaCliente: (rpcData.fichaCliente as FichaClienteOmnicanal) ?? fichaCliente,
+            remitenteNombre: String(rpcData.remitenteNombre || nombreLimpio),
+            remitenteTelefono:
+              rpcData.remitenteTelefono !== undefined ? rpcData.remitenteTelefono : telefonoLimpio,
+            remitenteCorreo:
+              rpcData.remitenteCorreo !== undefined ? rpcData.remitenteCorreo : correoLimpio,
+            conversacionesActualizadasIds: idsRpc,
+          };
+        }
+      } catch {
+        // Continuar con sincronización directa resiliente
+      }
+    }
+
+    // 2. Sincronización directa resiliente en `comun_agentes.agc_conversacion` + `com_cliente` + respaldo híbrido
+    const conversacionesActualizadasIds = new Set<string>();
+    let telSemilla = normalizarTelefonoOmnicanal(telefonoLimpio);
+    let correoSemilla = correoLimpio || "";
+    let usuarioSemilla = String(entrada.usuarioId || "").trim();
+    let clienteSemilla = String(entrada.clienteId || "").trim();
+    let refWebSemilla = "";
+
+    try {
+      const { data: todasConvs } = await adminDb
+        .schema("comun_agentes")
+        .from("agc_conversacion")
+        .select(
+          "cnv_id, cnv_canal, cnv_remitente_nombre, cnv_remitente_telefono, cnv_remitente_correo, cnv_usuario_id, cnv_cliente_id, cnv_detalle_conversacion"
+        )
+        .eq("cnv_negocio", neg)
+        .neq("cnv_canal", "interno")
+        .is("cnv_eliminado_en", null)
+        .limit(300);
+
+      const listaConvs: any[] = Array.isArray(todasConvs) ? todasConvs : [];
+      const convObjetivo = esUuidConv
+        ? listaConvs.find((c) => String(c.cnv_id) === convId)
+        : null;
+
+      if (convObjetivo) {
+        if (!telSemilla) {
+          telSemilla = normalizarTelefonoOmnicanal(convObjetivo.cnv_remitente_telefono);
+        }
+        if (!correoSemilla && convObjetivo.cnv_remitente_correo) {
+          correoSemilla = String(convObjetivo.cnv_remitente_correo).trim().toLowerCase();
+        }
+        if (!usuarioSemilla && convObjetivo.cnv_usuario_id) {
+          usuarioSemilla = String(convObjetivo.cnv_usuario_id);
+        }
+        if (!clienteSemilla && convObjetivo.cnv_cliente_id) {
+          clienteSemilla = String(convObjetivo.cnv_cliente_id);
+        }
+        const refDeObj = convObjetivo?.cnv_detalle_conversacion?.puente_omnicanal?.refWeb;
+        if (refDeObj) refWebSemilla = String(refDeObj);
+      }
+
+      const convsHermanas = listaConvs.filter((c) => {
+        const idActual = String(c.cnv_id);
+        if (esUuidConv && idActual === convId) return true;
+        const telC = normalizarTelefonoOmnicanal(c.cnv_remitente_telefono);
+        if (telSemilla && telSemilla.length >= 8 && telC === telSemilla) return true;
+        const mailC = String(c.cnv_remitente_correo || "").trim().toLowerCase();
+        if (correoSemilla && mailC && mailC === correoSemilla) return true;
+        if (usuarioSemilla && c.cnv_usuario_id && String(c.cnv_usuario_id) === usuarioSemilla) {
+          return true;
+        }
+        if (clienteSemilla && c.cnv_cliente_id && String(c.cnv_cliente_id) === clienteSemilla) {
+          return true;
+        }
+        const refC = c?.cnv_detalle_conversacion?.puente_omnicanal?.refWeb;
+        if (refWebSemilla && refC && String(refC) === refWebSemilla) return true;
+        return false;
+      });
+
+      for (const fila of convsHermanas) {
+        const esPrincipal = esUuidConv && String(fila.cnv_id) === convId;
+        const detPrev = (fila.cnv_detalle_conversacion ?? {}) as Record<string, any>;
+        const datosVentaPrev = (detPrev.datos_venta ?? {}) as Record<string, any>;
+        const patchFila: Record<string, any> = {
+          cnv_remitente_nombre: nombreLimpio,
+          cnv_detalle_conversacion: {
+            ...detPrev,
+            ficha_cliente: fichaCliente,
+            datos_venta: {
+              ...datosVentaPrev,
+              nombreCliente: nombreLimpio,
+            },
+          },
+          cnv_actualizado_en: ahoraIso,
+        };
+
+        if (esPrincipal) {
+          patchFila.cnv_remitente_telefono = telefonoLimpio;
+          patchFila.cnv_remitente_correo = correoLimpio;
+        } else {
+          if (!fila.cnv_remitente_telefono && telefonoLimpio) {
+            patchFila.cnv_remitente_telefono = telefonoLimpio;
+          }
+          if (!fila.cnv_remitente_correo && correoLimpio) {
+            patchFila.cnv_remitente_correo = correoLimpio;
+          }
+        }
+
+        const { error: errUpd } = await adminDb
+          .schema("comun_agentes")
+          .from("agc_conversacion")
+          .update(patchFila)
+          .eq("cnv_id", fila.cnv_id);
+
+        if (!errUpd) {
+          conversacionesActualizadasIds.add(String(fila.cnv_id));
+        }
+      }
+    } catch {
+      // Continuar con actualización en com_cliente y respaldo híbrido
+    }
+
+    // 3. Sincronizar también en `comun_comercio.com_cliente` si existe ficha comercial
+    try {
+      let cliObjetivo: any = null;
+      if (clienteSemilla && /^[0-9a-f-]{36}$/i.test(clienteSemilla)) {
+        const { data } = await adminDb
+          .schema("comun_comercio")
+          .from("com_cliente")
+          .select("cli_id, cli_telefono, cli_correo, cli_detalle_cliente")
+          .eq("cli_id", clienteSemilla)
+          .maybeSingle();
+        cliObjetivo = data ?? null;
+      } else if (usuarioSemilla && /^[0-9a-f-]{36}$/i.test(usuarioSemilla)) {
+        const { data } = await adminDb
+          .schema("comun_comercio")
+          .from("com_cliente")
+          .select("cli_id, cli_telefono, cli_correo, cli_detalle_cliente")
+          .eq("cli_negocio", neg)
+          .eq("cli_usuario_id", usuarioSemilla)
+          .is("cli_eliminado_en", null)
+          .maybeSingle();
+        cliObjetivo = data ?? null;
+      } else if (correoSemilla) {
+        const { data } = await adminDb
+          .schema("comun_comercio")
+          .from("com_cliente")
+          .select("cli_id, cli_telefono, cli_correo, cli_detalle_cliente")
+          .eq("cli_negocio", neg)
+          .ilike("cli_correo", correoSemilla)
+          .is("cli_eliminado_en", null)
+          .maybeSingle();
+        cliObjetivo = data ?? null;
+      }
+
+      if (cliObjetivo?.cli_id) {
+        const detCli = (cliObjetivo.cli_detalle_cliente ?? {}) as Record<string, any>;
+        await adminDb
+          .schema("comun_comercio")
+          .from("com_cliente")
+          .update({
+            cli_nombre: nombreLimpio,
+            ...(telefonoLimpio ? { cli_telefono: telefonoLimpio } : {}),
+            ...(correoLimpio ? { cli_correo: correoLimpio } : {}),
+            cli_detalle_cliente: {
+              ...detCli,
+              ficha_cliente: fichaCliente,
+            },
+            cli_actualizado_en: ahoraIso,
+          })
+          .eq("cli_id", cliObjetivo.cli_id);
+      }
+    } catch {
+      // No interrumpir si com_cliente no tiene fila aún
+    }
+
+    // 4. Actualizar respaldo híbrido en `cfg_negocio` si existiera la conversación ahí
+    try {
+      const almacen = await leerAlmacenRespaldoCfg(neg);
+      let tocoRespaldo = false;
+      for (const c of almacen.conversaciones) {
+        const telC = normalizarTelefonoOmnicanal(c.remitenteTelefono);
+        const mailC = String(c.remitenteCorreo || "").trim().toLowerCase();
+        const coincide =
+          (convId && c.id === convId) ||
+          (telSemilla && telSemilla.length >= 8 && telC === telSemilla) ||
+          (correoSemilla && mailC && mailC === correoSemilla);
+        if (coincide) {
+          c.remitenteNombre = nombreLimpio;
+          if (convId && c.id === convId) {
+            c.remitenteTelefono = telefonoLimpio;
+            c.remitenteCorreo = correoLimpio;
+          } else {
+            if (!c.remitenteTelefono && telefonoLimpio) c.remitenteTelefono = telefonoLimpio;
+            if (!c.remitenteCorreo && correoLimpio) c.remitenteCorreo = correoLimpio;
+          }
+          c.fichaCliente = fichaCliente;
+          conversacionesActualizadasIds.add(c.id);
+          tocoRespaldo = true;
+        }
+      }
+      if (tocoRespaldo) {
+        await escribirAlmacenRespaldoCfg(neg, almacen);
+      }
+    } catch {
+      // Ignorar respaldo secundario
+    }
+
+    if (convId) {
+      conversacionesActualizadasIds.add(convId);
+    }
+
+    return {
+      ok: true,
+      fichaCliente,
+      remitenteNombre: nombreLimpio,
+      remitenteTelefono: telefonoLimpio,
+      remitenteCorreo: correoLimpio,
+      conversacionesActualizadasIds: Array.from(conversacionesActualizadasIds),
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "No se pudo guardar la ficha del cliente.",
+    };
+  }
+}
+
+/**
+ * Registra eventos públicos de correlación entre Tienda Web y WhatsApp:
+ * - `WEB_A_WHATSAPP`: visitante en la web pulsa un botón hacia WhatsApp (`TNK-XXXXXX`).
+ * - `WHATSAPP_A_WEB`: cliente de WhatsApp abre un link enviado desde el chat (`?wref=WA-XXXXXX`).
+ */
+export async function registrarEventoPuenteOmnicanalPublicoAction(entrada: {
+  negocio?: string;
+  direccion: "WEB_A_WHATSAPP" | "WHATSAPP_A_WEB";
+  refWeb?: string | null;
+  wref?: string | null;
+  claveHiloWeb?: string | null;
+  productoNombre?: string | null;
+  productoSlug?: string | null;
+  varianteNombre?: string | null;
+  pvp?: number | null;
+  urlPagina?: string | null;
+  visitanteNombre?: string | null;
+  visitanteCorreo?: string | null;
+  visitanteTelefono?: string | null;
+}): Promise<{ ok: boolean }> {
+  try {
+    const neg = normalizarNegocioComercio(entrada.negocio || "tinkay");
+    const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
+    const supabase: any = crearClienteAdmin() ?? (await crearClienteServidor());
+    const ahoraIso = new Date().toISOString();
+
+    const refWeb = String(entrada.refWeb || "")
+      .trim()
+      .toUpperCase()
+      .slice(0, 24);
+    const wref = String(entrada.wref || "")
+      .trim()
+      .toUpperCase()
+      .slice(0, 24);
+    const claveHiloWeb = String(entrada.claveHiloWeb || "").trim().slice(0, 120) || null;
+
+    const visitaActual: RegistroVisitaWebOmnicanal | null =
+      entrada.productoNombre || entrada.urlPagina
+        ? {
+            productoNombre: entrada.productoNombre ? String(entrada.productoNombre).slice(0, 160) : null,
+            productoSlug: entrada.productoSlug ? String(entrada.productoSlug).slice(0, 160) : null,
+            varianteNombre: entrada.varianteNombre ? String(entrada.varianteNombre).slice(0, 120) : null,
+            pvp:
+              entrada.pvp != null && Number.isFinite(Number(entrada.pvp))
+                ? Number(entrada.pvp)
+                : null,
+            urlPagina: entrada.urlPagina ? String(entrada.urlPagina).slice(0, 500) : null,
+            vistoEn: ahoraIso,
+          }
+        : null;
+
+    // A) Visitante en Tienda Web salta a WhatsApp -> guardar snapshot indexado por `refWeb`
+    if (entrada.direccion === "WEB_A_WHATSAPP" && refWeb) {
+      try {
+        const { data: cfgActual } = await supabase
+          .schema("comun_configuracion")
+          .from("cfg_negocio")
+          .select("cfg_id, cfg_detalle_configuracion")
+          .eq("cfg_negocio", neg)
+          .maybeSingle();
+
+        if (cfgActual?.cfg_id) {
+          const detPrev = (cfgActual.cfg_detalle_configuracion ?? {}) as Record<string, any>;
+          const puentesPrev = (detPrev.omnicanal_puentes_web ?? {}) as Record<
+            string,
+            SnapshotPuenteWebCfg
+          >;
+          const entradasOrdenadas = Object.entries(puentesPrev)
+            .sort((a, b) =>
+              String(b[1]?.registradoEn || "").localeCompare(String(a[1]?.registradoEn || ""))
+            )
+            .slice(0, 149);
+          const nuevoMapa: Record<string, SnapshotPuenteWebCfg> = Object.fromEntries(entradasOrdenadas);
+          nuevoMapa[refWeb] = {
+            refWeb,
+            claveHiloWeb,
+            productoNombre: visitaActual?.productoNombre ?? null,
+            productoSlug: visitaActual?.productoSlug ?? null,
+            varianteNombre: visitaActual?.varianteNombre ?? null,
+            pvp: visitaActual?.pvp ?? null,
+            urlPagina: visitaActual?.urlPagina ?? null,
+            visitanteNombre: entrada.visitanteNombre ? String(entrada.visitanteNombre).slice(0, 120) : null,
+            visitanteCorreo: entrada.visitanteCorreo
+              ? String(entrada.visitanteCorreo).trim().toLowerCase().slice(0, 160)
+              : null,
+            visitanteTelefono: entrada.visitanteTelefono
+              ? String(entrada.visitanteTelefono).trim().slice(0, 40)
+              : null,
+            registradoEn: ahoraIso,
+          };
+
+          await supabase
+            .schema("comun_configuracion")
+            .from("cfg_negocio")
+            .update({
+              cfg_detalle_configuracion: {
+                ...detPrev,
+                omnicanal_puentes_web: nuevoMapa,
+              },
+            })
+            .eq("cfg_id", cfgActual.cfg_id);
+        }
+      } catch {
+        // No bloquear si cfg_negocio no es editable con sesión anónima
+      }
+
+      // Estampar `refWeb` y producto visto en la conversación Web activa (si existe)
+      if (claveHiloWeb) {
+        try {
+          const { data: convWeb } = await supabase
+            .schema("comun_agentes")
+            .from("agc_conversacion")
+            .select("cnv_id, cnv_detalle_conversacion")
+            .eq("cnv_negocio", neg)
+            .eq("cnv_canal", "web")
+            .eq("cnv_clave_hilo", claveHiloWeb)
+            .is("cnv_eliminado_en", null)
+            .maybeSingle();
+
+          if (convWeb?.cnv_id) {
+            const det = (convWeb.cnv_detalle_conversacion ?? {}) as Record<string, any>;
+            const puentePrev = (det.puente_omnicanal ?? {}) as PuenteOmnicanalCliente;
+            const histPrev = Array.isArray(puentePrev.historialVisitasWeb)
+              ? puentePrev.historialVisitasWeb
+              : [];
+            await supabase
+              .schema("comun_agentes")
+              .from("agc_conversacion")
+              .update({
+                cnv_detalle_conversacion: {
+                  ...det,
+                  puente_omnicanal: {
+                    ...puentePrev,
+                    refWeb,
+                    origenInicial: puentePrev.origenInicial || "WEB_A_WHATSAPP",
+                    ultimoProductoVistoWeb: visitaActual ?? puentePrev.ultimoProductoVistoWeb ?? null,
+                    historialVisitasWeb: visitaActual
+                      ? [visitaActual, ...histPrev].slice(0, 15)
+                      : histPrev,
+                  },
+                },
+                cnv_actualizado_en: ahoraIso,
+              })
+              .eq("cnv_id", convWeb.cnv_id);
+          }
+        } catch {
+          // Ignorar
+        }
+      }
+      return { ok: true };
+    }
+
+    // B) Cliente de WhatsApp visita la Tienda Web mediante un link con `?wref=WA-XXXXXX`
+    if (entrada.direccion === "WHATSAPP_A_WEB" && /^WA-[A-Z0-9]{4,10}$/.test(wref)) {
+      const { data: convsWa } = await supabase
+        .schema("comun_agentes")
+        .from("agc_conversacion")
+        .select(
+          "cnv_id, cnv_clave_hilo, cnv_remitente_nombre, cnv_remitente_telefono, cnv_estado_atencion, cnv_detalle_conversacion"
+        )
+        .eq("cnv_negocio", neg)
+        .eq("cnv_canal", "whatsapp")
+        .is("cnv_eliminado_en", null)
+        .order("cnv_ultimo_mensaje_en", { ascending: false })
+        .limit(250);
+
+      const convWa = Array.isArray(convsWa)
+        ? convsWa.find((c: any) => generarCodigoRefWhatsapp(String(c.cnv_id)) === wref)
+        : null;
+
+      if (convWa?.cnv_id) {
+        const detWa = (convWa.cnv_detalle_conversacion ?? {}) as Record<string, any>;
+        const puentePrev = (detWa.puente_omnicanal ?? {}) as PuenteOmnicanalCliente;
+        const histPrev = Array.isArray(puentePrev.historialVisitasWeb)
+          ? puentePrev.historialVisitasWeb
+          : [];
+        const yaVioMismoProductoReciente =
+          Boolean(visitaActual?.productoSlug) &&
+          puentePrev.ultimoProductoVistoWeb?.productoSlug === visitaActual?.productoSlug;
+
+        const nuevoHistorial = visitaActual
+          ? [
+              visitaActual,
+              ...histPrev.filter(
+                (h) =>
+                  !(
+                    h.productoSlug &&
+                    visitaActual.productoSlug &&
+                    h.productoSlug === visitaActual.productoSlug
+                  )
+              ),
+            ].slice(0, 15)
+          : histPrev;
+
+        await supabase
+          .schema("comun_agentes")
+          .from("agc_conversacion")
+          .update({
+            cnv_detalle_conversacion: {
+              ...detWa,
+              puente_omnicanal: {
+                ...puentePrev,
+                wref,
+                ...(refWeb ? { refWeb } : {}),
+                ...(claveHiloWeb ? { claveHiloWebVinculado: claveHiloWeb } : {}),
+                origenInicial: puentePrev.origenInicial || "WHATSAPP_A_WEB",
+                ultimoProductoVistoWeb: visitaActual ?? puentePrev.ultimoProductoVistoWeb ?? null,
+                historialVisitasWeb: nuevoHistorial,
+                vinculadoEn: puentePrev.vinculadoEn || ahoraIso,
+              },
+            },
+            cnv_actualizado_en: ahoraIso,
+          })
+          .eq("cnv_id", convWa.cnv_id);
+
+        // Si el cliente abrió un producto específico en la web, dejar rastro en vivo en la consola
+        if (visitaActual?.productoNombre && !yaVioMismoProductoReciente) {
+          const notaVisita = `🛍️ El cliente abrió en la Tienda Web: ${visitaActual.productoNombre}${
+            visitaActual.varianteNombre ? ` (${visitaActual.varianteNombre})` : ""
+          }${visitaActual.pvp != null ? ` — $${Number(visitaActual.pvp).toFixed(2)}` : ""}`;
+
+          try {
+            await supabase
+              .schema("comun_agentes")
+              .from("agc_mensaje")
+              .insert({
+                msg_conversacion_id: convWa.cnv_id,
+                msg_negocio: neg,
+                msg_origen: "SISTEMA",
+                msg_autor_nombre: "Actividad Tienda Web",
+                msg_contenido: notaVisita,
+                msg_es_nota_interna: true,
+                msg_detalle_mensaje: {
+                  tipo: "visita_web_desde_whatsapp",
+                  wref,
+                  producto: visitaActual,
+                },
+              });
+          } catch {
+            // Ignorar si esquema varía
+          }
+
+          await emitirBroadcastServidorOmnicanal(supabase, neg, "actividad_chat_web", {
+            eventoId: `wref-visita-${wref}-${Date.now()}`,
+            claveHilo: String(convWa.cnv_clave_hilo || ""),
+            conversacionId: String(convWa.cnv_id),
+            canal: "whatsapp",
+            fase: "NOTA_INTERNA",
+            contenido: notaVisita,
+            autorNombre: "Actividad Tienda Web",
+            remitenteNombre: String(convWa.cnv_remitente_nombre || "Cliente WhatsApp"),
+            remitenteTelefono: convWa.cnv_remitente_telefono
+              ? String(convWa.cnv_remitente_telefono)
+              : null,
+            estadoAtencion: (convWa.cnv_estado_atencion as EstadoAtencionOmnicanal) || "BOT_ACTIVO",
+            creadoEn: ahoraIso,
+          });
+        }
+      }
+    }
+
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
+}
+

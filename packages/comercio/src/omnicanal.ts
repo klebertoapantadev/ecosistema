@@ -225,6 +225,67 @@ export function calcularFechaRecordatorioRapido(
   }
 }
 
+export interface FichaClienteOmnicanal {
+  nombrePersonalizado?: string | null;
+  calificacionEstrellas?: number | null;
+  notasCliente?: string | null;
+  actualizadoEn?: string | null;
+  actualizadoPor?: string | null;
+  actualizadoPorNombre?: string | null;
+}
+
+export interface RegistroVisitaWebOmnicanal {
+  titulo?: string | null;
+  productoNombre?: string | null;
+  slugProducto?: string | null;
+  productoSlug?: string | null;
+  varianteNombre?: string | null;
+  pvp?: number | null;
+  url?: string | null;
+  urlPagina?: string | null;
+  vistoEn: string;
+  direccion?: "WEB_A_WHATSAPP" | "WHATSAPP_A_WEB";
+}
+
+export interface PuenteOmnicanalCliente {
+  refWeb?: string | null;
+  refWhatsapp?: string | null;
+  wref?: string | null;
+  claveHiloWebVinculado?: string | null;
+  conversacionWebVinculadaId?: string | null;
+  conversacionWhatsappVinculadaId?: string | null;
+  origenInicial?: "WEB_A_WHATSAPP" | "WHATSAPP_A_WEB" | null;
+  vinculadoEn?: string | null;
+  ultimoProductoVistoWeb?: RegistroVisitaWebOmnicanal | null;
+  historialVisitasWeb?: RegistroVisitaWebOmnicanal[];
+}
+
+export const SUGERENCIAS_NOTAS_CLIENTE_OMNICANAL: string[] = [
+  "Cliente de eventos",
+  "Cliente frecuente",
+  "Recomendado Nancy",
+  "Cliente problemático",
+  "Corporativo / Factura SRI",
+];
+
+export function describirCalificacionCliente(estrellas?: number | null): string {
+  const n = Number(estrellas || 0);
+  switch (n) {
+    case 1:
+      return "1★ · Cliente crítico / alerta";
+    case 2:
+      return "2★ · Atención delicada";
+    case 3:
+      return "3★ · Cliente regular";
+    case 4:
+      return "4★ · Buen cliente";
+    case 5:
+      return "5★ · Cliente excelente / VIP";
+    default:
+      return "Sin calificación";
+  }
+}
+
 export interface ConversacionOmnicanal {
   id: string;
   secuencial?: number;
@@ -255,6 +316,8 @@ export interface ConversacionOmnicanal {
   etiquetasIds: string[];
   datosVenta?: DatosVentaConversacion;
   cierre?: DatosCierreConversacion | null;
+  fichaCliente?: FichaClienteOmnicanal | null;
+  puenteOmnicanal?: PuenteOmnicanalCliente | null;
 }
 
 export interface MensajeOmnicanal {
@@ -285,6 +348,8 @@ export interface ContactoUnificadoOmnicanal {
   ultimaCompraEn?: string | null;
   creadoEn: string;
   etiquetasIds: string[];
+  calificacionEstrellas?: number | null;
+  notasCliente?: string | null;
 }
 
 export interface MetricasOmnicanal {
@@ -1213,6 +1278,7 @@ export interface EntradaCompartirProductoCatalogo {
   incluirLinkWeb?: boolean;
   incluirLinkAlbum?: boolean;
   notaPersonalizada?: string;
+  wref?: string | null;
 }
 
 export interface SalidaCompartirProductoCatalogo {
@@ -1248,11 +1314,14 @@ export function construirMensajeProductoCatalogoOmnicanal(
     .trim()
     .replace(/^\/+|\/+$/g, "");
   const sku = entrada.skuVariante?.trim() || "";
-  const urlWebProducto = slugLimpio
+  const urlWebSinRef = slugLimpio
     ? `${baseTienda}/producto/${encodeURIComponent(slugLimpio)}${
         sku ? `?variante=${encodeURIComponent(sku)}` : ""
       }`
     : `${baseTienda}/#catalogo`;
+  const urlWebProducto = entrada.wref
+    ? anexarParametroRefUrl(urlWebSinRef, "wref", entrada.wref)
+    : urlWebSinRef;
 
   let imgAbsoluta: string | null = null;
   const imgCruda = entrada.imagenUrl?.trim() || "";
@@ -1367,4 +1436,86 @@ export function limpiarVistaPreviaMensajeOmnicanal(texto?: string | null): strin
     .replace(/\s+/g, " ")
     .trim();
   return limpio || "📷 Imagen";
+}
+
+function hashFnv1aBase36Corto(semilla: string, longitud = 6): string {
+  const txt = String(semilla || "eco").trim();
+  let h1 = 0x811c9dc5;
+  let h2 = 0x01000193;
+  for (let i = 0; i < txt.length; i++) {
+    const ch = txt.charCodeAt(i);
+    h1 ^= ch;
+    h1 = Math.imul(h1, 0x01000193) >>> 0;
+    h2 ^= ch + i;
+    h2 = Math.imul(h2, 0x85ebca6b) >>> 0;
+  }
+  const combinado = `${h1.toString(36)}${h2.toString(36)}`
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "");
+  return (combinado + "8K4P2M").slice(0, longitud);
+}
+
+/**
+ * Genera un código corto determinístico (`TNK-XXXXXX`) para correlacionar la sesión Web de un
+ * visitante cuando salta a escribirnos por WhatsApp (`Web → WhatsApp`).
+ */
+export function generarCodigoRefVisitanteWeb(semillaId: string, negocio = "tinkay"): string {
+  const neg = (negocio || "tinkay").trim().toLowerCase();
+  const pref =
+    neg.startsWith("mrg") || neg.includes("margarita")
+      ? "MRG"
+      : neg.startsWith("ffh") || neg.includes("fastfix")
+        ? "FFH"
+        : neg.startsWith("trq") || neg.includes("tranq")
+          ? "TRQ"
+          : "TNK";
+  return `${pref}-${hashFnv1aBase36Corto(semillaId, 6)}`;
+}
+
+/**
+ * Genera un código corto determinístico (`WA-XXXXXX`) sin exponer datos sensibles para adjuntar
+ * en los enlaces enviados por WhatsApp hacia la tienda web (`WhatsApp → Web`).
+ */
+export function generarCodigoRefWhatsapp(conversacionId: string): string {
+  return `WA-${hashFnv1aBase36Corto(conversacionId, 6)}`;
+}
+
+/**
+ * Extrae el código de correlación Web (`TNK-XXXXXX`) de un mensaje entrante de WhatsApp o URL.
+ */
+export function extraerCodigoRefWebDeTexto(texto?: string | null): string | null {
+  if (!texto) return null;
+  const porQuery = texto.match(/[?&]ref=((?:TNK|MRG|FFH|TRQ|WEB)-[A-Z0-9]{5,8})/i);
+  if (porQuery?.[1]) return porQuery[1].toUpperCase();
+  const directo = texto.match(/\b((?:TNK|MRG|FFH|TRQ|WEB)-[A-Z0-9]{5,8})\b/i);
+  if (directo?.[1]) return directo[1].toUpperCase();
+  return null;
+}
+
+/**
+ * Extrae el código de correlación de WhatsApp (`WA-XXXXXX`) cuando un cliente llega a la web.
+ */
+export function extraerCodigoRefWhatsappDeUrl(urlOSearch?: string | null): string | null {
+  if (!urlOSearch) return null;
+  const porParam = urlOSearch.match(/[?&]wref=(WA-[A-Z0-9]{5,8})/i);
+  if (porParam?.[1]) return porParam[1].toUpperCase();
+  const directo = urlOSearch.match(/\b(WA-[A-Z0-9]{5,8})\b/i);
+  if (directo?.[1]) return directo[1].toUpperCase();
+  return null;
+}
+
+export function anexarParametroRefUrl(
+  url: string,
+  clave: string,
+  valor?: string | null
+): string {
+  const valLimpio = (valor || "").trim();
+  if (!valLimpio) return url;
+  const hashIdx = url.indexOf("#");
+  const baseSinHash = hashIdx >= 0 ? url.slice(0, hashIdx) : url;
+  const hashParte = hashIdx >= 0 ? url.slice(hashIdx) : "";
+  const separador = baseSinHash.includes("?") ? "&" : "?";
+  return `${baseSinHash}${separador}${encodeURIComponent(clave)}=${encodeURIComponent(
+    valLimpio
+  )}${hashParte}`;
 }

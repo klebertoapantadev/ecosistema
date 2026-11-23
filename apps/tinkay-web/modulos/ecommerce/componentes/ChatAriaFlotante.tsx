@@ -13,6 +13,10 @@ import {
 } from '@eco/comercio';
 import { crearClienteNavegador } from '@eco/supabase/cliente';
 import { useCarrito } from '../contexto-carrito';
+import {
+  IconoWhatsappVector,
+  abrirWhatsappTiendaConPuenteOmnicanal,
+} from '../puente-omnicanal-cliente';
 import { PRODUCTOS_TINKAY, FRASES_DEDICATORIAS } from '../datos-catalogo';
 import { ProductoEcommerce, VarianteEcommerce, MensajeChat } from '../tipos';
 import {
@@ -32,18 +36,18 @@ const MENSAJES_INICIALES: MensajeChat[] = [
     id: 'msg-init-1',
     remitente: 'aria',
     texto:
-      '¡Hola! Soy Mía 🌿, sommelier floral de Tinkay. ¿Para qué ocasión o evento especial buscamos flores hoy? También puedes pegarme tu link de Google Maps / Waze o usar el pin 📍 para cotizar el envío exacto.',
+      '¡Hola! Soy Mía 🌿, sommelier floral de Tinkay. ¿Para qué ocasión o evento especial buscamos flores hoy? Si prefieres hablar directo por WhatsApp, toca el ícono verde de WhatsApp abajo a la izquierda.',
     timestamp: 'Ahora',
   },
 ];
 
 const SUGERENCIAS_RAPIDAS = [
+  { id: 'whatsapp_directo', texto: 'WhatsApp directo' },
   { id: 'inmediata', texto: '⚡ Entrega Inmediata (1–2h)' },
   { id: 'eventos', texto: '🎉 Eventos y Bodas' },
   { id: 'amor', texto: '🌹 Sorpresa de Amor / Aniversario' },
   { id: 'cumple', texto: '🎂 Cumpleaños Alegre' },
   { id: 'condolencias', texto: '🕊️ Condolencias y Respeto' },
-  { id: 'envio', texto: '📍 Cotizar envío a mi ubicación' },
 ];
 
 type CotizacionChat = NonNullable<MensajeChat['cotizacionEnvio']>;
@@ -165,6 +169,7 @@ export function ChatAriaFlotante() {
     abrirProductoPorIdentificador,
     obtenerEnlaceProducto,
     configLogistica,
+    configTiendaCheckout,
     entregaUnificada,
     actualizarEntregaUnificada,
     usuarioRegistrado,
@@ -1143,14 +1148,63 @@ export function ChatAriaFlotante() {
               </div>
             </div>
 
-            <button
-              type="button"
-              className="btn-cerrar-chat"
-              onClick={() => setAbierto(false)}
-              aria-label="Minimizar chat"
-            >
-              <X size={18} />
-            </button>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  const ultimoUsuario = [...mensajes]
+                    .reverse()
+                    .find((msg) => msg.remitente === 'usuario');
+                  abrirWhatsappTiendaConPuenteOmnicanal({
+                    whatsappTienda: configTiendaCheckout?.whatsappTienda,
+                    productoNombre: productoSeleccionadoModal?.nombre || null,
+                    productoSlug:
+                      productoSeleccionadoModal?.slug || productoSeleccionadoModal?.id || null,
+                    varianteNombre: productoSeleccionadoModal?.variantes?.[0]?.nombre || null,
+                    precioUsd: productoSeleccionadoModal?.variantes?.[0]?.pvp ?? null,
+                    urlProducto: productoSeleccionadoModal
+                      ? obtenerEnlaceProducto(
+                          productoSeleccionadoModal,
+                          productoSeleccionadoModal.variantes?.[0]?.sku
+                        )
+                      : null,
+                    consultaInicial:
+                      inputTexto.trim() ||
+                      (ultimoUsuario?.texto
+                        ? `Hola Tinkay 🌿, continuando mi consulta web: "${ultimoUsuario.texto.slice(0, 140)}"`
+                        : null),
+                  });
+                }}
+                title="Continuar atención directa en nuestro WhatsApp"
+                aria-label="WhatsApp"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '5px 10px',
+                  borderRadius: '999px',
+                  border: '1px solid rgba(255, 255, 255, 0.35)',
+                  background: '#25D366',
+                  color: '#FFFFFF',
+                  fontSize: '0.73rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                }}
+              >
+                <IconoWhatsappVector size={14} color="#FFFFFF" />
+                <span>WhatsApp</span>
+              </button>
+
+              <button
+                type="button"
+                className="btn-cerrar-chat"
+                onClick={() => setAbierto(false)}
+                aria-label="Minimizar chat"
+              >
+                <X size={18} />
+              </button>
+            </div>
           </div>
 
           {/* Franja ligera opcional de identificación para atención personalizada en vivo */}
@@ -1624,14 +1678,43 @@ export function ChatAriaFlotante() {
                 type="button"
                 className="chip-pregunta-rapida"
                 onClick={() => {
-                  if (sug.id === 'envio') {
-                    setSelectorMapaAbierto((prev) => !prev);
+                  if (sug.id === 'whatsapp_directo') {
+                    abrirWhatsappTiendaConPuenteOmnicanal({
+                      whatsappTienda: configTiendaCheckout?.whatsappTienda,
+                      productoNombre: productoSeleccionadoModal?.nombre || null,
+                      productoSlug:
+                        productoSeleccionadoModal?.slug || productoSeleccionadoModal?.id || null,
+                      varianteNombre: productoSeleccionadoModal?.variantes?.[0]?.nombre || null,
+                      precioUsd: productoSeleccionadoModal?.variantes?.[0]?.pvp ?? null,
+                      urlProducto: productoSeleccionadoModal
+                        ? obtenerEnlaceProducto(
+                            productoSeleccionadoModal,
+                            productoSeleccionadoModal.variantes?.[0]?.sku
+                          )
+                        : null,
+                    });
                   } else {
                     void handleEnviar(sug.texto);
                   }
                 }}
+                style={
+                  sug.id === 'whatsapp_directo'
+                    ? {
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        background: '#F0FDF4',
+                        border: '1px solid #86EFAC',
+                        color: '#15803D',
+                        fontWeight: 700,
+                      }
+                    : undefined
+                }
               >
-                {sug.texto}
+                {sug.id === 'whatsapp_directo' && (
+                  <IconoWhatsappVector size={13} color="#16A34A" />
+                )}
+                <span>{sug.texto}</span>
               </button>
             ))}
           </div>
@@ -1770,30 +1853,52 @@ export function ChatAriaFlotante() {
           >
             <button
               type="button"
-              onClick={() => setSelectorMapaAbierto((prev) => !prev)}
-              title="Cotizar envío con enlace o mapa"
-              aria-label="Cotizar envío con enlace o mapa"
+              onClick={() => {
+                const ultimoUsuario = [...mensajes]
+                  .reverse()
+                  .find((msg) => msg.remitente === 'usuario');
+                abrirWhatsappTiendaConPuenteOmnicanal({
+                  whatsappTienda: configTiendaCheckout?.whatsappTienda,
+                  productoNombre: productoSeleccionadoModal?.nombre || null,
+                  productoSlug:
+                    productoSeleccionadoModal?.slug || productoSeleccionadoModal?.id || null,
+                  varianteNombre: productoSeleccionadoModal?.variantes?.[0]?.nombre || null,
+                  precioUsd: productoSeleccionadoModal?.variantes?.[0]?.pvp ?? null,
+                  urlProducto: productoSeleccionadoModal
+                    ? obtenerEnlaceProducto(
+                        productoSeleccionadoModal,
+                        productoSeleccionadoModal.variantes?.[0]?.sku
+                      )
+                    : null,
+                  consultaInicial:
+                    inputTexto.trim() ||
+                    (ultimoUsuario?.texto
+                      ? `Hola Tinkay 🌿, continuando mi consulta web: "${ultimoUsuario.texto.slice(0, 140)}"`
+                      : null),
+                });
+              }}
+              title="Contactar directo a nuestro WhatsApp"
+              aria-label="Contactar por WhatsApp"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: '34px',
-                height: '34px',
+                width: '36px',
+                height: '36px',
                 borderRadius: '50%',
-                border: selectorMapaAbierto
-                  ? '1px solid #3D5A45'
-                  : '1px solid rgba(61, 90, 69, 0.25)',
-                background: selectorMapaAbierto ? '#3D5A45' : '#FFFFFF',
-                color: selectorMapaAbierto ? '#FFFFFF' : '#3D5A45',
+                border: '1px solid #16A34A',
+                background: '#25D366',
+                color: '#FFFFFF',
                 cursor: 'pointer',
                 flexShrink: 0,
+                boxShadow: '0 2px 6px rgba(37, 211, 102, 0.28)',
               }}
             >
-              <MapPin size={16} />
+              <IconoWhatsappVector size={18} color="#FFFFFF" />
             </button>
             <input
               type="text"
-              placeholder="Pregúntale a Mía o pega tu link de Maps / Waze..."
+              placeholder="Pregúntale a Mía o escribe aquí..."
               value={inputTexto}
               onChange={(e) => setInputTexto(e.target.value)}
               className="input-texto-chat"

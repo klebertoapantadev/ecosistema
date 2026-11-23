@@ -592,11 +592,14 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
                 ? 'Mobiliario y ambientación en calidad de renta temporal para eventos sociales y corporativos.'
                 : '');
 
-        const etiquetasDb = Array.isArray(detalle.etiquetas)
+        const etiquetasDbRaw = Array.isArray(detalle.etiquetas)
           ? detalle.etiquetas
-              .map((e: unknown) => String(e).trim())
-              .filter((e: string) => e.length > 0)
+          : typeof detalle.etiquetas === 'string'
+          ? String(detalle.etiquetas).split(',')
           : [];
+        const etiquetasDb = etiquetasDbRaw
+          .map((e: unknown) => String(e).replace(/^#+/, '').trim())
+          .filter((e: string) => e.length > 0);
 
         const esCombo = Boolean(detalle.es_combo);
         const comboComponentes = esCombo
@@ -683,6 +686,7 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
             : esEventoProd
             ? Array.from(new Set([...etiquetasDb, 'Cotización Evento']))
             : etiquetasDb,
+          etiquetasBusqueda: etiquetasDb,
           deliveryIncluido:
             typeof detalle.logistica?.delivery_incluido === 'boolean'
               ? detalle.logistica.delivery_incluido

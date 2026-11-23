@@ -77,6 +77,7 @@ export interface ProductoEcommerce {
   usos?: string[]; // Usos recomendados (ej. 'condolencias', 'cumpleanos')
   ocasionRecomendada?: string;
   etiquetas: string[];
+  etiquetasBusqueda?: string[]; // Etiquetas semánticas de búsqueda (Keywords IA) configuradas en el producto
   deliveryIncluido?: boolean;
   modalidadTransporte?: string;
   etiquetaTransporte?: string;

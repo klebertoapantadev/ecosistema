@@ -31,6 +31,7 @@ export interface SeleccionProductoCatalogoChat extends SalidaCompartirProductoCa
 export interface PropiedadesModalSelectorCatalogoChat {
   abierto: boolean;
   negocio: string;
+  wref?: string | null;
   esMovil?: boolean;
   enviandoDirecto?: boolean;
   onCerrar: () => void;
@@ -76,6 +77,7 @@ function resolverAlbumProducto(prod: ProductoCatalogo, varianteIdx: number): str
 export function ModalSelectorCatalogoChat({
   abierto,
   negocio,
+  wref = null,
   esMovil = false,
   enviandoDirecto = false,
   onCerrar,
@@ -238,6 +240,7 @@ export function ModalSelectorCatalogoChat({
       incluirFotoPrincipal,
       incluirLinkWeb,
       incluirLinkAlbum: incluirLinkAlbum && Boolean(albumEfectivo),
+      wref,
     });
 
     return {
@@ -258,6 +261,7 @@ export function ModalSelectorCatalogoChat({
     incluirFotoPrincipal,
     incluirLinkWeb,
     incluirLinkAlbum,
+    wref,
   ]);
 
   if (!abierto) return null;

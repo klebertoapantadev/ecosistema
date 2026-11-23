@@ -5,17 +5,35 @@ import React, { useState, useMemo } from 'react';
 import { useCarrito } from '../contexto-carrito';
 import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from '../datos-catalogo';
 import {
+  CLASIFICACIONES_PRINCIPALES_TINKAY,
+  esIdentificadorClasificacionVirtual,
   expandirProductosVitrina,
   obtenerCategoriasVisibles,
+  obtenerClasificacionPrincipalDeCategoria,
+  obtenerClasificacionPrincipalPorId,
+  obtenerEtiquetasBusquedaDisponibles,
   obtenerJerarquiaCatalogoTinkay,
   obtenerNombreProductoIndividual,
   obtenerPvpProducto,
+  obtenerSubcategoriasDeClasificacion,
   productoCoincideConBusqueda,
   productoCoincideConCategoria,
+  productoCoincideConEtiquetas,
   productoTieneOferta,
 } from '../filtrado-catalogo';
 import { TarjetaProductoConCarrusel } from './TarjetaProductoConCarrusel';
-import { Search, SlidersHorizontal, Feather, Sparkles, ArrowUpDown, Link2, Check } from 'lucide-react';
+import {
+  Search,
+  SlidersHorizontal,
+  Feather,
+  Sparkles,
+  ArrowUpDown,
+  Link2,
+  Check,
+  Tag,
+  Hash,
+  X,
+} from 'lucide-react';
 
 export { obtenerNombreProductoIndividual, obtenerPvpProducto, productoTieneOferta };
 
@@ -51,6 +69,7 @@ export function VitrinaCatalogoTinkay() {
     'recomendados' | 'precio-desc' | 'precio-asc' | 'destacados' | 'nombre-asc'
   >('recomendados');
   const [soloOfertas, setSoloOfertas] = useState<boolean>(false);
+  const [etiquetasActivas, setEtiquetasActivas] = useState<string[]>([]);
 
   // 1. Expandir todas las variaciones como productos individuales (excepto categoría Extras)
   const productosBaseDesplegados = useMemo(
@@ -64,10 +83,26 @@ export function VitrinaCatalogoTinkay() {
     [catalogoCategorias, productosBaseDesplegados]
   );
 
+  const clasificacionActiva = useMemo(
+    () => obtenerClasificacionPrincipalDeCategoria(categoriaActiva, categoriasVisibles),
+    [categoriaActiva, categoriasVisibles]
+  );
+
+  const subcategoriasActivas = useMemo(
+    () =>
+      obtenerSubcategoriasDeClasificacion(
+        clasificacionActiva,
+        categoriasVisibles,
+        productosBaseDesplegados
+      ),
+    [clasificacionActiva, categoriasVisibles, productosBaseDesplegados]
+  );
+
   // Si la categoría activa quedó sin productos o se ocultó, regresar a 'cat-todos'
   React.useEffect(() => {
     if (
       categoriaActiva !== 'cat-todos' &&
+      !esIdentificadorClasificacionVirtual(categoriaActiva) &&
       categoriasVisibles.length > 0 &&
       !categoriasVisibles.some((c) => c.id === categoriaActiva)
     ) {
@@ -83,18 +118,38 @@ export function VitrinaCatalogoTinkay() {
   const handleCambioBusqueda = (nuevoValor: string) => {
     setTerminoBusqueda(nuevoValor);
     const limpio = nuevoValor.trim();
-    if (limpio && categoriaActiva !== 'cat-todos') {
-      const hayEnCategoriaActual = productosBaseDesplegados.some(
+    if (!limpio) return;
+
+    const hayEnAmbitoActual = productosBaseDesplegados.some(
+      (p) =>
+        (categoriaActiva === 'cat-todos' ||
+          productoCoincideConCategoria(p, categoriaActiva, catalogoCategorias)) &&
+        productoCoincideConEtiquetas(p, etiquetasActivas) &&
+        productoCoincideConBusqueda(p, limpio, catalogoCategorias)
+    );
+    if (hayEnAmbitoActual) return;
+
+    if (etiquetasActivas.length > 0) {
+      const haySinEtiquetas = productosBaseDesplegados.some(
         (p) =>
-          productoCoincideConCategoria(p, categoriaActiva, catalogoCategorias) &&
+          (categoriaActiva === 'cat-todos' ||
+            productoCoincideConCategoria(p, categoriaActiva, catalogoCategorias)) &&
           productoCoincideConBusqueda(p, limpio, catalogoCategorias)
       );
-      if (!hayEnCategoriaActual) {
-        const hayEnTodoCatalogo = productosBaseDesplegados.some((p) =>
-          productoCoincideConBusqueda(p, limpio, catalogoCategorias)
-        );
-        if (hayEnTodoCatalogo) {
-          setCategoriaActiva('cat-todos');
+      if (haySinEtiquetas) {
+        setEtiquetasActivas([]);
+        return;
+      }
+    }
+
+    if (categoriaActiva !== 'cat-todos') {
+      const hayEnTodoCatalogo = productosBaseDesplegados.some((p) =>
+        productoCoincideConBusqueda(p, limpio, catalogoCategorias)
+      );
+      if (hayEnTodoCatalogo) {
+        setCategoriaActiva('cat-todos');
+        if (etiquetasActivas.length > 0) {
+          setEtiquetasActivas([]);
         }
       }
     }
@@ -112,10 +167,28 @@ export function VitrinaCatalogoTinkay() {
         setTerminoBusqueda('');
       }
     }
+    if (etiquetasActivas.length > 0) {
+      const hayConEtiquetas = productosBaseDesplegados.some(
+        (p) =>
+          (catId === 'cat-todos' || productoCoincideConCategoria(p, catId, catalogoCategorias)) &&
+          productoCoincideConEtiquetas(p, etiquetasActivas)
+      );
+      if (!hayConEtiquetas) {
+        setEtiquetasActivas([]);
+      }
+    }
   };
 
-  // 3. Filtrado reactivo por categoría, búsqueda multidimensional (usos, nombres, categorías, detalles), presupuesto y ofertas
-  const productosFiltrados = useMemo(() => {
+  const handleToggleEtiqueta = (claveEtiqueta: string) => {
+    setEtiquetasActivas((prev) =>
+      prev.includes(claveEtiqueta)
+        ? prev.filter((item) => item !== claveEtiqueta)
+        : [...prev, claveEtiqueta]
+    );
+  };
+
+  // Productos base del ámbito actual (antes del filtro por chips de etiquetas) para listar etiquetas útiles
+  const productosAmbitoActual = useMemo(() => {
     return productosBaseDesplegados.filter((p) => {
       if (soloOfertas && !productoTieneOferta(p)) {
         return false;
@@ -151,6 +224,22 @@ export function VitrinaCatalogoTinkay() {
     productosBaseDesplegados,
     catalogoCategorias,
   ]);
+
+  const etiquetasDisponibles = useMemo(() => {
+    const base = obtenerEtiquetasBusquedaDisponibles(productosAmbitoActual);
+    if (etiquetasActivas.length === 0) return base;
+    const existentes = new Set(base.map((e) => e.clave));
+    const extrasActivas = etiquetasActivas
+      .filter((cl) => !existentes.has(cl))
+      .map((cl) => ({ clave: cl, etiqueta: cl, cantidad: 0 }));
+    return [...extrasActivas, ...base];
+  }, [productosAmbitoActual, etiquetasActivas]);
+
+  // 3. Filtrado reactivo final incluyendo etiquetas semánticas de búsqueda seleccionadas
+  const productosFiltrados = useMemo(() => {
+    if (etiquetasActivas.length === 0) return productosAmbitoActual;
+    return productosAmbitoActual.filter((p) => productoCoincideConEtiquetas(p, etiquetasActivas));
+  }, [productosAmbitoActual, etiquetasActivas]);
 
   // 4. Ordenamiento reactivo con jerarquía estructural:
   //    Nivel 1: Flores destacadas (Primero)
@@ -191,13 +280,42 @@ export function VitrinaCatalogoTinkay() {
     });
   }, [productosFiltrados, criterioOrden, categoriaActiva]);
 
+  const clasifPrincipalObj = obtenerClasificacionPrincipalPorId(categoriaActiva);
+  const subcategoriaActivaObj = subcategoriasActivas.find((s) => s.id === categoriaActiva);
   const categoriaActivaObj = categoriasVisibles.find((c) => c.id === categoriaActiva);
   const esModoCondolencias =
+    clasificacionActiva === 'grupo-condolencias' ||
     Boolean(categoriaActivaObj?.modoVisualSobrio) ||
     categoriaActiva === 'cat-ocas-condol' ||
     (Boolean(terminoBusqueda.trim()) &&
       productosFinales.length > 0 &&
       productosFinales.every((p) => p.esCondolencias));
+
+  const tituloVitrinaActual = esModoCondolencias
+    ? 'Arreglos de Condolencias & Respeto'
+    : clasifPrincipalObj
+    ? clasifPrincipalObj.tituloVitrina
+    : subcategoriaActivaObj
+    ? subcategoriaActivaObj.nombre
+    : categoriaActivaObj && categoriaActiva !== 'cat-todos'
+    ? categoriaActivaObj.nombre
+    : 'Flores con Historia, Para Cada Momento';
+
+  const subtituloVitrinaActual = esModoCondolencias
+    ? 'Composiciones solemnes en blanco y follajes andinos para acompañar en los momentos más difíciles con entrega puntual en velaciones e iglesias.'
+    : clasifPrincipalObj
+    ? clasifPrincipalObj.descripcionVitrina
+    : categoriaActivaObj && categoriaActiva !== 'cat-todos' && categoriaActivaObj.descripcion
+    ? categoriaActivaObj.descripcion
+    : 'Explora nuestros arreglos florales para toda ocasión, eventos y condolencias preparados con rosas frescas de exportación.';
+
+  const nombreEnlaceActual = clasifPrincipalObj
+    ? clasifPrincipalObj.nombre
+    : subcategoriaActivaObj
+    ? subcategoriaActivaObj.nombre
+    : categoriaActivaObj && categoriaActiva !== 'cat-todos'
+    ? categoriaActivaObj.nombre
+    : '';
 
   return (
     <section
@@ -221,22 +339,8 @@ export function VitrinaCatalogoTinkay() {
                 </>
               )}
             </span>
-            <h2 className="titulo-seccion-vitrina">
-              {esModoCondolencias
-                ? 'Arreglos de Condolencias & Respeto'
-                : categoriaActivaObj && categoriaActiva !== 'cat-todos'
-                ? categoriaActivaObj.nombre
-                : 'Flores con Historia, Para Cada Momento'}
-            </h2>
-            <p className="subtitulo-seccion-vitrina">
-              {esModoCondolencias
-                ? 'Composiciones solemnes en blanco y follajes andinos para acompañar en los momentos más difíciles con entrega puntual en velaciones e iglesias.'
-                : categoriaActivaObj &&
-                  categoriaActiva !== 'cat-todos' &&
-                  categoriaActivaObj.descripcion
-                ? categoriaActivaObj.descripcion
-                : 'Explora nuestros bouquets coreanos, box florales, ramos para florero y arreglos de eventos preparados con rosas frescas de exportación.'}
-            </p>
+            <h2 className="titulo-seccion-vitrina">{tituloVitrinaActual}</h2>
+            <p className="subtitulo-seccion-vitrina">{subtituloVitrinaActual}</p>
           </div>
 
           {/* Barra de Búsqueda, Ordenamiento y Filtros Rápidos */}
@@ -245,11 +349,11 @@ export function VitrinaCatalogoTinkay() {
               <Search size={18} className="icono-busqueda" />
               <input
                 type="text"
-                placeholder="Buscar por nombre, uso, categoría, flores u ocasión (ej. condolencias, cumpleaños, orquídea)..."
+                placeholder="Buscar por nombre, etiqueta (#orquídeas, rosas), uso u ocasión..."
                 value={terminoBusqueda}
                 onChange={(e) => handleCambioBusqueda(e.target.value)}
                 className="input-busqueda-catalogo"
-                aria-label="Buscar productos por nombre, categoría, uso o características"
+                aria-label="Buscar productos por nombre, etiqueta de búsqueda, categoría o uso"
               />
               {terminoBusqueda && (
                 <button
@@ -330,7 +434,7 @@ export function VitrinaCatalogoTinkay() {
           </div>
         </div>
 
-        {/* Pestañas de Categorías Multidimensionales + Botón Copiar Link de Categoría */}
+        {/* Nivel 1: Primera Clasificación de Consulta (Arreglos Florales, Eventos, Condolencias) + Copiar link */}
         <div
           className="fila-categorias-y-enlace"
           style={{
@@ -342,21 +446,46 @@ export function VitrinaCatalogoTinkay() {
             marginBottom: '6px',
           }}
         >
-          <div className="pills-categorias-scroll" style={{ flex: 1, minWidth: 0 }}>
-            {categoriasVisibles.map((cat) => {
-              const estaActiva = cat.id === categoriaActiva;
+          <div
+            className="pills-categorias-scroll pills-clasificacion-principal"
+            style={{ flex: 1, minWidth: 0 }}
+            role="tablist"
+            aria-label="Primera clasificación de consulta"
+          >
+            {CLASIFICACIONES_PRINCIPALES_TINKAY.map((clasif) => {
+              const estaActiva = clasificacionActiva === clasif.id;
               return (
                 <button
-                  key={cat.id}
+                  key={clasif.id}
                   type="button"
-                  className={`pill-categoria ${estaActiva ? 'pill-activa' : ''} ${cat.modoVisualSobrio ? 'pill-condolencias' : ''}`}
-                  onClick={() => handleSeleccionarCategoria(cat.id)}
+                  role="tab"
+                  aria-selected={estaActiva}
+                  title={`${clasif.nombre} — ${clasif.subtitulo}`}
+                  className={`pill-categoria pill-clasificacion-principal ${
+                    estaActiva ? 'pill-activa' : ''
+                  } ${clasif.modoVisualSobrio ? 'pill-condolencias' : ''}`}
+                  onClick={() => handleSeleccionarCategoria(clasif.id)}
                 >
-                  {cat.modoVisualSobrio && <Feather size={14} className="icono-pill" />}
-                  <span>{cat.nombre}</span>
+                  {clasif.modoVisualSobrio && <Feather size={14} className="icono-pill" />}
+                  <span>{clasif.nombre}</span>
+                  {clasif.id === 'grupo-arreglos-florales' && (
+                    <span className="pill-subtexto-ocasion">(Para toda ocasión)</span>
+                  )}
                 </button>
               );
             })}
+            <button
+              type="button"
+              role="tab"
+              aria-selected={clasificacionActiva === 'cat-todos'}
+              title="Ver todo el catálogo"
+              className={`pill-categoria ${
+                clasificacionActiva === 'cat-todos' ? 'pill-activa' : ''
+              }`}
+              onClick={() => handleSeleccionarCategoria('cat-todos')}
+            >
+              <span>Todo el Catálogo</span>
+            </button>
           </div>
 
           <button
@@ -364,8 +493,8 @@ export function VitrinaCatalogoTinkay() {
             onClick={handleCopiarEnlaceCategoria}
             className="btn-responsive-accion"
             title={
-              categoriaActivaObj && categoriaActiva !== 'cat-todos'
-                ? `Copiar link directo de "${categoriaActivaObj.nombre}" para WhatsApp o Chat`
+              nombreEnlaceActual
+                ? `Copiar link directo de "${nombreEnlaceActual}" para WhatsApp o Chat`
                 : 'Copiar link directo del catálogo para WhatsApp o Chat'
             }
             aria-label="Copiar link de categoría"
@@ -391,6 +520,90 @@ export function VitrinaCatalogoTinkay() {
           </button>
         </div>
 
+        {/* Nivel 2: Sub-colecciones contextuales (dentro de Arreglos Florales, Todo o Eventos) */}
+        {subcategoriasActivas.length > 0 && (
+          <div className="fila-subcategorias-vitrina" aria-label="Sub-colecciones">
+            <span className="etiqueta-riel-filtro">
+              {clasificacionActiva === 'grupo-eventos' ? 'Tipo:' : 'Colección:'}
+            </span>
+            <div className="riel-chips-secundarios">
+              <button
+                type="button"
+                className={`chip-subcategoria ${
+                  categoriaActiva === clasificacionActiva ||
+                  (clasificacionActiva === 'cat-todos' && categoriaActiva === 'cat-todos')
+                    ? 'activo'
+                    : ''
+                }`}
+                onClick={() =>
+                  handleSeleccionarCategoria(
+                    clasificacionActiva === 'cat-todos' ? 'cat-todos' : clasificacionActiva
+                  )
+                }
+              >
+                {clasificacionActiva === 'grupo-eventos' ? 'Todo en Eventos' : 'Todas'}
+              </button>
+              {subcategoriasActivas.map((sub) => {
+                const estaActiva = categoriaActiva === sub.id;
+                return (
+                  <button
+                    key={sub.id}
+                    type="button"
+                    className={`chip-subcategoria ${estaActiva ? 'activo' : ''}`}
+                    onClick={() => handleSeleccionarCategoria(sub.id)}
+                  >
+                    {sub.nombre}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Nivel 3: Filtro interactivo por Etiquetas Semánticas de Búsqueda (Keywords IA) */}
+        {etiquetasDisponibles.length > 0 && (
+          <div className="fila-etiquetas-busqueda-vitrina" aria-label="Filtrar por etiquetas de búsqueda">
+            <span className="etiqueta-riel-filtro">
+              <Tag size={13} />
+              <span>Etiquetas:</span>
+            </span>
+            <div className="riel-chips-secundarios">
+              {etiquetasDisponibles.map((item) => {
+                const activa = etiquetasActivas.includes(item.clave);
+                return (
+                  <button
+                    key={item.clave}
+                    type="button"
+                    aria-pressed={activa}
+                    title={
+                      activa
+                        ? `Quitar filtro de etiqueta "${item.etiqueta}"`
+                        : `Filtrar resultados por etiqueta "${item.etiqueta}"`
+                    }
+                    className={`chip-etiqueta-busqueda ${activa ? 'activa' : ''}`}
+                    onClick={() => handleToggleEtiqueta(item.clave)}
+                  >
+                    <Hash size={12} />
+                    <span>{item.etiqueta}</span>
+                    {activa && <X size={12} />}
+                  </button>
+                );
+              })}
+              {etiquetasActivas.length > 0 && (
+                <button
+                  type="button"
+                  className="btn-limpiar-etiquetas"
+                  onClick={() => setEtiquetasActivas([])}
+                  title="Limpiar etiquetas seleccionadas"
+                  aria-label="Limpiar etiquetas"
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Grid de Productos con Carruseles Fotográficos */}
         {productosFinales.length === 0 ? (
           <div className="vacio-catalogo-alerta">
@@ -401,6 +614,7 @@ export function VitrinaCatalogoTinkay() {
               onClick={() => {
                 setCategoriaActiva('cat-todos');
                 setTerminoBusqueda('');
+                setEtiquetasActivas([]);
                 setFiltroPresupuesto('todos');
                 setSoloOfertas(false);
                 setCriterioOrden('recomendados');

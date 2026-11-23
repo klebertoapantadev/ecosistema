@@ -19,6 +19,11 @@ import { DrawerCarritoFloristeria } from './DrawerCarritoFloristeria';
 import { DrawerProformaEvento } from './DrawerProformaEvento';
 import { ModalCheckoutTinkay } from './ModalCheckoutTinkay';
 import { ChatAriaFlotante } from './ChatAriaFlotante';
+import {
+  IconoWhatsappVector,
+  abrirWhatsappTiendaConPuenteOmnicanal,
+  capturarWrefEntranteNavegador,
+} from '../puente-omnicanal-cliente';
 import { Sparkles, ShieldCheck, Heart, Truck, Phone, MapPin } from 'lucide-react';
 
 function ContenidoPaginaEcommerceTinkay() {
@@ -28,6 +33,10 @@ function ContenidoPaginaEcommerceTinkay() {
   const [mensajeWaContextual, setMensajeWaContextual] = React.useState(
     'Hola Tinkay, deseo asesoría para elegir un arreglo floral.'
   );
+
+  React.useEffect(() => {
+    capturarWrefEntranteNavegador();
+  }, []);
 
   React.useEffect(() => {
     const attr = leerAtribucionNavegador('tinkay', {
@@ -217,12 +226,19 @@ function ContenidoPaginaEcommerceTinkay() {
                 botánica en Quito y Cumbayá.
               </p>
               <div className="telefono-contacto-pie">
-                <Phone size={15} />
+                <IconoWhatsappVector size={15} color="#25D366" />
                 <a
                   href={urlWhatsappPie}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="enlace-mapa-pie"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    abrirWhatsappTiendaConPuenteOmnicanal({
+                      whatsappTienda: telefonoTienda,
+                      consultaInicial: mensajeWaContextual,
+                    });
+                  }}
                 >
                   Atención &amp; WhatsApp: {telefonoTienda}
                 </a>
@@ -244,6 +260,21 @@ function ContenidoPaginaEcommerceTinkay() {
               <h4>Colecciones</h4>
               <ul>
                 <li>
+                  <Link href="/categoria/arreglos-florales" onClick={(e) => irAColeccion(e, 'grupo-arreglos-florales')}>
+                    Arreglos Florales (Toda Ocasión)
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/categoria/eventos" onClick={(e) => irAColeccion(e, 'grupo-eventos')}>
+                    Eventos &amp; Ceremonias
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/categoria/condolencias" onClick={(e) => irAColeccion(e, 'grupo-condolencias')}>
+                    Condolencias &amp; Funerarios
+                  </Link>
+                </li>
+                <li>
                   <Link href="/categoria/box-florales" onClick={(e) => irAColeccion(e, 'box-florales')}>
                     Box Florales de Lujo
                   </Link>
@@ -256,16 +287,6 @@ function ContenidoPaginaEcommerceTinkay() {
                 <li>
                   <Link href="/categoria/cat-floreros" onClick={(e) => irAColeccion(e, 'cat-floreros')}>
                     Ramos Clásicos para Florero
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/categoria/eventos-y-ceremonias" onClick={(e) => irAColeccion(e, 'eventos')}>
-                    Eventos &amp; Ceremonias
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/categoria/cat-ocas-condol" onClick={(e) => irAColeccion(e, 'cat-ocas-condol')}>
-                    Condolencias &amp; Funerarios
                   </Link>
                 </li>
               </ul>

@@ -16,6 +16,7 @@ import { cargarCatalogoDinamicoTinkay } from './servicio-catalogo';
 import {
   expandirProductosVitrina,
   obtenerCategoriasVisibles,
+  obtenerSlugCategoriaPublico,
   resolverCategoriaPorIdentificador,
   resolverProductoPorIdentificador,
 } from './filtrado-catalogo';
@@ -249,8 +250,7 @@ export function ProveedorCarrito({
   const obtenerEnlaceCategoriaActual = React.useCallback(
     (catIdOpcional?: string) => {
       const idRef = catIdOpcional ?? categoriaActiva;
-      const catObj = categorias.find((c) => c.id === idRef || c.slug === idRef);
-      const slugRef = catObj?.slug || idRef;
+      const slugRef = obtenerSlugCategoriaPublico(idRef, categorias);
       return construirEnlaceCategoriaTienda({
         negocio: 'tinkay',
         slugCategoria: slugRef,
@@ -289,11 +289,10 @@ export function ProveedorCarrito({
         if (!catId || catId === 'cat-todos' || catId === 'todos') {
           sincronizarRutaNavegador('/');
         } else {
-          const catObj = categorias.find((c) => c.id === catId || c.slug === catId);
           sincronizarRutaNavegador(
             construirEnlaceCategoriaTienda({
               negocio: 'tinkay',
-              slugCategoria: catObj?.slug || catId,
+              slugCategoria: obtenerSlugCategoriaPublico(catId, categorias),
             })
           );
         }
@@ -335,11 +334,10 @@ export function ProveedorCarrito({
         if (!destino || destino === 'cat-todos' || destino === 'todos') {
           sincronizarRutaNavegador('/#catalogo');
         } else {
-          const catObj = categorias.find((c) => c.id === destino || c.slug === destino);
           sincronizarRutaNavegador(
             construirEnlaceCategoriaTienda({
               negocio: 'tinkay',
-              slugCategoria: catObj?.slug || destino,
+              slugCategoria: obtenerSlugCategoriaPublico(destino, categorias),
             })
           );
         }

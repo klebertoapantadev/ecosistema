@@ -1,7 +1,7 @@
 "use client";
 import { SelectConBuscador } from "@eco/datagrid";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ShoppingBag,
   Scale,
@@ -11,6 +11,7 @@ import {
   Search,
   Sparkles,
   Tag,
+  Hash,
   CheckCircle,
   AlertCircle,
   HelpCircle,
@@ -109,6 +110,7 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const [cargando, setCargando] = useState(true);
   const [cargandoSemillas, setCargandoSemillas] = useState(false);
   const [busqueda, setBusqueda] = useState("");
+  const [etiquetasActivas, setEtiquetasActivas] = useState<string[]>([]);
   const [categoriaSeleccionada, setCategoriaSeleccionada] = useState<string>("todas");
   const [canalSeleccionado, setCanalSeleccionado] = useState<string>("todos");
   const [filtroEstadoAdmin, setFiltroEstadoAdmin] = useState<"todos" | "activos" | "inactivos">("todos");
@@ -446,7 +448,44 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const totalActivos = (productos || []).filter((p) => p && p.pro_activo !== false).length;
 
   // Filtrado y ordenamiento (en Configuración siempre muestra primero los productos más recientemente creados)
-  const productosFiltradosBase = (productos || []).filter((p) => {
+  const normalizarTextoFiltro = (valor: unknown): string =>
+    String(valor ?? "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[_/\\|•·—–#-]+/g, " ")
+      .replace(/[^a-z0-9]+/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const tokenCoincideConTexto = (token: string, corpus: string): boolean => {
+    if (!token) return true;
+    if (corpus.includes(token)) return true;
+    if (token.endsWith("ces") && token.length > 4 && corpus.includes(`${token.slice(0, -3)}z`)) {
+      return true;
+    }
+    if (token.endsWith("es") && token.length > 4 && corpus.includes(token.slice(0, -2))) {
+      return true;
+    }
+    if (token.endsWith("s") && token.length > 3 && corpus.includes(token.slice(0, -1))) {
+      return true;
+    }
+    return false;
+  };
+
+  const obtenerEtiquetasProducto = (p: ProductoCatalogo): string[] => {
+    const raw = p.pro_detalle_producto?.etiquetas;
+    const lista = Array.isArray(raw)
+      ? raw
+      : typeof raw === "string"
+      ? String(raw).split(",")
+      : [];
+    return lista
+      .map((item: unknown) => String(item).replace(/^#+/, "").trim())
+      .filter((item: string) => item.length > 0);
+  };
+
+  const productosBasePorAmbito = (productos || []).filter((p) => {
     if (!p) return false;
 
     // En vista de cliente, ocultar productos inactivos o fuera de temporada
@@ -459,10 +498,34 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
       if (filtroEstadoAdmin === "inactivos" && p.pro_activo !== false) return false;
     }
 
-    const cumpleBusqueda =
-      busqueda.trim() === "" ||
-      (p.pro_nombre && p.pro_nombre.toLowerCase().includes(busqueda.toLowerCase())) ||
-      (p.pro_descripcion && p.pro_descripcion.toLowerCase().includes(busqueda.toLowerCase()));
+    const queryNorm = normalizarTextoFiltro(busqueda);
+    let cumpleBusqueda = true;
+    if (queryNorm) {
+      const det = p.pro_detalle_producto || {};
+      const etiquetas = obtenerEtiquetasProducto(p);
+      const usos = Array.isArray(det.usos) ? det.usos : Array.isArray(det.ocasiones) ? det.ocasiones : [];
+      const textosVariantes = Array.isArray(p.variantes)
+        ? p.variantes.flatMap((v) => [v.var_nombre, v.var_sku, v.var_detalle_variante?.detalle])
+        : [];
+      const corpus = normalizarTextoFiltro(
+        [
+          p.pro_nombre,
+          p.pro_slug,
+          p.pro_descripcion,
+          det.descripcion_corta,
+          p.categoria?.ctg_nombre,
+          ...etiquetas,
+          ...usos,
+          ...textosVariantes,
+        ]
+          .filter(Boolean)
+          .join(" ")
+      );
+      const tokens = queryNorm.split(" ").filter(Boolean);
+      cumpleBusqueda =
+        tokenCoincideConTexto(queryNorm, corpus) ||
+        tokens.every((tok) => tokenCoincideConTexto(tok, corpus));
+    }
 
     const cumpleCategoria =
       categoriaSeleccionada === "todas" ||
@@ -475,6 +538,57 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
 
     return cumpleBusqueda && cumpleCategoria && cumpleCanal;
   });
+
+  const etiquetasDisponiblesCatalogo = useMemo(() => {
+    const mapa = new Map<string, { etiqueta: string; cantidad: number; prio: number }>();
+    for (const p of productosBasePorAmbito) {
+      const etiquetas = obtenerEtiquetasProducto(p);
+      const vistasProd = new Set<string>();
+      for (const raw of etiquetas) {
+        const clave = normalizarTextoFiltro(raw);
+        if (!clave || vistasProd.has(clave)) continue;
+        vistasProd.add(clave);
+        const prio = /[A-ZÁÉÍÓÚÑáéíóúñ]/.test(raw) ? 1 : 0;
+        const actual = mapa.get(clave);
+        if (!actual) {
+          mapa.set(clave, { etiqueta: raw, cantidad: 1, prio });
+        } else {
+          actual.cantidad += 1;
+          if (prio > actual.prio) {
+            actual.etiqueta = raw;
+            actual.prio = prio;
+          }
+        }
+      }
+    }
+    const lista = Array.from(mapa.entries())
+      .map(([clave, info]) => ({ clave, etiqueta: info.etiqueta, cantidad: info.cantidad }))
+      .sort((a, b) => (b.cantidad !== a.cantidad ? b.cantidad - a.cantidad : a.etiqueta.localeCompare(b.etiqueta, "es")));
+
+    if (etiquetasActivas.length === 0) return lista;
+    const existentes = new Set(lista.map((i) => i.clave));
+    const extras = etiquetasActivas
+      .filter((cl) => !existentes.has(cl))
+      .map((cl) => ({ clave: cl, etiqueta: cl, cantidad: 0 }));
+    return [...extras, ...lista];
+  }, [productosBasePorAmbito, etiquetasActivas]);
+
+  const productosFiltradosBase =
+    etiquetasActivas.length === 0
+      ? productosBasePorAmbito
+      : productosBasePorAmbito.filter((p) => {
+          const etNorms = obtenerEtiquetasProducto(p).map((e) => normalizarTextoFiltro(e)).filter(Boolean);
+          if (etNorms.length === 0) return false;
+          return etiquetasActivas.every((cl) => {
+            const tokensCl = cl.split(" ").filter(Boolean);
+            return etNorms.some(
+              (et) =>
+                et === cl ||
+                tokenCoincideConTexto(cl, et) ||
+                (tokensCl.length > 0 && tokensCl.every((t) => tokenCoincideConTexto(t, et)))
+            );
+          });
+        });
 
   const productosFiltrados =
     modoVista === "admin"
@@ -959,10 +1073,10 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 type="text"
                 placeholder={
                   esFloristeria
-                    ? "Buscar arreglo, flor, ocasión o SKU..."
+                    ? "Buscar arreglo, etiqueta (#orquídeas), flor, ocasión o SKU..."
                     : esMantenimiento
-                    ? "Buscar servicio, tarifa o palabra clave..."
-                    : "Buscar servicio, honorario, plan o palabra clave..."
+                    ? "Buscar servicio, etiqueta, tarifa o palabra clave..."
+                    : "Buscar servicio, etiqueta, honorario, plan o palabra clave..."
                 }
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
@@ -1227,6 +1341,101 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 </button>
               )}
             </div>
+
+            {/* Riel deslizable de etiquetas semánticas de búsqueda (Keywords IA) */}
+            {etiquetasDisponiblesCatalogo.length > 0 && (
+              <div
+                className="catalogo-riel-deslizable"
+                style={{
+                  gap: "6px",
+                  width: "100%",
+                  paddingBottom: "2px",
+                  alignItems: "center",
+                }}
+              >
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    fontSize: "0.72rem",
+                    fontWeight: 700,
+                    color: "#847D74",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                    whiteSpace: "nowrap",
+                    flexShrink: 0,
+                  }}
+                >
+                  <Tag size={12} />
+                  <span>Etiquetas:</span>
+                </span>
+                {etiquetasDisponiblesCatalogo.map((item) => {
+                  const activa = etiquetasActivas.includes(item.clave);
+                  return (
+                    <button
+                      key={item.clave}
+                      type="button"
+                      aria-pressed={activa}
+                      onClick={() =>
+                        setEtiquetasActivas((prev) =>
+                          prev.includes(item.clave)
+                            ? prev.filter((k) => k !== item.clave)
+                            : [...prev, item.clave]
+                        )
+                      }
+                      title={
+                        activa
+                          ? `Quitar filtro #${item.etiqueta}`
+                          : `Filtrar por etiqueta #${item.etiqueta}`
+                      }
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        padding: "4px 10px",
+                        borderRadius: "7px",
+                        fontSize: "0.75rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        flexShrink: 0,
+                        scrollSnapAlign: "start",
+                        border: activa ? "1.5px solid #2F4737" : "1px solid #D5CFC4",
+                        background: activa ? "#2F4737" : "#FFFFFF",
+                        color: activa ? "#FFFFFF" : "#57524C",
+                      }}
+                    >
+                      <Hash size={11} />
+                      <span>{item.etiqueta}</span>
+                      {activa && <X size={11} />}
+                    </button>
+                  );
+                })}
+                {etiquetasActivas.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setEtiquetasActivas([])}
+                    title="Limpiar filtro de etiquetas"
+                    aria-label="Limpiar etiquetas"
+                    style={{
+                      padding: "4px 9px",
+                      borderRadius: "7px",
+                      fontSize: "0.73rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
+                      border: "1px dashed #B8B0A4",
+                      background: "transparent",
+                      color: "#57524C",
+                    }}
+                  >
+                    Limpiar
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
       {/* Banner de Colección / Categoría con Recursos Digitales */}

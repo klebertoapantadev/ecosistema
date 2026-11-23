@@ -9,8 +9,18 @@ import {
 import { CampanaNotificaciones } from '@eco/notificaciones';
 import { crearClienteNavegador } from '@eco/supabase';
 import { useCarrito } from '../contexto-carrito';
+import {
+  IconoWhatsappVector,
+  abrirWhatsappTiendaConPuenteOmnicanal,
+} from '../puente-omnicanal-cliente';
 import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from '../datos-catalogo';
-import { expandirProductosVitrina, obtenerCategoriasVisibles } from '../filtrado-catalogo';
+import {
+  CLASIFICACIONES_PRINCIPALES_TINKAY,
+  expandirProductosVitrina,
+  obtenerCategoriasVisibles,
+  obtenerClasificacionPrincipalDeCategoria,
+  obtenerSubcategoriasDeClasificacion,
+} from '../filtrado-catalogo';
 import {
   ShoppingBag,
   Feather,
@@ -36,6 +46,9 @@ export function EncabezadoEcommerce() {
     categoriaActiva,
     navegarACategoria,
     configLogistica,
+    configTiendaCheckout,
+    productoSeleccionadoModal,
+    obtenerEnlaceProducto,
   } = useCarrito();
 
   const [estadoRegalo, setEstadoRegalo] = useState<EstadoRegaloPrimeraCompra | null>(null);
@@ -103,13 +116,24 @@ export function EncabezadoEcommerce() {
     };
   }, []);
 
-  const categoriasMenu = useMemo(() => {
+  const { categoriasVisibles, subcategoriasFlorales } = useMemo(() => {
     const prodsBase = expandirProductosVitrina(
       productos && productos.length > 0 ? productos : PRODUCTOS_TINKAY
     );
     const catsBase = categorias && categorias.length > 0 ? categorias : CATEGORIAS_TINKAY;
-    return obtenerCategoriasVisibles(catsBase, prodsBase);
+    const visibles = obtenerCategoriasVisibles(catsBase, prodsBase);
+    const subFlorales = obtenerSubcategoriasDeClasificacion(
+      'grupo-arreglos-florales',
+      visibles,
+      prodsBase
+    );
+    return { categoriasVisibles: visibles, subcategoriasFlorales: subFlorales };
   }, [productos, categorias]);
+
+  const clasificacionActiva = useMemo(
+    () => obtenerClasificacionPrincipalDeCategoria(categoriaActiva, categoriasVisibles),
+    [categoriaActiva, categoriasVisibles]
+  );
 
   const handleSeleccionMenu = (e: React.MouseEvent<HTMLAnchorElement>, catId: string) => {
     e.preventDefault();
@@ -160,37 +184,90 @@ export function EncabezadoEcommerce() {
           </Link>
         </div>
 
-        <nav className="nav-enlaces-floristeria" aria-label="Categorías principales">
-          {categoriasMenu.map((cat) => {
-            const esTodos = cat.id === 'cat-todos';
-            const estaActiva = categoriaActiva === cat.id;
-            const etiquetaMenu = esTodos
-              ? 'Catálogo'
-              : cat.modoVisualSobrio
-              ? 'Condolencias'
-              : cat.nombre;
-
+        <nav className="nav-enlaces-floristeria" aria-label="Clasificación principal de consulta">
+          {CLASIFICACIONES_PRINCIPALES_TINKAY.map((clasif) => {
+            const estaActiva = clasificacionActiva === clasif.id;
             return (
               <a
-                key={cat.id}
-                href="#catalogo"
-                onClick={(e) => handleSeleccionMenu(e, cat.id)}
+                key={clasif.id}
+                href={`/categoria/${clasif.slug}`}
+                onClick={(e) => handleSeleccionMenu(e, clasif.id)}
                 aria-current={estaActiva ? 'true' : undefined}
+                title={`${clasif.nombre} — ${clasif.subtitulo}`}
                 className={[
-                  cat.modoVisualSobrio ? 'enlace-condolencias' : '',
+                  'enlace-clasificacion-principal',
+                  clasif.modoVisualSobrio ? 'enlace-condolencias' : '',
                   estaActiva ? 'enlace-categoria-activo' : '',
                 ]
                   .filter(Boolean)
                   .join(' ')}
               >
-                {cat.modoVisualSobrio && <Feather size={14} />}
-                <span>{etiquetaMenu}</span>
+                <span className="enlace-clasificacion-fila">
+                  {clasif.modoVisualSobrio && <Feather size={14} />}
+                  <span>{clasif.nombre}</span>
+                </span>
+                {clasif.id === 'grupo-arreglos-florales' && (
+                  <span className="nav-subetiqueta-ocasion">Para toda ocasión</span>
+                )}
               </a>
             );
           })}
+          <a
+            href="#catalogo"
+            onClick={(e) => handleSeleccionMenu(e, 'cat-todos')}
+            aria-current={clasificacionActiva === 'cat-todos' ? 'true' : undefined}
+            title="Ver todo el catálogo Tinkay"
+            className={[
+              'enlace-clasificacion-todo',
+              clasificacionActiva === 'cat-todos' ? 'enlace-categoria-activo' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          >
+            <span>Todo</span>
+          </a>
         </nav>
 
         <div className="acciones-usuario-cabecera">
+          <button
+            type="button"
+            onClick={() =>
+              abrirWhatsappTiendaConPuenteOmnicanal({
+                whatsappTienda: configTiendaCheckout?.whatsappTienda,
+                productoNombre: productoSeleccionadoModal?.nombre || null,
+                productoSlug:
+                  productoSeleccionadoModal?.slug || productoSeleccionadoModal?.id || null,
+                varianteNombre: productoSeleccionadoModal?.variantes?.[0]?.nombre || null,
+                precioUsd: productoSeleccionadoModal?.variantes?.[0]?.pvp ?? null,
+                urlProducto: productoSeleccionadoModal
+                  ? obtenerEnlaceProducto(
+                      productoSeleccionadoModal,
+                      productoSeleccionadoModal.variantes?.[0]?.sku
+                    )
+                  : null,
+              })
+            }
+            className="enlace-ingresar-discreto btn-responsive-accion"
+            title="Contactar directo a nuestro WhatsApp"
+            aria-label="WhatsApp"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '7px 12px',
+              borderRadius: '999px',
+              border: '1px solid #86EFAC',
+              background: '#F0FDF4',
+              color: '#15803D',
+              fontWeight: 700,
+              cursor: 'pointer',
+              fontFamily: 'inherit',
+            }}
+          >
+            <IconoWhatsappVector size={17} color="#16A34A" />
+            <span className="btn-texto-responsive">WhatsApp</span>
+          </button>
+
           {estadoRegalo?.autenticado ? (
             <>
               <CampanaNotificaciones negocio="tinkay" variante="clara" />
@@ -390,6 +467,7 @@ export function EncabezadoEcommerce() {
           )}
 
           {(cantidadTotalProforma > 0 ||
+            clasificacionActiva === 'grupo-eventos' ||
             (categoriaActiva || '').toLowerCase().includes('evento')) && (
             <button
               type="button"
@@ -432,36 +510,43 @@ export function EncabezadoEcommerce() {
         </div>
       </div>
 
-      {/* Franja rápida de categorías deslizable en móvil / tablet */}
-      <nav className="franja-categorias-movil" aria-label="Categorías rápidas">
-        {categoriasMenu.map((cat) => {
-          const esTodos = cat.id === 'cat-todos';
-          const estaActiva = categoriaActiva === cat.id;
-          const etiquetaMenu = esTodos
-            ? 'Catálogo'
-            : cat.modoVisualSobrio
-            ? 'Condolencias'
-            : cat.nombre;
-
+      {/* Franja rápida de clasificación principal deslizable en móvil / tablet */}
+      <nav className="franja-categorias-movil" aria-label="Clasificación principal">
+        {CLASIFICACIONES_PRINCIPALES_TINKAY.map((clasif) => {
+          const estaActiva = clasificacionActiva === clasif.id;
           return (
             <a
-              key={cat.id}
-              href="#catalogo"
-              onClick={(e) => handleSeleccionMenu(e, cat.id)}
+              key={clasif.id}
+              href={`/categoria/${clasif.slug}`}
+              onClick={(e) => handleSeleccionMenu(e, clasif.id)}
               aria-current={estaActiva ? 'true' : undefined}
+              title={`${clasif.nombre} (${clasif.subtitulo})`}
               className={[
                 'chip-cat-cabecera-movil',
-                cat.modoVisualSobrio ? 'condolencias' : '',
+                clasif.modoVisualSobrio ? 'condolencias' : '',
                 estaActiva ? 'activa' : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
             >
-              {cat.modoVisualSobrio && <Feather size={13} />}
-              <span>{etiquetaMenu}</span>
+              {clasif.modoVisualSobrio && <Feather size={13} />}
+              <span>{clasif.nombre}</span>
             </a>
           );
         })}
+        <a
+          href="#catalogo"
+          onClick={(e) => handleSeleccionMenu(e, 'cat-todos')}
+          aria-current={clasificacionActiva === 'cat-todos' ? 'true' : undefined}
+          className={[
+            'chip-cat-cabecera-movil',
+            clasificacionActiva === 'cat-todos' ? 'activa' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          <span>Todo</span>
+        </a>
       </nav>
 
       {/* Drawer de Navegación Móvil */}
@@ -522,43 +607,117 @@ export function EncabezadoEcommerce() {
                   marginBottom: '4px',
                 }}
               >
-                Colecciones Florales
+                Clasificación Principal
               </span>
-              {categoriasMenu.map((cat) => {
-                const esTodos = cat.id === 'cat-todos';
-                const estaActiva = categoriaActiva === cat.id;
-                const etiquetaMenu = esTodos
-                  ? 'Todo el Catálogo'
-                  : cat.modoVisualSobrio
-                  ? 'Condolencias'
-                  : cat.nombre;
-
+              {CLASIFICACIONES_PRINCIPALES_TINKAY.map((clasif) => {
+                const estaActiva = clasificacionActiva === clasif.id;
                 return (
                   <a
-                    key={cat.id}
-                    href="#catalogo"
+                    key={clasif.id}
+                    href={`/categoria/${clasif.slug}`}
                     onClick={(e) => {
-                      handleSeleccionMenu(e, cat.id);
+                      handleSeleccionMenu(e, clasif.id);
                       setMenuMovilAbierto(false);
                     }}
                     style={{
                       display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
+                      flexDirection: 'column',
+                      gap: '2px',
                       padding: '10px 12px',
                       borderRadius: '10px',
                       textDecoration: 'none',
-                      fontSize: '0.9rem',
+                      fontSize: '0.92rem',
                       fontWeight: estaActiva ? 700 : 600,
-                      background: estaActiva ? 'rgba(236, 127, 167, 0.14)' : 'transparent',
-                      color: estaActiva ? 'var(--rosa-oscuro)' : 'var(--tinta)',
+                      background: estaActiva
+                        ? clasif.modoVisualSobrio
+                          ? 'rgba(61, 90, 69, 0.14)'
+                          : 'rgba(236, 127, 167, 0.14)'
+                        : 'transparent',
+                      color: estaActiva
+                        ? clasif.modoVisualSobrio
+                          ? 'var(--verde)'
+                          : 'var(--rosa-oscuro)'
+                        : 'var(--tinta)',
                     }}
                   >
-                    {cat.modoVisualSobrio && <Feather size={15} />}
-                    <span>{etiquetaMenu}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                      {clasif.modoVisualSobrio && <Feather size={15} />}
+                      <span>{clasif.nombre}</span>
+                    </span>
+                    <span style={{ fontSize: '0.74rem', fontWeight: 500, color: 'var(--gris)' }}>
+                      {clasif.subtitulo}
+                    </span>
                   </a>
                 );
               })}
+
+              <a
+                href="#catalogo"
+                onClick={(e) => {
+                  handleSeleccionMenu(e, 'cat-todos');
+                  setMenuMovilAbierto(false);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '9px 12px',
+                  borderRadius: '10px',
+                  textDecoration: 'none',
+                  fontSize: '0.86rem',
+                  fontWeight: clasificacionActiva === 'cat-todos' ? 700 : 600,
+                  background:
+                    clasificacionActiva === 'cat-todos' ? 'rgba(34, 29, 26, 0.08)' : 'transparent',
+                  color: 'var(--tinta)',
+                }}
+              >
+                <span>Todo el Catálogo</span>
+              </a>
+
+              {subcategoriasFlorales.length > 0 && (
+                <>
+                  <span
+                    style={{
+                      fontSize: '0.68rem',
+                      fontWeight: 800,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                      color: 'var(--gris)',
+                      marginTop: '10px',
+                      marginBottom: '2px',
+                    }}
+                  >
+                    Colecciones en Arreglos Florales
+                  </span>
+                  {subcategoriasFlorales.map((sub) => {
+                    const estaActiva = categoriaActiva === sub.id;
+                    return (
+                      <a
+                        key={sub.id}
+                        href={`/categoria/${sub.slug}`}
+                        onClick={(e) => {
+                          handleSeleccionMenu(e, sub.id);
+                          setMenuMovilAbierto(false);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          padding: '8px 12px',
+                          borderRadius: '9px',
+                          textDecoration: 'none',
+                          fontSize: '0.84rem',
+                          fontWeight: estaActiva ? 700 : 500,
+                          background: estaActiva ? 'rgba(236, 127, 167, 0.14)' : 'transparent',
+                          color: estaActiva ? 'var(--rosa-oscuro)' : 'var(--tinta)',
+                        }}
+                      >
+                        <span>{sub.nombre}</span>
+                      </a>
+                    );
+                  })}
+                </>
+              )}
             </div>
 
             <div
