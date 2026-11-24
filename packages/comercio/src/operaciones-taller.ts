@@ -1046,6 +1046,9 @@ export interface ItemOrdenTaller {
   cantidad: number;
   precioUnitario?: number;
   dedicatoria?: string;
+  imagenUrl?: string;
+  fotoReferenciaUrl?: string;
+  mismosColoresFoto?: boolean;
   esRenta?: boolean;
   tipoOferta?: string;
 }

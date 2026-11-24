@@ -2889,57 +2889,105 @@ export function BandejaPedidosTienda({
                     </strong>
                   </div>
 
-                  {p.items.map((it, idx) => (
-                    <div
-                      key={`${p.id}-it-${idx}`}
-                      style={{
-                        borderTop: idx === 0 ? "none" : "1px solid #F4F2EE",
-                        paddingTop: idx === 0 ? 0 : "6px",
-                        fontSize: "0.78rem",
-                        color: "#221E1B",
-                      }}
-                    >
-                      <div style={{ display: "flex", justifyContent: "space-between", gap: "8px" }}>
-                        <strong>
-                          {it.cantidad}× {it.descripcion}
-                        </strong>
-                        {it.totalLinea > 0 && <span>${it.totalLinea.toFixed(2)}</span>}
+                  {p.items.map((it, idx) => {
+                    const fotoRefItem =
+                      it.personalizacionFloral?.fotoReferenciaUrl || it.imagen || null;
+                    return (
+                      <div
+                        key={`${p.id}-it-${idx}`}
+                        style={{
+                          borderTop: idx === 0 ? "none" : "1px solid #F4F2EE",
+                          paddingTop: idx === 0 ? 0 : "6px",
+                          fontSize: "0.78rem",
+                          color: "#221E1B",
+                          display: "flex",
+                          gap: "10px",
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        {fotoRefItem && (
+                          <a
+                            href={fotoRefItem}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={
+                              it.personalizacionFloral?.mismosColoresFoto
+                                ? "Abrir foto exacta de referencia elegida por el cliente"
+                                : "Abrir foto de referencia del arreglo"
+                            }
+                            style={{ flexShrink: 0, display: "block" }}
+                          >
+                            <img
+                              src={fotoRefItem}
+                              alt={`Referencia ${it.descripcion}`}
+                              style={{
+                                width: "54px",
+                                height: "54px",
+                                objectFit: "cover",
+                                borderRadius: "8px",
+                                border: it.personalizacionFloral?.mismosColoresFoto
+                                  ? "2px solid #2F4737"
+                                  : "1px solid #D5CFC4",
+                                background: "#FFFFFF",
+                                display: "block",
+                              }}
+                            />
+                          </a>
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", gap: "8px" }}>
+                            <strong>
+                              {it.cantidad}× {it.descripcion}
+                            </strong>
+                            {it.totalLinea > 0 && <span>${it.totalLinea.toFixed(2)}</span>}
+                          </div>
+                          {it.personalizacionFloral?.resumenTexto && (
+                            <div
+                              style={{
+                                marginTop: "3px",
+                                fontSize: "0.73rem",
+                                color: it.personalizacionFloral.mismosColoresFoto
+                                  ? "#166534"
+                                  : "#831843",
+                                background: it.personalizacionFloral.mismosColoresFoto
+                                  ? "#F0FDF4"
+                                  : "#FDF2F8",
+                                border: it.personalizacionFloral.mismosColoresFoto
+                                  ? "1px solid #BBF7D0"
+                                  : "1px solid #FBCFE8",
+                                borderRadius: "6px",
+                                padding: "5px 8px",
+                              }}
+                            >
+                              <strong>
+                                {it.personalizacionFloral.mismosColoresFoto
+                                  ? "📸 Foto elegida:"
+                                  : "🎨 Personalización floral:"}
+                              </strong>{" "}
+                              {it.personalizacionFloral.resumenTexto}
+                            </div>
+                          )}
+                          {it.dedicatoria?.mensaje && (
+                            <div
+                              style={{
+                                marginTop: "3px",
+                                fontSize: "0.73rem",
+                                color: "#57524C",
+                                background: "#FAF6EE",
+                                border: "1px solid #E5D7BC",
+                                borderRadius: "6px",
+                                padding: "5px 8px",
+                              }}
+                            >
+                              <strong>Para:</strong> {it.dedicatoria.para || "—"} ·{" "}
+                              <strong>De:</strong> {it.dedicatoria.de || "—"} — &ldquo;
+                              {it.dedicatoria.mensaje}&rdquo;
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      {it.personalizacionFloral?.resumenTexto && (
-                        <div
-                          style={{
-                            marginTop: "3px",
-                            fontSize: "0.73rem",
-                            color: "#831843",
-                            background: "#FDF2F8",
-                            border: "1px solid #FBCFE8",
-                            borderRadius: "6px",
-                            padding: "5px 8px",
-                          }}
-                        >
-                          <strong>🎨 Personalización floral:</strong>{" "}
-                          {it.personalizacionFloral.resumenTexto}
-                        </div>
-                      )}
-                      {it.dedicatoria?.mensaje && (
-                        <div
-                          style={{
-                            marginTop: "3px",
-                            fontSize: "0.73rem",
-                            color: "#57524C",
-                            background: "#FAF6EE",
-                            border: "1px solid #E5D7BC",
-                            borderRadius: "6px",
-                            padding: "5px 8px",
-                          }}
-                        >
-                          <strong>Para:</strong> {it.dedicatoria.para || "—"} ·{" "}
-                          <strong>De:</strong> {it.dedicatoria.de || "—"} — &ldquo;
-                          {it.dedicatoria.mensaje}&rdquo;
-                        </div>
-                      )}
-                    </div>
-                  ))}
+                    );
+                  })}
 
                   {/* TARJETA DEDICATORIA VINCULADA 1:1 AL PEDIDO (EXCEPTO EXEQUIALES) */}
                   {!esExeq &&

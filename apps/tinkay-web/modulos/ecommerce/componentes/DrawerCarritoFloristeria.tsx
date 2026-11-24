@@ -224,7 +224,11 @@ export function DrawerCarritoFloristeria() {
                   <div key={item.id} className="tarjeta-item-carrito">
                     <div className="fila-principal-item">
                       <img
-                        src={item.producto.fotos[0] || '/img/slide4_flores_amor.jpg'}
+                        src={
+                          item.personalizacionFloral?.fotoReferenciaUrl ||
+                          item.producto.fotos[0] ||
+                          '/img/slide4_flores_amor.jpg'
+                        }
                         alt={item.producto.nombre}
                         className="miniatura-item-carrito"
                         loading="lazy"

@@ -845,6 +845,7 @@ export interface PedidoTiendaRegistrado {
     precioUnitario: number;
     impuesto?: string;
     totalLinea: number;
+    imagen?: string;
     dedicatoria?: { para: string; de: string; mensaje: string };
     personalizacionFloral?: SeleccionPersonalizacionFloral;
     entregaIndividual?: Record<string, unknown>;
@@ -1105,6 +1106,8 @@ export async function registrarPedidoTiendaAction(
       precio_unitario: it.pvpUnitario,
       impuesto: it.tarifaIva > 0 ? `IVA_${it.tarifaIva}` : "IVA_0",
       total_linea: totalLinea,
+      imagen: it.personalizacionFloral?.fotoReferenciaUrl || it.imagen || null,
+      foto_referencia_url: it.personalizacionFloral?.fotoReferenciaUrl || it.imagen || null,
       dedicatoria: it.dedicatoria ?? null,
       personalizacion_floral: it.personalizacionFloral ?? null,
       entrega_individual: entregaInd,
@@ -1352,6 +1355,8 @@ export async function registrarPedidoTiendaAction(
         precio_unitario: 0,
         impuesto: "IVA_0",
         total_linea: 0,
+        imagen: regaloVerificadoOrden.imagenUrl || null,
+        foto_referencia_url: regaloVerificadoOrden.imagenUrl || null,
         dedicatoria: null,
         personalizacion_floral: null,
         entrega_individual: null,
@@ -2209,6 +2214,18 @@ export async function obtenerPedidosTiendaAction(
         precioUnitario: Number(it.precio_unitario ?? 0),
         impuesto: String(it.impuesto || "IVA_0"),
         totalLinea: Number(it.total_linea ?? 0),
+        imagen:
+          it.personalizacion_floral?.fotoReferenciaUrl ||
+          it.personalizacionFloral?.fotoReferenciaUrl ||
+          it.foto_referencia_url ||
+          it.imagen
+            ? String(
+                it.personalizacion_floral?.fotoReferenciaUrl ||
+                  it.personalizacionFloral?.fotoReferenciaUrl ||
+                  it.foto_referencia_url ||
+                  it.imagen
+              )
+            : undefined,
         dedicatoria: it.dedicatoria ?? undefined,
         personalizacionFloral:
           it.personalizacion_floral ?? it.personalizacionFloral ?? undefined,
@@ -4414,7 +4431,18 @@ function mapearProformaPublicaDesdeFila(f: any, itemsTabla: any[] = []): Proform
         ),
         impuesto: String(it.impuesto ?? it.pfi_impuesto ?? detIt.impuesto ?? "IVA_0"),
         totalLinea: Number(it.total_linea ?? it.pfi_total_linea ?? detIt.total_linea ?? 0),
-        imagen: detIt.imagen ? String(detIt.imagen) : undefined,
+        imagen:
+          detIt.personalizacion_floral?.fotoReferenciaUrl ||
+          detIt.personalizacionFloral?.fotoReferenciaUrl ||
+          detIt.foto_referencia_url ||
+          detIt.imagen
+            ? String(
+                detIt.personalizacion_floral?.fotoReferenciaUrl ||
+                  detIt.personalizacionFloral?.fotoReferenciaUrl ||
+                  detIt.foto_referencia_url ||
+                  detIt.imagen
+              )
+            : undefined,
       };
     }),
   };
@@ -6104,7 +6132,18 @@ export async function obtenerExpedientePedidosClienteAction(
         precioUnitario,
         tarifaIva,
         subtotal: subtotalItem,
-        imagen: detIt.imagen ? String(detIt.imagen) : undefined,
+        imagen:
+          detIt.personalizacion_floral?.fotoReferenciaUrl ||
+          detIt.personalizacionFloral?.fotoReferenciaUrl ||
+          detIt.foto_referencia_url ||
+          detIt.imagen
+            ? String(
+                detIt.personalizacion_floral?.fotoReferenciaUrl ||
+                  detIt.personalizacionFloral?.fotoReferenciaUrl ||
+                  detIt.foto_referencia_url ||
+                  detIt.imagen
+              )
+            : undefined,
         dedicatoria,
         personalizacionFloral:
           detIt.personalizacion_floral ?? detIt.personalizacionFloral ?? null,

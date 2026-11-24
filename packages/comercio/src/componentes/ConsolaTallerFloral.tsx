@@ -493,25 +493,59 @@ export function ConsolaTallerFloral({
         render: (o) => {
           const clasif = resolverClasifTaller(o);
           const conf = esEntregaConfirmadaOrden(o);
+          const fotoRefOrden = o.items.find((it) => it.fotoReferenciaUrl || it.imagenUrl);
+          const fotoRefUrl = fotoRefOrden?.fotoReferenciaUrl || fotoRefOrden?.imagenUrl || null;
           return (
-            <div style={{ display: "flex", flexDirection: "column", gap: "4px", maxWidth: "340px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
-                <strong style={{ fontSize: "0.83rem", color: "#1F1C19" }}>{o.codigo}</strong>
-                <InsigniaClasificacionPedido
-                  clasificacion={clasif}
-                  opaco={conf}
-                  compacto
-                  sufijoTexto={clasif === "EXEQUIALES" && o.salaServicio ? o.salaServicio : null}
-                />
-              </div>
-              <strong style={{ fontSize: "0.85rem", color: "#221E1B" }}>
-                {o.productoResumen}
-              </strong>
-              {clasif !== "EXEQUIALES" && o.dedicatoria && (
-                <span style={{ fontSize: "0.73rem", color: "#745622" }}>
-                  Dedicatoria: {o.dedicatoria}
-                </span>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: "8px", maxWidth: "360px" }}>
+              {fotoRefUrl && (
+                <a
+                  href={fotoRefUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={
+                    fotoRefOrden?.mismosColoresFoto
+                      ? "Foto exacta elegida por el cliente (Mismos colores de la foto)"
+                      : "Ver foto de referencia del arreglo"
+                  }
+                  onClick={(e) => e.stopPropagation()}
+                  style={{ flexShrink: 0, display: "block" }}
+                >
+                  <img
+                    src={fotoRefUrl}
+                    alt={`Referencia ${o.codigo}`}
+                    style={{
+                      width: "44px",
+                      height: "44px",
+                      objectFit: "cover",
+                      borderRadius: "8px",
+                      border: fotoRefOrden?.mismosColoresFoto
+                        ? "2px solid #2F4737"
+                        : "1px solid #D5CFC4",
+                      background: "#FFFFFF",
+                      display: "block",
+                    }}
+                  />
+                </a>
               )}
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px", flexWrap: "wrap" }}>
+                  <strong style={{ fontSize: "0.83rem", color: "#1F1C19" }}>{o.codigo}</strong>
+                  <InsigniaClasificacionPedido
+                    clasificacion={clasif}
+                    opaco={conf}
+                    compacto
+                    sufijoTexto={clasif === "EXEQUIALES" && o.salaServicio ? o.salaServicio : null}
+                  />
+                </div>
+                <strong style={{ fontSize: "0.85rem", color: "#221E1B" }}>
+                  {o.productoResumen}
+                </strong>
+                {clasif !== "EXEQUIALES" && o.dedicatoria && (
+                  <span style={{ fontSize: "0.73rem", color: "#745622" }}>
+                    Dedicatoria: {o.dedicatoria}
+                  </span>
+                )}
+              </div>
             </div>
           );
         },
@@ -1103,15 +1137,64 @@ export function ConsolaTallerFloral({
             >
               <div>
                 <strong>Detalle completo de elaboración:</strong>
-                <ul style={{ margin: "6px 0 0 18px", padding: 0 }}>
-                  {o.items.map((it, idx) => (
-                    <li key={idx}>
-                      <strong>
-                        {it.cantidad}× {it.descripcion}
-                      </strong>
-                      {it.dedicatoria ? ` — 💌 ${it.dedicatoria}` : ""}
-                    </li>
-                  ))}
+                <ul style={{ margin: "6px 0 0 0", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {o.items.map((it, idx) => {
+                    const imgRef = it.fotoReferenciaUrl || it.imagenUrl || null;
+                    return (
+                      <li
+                        key={idx}
+                        style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}
+                      >
+                        {imgRef && (
+                          <a
+                            href={imgRef}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Abrir foto exacta de referencia del cliente en tamaño completo"
+                            style={{ flexShrink: 0, display: "block" }}
+                          >
+                            <img
+                              src={imgRef}
+                              alt={`Referencia ${it.descripcion}`}
+                              style={{
+                                width: "64px",
+                                height: "64px",
+                                objectFit: "cover",
+                                borderRadius: "9px",
+                                border: it.mismosColoresFoto
+                                  ? "2px solid #2F4737"
+                                  : "1px solid #D5CFC4",
+                                background: "#FFFFFF",
+                                display: "block",
+                              }}
+                            />
+                          </a>
+                        )}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <strong>
+                            {it.cantidad}× {it.descripcion}
+                          </strong>
+                          {it.mismosColoresFoto && imgRef && (
+                            <div
+                              style={{
+                                marginTop: "2px",
+                                fontSize: "0.72rem",
+                                fontWeight: 700,
+                                color: "#166534",
+                              }}
+                            >
+                              📸 Respetar exactamente colores y presentación de la foto adjunta
+                            </div>
+                          )}
+                          {it.dedicatoria ? (
+                            <div style={{ marginTop: "2px", fontSize: "0.75rem", color: "#745622" }}>
+                              💌 {it.dedicatoria}
+                            </div>
+                          ) : null}
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
                 {resolverClasifTaller(o) !== "EXEQUIALES" && o.dedicatoria && (
                   <div

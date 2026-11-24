@@ -219,6 +219,12 @@ export interface ConfiguracionPersonalizacionFloral {
 export interface SeleccionPersonalizacionFloral {
   /** Si el cliente elige mantener exactamente los mismos colores y papel mostrados en la foto */
   mismosColoresFoto?: boolean;
+  /** URL exacta de la foto que el cliente estaba visualizando al seleccionar el arreglo */
+  fotoReferenciaUrl?: string;
+  /** Índice (base 1) de la foto seleccionada en el carrusel (ej. 2 de 3) */
+  fotoReferenciaIndice?: number;
+  /** Total de fotos disponibles en el carrusel del producto/variante */
+  fotoReferenciaTotal?: number;
   modoFlores: ModoFlorPersonalizacion;
   coloresRosas: string[];
   cantidadOrquideas: number;
@@ -502,7 +508,13 @@ export function formatearResumenPersonalizacionFloral(
   const partes: string[] = [];
 
   if (seleccion.mismosColoresFoto) {
-    partes.push("Mismos colores de la foto");
+    const sufijoFoto =
+      seleccion.fotoReferenciaIndice &&
+      seleccion.fotoReferenciaTotal &&
+      seleccion.fotoReferenciaTotal > 1
+        ? ` (Foto ${seleccion.fotoReferenciaIndice} de ${seleccion.fotoReferenciaTotal})`
+        : "";
+    partes.push(`Mismos colores de la foto${sufijoFoto}`);
     const orq = Math.max(0, Math.round(Number(seleccion.cantidadOrquideas || 0)));
     if (orq > 0) {
       partes.push(`+ ${orq} ${orq === 1 ? "orquídea" : "orquídeas"}`);
@@ -580,9 +592,22 @@ export function validarSeleccionPersonalizacionFloral(
     ? (seleccion.indicacionesAdicionales || "").trim().slice(0, 500)
     : "";
 
+  const fotoReferenciaUrl = seleccion.fotoReferenciaUrl?.trim() || undefined;
+  const fotoReferenciaTotal =
+    seleccion.fotoReferenciaTotal && seleccion.fotoReferenciaTotal > 0
+      ? Math.round(seleccion.fotoReferenciaTotal)
+      : undefined;
+  const fotoReferenciaIndice =
+    seleccion.fotoReferenciaIndice && seleccion.fotoReferenciaIndice > 0
+      ? Math.round(seleccion.fotoReferenciaIndice)
+      : undefined;
+
   if (seleccion.mismosColoresFoto) {
     const baseFoto: Omit<SeleccionPersonalizacionFloral, "resumenTexto"> = {
       mismosColoresFoto: true,
+      fotoReferenciaUrl,
+      fotoReferenciaIndice,
+      fotoReferenciaTotal,
       modoFlores: modoValido,
       coloresRosas: [],
       cantidadOrquideas,
@@ -658,6 +683,9 @@ export function validarSeleccionPersonalizacionFloral(
 
   const baseSel: Omit<SeleccionPersonalizacionFloral, "resumenTexto"> = {
     mismosColoresFoto: false,
+    fotoReferenciaUrl,
+    fotoReferenciaIndice,
+    fotoReferenciaTotal,
     modoFlores: modoValido,
     coloresRosas: coloresLimpios,
     cantidadOrquideas,

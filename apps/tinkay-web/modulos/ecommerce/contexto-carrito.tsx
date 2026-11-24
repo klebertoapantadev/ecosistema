@@ -776,15 +776,16 @@ export function ProveedorCarrito({
     const cantAgregar = Math.max(1, Math.floor(cantidadInicial || 1));
 
     setItems((prev) => {
-      const clavePersNueva = personalizacionFloral?.resumenTexto?.trim() || '';
-      // Solo unir cantidades si no hay dedicatoria ni entrega individual y coinciden exactamente en personalización floral
+      const clavePersNueva = `${personalizacionFloral?.resumenTexto?.trim() || ''}||${personalizacionFloral?.fotoReferenciaUrl?.trim() || producto.fotos?.[0] || ''}`;
+      // Solo unir cantidades si no hay dedicatoria ni entrega individual y coinciden exactamente en personalización floral y foto de referencia
       if (!dedicatoria && !entregaIndividual) {
         const indexExistente = prev.findIndex(
           (i) =>
             i.producto.id === producto.id &&
             i.variante.sku === variante.sku &&
             !i.dedicatoria?.mensaje &&
-            (i.personalizacionFloral?.resumenTexto?.trim() || '') === clavePersNueva
+            `${i.personalizacionFloral?.resumenTexto?.trim() || ''}||${i.personalizacionFloral?.fotoReferenciaUrl?.trim() || i.producto.fotos?.[0] || ''}` ===
+              clavePersNueva
         );
         if (indexExistente >= 0) {
           const clon = [...prev];

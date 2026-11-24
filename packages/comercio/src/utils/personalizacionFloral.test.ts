@@ -178,6 +178,28 @@ describe("personalizacionFloral", () => {
         "Mismos colores de la foto · Nota: Con lazo dorado si es posible"
       );
     }
+
+    const resConFoto = validarSeleccionPersonalizacionFloral(cfg, {
+      mismosColoresFoto: true,
+      fotoReferenciaUrl: "https://cdn.tinkay.com/bouquet-foto-2.jpg",
+      fotoReferenciaIndice: 2,
+      fotoReferenciaTotal: 3,
+      modoFlores: "solo_girasoles",
+      coloresRosas: [],
+      cantidadOrquideas: 0,
+      colorBasePapel: null,
+    });
+    expect(resConFoto.ok).toBe(true);
+    if (resConFoto.ok) {
+      expect(resConFoto.seleccionFinal.fotoReferenciaUrl).toBe(
+        "https://cdn.tinkay.com/bouquet-foto-2.jpg"
+      );
+      expect(resConFoto.seleccionFinal.fotoReferenciaIndice).toBe(2);
+      expect(resConFoto.seleccionFinal.fotoReferenciaTotal).toBe(3);
+      expect(resConFoto.seleccionFinal.resumenTexto).toBe(
+        "Mismos colores de la foto (Foto 2 de 3)"
+      );
+    }
   });
 
   it("resuelve configuración heredada de Master vs personalizada por variante/tamaño", () => {

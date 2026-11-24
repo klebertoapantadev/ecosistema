@@ -1428,7 +1428,26 @@ export async function obtenerConsolaTallerYDespachoAction(
     if (!error && data?.ok) {
       const ordenes: OrdenTrabajoTaller[] = Array.isArray(data.ordenes)
         ? (data.ordenes as any[]).map((o) => {
-            const itemsNorm = Array.isArray(o.items) ? o.items : [];
+            const itemsNorm: ItemOrdenTaller[] = Array.isArray(o.items)
+              ? (o.items as any[]).map((it) => {
+                  const pers = it.personalizacion_floral ?? it.personalizacionFloral;
+                  const fotoRef =
+                    pers?.fotoReferenciaUrl ||
+                    it.foto_referencia_url ||
+                    it.fotoReferenciaUrl ||
+                    it.imagen ||
+                    it.imagenUrl ||
+                    undefined;
+                  return {
+                    ...it,
+                    descripcion: String(it.descripcion || it.producto_nombre || it.nombre || "Arreglo"),
+                    cantidad: Number(it.cantidad ?? 1),
+                    imagenUrl: fotoRef ? String(fotoRef) : undefined,
+                    fotoReferenciaUrl: fotoRef ? String(fotoRef) : undefined,
+                    mismosColoresFoto: Boolean(pers?.mismosColoresFoto || it.mismosColoresFoto),
+                  };
+                })
+              : [];
             return {
               ...o,
               clasificacionPedido: inferirClasificacionPedido({
@@ -1609,11 +1628,21 @@ export async function obtenerConsolaTallerYDespachoAction(
             ? String(pers.resumenTexto)
             : "";
         const descBase = String(it.producto_nombre || it.descripcion || it.nombre || "Arreglo");
+        const fotoRef =
+          pers?.fotoReferenciaUrl ||
+          it.foto_referencia_url ||
+          it.fotoReferenciaUrl ||
+          it.imagen ||
+          it.imagenUrl ||
+          undefined;
         return {
           sku: it.sku ? String(it.sku) : undefined,
           descripcion: resumenPers ? `${descBase} [${resumenPers}]` : descBase,
           cantidad: Number(it.cantidad ?? 1),
           precioUnitario: Number(it.pvp_unitario ?? it.precio_unitario ?? 0),
+          imagenUrl: fotoRef ? String(fotoRef) : undefined,
+          fotoReferenciaUrl: fotoRef ? String(fotoRef) : undefined,
+          mismosColoresFoto: Boolean(pers?.mismosColoresFoto),
           dedicatoria: it.dedicatoria?.mensaje
             ? `Para: ${it.dedicatoria.para || "-"} | De: ${it.dedicatoria.de || "-"} — "${it.dedicatoria.mensaje}"`
             : undefined,

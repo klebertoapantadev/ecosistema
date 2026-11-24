@@ -1044,48 +1044,72 @@ function ContenidoEspacioCliente({
                           gap: '6px',
                         }}
                       >
-                        {pedido.items.map((it, idx) => (
-                          <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            <div
-                              style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                gap: '8px',
-                                fontSize: '0.82rem',
-                                color: 'var(--tinta)',
-                              }}
-                            >
-                              <span>
-                                <strong>{it.cantidad}x</strong> {it.nombre}
-                                {it.variante && it.variante !== it.nombre ? ` (${it.variante})` : ''}
-                              </span>
-                              <strong>${it.subtotal.toFixed(2)}</strong>
+                        {pedido.items.map((it, idx) => {
+                          const fotoIt = it.personalizacionFloral?.fotoReferenciaUrl || it.imagen;
+                          return (
+                            <div key={idx} style={{ display: 'flex', gap: '9px', alignItems: 'flex-start' }}>
+                              {fotoIt && (
+                                <img
+                                  src={fotoIt}
+                                  alt={it.nombre}
+                                  style={{
+                                    width: '44px',
+                                    height: '44px',
+                                    objectFit: 'cover',
+                                    borderRadius: '8px',
+                                    border: it.personalizacionFloral?.mismosColoresFoto
+                                      ? '2px solid #2F4737'
+                                      : '1px solid #E7E5E4',
+                                    flexShrink: 0,
+                                  }}
+                                />
+                              )}
+                              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                <div
+                                  style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    gap: '8px',
+                                    fontSize: '0.82rem',
+                                    color: 'var(--tinta)',
+                                  }}
+                                >
+                                  <span>
+                                    <strong>{it.cantidad}x</strong> {it.nombre}
+                                    {it.variante && it.variante !== it.nombre ? ` (${it.variante})` : ''}
+                                  </span>
+                                  <strong>${it.subtotal.toFixed(2)}</strong>
+                                </div>
+                                {it.personalizacionFloral?.resumenTexto && (
+                                  <span
+                                    style={{
+                                      fontSize: '0.72rem',
+                                      color: it.personalizacionFloral.mismosColoresFoto ? '#166534' : '#831843',
+                                      background: it.personalizacionFloral.mismosColoresFoto ? '#F0FDF4' : '#FDF2F8',
+                                      border: it.personalizacionFloral.mismosColoresFoto
+                                        ? '1px solid #BBF7D0'
+                                        : '1px solid #FBCFE8',
+                                      borderRadius: '6px',
+                                      padding: '3px 7px',
+                                      display: 'inline-block',
+                                      marginTop: '2px',
+                                    }}
+                                  >
+                                    {it.personalizacionFloral.mismosColoresFoto ? '📸 ' : '🎨 '}
+                                    {it.personalizacionFloral.resumenTexto}
+                                  </span>
+                                )}
+                                {it.dedicatoria?.mensaje && (
+                                  <span style={{ fontSize: '0.72rem', color: '#6B746C', fontStyle: 'italic' }}>
+                                    💌 Para {it.dedicatoria.para || 'Destinatario'}: &ldquo;
+                                    {it.dedicatoria.mensaje.slice(0, 65)}
+                                    {it.dedicatoria.mensaje.length > 65 ? '…' : ''}&rdquo;
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                            {it.personalizacionFloral?.resumenTexto && (
-                              <span
-                                style={{
-                                  fontSize: '0.72rem',
-                                  color: '#831843',
-                                  background: '#FDF2F8',
-                                  border: '1px solid #FBCFE8',
-                                  borderRadius: '6px',
-                                  padding: '3px 7px',
-                                  display: 'inline-block',
-                                  marginTop: '2px',
-                                }}
-                              >
-                                🎨 {it.personalizacionFloral.resumenTexto}
-                              </span>
-                            )}
-                            {it.dedicatoria?.mensaje && (
-                              <span style={{ fontSize: '0.72rem', color: '#6B746C', fontStyle: 'italic' }}>
-                                💌 Para {it.dedicatoria.para || 'Destinatario'}: &ldquo;
-                                {it.dedicatoria.mensaje.slice(0, 65)}
-                                {it.dedicatoria.mensaje.length > 65 ? '…' : ''}&rdquo;
-                              </span>
-                            )}
-                          </div>
-                        ))}
+                          );
+                        })}
                         {pedido.regaloPrimeraCompra && (
                           <div
                             style={{
@@ -1532,7 +1556,11 @@ function ContenidoEspacioCliente({
                     >
                       <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
                         <img
-                          src={item.producto.fotos[0] || '/img/slide4_flores_amor.jpg'}
+                          src={
+                            item.personalizacionFloral?.fotoReferenciaUrl ||
+                            item.producto.fotos[0] ||
+                            '/img/slide4_flores_amor.jpg'
+                          }
                           alt={item.producto.nombre}
                           style={{
                             width: '74px',
@@ -3498,14 +3526,39 @@ function ContenidoEspacioCliente({
                       style={{
                         padding: '8px 10px',
                         borderRadius: '8px',
-                        background: '#FDF2F8',
-                        border: '1px solid #FBCFE8',
+                        background: it.personalizacionFloral.mismosColoresFoto ? '#F0FDF4' : '#FDF2F8',
+                        border: it.personalizacionFloral.mismosColoresFoto
+                          ? '1px solid #BBF7D0'
+                          : '1px solid #FBCFE8',
                         fontSize: '0.78rem',
-                        color: '#831843',
+                        color: it.personalizacionFloral.mismosColoresFoto ? '#166534' : '#831843',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '10px',
                       }}
                     >
-                      <strong>🎨 Personalización floral:</strong>{' '}
-                      {it.personalizacionFloral.resumenTexto}
+                      {(it.personalizacionFloral.fotoReferenciaUrl || it.imagen) && (
+                        <img
+                          src={it.personalizacionFloral.fotoReferenciaUrl || it.imagen}
+                          alt={`Foto elegida ${it.nombre}`}
+                          style={{
+                            width: '48px',
+                            height: '48px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '2px solid #2F4737',
+                            flexShrink: 0,
+                          }}
+                        />
+                      )}
+                      <div>
+                        <strong>
+                          {it.personalizacionFloral.mismosColoresFoto
+                            ? '📸 Foto de referencia elegida:'
+                            : '🎨 Personalización floral:'}
+                        </strong>{' '}
+                        {it.personalizacionFloral.resumenTexto}
+                      </div>
                     </div>
                   )}
 

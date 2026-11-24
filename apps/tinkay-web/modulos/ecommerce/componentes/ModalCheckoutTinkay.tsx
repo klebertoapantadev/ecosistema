@@ -610,6 +610,11 @@ export function ModalCheckoutTinkay() {
         cantidad: it.cantidad,
         pvpUnitario: it.variante.pvp,
         tarifaIva: it.variante.tarifaIva,
+        imagen:
+          it.personalizacionFloral?.fotoReferenciaUrl ||
+          it.producto.fotos?.[0] ||
+          it.variante.foto ||
+          undefined,
         deliveryIncluidoProducto: it.producto.deliveryIncluido !== false,
         recargoLogisticoUsd: it.producto.recargoLogisticoUsd || 0,
         dedicatoria: it.dedicatoria
@@ -1544,7 +1549,10 @@ export function ModalCheckoutTinkay() {
                               }}
                             >
                               <img
-                                src={it.producto.fotos[0]}
+                                src={
+                                  it.personalizacionFloral?.fotoReferenciaUrl ||
+                                  it.producto.fotos[0]
+                                }
                                 alt={it.producto.nombre}
                                 className="foto-mini-resumen"
                                 style={{ flexShrink: 0 }}

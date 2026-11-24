@@ -691,13 +691,68 @@ export function ModalDetalleProducto() {
     });
   };
 
+  const obtenerGaleriaVisualizacionActual = () => {
+    if (!producto) {
+      return {
+        fotos: ['/img/slide4_flores_amor.jpg'],
+        mostrandoGaleriaPropia: true,
+        indiceFotoSeguro: 0,
+        fotoActivaUrl: '/img/slide4_flores_amor.jpg',
+      };
+    }
+    const todasLasFotosProd =
+      producto.fotosModal && producto.fotosModal.length > 0
+        ? producto.fotosModal
+        : producto.fotos && producto.fotos.length > 0
+        ? producto.fotos
+        : ['/img/slide4_flores_amor.jpg'];
+
+    const fotosVarActual =
+      varianteSeleccionada.fotos && varianteSeleccionada.fotos.length > 0
+        ? varianteSeleccionada.fotos
+        : varianteSeleccionada.foto
+        ? [varianteSeleccionada.foto]
+        : [];
+
+    const esMulti = producto.variantes.length > 1;
+    const galeriaPropia = esMulti ? fotosVarActual.length > 0 : true;
+    const fotosSimple = Array.from(new Set([...fotosVarActual, ...todasLasFotosProd]));
+    const listaFotos = esMulti
+      ? galeriaPropia
+        ? fotosVarActual
+        : todasLasFotosProd
+      : fotosSimple.length > 0
+      ? fotosSimple
+      : ['/img/slide4_flores_amor.jpg'];
+
+    const idxSeguro = fotoActivaIndex < listaFotos.length ? fotoActivaIndex : 0;
+    const urlActiva = listaFotos[idxSeguro] || listaFotos[0] || '/img/slide4_flores_amor.jpg';
+
+    return {
+      fotos: listaFotos,
+      mostrandoGaleriaPropia: galeriaPropia,
+      indiceFotoSeguro: idxSeguro,
+      fotoActivaUrl: urlActiva,
+    };
+  };
+
   const handleAgregarAlCarrito = (irDirectoAlPago = false) => {
     if (!producto) return;
+
+    const { fotos: listaFotosVis, indiceFotoSeguro: idxFotoVis, fotoActivaUrl } =
+      obtenerGaleriaVisualizacionActual();
+    const fotosOrdenadasConSeleccionada = [
+      fotoActivaUrl,
+      ...listaFotosVis.filter((u) => u && u !== fotoActivaUrl),
+    ];
 
     let personalizacionFinal: SeleccionPersonalizacionFloral | undefined;
     if (personalizacionFloralActiva && configPersonalizacionFloral) {
       const validacion = validarSeleccionPersonalizacionFloral(configPersonalizacionFloral, {
         mismosColoresFoto,
+        fotoReferenciaUrl: fotoActivaUrl,
+        fotoReferenciaIndice: idxFotoVis + 1,
+        fotoReferenciaTotal: listaFotosVis.length,
         modoFlores: modoFloresSel,
         coloresRosas: coloresRosasSel,
         cantidadOrquideas: cantidadOrquideasSel,
@@ -747,7 +802,7 @@ export function ModalDetalleProducto() {
           ...producto,
           id: `${producto.id}__${varianteSeleccionada.sku}`,
           nombre: producto.nombre,
-          fotos: varianteSeleccionada.foto ? [varianteSeleccionada.foto] : producto.fotos,
+          fotos: fotosOrdenadasConSeleccionada,
         };
 
         const varianteSetCarrito: VarianteEcommerce = {
@@ -805,7 +860,7 @@ export function ModalDetalleProducto() {
         ...producto,
         id: `${producto.id}__${varianteSeleccionada.sku}`,
         nombre: tituloModal,
-        fotos: varianteSeleccionada.foto ? [varianteSeleccionada.foto] : producto.fotos,
+        fotos: fotosOrdenadasConSeleccionada,
       };
 
       // 1. Agregar el arreglo principal con su variante, cantidad, personalización floral y dedicatoria (o a la Proforma si es Evento)
@@ -2172,6 +2227,9 @@ export function ModalDetalleProducto() {
                 : '';
               const resumenActual = formatearResumenPersonalizacionFloral({
                 mismosColoresFoto,
+                fotoReferenciaUrl: fotos[indiceFotoSeguro],
+                fotoReferenciaIndice: indiceFotoSeguro + 1,
+                fotoReferenciaTotal: fotos.length,
                 modoFlores: modoFloresSel,
                 coloresRosas: coloresRosasSel,
                 cantidadOrquideas: cantidadOrquideasSel,
@@ -2322,7 +2380,7 @@ export function ModalDetalleProducto() {
                   {mismosColoresFoto ? (
                     <div
                       style={{
-                        padding: '9px 12px',
+                        padding: '10px 12px',
                         borderRadius: '10px',
                         background: '#F0FDF4',
                         border: '1px solid #BBF7D0',
@@ -2330,14 +2388,73 @@ export function ModalDetalleProducto() {
                         fontSize: '0.78rem',
                         fontWeight: 600,
                         display: 'flex',
-                        alignItems: 'center',
-                        gap: '7px',
+                        flexDirection: 'column',
+                        gap: '8px',
                       }}
                     >
-                      <Check size={15} style={{ flexShrink: 0 }} />
-                      <span>
-                        Elaboraremos tu arreglo respetando los mismos colores de flores y papel mostrados en la foto.
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <img
+                          src={fotos[indiceFotoSeguro] || fotos[0]}
+                          alt={`Foto ${indiceFotoSeguro + 1} seleccionada de referencia`}
+                          style={{
+                            width: '54px',
+                            height: '54px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '2px solid #2F4737',
+                            flexShrink: 0,
+                            background: '#FFFFFF',
+                          }}
+                        />
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', fontWeight: 800 }}>
+                            <Check size={14} style={{ flexShrink: 0 }} />
+                            <span>
+                              Foto adjunta al pedido{fotos.length > 1 ? ` (Foto ${indiceFotoSeguro + 1} de ${fotos.length})` : ''}
+                            </span>
+                          </span>
+                          <span style={{ fontWeight: 500, lineHeight: 1.35 }}>
+                            Elaboraremos tu arreglo respetando exactamente los colores de flores y presentación de esta foto.
+                          </span>
+                        </div>
+                      </div>
+
+                      {fotos.length > 1 && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.71rem', color: '#15803D', fontWeight: 700 }}>
+                            Cambiar foto de referencia:
+                          </span>
+                          {fotos.map((urlMini, idxMini) => {
+                            const activaMini = idxMini === indiceFotoSeguro;
+                            return (
+                              <button
+                                key={`ref-mini-${idxMini}`}
+                                type="button"
+                                onClick={() => cambiarFotoActiva(idxMini)}
+                                title={`Usar Foto ${idxMini + 1} de ${fotos.length} como referencia`}
+                                aria-label={`Seleccionar Foto ${idxMini + 1}`}
+                                style={{
+                                  padding: 0,
+                                  width: '36px',
+                                  height: '36px',
+                                  borderRadius: '7px',
+                                  overflow: 'hidden',
+                                  border: activaMini ? '2px solid #2F4737' : '1px solid #BBF7D0',
+                                  boxShadow: activaMini ? '0 0 0 2px rgba(47, 71, 55, 0.25)' : 'none',
+                                  cursor: 'pointer',
+                                  background: '#FFFFFF',
+                                }}
+                              >
+                                <img
+                                  src={urlMini}
+                                  alt={`Opción Foto ${idxMini + 1}`}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                                />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <>
