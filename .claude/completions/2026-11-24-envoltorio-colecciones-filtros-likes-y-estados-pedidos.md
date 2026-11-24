@@ -14,10 +14,9 @@
 2. **Microcopia y color sutil en tarjetas (`TarjetaProductoConCarrusel.tsx`, `personalizacionFloral.ts`, `ModalDetalleProducto.tsx`):**
    - Reemplazado `"Elaborado en los colores de tu preferencia"` (rosa intenso) por **`Colores y decoración según la ocasión`** en tono neutro cálido (`#F6F4EF` / `#E6E0D6` / `#6B655E`).
 
-3. **Buscador principal + panel estructurado de filtros + Me Gusta del cliente (`VitrinaCatalogoTinkay.tsx`):**
-   - Buscador por texto como control principal (`"Busca por ocasión, flores, color, precio..."`).
-   - Botón desplegable **`Filtros`** con 5 secciones en orden: 1) Categorías (`Arreglos Florales`, `Eventos`, `Condolencias`, `Ofertas`, `Entrega Inmediata`), 2) Colecciones, 3) Etiquetas, 4) Popularidad y Orden (`Más solicitados (Más Me gusta)`), 5) Presupuesto.
-   - Botón dedicado **`❤️ Me gusta`** siempre visible para ver los arreglos marcados por el cliente.
+3. **Barra única de búsqueda en cabecera + línea deslizable (`EncabezadoEcommerce.tsx`, `VitrinaCatalogoTinkay.tsx`, `contexto-carrito.tsx`, `estilos-ecommerce.css`):**
+   - Unificada toda la búsqueda y exploración en una sola barra fija en cabecera: **Arriba** búsqueda libre (*"Busca por ocasión, flores, color, precio..."*) + **ícono de Filtros** integrado (abre modal/hoja con los 5 bloques: Categorías, Colecciones, Etiquetas, Popularidad/`Más solicitados` y Presupuesto); **Abajo** una única línea horizontal deslizable con **`♡ Me gusta`** (cliente) seguido de las categorías base (`Arreglos Florales`, `Eventos`, `Condolencias`, `Ofertas`, `Entrega Inmediata`, `Todo`).
+   - Eliminada la barra duplicada de búsqueda/filtros dentro de `VitrinaCatalogoTinkay.tsx`.
 
 4. **Contador global de Me Gusta siempre acumulativo (`contexto-carrito.tsx`):**
    - Cada pulsación para marcar corazón incrementa `+1` globalmente en PostgreSQL; quitar el corazón no decrementa; volver a marcarlo incrementa `+1` nuevamente.

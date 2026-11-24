@@ -40,6 +40,14 @@ import {
   type SeleccionPersonalizacionFloral,
 } from '@eco/comercio';
 
+export type CriterioOrdenCatalogo =
+  | 'recomendados'
+  | 'mas-deseados'
+  | 'precio-desc'
+  | 'precio-asc'
+  | 'destacados'
+  | 'nombre-asc';
+
 interface ContextoCarritoValor {
   items: ItemCarrito[];
   cantidadTotal: number;
@@ -53,6 +61,10 @@ interface ContextoCarritoValor {
   categorias: CategoriaEcommerce[];
   categoriaActiva: string;
   terminoBusqueda: string;
+  filtroPresupuesto: string;
+  criterioOrden: CriterioOrdenCatalogo;
+  etiquetasActivas: string[];
+  filtrosPanelAbierto: boolean;
   configLogistica: ConfiguracionLogisticaNegocio;
   configTiendaCheckout: ConfiguracionTiendaCheckout;
   usuarioRegistrado: boolean;
@@ -75,6 +87,12 @@ interface ContextoCarritoValor {
   setOrdenConfirmadaId: (id: string | null) => void;
   setCategoriaActiva: (catId: string) => void;
   setTerminoBusqueda: (termino: string) => void;
+  setFiltroPresupuesto: (presupuesto: string) => void;
+  setCriterioOrden: React.Dispatch<React.SetStateAction<CriterioOrdenCatalogo>>;
+  setEtiquetasActivas: React.Dispatch<React.SetStateAction<string[]>>;
+  toggleEtiquetaActiva: (claveEtiqueta: string) => void;
+  setFiltrosPanelAbierto: React.Dispatch<React.SetStateAction<boolean>>;
+  limpiarFiltrosCatalogo: () => void;
   navegarACategoria: (identificador: string) => void;
   abrirProductoPorIdentificador: (identificador: string, varianteSku?: string) => boolean;
   obtenerEnlaceCategoriaActual: (catIdOpcional?: string) => string;
@@ -241,7 +259,34 @@ export function ProveedorCarrito({
   const [categoriaActiva, setCategoriaActivaInterna] = useState<string>('cat-todos');
   const [focoPersonalizacionModal, setFocoPersonalizacionModal] = useState<boolean>(false);
   const [terminoBusqueda, setTerminoBusqueda] = useState<string>('');
+  const [filtroPresupuesto, setFiltroPresupuesto] = useState<string>('todos');
+  const [criterioOrden, setCriterioOrden] = useState<CriterioOrdenCatalogo>('recomendados');
+  const [etiquetasActivas, setEtiquetasActivas] = useState<string[]>([]);
+  const [filtrosPanelAbierto, setFiltrosPanelAbierto] = useState<boolean>(false);
   const [favoritosIds, setFavoritosIds] = useState<string[]>([]);
+
+  const toggleEtiquetaActiva = React.useCallback((claveEtiqueta: string) => {
+    setEtiquetasActivas((prev) =>
+      prev.includes(claveEtiqueta)
+        ? prev.filter((item) => item !== claveEtiqueta)
+        : [...prev, claveEtiqueta]
+    );
+  }, []);
+
+  const limpiarFiltrosCatalogo = React.useCallback(() => {
+    setCategoriaActivaInterna('cat-todos');
+    setTerminoBusqueda('');
+    setEtiquetasActivas([]);
+    setFiltroPresupuesto('todos');
+    setCriterioOrden('recomendados');
+    if (typeof window !== 'undefined') {
+      try {
+        window.history.replaceState(null, '', '/');
+      } catch {
+        // Ignorar
+      }
+    }
+  }, []);
   const [favoritosCargados, setFavoritosCargados] = useState<boolean>(false);
   const [likesRegistradosIds, setLikesRegistradosIds] = useState<string[]>([]);
   const [configLogistica, setConfigLogistica] = useState<ConfiguracionLogisticaNegocio>(() =>
@@ -1294,13 +1339,6 @@ export function ProveedorCarrito({
     }, 0);
   }, [productos]);
 
-  // Si el usuario estaba en la vista personal "Me gusta" y quita el último corazón, volver a catálogo
-  useEffect(() => {
-    if (favoritosCargados && categoriaActiva === 'grupo-favoritos' && totalFavoritos === 0) {
-      setCategoriaActiva('cat-todos');
-    }
-  }, [favoritosCargados, categoriaActiva, totalFavoritos, setCategoriaActiva]);
-
   return (
     <ContextoCarrito.Provider
       value={{
@@ -1316,6 +1354,10 @@ export function ProveedorCarrito({
         categorias,
         categoriaActiva,
         terminoBusqueda,
+        filtroPresupuesto,
+        criterioOrden,
+        etiquetasActivas,
+        filtrosPanelAbierto,
         configLogistica,
         configTiendaCheckout,
         usuarioRegistrado,
@@ -1336,6 +1378,12 @@ export function ProveedorCarrito({
         setOrdenConfirmadaId,
         setCategoriaActiva,
         setTerminoBusqueda,
+        setFiltroPresupuesto,
+        setCriterioOrden,
+        setEtiquetasActivas,
+        toggleEtiquetaActiva,
+        setFiltrosPanelAbierto,
+        limpiarFiltrosCatalogo,
         navegarACategoria,
         abrirProductoPorIdentificador,
         obtenerEnlaceCategoriaActual,
