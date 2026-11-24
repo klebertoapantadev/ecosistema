@@ -187,6 +187,19 @@ export function ModalCheckoutTinkay() {
     totalPagado: number;
     entregaTexto: string;
     esTransferencia?: boolean;
+    estadoEtiqueta?: string;
+    metodoPagoEtiqueta?: string;
+    nombreCliente?: string;
+    whatsappCliente?: string;
+    comprobanteAdjuntoNombre?: string;
+    itemsComprados?: Array<{
+      nombre: string;
+      variante: string;
+      cantidad: number;
+      subtotal: number;
+      personalizacionResumen?: string;
+      dedicatoriaResumen?: string;
+    }>;
     incluyoObsequio?: boolean;
     nombreObsequio?: string;
     autorizacionPlux?: string | null;
@@ -819,10 +832,29 @@ export function ModalCheckoutTinkay() {
       return;
     }
 
+    const snapshotItemsComprados = items.map((it) => ({
+      nombre: it.producto.nombre,
+      variante: it.variante.nombre,
+      cantidad: it.cantidad,
+      subtotal: Number((it.variante.pvp * it.cantidad).toFixed(2)),
+      personalizacionResumen: it.personalizacionFloral?.resumenTexto || undefined,
+      dedicatoriaResumen: it.dedicatoria?.mensaje
+        ? `Para: ${it.dedicatoria.para || '-'} · "${it.dedicatoria.mensaje.slice(0, 70)}${
+            it.dedicatoria.mensaje.length > 70 ? '…' : ''
+          }"`
+        : undefined,
+    }));
+
     setResumenExito({
       totalPagado: totalPagar,
       entregaTexto: entregaTextoConfirmado,
       esTransferencia: true,
+      estadoEtiqueta: 'Nuevo - Por Confirmar',
+      metodoPagoEtiqueta: 'Transferencia Bancaria / QR DeUna',
+      nombreCliente: datosFactura.nombreCompleto?.trim() || 'Cliente',
+      whatsappCliente: telefonoNormalizado || datosFactura.telefono || '',
+      comprobanteAdjuntoNombre: comprobanteSubido?.nombreArchivo || undefined,
+      itemsComprados: snapshotItemsComprados,
       incluyoObsequio: incluyeExtraObsequio,
       nombreObsequio: incluyeExtraObsequio ? datosObsequio.nombre : undefined,
     });
@@ -854,9 +886,13 @@ export function ModalCheckoutTinkay() {
 
   const urlWhatsappExito = construirUrlWhatsappTienda(
     configCheckoutLocal.whatsappTienda,
-    `Hola Tinkay, adjunto el comprobante de mi orden ${codigoOrdenGenerado} por $${(
-      resumenExito?.totalPagado ?? totalPagar
-    ).toFixed(2)} USD.`
+    resumenExito?.esTransferencia
+      ? `Hola Tinkay, realicé el pedido ${codigoOrdenGenerado} por $${(
+          resumenExito?.totalPagado ?? totalPagar
+        ).toFixed(2)} USD mediante Transferencia (Estado: Nuevo - Por Confirmar). Deseo confirmar el recibo y coordinar mi entrega.`
+      : `Hola Tinkay, acabo de confirmar mi pedido ${codigoOrdenGenerado} por $${(
+          resumenExito?.totalPagado ?? totalPagar
+        ).toFixed(2)} USD con tarjeta (Estado: Nuevo - Confirmado). Quedo atento(a) a la coordinación de mi entrega.`
   );
 
   const transf = configCheckoutLocal.transferencia;
@@ -898,76 +934,235 @@ export function ModalCheckoutTinkay() {
             </span>
             <h2>Gracias por tu compra en Tinkay</h2>
             <p className="codigo-orden-destacado">
-              Orden de Taller: <strong>{codigoOrdenGenerado}</strong>
+              Pedido N°: <strong>{codigoOrdenGenerado}</strong>
             </p>
+
+            {/* Insignia visible de estado del pedido */}
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '5px 12px',
+                borderRadius: '999px',
+                marginTop: '4px',
+                marginBottom: '10px',
+                background: resumenExito?.esTransferencia ? '#FEF3C7' : '#DCFCE7',
+                border: resumenExito?.esTransferencia
+                  ? '1px solid #FCD34D'
+                  : '1px solid #86EFAC',
+                color: resumenExito?.esTransferencia ? '#B45309' : '#166534',
+                fontSize: '0.78rem',
+                fontWeight: 800,
+              }}
+            >
+              <span>
+                {resumenExito?.esTransferencia ? '⏳' : '✅'} Estado:{' '}
+                {resumenExito?.estadoEtiqueta ||
+                  (resumenExito?.esTransferencia
+                    ? 'Nuevo - Por Confirmar'
+                    : 'Nuevo - Confirmado')}
+              </span>
+            </div>
+
             <p className="instrucciones-exito">
               {resumenExito?.esTransferencia ? (
                 <>
-                  Hemos recibido tu pedido y tu comprobante adjunto.{' '}
-                  <strong>{transf.advertenciaAcreditacion}</strong> También puedes escribirnos por
-                  WhatsApp si deseas compartir el comprobante o coordinar detalles adicionales.
+                  Tu pedido fue creado en estado <strong>Nuevo - Por Confirmar</strong>. Nuestro
+                  equipo verificará tu comprobante de transferencia para iniciar la elaboración.{' '}
+                  <strong>{transf.advertenciaAcreditacion}</strong>
                 </>
               ) : (
                 <>
-                  Hemos acreditado tu pago con PLUX
+                  Tu pago con tarjeta fue confirmado y tu pedido está en estado{' '}
+                  <strong>Nuevo - Confirmado</strong>
                   {datosFactura.correo ? (
                     <>
                       {' '}
-                      y enviado el comprobante a <strong>{datosFactura.correo}</strong>
+                      (enviamos el comprobante a <strong>{datosFactura.correo}</strong>)
                     </>
                   ) : null}
-                  . Nuestro taller ha iniciado la preparación de tu orden.
+                  . Nuestro equipo floral ya recibió los detalles de tu orden.
                 </>
               )}
             </p>
 
-            <div className="tarjeta-resumen-confirmacion">
+            {/* Datos completos del pedido en pantalla */}
+            <div className="tarjeta-resumen-confirmacion" style={{ textAlign: 'left' }}>
               <div className="fila-resumen-c">
-                <span>{resumenExito?.esTransferencia ? 'Total de la orden:' : 'Total pagado:'}</span>
-                <strong>${(resumenExito?.totalPagado ?? totalPagar).toFixed(2)} USD</strong>
+                <span>Código de pedido:</span>
+                <strong>{codigoOrdenGenerado}</strong>
               </div>
               <div className="fila-resumen-c">
-                <span>Modalidad:</span>
+                <span>Estado actual:</span>
+                <strong
+                  style={{
+                    color: resumenExito?.esTransferencia ? '#B45309' : '#166534',
+                  }}
+                >
+                  {resumenExito?.estadoEtiqueta ||
+                    (resumenExito?.esTransferencia
+                      ? 'Nuevo - Por Confirmar'
+                      : 'Nuevo - Confirmado')}
+                </strong>
+              </div>
+              <div className="fila-resumen-c">
+                <span>Forma de pago:</span>
+                <span>
+                  {resumenExito?.metodoPagoEtiqueta ||
+                    (resumenExito?.esTransferencia
+                      ? 'Transferencia / QR DeUna'
+                      : 'Tarjeta de Crédito / Débito (PLUX)')}
+                </span>
+              </div>
+              {resumenExito?.autorizacionPlux && (
+                <div className="fila-resumen-c">
+                  <span>Autorización:</span>
+                  <strong>{resumenExito.autorizacionPlux}</strong>
+                </div>
+              )}
+              {resumenExito?.comprobanteAdjuntoNombre && (
+                <div className="fila-resumen-c">
+                  <span>Recibo cargado:</span>
+                  <span style={{ color: '#059669', fontWeight: 700 }}>
+                    {resumenExito.comprobanteAdjuntoNombre}
+                  </span>
+                </div>
+              )}
+              {resumenExito?.nombreCliente && (
+                <div className="fila-resumen-c">
+                  <span>Cliente:</span>
+                  <span>
+                    {resumenExito.nombreCliente}
+                    {resumenExito.whatsappCliente ? ` · ${resumenExito.whatsappCliente}` : ''}
+                  </span>
+                </div>
+              )}
+              <div className="fila-resumen-c">
+                <span>Modalidad y entrega:</span>
                 <span>{resumenExito?.entregaTexto || 'Registrada'}</span>
               </div>
+
+              {resumenExito?.itemsComprados && resumenExito.itemsComprados.length > 0 && (
+                <div
+                  style={{
+                    marginTop: '8px',
+                    paddingTop: '8px',
+                    borderTop: '1px dashed #E2DDD4',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px',
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: '0.73rem',
+                      fontWeight: 800,
+                      color: '#57524C',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.03em',
+                    }}
+                  >
+                    Detalle del pedido
+                  </span>
+                  {resumenExito.itemsComprados.map((item, idx) => (
+                    <div
+                      key={`${item.nombre}-${idx}`}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '2px',
+                        padding: '6px 8px',
+                        borderRadius: '8px',
+                        background: '#FAF8F5',
+                        border: '1px solid #ECE7DF',
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          gap: '8px',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          color: '#1F1C19',
+                        }}
+                      >
+                        <span>
+                          {item.cantidad}x {item.nombre}
+                          {item.variante ? ` (${item.variante})` : ''}
+                        </span>
+                        <span style={{ flexShrink: 0 }}>${item.subtotal.toFixed(2)}</span>
+                      </div>
+                      {item.personalizacionResumen && (
+                        <span style={{ fontSize: '0.72rem', color: '#57524C' }}>
+                          🎨 {item.personalizacionResumen}
+                        </span>
+                      )}
+                      {item.dedicatoriaResumen && (
+                        <span style={{ fontSize: '0.71rem', color: '#6B655E' }}>
+                          💌 {item.dedicatoriaResumen}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {resumenExito?.incluyoObsequio && (
-                <div className="fila-resumen-c">
+                <div className="fila-resumen-c" style={{ marginTop: '6px' }}>
                   <span>Obsequio de bienvenida:</span>
                   <strong style={{ color: '#059669' }}>
                     1x {resumenExito.nombreObsequio || datosObsequio.nombre} ($0.00)
                   </strong>
                 </div>
               )}
-            </div>
 
-            {resumenExito?.esTransferencia && (
-              <a
-                href={urlWhatsappExito}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={`Escribir a WhatsApp (${configCheckoutLocal.whatsappTienda}) y adjuntar comprobante`}
-                aria-label="Enviar por WhatsApp"
+              <div
+                className="fila-resumen-c"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  width: '100%',
-                  marginTop: '10px',
-                  marginBottom: '10px',
-                  padding: '12px 18px',
-                  borderRadius: '999px',
-                  background: '#16A34A',
-                  color: '#FFFFFF',
-                  fontWeight: 700,
-                  fontSize: '0.88rem',
-                  textDecoration: 'none',
+                  marginTop: '8px',
+                  paddingTop: '8px',
+                  borderTop: '1px solid #E2DDD4',
+                  fontSize: '0.94rem',
                 }}
               >
-                <MessageCircle size={18} />
-                <span>Enviar por WhatsApp</span>
-              </a>
-            )}
+                <strong>
+                  {resumenExito?.esTransferencia ? 'Total del pedido:' : 'Total pagado:'}
+                </strong>
+                <strong style={{ color: '#1F1C19' }}>
+                  ${(resumenExito?.totalPagado ?? totalPagar).toFixed(2)} USD
+                </strong>
+              </div>
+            </div>
+
+            {/* Opción siempre visible para contactar a la tienda vía WhatsApp */}
+            <a
+              href={urlWhatsappExito}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={`Contactar a Tinkay por WhatsApp (${configCheckoutLocal.whatsappTienda})`}
+              aria-label="Contactar por WhatsApp"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                width: '100%',
+                marginTop: '12px',
+                marginBottom: '10px',
+                padding: '12px 18px',
+                borderRadius: '999px',
+                background: '#16A34A',
+                color: '#FFFFFF',
+                fontWeight: 700,
+                fontSize: '0.88rem',
+                textDecoration: 'none',
+              }}
+            >
+              <MessageCircle size={18} />
+              <span>Contactar por WhatsApp</span>
+            </a>
 
             {resumenExito?.facturaElectronica && (
               <div
@@ -2420,10 +2615,29 @@ export function ModalCheckoutTinkay() {
                               },
                               ordenPluxPreparada.codigoOrden
                             );
+                            const snapshotItemsPlux = items.map((it) => ({
+                              nombre: it.producto.nombre,
+                              variante: it.variante.nombre,
+                              cantidad: it.cantidad,
+                              subtotal: Number((it.variante.pvp * it.cantidad).toFixed(2)),
+                              personalizacionResumen:
+                                it.personalizacionFloral?.resumenTexto || undefined,
+                              dedicatoriaResumen: it.dedicatoria?.mensaje
+                                ? `Para: ${it.dedicatoria.para || '-'} · "${it.dedicatoria.mensaje.slice(
+                                    0,
+                                    70
+                                  )}${it.dedicatoria.mensaje.length > 70 ? '…' : ''}"`
+                                : undefined,
+                            }));
                             setResumenExito({
                               totalPagado: totalPagar,
                               entregaTexto: entregaTextoConfirmado,
                               esTransferencia: false,
+                              estadoEtiqueta: 'Nuevo - Confirmado',
+                              metodoPagoEtiqueta: 'Tarjeta de Crédito / Débito (PLUX)',
+                              nombreCliente: datosFactura.nombreCompleto?.trim() || 'Cliente',
+                              whatsappCliente: telefonoNormalizado || datosFactura.telefono || '',
+                              itemsComprados: snapshotItemsPlux,
                               incluyoObsequio: incluyeExtraObsequio,
                               nombreObsequio: incluyeExtraObsequio ? datosObsequio.nombre : undefined,
                               autorizacionPlux: pago.autorizacion,

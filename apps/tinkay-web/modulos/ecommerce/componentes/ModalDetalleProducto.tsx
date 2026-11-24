@@ -2,16 +2,17 @@
 
 import React, { useRef, useState } from 'react';
 import {
-  OPCIONES_COLOR_BASE_PAPEL,
   calcularPrecioPorVolumen,
   capturarYPersistirAtribucionNavegador,
   describirEscalaVolumen,
   dispararEventoPixelNavegador,
   formatearResumenPersonalizacionFloral,
+  inferirTipoEnvoltorioPorColeccion,
   modoRequiereColoresRosas,
   obtenerColoresRosasHabilitados,
   obtenerEtiquetaTipoEnvoltorio,
   obtenerModosFlorDisponibles,
+  obtenerOpcionesColorEnvoltorio,
   resolverPersonalizacionFloralEfectiva,
   validarSeleccionPersonalizacionFloral,
   type ColorBasePapelId,
@@ -149,6 +150,12 @@ export function ModalDetalleProducto() {
         modoVariante: varInicial.personalizacionFloralModo,
         habilitadaPorDefecto:
           !esRentaTmp && !esEventoTmp && !producto.esExtra && !producto.esComplemento,
+        tipoEnvoltorioPorDefecto: inferirTipoEnvoltorioPorColeccion({
+          categoriaNombre: producto.categoriaNombre,
+          categoriaSlug: producto.categoriaPrincipal,
+          productoNombre: producto.nombre,
+          productoSlug: producto.slug,
+        }),
       });
       const modosDisp = obtenerModosFlorDisponibles(cfgPers);
       setMismosColoresFoto(false);
@@ -616,6 +623,12 @@ export function ModalDetalleProducto() {
       configVariante: varianteSeleccionada.personalizacionFloral,
       modoVariante: varianteSeleccionada.personalizacionFloralModo,
       habilitadaPorDefecto: habilitadaDef,
+      tipoEnvoltorioPorDefecto: inferirTipoEnvoltorioPorColeccion({
+        categoriaNombre: producto.categoriaNombre,
+        categoriaSlug: producto.categoriaPrincipal,
+        productoNombre: producto.nombre,
+        productoSlug: producto.slug,
+      }),
     });
   }, [producto, varianteSeleccionada, esProductoRenta, esProductoEvento]);
 
@@ -2146,14 +2159,14 @@ export function ModalDetalleProducto() {
               const pideColoresRosas =
                 !mismosColoresFoto &&
                 modoRequiereColoresRosas(modoFloresSel, configPersonalizacionFloral);
-              const opcionesBaseDisponibles = OPCIONES_COLOR_BASE_PAPEL.filter((op) =>
-                configPersonalizacionFloral.coloresBaseDisponibles.includes(op.id)
-              );
               const tipoEnvEfectivo: TipoEnvoltorioSeleccionado | null =
                 configPersonalizacionFloral.mostrarColorBase &&
                 configPersonalizacionFloral.tipoEnvoltorio !== 'no_aplica'
                   ? configPersonalizacionFloral.tipoEnvoltorio
                   : null;
+              const opcionesBaseDisponibles = obtenerOpcionesColorEnvoltorio(tipoEnvEfectivo).filter(
+                (op) => configPersonalizacionFloral.coloresBaseDisponibles.includes(op.id)
+              );
               const rotuloTipoEnv = tipoEnvEfectivo
                 ? obtenerEtiquetaTipoEnvoltorio(tipoEnvEfectivo)
                 : '';
@@ -2234,7 +2247,7 @@ export function ModalDetalleProducto() {
                         lineHeight: 1.4,
                       }}
                     >
-                      ✨ <strong>Este arreglo se elabora en los colores de tu preferencia.</strong>{' '}
+                      ✨ <strong>Colores y decoración según la ocasión.</strong>{' '}
                       Elige tu combinación ideal o solicita los mismos colores de la foto.
                     </p>
                   </div>
@@ -2525,34 +2538,30 @@ export function ModalDetalleProducto() {
                                         }}
                                       >
                                         <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                                          <span
-                                            style={{
-                                              width: '16px',
-                                              height: '16px',
-                                              borderRadius: '999px',
-                                              background: op.coloresMuestra[0],
-                                              border: '1px solid rgba(0,0,0,0.22)',
-                                            }}
-                                          />
-                                          <span
-                                            style={{
-                                              width: '16px',
-                                              height: '16px',
-                                              borderRadius: '999px',
-                                              background: op.coloresMuestra[1],
-                                              border: '1px solid rgba(0,0,0,0.22)',
-                                              marginLeft: '-5px',
-                                            }}
-                                          />
+                                          {op.coloresMuestra.map((hex, idxM) => (
+                                            <span
+                                              key={`${op.id}-${idxM}`}
+                                              style={{
+                                                width: '16px',
+                                                height: '16px',
+                                                borderRadius: '999px',
+                                                background: hex,
+                                                border: '1px solid rgba(0,0,0,0.22)',
+                                                marginLeft: idxM > 0 ? '-5px' : 0,
+                                              }}
+                                            />
+                                          ))}
                                         </span>
                                         {activo && <Check size={14} color="#2F4737" />}
                                       </div>
                                       <strong style={{ fontSize: '0.78rem', lineHeight: 1.2 }}>
                                         {op.etiqueta}
                                       </strong>
-                                      <span style={{ fontSize: '0.7rem', color: '#57524C' }}>
-                                        {op.detalle}
-                                      </span>
+                                      {tipoEnvEfectivo === 'papel_envoltorio' && (
+                                        <span style={{ fontSize: '0.7rem', color: '#57524C' }}>
+                                          {op.detalle}
+                                        </span>
+                                      )}
                                     </button>
                                   );
                                 })}

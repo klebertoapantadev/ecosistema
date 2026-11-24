@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import {
   describirConfiguracionPersonalizacionCliente,
   describirEscalaVolumen,
+  inferirTipoEnvoltorioPorColeccion,
   resolverPersonalizacionFloralEfectiva,
 } from '@eco/comercio';
 import { ProductoEcommerce, VarianteEcommerce } from '../tipos';
@@ -137,6 +138,12 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
     modoVariante: varianteSeleccionada.personalizacionFloralModo,
     habilitadaPorDefecto:
       !esProductoRenta && !esProductoEvento && !producto.esExtra && !producto.esComplemento,
+    tipoEnvoltorioPorDefecto: inferirTipoEnvoltorioPorColeccion({
+      categoriaNombre: producto.categoriaNombre,
+      categoriaSlug: producto.categoriaPrincipal,
+      productoNombre: producto.nombre,
+      productoSlug: producto.slug,
+    }),
   });
   const requierePersonalizacionFloral = Boolean(
     configPersonalizacion.habilitada &&
@@ -381,18 +388,24 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
               gap: '5px',
               marginTop: '4px',
               marginBottom: '6px',
-              padding: '3px 8px',
+              padding: '3px 9px',
               borderRadius: '999px',
-              background: esCondolenciasSobrio ? '#F4F4F5' : '#FDF2F8',
-              border: esCondolenciasSobrio ? '1px solid #E4E4E7' : '1px solid #FBCFE8',
-              color: esCondolenciasSobrio ? '#3F3F46' : '#9D174D',
+              background: esCondolenciasSobrio ? '#F4F4F5' : '#F6F4EF',
+              border: esCondolenciasSobrio ? '1px solid #E4E4E7' : '1px solid #E6E0D6',
+              color: esCondolenciasSobrio ? '#52525B' : '#6B655E',
               fontSize: '0.69rem',
-              fontWeight: 600,
+              fontWeight: 500,
               maxWidth: '100%',
             }}
             title="Al comprar podrás elegir tus colores de preferencia o los mismos colores de la foto"
           >
-            <Palette size={12} style={{ flexShrink: 0 }} />
+            <Palette
+              size={12}
+              style={{
+                flexShrink: 0,
+                color: esCondolenciasSobrio ? '#71717A' : '#8A8178',
+              }}
+            />
             <span
               style={{
                 overflow: 'hidden',
@@ -400,7 +413,7 @@ export function TarjetaProductoConCarrusel({ producto, modoSobrio }: Props) {
                 whiteSpace: 'nowrap',
               }}
             >
-              {textoColoresPreferencia || 'Elaborado en los colores de tu preferencia'}
+              {textoColoresPreferencia || 'Colores y decoración según la ocasión'}
             </span>
           </div>
         )}

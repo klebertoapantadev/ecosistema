@@ -23,7 +23,9 @@ import {
   type DisenoVisualTarjeta,
   type EmisoraRadioTv,
   type EstadoOrdenTaller,
+  type EstadoPedidoConfig,
   type FotoConteoBonches,
+  esEstadoVisibleEnTaller,
   type InformeQuincenalEntregas,
   type ItemOrdenTaller,
   type OrdenTrabajoTaller,
@@ -1342,6 +1344,7 @@ export interface DatosConsolaTallerYDespacho {
   ordenesEliminadas?: OrdenTrabajoTaller[];
   productosCatalogo: ProductoLigeroSelectorTaller[];
   repartidoresNegocio?: RepartidorDisponibleNegocio[];
+  estadosConfig?: EstadoPedidoConfig[];
   migracionPendiente?: boolean;
 }
 
@@ -1413,6 +1416,8 @@ export async function obtenerConsolaTallerYDespachoAction(
     const neg = normalizarNegocio(negocio);
     const { crearClienteAdmin, crearClienteServidor } = await import("@eco/supabase/servidor");
     const supabase = await crearClienteServidor();
+    const { leerEstadosPedidosConfig } = await import("./acciones-logistica");
+    const estadosConfig = await leerEstadosPedidosConfig(neg, supabase);
 
     const { data, error } = await invocarRpcComercio(
       supabase,
@@ -1531,6 +1536,7 @@ export async function obtenerConsolaTallerYDespachoAction(
           ordenesEliminadas,
           productosCatalogo,
           repartidoresNegocio,
+          estadosConfig,
         },
       };
     }
@@ -1802,6 +1808,7 @@ export async function obtenerConsolaTallerYDespachoAction(
         usuarioActualNombre: user?.email?.split("@")[0] || "Operador",
         ordenes: ordenesRespaldoEnriquecidas,
         productosCatalogo,
+        estadosConfig,
         migracionPendiente: true,
       },
     };
@@ -5348,6 +5355,14 @@ export async function obtenerTableroTvTallerAction(
     );
 
     if (!error && data?.ok) {
+      const { leerEstadosPedidosConfig } = await import("./acciones-logistica");
+      const estadosConfigTv = await leerEstadosPedidosConfig(neg, supabase);
+      const ordenesTvCrudas = Array.isArray(data.ordenes) ? (data.ordenes as OrdenTvTaller[]) : [];
+      const ordenesTvFiltradas = ordenesTvCrudas.filter((ord) => {
+        const estPago = (ord as unknown as { estadoPago?: string | null }).estadoPago;
+        if (!estPago) return true;
+        return esEstadoVisibleEnTaller(estPago, estadosConfigTv);
+      });
       return {
         ok: true,
         datos: {
@@ -5356,7 +5371,7 @@ export async function obtenerTableroTvTallerAction(
           esOperadorOAdmin: Boolean(data.esOperadorOAdmin),
           puedeInteractuar: Boolean(data.puedeInteractuar),
           hoyYmd: String(data.hoyYmd || obtenerFechaHoyEcuadorYmd()),
-          ordenes: Array.isArray(data.ordenes) ? (data.ordenes as OrdenTvTaller[]) : [],
+          ordenes: ordenesTvFiltradas,
           indicadoresTv:
             data.indicadoresTv && typeof data.indicadoresTv === "object"
               ? data.indicadoresTv

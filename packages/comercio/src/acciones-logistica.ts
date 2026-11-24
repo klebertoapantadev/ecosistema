@@ -28,6 +28,7 @@ import {
 } from "./logistica";
 import {
   ESTADOS_PEDIDO_DEFECTO,
+  esEstadoVisibleEnTaller,
   inferirClasificacionPedido,
   normalizarEstadosPedidosConfig,
   type ClasificacionOperativaPedido,
@@ -1171,9 +1172,11 @@ export async function registrarPedidoTiendaAction(
 
   const metodoPagoNorm = entrada.metodoPago.trim().toLowerCase();
   const estadoInicial =
-    metodoPagoNorm === "transferencia" || metodoPagoNorm === "plux"
-      ? "PENDIENTE_PAGO"
-      : "APROBADA";
+    metodoPagoNorm === "transferencia"
+      ? "NUEVO_POR_CONFIRMAR"
+      : metodoPagoNorm === "plux"
+        ? "PENDIENTE_PAGO"
+        : "NUEVO_CONFIRMADO";
 
   const totalCentavos = Math.round(entrada.totalPagar * 100);
   const ivaCentavos = Math.round(entrada.totalIva * 100);
@@ -1923,7 +1926,48 @@ export async function guardarEstadosPedidosAdminAction(entrada: {
 
     if (errUpd) return { ok: false, error: errUpd.message };
 
+    // Sincronizar visibilidad en Taller de órdenes pendientes según el nuevo ajuste de visibleEnTaller
+    try {
+      const estadosOcultos = estadosLimpios
+        .filter((e) => e.visibleEnTaller === false)
+        .map((e) => e.valor);
+      const estadosVisibles = estadosLimpios
+        .filter((e) => e.visibleEnTaller !== false)
+        .map((e) => e.valor);
+
+      if (estadosOcultos.length > 0) {
+        await db
+          .schema("comun_comercio")
+          .from("com_orden_taller")
+          .update({
+            ota_estado_taller: "PENDIENTE_ENVIO",
+            ota_actualizado_en: new Date().toISOString(),
+          })
+          .eq("ota_negocio", negNorm)
+          .in("ota_estado_pago", estadosOcultos)
+          .eq("ota_estado_taller", "ENVIADO_TALLER")
+          .is("ota_eliminado_en", null);
+      }
+
+      if (estadosVisibles.length > 0) {
+        await db
+          .schema("comun_comercio")
+          .from("com_orden_taller")
+          .update({
+            ota_estado_taller: "ENVIADO_TALLER",
+            ota_actualizado_en: new Date().toISOString(),
+          })
+          .eq("ota_negocio", negNorm)
+          .in("ota_estado_pago", estadosVisibles)
+          .eq("ota_estado_taller", "PENDIENTE_ENVIO")
+          .is("ota_eliminado_en", null);
+      }
+    } catch {
+      // No bloquear guardado de configuración si la sincronización opcional falla
+    }
+
     revalidatePath("/panel/pedidos");
+    revalidatePath("/panel/taller");
     return { ok: true, estadosConfig: estadosLimpios };
   } catch (err) {
     return {
@@ -3130,6 +3174,7 @@ export async function actualizarEstadoPedidoTiendaAction(
   const estadosPermitidos = new Set([
     ...estadosConfig.map((e) => e.valor),
     "NUEVO_POR_CONFIRMAR",
+    "NUEVO_CONFIRMADO",
     "ENVIADA",
     "PENDIENTE_PAGO",
     "ORDEN_CONFIRMADA",
@@ -3191,7 +3236,8 @@ export async function actualizarEstadoPedidoTiendaAction(
     clienteUsuarioId = rpcUpd.clienteUsuarioId ? String(rpcUpd.clienteUsuarioId) : null;
     repartidorAsignadoId = rpcUpd.repartidorAsignadoId ? String(rpcUpd.repartidorAsignadoId) : null;
   } else {
-    // 2. Verificar si es una orden directa de Taller / Manual / Exequiales en com_orden_taller
+  // 2. Verificar si es una orden directa de Taller / Manual / Exequiales o estado personalizado aún no soportado en RPC
+    const visibleEnTallerNuevo = esEstadoVisibleEnTaller(nuevoEstado, estadosConfig);
     const estadoTallerEquiv =
       nuevoEstado === "ENTREGADO"
         ? "ENTREGADO"
@@ -3201,7 +3247,9 @@ export async function actualizarEstadoPedidoTiendaAction(
             ? "EN_PREPARACION"
             : nuevoEstado === "CANCELADO" || nuevoEstado === "NO_ACEPTADA"
               ? "ANULADO"
-              : "PENDIENTE_ENVIO";
+              : visibleEnTallerNuevo
+                ? "ENVIADO_TALLER"
+                : "PENDIENTE_ENVIO";
 
     const { data: rpcTallerUpd, error: rpcTallerErr } = await (supabase as any)
       .schema("comun_comercio")
@@ -3215,7 +3263,7 @@ export async function actualizarEstadoPedidoTiendaAction(
     if (!rpcTallerErr && rpcTallerUpd?.ok) {
       codigoOrden = String(rpcTallerUpd.codigo || "PEDIDO");
       compradorNombre = String(rpcTallerUpd.productoResumen || "Cliente");
-      // Sincronizar también ota_estado_pago para conservar estados personalizados y NUEVO_POR_CONFIRMAR
+      // Sincronizar también ota_estado_pago para conservar estados personalizados, NUEVO_POR_CONFIRMAR y NUEVO_CONFIRMADO
       try {
         await db
           .schema("comun_comercio")
@@ -3226,10 +3274,16 @@ export async function actualizarEstadoPedidoTiendaAction(
       } catch {
         // Opcional
       }
-    } else if (!rpcErr && rpcUpd && rpcUpd.ok === false && !String(rpcUpd.error || "").includes("no encontrado")) {
+    } else if (
+      !rpcErr &&
+      rpcUpd &&
+      rpcUpd.ok === false &&
+      !String(rpcUpd.error || "").includes("no encontrado") &&
+      !String(rpcUpd.error || "").includes("no válido")
+    ) {
       return { ok: false, error: String(rpcUpd.error || "No se pudo actualizar el estado del pedido") };
     } else {
-      // 3. Respaldo compatible sobre com_proforma verificando fila afectada
+      // 3. Respaldo compatible sobre com_proforma verificando fila afectada (soporta estados personalizados)
       const { data: filasUpd, error } = await db
         .schema("comun_comercio")
         .from("com_proforma")
@@ -3249,6 +3303,23 @@ export async function actualizarEstadoPedidoTiendaAction(
           ok: false,
           error: "No se pudo encontrar ni actualizar el pedido seleccionado.",
         };
+      }
+
+      // Espejar también en com_orden_taller asociada según visibleEnTaller
+      try {
+        await db
+          .schema("comun_comercio")
+          .from("com_orden_taller")
+          .update({
+            ota_estado_pago: nuevoEstado,
+            ota_estado_taller: estadoTallerEquiv,
+            ota_actualizado_en: new Date().toISOString(),
+          })
+          .eq("ota_proforma_id", pedidoId)
+          .eq("ota_negocio", negNorm)
+          .is("ota_eliminado_en", null);
+      } catch {
+        // Opcional
       }
 
       const fila = filasUpd[0];
@@ -3290,7 +3361,9 @@ export async function actualizarEstadoPedidoTiendaAction(
 
   // 4. Si el equipo aprueba un pedido por Transferencia / QR DeUna, disparar Purchase en Meta Conversions API
   if (
-    ["ORDEN_CONFIRMADA", "APROBADA", "RESERVADA_70", "EN_PREPARACION"].includes(nuevoEstado) &&
+    ["NUEVO_CONFIRMADO", "ORDEN_CONFIRMADA", "APROBADA", "RESERVADA_70", "EN_PREPARACION"].includes(
+      nuevoEstado
+    ) &&
     /^[0-9a-f-]{36}$/i.test(pedidoId)
   ) {
     try {

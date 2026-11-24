@@ -4,7 +4,7 @@ import { CATEGORIAS_TINKAY, PRODUCTOS_TINKAY } from './datos-catalogo';
 import { normalizarTextoEcommerce } from './filtrado-catalogo';
 import {
   esCodigoOfertaRenta,
-  inferirTipoEnvoltorioPorNombre,
+  inferirTipoEnvoltorioPorColeccion,
   normalizarComponentesCombo,
   normalizarConfiguracionPersonalizacionFloral,
   normalizarConfiguracionRenta,
@@ -356,6 +356,26 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
             ? Number(detalle.tarifa_iva_predeterminada)
             : 0;
 
+        // Buscar categoría en catsDb por UUID o slug antes de normalizar variantes
+        const catEncontrada = catsDb.find(
+          (c) =>
+            c.ctg_id === p.pro_categoria_principal_id ||
+            c.ctg_slug === p.pro_categoria_principal_id
+        );
+        const catNombre = catEncontrada?.ctg_nombre || '';
+        const catSlug = catEncontrada?.ctg_slug || '';
+        const catTipo = catEncontrada?.ctg_tipo;
+        const palabrasClaveCat = Array.isArray(catEncontrada?.ctg_detalle_categoria?.palabras_clave)
+          ? catEncontrada.ctg_detalle_categoria.palabras_clave
+          : undefined;
+
+        const tipoEnvoltorioColeccion = inferirTipoEnvoltorioPorColeccion({
+          categoriaNombre: catNombre,
+          categoriaSlug: catSlug,
+          productoNombre: p.pro_nombre,
+          productoSlug: p.pro_slug,
+        });
+
         const variantes: VarianteEcommerce[] = varsActivas.map((v) => {
           const detVar = v.var_detalle_variante as Record<string, unknown> | undefined;
           const esPersonalizada = detVar?.iva_personalizado === true;
@@ -455,11 +475,7 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
                     v.var_detalle_variante.personalizacion_floral,
                     {
                       habilitadaPorDefecto: true,
-                      tipoEnvoltorioPorDefecto: inferirTipoEnvoltorioPorNombre(
-                        v.var_nombre,
-                        p.pro_nombre,
-                        p.pro_slug
-                      ),
+                      tipoEnvoltorioPorDefecto: tipoEnvoltorioColeccion,
                     }
                   )
                 : undefined,
@@ -484,19 +500,6 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
         if (fotos.length === 0 && fallbackMatch && fallbackMatch.fotos.length > 0) {
           fotos.push(...fallbackMatch.fotos);
         }
-
-        // Buscar categoría en catsDb por UUID o slug
-        const catEncontrada = catsDb.find(
-          (c) =>
-            c.ctg_id === p.pro_categoria_principal_id ||
-            c.ctg_slug === p.pro_categoria_principal_id
-        );
-        const catNombre = catEncontrada?.ctg_nombre || '';
-        const catSlug = catEncontrada?.ctg_slug || '';
-        const catTipo = catEncontrada?.ctg_tipo;
-        const palabrasClaveCat = Array.isArray(catEncontrada?.ctg_detalle_categoria?.palabras_clave)
-          ? catEncontrada.ctg_detalle_categoria.palabras_clave
-          : undefined;
 
         const usosRaw = [
           ...(Array.isArray(detalle.usos)
@@ -729,12 +732,7 @@ export const cargarCatalogoDinamicoTinkay = cache(async function cargarCatalogoD
             detalle.personalizacion_floral,
             {
               habilitadaPorDefecto: !esRentaProd && !esEventoProd && !esExtra,
-              tipoEnvoltorioPorDefecto: inferirTipoEnvoltorioPorNombre(
-                p.pro_nombre,
-                p.pro_slug,
-                catNombre,
-                catSlug
-              ),
+              tipoEnvoltorioPorDefecto: tipoEnvoltorioColeccion,
             }
           ),
         };

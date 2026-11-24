@@ -1593,6 +1593,35 @@ export function BandejaPedidosTienda({
             <span>Nuevo Pedido</span>
           </button>
 
+          {esAdminEstricto && (
+            <button
+              type="button"
+              onClick={() => setMostrarAdminEstados(true)}
+              title="Administrar estados de pedidos y visibilidad en Taller"
+              aria-label="Estados"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                padding: "7px 12px",
+                minHeight: "34px",
+                borderRadius: "9px",
+                border: "1px solid #D5CFC4",
+                background: "#FAF8F5",
+                color: "#1F1C19",
+                fontSize: "0.78rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                flexShrink: 0,
+              }}
+            >
+              <SlidersHorizontal size={13} />
+              <span>Estados</span>
+            </button>
+          )}
+
           <button
             type="button"
             className="eco-pedidos-btn-opciones"

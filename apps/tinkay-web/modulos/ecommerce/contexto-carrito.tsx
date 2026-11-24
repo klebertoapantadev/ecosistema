@@ -1238,9 +1238,9 @@ export function ProveedorCarrito({
         prev.includes(idLimpio) ? prev.filter((id) => id !== idLimpio) : [...prev, idLimpio]
       );
 
-      // 2. Contador global persistente: incrementa +1 permanentemente al dar Me gusta
-      //    y NUNCA decrementa aunque el usuario retire el corazón luego.
-      if (!yaEsFavorito && !likesRegistradosIds.includes(idLimpio)) {
+      // 2. Contador global persistente: incrementa +1 cada vez que el cliente pulsa Me gusta
+      //    (incluso si antes lo quitó y vuelve a presionarlo) y NUNCA decrementa al quitarlo.
+      if (!yaEsFavorito) {
         const idRaiz = idLimpio.split('__')[0] || producto.slug || idLimpio;
         const skuObjetivo =
           (varianteSku || producto.varianteInicialSku || producto.variantes?.[0]?.sku || '').trim() ||
@@ -1270,7 +1270,7 @@ export function ProveedorCarrito({
           });
       }
     },
-    [favoritosIds, likesRegistradosIds, aplicarLikesAProductos]
+    [favoritosIds, aplicarLikesAProductos]
   );
 
   const totalFavoritos = useMemo(() => {

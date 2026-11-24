@@ -30,6 +30,7 @@ import {
 } from "../acciones-operaciones-taller";
 import {
   esEntregaConfirmadaOrden,
+  esEstadoVisibleEnTaller,
   esPedidoDeElaboracionEnFecha,
   formatearFechaEntregaHumana,
   formatearHorarioEntregaOrden,
@@ -320,14 +321,33 @@ export function ConsolaTallerFloral({
     }
   };
 
-  // Taller recibe los pedidos enviados por el operador (ENVIADO_TALLER, EN_PREPARACION, LISTO_ENTREGA)
+  const ordenEsVisibleEnTaller = useCallback(
+    (o: OrdenTrabajoTaller, estadosCfg = datos.estadosConfig): boolean => {
+      if (o.estadoTaller === "ANULADO") return false;
+      const estadoPagoNorm = String(o.estadoPago || "").trim().toUpperCase();
+      if (estadoPagoNorm && !esEstadoVisibleEnTaller(estadoPagoNorm, estadosCfg)) {
+        return false;
+      }
+      if (o.estadoTaller !== "PENDIENTE_ENVIO") return true;
+      // Si el estado del pedido está explícitamente habilitado para Taller (ej. Nuevo - Confirmado), mostrarlo en Taller
+      if (
+        estadoPagoNorm &&
+        estadoPagoNorm !== "VALIDADO" &&
+        estadoPagoNorm !== "CONVENIO_IESS" &&
+        esEstadoVisibleEnTaller(estadoPagoNorm, estadosCfg)
+      ) {
+        return true;
+      }
+      return false;
+    },
+    [datos.estadosConfig]
+  );
+
+  // Taller recibe los pedidos cuyo estado tiene "Visible en Taller" habilitado
   // y opcionalmente los históricos (ENTREGADO / fechas pasadas completadas) cuando activa el botón.
   const todasOrdenesTaller = useMemo(
-    () =>
-      datos.ordenes.filter(
-        (o) => o.estadoTaller !== "ANULADO" && o.estadoTaller !== "PENDIENTE_ENVIO"
-      ),
-    [datos.ordenes]
+    () => datos.ordenes.filter((o) => ordenEsVisibleEnTaller(o, datos.estadosConfig)),
+    [datos.ordenes, datos.estadosConfig, ordenEsVisibleEnTaller]
   );
 
   const esOrdenHistorica = useCallback(

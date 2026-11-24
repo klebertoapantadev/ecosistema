@@ -108,7 +108,7 @@ import {
 import { EditorPersonalizacionFloralProducto } from "./EditorPersonalizacionFloralProducto";
 import {
   crearConfiguracionPersonalizacionFloralPorDefecto,
-  inferirTipoEnvoltorioPorNombre,
+  inferirTipoEnvoltorioPorColeccion,
   normalizarConfiguracionPersonalizacionFloral,
   resolverPersonalizacionFloralEfectiva,
   resumirConfiguracionPersonalizacionAdmin,
@@ -749,14 +749,20 @@ export function ModalEditarProducto({
       setRentaConfig(normalizarConfiguracionRenta(det.renta_config));
       const esRentaProdIni = Boolean(det.es_renta) || esCodigoOfertaRenta(producto.pro_tipo, det);
       const esExtraIni = Boolean(det.es_complemento);
+      const catIniObj = categorias.find(
+        (c) =>
+          c.ctg_id === producto.pro_categoria_principal_id ||
+          c.ctg_slug === producto.pro_categoria_principal_id
+      );
       setPersonalizacionFloral(
         normalizarConfiguracionPersonalizacionFloral(det.personalizacion_floral, {
           habilitadaPorDefecto: esFloristeria && !esRentaProdIni && !esExtraIni,
-          tipoEnvoltorioPorDefecto: inferirTipoEnvoltorioPorNombre(
-            producto.pro_nombre,
-            producto.pro_slug,
-            producto.categoria?.ctg_nombre
-          ),
+          tipoEnvoltorioPorDefecto: inferirTipoEnvoltorioPorColeccion({
+            categoriaNombre: producto.categoria?.ctg_nombre || catIniObj?.ctg_nombre,
+            categoriaSlug: catIniObj?.ctg_slug,
+            productoNombre: producto.pro_nombre,
+            productoSlug: producto.pro_slug,
+          }),
         })
       );
       setImagenUrl(det.imagen_url || "");
@@ -1558,7 +1564,10 @@ export function ModalEditarProducto({
           esFloristeria && !esOfertaRentaActiva && modoColoresVar === "personalizado"
             ? normalizarConfiguracionPersonalizacionFloral(
                 v.var_detalle_variante?.personalizacion_floral,
-                { habilitadaPorDefecto: personalizacionFloral.habilitada }
+                {
+                  habilitadaPorDefecto: personalizacionFloral.habilitada,
+                  tipoEnvoltorioPorDefecto: personalizacionFloral.tipoEnvoltorio,
+                }
               )
             : null;
 

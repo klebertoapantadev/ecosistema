@@ -1,9 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
-import { ArrowDown, ArrowUp, Loader2, Plus, Save, Trash2, X } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { ArrowDown, ArrowUp, Eye, EyeOff, Loader2, Plus, Save, Trash2, X } from "lucide-react";
 import { guardarEstadosPedidosAdminAction } from "../acciones-logistica";
-import { ESTADOS_PEDIDO_DEFECTO, type EstadoPedidoConfig } from "../operaciones-taller";
+import {
+  ESTADOS_PEDIDO_DEFECTO,
+  estadoVisibleEnTallerPorDefecto,
+  type EstadoPedidoConfig,
+} from "../operaciones-taller";
 
 export interface PropsModalAdminEstadosPedido {
   abierto: boolean;
@@ -26,8 +30,25 @@ export function ModalAdminEstadosPedido({
   const [nuevaEtiqueta, setNuevaEtiqueta] = useState<string>("");
   const [nuevoFondo, setNuevoFondo] = useState<string>("#E0F2FE");
   const [nuevoTexto, setNuevoTexto] = useState<string>("#0369A1");
+  const [nuevoVisibleTaller, setNuevoVisibleTaller] = useState<boolean>(true);
   const [guardando, setGuardando] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (abierto) {
+      const base = estadosActuales.length > 0 ? estadosActuales : ESTADOS_PEDIDO_DEFECTO;
+      setLista(
+        base.map((e) => ({
+          ...e,
+          visibleEnTaller:
+            typeof e.visibleEnTaller === "boolean"
+              ? e.visibleEnTaller
+              : estadoVisibleEnTallerPorDefecto(e.valor),
+        }))
+      );
+      setErrorMsg(null);
+    }
+  }, [abierto, estadosActuales]);
 
   if (!abierto) return null;
 
@@ -64,17 +85,35 @@ export function ModalAdminEstadosPedido({
         colorTexto: nuevoTexto,
         orden: (prev.length + 1) * 10,
         activo: true,
+        visibleEnTaller: nuevoVisibleTaller,
       },
     ]);
     setNuevaEtiqueta("");
   };
 
+  const handleEliminar = (valor: string) => {
+    if (lista.length <= 1) {
+      setErrorMsg("Debe permanecer al menos un estado de pedido.");
+      return;
+    }
+    setErrorMsg(null);
+    setLista((prev) => prev.filter((x) => x.valor !== valor));
+  };
+
   const handleGuardar = async () => {
+    if (lista.length === 0) {
+      setErrorMsg("Agrega al menos un estado antes de guardar.");
+      return;
+    }
     setGuardando(true);
     setErrorMsg(null);
     const res = await guardarEstadosPedidosAdminAction({
       negocio,
-      estados: lista.map((e, i) => ({ ...e, orden: (i + 1) * 10 })),
+      estados: lista.map((e, i) => ({
+        ...e,
+        orden: (i + 1) * 10,
+        visibleEnTaller: e.visibleEnTaller !== false,
+      })),
     });
     setGuardando(false);
     if (!res.ok) {
@@ -97,11 +136,13 @@ export function ModalAdminEstadosPedido({
         justifyContent: "center",
         padding: "14px",
       }}
+      onClick={onCerrar}
     >
       <div
+        onClick={(e) => e.stopPropagation()}
         style={{
           width: "100%",
-          maxWidth: "600px",
+          maxWidth: "700px",
           maxHeight: "90vh",
           overflowY: "auto",
           background: "#FFFFFF",
@@ -113,14 +154,20 @@ export function ModalAdminEstadosPedido({
           boxShadow: "0 20px 50px rgba(0, 0, 0, 0.28)",
         }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h3 style={{ margin: 0, fontSize: "1rem", color: "#0F172A" }}>
-            Administrar Estados de Pedidos
-          </h3>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "10px" }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: "1.02rem", color: "#0F172A" }}>
+              Administrar Estados de Pedidos
+            </h3>
+            <p style={{ margin: "3px 0 0", fontSize: "0.76rem", color: "#64748B" }}>
+              Edita, agrega o elimina estados y define cuáles son visibles en la Consola de Taller.
+            </p>
+          </div>
           <button
             type="button"
             onClick={onCerrar}
             aria-label="Cerrar"
+            title="Cerrar"
             style={{ border: "none", background: "transparent", cursor: "pointer", color: "#64748B" }}
           >
             <X size={18} />
@@ -143,100 +190,162 @@ export function ModalAdminEstadosPedido({
         )}
 
         <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
-          {lista.map((est, idx) => (
-            <div
-              key={est.valor}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-                padding: "7px 10px",
-                borderRadius: "9px",
-                border: "1px solid #E2E8F0",
-                background: "#F8FAFC",
-                flexWrap: "wrap",
-              }}
-            >
-              <input
-                type="text"
-                value={est.etiqueta}
-                onChange={(e) =>
-                  setLista((prev) =>
-                    prev.map((x) => (x.valor === est.valor ? { ...x, etiqueta: e.target.value } : x))
-                  )
-                }
+          {lista.map((est, idx) => {
+            const visibleTaller = est.visibleEnTaller !== false;
+            return (
+              <div
+                key={est.valor}
                 style={{
-                  flex: "1 1 160px",
-                  padding: "6px 8px",
-                  borderRadius: "7px",
-                  border: "1px solid #CBD5E1",
-                  fontSize: "0.8rem",
-                  fontWeight: 700,
-                  background: est.colorFondo,
-                  color: est.colorTexto,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "7px",
+                  padding: "8px 10px",
+                  borderRadius: "10px",
+                  border: "1px solid #E2E8F0",
+                  background: "#F8FAFC",
+                  flexWrap: "wrap",
                 }}
-              />
-              <input
-                type="color"
-                value={est.colorFondo}
-                title="Color de fondo"
-                onChange={(e) =>
-                  setLista((prev) =>
-                    prev.map((x) => (x.valor === est.valor ? { ...x, colorFondo: e.target.value } : x))
-                  )
-                }
-                style={{ width: "30px", height: "28px", border: "none", background: "transparent", cursor: "pointer" }}
-              />
-              <input
-                type="color"
-                value={est.colorTexto}
-                title="Color de texto"
-                onChange={(e) =>
-                  setLista((prev) =>
-                    prev.map((x) => (x.valor === est.valor ? { ...x, colorTexto: e.target.value } : x))
-                  )
-                }
-                style={{ width: "30px", height: "28px", border: "none", background: "transparent", cursor: "pointer" }}
-              />
-              <button
-                type="button"
-                disabled={idx === 0}
-                onClick={() => mover(idx, -1)}
-                title="Subir"
-                style={{ padding: "4px", borderRadius: "6px", border: "1px solid #CBD5E1", background: "#FFFFFF", cursor: "pointer" }}
               >
-                <ArrowUp size={12} />
-              </button>
-              <button
-                type="button"
-                disabled={idx === lista.length - 1}
-                onClick={() => mover(idx, 1)}
-                title="Bajar"
-                style={{ padding: "4px", borderRadius: "6px", border: "1px solid #CBD5E1", background: "#FFFFFF", cursor: "pointer" }}
-              >
-                <ArrowDown size={12} />
-              </button>
-              {est.valor !== "NUEVO_POR_CONFIRMAR" && (
+                <input
+                  type="text"
+                  value={est.etiqueta}
+                  aria-label={`Nombre del estado ${est.valor}`}
+                  onChange={(e) =>
+                    setLista((prev) =>
+                      prev.map((x) => (x.valor === est.valor ? { ...x, etiqueta: e.target.value } : x))
+                    )
+                  }
+                  style={{
+                    flex: "1 1 170px",
+                    padding: "6px 9px",
+                    borderRadius: "7px",
+                    border: "1px solid #CBD5E1",
+                    fontSize: "0.8rem",
+                    fontWeight: 700,
+                    background: est.colorFondo,
+                    color: est.colorTexto,
+                  }}
+                />
+
+                {/* Interruptor: Visible en Taller */}
                 <button
                   type="button"
-                  onClick={() => setLista((prev) => prev.filter((x) => x.valor !== est.valor))}
-                  title="Quitar estado"
+                  onClick={() =>
+                    setLista((prev) =>
+                      prev.map((x) =>
+                        x.valor === est.valor
+                          ? { ...x, visibleEnTaller: !(x.visibleEnTaller !== false) }
+                          : x
+                      )
+                    )
+                  }
+                  aria-pressed={visibleTaller}
+                  title={
+                    visibleTaller
+                      ? "Los pedidos en este estado SÍ se muestran en Taller. Clic para ocultar."
+                      : "Los pedidos en este estado NO se muestran en Taller. Clic para activar."
+                  }
                   style={{
-                    padding: "4px 6px",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    padding: "5px 10px",
+                    borderRadius: "999px",
+                    border: visibleTaller ? "1px solid #86EFAC" : "1px solid #CBD5E1",
+                    background: visibleTaller ? "#DCFCE7" : "#F1F5F9",
+                    color: visibleTaller ? "#166534" : "#64748B",
+                    fontSize: "0.72rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {visibleTaller ? <Eye size={13} /> : <EyeOff size={13} />}
+                  <span>{visibleTaller ? "Taller: Sí" : "Taller: No"}</span>
+                </button>
+
+                <input
+                  type="color"
+                  value={est.colorFondo}
+                  title="Color de fondo"
+                  aria-label="Color de fondo"
+                  onChange={(e) =>
+                    setLista((prev) =>
+                      prev.map((x) => (x.valor === est.valor ? { ...x, colorFondo: e.target.value } : x))
+                    )
+                  }
+                  style={{ width: "28px", height: "28px", border: "none", background: "transparent", cursor: "pointer" }}
+                />
+                <input
+                  type="color"
+                  value={est.colorTexto}
+                  title="Color de texto"
+                  aria-label="Color de texto"
+                  onChange={(e) =>
+                    setLista((prev) =>
+                      prev.map((x) => (x.valor === est.valor ? { ...x, colorTexto: e.target.value } : x))
+                    )
+                  }
+                  style={{ width: "28px", height: "28px", border: "none", background: "transparent", cursor: "pointer" }}
+                />
+                <button
+                  type="button"
+                  disabled={idx === 0}
+                  onClick={() => mover(idx, -1)}
+                  title="Subir"
+                  aria-label="Subir estado"
+                  style={{
+                    padding: "5px",
+                    borderRadius: "6px",
+                    border: "1px solid #CBD5E1",
+                    background: "#FFFFFF",
+                    cursor: idx === 0 ? "not-allowed" : "pointer",
+                    opacity: idx === 0 ? 0.45 : 1,
+                  }}
+                >
+                  <ArrowUp size={12} />
+                </button>
+                <button
+                  type="button"
+                  disabled={idx === lista.length - 1}
+                  onClick={() => mover(idx, 1)}
+                  title="Bajar"
+                  aria-label="Bajar estado"
+                  style={{
+                    padding: "5px",
+                    borderRadius: "6px",
+                    border: "1px solid #CBD5E1",
+                    background: "#FFFFFF",
+                    cursor: idx === lista.length - 1 ? "not-allowed" : "pointer",
+                    opacity: idx === lista.length - 1 ? 0.45 : 1,
+                  }}
+                >
+                  <ArrowDown size={12} />
+                </button>
+                <button
+                  type="button"
+                  disabled={lista.length <= 1}
+                  onClick={() => handleEliminar(est.valor)}
+                  title="Eliminar estado"
+                  aria-label={`Eliminar estado ${est.etiqueta}`}
+                  style={{
+                    padding: "5px 7px",
                     borderRadius: "6px",
                     border: "1px solid #FECACA",
                     background: "#FEF2F2",
                     color: "#B91C1C",
-                    cursor: "pointer",
+                    cursor: lista.length <= 1 ? "not-allowed" : "pointer",
+                    opacity: lista.length <= 1 ? 0.4 : 1,
                   }}
                 >
                   <Trash2 size={12} />
                 </button>
-              )}
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
 
+        {/* Barra para agregar nuevo estado */}
         <div
           style={{
             display: "flex",
@@ -252,6 +361,12 @@ export function ModalAdminEstadosPedido({
             type="text"
             value={nuevaEtiqueta}
             onChange={(e) => setNuevaEtiqueta(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                agregarEstado();
+              }
+            }}
             placeholder="Nuevo estado (ej. Listo para Retiro)"
             style={{
               flex: "1 1 180px",
@@ -262,28 +377,52 @@ export function ModalAdminEstadosPedido({
               background: "#FFFFFF",
             }}
           />
+          <button
+            type="button"
+            onClick={() => setNuevoVisibleTaller((prev) => !prev)}
+            aria-pressed={nuevoVisibleTaller}
+            title="Define si el nuevo estado será visible en Taller"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              padding: "6px 10px",
+              borderRadius: "999px",
+              border: nuevoVisibleTaller ? "1px solid #86EFAC" : "1px solid #CBD5E1",
+              background: nuevoVisibleTaller ? "#DCFCE7" : "#FFFFFF",
+              color: nuevoVisibleTaller ? "#166534" : "#64748B",
+              fontSize: "0.73rem",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            {nuevoVisibleTaller ? <Eye size={13} /> : <EyeOff size={13} />}
+            <span>{nuevoVisibleTaller ? "Taller: Sí" : "Taller: No"}</span>
+          </button>
           <input
             type="color"
             value={nuevoFondo}
             onChange={(e) => setNuevoFondo(e.target.value)}
-            title="Fondo"
-            style={{ width: "32px", height: "30px", border: "none", cursor: "pointer" }}
+            title="Color de fondo"
+            style={{ width: "30px", height: "30px", border: "none", cursor: "pointer" }}
           />
           <input
             type="color"
             value={nuevoTexto}
             onChange={(e) => setNuevoTexto(e.target.value)}
-            title="Texto"
-            style={{ width: "32px", height: "30px", border: "none", cursor: "pointer" }}
+            title="Color de texto"
+            style={{ width: "30px", height: "30px", border: "none", cursor: "pointer" }}
           />
           <button
             type="button"
             onClick={agregarEstado}
+            title="Agregar estado"
+            aria-label="Agregar estado"
             style={{
               display: "inline-flex",
               alignItems: "center",
               gap: "4px",
-              padding: "7px 11px",
+              padding: "7px 12px",
               borderRadius: "7px",
               border: "none",
               background: "#0F172A",

@@ -1056,10 +1056,13 @@ export async function confirmarPagoPluxAction(entrada: {
             0,
             Math.round((Number(prfActual.prf_total || 0) - nuevoAbonado) * 100) / 100,
           );
+          const esProformaEvento = String(detPrfActual.tipo_origen || "") === "PROFORMA_EVENTO";
           const nuevoEstadoPrf =
             detPrevio.modalidad_cobro === "RESERVA_70" && saldoPendiente > 0.01
               ? "RESERVADA_70"
-              : "APROBADA";
+              : esProformaEvento
+                ? "APROBADA"
+                : "NUEVO_CONFIRMADO";
           const pagosPluxPrevios = Array.isArray(detPrfActual.pagos_plux) ? detPrfActual.pagos_plux : [];
 
           const evidenciaPluxCompleta = {
@@ -1132,7 +1135,9 @@ export async function confirmarPagoPluxAction(entrada: {
                 .schema("comun_comercio")
                 .from("com_orden_taller")
                 .update({
-                  ota_estado_pago: saldoPendiente <= 0.01 ? "PAGADO" : "ABONADO",
+                  ota_estado_pago: nuevoEstadoPrf,
+                  ota_estado_taller:
+                    nuevoEstadoPrf === "NUEVO_CONFIRMADO" ? "ENVIADO_TALLER" : undefined,
                   ota_metodo_pago: "plux",
                   ota_detalle_orden: {
                     ...detOta,

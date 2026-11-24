@@ -2030,20 +2030,133 @@ export interface EstadoPedidoConfig {
   colorTexto: string;
   orden: number;
   activo?: boolean;
+  /** Si es true, los pedidos en este estado son visibles para el Taller (/panel/taller y TV Taller). */
+  visibleEnTaller?: boolean;
+}
+
+const ESTADOS_OCULTOS_TALLER_DEFECTO = new Set([
+  "NUEVO_POR_CONFIRMAR",
+  "ENVIADA",
+  "PENDIENTE_PAGO",
+  "NO_ACEPTADA",
+  "CANCELADO",
+]);
+
+export function estadoVisibleEnTallerPorDefecto(valorEstado: string): boolean {
+  const cod = String(valorEstado || "").trim().toUpperCase();
+  if (!cod) return true;
+  return !ESTADOS_OCULTOS_TALLER_DEFECTO.has(cod);
 }
 
 export const ESTADOS_PEDIDO_DEFECTO: EstadoPedidoConfig[] = [
-  { valor: "NUEVO_POR_CONFIRMAR", etiqueta: "Nuevo - Por Confirmar", colorFondo: "#FEF3C7", colorTexto: "#B45309", orden: 5, activo: true },
-  { valor: "ENVIADA", etiqueta: "Proforma Emitida", colorFondo: "#F3E8FF", colorTexto: "#6B21A8", orden: 10, activo: true },
-  { valor: "PENDIENTE_PAGO", etiqueta: "Pendiente Pago", colorFondo: "#FEF3C7", colorTexto: "#92400E", orden: 20, activo: true },
-  { valor: "ORDEN_CONFIRMADA", etiqueta: "Orden Confirmada", colorFondo: "#FEF9C3", colorTexto: "#854D0E", orden: 30, activo: true },
-  { valor: "RESERVADA_70", etiqueta: "Reserva 70%", colorFondo: "#DBEAFE", colorTexto: "#1D4ED8", orden: 40, activo: true },
-  { valor: "APROBADA", etiqueta: "Confirmado", colorFondo: "#DCFCE7", colorTexto: "#166534", orden: 50, activo: true },
-  { valor: "EN_PREPARACION", etiqueta: "En Taller", colorFondo: "#E0F2FE", colorTexto: "#0369A1", orden: 60, activo: true },
-  { valor: "EN_RUTA", etiqueta: "En Ruta", colorFondo: "#E0E7FF", colorTexto: "#3730A3", orden: 70, activo: true },
-  { valor: "ENTREGADO", etiqueta: "Entregado", colorFondo: "#F0FDF4", colorTexto: "#15803D", orden: 80, activo: true },
-  { valor: "NO_ACEPTADA", etiqueta: "No Aceptada", colorFondo: "#F1F5F9", colorTexto: "#64748B", orden: 90, activo: true },
-  { valor: "CANCELADO", etiqueta: "Cancelado", colorFondo: "#FEE2F2", colorTexto: "#991B1B", orden: 100, activo: true },
+  {
+    valor: "NUEVO_POR_CONFIRMAR",
+    etiqueta: "Nuevo - Por Confirmar",
+    colorFondo: "#FEF3C7",
+    colorTexto: "#B45309",
+    orden: 5,
+    activo: true,
+    visibleEnTaller: false,
+  },
+  {
+    valor: "NUEVO_CONFIRMADO",
+    etiqueta: "Nuevo - Confirmado",
+    colorFondo: "#DCFCE7",
+    colorTexto: "#166534",
+    orden: 8,
+    activo: true,
+    visibleEnTaller: true,
+  },
+  {
+    valor: "ENVIADA",
+    etiqueta: "Proforma Emitida",
+    colorFondo: "#F3E8FF",
+    colorTexto: "#6B21A8",
+    orden: 10,
+    activo: true,
+    visibleEnTaller: false,
+  },
+  {
+    valor: "PENDIENTE_PAGO",
+    etiqueta: "Pendiente Pago",
+    colorFondo: "#FEF3C7",
+    colorTexto: "#92400E",
+    orden: 20,
+    activo: true,
+    visibleEnTaller: false,
+  },
+  {
+    valor: "ORDEN_CONFIRMADA",
+    etiqueta: "Orden Confirmada",
+    colorFondo: "#FEF9C3",
+    colorTexto: "#854D0E",
+    orden: 30,
+    activo: true,
+    visibleEnTaller: true,
+  },
+  {
+    valor: "RESERVADA_70",
+    etiqueta: "Reserva 70%",
+    colorFondo: "#DBEAFE",
+    colorTexto: "#1D4ED8",
+    orden: 40,
+    activo: true,
+    visibleEnTaller: true,
+  },
+  {
+    valor: "APROBADA",
+    etiqueta: "Confirmado",
+    colorFondo: "#DCFCE7",
+    colorTexto: "#166534",
+    orden: 50,
+    activo: true,
+    visibleEnTaller: true,
+  },
+  {
+    valor: "EN_PREPARACION",
+    etiqueta: "En Taller",
+    colorFondo: "#E0F2FE",
+    colorTexto: "#0369A1",
+    orden: 60,
+    activo: true,
+    visibleEnTaller: true,
+  },
+  {
+    valor: "EN_RUTA",
+    etiqueta: "En Ruta",
+    colorFondo: "#E0E7FF",
+    colorTexto: "#3730A3",
+    orden: 70,
+    activo: true,
+    visibleEnTaller: true,
+  },
+  {
+    valor: "ENTREGADO",
+    etiqueta: "Entregado",
+    colorFondo: "#F0FDF4",
+    colorTexto: "#15803D",
+    orden: 80,
+    activo: true,
+    visibleEnTaller: true,
+  },
+  {
+    valor: "NO_ACEPTADA",
+    etiqueta: "No Aceptada",
+    colorFondo: "#F1F5F9",
+    colorTexto: "#64748B",
+    orden: 90,
+    activo: true,
+    visibleEnTaller: false,
+  },
+  {
+    valor: "CANCELADO",
+    etiqueta: "Cancelado",
+    colorFondo: "#FEE2F2",
+    colorTexto: "#991B1B",
+    orden: 100,
+    activo: true,
+    visibleEnTaller: false,
+  },
 ];
 
 export function normalizarEstadosPedidosConfig(
@@ -2066,6 +2179,7 @@ export function normalizarEstadosPedidosConfig(
     const etiqueta = String(raw.etiqueta || "").trim();
     if (!valor || !etiqueta || vistos.has(valor)) continue;
     vistos.add(valor);
+    const visibleRaw = raw.visibleEnTaller ?? raw.visible_en_taller;
     limpios.push({
       valor,
       etiqueta,
@@ -2073,12 +2187,36 @@ export function normalizarEstadosPedidosConfig(
       colorTexto: String(raw.colorTexto || "#1E293B").trim() || "#1E293B",
       orden: Number.isFinite(Number(raw.orden)) ? Number(raw.orden) : (i + 1) * 10,
       activo: raw.activo !== false,
+      visibleEnTaller:
+        typeof visibleRaw === "boolean"
+          ? visibleRaw
+          : estadoVisibleEnTallerPorDefecto(valor),
     });
   }
 
-  if (!vistos.has("NUEVO_POR_CONFIRMAR")) {
-    limpios.unshift(ESTADOS_PEDIDO_DEFECTO[0]!);
+  if (limpios.length === 0) {
+    return ESTADOS_PEDIDO_DEFECTO;
   }
 
   return limpios.sort((a, b) => a.orden - b.orden);
+}
+
+/**
+ * Determina si un pedido con `estadoPedido` debe mostrarse en la Consola de Taller / TV Taller
+ * según la configuración editable de estados del negocio.
+ */
+export function esEstadoVisibleEnTaller(
+  estadoPedido?: string | null,
+  estadosConfig?: EstadoPedidoConfig[] | null
+): boolean {
+  const cod = String(estadoPedido || "").trim().toUpperCase();
+  if (!cod || cod === "VALIDADO" || cod === "CONVENIO_IESS" || cod === "PAGADO" || cod === "ABONADO") {
+    return true;
+  }
+  const lista = estadosConfig && estadosConfig.length > 0 ? estadosConfig : ESTADOS_PEDIDO_DEFECTO;
+  const encontrado = lista.find((e) => e.valor === cod);
+  if (encontrado) {
+    return encontrado.visibleEnTaller !== false;
+  }
+  return estadoVisibleEnTallerPorDefecto(cod);
 }

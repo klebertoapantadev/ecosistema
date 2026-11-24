@@ -4,10 +4,12 @@ import React from "react";
 import { Palette, Sparkles, Check } from "lucide-react";
 import {
   COLORES_ROSAS_PERSONALIZACION,
-  OPCIONES_COLOR_BASE_PAPEL,
   OPCIONES_TIPO_ENVOLTORIO_FLORAL,
+  obtenerColoresPorDefectoEnvoltorio,
+  obtenerOpcionesColorEnvoltorio,
   type ColorBasePapelId,
   type ConfiguracionPersonalizacionFloral,
+  type TipoEnvoltorioFloral,
 } from "../utils/personalizacionFloral";
 
 interface Props {
@@ -29,14 +31,28 @@ export function EditorPersonalizacionFloralProducto({ valor, onChange }: Props) 
     actualizar({ coloresRosasDisponibles: siguientes });
   };
 
+  const opcionesColorEnvoltorio = obtenerOpcionesColorEnvoltorio(valor.tipoEnvoltorio);
+
   const toggleColorBase = (id: ColorBasePapelId) => {
-    const actuales = valor.coloresBaseDisponibles || ["claros", "oscuros", "rosa"];
+    const porDefecto = obtenerColoresPorDefectoEnvoltorio(valor.tipoEnvoltorio);
+    const actuales =
+      valor.coloresBaseDisponibles && valor.coloresBaseDisponibles.length > 0
+        ? valor.coloresBaseDisponibles
+        : porDefecto;
     const existe = actuales.includes(id);
     if (existe && actuales.length <= 1) return; // Mantener al menos 1 opción cuando está activo
     const siguientes = existe
       ? actuales.filter((c) => c !== id)
       : ([...actuales, id] as ColorBasePapelId[]);
     actualizar({ coloresBaseDisponibles: siguientes });
+  };
+
+  const cambiarTipoEnvoltorio = (nuevoTipo: TipoEnvoltorioFloral) => {
+    actualizar({
+      tipoEnvoltorio: nuevoTipo,
+      mostrarColorBase: nuevoTipo !== "no_aplica",
+      coloresBaseDisponibles: obtenerColoresPorDefectoEnvoltorio(nuevoTipo),
+    });
   };
 
   const actualizarOrqMin = (nuevoMin: number) => {
@@ -504,12 +520,7 @@ export function EditorPersonalizacionFloralProducto({ valor, onChange }: Props) 
                     <button
                       key={opEnv.id}
                       type="button"
-                      onClick={() =>
-                        actualizar({
-                          tipoEnvoltorio: opEnv.id,
-                          mostrarColorBase: opEnv.id !== "no_aplica",
-                        })
-                      }
+                      onClick={() => cambiarTipoEnvoltorio(opEnv.id)}
                       title={opEnv.descripcion}
                       style={{
                         display: "inline-flex",
@@ -560,11 +571,13 @@ export function EditorPersonalizacionFloralProducto({ valor, onChange }: Props) 
                   }}
                 >
                   Colores disponibles para{" "}
-                  <strong>{valor.tipoEnvoltorio === "base" ? "Base" : "Papel"}</strong> (3
-                  alternativas exclusivas):
+                  <strong>{valor.tipoEnvoltorio === "base" ? "Base" : "Papel"}</strong>{" "}
+                  {valor.tipoEnvoltorio === "base"
+                    ? "(Blanco / Negro / Rosado):"
+                    : "(Colores Claros / Oscuros / Tonos Pastel):"}
                 </span>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                  {OPCIONES_COLOR_BASE_PAPEL.map((op) => {
+                  {opcionesColorEnvoltorio.map((op) => {
                     const activa = valor.coloresBaseDisponibles.includes(op.id);
                     return (
                       <button
@@ -586,29 +599,28 @@ export function EditorPersonalizacionFloralProducto({ valor, onChange }: Props) 
                         }}
                       >
                         <span style={{ display: "inline-flex", alignItems: "center" }}>
-                          <span
-                            style={{
-                              width: "12px",
-                              height: "12px",
-                              borderRadius: "999px",
-                              background: op.coloresMuestra[0],
-                              border: "1px solid rgba(0,0,0,0.22)",
-                            }}
-                          />
-                          <span
-                            style={{
-                              width: "12px",
-                              height: "12px",
-                              borderRadius: "999px",
-                              background: op.coloresMuestra[1],
-                              border: "1px solid rgba(0,0,0,0.22)",
-                              marginLeft: "-4px",
-                            }}
-                          />
+                          {op.coloresMuestra.map((hex, idxM) => (
+                            <span
+                              key={`${op.id}-${idxM}`}
+                              style={{
+                                width: "12px",
+                                height: "12px",
+                                borderRadius: "999px",
+                                background: hex,
+                                border: "1px solid rgba(0,0,0,0.22)",
+                                marginLeft: idxM > 0 ? "-4px" : 0,
+                              }}
+                            />
+                          ))}
                         </span>
                         <span>
-                          {op.etiqueta}{" "}
-                          <small style={{ fontWeight: 500, opacity: 0.8 }}>({op.detalle})</small>
+                          {op.etiqueta}
+                          {valor.tipoEnvoltorio === "papel_envoltorio" && (
+                            <>
+                              {" "}
+                              <small style={{ fontWeight: 500, opacity: 0.8 }}>({op.detalle})</small>
+                            </>
+                          )}
                         </span>
                       </button>
                     );

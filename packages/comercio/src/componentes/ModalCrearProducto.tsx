@@ -96,6 +96,8 @@ import {
 import { EditorPersonalizacionFloralProducto } from "./EditorPersonalizacionFloralProducto";
 import {
   crearConfiguracionPersonalizacionFloralPorDefecto,
+  inferirTipoEnvoltorioPorColeccion,
+  obtenerColoresPorDefectoEnvoltorio,
   type ConfiguracionPersonalizacionFloral,
 } from "../utils/personalizacionFloral";
 
@@ -151,10 +153,34 @@ export function ModalCrearProducto({
   const [rentaConfig, setRentaConfig] = useState<ConfiguracionRentaProducto>(() =>
     normalizarConfiguracionRenta()
   );
+  const [envoltorioEditadoManual, setEnvoltorioEditadoManual] = useState(false);
   const [personalizacionFloral, setPersonalizacionFloral] =
-    useState<ConfiguracionPersonalizacionFloral>(() =>
-      crearConfiguracionPersonalizacionFloralPorDefecto(esFloristeria)
-    );
+    useState<ConfiguracionPersonalizacionFloral>(() => {
+      const catInicial = categorias[0];
+      const tipoEnvInicial = esFloristeria
+        ? inferirTipoEnvoltorioPorColeccion({
+            categoriaNombre: catInicial?.ctg_nombre,
+            categoriaSlug: catInicial?.ctg_slug,
+          })
+        : "no_aplica";
+      return crearConfiguracionPersonalizacionFloralPorDefecto(esFloristeria, tipoEnvInicial);
+    });
+
+  useEffect(() => {
+    if (!esFloristeria || envoltorioEditadoManual) return;
+    const catSel = categoriasLocales.find((c) => c.ctg_id === categoriaId);
+    if (!catSel) return;
+    const tipoEnv = inferirTipoEnvoltorioPorColeccion({
+      categoriaNombre: catSel.ctg_nombre,
+      categoriaSlug: catSel.ctg_slug,
+    });
+    setPersonalizacionFloral((prev) => ({
+      ...prev,
+      tipoEnvoltorio: tipoEnv,
+      mostrarColorBase: tipoEnv !== "no_aplica",
+      coloresBaseDisponibles: obtenerColoresPorDefectoEnvoltorio(tipoEnv),
+    }));
+  }, [categoriaId, categoriasLocales, esFloristeria, envoltorioEditadoManual]);
   const [precioBase, setPrecioBase] = useState<number | "">("");
   const [precioComparacion, setPrecioComparacion] = useState<number | "">("");
   const [tarifaIva, setTarifaIva] = useState<number>(esFloristeria ? 0 : 15);
@@ -1432,7 +1458,12 @@ export function ModalCrearProducto({
               <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                 <EditorPersonalizacionFloralProducto
                   valor={personalizacionFloral}
-                  onChange={setPersonalizacionFloral}
+                  onChange={(nuevo) => {
+                    if (nuevo.tipoEnvoltorio !== personalizacionFloral.tipoEnvoltorio) {
+                      setEnvoltorioEditadoManual(true);
+                    }
+                    setPersonalizacionFloral(nuevo);
+                  }}
                 />
               </div>
             )}

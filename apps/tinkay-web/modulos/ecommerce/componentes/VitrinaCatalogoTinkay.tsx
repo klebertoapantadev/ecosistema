@@ -1,5 +1,4 @@
 'use client';
-import { SelectConBuscador } from "@eco/comercio";
 
 import React, { useState, useMemo } from 'react';
 import { useCarrito } from '../contexto-carrito';
@@ -28,7 +27,6 @@ import {
   SlidersHorizontal,
   Feather,
   Sparkles,
-  ArrowUpDown,
   Link2,
   Check,
   Tag,
@@ -37,9 +35,22 @@ import {
   Flame,
   Zap,
   Heart,
+  ChevronDown,
+  ChevronUp,
+  Layers,
+  DollarSign,
+  TrendingUp,
 } from 'lucide-react';
 
 export { obtenerNombreProductoIndividual, obtenerPvpProducto, productoTieneOferta };
+
+const PRESUPUESTOS_FILTRO = [
+  { id: 'todos', etiqueta: 'Todos' },
+  { id: 'menor-30', etiqueta: 'Hasta $30' },
+  { id: '30-50', etiqueta: '$30 – $50' },
+  { id: '50-80', etiqueta: '$50 – $80' },
+  { id: 'mayor-80', etiqueta: 'Más de $80' },
+] as const;
 
 export function VitrinaCatalogoTinkay() {
   const {
@@ -57,6 +68,7 @@ export function VitrinaCatalogoTinkay() {
   } = useCarrito();
 
   const [linkCatCopiado, setLinkCatCopiado] = useState(false);
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
 
   const handleCopiarEnlaceCategoria = async () => {
     const url = obtenerEnlaceCategoriaActual(categoriaActiva);
@@ -104,6 +116,11 @@ export function VitrinaCatalogoTinkay() {
       ),
     [clasificacionActiva, categoriasVisibles, productosBaseDesplegados]
   );
+
+  const coleccionesParaFiltros = useMemo(() => {
+    if (subcategoriasActivas.length > 0) return subcategoriasActivas;
+    return categoriasVisibles.filter((c) => c.id !== 'cat-todos');
+  }, [subcategoriasActivas, categoriasVisibles]);
 
   // Si la categoría activa quedó sin productos o se ocultó, regresar a 'cat-todos'
   React.useEffect(() => {
@@ -205,6 +222,14 @@ export function VitrinaCatalogoTinkay() {
     );
   };
 
+  const handleLimpiarTodo = () => {
+    setCategoriaActiva('cat-todos');
+    setTerminoBusqueda('');
+    setEtiquetasActivas([]);
+    setFiltroPresupuesto('todos');
+    setCriterioOrden('recomendados');
+  };
+
   // Productos base del ámbito actual (antes del filtro por chips de etiquetas) para listar etiquetas útiles
   const productosAmbitoActual = useMemo(() => {
     return productosBaseDesplegados.filter((p) => {
@@ -257,12 +282,7 @@ export function VitrinaCatalogoTinkay() {
     return productosAmbitoActual.filter((p) => productoCoincideConEtiquetas(p, etiquetasActivas));
   }, [productosAmbitoActual, etiquetasActivas]);
 
-  // 4. Ordenamiento reactivo con jerarquía estructural:
-  //    Nivel 1: Flores destacadas (Primero)
-  //    Nivel 2: Flores resto (Luego el resto)
-  //    Nivel 3: Condolencias (Trasantepenúltimo)
-  //    Nivel 4: Eventos (Penúltimo)
-  //    Nivel 5: Mobiliario (Último)
+  // 4. Ordenamiento reactivo con jerarquía estructural
   const productosFinales = useMemo(() => {
     const lista = [...productosFiltrados];
 
@@ -274,7 +294,6 @@ export function VitrinaCatalogoTinkay() {
         return obtenerPvpProducto(b) - obtenerPvpProducto(a);
       }
 
-      // En "Todo el Catálogo" (vista general), preservar estrictamente los 5 niveles estructurales
       if (categoriaActiva === 'cat-todos') {
         const jA = obtenerJerarquiaCatalogoTinkay(a);
         const jB = obtenerJerarquiaCatalogoTinkay(b);
@@ -283,7 +302,6 @@ export function VitrinaCatalogoTinkay() {
         }
       }
 
-      // Ordenamiento dentro del mismo nivel o cuando se filtra por una categoría específica
       switch (criterioOrden) {
         case 'precio-desc':
           return obtenerPvpProducto(b) - obtenerPvpProducto(a);
@@ -320,7 +338,7 @@ export function VitrinaCatalogoTinkay() {
       : categoriaActiva === 'grupo-entrega-inmediata'
       ? 'Arreglos con Entrega Inmediata'
       : categoriaActiva === 'grupo-favoritos'
-      ? 'Mis Productos Favoritos'
+      ? 'Mis Productos con Me Gusta'
       : esModoCondolencias
       ? 'Arreglos de Condolencias & Respeto'
       : clasifPrincipalObj
@@ -338,7 +356,7 @@ export function VitrinaCatalogoTinkay() {
       ? 'Diseños florales frescos listos para despachar el mismo día en 1 a 2 horas en Quito y Valles.'
       : categoriaActiva === 'grupo-favoritos'
       ? totalFavoritos > 0
-        ? `Tienes ${totalFavoritos} ${totalFavoritos === 1 ? 'arreglo guardado' : 'arreglos guardados'} con Me gusta para revisar o pedir cuando desees.`
+        ? `Tienes ${totalFavoritos} ${totalFavoritos === 1 ? 'arreglo marcado' : 'arreglos marcados'} con Me gusta para revisar o pedir cuando desees.`
         : 'Pulsa el ícono de corazón en cualquier arreglo para guardarlo en tu lista personal.'
       : esModoCondolencias
       ? 'Composiciones solemnes en blanco y follajes andinos para acompañar en los momentos más difíciles con entrega puntual en velaciones e iglesias.'
@@ -346,7 +364,7 @@ export function VitrinaCatalogoTinkay() {
       ? clasifPrincipalObj.descripcionVitrina
       : categoriaActivaObj && categoriaActiva !== 'cat-todos' && categoriaActivaObj.descripcion
       ? categoriaActivaObj.descripcion
-      : 'Explora nuestros arreglos florales para toda ocasión, eventos y condolencias preparados con rosas frescas de exportación.';
+      : 'Explora nuestros arreglos florales para toda ocasión, eventos y condolencias preparados con rosas frescas ecuatorianas.';
 
   const nombreEnlaceActual =
     categoriaActiva === 'grupo-ofertas'
@@ -363,14 +381,59 @@ export function VitrinaCatalogoTinkay() {
       ? categoriaActivaObj.nombre
       : '';
 
+  const cantidadFiltrosActivos =
+    (categoriaActiva !== 'cat-todos' && categoriaActiva !== 'grupo-favoritos' ? 1 : 0) +
+    etiquetasActivas.length +
+    (criterioOrden !== 'recomendados' ? 1 : 0) +
+    (filtroPresupuesto !== 'todos' ? 1 : 0);
+
+  const etiquetaPresupuestoActiva =
+    PRESUPUESTOS_FILTRO.find((p) => p.id === filtroPresupuesto)?.etiqueta || '';
+
+  const chipEstilo = (activo: boolean, variante?: 'oscuro' | 'rosa' | 'ambar' | 'verde') => {
+    if (activo) {
+      if (variante === 'rosa') {
+        return {
+          background: '#BE123C',
+          border: '1px solid #BE123C',
+          color: '#FFFFFF',
+        };
+      }
+      if (variante === 'ambar') {
+        return {
+          background: '#B45309',
+          border: '1px solid #B45309',
+          color: '#FFFFFF',
+        };
+      }
+      if (variante === 'verde') {
+        return {
+          background: '#2F4737',
+          border: '1px solid #2F4737',
+          color: '#FFFFFF',
+        };
+      }
+      return {
+        background: '#1F1C19',
+        border: '1px solid #1F1C19',
+        color: '#FFFFFF',
+      };
+    }
+    return {
+      background: '#FAF8F5',
+      border: '1px solid #E5DFD5',
+      color: '#3F3A35',
+    };
+  };
+
   return (
     <section
       className={`seccion-vitrina-catalogo ${esModoCondolencias ? 'vitrina-modo-condolencias' : ''}`}
       id="catalogo"
     >
       <div className="contenedor-maximo">
-        {/* Cabecera de la vitrina */}
-        <div className="cabecera-vitrina">
+        {/* Cabecera editorial sobria */}
+        <div className="cabecera-vitrina" style={{ marginBottom: '12px' }}>
           <div className="titulos-vitrina">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span className="etiqueta-pequena">
@@ -395,7 +458,7 @@ export function VitrinaCatalogoTinkay() {
                     )
                   }
                   aria-pressed={criterioOrden === 'mas-deseados'}
-                  title="Ver primero los productos más deseados según los Me gusta acumulados de todos los clientes"
+                  title="Ordenar por los arreglos con más Me gusta"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -405,12 +468,12 @@ export function VitrinaCatalogoTinkay() {
                     border:
                       criterioOrden === 'mas-deseados'
                         ? '1px solid #BE123C'
-                        : '1px solid #FBCFE8',
+                        : '1px solid #E7E2D8',
                     background:
-                      criterioOrden === 'mas-deseados' ? '#BE123C' : '#FFF1F2',
-                    color: criterioOrden === 'mas-deseados' ? '#FFFFFF' : '#BE123C',
-                    fontSize: '0.73rem',
-                    fontWeight: 700,
+                      criterioOrden === 'mas-deseados' ? '#BE123C' : '#F6F4EF',
+                    color: criterioOrden === 'mas-deseados' ? '#FFFFFF' : '#6B655E',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
                     cursor: 'pointer',
                   }}
                 >
@@ -422,298 +485,829 @@ export function VitrinaCatalogoTinkay() {
             <h2 className="titulo-seccion-vitrina">{tituloVitrinaActual}</h2>
             <p className="subtitulo-seccion-vitrina">{subtituloVitrinaActual}</p>
           </div>
-
-          {/* Barra de Búsqueda, Ordenamiento y Filtros Rápidos */}
-          <div className="barra-busqueda-vitrina">
-            <div className="campo-busqueda-icono">
-              <Search size={18} className="icono-busqueda" />
-              <input
-                type="text"
-                placeholder="Buscar por nombre, etiqueta (#orquídeas, rosas), uso u ocasión..."
-                value={terminoBusqueda}
-                onChange={(e) => handleCambioBusqueda(e.target.value)}
-                className="input-busqueda-catalogo"
-                aria-label="Buscar productos por nombre, etiqueta de búsqueda, categoría o uso"
-              />
-              {terminoBusqueda && (
-                <button
-                  type="button"
-                  onClick={() => setTerminoBusqueda('')}
-                  className="btn-limpiar-busqueda"
-                  title="Limpiar búsqueda"
-                  aria-label="Limpiar búsqueda"
-                >
-                  ×
-                </button>
-              )}
-            </div>
-
-            {/* Selectores compactos: en móvil se disponen en 2 columnas para ahorrar scroll */}
-            <div className="fila-selectores-vitrina">
-              {/* Selector de Ordenamiento por Precio / Relevancia */}
-              <div className="selector-orden-wrapper" title="Ordenar catálogo">
-                <ArrowUpDown size={15} />
-                <SelectConBuscador
-                  value={criterioOrden}
-                  onChange={(e) =>
-                    setCriterioOrden(
-                      e.target.value as
-                        | 'recomendados'
-                        | 'mas-deseados'
-                        | 'precio-desc'
-                        | 'precio-asc'
-                        | 'destacados'
-                        | 'nombre-asc'
-                    )
-                  }
-                  className="select-criterio-orden"
-                  aria-label="Ordenar productos por recomendación, más deseados, precio o destacados"
-                >
-                  <option value="recomendados">Recomendados Tinkay</option>
-                  <option value="mas-deseados">Más deseados (❤️)</option>
-                  <option value="destacados">Más Pedidos / Destacados</option>
-                  <option value="precio-desc">Mayor a menor ($$$ → $)</option>
-                  <option value="precio-asc">Menor a mayor ($ → $$$)</option>
-                  <option value="nombre-asc">Nombre: A — Z</option>
-                </SelectConBuscador>
-              </div>
-
-              {/* Selector de Rango de Presupuesto */}
-              <div className="selector-presupuesto-wrapper" title="Filtrar por presupuesto">
-                <SlidersHorizontal size={15} />
-                <SelectConBuscador
-                  value={filtroPresupuesto}
-                  onChange={(e) => setFiltroPresupuesto(e.target.value)}
-                  className="select-filtro-presupuesto"
-                  aria-label="Filtrar por rango de presupuesto"
-                >
-                  <option value="todos">Cualquier Presupuesto</option>
-                  <option value="menor-30">Hasta $30.00</option>
-                  <option value="30-50">$30.00 - $50.00</option>
-                  <option value="50-80">$50.00 - $80.00</option>
-                  <option value="mayor-80">Más de $80.00</option>
-                </SelectConBuscador>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Nivel 1: Primera Clasificación + Ofertas + Entrega Inmediata + Me gusta + Copiar link */}
+        {/* ================================================================
+            BARRA PRINCIPAL DE BÚSQUEDA + FILTROS + ME GUSTA DEL CLIENTE
+            ================================================================ */}
         <div
-          className="fila-categorias-y-enlace"
           style={{
             display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'space-between',
-            gap: '8px',
-            flexWrap: 'nowrap',
-            marginBottom: '6px',
+            flexDirection: 'column',
+            gap: '10px',
+            marginBottom: '16px',
           }}
         >
+          {/* Fila 1: Buscador por texto (control principal) */}
+          <div className="campo-busqueda-icono" style={{ width: '100%' }}>
+            <Search size={18} className="icono-busqueda" />
+            <input
+              type="text"
+              placeholder="Busca por ocasión, flores, color, precio..."
+              value={terminoBusqueda}
+              onChange={(e) => handleCambioBusqueda(e.target.value)}
+              className="input-busqueda-catalogo"
+              aria-label="Busca por ocasión, flores, color o etiqueta"
+              style={{
+                width: '100%',
+                minHeight: '46px',
+                fontSize: '0.92rem',
+              }}
+            />
+            {terminoBusqueda && (
+              <button
+                type="button"
+                onClick={() => setTerminoBusqueda('')}
+                className="btn-limpiar-busqueda"
+                title="Limpiar búsqueda"
+                aria-label="Limpiar búsqueda"
+              >
+                ×
+              </button>
+            )}
+          </div>
+
+          {/* Fila 2: Botón Filtros + Botón Me Gusta (Corazón del cliente) + Copiar link */}
           <div
-            className="pills-categorias-scroll pills-clasificacion-principal"
-            style={{ flex: 1, minWidth: 0 }}
-            role="tablist"
-            aria-label="Primera clasificación de consulta y filtros rápidos"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '8px',
+              flexWrap: 'wrap',
+            }}
           >
-            {totalFavoritos > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              {/* Botón principal de Filtros */}
               <button
                 type="button"
-                role="tab"
-                aria-selected={clasificacionActiva === 'grupo-favoritos'}
-                title={`Revisar mis ${totalFavoritos} productos marcados con Me gusta`}
-                className={`pill-categoria pill-favoritos con-likes ${
-                  clasificacionActiva === 'grupo-favoritos' ? 'pill-activa' : ''
-                }`}
-                onClick={() => handleSeleccionarCategoria('grupo-favoritos')}
+                onClick={() => setFiltrosAbiertos((prev) => !prev)}
+                aria-expanded={filtrosAbiertos}
+                aria-controls="panel-filtros-tinkay"
+                title="Abrir filtros por categoría, colecciones, etiquetas, más solicitados y presupuesto"
+                aria-label="Filtros del catálogo"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '7px',
+                  padding: '9px 14px',
+                  borderRadius: '999px',
+                  border:
+                    filtrosAbiertos || cantidadFiltrosActivos > 0
+                      ? '1.5px solid #1F1C19'
+                      : '1px solid #DCD5CA',
+                  background:
+                    filtrosAbiertos || cantidadFiltrosActivos > 0 ? '#1F1C19' : '#FFFFFF',
+                  color:
+                    filtrosAbiertos || cantidadFiltrosActivos > 0 ? '#FFFFFF' : '#1F1C19',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(31,28,25,0.06)',
+                }}
               >
-                <Heart size={14} fill="currentColor" />
+                <SlidersHorizontal size={15} />
+                <span>Filtros</span>
+                {cantidadFiltrosActivos > 0 && (
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minWidth: '20px',
+                      height: '20px',
+                      padding: '0 6px',
+                      borderRadius: '999px',
+                      background: '#E88FB0',
+                      color: '#1F1C19',
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                    }}
+                  >
+                    {cantidadFiltrosActivos}
+                  </span>
+                )}
+                {filtrosAbiertos ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
+              </button>
+
+              {/* Opción dedicada para ver los marcados con Me Gusta (Corazón) del cliente */}
+              <button
+                type="button"
+                onClick={() =>
+                  handleSeleccionarCategoria(
+                    categoriaActiva === 'grupo-favoritos' ? 'cat-todos' : 'grupo-favoritos'
+                  )
+                }
+                aria-pressed={categoriaActiva === 'grupo-favoritos'}
+                title={
+                  totalFavoritos > 0
+                    ? `Ver mis ${totalFavoritos} arreglos marcados con Me gusta`
+                    : 'Ver mis arreglos marcados con Me gusta'
+                }
+                aria-label="Mis Me gusta"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '9px 14px',
+                  borderRadius: '999px',
+                  border:
+                    categoriaActiva === 'grupo-favoritos'
+                      ? '1.5px solid #BE123C'
+                      : totalFavoritos > 0
+                        ? '1px solid #F4B4C6'
+                        : '1px solid #DCD5CA',
+                  background:
+                    categoriaActiva === 'grupo-favoritos'
+                      ? '#BE123C'
+                      : totalFavoritos > 0
+                        ? '#FFF1F2'
+                        : '#FFFFFF',
+                  color:
+                    categoriaActiva === 'grupo-favoritos'
+                      ? '#FFFFFF'
+                      : totalFavoritos > 0
+                        ? '#BE123C'
+                        : '#3F3A35',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(31,28,25,0.05)',
+                }}
+              >
+                <Heart
+                  size={15}
+                  fill={categoriaActiva === 'grupo-favoritos' || totalFavoritos > 0 ? 'currentColor' : 'none'}
+                />
                 <span>Me gusta</span>
-                <span className="badge-pill-contador">{totalFavoritos}</span>
+                {totalFavoritos > 0 && (
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      minWidth: '20px',
+                      height: '20px',
+                      padding: '0 6px',
+                      borderRadius: '999px',
+                      background:
+                        categoriaActiva === 'grupo-favoritos'
+                          ? 'rgba(255,255,255,0.22)'
+                          : '#BE123C',
+                      color: '#FFFFFF',
+                      fontSize: '0.72rem',
+                      fontWeight: 800,
+                    }}
+                  >
+                    {totalFavoritos}
+                  </span>
+                )}
               </button>
-            )}
-            {CLASIFICACIONES_PRINCIPALES_TINKAY.map((clasif) => {
-              const estaActiva = clasificacionActiva === clasif.id;
-              return (
-                <button
-                  key={clasif.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={estaActiva}
-                  title={`${clasif.nombre} — ${clasif.subtitulo}`}
-                  className={`pill-categoria pill-clasificacion-principal ${
-                    estaActiva ? 'pill-activa' : ''
-                  } ${clasif.modoVisualSobrio ? 'pill-condolencias' : ''}`}
-                  onClick={() => handleSeleccionarCategoria(clasif.id)}
-                >
-                  {clasif.modoVisualSobrio && <Feather size={14} className="icono-pill" />}
-                  <span>{clasif.nombre}</span>
-                  {clasif.id === 'grupo-arreglos-florales' && (
-                    <span className="pill-subtexto-ocasion">(Para toda ocasión)</span>
-                  )}
-                </button>
-              );
-            })}
-            {totalOfertasDisponibles > 0 && (
-              <button
-                type="button"
-                role="tab"
-                aria-selected={clasificacionActiva === 'grupo-ofertas'}
-                title={`Filtrar ${totalOfertasDisponibles} productos en oferta`}
-                className={`pill-categoria pill-ofertas ${
-                  clasificacionActiva === 'grupo-ofertas' ? 'pill-activa' : ''
-                }`}
-                onClick={() => handleSeleccionarCategoria('grupo-ofertas')}
-              >
-                <Flame size={14} />
-                <span>Ofertas</span>
-                <span className="badge-pill-contador">{totalOfertasDisponibles}</span>
-              </button>
-            )}
-            {totalEntregaInmediata > 0 && (
-              <button
-                type="button"
-                role="tab"
-                aria-selected={clasificacionActiva === 'grupo-entrega-inmediata'}
-                title="Filtrar arreglos con entrega inmediata"
-                className={`pill-categoria pill-inmediata ${
-                  clasificacionActiva === 'grupo-entrega-inmediata' ? 'pill-activa' : ''
-                }`}
-                onClick={() => handleSeleccionarCategoria('grupo-entrega-inmediata')}
-              >
-                <Zap size={14} />
-                <span>Entrega Inmediata</span>
-              </button>
-            )}
+            </div>
+
             <button
               type="button"
-              role="tab"
-              aria-selected={clasificacionActiva === 'cat-todos'}
-              title="Ver todo el catálogo"
-              className={`pill-categoria ${
-                clasificacionActiva === 'cat-todos' ? 'pill-activa' : ''
-              }`}
-              onClick={() => handleSeleccionarCategoria('cat-todos')}
+              onClick={handleCopiarEnlaceCategoria}
+              className="btn-responsive-accion"
+              title={
+                nombreEnlaceActual
+                  ? `Copiar link directo de "${nombreEnlaceActual}"`
+                  : 'Copiar link del catálogo'
+              }
+              aria-label="Copiar link"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 13px',
+                borderRadius: '999px',
+                border: linkCatCopiado ? '1px solid var(--verde)' : '1px solid var(--linea)',
+                background: linkCatCopiado ? 'rgba(61, 90, 69, 0.1)' : 'var(--blanco)',
+                color: linkCatCopiado ? 'var(--verde)' : 'var(--tinta)',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                cursor: 'pointer',
+                flexShrink: 0,
+              }}
             >
-              <span>Todo</span>
+              {linkCatCopiado ? <Check size={14} /> : <Link2 size={14} />}
+              <span className="btn-texto-responsive">
+                {linkCatCopiado ? 'Link copiado' : 'Copiar link'}
+              </span>
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={handleCopiarEnlaceCategoria}
-            className="btn-responsive-accion"
-            title={
-              nombreEnlaceActual
-                ? `Copiar link directo de "${nombreEnlaceActual}" para WhatsApp o Chat`
-                : 'Copiar link directo del catálogo para WhatsApp o Chat'
-            }
-            aria-label="Copiar link de categoría"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 13px',
-              borderRadius: '999px',
-              border: linkCatCopiado ? '1px solid var(--verde)' : '1px solid var(--linea)',
-              background: linkCatCopiado ? 'rgba(61, 90, 69, 0.1)' : 'var(--blanco)',
-              color: linkCatCopiado ? 'var(--verde)' : 'var(--tinta)',
-              fontSize: '0.78rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              flexShrink: 0,
-            }}
-          >
-            {linkCatCopiado ? <Check size={14} /> : <Link2 size={14} />}
-            <span className="btn-texto-responsive">
-              {linkCatCopiado ? 'Link copiado' : 'Copiar link'}
-            </span>
-          </button>
-        </div>
-
-        {/* Nivel 2: Sub-colecciones contextuales (dentro de Arreglos Florales, Todo o Eventos) */}
-        {subcategoriasActivas.length > 0 && (
-          <div className="fila-subcategorias-vitrina" aria-label="Sub-colecciones">
-            <span className="etiqueta-riel-filtro">
-              {clasificacionActiva === 'grupo-eventos' ? 'Tipo:' : 'Colección:'}
-            </span>
-            <div className="riel-chips-secundarios">
-              <button
-                type="button"
-                className={`chip-subcategoria ${
-                  categoriaActiva === clasificacionActiva ||
-                  (clasificacionActiva === 'cat-todos' && categoriaActiva === 'cat-todos')
-                    ? 'activo'
-                    : ''
-                }`}
-                onClick={() =>
-                  handleSeleccionarCategoria(
-                    clasificacionActiva === 'cat-todos' ? 'cat-todos' : clasificacionActiva
-                  )
-                }
-              >
-                {clasificacionActiva === 'grupo-eventos' ? 'Todo en Eventos' : 'Todas'}
-              </button>
-              {subcategoriasActivas.map((sub) => {
-                const estaActiva = categoriaActiva === sub.id;
-                return (
-                  <button
-                    key={sub.id}
-                    type="button"
-                    className={`chip-subcategoria ${estaActiva ? 'activo' : ''}`}
-                    onClick={() => handleSeleccionarCategoria(sub.id)}
-                  >
-                    {sub.nombre}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Nivel 3: Filtro interactivo por Etiquetas Semánticas de Búsqueda (Keywords IA) */}
-        {etiquetasDisponibles.length > 0 && (
-          <div className="fila-etiquetas-busqueda-vitrina" aria-label="Filtrar por etiquetas de búsqueda">
-            <span className="etiqueta-riel-filtro">
-              <Tag size={13} />
-              <span>Etiquetas:</span>
-            </span>
-            <div className="riel-chips-secundarios">
-              {etiquetasDisponibles.map((item) => {
-                const activa = etiquetasActivas.includes(item.clave);
-                return (
-                  <button
-                    key={item.clave}
-                    type="button"
-                    aria-pressed={activa}
-                    title={
-                      activa
-                        ? `Quitar filtro de etiqueta "${item.etiqueta}"`
-                        : `Filtrar resultados por etiqueta "${item.etiqueta}"`
-                    }
-                    className={`chip-etiqueta-busqueda ${activa ? 'activa' : ''}`}
-                    onClick={() => handleToggleEtiqueta(item.clave)}
-                  >
-                    <Hash size={12} />
-                    <span>{item.etiqueta}</span>
-                    {activa && <X size={12} />}
-                  </button>
-                );
-              })}
-              {etiquetasActivas.length > 0 && (
+          {/* Resumen compacto de filtros activos cuando el panel está cerrado */}
+          {!filtrosAbiertos && cantidadFiltrosActivos > 0 && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                flexWrap: 'wrap',
+              }}
+            >
+              {categoriaActiva !== 'cat-todos' && categoriaActiva !== 'grupo-favoritos' && nombreEnlaceActual && (
                 <button
                   type="button"
-                  className="btn-limpiar-etiquetas"
-                  onClick={() => setEtiquetasActivas([])}
-                  title="Limpiar etiquetas seleccionadas"
-                  aria-label="Limpiar etiquetas"
+                  onClick={() => handleSeleccionarCategoria('cat-todos')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '4px 10px',
+                    borderRadius: '999px',
+                    border: '1px solid #D5CFC4',
+                    background: '#F6F4EF',
+                    color: '#221E1B',
+                    fontSize: '0.74rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
                 >
-                  Limpiar
+                  <span>{nombreEnlaceActual}</span>
+                  <X size={12} />
                 </button>
               )}
+              {criterioOrden === 'mas-deseados' && (
+                <button
+                  type="button"
+                  onClick={() => setCriterioOrden('recomendados')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '4px 10px',
+                    borderRadius: '999px',
+                    border: '1px solid #F4B4C6',
+                    background: '#FFF1F2',
+                    color: '#BE123C',
+                    fontSize: '0.74rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Heart size={11} fill="currentColor" />
+                  <span>Más solicitados</span>
+                  <X size={12} />
+                </button>
+              )}
+              {criterioOrden !== 'recomendados' && criterioOrden !== 'mas-deseados' && (
+                <button
+                  type="button"
+                  onClick={() => setCriterioOrden('recomendados')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '4px 10px',
+                    borderRadius: '999px',
+                    border: '1px solid #D5CFC4',
+                    background: '#F6F4EF',
+                    color: '#221E1B',
+                    fontSize: '0.74rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <span>
+                    {criterioOrden === 'precio-asc'
+                      ? 'Menor precio'
+                      : criterioOrden === 'precio-desc'
+                        ? 'Mayor precio'
+                        : 'Destacados'}
+                  </span>
+                  <X size={12} />
+                </button>
+              )}
+              {filtroPresupuesto !== 'todos' && (
+                <button
+                  type="button"
+                  onClick={() => setFiltroPresupuesto('todos')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    padding: '4px 10px',
+                    borderRadius: '999px',
+                    border: '1px solid #D5CFC4',
+                    background: '#F6F4EF',
+                    color: '#221E1B',
+                    fontSize: '0.74rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <span>{etiquetaPresupuestoActiva}</span>
+                  <X size={12} />
+                </button>
+              )}
+              {etiquetasActivas.map((et) => (
+                <button
+                  key={et}
+                  type="button"
+                  onClick={() => handleToggleEtiqueta(et)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '4px 10px',
+                    borderRadius: '999px',
+                    border: '1px solid #D5CFC4',
+                    background: '#F6F4EF',
+                    color: '#221E1B',
+                    fontSize: '0.74rem',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  <Hash size={11} />
+                  <span>{et}</span>
+                  <X size={12} />
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={handleLimpiarTodo}
+                style={{
+                  border: 'none',
+                  background: 'none',
+                  color: '#6B655E',
+                  fontSize: '0.74rem',
+                  fontWeight: 700,
+                  textDecoration: 'underline',
+                  cursor: 'pointer',
+                  padding: '4px 6px',
+                }}
+              >
+                Limpiar todo
+              </button>
             </div>
-          </div>
-        )}
+          )}
+
+          {/* Panel de Filtros Estructurado (3.1 a 3.5) */}
+          {filtrosAbiertos && (
+            <div
+              id="panel-filtros-tinkay"
+              style={{
+                background: '#FFFFFF',
+                border: '1px solid #E5DFD5',
+                borderRadius: '16px',
+                padding: '16px',
+                boxShadow: '0 10px 28px rgba(31, 28, 25, 0.08)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '14px',
+              }}
+            >
+              {/* 3.1 Categorías principales: Arreglos, Eventos, Condolencias, Ofertas, Entrega Inmediata */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    color: '#221E1B',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  <Sparkles size={13} />
+                  <span>Categorías</span>
+                </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
+                  <button
+                    type="button"
+                    onClick={() => handleSeleccionarCategoria('cat-todos')}
+                    style={{
+                      ...chipEstilo(categoriaActiva === 'cat-todos'),
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      padding: '7px 12px',
+                      borderRadius: '999px',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <span>Todo</span>
+                  </button>
+                  {CLASIFICACIONES_PRINCIPALES_TINKAY.map((clasif) => {
+                    const estaActiva = clasificacionActiva === clasif.id;
+                    return (
+                      <button
+                        key={clasif.id}
+                        type="button"
+                        onClick={() => handleSeleccionarCategoria(clasif.id)}
+                        style={{
+                          ...chipEstilo(estaActiva),
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '5px',
+                          padding: '7px 12px',
+                          borderRadius: '999px',
+                          fontSize: '0.78rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {clasif.modoVisualSobrio && <Feather size={13} />}
+                        <span>{clasif.nombre}</span>
+                      </button>
+                    );
+                  })}
+                  {totalOfertasDisponibles > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleSeleccionarCategoria('grupo-ofertas')}
+                      style={{
+                        ...chipEstilo(clasificacionActiva === 'grupo-ofertas', 'rosa'),
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '7px 12px',
+                        borderRadius: '999px',
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Flame size={13} />
+                      <span>Ofertas ({totalOfertasDisponibles})</span>
+                    </button>
+                  )}
+                  {totalEntregaInmediata > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleSeleccionarCategoria('grupo-entrega-inmediata')}
+                      style={{
+                        ...chipEstilo(clasificacionActiva === 'grupo-entrega-inmediata', 'verde'),
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: '7px 12px',
+                        borderRadius: '999px',
+                        fontSize: '0.78rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <Zap size={13} />
+                      <span>Entrega Inmediata</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* 3.2 Colecciones */}
+              {coleccionesParaFiltros.length > 0 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '7px',
+                    paddingTop: '10px',
+                    borderTop: '1px solid #F0EBE3',
+                  }}
+                >
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      fontSize: '0.75rem',
+                      fontWeight: 800,
+                      color: '#221E1B',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.04em',
+                    }}
+                  >
+                    <Layers size={13} />
+                    <span>Colecciones</span>
+                  </span>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleSeleccionarCategoria(
+                          clasificacionActiva === 'cat-todos' ? 'cat-todos' : clasificacionActiva
+                        )
+                      }
+                      style={{
+                        ...chipEstilo(
+                          categoriaActiva === clasificacionActiva || categoriaActiva === 'cat-todos',
+                          'verde'
+                        ),
+                        padding: '6px 11px',
+                        borderRadius: '999px',
+                        fontSize: '0.76rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      Todas
+                    </button>
+                    {coleccionesParaFiltros.map((sub) => {
+                      const estaActiva = categoriaActiva === sub.id;
+                      return (
+                        <button
+                          key={sub.id}
+                          type="button"
+                          onClick={() => handleSeleccionarCategoria(sub.id)}
+                          style={{
+                            ...chipEstilo(estaActiva, 'verde'),
+                            padding: '6px 11px',
+                            borderRadius: '999px',
+                            fontSize: '0.76rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {sub.nombre}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* 3.3 Etiquetas */}
+              {etiquetasDisponibles.length > 0 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '7px',
+                    paddingTop: '10px',
+                    borderTop: '1px solid #F0EBE3',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '8px',
+                    }}
+                  >
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '0.75rem',
+                        fontWeight: 800,
+                        color: '#221E1B',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.04em',
+                      }}
+                    >
+                      <Tag size={13} />
+                      <span>Etiquetas</span>
+                    </span>
+                    {etiquetasActivas.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setEtiquetasActivas([])}
+                        style={{
+                          border: 'none',
+                          background: 'none',
+                          color: '#BE123C',
+                          fontSize: '0.73rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        Quitar etiquetas
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {etiquetasDisponibles.map((item) => {
+                      const activa = etiquetasActivas.includes(item.clave);
+                      return (
+                        <button
+                          key={item.clave}
+                          type="button"
+                          aria-pressed={activa}
+                          onClick={() => handleToggleEtiqueta(item.clave)}
+                          style={{
+                            ...chipEstilo(activa),
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            padding: '5px 10px',
+                            borderRadius: '999px',
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <Hash size={11} />
+                          <span>{item.etiqueta}</span>
+                          {activa && <X size={11} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* 3.4 Los más solicitados (Más Me gusta) y orden */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '7px',
+                  paddingTop: '10px',
+                  borderTop: '1px solid #F0EBE3',
+                }}
+              >
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    color: '#221E1B',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  <TrendingUp size={13} />
+                  <span>Popularidad y Orden</span>
+                </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setCriterioOrden((prev) =>
+                        prev === 'mas-deseados' ? 'recomendados' : 'mas-deseados'
+                      )
+                    }
+                    aria-pressed={criterioOrden === 'mas-deseados'}
+                    style={{
+                      ...chipEstilo(criterioOrden === 'mas-deseados', 'rosa'),
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      padding: '7px 12px',
+                      borderRadius: '999px',
+                      fontSize: '0.77rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <Heart size={13} fill="currentColor" />
+                    <span>Más solicitados (Más Me gusta)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCriterioOrden('recomendados')}
+                    style={{
+                      ...chipEstilo(criterioOrden === 'recomendados'),
+                      padding: '7px 12px',
+                      borderRadius: '999px',
+                      fontSize: '0.77rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Recomendados
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCriterioOrden('precio-asc')}
+                    style={{
+                      ...chipEstilo(criterioOrden === 'precio-asc'),
+                      padding: '7px 12px',
+                      borderRadius: '999px',
+                      fontSize: '0.77rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Menor precio
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCriterioOrden('precio-desc')}
+                    style={{
+                      ...chipEstilo(criterioOrden === 'precio-desc'),
+                      padding: '7px 12px',
+                      borderRadius: '999px',
+                      fontSize: '0.77rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    Mayor precio
+                  </button>
+                </div>
+              </div>
+
+              {/* 3.5 Presupuesto */}
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '7px',
+                  paddingTop: '10px',
+                  borderTop: '1px solid #F0EBE3',
+                }}
+              >
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    color: '#221E1B',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  <DollarSign size={13} />
+                  <span>Presupuesto</span>
+                </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
+                  {PRESUPUESTOS_FILTRO.map((pres) => {
+                    const activo = filtroPresupuesto === pres.id;
+                    return (
+                      <button
+                        key={pres.id}
+                        type="button"
+                        onClick={() => setFiltroPresupuesto(pres.id)}
+                        style={{
+                          ...chipEstilo(activo, 'ambar'),
+                          padding: '6px 12px',
+                          borderRadius: '999px',
+                          fontSize: '0.76rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {pres.etiqueta}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Pie del panel de filtros */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '10px',
+                  paddingTop: '10px',
+                  borderTop: '1px solid #F0EBE3',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={handleLimpiarTodo}
+                  style={{
+                    padding: '8px 14px',
+                    borderRadius: '999px',
+                    border: '1px solid #D5CFC4',
+                    background: '#FFFFFF',
+                    color: '#57524C',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Limpiar filtros
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFiltrosAbiertos(false)}
+                  style={{
+                    padding: '9px 18px',
+                    borderRadius: '999px',
+                    border: 'none',
+                    background: '#1F1C19',
+                    color: '#FFFFFF',
+                    fontSize: '0.8rem',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  Ver {productosFinales.length}{' '}
+                  {productosFinales.length === 1 ? 'resultado' : 'resultados'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Grid de Productos con Carruseles Fotográficos */}
         {productosFinales.length === 0 ? (
@@ -726,13 +1320,7 @@ export function VitrinaCatalogoTinkay() {
             <button
               type="button"
               className="btn btn-mini"
-              onClick={() => {
-                setCategoriaActiva('cat-todos');
-                setTerminoBusqueda('');
-                setEtiquetasActivas([]);
-                setFiltroPresupuesto('todos');
-                setCriterioOrden('recomendados');
-              }}
+              onClick={handleLimpiarTodo}
             >
               {categoriaActiva === 'grupo-favoritos' ? 'Explorar catálogo' : 'Restablecer filtros'}
             </button>
