@@ -28,6 +28,8 @@ import {
   ArrowRight,
   Truck,
   FileText,
+  ClipboardCopy,
+  Check,
 } from "lucide-react";
 import {
   crearProductoAction,
@@ -47,6 +49,7 @@ import { TipoVigenciaTemporal } from "../utils/vigencia";
 import { ModalCrearCategoria } from "./ModalCrearCategoria";
 import { ModalGaleriaMedios } from "./ModalGaleriaMedios";
 import { detectarTipoNegocio } from "../utils/negocio";
+import { formatearConfiguracionProductoTexto } from "../utils/catalogoMasivo";
 import { obtenerConfiguracionLogisticaAction } from "../acciones-logistica";
 import {
   crearConfiguracionLogisticaPorDefecto,
@@ -268,6 +271,89 @@ export function ModalCrearProducto({
 
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [configCopiadaTexto, setConfigCopiadaTexto] = useState(false);
+
+  const handleCopiarConfiguracionBorrador = async () => {
+    const catSel = categoriasLocales.find((c) => c.ctg_id === categoriaId);
+    const tipoObj = tiposOfertaLocales.find(
+      (t) => t.tof_codigo.toUpperCase() === String(tipo || "").toUpperCase()
+    );
+    const precioNum = Number(precioBase) || 0;
+    const precioCompNum = Number(precioComparacion) || 0;
+    const texto = formatearConfiguracionProductoTexto({
+      negocio,
+      nombre: nombre.trim() || "(Borrador sin nombre)",
+      categoriaNombre: catSel?.ctg_nombre || "Sin categoría",
+      tipo,
+      tipoOfertaEtiqueta: tipoObj?.tof_nombre || null,
+      activo: proActivo,
+      destacado,
+      tarifaIvaPredeterminada: tarifaIva,
+      descripcion,
+      beneficios: beneficiosTexto
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean),
+      requisitos: requisitosTexto
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean),
+      tiempoEntrega,
+      canalesVisibilidad: canalesSeleccionados,
+      usos: usosSeleccionados,
+      etiquetas: etiquetasSeleccionadas,
+      vigenciaTipo,
+      fechaInicio: fechaInicio || null,
+      fechaFin: fechaFin || null,
+      etiquetaTemporada: etiquetaTemporada || null,
+      mensajeFueraTemporada: mensajeFueraTemporada || null,
+      logistica: {
+        delivery_incluido: deliveryIncluido,
+        modalidad_transporte: modalidadTransporte,
+        etiqueta_transporte: etiquetaTransporte,
+        cobertura_texto: coberturaTransporte,
+        recargo_transporte_usd: recargoTransporteUsd,
+      },
+      personalizacionFloral: esFloristeria ? personalizacionFloral : null,
+      imagenUrl: imagenUrl || null,
+      galeriaUrls: galeriaTexto
+        .split("\n")
+        .map((g) => g.trim())
+        .filter(Boolean),
+      albumFotosUrl: albumFotosUrl || null,
+      videoUrl: videoUrl || null,
+      esCombo: esComboCrear,
+      comboComponentes: comboComponentesCrear.map((c) => ({
+        nombre: c.producto_nombre || c.producto_slug || c.producto_id,
+        cantidad: c.cantidad_base,
+        sku: c.variante_sku,
+      })),
+      variantes: [
+        {
+          var_sku: sku.trim() || "(Auto)",
+          var_nombre: nombre.trim() || "Estándar",
+          var_precio: precioNum,
+          var_precio_comparacion: precioCompNum > 0 ? precioCompNum : null,
+          var_tarifa_iva_porcentaje: tarifaIva,
+          var_activo: proActivo,
+          tipo_envoltorio: esFloristeria ? personalizacionFloral.tipoEnvoltorio : null,
+          portada_url: imagenUrl || null,
+          escalas_volumen: escalasVolumenCrear.map((e) => ({
+            cantidad_minima: e.min_cantidad,
+            tipo: e.tipo,
+            valor: e.valor,
+          })),
+        },
+      ],
+    });
+    try {
+      await navigator.clipboard.writeText(texto);
+      setConfigCopiadaTexto(true);
+      setTimeout(() => setConfigCopiadaTexto(false), 2200);
+    } catch {
+      setError("No se pudo copiar la configuración al portapapeles.");
+    }
+  };
 
   // Al abrir el modal para crear un producto nuevo, reiniciar a un formulario limpio en Paso 1
   useEffect(() => {
@@ -934,21 +1020,54 @@ export function ModalCrearProducto({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onCerrar}
-            title="Cerrar asistente"
-            aria-label="Cerrar"
-            style={{
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-              color: "#847D74",
-              padding: "6px",
-            }}
-          >
-            <X size={20} />
-          </button>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={() => void handleCopiarConfiguracionBorrador()}
+              className="btn-responsive-accion"
+              title="Copiar en texto todos los detalles configurados hasta este paso"
+              aria-label="Copiar Config"
+              style={{
+                background: configCopiadaTexto
+                  ? "rgba(5, 150, 105, 0.28)"
+                  : "rgba(255, 255, 255, 0.1)",
+                color: configCopiadaTexto ? "#A7F3D0" : "#E6E2DA",
+                border: configCopiadaTexto
+                  ? "1px solid rgba(167, 243, 208, 0.45)"
+                  : "1px solid rgba(255, 255, 255, 0.2)",
+                height: "32px",
+                padding: "0 10px",
+                borderRadius: "8px",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+              }}
+            >
+              {configCopiadaTexto ? <Check size={14} /> : <ClipboardCopy size={14} />}
+              <span className="btn-texto-responsive">
+                {configCopiadaTexto ? "Copiado" : "Copiar Config"}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={onCerrar}
+              title="Cerrar asistente"
+              aria-label="Cerrar"
+              style={{
+                background: "transparent",
+                border: "none",
+                cursor: "pointer",
+                color: "#847D74",
+                padding: "6px",
+              }}
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Barra de Pasos del Wizard */}

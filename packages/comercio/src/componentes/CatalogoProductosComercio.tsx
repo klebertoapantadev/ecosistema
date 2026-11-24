@@ -40,6 +40,8 @@ import {
   FileText,
   Trash2,
   Heart,
+  ClipboardCopy,
+  FileSpreadsheet,
 } from "lucide-react";
 import {
   ProductoCatalogo,
@@ -84,6 +86,8 @@ import {
   describirEscalaVolumen,
 } from "../utils/combosVolumen";
 import { ModalGestionTiposOferta } from "./ModalGestionTiposOferta";
+import { ModalExportarImportarCatalogo } from "./ModalExportarImportarCatalogo";
+import { formatearConfiguracionProductoTexto } from "../utils/catalogoMasivo";
 
 interface Props {
   negocio?: string;
@@ -136,6 +140,21 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
   const [varianteAEditarId, setVarianteAEditarId] = useState<string | undefined>(undefined);
   const [modalEditarAbierto, setModalEditarAbierto] = useState(false);
   const [modalManualAbierto, setModalManualAbierto] = useState(false);
+  const [modalMasivoAbierto, setModalMasivoAbierto] = useState(false);
+  const [configCopiadaProdId, setConfigCopiadaProdId] = useState<string | null>(null);
+
+  const copiarConfiguracionProducto = async (prod: ProductoCatalogo) => {
+    try {
+      const texto = formatearConfiguracionProductoTexto(prod, { negocio });
+      await navigator.clipboard.writeText(texto);
+      setConfigCopiadaProdId(prod.pro_id);
+      setTimeout(() => {
+        setConfigCopiadaProdId((prev) => (prev === prod.pro_id ? null : prev));
+      }, 2200);
+    } catch {
+      // Fallback silencioso si el navegador bloquea clipboard
+    }
+  };
 
   // Mapa de variantes seleccionadas por producto
   const [varianteSeleccionadaPorProducto, setVarianteSeleccionadaPorProducto] = useState<
@@ -798,6 +817,32 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                 <span className="btn-texto-responsive">
                   {esFloristeria ? "Nuevo Arreglo" : esMantenimiento ? "Nuevo Servicio" : "Nuevo Honorario"}
                 </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setModalMasivoAbierto(true)}
+                className="btn-responsive-accion"
+                title="Ver, exportar a Markdown / Excel o importar actualización masiva de productos"
+                aria-label="MD / Excel"
+                style={{
+                  background: "#EAF3ED",
+                  color: "#1F352C",
+                  border: "1px solid #C6DEC9",
+                  padding: "7px 12px",
+                  borderRadius: "8px",
+                  fontSize: "0.8rem",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                }}
+              >
+                <FileSpreadsheet size={14} color="#2F4737" />
+                <span className="btn-texto-responsive">MD / Excel</span>
               </button>
 
               {!esModoMovil && (
@@ -2651,6 +2696,51 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
+                        void copiarConfiguracionProducto(p);
+                      }}
+                      className="btn-responsive-accion"
+                      title={`Copiar en texto toda la configuración de "${p.pro_nombre}"`}
+                      aria-label={`Copiar configuración de ${p.pro_nombre}`}
+                      style={{
+                        background:
+                          configCopiadaProdId === p.pro_id
+                            ? "rgba(5, 150, 105, 0.95)"
+                            : "rgba(15, 23, 42, 0.9)",
+                        border:
+                          configCopiadaProdId === p.pro_id
+                            ? "1.5px solid #7EA389"
+                            : "1.5px solid rgba(200, 162, 90, 0.45)",
+                        color: "#FFFFFF",
+                        padding: "5px 10px",
+                        borderRadius: "8px",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "5px",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
+                      }}
+                    >
+                      {configCopiadaProdId === p.pro_id ? (
+                        <>
+                          <CheckCircle2 size={12} color="#FFFFFF" />
+                          <span className="btn-texto-responsive">Copiado</span>
+                        </>
+                      ) : (
+                        <>
+                          <ClipboardCopy size={12} color="#E5D7BC" />
+                          <span className="btn-texto-responsive">Copiar Config</span>
+                        </>
+                      )}
+                    </button>
+                  )}
+
+                  {modoVista === "admin" && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
                         setProductoAEditar(p);
                         setVarianteAEditarId(undefined); // Abre pestaña del Producto Master
                         setModalEditarAbierto(true);
@@ -3739,6 +3829,16 @@ export function CatalogoProductosComercio({ negocio = "tranqi" }: Props) {
         onCerrar={() => setModalTiposOfertaAbierto(false)}
         negocio={negocio}
         tabInicial="gestionar"
+      />
+
+      <ModalExportarImportarCatalogo
+        abierto={modalMasivoAbierto}
+        negocio={negocio}
+        productos={productos}
+        productosFiltrados={productosFiltrados}
+        categorias={categoriasLista}
+        onCerrar={() => setModalMasivoAbierto(false)}
+        onCatalogoActualizado={cargarDatos}
       />
     </div>
   );

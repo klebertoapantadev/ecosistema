@@ -38,6 +38,8 @@ import {
   Palette,
   Settings2,
   Save,
+  ClipboardCopy,
+  Check,
 } from "lucide-react";
 import {
   editarProductoAction,
@@ -114,6 +116,7 @@ import {
   resumirConfiguracionPersonalizacionAdmin,
   type ConfiguracionPersonalizacionFloral,
 } from "../utils/personalizacionFloral";
+import { formatearConfiguracionProductoTexto } from "../utils/catalogoMasivo";
 
 
 export const COLOR_PRODUCTO_MASTER = {
@@ -477,6 +480,96 @@ export function ModalEditarProducto({
     "guardar" | "cancelar" | "eliminar_producto" | "eliminar_variante" | null
   >(null);
   const [error, setError] = useState<string | null>(null);
+  const [configCopiadaTexto, setConfigCopiadaTexto] = useState(false);
+
+  const handleCopiarConfiguracionActual = async () => {
+    const catActual = categoriasLocales.find((c) => c.ctg_id === categoriaId);
+    const tipoOfertaObj = opcionesTiposOferta.find(
+      (t) => t.tof_codigo.toUpperCase() === String(tipo || "").toUpperCase()
+    );
+    const texto = formatearConfiguracionProductoTexto({
+      pro_id: producto?.pro_id,
+      pro_slug: producto?.pro_slug,
+      negocio,
+      nombre: nombre || producto?.pro_nombre || "",
+      categoriaNombre: catActual?.ctg_nombre || producto?.categoria?.ctg_nombre || "Sin categoría",
+      tipo,
+      tipoOfertaEtiqueta: tipoOfertaObj?.tof_nombre || null,
+      activo: proActivo,
+      destacado,
+      tarifaIvaPredeterminada: tarifaIvaMaster,
+      descripcion,
+      beneficios: beneficiosTexto
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean),
+      requisitos: requisitosTexto
+        .split("\n")
+        .map((l) => l.trim())
+        .filter(Boolean),
+      tiempoEntrega,
+      canalesVisibilidad: canalesSeleccionados,
+      usos: usosSeleccionados,
+      etiquetas: etiquetasSeleccionadas,
+      vigenciaTipo,
+      fechaInicio: fechaInicio || null,
+      fechaFin: fechaFin || null,
+      etiquetaTemporada: etiquetaTemporada || null,
+      mensajeFueraTemporada: mensajeFueraTemporada || null,
+      logistica: {
+        delivery_incluido: deliveryIncluido,
+        modalidad_transporte: modalidadTransporte,
+        etiqueta_transporte: etiquetaTransporte,
+        cobertura_texto: coberturaTransporte,
+        recargo_transporte_usd: recargoTransporteUsd,
+      },
+      personalizacionFloral: esFloristeria ? personalizacionFloral : null,
+      imagenUrl: imagenUrl || null,
+      galeriaUrls: galeriaTexto
+        .split("\n")
+        .map((g) => g.trim())
+        .filter(Boolean),
+      albumFotosUrl: albumFotosUrl || null,
+      videoUrl: videoUrl || null,
+      esCombo,
+      comboComponentes: comboComponentes.map((c) => ({
+        nombre: c.producto_nombre || c.producto_slug || c.producto_id,
+        cantidad: c.cantidad_base,
+        sku: c.variante_sku,
+      })),
+      esRenta: esOfertaRentaActiva,
+      rentaResumen: esOfertaRentaActiva
+        ? `Periodo: ${rentaConfig.periodo} · Retiro incluido: ${rentaConfig.incluye_retiro ? "Sí" : "No"} · Garantía: $${Number(rentaConfig.deposito_garantia_usd || 0).toFixed(2)}`
+        : null,
+      variantes: variantesLocales.map((v) => ({
+        var_id: v.var_id,
+        var_sku: v.var_sku || "",
+        var_nombre: v.var_nombre || nombre,
+        var_precio: Number(v.var_precio || 0),
+        var_precio_comparacion:
+          v.var_precio_comparacion != null ? Number(v.var_precio_comparacion) : null,
+        var_tarifa_iva_porcentaje: Number(v.var_tarifa_iva_porcentaje ?? tarifaIvaMaster),
+        var_activo: v.var_activo !== false,
+        tipo_envoltorio: esFloristeria
+          ? resolverPersonalizacionFloralEfectiva({
+              configMaster: personalizacionFloral,
+              configVariante: v.var_detalle_variante?.personalizacion_floral,
+              modoVariante: v.var_detalle_variante?.personalizacion_floral_modo,
+              habilitadaPorDefecto: esFloristeria,
+              tipoEnvoltorioPorDefecto: personalizacionFloral.tipoEnvoltorio,
+            }).tipoEnvoltorio
+          : null,
+        portada_url: v.var_detalle_variante?.portada_url || null,
+      })),
+    });
+    try {
+      await navigator.clipboard.writeText(texto);
+      setConfigCopiadaTexto(true);
+      setTimeout(() => setConfigCopiadaTexto(false), 2200);
+    } catch {
+      setError("No se pudo copiar la configuración al portapapeles.");
+    }
+  };
 
   // Estado de Usos (Casos de Uso / Aplicación) y Etiquetas Semánticas IA
   const [usosSeleccionados, setUsosSeleccionados] = useState<string[]>([]);
@@ -1810,6 +1903,38 @@ export function ModalEditarProducto({
           </div>
 
           <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={() => void handleCopiarConfiguracionActual()}
+              className="btn-responsive-accion"
+              title="Copiar en texto todos los detalles de configuración de este producto"
+              aria-label="Copiar Config"
+              style={{
+                background: configCopiadaTexto
+                  ? "rgba(5, 150, 105, 0.28)"
+                  : "rgba(255, 255, 255, 0.1)",
+                color: configCopiadaTexto ? "#A7F3D0" : "#E6E2DA",
+                border: configCopiadaTexto
+                  ? "1px solid rgba(167, 243, 208, 0.45)"
+                  : "1px solid rgba(255, 255, 255, 0.2)",
+                height: "34px",
+                padding: "0 10px",
+                borderRadius: "8px",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "5px",
+                flexShrink: 0,
+              }}
+            >
+              {configCopiadaTexto ? <Check size={14} /> : <ClipboardCopy size={14} />}
+              <span className="btn-texto-responsive">
+                {configCopiadaTexto ? "Copiado" : "Copiar Config"}
+              </span>
+            </button>
+
             {esModoMaster ? (
               <button
                 type="button"

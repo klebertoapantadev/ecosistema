@@ -25,6 +25,7 @@ import {
   normalizarConfiguracionPersonalizacionFloral,
   type ConfiguracionPersonalizacionFloral,
 } from "./utils/personalizacionFloral";
+import type { PatchProductoMasivo } from "./utils/catalogoMasivo";
 import { obtenerEmisorRideNegocioAction } from "./acciones-facturacion-sri";
 import type { ConfiguracionEmisorSri, LineaFacturaSriResumen } from "./ride-sri";
 
@@ -9013,6 +9014,211 @@ export async function obtenerMeGustaCatalogoAction(
       total_global: 0,
       productos: [],
       error: err?.message || "Error consultando Me gusta del catálogo.",
+    };
+  }
+}
+
+export interface ResultadoActualizacionMasivaCatalogo {
+  ok: boolean;
+  actualizados: number;
+  fallidos: number;
+  detalles: Array<{
+    pro_id: string;
+    nombre: string;
+    ok: boolean;
+    error?: string;
+  }>;
+  error?: string;
+}
+
+/**
+ * Aplica actualizaciones masivas de productos y variantes del catálogo comercial
+ * (provenientes de archivo Markdown `.md` o Excel `.xlsx` editado manualmente o con IA).
+ * Solo ejecutable por operadores o administradores autenticados del negocio.
+ */
+export async function actualizarProductosMasivoAction(entrada: {
+  negocio: string;
+  patches: PatchProductoMasivo[];
+}): Promise<ResultadoActualizacionMasivaCatalogo> {
+  try {
+    const { principal } = normalizarIdentificadorNegocio(entrada.negocio);
+    const negocio = principal;
+
+    if (!Array.isArray(entrada.patches) || entrada.patches.length === 0) {
+      return {
+        ok: false,
+        actualizados: 0,
+        fallidos: 0,
+        detalles: [],
+        error: "No se recibieron productos con cambios para actualizar.",
+      };
+    }
+
+    if (entrada.patches.length > 300) {
+      return {
+        ok: false,
+        actualizados: 0,
+        fallidos: 0,
+        detalles: [],
+        error: "El lote supera el límite de 300 productos por importación. Divide el archivo en lotes más pequeños.",
+      };
+    }
+
+    const supabase: any = await crearClienteServidor();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return {
+        ok: false,
+        actualizados: 0,
+        fallidos: 0,
+        detalles: [],
+        error: "Debes iniciar sesión como operador o administrador para realizar una actualización masiva.",
+      };
+    }
+
+    // Verificar autorización estricta de operador/administrador en este negocio
+    let autorizado = false;
+    try {
+      const { data: esOp, error: errOp } = await supabase
+        .schema("comun_seguridad")
+        .rpc("seg_fn_es_operador_o_admin_negocio", { p_negocio: negocio });
+      if (!errOp && esOp === true) {
+        autorizado = true;
+      }
+    } catch {
+      autorizado = false;
+    }
+
+    if (!autorizado) {
+      const dbAuth: any = crearClienteAdmin() || supabase;
+      const [{ data: rowUsu }, { data: rowMem }] = await Promise.all([
+        dbAuth
+          .schema("comun_seguridad")
+          .from("seg_usuario")
+          .select("usu_es_superadmin")
+          .eq("usu_id", user.id)
+          .maybeSingle(),
+        dbAuth
+          .schema("comun_seguridad")
+          .from("seg_membresia")
+          .select("mem_rol, mem_estado")
+          .eq("mem_usuario_id", user.id)
+          .eq("mem_negocio", negocio)
+          .eq("mem_estado", "ACTIVA")
+          .maybeSingle(),
+      ]);
+
+      const rolMem = String(rowMem?.mem_rol || "").toUpperCase();
+      if (
+        Boolean(rowUsu?.usu_es_superadmin) ||
+        ["SUPERADMIN", "ADMIN", "ADMIN_NEGOCIO", "ADMINISTRADOR", "OPERADOR", "ASESOR", "VENTAS", "SOCIO"].includes(
+          rolMem
+        )
+      ) {
+        autorizado = true;
+      }
+    }
+
+    if (!autorizado) {
+      return {
+        ok: false,
+        actualizados: 0,
+        fallidos: 0,
+        detalles: [],
+        error: "No tienes permisos de operador o administrador para actualizar masivamente este catálogo.",
+      };
+    }
+
+    const detalles: ResultadoActualizacionMasivaCatalogo["detalles"] = [];
+    let actualizados = 0;
+    let fallidos = 0;
+
+    for (const patch of entrada.patches) {
+      try {
+        const res = await editarProductoAction({
+          pro_id: patch.pro_id,
+          negocio,
+          nombre: patch.nombre,
+          descripcion: patch.descripcion,
+          categoriaId: patch.categoriaId,
+          tipo: patch.tipo,
+          destacado: patch.destacado,
+          pro_activo: patch.pro_activo,
+          tarifaIvaPredeterminada: patch.tarifaIvaPredeterminada,
+          beneficios: patch.beneficios,
+          requisitos: patch.requisitos,
+          tiempoEntrega: patch.tiempoEntrega,
+          usos: patch.usos,
+          etiquetas: patch.etiquetas,
+          canales_visibilidad: patch.canales_visibilidad,
+          vigencia_tipo: patch.vigencia_tipo,
+          fecha_inicio: patch.fecha_inicio,
+          fecha_fin: patch.fecha_fin,
+          etiqueta_temporada: patch.etiqueta_temporada,
+          logistica: patch.logistica,
+          personalizacionFloral: patch.personalizacionFloral,
+          imagenUrl: patch.imagenUrl,
+          albumFotosUrl: patch.albumFotosUrl,
+          videoUrl: patch.videoUrl,
+          galeriaUrls: patch.galeriaUrls,
+          variantes: patch.variantes,
+        });
+
+        if (res.ok) {
+          actualizados += 1;
+          detalles.push({
+            pro_id: patch.pro_id,
+            nombre: patch.nombre,
+            ok: true,
+          });
+        } else {
+          fallidos += 1;
+          detalles.push({
+            pro_id: patch.pro_id,
+            nombre: patch.nombre,
+            ok: false,
+            error: res.error || "No se pudo actualizar el producto.",
+          });
+        }
+      } catch (errItem: any) {
+        fallidos += 1;
+        detalles.push({
+          pro_id: patch.pro_id,
+          nombre: patch.nombre,
+          ok: false,
+          error: errItem?.message || "Error inesperado al guardar producto.",
+        });
+      }
+    }
+
+    try {
+      revalidatePath("/panel/catalogo-productos");
+      revalidatePath("/panel");
+      revalidatePath("/");
+    } catch {
+      // revalidatePath puede omitirse fuera del ciclo de request Next.js
+    }
+
+    return {
+      ok: actualizados > 0 || fallidos === 0,
+      actualizados,
+      fallidos,
+      detalles,
+      error:
+        fallidos > 0 && actualizados === 0
+          ? detalles.find((d) => !d.ok)?.error || "Ningún producto pudo ser actualizado."
+          : undefined,
+    };
+  } catch (err: any) {
+    return {
+      ok: false,
+      actualizados: 0,
+      fallidos: entrada.patches?.length || 0,
+      detalles: [],
+      error: err?.message || "Error inesperado en la actualización masiva del catálogo.",
     };
   }
 }

@@ -8,3 +8,8 @@ export {
   ordenarOpcionesSelectAlfabeticamente,
 } from "./SelectConBuscador";
 export type { OpcionSelectBuscador, SelectConBuscadorProps } from "./SelectConBuscador";
+export {
+  exportarHojasAExcel,
+  leerHojasDesdeExcelBuffer,
+} from "./excel";
+export type { HojaExcelExportacion } from "./excel";
